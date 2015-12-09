@@ -534,7 +534,8 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   (EQUAL( map_proj_name, "STEREOGRAPHIC" )) ||
                   (EQUAL( map_proj_name, "SINUSOIDAL_EQUAL-AREA" )) ||
                   (EQUAL( map_proj_name, "SINUSOIDAL" ))  ) {
-            //isis uses the sphereical equation for these projections so force a sphere
+            // ISIS uses the spherical equation for these projections so force
+            // a sphere.
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
                             semi_major, 0.0, 
                             "Reference_Meridian", 0.0 );
@@ -1055,7 +1056,7 @@ int ISIS2Dataset::WriteQUBE_Information(
 /*      osRasterFile : name of raster file but if it is empty we        */
 /*                     have only one file with an attached label        */
 /*      sObjectTag : QUBE, IMAGE or SPECTRAL_QUBE                       */
-/*      bRelaunch : flag to allow recursiv call                         */
+/*      bRelaunch : flag to allow recursive call                        */
 /************************************************************************/
 
 int ISIS2Dataset::WriteLabel(

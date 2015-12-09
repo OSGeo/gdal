@@ -5,7 +5,7 @@ void gbit(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte)
       gbits(in,iout,iskip,nbyte,(g2int)0,(g2int)1);
 }
 
-void sbit(unsigned char *out,g2int *in,g2int iskip,g2int nbyte)
+void sbit(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte)
 {
       sbits(out,in,iskip,nbyte,(g2int)0,(g2int)1);
 }
@@ -26,34 +26,34 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 */
 {
       g2int i,tbit,bitcnt,ibit,itmp;
-      g2int nbit,index;
-      static g2int ones[]={1,3,7,15,31,63,127,255};
+      g2int nbit,l_index;
+      static const g2int ones[]={1,3,7,15,31,63,127,255};
 
 //     nbit is the start position of the field in bits
       nbit = iskip;
       for (i=0;i<n;i++) {
          bitcnt = nbyte;
-         index=nbit/8;
+         l_index=nbit/8;
          ibit=nbit%8;
          nbit = nbit + nbyte + nskip;
 
 //        first byte
          tbit= ( bitcnt < (8-ibit) ) ? bitcnt : 8-ibit;  // find min
-         itmp = (int)*(in+index) & ones[7-ibit];
+         itmp = (int)*(in+l_index) & ones[7-ibit];
          if (tbit != 8-ibit) itmp >>= (8-ibit-tbit);
-         index++;
+         l_index++;
          bitcnt = bitcnt - tbit;
 
 //        now transfer whole bytes
          while (bitcnt >= 8) {
-             itmp = itmp<<8 | (int)*(in+index);
+             itmp = itmp<<8 | (int)*(in+l_index);
              bitcnt = bitcnt - 8;
-             index++;
+             l_index++;
          }
 
 //        get data from last byte
          if (bitcnt > 0) {
-             itmp = ( itmp << bitcnt ) | ( ((int)*(in+index) >> (8-bitcnt)) & ones[bitcnt-1] );
+             itmp = ( itmp << bitcnt ) | ( ((int)*(in+l_index) >> (8-bitcnt)) & ones[bitcnt-1] );
          }
 
          *(iout+i) = itmp;
@@ -61,7 +61,7 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 }
 
 
-void sbits(unsigned char *out,g2int *in,g2int iskip,g2int nbyte,g2int nskip,
+void sbits(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte,g2int nskip,
            g2int n)
 /*C          Store bits - pack bits:  Put arbitrary size values into a
 /          packed bit string, taking the low order bits from each value
@@ -76,8 +76,8 @@ void sbits(unsigned char *out,g2int *in,g2int iskip,g2int nbyte,g2int nskip,
 */
 {
       g2int i,bitcnt,tbit,ibit,itmp,imask,itmp2,itmp3;
-      g2int nbit,index;
-      static g2int ones[]={1,3,7,15,31,63,127,255};
+      g2int nbit,l_index;
+      static const g2int ones[]={1,3,7,15,31,63,127,255};
 
 //     number bits from zero to ...
 //     nbit is the last bit of the field to be filled
@@ -86,7 +86,7 @@ void sbits(unsigned char *out,g2int *in,g2int iskip,g2int nbyte,g2int nskip,
       for (i=0;i<n;i++) {
          itmp = *(in+i);
          bitcnt = nbyte;
-         index=nbit/8;
+         l_index=nbit/8;
          ibit=nbit%8;
          nbit = nbit + nbyte + nskip;
 
@@ -95,29 +95,29 @@ void sbits(unsigned char *out,g2int *in,g2int iskip,g2int nbyte,g2int nskip,
              tbit= ( bitcnt < (ibit+1) ) ? bitcnt : ibit+1;  // find min
              imask = ones[tbit-1] << (7-ibit);
              itmp2 = (itmp << (7-ibit)) & imask;
-             itmp3 = (int)*(out+index) & (255-imask);
-             out[index] = (unsigned char)(itmp2 | itmp3);
+             itmp3 = (int)*(out+l_index) & (255-imask);
+             out[l_index] = (unsigned char)(itmp2 | itmp3);
              bitcnt = bitcnt - tbit;
              itmp = itmp >> tbit;
-             index--;
+             l_index--;
          }
 
 //        now byte aligned
 
 //        do by bytes
          while (bitcnt >= 8) {
-             out[index] = (unsigned char)(itmp & 255);
+             out[l_index] = (unsigned char)(itmp & 255);
              itmp = itmp >> 8;
              bitcnt = bitcnt - 8;
-             index--;
+             l_index--;
          }
 
 //        do last byte
 
          if (bitcnt > 0) {
              itmp2 = itmp & ones[bitcnt-1];
-             itmp3 = (int)*(out+index) & (255-ones[bitcnt-1]);
-             out[index] = (unsigned char)(itmp2 | itmp3);
+             itmp3 = (int)*(out+l_index) & (255-ones[bitcnt-1]);
+             out[l_index] = (unsigned char)(itmp2 | itmp3);
          }
       }
 

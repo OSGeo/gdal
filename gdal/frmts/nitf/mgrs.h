@@ -111,10 +111,11 @@
 extern "C" {
   #endif
 
-
+#ifdef unused
   long Set_MGRS_Parameters(double a,
                            double f,
                            char   *Ellipsoid_Code);
+#endif
 /*
  * The function Set_MGRS_Parameters receives the ellipsoid parameters and sets
  * the corresponding state variables. If any errors occur, the error code(s)
@@ -243,7 +244,7 @@ extern "C" {
  *  The function Convert_MGRS_To_UPS converts an MGRS coordinate string
  *  to UPS (hemisphere, easting, and northing) coordinates, according 
  *  to the current ellipsoid parameters. If any errors occur, the error 
- *  code(s) are returned by the function, otherwide UPS_NO_ERROR is returned.
+ *  code(s) are returned by the function, otherwise UPS_NO_ERROR is returned.
  *
  *    MGRS          : MGRS coordinate string           (input)
  *    Hemisphere    : Hemisphere either 'N' or 'S'     (output)

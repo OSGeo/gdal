@@ -188,11 +188,11 @@ int DDFRecord::Write()
 
     memset( szLeader, ' ', nLeaderSize );
 
-    sprintf( szLeader+0, "%05d", (int) (nDataSize + nLeaderSize) );
+    snprintf( szLeader+0, sizeof(szLeader)-0, "%05d", (int) (nDataSize + nLeaderSize) );
     szLeader[5] = ' ';
     szLeader[6] = 'D';
     
-    sprintf( szLeader + 12, "%05d", (int) (nFieldOffset + nLeaderSize) );
+    snprintf( szLeader+12, sizeof(szLeader)-12, "%05d", (int) (nFieldOffset + nLeaderSize) );
     szLeader[17] = ' ';
 
     szLeader[20] = (char) ('0' + _sizeFieldLength);
@@ -1523,10 +1523,12 @@ int DDFRecord::ResetDirectory()
         DDFFieldDefn *poDefn = poField->GetFieldDefn();
         char      szFormat[128];
 
-        sprintf( szFormat, "%%%ds%%0%dd%%0%dd", 
+        snprintf( szFormat, sizeof(szFormat), "%%%ds%%0%dd%%0%dd", 
                  _sizeFieldTag, _sizeFieldLength, _sizeFieldPos );
 
-        sprintf( pachData + nEntrySize * iField, szFormat, 
+        snprintf( pachData + nEntrySize * iField,
+                  nEntrySize+1,
+                  szFormat, 
                  poDefn->GetName(), poField->GetDataSize(),
                  poField->GetData() - pachData - nFieldOffset );
     }

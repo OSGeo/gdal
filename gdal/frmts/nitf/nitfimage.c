@@ -1827,7 +1827,7 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /*                          NITFEncodeDMSLoc()                          */
 /************************************************************************/
 
-static void NITFEncodeDMSLoc( char *pszTarget, double dfValue, 
+static void NITFEncodeDMSLoc( char *pszTarget, size_t nTargetLen, double dfValue, 
                               const char *pszAxis )
 
 {
@@ -1874,10 +1874,10 @@ static void NITFEncodeDMSLoc( char *pszTarget, double dfValue,
     }
 
     if( EQUAL(pszAxis,"Lat") )
-        sprintf( pszTarget, "%02d%02d%02d%c", 
+        snprintf( pszTarget, nTargetLen, "%02d%02d%02d%c", 
                  nDegrees, nMinutes, nSeconds, chHemisphere );
     else
-        sprintf( pszTarget, "%03d%02d%02d%c", 
+        snprintf( pszTarget, nTargetLen, "%03d%02d%02d%c", 
                  nDegrees, nMinutes, nSeconds, chHemisphere );
 }
 
@@ -1946,14 +1946,14 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
             return FALSE;
         }
 
-        NITFEncodeDMSLoc( szIGEOLO +  0, dfULY, "Lat" );
-        NITFEncodeDMSLoc( szIGEOLO +  7, dfULX, "Long" );
-        NITFEncodeDMSLoc( szIGEOLO + 15, dfURY, "Lat" );
-        NITFEncodeDMSLoc( szIGEOLO + 22, dfURX, "Long" );
-        NITFEncodeDMSLoc( szIGEOLO + 30, dfLRY, "Lat" );
-        NITFEncodeDMSLoc( szIGEOLO + 37, dfLRX, "Long" );
-        NITFEncodeDMSLoc( szIGEOLO + 45, dfLLY, "Lat" );
-        NITFEncodeDMSLoc( szIGEOLO + 52, dfLLX, "Long" );
+        NITFEncodeDMSLoc( szIGEOLO +  0, sizeof(szIGEOLO) - 0, dfULY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO +  7, sizeof(szIGEOLO) - 7, dfULX, "Long" );
+        NITFEncodeDMSLoc( szIGEOLO + 15, sizeof(szIGEOLO) - 15, dfURY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO + 22, sizeof(szIGEOLO) - 22, dfURX, "Long" );
+        NITFEncodeDMSLoc( szIGEOLO + 30, sizeof(szIGEOLO) - 30, dfLRY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO + 37, sizeof(szIGEOLO) - 37, dfLRX, "Long" );
+        NITFEncodeDMSLoc( szIGEOLO + 45, sizeof(szIGEOLO) - 45, dfLLY, "Lat" );
+        NITFEncodeDMSLoc( szIGEOLO + 52, sizeof(szIGEOLO) - 52, dfLLX, "Long" );
     }
 /* -------------------------------------------------------------------- */
 /*      Format geographic coordinates in decimal degrees                */
@@ -2383,7 +2383,7 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
     }
     else
     {
-        fprintf( stdout, "Chip is already de-warpped?\n" );
+        fprintf( stdout, "Chip is already de-warped?\n" );
     }
 
     return TRUE;
@@ -2440,31 +2440,31 @@ char **NITFReadBLOCKA( NITFImage *psImage )
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
-        sprintf( szTemp, "NITF_BLOCKA_BLOCK_INSTANCE_%02d", nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_BLOCK_INSTANCE_%02d", nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,   0,   2, szTemp );
-        sprintf( szTemp, "NITF_BLOCKA_N_GRAY_%02d", nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_N_GRAY_%02d", nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,   2,   5, szTemp );
-        sprintf( szTemp, "NITF_BLOCKA_L_LINES_%02d",      nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_L_LINES_%02d",      nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,   7,   5, szTemp );
-        sprintf( szTemp, "NITF_BLOCKA_LAYOVER_ANGLE_%02d",nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_LAYOVER_ANGLE_%02d",nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,  12,   3, szTemp );
-        sprintf( szTemp, "NITF_BLOCKA_SHADOW_ANGLE_%02d", nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_SHADOW_ANGLE_%02d", nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,  15,   3, szTemp );
         /* reserved: 16 */
-        sprintf( szTemp, "NITF_BLOCKA_FRLC_LOC_%02d",     nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_FRLC_LOC_%02d",     nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,  34,  21, szTemp );
-        sprintf( szTemp, "NITF_BLOCKA_LRLC_LOC_%02d",     nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_LRLC_LOC_%02d",     nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,  55,  21, szTemp );
-        sprintf( szTemp, "NITF_BLOCKA_LRFC_LOC_%02d",     nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_LRFC_LOC_%02d",     nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,  76,  21, szTemp );
-        sprintf( szTemp, "NITF_BLOCKA_FRFC_LOC_%02d",     nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "NITF_BLOCKA_FRFC_LOC_%02d",     nBlockaCount );
         NITFExtractMetadata( &papszMD, pachTRE,  97,  21, szTemp );
         /* reserved: 5 -> 97 + 21 + 5 = 123 -> OK */
     }
 
     if ( nBlockaCount > 0 )
     {
-        sprintf( szTemp, "%02d", nBlockaCount );
+        snprintf( szTemp, sizeof(szTemp), "%02d", nBlockaCount );
         papszMD = CSLSetNameValue( papszMD, "NITF_BLOCKA_BLOCK_COUNT", szTemp );
     }
 
@@ -3210,7 +3210,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
     if( pszTRE == NULL )
         return;
 
-    sprintf(szTempFileName, "/vsimem/%p", pszTRE);
+    snprintf(szTempFileName, sizeof(szTempFileName), "/vsimem/%p", pszTRE);
     fpTemp = VSIFileFromMemBuffer( szTempFileName, (GByte*) pszTRE, nTRESize, FALSE);
     psImage->pasLocations = NITFReadRPFLocationTable(fpTemp, &psImage->nLocCount);
     VSIFCloseL(fpTemp);
@@ -3254,7 +3254,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
             /* Image of http://trac.osgeo.org/gdal/ticket/3848 has incorrect */
             /* RPFHDR offset, but all other locations are correct... */
             /* So if we find LID_CoverageSectionSubheader and LID_CompressionLookupSubsection */
-            /* we check weither their content is valid */
+            /* we check whether their content is valid. */
             int bFoundValidLocation = FALSE;
             for( i = 0; i < psImage->nLocCount; i++ )
             {

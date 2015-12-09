@@ -304,7 +304,7 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Are we targetting a particular grid?                            */
+/*      Are we targeting a particular grid?                             */
 /* -------------------------------------------------------------------- */
     CPLString osFilename;
     int iTargetGrid = -1;

@@ -332,8 +332,9 @@ CPLStringList &CPLStringList::AddNameValue( const char  *pszKey,
 /*      Format the line.                                                */
 /* -------------------------------------------------------------------- */
     char *pszLine;
-    pszLine = (char *) CPLMalloc(strlen(pszKey)+strlen(pszValue)+2);
-    sprintf( pszLine, "%s=%s", pszKey, pszValue );
+    const size_t nLen = strlen(pszKey)+strlen(pszValue)+2;
+    pszLine = (char *) CPLMalloc(nLen);
+    snprintf( pszLine, nLen, "%s=%s", pszKey, pszValue );
 
 /* -------------------------------------------------------------------- */
 /*      If we don't need to keep the sort order things are pretty       */
@@ -396,8 +397,9 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
     else
     {
         char *pszLine;
-        pszLine = (char *) CPLMalloc(strlen(pszKey)+strlen(pszValue)+2);
-        sprintf( pszLine, "%s=%s", pszKey, pszValue );
+        const size_t nLen = strlen(pszKey)+strlen(pszValue)+2;
+        pszLine = (char *) CPLMalloc(nLen);
+        snprintf( pszLine, nLen, "%s=%s", pszKey, pszValue );
 
         papszList[iKey] = pszLine;
     }

@@ -678,7 +678,7 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we don't have the requested scanline, fetch preceeding       */
+/*      If we don't have the requested scanline, fetch preceding        */
 /*      scanlines to find the pointer to this scanline.                 */
 /* -------------------------------------------------------------------- */
     if( psGXF->panRawLineOffset[iScanline] == 0 )

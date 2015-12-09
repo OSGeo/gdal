@@ -113,14 +113,14 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //$$$
 {
       g2int ierr;
-      static unsigned char G=0x47;       // 'G'
-      static unsigned char R=0x52;       // 'R'
-      static unsigned char I=0x49;       // 'I'
-      static unsigned char B=0x42;       // 'B'
-      static unsigned char s7=0x37;   // '7'
+      const unsigned char G=0x47;       // 'G'
+      const unsigned char R=0x52;       // 'R'
+      const unsigned char I=0x49;       // 'I'
+      const unsigned char B=0x42;       // 'B'
+      const unsigned char s7=0x37;   // '7'
 
       unsigned char *cpack;
-      static g2int  zero=0,one=1,four=4,five=5,six=6,seven=7;
+      const g2int  zero=0,one=1,four=4,five=5,six=6,seven=7;
       const g2int  minsize=50000;
       g2int   iofst,ibeg,lencurr,len,nsize;
       g2int   ilen,isecnum,i,nbits,temp,left;
@@ -131,7 +131,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       g2int   width,height,iscan,itemp;
       g2float *pfld;
       xxtemplate  *mappds,*mapdrs;
-      unsigned int allones=4294967295u;
+      const unsigned int allones=4294967295u;
  
       ierr=0;
 //
@@ -464,7 +464,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       }
       //
       //   Calculate length of section 6 and store it in octets
-      //   1-4 of section 6.  Pad to end of octect, if necessary.
+      //   1-4 of section 6.  Pad to end of octet, if necessary.
       //
       left=8-(iofst%8);
       if (left != 8) {

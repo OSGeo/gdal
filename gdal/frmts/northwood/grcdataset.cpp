@@ -160,7 +160,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
     for( int val = 1; val <= maxValue; val++ )
     {
         int i = 0;
-        // loop throught the GRC dictionary to see if the value is defined
+        // Loop through the GRC dictionary to see if the value is defined.
         for( ;
              i < static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems );
              i++ )

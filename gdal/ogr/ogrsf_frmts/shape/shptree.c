@@ -391,7 +391,7 @@ SHPTreeNodeAddShapeId( SHPTreeNode * psTreeNode, SHPObject * psObject,
     int		i;
     
 /* -------------------------------------------------------------------- */
-/*      If there are subnodes, then consider wiether this object        */
+/*      If there are subnodes, then consider whether this object        */
 /*      will fit in them.                                               */
 /* -------------------------------------------------------------------- */
     if( nMaxDepth > 1 && psTreeNode->nSubNodes > 0 )
@@ -646,7 +646,7 @@ SHPTreeFindLikelyShapes( SHPTree * hTree,
 /************************************************************************/
 /*                          SHPTreeNodeTrim()                           */
 /*                                                                      */
-/*      This is the recurve version of SHPTreeTrimExtraNodes() that     */
+/*      This is the recursive version of SHPTreeTrimExtraNodes() that   */
 /*      walks the tree cleaning it up.                                  */
 /************************************************************************/
 

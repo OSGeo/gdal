@@ -375,7 +375,7 @@ int main( int nArgc, char ** papszArgv )
             for(i=0;i<nExistingLayers;i++)
             {
                 char        szLocation[5000];
-                sprintf( szLocation, "%s,%d", 
+                snprintf( szLocation, sizeof(szLocation), "%s,%d", 
                         fileNameToWrite, iLayer );
                 if (EQUAL(szLocation, existingLayersTab[i]))
                 {
@@ -502,7 +502,7 @@ int main( int nArgc, char ** papszArgv )
             char        szLocation[5000];
             OGRFeature  oTileFeat( poDstLayer->GetLayerDefn() );
 
-            sprintf( szLocation, "%s,%d", 
+            snprintf( szLocation, sizeof(szLocation), "%s,%d", 
                      fileNameToWrite, iLayer );
             oTileFeat.SetGeometry( &oRegion );
             oTileFeat.SetField( iTileIndexField, szLocation );

@@ -129,7 +129,7 @@ static int JPEG2000_VSIL_close(jas_stream_obj_t *obj)
 	return 0;
 }
 
-static jas_stream_ops_t JPEG2000_VSIL_stream_fileops = {
+static const jas_stream_ops_t JPEG2000_VSIL_stream_fileops = {
 	JPEG2000_VSIL_read,
 	JPEG2000_VSIL_write,
 	JPEG2000_VSIL_seek,
@@ -273,7 +273,7 @@ jas_stream_t *JPEG2000_VSIL_fopen(const char *filename, const char *mode)
 	stream->obj_ = (void *) obj;
 
 	/* Select the operations for a file stream object. */
-	stream->ops_ = &JPEG2000_VSIL_stream_fileops;
+	stream->ops_ = const_cast<jas_stream_ops_t*> (&JPEG2000_VSIL_stream_fileops);
 
 	/* Open the underlying file. */
 	if ((obj->fp = VSIFOpenL(filename, mode)) == NULL) {

@@ -901,14 +901,14 @@ int TABFeature::WriteGeometryToMAPFile(TABMAPFile * /* poMapFile*/,
  **********************************************************************/
 void TABFeature::DumpMID(FILE *fpOut /*=NULL*/)
 {
-    OGRFeatureDefn      *poDefn = GetDefnRef();
+    OGRFeatureDefn      *l_poDefn = GetDefnRef();
 
     if (fpOut == NULL)
         fpOut = stdout;
 
     for( int iField = 0; iField < GetFieldCount(); iField++ )
     {
-        OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(iField);
+        OGRFieldDefn    *poFDefn = l_poDefn->GetFieldDefn(iField);
         
         fprintf( fpOut, "  %s (%s) = %s\n",
                  poFDefn->GetNameRef(),
@@ -1417,9 +1417,9 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                poPointHdr->m_nB);
 
     /*-------------------------------------------------------------
-     * Symbol Angle, in thenths of degree.
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Symbol Angle, in tenths of degree.
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *------------------------------------------------------------*/
     m_dAngle       = poPointHdr->m_nAngle/10.0;
 
@@ -1509,9 +1509,9 @@ int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poPointHdr->m_nB = (GByte)COLOR_B(m_sSymbolDef.rgbColor);
 
     /*-------------------------------------------------------------
-     * Symbol Angle, in thenths of degree.
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Symbol Angle, in tenths of degree.
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *------------------------------------------------------------*/
     poPointHdr->m_nAngle = (GInt16)ROUND_INT(m_dAngle * 10.0);
 
@@ -5446,9 +5446,9 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     m_nTextAlignment = poTextHdr->m_nTextAlignment; // just./spacing/arrow
 
     /*-------------------------------------------------------------
-     * Text Angle, in thenths of degree.
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Text Angle, in tenths of degree.
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *------------------------------------------------------------*/
     m_dAngle       = poTextHdr->m_nAngle/10.0;
 
@@ -5689,9 +5689,9 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poTextHdr->m_nTextAlignment = m_nTextAlignment;   // just./spacing/arrow
 
     /*-----------------------------------------------------------------
-     * Text Angle, (written in thenths of degrees)
-     * Contrary to arc start/end angles, no conversion based on 
-     * origin quadrant is required here
+     * Text Angle, (written in tenths of degrees)
+     * Contrary to arc start/end angles, no conversion based on
+     * origin quadrant is required here.
      *----------------------------------------------------------------*/
     poTextHdr->m_nAngle = ROUND_INT(m_dAngle*10.0);
 
@@ -5714,7 +5714,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     double dXMin, dYMin, dXMax, dYMax;
     // Make sure Feature MBR is in sync with other params
- 
+
     UpdateMBR();
     GetMBR(dXMin, dYMin, dXMax, dYMax);
 
@@ -8432,14 +8432,14 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     int   nPenId;
     const char* pszPenId;
 
-    // Use the Style Manager to retreive all the information we need.
+    // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
     OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
 
-    // Retreive the Pen info.
+    // Retrieve the Pen info.
     numParts = poStyleMgr->GetPartCount();
     for(i=0; i<numParts; i++)
     {
@@ -8527,7 +8527,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     }
     else
     {
-        // If no Pen Id, use the Pen Pattern to retreive the Id.
+        // If no Pen Id, use the Pen Pattern to retrieve the Id.
         pszPenPattern = poPenStyle->Pattern(bIsNull);
         if (bIsNull)
             pszPenPattern = NULL;
@@ -8672,8 +8672,7 @@ const char *ITABFeatureBrush::GetBrushStyleString()
     }
 
      return pszStyle;
-    
-}  
+}
 
 
 /**********************************************************************
@@ -8693,14 +8692,14 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     const char *pszBrushColor;
     int nBrushColor;
 
-    // Use the Style Manager to retreive all the information we need.
+    // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
     OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
 
-    // Retreive the Brush info.
+    // Retrieve the Brush info.
     numParts = poStyleMgr->GetPartCount();
     for(i=0; i<numParts; i++)
     {
@@ -8941,10 +8940,9 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
                         m_sSymbolDef.nPointSize,
                         m_sSymbolDef.nSymbolNo,
                         nOGRStyle);
-     
+
     return pszStyle;
-    
-}  
+}
 
 /**********************************************************************
  *                   ITABFeatureSymbol::SetSymbolFromStyleString()
@@ -8964,14 +8962,14 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
 
     double dSymbolSize;
 
-    // Use the Style Manager to retreive all the information we need.
+    // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
     OGRStyleTool *poStylePart = NULL;
 
     // Init the StyleMgr with the StyleString.
     poStyleMgr->InitStyleString(pszStyleString);
 
-    // Retreive the Symbol info.
+    // Retrieve the Symbol info.
     numParts = poStyleMgr->GetPartCount();
     for(i=0; i<numParts; i++)
     {

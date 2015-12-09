@@ -426,9 +426,10 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
                 "The EPSG provided did not import cleanly. Defaulting to EPSG:3857");
         }
         else {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "The 'epsg' value did not transate to a known spatial reference."
-                " Please check the 'epsg' value and try again.");
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "The 'epsg' value did not translate to a known "
+                      "spatial reference. "
+                      "Please check the 'epsg' value and try again.");
 
             json_object_put(pJSONObject);
             pJSONObject = NULL;

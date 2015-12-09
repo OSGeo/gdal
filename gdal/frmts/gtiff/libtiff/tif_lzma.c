@@ -95,7 +95,7 @@ LZMAStrerror(lzma_ret ret)
 		case LZMA_PROG_ERROR:
 		    return "programming error";
 		default:
-		    return "unindentified liblzma error";
+		    return "unidentified liblzma error";
 	}
 }
 

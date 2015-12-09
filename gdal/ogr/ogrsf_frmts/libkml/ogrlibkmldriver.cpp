@@ -125,9 +125,9 @@ static GDALDataset *OGRLIBKMLDriverCreate( const char * pszName,
 /******************************************************************************
  DeleteDataSource()
 
- note: this method recursivly deletes an entire dir if the datasource is a dir
-       and all the files are kml or kmz
- 
+ Note: this method recursively deletes an entire dir if the datasource is a dir
+       and all the files are kml or kmz.
+
 ******************************************************************************/
 
 static CPLErr OGRLIBKMLDriverDelete( const char *pszName )

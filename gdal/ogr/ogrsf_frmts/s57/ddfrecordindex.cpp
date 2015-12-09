@@ -259,11 +259,7 @@ static int DDFCompare( const void *pRec1, const void *pRec2 )
 /************************************************************************/
 /*                                Sort()                                */
 /*                                                                      */
-/*      Sort the records based on the key.  This is currently           */
-/*      implemented as a bubble sort, and could gain in efficiency      */
-/*      by reimplementing as a quick sort; however, I believe that      */
-/*      the keys will always be in order so a bubble sort should        */
-/*      only require one pass to verify this.                           */
+/*      Sort the records based on the key.                              */
 /************************************************************************/
 
 void DDFRecordIndex::Sort()

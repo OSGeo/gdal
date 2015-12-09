@@ -413,7 +413,7 @@ void IRISDataset::LoadProjection()
     float fFlattening;
     float fPolarRadius;
     
-    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS verions)
+    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS versions)
         fEquatorialRadius = 6371000;
         fPolarRadius = fEquatorialRadius;
         fInvFlattening = 0;
@@ -630,6 +630,7 @@ int IRISDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Confirm that the file is an IRIS file                           */
 /* -------------------------------------------------------------------- */
+    // TODO: Translate to English.
     //Si no el posem, peta al fer el translate, quan s'obre Identify des de GDALIdentifyDriver
     if( poOpenInfo->nHeaderBytes < 640 )
         return FALSE;
@@ -642,7 +643,7 @@ int IRISDataset::Identify( GDALOpenInfo * poOpenInfo )
     /*Check if the two headers are 27 (product hdr) & 26 (product configuration), and the product type is in the range 1 -> 34*/
     if( !(nId1 == 27 && nId2 == 26 && nType > 0 && nType < 35) )
         return FALSE;
-     
+
     return TRUE;
 }
 

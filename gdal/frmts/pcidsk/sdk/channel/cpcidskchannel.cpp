@@ -210,7 +210,7 @@ PCIDSKChannel *CPCIDSKChannel::GetOverview( int overview_index )
         PCIDSKBuffer image_header(1024), file_header(1024);
         char  pseudo_filename[65];
 
-        sprintf( pseudo_filename, "/SIS=%d", 
+        snprintf( pseudo_filename, sizeof(pseudo_filename), "/SIS=%d", 
                  atoi(overview_infos[overview_index].c_str()) );
 
         image_header.Put( pseudo_filename, 64, 64 );
@@ -292,14 +292,14 @@ void CPCIDSKChannel::SetOverviewValidity( int overview_index,
 
     char new_info[48];
 
-    sprintf( new_info, "%d %d %s", 
+    snprintf( new_info, sizeof(new_info), "%d %d %s", 
              sis_id, (new_validity ? 1 : 0 ), resampling );
 
     overview_infos[overview_index] = new_info;
 
     // write back to metadata.
     char key[20];
-    sprintf( key, "_Overview_%d", overview_decimations[overview_index] );
+    snprintf( key, sizeof(key), "_Overview_%d", overview_decimations[overview_index] );
 
     SetMetadataValue( key, new_info );
 }

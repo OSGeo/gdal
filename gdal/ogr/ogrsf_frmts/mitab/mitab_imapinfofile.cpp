@@ -60,7 +60,7 @@
  * (MITAB bug 1737, GDAL ticket 1678))
  *
  * Revision 1.23  2007/06/12 14:43:19  dmorissette
- * Use iswspace instead of sispace in IMapInfoFile::SmartOpen() (bug 1737)
+ * Use iswspace instead of ispace in IMapInfoFile::SmartOpen() (bug 1737)
  *
  * Revision 1.22  2007/06/12 13:52:37  dmorissette
  * Added IMapInfoFile::SetCharset() method (bug 1734)
@@ -285,7 +285,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
  *                   IMapInfoFile::GetNextFeature()
  *
  * Standard OGR GetNextFeature implementation.  This method is used
- * to retreive the next OGRFeature.
+ * to retrieve the next OGRFeature.
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {

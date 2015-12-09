@@ -870,7 +870,7 @@ CPLErr KEARasterBand::SetColorInterpretation(GDALColorInterp egdalinterp)
     }
     catch(const kealib::KEAException &)
     {
-        // do nothing? The docs say CE_Failure only if unsupporte by format
+        // Do nothing? The docs say CE_Failure only if unsupported by format.
     }
     return CE_None;
 }

@@ -160,7 +160,7 @@ OGRErr OSRExportToERM( OGRSpatialReferenceH hSRS,
  * Convert coordinate system to ERMapper format.
  *
  * @param pszProj 32 character buffer to receive projection name.
- * @param pszDatum 32 character buffer to recieve datum name.
+ * @param pszDatum 32 character buffer to receive datum name.
  * @param pszUnits 32 character buffer to receive units name.
  *
  * @return OGRERR_NONE on success, OGRERR_SRS_UNSUPPORTED if not translation is
@@ -290,14 +290,14 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         if( EQUAL(pszDatum,"GDA94") && !bNorth && nZone >= 48 && nZone <= 58)
         {
-            sprintf( pszProj, "MGA%02d", nZone );
+            snprintf( pszProj, 32, "MGA%02d", nZone );
         }
         else
         {
             if( bNorth )
-                sprintf( pszProj, "NUTM%02d", nZone );
+                snprintf( pszProj, 32, "NUTM%02d", nZone );
             else
-                sprintf( pszProj, "SUTM%02d", nZone );
+                snprintf( pszProj, 32, "SUTM%02d", nZone );
         }
     }
 
@@ -323,8 +323,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
     if( (EQUAL(pszDatum,"RAW") || EQUAL(pszProj,"RAW")) && nEPSGCode != 0 )
     {
-        sprintf( pszProj, "EPSG:%d", nEPSGCode );
-        sprintf( pszDatum, "EPSG:%d", nEPSGCode );
+        snprintf( pszProj, 32, "EPSG:%d", nEPSGCode );
+        snprintf( pszDatum, 32, "EPSG:%d", nEPSGCode );
     }
 
 /* -------------------------------------------------------------------- */

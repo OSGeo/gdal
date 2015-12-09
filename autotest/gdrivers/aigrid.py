@@ -166,7 +166,7 @@ def aigrid_online_1():
         rat = ds.GetRasterBand(1).GetDefaultRAT()
     except:
         print('Skipping RAT checking... OG Python bindings have no RAT API')
-        return 'sucess'
+        return 'success'
 
     if rat is None:
         gdaltest.post_reason( 'No RAT found' )

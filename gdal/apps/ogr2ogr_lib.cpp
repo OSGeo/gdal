@@ -312,7 +312,7 @@ struct GDALVectorTranslateOptions
     /*! pointer to the progress data variable */
     void *pProgressData;
 
-    /*! whether layer and feature native data must be transfered */
+    /*! Whether layer and feature native data must be transferred. */
     bool bNativeData;
 };
 
@@ -2342,7 +2342,7 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
         }
 
         if (iLayer == nLayerCount)
-            /* shouldn't happen with an ideal driver */
+            /* should not happen with an ideal driver */
             poDstLayer = NULL;
     }
 

@@ -66,10 +66,10 @@ OGRGmtDataSource::~OGRGmtDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGmtDataSource::Open( const char *pszFilename, int bUpdate )
+int OGRGmtDataSource::Open( const char *pszFilename, int bUpdateIn )
 
 {
-    this->bUpdate = bUpdate;
+    this->bUpdate = bUpdateIn;
 
     OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, bUpdate );
     if( !poLayer->bValidFile )

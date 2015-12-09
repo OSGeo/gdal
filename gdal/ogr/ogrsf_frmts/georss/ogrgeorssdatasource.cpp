@@ -151,22 +151,22 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer( const char * pszLayerName,
 /*                startElementValidateCbk()                             */
 /************************************************************************/
 
-void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszName, const char **ppszAttr)
+void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszNameIn, const char **ppszAttr)
 {
     if (validity == GEORSS_VALIDITY_UNKNOWN)
     {
-        if (strcmp(pszName, "rss") == 0)
+        if (strcmp(pszNameIn, "rss") == 0)
         {
             validity = GEORSS_VALIDITY_VALID;
             eFormat = GEORSS_RSS;
         }
-        else if (strcmp(pszName, "feed") == 0 ||
-                 strcmp(pszName, "atom:feed") == 0)
+        else if (strcmp(pszNameIn, "feed") == 0 ||
+                 strcmp(pszNameIn, "atom:feed") == 0)
         {
             validity = GEORSS_VALIDITY_VALID;
             eFormat = GEORSS_ATOM;
         }
-        else if (strcmp(pszName, "rdf:RDF") == 0)
+        else if (strcmp(pszNameIn, "rdf:RDF") == 0)
         {
             const char** ppszIter = ppszAttr;
             while(*ppszIter)

@@ -211,6 +211,7 @@ def ogr_rfc28_9():
     else:
         return 'fail'
 
+# TODO: unparse quoting?
 ###############################################################################
 # test quoted names for funky columns in SELECT WHERE (confirm unparse quoting)
 
@@ -790,14 +791,15 @@ def ogr_rfc28_33():
         return 'fail'
 
 ###############################################################################
-# Test wildchar expansion of an unknown table.
+# Test wildcard expansion of an unknown table.
 
 def ogr_rfc28_34():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL( "select foo.* from idlink" )
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('Table foo not recognised from foo.* definition') != 0:
+    if gdal.GetLastErrorMsg().find(
+            'Table foo not recognised from foo.* definition') != 0:
         print(gdal.GetLastErrorMsg())
         return 'fail'
 

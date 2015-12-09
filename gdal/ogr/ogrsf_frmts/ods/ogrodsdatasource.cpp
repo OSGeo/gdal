@@ -36,6 +36,7 @@
 
 CPL_CVSID("$Id$");
 
+namespace OGRODS {
 
 /************************************************************************/
 /*                          ODSCellEvaluator                            */
@@ -296,7 +297,7 @@ static void XMLCALL startElementCbk(void *pUserData, const char *pszName,
     ((OGRODSDataSource*)pUserData)->startElementCbk(pszName, ppszAttr);
 }
 
-void OGRODSDataSource::startElementCbk(const char *pszName,
+void OGRODSDataSource::startElementCbk(const char *pszNameIn,
                                        const char **ppszAttr)
 {
     if (bStopParsing) return;
@@ -304,10 +305,10 @@ void OGRODSDataSource::startElementCbk(const char *pszName,
     nWithoutEventCounter = 0;
     switch(stateStack[nStackDepth].eVal)
     {
-        case STATE_DEFAULT: startElementDefault(pszName, ppszAttr); break;
-        case STATE_TABLE:   startElementTable(pszName, ppszAttr); break;
-        case STATE_ROW:     startElementRow(pszName, ppszAttr); break;
-        case STATE_CELL:    startElementCell(pszName, ppszAttr); break;
+        case STATE_DEFAULT: startElementDefault(pszNameIn, ppszAttr); break;
+        case STATE_TABLE:   startElementTable(pszNameIn, ppszAttr); break;
+        case STATE_ROW:     startElementRow(pszNameIn, ppszAttr); break;
+        case STATE_CELL:    startElementCell(pszNameIn, ppszAttr); break;
         case STATE_TEXTP:   break;
         default:            break;
     }
@@ -323,7 +324,7 @@ static void XMLCALL endElementCbk(void *pUserData, const char *pszName)
     ((OGRODSDataSource*)pUserData)->endElementCbk(pszName);
 }
 
-void OGRODSDataSource::endElementCbk(const char *pszName)
+void OGRODSDataSource::endElementCbk(const char *pszNameIn)
 {
     if (bStopParsing) return;
 
@@ -333,9 +334,9 @@ void OGRODSDataSource::endElementCbk(const char *pszName)
     switch(stateStack[nStackDepth].eVal)
     {
         case STATE_DEFAULT: break;
-        case STATE_TABLE:   endElementTable(pszName); break;
-        case STATE_ROW:     endElementRow(pszName); break;
-        case STATE_CELL:    endElementCell(pszName); break;
+        case STATE_TABLE:   endElementTable(pszNameIn); break;
+        case STATE_ROW:     endElementRow(pszNameIn); break;
+        case STATE_CELL:    endElementCell(pszNameIn); break;
         case STATE_TEXTP:   break;
         default:            break;
     }
@@ -563,10 +564,10 @@ void OGRODSDataSource::DetectHeaderLine()
 /*                          startElementDefault()                       */
 /************************************************************************/
 
-void OGRODSDataSource::startElementDefault(const char *pszName,
+void OGRODSDataSource::startElementDefault(const char *pszNameIn,
                                            const char **ppszAttr)
 {
-    if (strcmp(pszName, "table:table") == 0)
+    if (strcmp(pszNameIn, "table:table") == 0)
     {
         const char* pszTableName =
             GetAttributeValue(ppszAttr, "table:name", "unnamed");
@@ -588,10 +589,10 @@ void OGRODSDataSource::startElementDefault(const char *pszName,
 /*                          startElementTable()                        */
 /************************************************************************/
 
-void OGRODSDataSource::startElementTable(const char *pszName,
+void OGRODSDataSource::startElementTable(const char *pszNameIn,
                                          const char **ppszAttr)
 {
-    if (strcmp(pszName, "table:table-row") == 0 && !bEndTableParsing)
+    if (strcmp(pszNameIn, "table:table-row") == 0 && !bEndTableParsing)
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
@@ -614,11 +615,11 @@ void OGRODSDataSource::startElementTable(const char *pszName,
 /*                           endElementTable()                          */
 /************************************************************************/
 
-void OGRODSDataSource::endElementTable(CPL_UNUSED const char *pszName)
+void OGRODSDataSource::endElementTable(CPL_UNUSED const char * pszNameIn)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
-        CPLAssert(strcmp(pszName, "table:table") == 0);
+        CPLAssert(strcmp(pszNameIn, "table:table") == 0);
 
         if (nCurLine == 0 ||
             (nCurLine == 1 && apoFirstLineValues.size() == 0))
@@ -697,10 +698,10 @@ void OGRODSDataSource::endElementTable(CPL_UNUSED const char *pszName)
 /*                            startElementRow()                         */
 /************************************************************************/
 
-void OGRODSDataSource::startElementRow(const char *pszName,
+void OGRODSDataSource::startElementRow(const char *pszNameIn,
                                        const char **ppszAttr)
 {
-    if (strcmp(pszName, "table:table-cell") == 0)
+    if (strcmp(pszNameIn, "table:table-cell") == 0)
     {
         PushState(STATE_CELL);
 
@@ -732,7 +733,7 @@ void OGRODSDataSource::startElementRow(const char *pszName,
         nCellsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-columns-repeated", "1"));
     }
-    else if (strcmp(pszName, "table:covered-table-cell") == 0)
+    else if (strcmp(pszNameIn, "table:covered-table-cell") == 0)
     {
         /* Merged cell */
         apoCurLineValues.push_back("");
@@ -746,11 +747,11 @@ void OGRODSDataSource::startElementRow(const char *pszName,
 /*                            endElementRow()                           */
 /************************************************************************/
 
-void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
+void OGRODSDataSource::endElementRow(CPL_UNUSED const char * pszNameIn)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
-        CPLAssert(strcmp(pszName, "table:table-row") == 0);
+        CPLAssert(strcmp(pszNameIn, "table:table-row") == 0);
 
         OGRFeature* poFeature;
         size_t i;
@@ -939,10 +940,10 @@ void OGRODSDataSource::endElementRow(CPL_UNUSED const char *pszName)
 /*                           startElementCell()                         */
 /************************************************************************/
 
-void OGRODSDataSource::startElementCell(const char *pszName,
-                                        CPL_UNUSED const char **ppszAttr)
+void OGRODSDataSource::startElementCell(const char *pszNameIn,
+                                        const char ** /*ppszAttr*/)
 {
-    if (osValue.size() == 0 && strcmp(pszName, "text:p") == 0)
+    if (osValue.size() == 0 && strcmp(pszNameIn, "text:p") == 0)
     {
         PushState(STATE_TEXTP);
     }
@@ -952,11 +953,11 @@ void OGRODSDataSource::startElementCell(const char *pszName,
 /*                            endElementCell()                          */
 /************************************************************************/
 
-void OGRODSDataSource::endElementCell(CPL_UNUSED const char *pszName)
+void OGRODSDataSource::endElementCell(CPL_UNUSED const char * pszNameIn)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
-        CPLAssert(strcmp(pszName, "table:table-cell") == 0);
+        CPLAssert(strcmp(pszNameIn, "table:table-cell") == 0);
 
         for(int i = 0; i < nCellsRepeated; i++)
         {
@@ -994,8 +995,8 @@ void OGRODSDataSource::AnalyseFile()
     AnalyseSettings();
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
+    XML_SetElementHandler(oParser, OGRODS::startElementCbk, OGRODS::endElementCbk);
+    XML_SetCharacterDataHandler(oParser, OGRODS::dataHandlerCbk);
     XML_SetUserData(oParser, this);
 
     nDepth = 0;
@@ -1052,7 +1053,7 @@ static void XMLCALL startElementStylesCbk(void *pUserData, const char *pszName,
     ((OGRODSDataSource*)pUserData)->startElementStylesCbk(pszName, ppszAttr);
 }
 
-void OGRODSDataSource::startElementStylesCbk(const char *pszName,
+void OGRODSDataSource::startElementStylesCbk(const char *pszNameIn,
                                              const char **ppszAttr)
 {
     if (bStopParsing) return;
@@ -1060,12 +1061,12 @@ void OGRODSDataSource::startElementStylesCbk(const char *pszName,
     nWithoutEventCounter = 0;
 
     if (nStackDepth == 0 &&
-        strcmp(pszName, "config:config-item-map-named") == 0 &&
+        strcmp(pszNameIn, "config:config-item-map-named") == 0 &&
         strcmp(GetAttributeValue(ppszAttr, "config:name", ""), "Tables") == 0)
     {
         stateStack[++nStackDepth].nBeginDepth = nDepth;
     }
-    else if (nStackDepth == 1 && strcmp(pszName, "config:config-item-map-entry") == 0)
+    else if (nStackDepth == 1 && strcmp(pszNameIn, "config:config-item-map-entry") == 0)
     {
         const char* pszTableName = GetAttributeValue(ppszAttr, "config:name", NULL);
         if (pszTableName)
@@ -1075,7 +1076,7 @@ void OGRODSDataSource::startElementStylesCbk(const char *pszName,
             stateStack[++nStackDepth].nBeginDepth = nDepth;
         }
     }
-    else if (nStackDepth == 2 && strcmp(pszName, "config:config-item") == 0)
+    else if (nStackDepth == 2 && strcmp(pszNameIn, "config:config-item") == 0)
     {
         const char* pszConfigName = GetAttributeValue(ppszAttr, "config:name", NULL);
         if (pszConfigName)
@@ -1098,7 +1099,7 @@ static void XMLCALL endElementStylesCbk(void *pUserData, const char *pszName)
     ((OGRODSDataSource*)pUserData)->endElementStylesCbk(pszName);
 }
 
-void OGRODSDataSource::endElementStylesCbk(CPL_UNUSED const char *pszName)
+void OGRODSDataSource::endElementStylesCbk(const char * /*pszName*/)
 {
     if (bStopParsing) return;
 
@@ -1167,8 +1168,8 @@ void OGRODSDataSource::AnalyseSettings()
         return;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementStylesCbk, ::endElementStylesCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerStylesCbk);
+    XML_SetElementHandler(oParser, OGRODS::startElementStylesCbk, OGRODS::endElementStylesCbk);
+    XML_SetCharacterDataHandler(oParser, OGRODS::dataHandlerStylesCbk);
     XML_SetUserData(oParser, this);
 
     nDepth = 0;
@@ -1557,7 +1558,7 @@ void OGRODSDataSource::FlushCache()
         return;
     }
 
-    /* Write uncopressed mimetype */
+    /* Write uncompressed mimetype */
     char** papszOptions = CSLAddString(NULL, "COMPRESSED=NO");
     if( CPLCreateFileInZip(hZIP, "mimetype", papszOptions ) != CE_None )
     {
@@ -1584,7 +1585,6 @@ void OGRODSDataSource::FlushCache()
         return;
 
     VSILFILE* fp;
-    int i;
 
     fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/META-INF/manifest.xml", pszName), "wb");
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -1623,7 +1623,7 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "<config:config-item-map-indexed config:name=\"Views\">\n");
     VSIFPrintfL(fp, "<config:config-item-map-entry>\n");
     VSIFPrintfL(fp, "<config:config-item-map-named config:name=\"Tables\">\n");
-    for(i=0;i<nLayers;i++)
+    for(int i=0;i<nLayers;i++)
     {
         OGRLayer* poLayer = GetLayer(i);
         if (HasHeaderLine(poLayer))
@@ -1748,7 +1748,7 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "</office:automatic-styles>\n");
     VSIFPrintfL(fp, "<office:body>\n");
     VSIFPrintfL(fp, "<office:spreadsheet>\n");
-    for(i=0;i<nLayers;i++)
+    for(int i=0;i<nLayers;i++)
     {
         WriteLayer(fp, GetLayer(i));
     }
@@ -1962,3 +1962,5 @@ int ODSCellEvaluator::Evaluate(int nRow, int nCol)
 
     return TRUE;
 }
+
+} /* end of OGRODS namespace */

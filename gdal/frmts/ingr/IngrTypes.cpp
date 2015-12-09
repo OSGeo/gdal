@@ -70,7 +70,7 @@ static const INGR_FormatDescription INGR_FormatTable[] = {
     {LineArt,                 "LineArt",                     GDT_Byte}
 };
 
-static const char *IngrOrientation[] = {
+static const char * const IngrOrientation[] = {
     "Upper Left Vertical",
     "Upper Right Vertical",
     "Lower Left Vertical",
@@ -293,7 +293,7 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
     }
 
     // -------------------------------------------------------------
-    // Calculate Concatened Tranformation Matrix based on Orientation
+    // Calculate Concatenated Transformation Matrix based on Orientation
     // -------------------------------------------------------------
 
     double adfConcat[16];

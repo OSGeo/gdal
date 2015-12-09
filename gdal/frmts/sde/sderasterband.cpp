@@ -57,7 +57,7 @@
 /*  large overhead.                                                     */
 /*                                                                      */
 /*  Once the band or overview band is established, querying raster      */
-/*  blocks does not carry much more network overhead than that requied  */
+/*  blocks does not carry much more network overhead than that required */
 /*  to actually download the bytes.                                     */
 /*                                                                      */
 /*  Overview of internal methods:                                       */

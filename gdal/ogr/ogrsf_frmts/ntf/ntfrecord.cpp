@@ -56,12 +56,12 @@ NTFRecord::NTFRecord( FILE * fp )
         return;
 
 /* ==================================================================== */
-/*      Read lines untill we get to one without a continuation mark.    */
+/*      Read lines until we get to one without a continuation mark.     */
 /* ==================================================================== */
     char      szLine[MAX_RECORD_LEN+3];
     int       nNewLength;
 
-    do { 
+    do {
         nNewLength = ReadPhysicalLine( fp, szLine );
         if( nNewLength == -1 || nNewLength == -2 )
             break;
@@ -153,7 +153,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 
 {
     int         nBytesRead = 0;
-    int         nRecordStart, nRecordEnd, i, nLength = 0;
+    int         nRecordStart, nRecordEnd, i, l_nLength = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Read enough data that we are sure we have a whole record.       */
@@ -167,12 +167,12 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
             return -1;
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Low level read error occured while reading NTF file." );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Low level read error occurred while reading NTF file." );
             return -2;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Search for CR or LF.                                            */
 /* -------------------------------------------------------------------- */
@@ -198,13 +198,13 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /* -------------------------------------------------------------------- */
 /*      Trim CR/LF.                                                     */
 /* -------------------------------------------------------------------- */
-    nLength = i;
+    l_nLength = i;
     if( pszLine[i+1] == 10 || pszLine[i+1] == 13 )
         nRecordEnd = nRecordStart + i + 2;
     else
         nRecordEnd = nRecordStart + i + 1;
 
-    pszLine[nLength] = '\0';
+    pszLine[l_nLength] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      Restore read pointer to beginning of next record.               */
@@ -212,7 +212,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
     if( VSIFSeek( fp, nRecordEnd, SEEK_SET ) != 0 )
         return -1;
     
-    return nLength;
+    return l_nLength;
 }
 
 /************************************************************************/

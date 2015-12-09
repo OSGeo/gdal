@@ -178,7 +178,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 {
     int iExt;
     VSIStatBufL sStatBuf;
-    static const char *apszExtensions[] = 
+    static const char * const apszExtensions[] = 
         { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", 
           "qix", "cpg", NULL };
 

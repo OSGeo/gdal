@@ -531,7 +531,7 @@ already has overviews computed, you don't need to clean the existing overviews.
 Some format drivers do not support overviews at all.  Many format drivers
 store overviews in a secondary file with the extension .ovr that is actually
 in TIFF format.  By default, the GeoTIFF driver stores overviews internally to the file 
-operated on (if it is writeable), unless the -ro flag is specified.
+operated on (if it is writable), unless the -ro flag is specified.
 
 Most drivers also support an alternate overview format using Erdas Imagine 
 format.  To trigger this use the USE_RRD=YES configuration option.  This will 
@@ -594,7 +594,7 @@ gdaladdo -ro --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
 \endverbatim
 
 Create an external JPEG-compressed GeoTIFF overview file from a 3-band RGB dataset
-(if the dataset is a writeable GeoTIFF, you also need to add the -ro option to
+(if the dataset is a writable GeoTIFF, you also need to add the -ro option to
 force the generation of external overview):
 
 \verbatim
@@ -978,7 +978,7 @@ This program burns vector geometries (points, lines, and polygons) into the
 raster band(s) of a raster image.  Vectors are read from OGR supported vector 
 formats. 
 
-Note that on the refly reprojection of vector data to the coordinate system of the
+Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
 
 Since GDAL 1.8.0, the target GDAL file can be created by gdal_rasterize. Either

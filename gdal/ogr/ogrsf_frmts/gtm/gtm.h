@@ -152,7 +152,7 @@ public:
     bool Open(const char* pszFilename);
 
 
-    // Check wheater it is a valid GTM file or not
+    // Check whether it is a valid GTM file or not.
     bool isValid();
     bool readHeaderNumbers();
 

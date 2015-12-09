@@ -36,10 +36,10 @@
 using namespace PCIDSK;
 
 /* -------------------------------------------------------------------- */
-/*      Size of a block in the record/vertice block tables.  This is    */
+/*      Size of a block in the record/vertex block tables.  This is    */
 /*      determined by the PCIDSK format and may not be changed.         */
 /* -------------------------------------------------------------------- */
-static const int block_page_size = 8192;  
+static const int block_page_size = 8192;
 
 
 /* -------------------------------------------------------------------- */
@@ -61,9 +61,9 @@ CPCIDSKVectorSegment::CPCIDSKVectorSegment( PCIDSKFile *fileIn, int segmentIn,
 {
     base_initialized = false;
     needs_swap = false;
-    
+
     shape_count = 0;
-    
+
     last_shapes_id = NullShapeId;
     last_shapes_index = -1;
 

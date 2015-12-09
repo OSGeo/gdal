@@ -204,11 +204,11 @@ int FGdbLayer::EditIndexesForFIDHack(const char* pszRadixTablename)
 
     CPLString osGDBTablX = CPLResetExtension(pszRadixTablename, "gdbtablx");
     CPLString osNewGDBTablX = CPLResetExtension(pszRadixTablename, "gdbtablx.new");
-    
+
     if( !EditGDBTablX(osGDBTablX, osNewGDBTablX) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error occured when editing %s", osNewGDBTablX.c_str());
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error occurred when editing %s", osNewGDBTablX.c_str());
         VSIUnlink(osNewGDBTablX);
         return FALSE;
     }
@@ -226,8 +226,8 @@ int FGdbLayer::EditIndexesForFIDHack(const char* pszRadixTablename)
             CPLString osIndex(CPLFormFilename(osDirectory, *papszIter, NULL));
             if( !EditATXOrSPX(osIndex) )
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error occured when editing %s", osIndex.c_str());
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Error occurred when editing %s", osIndex.c_str());
                 bRet = FALSE;
             }
         }
@@ -3431,7 +3431,6 @@ OGRFeature *FGdbLayer::GetFeature( GIntBig oid )
 
 GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
-    long           hr;
     int32          rowCount = 0;
     
     if( m_pTable == NULL )
@@ -3468,6 +3467,7 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
         return nFeatures;
     }
 
+    long hr;
     if (FAILED(hr = m_pTable->GetRowCount(rowCount)))
     {
         GDBErr(hr, "Failed counting rows");
@@ -3735,15 +3735,16 @@ int FGdbLayer::CreateRealCopy()
     char* apszDrivers[2];
     apszDrivers[0] = (char*) "OpenFileGDB";
     apszDrivers[1] = NULL;
-    const char* pszSystemCatalog = CPLFormFilename(m_pDS->GetFSName(), "a00000001.gdbtable", NULL);
+    const char* pszSystemCatalog
+        = CPLFormFilename(m_pDS->GetFSName(), "a00000001.gdbtable", NULL);
     GDALDataset* poOpenFileGDBDS = (GDALDataset*)
         GDALOpenEx(pszSystemCatalog, GDAL_OF_VECTOR,
                     apszDrivers, NULL, NULL);
     if( poOpenFileGDBDS == NULL || poOpenFileGDBDS->GetLayer(0) == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot open %s with OpenFileGDB driver. Shouldn't happen.",
-                    pszSystemCatalog);
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot open %s with OpenFileGDB driver. Should not happen.",
+                  pszSystemCatalog);
         GDALClose(poOpenFileGDBDS);
         return FALSE;
     }
@@ -3757,8 +3758,9 @@ int FGdbLayer::CreateRealCopy()
     OGRFeature* poF = poLayer->GetNextFeature();
     if( poF == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find filename for layer %s",
-                    GetName());
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot find filename for layer %s",
+                  GetName());
         GDALClose(poOpenFileGDBDS);
         return FALSE;
     }

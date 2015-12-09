@@ -522,7 +522,7 @@ I have added this license to LICENSE.TXT to satisfy the credit requirement.
 === gdal/frmts/pcraster ===
 
 * Kor de Jong holds copyright.
-* Some missing headers (pcrasterdataset.h, pcrastermisc.cpp, pcrasterrasterband.cpp, pcpcrasterutil.cpp, pcrasterutil.h (#1822).
+* Some missing headers (pcrasterdataset.h, pcrastermisc.cpp, pcrasterrasterband.cpp, pcrasterutil.cpp, pcrasterutil.h (#1822).
 * libcsf: license and copyright implicit in AUTHORS and COPYING documents. 
 * libcsf COPYING indicates an MIT-like agreement but with more explicit requirements for notice in binaries.  Added to gdal/LICENSE.TXT
 

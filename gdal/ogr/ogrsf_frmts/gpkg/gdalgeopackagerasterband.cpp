@@ -37,12 +37,12 @@
 /*                      GDALGeoPackageRasterBand()                      */
 /************************************************************************/
 
-GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
-                                                   int nBand,
+GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDSIn,
+                                                   int nBandIn,
                                                    int nTileWidth, int nTileHeight)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     eDataType = GDT_Byte;
     nBlockXSize = nTileWidth;
     nBlockYSize = nTileHeight;
@@ -970,8 +970,8 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         CPLAssert(0);
     }
 
-    GDALDriver* poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
-    if( poDriver != NULL)
+    GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
+    if( l_poDriver != NULL)
     {
         GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
                                                   0, GDT_Byte, NULL);
@@ -1186,7 +1186,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         VSIStatBufL sStat;
         CPLAssert(VSIStatL(osMemFileName, &sStat) != 0);
 #endif
-        GDALDataset* poOutDS = poDriver->CreateCopy(osMemFileName, poMEMDS,
+        GDALDataset* poOutDS = l_poDriver->CreateCopy(osMemFileName, poMEMDS,
                                                     FALSE, papszDriverOptions, NULL, NULL);
         CSLDestroy( papszDriverOptions );
         if( poOutDS )
@@ -1297,7 +1297,7 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
     int bGotPartialTiles = FALSE;
     do
     {
-        int rc = sqlite3_step(hStmt);
+        rc = sqlite3_step(hStmt);
         if ( rc == SQLITE_ROW )
         {
             bGotPartialTiles = TRUE;
@@ -1515,7 +1515,7 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
         iQuadrantFlag |= (1 << 2);
     if( nDstXOffset + nDstXSize == nBlockXSize && nDstYOffset + nDstYSize == nBlockYSize )
         iQuadrantFlag |= (1 << 3);
-    int nFlags = iQuadrantFlag << (4 * (nBand - 1));
+    int l_nFlags = iQuadrantFlag << (4 * (nBand - 1));
     int nFullFlags = (1 << (4 * nBands)) - 1;
     int nOldFlags = 0;
 
@@ -1598,15 +1598,15 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
     GDALClose(poLogDS);
 #endif
 
-    if( (nOldFlags & nFlags) != 0 )
+    if( (nOldFlags & l_nFlags) != 0 )
     {
         CPLDebug("GPKG",
                  "Rewriting quadrant %d of band %d of tile (row=%d,col=%d)",
                  iQuadrantFlag, nBand, nRow, nCol);
     }
 
-    nFlags |= nOldFlags;
-    if( nFlags == nFullFlags )
+    l_nFlags |= nOldFlags;
+    if( l_nFlags == nFullFlags )
     {
 #ifdef DEBUG_VERBOSE
         CPLDebug("GPKG", "Got all quadrants for that tile");
@@ -1691,14 +1691,14 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
     {
         pszSQL = CPLSPrintf("INSERT INTO partial_tiles "
                 "(zoom_level, tile_row, tile_column, tile_data_band_%d, partial_flag) VALUES (%d, %d, %d, ?, %d)",
-                nBand, m_nZoomLevel, nRow, nCol, nFlags);
+                nBand, m_nZoomLevel, nRow, nCol, l_nFlags);
     }
     else
     {
         pszSQL = CPLSPrintf("UPDATE partial_tiles SET zoom_level = %d, "
                             "tile_row = %d, tile_column = %d, "
                             "tile_data_band_%d = ?, partial_flag = %d WHERE id = %d",
-                            m_nZoomLevel, nRow, nCol, nBand, nFlags, nExistingId);
+                            m_nZoomLevel, nRow, nCol, nBand, l_nFlags, nExistingId);
     }
 #ifdef DEBUG_VERBOSE
     CPLDebug("GPKG", "%s", pszSQL);

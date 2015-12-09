@@ -1340,8 +1340,8 @@ GBool MIFFile::NextFeature()
  *
  * Fill and return a TABFeature object for the specified feature id.
  *
- * The retruned pointer is a reference to an object owned and maintained
- * by this MIFFile object.  It should not be altered or freed by the 
+ * The returned pointer is a reference to an object owned and maintained
+ * by this MIFFile object.  It should not be altered or freed by the
  * caller and its contents is guaranteed to be valid only until the next
  * call to GetFeatureRef() or Close().
  *
@@ -1359,7 +1359,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
                  "GetFeatureRef() can be used only with Read access.");
         return NULL;
     }
-    
+
     /*-----------------------------------------------------------------
      * Make sure file is opened and Validate feature id by positioning
      * the read pointers for the .MAP and .DAT files to this feature id.
@@ -1829,10 +1829,10 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     szNewFieldName[31] = '\0';
 
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10) 
-      sprintf( szNewFieldName, "%.29s_%.1d", pszCleanName, nRenameNum++ );
+      snprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszCleanName, nRenameNum++ );
 
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 100) 
-      sprintf( szNewFieldName, "%.29s%.2d", pszCleanName, nRenameNum++ );
+      snprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszCleanName, nRenameNum++ );
 
     if (m_poDefn->GetFieldIndex(szNewFieldName) >= 0)
     {

@@ -126,7 +126,7 @@ int OGRGPSBabelWriteDataSource::Convert()
 /*                                 Create()                             */
 /************************************************************************/
 
-int OGRGPSBabelWriteDataSource::Create( const char * pszName,
+int OGRGPSBabelWriteDataSource::Create( const char * pszNameIn,
                                         char **papszOptions )
 {
     GDALDriver* poGPXDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("GPX");
@@ -136,7 +136,7 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszName,
         return FALSE;
     }
 
-    if (!STARTS_WITH_CI(pszName, "GPSBABEL:"))
+    if (!STARTS_WITH_CI(pszNameIn, "GPSBABEL:"))
     {
         const char* pszOptionGPSBabelDriverName =
                 CSLFetchNameValue(papszOptions, "GPSBABEL_DRIVER");
@@ -148,11 +148,11 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszName,
             return FALSE;
         }
 
-        pszFilename = CPLStrdup(pszName);
+        pszFilename = CPLStrdup(pszNameIn);
     }
     else
     {
-        const char* pszSep = strchr(pszName + 9, ':');
+        const char* pszSep = strchr(pszNameIn + 9, ':');
         if (pszSep == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -160,7 +160,7 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszName,
             return FALSE;
         }
 
-        pszGPSBabelDriverName = CPLStrdup(pszName + 9);
+        pszGPSBabelDriverName = CPLStrdup(pszNameIn + 9);
         *(strchr(pszGPSBabelDriverName, ':')) = '\0';
 
         pszFilename = CPLStrdup(pszSep+1);
@@ -182,7 +182,7 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszName,
     if (poGPXDS == NULL)
         return FALSE;
 
-    this->pszName = CPLStrdup(pszName);
+    this->pszName = CPLStrdup(pszNameIn);
 
     return TRUE;
 }

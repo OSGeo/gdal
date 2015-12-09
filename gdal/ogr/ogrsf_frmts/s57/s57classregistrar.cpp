@@ -68,8 +68,8 @@ S57ClassRegistrar::~S57ClassRegistrar()
 /*                        S57ClassContentExplorer()                     */
 /************************************************************************/
 
-S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrar):
-    poRegistrar(poRegistrar)
+S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrarIn):
+    poRegistrar(poRegistrarIn)
 {
     
     iCurrentClass = -1;
@@ -190,11 +190,11 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     
     if( EQUAL(pszProfile, "Additional_Military_Layers") )
     {
-       sprintf( szTargetFile, "s57objectclasses_%s.csv", "aml" );
+       snprintf( szTargetFile, sizeof(szTargetFile), "s57objectclasses_%s.csv", "aml" );
     }
     else if ( EQUAL(pszProfile, "Inland_Waterways") )
     {
-       sprintf( szTargetFile, "s57objectclasses_%s.csv", "iw" );
+       snprintf( szTargetFile, sizeof(szTargetFile), "s57objectclasses_%s.csv", "iw" );
     }
     else if( strlen(pszProfile) > 0 )
     {
@@ -249,11 +249,11 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 
     if( EQUAL(pszProfile, "Additional_Military_Layers") )
     {
-        sprintf( szTargetFile, "s57attributes_%s.csv", "aml" );
+      snprintf( szTargetFile, sizeof(szTargetFile), "s57attributes_%s.csv", "aml" );
     }
     else if ( EQUAL(pszProfile, "Inland_Waterways") )
     {
-       sprintf( szTargetFile, "s57attributes_%s.csv", "iw" );
+       snprintf( szTargetFile, sizeof(szTargetFile),"s57attributes_%s.csv", "iw" );
     }
     else if( strlen(pszProfile) > 0 )
     {

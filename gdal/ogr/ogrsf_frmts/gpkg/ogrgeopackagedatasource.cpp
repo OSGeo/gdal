@@ -108,7 +108,7 @@ static const TilingSchemeDefinition asTilingShemes[] =
 /* via a PRAGMA statement, so we have to write directly into the */
 /* file header here. */
 /* We do this at the *end* of initialization so that there is */
-/* data to write down to a file, and we'll have a writeable file */
+/* data to write down to a file, and we will have a writable file */
 /* once we close the SQLite connection */
 OGRErr GDALGeoPackageDataset::SetApplicationId()
 {
@@ -781,7 +781,7 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
                                         const char* pszContentsMinY,
                                         const char* pszContentsMaxX,
                                         const char* pszContentsMaxY,
-                                        char** papszOpenOptions,
+                                        char** papszOpenOptionsIn,
                                         const SQLResult& oResult,
                                         int nIdxInResult )
 {
@@ -802,10 +802,10 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
     double dfGDALMinY = dfMinY;
     double dfGDALMaxX = dfMaxX;
     double dfGDALMaxY = dfMaxY;
-    pszContentsMinX = CSLFetchNameValueDef(papszOpenOptions, "MINX", pszContentsMinX);
-    pszContentsMinY = CSLFetchNameValueDef(papszOpenOptions, "MINY", pszContentsMinY);
-    pszContentsMaxX = CSLFetchNameValueDef(papszOpenOptions, "MAXX", pszContentsMaxX);
-    pszContentsMaxY = CSLFetchNameValueDef(papszOpenOptions, "MAXY", pszContentsMaxY);
+    pszContentsMinX = CSLFetchNameValueDef(papszOpenOptionsIn, "MINX", pszContentsMinX);
+    pszContentsMinY = CSLFetchNameValueDef(papszOpenOptionsIn, "MINY", pszContentsMinY);
+    pszContentsMaxX = CSLFetchNameValueDef(papszOpenOptionsIn, "MAXX", pszContentsMaxX);
+    pszContentsMaxY = CSLFetchNameValueDef(papszOpenOptionsIn, "MAXY", pszContentsMaxY);
     if( pszContentsMinX != NULL && pszContentsMinY != NULL &&
         pszContentsMaxX != NULL && pszContentsMaxY != NULL )
     {
@@ -819,7 +819,7 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
         return FALSE;
     }
 
-    int nBandCount = atoi(CSLFetchNameValueDef(papszOpenOptions, "BAND_COUNT", "4"));
+    int nBandCount = atoi(CSLFetchNameValueDef(papszOpenOptionsIn, "BAND_COUNT", "4"));
     if( nBandCount != 1 && nBandCount != 2 && nBandCount != 3 && nBandCount != 4 )
         nBandCount = 4;
 
@@ -960,7 +960,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                                        const char* pszContentsMinY,
                                        const char* pszContentsMaxX,
                                        const char* pszContentsMaxY,
-                                       char** papszOpenOptions )
+                                       char** papszOpenOptionsIn )
 {
     OGRErr err;
     SQLResult oResult;
@@ -991,7 +991,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             "AND pixel_y_size > 0 AND tile_width > 0 AND tile_height > 0 AND matrix_width > 0 AND matrix_height > 0",
             osQuotedTableName.c_str());
     CPLString osSQL(pszSQL);
-    const char* pszZoomLevel =  CSLFetchNameValue(papszOpenOptions, "ZOOM_LEVEL");
+    const char* pszZoomLevel =  CSLFetchNameValue(papszOpenOptionsIn, "ZOOM_LEVEL");
     if( pszZoomLevel )
     {
         if( bUpdate )
@@ -1039,7 +1039,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     // If USE_TILE_EXTENT=YES, then query the tile table to find which tiles
     // actually exist.
     CPLString osContentsMinX, osContentsMinY, osContentsMaxX, osContentsMaxY;
-    if( CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "USE_TILE_EXTENT", "NO")) )
+    if( CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "USE_TILE_EXTENT", "NO")) )
     {
         pszSQL = sqlite3_mprintf(
             "SELECT MIN(tile_column), MIN(tile_row), MAX(tile_column), MAX(tile_row) FROM '%q' WHERE zoom_level = %d",
@@ -1070,7 +1070,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     
     if(! InitRaster ( NULL, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
                  pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
-                 papszOpenOptions, oResult, 0) )
+                 papszOpenOptionsIn, oResult, 0) )
     {
         SQLResultFree(&oResult);
         return FALSE;
@@ -1080,7 +1080,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
     // Do this after CheckUnknownExtensions() so that m_eTF is set to GPKG_TF_WEBP
     // if the table already registers the gpkg_webp extension
-    const char* pszTF = CSLFetchNameValue(papszOpenOptions, "TILE_FORMAT");
+    const char* pszTF = CSLFetchNameValue(papszOpenOptionsIn, "TILE_FORMAT");
     if( pszTF )
     {
         if( !bUpdate )
@@ -1100,9 +1100,9 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
     }
 
-    ParseCompressionOptions(papszOpenOptions);
+    ParseCompressionOptions(papszOpenOptionsIn);
 
-    m_osWHERE = CSLFetchNameValueDef(papszOpenOptions, "WHERE", "");
+    m_osWHERE = CSLFetchNameValueDef(papszOpenOptionsIn, "WHERE", "");
 
     // Set metadata
     if( pszIdentifier && pszIdentifier[0] )
@@ -1116,7 +1116,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
         poOvrDS->InitRaster ( this, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
                  pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
-                 papszOpenOptions, oResult, i);
+                 papszOpenOptionsIn, oResult, i);
 
         m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(m_papoOverviewDS,
                         sizeof(GDALGeoPackageDataset*) * (m_nOverviewCount+1));
@@ -2155,7 +2155,7 @@ int GDALGeoPackageDataset::CreateMetadataTables()
         "BEFORE UPDATE OF 'reference_scope' ON 'gpkg_metadata_reference' "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-        "violates constraint: referrence_scope must be one of \"geopackage\", "
+        "violates constraint: reference_scope must be one of \"geopackage\", "
         "\"table\", \"column\", \"row\", \"row/col\"') "
         "WHERE NOT NEW.reference_scope IN "
         "('geopackage','table','column','row','row/col'); "
@@ -2331,7 +2331,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
     {
         char** papszGeopackageMD = GetMetadata("GEOPACKAGE");
 
-        char** papszMDDup = NULL;
+        papszMDDup = NULL;
         for( char** papszIter = papszGeopackageMD; papszIter && *papszIter; ++papszIter )
         {
             papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
@@ -2367,7 +2367,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
             sqlite3_free(pszSQL);
         }
 
-        char** papszMDDup = NULL;
+        papszMDDup = NULL;
         for( char** papszIter = m_papoLayers[i]->GetMetadata(); papszIter && *papszIter; ++papszIter )
         {
             if( STARTS_WITH_CI(*papszIter, "IDENTIFIER=") )
@@ -2379,7 +2379,6 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
             papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
         }
 
-        CPLXMLNode* psXMLNode;
         {
             GDALMultiDomainMetadata oLocalMDMD;
             char** papszDomainList = m_papoLayers[i]->GetMetadataDomainList();
@@ -2448,7 +2447,7 @@ CPLErr GDALGeoPackageDataset::SetMetadataItem( const char * pszName,
 int GDALGeoPackageDataset::Create( const char * pszFilename,
                                    int nXSize,
                                    int nYSize,
-                                   int nBands,
+                                   int nBandsIn,
                                    GDALDataType eDT,
                                    char **papszOptions )
 {
@@ -2458,14 +2457,14 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     /* First, ensure there isn't any such file yet. */
     VSIStatBufL sStatBuf;
 
-    if( nBands != 0 )
+    if( nBandsIn != 0 )
     {
         if( eDT != GDT_Byte )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
             return FALSE;
         }
-        if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
+        if( nBandsIn != 1 && nBandsIn != 2 && nBandsIn != 3 && nBandsIn != 4 )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
@@ -2477,7 +2476,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
         bFileExists = TRUE;
-        if( nBands == 0 ||
+        if( nBandsIn == 0 ||
             !CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -2720,7 +2719,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             return FALSE;
     }
     
-    if( nBands != 0 )
+    if( nBandsIn != 0 )
     {
         const char* pszTableName = CPLGetBasename(m_pszFilename);
         m_osRasterTable = CSLFetchNameValueDef(papszOptions, "RASTER_TABLE", pszTableName);
@@ -2847,7 +2846,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             return FALSE;
         }
 
-        for(int i = 1; i <= nBands; i ++)
+        for(int i = 1; i <= nBandsIn; i ++)
             SetBand( i, new GDALGeoPackageRasterBand(this, i, nTileWidth, nTileHeight) );
 
         GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
@@ -3497,7 +3496,7 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
-static const char* apszFuncsWithSideEffects[] =
+static const char* const apszFuncsWithSideEffects[] =
 {
     "CreateSpatialIndex",
     "DisableSpatialIndex",

@@ -146,7 +146,7 @@ CPLErr HFABand::LoadOverviews()
         for( int iName = 0; true; iName++ )
         {
             char  szField[128];
-            sprintf( szField, "nameList[%d].string", iName );
+            snprintf( szField, sizeof(szField), "nameList[%d].string", iName );
 
             CPLErr eErr;
             const char *pszName = poRRDNames->GetStringField( szField, &eErr );
@@ -337,7 +337,7 @@ CPLErr	HFABand::LoadBlockInfo()
         char	szVarName[64];
         int	nLogvalid, nCompressType;
 
-        sprintf( szVarName, "blockinfo[%d].offset", iBlock );
+        snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].offset", iBlock );
         panBlockStart[iBlock] = (GUInt32)poDMS->GetIntField( szVarName, &eErr);
         if( eErr == CE_Failure )
         {
@@ -345,7 +345,7 @@ CPLErr	HFABand::LoadBlockInfo()
             return eErr;
         }
 
-        sprintf( szVarName, "blockinfo[%d].size", iBlock );
+        snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].size", iBlock );
         panBlockSize[iBlock] = poDMS->GetIntField( szVarName, &eErr );
         if( eErr == CE_Failure )
         {
@@ -353,7 +353,7 @@ CPLErr	HFABand::LoadBlockInfo()
             return eErr;
         }
 
-        sprintf( szVarName, "blockinfo[%d].logvalid", iBlock );
+        snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].logvalid", iBlock );
         nLogvalid = poDMS->GetIntField( szVarName, &eErr );
         if( eErr == CE_Failure )
         {
@@ -361,7 +361,7 @@ CPLErr	HFABand::LoadBlockInfo()
             return eErr;
         }
 
-        sprintf( szVarName, "blockinfo[%d].compressionType", iBlock );
+        snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].compressionType", iBlock );
         nCompressType = poDMS->GetIntField( szVarName, &eErr );
         if( eErr == CE_Failure )
         {
@@ -1279,10 +1279,10 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
     }
 
     char	szVarName[64];
-    sprintf( szVarName, "blockinfo[%d].offset", iBlock );
+    snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].offset", iBlock );
     poDMS->SetIntField( szVarName, (int) panBlockStart[iBlock] );
 
-    sprintf( szVarName, "blockinfo[%d].size", iBlock );
+    snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].size", iBlock );
     poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
 }
 
@@ -1452,7 +1452,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             }
 
             char	szVarName[64];
-            sprintf( szVarName, "blockinfo[%d].compressionType", iBlock );
+            snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].compressionType", iBlock );
             poDMS->SetIntField( szVarName, 0 );
         }
 
@@ -1470,7 +1470,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
                 return CE_Failure;
             }
 
-            sprintf( szVarName, "blockinfo[%d].logvalid", iBlock );
+            snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].logvalid", iBlock );
             poDMS->SetStringField( szVarName, "true" );
 
             panBlockFlag[iBlock] |= BFLG_VALID;
@@ -1553,7 +1553,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
                           "block valid." );
                 return CE_Failure;
             }
-            sprintf( szVarName, "blockinfo[%d].logvalid", iBlock );
+            snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].logvalid", iBlock );
             poDMS->SetStringField( szVarName, "true" );
 
             panBlockFlag[iBlock] |= BFLG_VALID;
@@ -1860,7 +1860,7 @@ CPLErr HFABand::SetPCT( int nColors,
 			double *padfAlpha)
 
 {
-    static const char *apszColNames[4] = {"Red", "Green", "Blue", "Opacity"};
+    static const char * const apszColNames[4] = {"Red", "Green", "Blue", "Opacity"};
     HFAEntry	*poEdsc_Table;
 
 /* -------------------------------------------------------------------- */
@@ -2097,13 +2097,13 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     char szName[50];
     CPLString osNodeName;
 
-    sprintf( szName, "nameList[%d].string", iNextName );
+    snprintf( szName, sizeof(szName), "nameList[%d].string", iNextName );
 
     osLayerName.Printf( "%s(:%s:_ss_%d_)", 
                         psRRDInfo->pszFilename, GetBandName(),
                         nOverviewLevel );
 
-    // TODO: Need to add to end of array (thats pretty hard).
+    // TODO: Need to add to end of array (that is pretty hard).
     if( poRRDNamesList->SetStringField( szName, osLayerName ) != CE_None )
     {
         poRRDNamesList->MakeData( poRRDNamesList->GetDataSize() + 3000 );

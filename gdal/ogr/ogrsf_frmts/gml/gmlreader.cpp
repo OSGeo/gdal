@@ -283,7 +283,8 @@ bool GMLReader::SetupParser()
 #endif
     if (bRet < 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SetupParser(): shouldn't happen");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SetupParser(): should not happen");
         return false;
     }
 
@@ -473,9 +474,9 @@ void GMLReader::CleanupParser()
 
 #ifdef HAVE_XERCES
 
-GMLBinInputStream::GMLBinInputStream(VSILFILE* fp)
+GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn)
 {
-    this->fp = fp;
+    this->fp = fpIn;
     emptyString = 0;
 }
 

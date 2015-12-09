@@ -67,7 +67,7 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   *      operation
   *
   * @param ptr a pointer to an integer to increment
-  * @return the pointed value AFTER the opeation: *ptr + 1
+  * @return the pointed value AFTER the operation: *ptr + 1
   */
 #define CPLAtomicInc(ptr) CPLAtomicAdd(ptr, 1)
 
@@ -78,7 +78,7 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   *      operation
   *
   * @param ptr a pointer to an integer to decrement
-  * @return the pointed value AFTER the opeation: *ptr - 1
+  * @return the pointed value AFTER the operation: *ptr - 1
   */
 #define CPLAtomicDec(ptr) CPLAtomicAdd(ptr, -1)
 

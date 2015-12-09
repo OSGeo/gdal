@@ -121,7 +121,7 @@ and http://64.145.236.125/forum/topic.asp?topic_id=1930&forum_id=1&Topic_Title=h
 /* We allow that couples of coordinates on the same line may be separated only by spaces */
 /* (instead of being separated by a comma) */
 
-#define STRING_NOT_TERMINATED      "string not terminated when end of line occured"
+#define STRING_NOT_TERMINATED      "string not terminated when end of line occurred"
 #define MISSING_FIELDS             "missing fields"
 #define BAD_INTEGER_NUMBER_FORMAT  "bad integer number format"
 #define BAD_FLOAT_NUMBER_FORMAT    "bad float number format"

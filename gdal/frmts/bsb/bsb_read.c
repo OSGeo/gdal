@@ -739,7 +739,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 
 /* -------------------------------------------------------------------- */
 /*      Do we know where the requested line is?  If not, read all       */
-/*      the preceeding ones to "find" our line.                         */
+/*      the preceding ones to "find" our line.                          */
 /* -------------------------------------------------------------------- */
     if( nScanline < 0 || nScanline >= psInfo->nYSize )
     {
@@ -1033,7 +1033,7 @@ int BSBWriteScanline( BSBInfo *psInfo, unsigned char *pabyScanlineBuf )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If this is the first scanline writen out the EOF marker, and    */
+/*      If this is the first scanline written out the EOF marker, and   */
 /*      the introductory info in the image segment.                     */
 /* -------------------------------------------------------------------- */
     if( psInfo->nLastLineWritten == -1 )

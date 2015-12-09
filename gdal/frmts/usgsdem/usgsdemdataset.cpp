@@ -640,7 +640,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         {
             sr.SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
             char    szUTMName[128];
-            sprintf( szUTMName, "UTM Zone %d, Northern Hemisphere, us-ft", iUTMZone );
+            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Northern Hemisphere, us-ft", iUTMZone );
             sr.SetNode( "PROJCS", szUTMName );
         }
     }

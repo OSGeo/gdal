@@ -599,7 +599,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
 /*                                                                      */
 /*      Identifies the "good" Polygon whithin the collection returned   */
 /*      by GEOSPolygonize()                                             */
-/*      short rationale: GEOSPolygonize() will possibily return a       */
+/*      short rationale: GEOSPolygonize() will possibly return a        */
 /*      collection of many Polygons; only one is the "good" one,        */
 /*      (including both exterior- and interior-rings)                   */
 /*      any other simply represents a single "hole", and should be      */
@@ -3308,8 +3308,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         return poMP;
     }
 
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "Unrecognised geometry type <%.500s>.", 
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Unrecognized geometry type <%.500s>.",
               pszBaseGeometry );
 
     return NULL;

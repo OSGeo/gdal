@@ -129,7 +129,9 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
             return FALSE;
         }
         pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-        sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+        snprintf( pszDSN,
+                  strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                  pszDSNStringTemplate,  pszNewName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -345,12 +347,12 @@ OGRLayer *OGRGeomediaDataSource::GetLayer( int iLayer )
 /*                          GetLayerByName()                            */
 /************************************************************************/
 
-OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszName )
+OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszNameIn )
 
 {
-    if (pszName == NULL)
+    if (pszNameIn == NULL)
         return NULL;
-    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszName);
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszNameIn);
     if (poLayer)
         return poLayer;
 
@@ -358,7 +360,7 @@ OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszName )
     {
         poLayer = papoLayersInvisible[i];
 
-        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+        if( strcmp( pszNameIn, poLayer->GetName() ) == 0 )
             return poLayer;
     }
 
@@ -366,7 +368,7 @@ OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszName )
 
     poGeomediaLayer = new OGRGeomediaTableLayer( this );
 
-    if( poGeomediaLayer->Initialize(pszName, NULL, NULL) != CE_None )
+    if( poGeomediaLayer->Initialize(pszNameIn, NULL, NULL) != CE_None )
     {
         delete poGeomediaLayer;
         return NULL;

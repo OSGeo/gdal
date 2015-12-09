@@ -64,8 +64,10 @@ CPL_C_END
 
 static const int HDF4_SDS_MAXNAMELEN = 65;
 
+extern const char * const pszGDALSignature;
+
 // Signature to recognize files written by GDAL
-const char      *pszGDALSignature =
+const char      * const pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
 extern CPLMutex *hHDF4Mutex;
@@ -1337,7 +1339,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
 /*      Collect the four corners.                                       */
 /* -------------------------------------------------------------------- */
     double adfXY[8];
-    static const char *apszItems[] = {
+    static const char * const apszItems[] = {
         "mapUpperLeft", "mapUpperRight", "mapLowerLeft", "mapLowerRight" };
     bool bLLPossible = true;
 
@@ -2713,9 +2715,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     if (strlen(papszSubdatasetName[2]) == 1)
     {
+        const size_t nLen = 2 + strlen(papszSubdatasetName[3]) + 1;
         char* pszFilename = reinterpret_cast<char *>(
-            CPLMalloc( 2 + strlen(papszSubdatasetName[3]) + 1) );
-        sprintf(pszFilename, "%s:%s", papszSubdatasetName[2], papszSubdatasetName[3]);
+            CPLMalloc( nLen ) );
+        snprintf(pszFilename, nLen, "%s:%s", papszSubdatasetName[2], papszSubdatasetName[3]);
         CPLFree(papszSubdatasetName[2]);
         CPLFree(papszSubdatasetName[3]);
         papszSubdatasetName[2] = pszFilename;

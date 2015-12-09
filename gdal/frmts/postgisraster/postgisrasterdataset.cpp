@@ -818,11 +818,11 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset* poRTDS)
 
         int bHasNoData = FALSE;
         double dfBandNoDataValue = prb->GetNoDataValue(&bHasNoData);
-            
+
         PostGISRasterTileRasterBand * prtb =
             (PostGISRasterTileRasterBand *)
                 poRTDS->GetRasterBand(iBand + 1);
-            
+
         prb->AddComplexSource(prtb, 0, 0, 
             poRTDS->GetRasterXSize(),
             poRTDS->GetRasterYSize(),
@@ -832,7 +832,7 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset* poRTDS)
 
         prtb->poSource = prb->papoSources[prb->nSources-1];
     }
-    
+
     return true;
 }
 
@@ -1568,12 +1568,12 @@ void PostGISRasterDataset::BuildBands(BandMetadata * poBandMetaData,
 
 /***********************************************************************
  * \brief Construct just one dataset from all the results fetched.
- * 
- * This method is not very elegant. It's strongly attached to 
+ *
+ * This method is not very elegant. It's strongly attached to
  * SetRasterProperties (it assumes poResult is not NULL, and the actual
  * results are stored at fixed positions). I just did it to avoid a
  * huge SetRasterProperties method.
- * 
+ *
  * I know, this could be avoided in a better way. Like implementing a
  * wrapper to raise queries and get results without all the checking
  * overhead. I'd like to do it, someday...
@@ -1581,26 +1581,25 @@ void PostGISRasterDataset::BuildBands(BandMetadata * poBandMetaData,
 GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     PGresult * poResult)
 {
-    
+
     /*******************************************************************
-     * We first get the band metadata. So we'll can use it as metadata 
-     * for all the sources. 
-     * 
+     * We first get the band metadata. So we'll can use it as metadata
+     * for all the sources.
+     *
      * We just fetch the band metadata from 1 tile. So, we assume that:
      * - All the bands have the same data type
      * - All the bands have the same NODATA value
-     * 
-     * It's user's resposibility to ensure the requested table fit in
+     *
+     * It's user's responsibility to ensure the requested table fit in
      * this schema. He/she may use the 'where' clause to ensure this
      ******************************************************************/
     int nBandsFetched = 0;
     BandMetadata * poBandMetaData = GetBandsMetadata(&nBandsFetched);
-   
-    
+
     /*******************************************************************
      * Now, we can iterate over the input query's results (metadata 
      * from all the database tiles). 
-     * 
+     *
      * In this iteration, we will construct the dataset GeoTransform 
      * array and we will add each tile's band as source for each of our
      * rasterbands. 
@@ -1615,7 +1614,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
      * tile's geotransform. And we don't need to construct sources for 
      * the raster bands. We just read from the unique tile we have. So, 
      * we avoid all the VRT stuff.
-     * 
+     *
      * TODO: For some reason, the implementation of IRasterIO in
      * PostGISRasterRasterBand class causes a segmentation fault when
      * tries to call GDALRasterBand::IRasterIO. This call intends to
@@ -1783,25 +1782,25 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     nRasterXSize = (int) 
         fabs(rint((xmax - xmin) / 
             adfGeoTransform[GEOTRSFRM_WE_RES]));
-    
+
     nRasterYSize = (int) 
         fabs(rint((ymax - ymin) / 
             adfGeoTransform[GEOTRSFRM_NS_RES]));
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("PostGIS_Raster", 
+    CPLDebug( "PostGIS_Raster",
         "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
         "Raster size: (%d, %d), ",nRasterXSize, nRasterYSize);
 #endif
 
     if (nRasterXSize <= 0 || nRasterYSize <= 0) {
-        ReportError(CE_Failure, CPLE_AppDefined, 
+        ReportError(CE_Failure, CPLE_AppDefined,
             "Computed PostGIS Raster dimension is invalid. You've "
-            "probably specified unappropriate resolution.");
-        
+            "probably specified inappropriate resolution." );
+
         return false;
     }
-    
+
     /*******************************************************************
      * Now construct the dataset bands
      ******************************************************************/
@@ -1810,7 +1809,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     // And free bandmetadata
     VSIFree(poBandMetaData);
 
-    
     /*******************************************************************
      * Finally, add complex sources and create a quadtree index for them
      ******************************************************************/
@@ -1979,12 +1977,12 @@ GBool PostGISRasterDataset::SetRasterProperties
     GBool bNeedToCheckWholeTable = false;
 
     /*******************************************************************
-     * Get the extent and the maximum number of bands of the requested 
+     * Get the extent and the maximum number of bands of the requested
      * raster-
-     * 
-     * TODO: The extent of rotated rasters could be a problem. We'll 
-     * need a ST_RotatedExtent function in PostGIS. Without that 
-     * function, we shouldn't allow rotated rasters
+     *
+     * TODO: The extent of rotated rasters could be a problem. We will
+     * need a ST_RotatedExtent function in PostGIS. Without that
+     * function, we should not allow rotated rasters.
      ******************************************************************/
     if (pszWhere != NULL) {
         osCommand.Printf(
@@ -1996,7 +1994,7 @@ GBool PostGISRasterDataset::SetRasterProperties
             pszColumn, pszColumn, pszColumn, pszColumn, pszColumn,
             pszSchema, pszTable, pszWhere, 
             pszColumn);
-            
+
 #ifdef DEBUG_QUERY
         CPLDebug("PostGIS_Raster", 
         "PostGISRasterDataset::SetRasterProperties(): First query: %s", 
@@ -2005,9 +2003,9 @@ GBool PostGISRasterDataset::SetRasterProperties
 
         poResult = PQexec(poConn, osCommand.c_str());
     }
-    
+
     else {
-        
+
         /**
          * Optimization: First, check raster_columns view (it makes 
          * things faster. See ticket #5046)
@@ -2317,30 +2315,32 @@ GBool PostGISRasterDataset::SetRasterProperties
                 nRasterXSize = (int) 
                     fabs(rint((xmax - xmin) / 
                         adfGeoTransform[GEOTRSFRM_WE_RES]));
-                
+
                 nRasterYSize = (int) 
                     fabs(rint((ymax - ymin) / 
                         adfGeoTransform[GEOTRSFRM_NS_RES]));
 
             #ifdef DEBUG_VERBOSE
-                CPLDebug("PostGIS_Raster", 
+                CPLDebug( "PostGIS_Raster",
                     "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
                     "Raster size: (%d, %d), ",nRasterXSize, nRasterYSize);
             #endif
 
                 if (nRasterXSize <= 0 || nRasterYSize <= 0) {
-                    ReportError(CE_Failure, CPLE_AppDefined, 
-                        "Computed PostGIS Raster dimension is invalid. You've "
-                        "probably specified unappropriate resolution.");
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Computed PostGIS Raster dimension is invalid. You "
+                        "have probably specified an inappropriate "
+                        "resolution." );
 
                     return false;
                 }
 
                 bBuildQuadTreeDynamically = true;
 
-                /*******************************************************************
+                /**************************************************************
                 * Now construct the dataset bands
-                ******************************************************************/
+                ***************************************************************/
                 int nBandsFetched = 0;
                 BandMetadata * poBandMetaData = GetBandsMetadata(&nBandsFetched);
 
@@ -2354,10 +2354,10 @@ GBool PostGISRasterDataset::SetRasterProperties
 
             osCommand.Printf("select %s, st_metadata(%s) from %s.%s",
                 pszPrimaryKeyName, pszColumn, pszSchema, pszTable);
-                        
-            // srid shouldn't be necessary. It was previously checked
+
+            // srid should not be necessary. It was previously checked
         }
-        
+
         else {
             osCommand.Printf("select %s, st_metadata(%s) from %s.%s "
                 "where %s", pszPrimaryKeyName, pszColumn, pszSchema, 

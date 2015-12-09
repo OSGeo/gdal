@@ -149,7 +149,7 @@ typedef struct {
     char       szPVType[4];
     char       szIREP[9];
     char       szICAT[9];
-    int        nABPP; /* signficant bits per pixel */
+    int        nABPP; /* significant bits per pixel */
 
     char       chICORDS;
     int        bHaveIGEOLO;

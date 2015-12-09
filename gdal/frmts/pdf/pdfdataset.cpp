@@ -70,7 +70,7 @@ CPL_C_END
 #define HAVE_MULTIPLE_PDF_BACKENDS
 #endif
 
-static const char* pszOpenOptionList =
+static const char* const szOpenOptionList =
 "<OpenOptionList>"
 #if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
 "  <Option name='RENDERING_OPTIONS' type='string-select' description='Which graphical elements to render' default='RASTER,VECTOR,TEXT' alt_config_option='GDAL_PDF_RENDERING_OPTIONS'>"
@@ -1318,7 +1318,7 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
     CPLErr eLastErrType = CPLGetLastErrorType();
     CPLErrorNum nLastErrno = CPLGetLastErrorNo();
     CPLString osLastErrorMsg(CPLGetLastErrorMsg());
-    CPLXMLNode* psNode = CPLParseXMLString(pszOpenOptionList);
+    CPLXMLNode* psNode = CPLParseXMLString(szOpenOptionList);
     CPLErrorSetState(eLastErrType, nLastErrno, osLastErrorMsg);
     if( psNode == NULL ) return pszDefaultVal;
     CPLXMLNode* psIter = psNode->psChild;
@@ -3339,7 +3339,7 @@ void PDFDataset::AddLayer(const char* pszLayerName)
     }
 
     char szFormatName[64];
-    sprintf(szFormatName, "LAYER_%%0%dd_NAME",  nNewIndex >= 100 ? 3 : 2);
+    snprintf(szFormatName, sizeof(szFormatName), "LAYER_%%0%dd_NAME",  nNewIndex >= 100 ? 3 : 2);
 
     osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex),
                              pszLayerName);
@@ -4357,9 +4357,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         for(i=0;i<nPages;i++)
         {
             char szKey[32];
-            sprintf( szKey, "SUBDATASET_%d_NAME", i+1 );
+            snprintf( szKey, sizeof(szKey), "SUBDATASET_%d_NAME", i+1 );
             aosList.AddNameValue(szKey, CPLSPrintf("PDF:%d:%s", i+1, poOpenInfo->pszFilename));
-            sprintf( szKey, "SUBDATASET_%d_DESC", i+1 );
+            snprintf( szKey, sizeof(szKey), "SUBDATASET_%d_DESC", i+1 );
             aosList.AddNameValue(szKey, CPLSPrintf("Page %d of %s", i+1, poOpenInfo->pszFilename));
         }
         poDS->SetMetadata( aosList.List(), "SUBDATASETS" );
@@ -5235,7 +5235,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
         {
             adfCTM[i] = Get(poCTM, i);
             /* Nullify rotation terms that are significantly smaller than */
-            /* scaling termes */
+            /* scaling terms. */
             if ((i == 1 || i == 2) && fabs(adfCTM[i]) < fabs(adfCTM[0]) * 1e-10)
                 adfCTM[i] = 0;
             CPLDebug("PDF", "CTM[%d] = %.16g", i, adfCTM[i]);
@@ -5274,7 +5274,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
                     CPLDebug("PDF", "GCP[%d].y = %.16g", i, dfY);
 
                     char    szID[32];
-                    sprintf( szID, "%d", nGCPCount+1 );
+                    snprintf( szID, sizeof(szID), "%d", nGCPCount+1 );
                     pasGCPList[nGCPCount].pszId = CPLStrdup( szID );
                     pasGCPList[nGCPCount].pszInfo = CPLStrdup("");
                     pasGCPList[nGCPCount].dfGCPPixel = dfUserX;
@@ -6825,7 +6825,7 @@ void GDALRegister_PDF()
 "</CreationOptionList>\n" );
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, pszOpenOptionList );
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, szOpenOptionList );
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );

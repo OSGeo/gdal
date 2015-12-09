@@ -85,7 +85,7 @@ and an output image to operate on.  The GDALWarpKernel does no IO, and in
 fact knows nothing about GDAL.  It invokes the transformation function to 
 get sample locations, builds output values based on the resampling algorithm
 in use.  It also takes any validity and density masks into account during
-this operation.  
+this operation.
 
 <h3>Chunk Size Selection</h3>
 
@@ -93,26 +93,25 @@ The GDALWarpOptions ChunkAndWarpImage() method is responsible for invoking
 the WarpRegion() method on appropriate sized output chunks such that the
 memory required for the output image buffer, input image buffer and any
 required density and validity buffers is less than or equal to the application
-defined maximum memory available for use.  
+defined maximum memory available for use.
 
-It checks the memory requrired by walking the edges of the output region, 
-transforming the locations back into source pixel/line coordinates and 
+It checks the memory required by walking the edges of the output region,
+transforming the locations back into source pixel/line coordinates and
 establishing a bounding rectangle of source imagery that would be required
 for the output area.  This is actually accomplished by the private
-GDALWarpOperation::ComputeSourceWindow() method. 
+GDALWarpOperation::ComputeSourceWindow() method.
 
 Then memory requirements are used by totaling the memory required for all
 output bands, input bands, validity masks and density masks.  If this is
 greater than the GDALWarpOptions::dfWarpMemoryLimit then the destination
-region is divided in two (splitting the longest dimension), and 
-ChunkAndWarpImage() recursively invoked on each destination subregion. 
+region is divided in two (splitting the longest dimension), and
+ChunkAndWarpImage() recursively invoked on each destination subregion.
 
 <h3>Validity and Density Masks Generation</h3>
 
-Fill in ways in which the validity and density masks may be generated here. 
+Fill in ways in which the validity and density masks may be generated here.
 Note that detailed semantics of the masks should be found in
-GDALWarpKernel. 
-
+GDALWarpKernel.
 */
 
 /************************************************************************/
@@ -225,7 +224,7 @@ int GDALWarpOperation::ValidateOptions()
     }
 
     if( (int) psOptions->eWorkingDataType < 1
-        && (int) psOptions->eWorkingDataType >= GDT_TypeCount )
+        || (int) psOptions->eWorkingDataType >= GDT_TypeCount )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"
@@ -1027,7 +1026,7 @@ CPLErr GDALWarpOperation::CollectChunkList(
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we are allowed to drop no-source regons, do so now if       */
+/*      If we are allowed to drop no-source regions, do so now if       */
 /*      appropriate.                                                    */
 /* -------------------------------------------------------------------- */
     if( (nSrcXSize == 0 || nSrcYSize == 0)

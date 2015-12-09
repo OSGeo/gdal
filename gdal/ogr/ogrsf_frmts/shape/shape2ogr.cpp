@@ -397,7 +397,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                                       psShape->padfX[nPartStart], 
                                       psShape->padfY[nPartStart], 
                                       psShape->padfZ[nPartStart] );
-                        
+
                     poPoly->addRingDirectly( poRing );
                     poMP->addGeometryDirectly( poPoly );
                 }
@@ -422,7 +422,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                     CreateLinearRing( psShape, iPart, TRUE ) );
             }
             else
-                CPLDebug( "OGR", "Unrecognised parttype %d, ignored.", 
+                CPLDebug( "OGR", "Unrecognized parttype %d, ignored.",
                           psShape->panPartType[iPart] );
         }
 
@@ -447,7 +447,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
         /* nothing returned */
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup shape, and set feature id.                              */
 /* -------------------------------------------------------------------- */
@@ -917,7 +917,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
              * OGR splits it as YYYY/MM/DD, so 2 additional characters are
              * required.
              * Is this a correct assumption? What about time part of date?
-             * Shouldn't this format look as datetime: YYYY/MM/DD HH:MM:SS
+             * Should this format look as datetime: YYYY/MM/DD HH:MM:SS
              * with 4 additional characters?
              */
             oField.SetWidth( nWidth + 2 );
@@ -1402,8 +1402,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               char szFormat[20];
               char szValue[32];
               int nFieldWidth = poFieldDefn->GetWidth();
-              sprintf(szFormat, "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d", MIN(nFieldWidth, (int)sizeof(szValue)-1));
-              sprintf(szValue, szFormat, poFeature->GetFieldAsInteger64(iField) );
+              snprintf(szFormat, sizeof(szFormat), "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d", MIN(nFieldWidth, (int)sizeof(szValue)-1));
+              snprintf(szValue, sizeof(szValue), szFormat, poFeature->GetFieldAsInteger64(iField) );
               int nStrLen = static_cast<int>(strlen(szValue));
               if( nStrLen > nFieldWidth )
               {
@@ -1428,10 +1428,15 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                 static int nCounter = 0;
                 if( nCounter <= 10 )
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Value %.18g of field %s with 0 decimal of feature " CPL_FRMT_GIB " is bigger than 2^53. Precision loss likely occured or going to happen.%s",
-                             dfVal, poFieldDefn->GetNameRef(), poFeature->GetFID(),
-                             (nCounter == 10) ? " This warning will not be emitted anymore." : "");
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Value %.18g of field %s with 0 decimal of "
+                              "feature " CPL_FRMT_GIB " is bigger than 2^53. "
+                              "Precision loss likely occurred or going to "
+                              "happen.%s",
+                              dfVal, poFieldDefn->GetNameRef(),
+                              poFeature->GetFID(),
+                              (nCounter == 10) ? " This warning will not be "
+                              "emitted anymore." : "");
                     nCounter ++;
                 }
             }

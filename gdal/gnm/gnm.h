@@ -382,7 +382,7 @@ public:
     virtual CPLErr ChangeBlockState (GNMGFID nFID, bool bIsBlock);
 
     /**
-     * @brief Change all vertice and edges block state.
+     * @brief Change all vertices and edges block state.
      *
      * This is mainly use for unblock all vertices and edges.
      *

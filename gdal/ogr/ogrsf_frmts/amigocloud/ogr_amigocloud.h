@@ -52,8 +52,8 @@ class OGRAmigoCloudGeomFieldDefn: public OGRGeomFieldDefn
     public:
         int nSRID;
 
-        OGRAmigoCloudGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType) :
-                OGRGeomFieldDefn(pszName, eType), nSRID(0)
+        OGRAmigoCloudGeomFieldDefn(const char* pszNameIn, OGRwkbGeometryType eType) :
+                OGRGeomFieldDefn(pszNameIn, eType), nSRID(0)
         {
         }
 };
@@ -97,7 +97,6 @@ class OGRAmigoCloudLayer : public OGRLayer
         OGRAmigoCloudDataSource* poDS;
 
         OGRFeatureDefn      *poFeatureDefn;
-        OGRSpatialReference *poSRS;
         CPLString            osBaseSQL;
         CPLString            osFIDColName;
 

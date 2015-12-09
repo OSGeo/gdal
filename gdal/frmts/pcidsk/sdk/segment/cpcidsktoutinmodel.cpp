@@ -116,15 +116,14 @@ void CPCIDSKToutinModelSegment::Load()
     seg_data.SetSize((int)data_size - 1024);
     
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
-    
+
     SRITInfo_t* poInfo = BinaryToSRITInfo();
 
     mpoInfo = poInfo;
-    
+
     // We've now loaded the structure up with data. Mark it as being loaded 
     // properly.
     loaded_ = true;
-    
 }
 
 /**
@@ -145,7 +144,7 @@ void CPCIDSKToutinModelSegment::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSKToutinModelSegment::Synchronize()
@@ -334,8 +333,8 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
             AttitudeSeg_t *attitudeSeg
                 = SRITModel->OrbitPtr->AttitudeSeg;
 
-	    ndata = SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine;
-       
+            ndata = SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine;
+
             for (i=0; i<ndata; i++)
             {
                 SRITModel->Hdeltat.push_back(
@@ -359,14 +358,14 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /************************************************************************/
 /**
   * Translate a SRITInfo_t into binary data.
-  * Translate a SRITInfo_t into the corresponding block of          
-  * binary data.  This function is expected to be used by           
-  * ranslators such as iisopen.c (VISTA) so that our satellite     
-  * models can be converted into some opaque serialized form.       
-  * Translate a RFInfo_t into the corresponding block of binary data. 
+  * Translate a SRITInfo_t into the corresponding block of
+  * binary data.  This function is expected to be used by
+  * translators such as iisopen.c (VISTA) so that our satellite
+  * models can be converted into some opaque serialized form.
+  * Translate a RFInfo_t into the corresponding block of binary data.
   *
-  * @param  SRITModel	     Satellite Model structure.
-  * @param  pnBinaryLength	Length of binary data.
+  * @param  SRITModel        Satellite Model structure.
+  * @param  pnBinaryLength   Length of binary data.
   * @return Binary data for a  Satellite Model structure.
   */
 void

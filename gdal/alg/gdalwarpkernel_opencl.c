@@ -528,7 +528,8 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     cl_kernel kernel;
 	cl_int err = CL_SUCCESS;
     char *buffer = (char *)CPLCalloc(128000, sizeof(char));
-    char *progBuf = (char *)CPLCalloc(128000, sizeof(char));
+#define PROGBUF_SIZE 128000
+    char *progBuf = (char *)CPLCalloc(PROGBUF_SIZE, sizeof(char));
     float dstMinVal, dstMaxVal;
     
     const char *outType;
@@ -1226,11 +1227,11 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     //Assemble the kernel from parts. The compiler is unable to handle multiple
     //kernels in one string with more than a few __constant modifiers each.
     if (warper->resampAlg == OCL_Bilinear)
-        sprintf(progBuf, "%s\n%s", kernGenFuncs, kernBilinear);
+        snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernBilinear);
     else if (warper->resampAlg == OCL_Cubic)
-        sprintf(progBuf, "%s\n%s", kernGenFuncs, kernCubic);
+        snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernCubic);
     else
-        sprintf(progBuf, "%s\n%s", kernGenFuncs, kernResampler);
+        snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernResampler);
     
     //Actually make the program from assembled source
     program = clCreateProgramWithSource(warper->context, 1, (const char**)&progBuf,

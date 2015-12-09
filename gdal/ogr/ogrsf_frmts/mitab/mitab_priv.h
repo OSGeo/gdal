@@ -78,7 +78,7 @@
  *
  * Revision 1.42  2006/11/20 20:05:58  dmorissette
  * First pass at improving generation of spatial index in .map file (bug 1585)
- * New methods for insertion and splittung in the spatial index are done.
+ * New methods for insertion and splitting in the spatial index are done.
  * Also implemented a method to dump the spatial index to .mif/.mid
  * Still need to implement splitting of TABMapObjectBlock to get optimal
  * results.
@@ -1005,7 +1005,7 @@ class TABRawBinBlock
     float       ReadFloat();
     double      ReadDouble();
 
-    virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
+    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
     int         WriteByte(GByte byValue);
     int         WriteInt16(GInt16 n16Value);
     int         WriteInt32(GInt32 n32Value);
@@ -1348,7 +1348,7 @@ class TABMAPCoordBlock: public TABRawBinBlock
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
-    virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
+    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
     void        SetComprCoordOrigin(GInt32 nX, GInt32 nY);
     int         ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
     int         ReadIntCoords(GBool bCompressed, int numCoords, GInt32 *panXY);
@@ -1415,7 +1415,7 @@ class TABMAPToolBlock: public TABRawBinBlock
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
-    virtual int WriteBytes(int nBytesToWrite, GByte *pBuf);
+    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
 
     void        SetNextToolBlock(GInt32 nNextCoordBlockAddress);
 
@@ -1968,7 +1968,7 @@ class TABRelation
 /*---------------------------------------------------------------------
  *                      class MIDDATAFile
  *
- * Class to handle a file pointer with a copy of the latest readed line
+ * Class to handle a file pointer with a copy of the latest read line.
  *
  *--------------------------------------------------------------------*/
 

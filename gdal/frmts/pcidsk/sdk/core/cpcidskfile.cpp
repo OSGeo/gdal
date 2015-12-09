@@ -208,7 +208,7 @@ void CPCIDSKFile::Synchronize()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Ensure the file is synhronized to disk.                         */
+/*      Ensure the file is synchronized to disk.                        */
 /* -------------------------------------------------------------------- */
     MutexHolder oHolder( io_mutex );
 
@@ -368,7 +368,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name,
     //see function BuildChildrenLayer in jtfile.cpp, the call on GDBSegNext
     //in the loop on gasTypeTable can create issue in PCIDSKSegNext 
     //(in pcic/gdbfrtms/pcidskopen.cpp)
-    sprintf( type_str, "%03d", (type % 1000) );
+    snprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
 
     for( i = previous; i < segment_count; i++ )
     {
@@ -1099,9 +1099,9 @@ void CPCIDSKFile::ExtendFile( uint64 blocks_requested, bool prezero )
     {
         std::vector<uint8> zeros;
         uint64 blocks_to_zero = blocks_requested;
-        
+
         zeros.resize( 512 * 32 );
-        
+
         while( blocks_to_zero > 0 )
         {
             uint64 this_time = blocks_to_zero;
@@ -1314,11 +1314,11 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
 /* -------------------------------------------------------------------- */
 /*      Attach reference to this overview as metadata.                  */
 /* -------------------------------------------------------------------- */
-            char overview_md_value[128];
             char overview_md_key[128];
+            char overview_md_value[128];
 
-            sprintf( overview_md_key, "_Overview_%d", factor );
-            sprintf( overview_md_value, "%d 0 %s",virtual_image,resampling.c_str());
+            snprintf( overview_md_key, sizeof(overview_md_key),  "_Overview_%d", factor );
+            snprintf( overview_md_value, sizeof(overview_md_value), "%d 0 %s",virtual_image,resampling.c_str());
                      
             channel->SetMetadataValue( overview_md_key, overview_md_value );
         }

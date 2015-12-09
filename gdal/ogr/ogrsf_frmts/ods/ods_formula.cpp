@@ -33,7 +33,14 @@
 
 #include "cpl_conv.h"
 #include "ods_formula.h"
+
+namespace {
 #include "ods_formula_parser.hpp"
+
+int ods_formulalex( ods_formula_node **ppNode, ods_formula_parse_context *context );
+
+#include "ods_formula_parser.cpp"
+} /* end of anonymous namespace */
 
 #define YYSTYPE  ods_formula_node*
 
@@ -78,7 +85,7 @@ const SingleOpStruct* ODSGetSingleOpEntry(ods_formula_op eOp)
 /*                                                                      */
 /*      Read back a token from the input.                               */
 /************************************************************************/
-
+namespace {
 int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
 {
     const char *pszInput = context->pszNext;
@@ -342,6 +349,7 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
         return *pszInput;
     }
 }
+} /* end of anonymous namespace */
 
 /************************************************************************/
 /*                        ods_formula_compile()                         */

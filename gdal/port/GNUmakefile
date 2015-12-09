@@ -13,7 +13,7 @@ else
 XTRA_OPT = 
 endif 
 
-CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(XTRA_OPT) $(SHADOW_WFLAGS)
+CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(XTRA_OPT)
 
 OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_strtod.o cpl_path.o cpl_csv.o cpl_findfile.o cpl_minixml.o \

@@ -140,8 +140,8 @@ static void ParseArc(OGRLineString* poLS, json_object* poArcsDB, int nArcID,
         {
             dfAccX += dfX;
             dfAccY += dfY;
-            double dfX = dfAccX * psParams->dfScale0 + psParams->dfTranslate0;
-            double dfY = dfAccY * psParams->dfScale1 + psParams->dfTranslate1;
+            dfX = dfAccX * psParams->dfScale0 + psParams->dfTranslate0;
+            dfY = dfAccY * psParams->dfScale1 + psParams->dfTranslate1;
             if( i == 0 )
             {
                 if( !bReverse && poLS->getNumPoints() > 0 )
@@ -514,7 +514,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     if( NULL == poGJObject_ )
     {
         CPLDebug( "TopoJSON",
-                  "Missing parset TopoJSON data. Forgot to call Parse()?" );
+                  "Missing parsed TopoJSON data. Forgot to call Parse()?" );
         return;
     }
 

@@ -441,10 +441,10 @@ TigerPolygon::~TigerPolygon()
 /*                             SetModule()                              */
 /************************************************************************/
 
-int TigerPolygon::SetModule( const char * pszModule )
+int TigerPolygon::SetModule( const char * pszModuleIn )
 
 {
-    if( !OpenFile( pszModule, "A" ) )
+    if( !OpenFile( pszModuleIn, "A" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -460,11 +460,11 @@ int TigerPolygon::SetModule( const char * pszModule )
             fpRTS = NULL;
         }
 
-        if( pszModule )
+        if( pszModuleIn )
         {
             char        *pszFilename;
         
-            pszFilename = poDS->BuildFilename( pszModule, "S" );
+            pszFilename = poDS->BuildFilename( pszModuleIn, "S" );
 
             fpRTS = VSIFOpenL( pszFilename, "rb" );
 

@@ -274,7 +274,7 @@ typedef enum
 } InstrEnum;
 
 #ifdef DEBUG_VERBOSE
-static const char* apszInstr[] =
+static const char* const apszInstr[] =
 {
     "INVALID",
     "GetGDALVersion",

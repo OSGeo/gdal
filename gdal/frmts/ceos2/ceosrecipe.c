@@ -34,18 +34,18 @@ CPL_CVSID("$Id$");
 /* Array of Datatypes and their names/values */
 
 typedef struct { 
-    char *String;
+    const char *String;
     int Type;
 } CeosStringType_t;
 
 typedef struct { 
-    int (*function)(CeosSARVolume_t *volume, void *token);
-    void *token;
+    int (*function)(CeosSARVolume_t *volume, const void *token);
+    const void *token;
     const char *name;
 } RecipeFunctionData_t;
 
 
-CeosStringType_t CeosDataType[] = { { "IU1", CEOS_TYP_UCHAR },
+static const CeosStringType_t CeosDataType[] = { { "IU1", CEOS_TYP_UCHAR },
 				    { "IU2", CEOS_TYP_USHORT },
 				    { "UI1", CEOS_TYP_UCHAR },
 				    { "UI2", CEOS_TYP_USHORT },
@@ -57,7 +57,7 @@ CeosStringType_t CeosDataType[] = { { "IU1", CEOS_TYP_UCHAR },
 				    { "R*4", CEOS_TYP_FLOAT },
 				    { NULL, 0 } };
 
-CeosStringType_t CeosInterleaveType[] = { { "BSQ", CEOS_IL_BAND },
+static const CeosStringType_t CeosInterleaveType[] = { { "BSQ", CEOS_IL_BAND },
 					  { " BSQ", CEOS_IL_BAND },
 					  { "BIL", CEOS_IL_LINE },
 					  { " BIL", CEOS_IL_LINE },
@@ -71,7 +71,7 @@ CeosStringType_t CeosInterleaveType[] = { { "BSQ", CEOS_IL_BAND },
 #define DATA_SET_SUMMARY { 18, 10, 18, 20 }
 
 /* NOTE: This seems to be the generic recipe used for most things */
-CeosRecipeType_t RadarSatRecipe[] =
+static const CeosRecipeType_t RadarSatRecipe[] =
 {
     { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       233, 4, CEOS_REC_TYP_I }, /* Number of channels */
@@ -129,7 +129,7 @@ CeosRecipeType_t RadarSatRecipe[] =
 } ;
 
 
-CeosRecipeType_t JersRecipe[] =
+static const CeosRecipeType_t JersRecipe[] =
 {
     { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
       233, 4, CEOS_REC_TYP_I }, /* Number of channels */
@@ -178,7 +178,7 @@ CeosRecipeType_t JersRecipe[] =
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
 
-CeosRecipeType_t ScanSARRecipe[] =
+static const CeosRecipeType_t ScanSARRecipe[] =
 {
     { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       233, 4, CEOS_REC_TYP_I }, /* Number of channels */
@@ -205,7 +205,7 @@ CeosRecipeType_t ScanSARRecipe[] =
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
 
-CeosRecipeType_t SIRCRecipe[] =
+static const CeosRecipeType_t SIRCRecipe[] =
 {
     { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       233, 4, CEOS_REC_TYP_I }, /* Number of channels */
@@ -249,8 +249,8 @@ static char *ExtractString( CeosRecord_t *record, unsigned int offset, unsigned 
 
 static int GetCeosStringType(const CeosStringType_t *CeosType, const char *string);
 
-static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token );
-static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token );
+static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token );
+static int PALSARRecipeFCN( CeosSARVolume_t *volume, const void *token );
 
 Link_t *RecipeFunctions = NULL;
 
@@ -278,8 +278,8 @@ void FreeRecipes( void )
 }
 
 void AddRecipe( int (*function)(CeosSARVolume_t *volume,
-				void *token),
-		void *token,
+				const void *token),
+		const void *token,
                 const char *name )
 {
 
@@ -303,9 +303,9 @@ void AddRecipe( int (*function)(CeosSARVolume_t *volume,
     }
 }
 
-int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
+int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
 {
-    CeosRecipeType_t *recipe;
+    const CeosRecipeType_t *recipe;
     CeosRecord_t *record;
     CeosTypeCode_t TypeCode;
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
@@ -504,7 +504,7 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
     }
 }
 
-int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token )
+int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
 
@@ -519,7 +519,7 @@ int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token )
     return 0;
 }    
 
-static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
+static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
     CeosTypeCode_t TypeCode;
@@ -586,7 +586,7 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
     }
 }    
 
-static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
+static int PALSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
     CeosTypeCode_t TypeCode;
@@ -658,7 +658,7 @@ void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 {
     Link_t *l_link;
     RecipeFunctionData_t *rec_data;
-    int (*function)(CeosSARVolume_t *volume, void *token);
+    int (*function)(CeosSARVolume_t *volume, const void *token);
 
     if( RecipeFunctions == NULL )
     {
@@ -700,12 +700,12 @@ static void ExtractInt(CeosRecord_t *record, int type, unsigned int offset, unsi
     switch(type)
     {
     case CEOS_REC_TYP_A:
-	sprintf( format, "A%u", length );
+	snprintf( format, sizeof(format), "A%u", length );
 	GetCeosField( record, offset, format,  buffer );
 	*value = atoi( buffer );
 	break;
     case CEOS_REC_TYP_B:
-	sprintf( format, "B%u", length );
+	snprintf( format, sizeof(format), "B%u", length );
 #ifdef notdef
 	GetCeosField( record, offset, format, buffer );
 	if( length <= 4 )
@@ -717,7 +717,7 @@ static void ExtractInt(CeosRecord_t *record, int type, unsigned int offset, unsi
 #endif
 	break;
     case CEOS_REC_TYP_I:
-	sprintf( format, "I%u", length );
+	snprintf( format, sizeof(format), "I%u", length );
 	GetCeosField( record, offset, format, value );
 	break;
     }
@@ -735,7 +735,7 @@ static char *ExtractString( CeosRecord_t *record, unsigned int offset, unsigned 
 	string = HMalloc( length + 1 );
     }
 
-    sprintf( format, "A%u", length );
+    snprintf( format, sizeof(format), "A%u", length );
 
     GetCeosField( record, offset, format, string );
 

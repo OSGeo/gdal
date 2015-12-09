@@ -421,7 +421,7 @@ DGNHandle
     }
 
     DGNClose( psSeed );
-    
+
     return psDGN;
 }
 
@@ -430,10 +430,10 @@ DGNHandle
 /************************************************************************/
 
 /**
- * Clone a retargetted element.
+ * Clone a retargeted element.
  *
  * Creates a copy of an element in a suitable form to write to a
- * different file than that it was read from. 
+ * different file than that it was read from.
  *
  * NOTE: At this time the clone operation will fail if the source
  * and destination file have a different origin or master/sub units. 

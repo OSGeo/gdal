@@ -39,6 +39,8 @@
 #include <string>
 #include <set>
 
+namespace OGRODS {
+
 /************************************************************************/
 /*                             OGRODSLayer                              */
 /************************************************************************/
@@ -88,8 +90,8 @@ class OGRODSLayer : public OGRMemLayer
     virtual OGRErr      ReorderFields( int* panMap )
     { SetUpdated(); return OGRMemLayer::ReorderFields(panMap); }
 
-    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
-    { SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlags); }
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
+    { SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn); }
 
     virtual OGRErr      SyncToDisk();
 };
@@ -217,6 +219,8 @@ class OGRODSDataSource : public OGRDataSource
     void                SetUpdated() { bUpdated = TRUE; }
 };
 
+} /* end of OGRODS namespace */
+
 /************************************************************************/
 /*                             OGRODSDriver                             */
 /************************************************************************/
@@ -234,6 +238,5 @@ class OGRODSDriver : public OGRSFDriver
                                              char ** = NULL );
     virtual OGRErr      DeleteDataSource( const char *pszName );
 };
-
 
 #endif /* ndef OGR_ODS_H_INCLUDED */

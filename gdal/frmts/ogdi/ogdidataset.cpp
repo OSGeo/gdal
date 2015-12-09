@@ -850,12 +850,12 @@ void OGDIDataset::AddSubDataset( const char *pszType, const char *pszLayer )
     char	szName[80];
     int		nCount = CSLCount( papszSubDatasets ) / 2;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, 
               CPLSPrintf( "%s:\"%s\":%s", GetDescription(), pszLayer, pszType ) );
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, 
               CPLSPrintf( "%s as %s", pszLayer, pszType ) );

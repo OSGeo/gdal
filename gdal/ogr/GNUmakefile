@@ -25,7 +25,7 @@ else
 ZLIB_XTRA_OPT =
 endif
 
-CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT) $(SHADOW_WFLAGS)
+CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
 
 default:	lib
 
@@ -77,7 +77,7 @@ install:
 	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
 	done
 
-# The sed substition below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
+# The sed substitution below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
 # that produces buggy compiled code.
 # Seen on gcc 4.1.2-27ubuntu1 (Ubuntu 10.04) (not the default compiler) and gcc-4.1.2-48.el5 (CentOS 5.5)
 # (default compiler...)
@@ -93,3 +93,9 @@ osr_cs_wkt_parser:
 	bison --no-lines -p osr_cs_wkt_ -d -oosr_cs_wkt_parser.c osr_cs_wkt_grammar.y
 	sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" < osr_cs_wkt_parser.c | sed "s/yyerrorlab:/#if 0\nyyerrorlab:/" | sed "s/yyerrlab1:/#endif\nyyerrlab1:/" > osr_cs_wkt_parser.c.tmp
 	mv osr_cs_wkt_parser.c.tmp osr_cs_wkt_parser.c
+
+osr_cs_wkt_parser.$(OBJ_EXT):   osr_cs_wkt_parser.c
+	$(CC) $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(NO_LOGICAL_OP_FLAG) -c -o $@ $<
+
+swq_parser.$(OBJ_EXT):   swq_parser.cpp
+	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(CPPFLAGS) $(NO_LOGICAL_OP_FLAG) -c -o $@ $<

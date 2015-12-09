@@ -79,18 +79,18 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if (pszLBLSIZE)
         nOffset = static_cast<int>(pszLBLSIZE - (const char *)pabyHeader);
 
-    char *pch1 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), "=");
+    const char *pch1 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), "=");
     if( pch1 == NULL )
         return FALSE;
 
     ++pch1;
-    char *pch2 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), " ");
+    const char *pch2 = strstr(pch1, " ");
     if( pch2 == NULL )
         return FALSE;
 
     char keyval[100];
-    strncpy( keyval, pch1, MAX( pch2-pch1, 99 ) );
-    keyval[MAX(pch2-pch1, 99)] = '\0';
+    strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
+    keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
     LabelSize = atoi( keyval );
     if( LabelSize > 10 * 1024 * 124 )
         return FALSE;
@@ -160,13 +160,19 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 
     if (pszLBLSIZE)
         nOffset = static_cast<int>(pszLBLSIZE - (const char *)szChunk);
-    pch1 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), "=" ) + 1;
-    pch2 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), " " );
-    strncpy( keyval, pch1, pch2-pch1 );
+    pch1 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), "=" );
+    if( pch1 == NULL )
+        return FALSE;
+    pch1 ++;
+    pch2 = strstr( pch1, " " );
+    if( pch2 == NULL )
+        return FALSE;
+    strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
+    keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
 
     int EOLabelSize = atoi( keyval );
-    if( EOLabelSize > 99 )
-        EOLabelSize = 99;
+    if( EOLabelSize > static_cast<int>(sizeof(szChunk) - 1) )
+        EOLabelSize = static_cast<int>(sizeof(szChunk) - 1);
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
         printf("Error seeking again to EOL!\n");
@@ -248,7 +254,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
         }
     }
 
-    else if( *pszHeaderNext == '(' && *pszHeaderNext-1 != '\'' )
+    else if( *pszHeaderNext == '(' && *(pszHeaderNext-1) != '\'' )
     {
         CPLString osWord;
 

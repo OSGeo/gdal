@@ -37,19 +37,19 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
-                                                OGRJMLDataset* poDS,
-                                                VSILFILE* fp,
-                                                int bAddRGBField,
-                                                int bAddOGRStyleField,
-                                                int bClassicGML )
+                                                OGRJMLDataset* poDSIn,
+                                                VSILFILE* fpIn,
+                                                int bAddRGBFieldIn,
+                                                int bAddOGRStyleFieldIn,
+                                                int bClassicGMLIn )
 
 {
-    this->poDS = poDS;
-    this->fp = fp;
+    this->poDS = poDSIn;
+    this->fp = fpIn;
     bFeaturesWritten = FALSE;
-    this->bAddRGBField = bAddRGBField;
-    this->bAddOGRStyleField = bAddOGRStyleField;
-    this->bClassicGML = bClassicGML;
+    this->bAddRGBField = bAddRGBFieldIn;
+    this->bAddOGRStyleField = bAddOGRStyleFieldIn;
+    this->bClassicGML = bClassicGMLIn;
     nNextFID = 0;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
@@ -244,7 +244,6 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             VSIFPrintfL(fp, "          <property name=\"%s\">", "R_G_B");
         if( poFeature->GetStyleString() != NULL )
         {
-            OGRGeometry* poGeom = poFeature->GetGeometryRef();
             OGRwkbGeometryType eGeomType =
                 poGeom ? wkbFlatten(poGeom->getGeometryType()) : wkbUnknown;
             OGRStyleMgr oMgr;

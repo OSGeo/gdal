@@ -65,7 +65,7 @@ class OGRWFSSortDesc
         CPLString osColumn;
         int       bAsc;
         
-        OGRWFSSortDesc(const CPLString& osColumn, int bAsc) : osColumn(osColumn), bAsc(bAsc) {}
+        OGRWFSSortDesc(const CPLString& osColumnIn, int bAscIn) : osColumn(osColumnIn), bAsc(bAscIn) {}
         OGRWFSSortDesc(const OGRWFSSortDesc& other) : osColumn(other.osColumn), bAsc(other.bAsc) {}
 };
 

@@ -1903,7 +1903,7 @@ static int SetGTParmIds( int nCTProjection,
     }
 }
 
-static const char *papszDatumEquiv[] =
+static const char * const papszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
     "Militar_Geographische_Institute",

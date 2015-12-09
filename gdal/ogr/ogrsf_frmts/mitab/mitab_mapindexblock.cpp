@@ -48,7 +48,7 @@
  *
  * Revision 1.10  2006/11/20 20:05:58  dmorissette
  * First pass at improving generation of spatial index in .map file (bug 1585)
- * New methods for insertion and splittung in the spatial index are done.
+ * New methods for insertion and splitting the spatial index are done.
  * Also implemented a method to dump the spatial index to .mif/.mid
  * Still need to implement splitting of TABMapObjectBlock to get optimal
  * results.
@@ -799,8 +799,8 @@ int     TABMAPIndexBlock::UpdateLeafEntry(GInt32 nBlockPtr,
  * split and this split can propagate up to its parent, etc.
  *
  * If bAddInThisNodeOnly=TRUE, then the entry is added only locally and
- * we do not try to update the child node.  This is used when the parent 
- * of a node that is being splitted has to be updated.
+ * we do not try to update the child node.  This is used when the parent
+ * of a node that is being split has to be updated.
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/

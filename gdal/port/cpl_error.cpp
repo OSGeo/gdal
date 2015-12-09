@@ -843,9 +843,9 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         }
         else if( cpl_log != NULL )
         {
-
+            size_t nPathLen = strlen(cpl_log) + 20;
             char* pszPath
-                = static_cast<char *>( CPLMalloc(strlen(cpl_log) + 20) );
+                = static_cast<char *>( CPLMalloc(nPathLen) );
             strcpy(pszPath, cpl_log);
 
             int i = 0;
@@ -856,7 +856,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                 /* generate sequenced log file names, inserting # before ext.*/
                 if (strrchr(cpl_log, '.') == NULL)
                 {
-                    CPLsprintf( pszPath, "%s_%d%s", cpl_log, i++,
+                    snprintf( pszPath, nPathLen, "%s_%d%s", cpl_log, i++,
                              ".log" );
                 }
                 else
@@ -868,7 +868,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                     {
                         cpl_log_base[pos] = '\0';
                     }
-                    CPLsprintf( pszPath, "%s_%d%s", cpl_log_base,
+                    snprintf( pszPath, nPathLen, "%s_%d%s", cpl_log_base,
                              i++, ".log" );
                     CPLFree(cpl_log_base);
                 }

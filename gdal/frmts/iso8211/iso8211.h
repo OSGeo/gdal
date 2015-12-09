@@ -191,12 +191,12 @@ class CPL_ODLL DDFFieldDefn
     void        Dump( FILE * fp );
 
     /** Fetch a pointer to the field name (tag).
-     * @return this is an internal copy and shouldn't be freed.
+     * @return this is an internal copy and should not be freed.
      */
     const char  *GetName() { return pszTag; }
 
     /** Fetch a longer description of this field.
-     * @return this is an internal copy and shouldn't be freed.
+     * @return this is an internal copy and should not be freed.
      */
     const char  *GetDescription() { return _fieldName; }
 
@@ -502,7 +502,7 @@ class CPL_ODLL DDFField
 
     /**
      * Return the pointer to the entire data block for this record. This
-     * is an internal copy, and shouldn't be freed by the application.
+     * is an internal copy, and should not be freed by the application.
      */
     const char         *GetData() { return pachData; }
 

@@ -36,7 +36,8 @@
 void swqerror( swq_parse_context *context, const char *msg )
 {
     CPLString osMsg;
-    osMsg.Printf( "SQL Expression Parsing Error: %s. Occured around :\n", msg );
+    osMsg.Printf( "SQL Expression Parsing Error: %s. Occurred around :\n",
+                  msg );
 
     int n = static_cast<int>(context->pszLastValid - context->pszInput);
 
@@ -805,7 +806,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
 /*                        swq_is_reserved_keyword()                     */
 /************************************************************************/
 
-static const char* apszSQLReservedKeywords[] = {
+static const char* const apszSQLReservedKeywords[] = {
     "OR",
     "AND",
     "NOT",

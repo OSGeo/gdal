@@ -39,12 +39,12 @@ CPL_CVSID("$Id$");
 /*                           OGRDGNLayer()                              */
 /************************************************************************/
 
-OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
-                          int bUpdate ) :
+OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
+                          int bUpdateIn ) :
     iNextShapeId(0)
 {
-    this->hDGN = hDGN;
-    this->bUpdate = bUpdate;
+    this->hDGN = hDGNIn;
+    this->bUpdate = bUpdateIn;
 
 /* -------------------------------------------------------------------- */
 /*      Work out what link format we are using.                         */
@@ -281,7 +281,7 @@ void OGRDGNLayer::ConsiderBrush( DGNElemCore *psElement, const char *pszPen,
         && DGNLookupColor( hDGN, nFillColor, 
                            &gv_red, &gv_green, &gv_blue ) )
     {
-        sprintf( szFullStyle, 
+        snprintf( szFullStyle, sizeof(szFullStyle),
                  "BRUSH(fc:#%02x%02x%02x,id:\"ogr-brush-0\")",
                  gv_red, gv_green, gv_blue );
               
@@ -372,8 +372,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
                     szMSLinkList[nMSLinkLen++] = ',';
                 }
 
-                sprintf( szEntityList + nEntityLen, "%d", anEntityNum[iLink]);
-                sprintf( szMSLinkList + nMSLinkLen, "%d", anMSLink[iLink] );
+                snprintf( szEntityList + nEntityLen, sizeof(szEntityList) - nEntityLen, "%d", anEntityNum[iLink]);
+                snprintf( szMSLinkList + nMSLinkLen, sizeof(szMSLinkList) - nMSLinkLen, "%d", anMSLink[iLink] );
                 
                 nEntityLen += static_cast<int>(strlen(szEntityList + nEntityLen ));
                 nMSLinkLen += static_cast<int>(strlen(szMSLinkList + nMSLinkLen ));
@@ -395,10 +395,10 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     if( DGNLookupColor( hDGN, psElement->color, 
                         &gv_red, &gv_green, &gv_blue ) )
     {
-        sprintf( gv_color, "%f %f %f 1.0", 
+        CPLsnprintf( gv_color, sizeof(gv_color), "%f %f %f 1.0", 
                  gv_red / 255.0, gv_green / 255.0, gv_blue / 255.0 );
 
-        sprintf( szFSColor, "c:#%02x%02x%02x", 
+        snprintf( szFSColor, sizeof(szFSColor), "c:#%02x%02x%02x", 
                  gv_red, gv_green, gv_blue );
     }
 
@@ -406,29 +406,29 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 /*      Generate corresponding PEN style.                               */
 /* -------------------------------------------------------------------- */
     if( psElement->style == DGNS_SOLID )
-        sprintf( szPen, "PEN(id:\"ogr-pen-0\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-0\"" );
     else if( psElement->style == DGNS_DOTTED )
-        sprintf( szPen, "PEN(id:\"ogr-pen-5\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-5\"" );
     else if( psElement->style == DGNS_MEDIUM_DASH )
-        sprintf( szPen, "PEN(id:\"ogr-pen-2\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-2\"" );
     else if( psElement->style == DGNS_LONG_DASH )
-        sprintf( szPen, "PEN(id:\"ogr-pen-4\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-4\"" );
     else if( psElement->style == DGNS_DOT_DASH )
-        sprintf( szPen, "PEN(id:\"ogr-pen-6\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-6\"" );
     else if( psElement->style == DGNS_SHORT_DASH )
-        sprintf( szPen, "PEN(id:\"ogr-pen-3\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-3\"" );
     else if( psElement->style == DGNS_DASH_DOUBLE_DOT )
-        sprintf( szPen, "PEN(id:\"ogr-pen-7\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-7\"" );
     else if( psElement->style == DGNS_LONG_DASH_SHORT_DASH )
-        sprintf( szPen, "PEN(p:\"10px 5px 4px 5px\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(p:\"10px 5px 4px 5px\"" );
     else
-        sprintf( szPen, "PEN(id:\"ogr-pen-0\"" );
+        snprintf( szPen, sizeof(szPen), "PEN(id:\"ogr-pen-0\"" );
 
     if( strlen(szFSColor) > 0 )
-        sprintf( szPen+strlen(szPen), ",%s", szFSColor );
+        snprintf( szPen+strlen(szPen), sizeof(szPen)-strlen(szPen), ",%s", szFSColor );
 
     if( psElement->weight > 1 )
-        sprintf( szPen+strlen(szPen), ",w:%dpx", psElement->weight );
+        snprintf( szPen+strlen(szPen), sizeof(szPen)-strlen(szPen), ",w:%dpx", psElement->weight );
         
     strcat( szPen, ")" );
 
@@ -541,29 +541,33 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           poFeature->SetGeometryDirectly( poPoint );
 
-          pszOgrFS = (char *) CPLMalloc(strlen(psText->string) + 150);
+          const size_t nOgrFSLen = strlen(psText->string) + 150;
+          pszOgrFS = (char *) CPLMalloc(nOgrFSLen);
 
           // setup the basic label.
-          sprintf( pszOgrFS, "LABEL(t:\"%s\"",  psText->string );
+          snprintf( pszOgrFS, nOgrFSLen, "LABEL(t:\"%s\"",  psText->string );
 
           // set the color if we have it. 
           if( strlen(szFSColor) > 0 )
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",%s", szFSColor );
+              snprintf( pszOgrFS+strlen(pszOgrFS), nOgrFSLen-strlen(pszOgrFS), ",%s", szFSColor );
 
           // Add the size info in ground units.
           if( ABS(psText->height_mult) >= 6.0 )
-              CPLsprintf( pszOgrFS+strlen(pszOgrFS), ",s:%dg", 
+              CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
+                           nOgrFSLen-strlen(pszOgrFS), ",s:%dg", 
                        (int) psText->height_mult );
           else if( ABS(psText->height_mult) > 0.1 )
-              CPLsprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.3fg", 
+              CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
+                          nOgrFSLen-strlen(pszOgrFS), ",s:%.3fg", 
                        psText->height_mult );
           else
-              CPLsprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12fg", 
+              CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
+                          nOgrFSLen-strlen(pszOgrFS), ",s:%.12fg", 
                        psText->height_mult );
 
           // Add the font name. Name it MstnFont<FONTNUMBER> if not available
           // in the font list. #3392
-          static const char *papszFontList[] =
+          static const char * const papszFontList[] =
           { "STANDARD", "WORKING", "FANCY", "ENGINEERING", "NEWZERO", "STENCEL", //0-5
             "USTN_FANCY", "COMPRESSED", "STENCEQ", NULL, "hand", "ARCH", //6-11
             "ARCHB", NULL, NULL, "IGES1001", "IGES1002", "IGES1003", //12-17
@@ -586,21 +590,25 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           if(psText->font_id <= 108 && papszFontList[psText->font_id] != NULL )
           {
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",f:%s",
+              snprintf( pszOgrFS+strlen(pszOgrFS),
+                        nOgrFSLen-strlen(pszOgrFS), ",f:%s",
                        papszFontList[psText->font_id] );
           }
           else
           {
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",f:MstnFont%d",
+              snprintf( pszOgrFS+strlen(pszOgrFS),
+                        nOgrFSLen-strlen(pszOgrFS), ",f:MstnFont%d",
                        psText->font_id );
           }
 
           // Add the angle, if not horizontal
           if( psText->rotation != 0.0 )
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",a:%d", 
+              snprintf( pszOgrFS+strlen(pszOgrFS),
+                        nOgrFSLen-strlen(pszOgrFS), ",a:%d", 
                        (int) (psText->rotation+0.5) );
 
-          strcat( pszOgrFS, ")" );
+          snprintf( pszOgrFS+strlen(pszOgrFS),
+                        nOgrFSLen-strlen(pszOgrFS), ")" );
 
           poFeature->SetStyleString( pszOgrFS );
           CPLFree( pszOgrFS );
@@ -932,7 +940,7 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
             dfCharHeight = poLabel->Size(bDefault)/1000.0;
 
         /* get font id */
-        static const char  *papszFontNumbers[] =
+        static const char  * const papszFontNumbers[] =
           { "STANDARD=0", "WORKING=1", "FANCY=2", "ENGINEERING=3", "NEWZERO=4",
             "STENCEL=5", "USTN_FANCY=7", "COMPRESSED=8", "STENCEQ=9", "hand=10",
             "ARCH=11", "ARCHB=12", "IGES1001=15", "IGES1002=16", "IGES1003=17", 

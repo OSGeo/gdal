@@ -37,10 +37,10 @@ CPL_CVSID("$Id$");
 /*                            OGRCouchDBLayer()                             */
 /************************************************************************/
 
-OGRCouchDBLayer::OGRCouchDBLayer(OGRCouchDBDataSource* poDS)
+OGRCouchDBLayer::OGRCouchDBLayer(OGRCouchDBDataSource* poDSIn)
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     nNextInSeq = 0;
 

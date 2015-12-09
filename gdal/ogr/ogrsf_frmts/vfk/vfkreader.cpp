@@ -312,9 +312,10 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                                                           poDataBlockCurrent->GetFeatureCount() + 1);
                 if (poNewFeature->SetProperties(pszLine)) {
                     if (AddFeature(poDataBlockCurrent, poNewFeature) != OGRERR_NONE) {
-                        CPLDebug("OGR-VFK", 
-                                 "%s: duplicated VFK data recored skipped (line %d).\n%s\n",
-                                 pszBlockName, iLine, pszLine);
+                        CPLDebug( "OGR-VFK",
+                                  "%s: duplicated VFK data record skipped "
+                                  "(line %d).\n%s\n",
+                                  pszBlockName, iLine, pszLine);
                         poDataBlockCurrent->SetIncRecordCount(RecordDuplicated);
                     }
                     else {
@@ -517,7 +518,8 @@ void VFKReader::AddInfo(const char *pszLine)
     }
     else {
         /* max. number of duplicated keys can be 101 */
-        char *pszKeyUniq = (char *) CPLMalloc(strlen(pszKey) + 5);
+        const size_t nLen = strlen(pszKey) + 5;
+        char *pszKeyUniq = (char *) CPLMalloc(nLen);
 
         int nCount = 1; /* assuming at least one match */
         for(std::map<CPLString, CPLString>::iterator i = poInfo.begin();
@@ -528,7 +530,7 @@ void VFKReader::AddInfo(const char *pszLine)
                 nCount += 1;
         }
 
-        sprintf(pszKeyUniq, "%s_%d", pszKey, nCount);
+        snprintf(pszKeyUniq, nLen, "%s_%d", pszKey, nCount);
         poInfo[pszKeyUniq] = pszValueEnc;
         CPLFree(pszKeyUniq);
     }

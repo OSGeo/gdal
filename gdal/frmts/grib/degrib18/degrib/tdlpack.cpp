@@ -20,7 +20,7 @@
 #define GRIB_SIGN_INT2(a,b) ((1-(int) ((unsigned) (a & 0x80) >> 6)) * (int) (((a & 0x7f) << 8) + b))
 
 /* *INDENT-OFF* */
-TDLP_TableType TDLP_B_Table[5] = {
+static const TDLP_TableType TDLP_B_Table[5] = {
    /* 0 */ {0, "Continuous field"},
    /* 1 */ {1, "Point Binary - cumulative from above"},
    /* 2 */ {2, "Point Binary - cumulative from below"},
@@ -28,7 +28,7 @@ TDLP_TableType TDLP_B_Table[5] = {
    /* 4 */ {5, "Grid Binary - "},
 };
 
-TDLP_TableType TDLP_DD_Table[9] = {
+static const TDLP_TableType TDLP_DD_Table[9] = {
    /* 0 */ {0, "Independent of model"},
    /* 1 */ {6, "NGM model"},
    /* 2 */ {7, "Eta model"},
@@ -40,20 +40,20 @@ TDLP_TableType TDLP_DD_Table[9] = {
    /* 8 */ {82, "Obs matching AEV Forecasts"},
 };
 
-TDLP_TableType TDLP_V_Table[4] = {
+static const TDLP_TableType TDLP_V_Table[4] = {
    /* 0 */ {0, "No vertical processing"},
    /* 1 */ {1, "Difference Levels (UUUU - LLLL)"},
    /* 2 */ {2, "Sum Levels (UUUU + LLLL)"},
    /* 3 */ {3, "Mean Levels (UUUU + LLLL) / 2."},
 };
 
-TDLP_TableType TDLP_T_Table[3] = {
-   /* 0 */ {0, "No nolinear tranform"},
+static const TDLP_TableType TDLP_T_Table[3] = {
+   /* 0 */ {0, "No nolinear transform"},  // TODO: "No no"?
    /* 1 */ {1, "Square transform"},
-   /* 2 */ {2, "Square root tranform"},
+   /* 2 */ {2, "Square root transform"},
 };
 
-TDLP_TableType TDLP_Oper_Table[9] = {
+static const TDLP_TableType TDLP_Oper_Table[9] = {
    /* 0 */ {0, "No time operator"},
    /* 1 */ {1, "Mean (Var 1, Var 2)"},
    /* 2 */ {2, "Difference (Var 1 - Var 2)"},
@@ -65,14 +65,14 @@ TDLP_TableType TDLP_Oper_Table[9] = {
    /* 8 */ {8, "Minimum (Var 1, Var 2)"},
 };
 
-TDLP_TableType TDLP_I_Table[4] = {
+static const TDLP_TableType TDLP_I_Table[4] = {
    /* 0 */ {0, "No interpolation"},
    /* 1 */ {1, "Bi-quadratic interpolation"},
    /* 2 */ {2, "Bi-linear interpolation"},
    /* 3 */ {3, "Special interpolation for QPF"},
 };
 
-TDLP_TableType TDLP_S_Table[6] = {
+static const TDLP_TableType TDLP_S_Table[6] = {
    /* 0 */ {0, "No smoothing"},
    /* 1 */ {1, "5-point smoothing"},
    /* 2 */ {2, "9-point smoothing"},
@@ -291,7 +291,7 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
  * NOTES
  *****************************************************************************
  */
-static const char *TDLP_TableLookUp(TDLP_TableType * table, int tableLen,
+static const char *TDLP_TableLookUp(const TDLP_TableType * table, int tableLen,
                                     int index)
 {
    int i;               /* Loop counter. */
@@ -336,43 +336,43 @@ void PrintPDS_TDLP (pdsTDLPType * pds)
 
    Print ("PDS-TDLP", "Reference Time", Prt_S, buffer);
    Print ("PDS-TDLP", "Plain Language", Prt_S, pds->Descriptor);
-   sprintf (buffer, "%09d", pds->ID1);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID1);
    Print ("PDS-TDLP", "ID 1", Prt_S, buffer);
-   sprintf (buffer, "%09d", pds->ID2);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID2);
    Print ("PDS-TDLP", "ID 2", Prt_S, buffer);
-   sprintf (buffer, "%09d", pds->ID3);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID3);
    Print ("PDS-TDLP", "ID 3", Prt_S, buffer);
    Print ("PDS-TDLP", "ID 4", Prt_D, pds->ID4);
    Print ("PDS-TDLP", "Model or Process Number", Prt_D, pds->procNum);
    Print ("PDS-TDLP", "Sequence Number", Prt_D, pds->seqNum);
 
-   sprintf (buffer, "%03d", pds->CCC);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->CCC);
    Print ("PDS-TDLP", "ID1-CCC", Prt_S, buffer);
-   sprintf (buffer, "%03d", pds->FFF);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->FFF);
    Print ("PDS-TDLP", "ID1-FFF", Prt_S, buffer);
    Print ("PDS-TDLP", "ID1-B", Prt_DS, pds->B,
           TDLP_TableLookUp (TDLP_B_Table, sizeof (TDLP_B_Table), pds->B));
-   sprintf (buffer, "%02d", pds->DD);
+   snprintf(buffer, sizeof(buffer), "%02d", pds->DD);
    Print ("PDS-TDLP", "ID1-DD", Prt_SS, buffer,
           TDLP_TableLookUp (TDLP_DD_Table, sizeof (TDLP_DD_Table), pds->DD));
 
    Print ("PDS-TDLP", "ID2-V", Prt_DS, pds->V,
           TDLP_TableLookUp (TDLP_V_Table, sizeof (TDLP_V_Table), pds->V));
-   sprintf (buffer, "%04d", pds->LLLL);
+   snprintf(buffer, sizeof(buffer), "%04d", pds->LLLL);
    Print ("PDS-TDLP", "ID2-LLLL", Prt_S, buffer);
-   sprintf (buffer, "%04d", pds->UUUU);
+   snprintf(buffer, sizeof(buffer), "%04d", pds->UUUU);
    Print ("PDS-TDLP", "ID2-UUUU", Prt_S, buffer);
 
    if (pds->Oper != 0) {
       Print ("PDS-TDLP", "ID3-T", Prt_DS, pds->T,
              TDLP_TableLookUp (TDLP_T_Table, sizeof (TDLP_T_Table), pds->T));
-      sprintf (buffer, "%02d", pds->RR);
+      snprintf(buffer, sizeof(buffer), "%02d", pds->RR);
       Print ("PDS-TDLP", "ID3-RR", Prt_SS, buffer,
              "Run time offset in hours");
       Print ("PDS-TDLP", "ID3-Oper", Prt_DS, pds->Oper,
              TDLP_TableLookUp (TDLP_Oper_Table, sizeof (TDLP_Oper_Table),
                                pds->Oper));
-      sprintf (buffer, "%02d", pds->HH);
+      snprintf(buffer, sizeof(buffer), "%02d", pds->HH);
       Print ("PDS-TDLP", "ID3-HH", Prt_SS, buffer,
              "Number of hours between variables");
    } else {
@@ -380,7 +380,7 @@ void PrintPDS_TDLP (pdsTDLPType * pds)
              TDLP_TableLookUp (TDLP_Oper_Table, sizeof (TDLP_Oper_Table),
                                pds->Oper));
    }
-   sprintf (buffer, "%03d", pds->ttt);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->ttt);
    Print ("PDS-TDLP", "ID3-ttt", Prt_SS, buffer, "Forecast Projection");
 
    Print ("PDS-TDLP", "ID4-thresh", Prt_F, pds->thresh);
@@ -880,13 +880,13 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
    uChar kbit;          /* # of bits for # values in a group. */
    TDLGroupType *grp;   /* Holds the info about each group. */
    size_t i, j;         /* Loop counters. */
-   uInt4 t_numPack;     /* Used to total number of values in a group to check 
+   uInt4 t_numPack;     /* Used to total number of values in a group to check
                          * the numPack value. */
    uInt4 t_numBits;     /* Used to total number of bits used in the groups. */
    uInt4 t_numBytes;    /* Used to total number of bytes used to compare to
                          * sectLen. */
    sInt4 maxVal;        /* The max value in a group. */
-   uInt4 dataCnt;       /* How many values (miss or othewise) we have read. */
+   uInt4 dataCnt;       /* How many values (miss or otherwise) we have read. */
    uInt4 lastData;      /* Index to last actual data. */
    uInt4 numVal;        /* # of actual (non-missing values) we have. */
    double scale;        /* Amount to scale values by. */
@@ -1521,7 +1521,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
       return -1;
    }
 
-   /* Preceeding was in degrib2, next part is specific to TDLP. */
+   /* Preceding was in degrib2, next part is specific to TDLP. */
    curLoc = 8;
    if (ReadTDLPSect1 (c_ipack + curLoc, tdlpLen, &curLoc, &(meta->pdsTdlp),
                       &f_gds, &f_bms, &DSF, &BSF) != 0) {
@@ -2141,7 +2141,7 @@ static int power (uInt4 val, int extra)
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *         min = The min value found (Output)
@@ -2196,7 +2196,7 @@ static char findMaxMin2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *         min = The min value found (Output)
  *         max = The max value found (Output)
@@ -2249,7 +2249,7 @@ static char findMaxMin1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *  Data = The data. (Input)
  * start = The starting index in data (Input)
- *  stop = The stoping index in data (Input)
+ *  stop = The stopping index in data (Input)
  *   min = The min value found (Output)
  *   max = The max value found (Output)
  *
@@ -2291,7 +2291,7 @@ static void findMaxMin0 (sInt4 *Data, int start, int stop, sInt4 *min,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2355,7 +2355,7 @@ static void findGroup2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
@@ -2418,7 +2418,7 @@ static void findGroup1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
  *         min = The min value for the group. (Output)
@@ -2471,7 +2471,7 @@ static void findGroup0 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2535,7 +2535,7 @@ static void findGroupRev2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)
@@ -2598,7 +2598,7 @@ static void findGroupRev1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)
@@ -3408,7 +3408,7 @@ static void shiftGroup (sInt4 *Data,
          /* See if that affects any of the previous groups. */
          for (j = i + 1; j < numGroup; j++) {
             if (group[j].num != 0) {
-               G1.start = G1.start;
+               /*G1.start = G1. start;*/ /* self-assignment... */
                G1.num = group[i - 1].num + group[j].num;
                G1.min = (group[i - 1].min < group[j].min) ?
                      group[i - 1].min : group[j].min;
@@ -3913,7 +3913,7 @@ static int GroupPack (double *Src, sInt4 **Dst, sInt4 numData,
       li_secMiss = (sInt4) (*secMiss * SCALE_MISSING + .5);
    }
 
-   /* Reason this is after TDL_ScaleData is we don't want to reoder the
+   /* Reason this is after TDL_ScaleData is we don't want to reorder the
     * caller's copy of the data. */
    if (f_grid) {
       TDL_ReorderGrid (Data, NX, NY);
@@ -4071,7 +4071,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    short int si_temp;   /* Temporary variable (short int). */
    double d_temp;       /* Temporary variable (double). */
    char buffer[6];      /* Used to write reserved values */
-   uChar pbuf;          /* A buffer of bits that weren't written to disk */
+   uChar pbuf;          /* A buffer of bits that were not written to disk */
    sChar pbufLoc;       /* Where in pbuf to add more bits. */
 
    commentLen = static_cast<int>(strlen (comment));

@@ -486,7 +486,7 @@ png_write_IHDR(png_structp png_ptr, png_uint_32 width, png_uint_32 height,
    interlace_type=PNG_INTERLACE_NONE;
 #endif
 
-   /* Save the relevent information */
+   /* Save the relevant information */
    png_ptr->bit_depth = (png_byte)bit_depth;
    png_ptr->color_type = (png_byte)color_type;
    png_ptr->interlaced = (png_byte)interlace_type;
@@ -1251,7 +1251,7 @@ png_check_keyword(png_structp png_ptr, png_charp key, png_charpp new_key)
    *new_key = (png_charp)png_malloc_warn(png_ptr, (png_uint_32)(key_len + 2));
    if (*new_key == NULL)
    {
-      png_warning(png_ptr, "Out of memory while procesing keyword");
+      png_warning(png_ptr, "Out of memory while processing keyword");
       return ((png_size_t)0);
    }
 

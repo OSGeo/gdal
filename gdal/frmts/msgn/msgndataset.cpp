@@ -127,7 +127,7 @@ MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn , open_mode_typ
     this->orig_band_no = orig_band_noIn;
     this->band_in_file = band_in_fileIn;
 
-    sprintf(band_description, "band %02d", orig_band_no);
+    snprintf(band_description, sizeof(band_description), "band %02d", orig_band_no);
 
     if (mode != MODE_RAD) {
         eDataType = GDT_UInt16;
@@ -508,12 +508,12 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadataItem("Radiometric parameters format", "offset slope");
     for (i=1; i < band_count; i++) {
-        sprintf(tagname, "ch%02d_cal", band_map[i]);
-        sprintf(field, "%.12e %.12e", cal[band_map[i]-1].cal_offset, cal[band_map[i]-1].cal_slope);
+        snprintf(tagname, sizeof(tagname), "ch%02d_cal", band_map[i]);
+        CPLsnprintf(field, sizeof(field), "%.12e %.12e", cal[band_map[i]-1].cal_offset, cal[band_map[i]-1].cal_slope);
         poDS->SetMetadataItem(tagname, field);
     }
 
-    sprintf(field, "%04d%02d%02d/%02d:%02d",
+    snprintf(field, sizeof(field), "%04d%02d%02d/%02d:%02d",
         poDS->msg_reader_core->get_year(),
         poDS->msg_reader_core->get_month(),
         poDS->msg_reader_core->get_day(),
@@ -522,7 +522,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     );
     poDS->SetMetadataItem("Date/Time", field);
 
-    sprintf(field, "%d %d",
+    snprintf(field, sizeof(field), "%d %d",
          poDS->msg_reader_core->get_line_start(),
          poDS->msg_reader_core->get_col_start()
     );

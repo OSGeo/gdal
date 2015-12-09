@@ -844,11 +844,12 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->papszExtraFiles = 
                     CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
 
-                char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nFLen + 27) );
+                const size_t nBufLen = nFLen + 27;
+                char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nBufLen) );
                 pszBeta0LUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "BETA_NOUGHT_LUT", pszLUTFile );
 
-                sprintf(pszBuf, "RADARSAT_2_CALIB:BETA0:%s", 
+                snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:BETA0:%s", 
                         osMDFilename.c_str() );
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_3_NAME", pszBuf );
@@ -863,11 +864,12 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->papszExtraFiles = 
                     CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
 
-                char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nFLen + 27) );
+                const size_t nBufLen = nFLen + 27;
+                char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nBufLen) );
                 pszSigma0LUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "SIGMA_NOUGHT_LUT", pszLUTFile );
 
-                sprintf(pszBuf, "RADARSAT_2_CALIB:SIGMA0:%s", 
+                snprintf(pszBuf, nBufLen,"RADARSAT_2_CALIB:SIGMA0:%s", 
                         osMDFilename.c_str() );
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_2_NAME", pszBuf );
@@ -882,10 +884,11 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->papszExtraFiles = 
                     CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
 
-                char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nFLen + 27) );
+                const size_t nBufLen = nFLen + 27;
+                char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nBufLen) );
                 pszGammaLUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "GAMMA_LUT", pszLUTFile );
-                sprintf(pszBuf, "RADARSAT_2_CALIB:GAMMA:%s", 
+                snprintf(pszBuf, nBufLen,"RADARSAT_2_CALIB:GAMMA:%s", 
                         osMDFilename.c_str());
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_4_NAME", pszBuf );
@@ -968,8 +971,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if (poDS->papszSubDatasets != NULL && eCalib == None) {
-        char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nFLen + 28) );
-        sprintf(pszBuf, "RADARSAT_2_CALIB:UNCALIB:%s", 
+        const size_t nBufLen = nFLen + 28;
+        char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nBufLen) );
+        snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:UNCALIB:%s", 
                 osMDFilename.c_str() );
         poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets,
                                                   "SUBDATASET_1_NAME", pszBuf );
@@ -1309,7 +1313,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->nGCPCount++ ;
 
             char szID[32];
-            sprintf( szID, "%d", poDS->nGCPCount );
+            snprintf( szID, sizeof(szID), "%d", poDS->nGCPCount );
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel = 

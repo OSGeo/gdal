@@ -209,10 +209,10 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
     CPLXMLNode *psDSTree = CPLCreateXMLNode( NULL, CXT_Element, "VRTDataset" );
 
     char szNumber[128];
-    sprintf( szNumber, "%d", GetRasterXSize() );
+    snprintf( szNumber, sizeof(szNumber), "%d", GetRasterXSize() );
     CPLSetXMLValue( psDSTree, "#rasterXSize", szNumber );
 
-    sprintf( szNumber, "%d", GetRasterYSize() );
+    snprintf( szNumber, sizeof(szNumber), "%d", GetRasterYSize() );
     CPLSetXMLValue( psDSTree, "#rasterYSize", szNumber );
 
  /* -------------------------------------------------------------------- */
@@ -405,7 +405,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
             //    poBand = new VRTPansharpenedRasterBand( this, 0 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "VRTRasterBand of unrecognised subclass '%s'.",
+                          "VRTRasterBand of unrecognized subclass '%s'.",
                           pszSubclass );
 
             if( poBand != NULL
@@ -448,7 +448,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                 poBand = new VRTPansharpenedRasterBand( this, l_nBands+1 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "VRTRasterBand of unrecognised subclass '%s'.",
+                          "VRTRasterBand of unrecognized subclass '%s'.",
                           pszSubclass );
 
             if( poBand != NULL 

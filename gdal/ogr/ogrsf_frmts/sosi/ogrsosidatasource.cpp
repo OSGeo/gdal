@@ -316,10 +316,10 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             char *pszUTFLineIter = pszUTFLine;
 			
             while (pszUTFLineIter[0] == '.') pszUTFLineIter++; /* Skipping the dots at the beginning of a SOSI line */
-            char *pszPos = strstr(pszUTFLineIter, " "); /* Split header and value */
-            if (pszPos != NULL) {
-                CPLString osKey = CPLString(std::string(pszUTFLineIter,pszPos)); /* FIXME: clean instantiation of CPLString? */
-                CPLString osValue = CPLString(pszPos+1);
+            char *pszPos2 = strstr(pszUTFLineIter, " "); /* Split header and value */
+            if (pszPos2 != NULL) {
+                CPLString osKey = CPLString(std::string(pszUTFLineIter,pszPos2)); /* FIXME: clean instantiation of CPLString? */
+                CPLString osValue = CPLString(pszPos2+1);
                 
                 oHeaders[osKey]=osValue;          /* Add to header map */
                 switch (nName) {             /* Add to header list for the corresponding layer, if it is not */
@@ -426,14 +426,14 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     /* -------------------------------------------------------------------- *
      *      Create a corresponding layers. One per geometry type            *
      * -------------------------------------------------------------------- */
-    int nLayers = 0;
-    if (bPolyLayer)  nLayers++;
-    if (bCurveLayer) nLayers++;
-    if (bPointLayer) nLayers++;
-    if (bTextLayer) nLayers++;
-    this->nLayers = nLayers;
+    int l_nLayers = 0;
+    if (bPolyLayer)  l_nLayers++;
+    if (bCurveLayer) l_nLayers++;
+    if (bPointLayer) l_nLayers++;
+    if (bTextLayer) l_nLayers++;
+    this->nLayers = l_nLayers;
     /* allocate some memory for up to three layers */
-    papoLayers = (OGRSOSILayer **) VSI_MALLOC2_VERBOSE(sizeof(void*), nLayers);
+    papoLayers = (OGRSOSILayer **) VSI_MALLOC2_VERBOSE(sizeof(void*), l_nLayers);
     if( papoLayers == NULL )
     {
         this->nLayers = 0;
@@ -446,7 +446,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bPolyLayer) {
 		OGRFeatureDefn *poFeatureDefn = defineLayer("polygons", wkbPolygon, poPolyHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPolyHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPolyHeaders );
     } else {
         delete poPolyHeaders;
         poPolyHeaders = NULL;
@@ -454,7 +454,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bCurveLayer) {
         OGRFeatureDefn *poFeatureDefn = defineLayer("lines", wkbLineString, poCurveHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poCurveHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poCurveHeaders );
     } else {
         delete poCurveHeaders;
         poCurveHeaders = NULL;
@@ -462,7 +462,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bPointLayer) {
         OGRFeatureDefn *poFeatureDefn = defineLayer("points", wkbPoint, poPointHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPointHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPointHeaders );
     } else {
         delete poPointHeaders;
         poPointHeaders = NULL;
@@ -470,7 +470,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bTextLayer) {
         OGRFeatureDefn *poFeatureDefn = defineLayer("text", wkbMultiPoint, poTextHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poTextHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poTextHeaders );
     } else {
         delete poTextHeaders;
         poTextHeaders = NULL;
@@ -506,7 +506,7 @@ int  OGRSOSIDataSource::Create( const char *pszFilename ) {
 /*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszName,
+OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
                                            OGRSpatialReference  *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            CPL_UNUSED char **papszOptions ) {
@@ -552,7 +552,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszName,
         }
     }
     
-    OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( pszName );
+    OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( pszNameIn );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eGType );
     OGRSOSILayer *poLayer = new OGRSOSILayer( this, poFeatureDefn, poFileadm, NULL /*poHeaderDefn*/);

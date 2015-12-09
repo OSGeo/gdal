@@ -179,15 +179,15 @@ doesn't exist already.  This behaviour can be changed using the configuration
 option <b>GML_SAVE_RESOLVED_TO</b>.  Set it to <b>SAME</b> to overwrite the
 original file.  Set it to a <b>filename ending with .gml</b> to save it to that
 location.  Any other values are ignored.  If the resolver cannot write to the
-file for any reason, it will try to save it to a temperary file generated using
+file for any reason, it will try to save it to a temporary file generated using
 CPLGenerateTempFilename("ResolvedGML"); if it cannot, resolution fails.<p>
 
-Note that the resolution algorithm is not optimised for large files.  For files
+Note that the resolution algorithm is not optimized for large files.  For files
 with more than a couple of thousand xlink:href tags, the process can go beyond
 a few minutes.  A rough progress is displayed through CPLDebug() for every
 256 links.  It can be seen by setting the environment variable CPL_DEBUG.
 The resolution time can be reduced if you know any elements that
-won't be needed.  Mention a comma seperated list of names of such elements with
+will not be needed.  Mention a comma separated list of names of such elements with
 the configuration option <b>GML_SKIP_RESOLVE_ELEMS</b>.  Set it to <b>ALL</b>
 to skip resolving altogether (default action).  Set it to <b>NONE</b> to
 resolve all the xlinks.<p>
@@ -577,7 +577,7 @@ OGRFeature(LAYER):0
 
 <h2>Advanced .gfs syntax (OGR &gt;= 1.11)</h2>
 
-<h3>Specifying ElementPath to find objets embedded into top level objects</h3>
+<h3>Specifying ElementPath to find objects embedded into top level objects</h3>
 
 Let's consider the following test.gml file :
 <pre>

@@ -139,7 +139,7 @@ public class gdal:public static void Debug(String msg_class, String message)
  * Push a new error handler.
  *
  * This pushes a new error handler on the thread-local error handler
- * stack.  This handler will be used untill removed with gdal.PopErrorHandler().
+ * stack.  This handler will be used until removed with gdal.PopErrorHandler().
  *
  * @param callbackName handler function name : "CPLQuietErrorHandler", "CPLDefaultErrorHandler", "CPLLoggingErrorHandler"
  */
@@ -149,7 +149,7 @@ public class gdal:public static int PushErrorHandler(String callbackName)
  * Push the quiet error handler.
  *
  * This pushes a new error handler on the thread-local error handler
- * stack.  This handler will be used untill removed with gdal.PopErrorHandler().
+ * stack.  This handler will be used until removed with gdal.PopErrorHandler().
  *
  * @since Java bindings 1.7.0
  */
@@ -190,7 +190,7 @@ public class gdal:public static int SetErrorHandler()
  * The msg_class argument can have the value gdalconst.CE_Warning indicating that the
  * message is an informational warning, gdalconst.CE_Failure indicating that the
  * action failed, but that normal recover mechanisms will be used or
- * CE_Fatal meaning that a fatal error has occured, and that Error()
+ * CE_Fatal meaning that a fatal error has occurred, and that Error()
  * should not return.  
  * <p>
  * The default behaviour of Error() is to report errors to stderr,
@@ -278,7 +278,7 @@ public class gdal:public static int Unlink(String fileName)
  * This function will "escape" a variety of special characters
  * to make the string suitable to embed within a string constant
  * or to write within a text stream but in a form that can be
- * reconstitued to it's original form.  The escaping will even preserve
+ * reconstituted to it's original form.  The escaping will even preserve
  * zero bytes allowing preservation of raw binary data.
  * <ul>
  * <li>gdalconst.CPLES_BackslashQuotable(0): This scheme turns a binary string into 
@@ -1420,7 +1420,7 @@ public class gdal:public static Dataset OpenShared(String name)
  * exotic drivers this may not refer to a physical file, but instead contain
  * information for the driver on how to access a dataset.
  *
- * @param fileList a veector of strings.
+ * @param fileList a vector of strings.
  * These strings are filenames that are auxiliary to the main filename. The passed
  * value may be null.
  *
@@ -2042,7 +2042,7 @@ public class Dataset:public java.util.Vector GetGCPs()
  * <p>
  * This method assigns the passed set of GCPs to this dataset, as well as
  * setting their coordinate system.  Internally copies are made of the
- * coordinate system and list of points, so the caller remains resposible for
+ * coordinate system and list of points, so the caller remains responsible for
  * deallocating these arguments if appropriate. 
  * <p>
  * Most formats do not support setting of GCPs, even formats that can 
@@ -6649,7 +6649,7 @@ public class Layer:public int AlterFieldDefn( int iField, FieldDefn newFieldDefn
  <p>
  Returns the extent (MBR) of the data in the layer.  If force is 0,
  and it would be expensive to establish the extent then a RuntimeException
- will be throwned indicating that the extent isn't know.  If force is 
+ will be thrown indicating that the extent is not known.  If force is 
  1 then some implementations will actually scan the entire layer once
  to compute the MBR of all the features in the layer.
  <p>
@@ -7149,7 +7149,7 @@ is uncertain, though it might still be UTF-8.<p>
  @param cap the name of the capability to test.
 
  @return true if the layer has the requested capability, or false otherwise.
-Layers will return false for any unrecognised capabilities.<p>
+Layers will return false for any unrecognized capabilities.<p>
 
 */
 public class Layer:public boolean TestCapability(String cap)
@@ -8792,7 +8792,7 @@ public class Geometry:public String GetGeometryName()
  * <p>
  * This function returns an handle to a geometry within the container.
  * The returned geometry remains owned by the container, and should not be
- * modified.  The handle is only valid untill the next change to the
+ * modified.  The handle is only valid until the next change to the
  * geometry container.  Use Clone() to make a copy.
  * <p>
  * This function relates to the SFCOM 
@@ -8970,7 +8970,7 @@ public class Geometry:public boolean Intersect(Geometry other)
  * Do these features intersect?
  * <p>
  * Determines whether two geometries intersect.  If GEOS is enabled, then
- * this is done in rigerous fashion otherwise true is returned if the
+ * this is done in rigorous fashion otherwise true is returned if the
  * envelopes (bounding boxes) of the two features overlap.
  * <p>
  * The geom argument may be safely null, but in this case the method
@@ -10144,7 +10144,7 @@ public class ogr:public static Geometry ForceToMultiLineString(Geometry geom)
 /* Class SpatialReference */
 
 /**
- * This class respresents a OpenGIS Spatial Reference System, and contains
+ * This class represents an OpenGIS Spatial Reference System, and contains
  * methods for converting between this object organization and well known
  * text (WKT) format.  This object is reference counted as one instance of
  * the object is normally shared between many Geometry objects.
@@ -11303,7 +11303,7 @@ public class SpatialReference:public int SetGeocCS()
  * <p>
  * This method is will ensure a GEOCCS node is created as the root,
  * and set the provided name on it.  If used on a GEOGCS coordinate system,
- * the DATUM and PRIMEM nodes from the GEOGCS will be tarnsferred over to
+ * the DATUM and PRIMEM nodes from the GEOGCS will be transferred over to
  * the GEOGCS.
  *
  * @param name the user visible name to assign. Not used as a key. May be null

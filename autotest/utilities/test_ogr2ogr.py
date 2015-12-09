@@ -1834,7 +1834,7 @@ def test_ogr2ogr_48():
 
 ###############################################################################
 # Test detection of duplicated field names in source layer and renaming
-# in targe layer
+# in target layer
 
 def test_ogr2ogr_49():
     if test_cli_utilities.get_ogr2ogr_path() is None:

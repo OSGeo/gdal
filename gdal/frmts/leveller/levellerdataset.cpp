@@ -324,16 +324,16 @@ class digital_axis
 		bool get(LevellerDataset& ds, VSILFILE* fp, int n)
 		{
 			char szTag[32];
-			sprintf(szTag, "coordsys_da%d_style", n);
+			snprintf(szTag, sizeof(szTag), "coordsys_da%d_style", n);
 			if(!ds.get(m_eStyle, fp, szTag))
 				return false;
-			sprintf(szTag, "coordsys_da%d_fixedend", n);
+			snprintf(szTag, sizeof(szTag), "coordsys_da%d_fixedend", n);
 			if(!ds.get(m_fixedEnd, fp, szTag))
 				return false;
-			sprintf(szTag, "coordsys_da%d_v0", n);
+			snprintf(szTag, sizeof(szTag), "coordsys_da%d_v0", n);
 			if(!ds.get(m_d[0], fp, szTag))
 				return false;
-			sprintf(szTag, "coordsys_da%d_v1", n);
+			snprintf(szTag, sizeof(szTag), "coordsys_da%d_v1", n);
 			if(!ds.get(m_d[1], fp, szTag))
 				return false;
 			return true;
@@ -1005,12 +1005,12 @@ bool LevellerDataset::write_tag(const char* pszTag, const char* psz)
 	CPLAssert(strlen(pszTag) <= kMaxTagNameLen);
 
 	char sz[kMaxTagNameLen + 1];
-	sprintf(sz, "%sl", pszTag);
+	snprintf(sz, sizeof(sz), "%sl", pszTag);
 	const size_t len = strlen(psz);
 
 	if(len > 0 && this->write_tag(sz, len))
 	{
-		sprintf(sz, "%sd", pszTag);
+		snprintf(sz, sizeof(sz), "%sd", pszTag);
 		this->write_tag_start(sz, len);
 		return (1 == VSIFWriteL(psz, len, 1, m_fp));
 	}
@@ -1116,7 +1116,7 @@ bool LevellerDataset::get(char* pszValue, size_t maxchars, VSILFILE* fp, const c
 
     // We can assume 8-bit encoding, so just go straight
     // to the *_d tag.
-    sprintf(szTag, "%sd", pszTag);
+    snprintf(szTag, sizeof(szTag), "%sd", pszTag);
 
     vsi_l_offset offset;
     size_t		 len;

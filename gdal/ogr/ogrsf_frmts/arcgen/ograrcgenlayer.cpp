@@ -40,10 +40,10 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRARCGENLayer::OGRARCGENLayer( const char* pszFilename,
-                          VSILFILE* fp, OGRwkbGeometryType eType )
+                          VSILFILE* fpIn, OGRwkbGeometryType eType )
 
 {
-    this->fp = fp;
+    this->fp = fpIn;
     nNextFID = 0;
     bEOF = FALSE;
 

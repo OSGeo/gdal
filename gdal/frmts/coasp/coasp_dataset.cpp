@@ -202,10 +202,10 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
 		int nCount = CSLCount(papszMDTokens);
                 char *pszItemValue = CPLStrdup(papszMDTokens[1]);
 		for (int i = 2; i < nCount; i++) {
-			int nSize = static_cast<int>(strlen(papszMDTokens[i]));
-			pszItemValue = (char *)CPLRealloc(pszItemValue, 
-				strlen(pszItemValue) + 1 + nSize);
-			sprintf(pszItemValue,"%s %s",pszItemValue, 
+			const size_t nSize = strlen(pszItemValue) + 1 + strlen(papszMDTokens[i]);
+			pszItemValue = (char *)CPLRealloc(pszItemValue, nSize);
+			snprintf(pszItemValue + strlen(pszItemValue),
+                                 nSize - strlen(pszItemValue), " %s",
 				papszMDTokens[i]);
 		}
 

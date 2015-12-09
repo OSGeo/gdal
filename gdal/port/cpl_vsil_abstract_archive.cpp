@@ -411,7 +411,7 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
             return NULL;
         }
 
-        /* Skip optionnal leading subdir */
+        /* Skip optional leading subdir */
         CPLString osFileName = poReader->GetFileName();
         const char* fileName = osFileName.c_str();
         if (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\')
@@ -506,7 +506,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
 
         if (poReader != NULL && poReader->GotoFirstFile())
         {
-            /* Skip optionnal leading subdir */
+            /* Skip optional leading subdir */
             CPLString osFileName = poReader->GetFileName();
             const char* fileName = osFileName.c_str();
             if (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\')

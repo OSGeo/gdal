@@ -142,7 +142,6 @@ void featurestyle2kml (
         /***** parse the style table *****/
 
         poOgrSTBL->ResetStyleStringReading (  );
-        const char *pszStyleString;
 
         while ( ( pszStyleString = poOgrSTBL->GetNextStyle (  ) ) != NULL ) {
 
@@ -378,7 +377,7 @@ void kml2featurestyle (
 
             OGRStyleMgr *poOgrSM = new OGRStyleMgr;
 
-            /***** if were resolveing style the feature  *****/
+            /***** if were resolving style the feature *****/
             /***** might already have styling to add too *****/
 
             const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );

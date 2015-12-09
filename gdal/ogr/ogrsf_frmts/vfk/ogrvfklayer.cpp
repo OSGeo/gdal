@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
   \param pszName layer name
   \param poSRSIn spatial reference
   \param eReqType WKB geometry type
-  \param poDSIn  data source where to registrate OGR layer
+  \param poDSIn  data source where to register OGR layer
 */
 OGRVFKLayer::OGRVFKLayer(const char *pszName,
                          OGRSpatialReference *poSRSIn,

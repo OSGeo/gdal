@@ -1033,8 +1033,8 @@ def nitf_40():
         return 'fail'
     ds = None
 
-    # Check that it is indeed at a very far offset, and that the NITF driver hasn't
-    # put it somewhere else due to unvoluntary cast to 32bit integer...
+    # Check that it is indeed at a very far offset, and that the NITF driver
+    # has not put it somewhere else due to involuntary cast to 32bit integer.
     blockWidth = 256
     blockHeight = 256
     nBlockx = int((width+blockWidth-1)/blockWidth)
@@ -1304,11 +1304,11 @@ def nitf_47():
         print(cs)
         gdaltest.post_reason('did not get expected checksum for overview of subdataset')
         return 'fail'
-    
+
     ds = None
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Check building of standard overviews in place of rset overviews.
 
@@ -1325,16 +1325,16 @@ def nitf_48():
     shutil.copyfile( 'data/rset.ntf.r0', 'tmp/rset.ntf.r0' )
     shutil.copyfile( 'data/rset.ntf.r1', 'tmp/rset.ntf.r1' )
     shutil.copyfile( 'data/rset.ntf.r2', 'tmp/rset.ntf.r2' )
-    
+
     ds = gdal.Open( 'tmp/rset.ntf.r0', gdal.GA_Update )
     ds.BuildOverviews( overviewlist = [3] )
     ds = None
-    
+
     ds = gdal.Open( 'tmp/rset.ntf.r0' )
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason( 'did not get the expected number of rset overviews.' )
         return 'fail'
-    
+
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 2328:
         print(cs)
@@ -2696,7 +2696,7 @@ def nitf_online_21():
     return 'success'
 
 ###############################################################################
-# Test fix for #3002 (reconcilement of NITF file with LA segments)
+# Test fix for #3002 (reconcile NITF file with LA segments)
 #
 
 def nitf_online_22():

@@ -52,7 +52,7 @@ def postgisraster_init():
 
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
-        
+
     gdaltest.postgisraster_connection_string="PG:host='localhost' dbname='gisdb' user='gis' password='gis' schema='gis_schema' "
 
     try:
@@ -67,7 +67,6 @@ def postgisraster_init():
         return 'skip'
 
     return 'success'
-    
 
 ###############################################################################
 # 
@@ -75,15 +74,15 @@ def postgisraster_test_open_error1():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='unexistent'")
+    ds = gdal.Open(gdaltest.postgisraster_connection_string
+                   + "table='nonexistent'")
     if ds is None:
         return 'success'
     else:
         return 'fail'
-        
-        
+
 ###############################################################################
-# 
+#
 def postgisraster_test_open_error2():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -93,15 +92,14 @@ def postgisraster_test_open_error2():
     if ds is None:
         return 'fail'
     else:
-        return 'success'        
+        return 'success'
 
-    
 ###############################################################################
 # 
 def postgisraster_compare_utm():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
-        
+
     src_ds = gdal.Open( 'data/utm.tif' )
     dst_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='utm'" )
 
@@ -338,9 +336,10 @@ def postgisraster_test_create_copy_and_delete_phases():
         gdaltest.post_reason( 'Could not open reduced dataset (1).' )
         return 'fail'
     elif len(src_md) != 100:
-        # The length of the metadata contains two pcs of 
+        # The length of the metadata contains two pcs of
         # information per raster, so 50 rasters remaining = 100 keys
-        gdaltest.post_reason( 'Expected 100 keys of metadata for 50 subadataset rasters.' )
+        gdaltest.post_reason(
+            'Expected 100 keys of metadata for 50 subdataset rasters.' )
         print(len(src_md))
         return 'fail'
 

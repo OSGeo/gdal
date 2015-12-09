@@ -86,7 +86,7 @@ OGRILI2DataSource::~OGRILI2DataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, int bTestOpen )
+int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptionsIn, int bTestOpen )
 
 {
     FILE        *fp;
@@ -94,10 +94,10 @@ int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
     CPLString   osBasename;
     CPLString   osModelFilename;
 
-    if( CSLFetchNameValue(papszOpenOptions, "MODEL") != NULL )
+    if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != NULL )
     {
         osBasename = pszNewName;
-        osModelFilename = CSLFetchNameValue(papszOpenOptions, "MODEL");
+        osModelFilename = CSLFetchNameValue(papszOpenOptionsIn, "MODEL");
     }
     else
     {
@@ -146,20 +146,20 @@ int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
             return FALSE;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      We assume now that it is ILI2.  Close and instantiate a          */
 /*      ILI2Reader on it.                                                */
 /* -------------------------------------------------------------------- */
     VSIFClose( fp );
-    
+
     poReader = CreateILI2Reader();
     if( poReader == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "File %s appears to be ILI2 but the ILI2 reader can't\n"
-                  "be instantiated, likely because Xerces support wasn't\n"
-                  "configured in.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "File %s appears to be ILI2 but the ILI2 reader cannot\n"
+                  "be instantiated, likely because Xerces support was not\n"
+                  "configured in.",
                   pszNewName );
         return FALSE;
     }

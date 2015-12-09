@@ -1242,26 +1242,26 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
             }
         }
 
-        /* Recognize points as outputed by GDAL (ogr-sym-2 : circle (not filled)) */
+        // Recognize points as written by GDAL (ogr-sym-2 : circle (not filled))
         OGRGeometry* poCenter = NULL;
         if (poCenter == NULL && poLS != NULL && poLS->getNumPoints() == 5)
         {
             poCenter = PDFGetCircleCenter(poLS);
         }
 
-        /* Recognize points as outputed by GDAL (ogr-sym-4: square (not filled)) */
+        // Recognize points as written by GDAL (ogr-sym-4: square (not filled))
         if (poCenter == NULL && poLS != NULL && (poLS->getNumPoints() == 4 || poLS->getNumPoints() == 5))
         {
             poCenter = PDFGetSquareCenter(poLS);
         }
 
-        /* Recognize points as outputed by GDAL (ogr-sym-6: triangle (not filled)) */
+        // Recognize points as written by GDAL (ogr-sym-6: triangle (not filled))
         if (poCenter == NULL && poLS != NULL && (poLS->getNumPoints() == 3 || poLS->getNumPoints() == 4))
         {
             poCenter = PDFGetTriangleCenter(poLS);
         }
 
-        /* Recognize points as outputed by GDAL (ogr-sym-8: star (not filled)) */
+        // Recognize points as written by GDAL (ogr-sym-8: star (not filled))
         if (poCenter == NULL && poLS != NULL && (poLS->getNumPoints() == 10 || poLS->getNumPoints() == 11))
         {
             poCenter = PDFGetStarCenter(poLS);
@@ -1272,7 +1272,7 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
             OGRLineString* poLS1 = (OGRLineString* )poMLS->getGeometryRef(0);
             OGRLineString* poLS2 = (OGRLineString* )poMLS->getGeometryRef(1);
 
-            /* Recognize points as outputed by GDAL (ogr-sym-0: cross (+) ) */
+            // Recognize points as written by GDAL (ogr-sym-0: cross (+) ).
             if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
                 poLS1->getY(0) == poLS1->getY(1) &&
                 poLS2->getX(0) == poLS2->getX(1) &&
@@ -1282,7 +1282,7 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
             {
                 poCenter = new OGRPoint(poLS2->getX(0), poLS1->getY(0));
             }
-            /* Recognize points as outputed by GDAL (ogr-sym-1: diagcross (X) ) */
+            // Recognize points as written by GDAL (ogr-sym-1: diagcross (X) ).
             else if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
                      poLS1->getX(0) == poLS2->getX(0) &&
                      poLS1->getY(0) == poLS2->getY(1) &&
@@ -1327,10 +1327,10 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
                         poLS &&
                         poLS->getNumPoints() == 5)
                     {
-                        /* Recognize points as outputed by GDAL (ogr-sym-3 : circle (filled)) */
+                        // Recognize points as written by GDAL (ogr-sym-3 : circle (filled))
                         poCenter = PDFGetCircleCenter(poLS);
 
-                        /* Recognize points as outputed by GDAL (ogr-sym-5: square (filled)) */
+                        // Recognize points as written by GDAL (ogr-sym-5: square (filled))
                         if (poCenter == NULL)
                             poCenter = PDFGetSquareCenter(poLS);
 
@@ -1346,14 +1346,14 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
                                                     (poLS->getY(0) + poLS->getY(2)) / 2);
                         }
                     }
-                    /* Recognize points as outputed by GDAL (ogr-sym-7: triangle (filled)) */
+                    // Recognize points as written by GDAL (ogr-sym-7: triangle (filled))
                     else if (nPolys == 0 &&
                              poLS &&
                              poLS->getNumPoints() == 4)
                     {
                         poCenter = PDFGetTriangleCenter(poLS);
                     }
-                    /* Recognize points as outputed by GDAL (ogr-sym-9: star (filled)) */
+                    // Recognize points as written by GDAL (ogr-sym-9: star (filled))
                     else if (nPolys == 0 &&
                              poLS &&
                              poLS->getNumPoints() == 11)

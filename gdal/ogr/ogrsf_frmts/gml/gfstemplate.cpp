@@ -110,7 +110,7 @@ bool GMLReader::ReArrangeTemplateClasses ( GFSTemplateList *pCC )
     int clIdx;
     for (clIdx = 0; clIdx < GetClassCount(); clIdx++)
     {
-    /* tranferring any previous FeatureClass */
+    /* Transferring any previous FeatureClass */
         m_papoSavedClass[clIdx] = m_papoClass[clIdx];
     }
 

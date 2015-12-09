@@ -768,7 +768,7 @@ static void kml2styletable (
 
     else {
         CPLError ( CE_Failure, CPLE_AppDefined,
-                   "ERROR Parseing kml Style: No id" );
+                   "ERROR parsing kml Style: No id" );
     }
 
     return;
@@ -782,19 +782,19 @@ StyleSelectorPtr StyleFromStyleSelector(
     const StyleSelectorPtr& poKmlStyleSelector, 
     OGRStyleTable * poStyleTable) 
 {
-    
+
     /***** is it a style? *****/
 
     if ( poKmlStyleSelector->IsA( kmldom::Type_Style) )
         return poKmlStyleSelector;
 
     /***** is it a style map? *****/
-    
+
     else if ( poKmlStyleSelector->IsA( kmldom::Type_StyleMap) )
         return StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyleSelector), poStyleTable);
 
     /***** not a style or a style map *****/
-    
+
     return NULL;
 }
 
@@ -858,8 +858,8 @@ static StyleSelectorPtr StyleFromStyleURL(
 
     if ( *pszUrl == '#' && poStyleTable ) {
 
-        /***** searh the style table for the style we *****/
-        /***** want and copy it back into the table   *****/
+        /***** Search the style table for the style we *****/
+        /***** want and copy it back into the table.   *****/
 
         const char *pszTest = NULL;
         pszTest = poStyleTable->Find ( pszUrl + 1 );
@@ -901,27 +901,27 @@ static StyleSelectorPtr StyleFromStyleURL(
                 /***** loop, read and copy to a string *****/
 
                 size_t nRead;
-                do {                        
+                do {
                     nRead = VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
                     if (nRead == 0)
                         break;
-                    
+
                     /***** copy buf to the string *****/
-                    
+
                     szbuf[nRead] = '\0';
-                    oStyle.append( szbuf );                        
+                    oStyle.append( szbuf );
                 } while (!VSIFEofL(fp));
-                
+
                 VSIFCloseL(fp);
 
                 /***** parse the kml into the dom *****/
-                
+
                 std::string oKmlErrors;
                 ElementPtr poKmlRoot = kmldom::Parse ( oStyle, &oKmlErrors );
 
                 if ( !poKmlRoot ) {
                     CPLError ( CE_Failure, CPLE_OpenFailed,
-                               "ERROR Parseing style kml %s :%s",
+                               "ERROR parsing style kml %s :%s",
                                pszUrlTmp, oKmlErrors.c_str (  ) );
                     CPLFree(pszUrlTmp);
                     CPLFree ( pszUrl );
@@ -960,7 +960,7 @@ static StyleSelectorPtr StyleFromStyleURL(
         }
     }
 
-    /***** FIXME add suport here for relative links inside kml *****/
+    /***** FIXME Add support here for relative links inside KML. *****/
 
     CPLFree ( pszUrl );
     CPLFree ( pszStyleMapId );
@@ -987,7 +987,7 @@ StyleSelectorPtr StyleFromStyleMap(
         PairPtr myPair = poKmlStyleMap->get_pair_array_at(i);
 
         /***** is it the right one of the pair? *****/
-        
+
         if ( myPair->get_key() == nStyleMapKey ) {
             
             if (myPair->has_styleselector())

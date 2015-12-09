@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 
     GDALGeneralCmdLineProcessor( argc, &argv, 0 );
 
-    // We don't actually use the arguments ourself. 
+    // We don't actually use the arguments ourself.
     CSLDestroy( argv );
     argv = NULL;
 

@@ -35,10 +35,10 @@
 
 CPL_CVSID("$Id$");
 
-/* why would fipszone and zone be paramers when they relate to a composite
+/* why would fipszone and zone be parameters when they relate to a composite
    projection which renders done into a non-zoned projection? */
 
-static const char *papszParameters[] =
+static const char * const papszParameters[] =
 {
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_SCALE_FACTOR,
@@ -77,7 +77,7 @@ static const char *papszParameters[] =
 // underscores instead of spaces.  Should we use the EPSG names were available?
 // Plate-Caree has an accent in the spec!
 
-static const char *papszProjectionSupported[] =
+static const char * const papszProjectionSupported[] =
 {
     SRS_PT_CASSINI_SOLDNER,
     SRS_PT_BONNE,
@@ -136,7 +136,7 @@ static const char *papszProjectionSupported[] =
     NULL
 };
 
-static const char *papszProjectionUnsupported[] =
+static const char * const papszProjectionUnsupported[] =
 {
     SRS_PT_NEW_ZEALAND_MAP_GRID,
     SRS_PT_TUNISIA_MINING_GRID,
@@ -146,7 +146,7 @@ static const char *papszProjectionUnsupported[] =
 /*
 ** List of supported projections with the PARAMETERS[] acceptable for each.
 */
-static const char *papszProjWithParms[] = {
+static const char * const papszProjWithParms[] = {
 
     SRS_PT_TRANSVERSE_MERCATOR,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -532,7 +532,7 @@ static const char *papszProjWithParms[] = {
     NULL
 };
 
-static const char *papszAliasGroupList[] = {
+static const char * const papszAliasGroupList[] = {
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_LATITUDE_OF_CENTER,
     NULL,
@@ -618,7 +618,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
         && !EQUAL(poRoot->GetValue(),"COMPD_CS"))
     {
         CPLDebug( "OGRSpatialReference::Validate",
-                  "Unrecognised root node `%s'\n",
+                  "Unrecognized root node `%s'\n",
                   poRoot->GetValue() );
         return OGRERR_CORRUPT_DATA;
     }
@@ -876,16 +876,16 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                               "PARAMETER has wrong number of children (%d),"
                               "not 2 as expected.\n",
                               poNode->GetChildCount() );
-                    
+
                     return OGRERR_CORRUPT_DATA;
                 }
                 else if( CSLFindString( (char **)papszParameters,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
-                              "Unrecognised PARAMETER `%s'.\n",
+                              "Unrecognized PARAMETER `%s'.\n",
                               poNode->GetChild(0)->GetValue() );
-                    
+
                     return OGRERR_UNSUPPORTED_SRS;
                 }
             }
@@ -897,7 +897,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                               "PROJECTION has wrong number of children (%d),"
                               "not 1 or 2 as expected.\n",
                               poNode->GetChildCount() );
-                    
+
                     return OGRERR_CORRUPT_DATA;
                 }
                 else if( CSLFindString( (char **)papszProjectionSupported,
@@ -906,18 +906,18 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
-                              "Unrecognised PROJECTION `%s'.\n",
+                              "Unrecognized PROJECTION `%s'.\n",
                               poNode->GetChild(0)->GetValue() );
-                    
+
                     return OGRERR_UNSUPPORTED_SRS;
                 }
                 else if( CSLFindString( (char **)papszProjectionSupported,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
-                              "Unsupported, but recognised PROJECTION `%s'.\n",
+                              "Unsupported, but recognized PROJECTION `%s'.\n",
                               poNode->GetChild(0)->GetValue() );
-                    
+
                     return OGRERR_UNSUPPORTED_SRS;
                 }
 

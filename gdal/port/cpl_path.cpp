@@ -626,7 +626,7 @@ const char *CPLFormCIFilename( const char * pszPath,
     else if( pszExtension[0] != '.' && strlen(pszExtension) > 0 )
         pszAddedExtSep = ".";
 
-    sprintf( pszFilename, "%s%s%s", 
+    snprintf( pszFilename, nLen, "%s%s%s", 
              pszBasename, pszAddedExtSep, pszExtension );
 
     const char *pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
@@ -787,7 +787,7 @@ int CPLIsFilenameRelative( const char *pszFilename )
  *
  * @param pszBaseDir the name of the directory relative to which the path 
  * should be computed.  pszBaseDir may be NULL in which case the original
- * target is returned without relitivizing.
+ * target is returned without relativizing.
  *
  * @param pszTarget the filename to be changed to be relative to pszBaseDir.
  *

@@ -38,7 +38,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *apszUnitMap[] = {
+static const char * const apszUnitMap[] = {
     "meters", "1.0",
     "meter", "1.0",
     "m", "1.0",
@@ -90,7 +90,7 @@ static const char *apszUnitMap[] = {
 /************************************************************************/
 char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
 {
-    static const char *keyNames[] = {
+    static const char * const keyNames[] = {
         "NAD = ", "Datum = ", "Ellipsoid = ", "Units = ", NULL
     };
 
@@ -703,7 +703,7 @@ void CheckUTM( GTIFDefn * psDefn, const char * pszCtString )
     if(!psDefn || !pszCtString)
         return;
 
-    static const char *apszUtmProjCode[] = {
+    static const char * const apszUtmProjCode[] = {
         "PSAD56", "17N", "16017",
         "PSAD56", "18N", "16018",
         "PSAD56", "19N", "16019",

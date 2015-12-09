@@ -86,6 +86,8 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
 static const int N_MAX_REGIONS = 1000;
 static const int DOWNLOAD_CHUNK_SIZE = 16384;
 
+namespace {
+
 typedef enum
 {
     EXIST_UNKNOWN = -1,
@@ -116,6 +118,28 @@ typedef struct
     char           *pData;
 } CachedRegion;
 
+typedef struct
+{
+    char*           pBuffer;
+    size_t          nSize;
+    bool            bIsHTTP;
+    bool            bIsInHeader;
+    bool            bMultiRange;
+    vsi_l_offset    nStartOffset;
+    vsi_l_offset    nEndOffset;
+    int             nHTTPCode;
+    vsi_l_offset    nContentLength;
+    bool            bFoundContentRange;
+    bool            bError;
+    bool            bDownloadHeaderOnly;
+
+    VSILFILE           *fp; 
+    VSICurlReadCbkFunc  pfnReadCbk;
+    void               *pReadCbkUserData;
+    bool                bInterrupted;
+} WriteFuncStruct;
+
+} /* end of anoymous namespace */
 
 static const char* VSICurlGetCacheFileName()
 {
@@ -467,28 +491,6 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 }
-
-
-typedef struct
-{
-    char*           pBuffer;
-    size_t          nSize;
-    bool            bIsHTTP;
-    bool            bIsInHeader;
-    bool            bMultiRange;
-    vsi_l_offset    nStartOffset;
-    vsi_l_offset    nEndOffset;
-    int             nHTTPCode;
-    vsi_l_offset    nContentLength;
-    bool            bFoundContentRange;
-    bool            bError;
-    bool            bDownloadHeaderOnly;
-
-    VSILFILE           *fp; 
-    VSICurlReadCbkFunc  pfnReadCbk;
-    void               *pReadCbkUserData;
-    bool                bInterrupted;
-} WriteFuncStruct;
 
 /************************************************************************/
 /*                    VSICURLInitWriteFuncStruct()                      */
@@ -891,7 +893,8 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     }
 
     char rangeStr[512];
-    sprintf(rangeStr, CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, startOffset,
+    snprintf(rangeStr, sizeof(rangeStr),
+             CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, startOffset,
             sWriteFuncHeaderData.nEndOffset);
 
     if (ENABLE_DEBUG)
@@ -934,7 +937,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
 
     if (ENABLE_DEBUG)
-        CPLDebug("VSICURL", "Got reponse_code=%ld", response_code);
+        CPLDebug("VSICURL", "Got response_code=%ld", response_code);
 
     if ((response_code != 200 && response_code != 206 &&
          response_code != 225 && response_code != 226 && response_code != 426) || sWriteFuncHeaderData.bError)

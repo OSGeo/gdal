@@ -978,12 +978,12 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 /**
  * \brief Fetch a format specific internally meaningful handle.
  *
- * This method is the same as the C GDALGetInternalHandle() method. 
+ * This method is the same as the C GDALGetInternalHandle() method.
  *
  * @param pszHandleName the handle name desired.  The meaningful names
  * will be specific to the file format.
  *
- * @return the desired handle value, or NULL if not recognised/supported.
+ * @return the desired handle value, or NULL if not recognized/supported.
  */
 
 void *GDALDataset::GetInternalHandle( CPL_UNUSED const char * pszHandleName )
@@ -2864,12 +2864,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
     {
         if( oOpenInfo.bStatOK )
             CPLError( CE_Failure, CPLE_OpenFailed,
-                    "`%s' not recognised as a supported file format.\n",
+                    "`%s' not recognized as a supported file format.\n",
                     pszFilename );
         else
             CPLError( CE_Failure, CPLE_OpenFailed,
                     "`%s' does not exist in the file system,\n"
-                    "and is not recognised as a supported dataset name.\n",
+                    "and is not recognized as a supported dataset name.\n",
                     pszFilename );
     }
 
@@ -3957,7 +3957,7 @@ OGRLayer *GDALDataset::ICreateLayer( const char * pszName,
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateLayer() not supported by this dataset." );
-              
+
     return NULL;
 }
 
@@ -3979,12 +3979,12 @@ OGRLayer *GDALDataset::ICreateLayer( const char * pszName,
  deprecated OGR_DS_CopyLayer().
 
  In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
+
  @param poSrcLayer source layer.
  @param pszNewName the name of the layer to create.
  @param papszOptions a StringList of name=value options.  Options are driver
                      specific. There is a common option to set output layer
-                     spatial reference: DST_SRSWKT. The option shoulde be in
+                     spatial reference: DST_SRSWKT. The option should be in
                      WKT format.
 
  @return an handle to the layer, or NULL if an error occurs.
@@ -4561,7 +4561,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
         for( i = 0; i < GetLayerCount(); i++ )
         {
             poLayer = GetLayer(i);
-        
+
             if( EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
         }
@@ -4588,7 +4588,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we weren't given a field name, drop all indexes.             */
+/*      If we were not given a field name, drop all indexes.            */
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
@@ -5442,7 +5442,7 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
     GDALSQLParseInfo* psParseInfo = (GDALSQLParseInfo*)CPLCalloc(1, sizeof(GDALSQLParseInfo));
 
 /* -------------------------------------------------------------------- */
-/*      Validate that all the source tables are recognised, count       */
+/*      Validate that all the source tables are recognized, count       */
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
     int  nFieldCount = 0, iTable, iField;

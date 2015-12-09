@@ -515,6 +515,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
     int anOffset[4];
     int iShpFile;
     char* pszFilename;
+    size_t nFilenameLen;
 
     if ( CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE_USE") == NULL )
         return FALSE;
@@ -541,7 +542,8 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             return FALSE;
     }
 
-    pszFilename = (char*) VSI_MALLOC_VERBOSE(strlen(pszRadixFileName) + 4 + 1);
+    nFilenameLen = strlen(pszRadixFileName) + 4 + 1;
+    pszFilename = (char*) VSI_MALLOC_VERBOSE(nFilenameLen);
     if (pszFilename == NULL)
         return FALSE;
 
@@ -566,7 +568,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             return FALSE;
         }
 
-        sprintf(pszFilename, "%s.%s", pszRadixFileName, apszExt[iShpFile]);
+        snprintf(pszFilename, nFilenameLen, "%s.%s", pszRadixFileName, apszExt[iShpFile]);
         fp = VSIFOpenL(pszFilename, "wb");
         if (fp == NULL)
         {

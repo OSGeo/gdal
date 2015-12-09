@@ -2219,9 +2219,9 @@ void OGRGeoPackageTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 /*                        HasFastSpatialFilter()                        */
 /************************************************************************/
 
-int OGRGeoPackageTableLayer::HasFastSpatialFilter(int iGeomCol)
+int OGRGeoPackageTableLayer::HasFastSpatialFilter(int iGeomColIn)
 {
-    if( iGeomCol < 0 || iGeomCol >= m_poFeatureDefn->GetGeomFieldCount() )
+    if( iGeomColIn < 0 || iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount() )
         return FALSE;
     return HasSpatialIndex();
 }
@@ -2230,16 +2230,16 @@ int OGRGeoPackageTableLayer::HasFastSpatialFilter(int iGeomCol)
 /*                           GetSpatialWhere()                          */
 /************************************************************************/
 
-CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomCol,
+CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
                                                OGRGeometry* poFilterGeom)
 {
     CPLString osSpatialWHERE;
 
-    if( iGeomCol < 0 || iGeomCol >= m_poFeatureDefn->GetGeomFieldCount() )
+    if( iGeomColIn < 0 || iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount() )
         return osSpatialWHERE;
 
     const char* pszT = m_pszTableName;
-    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef();
+    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(iGeomColIn)->GetNameRef();
 
     if( poFilterGeom != NULL )
     {

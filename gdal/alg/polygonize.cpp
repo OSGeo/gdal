@@ -568,7 +568,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
         panLastLineId[iX] = -1;
 
 /* -------------------------------------------------------------------- */
-/*      We will use a new enumerator for the second pass primariliy     */
+/*      We will use a new enumerator for the second pass primarily      */
 /*      so we can preserve the first pass map.                          */
 /* -------------------------------------------------------------------- */
     GDALRasterPolygonEnumeratorT<DataType, EqualityTest> oSecondEnum(nConnectedness);

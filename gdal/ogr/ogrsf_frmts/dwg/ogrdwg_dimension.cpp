@@ -98,10 +98,9 @@ OGRFeature *OGRDWGLayer::TranslateDIMENSION( OdDbEntityPtr poEntity )
         |
         X (14,24) (Target1)
 
-
 Given:
   Locations Arrow1, Target1, and Target2 we need to compute Arrow2.
- 
+
 Steps:
  1) Compute direction vector from Target1 to Arrow1 (Vec1).
  2) Compute direction vector for arrow as perpendicular to Vec1 (call Vec2).
@@ -122,13 +121,13 @@ the approach is as above in all these cases.
 
     dfVec1X = (oArrow1.x - oTarget1.x);
     dfVec1Y = (oArrow1.y - oTarget1.y);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Step 2, compute the direction vector from Arrow1 to Arrow2      */
-/*      as a perpendicluar to Vec1.                                     */
+/*      as a perpendicular to Vec1.                                     */
 /* -------------------------------------------------------------------- */
     double dfVec2X, dfVec2Y;
-    
+
     dfVec2X = dfVec1Y;
     dfVec2Y = -dfVec1X;
 
@@ -139,7 +138,7 @@ the approach is as above in all these cases.
 /* -------------------------------------------------------------------- */
     double dfL1M, dfL1B, dfL2M, dfL2B;
     double dfArrowX2, dfArrowY2;
-    
+
     // special case if vec1 is vertical.
     if( dfVec1X == 0.0 )
     {

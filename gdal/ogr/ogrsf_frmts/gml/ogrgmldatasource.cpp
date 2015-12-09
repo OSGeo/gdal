@@ -590,10 +590,10 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                 m_bGetSecondaryGeometryOption );
     if( poReader == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s appears to be GML but the GML reader can't\n"
-                  "be instantiated, likely because Xerces or Expat support wasn't\n"
-                  "configured in.", 
+                  "be instantiated, likely because Xerces or Expat support was\n"
+                  "not configured in.",
                   pszFilename );
         VSIFCloseL( fp );
         return false;
@@ -767,7 +767,6 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                 bHaveSchema = poReader->LoadClasses( osGFSFilename );
                 if (bHaveSchema)
                 {
-                    const char *pszXSDFilenameTmp;
                     pszXSDFilenameTmp = CPLResetExtension( pszFilename, "xsd" );
                     if( VSIStatExL( pszXSDFilenameTmp, &sGMLStatBuf,
                                     VSI_STAT_EXISTS_FLAG ) == 0 )
@@ -1146,13 +1145,13 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         !STARTS_WITH_CI(pszFilename, "/vsicurl/") &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl_streaming/"))
     {
-        VSILFILE    *fp = NULL;
+        VSILFILE    *l_fp = NULL;
 
         VSIStatBufL sGFSStatBuf;
         if( VSIStatExL( osGFSFilename, &sGFSStatBuf, VSI_STAT_EXISTS_FLAG ) != 0
-            && (fp = VSIFOpenL( osGFSFilename, "wt" )) != NULL )
+            && (l_fp = VSIFOpenL( osGFSFilename, "wt" )) != NULL )
         {
-            VSIFCloseL( fp );
+            VSIFCloseL( l_fp );
             poReader->SaveClasses( osGFSFilename );
         }
         else
@@ -1216,6 +1215,7 @@ void OGRGMLDataSource::BuildJointClassFromXSD()
     {
         GMLFeatureClass* poClass = poReader->GetClass(i);
 
+        {
         CPLString osPropertyName;
         osPropertyName.Printf("%s.%s", poClass->GetName(), "gml_id");
         GMLPropertyDefn* poNewProperty = new GMLPropertyDefn( osPropertyName );
@@ -1225,6 +1225,7 @@ void OGRGMLDataSource::BuildJointClassFromXSD()
         poNewProperty->SetSrcElement(osSrcElement);
         poNewProperty->SetType(GMLPT_String);
         poJointClass->AddProperty(poNewProperty);
+        }
 
         int iField;
         for( iField = 0; iField < poClass->GetPropertyCount(); iField++ )
@@ -1279,18 +1280,18 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
     GMLFeatureClass *poClass = poReader->GetClass(0);
     CPLString osJointClassName = "join";
 
-    int iField, iSubClass;
-    for( iField = 0; iField < poClass->GetPropertyCount(); iField ++ )
+    for( int iField = 0; iField < poClass->GetPropertyCount(); iField ++ )
     {
         GMLPropertyDefn* poProp = poClass->GetProperty(iField);
         CPLString osPrefix(poProp->GetName());
         size_t iPos = osPrefix.find('.');
         if( iPos != std::string::npos )
             osPrefix.resize(iPos);
+        int iSubClass;
         for( iSubClass = 0; iSubClass < (int)aapoProps.size(); iSubClass ++ )
         {
             CPLString osPrefixClass(aapoProps[iSubClass][0]->GetName());
-            size_t iPos = osPrefixClass.find('.');
+            iPos = osPrefixClass.find('.');
             if( iPos != std::string::npos )
                 osPrefixClass.resize(iPos);
             if( osPrefix == osPrefixClass )
@@ -1309,7 +1310,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
 
     poClass->StealProperties();
     std::vector< std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> > > aapoGeomProps;
-    for( iSubClass = 0; iSubClass < (int)aapoProps.size(); iSubClass ++ )
+    for( int iSubClass = 0; iSubClass < (int)aapoProps.size(); iSubClass ++ )
     {
         CPLString osPrefixClass(aapoProps[iSubClass][0]->GetName());
         size_t iPos = osPrefixClass.find('.');
@@ -1325,7 +1326,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
     aapoProps.resize(0);
 
     // Reorder geometry fields too
-    for( iField = 0; iField < poClass->GetGeometryPropertyCount(); iField ++ )
+    for( int iField = 0; iField < poClass->GetGeometryPropertyCount(); iField ++ )
     {
         GMLGeometryPropertyDefn* poProp = poClass->GetGeometryProperty(iField);
         CPLString osPrefix(poProp->GetName());
@@ -1344,9 +1345,9 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         aapoGeomProps[iSubClass].second.push_back(poProp);
     }
     poClass->StealGeometryProperties();
-    for( iSubClass = 0; iSubClass < (int)aapoGeomProps.size(); iSubClass ++ )
+    for( int iSubClass = 0; iSubClass < (int)aapoGeomProps.size(); iSubClass ++ )
     {
-        for( iField = 0; iField < (int)aapoGeomProps[iSubClass].second.size(); iField ++ )
+        for( int iField = 0; iField < (int)aapoGeomProps[iSubClass].second.size(); iField ++ )
         {
             poClass->AddGeometryProperty(aapoGeomProps[iSubClass].second[iField]);
         }
@@ -1699,13 +1700,13 @@ void OGRGMLDataSource::WriteTopElements()
         CPLFree(pszTmp);
     }
 
-    const char* pszName = CSLFetchNameValueDef(papszCreateOptions,
+    const char* l_pszName = CSLFetchNameValueDef(papszCreateOptions,
         "NAME", GetMetadataItem("NAME"));
-    if( pszName != NULL )
+    if( l_pszName != NULL )
     {
         if (bWriteSpaceIndentation)
             VSIFPrintfL( fpOutput, "  ");
-        char* pszTmp = CPLEscapeString(pszName, -1, CPLES_XML);
+        char* pszTmp = CPLEscapeString(l_pszName, -1, CPLES_XML);
         PrintLine( fpOutput, "<gml:name>%s</gml:name>", pszTmp );
         CPLFree(pszTmp);
     }
@@ -2505,14 +2506,14 @@ class OGRGMLSingleFeatureLayer : public OGRLayer
 /*                      OGRGMLSingleFeatureLayer()                      */
 /************************************************************************/
 
-OGRGMLSingleFeatureLayer::OGRGMLSingleFeatureLayer( int nVal )
+OGRGMLSingleFeatureLayer::OGRGMLSingleFeatureLayer( int nValIn )
 {
     poFeatureDefn = new OGRFeatureDefn( "SELECT" );
     poFeatureDefn->Reference();
     OGRFieldDefn oField( "Validates", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oField );
 
-    this->nVal = nVal;
+    this->nVal = nValIn;
     iNextShapeId = 0;
 }
 
@@ -2639,17 +2640,17 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
         }
     }
 
-    const char* pszName = strstr(pszXML, "<gml:name");
-    if( pszName )
-        pszName = strchr(pszName, '>');
-    if( pszName )
+    const char* l_pszName = strstr(pszXML, "<gml:name");
+    if( l_pszName )
+        l_pszName = strchr(l_pszName, '>');
+    if( l_pszName )
     {
-        pszName ++;
-        const char* pszEndName = strstr(pszName, "</gml:name>");
+        l_pszName ++;
+        const char* pszEndName = strstr(l_pszName, "</gml:name>");
         if( pszEndName )
         {
-            CPLString osTmp(pszName);
-            osTmp.resize(pszEndName-pszName);
+            CPLString osTmp(l_pszName);
+            osTmp.resize(pszEndName-l_pszName);
             char* pszTmp = CPLUnescapeString(osTmp, NULL, CPLES_XML);
             if( pszTmp )
                 SetMetadataItem("NAME", pszTmp);

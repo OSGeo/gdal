@@ -79,9 +79,9 @@ CPLString OGRCARTODBEscapeLiteral(const char* pszStr)
 /*                        OGRCARTODBTableLayer()                        */
 /************************************************************************/
 
-OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
+OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDSIn,
                                            const char* pszName) :
-                                           OGRCARTODBLayer(poDS)
+                                           OGRCARTODBLayer(poDSIn)
 
 {
     osName = pszName;
@@ -231,20 +231,20 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                             new OGRCartoDBGeomFieldDefn(pszAttname, eType);
                         if( bNotNull )
                             poFieldDefn->SetNullable(FALSE);
-                        OGRSpatialReference* poSRS = NULL;
+                        OGRSpatialReference* l_poSRS = NULL;
                         if( pszSRText != NULL )
                         {
-                            poSRS = new OGRSpatialReference();
+                            l_poSRS = new OGRSpatialReference();
                             char* pszTmp = (char* )pszSRText;
-                            if( poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
+                            if( l_poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
                             {
-                                delete poSRS;
-                                poSRS = NULL;
+                                delete l_poSRS;
+                                l_poSRS = NULL;
                             }
-                            if( poSRS != NULL )
+                            if( l_poSRS != NULL )
                             {
-                                poFieldDefn->SetSpatialRef(poSRS);
-                                poSRS->Release();
+                                poFieldDefn->SetSpatialRef(l_poSRS);
+                                l_poSRS->Release();
                             }
                         }
                         poFieldDefn->nSRID = nSRID;
@@ -311,7 +311,7 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNext)
+json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNextIn)
 {
     if( osFIDColName.size() > 0 )
     {
@@ -326,7 +326,7 @@ json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNext)
         return poDS->RunSQL(osSQL);
     }
     else
-        return OGRCARTODBLayer::FetchNewFeatures(iNext);
+        return OGRCARTODBLayer::FetchNewFeatures(iNextIn);
 }
 
 /************************************************************************/
@@ -1328,14 +1328,14 @@ int OGRCARTODBTableLayer::TestCapability( const char * pszCap )
 /************************************************************************/
 
 void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
-                                               OGRSpatialReference* poSRS,
+                                               OGRSpatialReference* poSRSIn,
                                                int bGeomNullable,
-                                               int bCartoDBify)
+                                               int bCartoDBifyIn)
 {
     bDeferedCreation = TRUE;
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
-    this->bCartoDBify = bCartoDBify;
+    this->bCartoDBify = bCartoDBifyIn;
     poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
@@ -1349,11 +1349,11 @@ void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
             new OGRCartoDBGeomFieldDefn("the_geom", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
         poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
-        if( poSRS != NULL )
+        if( poSRSIn != NULL )
         {
-            poFieldDefn->nSRID = poDS->FetchSRSId( poSRS );
+            poFieldDefn->nSRID = poDS->FetchSRSId( poSRSIn );
             poFeatureDefn->GetGeomFieldDefn(
-                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
+                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRSIn);
         }
     }
     osFIDColName = "cartodb_id";

@@ -742,7 +742,7 @@ void GDALRasterBlock::Touch_unlocked()
     if( poNewest == this )
         return;
 
-    // In theory, we shouldn't try to touch a block that has been detached
+    // In theory, we should not try to touch a block that has been detached
     CPLAssert(bMustDetach);
     if( !bMustDetach )
     {
@@ -754,7 +754,7 @@ void GDALRasterBlock::Touch_unlocked()
 
     if( poOldest == this )
         poOldest = this->poPrevious;
-    
+
     if( poPrevious != NULL )
         poPrevious->poNext = poNext;
 
@@ -770,7 +770,7 @@ void GDALRasterBlock::Touch_unlocked()
         poNewest->poPrevious = this;
     }
     poNewest = this;
-    
+
     if( poOldest == NULL )
     {
         CPLAssert( poPrevious == NULL && poNext == NULL );

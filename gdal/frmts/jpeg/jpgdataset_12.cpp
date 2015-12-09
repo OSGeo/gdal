@@ -30,6 +30,10 @@
 #if defined(JPEG_DUAL_MODE_8_12)
 #define LIBJPEG_12_PATH   "libjpeg12/jpeglib.h" 
 #define JPGDataset        JPGDataset12
+#define GDALJPEGErrorStruct     GDALJPEGErrorStruct12
+#define jpeg_vsiio_src    jpeg_vsiio_src_12
+#define jpeg_vsiio_dest   jpeg_vsiio_dest_12
+
 #include "jpgdataset.cpp"
 
 GDALDataset* JPEGDataset12Open(const char* pszFilename,

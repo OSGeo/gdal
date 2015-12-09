@@ -10,7 +10,7 @@
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
 #
-# Permission is hereby granted, free of charge, to any person oxyzaining a
+# Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -34,7 +34,7 @@ import os
 # WARNING: Only works from a git repository !
 
 # Please edit for a different author
-author_in_file = 'ouault'
+author_in_file = 'rouault'
 git_author = 'Even Rouault'
 full_author = 'Even Rouault <even dot rouault at mines-paris dot org>'
 

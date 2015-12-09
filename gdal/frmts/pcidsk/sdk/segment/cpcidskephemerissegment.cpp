@@ -58,7 +58,7 @@ namespace
  * Ephemeris Segment constructor
  * @param fileIn the PCIDSK file
  * @param segmentIn the segment index
- * @param segment_pointer the segement pointer
+ * @param segment_pointer the segment pointer
  * @param bLoad true to load the segment, else false (default true)
  */
 CPCIDSKEphemerisSegment::CPCIDSKEphemerisSegment(PCIDSKFile *fileIn, 
@@ -103,13 +103,12 @@ void CPCIDSKEphemerisSegment::Load()
         loaded_ = true;
         return ;
     }
-    
+
     mpoEphemeris = BinaryToEphemeris(0);
 
     // We've now loaded the structure up with data. Mark it as being loaded 
     // properly.
     loaded_ = true;
-    
 }
 
 /**
@@ -131,7 +130,7 @@ void CPCIDSKEphemerisSegment::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSKEphemerisSegment::Synchronize()
@@ -175,7 +174,6 @@ double CPCIDSKEphemerisSegment::ConvertDeg(double degree, int mode)
 	    result = 360 + degree;
 	else
 	    result = degree;
-	
     }
     return (result);
 }
@@ -184,8 +182,8 @@ double CPCIDSKEphemerisSegment::ConvertDeg(double degree, int mode)
 /*		      ReadAvhrrEphemerisSegment()                       */
 /************************************************************************/
 /**
- *  Read the contents of blocks 9, 11, and onwards from the orbit	
- *  segment into the EphemerisSeg_t structure.	
+ *  Read the contents of blocks 9, 11, and onwards from the orbit
+ *  segment into the EphemerisSeg_t structure.
  * @param nStartBlock where to start to read in the buffer
  * @param psEphSegRec the structure to populate with information.
  */
@@ -359,8 +357,8 @@ CPCIDSKEphemerisSegment::ReadAvhrrInt32(unsigned char* pbyBuf)
 /************************************************************************/
 /*		      WriteAvhrrEphemerisSegment()                      */
 /************************************************************************/
-/**                                                                      
- *  Write the contents of blocks 9, 10, and onwards to the orbit	
+/**
+ *  Write the contents of blocks 9, 10, and onwards to the orbit
  *  segment from fields in the EphemerisSeg_t structure.
  * @param nStartBlock where to start to write the information in the buffer
  * @param psEphSegRec the information to write.
@@ -439,7 +437,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
     seg_data.Put(as->szInclination.c_str(),nPos+432,16,true);
     seg_data.Put(as->szMeanAnomaly.c_str(),nPos+448,16,true);
     seg_data.Put(as->szSemiMajorAxis.c_str(),nPos+464,16,true);
-   
+
 /* -------------------------------------------------------------------- */
 /*  second avhrr block is all zeros.					*/
 /* -------------------------------------------------------------------- */
@@ -448,7 +446,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 /*  Write the 3rd avhrr Block.                                          */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512*2;
-    
+
     seg_data.Put(as->nRecordSize,nPos,16);
     seg_data.Put(as->nBlockSize,nPos+16,16);
     seg_data.Put(as->nNumRecordsPerBlock,nPos+32,16);
@@ -522,7 +520,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrScanlineRecord(
         WriteAvhrrInt32(sr->anSpaceScanData[i],  b+(60+i*4));
 
 }
- 
+
 /************************************************************************/
 /*			   WriteAvhrrInt32()                            */
 /************************************************************************/
@@ -545,12 +543,12 @@ void CPCIDSKEphemerisSegment::WriteAvhrrInt32(int nValue,
 /*                        BinaryToEphemeris()                           */
 /************************************************************************/
 /**
- * Read binary information from a binary buffer to create an 
+ * Read binary information from a binary buffer to create an
  * EphemerisSeg_t structure. The caller is responsible to free the memory
  * of the returned structure with delete.
  *
  * @param nStartBlock where to start read the orbit info into the buffer.
- * @return the orbbit information 
+ * @return the orbit information.
  */
 EphemerisSeg_t *
 CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
@@ -561,11 +559,11 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
     int nPos = nStartBlock;
 
     l_segment = new EphemerisSeg_t();
-    
+
 /* -------------------------------------------------------------------- */
 /*	Process first block.						*/
 /* -------------------------------------------------------------------- */
-    
+
     l_segment->SatelliteDesc = seg_data.Get(nPos+8,32);  
     l_segment->SceneID = seg_data.Get(nPos+40, 32);
 

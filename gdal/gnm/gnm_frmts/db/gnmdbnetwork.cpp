@@ -105,14 +105,14 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
         return CE_Failure;
     }
 
-    GDALDriver *poDriver = m_poDS->GetDriver();
-    if(NULL == poDriver)
+    GDALDriver *l_poDriver = m_poDS->GetDriver();
+    if(NULL == l_poDriver)
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Get dataset driver failed");
         return CE_Failure;
     }
 
-    if(!CheckStorageDriverSupport(poDriver->GetDescription()))
+    if(!CheckStorageDriverSupport(l_poDriver->GetDescription()))
     {
         return CE_Failure;
     }

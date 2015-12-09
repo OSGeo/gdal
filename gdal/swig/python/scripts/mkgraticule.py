@@ -132,7 +132,7 @@ if t_srs is not None:
 else:
     t_srs_o = osr.SpatialReference()
     t_srs_o.SetFromUserInput( 'WGS84' )
-    
+
 #############################################################################-
 # Create graticule file.
 
@@ -149,7 +149,7 @@ layer = ds.CreateLayer( 'out', geom_type = ogr.wkbLineString,
 
 #########################################################################
 # Not connected case.  Produce individual segments are these are going to
-# be more resilent in the face of reprojection errors.
+# be more resilient in the face of reprojection errors.
 
 if not connected:
     #########################################################################
@@ -167,7 +167,7 @@ if not connected:
             err = 0
             if ct is not None:
                 err = geom.Transform( ct )
-              
+
             if err is 0:
                 feat.SetGeometry( geom )
                 layer.CreateFeature( feat )

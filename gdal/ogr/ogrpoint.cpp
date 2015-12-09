@@ -473,9 +473,9 @@ OGRErr OGRPoint::exportToWkt( char ** ppszDstText,
     {
         OGRMakeWktCoordinate(szCoordinate, x, y, z, getCoordinateDimension() );
         if( getCoordinateDimension() == 3 && eWkbVariant == wkbVariantIso )
-            sprintf( szTextEquiv, "POINT Z (%s)", szCoordinate );
+            snprintf( szTextEquiv, sizeof(szTextEquiv), "POINT Z (%s)", szCoordinate );
         else
-            sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
+            snprintf( szTextEquiv, sizeof(szTextEquiv), "POINT (%s)", szCoordinate );
         *ppszDstText = CPLStrdup( szTextEquiv );
     }
     

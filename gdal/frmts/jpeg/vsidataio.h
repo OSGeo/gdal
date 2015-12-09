@@ -34,7 +34,11 @@
 #include "cpl_vsi.h"
 
 CPL_C_START
-#include "jpeglib.h"
+#ifdef LIBJPEG_12_PATH
+#  include LIBJPEG_12_PATH
+#else
+#  include "jpeglib.h"
+#endif
 CPL_C_END
 
 void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);

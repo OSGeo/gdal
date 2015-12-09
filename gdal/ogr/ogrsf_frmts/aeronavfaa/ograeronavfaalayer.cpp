@@ -389,10 +389,10 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
 /*                    OGRAeronavFAARouteLayer()                        */
 /************************************************************************/
 
-OGRAeronavFAARouteLayer::OGRAeronavFAARouteLayer( VSILFILE* fp, const char* pszLayerName, int bIsDPOrSTARS ) :
+OGRAeronavFAARouteLayer::OGRAeronavFAARouteLayer( VSILFILE* fp, const char* pszLayerName, int bIsDPOrSTARSIn ) :
                         OGRAeronavFAALayer(fp, pszLayerName)
 {
-    this->bIsDPOrSTARS = bIsDPOrSTARS;
+    this->bIsDPOrSTARS = bIsDPOrSTARSIn;
 
     poFeatureDefn->SetGeomType( wkbLineString );
 

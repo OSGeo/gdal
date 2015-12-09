@@ -647,9 +647,10 @@ unsigned int CPCIDSKRPCModelSegment::GetPixels(void) const
 void CPCIDSKRPCModelSegment::SetRasterSize(const unsigned int lines, const unsigned int pixels)
 {
     if (lines == 0 || pixels == 0) {
-        throw PCIDSKException("Non-sensical raster dimensions provided: %ux%u", lines, pixels);
+        throw PCIDSKException("Nonsensical raster dimensions provided: %ux%u",
+                              lines, pixels);
     }
-    
+
     pimpl_->lines = lines;
     pimpl_->pixels = pixels;
     mbModified = true;
@@ -660,7 +661,7 @@ void CPCIDSKRPCModelSegment::SetDownsample(const unsigned int downsample)
     if (downsample == 0) {
         throw PCIDSKException("Invalid downsample factor provided: %u", downsample);
     }
-    
+
     pimpl_->downsample = downsample;
     mbModified = true;
 }

@@ -1160,7 +1160,6 @@ OGRFeature *OGRSXFLayer::TranslateLine(const SXFRecordDescription& certifInfo,
     double dfY = 1.0;
     double dfZ = 0.0;
     GUInt32 nOffset = 0;
-    GUInt32 count;
     GUInt32 nDelta = 0;
 
     //OGRFeatureDefn *fd = poFeatureDefn->Clone();
@@ -1174,7 +1173,7 @@ OGRFeature *OGRSXFLayer::TranslateLine(const SXFRecordDescription& certifInfo,
 
     OGRLineString* poLS = new OGRLineString();
 
-    for(count=0 ; count <  certifInfo.nPointCount ; count++)
+    for(GUInt32 count=0 ; count <  certifInfo.nPointCount ; count++)
     {
         const char * psCoords = psRecordBuf + nOffset ;
 
@@ -1415,7 +1414,7 @@ OGRFeature *OGRSXFLayer::TranslatePolygon(const SXFRecordDescription& certifInfo
             poLS->addPoint( dfX, dfY, dfZ );
         }
 
-        OGRLinearRing *poLR = new OGRLinearRing();
+        poLR = new OGRLinearRing();
         poLR->addSubLineString( poLS, 0 );
 
         poPoly->addRingDirectly( poLR );

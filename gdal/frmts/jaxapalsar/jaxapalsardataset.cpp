@@ -381,33 +381,33 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* extract equivalent number of looks */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH + 
                   EFFECTIVE_LOOKS_AZIMUTH_OFFSET, SEEK_SET );
-        char pszENL[17];
+        char szENL[17];
         double dfENL;
         READ_CHAR_FLOAT(dfENL, 16, fp);
-        sprintf( pszENL, "%-16.1f", dfENL );
-        poDS->SetMetadataItem( "AZIMUTH_LOOKS", pszENL );
+        snprintf( szENL, sizeof(szENL), "%-16.1f", dfENL );
+        poDS->SetMetadataItem( "AZIMUTH_LOOKS", szENL );
 
         /* extract pixel spacings */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   DATA_SET_SUMMARY_LENGTH + PIXEL_SPACING_OFFSET, SEEK_SET );
         double dfPixelSpacing;
         double dfLineSpacing;
-        char pszPixelSpacing[33];
-        char pszLineSpacing[33];
+        char szPixelSpacing[33];
+        char szLineSpacing[33];
         READ_CHAR_FLOAT(dfPixelSpacing, 16, fp);
         READ_CHAR_FLOAT(dfLineSpacing, 16, fp);
-        sprintf( pszPixelSpacing, "%-32.1f",dfPixelSpacing );
-        sprintf( pszLineSpacing, "%-32.1f", dfLineSpacing );
-        poDS->SetMetadataItem( "PIXEL_SPACING", pszPixelSpacing );
-        poDS->SetMetadataItem( "LINE_SPACING", pszPixelSpacing );
+        snprintf( szPixelSpacing, sizeof(szPixelSpacing), "%-32.1f",dfPixelSpacing );
+        snprintf( szLineSpacing, sizeof(szLineSpacing), "%-32.1f", dfLineSpacing );
+        poDS->SetMetadataItem( "PIXEL_SPACING", szPixelSpacing );
+        poDS->SetMetadataItem( "LINE_SPACING", szPixelSpacing );
 
         /* Alphanumeric projection name */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   DATA_SET_SUMMARY_LENGTH + ALPHANUMERIC_PROJECTION_NAME_OFFSET,
                   SEEK_SET );
-        char pszProjName[33];
-        READ_STRING(pszProjName, 32, fp);
-        poDS->SetMetadataItem( "PROJECTION_NAME", pszProjName );
+        char szProjName[33];
+        READ_STRING(szProjName, 32, fp);
+        poDS->SetMetadataItem( "PROJECTION_NAME", szProjName );
 		
         /* Extract corner GCPs */
         poDS->nGCPCount = 4;
@@ -418,10 +418,10 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* setup the GCPs */
         int i;
         for (i = 0; i < poDS->nGCPCount; i++) {
-            char pszID[2];
-            sprintf( pszID, "%d", i + 1);
+            char szID[30];
+            snprintf( szID, sizeof(szID), "%d", i + 1);
             CPLFree(poDS->pasGCPList[i].pszId);
-            poDS->pasGCPList[i].pszId = CPLStrdup( pszID );
+            poDS->pasGCPList[i].pszId = CPLStrdup( szID );
             poDS->pasGCPList[i].dfGCPZ = 0.0;
         }
 
@@ -530,7 +530,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     /* Check that this actually is a JAXA PALSAR product */
     if ( !PALSARJaxaDataset::Identify(poOpenInfo) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -541,7 +541,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
                   " datasets.\n" );
         return NULL;
     }
-    
+
     PALSARJaxaDataset *poDS = new PALSARJaxaDataset();
 
     /* Get the suffix of the filename, we'll need this */
@@ -549,15 +549,16 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
                                  (CPLGetFilename( poOpenInfo->pszFilename ) + 3) );
 
     /* Try to read each of the polarizations */
-    char *pszImgFile = (char *)VSIMalloc( 
+    const size_t nImgFileLen =
         strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) + 
-        strlen( pszSuffix ) + 8 );
+        strlen( pszSuffix ) + 8;
+    char *pszImgFile = (char *)CPLMalloc( nImgFileLen );
 
     int nBandNum = 1;
 
     /* HH */
     VSILFILE *fpHH;
-    sprintf( pszImgFile, "%s%sIMG-HH%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HH%s", 
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpHH = VSIFOpenL( pszImgFile, "rb" );
     if (fpHH != NULL) { 
@@ -567,7 +568,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     /* HV */
     VSILFILE *fpHV;
-    sprintf( pszImgFile, "%s%sIMG-HV%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HV%s", 
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpHV = VSIFOpenL( pszImgFile, "rb" );
     if (fpHV != NULL) {
@@ -577,7 +578,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     /* VH */
     VSILFILE *fpVH;
-    sprintf( pszImgFile, "%s%sIMG-VH%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VH%s", 
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpVH = VSIFOpenL( pszImgFile, "rb" );
     if (fpVH != NULL) {
@@ -587,7 +588,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     /* VV */
     VSILFILE *fpVV;
-    sprintf( pszImgFile, "%s%sIMG-VV%s",
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     fpVV = VSIFOpenL( pszImgFile, "rb" );
     if (fpVV != NULL) {
@@ -616,10 +617,10 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     }
 
     /* read metadata from Leader file. */
-    char *pszLeaderFilename = (char *)VSIMalloc( 
-        strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) + 
-        strlen(pszSuffix) + 5 );
-    sprintf( pszLeaderFilename, "%s%sLED%s", 
+    const size_t nLeaderFilenameLen = strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) + 
+        strlen(pszSuffix) + 5;
+    char *pszLeaderFilename = (char *)CPLMalloc( nLeaderFilenameLen );
+    snprintf( pszLeaderFilename, nLeaderFilenameLen, "%s%sLED%s", 
              CPLGetDirname( poOpenInfo->pszFilename ) , SEP_STRING, pszSuffix );
 
     VSILFILE *fpLeader = VSIFOpenL( pszLeaderFilename, "rb" );

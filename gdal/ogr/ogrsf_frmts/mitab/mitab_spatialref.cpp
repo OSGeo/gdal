@@ -17,10 +17,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -47,7 +47,7 @@
  * Cleanup Win32 Compile Warnings (GDAL bug #2930)
  *
  * Revision 1.50  2010-07-05 17:20:14  aboudreault
- * Added Krovak projection suppoprt (bug 2230)
+ * Added Krovak projection support (bug 2230)
  *
  * Revision 1.49  2009-10-15 16:16:37  fwarmerdam
  * add the default EPSG/OGR name for new zealand datums (gdal #3187)
@@ -144,7 +144,7 @@
  * Added new datums/ellipsoid from MapInfo V6.0
  *
  * Revision 1.20  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.19  2000/02/07 17:43:17  daniel
  * Fixed offset in parsing of custom datum string in SetSpatialRef()
@@ -1316,7 +1316,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
             && sTABProj.adDatumParams[3] == 0.0
             && sTABProj.adDatumParams[4] == 0.0 )
         {
-            sprintf( szDatumName,
+            snprintf( szDatumName, sizeof(szDatumName), 
                      "MIF 999,%d,%.15g,%.15g,%.15g", 
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX, 
@@ -1325,7 +1325,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         }
         else
         {
-            sprintf( szDatumName,
+            snprintf( szDatumName, sizeof(szDatumName), 
                      "MIF 9999,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX, 
@@ -1383,7 +1383,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     }
     else
     {
-        sprintf( szDatumName, "MIF %d", psDatumInfo->nMapInfoDatumID );
+        snprintf( szDatumName, sizeof(szDatumName), "MIF %d", psDatumInfo->nMapInfoDatumID );
     }
 
     /*-----------------------------------------------------------------

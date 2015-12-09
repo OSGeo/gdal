@@ -563,7 +563,7 @@ typedef struct AVCE00ReadInfo_t
     AVCCoverType eCoverType;
 
     /* pasSections is built when the coverage is opened and describes
-     * the squeleton of the E00 file.
+     * the skeleton of the E00 file.
      */
     AVCE00Section *pasSections;
     int            numSections;
@@ -823,7 +823,7 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef);
 
 GBool AVCFileExists(const char *pszPath, const char *pszName);
 char *AVCAdjustCaseSensitiveFilename(char *pszFname);
-int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
+int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType eType,
                        double dValue);
 
 /*=====================================================================

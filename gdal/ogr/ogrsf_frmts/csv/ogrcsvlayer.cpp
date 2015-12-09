@@ -219,9 +219,9 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
-                          VSILFILE * fp, const char *pszFilename,
-                          int bNew, int bInWriteMode,
-                          char chDelimiter ) :
+                          VSILFILE * fp, const char *pszFilenameIn,
+                          int bNewIn, int bInWriteModeIn,
+                          char chDelimiterIn ) :
     poFeatureDefn(NULL),
     fpCSV(fp),
     nNextFID(1),
@@ -251,10 +251,10 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     bMergeDelimiter(FALSE),
     bEmptyStringNull(FALSE)
 {
-    this->bNew = bNew;
-    this->bInWriteMode = bInWriteMode;
-    this->pszFilename = CPLStrdup(pszFilename);
-    this->chDelimiter = chDelimiter;
+    this->bNew = bNewIn;
+    this->bInWriteMode = bInWriteModeIn;
+    this->pszFilename = CPLStrdup(pszFilenameIn);
+    this->chDelimiter = chDelimiterIn;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
     SetDescription( poFeatureDefn->GetName() );
@@ -411,10 +411,10 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             /* tokenize without quotes to get the actual values */
             CSLDestroy( papszTokens );
             // papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, FALSE );   
-            int nFlags = CSLT_HONOURSTRINGS;
+            int l_nFlags = CSLT_HONOURSTRINGS;
             if( !bMergeDelimiter )
-                nFlags |= CSLT_ALLOWEMPTYTOKENS;
-            papszTokens = CSLTokenizeString2( pszLine, szDelimiter,  nFlags );
+                l_nFlags |= CSLT_ALLOWEMPTYTOKENS;
+            papszTokens = CSLTokenizeString2( pszLine, szDelimiter,  l_nFlags );
             nFieldCount = CSLCount( papszTokens );
         }
     }
@@ -566,7 +566,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                 break;
             }
             pszFieldName = szFieldNameBuffer;
-            sprintf( szFieldNameBuffer, "field_%d", iField+1 );
+            snprintf( szFieldNameBuffer, sizeof(szFieldNameBuffer), "field_%d", iField+1 );
         }
 
         OGRFieldDefn oField(pszFieldName, OFTString);
@@ -574,9 +574,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             if( EQUAL(papszFieldTypes[iField], "WKT") )
             {
                 eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
-                const char* pszFieldName = oField.GetNameRef();
                 panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
-                OGRGeomFieldDefn oGeomFieldDefn(pszFieldName, wkbUnknown );
+                OGRGeomFieldDefn oGeomFieldDefn(oField.GetNameRef(), wkbUnknown );
                 poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
                 if( bKeepGeomColumns )
                     poFeatureDefn->AddFieldDefn( &oField );
@@ -683,7 +682,6 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         {
             eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
 
-            const char* pszFieldName = oField.GetNameRef();
             panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
             OGRGeomFieldDefn oGeomFieldDefn(
                 EQUAL(pszFieldName,"WKT") ? "" : CPLSPrintf("geom_%s", pszFieldName),
@@ -720,9 +718,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         else if( Matches(oField.GetNameRef(),papszGeomPossibleNames) )
         {
             eGeometryFormat = OGR_CSV_GEOM_AS_SOME_GEOM_FORMAT;
-            const char* pszFieldName = oField.GetNameRef();
             panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
-            OGRGeomFieldDefn oGeomFieldDefn(pszFieldName, wkbUnknown );
+            OGRGeomFieldDefn oGeomFieldDefn(oField.GetNameRef(), wkbUnknown );
             poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
             if( !bKeepGeomColumns )
                 continue;
@@ -2185,10 +2182,10 @@ void OGRCSVLayer::SetCRLF( int bNewValue )
 /************************************************************************/
 
 void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
-                                   OGRCSVGeometryFormat eGeometryFormat,
+                                   OGRCSVGeometryFormat eGeometryFormatIn,
                                    const char* pszGeomCol)
 {
-    this->eGeometryFormat = eGeometryFormat;
+    this->eGeometryFormat = eGeometryFormatIn;
     if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT && eGType != wkbNone )
     {
         OGRGeomFieldDefn oGFld(pszGeomCol, eGType);
@@ -2207,18 +2204,18 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
 /*                          SetCreateCSVT()                             */
 /************************************************************************/
 
-void OGRCSVLayer::SetCreateCSVT(int bCreateCSVT)
+void OGRCSVLayer::SetCreateCSVT(int bCreateCSVTIn)
 {
-    this->bCreateCSVT = bCreateCSVT;
+    this->bCreateCSVT = bCreateCSVTIn;
 }
 
 /************************************************************************/
 /*                          SetWriteBOM()                               */
 /************************************************************************/
 
-void OGRCSVLayer::SetWriteBOM(int bWriteBOM)
+void OGRCSVLayer::SetWriteBOM(int bWriteBOMIn)
 {
-    this->bWriteBOM = bWriteBOM;
+    this->bWriteBOM = bWriteBOMIn;
 }
 
 /************************************************************************/

@@ -126,9 +126,9 @@ class OGRCSWDataSource : public OGRDataSource
 /*                           OGRCSWLayer()                              */
 /************************************************************************/
 
-OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDS)
+OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn("records");
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
@@ -508,7 +508,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
 
     CPLHTTPDestroyResult(psResult);
 
-    GDALDataset* poBaseDS = NULL;
+    GDALDataset* l_poBaseDS = NULL;
 
     if( poDS->GetOutputSchema().size() )
     {
@@ -536,8 +536,8 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
             return NULL;
         }
 
-        poBaseDS = poDrv->Create("", 0, 0, 0, GDT_Unknown, NULL);
-        OGRLayer* poLyr = poBaseDS->CreateLayer("records");
+        l_poBaseDS = poDrv->Create("", 0, 0, 0, GDT_Unknown, NULL);
+        OGRLayer* poLyr = l_poBaseDS->CreateLayer("records");
         OGRFieldDefn oField("raw_xml", OFTString);
         poLyr->CreateField(&oField);
         for( CPLXMLNode* psIter = psSearchResults->psChild; psIter; psIter = psIter->psNext )
@@ -617,8 +617,8 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
     }
     else
     {
-        poBaseDS = (GDALDataset*) OGROpen(osTmpFileName, FALSE, NULL);
-        if (poBaseDS == NULL)
+        l_poBaseDS = (GDALDataset*) OGROpen(osTmpFileName, FALSE, NULL);
+        if (l_poBaseDS == NULL)
         {
             if( strstr((const char*)pabyData, "<csw:GetRecordsResponse") == NULL &&
                 strstr((const char*)pabyData, "<GetRecordsResponse") == NULL )
@@ -632,14 +632,14 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
         }
     }
 
-    OGRLayer* poLayer = poBaseDS->GetLayer(0);
+    OGRLayer* poLayer = l_poBaseDS->GetLayer(0);
     if (poLayer == NULL)
     {
-        GDALClose(poBaseDS);
+        GDALClose(l_poBaseDS);
         return NULL;
     }
 
-    return poBaseDS;
+    return l_poBaseDS;
 }
 
 /************************************************************************/
@@ -897,9 +897,9 @@ CPLHTTPResult* OGRCSWDataSource::SendGetCapabilities()
 /************************************************************************/
 
 int OGRCSWDataSource::Open( const char * pszFilename,
-                            char** papszOpenOptions )
+                            char** papszOpenOptionsIn )
 {
-    const char* pszBaseURL = CSLFetchNameValue(papszOpenOptions, "URL");
+    const char* pszBaseURL = CSLFetchNameValue(papszOpenOptionsIn, "URL");
     if( pszBaseURL == NULL )
     {
         pszBaseURL = pszFilename;
@@ -912,17 +912,17 @@ int OGRCSWDataSource::Open( const char * pszFilename,
         }
     }
     osBaseURL = pszBaseURL;
-    osElementSetName = CSLFetchNameValueDef(papszOpenOptions, "ELEMENTSETNAME",
+    osElementSetName = CSLFetchNameValueDef(papszOpenOptionsIn, "ELEMENTSETNAME",
                                             "full");
-    bFullExtentRecordsAsNonSpatial = CSLFetchBoolean(papszOpenOptions,
+    bFullExtentRecordsAsNonSpatial = CSLFetchBoolean(papszOpenOptionsIn,
                                                      "FULL_EXTENT_RECORDS_AS_NON_SPATIAL",
                                                      FALSE);
-    osOutputSchema = CSLFetchNameValueDef(papszOpenOptions, "OUTPUT_SCHEMA", "");
+    osOutputSchema = CSLFetchNameValueDef(papszOpenOptionsIn, "OUTPUT_SCHEMA", "");
     if( EQUAL(osOutputSchema, "gmd") )
         osOutputSchema = "http://www.isotc211.org/2005/gmd";
     else if( EQUAL(osOutputSchema, "csw") )
         osOutputSchema = "http://www.opengis.net/cat/csw/2.0.2";
-    nMaxRecords = atoi(CSLFetchNameValueDef(papszOpenOptions, "MAX_RECORDS", "500"));
+    nMaxRecords = atoi(CSLFetchNameValueDef(papszOpenOptionsIn, "MAX_RECORDS", "500"));
 
     if (!STARTS_WITH(osBaseURL, "http://") &&
         !STARTS_WITH(osBaseURL, "https://") &&

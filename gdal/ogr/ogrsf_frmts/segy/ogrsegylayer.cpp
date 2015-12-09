@@ -226,11 +226,11 @@ static float SEGYReadMSBFloat32(const GByte* pabyVal)
 
 
 OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
-                            VSILFILE* fp,
+                            VSILFILE* fpIn,
                             SEGYBinaryFileHeader* psBFH )
 
 {
-    this->fp = fp;
+    this->fp = fpIn;
     nNextFID = 0;
     bEOF = FALSE;
     memcpy(&sBFH, psBFH, sizeof(sBFH));

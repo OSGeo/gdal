@@ -378,7 +378,7 @@ you will generally want to use it in combination of the -clipdstlayer, -clipdstw
 <dt> <b>-clipdstlayer</b> <em>layername</em>:</dt><dd>Select the named layer from the destination clip datasource.</dd>
 <dt> <b>-clipdstwhere</b> <em>expression</em>:</dt><dd>Restrict desired geometries based on attribute query.</dd>
 <dt> <b>-wrapdateline</b>:</dt><dd> (starting with GDAL 1.7.0) split geometries crossing the dateline meridian (long. = +/- 180deg)</dd>
-<dt> <b>-datelineoffset</b>:</dt><dd> (starting with GDAL 1.10) offset from dateline in degrees (default long. = +/- 10deg, geometries within 170deg to -170deg will be splited)</dd>
+<dt> <b>-datelineoffset</b>:</dt><dd> (starting with GDAL 1.10) offset from dateline in degrees (default long. = +/- 10deg, geometries within 170deg to -170deg will be split)</dd>
 <dt> <b>-simplify</b><em> tolerance</em>:</dt><dd> (starting with GDAL 1.9.0) distance tolerance for simplification.
 Note: the algorithm used preserves topology per feature, in particular for polygon geometries, but not for a whole layer.</dd>
 <dt> <b>-segmentize</b><em> max_dist</em>:</dt><dd> (starting with GDAL 1.6.0) maximum distance between 2 nodes.
@@ -594,7 +594,7 @@ The ogrlineref program can be used to create a linear reference - a file contain
 a segments of special length (e.g. 1 km in reference units) and get coordinates, 
 linear referenced distances or sublines (subpaths) from this file. The utility not
 required the M or Z values in geometry. The results can be stored in any OGR supported 
-format. Also some information writed to the stdout.  
+format. Also some information is written to the stdout.
 
 <dl>
 <dt><b>\-\-help-general</b>:</dt><dd> Show the usage.</dd>
@@ -628,7 +628,7 @@ format. Also some information writed to the stdout.
 <dt> <b>-of</b><em>field_name</em>:</dt><dd> The field name for storing the 
     uniq values of input lines</dd>
 <dt> <b>-s</b><em>step</em>:</dt><dd> The part size in linear units</dd>
-<dt> <b>-get_pos</b>:</dt><dd> Return linear referenced postion for input X, Y</dd>
+<dt> <b>-get_pos</b>:</dt><dd> Return linear referenced position for input X, Y</dd>
 <dt> <b>-x</b><em>long</em>:</dt><dd> Input X coordinate</dd>
 <dt> <b>-y</b><em>lat</em>:</dt><dd> Input Y coordinate</dd>
 <dt> <b>-get_coord</b>:</dt><dd> Return point on path for input linear distance</dd>

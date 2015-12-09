@@ -642,7 +642,7 @@ struct qhT {
                              previous facets do not have outside sets
                              NARROWhull: previous facets may have coplanar outside sets for qh_outcoplanar */
   facetT *newfacet_list;  /* list of new facets to end of facet_list */
-  facetT *visible_list;   /* list of visible facets preceeding newfacet_list,
+  facetT *visible_list;   /* list of visible facets preceding newfacet_list,
                              facet->visible set */
   int       num_visible;  /* current number of visible facets */
   unsigned tracefacet_id;  /* set at init, then can print whenever */
@@ -654,7 +654,7 @@ struct qhT {
   vertexT *newvertex_list; /* list of vertices in newfacet_list, to vertex_tail
                              all vertices have 'newlist' set */
   int   num_facets;       /* number of facets in facet_list
-                             includes visble faces (num_visible) */
+                             includes visible faces (num_visible) */
   int   num_vertices;     /* number of vertices in facet_list */
   int   num_outside;      /* number of points in outsidesets (for tracing and RANDOMoutside)
                                includes coplanar outsideset points for NARROWhull/qh_outcoplanar() */

@@ -68,7 +68,7 @@ CPL_C_END
 // To remind myself not to use CPLString in this file!
 #define CPLString Please_do_not_use_CPLString_in_this_file
 
-static const char *papszDatumEquiv[] =
+static const char * const papszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
     "Militar_Geographische_Institute",
@@ -1087,7 +1087,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         if( verticalCSType > 0 && verticalCSType != KvUserDefined )
         {
             pszFilename = CSVFilename( "coordinate_reference_system.csv" );
-            sprintf( szSearchKey, "%d", verticalCSType );
+            snprintf( szSearchKey, sizeof(szSearchKey), "%d", verticalCSType );
 
             if( verticalDatum < 1 || verticalDatum == KvUserDefined )
             {
@@ -1145,7 +1145,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             if( EQUAL(pszFilename,"datum.csv") )
                 pszFilename = CSVFilename( "gdal_datum.csv" );
 
-            sprintf( szSearchKey, "%d", verticalDatum );
+            snprintf( szSearchKey, sizeof(szSearchKey), "%d", verticalDatum );
 
             pszValue = CSVGetField( pszFilename,
                                     "DATUM_CODE", szSearchKey, CC_Integer,
@@ -1181,7 +1181,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             pszFilename = CSVFilename("unit_of_measure.csv");
             
             // Name
-            sprintf( szSearchKey, "%d", verticalUnits );
+            snprintf( szSearchKey, sizeof(szSearchKey), "%d", verticalUnits );
             pszValue = CSVGetField( pszFilename,
                                     "uom_code", szSearchKey, CC_Integer,
                                     "unit_of_meas_name" );
@@ -1201,7 +1201,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                              "uom_code", szSearchKey, CC_Integer,
                              "factor_c" ));
             if( dfFactorB != 0.0 && dfFactorC != 0.0 )
-                CPLsprintf( szInMeters, "%.16g", dfFactorB / dfFactorC );
+                CPLsnprintf( szInMeters, sizeof(szInMeters), "%.16g", dfFactorB / dfFactorC );
             else
                 strcpy( szInMeters, "1" );
 
@@ -2516,7 +2516,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     short nRasterType;
     char szFilename[100];
 
-    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif",
+    snprintf( szFilename, sizeof(szFilename), "/vsimem/wkt_from_mem_buf_%ld.tif",
              (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
@@ -2641,7 +2641,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
             char	szID[32];
             GDAL_GCP	*psGCP = *ppasGCPList + iGCP;
 
-            sprintf( szID, "%d", iGCP+1 );
+            snprintf( szID, sizeof(szID), "%d", iGCP+1 );
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel = padfTiePoints[iGCP*6+0];
@@ -2708,7 +2708,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
     GTIF 	*hGTIF;
     char        szFilename[100];
 
-    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
+    snprintf( szFilename, sizeof(szFilename), "/vsimem/wkt_from_mem_buf_%ld.tif", 
              (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
@@ -2853,7 +2853,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
 
         TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6*nGCPCount, padfTiePoints);
         CPLFree( padfTiePoints );
-    } 
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write RPC                                                       */
@@ -2876,7 +2876,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
     VSIFCloseL(fpL);
 
 /* -------------------------------------------------------------------- */
-/*      Read back from the memory buffer.  It would be preferrable      */
+/*      Read back from the memory buffer.  It would be preferable       */
 /*      to be able to "steal" the memory buffer, but there isn't        */
 /*      currently any support for this.                                 */
 /* -------------------------------------------------------------------- */

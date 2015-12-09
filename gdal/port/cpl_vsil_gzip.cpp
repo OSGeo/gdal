@@ -1069,7 +1069,8 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
 
             /* Write a very simple .gz header:
             */
-            sprintf( header, "%c%c%c%c%c%c%c%c%c%c", gz_magic[0], gz_magic[1],
+            snprintf( header, sizeof(header),
+                      "%c%c%c%c%c%c%c%c%c%c", gz_magic[0], gz_magic[1],
                     Z_DEFLATED, 0 /*flags*/, 0,0,0,0 /*time*/, 0 /*xflags*/,
                     0x03 );
             m_poBaseHandle->Write( header, 1, 10 );

@@ -212,9 +212,9 @@ typedef struct NumericVar
 /*
 * get_str_from_var() -
 *
-*	Convert a var to text representation (guts of numeric_out).
-*	CAUTION: var's contents may be modified by rounding!
-*	Returns a palloc'd string.
+*       Convert a var to text representation (guts of numeric_out).
+*       CAUTION: var's contents may be modified by rounding!
+*       Returns a malloc'd string.
 */
 static char *
 OGRPGGetStrFromBinaryNumeric(NumericVar *var)
@@ -226,7 +226,7 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
         int			d;
         NumericDigit dig;
         NumericDigit d1;
-        
+
         int dscale = var->dscale;
 
         /*
@@ -264,9 +264,10 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
                 {
                         dig = (d < var->ndigits) ? var->digits[d] : 0;
                         CPL_MSBPTR16(&dig);
-                        /* In the first digit, suppress extra leading decimal zeroes */
+                        /* In the first digit, suppress extra leading
+                           decimal zeroes */
                         {
-                                bool		putit = (d > 0);
+                                bool putit = (d > 0);
 
                                 d1 = dig / 1000;
                                 dig -= d1 * 1000;
@@ -287,8 +288,8 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
                         }
                 }
         }
-        
-                /*
+
+        /*
         * If requested, output a decimal point and all the digits that follow it.
         * We initially put out a multiple of DEC_DIGITS digits, then truncate if
         * needed.
@@ -1198,7 +1199,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                         CPL_MSBPTR64(&dfVal);
                         OGRPGdt2timeFloat8(dfVal, &nHour, &nMinute, &nSecond, &dfsec);
                     }
-                    sprintf(szTime, "%02d:%02d:%02d", nHour, nMinute, nSecond);
+                    snprintf(szTime, sizeof(szTime), "%02d:%02d:%02d", nHour, nMinute, nSecond);
                     poFeature->SetField( iOGRField, szTime);
                 }
                 else if ( nTypeOID == TIMESTAMPOID || nTypeOID == TIMESTAMPTZOID )
@@ -1390,15 +1391,15 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /*                    OGRPGIsKnownGeomFuncPrefix()                      */
 /************************************************************************/
 
-static const char* papszKnownGeomFuncPrefixes[] = {
+static const char* const apszKnownGeomFuncPrefixes[] = {
     "ST_AsBinary", "BinaryBase64", "ST_AsEWKT", "ST_AsEWKB", "EWKBBase64",
     "ST_AsText", "AsBinary", "asEWKT", "asEWKB", "asText" };
 static int OGRPGIsKnownGeomFuncPrefix(const char* pszFieldName)
 {
-    for(size_t i=0; i<sizeof(papszKnownGeomFuncPrefixes) / sizeof(char*); i++)
+    for(size_t i=0; i<sizeof(apszKnownGeomFuncPrefixes) / sizeof(char*); i++)
     {
-        if( EQUALN(pszFieldName, papszKnownGeomFuncPrefixes[i],
-                   static_cast<int>(strlen(papszKnownGeomFuncPrefixes[i]))) )
+        if( EQUALN(pszFieldName, apszKnownGeomFuncPrefixes[i],
+                   static_cast<int>(strlen(apszKnownGeomFuncPrefixes[i]))) )
             return static_cast<int>(i);
     }
     return -1;
@@ -1442,11 +1443,11 @@ void OGRPGLayer::CreateMapFromFieldNameToIndex(PGresult* hResult,
                 {
                     int iKnownPrefix = OGRPGIsKnownGeomFuncPrefix(pszName);
                     if( iKnownPrefix >= 0 &&
-                        pszName[ strlen(papszKnownGeomFuncPrefixes[iKnownPrefix]) ] == '_' )
+                        pszName[ strlen(apszKnownGeomFuncPrefixes[iKnownPrefix]) ] == '_' )
                     {
                         panMapFieldNameToGeomIndex[iField] =
                             poFeatureDefn->GetGeomFieldIndex(pszName +
-                            strlen(papszKnownGeomFuncPrefixes[iKnownPrefix]) + 1);
+                            strlen(apszKnownGeomFuncPrefixes[iKnownPrefix]) + 1);
                     }
                 }
             }
@@ -1733,7 +1734,8 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 {
     char* pszTextBuf;
 
-    pszTextBuf = (char *) CPLMalloc(nLen*5+1);
+    const size_t nTextBufLen = nLen*5+1;
+    pszTextBuf = (char *) CPLMalloc(nTextBufLen);
 
     int  iSrc, iDst=0;
 
@@ -1742,7 +1744,7 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
         if( pabyData[iSrc] < 40 || pabyData[iSrc] > 126
             || pabyData[iSrc] == '\\' )
         {
-            sprintf( pszTextBuf+iDst, "\\\\%03o", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nTextBufLen-iDst, "\\\\%03o", pabyData[iSrc] );
             iDst += 5;
         }
         else
@@ -2093,10 +2095,10 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
                 new OGRPGGeomFieldDefn(this, oField.GetNameRef());
             if( iGeomFuncPrefix >= 0 &&
                 oField.GetNameRef()[strlen(
-                    papszKnownGeomFuncPrefixes[iGeomFuncPrefix])] == '_' )
+                    apszKnownGeomFuncPrefixes[iGeomFuncPrefix])] == '_' )
             {
                 poGeomFieldDefn->SetName( oField.GetNameRef() +
-                    strlen(papszKnownGeomFuncPrefixes[iGeomFuncPrefix]) + 1 );
+                    strlen(apszKnownGeomFuncPrefixes[iGeomFuncPrefix]) + 1 );
             }
             if (nTypeOID == poDS->GetGeographyOID())
             {

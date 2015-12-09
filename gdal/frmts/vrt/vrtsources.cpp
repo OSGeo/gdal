@@ -230,7 +230,7 @@ void VRTSimpleSource::SetNoDataValue( double dfNewNoDataValue )
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-static const char* apszSpecialSyntax[] = { "HDF5:\"{FILENAME}\":{ANY}",
+static const char* const apszSpecialSyntax[] = { "HDF5:\"{FILENAME}\":{ANY}",
                                             "HDF5:{FILENAME}:{ANY}",
                                             "NETCDF:\"{FILENAME}\":{ANY}",
                                             "NETCDF:{FILENAME}:{ANY}",
@@ -2070,10 +2070,11 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     const int bNoDataSetIsNan = m_bNoDataSet && CPLIsNan(m_dfNoDataValue);
     const int bNoDataSetAndNotNan = m_bNoDataSet && !CPLIsNan(m_dfNoDataValue);
 
-    if( m_eScalingType == VRT_SCALING_LINEAR && m_bNoDataSet == FALSE && m_dfScaleRatio == 0)
+    if( m_eScalingType == VRT_SCALING_LINEAR &&
+        m_bNoDataSet == FALSE && m_dfScaleRatio == 0)
     {
 /* -------------------------------------------------------------------- */
-/*      Optimization when outputing a constant value                    */
+/*      Optimization when writing a constant value                      */
 /*      (used by the -addalpha option of gdalbuildvrt)                  */
 /* -------------------------------------------------------------------- */
         pafData = NULL;

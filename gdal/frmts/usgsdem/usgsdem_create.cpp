@@ -192,11 +192,12 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 
     const int DOUBLE_BUFFER_SIZE = 64;
     char szTemp[DOUBLE_BUFFER_SIZE];
-#if defined(HAVE_SNPRINTF)
-    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
-#else
-    CPLsprintf( szTemp, pszFormat, dfValue );
-#endif
+    int nOffset = 0;
+    if( CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue ) == 25 &&
+        szTemp[0] == ' ' )
+    {
+        nOffset = 1;
+    }
     szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
 
     for( int i = 0; szTemp[i] != '\0'; i++ )
@@ -208,14 +209,15 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
             && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
             && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
         {
-            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+1] = szTemp[i+2];
+            szTemp[i+2] = szTemp[i+3];
             szTemp[i+3] = '\0';
             break;
         }
 #endif
     }
 
-    TextFillR( pszBuffer, 24, szTemp );
+    TextFillR( pszBuffer, 24, szTemp + nOffset );
 }
 
 /************************************************************************/
@@ -240,12 +242,12 @@ static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
 
     const int DOUBLE_BUFFER_SIZE = 64;
     char szTemp[DOUBLE_BUFFER_SIZE];
-
-#if defined(HAVE_SNPRINTF)
-    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
-#else
-    CPLsprintf( szTemp, pszFormat, dfValue );
-#endif
+    int nOffset = 0;
+    if( CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue ) == 13 &&
+        szTemp[0] == ' ' )
+    {
+        nOffset = 1;
+    }
     szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
 
     for( int i = 0; szTemp[i] != '\0'; i++ )
@@ -257,14 +259,15 @@ static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
             && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
             && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
         {
-            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+1] = szTemp[i+2];
+            szTemp[i+2] = szTemp[i+3];
             szTemp[i+3] = '\0';
             break;
         }
 #endif
     }
 
-    TextFillR( pszBuffer, 12, szTemp );
+    TextFillR( pszBuffer, 12, szTemp + nOffset );
 }
 
 /************************************************************************/
@@ -822,7 +825,7 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         }
 
         char szWord[10];
-        sprintf( szWord, "%d", psWInfo->panData[iData] );
+        snprintf( szWord, sizeof(szWord), "%d", psWInfo->panData[iData] );
         TextFillR( achBuffer + iOffset, 6, szWord );
 
         iOffset += 6;
@@ -1317,7 +1320,7 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     char *apszOptions[] = { szDataPointer, NULL };
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
-    sprintf( szDataPointer, "DATAPOINTER=" );
+    snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
                      psWInfo->panData, 
                      static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );

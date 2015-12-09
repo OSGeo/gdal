@@ -211,11 +211,11 @@ OGRLayer * OGRGPXDataSource::ICreateLayer( const char * pszLayerName,
 /*                startElementValidateCbk()                             */
 /************************************************************************/
 
-void OGRGPXDataSource::startElementValidateCbk(const char *pszName, const char **ppszAttr)
+void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn, const char **ppszAttr)
 {
     if (validity == GPX_VALIDITY_UNKNOWN)
     {
-        if (strcmp(pszName, "gpx") == 0)
+        if (strcmp(pszNameIn, "gpx") == 0)
         {
             int i;
             validity = GPX_VALIDITY_VALID;
@@ -235,7 +235,7 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszName, const char *
     }
     else if (validity == GPX_VALIDITY_VALID)
     {
-        if (strcmp(pszName, "extensions") == 0)
+        if (strcmp(pszNameIn, "extensions") == 0)
         {
             bUseExtensions = TRUE;
         }

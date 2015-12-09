@@ -459,8 +459,8 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                     GDALJP2Box oResBox( fpVSIL );
 
                     oResBox.ReadFirstChild( &oSubBox );
-                    
-                    // we will use either the resd or resc box, which ever
+
+                    // We will use either the resd or resc box, which ever
                     // happens to be first.  Should we prefer resd?
                     unsigned char *pabyResData = NULL;
                     if( oResBox.GetDataLength() == 10 &&
@@ -468,7 +468,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                     {
                         int nVertNum, nVertDen, nVertExp;
                         int nHorzNum, nHorzDen, nHorzExp;
-                        
+
                         nVertNum = pabyResData[0] * 256 + pabyResData[1];
                         nVertDen = pabyResData[2] * 256 + pabyResData[3];
                         nHorzNum = pabyResData[4] * 256 + pabyResData[5];
@@ -1458,9 +1458,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 
     char szSRSName[100];
     if( nEPSGCode != 0 )
-        sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+        snprintf( szSRSName, sizeof(szSRSName), "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
     else
-        strcpy( szSRSName, 
+        snprintf( szSRSName, sizeof(szSRSName), "%s",
                 "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
 
     // Compute bounding box
@@ -1601,7 +1601,7 @@ static CPLXMLNode* GDALGMLJP2GetXMLRoot(CPLXMLNode* psNode)
 
 static void GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot)
 {
-    /* GML 3.2 SF profile recommands the feature collection type to derive */
+    /* GML 3.2 SF profile recommends the feature collection type to derive */
     /* from gml:AbstractGML to prevent it to be included in another feature */
     /* collection, but this is what we want to do. So patch that... */
 
@@ -1796,7 +1796,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                   "Ignored for a remote_resource"],
                 "namespace": "http://example.com",
 
-                "#schema_location_doc": ["Value of the substitued schemaLocation. ",
+                "#schema_location_doc": ["Value of the substituted schemaLocation. ",
                                          "Typically a schema box label (link)",
                                          "Ignored for a remote_resource"],
                 "schema_location": "gmljp2://xml/schema_0.xsd",
@@ -2239,12 +2239,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         if( nEPSGCode != 0 )
         {
             if( bCRSURL )
-                sprintf( szSRSName, "http://www.opengis.net/def/crs/EPSG/0/%d", nEPSGCode );
+                snprintf( szSRSName, sizeof(szSRSName),
+                          "http://www.opengis.net/def/crs/EPSG/0/%d", nEPSGCode );
             else
-                sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+                snprintf( szSRSName, sizeof(szSRSName),
+                          "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
         }
         else
-            strcpy( szSRSName, 
+            snprintf( szSRSName, sizeof(szSRSName), "%s",
                     "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
 
         osGridCoverage.Printf(
@@ -2372,7 +2374,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
                 else if( aoMetadata[i].bParentCoverageCollection )
                 {
-                    /*  Insert the gmlcov:metadata link as the next sibbling of */
+                    /* Insert the gmlcov:metadata link as the next sibling of */
                     /* GMLJP2CoverageCollection.rangeType */
                     CPLXMLNode* psRangeType =
                         CPLGetXMLNode(psGMLJP2CoverageCollection, "gmlcov:rangeType");

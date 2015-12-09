@@ -867,7 +867,7 @@ def main(args = None):
         elif arg == '-useDirForEachRow':
             UseDirForEachRow=True
         elif arg[:1] == '-':
-            print('Unrecognised command option: %s' % arg)
+            print('Unrecognized command option: %s' % arg)
             Usage()
             return 1
 

@@ -361,7 +361,7 @@
 
 #ifdef PNG_SETJMP_SUPPORTED
 /* This is an attempt to force a single setjmp behaviour on Linux.  If
- * the X config stuff didn't define _BSD_SOURCE we wouldn't need this.
+ * the X config stuff did not define _BSD_SOURCE we would not need this.
  *
  * You can bypass this test if you know that your application uses exactly
  * the same setjmp.h that was included when libpng was built.  Only define
@@ -1297,7 +1297,7 @@ typedef unsigned char png_byte;
 
 /* Suggest testing for specific compiler first before testing for
  * FAR.  The Watcom compiler defines both __MEDIUM__ and M_I86MM,
- * making reliance oncertain keywords suspect. (SJT)
+ * making reliance on certain keywords suspect. (SJT)
  */
 
 /* MSC Medium model */

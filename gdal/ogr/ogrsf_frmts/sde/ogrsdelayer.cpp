@@ -120,7 +120,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 /* -------------------------------------------------------------------- */
     char               *pszTableNameCopy = CPLStrdup( pszTableName );
     char               *pszPeriodPtr;
-    
+
     if( (pszPeriodPtr = strstr( pszTableNameCopy,"." )) != NULL )
     {
         *pszPeriodPtr  = '\0';
@@ -132,21 +132,21 @@ int OGRSDELayer::Initialize( const char *pszTableName,
         pszOwnerName   = NULL;
         pszDbTableName = CPLStrdup(pszTableName);
     }
-    
+
     CPLFree( pszTableNameCopy );
 
 /* -------------------------------------------------------------------- */
 /*      Determine whether multi-versioning is enabled for this table.   */
 /* -------------------------------------------------------------------- */
     SE_REGINFO          hRegInfo;
-    
+
     nSDEErr = SE_reginfo_create( &hRegInfo );
     if( nSDEErr != SE_SUCCESS )
     {
         poDS->IssueSDEError( nSDEErr, "SE_reginfo_create" );
         return FALSE;
     }
-    
+
     // TODO: This is called from places that have RegInfo already -
     // should we just pass that in?
     nSDEErr = SE_registration_get_info( poDS->GetConnection(),
@@ -157,9 +157,9 @@ int OGRSDELayer::Initialize( const char *pszTableName,
         poDS->IssueSDEError( nSDEErr, "SE_registration_get_info" );
         return FALSE;
     }
-    
+
     bVersioned = SE_reginfo_is_multiversion( hRegInfo );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Describe table                                                  */
 /* -------------------------------------------------------------------- */
@@ -607,7 +607,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
         return FALSE;
-    }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Free query resources.                                           */
@@ -632,11 +632,11 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 
             if( EQUAL(pszOrder, "ATTRIBUTE_FIRST") )
                 nSearchOrder = SE_ATTRIBUTE_FIRST;
-            else 
+            else
             {
                 if( !EQUAL(pszOrder, "SPATIAL_FIRST") )
-                    CPLError( CE_Warning, CPLE_AppDefined, 
-                              "Unrecognised OGR_SDE_SEARCHORDER value of %s.",
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Unrecognized OGR_SDE_SEARCHORDER value of %s.",
                               pszOrder );
                 nSearchOrder = SE_SPATIAL_FIRST;
             }

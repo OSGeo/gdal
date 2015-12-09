@@ -1161,7 +1161,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                         bDstNoDataNone = TRUE;
                         continue;
                     }
-                    else if ( papszTokens[i] == NULL ) // this shouldn't happen, but just in case
+                    else if ( papszTokens[i] == NULL ) // this should not happen, but just in case
                     {
                         CPLError( CE_Failure, CPLE_AppDefined, "Error parsing dstnodata arg #%d", i );
                         bDstNoDataNone = TRUE;

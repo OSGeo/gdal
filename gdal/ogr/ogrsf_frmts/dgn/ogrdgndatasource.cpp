@@ -169,10 +169,10 @@ OGRLayer *OGRDGNDataSource::GetLayer( int iLayer )
 /************************************************************************/
 
 int OGRDGNDataSource::PreCreate( const char *pszFilename, 
-                                 char **papszOptions )
+                                 char **papszOptionsIn )
 
 {
-    this->papszOptions = CSLDuplicate( papszOptions );
+    this->papszOptions = CSLDuplicate( papszOptionsIn );
     pszName = CPLStrdup( pszFilename );
 
     return TRUE;

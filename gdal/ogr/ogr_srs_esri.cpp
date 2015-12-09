@@ -66,7 +66,7 @@ CPL_C_END
 
 static int   FindCodeFromDict( const char* pszDictFile, const char* CSName, char* code );
 
-static const char *apszProjMapping[] = {
+static const char * const apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
     "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
@@ -80,39 +80,39 @@ static const char *apszProjMapping[] = {
     "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
     NULL, NULL }; 
  
-static const char *apszAlbersMapping[] = {
+static const char * const apszAlbersMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     "Central_Parallel", SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
-static const char *apszECMapping[] = {
+static const char * const apszECMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER, 
     NULL, NULL };
 
-static const char *apszPolarStereographicMapping[] = {
+static const char * const apszPolarStereographicMapping[] = {
     SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
-static const char *apszOrthographicMapping[] = {
+static const char * const apszOrthographicMapping[] = {
     "Longitude_Of_Center", SRS_PP_CENTRAL_MERIDIAN,
     "Latitude_Of_Center", SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
-static const char *apszLambertConformalConicMapping[] = {
+static const char * const apszLambertConformalConicMapping[] = {
     "Central_Parallel", SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
 static char **papszDatumMapping = NULL;
 static CPLMutex* hDatumMappingMutex = NULL;
  
-static const char *apszDefaultDatumMapping[] = {
+static const char * const apszDefaultDatumMapping[] = {
     "6267", "North_American_1927", SRS_DN_NAD27,
     "6269", "North_American_1983", SRS_DN_NAD83,
     NULL, NULL, NULL }; 
 
-static const char *apszSpheroidMapping[] = {
+static const char * const apszSpheroidMapping[] = {
     "WGS_84", "WGS_1984",
     "WGS_72", "WGS_1972",
     "GRS_1967_Modified", "GRS_1967_Truncated",
@@ -120,7 +120,7 @@ static const char *apszSpheroidMapping[] = {
     "Everest_1830_1937_Adjustment", "Everest_Adjustment_1937",
     NULL, NULL }; 
  
-static const char *apszUnitMapping[] = {
+static const char * const apszUnitMapping[] = {
     "Meter", "meter",
     "Meter", "metre",
     "Foot", "foot",
@@ -663,8 +663,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      ArcGIS and related products now use a varient of Well Known     */
-/*      Text.  Try to recognise this and ingest it.  WKT is usually     */
+/*      ArcGIS and related products now use a variant of Well Known     */
+/*      Text.  Try to recognize this and ingest it.  WKT is usually     */
 /*      all on one line, but we will accept multi-line formats and      */
 /*      concatenate.                                                    */
 /* -------------------------------------------------------------------- */
@@ -706,7 +706,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     else if( EQUAL(osProj,"GEOGRAPHIC") )
     {
     }
-    
+
     else if( EQUAL(osProj,"utm") )
     {
         if( (int) OSR_GDV( papszPrj, "zone", 0.0 ) != 0 )
@@ -1157,7 +1157,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Force Unnamed to Unknown for most common locations.             */
 /* -------------------------------------------------------------------- */
-        static const char *apszUnknownMapping[] = { 
+        static const char * const apszUnknownMapping[] = { 
             "Unknown", "Unnamed",
             NULL, NULL 
         };
@@ -1230,9 +1230,9 @@ OGRErr OGRSpatialReference::morphToESRI()
         {
             char szUTMName[128];
             if( bNorth )
-                sprintf( szUTMName, "%s_UTM_Zone_%dN", pszUTMPrefix, nZone );
+                snprintf( szUTMName, sizeof(szUTMName), "%s_UTM_Zone_%dN", pszUTMPrefix, nZone );
             else
-                sprintf( szUTMName, "%s_UTM_Zone_%dS", pszUTMPrefix, nZone );
+                snprintf( szUTMName, sizeof(szUTMName), "%s_UTM_Zone_%dS", pszUTMPrefix, nZone );
               
             if( poProjCSNodeChild )
                 poProjCSNodeChild->SetValue( szUTMName );
@@ -1770,7 +1770,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
     GetRoot()->applyRemapper( "PROJECTION", 
                               (char **)apszProjMapping,
                               (char **)apszProjMapping+1, 2 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
 /* -------------------------------------------------------------------- */
@@ -1823,7 +1823,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
             {
                 const char *pszFilename = NULL;
                 char **papszRecord = NULL;
-                
+
                 /* look for GEOGCS corresponding to this datum */
                 pszFilename = CSVFilename("gcs.csv");
                 papszRecord = CSVScanFileByName( pszFilename, "DATUM_CODE",  
@@ -1840,7 +1840,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                                      CSVGetFileFieldId(pszFilename,"COORD_REF_SYS_CODE")) );
                     // int bDeprecated = atoi( CSLGetField( papszRecord,
                     //                                      CSVGetFileFieldId(pszFilename,"DEPRECATED")) );
-                    
+
                     CPLDebug( "OGR_ESRI", "morphFromESRI() got GEOGCS node #%d", nGeogCS );
 
                     // if ( nGeogCS >= 1 && bDeprecated == 0 )
@@ -1848,7 +1848,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                     {
                         OGRSpatialReference oSRSTemp;
                         if ( oSRSTemp.importFromEPSG( nGeogCS ) == OGRERR_NONE )
-                        {                        
+                        {
                             /* make clone of GEOGCS and strip CT parms for testing */
                             OGRSpatialReference *poSRSTemp2 = NULL;
                             bool bIsSame = false;
@@ -2013,7 +2013,7 @@ int RemapImgWGSProjcsName( OGRSpatialReference* pOgr, const char* pszProjCSName,
     if(EQUAL(pszProgCSName, "WGS_1972") || EQUAL(pszProgCSName, "WGS_1984") )
     {
         char* newName = (char *) CPLMalloc(strlen(pszProjCSName) + 10);
-        sprintf( newName, "%s_", pszProgCSName );
+        snprintf( newName, strlen(pszProjCSName) + 10, "%s_", pszProgCSName );
         strcat(newName, pszProjCSName);
         SetNewName( pOgr, "PROJCS", newName );
         CPLFree( newName );
@@ -2318,7 +2318,7 @@ int AddParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjection
 /************************************************************************/
 int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
 {
-    static const char *keyNamesG[] = {
+    static const char * const keyNamesG[] = {
         "GEOGCS"};
     int ret = -1;
 
@@ -2457,7 +2457,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
     if(searchCode > 0)
     {
         char codeS[10];
-        sprintf(codeS, "%d", (int)searchCode);
+        snprintf(codeS, sizeof(codeS), "%d", (int)searchCode);
         return importFromDict( "esri_StatePlane_extra.wkt", codeS);
     }
     return OGRERR_FAILURE;
@@ -2479,7 +2479,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
             return OGRERR_FAILURE;
         return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
     }
-    double* tableWISCRS;
+    const double* tableWISCRS;
     if(prjName != NULL && STARTS_WITH_CI(prjName, "Lambert_Conformal_Conic"))
         tableWISCRS = apszWISCRS_LCC_meter;
     else if(prjName != NULL && EQUAL(prjName, SRS_PT_TRANSVERSE_MERCATOR))
@@ -2500,7 +2500,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
         if(unitsName != NULL && !EQUAL(unitsName, "meters"))
             k += 100;
         char codeS[10];
-        sprintf(codeS, "%d", k);
+        snprintf(codeS, sizeof(codeS), "%d", k);
         return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
     }
     return OGRERR_FAILURE;

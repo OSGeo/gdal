@@ -81,22 +81,22 @@ void OGRWFSRecursiveUnlink( const char *pszName )
 /*                            OGRWFSLayer()                             */
 /************************************************************************/
 
-OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
-                          OGRSpatialReference* poSRS,
-                          int bAxisOrderAlreadyInverted,
-                          const char* pszBaseURL,
-                          const char* pszName,
-                          const char* pszNS,
-                          const char* pszNSVal )
+OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDSIn,
+                          OGRSpatialReference* poSRSIn,
+                          int bAxisOrderAlreadyInvertedIn,
+                          const char* pszBaseURLIn,
+                          const char* pszNameIn,
+                          const char* pszNSIn,
+                          const char* pszNSValIn )
 
 {
-    this->poDS = poDS;
-    this->poSRS = poSRS;
-    this->bAxisOrderAlreadyInverted = bAxisOrderAlreadyInverted;
-    this->pszBaseURL = CPLStrdup(pszBaseURL);
-    this->pszName = CPLStrdup(pszName);
-    this->pszNS = pszNS ? CPLStrdup(pszNS) : NULL;
-    this->pszNSVal = pszNSVal ? CPLStrdup(pszNSVal) : NULL;
+    this->poDS = poDSIn;
+    this->poSRS = poSRSIn;
+    this->bAxisOrderAlreadyInverted = bAxisOrderAlreadyInvertedIn;
+    this->pszBaseURL = CPLStrdup(pszBaseURLIn);
+    this->pszName = CPLStrdup(pszNameIn);
+    this->pszNS = pszNSIn ? CPLStrdup(pszNSIn) : NULL;
+    this->pszNSVal = pszNSValIn ? CPLStrdup(pszNSValIn) : NULL;
 
     SetDescription( pszName );
 
@@ -596,7 +596,7 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
     if (pszPropertyName[0] == 0 && poFeatureDefn != NULL)
     {
         int bHasIgnoredField = FALSE;
-        CPLString osPropertyName;
+        osPropertyName.clear();
         for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
             if (EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "gml_id"))
@@ -1009,7 +1009,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         {
             CPLString osFullFilename =
                     CPLFormFilename( osTmpFileName, papszFileList[i], NULL );
-            GDALDriverH hDrv = GDALIdentifyDriver(osFullFilename, NULL);
+            hDrv = GDALIdentifyDriver(osFullFilename, NULL);
             if( hDrv != NULL && hDrv == GDALGetDriverByName("GML") )
                 papszOpenOptions = apszGMLOpenOptions;
             poPageDS = (GDALDataset*) GDALOpenEx(osFullFilename,
@@ -1074,18 +1074,18 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poFeatureDefn->Reference();
 
-    GDALDataset* poDS = NULL;
+    GDALDataset* l_poDS = NULL;
 
     if (poSrcFDefn == NULL)
         poSrcFDefn = DescribeFeatureType();
     if (poSrcFDefn == NULL)
     {
-        poDS = FetchGetFeature(1);
-        if (poDS == NULL)
+        l_poDS = FetchGetFeature(1);
+        if (l_poDS == NULL)
         {
             return poFeatureDefn;
         }
-        poSrcFDefn = poDS->GetLayer(0)->GetLayerDefn();
+        poSrcFDefn = l_poDS->GetLayer(0)->GetLayerDefn();
         bGotApproximateLayerDefn = TRUE;
         /* We cannot trust width and precision based on a single feature */
         bUnsetWidthPrecision = TRUE;
@@ -1120,8 +1120,8 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
         }
     }
 
-    if (poDS)
-        GDALClose(poDS);
+    if (l_poDS)
+        GDALClose(l_poDS);
     else
         delete poSrcFDefn;
 
@@ -1561,18 +1561,18 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         return -1;
     }
 
-    GIntBig nFeatures = CPLAtoGIntBig(pszValue);
+    GIntBig l_nFeatures = CPLAtoGIntBig(pszValue);
     /* Hum, http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=ad:Address&OUTPUTFORMAT=text/xml;%20subtype=gml/3.2.1&RESULTTYPE=hits */
     /* returns more than MAXFEATURES features... So truncate to MAXFEATURES */
     CPLString osMaxFeatures = CPLURLGetValue(osURL, atoi(poDS->GetVersion()) >= 2 ? "COUNT" : "MAXFEATURES");
     if (osMaxFeatures.size() != 0)
     {
         GIntBig nMaxFeatures = CPLAtoGIntBig(osMaxFeatures);
-        if (nFeatures > nMaxFeatures)
+        if (l_nFeatures > nMaxFeatures)
         {
             CPLDebug("WFS", "Truncating result from " CPL_FRMT_GIB " to " CPL_FRMT_GIB,
-                     nFeatures, nMaxFeatures);
-            nFeatures = nMaxFeatures;
+                     l_nFeatures, nMaxFeatures);
+            l_nFeatures = nMaxFeatures;
         }
     }
 
@@ -1580,7 +1580,7 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     CPLHTTPDestroyResult(psResult);
     CPLFree(pabyData);
 
-    return nFeatures;
+    return l_nFeatures;
 }
 /************************************************************************/
 /*              CanRunGetFeatureCountAndGetExtentTogether()             */
@@ -1652,12 +1652,12 @@ GIntBig OGRWFSLayer::GetFeatureCount( int bForce )
 /*                              SetExtent()                             */
 /************************************************************************/
 
-void OGRWFSLayer::SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY)
+void OGRWFSLayer::SetExtents(double dfMinXIn, double dfMinYIn, double dfMaxXIn, double dfMaxYIn)
 {
-    this->dfMinX = dfMinX;
-    this->dfMinY = dfMinY;
-    this->dfMaxX = dfMaxX;
-    this->dfMaxY = dfMaxY;
+    this->dfMinX = dfMinXIn;
+    this->dfMinY = dfMinYIn;
+    this->dfMaxX = dfMaxXIn;
+    this->dfMaxY = dfMaxYIn;
     bHasExtents = TRUE;
 }
 
@@ -2462,7 +2462,7 @@ OGRErr OGRWFSLayer::CommitTransaction()
 
         bInTransaction = FALSE;
         osGlobalInsert = "";
-        int nExpectedInserts = this->nExpectedInserts;
+        int l_nExpectedInserts = this->nExpectedInserts;
         this->nExpectedInserts = 0;
 
         CPLDebug("WFS", "Post : %s", osPost.c_str());
@@ -2538,11 +2538,11 @@ OGRErr OGRWFSLayer::CommitTransaction()
         else
         {
             int nGotInserted = atoi(CPLGetXMLValue(psRoot, "TransactionSummary.totalInserted", ""));
-            if (nGotInserted != nExpectedInserts)
+            if (nGotInserted != l_nExpectedInserts)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Only %d features were inserted whereas %d where expected",
-                         nGotInserted, nExpectedInserts);
+                         nGotInserted, l_nExpectedInserts);
                 CPLDestroyXMLNode( psXML );
                 CPLHTTPDestroyResult(psResult);
                 return OGRERR_FAILURE;

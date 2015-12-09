@@ -488,7 +488,7 @@ def ogr_geom_segmentize():
         print(geom.ExportToWkt())
         return 'fail'
 
-    # Check segmentize symetry : do exact binary comparison
+    # Check segmentize symmetry : do exact binary comparison.
     in_wkt = 'LINESTRING (0 0,1.2 1,2 0)'
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     g1.Segmentize(0.25)
@@ -504,7 +504,7 @@ def ogr_geom_segmentize():
             print(g1)
             print(g2)
             return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1295,7 +1295,7 @@ def ogr_geom_circularstring():
         print(length)
         return 'fail'
 
-    # Check segmentize symetry : do exact binary comparison
+    # Check segmentize symmetry : do exact binary comparison
     in_wkt = 'CIRCULARSTRING (0 0,1.2 1,2 0)'
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     g1.Segmentize(0.25)

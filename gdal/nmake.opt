@@ -37,9 +37,8 @@
 # 1600 = 10.0(2010)
 # 1500 = 9.0 (2008)
 # 1400 = 8.0 (2005) - specific compilation flags, different from older VC++
-# 1310 = 7.1 (2003)
-# 1300 = 7.0 (2002)
-# 1200 = 6.0
+# 1310 = 7.1 (2003) # is it still supported ?
+# 1300 = 7.0 (2002) # is it still supported ?
 #
 !IFNDEF MSVC_VER
 #assume msvc VS2008.
@@ -646,7 +645,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/mongoclient.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib
 
 # For a static build of mongoclient, only building the driver as a plugin succeeded
-# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successfull linking
+# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successful linking
 # It was built with: c:\Python27\Scripts\scons.bat --32 --prefix=c:\users\even\dev\mongo-client-install --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
 # MONGODB_PLUGIN = YES
 # MONGODB_INC = c:/users/even/dev/mongo-client-install/include
@@ -738,7 +737,12 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
+!IF $(MSVC_VER) >= 1900
+# legacy_stdio_definitions.lib : https://connect.microsoft.com/VisualStudio/feedback/details/1134693/vs-2015-ctp-5-c-vsnwprintf-s-and-other-functions-are-not-exported-in-appcrt140-dll-breaking-linkage-of-static-libraries
+ODBCLIB = legacy_stdio_definitions.lib odbc32.lib odbccp32.lib user32.lib
+!ELSE
 ODBCLIB = odbc32.lib odbccp32.lib user32.lib
+!ENDIF
 !ENDIF
 
 !IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)

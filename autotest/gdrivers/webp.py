@@ -57,8 +57,14 @@ def webp_2():
     if gdaltest.webp_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'WEBP', 'rgbsmall.webp', 1, 21464 )
-    return tst.testOpen()
+    ds = gdal.Open('data/rgbsmall.webp')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 21464 and cs != 21450:
+        gdaltest.post_reason('did not get expected checksum on band 1')
+        print(cs)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # CreateCopy() test

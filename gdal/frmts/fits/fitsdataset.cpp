@@ -52,7 +52,7 @@ class FITSRasterBand;
 class FITSDataset : public GDALPamDataset {
 
   friend class FITSRasterBand;
-  
+
   fitsfile* hFITS;
 
   GDALDataType gdalDataType;   // GDAL code for the image type
@@ -61,7 +61,7 @@ class FITSDataset : public GDALPamDataset {
   bool isExistingFile;
   long highestOffsetWritten;  // How much of image has been written
 
-  FITSDataset();     // Others shouldn't call this constructor explicitly
+  FITSDataset();     // Others should not call this constructor explicitly
 
   CPLErr Init(fitsfile* hFITS_, bool isExistingFile_);
 
@@ -85,7 +85,7 @@ public:
 class FITSRasterBand : public GDALPamRasterBand {
 
   friend class	FITSDataset;
-  
+
 public:
 
   FITSRasterBand(FITSDataset*, int);
@@ -215,7 +215,7 @@ CPLErr FITSRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 // Simple static function to determine if FITS header keyword should
 // be saved in meta data.
 static const int ignorableHeaderCount = 15;
-static const char* ignorableFITSHeaders[ignorableHeaderCount] = {
+static const char* const ignorableFITSHeaders[ignorableHeaderCount] = {
   "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "NAXIS3", "END",
   "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "CONTINUE",
   "COMMENT", "", "LONGSTRN"
@@ -420,10 +420,10 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
       return CE_Failure;
     }
     if (strcmp(key, "END") == 0) {
-        /* we shouldn't get here in principle since the END */
-        /* keyword shouldn't be counted in nKeys, but who knows... */
+        // We should not get here in principle since the END
+        // keyword shouldn't be counted in nKeys, but who knows.
         break;
-    } 
+    }
     else if (isIgnorableFITSHeader(key)) {
       // Ignore it!
     }
@@ -538,7 +538,7 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
 
   // Create the file - to force creation, we prepend the name with '!'
   char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
-  sprintf(extFilename, "!%s", pszFilename);
+  snprintf(extFilename, strlen(pszFilename) + 10, "!%s", pszFilename);
   fits_create_file(&hFITS, extFilename, &status);
   delete[] extFilename;
   if (status) {

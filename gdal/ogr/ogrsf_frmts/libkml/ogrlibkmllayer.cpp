@@ -69,7 +69,7 @@ using kmldom::DeletePtr;
 CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
 {
     CPLString osName(pszName);
-    /* (Approximate) validation rules for a valic NCName */
+    /* (Approximate) validation rules for a valid NCName */
     for(size_t i = 0; i < osName.size(); i++)
     {
         char ch = osName[i];
@@ -120,7 +120,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                                  UpdatePtr poKmlUpdate,
                                  const char *pszFileName,
                                  int bNew,
-                                 int bUpdate )
+                                 int bUpdateIn )
 {
 
     m_poStyleTable = NULL;
@@ -128,7 +128,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     nFeatures = 0;
     nFID = 1;
 
-    this->bUpdate = bUpdate;
+    this->bUpdate = bUpdateIn;
     bUpdated = FALSE;
     m_pszName = CPLStrdup ( pszLayerName );
     m_pszFileName = CPLStrdup ( pszFileName );
@@ -641,7 +641,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFID )
+OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
 {
     if( !bUpdate || m_poKmlUpdate == NULL )
         return OGRERR_UNSUPPORTED_OPERATION;
@@ -653,7 +653,7 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFID )
     poDelete->add_feature(poKmlPlacemark);
     
     const char* pszId = CPLSPrintf("%s." CPL_FRMT_GIB,
-                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFID);
+                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFIDIn);
     poKmlPlacemark->set_targetid(pszId);
 
     /***** mark the layer as updated *****/

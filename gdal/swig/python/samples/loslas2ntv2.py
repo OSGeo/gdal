@@ -241,7 +241,7 @@ if __name__ == '__main__':
             ntv2_filename = arg
 
         else:
-            print('Unrecognised argument: ', arg)
+            print('Unrecognized argument: ', arg)
             Usage()
 
         i = i + 1

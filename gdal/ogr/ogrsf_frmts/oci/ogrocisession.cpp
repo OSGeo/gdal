@@ -117,9 +117,9 @@ OGROCISession::~OGROCISession()
 /*                          EstablishSession()                          */
 /************************************************************************/
 
-int OGROCISession::EstablishSession( const char *pszUserid, 
-                                     const char *pszPassword,
-                                     const char *pszDatabase )
+int OGROCISession::EstablishSession( const char *pszUseridIn, 
+                                     const char *pszPasswordIn,
+                                     const char *pszDatabaseIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -128,9 +128,9 @@ int OGROCISession::EstablishSession( const char *pszUserid,
 
     ub4 eCred = OCI_CRED_RDBMS;
 
-    if( EQUAL(pszDatabase, "") &&
-        EQUAL(pszPassword, "") &&
-        EQUAL(pszUserid, "/") )
+    if( EQUAL(pszDatabaseIn, "") &&
+        EQUAL(pszPasswordIn, "") &&
+        EQUAL(pszUseridIn, "/") )
     {
         eCred = OCI_CRED_EXT;
     }
@@ -175,8 +175,8 @@ int OGROCISession::EstablishSession( const char *pszUserid,
         return FALSE;
     }
 
-    if( Failed( OCIServerAttach( hServer, hError, (text*) pszDatabase,
-                static_cast<int>(strlen((char*) pszDatabase)), 0) ) )
+    if( Failed( OCIServerAttach( hServer, hError, (text*) pszDatabaseIn,
+                static_cast<int>(strlen((char*) pszDatabaseIn)), 0) ) )
     {
         return FALSE;
     }
@@ -198,14 +198,14 @@ int OGROCISession::EstablishSession( const char *pszUserid,
     }
 
     if( Failed( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
-                (dvoid *) pszUserid, (ub4) strlen((char *) pszUserid),
+                (dvoid *) pszUseridIn, (ub4) strlen((char *) pszUseridIn),
                 (ub4) OCI_ATTR_USERNAME, hError) ) )
     {
         return FALSE;
     }
 
     if( Failed( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
-                (dvoid *) pszPassword, (ub4) strlen((char *) pszPassword),
+                (dvoid *) pszPasswordIn, (ub4) strlen((char *) pszPasswordIn),
                 (ub4) OCI_ATTR_PASSWORD, hError) ) )
     {
         return FALSE;
@@ -275,9 +275,9 @@ int OGROCISession::EstablishSession( const char *pszUserid,
 /* -------------------------------------------------------------------- */
 /*      Record information about the session.                           */
 /* -------------------------------------------------------------------- */
-    this->pszUserid = CPLStrdup(pszUserid);
-    this->pszPassword = CPLStrdup(pszPassword);
-    this->pszDatabase = CPLStrdup(pszDatabase);
+    this->pszUserid = CPLStrdup(pszUseridIn);
+    this->pszPassword = CPLStrdup(pszPasswordIn);
+    this->pszDatabase = CPLStrdup(pszDatabaseIn);
 
 /* -------------------------------------------------------------------- */
 /*      Setting up the OGR compatible time formatting rules.            */

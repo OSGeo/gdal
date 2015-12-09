@@ -216,7 +216,7 @@ EGifSetGifVersion(const char *Version) {
 
 /******************************************************************************
  * This routine should be called before any other EGif calls, immediately
- * follows the GIF file openning.
+ * follows the GIF file opening.
  *****************************************************************************/
 int
 EGifPutScreenDesc(GifFileType * GifFile,
@@ -356,7 +356,7 @@ EGifPutImageDesc(GifFileType * GifFile,
     }
 
     /* Put the image descriptor into the file: */
-    Buf[0] = ',';    /* Image seperator character. */
+    Buf[0] = ',';    /* Image separator character. */
 #ifndef DEBUG_NO_PREFIX
     WRITE(GifFile, Buf, 1);
 #endif /* DEBUG_NO_PREFIX */

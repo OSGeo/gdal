@@ -72,6 +72,7 @@ typedef unsigned long      GUIntBig;
 %typemap(argout) (double *val, int *hasval) {
     /* %typemap(argout) (double *val, int *hasval) */
     if (GIMME_V == G_ARRAY) {
+        EXTEND(SP, argvi+2-items+1);
         $result = sv_newmortal();
         sv_setnv($result, *$1);
         argvi++;
@@ -100,9 +101,10 @@ typedef unsigned long      GUIntBig;
     /* %typemap(out) char **CSL */
     if (GIMME_V == G_ARRAY) {
         if ($1) {
+            int n = CSLCount($1);
+            EXTEND(SP, argvi+n-items+1);
             int i;
             for (i = 0; $1[i]; i++) {
-                if (argvi > items-1) EXTEND(SP, 1);
                 SV *sv = newSVpv($1[i], 0);
                 SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
                 ST(argvi++) = sv_2mortal(sv);
@@ -116,8 +118,7 @@ typedef unsigned long      GUIntBig;
             for (i = 0; $1[i]; i++) {
                 SV *sv = newSVpv($1[i], 0);
                 SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
-                if (!av_store(av, i, sv))
-                    SvREFCNT_dec(sv);
+                av_push(av, sv);
             }
             CSLDestroy($1);
         }
@@ -135,8 +136,7 @@ typedef unsigned long      GUIntBig;
         for (i = 0; $1[i]; i++) {
             SV *sv = newSVpv($1[i], 0);
             SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
-            if (!av_store(av, i, sv))
-                SvREFCNT_dec(sv);
+            av_push(av, sv);
         }
         CSLDestroy($1);
     }
@@ -875,7 +875,9 @@ typedef unsigned long      GUIntBig;
                 AV *av = (AV*)(SvRV($input));
                 for (int i = 0; i < av_len(av)+1; i++) {
                     SV *sv = *(av_fetch(av, i, 0));
-                    $1 = CSLAddString( $1, sv_to_utf8_string(sv, NULL) );
+                    char *tmp = sv_to_utf8_string(sv, NULL);
+                    $1 = CSLAddString($1, tmp);
+                    free(tmp);
                 }
             } else if (SvTYPE(SvRV($input))==SVt_PVHV) {
                 HV *hv = (HV*)SvRV($input);
@@ -884,8 +886,10 @@ typedef unsigned long      GUIntBig;
                 I32 klen;
                 $1 = NULL;
                 hv_iterinit(hv);
-                while(sv = hv_iternextsv(hv,&key,&klen)) {
-                    $1 = CSLAddNameValue( $1, key, sv_to_utf8_string(sv, NULL) );
+                while(sv = hv_iternextsv(hv, &key, &klen)) {
+                    char *tmp = sv_to_utf8_string(sv, NULL);
+                    $1 = CSLAddNameValue($1, key, tmp);
+                    free(tmp);
                 }
             } else
                 do_confess(NEED_REF, 1);
@@ -1059,7 +1063,9 @@ typedef unsigned long      GUIntBig;
 
         nType = SvIV(*(av_fetch(av,0,0)));
         SV *sv = *(av_fetch(av,1,0));
-        psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, sv_to_utf8_string(sv, NULL) );
+        char *tmp = sv_to_utf8_string(sv, NULL);
+        psThisNode = CPLCreateXMLNode(NULL, (CPLXMLNodeType)nType, tmp);
+        free(tmp);
     
         for( iChild = 0; iChild < nChildCount; iChild++ )
         {
@@ -1353,8 +1359,6 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(argout) (VSIStatBufL *)
 {
     /* %typemap(argout) (VSIStatBufL *) */
-    SP -= 1; /* should be somewhere else, remove the filename arg */
-    EXTEND(SP, 1);
     char mode[2];
     mode[0] = ' ';
     mode[1] = '\0';
@@ -1365,11 +1369,9 @@ IF_UNDEF_NULL(const char *, target_key)
     else if (S_ISSOCK(sStatBuf2.st_mode)) mode[0] = 'S';
     else if (S_ISBLK(sStatBuf2.st_mode)) mode[0] = 'b';
     else if (S_ISCHR(sStatBuf2.st_mode)) mode[0] = 'c';
-    PUSHs(sv_2mortal(newSVpv(mode, 0)));
-    argvi++;
-    EXTEND(SP, 1);
-    PUSHs(sv_2mortal(newSVuv(sStatBuf2.st_size)));
-    argvi++;
+    EXTEND(SP, argvi+2-items+1);
+    ST(argvi++) = sv_2mortal(newSVpv(mode, 0));
+    ST(argvi++) = sv_2mortal(newSVuv(sStatBuf2.st_size));
 }
 
 /*

@@ -249,7 +249,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
     if( dfMaxError > 0.0 )
         GDALDestroyApproxTransformer( psWOptions->pTransformerArg );
-        
+
     GDALDestroyWarpOptions( psWOptions );
 
     return eErr;
@@ -268,7 +268,7 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit, double dfMaxError,
     GDALProgressFunc pfnProgress, void *pProgressArg, 
     GDALWarpOptions *psOptions )
-    
+
 {
     VALIDATE_POINTER1( hSrcDS, "GDALCreateAndReprojectImage", CE_Failure );
 
@@ -900,35 +900,40 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * will be selected, not just those whose center point falls within the 
  * polygon.
  *
- * - OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE when
- * outputing typically to a compressed dataset (GeoTIFF with COMPRESSED creation
- * option set for example) for achieving a smaller file size. This is achieved
- * by writing at once data aligned on full blocks of the target dataset, which
- * avoids partial writes of compressed blocks and lost space when they are rewritten
- * at the end of the file. However sticking to target block size may cause major
+ * - OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE
+ * typically when writing to a compressed dataset (GeoTIFF with
+ * COMPRESSED creation option set for example) for achieving a smaller
+ * file size. This is achieved by writing at once data aligned on full
+ * blocks of the target dataset, which avoids partial writes of
+ * compressed blocks and lost space when they are rewritten at the end
+ * of the file. However sticking to target block size may cause major
  * processing slowdown for some particular reprojections.
  *
  * - NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
  * set the number of threads to use to parallelize the computation part of the
  * warping. If not set, computation will be done in a single thread.
  *
- * - STREAMABLE_OUTPUT: (GDAL >= 2.0) This defaults to FALSE, but may be set to TRUE when
- * outputing typically to a streamed file. The gdalwarp utility automatically
- * sets this option when outputing to /vsistdout/ or a named pipe (on Unix).
- * This option has performance impacts for some reprojections.
- * Note: band interleaved output is not currently supported by the warping
- * algorithm in a streamable compatible way.
+ * - STREAMABLE_OUTPUT: (GDAL >= 2.0) This defaults to FALSE, but may
+ * be set to TRUE typically when writing to a streamed file. The
+ * gdalwarp utility automatically sets this option when writing to
+ * /vsistdout/ or a named pipe (on Unix).  This option has performance
+ * impacts for some reprojections.  Note: band interleaved output is
+ * not currently supported by the warping algorithm in a streamable
+ * compatible way.
  *
- * - SRC_COORD_PRECISION: (GDAL >= 2.0). Advanced setting. This defaults to 0, to indicate that
- * no rounding of computing source image coordinates corresponding to the target
- * image must be done. If greater than 0 (and typically below 1), this value,
- * expressed in pixel, will be used to round computed source image coordinates. The purpose
- * of this option is to make the results of warping with the approximated transformer
- * more reproducible and not sensitive to changes in warping memory size. To achieve
- * that, SRC_COORD_PRECISION must be at least 10 times greater than the error
- * threshold. The higher the SRC_COORD_PRECISION/error_threshold ratio, the higher
- * the performance will be, since exact reprojections must statistically be
- * done with a frequency of 4*error_threshold/SRC_COORD_PRECISION.
+ * - SRC_COORD_PRECISION: (GDAL >= 2.0). Advanced setting. This
+ * defaults to 0, to indicate that no rounding of computing source
+ * image coordinates corresponding to the target image must be
+ * done. If greater than 0 (and typically below 1), this value,
+ * expressed in pixel, will be used to round computed source image
+ * coordinates. The purpose of this option is to make the results of
+ * warping with the approximated transformer more reproducible and not
+ * sensitive to changes in warping memory size. To achieve that,
+ * SRC_COORD_PRECISION must be at least 10 times greater than the
+ * error threshold. The higher the SRC_COORD_PRECISION/error_threshold
+ * ratio, the higher the performance will be, since exact
+ * reprojections must statistically be done with a frequency of
+ * 4*error_threshold/SRC_COORD_PRECISION.
  */
 
 /************************************************************************/

@@ -34,6 +34,8 @@ CPL_CVSID("$Id$");
 
 extern "C" void RegisterOGRODS();
 
+using namespace OGRODS;
+
 // g++ -DHAVE_EXPAT -g -Wall -fPIC ogr/ogrsf_frmts/ods/*.cpp -shared -o ogr_ODS.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/mem -Iogr/ogrsf_frmts/ods -L. -lgdal
 
 /************************************************************************/

@@ -75,11 +75,13 @@ OGRFeature *OGRSEGUKOOABaseLayer::GetNextFeature()
 /*                         OGRUKOOAP190Layer()                          */
 /************************************************************************/
 
+namespace {
 typedef struct
 {
     const char*     pszName;
     OGRFieldType    eType;
 } FieldDesc;
+} /* end of anonymous namespace */
 
 static const FieldDesc UKOOAP190Fields[] =
 {
@@ -113,10 +115,10 @@ static const FieldDesc UKOOAP190Fields[] =
 #define FIELD_DATETIME      12
 
 OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
-                                      VSILFILE* fp )
+                                      VSILFILE* fpIn )
 
 {
-    this->fp = fp;
+    this->fp = fpIn;
     nNextFID = 0;
     bEOF = FALSE;
     poSRS = NULL;
@@ -470,12 +472,12 @@ static const FieldDesc SEGP1Fields[] =
 #define SEGP1_FIELD_DATETIME      10
 
 OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
-                              VSILFILE* fp,
-                              int nLatitudeCol )
+                              VSILFILE* fpIn,
+                              int nLatitudeColIn )
 
 {
-    this->fp = fp;
-    this->nLatitudeCol = nLatitudeCol;
+    this->fp = fpIn;
+    this->nLatitudeCol = nLatitudeColIn;
     nNextFID = 0;
     bEOF = FALSE;
     poSRS = NULL;
@@ -719,10 +721,11 @@ int OGRSEGP1Layer::DetectLatitudeColumn(const char* pszLine)
 /************************************************************************/
 
 OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer(const char* pszFilename,
-                                           OGRLayer *poBaseLayer)
+                                           OGRLayer *poBaseLayerIn)
 {
     nNextFID = 0;
     bEOF = FALSE;
+    this->poBaseLayer = poBaseLayerIn;
 
     poFeatureDefn = new OGRFeatureDefn( CPLSPrintf("%s_lines",
                                                    CPLGetBasename(pszFilename)) );
@@ -733,7 +736,6 @@ OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer(const char* pszFilename,
     OGRFieldDefn    oField( "LINENAME", OFTString );
     poFeatureDefn->AddFieldDefn( &oField );
 
-    this->poBaseLayer = poBaseLayer;
     poNextBaseFeature = NULL;
 }
 

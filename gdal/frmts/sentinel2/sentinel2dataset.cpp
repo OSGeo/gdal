@@ -977,7 +977,7 @@ char** SENTINEL2GetUserProductMetadata( CPLXMLNode* psMainMTD,
         if( pszRefBand != NULL )
         {
             int nIdx = atoi(pszRefBand);
-            if( nIdx >= 0 || nIdx < (int)NB_BANDS )
+            if( nIdx >= 0 && nIdx < (int)NB_BANDS )
                 aosList.AddNameValue("REFERENCE_BAND", asBandDesc[nIdx].pszBandName );
         }
     }
@@ -1692,7 +1692,10 @@ static void SENTINEL2SetBandMetadata(GDALRasterBand* poBand,
         const SENTINEL2_L2A_BandDescription* psL2ABandDesc =
                                         SENTINEL2GetL2ABandDesc(osBandName);
         if(psL2ABandDesc != NULL )
+        {
+            osBandDesc += ", ";
             osBandDesc += psL2ABandDesc->pszBandDescription;
+        }
 
         poBand->SetMetadataItem("BANDNAME", osBandName);
     }
@@ -2748,7 +2751,7 @@ void SENTINEL2Dataset::AddL1CL2ABandMetadata(SENTINEL2Level eLevel,
                 if( pszBandId != NULL && pszUnit != NULL && pszValue != NULL )
                 {
                     int nIdx = atoi(pszBandId);
-                    if( nIdx >= 0 || nIdx < (int)NB_BANDS )
+                    if( nIdx >= 0 && nIdx < (int)NB_BANDS )
                     {
                         for(int i=0;i<nBands;i++)
                         {

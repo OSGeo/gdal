@@ -959,7 +959,7 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->nGCPCount++ ;
 
             char szID[32];
-            sprintf( szID, "%d", poDS->nGCPCount );
+            snprintf( szID, sizeof(szID), "%d", poDS->nGCPCount );
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel = CPLAtof(CPLGetXMLValue(psNode,"pixel","0"));

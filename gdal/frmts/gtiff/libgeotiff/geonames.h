@@ -42,7 +42,7 @@ typedef struct _KeyInfo KeyInfo;
  *         6.2.x GeoTIFF Keys
  ************************************************************/
 
-static KeyInfo _keyInfo[] =  {
+static const KeyInfo _keyInfo[] =  {
 #   include "geokeys.inc"   /* geokey database */
     END_LIST
 };
@@ -53,7 +53,7 @@ static KeyInfo _keyInfo[] =  {
    ValuePair(KvUndefined,KvUndefined) \
    ValuePair(KvUserDefined,KvUserDefined) 
 
-static KeyInfo _csdefaultValue[] = {
+static const KeyInfo _csdefaultValue[] = {
    COMMON_VALUES
    END_LIST  
 };
@@ -62,7 +62,7 @@ static KeyInfo _csdefaultValue[] = {
  *         6.3.x GeoTIFF Key Values
  ************************************************************/
 
-static KeyInfo _modeltypeValue[] = {
+static const KeyInfo _modeltypeValue[] = {
    COMMON_VALUES
     ValuePair(ModelTypeProjected,1)
     ValuePair(ModelTypeGeographic,2)
@@ -73,68 +73,68 @@ static KeyInfo _modeltypeValue[] = {
    END_LIST  
 };
 
-static KeyInfo _rastertypeValue[] = {
+static const KeyInfo _rastertypeValue[] = {
    COMMON_VALUES
     ValuePair(RasterPixelIsArea,1)
     ValuePair(RasterPixelIsPoint,2)
    END_LIST  
 };
 
-static KeyInfo _geounitsValue[] = {
+static const KeyInfo _geounitsValue[] = {
    COMMON_VALUES
 #  include "epsg_units.inc"
    END_LIST  
 };
 
-static KeyInfo _geographicValue[] = {
+static const KeyInfo _geographicValue[] = {
    COMMON_VALUES
 #  include "epsg_gcs.inc"
    END_LIST  
 };
 
-static KeyInfo _geodeticdatumValue[] = {
+static const KeyInfo _geodeticdatumValue[] = {
    COMMON_VALUES
 #  include "epsg_datum.inc"
    END_LIST  
 };
 
-static KeyInfo _ellipsoidValue[] = {
+static const KeyInfo _ellipsoidValue[] = {
    COMMON_VALUES
 #  include "epsg_ellipse.inc"
    END_LIST  
 };
 
-static KeyInfo _primemeridianValue[] = {
+static const KeyInfo _primemeridianValue[] = {
    COMMON_VALUES
 #  include "epsg_pm.inc"
    END_LIST  
 };
 
-static KeyInfo _pcstypeValue[] = {
+static const KeyInfo _pcstypeValue[] = {
    COMMON_VALUES
 #  include "epsg_pcs.inc"
    END_LIST  
 };
 
-static KeyInfo _projectionValue[] = {
+static const KeyInfo _projectionValue[] = {
    COMMON_VALUES
 #  include "epsg_proj.inc"
    END_LIST  
 };
 
-static KeyInfo _coordtransValue[] = {
+static const KeyInfo _coordtransValue[] = {
    COMMON_VALUES
 #  include "geo_ctrans.inc"
    END_LIST  
 };
 
-static KeyInfo _vertcstypeValue[] = {
+static const KeyInfo _vertcstypeValue[] = {
    COMMON_VALUES
 #  include "epsg_vertcs.inc"
    END_LIST  
 };
 
-static KeyInfo _vdatumValue[] = {
+static const KeyInfo _vdatumValue[] = {
    COMMON_VALUES
     ValuePair(VDatumBase,1)
    END_LIST  

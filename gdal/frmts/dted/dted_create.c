@@ -3,7 +3,7 @@
  *
  * Project:  DTED Translator
  * Purpose:  Implementation of DTEDCreate() portion of DTED API.
- * Author:   Frank Warmerdam, warmerdamm@pobox.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
@@ -77,7 +77,7 @@ static void DTEDFormatDMS( unsigned char *achField, double dfAngle,
     dfRemainder = dfRemainder - nMinutes / 60.0;
     nSeconds = (int) floor(dfRemainder * 3600.0 + 0.5);
 
-    sprintf( szWork, pszFormat,
+    snprintf( szWork, sizeof(szWork),pszFormat,
              nDegrees, nMinutes, nSeconds, chHemisphere );
 
     strncpy( (char *) achField, szWork, strlen(szWork) );
@@ -96,7 +96,7 @@ static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... )
     char    szWork[512];
 
     va_start(args, pszFormat);
-    vsprintf( szWork, pszFormat, args );
+    CPLvsnprintf( szWork, sizeof(szWork), pszFormat, args );
     va_end(args);
 
     strncpy( (char *) pszTarget, szWork, strlen(szWork) );
@@ -135,7 +135,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     }
     else
     {
-        sprintf( szError, "Illegal DTED Level value %d, only 0-2 allowed.",
+        snprintf( szError, sizeof(szError), "Illegal DTED Level value %d, only 0-2 allowed.",
                  nLevel );
         return szError;
     }
@@ -156,7 +156,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
 
     if( fp == NULL )
     {
-        sprintf( szError, "Unable to create file `%s'.", pszFilename );
+        snprintf( szError, sizeof(szError), "Unable to create file `%s'.", pszFilename );
         return szError;
     }
 

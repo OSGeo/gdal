@@ -69,9 +69,9 @@ OGRXPlaneReader::~OGRXPlaneReader()
 /*                         StartParsing()                               */
 /************************************************************************/
 
-int OGRXPlaneReader::StartParsing( const char * pszFilename )
+int OGRXPlaneReader::StartParsing( const char * pszFilenameIn )
 {
-    fp = VSIFOpenL( pszFilename, "rb" );
+    fp = VSIFOpenL( pszFilenameIn, "rb" );
     if (fp == NULL)
         return FALSE;
 
@@ -95,7 +95,7 @@ int OGRXPlaneReader::StartParsing( const char * pszFilename )
     }
 
     CPLFree(this->pszFilename);
-    this->pszFilename = CPLStrdup(pszFilename);
+    this->pszFilename = CPLStrdup(pszFilenameIn);
 
     nLineNumber = 2;
     CPLDebug("XPlane", "Version/Copyright : %s", pszLine);

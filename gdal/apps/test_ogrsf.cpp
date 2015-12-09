@@ -315,7 +315,7 @@ static int TestDataset( GDALDriver** ppoDriver )
     if( poDS == NULL )
     {
         OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-        
+
         printf( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 pszDataSource );
@@ -341,13 +341,14 @@ static int TestDataset( GDALDriver** ppoDriver )
                 "      different from user name `%s'.\n",
                 poDS->GetDescription(), pszDataSource );
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      Process optionnal SQL request.                                  */
+/*      Process optional SQL request.                                   */
 /* -------------------------------------------------------------------- */
     if (pszSQLStatement != NULL)
     {
-        OGRLayer  *poResultSet = poDS->ExecuteSQL(pszSQLStatement, NULL, pszDialect);
+        OGRLayer *poResultSet
+            = poDS->ExecuteSQL(pszSQLStatement, NULL, pszDialect);
         if (poResultSet == NULL)
         {
             GDALClose( (GDALDatasetH)poDS );
@@ -360,7 +361,7 @@ static int TestDataset( GDALDriver** ppoDriver )
                         poResultSet->GetName() );
         }
         bRet = TestOGRLayer( poDS, poResultSet, TRUE );
-        
+
         poDS->ReleaseResultSet(poResultSet);
 
         bRetLocal = TestDSErrorConditions(poDS);
@@ -833,15 +834,17 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             {
                 if( poLayer->GetGeomType() != eExpectedGeomType )
                 {
-                    printf("ERROR: %s: GetGeomType() returns %d but %d was expected (and %d originaly set).\n",
-                    poDriver->GetDescription(), poLayer->GetGeomType(), eExpectedGeomType, eGeomType);
+                    printf( "ERROR: %s: GetGeomType() returns %d but %d "
+                            "was expected (and %d originally set).\n",
+                            poDriver->GetDescription(), poLayer->GetGeomType(),
+                            eExpectedGeomType, eGeomType);
                     bRet = FALSE;
                 }
             }
             LOG_ACTION(GDALClose(poDS));
         }
     }
-    
+
     CPLPushErrorHandler(CPLQuietErrorHandler);
     LOG_ACTION(poDriver->Delete(osFilename));
     CPLPopErrorHandler();
@@ -1168,6 +1171,9 @@ static const char* GetLayerNameForSQL( GDALDataset* poDS, const char* pszLayerNa
     if (EQUAL(poDS->GetDriverName(), "SQLAnywhere"))
         return pszLayerName;
 
+    if (EQUAL(poDS->GetDriverName(), "DB2ODBC"))
+        return pszLayerName;
+        
     return CPLSPrintf("\"%s\"", pszLayerName);
 }
 
@@ -2992,7 +2998,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
 
     CPLString osSQL;
 
-    /* Test consistency between result layer and traditionnal layer */
+    /* Test consistency between result layer and traditional layer */
     LOG_ACTION(poLayer->ResetReading());
     poLayerFeat = LOG_ACTION(poLayer->GetNextFeature());
 

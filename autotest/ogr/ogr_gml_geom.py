@@ -1133,7 +1133,7 @@ def gml_write_gml3_srs():
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
         return 'fail'
 
-    # Shouldn't change the coordinate order
+    # Should not change the coordinate order.
     geom = ogr.CreateGeometryFromWkt('POINT(49 2)')
     geom.AssignSpatialReference(srlatlong)
     gml3 = geom.ExportToGML( options = ['FORMAT=GML3'] )

@@ -84,7 +84,7 @@
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
  * Revision 1.7  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.6  2000/02/28 17:12:22  daniel
  * Write support for joined tables and indexed fields
@@ -762,7 +762,7 @@ int TABView::Close()
         TABAdjustFilenameExtension(pszFile);
         VSIUnlink(pszFile);
 
-        sprintf(pszFile, "%s2.id", m_pszFname);
+        snprintf(pszFile, strlen(pszFile)+1, "%s2.id", m_pszFname);
         TABAdjustFilenameExtension(pszFile);
         VSIUnlink(pszFile);
 
@@ -859,8 +859,8 @@ GIntBig TABView::GetNextFeatureId(GIntBig nPrevId)
  *
  * Fill and return a TABFeature object for the specified feature id.
  *
- * The retruned pointer is a reference to an object owned and maintained
- * by this TABView object.  It should not be altered or freed by the 
+ * The returned pointer is a reference to an object owned and maintained
+ * by this TABView object.  It should not be altered or freed by the
  * caller and its contents is guaranteed to be valid only until the next
  * call to GetFeatureRef() or Close().
  *
@@ -870,9 +870,9 @@ GIntBig TABView::GetNextFeatureId(GIntBig nPrevId)
  **********************************************************************/
 TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
 {
-    
+
     /*-----------------------------------------------------------------
-     * Make sure file is opened 
+     * Make sure file is open.
      *----------------------------------------------------------------*/
     if (m_poRelation == NULL)
     {
@@ -1525,11 +1525,12 @@ int  TABRelation::CreateRelFields()
      * already exists then we'll try to generate a unique name.
      *----------------------------------------------------------------*/
     m_pszMainFieldName = CPLStrdup("MI_Refnum      ");
+    const size_t nLen = strlen(m_pszMainFieldName) + 1;
     strcpy(m_pszMainFieldName, "MI_Refnum");
     i = 1;
     while(m_poDefn->GetFieldIndex(m_pszMainFieldName) >= 0)
     {
-        sprintf(m_pszMainFieldName, "MI_Refnum_%d", i++);
+        snprintf(m_pszMainFieldName, nLen, "MI_Refnum_%d", i++);
     }
     m_pszRelFieldName = CPLStrdup(m_pszMainFieldName);
 
@@ -1584,7 +1585,7 @@ int  TABRelation::CreateRelFields()
  *
  * Fill and return a TABFeature object for the specified feature id.
  *
- * The retuned pointer is a new TABFeature that will have to be freed
+ * The returned pointer is a new TABFeature that will have to be freed
  * by the caller.
  *
  * Returns NULL if the specified feature id does not exist of if an
@@ -1592,8 +1593,8 @@ int  TABRelation::CreateRelFields()
  * report the reason of the failure.
  *
  * __TODO__ The current implementation fetches the features from each table
- * and creates a 3rd feature to merge them.  There would be room for 
- * optimization, at least by avoiding the duplication of the geometry 
+ * and creates a 3rd feature to merge them.  There would be room for
+ * optimization, at least by avoiding the duplication of the geometry
  * which can be big sometimes... but this would imply changes at the
  * lower-level in the lib. and we won't go there yet.
  **********************************************************************/

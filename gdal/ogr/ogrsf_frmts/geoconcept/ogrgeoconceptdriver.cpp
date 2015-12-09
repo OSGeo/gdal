@@ -170,7 +170,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
 {
     int iExt;
     VSIStatBuf sStatBuf;
-    static const char *apszExtensions[] = 
+    static const char * const apszExtensions[] = 
         { "gxt", "txt", "gct", "gcm", "gcr", NULL };
 
     if( VSIStat( pszDataSource, &sStatBuf ) != 0 )

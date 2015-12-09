@@ -761,7 +761,7 @@ void IS_Free (IS_dataType *is)
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.
  *  11/2002 AAT: Updated.
  *  12/2002 (TK,AC,TB,&MS): Code Review.
- *   1/2003 AAT: It wasn't error coded 208, but rather 202 to look for.
+ *   1/2003 AAT: It was not error coded 208, but rather 202 to look for.
  *   3/2003 AAT: Modified handling of section 2 stuff (no loop)
  *   3/2003 AAT: Added ability to handle multiple grids in same message.
  *   4/2003 AAT: Added ability to call GRIB1 decoder for GRIB1 messages.

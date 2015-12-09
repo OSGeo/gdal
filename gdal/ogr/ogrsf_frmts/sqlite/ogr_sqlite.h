@@ -65,6 +65,8 @@
 #define HAVE_SQLITE3_PREPARE_V2
 #endif
 
+#ifndef DO_NOT_INCLUDE_SQLITE_CLASSES
+
 #define UNINITIALIZED_SRID  -2
 
 /************************************************************************/
@@ -155,8 +157,8 @@ enum OGRSpatialiteGeomType
 class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
 {
     public:
-        OGRSQLiteGeomFieldDefn( const char* pszName, int iGeomColIn ) :
-            OGRGeomFieldDefn(pszName, wkbUnknown), nSRSId(-1),
+        OGRSQLiteGeomFieldDefn( const char* pszNameIn, int iGeomColIn ) :
+            OGRGeomFieldDefn(pszNameIn, wkbUnknown), nSRSId(-1),
             iCol(iGeomColIn), bTriedAsSpatiaLite(FALSE), eGeomFormat(OSGF_None),
             bHasM(FALSE), bCachedExtentIsValid(FALSE), bHasSpatialIndex(FALSE),
             bHasCheckedSpatialIndexTable(FALSE)
@@ -353,11 +355,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     OGRErr              RecomputeOrdinals();
 
     OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
-    void                AddColumnDef(char* pszNewFieldList,
+    void                AddColumnDef(char* pszNewFieldList, size_t nBufLen,
                                      OGRFieldDefn* poFldDefn);
 
     void                InitFieldListForRecrerate(char* & pszNewFieldList,
                                                   char* & pszFieldListForSelect,
+                                                  size_t& nBufLenOut,
                                                   int nExtraSpace = 0);
     OGRErr              RecreateTable(const char* pszFieldListForSelect,
                                       const char* pszNewFieldList,
@@ -832,6 +835,8 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
 
     void                ReloadLayers();
 };
+
+#endif /* DO_NOT_INCLUDE_SQLITE_CLASSES */
 
 /* To escape literals. The returned string doesn't contain the surrounding single quotes */
 CPLString OGRSQLiteEscape( const char *pszLiteral );

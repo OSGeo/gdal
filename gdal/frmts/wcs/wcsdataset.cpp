@@ -160,6 +160,7 @@ class WCSRasterBand : public GDALPamRasterBand
 WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn, int iOverviewIn )
 
 {
+    poDS = poDSIn;
     poODS = poDSIn;
     this->nBand = nBandIn;
 
@@ -1009,7 +1010,7 @@ int WCSDataset::ExtractGridInfo100()
         && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
         OGRSpatialReference oSRS;
-        
+
         if( oSRS.SetFromUserInput( pszNativeCRSs ) == OGRERR_NONE )
         {
             CPLFree( pszProjection );
@@ -1017,7 +1018,7 @@ int WCSDataset::ExtractGridInfo100()
         }
         else
             CPLDebug( "WCS", 
-                      "<nativeCRSs> element contents not parsable:\n%s", 
+                      "<nativeCRSs> element contents not parsable:\n%s",
                       pszNativeCRSs );
     }
 
@@ -1030,7 +1031,7 @@ int WCSDataset::ExtractGridInfo100()
              || STARTS_WITH_CI(pszNativeCRSs, "OGC:") ) )
     {
         osCRS = pszNativeCRSs;
-        
+
         size_t nDivider = osCRS.find( " " );
 
         if( nDivider != std::string::npos )
@@ -1041,11 +1042,11 @@ int WCSDataset::ExtractGridInfo100()
 /*      Do we have a coordinate system override?                        */
 /* -------------------------------------------------------------------- */
     const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", NULL );
-    
+
     if( pszProjOverride )
     {
         OGRSpatialReference oSRS;
-        
+
         if( oSRS.SetFromUserInput( pszProjOverride ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1437,7 +1438,7 @@ int WCSDataset::ExtractGridInfo()
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognised GridCRS.GridType value '%s',\n"
+                  "Unrecognized GridCRS.GridType value '%s',\n"
                   "unable to process WCS coverage.",
                   pszGridType );
         CSLDestroy( papszOffsetTokens );

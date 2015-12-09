@@ -122,7 +122,7 @@ static int CRS_compute_georef_equations(struct Control_Points *,
     double [], double [], double [], double [], int);
 static int remove_outliers(GCPTransformInfo *);
 
-static char *CRS_error_message[] = {
+static const char * const CRS_error_message[] = {
     "Failed to compute GCP transform: Not enough points available",
     "Failed to compute GCP transform: Transform is not solvable",
     "Failed to compute GCP transform: Not enough memory",
@@ -1067,7 +1067,7 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
   ARE REACHED OR NO OUTLIERS CAN BE DETECTED.
   
   1. WE CALCULATE THE COEFFICIENTS FOR ALL THE GCPS.
-  2. THE GCP LIST WILL BE SCANED TO DETERMINE THE WORST OUTLIER USING
+  2. THE GCP LIST WILL BE SCANNED TO DETERMINE THE WORST OUTLIER USING
      THE CALCULATED COEFFICIENTS.
   3. THE WORST OUTLIER WILL BE REMOVED FROM THE GCP LIST.
   4. THE COEFFICIENTS WILL BE RECALCULATED WITHOUT THE WORST OUTLIER.

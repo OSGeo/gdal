@@ -32,7 +32,7 @@ const char *centerLookup (unsigned short int center)
     * http://www.nco.ncep.noaa.gov/pmb/docs/on388/table0.html 
     * I typed this in on 11/2/2006 */
 /* *INDENT-OFF* */
-   static struct {
+   static const struct {
       unsigned short int num;
       const char *name;
    } Center[] = {
@@ -350,7 +350,7 @@ const char *subCenterLookup(unsigned short int center,
  * http://www.ecmwf.int/publications/manuals/libraries/gribex/
  *        localGRIBUsage.html as of 4/5/2006
  */
-   static struct {
+   static const struct {
       unsigned short int center, subcenter;
       const char *name;
    } SubCenter[] = {
@@ -424,7 +424,7 @@ const char *processLookup (unsigned short int center, unsigned char process)
    /* see: http://www.nco.ncep.noaa.gov/pmb/docs/on388/tablea.html I typed
     * this in on 10/12/2005 */
 /* *INDENT-OFF* */
-   static struct {
+   static const struct {
       unsigned short int center;
       unsigned char process;
       const char *name;
@@ -554,7 +554,7 @@ typedef struct {
  * 1/3/2006
  */
 /* GRIB2 Code table 4.2 : 0.0 */
-GRIB2ParmTable MeteoTemp[] = {
+static const GRIB2ParmTable MeteoTemp[] = {
    /* 0 */ {"TMP", "Temperature", "K", UC_K2F},  /* Need NDFD override. T */
    /* 1 */ {"VTMP", "Virtual temperature", "K", UC_K2F},
    /* 2 */ {"POT", "Potential temperature", "K", UC_K2F},
@@ -578,7 +578,7 @@ GRIB2ParmTable MeteoTemp[] = {
 
 /* GRIB2 Code table 4.2 : 0.1 */
 /* NCEP added "Water" to items 22, 24, 25 */
-GRIB2ParmTable MeteoMoist[] = {
+static const GRIB2ParmTable MeteoMoist[] = {
    /* 0 */ {"SPFH", "Specific humidity", "kg/kg", UC_NONE},
    /* 1 */ {"RH", "Relative Humidity", "%", UC_NONE},
    /* 2 */ {"MIXR", "Humidity mixing ratio", "kg/kg", UC_NONE},
@@ -633,7 +633,7 @@ GRIB2ParmTable MeteoMoist[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.2 */
-GRIB2ParmTable MeteoMoment[] = {
+static const GRIB2ParmTable MeteoMoment[] = {
    /* 0 */ {"WDIR", "Wind direction (from which blowing)", "deg true",
             UC_NONE}, /* Need NDFD override WindDir */
    /* 1 */ {"WIND", "Wind speed", "m/s", UC_MS2Knots}, /* Need NDFD override WindSpd */
@@ -669,7 +669,7 @@ GRIB2ParmTable MeteoMoment[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.3 */
-GRIB2ParmTable MeteoMass[] = {
+static const GRIB2ParmTable MeteoMass[] = {
    /* 0 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 1 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
    /* 2 */ {"PTEND", "Pressure tendency", "Pa/s", UC_NONE},
@@ -693,7 +693,7 @@ GRIB2ParmTable MeteoMass[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.4 */
-GRIB2ParmTable MeteoShortRadiate[] = {
+static const GRIB2ParmTable MeteoShortRadiate[] = {
    /* 0 */ {"NSWRS", "Net short-wave radiation flux (surface)", "W/(m^2)", UC_NONE},
    /* 1 */ {"NSWRT", "Net short-wave radiation flux (top of atmosphere)",
             "W/(m^2)", UC_NONE},
@@ -707,7 +707,7 @@ GRIB2ParmTable MeteoShortRadiate[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.5 */
-GRIB2ParmTable MeteoLongRadiate[] = {
+static const GRIB2ParmTable MeteoLongRadiate[] = {
    /* 0 */ {"NLWRS", "Net long wave radiation flux (surface)", "W/(m^2)", UC_NONE},
    /* 1 */ {"NLWRT", "Net long wave radiation flux (top of atmosphere)",
             "W/(m^2)", UC_NONE},
@@ -717,7 +717,7 @@ GRIB2ParmTable MeteoLongRadiate[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.6 */
-GRIB2ParmTable MeteoCloud[] = {
+static const GRIB2ParmTable MeteoCloud[] = {
    /* 0 */ {"CICE", "Cloud Ice", "kg/(m^2)", UC_NONE},
    /* 1 */ {"TCDC", "Total cloud cover", "%", UC_NONE}, /* Need NDFD override Sky */
    /* 2 */ {"CDCON", "Convective cloud cover", "%", UC_NONE},
@@ -753,7 +753,7 @@ GRIB2ParmTable MeteoCloud[] = {
 
 /* GRIB2 Code table 4.2 : 0.7 */
 /* NCEP capitalized items 6, 7, 8 */
-GRIB2ParmTable MeteoStability[] = {
+static const GRIB2ParmTable MeteoStability[] = {
    /* 0 */ {"PLI", "Parcel lifted index (to 500 hPa)", "K", UC_NONE},
    /* 1 */ {"BLI", "Best lifted index (to 500 hPa)", "K", UC_NONE},
    /* 2 */ {"KX", "K index", "K", UC_NONE},
@@ -771,19 +771,19 @@ GRIB2ParmTable MeteoStability[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.13 */
-GRIB2ParmTable MeteoAerosols[] = {
+static const GRIB2ParmTable MeteoAerosols[] = {
    /* 0 */ {"", "Aerosol type", "(0 Aerosol not present, 1 Aerosol present, "
             "255 missing)", UC_NONE},
 };
 
 /* GRIB2 Code table 4.2 : 0.14 */
-GRIB2ParmTable MeteoGases[] = {
+static const GRIB2ParmTable MeteoGases[] = {
    /* 0 */ {"TOZNE", "Total ozone", "Dobson", UC_NONE},
 /* 1 */    {"O3MR", "Ozone Mixing Ratio", "kg/kg", UC_NONE},
 };
 
 /* GRIB2 Code table 4.2 : 0.15 */
-GRIB2ParmTable MeteoRadar[] = {
+static const GRIB2ParmTable MeteoRadar[] = {
    /* 0 */ {"", "Base spectrum width", "m/s", UC_NONE},
    /* 1 */ {"", "Base reflectivity", "dB", UC_NONE},
    /* 2 */ {"", "Base radial velocity", "m/s", UC_NONE},
@@ -796,7 +796,7 @@ GRIB2ParmTable MeteoRadar[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.18 */
-GRIB2ParmTable MeteoNuclear[] = {
+static const GRIB2ParmTable MeteoNuclear[] = {
    /* 0 */ {"", "Air concentration of Caesium 137", "Bq/(m^3)", UC_NONE},
    /* 1 */ {"", "Air concentration of Iodine 131", "Bq/(m^3)", UC_NONE},
    /* 2 */ {"", "Air concentration of radioactive pollutant", "Bq/(m^3)", UC_NONE},
@@ -813,7 +813,7 @@ GRIB2ParmTable MeteoNuclear[] = {
 
 /* GRIB2 Code table 4.2 : 0.19 */
 /* NCEP capitalized items 11 */
-GRIB2ParmTable MeteoAtmos[] = {
+static const GRIB2ParmTable MeteoAtmos[] = {
    /* 0 */ {"VIS", "Visibility", "m", UC_NONE},
    /* 1 */ {"ALBDO", "Albedo", "%", UC_NONE},
    /* 2 */ {"TSTM", "Thunderstorm probability", "%", UC_NONE},
@@ -842,17 +842,17 @@ GRIB2ParmTable MeteoAtmos[] = {
 };
 
 /* GRIB2 Code table 4.2 : 0.253 or 0.190 (Document is inconsistent.) */
-GRIB2ParmTable MeteoText[] = {
+static const GRIB2ParmTable MeteoText[] = {
    /* 0 */ {"", "Arbitrary text string", "CCITTIA5", UC_NONE},
 };
 
-GRIB2ParmTable MeteoMisc[] = {
+static const GRIB2ParmTable MeteoMisc[] = {
    /* 0 */ {"TSEC", "Seconds prior to initial reference time (defined in Section"
             " 1)", "s", UC_NONE},
 };
 
 /* GRIB2 Code table 4.2 : 1.0 */
-GRIB2ParmTable HydroBasic[] = {
+static const GRIB2ParmTable HydroBasic[] = {
    /* 0 */ {"", "Flash flood guidance", "kg/(m^2)", UC_NONE},
    /* 1 */ {"", "Flash flood runoff", "kg/(m^2)", UC_NONE},
    /* 2 */ {"", "Remotely sensed snow cover", "(50 no-snow/no-cloud, "
@@ -865,7 +865,7 @@ GRIB2ParmTable HydroBasic[] = {
 };
 
 /* GRIB2 Code table 4.2 : 1.1 */
-GRIB2ParmTable HydroProb[] = {
+static const GRIB2ParmTable HydroProb[] = {
    /* 0 */ {"", "Conditional percent precipitation amount fractile for an "
             "overall period", "kg/(m^2)", UC_NONE},
    /* 1 */ {"", "Percent precipitation in a sub-period of an overall period",
@@ -874,7 +874,7 @@ GRIB2ParmTable HydroProb[] = {
 };
 
 /* GRIB2 Code table 4.2 : 2.0 */
-GRIB2ParmTable LandVeg[] = {
+static const GRIB2ParmTable LandVeg[] = {
    /* 0 */ {"LAND", "Land cover (1=land; 2=sea)", "Proportion", UC_NONE},
    /* 1 */ {"SFCR", "Surface roughness", "m", UC_NONE}, /*NCEP override SFRC? */
    /* 2 */ {"TSOIL", "Soil temperature", "K", UC_NONE},
@@ -904,7 +904,7 @@ GRIB2ParmTable LandVeg[] = {
 
 /* GRIB2 Code table 4.2 : 2.3 */
 /* NCEP changed 0 to be "Soil type (as in Zobler)" I ignored them */
-GRIB2ParmTable LandSoil[] = {
+static const GRIB2ParmTable LandSoil[] = {
    /* 0 */ {"SOTYP", "Soil type", "(1 Sand, 2 Loamy sand, 3 Sandy loam, "
             "4 Silt loam, 5 Organic (redefined), 6 Sandy clay loam, "
             "7 Silt clay loam, 8 Clay loam, 9 Sandy clay, 10 Silty clay, "
@@ -921,7 +921,7 @@ GRIB2ParmTable LandSoil[] = {
 };
 
 /* GRIB2 Code table 4.2 : 3.0 */
-GRIB2ParmTable SpaceImage[] = {
+static const GRIB2ParmTable SpaceImage[] = {
    /* 0 */ {"", "Scaled radiance", "numeric", UC_NONE},
    /* 1 */ {"", "Scaled albedo", "numeric", UC_NONE},
    /* 2 */ {"", "Scaled brightness temperature", "numeric", UC_NONE},
@@ -943,7 +943,7 @@ GRIB2ParmTable SpaceImage[] = {
 };
 
 /* GRIB2 Code table 4.2 : 3.1 */
-GRIB2ParmTable SpaceQuantitative[] = {
+static const GRIB2ParmTable SpaceQuantitative[] = {
    /* 0 */ {"", "Estimated precipitation", "kg/(m^2)", UC_NONE},
 /* 1 */ {"", "Instantaneous rain rate", "kg/(m^2*s)", UC_NONE},
 /* 2 */ {"", "Cloud top height", "kg/(m^2*s)", UC_NONE},
@@ -955,7 +955,7 @@ GRIB2ParmTable SpaceQuantitative[] = {
 };
 
 /* GRIB2 Code table 4.2 : 10.0 */
-GRIB2ParmTable OceanWaves[] = {
+static const GRIB2ParmTable OceanWaves[] = {
    /* 0 */ {"WVSP1", "Wave spectra (1)", "-", UC_NONE},
    /* 1 */ {"WVSP2", "Wave spectra (2)", "-", UC_NONE},
    /* 2 */ {"WVSP3", "Wave spectra (3)", "-", UC_NONE},
@@ -973,7 +973,7 @@ GRIB2ParmTable OceanWaves[] = {
 };
 
 /* GRIB2 Code table 4.2 : 10.1 */
-GRIB2ParmTable OceanCurrents[] = {
+static const GRIB2ParmTable OceanCurrents[] = {
    /* 0 */ {"DIRC", "Current direction", "Degree true", UC_NONE},
    /* 1 */ {"SPC", "Current speed", "m/s", UC_NONE},
    /* 2 */ {"UOGRD", "u-component of current", "m/s", UC_NONE},
@@ -981,7 +981,7 @@ GRIB2ParmTable OceanCurrents[] = {
 };
 
 /* GRIB2 Code table 4.2 : 10.2 */
-GRIB2ParmTable OceanIce[] = {
+static const GRIB2ParmTable OceanIce[] = {
    /* 0 */ {"ICEC", "Ice cover", "Proportion", UC_NONE},
    /* 1 */ {"ICETK", "Ice thinkness", "m", UC_NONE},
    /* 2 */ {"DICED", "Direction of ice drift", "Degree true", UC_NONE},
@@ -993,18 +993,20 @@ GRIB2ParmTable OceanIce[] = {
 };
 
 /* GRIB2 Code table 4.2 : 10.3 */
-GRIB2ParmTable OceanSurface[] = {
+static const GRIB2ParmTable OceanSurface[] = {
    /* 0 */ {"WTMP", "Water temperature", "K", UC_NONE},
    /* 1 */ {"DSLM", "Deviation of sea level from mean", "m", UC_NONE},
 };
 
+#ifdef unused
 /* GRIB2 Code table 4.2 : 10.4 */
-GRIB2ParmTable OceanSubSurface[] = {
+static const GRIB2ParmTable OceanSubSurface[] = {
    /* 0 */ {"MTHD", "Main thermocline depth", "m", UC_NONE},
    /* 1 */ {"MTHA", "Main thermocline anomaly", "m", UC_NONE},
    /* 2 */ {"TTHDP", "Transient thermocline depth", "m", UC_NONE},
    /* 3 */ {"SALTY", "Salinity", "kg/kg", UC_NONE},
 };
+#endif
 
 /* *INDENT-ON* */
 
@@ -1032,7 +1034,7 @@ GRIB2ParmTable OceanSubSurface[] = {
  * NOTES
  *****************************************************************************
  */
-static GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
+static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                                               size_t *tableLen)
 {
    enum { METEO_TEMP = 0, METEO_MOIST = 1, METEO_MOMENT = 2, METEO_MASS = 3,
@@ -1179,7 +1181,7 @@ static GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
 }
 
 /* *INDENT-OFF* */
-NDFD_AbrevOverideTable NDFD_Overide[] = {
+static const NDFD_AbrevOverideTable NDFD_Overide[] = {
    /*  0 */ {"TMP", "T"},
    /*  1 */ {"TMAX", "MaxT"},
    /*  2 */ {"TMIN", "MinT"},
@@ -1195,7 +1197,7 @@ NDFD_AbrevOverideTable NDFD_Overide[] = {
    /* 11 */ {"GUST", "WindGust"},
 };
 
-GRIB2LocalTable NDFD_LclTable[] = {
+static const GRIB2LocalTable NDFD_LclTable[] = {
    /* 0 */ {0, 1, 192, "Wx", "Weather string", "-", UC_NONE},
    /* 1 */ {0, 0, 193, "ApparentT", "Apparent Temperature", "K", UC_K2F},
    /* 2 */ {0, 14, 192, "O3MR", "Ozone Mixing Ratio", "kg/kg", UC_NONE},
@@ -1211,7 +1213,7 @@ GRIB2LocalTable NDFD_LclTable[] = {
            {10, 3, 193, "ETSurge", "Extra Tropical Storm Surge", "m", UC_M2Feet},
 };
 
-GRIB2LocalTable HPC_LclTable[] = {
+static const GRIB2LocalTable HPC_LclTable[] = {
    /* 0 */ {0, 1, 192, "HPC-Wx", "HPC Code", "-", UC_NONE},
 };
 
@@ -1227,7 +1229,7 @@ http://www.nco.ncep.noaa.gov/pmb/docs/on388/table2.html
 Updated again on 2/14/2006
 Updated again on 3/15/2006
 */
-GRIB2LocalTable NCEP_LclTable[] = {
+static const GRIB2LocalTable NCEP_LclTable[] = {
    /*  0 */ {0, 0, 192, "SNOHF", "Snow Phase Change Heat Flux", "W/(m^2)", UC_NONE},
             {0, 0, 193, "TTRAD", "Temperature tendency by all radiation", "K/s", UC_NONE},
 
@@ -1404,7 +1406,7 @@ int IsData_MOS (unsigned short int center, unsigned short int subcenter)
  * NOTES
  *****************************************************************************
  */
-static GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
+static const GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
                                                unsigned short int subcenter,
                                                size_t *tableLen)
 {
@@ -1494,8 +1496,8 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
                           double lowerProb, double upperProb, char **name,
                           char **comment, char **unit, int *convert)
 {
-   GRIB2ParmTable *table;
-   GRIB2LocalTable *local;
+   const GRIB2ParmTable *table;
+   const GRIB2LocalTable *local;
    size_t tableLen;
    size_t i;
    char f_isNdfd = IsData_NDFD (center, subcenter);
@@ -1669,8 +1671,8 @@ static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
                           sChar percentile, char **name, char **comment,
                           char **unit, int *convert)
 {
-   GRIB2ParmTable *table;
-   GRIB2LocalTable *local;
+   const GRIB2ParmTable *table;
+   const GRIB2LocalTable *local;
    size_t tableLen;
    size_t i;
 
@@ -1761,8 +1763,8 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
                           char **name,
                           char **comment, char **unit, int *convert)
 {
-   GRIB2ParmTable *table;
-   GRIB2LocalTable *local;
+   const GRIB2ParmTable *table;
+   const GRIB2LocalTable *local;
    size_t tableLen;
    size_t i;
    sChar f_accum;
@@ -2161,7 +2163,7 @@ int ComputeUnit (int convert, char *origName, sChar f_unit, double *unitM,
             origName[strlen (origName) - 2] = '\0';
             if (strlen (origName) > 21)
                origName[21] = '\0';
-            sprintf (name, "[%s]", origName + 7);
+            snprintf (name, 15, "[%s]", origName + 7);
             *unitM = -10; /* M = -10 => take 10^(x) */
             *unitB = 0;
             return 0;
@@ -2296,7 +2298,7 @@ static int ComputeUnit2 (int prodType, int templat, int cat, int subcat,
 
 /* GRIB2 Code Table 4.5 */
 /* *INDENT-OFF* */
-GRIB2SurfTable Surface[] = {
+static const GRIB2SurfTable Surface[] = {
    /* 0 */ {"RESERVED", "Reserved", "-"},
    /* 1 */ {"SFC", "Ground or water surface", "-"},
    /* 2 */ {"CBL", "Cloud base level", "-"},
@@ -2338,7 +2340,7 @@ typedef struct {
 
 /* based on http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table4-5.shtml
  * updated last on 3/14/2006 */
-GRIB2LocalSurface NCEP_Surface[] = {
+static const GRIB2LocalSurface NCEP_Surface[] = {
    {200, {"EATM", "Entire atmosphere (considered as a single layer)", "-"}},
    {201, {"EOCN", "Entire ocean (considered as a single layer)", "-"}},
    {204, {"HTFL", "Highest tropospheric freezing level", "-"}},
@@ -2482,13 +2484,13 @@ void ParseLevelName (unsigned short int center, unsigned short int subcenter,
    *shortLevelName = NULL;
    free (*longLevelName);
    *longLevelName = NULL;
-   sprintf (valBuff, "%f", value);
+   snprintf (valBuff, sizeof(valBuff), "%f", value);
    strTrimRight (valBuff, '0');
    if (valBuff[strlen (valBuff) - 1] == '.') {
       valBuff[strlen (valBuff) - 1] = '\0';
    }
    if (f_sndValue) {
-      sprintf (sndBuff, "%f", sndValue);
+      snprintf (sndBuff, sizeof(sndBuff), "%f", sndValue);
       strTrimRight (sndBuff, '0');
       if (sndBuff[strlen (sndBuff) - 1] == '.') {
          sndBuff[strlen (sndBuff) - 1] = '\0';

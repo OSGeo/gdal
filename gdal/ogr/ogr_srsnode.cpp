@@ -339,7 +339,7 @@ void OGR_SRSNode::SetValue( const char * pszNewValue )
 /**
  * Make a duplicate of this node, and it's children.
  *
- * @return a new node tree, which becomes the responsiblity of the caller.
+ * @return a new node tree, which becomes the responsibility of the caller.
  */
 
 OGR_SRSNode *OGR_SRSNode::Clone() const
@@ -374,7 +374,7 @@ int OGR_SRSNode::NeedsQuoting() const
     // needs to be quoted even though it appears well behaved.
     if( poParent != NULL && EQUAL(poParent->GetValue(),"AUTHORITY") )
         return TRUE;
-    
+
     // As per bugzilla bug 294, the OGC spec says the direction
     // values for the AXIS keywords should *not* be quoted.
     if( poParent != NULL && EQUAL(poParent->GetValue(),"AXIS") 
@@ -754,7 +754,7 @@ void OGR_SRSNode::MakeValueSafe()
  * continues.
  *
  * @param pszNode Restrict remapping to children of this type of node 
- *                (eg. "PROJECTION")
+ *                (e.g. "PROJECTION")
  * @param papszSrcValues a NULL terminated array of source string.  If the
  * node value matches one of these (case insensitive) then replacement occurs.
  * @param papszDstValues an array of destination strings.  On a match, the
@@ -765,9 +765,9 @@ void OGR_SRSNode::MakeValueSafe()
  * @param bChildOfHit Only TRUE if we the current node is the child of a match,
  * and so needs to be set.  Application code would normally pass FALSE for this
  * argument.
- * 
+ *
  * @return returns OGRERR_NONE unless something bad happens.  There is no
- * indication returned about whether any replacement occured.  
+ * indication returned about whether any replacement occurred.
  */
 
 OGRErr OGR_SRSNode::applyRemapper( const char *pszNode, 
@@ -862,7 +862,7 @@ static const char * const apszGEOCCSRule[] =
 static const char * const apszVERTCSRule[] = 
 { "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
 
-static const char * const *apszOrderingRules[] = {
+static const char * const * const apszOrderingRules[] = {
     apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, apszGEOCCSRule, apszVERTCSRule, NULL };
 
 /**

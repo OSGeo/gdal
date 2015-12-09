@@ -113,7 +113,7 @@
  * Include OGR StyleString stuff (implemented by Stephane)
  *
  * Revision 1.15  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.14  2000/09/19 17:23:53  daniel
  * Maintain and/or compute valid region and polyline center/label point
@@ -400,7 +400,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
               {
                   GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
                                      &nHour, &nMin, &fSec, &nTZFlag);
-                  sprintf(szBuffer, "%2.2d%2.2d%2.2d%3.3d", nHour, nMin,
+                  snprintf(szBuffer, sizeof(szBuffer), "%2.2d%2.2d%2.2d%3.3d", nHour, nMin,
                           (int)fSec, OGR_GET_MS(fSec));
               }
               fp->WriteLine("%s",szBuffer);
@@ -416,7 +416,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
               {
                   GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
                                      &nHour, &nMin, &fSec, &nTZFlag);
-                  sprintf(szBuffer, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
+                  snprintf(szBuffer, sizeof(szBuffer), "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
               }
               fp->WriteLine("%s",szBuffer);
               break;
@@ -431,7 +431,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
               {
                   GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
                                      &nHour, &nMin, &fSec, &nTZFlag);
-                  sprintf(szBuffer, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", 
+                  snprintf(szBuffer, sizeof(szBuffer), "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", 
                           nYear, nMonth, nDay, nHour, nMin,
                           (int)fSec, OGR_GET_MS(fSec));
               }
@@ -786,7 +786,10 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if (STARTS_WITH_CI(papszToken[0], "LINE"))
     {
         if (CSLCount(papszToken) != 5)
+        {
+          CSLDestroy(papszToken);
           return -1;
+        }
 
         poLine = new OGRLineString();
         poLine->setNumPoints(2);

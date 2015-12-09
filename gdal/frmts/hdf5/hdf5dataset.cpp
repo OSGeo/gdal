@@ -728,10 +728,11 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
     }
     else {
+        const size_t nDataLen = 8192;
         if( nAttrElmts > 0 ) {
             buf = (void *) CPLMalloc( nAttrElmts*
                           H5Tget_size( hAttrNativeType ));
-            szData = (char*) CPLMalloc( 8192 );
+            szData = (char*) CPLMalloc( nDataLen );
             szValue = (char*) CPLMalloc( MAX_METADATA_LEN );
             szData[0] = '\0';
             szValue[0] ='\0';
@@ -740,7 +741,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         if( H5Tequal( H5T_NATIVE_CHAR, hAttrNativeType ) 
             || H5Tequal( H5T_NATIVE_SCHAR,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%c ", ((char *) buf)[i]);
+                snprintf( szData, nDataLen, "%c ", ((char *) buf)[i]);
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -749,7 +750,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_UCHAR,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%c", ((char *) buf)[i] );
+                snprintf( szData, nDataLen, "%c", ((char *) buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -758,7 +759,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_SHORT,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%d ", ((short *) buf)[i] );
+                snprintf( szData, nDataLen, "%d ", ((short *) buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -767,7 +768,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_USHORT, hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%ud ", ((unsigned short *) buf)[i] );
+                snprintf( szData, nDataLen, "%ud ", ((unsigned short *) buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -776,7 +777,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_INT,    hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%d ", ((int *) buf)[i] );
+                snprintf( szData, nDataLen, "%d ", ((int *) buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -785,7 +786,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_UINT,   hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%ud ", ((unsigned int *) buf)[i] );
+                snprintf( szData, nDataLen, "%ud ", ((unsigned int *) buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -794,7 +795,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_LONG,   hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%ld ", ((long *)buf)[i] );
+                snprintf( szData, nDataLen, "%ld ", ((long *)buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -803,7 +804,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_ULONG,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                sprintf( szData, "%ld ", ((unsigned long *)buf)[i] );
+                snprintf( szData, nDataLen, "%ld ", ((unsigned long *)buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -812,7 +813,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_FLOAT,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                CPLsprintf( szData, "%.8g ",  ((float *)buf)[i] );
+                CPLsnprintf( szData, nDataLen, "%.8g ",  ((float *)buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -821,7 +822,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else if( H5Tequal( H5T_NATIVE_DOUBLE, hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-                CPLsprintf( szData, "%.15g ",  ((double *)buf)[i] );
+                CPLsnprintf( szData, nDataLen, "%.15g ",  ((double *)buf)[i] );
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
                     CPLError( CE_Warning, CPLE_OutOfMemory,
@@ -1009,14 +1010,14 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
         szDim[0]='\0';
         switch( poRootGroup->nRank ) {
         case 3:
-            sprintf( szTemp,"%dx%dx%d",
+            snprintf( szTemp, sizeof(szTemp), "%dx%dx%d",
                 (int)poRootGroup->paDims[0],
                 (int)poRootGroup->paDims[1],
                 (int)poRootGroup->paDims[2] );
             break;
 
         case 2:
-            sprintf( szTemp,"%dx%d",
+            snprintf( szTemp, sizeof(szTemp), "%dx%d",
                 (int)poRootGroup->paDims[0],
                 (int)poRootGroup->paDims[1] );
             break;
@@ -1027,7 +1028,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
         }
         strcat( szDim,szTemp );
 
-        sprintf( szTemp, "SUBDATASET_%d_NAME", ++(poDS->nSubDataCount) );
+        snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", ++(poDS->nSubDataCount) );
 
         poDS->papszSubDatasets =
             CSLSetNameValue( poDS->papszSubDatasets, szTemp,
@@ -1035,7 +1036,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
                         poDS->GetDescription(),
                         poRootGroup->pszUnderscorePath ) );
 
-        sprintf(  szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount );
+        snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", poDS->nSubDataCount );
 
         poDS->papszSubDatasets =
             CSLSetNameValue( poDS->papszSubDatasets, szTemp,

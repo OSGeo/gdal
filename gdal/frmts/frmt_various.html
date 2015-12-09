@@ -331,7 +331,7 @@ USGS DOQ Standards</a></p>
 often referred to as ESRI BIL format.  Eight, sixteen
 and thirty-two bit integer raster data types are supported as well as 32
 bit floating point.  Coordinate systems (from a .prj file), and georeferencing
-are supported.  Unrecognised options in the .hdr file are ignored.  To 
+are supported.  Unrecognized options in the .hdr file are ignored.  To
 open a dataset select the file with the image file (often with the extension
 .bil).  If present .clr color table files are read, but not written. If present,
 image.rep file will be read to extract the projection system of SpatioCarte Defense 1.0 raster products.</p>
@@ -439,7 +439,7 @@ ENVI metadata domain, and all of these can then be written out to the header fil
 <ul>
 
 	<li> <b>INTERLEAVE=BSQ/BIP/BIL</b>: Force the generation specified
-	type of interleaving. <b>BSQ</b> --- band sequental (default),
+	type of interleaving. <b>BSQ</b> --- band sequential (default),
 	<b>BIP</b> --- data interleaved by pixel,
 	<b>BIL</b> --- data interleaved by line.</li>
 	
@@ -758,7 +758,7 @@ and so on.   To open a dataset select the .hdr file.</p>
 <p>Reading lat/long GCPs (TOP_LEFT_CORNER, ...) is supported but there is no
 support for reading affine georeferencing or projection information.</p>
 
-<p>Unrecognised keywords from the .hdr file are preserved as metadata. </p>
+<p>Unrecognized keywords from the .hdr file are preserved as metadata.</p>
 
 <p>All data types with GDAL equivalents are supported, including 8, 16, 32 and
 64 bit data precisions in integer, real and complex data types.  In addition
@@ -972,7 +972,7 @@ are preserved when the color table is read. </p>
 <p>PNG files can be created with a type of PNG, using the CreateCopy() method, 
 requiring a prototype to read from.  Writing includes support for the
 various image types, and will preserve transparency/nodata values.  
-Georeferencing .wld files are written if option WORLDFILE setted.  All
+Georeferencing .wld files are written if option WORLDFILE is set.  All
 pixel types other than 16bit unsigned will be written as eight bit.</p>
 
 <p>Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
@@ -1036,7 +1036,7 @@ http://www.libpng.org/pub/png</a>.</p>
 <ul>
 
 <li> <b>MAXVAL=n</b>: Force setting the maximum color value to <b>n</b>
-in the output PNM file. May be useful if you plannig use the output files with
+in the output PNM file. May be useful if you planning to use the output files with
 software which is not liberal to this value.</li>
 </ul>
 
@@ -1087,12 +1087,13 @@ Subdatasets:
 </pre>
 
 
-<p>In some situations, <a href="frmt_nitf.html">NITF</a> tiles inside a subdataset don't share the same palettes.
-The RPFTOC driver will do its best to remap palettes to the reported palette by gdalinfo (which
-is the palette of the first tile of the subdataset).
-In situations where it wouldn't give a good result, you can try to set the RPFTOC_FORCE_RGBA
-environment variable to TRUE before opening the subdataset. This will cause the driver to expose
-the subdataset as a RGBA dataset, instead of a paletted one.</p>
+<p>In some situations, <a href="frmt_nitf.html">NITF</a> tiles inside a
+subdataset don't share the same palettes.  The RPFTOC driver will do its best
+to remap palettes to the reported palette by gdalinfo (which is the palette of
+the first tile of the subdataset).  In situations where it would not give a
+good result, you can try to set the RPFTOC_FORCE_RGBA environment variable to
+TRUE before opening the subdataset. This will cause the driver to expose the
+subdataset as a RGBA dataset, instead of a paletted one.</p>
 
 <p>It is possible to build external overviews for a subdataset. The overview for the first subdataset
 will be named A.TOC.1.ovr for example, for the second dataset it will be A.TOC.2.ovr, etc.
@@ -1333,7 +1334,7 @@ or other suffixes depending on the image file it comes with.</p>
 <p>GDAL includes support for reading and writing XPM (X11 Pixmap Format) 
 image files.  These are colormapped one band images primarily used for 
 simple graphics purposes in X11 applications.  It has been incorporated in
-GDAL primarily to ease translation of GDAL images into a form useable with
+GDAL primarily to ease translation of GDAL images into a form usable with
 the GTK toolkit.</p>
 
 <p>The XPM support does not support georeferencing (not available from XPM files)

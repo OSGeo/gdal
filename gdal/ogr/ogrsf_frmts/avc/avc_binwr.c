@@ -166,9 +166,8 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
     psFile->eFileType = eType;
     psFile->nPrecision = nPrecision;
 
-    psFile->pszFilename = (char*)CPLMalloc((strlen(pszPath)+strlen(pszName)+1)*
-                                           sizeof(char));
-    sprintf(psFile->pszFilename, "%s%s", pszPath, pszName);
+    psFile->pszFilename = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
+    snprintf(psFile->pszFilename, strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
 
     psFile->eCoverType = eCoverType;
 
@@ -394,7 +393,7 @@ int AVCBinWriteHeader(AVCBinFile *psFile)
 /**********************************************************************
  *                          AVCBinWriteClose()
  *
- * Close a coverage file opened for wirting, and release all memory 
+ * Close a coverage file opened for writing, and release all memory
  * (object strcut., buffers, etc.) associated with this file.
  **********************************************************************/
 
@@ -1583,7 +1582,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
         /* Not found... Use the next logical table index */
         nTableIndex++;
 
-        /* We're already at EOF so we shouldn't need to fseek here, but
+        /* We are already at EOF so we should not need to fseek here, but
          * ANSI-C requires that a file positioning function be called 
          * between read and writes... this had never been a problem before
          * on any system except with NT4 network drives.
@@ -1591,7 +1590,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
         CPL_IGNORE_RET_VAL_INT(VSIFSeek(hRawBinFile->fp, numDirEntries*380, SEEK_SET));
     }
 
-    sprintf(psTableDef->szInfoFile, "ARC%4.4d", nTableIndex);
+    snprintf(psTableDef->szInfoFile, sizeof(psTableDef->szInfoFile), "ARC%4.4d", nTableIndex);
     _AVCBinWriteArcDir(hRawBinFile, psTableDef);
 
     AVCRawBinClose(hRawBinFile);
@@ -1648,7 +1647,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
  *            "../<covername>/<subclassname>.<ext>"
  *
  *    e.g. The table named "TEST.PATCOUNTY" would be stored in the file
- *         "../test/county.pat" (this path is realtive to the info directory)
+ *         "../test/county.pat" (this path is relative to the info directory)
  *
  *  When the <SUBCLASSNAME> is not present, then the name of the data file
  *  will be the "../<covername>/<ext>.adf"
@@ -1678,6 +1677,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
     AVCTableDef  *psTableDef = NULL;
     char         *pszFname = NULL, szInfoFile[8]="";
     int          i, nTableIndex = 0;
+    size_t       nFnameLen;
 
     if (eCoverType == AVCCoverPC || eCoverType == AVCCoverPC2)
         return _AVCBinWriteCreateDBFTable(pszInfoPath, pszCoverName,
@@ -1697,7 +1697,8 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
 
     /* Alloc a buffer big enough for the longest possible filename...
      */
-    pszFname = (char*)CPLMalloc((strlen(pszInfoPath)+81)*sizeof(char));
+    nFnameLen = strlen(pszInfoPath)+81;
+    pszFname = (char*)CPLMalloc(nFnameLen);
 
 
     /*-----------------------------------------------------------------
@@ -1717,7 +1718,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
      * Note: there could be a problem if 2 processes try to add an entry
      * at the exact same time... does Arc/Info do any locking on that file???
      *----------------------------------------------------------------*/
-    sprintf(pszFname, "%sarc.dir", pszInfoPath);
+    snprintf(pszFname, nFnameLen, "%sarc.dir", pszInfoPath);
 
     nTableIndex = _AVCBinWriteCreateArcDirEntry(pszFname, psTableDef, 
                                                 psDBCSInfo);
@@ -1733,12 +1734,12 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
         return NULL;
     }
 
-    sprintf(szInfoFile, "arc%4.4d", nTableIndex);
+    snprintf(szInfoFile, sizeof(szInfoFile), "arc%4.4d", nTableIndex);
 
     /*-----------------------------------------------------------------
      * Create the "arc####.nit" with the attribute definitions.
      *----------------------------------------------------------------*/
-    sprintf(pszFname, "%s%s.nit", pszInfoPath, szInfoFile);
+    snprintf(pszFname, nFnameLen, "%s%s.nit", pszInfoPath, szInfoFile);
 
     hRawBinFile = AVCRawBinOpen(pszFname, "w",
                                 AVC_COVER_BYTE_ORDER(AVCCoverV7),
@@ -1772,7 +1773,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
          * Internal table: data goes directly in "arc####.dat"
          *------------------------------------------------------------*/
         psTableDef->szDataFile[0] = '\0';
-        sprintf(pszFname, "%s%s.dat", pszInfoPath, szInfoFile);
+        snprintf(pszFname, nFnameLen, "%s%s.dat", pszInfoPath, szInfoFile);
         psFile->pszFilename = CPLStrdup(pszFname);
     }
     else
@@ -1821,20 +1822,20 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
                 (EQUAL(szExt, "TIC") || EQUAL(szExt, "BND")) )
             {
                 /* "../<covername>/dbl<ext>.adf" */
-                sprintf(psTableDef->szDataFile, 
+                snprintf(psTableDef->szDataFile, sizeof(psTableDef->szDataFile),
                         "../%s/dbl%s.adf", szCoverName, szExt);
             }
             else
             {
                 /* "../<covername>/<ext>.adf" */
-                sprintf(psTableDef->szDataFile, 
+                snprintf(psTableDef->szDataFile, sizeof(psTableDef->szDataFile),
                         "../%s/%s.adf", szCoverName, szExt);
             }
         }
         else
         {
             /* "../<covername>/<subclass>.<ext>" */
-            sprintf(psTableDef->szDataFile, 
+            snprintf(psTableDef->szDataFile, sizeof(psTableDef->szDataFile),
                     "../%s/%s.%s", szCoverName, szSubclass, szExt);
         }
 
@@ -1843,7 +1844,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
          * Note that the path that is written in the arc####.dat contains
          * '/' as a directory delimiter, even on Windows systems.
          *------------------------------------------------------------*/
-        sprintf(pszFname, "%s%s.dat", pszInfoPath, szInfoFile);
+        snprintf(pszFname, nFnameLen, "%s%s.dat", pszInfoPath, szInfoFile);
         fpOut = VSIFOpen(pszFname, "wt");
         if (fpOut)
         {
@@ -1860,7 +1861,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
             return NULL;
         }
 
-        sprintf(pszFname, "%s%s", 
+        snprintf(pszFname, nFnameLen, "%s%s", 
                 pszInfoPath, psTableDef->szDataFile);
         psFile->pszFilename = CPLStrdup(pszFname);
 
@@ -2074,7 +2075,7 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
  * (This function is for internal library use... external calls should
  * go to AVCBinWriteClose() instead)
  *
- * Close an info table opened for wirting, and release all memory 
+ * Close an info table opened for writing, and release all memory
  * (object struct., buffers, etc.) associated with this file.
  **********************************************************************/
 static void    _AVCBinWriteCloseTable(AVCBinFile *psFile)
@@ -2285,10 +2286,10 @@ int _AVCBinWriteDBFTableRec(DBFHandle hDBFFile, int nFields,
             int nLen;
 
             if (pasDef[i].nSize == 4)
-                nLen = AVCPrintRealValue(szBuf, AVC_FORMAT_DBF_FLOAT,
+                nLen = AVCPrintRealValue(szBuf, sizeof(szBuf), AVC_FORMAT_DBF_FLOAT,
                                          AVCFileTABLE, pasFields[i].fFloat);
             else
-                nLen = AVCPrintRealValue(szBuf, AVC_FORMAT_DBF_FLOAT,
+                nLen = AVCPrintRealValue(szBuf, sizeof(szBuf), AVC_FORMAT_DBF_FLOAT,
                                          AVCFileTABLE, pasFields[i].dDouble);
 
             szBuf[nLen] = '\0';

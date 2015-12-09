@@ -513,7 +513,7 @@ void EHdrDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
     }
 
     char szNewLine[82];
-    sprintf( szNewLine, "%-15s%s", pszKey, pszValue );
+    snprintf( szNewLine, sizeof(szNewLine), "%-15s%s", pszKey, pszValue );
 
     for( int i = CSLCount(papszHDR)-1; i >= 0; i-- )
     {
@@ -832,9 +832,9 @@ CPLErr EHdrDataset::ReadSTX()
               if (bNoDataSet && dfNoData == poBand->dfMin)
               {
                   /* Triggered by /vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil */
-                  CPLDebug("EHDr", "Ignoring .stx file where min == nodata. "
-                           "The nodata value shouldn't be taken into account "
-                           "in minimum value computation.");
+                  CPLDebug( "EHDr", "Ignoring .stx file where min == nodata. "
+                            "The nodata value should not be taken into account "
+                            "in minimum value computation.");
                   CSLDestroy( papszTokens );
                   papszTokens = NULL;
                   break;
@@ -1576,7 +1576,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             if (utmZone != 0 && bUTM && bWGS84 && (bNorth || bSouth))
             {
                 char projCSStr[64];
-                sprintf(projCSStr, "WGS 84 / UTM zone %d%c",
+                snprintf(projCSStr, sizeof(projCSStr), "WGS 84 / UTM zone %d%c",
                         utmZone, (bNorth) ? 'N' : 'S');
 
                 OGRSpatialReference oSRS;

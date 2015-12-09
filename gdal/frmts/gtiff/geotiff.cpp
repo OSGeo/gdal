@@ -1142,8 +1142,8 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn) :
 
 GTiffRasterBand::~GTiffRasterBand()
 {
-    /* So that any future DropReferenceVirtualMem() will not try to access the */
-    /* raster band object, but this wouldn't conform the advertized contract */
+    // So that any future DropReferenceVirtualMem() will not try to access the
+    // raster band object, but this would not conform the advertised contract.
     if( aSetPSelf.size() != 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1561,7 +1561,9 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
     if( !(CPLIsVirtualMemFileMapAvailable() &&
           VSIFGetNativeFileDescriptorL(fp) != NULL &&
+#if SIZEOF_VOIDP == 4
           nLength == (size_t)nLength &&
+#endif
           poGDS->nCompression == COMPRESSION_NONE &&
           (poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK ||
            poGDS->nPhotometric == PHOTOMETRIC_RGB ||
@@ -5163,7 +5165,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 {
 /* -------------------------------------------------------------------- */
 /*      Special case for 24bit data which is pre-byteswapped since      */
-/*      the size falls on a byte boundary ... ugg (#2361).              */
+/*      the size falls on a byte boundary ... ugh (#2361).              */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
@@ -5312,7 +5314,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 {
 /* -------------------------------------------------------------------- */
 /*      Special case for 24bit data which is pre-byteswapped since      */
-/*      the size falls on a byte boundary ... ugg (#2361).              */
+/*      the size falls on a byte boundary ... ugh (#2361).              */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
                     poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
@@ -5507,7 +5509,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 if( (iBitOffset & 0x7) == 0 )
                 {
                     /* starting on byte boundary */
-                    
+
                     ((GUInt16 *) pImage)[iPixel++] = 
                         (poGDS->pabyBlockBuf[iByte] << 4)
                         | (poGDS->pabyBlockBuf[iByte+1] >> 4);
@@ -5515,7 +5517,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 else
                 {
                     /* starting off byte boundary */
-                    
+
                     ((GUInt16 *) pImage)[iPixel++] = 
                         ((poGDS->pabyBlockBuf[iByte] & 0xf) << 8)
                         | (poGDS->pabyBlockBuf[iByte+1]);
@@ -5527,7 +5529,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 /* -------------------------------------------------------------------- */
 /*      Special case for 24bit data which is pre-byteswapped since      */
-/*      the size falls on a byte boundary ... ugg (#2361).              */
+/*      the size falls on a byte boundary ... ugh (#2361).              */
 /* -------------------------------------------------------------------- */
     else if( poGDS->nBitsPerSample == 24 )
     {
@@ -6210,7 +6212,7 @@ int GTiffDataset::GetJPEGOverviewCount()
         return 0;
     }
 
-    /* libjpeg-6b only suppports 2, 4 and 8 scale denominators */
+    /* libjpeg-6b only supports 2, 4 and 8 scale denominators */
     /* TODO: Later versions support more */
     for(int i = 2; i >= 0; i--)
     {
@@ -6589,7 +6591,7 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
                     // is not set in tif_flags
                     // (if using TIFFWriteEncodedStrip/Tile first, TIFFWriteBufferSetup()
                     // is automatically called)
-                    // This shoud likely rather fixed in libtiff itself...
+                    // This should likely rather fixed in libtiff itself...
                     TIFFWriteBufferSetup(hTIFF, NULL, (size_t)-1);
                 }
             }
@@ -8633,7 +8635,7 @@ static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
 
     if( nBand > 0 )
     {
-        sprintf( szBandId, "%d", nBand - 1 );
+        snprintf( szBandId, sizeof(szBandId), "%d", nBand - 1 );
         CPLCreateXMLNode( CPLCreateXMLNode( psItem,CXT_Attribute,"sample"),
                           CXT_Text, szBandId );
     }
@@ -9296,7 +9298,7 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
 
     if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
-    
+
     if( nCompression == COMPRESSION_JPEG 
         && nPhotometric == PHOTOMETRIC_YCBCR 
         && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
@@ -9310,7 +9312,7 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Propogate any quality settings.                                 */
+/*      Propagate any quality settings.                                 */
 /* -------------------------------------------------------------------- */
     if( GetAccess() == GA_Update )
     {
@@ -11201,7 +11203,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             {
                 char	szID[32];
 
-                sprintf( szID, "%d", iGCP+1 );
+                snprintf( szID, sizeof(szID), "%d", iGCP+1 );
                 pasGCPList[iGCP].pszId = CPLStrdup( szID );
                 pasGCPList[iGCP].pszInfo = CPLStrdup("");
                 pasGCPList[iGCP].dfGCPPixel = padfTiePoints[iGCP*6+0];
@@ -11265,7 +11267,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         {
             if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &nShort ) )
             {
-                sprintf( szWorkMDI, "%d", nShort );
+                snprintf( szWorkMDI, sizeof(szWorkMDI), "%d", nShort );
                 SetMetadataItem( asTIFFTags[iTag].pszTagName, szWorkMDI );
             }
         }
@@ -11274,13 +11276,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nShort ) )
     {
         if( nShort == RESUNIT_NONE )
-            sprintf( szWorkMDI, "%d (unitless)", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d (unitless)", nShort );
         else if( nShort == RESUNIT_INCH )
-            sprintf( szWorkMDI, "%d (pixels/inch)", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d (pixels/inch)", nShort );
         else if( nShort == RESUNIT_CENTIMETER )
-            sprintf( szWorkMDI, "%d (pixels/cm)", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d (pixels/cm)", nShort );
         else
-            sprintf( szWorkMDI, "%d", nShort );
+            snprintf( szWorkMDI, sizeof(szWorkMDI), "%d", nShort );
         SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
     }
 
@@ -13108,7 +13110,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* when CreateCopy'ing() from a JPEG dataset, and asking for COMPRESS=JPEG, */
     /* use DCT coefficients (unless other options are incompatible, like strip/tile dimensions, */
     /* specifying JPEG_QUALITY option, incompatible PHOTOMETRIC with the source colorspace, etc...) */
-    /* to avoid the lossy steps involved by uncompression/recompression */
+    /* to avoid the lossy steps involved by decompression/recompression */
     if (!bDirectCopyFromJPEG && GTIFF_CanCopyFromJPEG(poSrcDS, papszCreateOptions))
     {
         CPLDebug("GTiff", "Using special copy mode from a JPEG dataset");
@@ -13691,8 +13693,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Second chance : now that we have a PAM dataset, it is possible  */
-/*      to write metadata that we couldn't be writen as TIFF tag        */
+/*      Second chance: now that we have a PAM dataset, it is possible   */
+/*      to write metadata that we could not write as a TIFF tag.        */
 /* -------------------------------------------------------------------- */
     if (!bHasWrittenMDInGeotiffTAG && !bStreaming)
         GTiffDataset::WriteMetadata( poDS, hTIFF, TRUE, pszProfile,
@@ -14961,7 +14963,7 @@ void GDALRegister_GTiff()
 /* -------------------------------------------------------------------- */
 /*      Build full creation option list.                                */
 /* -------------------------------------------------------------------- */
-        sprintf( szCreateOptions, "%s%s%s", 
+        snprintf( szCreateOptions, sizeof(szCreateOptions), "%s%s%s", 
 "<CreationOptionList>"
 "   <Option name='COMPRESS' type='string-select'>",
                  szOptionalCompressItems,

@@ -40,7 +40,7 @@ CPL_CVSID("$Id: ogrgmetablelayer.cpp 25475 2013-01-09 09:09:59Z warmerdam $");
 /*                            OGRGMELayer()                             */
 /************************************************************************/
 
-OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
+OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDSIn,
                          const char* pszTableId) :
     iGeometryField(0),
     current_features_array(NULL),
@@ -49,7 +49,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
     eGTypeForCreation(wkbUnknown)
 {
     CPLDebug("GME", "Opening existing layer %s", pszTableId);
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poFeatureDefn = NULL;
     current_feature_page = NULL;
@@ -64,13 +64,13 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
 }
 
 
-OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
+OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDSIn,
                          const char* pszTableName,
                          char ** papszOptions)
 
 {
     CPLDebug("GME", "Creating new layer %s", pszTableName);
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poFeatureDefn = NULL;
     current_feature_page = NULL;

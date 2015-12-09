@@ -58,10 +58,10 @@ CPL_CVSID("$Id$");
 
 static int kakadu_initialized = FALSE;
 
-static unsigned char jp2_header[] = 
+static const unsigned char jp2_header[] = 
 {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
-static unsigned char jpc_header[] = 
+static const unsigned char jpc_header[] = 
 {0xff,0x4f};
 
 /* -------------------------------------------------------------------- */
@@ -1491,7 +1491,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
             oWCodeStream.set_resilient();
 
         poCodeStream= &oWCodeStream;
-        
+
         pszPersistency = "(non-persistent)";
     }
 
@@ -1517,7 +1517,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
     int *stripe_heights, *sample_offsets, *sample_gaps, *row_gaps, *precisions;
     bool *is_signed;
     int i;
-    
+
     component_indices = (int *) CPLMalloc(sizeof(int) * nBandCount);
     stripe_heights = (int *) CPLMalloc(sizeof(int) * nBandCount);
     sample_offsets = (int *) CPLMalloc(sizeof(int) * nBandCount);
@@ -1578,7 +1578,7 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         {
             kdu_stripe_decompressor decompressor;
             decompressor.start(*poCodeStream,false,false,poThreadEnv);
-        
+
             CPLDebug( "JP2KAK", "DirectRasterIO() for %d,%d,%d,%d -> %dx%d (no intermediate) %s",
                       nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                       pszPersistency );

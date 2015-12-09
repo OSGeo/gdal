@@ -1163,7 +1163,7 @@ def ogr_shape_28():
 
     file = open("tmp/hugedbf.dbf", "rb+")
 
-    # Set recourd count to 24,000,000
+    # Set record count to 24,000,000
     file.seek(4, 0)
     file.write("\x00".encode('latin1'))
     file.write("\x36".encode('latin1'))
@@ -3673,7 +3673,7 @@ def ogr_shape_78():
     fd.SetPrecision(1)
     lyr.CreateField(fd)
 
-    # Integer values up to 2^53 can be exactly tansported into a double.
+    # Integer values up to 2^53 can be exactly converted into a double.
     gdal.ErrorReset()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('dblfield', (2**53) * 1.0)
@@ -3823,7 +3823,7 @@ def ogr_shape_81():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Writes a shorter geometry, so .shp shouldn't change size
+    # Writes a shorter geometry, so .shp should not change size.
     size_before = size_after
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(3 3,4 4)'))
     lyr.SetFeature(f)

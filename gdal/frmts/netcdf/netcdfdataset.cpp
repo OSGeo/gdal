@@ -954,7 +954,8 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
 /* -------------------------------------------------------------------- */
     char szVarName[NC_MAX_NAME+1];
     szVarName[0] = '\0';
-    nc_inq_varname( cdfid, nZId, szVarName );
+    int status = nc_inq_varname( cdfid, nZId, szVarName );
+    NCDF_ERR(status);
 
     int nd;
     nc_inq_varndims( cdfid, nZId, &nd );
@@ -980,7 +981,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
 /* -------------------------------------------------------------------- */
     int nVarID = -1;
     int result = 0;
-    int status;
     int Taken = 0;
 
     for( int i=0; i < nd-2 ; i++ ) {
@@ -1826,7 +1826,10 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
     char szVarName[ NC_MAX_NAME+1 ];
     szVarName[0] = '\0';
-    nc_inq_varname( cdfid, nVarId, szVarName );
+    {
+    int status = nc_inq_varname( cdfid, nVarId, szVarName );
+    NCDF_ERR(status);
+    }
     char szTemp[ NC_MAX_NAME+1 ];
     snprintf(szTemp,sizeof(szTemp), "%s#%s", szVarName,CF_GRD_MAPPING);
 
@@ -3273,12 +3276,15 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
 
         if ( hDS_X != NULL && hDS_Y != NULL ) {
-            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo, "X_BAND", "0" )));
+            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo,
+                                                     "X_BAND", "0" )));
             hBand_X = GDALGetRasterBand( hDS_X, nBand );
-            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo, "Y_BAND", "0" )));
+            nBand = MAX(1,atoi(CSLFetchNameValueDef( papszGeolocationInfo,
+                                                     "Y_BAND", "0" )));
             hBand_Y = GDALGetRasterBand( hDS_Y, nBand );
 
-            /* if geoloc bands are found do basic vaidation based on their dimensions */
+            // If geoloc bands are found, do basic validation based on their
+            // dimensions.
             if ( hBand_X != NULL && hBand_Y != NULL ) {
 
                 int nXSize_XBand = GDALGetRasterXSize( hDS_X );
@@ -3289,7 +3295,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 /* TODO 1D geolocation arrays not implemented */
                 if ( (nYSize_XBand == 1) && (nYSize_YBand == 1) ) {
                     bHasGeoloc = false;
-                    CPLDebug( "GDAL_netCDF", 
+                    CPLDebug( "GDAL_netCDF",
                               "1D GEOLOCATION arrays not supported yet" );
                 }
                 /* 2D bands must have same sizes as the raster bands */
@@ -3298,8 +3304,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                           (nXSize_YBand != nRasterXSize) ||
                           (nYSize_YBand != nRasterYSize) ) {
                     bHasGeoloc = false;
-                    CPLDebug( "GDAL_netCDF", 
-                              "GEOLOCATION array sizes (%dx%d %dx%d) differ from raster (%dx%d), not supported",
+                    CPLDebug( "GDAL_netCDF",
+                              "GEOLOCATION array sizes (%dx%d %dx%d) differ "
+                              "from raster (%dx%d), not supported",
                               nXSize_XBand, nYSize_XBand, nXSize_YBand, nYSize_YBand,
                               nRasterXSize, nRasterYSize );
                 }
@@ -3465,7 +3472,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             NCDF_ERR(status);
 
             /* Various projection attributes */
-            // PDS: keep in synch with SetProjection function
+            // PDS: keep in sync with SetProjection function
             NCDFWriteProjAttribs(poPROJCS, pszProjName, cdfid, NCDFVarID);
         }
         else 
@@ -4034,13 +4041,15 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
     }
     else {
         szVarName[0] = '\0';
-        nc_inq_varname( cdfidIn, var, szVarName );
+        int status = nc_inq_varname( cdfid, var, szVarName );
+        NCDF_ERR(status);
     }
 
     for( int l=0; l < nbAttr; l++) {
         char szAttrName[ NC_MAX_NAME+1 ];
         szAttrName[0] = 0;
-        nc_inq_attname( cdfidIn, var, l, szAttrName);
+        int status = nc_inq_attname( cdfid, var, l, szAttrName);
+        NCDF_ERR(status);
         char szMetaName[ NC_MAX_NAME * 2 + 1 + 1 ];
         snprintf( szMetaName, sizeof(szMetaName), "%s#%s", szVarName, szAttrName  );
 
@@ -4145,7 +4154,8 @@ void netCDFDataset::CreateSubDatasetList( )
                     break;
             }
             szName[0] = '\0';
-            nc_inq_varname( cdfid, nVar, szName);
+            int status = nc_inq_varname( cdfid, nVar, szName);
+            NCDF_ERR(status);
             nAttlen = 0;
             nc_inq_att( cdfid, nVar, CF_STD_NAME, &nAttype, &nAttlen);
             if( nAttlen < sizeof(szVarStdName) &&
@@ -4632,7 +4642,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char szVarName[NC_MAX_NAME+1];
         szVarName[0] = '\0';
-        nc_inq_varname( cdfid, nVarID, szVarName);
+        status = nc_inq_varname( cdfid, nVarID, szVarName);
+        NCDF_ERR(status);
         osSubdatasetName = szVarName;
     }
 
@@ -4659,7 +4670,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int *paDimIds  = reinterpret_cast<int *>( CPLCalloc(nd, sizeof( int ) ) );
 
-    // X, Y, Z postion in array
+    // X, Y, Z position in array
     int *panBandDimPos
         = reinterpret_cast<int *>( CPLCalloc( nd, sizeof( int ) ) );
 
@@ -4708,8 +4719,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         szDimName2[0]='\0';
         szDimName3[0]='\0';
         szDimName4[0]='\0';
-        nc_inq_dimname( cdfid, paDimIds[nd-1], szDimName1 );
-        nc_inq_dimname( cdfid, paDimIds[nd-2], szDimName2 );
+        status = nc_inq_dimname( cdfid, paDimIds[nd-1], szDimName1 );
+        NCDF_ERR(status);
+        status = nc_inq_dimname( cdfid, paDimIds[nd-2], szDimName2 );
+        NCDF_ERR(status);
         if (  NCDFIsVarLongitude( cdfid, -1, szDimName1 )==false && 
               NCDFIsVarProjectionX( cdfid, -1, szDimName1 )==false ) {
             CPLError( CE_Warning, CPLE_AppDefined, 
@@ -4723,9 +4736,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                       nd-2, szDimName2 );
         }
         if ( nd >= 3 ) {
-            nc_inq_dimname( cdfid, paDimIds[nd-3], szDimName3 );
+            status = nc_inq_dimname( cdfid, paDimIds[nd-3], szDimName3 );
+            NCDF_ERR(status);
             if ( nd >= 4 ) {
-                nc_inq_dimname( cdfid, paDimIds[nd-4], szDimName4 );
+                status = nc_inq_dimname( cdfid, paDimIds[nd-4], szDimName4 );
+                NCDF_ERR(status);
                 if ( NCDFIsVarVerticalCoord( cdfid, -1, szDimName3 )==false ) {
                     CPLError( CE_Warning, CPLE_AppDefined, 
                               "dimension #%d (%s) is not a Time  dimension.", 
@@ -4816,7 +4831,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( int j=0; j < dim_count; j++ ){
         char szTemp[NC_MAX_NAME+1];
-        nc_inq_dimname( cdfid, j, szTemp );
+        status = nc_inq_dimname( cdfid, j, szTemp );
+        NCDF_ERR(status);
         poDS->papszDimName.AddString( szTemp );
         status = nc_inq_varid( cdfid, poDS->papszDimName[j], &nDimID );
         if( status == NC_NOERR ) {
@@ -5742,11 +5758,11 @@ int netCDFDataset::DefVarDeflate(
 {
 #ifdef NETCDF_HAS_NC4
     if ( eCompress == NCDF_COMPRESS_DEFLATE ) {
-        // must set chunk size to avoid huge performace hit (set bChunkingArg=TRUE)
+        // Must set chunk size to avoid huge performance hit (set bChunkingArg=TRUE)
         // perhaps another solution it to change the chunk cache?
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Chunk-Cache   
-        // TODO make sure this is ok
-        CPLDebug( "GDAL_netCDF", 
+        // TODO: make sure this is okay.
+        CPLDebug( "GDAL_netCDF",
                   "DefVarDeflate( %d, %d ) nZlevel=%d",
                   nVarId, bChunkingArg, nZLevel );
 
@@ -6155,7 +6171,7 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                             else {
                                 CPLError( CE_Failure, CPLE_NotSupported, 
                                           "NetCDF driver export of LCC-1SP with no standard_parallel1 "
-                                          "and no latitude_of_origin is not suported (bug #3324).");
+                                          "and no latitude_of_origin is not supported (bug #3324).");
                             }
                         }
                     }

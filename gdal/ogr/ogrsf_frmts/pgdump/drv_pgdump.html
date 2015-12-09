@@ -84,7 +84,7 @@ that should be use when CreateField() is invoked on them. This will override the
 This can for example be used to create a column of type <a href="http://www.postgresql.org/docs/9.0/static/hstore.html">HSTORE</a>.<p>
 <li> <b>POSTGIS_VERSION</b>: (From GDAL 1.9.0) Can be set to 2.0 for PostGIS 2.0 compatibility. Starting with GDAL 2.0,
 it is important to set it correctly when dealing with non-linear geometry types. Starting with GDAL 2.1, can be
-POSTGIS_VERSION=2.2 is specialy dealt with to correctly export POINT EMPTY geometries<p>
+POSTGIS_VERSION=2.2 is specially dealt with to correctly export POINT EMPTY geometries<p>
 </ul>
 
 <h3>Environment variables</h3>
@@ -109,7 +109,7 @@ Writing to /dev/stdout or /vsistdout/ is also supported.<p>
 <li>
 Simple translation of a shapefile into PostgreSQL into a file abc.sql.  The table 'abc' will
 be created with the features from abc.shp and attributes from abc.dbf. The SRID is specified.
-PG_USE_COPY is set to YES to improve the peformance.<p>
+PG_USE_COPY is set to YES to improve the performance.<p>
 
 <pre>
 % ogr2ogr --config PG_USE_COPY YES -f PGDump abc.sql abc.shp -lco SRID=32631

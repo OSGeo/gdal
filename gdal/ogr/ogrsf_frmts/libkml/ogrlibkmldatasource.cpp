@@ -749,7 +749,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer (
     ContainerPtr poKmlContainer,
     const char *pszFileName,
     int bNew,
-    int bUpdate,
+    int bUpdateIn,
     int nGuess )
 {
 
@@ -776,7 +776,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer (
                                                       m_poKmlUpdate,
                                                       pszFileName,
                                                       bNew,
-                                                      bUpdate );
+                                                      bUpdateIn );
 
     /***** add the layer to the array *****/
 
@@ -786,14 +786,14 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer (
 }
 
 /******************************************************************************
- method to parse multiple layers out of a container
+ Method to parse multiple layers out of a container.
 
  Args:          poKmlContainer  pointer to the container to parse
                 poOgrSRS        SRS to use when creating the layer
- 
+
  Returns:       number of features in the container that are not another
                 container
-                
+
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::ParseLayers (
@@ -809,7 +809,7 @@ int OGRLIBKMLDataSource::ParseLayers (
 
     size_t nKmlFeatures = poKmlContainer->get_feature_array_size (  );
 
-    /***** loop over the container to seperate the style, layers, etc *****/
+    /***** loop over the container to separate the style, layers, etc *****/
 
     size_t iKmlFeature;
 
@@ -826,10 +826,10 @@ int OGRLIBKMLDataSource::ParseLayers (
             std::string oKmlFeatName;
             if ( poKmlFeat->has_name (  ) ) {
                 /* Strip leading and trailing spaces */
-                const char* pszName = poKmlFeat->get_name (  ).c_str();
-                while(*pszName == ' ' || *pszName == '\n' || *pszName == '\r' || *pszName == '\t' )
-                    pszName ++;
-                oKmlFeatName = pszName;
+                const char* l_pszName = poKmlFeat->get_name (  ).c_str();
+                while(*l_pszName == ' ' || *l_pszName == '\n' || *l_pszName == '\r' || *l_pszName == '\t' )
+                    l_pszName ++;
+                oKmlFeatName = l_pszName;
                 int nSize = (int)oKmlFeatName.size();
                 while (nSize > 0 &&
                        (oKmlFeatName[nSize-1] == ' ' || oKmlFeatName[nSize-1] == '\n' ||
@@ -921,7 +921,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable (
     std::string *poKmlStyleKml,
     const char *pszMyStylePath)
 {
-    
+
     /***** parse the kml into the dom *****/
 
     std::string oKmlErrors;
@@ -929,37 +929,36 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable (
 
     if ( !poKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing style kml %s :%s",
+                   "ERROR parsing style kml %s :%s",
                    pszStylePath, oKmlErrors.c_str (  ) );
         return false;
     }
-    
+
     ContainerPtr poKmlContainer;
 
     if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
         return false;
     }
-    
+
     ParseStyles ( AsDocument ( poKmlContainer ), &m_poStyleTable );
     pszStylePath = CPLStrdup(pszMyStylePath);
-    
-        
+
     return true;
 }
 
 /******************************************************************************
  method to open a kml file
- 
+
  Args:          pszFilename file to open
                 bUpdate     update mode
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::OpenKml (
     const char *pszFilename,
-    int bUpdate )
+    int bUpdateIn )
 {
     std::string oKmlKml;
     char szBuffer[1024+1];
@@ -1002,7 +1001,7 @@ int OGRLIBKMLDataSource::OpenKml (
 
     if ( !poKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing kml %s :%s",
+                   "ERROR parsing kml %s :%s",
                    pszFilename, oKmlErrors.c_str (  ) );
         delete poOgrSRS;
 
@@ -1011,9 +1010,10 @@ int OGRLIBKMLDataSource::OpenKml (
 
     /***** get the container from root  *****/
 
-    if ( !( m_poKmlDSContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
+    if ( !( m_poKmlDSContainer = GetContainerFromRoot ( m_poKmlFactory,
+                                                        poKmlRoot ) ) ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing kml %s :%s %s",
+                   "ERROR parsing kml %s :%s %s",
                    pszFilename, "This file does not fit the OGR model,",
                    "there is no container element at the root." );
         delete poOgrSRS;
@@ -1036,7 +1036,7 @@ int OGRLIBKMLDataSource::OpenKml (
     if ( nPlacemarks && !nLayers ) {
         AddLayer ( CPLGetBasename ( pszFilename ),
                    poOgrSRS, wkbUnknown,
-                   this, poKmlRoot, m_poKmlDSContainer, pszFilename, FALSE, bUpdate, 1 );
+                   this, poKmlRoot, m_poKmlDSContainer, pszFilename, FALSE, bUpdateIn, 1 );
     }
 
     delete poOgrSRS;
@@ -1057,7 +1057,7 @@ int OGRLIBKMLDataSource::OpenKml (
 
 int OGRLIBKMLDataSource::OpenKmz (
     const char *pszFilename,
-    int bUpdate )
+    int bUpdateIn )
 {
     std::string oKmlKmz;
     char szBuffer[1024+1];
@@ -1115,7 +1115,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     if ( !poKmlDocKmlRoot ) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing kml layer %s from %s :%s",
+                   "ERROR parsing kml layer %s from %s :%s",
                    oKmlKmlPath.c_str (  ),
                    pszFilename, oKmlErrors.c_str (  ) );
         delete poOgrSRS;
@@ -1127,9 +1127,10 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     ContainerPtr poKmlContainer;
 
-    if (!(poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlDocKmlRoot ))) {
+    if (!(poKmlContainer = GetContainerFromRoot ( m_poKmlFactory,
+                                                  poKmlDocKmlRoot ))) {
         CPLError ( CE_Failure, CPLE_OpenFailed,
-                   "ERROR Parseing %s from %s :%s",
+                   "ERROR parsing %s from %s :%s",
                    oKmlKmlPath.c_str (  ),
                    pszFilename, "kml contains no Containers" );
         delete poOgrSRS;
@@ -1181,12 +1182,12 @@ int OGRLIBKMLDataSource::OpenKmz (
 
                 /***** parse the kml into the DOM *****/
 
-                std::string oKmlErrors;
+                oKmlErrors.clear();
                 ElementPtr poKmlLyrRoot = kmldom::Parse ( oKml, &oKmlErrors );
 
                 if ( !poKmlLyrRoot ) {
                     CPLError ( CE_Failure, CPLE_OpenFailed,
-                               "ERROR Parseing kml layer %s from %s :%s",
+                               "ERROR parseing kml layer %s from %s :%s",
                                poKmlHref->get_path (  ).c_str (  ),
                                pszFilename, oKmlErrors.c_str (  ) );
                     delete poKmlHref;
@@ -1202,7 +1203,7 @@ int OGRLIBKMLDataSource::OpenKmz (
                 if ( !poKmlLyrContainer )
                 {
                     CPLError ( CE_Failure, CPLE_OpenFailed,
-                               "ERROR Parseing kml layer %s from %s :%s",
+                               "ERROR parsing kml layer %s from %s :%s",
                                poKmlHref->get_path (  ).c_str (  ),
                                pszFilename, oKmlErrors.c_str (  ) );
                     delete poKmlHref;
@@ -1215,7 +1216,7 @@ int OGRLIBKMLDataSource::OpenKmz (
                 AddLayer ( CPLGetBasename
                            ( poKmlHref->get_path (  ).c_str (  ) ), poOgrSRS,
                            wkbUnknown, this, poKmlLyrRoot, poKmlLyrContainer,
-                           poKmlHref->get_path (  ).c_str (  ), FALSE, bUpdate,
+                           poKmlHref->get_path (  ).c_str (  ), FALSE, bUpdateIn,
                            static_cast<int>(nKmlFeatures) );
 
             }
@@ -1227,19 +1228,19 @@ int OGRLIBKMLDataSource::OpenKmz (
     }
 
     /***** if the doc.kml has links store it so if were in update mode we can write it *****/
-    
+
     if ( nLinks ) {
         m_poKmlDocKml = poKmlContainer;
         m_poKmlDocKmlRoot = poKmlDocKmlRoot;
     }
-        
+
     /***** if the doc.kml has no links treat it as a normal kml file *****/
 
     else {
 
-        /* todo there could still be a seperate styles file in the kmz
+        /* TODO: There could still be a separate styles file in the KMZ
            if there is this would be a layer style table IF its only a single
-           layer
+           layer.
          */
 
         /***** get the styles *****/
@@ -1255,7 +1256,8 @@ int OGRLIBKMLDataSource::OpenKmz (
         if ( nPlacemarks && !nLayers ) {
             AddLayer ( CPLGetBasename ( pszFilename ),
                        poOgrSRS, wkbUnknown,
-                       this, poKmlDocKmlRoot, poKmlContainer, pszFilename, FALSE, bUpdate, 1 );
+                       this, poKmlDocKmlRoot, poKmlContainer,
+                       pszFilename, FALSE, bUpdateIn, 1 );
         }
     }
 
@@ -1287,7 +1289,7 @@ int OGRLIBKMLDataSource::OpenKmz (
 
 int OGRLIBKMLDataSource::OpenDir (
     const char *pszFilename,
-    int bUpdate )
+    int bUpdateIn )
 {
 
     char **papszDirList = VSIReadDir ( pszFilename );
@@ -1350,7 +1352,7 @@ int OGRLIBKMLDataSource::OpenDir (
 
         if ( !poKmlRoot ) {
             CPLError ( CE_Failure, CPLE_OpenFailed,
-                       "ERROR Parseing kml layer %s from %s :%s",
+                       "ERROR parsing kml layer %s from %s :%s",
                        osFilePath.c_str(), pszFilename, oKmlErrors.c_str (  ) );
 
             continue;
@@ -1360,9 +1362,10 @@ int OGRLIBKMLDataSource::OpenDir (
 
         ContainerPtr poKmlContainer;
 
-        if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory, poKmlRoot ) ) ) {
+        if ( !( poKmlContainer = GetContainerFromRoot ( m_poKmlFactory,
+                                                        poKmlRoot ) ) ) {
             CPLError ( CE_Failure, CPLE_OpenFailed,
-                       "ERROR Parseing kml %s :%s %s",
+                       "ERROR parsing kml %s :%s %s",
                        pszFilename,
                        "This file does not fit the OGR model,",
                        "there is no container element at the root." );
@@ -1382,7 +1385,7 @@ int OGRLIBKMLDataSource::OpenDir (
 
         AddLayer ( CPLGetBasename ( osFilePath.c_str() ),
                    poOgrSRS, wkbUnknown,
-                   this, poKmlRoot, poKmlContainer, osFilePath.c_str(), FALSE, bUpdate, nFiles );
+                   this, poKmlRoot, poKmlContainer, osFilePath.c_str(), FALSE, bUpdateIn, nFiles );
 
     }
 
@@ -1439,10 +1442,10 @@ static int CheckIsKMZ(const char *pszFilename)
 
 int OGRLIBKMLDataSource::Open (
     const char *pszFilename,
-    int bUpdate )
+    int bUpdateIn )
 {
 
-    this->bUpdate = bUpdate;
+    this->bUpdate = bUpdateIn;
     pszName = CPLStrdup ( pszFilename );
 
     /***** dir *****/
@@ -1527,9 +1530,9 @@ static int IsValidPhoneNumber(const char* pszPhoneNumber)
 void OGRLIBKMLDataSource::SetCommonOptions(ContainerPtr poKmlContainer,
                                            char** papszOptions)
 {
-    const char* pszName = CSLFetchNameValue(papszOptions, "NAME");
-    if( pszName != NULL )
-        poKmlContainer->set_name(pszName);
+    const char* l_pszName = CSLFetchNameValue(papszOptions, "NAME");
+    if( l_pszName != NULL )
+        poKmlContainer->set_name(l_pszName);
 
     const char* pszVisibilility = CSLFetchNameValue(papszOptions, "VISIBILITY");
     if( pszVisibilility != NULL )
@@ -2147,7 +2150,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
 
         if ( CSLTestBoolean ( pszUseDocKml ) && m_poKmlDocKml ) {
 
-            DocumentPtr poKmlDocument = AsDocument ( m_poKmlDocKml );
+            poKmlDocument = AsDocument ( m_poKmlDocKml );
 
             NetworkLinkPtr poKmlNetLink = m_poKmlFactory->CreateNetworkLink (  );
             LinkPtr poKmlLink = m_poKmlFactory->CreateLink (  );

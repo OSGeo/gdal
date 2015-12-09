@@ -2087,7 +2087,7 @@ gdal2tiles temp.vrt""" % self.input )
         // Add base layers
         L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
-        // Fit to overlayer bounds (SW and NE points with (lat, lon))
+        // Fit to overlay bounds (SW and NE points with (lat, lon))
         map.fitBounds([[%(south)s, %(east)s], [%(north)s, %(west)s]]);
 
         </script>

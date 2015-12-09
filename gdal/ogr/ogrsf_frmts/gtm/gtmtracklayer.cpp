@@ -30,7 +30,7 @@
 #include "ogr_gtm.h"
 
 
-GTMTrackLayer::GTMTrackLayer( const char* pszName,
+GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
                               OGRSpatialReference* poSRSIn,
                               CPL_UNUSED int bWriterIn,
                               OGRGTMDataSource* poDSIn )
@@ -78,6 +78,8 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
     nNextFID = 0;
     nTotalFCount = poDS->getNTracks();
 
+    this->pszName = CPLStrdup(pszNameIn);
+
     poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
@@ -95,8 +97,7 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
 
     OGRFieldDefn oFieldColor( "color", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oFieldColor );
-  
-    this->pszName = CPLStrdup(pszName);
+
 }
 
 GTMTrackLayer::~GTMTrackLayer()
@@ -119,15 +120,15 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
         if( poFeature->IsFieldSet( i ) )
         {
-            const char* pszName = poFieldDefn->GetNameRef();
+            const char* l_pszName = poFieldDefn->GetNameRef();
             /* track name */
-            if (STARTS_WITH(pszName, "name"))
+            if (STARTS_WITH(l_pszName, "name"))
             {
                 CPLFree(psztrackname);
                 psztrackname = CPLStrdup( poFeature->GetFieldAsString( i ) );
             }
             /* track type */
-            else if (STARTS_WITH(pszName, "type"))
+            else if (STARTS_WITH(l_pszName, "type"))
             {
                 type = poFeature->GetFieldAsInteger( i );
                 // Check if it is a valid type
@@ -135,7 +136,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                     type = 1;
             }
             /* track color */
-            else if (STARTS_WITH(pszName, "color"))
+            else if (STARTS_WITH(l_pszName, "color"))
             {
                 color = (unsigned int) poFeature->GetFieldAsInteger( i );
                 if (color > 0xFFFFFF)

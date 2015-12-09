@@ -695,7 +695,7 @@ eChanType CTiledChannel::GetType() const
 void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
                                         PCIDSKBuffer &oDecompressedData )
 
-                               
+
 {
     int    src_offset=0, dst_offset=0;
     uint8  *src = (uint8 *) oCompressedData.buffer;
@@ -704,7 +704,7 @@ void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
 
 /* -------------------------------------------------------------------- */
 /*      Process till we are out of source data, or our destination      */
-/*      buffer is full.  These conditions should be satisified at       */
+/*      buffer is full.  These conditions should be satisfied at        */
 /*      the same time!                                                  */
 /* -------------------------------------------------------------------- */
     while( src_offset + 1 + pixel_size <= oCompressedData.buffer_size
@@ -918,7 +918,7 @@ void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Make the output buffer plent big to hold any conceivable        */
+/*      Make the output buffer plenty big to hold any conceivable       */
 /*      result.                                                         */
 /* -------------------------------------------------------------------- */
     oCompressedData.SetSize( oDecompressedData.buffer_size * 2 + 1000 );

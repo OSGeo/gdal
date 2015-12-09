@@ -146,7 +146,7 @@ GDALDriverManager::~GDALDriverManager()
     /* datasets, which defeat some "design" of the proxy pool */
     GDALDatasetPoolPreventDestroy();
 
-    /* First begin by requesting each reamining dataset to drop any reference */
+    /* First begin by requesting each remaining dataset to drop any reference */
     /* to other datasets */
     bool bHasDroppedRef = false;
 
@@ -207,7 +207,7 @@ GDALDriverManager::~GDALDriverManager()
     PamCleanProxyDB();
 
 /* -------------------------------------------------------------------- */
-/*      Blow away all the finder hints paths.  We really shouldn't      */
+/*      Blow away all the finder hints paths.  We really should not     */
 /*      be doing all of them, but it is currently hard to keep track    */
 /*      of those that actually belong to us.                            */
 /* -------------------------------------------------------------------- */
@@ -764,14 +764,18 @@ void GDALDriverManager::AutoLoadDrivers()
             if( STARTS_WITH_CI(papszFiles[iFile], "gdal_") )
             {
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                sprintf( pszFuncName, "GDALRegister_%s", 
-                     CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
+                snprintf( pszFuncName,
+                          strlen(papszFiles[iFile])+20,
+                          "GDALRegister_%s", 
+                        CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
             }
             else if ( STARTS_WITH_CI(papszFiles[iFile], "ogr_") )
             {
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                sprintf( pszFuncName, "RegisterOGR%s", 
-                     CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
+                snprintf( pszFuncName,
+                         strlen(papszFiles[iFile])+20,
+                         "RegisterOGR%s", 
+                         CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
             }
             else
                 continue;

@@ -312,7 +312,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                 (*ppanHistogram)[i] = (GUIntBig) bandStats.Histogram[i];
             }
             //JTO: this is not perfect as You can't tell who wrote the histogram !!! 
-            //It will offset it unnecesarilly for files with hists not modified by GDAL. 
+            //It will offset it unnecessarily for files with hists not modified by GDAL. 
             double dfHalfBucket = (bandStats.fMaxHist -  bandStats.fMinHist) / (2 * (*pnBuckets - 1));
             if ( pdfMin != NULL ){
                 *pdfMin = bandStats.fMinHist - dfHalfBucket;
@@ -418,7 +418,8 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
             error = NCSEcwInitStatistics(&pNewStatistics, nStatsBandCount, bucketCounts);
             if (!error.Success()){
                 CPLError( CE_Warning, CPLE_AppDefined,
-                            "NCSEcwInitStatistics failed in ECWRasterBand::SetDefaultHistogram (realocate)." );
+                          "NCSEcwInitStatistics failed in "
+                          "ECWRasterBand::SetDefaultHistogram (reallocate)." );
                 return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
             }
             //we need to copy existing statistics.
@@ -1028,9 +1029,10 @@ ECWDataset::~ECWDataset()
         #13 0x00007fffb7551c61 in GDALDestroy () at gdaldllmain.cpp:80
         #14 0x00007ffff7de990e in _dl_fini () at dl-fini.c:254
     */
-    // Not replicable with similar test in C++, but this might be just a matter of luck related
-    // to the order in which the libraries are unloaded, so just don't try
-    // to delete poFileView from the GDAL destructor.
+    // Not reproducible with similar test in C++, but this might be
+    // just a matter of luck related to the order in which the
+    // libraries are unloaded, so just don't try to delete poFileView
+    // from the GDAL destructor.
     if( poFileView != NULL && !GDALIsInGlobalDestructor() )
     {
         VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
@@ -1805,7 +1807,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
 
     if( bUseOldBandRasterIOImplementation )
-        /* Sanity check. Shouldn't happen */
+        /* Sanity check. Should not happen */
         return CE_Failure;
     int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
 
@@ -3224,11 +3226,11 @@ const char* ECWGetColorSpaceName(NCSFileColorSpace colorSpace)
         case NCSCS_MULTIBAND:
             return "MULTIBAND"; break;
         case NCSCS_sRGB:
-            return  "RGB"; break;
+            return "RGB"; break;
         case NCSCS_YCbCr:
             return "YCbCr"; break;
         default:
-            return  "unrecognised";
+            return "unrecognized";
     }
 }
 /************************************************************************/

@@ -35,8 +35,8 @@ CPL_CVSID("$Id$");
 /*                         OGRCouchDBRowsLayer()                        */
 /************************************************************************/
 
-OGRCouchDBRowsLayer::OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDS) :
-                                                    OGRCouchDBLayer(poDS)
+OGRCouchDBRowsLayer::OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDSIn) :
+                                                    OGRCouchDBLayer(poDSIn)
 
 {
     poFeatureDefn = new OGRFeatureDefn( "rows" );

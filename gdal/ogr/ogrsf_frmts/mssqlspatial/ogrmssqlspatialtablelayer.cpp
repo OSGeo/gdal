@@ -245,7 +245,7 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
 /************************************************************************/
 
 CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
-                                              const char *pszLayerName,
+                                              const char *pszLayerNameIn,
                                               const char *pszGeomCol,
                                               CPL_UNUSED int nCoordDimension,
                                               int nSRId,
@@ -260,20 +260,20 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /*      schema is provided if there is a dot in the name, and that      */
 /*      it is in the form <schema>.<tablename>                          */
 /* -------------------------------------------------------------------- */
-    const char *pszDot = strstr(pszLayerName,".");
+    const char *pszDot = strstr(pszLayerNameIn,".");
     if( pszDot != NULL )
     {
         pszTableName = CPLStrdup(pszDot + 1);
-        pszSchemaName = CPLStrdup(pszLayerName);
-        pszSchemaName[pszDot - pszLayerName] = '\0';
-        this->pszLayerName = CPLStrdup(pszLayerName);
+        pszSchemaName = CPLStrdup(pszLayerNameIn);
+        pszSchemaName[pszDot - pszLayerNameIn] = '\0';
+        this->pszLayerName = CPLStrdup(pszLayerNameIn);
     }
     else
     {
-        pszTableName = CPLStrdup(pszLayerName);
+        pszTableName = CPLStrdup(pszLayerNameIn);
         pszSchemaName = CPLStrdup(pszSchema);
         if ( EQUAL(pszSchemaName, "dbo") )
-            this->pszLayerName = CPLStrdup(pszLayerName);
+            this->pszLayerName = CPLStrdup(pszLayerNameIn);
         else
             this->pszLayerName = CPLStrdup(CPLSPrintf("%s.%s", pszSchemaName, pszTableName));
     }
@@ -418,7 +418,7 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
                        pszSchemaName, pszTableName, pszGeomColumn, 
                        pszSchemaName, pszTableName, pszGeomColumn, 
                        pszSchemaName, pszTableName );
-    
+
     if( !oStatement.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -659,19 +659,19 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL 
+            && EQUAL(pszQueryIn,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = (pszQuery) ? CPLStrdup( pszQuery ) : NULL;
+    this->pszQuery = (pszQueryIn) ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 
@@ -775,14 +775,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     if( oField.GetType() == OFTInteger )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "int" );
     }
     else if( oField.GetType() == OFTInteger64 )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "bigint" );
     }
@@ -790,7 +790,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
             && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,%d)",
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
         else
             strcpy( szFieldType, "float" );
@@ -800,7 +800,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         if( oField.GetWidth() == 0 || !bPreservePrecision )
             strcpy( szFieldType, "nvarchar(MAX)" );
         else
-            sprintf( szFieldType, "nvarchar(%d)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "nvarchar(%d)", oField.GetWidth() );
     }
     else if( oField.GetType() == OFTDate )
     {
@@ -1117,7 +1117,7 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 
     if (oStatement.GetRowCountAffected() < 1)
         return OGRERR_NON_EXISTING_FEATURE;
-    
+
     return OGRERR_NONE;
 }
 
@@ -1136,14 +1136,15 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
         return OGRERR_FAILURE;
     }
-    
+
     ClearStatement();
 
     CPLODBCStatement oStatement( poDS->GetSession() );
 
-    /* the fid values are retieved from the source layer */
+    /* the fid values are retrieved from the source layer */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
-        oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] ON;", pszSchemaName, pszTableName );
+        oStatement.Appendf( "SET IDENTITY_INSERT [%s].[%s] ON;",
+                            pszSchemaName, pszTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */

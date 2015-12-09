@@ -75,7 +75,7 @@ typedef struct {
 const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(const char* pszProduct,
                                               const char* pszDataset);
 
-CPLErr EnvisatFile_GetFieldAsString(const void*, int, const EnvisatFieldDescr*, char*);
+CPLErr EnvisatFile_GetFieldAsString(const void*, int, const EnvisatFieldDescr*, char*, size_t);
 
 
 #ifdef __cplusplus

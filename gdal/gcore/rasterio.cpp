@@ -65,8 +65,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     if( eRWFlag == GF_Write && eFlushBlockErr != CE_None )
     {
-        CPLError(eFlushBlockErr, CPLE_AppDefined,
-                 "An error occured while writing a dirty block");
+        CPLError( eFlushBlockErr, CPLE_AppDefined,
+                  "An error occurred while writing a dirty block" );
         CPLErr eErr = eFlushBlockErr;
         eFlushBlockErr = CE_None;
         return eErr;
@@ -139,7 +139,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
             }
 
-            // To make Coverity happy. Shouldn't happen by design
+            // To make Coverity happy. Should not happen by design.
             if( pabySrcBlock == NULL )
             {
                 CPLAssert(FALSE);
@@ -480,7 +480,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     }*/
                 }
 
-                // To make Coverity happy. Shouldn't happen by design
+                // To make Coverity happy. Should not happen by design.
                 if( pabyDstBlock == NULL )
                 {
                     CPLAssert(FALSE);
@@ -609,7 +609,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 }
 
-                // To make Coverity happy. Shouldn't happen by design
+                // To make Coverity happy.  Should not happen by design.
                 if( pabySrcBlock == NULL )
                 {
                     CPLAssert(FALSE);
@@ -768,9 +768,9 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
 
     char* apszOptions[4];
     char szBuffer0[64], szBuffer1[64], szBuffer2[64];
-    sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
-    sprintf(szBuffer1, "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
-    sprintf(szBuffer2, "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
+    snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
+    snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+    snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
     apszOptions[0] = szBuffer0;
     apszOptions[1] = szBuffer1;
     apszOptions[2] = szBuffer2;
@@ -1179,9 +1179,9 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
 
         char* apszOptions[4];
         char szBuffer0[64], szBuffer1[64], szBuffer2[64];
-        sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
-        sprintf(szBuffer1, "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
-        sprintf(szBuffer2, "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
+        snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
+        snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+        snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
         apszOptions[0] = szBuffer0;
         apszOptions[1] = szBuffer1;
         apszOptions[2] = szBuffer2;

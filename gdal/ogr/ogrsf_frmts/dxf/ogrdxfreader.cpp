@@ -65,10 +65,10 @@ OGRDXFReader::~OGRDXFReader()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void OGRDXFReader::Initialize( VSILFILE *fp )
+void OGRDXFReader::Initialize( VSILFILE *fpIn )
 
 {
-    this->fp = fp;
+    this->fp = fpIn;
 }
 
 /************************************************************************/

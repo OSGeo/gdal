@@ -486,15 +486,16 @@ int Clock_NumDay (int month, int day, sInt4 year, char f_tot)
  * NOTES
  *****************************************************************************
  */
-static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
+#define SIZEOF_BUFFER   100
+static void Clock_FormatParse (char buffer[SIZEOF_BUFFER], sInt4 sec, float floatSec,
                                sInt4 totDay, sInt4 year, int month, int day,
                                char format)
 {
-   static char *MonthName[] = {
+   static const char * const MonthName[] = {
       "January", "February", "March", "April", "May", "June", "July",
       "August", "September", "October", "November", "December"
    };
-   static char *DayName[] = {
+   static const char * const DayName[] = {
       "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
       "Saturday"
    };
@@ -510,57 +511,57 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
    switch (format) {
       case 'd':
          dy = (Clock_NumDay (month, 1, year, 1) - 1);
-         sprintf (buffer, "%02d", day - dy);
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", day - dy);
          return;
       case 'm':
-         sprintf (buffer, "%02d", month);
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", month);
          return;
       case 'E':
-         sprintf (buffer, "%2d", month);
+         snprintf(buffer, SIZEOF_BUFFER, "%2d", month);
          return;
       case 'Y':
-         sprintf (buffer, "%04d", year);
+         snprintf(buffer, SIZEOF_BUFFER, "%04d", year);
          return;
       case 'H':
-         sprintf (buffer, "%02d", (int) ((sec % 86400L) / 3600));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) ((sec % 86400L) / 3600));
          return;
       case 'G':
-         sprintf (buffer, "%2d", (int) ((sec % 86400L) / 3600));
+         snprintf(buffer, SIZEOF_BUFFER, "%2d", (int) ((sec % 86400L) / 3600));
          return;
       case 'M':
-         sprintf (buffer, "%02d", (int) ((sec % 3600) / 60));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) ((sec % 3600) / 60));
          return;
       case 'S':
-         sprintf (buffer, "%02d", (int) (sec % 60));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) (sec % 60));
          return;
       case 'f':
-         sprintf (buffer, "%05.2f", ((int) (sec % 60)) + floatSec);
+         snprintf(buffer, SIZEOF_BUFFER, "%05.2f", ((int) (sec % 60)) + floatSec);
          return;
       case 'n':
-         sprintf (buffer, "\n");
+         snprintf(buffer, SIZEOF_BUFFER, "\n");
          return;
       case '%':
-         sprintf (buffer, "%%");
+         snprintf(buffer, SIZEOF_BUFFER, "%%");
          return;
       case 't':
-         sprintf (buffer, "\t");
+         snprintf(buffer, SIZEOF_BUFFER, "\t");
          return;
       case 'y':
-         sprintf (buffer, "%02d", (int) (year % 100));
+         snprintf(buffer, SIZEOF_BUFFER, "%02d", (int) (year % 100));
          return;
       case 'I':
          i = ((sec % 43200L) / 3600);
          if (i == 0) {
-            sprintf (buffer, "12");
+            snprintf(buffer, SIZEOF_BUFFER, "12");
          } else {
-            sprintf (buffer, "%02d", i);
+            snprintf(buffer, SIZEOF_BUFFER, "%02d", i);
          }
          return;
       case 'p':
          if (((sec % 86400L) / 3600) >= 12) {
-            sprintf (buffer, "PM");
+            snprintf(buffer, SIZEOF_BUFFER, "PM");
          } else {
-            sprintf (buffer, "AM");
+            snprintf(buffer, SIZEOF_BUFFER, "AM");
          }
          return;
       case 'B':
@@ -579,28 +580,28 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
          buffer[3] = '\0';
          return;
       case 'w':
-         sprintf (buffer, "%d", (int) ((4 + totDay) % 7));
+         snprintf(buffer, SIZEOF_BUFFER, "%d", (int) ((4 + totDay) % 7));
          return;
       case 'j':
-         sprintf (buffer, "%03d", day + 1);
+         snprintf(buffer, SIZEOF_BUFFER, "%03d", day + 1);
          return;
       case 'e':
          dy = (Clock_NumDay (month, 1, year, 1) - 1);
-         sprintf (buffer, "%d", (int) (day - dy));
+         snprintf(buffer, SIZEOF_BUFFER, "%d", (int) (day - dy));
          return;
       case 'W':
          i = (1 - ((4 + totDay - day) % 7)) % 7;
          if (day < i)
-            sprintf (buffer, "00");
+            snprintf(buffer, SIZEOF_BUFFER, "00");
          else
-            sprintf (buffer, "%02d", ((day - i) / 7) + 1);
+            snprintf(buffer, SIZEOF_BUFFER, "%02d", ((day - i) / 7) + 1);
          return;
       case 'U':
          i = (-((4 + totDay - day) % 7)) % 7;
          if (day < i)
-            sprintf (buffer, "00");
+            snprintf(buffer, SIZEOF_BUFFER, "00");
          else
-            sprintf (buffer, "%02d", ((day - i) / 7) + 1);
+            snprintf(buffer, SIZEOF_BUFFER, "%02d", ((day - i) / 7) + 1);
          return;
       case 'D':
          Clock_FormatParse (buffer, sec, floatSec, totDay, year, month,
@@ -678,7 +679,7 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
          }
          return;
       default:
-         sprintf (buffer, "unknown %c", format);
+         snprintf(buffer, SIZEOF_BUFFER, "unknown %c", format);
          return;
    }
 }
@@ -1161,41 +1162,41 @@ double Clock_Seconds (void)
 int Clock_PrintZone2 (char *ptr, sChar TimeZone, char f_day)
 {
    if (TimeZone == 0) {
-      sprintf (ptr, "UTC");
+      strcpy (ptr, "UTC");
       return 0;
    } else if (TimeZone == 5) {
       if (f_day) {
-         sprintf (ptr, "EDT");
+         strcpy (ptr, "EDT");
       } else {
-         sprintf (ptr, "EST");
+         strcpy (ptr, "EST");
       }
       return 0;
    } else if (TimeZone == 6) {
       if (f_day) {
-         sprintf (ptr, "CDT");
+         strcpy (ptr, "CDT");
       } else {
-         sprintf (ptr, "CST");
+         strcpy (ptr, "CST");
       }
       return 0;
    } else if (TimeZone == 7) {
       if (f_day) {
-         sprintf (ptr, "MDT");
+         strcpy (ptr, "MDT");
       } else {
-         sprintf (ptr, "MST");
+         strcpy (ptr, "MST");
       }
       return 0;
    } else if (TimeZone == 8) {
       if (f_day) {
-         sprintf (ptr, "PDT");
+         strcpy (ptr, "PDT");
       } else {
-         sprintf (ptr, "PST");
+         strcpy (ptr, "PST");
       }
       return 0;
    } else if (TimeZone == 9) {
       if (f_day) {
-         sprintf (ptr, "YDT");
+         strcpy (ptr, "YDT");
       } else {
-         sprintf (ptr, "YST");
+         strcpy (ptr, "YST");
       }
       return 0;
    }
@@ -1396,7 +1397,7 @@ int Clock_ScanMonth (char *ptr)
  */
 void Clock_PrintMonth3 (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
-   static char *MonthName[] = {
+   static const char * const MonthName[] = {
       "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT",
       "NOV", "DEC"
    };
@@ -1424,7 +1425,7 @@ void Clock_PrintMonth3 (int mon, char *buffer, CPL_UNUSED int buffLen)
  */
 void Clock_PrintMonth (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
-   static char *MonthName[] = {
+   static const char * const MonthName[] = {
       "January", "February", "March", "April", "May", "June", "July",
       "August", "September", "October", "November", "December"
    };
@@ -1863,7 +1864,7 @@ void Clock_PrintDateNumber (double l_clock, char buffer[15])
 
    Clock_PrintDate (l_clock, &year, &month, &day, &hour, &min, &d_sec);
    sec = (int) d_sec;
-   sprintf (buffer, "%04d%02d%02d%02d%02d%02d", year, month, day, hour, min,
+   snprintf(buffer, 15, "%04d%02d%02d%02d%02d%02d", year, month, day, hour, min,
             sec);
 }
 
@@ -2187,7 +2188,7 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
          printf ("Pre Relative Word: %s %d\n", word, l_index);
 
       } else if (strcmp (word, "AGO") == 0) {
-         if ((lastWordType != WT_PRE_RELATIVE) ||
+         if ((lastWordType != WT_PRE_RELATIVE) &&
              (lastWordType != WT_RELATIVE_UNIT)) {
             printf ("Ago did not follow relative words\n");
             goto errorReturn;

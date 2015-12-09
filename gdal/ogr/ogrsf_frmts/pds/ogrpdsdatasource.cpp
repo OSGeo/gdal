@@ -33,6 +33,8 @@
 
 CPL_CVSID("$Id$");
 
+using namespace OGRPDS;
+
 /************************************************************************/
 /*                           OGRPDSDataSource()                         */
 /************************************************************************/
@@ -330,7 +332,7 @@ int OGRPDSDataSource::Open( const char * pszFilename )
         LoadTable(pszFilename, nRecordSize, "TABLE");
     else
     {
-        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
+        fp = VSIFOpenL(pszFilename, "rb");
         if (fp == NULL)
             return FALSE;
 

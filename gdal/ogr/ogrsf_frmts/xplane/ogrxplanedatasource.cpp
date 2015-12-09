@@ -109,12 +109,12 @@ void OGRXPlaneDataSource::RegisterLayer(OGRXPlaneLayer* poLayer)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
+int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
 
 {
     Reset();
 
-    this->bReadWholeFile = bReadWholeFile;
+    this->bReadWholeFile = bReadWholeFileIn;
 
     const char* pszShortFilename = CPLGetFilename(pszFilename);
     if (EQUAL(pszShortFilename, "nav.dat") ||

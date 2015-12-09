@@ -367,8 +367,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If 502, 503 or 504 status code retry this HTTP call until max        */
-/*      retry has been rearched                                         */
+/*      If 502, 503 or 504 status code retry this HTTP call until max   */
+/*      retry has been reached                                          */
 /* -------------------------------------------------------------------- */
     const char *pszRetryDelay = CSLFetchNameValue( papszOptions, "RETRY_DELAY" );
     if( pszRetryDelay == NULL )

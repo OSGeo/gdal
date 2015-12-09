@@ -39,7 +39,7 @@
 
 /*
  * To override the default routine used to image decoded
- * spans one can use the pseduo tag TIFFTAG_FAXFILLFUNC.
+ * spans one can use the pseudo tag TIFFTAG_FAXFILLFUNC.
  * The routine must have the type signature given below;
  * for example:
  *

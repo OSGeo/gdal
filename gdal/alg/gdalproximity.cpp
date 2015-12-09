@@ -45,7 +45,8 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /************************************************************************/
 
 /**
-Compute the proximity of all pixels in the image to a set of pixels in the source image.
+Compute the proximity of all pixels in the image to a set of pixels in
+the source image.
 
 This function attempts to compute the proximity of all pixels in
 the image to a set of pixels in the source image.  The following
@@ -56,7 +57,7 @@ that target pixels are set to the value corresponding to a distance
 of zero.
 
 The progress function args may be NULL or a valid progress reporting function
-such as GDALTermProgress/NULL. 
+such as GDALTermProgress/NULL.
 
 Options:
 
@@ -141,7 +142,8 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         else if( !EQUAL(pszOpt,"PIXEL") )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unrecognised DISTUNITS value '%s', should be GEO or PIXEL.",
+                      "Unrecognized DISTUNITS value '%s', "
+                      "should be GEO or PIXEL.",
                       pszOpt );
             return CE_Failure;
         }

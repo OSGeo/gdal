@@ -402,12 +402,12 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
             pszType = papszRow[0];
 
-            OGRwkbGeometryType nGeomType = OGRFromOGCGeomType(pszType);
+            OGRwkbGeometryType l_nGeomType = OGRFromOGCGeomType(pszType);
 
             if( papszRow[1] != NULL && atoi(papszRow[1]) == 3 )
-                nGeomType = wkbSetZ(nGeomType);
+                l_nGeomType = wkbSetZ(l_nGeomType);
 
-            poDefn->SetGeomType( nGeomType );
+            poDefn->SetGeomType( l_nGeomType );
 
         }
         else if (eForcedGeomType != wkbUnknown)
@@ -454,7 +454,8 @@ void OGRMySQLTableLayer::BuildWhere()
 
 {
     CPLFree( pszWHERE );
-    pszWHERE = (char*)CPLMalloc(500 + ((pszQuery) ? strlen(pszQuery) : 0));
+    const size_t nWHERELen = 500 + ((pszQuery) ? strlen(pszQuery) : 0);
+    pszWHERE = (char*)CPLMalloc(nWHERELen);
     pszWHERE[0] = '\0';
 
     if( m_poFilterGeom != NULL && pszGeomColumn )
@@ -474,7 +475,7 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MaxY,
                 sEnvelope.MinX, sEnvelope.MinY);
 
-        sprintf( pszWHERE,
+        snprintf( pszWHERE, nWHERELen,
                  "WHERE MBRIntersects(GeomFromText('%s'), `%s`)",
                  szEnvelope,
                  pszGeomColumn);
@@ -484,9 +485,10 @@ void OGRMySQLTableLayer::BuildWhere()
     if( pszQuery != NULL )
     {
         if( strlen(pszWHERE) == 0 )
-            sprintf( pszWHERE, "WHERE %s ", pszQuery  );
+            snprintf( pszWHERE, nWHERELen, "WHERE %s ", pszQuery  );
         else
-            sprintf( pszWHERE+strlen(pszWHERE), "&& (%s) ", pszQuery );
+            snprintf( pszWHERE+strlen(pszWHERE),
+                      nWHERELen - strlen(pszWHERE), "&& (%s) ", pszQuery );
     }
 }
 
@@ -508,7 +510,9 @@ void OGRMySQLTableLayer::BuildFullQueryStatement()
     pszQueryStatement = (char *) 
         CPLMalloc(strlen(pszFields)+strlen(pszWHERE)
                   +strlen(poFeatureDefn->GetName()) + 40);
-    sprintf( pszQueryStatement,
+    snprintf( pszQueryStatement,
+              strlen(pszFields)+strlen(pszWHERE)
+                  +strlen(poFeatureDefn->GetName()) + 40,
              "SELECT %s FROM `%s` %s", 
              pszFields, poFeatureDefn->GetName(), pszWHERE );
     
@@ -556,7 +560,7 @@ char *OGRMySQLTableLayer::BuildFields()
     pszFieldList[0] = '\0';
 
     if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
-        sprintf( pszFieldList, "`%s`", pszFIDColumn );
+        snprintf( pszFieldList, nSize, "`%s`", pszFIDColumn );
 
     if( pszGeomColumn )
     {
@@ -568,7 +572,7 @@ char *OGRMySQLTableLayer::BuildFields()
         /*      first 4 bytes being an int that defines the SRID        */
         /*      and the rest being the WKB.                             */
 		/* ------------------------------------------------------------ */            
-        sprintf( pszFieldList+strlen(pszFieldList), 
+        snprintf( pszFieldList+strlen(pszFieldList), nSize-strlen(pszFieldList),
                  "`%s` `%s`", pszGeomColumn, pszGeomColumn );
     }
 
@@ -593,18 +597,18 @@ char *OGRMySQLTableLayer::BuildFields()
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
     CPLFree( this->pszQuery );
 
-    if( pszQuery == NULL || strlen(pszQuery) == 0 )
+    if( pszQueryIn == NULL || strlen(pszQueryIn) == 0 )
         this->pszQuery = NULL;
     else
-        this->pszQuery = CPLStrdup( pszQuery );
+        this->pszQuery = CPLStrdup( pszQueryIn );
 
     BuildWhere();
 
@@ -977,14 +981,14 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     if( oField.GetType() == OFTInteger )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "DECIMAL(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "DECIMAL(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "INTEGER" );
     }
     else if( oField.GetType() == OFTInteger64 )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "DECIMAL(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "DECIMAL(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "BIGINT" );
     }
@@ -992,7 +996,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     {
         if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
             && bPreservePrecision )
-            sprintf( szFieldType, "DOUBLE(%d,%d)",
+            snprintf( szFieldType, sizeof(szFieldType), "DOUBLE(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
         else
             strcpy( szFieldType, "DOUBLE" );
@@ -1001,26 +1005,26 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( oField.GetType() == OFTDate )
     {
         oField.SetDefault(NULL);
-        sprintf( szFieldType, "DATE" );
+        snprintf( szFieldType, sizeof(szFieldType), "DATE" );
     }
 
     else if( oField.GetType() == OFTDateTime )
     {
         if( oField.GetDefault() != NULL && EQUAL(oField.GetDefault(), "CURRENT_TIMESTAMP") )
-            sprintf( szFieldType, "TIMESTAMP" );
+            snprintf( szFieldType, sizeof(szFieldType), "TIMESTAMP" );
         else
-            sprintf( szFieldType, "DATETIME" );
+            snprintf( szFieldType, sizeof(szFieldType), "DATETIME" );
     }
 
     else if( oField.GetType() == OFTTime )
     {
         oField.SetDefault(NULL);
-        sprintf( szFieldType, "TIME" );
+        snprintf( szFieldType, sizeof(szFieldType), "TIME" );
     }
 
     else if( oField.GetType() == OFTBinary )
     {
-        sprintf( szFieldType, "LONGBLOB" );
+        snprintf( szFieldType, sizeof(szFieldType), "LONGBLOB" );
     }
 
     else if( oField.GetType() == OFTString )
@@ -1033,7 +1037,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                 strcpy( szFieldType, "TEXT" );
         }
         else
-            sprintf( szFieldType, "VARCHAR(%d)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "VARCHAR(%d)", oField.GetWidth() );
     }
     else if( bApproxOK )
     {

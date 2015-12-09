@@ -161,7 +161,7 @@ void EIRDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
     }
 
     char szNewLine[82];
-    sprintf( szNewLine, "%-15s%s", pszKey, pszValue );
+    snprintf( szNewLine, sizeof(szNewLine), "%-15s%s", pszKey, pszValue );
 
     for( int i = CSLCount(papszHDR)-1; i >= 0; i-- )
     {

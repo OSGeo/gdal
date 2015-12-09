@@ -303,14 +303,14 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
          * Lazy way to build the INFO path: simply add "../info/"...
          * this could probably be improved!
          *------------------------------------------------------------*/
-        psInfo->pszInfoPath =(char*)CPLMalloc((strlen(psInfo->pszCoverPath)+9)*
-                                           sizeof(char));
+        size_t nInfoPathLen = strlen(psInfo->pszCoverPath)+9;
+        psInfo->pszInfoPath =(char*)CPLMalloc(nInfoPathLen);
 #ifdef WIN32
 #  define AVC_INFOPATH "..\\info\\"
 #else
 #  define AVC_INFOPATH "../info/"
 #endif
-        sprintf(psInfo->pszInfoPath, "%s%s", psInfo->pszCoverPath, 
+        snprintf(psInfo->pszInfoPath, nInfoPathLen, "%s%s", psInfo->pszCoverPath, 
                                              AVC_INFOPATH);
 
         AVCAdjustCaseSensitiveFilename(psInfo->pszInfoPath);
@@ -341,7 +341,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
     }
 
     /*-----------------------------------------------------------------
-     * Make sure there was no error until now before we build squeleton.
+     * Make sure there was no error until now before we build skeleton.
      *----------------------------------------------------------------*/
     if (CPLGetLastErrorNo() != 0)
     {
@@ -354,12 +354,12 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
     }
 
     /*-----------------------------------------------------------------
-     * Build the E00 file squeleton and be ready to return a E00 header...
+     * Build the E00 file skeleton and be ready to return a E00 header...
      * We'll also read the coverage precision by the same way.
      *----------------------------------------------------------------*/
     nCoverPrecision = _AVCE00ReadBuildSqueleton(psInfo, papszCoverDir);
 
-    /* Ignore warnings produced while building squeleton */
+    /* Ignore warnings produced while building skeleton */
     CPLErrorReset();
 
     CSLDestroy(papszCoverDir);
@@ -733,7 +733,7 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
 /**********************************************************************
  *                         _AVCE00ReadAddJabberwockySection()
  *
- * Add to the squeleton a section that contains subsections 
+ * Add to the skeleton a section that contains subsections 
  * for all the files with a given extension.
  *
  * Returns Updated Coverage precision
@@ -785,7 +785,7 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
                 bFoundFiles = TRUE;
             }
 
-            /* Add this file to the squeleton 
+            /* Add this file to the skeleton 
              */
             iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections), 
                                               &(psInfo->numSections), 1);
@@ -957,10 +957,10 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
 /**********************************************************************
  *                         _AVCE00ReadBuildSqueleton()
  *
- * Build the squeleton of the E00 file corresponding to the specified
+ * Build the skeleton of the E00 file corresponding to the specified
  * coverage and set the appropriate fields in the AVCE00ReadPtr struct.
  *
- * Note that the order of the sections in the squeleton is important
+ * Note that the order of the sections in the skeleton is important
  * since some software may rely on this ordering when they read E00 files.
  *
  * The function returns the coverage precision that it will read from one
@@ -1197,7 +1197,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
                                                            papszCoverDir);
 
     /*-----------------------------------------------------------------
-     * At this point, we should have read the coverage precsion... and if
+     * At this point, we should have read the coverage precision... and if
      * we haven't yet then we'll just use single by default.
      * We'll need cPrecisionCode for some of the sections that follow.
      *----------------------------------------------------------------*/
@@ -1597,9 +1597,9 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
 
         /*---------------------------------------------------------
          * And now proceed to the next section...
-         * OK, I don't really like recursivity either... but it was
+         * OK, I don't really like recursion, but it was
          * the simplest way to do this, and anyways we should never
-         * have more than one level of recursivity.
+         * have more than one level of recursion.
          *--------------------------------------------------------*/
         if (psInfo->bReadAllSections)
             psInfo->iCurSection++;
@@ -1611,7 +1611,7 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
     }
 
     /*-----------------------------------------------------------------
-     * Check for errors... if any error happened, tehn return NULL
+     * Check for errors... if any error happened, then return NULL.
      *----------------------------------------------------------------*/
     if (CPLGetLastErrorNo() != 0)
     {
@@ -1874,9 +1874,9 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
             /*---------------------------------------------------------
              * Finished returning the last lines of the section...
              * proceed to the next section...
-             * OK, I don't really like recursivity either... but it was
+             * OK, I don't really like recursivion, but it was
              * the simplest way to do this, and anyways we should never
-             * have more than one level of recursivity.
+             * have more than one level of recursion.
              *--------------------------------------------------------*/
             if (psInfo->bReadAllSections)
                 psInfo->iCurSection++;
@@ -1897,7 +1897,7 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
  *                         AVCE00ReadSectionsList()
  *
  * Returns an array of AVCE00Section structures that describe the
- * squeleton of the whole coverage.  The value of *numSect will be
+ * skeleton of the whole coverage.  The value of *numSect will be
  * set to the number of sections in the array.
  *
  * You can scan the returned array, and use AVCE00ReadGotoSection() to move

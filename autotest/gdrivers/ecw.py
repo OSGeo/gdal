@@ -245,24 +245,28 @@ def ecw_6():
 
     ds = gdal.Open( 'tmp/ecw_5.jp2' )
 
-    if gdaltest.ecw_drv.major_version == 3:    
+    if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (144.422, 44.9075)
     else:
         (exp_mean, exp_stddev) = (143.375, 44.8539)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    # The difference in the stddev is outragously large between win32 and
-    # linux, but I don't know why. 
+    # The difference in the stddev is outrageously large between win32 and
+    # Linux, but I don't know why.
     if abs(mean-exp_mean) > 1.5 or abs(stddev-exp_stddev) > 6:
-        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from '
+                              'expected(%g,%g)' % ( mean, stddev, exp_mean,
+                                                    exp_stddev) )
         return 'fail'
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
-    # The difference in the stddev is outragously large between win32 and
-    # linux, but I don't know why. 
+    # The difference in the stddev is outrageously large between win32 and
+    # Linux, but I don't know why.
     if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 6:
-        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev) )
+        gdaltest.post_reason( 'mean/stddev of (%g,%g) diffs from '
+                              'expected(%g,%g)' % ( mean, stddev, exp_mean,
+                                                    exp_stddev) )
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
@@ -1453,12 +1457,12 @@ def ecw_37():
         print ('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
-    dsr = None 
+    dsr = None
 
     return 'success'
 
 ###############################################################################
-# Check openning unicode files
+# Check opening unicode files.
 
 def ecw_38():
 
@@ -1476,11 +1480,11 @@ def ecw_38():
         return 'skip'
 
     shutil.copyfile( 'data/jrc.ecw', fname )
-    
+
     ds = gdal.Open( 'data/jrc.ecw' )
- 
+
     ds_ref = gdal.Open( fname )
-    
+
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
 
     ds = None
@@ -2018,30 +2022,6 @@ def ecw_46():
     return 'success'
 
 ###############################################################################
-# Check that we can open filename with UTF-8 characters
-
-def ecw_47():
-    
-    if gdaltest.ecw_drv is None:
-        return 'skip'
-    if gdaltest.ecw_drv.major_version < 4:
-        return 'skip'
-
-    if sys.version_info >= (3,0,0):
-        filename = 'tmp/\u00e9ven.ecw'
-    else:
-        exec("filename = u'tmp/\\u00e9ven.ecw'")
-    shutil.copy('data/jrc.ecw', filename)
-    ds = gdal.Open( filename )
-    if ds is None:
-        os.unlink(filename)
-        return 'fail'
-    ds = None
-    os.unlink(filename)
-
-    return 'success' 
-
-###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2390,7 +2370,6 @@ gdaltest_list = [
     ecw_44,
     ecw_45,
     ecw_46,
-    ecw_47,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 

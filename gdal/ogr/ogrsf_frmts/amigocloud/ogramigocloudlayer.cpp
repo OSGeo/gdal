@@ -36,12 +36,10 @@ CPL_CVSID("$Id$");
 /*                         OGRAmigoCloudLayer()                            */
 /************************************************************************/
 
-OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS)
+OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDSIn)
 
 {
-    this->poDS = poDS;
-
-    poSRS = NULL;
+    this->poDS = poDSIn;
 
     poFeatureDefn = NULL;
     
@@ -61,9 +59,6 @@ OGRAmigoCloudLayer::~OGRAmigoCloudLayer()
 {
     if( poCachedObj != NULL )
         json_object_put(poCachedObj);
-
-    if( poSRS != NULL )
-        poSRS->Release();
 
     if( poFeatureDefn != NULL )
         poFeatureDefn->Release();
@@ -179,7 +174,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object* OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNext)
+json_object* OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNextIn)
 {
     CPLString osSQL = osBaseSQL;
     if( osSQL.ifind("SELECT") != std::string::npos &&
@@ -188,7 +183,7 @@ json_object* OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNext)
         osSQL += " LIMIT ";
         osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
         osSQL += " OFFSET ";
-        osSQL += CPLSPrintf(CPL_FRMT_GIB, iNext);
+        osSQL += CPLSPrintf(CPL_FRMT_GIB, iNextIn);
     }
     return poDS->RunSQL(osSQL);
 }

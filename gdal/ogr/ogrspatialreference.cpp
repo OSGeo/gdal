@@ -62,7 +62,7 @@ void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
         && (strcmp(pszStrBuf+nLen-6,"999999") == 0
             || strcmp(pszStrBuf+nLen-6,"000001") == 0) )
     {
-        CPLsprintf( pszStrBuf, "%.15g", dfValue );
+        CPLsnprintf( pszStrBuf, size, "%.15g", dfValue );
     }
 
     // Force to user periods regardless of locale.
@@ -873,7 +873,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
     char        szValue[64];
 
     if( ABS(dfValue - (int) dfValue) == 0.0 )
-        sprintf( szValue, "%d", (int) dfValue );
+        snprintf( szValue, sizeof(szValue), "%d", (int) dfValue );
     else
         OGRsnPrintDouble( szValue, sizeof(szValue), dfValue );
 
@@ -971,10 +971,10 @@ OGRErr OSRSetAngularUnits( OGRSpatialReferenceH hSRS,
  *
  * This method does the same thing as the C function OSRGetAngularUnits().
  *
- * @param ppszName a pointer to be updated with the pointer to the 
- * units name.  The returned value remains internal to the OGRSpatialReference
- * and shouldn't be freed, or modified.  It may be invalidated on the next
- * OGRSpatialReference call. 
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should
+ * not be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call.
  *
  * @return the value to multiply by angular distances to transform them to 
  * radians.
@@ -987,20 +987,20 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
 
     if( ppszName != NULL )
         *ppszName = (char* ) "degree";
-        
+
     if( poCS == NULL )
         return CPLAtof(SRS_UA_DEGREE_CONV);
 
     for( int iChild = 0; iChild < poCS->GetChildCount(); iChild++ )
     {
         const OGR_SRSNode     *poChild = poCS->GetChild(iChild);
-        
+
         if( EQUAL(poChild->GetValue(),"UNIT")
             && poChild->GetChildCount() >= 2 )
         {
             if( ppszName != NULL )
                 *ppszName = (char *) poChild->GetChild(0)->GetValue();
-            
+
             return CPLAtof( poChild->GetChild(1)->GetValue() );
         }
     }
@@ -1212,7 +1212,7 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
         return OGRERR_FAILURE;
 
     if( dfInMeters == (int) dfInMeters )
-        sprintf( szValue, "%d", (int) dfInMeters );
+        snprintf( szValue, sizeof(szValue), "%d", (int) dfInMeters );
     else
       OGRsnPrintDouble( szValue, sizeof(szValue), dfInMeters );
 
@@ -1265,20 +1265,20 @@ OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 /**
- * \brief Fetch linear projection units. 
+ * \brief Fetch linear projection units.
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
- * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node 
+ * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node
  * for units.
  *
  * This method does the same thing as the C function OSRGetLinearUnits()/
  *
- * @param ppszName a pointer to be updated with the pointer to the 
- * units name.  The returned value remains internal to the OGRSpatialReference
- * and shouldn't be freed, or modified.  It may be invalidated on the next
- * OGRSpatialReference call. 
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should
+ * not be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call.
  *
- * @return the value to multiply by linear distances to transform them to 
+ * @return the value to multiply by linear distances to transform them to
  * meters.
  */
 
@@ -1293,12 +1293,12 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
 /************************************************************************/
 
 /**
- * \brief Fetch linear projection units. 
+ * \brief Fetch linear projection units.
  *
  * This function is the same as OGRSpatialReference::GetLinearUnits()
  */
 double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
-    
+
 {
     VALIDATE_POINTER1( hSRS, "OSRGetLinearUnits", 0 );
 
@@ -1310,19 +1310,19 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
 /************************************************************************/
 
 /**
- * \brief Fetch linear units for target. 
+ * \brief Fetch linear units for target.
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
  *
  * This method does the same thing as the C function OSRGetTargetLinearUnits()/
  *
- * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS".
- * @param ppszName a pointer to be updated with the pointer to the
- * units name.  The returned value remains internal to the OGRSpatialReference
- * and shouldn't be freed, or modified.  It may be invalidated on the next
+ * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS".  @param
+ * ppszName a pointer to be updated with the pointer to the units name.  The
+ * returned value remains internal to the OGRSpatialReference and should not
+ * be freed, or modified.  It may be invalidated on the next
  * OGRSpatialReference call.
  *
- * @return the value to multiply by linear distances to transform them to 
+ * @return the value to multiply by linear distances to transform them to
  * meters.
  *
  * @since OGR 1.9.0
@@ -2273,7 +2273,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
     if( !STARTS_WITH_CI(pszAuthority, "OGC") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "URN %s has unrecognised authority.",
+                  "URN %s has unrecognized authority.",
                   pszURN );
         return OGRERR_FAILURE;
     }
@@ -2540,7 +2540,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
         while (iComponentUrl != -1)
         {
             char searchStr[5];
-            sprintf(searchStr, "&%d=", iComponentUrl);
+            snprintf(searchStr, sizeof(searchStr), "&%d=", iComponentUrl);
             
             const char* pszUrlEnd = strstr(pszCur, searchStr);
             
@@ -2977,15 +2977,15 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
 /**
  * \brief Set the user visible GEOCCS name.
  *
- * This method is the same as the C function OSRSetGeocCS(). 
+ * This method is the same as the C function OSRSetGeocCS().
 
  * This method will ensure a GEOCCS node is created as the root,
- * and set the provided name on it.  If used on a GEOGCS coordinate system, 
- * the DATUM and PRIMEM nodes from the GEOGCS will be tarnsferred over to 
- * the GEOGCS. 
+ * and set the provided name on it.  If used on a GEOGCS coordinate system,
+ * the DATUM and PRIMEM nodes from the GEOGCS will be transferred over to
+ * the GEOGCS.
  *
  * @param pszName the user visible name to assign.  Not used as a key.
- * 
+ *
  * @return OGRERR_NONE on success.
  *
  * @since OGR 1.9.0
@@ -5533,9 +5533,9 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
         char    szUTMName[128];
 
         if( bNorth )
-            sprintf( szUTMName, "UTM Zone %d, Northern Hemisphere", nZone );
+            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Northern Hemisphere", nZone );
         else
-            sprintf( szUTMName, "UTM Zone %d, Southern Hemisphere", nZone );
+            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Southern Hemisphere", nZone );
 
         SetNode( "PROJCS", szUTMName );
     }
@@ -5769,7 +5769,7 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
     char   szCode[32];
     OGR_SRSNode *poAuthNode;
 
-    sprintf( szCode, "%d", nCode );
+    snprintf( szCode, sizeof(szCode), "%d", nCode );
 
     poAuthNode = new OGR_SRSNode( "AUTHORITY" );
     poAuthNode->AddChild( new OGR_SRSNode( pszAuthority ) );
@@ -7235,7 +7235,7 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
             *peOrientation = OAO_Other;
         else
         {
-            CPLDebug( "OSR", "Unrecognised orientation value '%s'.",
+            CPLDebug( "OSR", "Unrecognized orientation value '%s'.",
                       pszOrientation );
         }
     }

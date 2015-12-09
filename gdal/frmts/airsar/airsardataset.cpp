@@ -366,7 +366,7 @@ CPLErr AirSARDataset::LoadLine( int iLine )
 /************************************************************************/
 /*                             ReadHeader()                             */
 /*                                                                      */
-/*      Read the AirSAR header.  We assume an equal sign seperates      */
+/*      Read the AirSAR header.  We assume an equal sign separates      */
 /*      the keyword name from the value.  If not, assume the last       */
 /*      "blank delimited" word is the value and everything else is a    */
 /*      keyword.                                                        */
@@ -491,7 +491,7 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
 /* -------------------------------------------------------------------- */
         char szPrefixedKeyName[55];
 
-        sprintf( szPrefixedKeyName, "%s_%s", pszPrefix, szLine );
+        snprintf( szPrefixedKeyName, sizeof(szPrefixedKeyName), "%s_%s", pszPrefix, szLine );
 
         papszHeadInfo = 
             CSLSetNameValue( papszHeadInfo, szPrefixedKeyName, szLine+iValue );

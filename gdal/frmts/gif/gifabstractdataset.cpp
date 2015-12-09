@@ -523,7 +523,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
     {
         char szBackground[10];
 
-        sprintf( szBackground, "%d", nBackground );
+        snprintf( szBackground, sizeof(szBackground), "%d", nBackground );
         SetMetadataItem( "GIF_BACKGROUND", szBackground );
     }
 }

@@ -111,7 +111,7 @@ void OGRMySQLDataSource::ReportError( const char *pszDescription )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptions,
+int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptionsIn,
                               int bUpdate )
 
 {
@@ -120,7 +120,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptions,
 /* -------------------------------------------------------------------- */
 /*      Use options process to get .my.cnf file contents.               */
 /* -------------------------------------------------------------------- */
-    int nPort = 0, i;
+    int nPort = 0;
     char **papszTableNames=NULL;
     std::string oHost, oPassword, oUser, oDB;
 
@@ -129,7 +129,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptions,
                                       "host", "tables" };
     for(int i=0; i <(int)(sizeof(apszOpenOptions)/sizeof(char*));i++)
     {
-        const char* pszVal = CSLFetchNameValue(papszOpenOptions, apszOpenOptions[i]);
+        const char* pszVal = CSLFetchNameValue(papszOpenOptionsIn, apszOpenOptions[i]);
         if( pszVal )
         {
             if( osNewName[osNewName.size()-1] != ':' )
@@ -170,7 +170,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptions,
 
     oDB = papszItems[0];
 
-    for( i = 1; papszItems[i] != NULL; i++ )
+    for( int i = 1; papszItems[i] != NULL; i++ )
     {
         if( STARTS_WITH_CI(papszItems[i], "user=") )
             oUser = papszItems[i] + 5;
@@ -477,7 +477,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
         mysql_free_result( hResult );
     hResult = NULL;   
                         
-    sprintf( szCommand,
+    snprintf( szCommand, sizeof(szCommand),
          "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
          nId );
     

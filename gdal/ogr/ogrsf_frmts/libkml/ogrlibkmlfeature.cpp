@@ -652,7 +652,7 @@ FeaturePtr feat2kml (
         poKmlFeature = poKmlPlacemark;
 
         OGRPoint* poOgrPoint = (OGRPoint*) poOgrGeom;
-        CameraPtr camera = poKmlFactory->CreateCamera();
+        camera = poKmlFactory->CreateCamera();
         camera->set_latitude(poOgrPoint->getY());
         camera->set_longitude(poOgrPoint->getX());
         int isGX = FALSE;

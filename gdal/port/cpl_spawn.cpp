@@ -146,7 +146,7 @@ int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
         pData[nDataLength-1] = '\0';
     if( pData && strstr(
             const_cast<const char *>( reinterpret_cast<char *>( pData ) ),
-            "An error occured while forking process") != NULL )
+            "An error occurred while forking process") != NULL )
         bDisplayErr = TRUE;
     if( pData && bDisplayErr )
         CPLError(CE_Failure, CPLE_AppDefined, "[%s error] %s", papszArgv[0], pData);

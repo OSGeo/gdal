@@ -32,10 +32,10 @@ is what is used to access the datasource.<p>
 By default the ODBC searches for GEOMETRY_COLUMNS table.  If found it is
 used to identify the set of spatial tables that should be treated as layers
 by OGR.  If not found, then all tables in the datasource are returned as
-non-spatial layers.  However, if a table list (a list of comma seperated table
+non-spatial layers.  However, if a table list (a list of comma separated table
 names) is provided, then only those tables will be represented as layers
 (non-spatial).  Fetching the full definition of all tables in a complicated
-database can be quite timeconsuming, so the ability to restrict the set of
+database can be quite time consuming, so the ability to restrict the set of
 tables accessed is primarily a performance issue.<p>
 
 If the GEOMETRY_COLUMNS table is found, it is used to select a column to 

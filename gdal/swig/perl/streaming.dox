@@ -17,10 +17,12 @@ my $layer = Geo::OGR::DataSource::Open(<data source name here>)->GetLayer(<layer
 {
     package Writer;
     sub write {
+        # note that the object itself is not available!
         my ($w) = @_;
         print $w;
     }
     sub close {
+        # note that the object itself is not available!
         print "done\n";
     }
 }

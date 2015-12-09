@@ -577,7 +577,7 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string className)
     std::string newName = className;
     // From ESRI docs
     // Feature classes starting with these strings are unsupported.
-    static const char* UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", NULL};
+    static const char* const UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", NULL};
 
     for (int i = 0; UNSUPPORTED_PREFIXES[i] != NULL; i++)
     {
@@ -602,7 +602,7 @@ std::string FGDBEscapeReservedKeywords(const std::string name)
     std::transform(upperName.begin(), upperName.end(), upperName.begin(), ::toupper);
 
     // From ESRI docs
-    static const char* RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
+    static const char* const RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
                                     "BY", "COLUMN", "CREATE", "DATE", "DELETE", "DESC",
                                     "DROP", "EXISTS", "FOR", "FROM", "IN", "INSERT", "INTO",
                                     "IS", "LIKE", "NOT", "NULL", "OR", "ORDER", "SELECT",

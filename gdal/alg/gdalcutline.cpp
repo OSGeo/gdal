@@ -75,7 +75,7 @@ BlendMaskGenerator(
 /* -------------------------------------------------------------------- */
 /*      Prepare a clipping polygon a bit bigger than the area of        */
 /*      interest in the hopes of simplifying the cutline down to        */
-/*      stuff that will be relavent for this area of interest.          */
+/*      stuff that will be relevant for this area of interest.          */
 /* -------------------------------------------------------------------- */
     CPLString osClipRectWKT;
 
@@ -349,7 +349,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     char *apszOptions[] = { szDataPointer, NULL };
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
-    sprintf( szDataPointer, "DATAPOINTER=" );
+    snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
                      pabyPolyMask, 
                      static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );

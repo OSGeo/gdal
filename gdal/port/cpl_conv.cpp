@@ -218,7 +218,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
         {
             char szSmallMsg[60];
 
-            sprintf( szSmallMsg, 
+            snprintf( szSmallMsg, sizeof(szSmallMsg),
                      "CPLRealloc(): Out of memory allocating %ld bytes.", 
                      (long) nNewSize );
             CPLEmergencyError( szSmallMsg ); 
@@ -998,7 +998,7 @@ static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
 #endif
-    sprintf(szBuffer, CPL_FRMT_GIB, nVal);
+    snprintf(szBuffer, sizeof(szBuffer), CPL_FRMT_GIB, nVal);
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
@@ -1287,9 +1287,9 @@ int CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
     char    szTemp[64];
 
 #if UINT_MAX == 65535
-    sprintf( szTemp, "%*ld", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*ld", nMaxLen, iValue );
 #else
-    sprintf( szTemp, "%*d", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*d", nMaxLen, iValue );
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );
@@ -1332,15 +1332,15 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #pragma GCC diagnostic ignored "-Wformat"
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
 #endif
-    sprintf( szTemp, "%*I64d", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*I64d", nMaxLen, iValue );
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 # elif HAVE_LONG_LONG
-    sprintf( szTemp, "%*lld", nMaxLen, (long long) iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*lld", nMaxLen, (long long) iValue );
 //    sprintf( szTemp, "%*Ld", nMaxLen, (long long) iValue );
 #else
-    sprintf( szTemp, "%*ld", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*ld", nMaxLen, iValue );
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );
@@ -1376,14 +1376,14 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
 
     char szTemp[64];
 
-    sprintf( szTemp, "%p", pValue );
+    snprintf( szTemp, sizeof(szTemp), "%p", pValue );
 
     // On windows, and possibly some other platforms the sprintf("%p")
     // does not prefix things with 0x so it is hard to know later if the
     // value is hex encoded.  Fix this up here.
 
     if( !STARTS_WITH_CI(szTemp, "0x") )
-        sprintf( szTemp, "0x%p", pValue );
+        snprintf( szTemp, sizeof(szTemp), "0x%p", pValue );
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );
 }
@@ -1424,11 +1424,7 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
     const int double_buffer_size = 64;
     char szTemp[double_buffer_size];
 
-#if defined(HAVE_SNPRINTF)
     CPLsnprintf( szTemp, double_buffer_size, pszFormat, dfValue );
-#else
-    CPLsprintf( szTemp, pszFormat, dfValue );
-#endif
     szTemp[double_buffer_size - 1] = '\0';
 
     for( int i = 0; szTemp[i] != '\0'; i++ )
@@ -2576,8 +2572,8 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unrecognised filesystem object : '%s'.",
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unrecognized filesystem object : '%s'.",
                   pszOldPath );
         return -1;
     }

@@ -227,7 +227,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     {
         int iDstX;
 
-        // Clear output buffer to "transparent" value.  Shouldn't we
+        // Clear output buffer to "transparent" value.  Should not we
         // really be reading from the destination file to support overlay?
         for( iBand = 0; iBand < nBandCount; iBand++ )
         {

@@ -574,13 +574,13 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(const OGREDIGEOObjectDescript
             const OGREDIGEOAttributeDescriptor& attrDesc = it->second;
             const OGREDIGEOAttributeDef& attrDef =
                                     mapAttributes[attrDesc.osNameRID];
-            OGRFieldType eType = OFTString;
+            OGRFieldType eFieldType = OFTString;
             if (attrDef.osTYP == "R" || attrDef.osTYP == "E")
-                eType = OFTReal;
+                eFieldType = OFTReal;
             else if (attrDef.osTYP == "I" || attrDef.osTYP == "N")
-                eType = OFTInteger;
+                eFieldType = OFTInteger;
 
-            poLayer->AddFieldDefn(attrDef.osLAB, eType, objDesc.aosAttrRID[j]);
+            poLayer->AddFieldDefn(attrDef.osLAB, eFieldType, objDesc.aosAttrRID[j]);
         }
     }
 
@@ -1324,7 +1324,7 @@ static int OGREDIGEOSortForQGIS(const void* a, const void* b)
         if (nCmp == 0)
             return 0;
 
-        static const char* apszPolyOrder[] =
+        static const char* const apszPolyOrder[] =
             { "COMMUNE_id", "LIEUDIT_id", "SECTION_id", "SUBDSECT_id",
               "SUBDFISC_id", "PARCELLE_id", "BATIMENT_id" };
         for(int i=0;i<(int)(sizeof(apszPolyOrder)/sizeof(char*));i++)

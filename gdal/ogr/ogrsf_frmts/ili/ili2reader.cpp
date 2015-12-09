@@ -45,8 +45,8 @@ CPL_CVSID("$Id$");
 //
 // constants
 //
-static const char *ILI2_TID = "TID";
-static const char *ILI2_REF = "REF";
+static const char * const ILI2_TID = "TID";
+static const char * const ILI2_REF = "REF";
 
 static const int ILI2_STRING_TYPE = 0;
 static const int ILI2_COORD_TYPE = 1;
@@ -56,12 +56,12 @@ static const int ILI2_BOUNDARY_TYPE = 8;
 static const int ILI2_AREA_TYPE = 16; // also SURFACE
 static const int ILI2_GEOMCOLL_TYPE = 32;
 
-static const char *ILI2_COORD = "COORD";
-static const char *ILI2_ARC = "ARC";
-static const char *ILI2_POLYLINE = "POLYLINE";
-static const char *ILI2_BOUNDARY = "BOUNDARY";
-static const char *ILI2_AREA = "AREA";
-static const char *ILI2_SURFACE = "SURFACE";
+static const char * const ILI2_COORD = "COORD";
+static const char * const ILI2_ARC = "ARC";
+static const char * const ILI2_POLYLINE = "POLYLINE";
+static const char * const ILI2_BOUNDARY = "BOUNDARY";
+static const char * const ILI2_AREA = "AREA";
+static const char * const ILI2_SURFACE = "SURFACE";
 
 
 //
@@ -240,25 +240,25 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
 
       DOMElement *arcElem = (DOMElement *)lineElem->getFirstChild();
       while (arcElem != NULL) {
-        char* pszTagName = XMLString::transcode(arcElem->getTagName());
+        char* pszTagName2 = XMLString::transcode(arcElem->getTagName());
         char* pszObjValue = getObjValue(arcElem);
-        if (cmpStr("C1", pszTagName) == 0)
+        if (cmpStr("C1", pszTagName2) == 0)
           ptEnd->setX(CPLAtof(pszObjValue));
-        else if (cmpStr("C2", pszTagName) == 0)
+        else if (cmpStr("C2", pszTagName2) == 0)
           ptEnd->setY(CPLAtof(pszObjValue));
-        else if (cmpStr("C3", pszTagName) == 0)
+        else if (cmpStr("C3", pszTagName2) == 0)
           ptEnd->setZ(CPLAtof(pszObjValue));
-        else if (cmpStr("A1", pszTagName) == 0)
+        else if (cmpStr("A1", pszTagName2) == 0)
           ptOnArc->setX(CPLAtof(pszObjValue));
-        else if (cmpStr("A2", pszTagName) == 0)
+        else if (cmpStr("A2", pszTagName2) == 0)
           ptOnArc->setY(CPLAtof(pszObjValue));
-        else if (cmpStr("A3", pszTagName) == 0)
+        else if (cmpStr("A3", pszTagName2) == 0)
           ptOnArc->setZ(CPLAtof(pszObjValue));
-        else if (cmpStr("R", pszTagName) == 0) {
+        else if (cmpStr("R", pszTagName2) == 0) {
           // radius = CPLAtof(pszObjValue);
         }
         CPLFree(pszObjValue);
-        XMLString::release(&pszTagName);
+        XMLString::release(&pszTagName2);
 
         arcElem = (DOMElement *)arcElem->getNextSibling();
       }

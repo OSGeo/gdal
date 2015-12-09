@@ -281,10 +281,10 @@ TigerCompleteChain::~TigerCompleteChain()
 /*                             SetModule()                              */
 /************************************************************************/
 
-int TigerCompleteChain::SetModule( const char * pszModule )
+int TigerCompleteChain::SetModule( const char * pszModuleIn )
 
 {
-    if( !OpenFile( pszModule, "1" ) )
+    if( !OpenFile( pszModuleIn, "1" ) )
         return FALSE;
 
     EstablishFeatureCount();
@@ -295,7 +295,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 /*      first record.                                                   */
 /* -------------------------------------------------------------------- */
     nRT1RecOffset = 0;
-    if( pszModule )
+    if( pszModuleIn )
     {
         char achHeader[10];
         
@@ -320,11 +320,11 @@ int TigerCompleteChain::SetModule( const char * pszModule )
             fpRT3 = NULL;
         }
 
-        if( pszModule )
+        if( pszModuleIn )
         {
             char        *pszFilename;
         
-            pszFilename = poDS->BuildFilename( pszModule, "3" );
+            pszFilename = poDS->BuildFilename( pszModuleIn, "3" );
 
             fpRT3 = VSIFOpenL( pszFilename, "rb" );
 
@@ -348,11 +348,11 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 /* -------------------------------------------------------------------- */
 /*      Try to open the RT2 file corresponding to this RT1 file.        */
 /* -------------------------------------------------------------------- */
-    if( pszModule != NULL )
+    if( pszModuleIn != NULL )
     {
         char    *pszFilename;
 
-        pszFilename = poDS->BuildFilename( pszModule, "2" );
+        pszFilename = poDS->BuildFilename( pszModuleIn, "2" );
 
         fpShape = VSIFOpenL( pszFilename, "rb" );
         
@@ -489,7 +489,7 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 
     nShapeRecId = GetShapeRecordId( nRecordId, nTLID );
 
-    // -2 means an error occured.
+    // -2 means an error occurred.
     if( nShapeRecId == -2 )
         return FALSE;
 
@@ -784,7 +784,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
 
             WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
             
-            sprintf( szTemp, "%3d", nRTSQ );
+            snprintf( szTemp, sizeof(szTemp), "%3d", nRTSQ );
             strncpy( ((char *)szRecord) + 15, szTemp, 4 );
 
             for( i = 0; i < 10; i++ )

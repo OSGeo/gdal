@@ -113,7 +113,7 @@ class CPL_DLL OGR_SRSNode
 /************************************************************************/
 
 /**
- * This class respresents a OpenGIS Spatial Reference System, and contains
+ * This class represents an OpenGIS Spatial Reference System, and contains
  * methods for converting between this object organization and well known
  * text (WKT) format.  This object is reference counted as one instance of
  * the object is normally shared between many OGRGeometry objects.

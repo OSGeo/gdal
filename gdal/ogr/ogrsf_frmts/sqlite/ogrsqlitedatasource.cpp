@@ -632,8 +632,6 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     if (pszSqliteJournal != NULL)
     {
         char* pszErrMsg = NULL;
-        char **papszResult;
-        int nRowCount, nColCount;
 
         const char* pszSQL = CPLSPrintf("PRAGMA journal_mode = %s",
                                         pszSqliteJournal);
@@ -658,8 +656,6 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
         for(int i=0; papszTokens[i] != NULL; i++ )
         {
             char* pszErrMsg = NULL;
-            char **papszResult;
-            int nRowCount, nColCount;
 
             const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
 
@@ -825,7 +821,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Optionnaly initialize the content of the spatial_ref_sys table  */
+/*      Optionally initialize the content of the spatial_ref_sys table  */
 /*      with the EPSG database                                          */
 /* -------------------------------------------------------------------- */
     if ( (bSpatialite || bMetadata) &&
@@ -1661,7 +1657,7 @@ void OGRSQLiteDataSource::FlushCache()
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
-static const char* apszFuncsWithSideEffects[] =
+static const char* const apszFuncsWithSideEffects[] =
 {
     "InitSpatialMetaData",
     "AddGeometryColumn",
@@ -1992,7 +1988,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         CPLFree( pszLayerName );
         return NULL;
     }
-    
+
     CPLString osGeometryName;
     const char* pszGeometryNameIn = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryNameIn == NULL )
@@ -2020,8 +2016,8 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
-    /* Shouldn't happen since a spatialite DB should be opened in read-only mode */
-    /* if libspatialite isn't loaded */
+    // Should not happen since a spatialite DB should be opened in
+    // read-only mode if libspatialite is not loaded.
     if (bIsSpatiaLiteDB && !IsSpatialiteLoaded())
     {
         CPLError( CE_Failure, CPLE_NotSupported,

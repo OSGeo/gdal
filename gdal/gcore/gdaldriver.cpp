@@ -410,13 +410,13 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Propogate some specific structural metadata as options if it    */
+/*      Propagate some specific structural metadata as options if it    */
 /*      appears to be supported by the target driver and the caller     */
 /*      didn't provide values.                                          */
 /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate( papszOptions );
     int  iOptItem;
-    static const char *apszOptItems[] = {
+    static const char * const apszOptItems[] = {
         "NBITS", "IMAGE_STRUCTURE",
         "PIXELTYPE", "IMAGE_STRUCTURE", 
         NULL };
@@ -447,7 +447,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
                                               apszOptItems[iOptItem], 
                                               pszValue );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create destination dataset.                                     */
 /* -------------------------------------------------------------------- */
@@ -459,7 +459,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     poDstDS = Create( pszFilename, nXSize, nYSize, 
                       nBands, eType, papszCreateOptions );
-                      
+
     CSLDestroy(papszCreateOptions);
 
     if( poDstDS == NULL )
@@ -469,7 +469,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     {
         if( GetMetadataItem(GDAL_DCAP_RASTER) != NULL )
         {
-            /* Shouldn't happen for a well-behaved driver */
+            /* Should not happen for a well-behaved driver */
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Output driver created only %d bands whereas %d were expected",
                      nDstBands, nBands);

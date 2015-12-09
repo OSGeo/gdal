@@ -1778,14 +1778,14 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
 
         region.size.x = MIN(region.size.x,nBufXSize);
         region.size.y = MIN(region.size.y,nBufYSize);
-        
+
         if( region.pos.x + region.size.x > view_dims.size.x )
             region.size.x = view_dims.size.x - region.pos.x;
         if( region.pos.y + region.size.y > view_dims.size.y )
             region.size.y = view_dims.size.y - region.pos.y;
-        
+
         region.pos += view_dims.pos;
-    
+
         CPLAssert( nBytesPerPixel == 1 || nBytesPerPixel == 2  );
 
         if( poJDS->poCodestream->get_bit_depth(0) > 16 )
@@ -1801,7 +1801,7 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
 /*      Now we process the available cached jpeg2000 data into          */
 /*      imagery.  The kdu_region_decompressor only seems to support     */
 /*      reading back one or three components at a time, we may need     */
-/*      to do severalp processing passes to get the bands we            */
+/*      to do several processing passes to get the bands we             */
 /*      want. We try to do groups of three were possible, and handle    */
 /*      the rest one band at a time.                                    */
 /* ==================================================================== */

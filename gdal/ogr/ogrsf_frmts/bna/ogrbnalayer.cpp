@@ -42,11 +42,11 @@
 
 OGRBNALayer::OGRBNALayer( const char *pszFilename,
                           const char* layerName,
-                          BNAFeatureType bnaFeatureType,
+                          BNAFeatureType bnaFeatureTypeIn,
                           OGRwkbGeometryType eLayerGeomType,
-                          int bWriter,
-                          OGRBNADataSource* poDS,
-                          int nIDs) :
+                          int bWriterIn,
+                          OGRBNADataSource* poDSIn,
+                          int nIDsIn) :
     eof(FALSE),
     failed(FALSE),
     curLine(0),
@@ -55,9 +55,9 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
     partialIndexTable(TRUE),
     offsetAndLineFeaturesTable(NULL)
 {
-    this->bWriter = bWriter;
-    this->poDS = poDS;
-    this->nIDs = nIDs;
+    this->bWriter = bWriterIn;
+    this->poDS = poDSIn;
+    this->nIDs = nIDsIn;
 
     const char* iKnowHowToCount[]
         = { "Primary", "Secondary", "Third", "Fourth", "Fifth" };
@@ -69,7 +69,7 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eLayerGeomType );
     SetDescription( poFeatureDefn->GetName() );
-    this->bnaFeatureType = bnaFeatureType;
+    this->bnaFeatureType = bnaFeatureTypeIn;
 
     if (! bWriter )
     {
@@ -77,13 +77,13 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
         {
             if (i < (int) (sizeof(iKnowHowToCount)/sizeof(iKnowHowToCount[0])) )
             {
-                sprintf(tmp, "%s ID", iKnowHowToCount[i]);
+                snprintf(tmp, sizeof(tmp), "%s ID", iKnowHowToCount[i]);
                 OGRFieldDefn oFieldID(tmp, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldID );
             }
             else
             {
-                sprintf(tmp, "%dth ID", i+1);
+                snprintf(tmp, sizeof(tmp), "%dth ID", i+1);
                 OGRFieldDefn oFieldID(tmp, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldID );
             }
@@ -126,11 +126,11 @@ OGRBNALayer::~OGRBNALayer()
 /************************************************************************/
 /*                         SetFeatureIndexTable()                       */
 /************************************************************************/
-void  OGRBNALayer::SetFeatureIndexTable(int nFeatures, OffsetAndLine* offsetAndLineFeaturesTable, int partialIndexTable)
+void  OGRBNALayer::SetFeatureIndexTable(int nFeaturesIn, OffsetAndLine* offsetAndLineFeaturesTableIn, int partialIndexTableIn)
 {
-    this->nFeatures = nFeatures;
-    this->offsetAndLineFeaturesTable = offsetAndLineFeaturesTable;
-    this->partialIndexTable = partialIndexTable;
+    this->nFeatures = nFeaturesIn;
+    this->offsetAndLineFeaturesTable = offsetAndLineFeaturesTableIn;
+    this->partialIndexTable = partialIndexTableIn;
 }
 
 /************************************************************************/
@@ -287,7 +287,6 @@ void OGRBNALayer::WriteCoord(VSILFILE* fp, double dfX, double dfY)
 OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
 
 {
-    int i,j,k,n;
     OGRGeometry     *poGeom = poFeature->GetGeometryRef();
     char eol[3];
     const char* partialEol = (poDS->GetMultiLine()) ? eol : poDS->GetCoordinateSeparator();
@@ -375,7 +374,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
                     double major_radius = fabs(firstX - center1X);
                     double minor_radius = fabs(quarterY - center1Y);
                     is_ellipse = TRUE;
-                    for(i=0;i<360;i++)
+                    for(int i=0;i<360;i++)
                     {
                         if (!(fabs(center1X + major_radius * cos(i * (M_PI / 180)) - ring->getX(i)) < 1e-5 &&
                               fabs(center1Y + minor_radius * sin(i * (M_PI / 180)) - ring->getY(i)) < 1e-5))
@@ -400,7 +399,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
             if ( is_ellipse == FALSE)
             {
                 int nInteriorRings = polygon->getNumInteriorRings();
-                for(i=0;i<nInteriorRings;i++)
+                for(int i=0;i<nInteriorRings;i++)
                 {
                     nBNAPoints += polygon->getInteriorRing(i)->getNumPoints() + 1;
                 }
@@ -411,19 +410,19 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
                 }
                 WriteFeatureAttributes(fp, poFeature);
                 CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%d", nBNAPoints));
-                n = ring->getNumPoints();
+                int n = ring->getNumPoints();
                 int nbPair = 0;
-                for(i=0;i<n;i++)
+                for(int i=0;i<n;i++)
                 {
                     CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " "));
                     WriteCoord(fp, ring->getX(i), ring->getY(i));
                     nbPair++;
                 }
-                for(i=0;i<nInteriorRings;i++)
+                for(int i=0;i<nInteriorRings;i++)
                 {
                     ring = polygon->getInteriorRing(i);
                     n = ring->getNumPoints();
-                    for(j=0;j<n;j++)
+                    for(int j=0;j<n;j++)
                     {
                         CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " "));
                         WriteCoord(fp, ring->getX(j), ring->getY(j));
@@ -445,7 +444,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
             int N = multipolygon->getNumGeometries();
             int nBNAPoints = 0;
             double firstX = 0, firstY = 0; 
-            for(i=0;i<N;i++)
+            for(int i=0;i<N;i++)
             {
                 OGRPolygon* polygon = (OGRPolygon*)multipolygon->getGeometryRef(i);
                 OGRLinearRing* ring = polygon->getExteriorRing();
@@ -461,7 +460,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
                 }
                 nBNAPoints += ring->getNumPoints();
                 int nInteriorRings = polygon->getNumInteriorRings();
-                for(j=0;j<nInteriorRings;j++)
+                for(int j=0;j<nInteriorRings;j++)
                 {
                     nBNAPoints += polygon->getInteriorRing(j)->getNumPoints() + 1;
                 }
@@ -474,16 +473,16 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
             WriteFeatureAttributes(fp, poFeature);
             CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%d", nBNAPoints));
             int nbPair = 0;
-            for(i=0;i<N;i++)
+            for(int i=0;i<N;i++)
             {
                 OGRPolygon* polygon = (OGRPolygon*)multipolygon->getGeometryRef(i);
                 OGRLinearRing* ring = polygon->getExteriorRing();
                 if (ring == NULL)
                     continue;
 
-                n = ring->getNumPoints();
+                int n = ring->getNumPoints();
                 int nInteriorRings = polygon->getNumInteriorRings();
-                for(j=0;j<n;j++)
+                for(int j=0;j<n;j++)
                 {
                     CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " "));
                     WriteCoord(fp, ring->getX(j), ring->getY(j));
@@ -495,11 +494,11 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
                     WriteCoord(fp, firstX, firstY);
                     nbPair++;
                 }
-                for(j=0;j<nInteriorRings;j++)
+                for(int j=0;j<nInteriorRings;j++)
                 {
                     ring = polygon->getInteriorRing(j);
                     n = ring->getNumPoints();
-                    for(k=0;k<n;k++)
+                    for(int k=0;k<n;k++)
                     {
                         CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " "));
                         WriteCoord(fp, ring->getX(k), ring->getY(k));
@@ -519,7 +518,6 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         {
             OGRLineString* line = (OGRLineString*)poGeom;
             int n = line->getNumPoints();
-            int i;
             if (n < 2)
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Invalid geometry" );
@@ -528,7 +526,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
             WriteFeatureAttributes(fp, poFeature);
             CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "-%d", n));
             int nbPair = 0;
-            for(i=0;i<n;i++)
+            for(int i=0;i<n;i++)
             {
                 CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s", partialEol));
                 WriteCoord(fp, line->getX(i), line->getY(i));

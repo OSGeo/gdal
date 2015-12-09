@@ -182,10 +182,10 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
  * [16] Landsat path number
  *
  * Particular projection uses different parameters, unused ones may be set to
- * zero. If NULL suppliet instead of array pointer default values will be
+ * zero. If NULL is supplied instead of an array pointer, default values will be
  * used (i.e., zeroes).
  *
- * @return OGRERR_NONE on success or an error code in case of failure. 
+ * @return OGRERR_NONE on success or an error code in case of failure.
  */
 
 OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
@@ -234,7 +234,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             int nCode = atoi(pszEM+1);
 
             if( nCode >= -99 && nCode <= 999 )
-                sprintf( szEarthModel, "%c%03d", toupper(*pszEM), nCode );
+                snprintf( szEarthModel, sizeof(szEarthModel), "%c%03d", toupper(*pszEM), nCode );
 
             break;
         }

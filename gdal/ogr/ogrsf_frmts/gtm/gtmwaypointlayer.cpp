@@ -31,7 +31,7 @@
 #include "ogr_gtm.h"
 #include "cpl_time.h"
 
-GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
+GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
                                     OGRSpatialReference* poSRSIn,
                                     CPL_UNUSED int bWriterIn,
                                     OGRGTMDataSource* poDSIn )
@@ -79,6 +79,8 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
     nNextFID = 0;
     nTotalFCount = poDS->getNWpts();
 
+    this->pszName = CPLStrdup(pszNameIn);
+
     poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
@@ -98,8 +100,6 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
   
     OGRFieldDefn oFieldTime( "time", OFTDateTime );
     poFeatureDefn->AddFieldDefn( &oFieldTime );
-    
-    this->pszName = CPLStrdup(pszName);
 }
 
 GTMWaypointLayer::~GTMWaypointLayer()
@@ -122,21 +122,21 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
         if( poFeature->IsFieldSet( i ) )
         {
-            const char* pszName = poFieldDefn->GetNameRef();
+            const char* l_pszName = poFieldDefn->GetNameRef();
             /* Waypoint name */
-            if (STARTS_WITH(pszName, "name"))
+            if (STARTS_WITH(l_pszName, "name"))
             {
                 strncpy (psNameField, poFeature->GetFieldAsString( i ), 10);
                 CPLStrlcat (psNameField, "          ", sizeof(psNameField));
             }
             /* Waypoint comment */
-            else if (STARTS_WITH(pszName, "comment"))
+            else if (STARTS_WITH(l_pszName, "comment"))
             {
                 CPLFree(pszcomment);
                 pszcomment = CPLStrdup( poFeature->GetFieldAsString( i ) );
             }
             /* Waypoint icon */
-            else if (STARTS_WITH(pszName, "icon"))
+            else if (STARTS_WITH(l_pszName, "icon"))
             {
                 icon = poFeature->GetFieldAsInteger( i );
                 // Check if it is a valid icon
@@ -144,7 +144,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
                     icon = 48;
             }
             /* Waypoint date */
-            else if (EQUAL(pszName, "time"))
+            else if (EQUAL(l_pszName, "time"))
             {
                 struct tm brokendowndate;
                 int year, month, day, hour, min, sec, TZFlag;

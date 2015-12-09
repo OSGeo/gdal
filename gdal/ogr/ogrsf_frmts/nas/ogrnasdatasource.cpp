@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *apszURNNames[] =
+static const char * const apszURNNames[] =
 {
     "DE_DHDN_3GK2_*", "EPSG:31466",
     "DE_DHDN_3GK3_*", "EPSG:31467",
@@ -86,8 +86,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
     if( poReader == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be NAS but the NAS reader can't\n"
-                  "be instantiated, likely because Xerces support wasn't\n"
+                  "File %s appears to be NAS but the NAS reader cannot\n"
+                  "be instantiated, likely because Xerces support was not\n"
                   "configured in.",
                   pszNewName );
         return FALSE;
@@ -334,18 +334,18 @@ void OGRNASDataSource::PopulateRelations()
         {
             int nGMLIdIndex = poFeature->GetClass()->GetPropertyIndex( "gml_id" );
             const GMLProperty *psGMLId = (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex ) : NULL;
-            char *pszName = NULL;
+            char *l_pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
-                                                      &pszName );
+                                                      &l_pszName );
 
             if( STARTS_WITH_CI(pszValue, "urn:adv:oid:")
                 && psGMLId != NULL && psGMLId->nSubProperties == 1 )
             {
                 poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],
-                                              pszName,
+                                              l_pszName,
                                               pszValue + 12 );
             }
-            CPLFree( pszName );
+            CPLFree( l_pszName );
         }
 
         delete poFeature;

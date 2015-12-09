@@ -868,7 +868,7 @@ void qh_partitionall(setT *vertices, pointT *points, int numpoints){
       searches new facets instead of using qh_findbest()
 
   returns:
-    qh.max_ouside updated
+    qh.max_outside updated
     if qh.KEEPcoplanar or qh.KEEPinside
       point assigned to best coplanarset
 

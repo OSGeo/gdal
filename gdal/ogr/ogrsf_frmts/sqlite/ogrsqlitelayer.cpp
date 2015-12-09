@@ -174,7 +174,7 @@ int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt,
 /************************************************************************/
 
 void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
-                                       sqlite3_stmt *hStmt,
+                                       sqlite3_stmt *hStmtIn,
                                        const std::set<CPLString>& aosGeomCols,
                                        const std::set<CPLString>& aosIgnoredCols )
 
@@ -183,14 +183,14 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
     poFeatureDefn->SetGeomType(wkbNone);
     poFeatureDefn->Reference();
 
-    int    nRawColumns = sqlite3_column_count( hStmt );
+    int    nRawColumns = sqlite3_column_count( hStmtIn );
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
     int iCol;
     for( iCol = 0; iCol < nRawColumns; iCol++ )
     {
-        OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
+        OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmtIn, iCol )),
                                 OFTString );
 
         // In some cases, particularly when there is a real name for
@@ -236,7 +236,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             continue;
         }
 
-        int nColType = sqlite3_column_type( hStmt, iCol );
+        int nColType = sqlite3_column_type( hStmtIn, iCol );
         switch( nColType )
         {
           case SQLITE_INTEGER:
@@ -244,7 +244,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 oField.SetType( OFTInteger64 );
             else
             {
-                GIntBig nVal = sqlite3_column_int64(hStmt, iCol);
+                GIntBig nVal = sqlite3_column_int64(hStmtIn, iCol);
                 if( CPL_INT64_FITS_ON_INT32(nVal) )
                     oField.SetType( OFTInteger );
                 else
@@ -264,7 +264,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             /* leave it as OFTString */;
         }
         
-        const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
+        const char * pszDeclType = sqlite3_column_decltype(hStmtIn, iCol);
         //CPLDebug("SQLITE", "decltype(%s) = %s",
         //         oField.GetNameRef(), pszDeclType ? pszDeclType : "null");
         OGRFieldType eFieldType = OFTString;
@@ -385,10 +385,10 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         else if( nColType == SQLITE_TEXT &&
                  (STARTS_WITH_CI(oField.GetNameRef(), "MIN(") ||
                   STARTS_WITH_CI(oField.GetNameRef(), "MAX(")) &&
-                 sqlite3_column_text( hStmt, iCol ) != NULL )
+                 sqlite3_column_text( hStmtIn, iCol ) != NULL )
         {
             int nRet = OGRSQLITEStringToDateTimeField(NULL, 0,
-                              (const char*)sqlite3_column_text( hStmt, iCol ));
+                              (const char*)sqlite3_column_text( hStmtIn, iCol ));
             if( nRet > 0 )
                 eFieldType = (OGRFieldType) nRet;
         }
@@ -403,11 +403,11 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         {
             if( nColType == SQLITE_BLOB )
             {
-                const int nBytes = sqlite3_column_bytes( hStmt, iCol );
+                const int nBytes = sqlite3_column_bytes( hStmtIn, iCol );
                 if( nBytes > 0 )
                 {
                     OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
-                    if( OGRIsBinaryGeomCol( hStmt, iCol, oField, eGeomFormat ) )
+                    if( OGRIsBinaryGeomCol( hStmtIn, iCol, oField, eGeomFormat ) )
                     {
                         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
                             new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
@@ -430,7 +430,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             }
             else if( nColType == SQLITE_TEXT )
             {
-                char* pszText = (char*) sqlite3_column_text( hStmt, iCol );
+                char* pszText = (char*) sqlite3_column_text( hStmtIn, iCol );
                 if( pszText != NULL )
                 {
                     OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
@@ -478,9 +478,9 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( nColType == SQLITE_BLOB && 
             (bAllowMultipleGeomFields || poFeatureDefn->GetGeomFieldCount() == 0) )
         {
-            const int nBytes = sqlite3_column_bytes( hStmt, iCol );
+            const int nBytes = sqlite3_column_bytes( hStmtIn, iCol );
             OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
-            if( nBytes > 0 && OGRIsBinaryGeomCol( hStmt, iCol, oField,
+            if( nBytes > 0 && OGRIsBinaryGeomCol( hStmtIn, iCol, oField,
                                                   eGeomFormat ) )
             {
                 OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
@@ -499,7 +499,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( EQUAL(oField.GetNameRef(),"OGC_FID") )
             continue;
 
-        /* config option just in case we wouldn't want that in some cases */
+        /* Config option just in case we would not want that in some cases */
         if( (eFieldType == OFTTime || eFieldType == OFTDate ||
              eFieldType == OFTDateTime) &&
             CSLTestBoolean(
@@ -516,7 +516,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
     {
         for( iCol = 0; iCol < nRawColumns; iCol++ )
         {
-            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmt,iCol)).c_str(),
+            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmtIn,iCol)).c_str(),
                       pszFIDColumn) )
             {
                 iFIDCol = iCol;
@@ -883,8 +883,9 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursiong level (%d) while parsing Spatialite geometry.",
-                    nRecLevel );
+                  "Too many recursion levels (%d) while parsing "
+                  "Spatialite geometry.",
+                  nRecLevel );
         return OGRERR_CORRUPT_DATA;
     }
 

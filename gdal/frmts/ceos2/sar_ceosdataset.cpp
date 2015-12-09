@@ -53,7 +53,7 @@ static GInt16 CastToGInt16(float val)
     return static_cast<GInt16>(val);
 }
 
-static const char *CeosExtension[][6] = { 
+static const char * const CeosExtension[][6] = { 
 { "vol", "led", "img", "trl", "nul", "ext" },
 { "vol", "lea", "img", "trl", "nul", "ext" },
 { "vol", "led", "img", "tra", "nul", "ext" },
@@ -110,6 +110,7 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 #define LEADER_RADIOMETRIC_DATA_RECORD_TC  QuadToTC( 18, 50, 18, 20 )
 #define LEADER_MAP_PROJ_RECORD_TC          QuadToTC( 10, 20, 31, 20 )
 
+// TODO: recond?
 /* JERS from Japan has MAP_PROJ recond with different identifiers */
 /* see CEOS-SAR-CCT Iss/Rev: 2/0 February 10, 1989 */
 #define LEADER_MAP_PROJ_RECORD_JERS_TC         QuadToTC( 18, 20, 18, 20 )
@@ -1537,7 +1538,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
     {
         char         szId[32];
 
-        sprintf( szId, "%d", i+1 );
+        snprintf( szId, sizeof(szId), "%d", i+1 );
         pasGCPList[i].pszId = CPLStrdup( szId );
 
         GetCeosField( record, 1073+32*i, "A16", szField );
@@ -1619,7 +1620,7 @@ void SAR_CEOSDataset::ScanForGCPs()
                 CPLFree( pasGCPList[nGCPCount].pszId );
 
                 char szId[32];
-                sprintf( szId, "%d", nGCPCount+1 );
+                snprintf( szId, sizeof(szId), "%d", nGCPCount+1 );
                 pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
 
                 pasGCPList[nGCPCount].dfGCPX = nLong / 1000000.0;
@@ -1641,7 +1642,7 @@ void SAR_CEOSDataset::ScanForGCPs()
             }
         }
     }
-    /* If general GCP's weren't found, look for Map Projection (e.g. JERS) */
+    /* If general GCP's were not found, look for Map Projection (e.g. JERS) */
     if( nGCPCount == 0 )
     {
         ScanForMapProjection();
@@ -1742,7 +1743,8 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 char    szMadeBasename[32];
 
-                sprintf( szMadeBasename, CeosExtension[e][iFile], nBand );
+                snprintf( szMadeBasename, sizeof(szMadeBasename),
+                          CeosExtension[e][iFile], nBand );
                 pszFilename = CPLStrdup(
                     CPLFormFilename(pszPath,szMadeBasename, pszExtension));
             }
@@ -1764,11 +1766,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 char szThisExtension[32];
 
                 if( strlen(pszExtension) > 3 )
-                    sprintf( szThisExtension, "%s%s", 
+                    snprintf( szThisExtension, sizeof(szThisExtension), "%s%s", 
                              CeosExtension[e][iFile], 
                              pszExtension+3 );
                 else
-                    sprintf( szThisExtension, "%s", 
+                    snprintf( szThisExtension, sizeof(szThisExtension), "%s", 
                              CeosExtension[e][iFile] );
 
                 pszFilename = CPLStrdup(

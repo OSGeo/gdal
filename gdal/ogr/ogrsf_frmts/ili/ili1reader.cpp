@@ -245,7 +245,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
           for (fIndex=1; fIndex<CSLCount(tokens); fIndex++)
           {
             char szFieldName[32];
-            sprintf(szFieldName, "Field%02d", fIndex);
+            snprintf(szFieldName, sizeof(szFieldName), "Field%02d", fIndex);
             OGRFieldDefn oFieldDefn(szFieldName, OFTString);
             featureDef->AddFieldDefn(&oFieldDefn);
           }

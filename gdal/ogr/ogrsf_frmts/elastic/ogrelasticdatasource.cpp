@@ -190,7 +190,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     if( bIndexExists )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s/_mapping/%s",
+        psResult = CPLHTTPFetch(CPLSPrintf("%s/%s/_mapping/%s",
                         GetURL(), osLaunderedName.c_str(), m_pszMappingName), NULL);
         CPLPopErrorHandler();
         bMappingExists = psResult != NULL && psResult->pabyData != NULL &&

@@ -118,7 +118,7 @@ typedef enum {          // AVHRR Earth location indication
 /*                      AVHRR band widths                               */
 /************************************************************************/
 
-static const char *apszBandDesc[] =
+static const char * const apszBandDesc[] =
 {
     // NOAA-7 -- METOP-2 channels
     "AVHRR Channel 1:  0.58  micrometers -- 0.68 micrometers",
@@ -853,7 +853,7 @@ void L1BDataset::ProcessRecordHeaders()
 
 /* -------------------------------------------------------------------- */
 /*      Pick a skip factor so that we will get roughly 20 lines         */
-/*      worth of GCPs.  That should give respectible coverage on all    */
+/*      worth of GCPs.  That should give respectable coverage on all    */
 /*      but the longest swaths.                                         */
 /* -------------------------------------------------------------------- */
     int nTargetLines;

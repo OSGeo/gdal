@@ -9,42 +9,37 @@
 ###############################################################################
 # Copyright (c) 2000, Atlantis Scientific Inc. (www.atlsci.com)
 # Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 # changes 29Apr2011
-# if the input image is a multi-band one, use all 
-# the channels in building the stack
+# If the input image is a multi-band one, use all the channels in
+# building the stack.
 # anssi.pekkarinen@fao.org
 
+import sys
+import math
+import time
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
+from osgeo import gdal
 
 try:
     progress = gdal.TermProgress_nocb
 except:
     progress = gdal.TermProgress
-
-
-import sys
-import math
-import time
 
 __version__ = '$id$'[5:-1]
 verbose = 0
@@ -57,7 +52,7 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                  nodata=None ):
 
     if verbose != 0:
-        print('Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
+        print('Copy %d,%d,%d,%d to %d,%d,%d,%d.'
               % (s_xoff, s_yoff, s_xsize, s_ysize,
              t_xoff, t_yoff, t_xsize, t_ysize ))
 
@@ -70,7 +65,7 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     s_band = s_fh.GetRasterBand( s_band_n )
     m_band = None
     # Works only in binary mode and doesn't take into account
-    # intermediate transparency values for compositing
+    # intermediate transparency values for compositing.
     if s_band.GetMaskFlags() != gdal.GMF_ALL_VALID:
         m_band = s_band.GetMaskBand()
     elif s_band.GetColorInterpretation() == gdal.GCI_AlphaBand:
@@ -88,7 +83,6 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                              t_xsize, t_ysize, t_band.DataType )
     t_band.WriteRaster( t_xoff, t_yoff, t_xsize, t_ysize,
                         data, t_xsize, t_ysize, t_band.DataType )
-        
 
     return 0
 
@@ -114,7 +108,7 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     t_band.WriteArray( to_write, t_xoff, t_yoff )
 
     return 0
-    
+
 # =============================================================================
 def raster_copy_with_mask( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                            t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
@@ -139,7 +133,7 @@ def raster_copy_with_mask( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     t_band.WriteArray( to_write, t_xoff, t_yoff )
 
     return 0
-    
+
 # =============================================================================
 def names_to_fileinfos( names ):
     """
@@ -150,7 +144,7 @@ def names_to_fileinfos( names ):
     Returns a list of file_info objects.  There may be less file_info objects
     than names if some of the names could not be opened as GDAL files.
     """
-    
+
     file_infos = []
     for name in names:
         fi = file_info()
@@ -197,11 +191,11 @@ class file_info:
 
     def report( self ):
         print('Filename: '+ self.filename)
-        print('File Size: %dx%dx%d' \
+        print('File Size: %dx%dx%d'
               % (self.xsize, self.ysize, self.bands))
-        print('Pixel Size: %f x %f' \
+        print('Pixel Size: %f x %f'
               % (self.geotransform[1],self.geotransform[5]))
-        print('UL:(%f,%f)   LR:(%f,%f)' \
+        print('UL:(%f,%f)   LR:(%f,%f)'
               % (self.ulx,self.uly,self.lrx,self.lry))
 
     def copy_into( self, t_fh, s_band = 1, t_band = 1, nodata_arg=None ):
@@ -237,7 +231,7 @@ class file_info:
         else:
             tgw_uly = max(t_uly,self.uly)
             tgw_lry = min(t_lry,self.lry)
-        
+
         # do they even intersect?
         if tgw_ulx >= tgw_lrx:
             return 1
@@ -245,7 +239,7 @@ class file_info:
             return 1
         if t_geotransform[5] > 0 and tgw_uly >= tgw_lry:
             return 1
-            
+
         # compute target window in pixel coordinates.
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
@@ -271,10 +265,9 @@ class file_info:
         # Open the source file, and copy the selected region.
         s_fh = gdal.Open( self.filename )
 
-        return \
-            raster_copy( s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
-                         t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
-                         nodata_arg )
+        return raster_copy( s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
+                            t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
+                            nodata_arg )
 
 
 # =============================================================================
@@ -313,7 +306,7 @@ def main( argv=None ):
     createonly = 0
     bTargetAlignedPixels = False
     start_time = time.time()
-    
+
     gdal.AllRegister()
     if argv is None:
         argv = sys.argv
@@ -398,7 +391,7 @@ def main( argv=None ):
             i = i + 4
 
         elif arg[:1] == '-':
-            print('Unrecognised command option: %s' % arg)
+            print('Unrecognized command option: %s' % arg)
             Usage()
             sys.exit( 1 )
 
@@ -430,7 +423,7 @@ def main( argv=None ):
         uly = file_infos[0].uly
         lrx = file_infos[0].lrx
         lry = file_infos[0].lry
-        
+
         for fi in file_infos:
             ulx = min(ulx, fi.ulx)
             uly = max(uly, fi.uly)
@@ -448,16 +441,16 @@ def main( argv=None ):
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     t_fh = gdal.Open( out_file, gdal.GA_Update )
     gdal.PopErrorHandler()
-    
+
     # Create output file if it does not already exist.
     if t_fh is None:
-    
+
         if bTargetAlignedPixels:
             ulx = math.floor(ulx / psize_x) * psize_x
             lrx = math.ceil(lrx / psize_x) * psize_x
             lry = math.floor(lry / -psize_y) * -psize_y
             uly = math.ceil(uly / -psize_y) * -psize_y
-    
+
         geotransform = [ulx, psize_x, 0, uly, 0, psize_y]
 
         xsize = int((lrx - ulx) / geotransform[1] + 0.5)
@@ -478,7 +471,7 @@ def main( argv=None ):
         if t_fh is None:
             print('Creation failed, terminating gdal_merge.')
             sys.exit( 1 )
-            
+
         t_fh.SetGeoTransform( geotransform )
         t_fh.SetProjection( file_infos[0].projection )
 
@@ -515,14 +508,14 @@ def main( argv=None ):
     if quiet == 0 and verbose == 0:
         progress( 0.0 )
     fi_processed = 0
-    
+
     for fi in file_infos:
         if createonly != 0:
             continue
-        
+
         if verbose != 0:
             print("")
-            print("Processing file %5d of %5d, %6.3f%% completed in %d minutes." \
+            print("Processing file %5d of %5d, %6.3f%% completed in %d minutes."
                   % (fi_processed+1,len(file_infos),
                      fi_processed * 100.0 / len(file_infos),
                      int(round((time.time() - start_time)/60.0)) ))
@@ -535,11 +528,11 @@ def main( argv=None ):
             for band in range(1, fi.bands+1):
                 fi.copy_into( t_fh, band, t_band, nodata )
                 t_band = t_band+1
-            
+
         fi_processed = fi_processed+1
         if quiet == 0 and verbose == 0:
             progress( fi_processed / float(len(file_infos))  )
-    
+
     # Force file to be closed.
     t_fh = None
 

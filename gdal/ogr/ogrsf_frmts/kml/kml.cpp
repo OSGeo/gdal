@@ -393,8 +393,9 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
             std::size_t nLineStartPos = 0;
             int bLineStart = TRUE;
 
-            /* Re-assemble multi-line content by removing leading spaces for each line */
-            /* I'm not sure why we do that. Shouldn't we preserve content as such ? */
+            // Re-assemble multi-line content by removing leading spaces for
+            // each line.  I am not sure why we do that. Should we preserve
+            // content as such?
             while(nPos < nLength)
             {
                 char ch = pszData[nPos];

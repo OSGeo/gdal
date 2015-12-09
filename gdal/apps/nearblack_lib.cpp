@@ -648,7 +648,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                             break;
                         }
                     }
-                    
+
                     if (bIsNonBlack == FALSE)
                         break;          
                 }
@@ -656,7 +656,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                 if (bIsNonBlack) {
 
                     /***** use nNonBlackPixels in grey areas  *****/
-                    /***** from the verical pass's grey areas ****/
+                    /***** from the vertical pass's grey areas ****/
 
                     if( panLastLineCounts[i] <= nMaxNonBlack )
                         nNonBlackPixels = panLastLineCounts[i];
@@ -692,7 +692,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
             else if( panLastLineCounts[i] == 0 ) {
                 bDoTest = TRUE;
                 nNonBlackPixels = 0;
-            }        
+            }
         }
     }
 

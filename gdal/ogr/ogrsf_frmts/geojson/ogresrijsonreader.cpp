@@ -78,8 +78,8 @@ OGRErr OGRESRIJSONReader::Parse( const char* pszText )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "ESRIJSON parsing error: %s (at offset %d)",
-            	      json_tokener_error_desc(jstok->err), jstok->char_offset);
-            
+                      json_tokener_error_desc(jstok->err), jstok->char_offset);
+
             json_tokener_free(jstok);
             return OGRERR_CORRUPT_DATA;
         }
@@ -105,7 +105,7 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     if( NULL == poGJObject_ )
     {
         CPLDebug( "ESRIJSON",
-                  "Missing parset ESRIJSON data. Forgot to call Parse()?" );
+                  "Missing parsed ESRIJSON data. Forgot to call Parse()?" );
         return;
     }
 

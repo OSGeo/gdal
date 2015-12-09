@@ -92,13 +92,13 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
 /*                       OGRESRIFeatureServiceLayer()                   */
 /************************************************************************/
 
-OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(OGRESRIFeatureServiceDataset* poDS) :
+OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(OGRESRIFeatureServiceDataset* poDSIn) :
     nFeaturesRead(0),
     nLastFID(0),
     bOtherPage(FALSE),
     bUseSequentialFID(FALSE)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     OGRFeatureDefn* poSrcFeatDefn = poDS->GetUnderlyingLayer()->GetLayerDefn();
     poFeatureDefn = new OGRFeatureDefn(poSrcFeatDefn->GetName());
     SetDescription(poFeatureDefn->GetName());
@@ -269,12 +269,12 @@ OGRErr OGRESRIFeatureServiceLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                      OGRESRIFeatureServiceDataset()                  */
 /************************************************************************/
 
-OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(const CPLString &osURL,
+OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(const CPLString &osURLIn,
                                                            OGRGeoJSONDataSource* poFirst) :
     poCurrent(poFirst)
 {
     poLayer = new OGRESRIFeatureServiceLayer(this);
-    this->osURL = osURL;
+    this->osURL = osURLIn;
     if( CPLURLGetValue(this->osURL, "resultRecordCount").size() == 0 )
     {
         // We assume that if the server sets the exceededTransferLimit, the

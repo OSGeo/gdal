@@ -366,7 +366,7 @@ DODSDataset::connect_to_server() throw(Error)
     {
         static char szDODS_CONF[1000];
             
-        sprintf( szDODS_CONF, "DODS_CONF=%.980s", 
+        snprintf( szDODS_CONF, sizeof(szDODS_CONF), "DODS_CONF=%.980s", 
                  CPLGetConfigOption( "DODS_CONF", "" ) );
         putenv( szDODS_CONF );
     }
@@ -456,8 +456,8 @@ string DODSDataset::SubConstraint( string raw_constraint,
 /*      candidates.  After the first we only accept additional          */
 /*      objects as bands if they match the size of the original.        */
 /*                                                                      */
-/*      Auto-recognision rules will presumably evolve over time to      */
-/*      recognise different common configurations and to support        */
+/*      Auto-recognition rules will presumably evolve over time to      */
+/*      recognize different common configurations and to support        */
 /*      more variations.                                                */
 /************************************************************************/
 
@@ -857,7 +857,7 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
     int iYDim = GetDimension( oCE, "y", NULL );
     int iMap;
     Grid::Map_iter iterMap;
-    
+
     for( iterMap = poGrid->map_begin(), iMap = 0;
          iterMap != poGrid->map_end(); 
          iterMap++, iMap++ )
@@ -875,7 +875,7 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
         || poYMap->var()->type() != dods_float64_c )
     {
         CPLDebug( "DODS", "Ignoring Grid Map - not a supported data type." );
-        return;							       
+        return;
     }
 
 /* -------------------------------------------------------------------- */
@@ -883,11 +883,11 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 /*      expected size.                                                  */
 /* -------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------- 
- *  Fetch maps.  We need to construct a seperate request like:     
+/* --------------------------------------------------------------------
+ *  Fetch maps.  We need to construct a separate request like:
  *    http://dods.gso.uri.edu/cgi-bin/nph-dods/MCSST/Northwest_Atlantic/5km/raw/1982/9/m82258070000.pvu.Z?dsp_band_1.lat,dsp_band_1.lon
  *
- *  to fetch just the maps, and not the actual dataset. 
+ *  to fetch just the maps, and not the actual dataset.
  * -------------------------------------------------------------------- */
 /* -------------------------------------------------------------------- */
 /*      Build constraint expression.                                    */
@@ -895,7 +895,6 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
     string constraint;
     string xdimname = "lon";
     string ydimname = "lat";
-    
 
     constraint = oVarName + "." + xdimname + "," 
         + oVarName + "." + ydimname;
@@ -904,7 +903,7 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 /*      Request data from server.                                       */
 /* -------------------------------------------------------------------- */
     DataDDS data( poBaseTypeFactory );
-    
+
     GetConnect()->request_data(data, constraint );
 
 /* -------------------------------------------------------------------- */

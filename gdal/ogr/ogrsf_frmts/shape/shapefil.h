@@ -195,7 +195,7 @@ extern "C" {
 /*        #define SHPAPI_CALL __declspec(dllexport) __stdcall           */
 /*        #define SHPAPI_CALL1 __declspec(dllexport) * __stdcall        */
 /*                                                                      */
-/*      The complexity of the situtation is partly caused by the        */
+/*      The complexity of the situation is partly caused by the        */
 /*      peculiar requirement of Visual C++ that __stdcall appear        */
 /*      after any "*"'s in the return value of a function while the     */
 /*      __declspec(dllexport) must appear before them.                  */
@@ -225,10 +225,10 @@ extern "C" {
 /* -------------------------------------------------------------------- */
 #ifndef DISABLE_CVSID
 #  if defined(__GNUC__) && __GNUC__ >= 4
-#    define SHP_CVSID(string)     static char cpl_cvsid[] __attribute__((used)) = string;
+#    define SHP_CVSID(string)     static const char cpl_cvsid[] __attribute__((used)) = string;
 #  else
-#    define SHP_CVSID(string)     static char cpl_cvsid[] = string; \
-static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
+#    define SHP_CVSID(string)     static const char cpl_cvsid[] = string; \
+static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #  endif
 #else
 #  define SHP_CVSID(string)

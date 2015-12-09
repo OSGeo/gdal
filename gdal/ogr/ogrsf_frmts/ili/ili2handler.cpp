@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 // 
 // constants
 // 
-static const char* ILI2_DATASECTION = "DATASECTION";
+static const char* const ILI2_DATASECTION = "DATASECTION";
 
 //
 // ILI2Handler

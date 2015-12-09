@@ -206,7 +206,7 @@ def ReadAndCheckValues(fname, numrows):
     if not (data.astype(numpy.double) == DOUBLE_DATA).all():
         raise HFATestError("string as int column does not match")
 
-    #print('suceeded reading')
+    # print('succeeded reading')
     ds = None
 
     return 'success'

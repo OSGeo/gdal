@@ -114,7 +114,7 @@ public:
     DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
                           m_dim(2) { }
 
-    OGRGeometry* Tesselate() const;
+    OGRGeometry* Tesselate() const;  // TODO: Spelling.
 
     size_t size() { return m_vertices.size(); }
 

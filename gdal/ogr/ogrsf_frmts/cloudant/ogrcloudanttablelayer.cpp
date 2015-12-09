@@ -41,9 +41,9 @@ CPL_CVSID("$Id$");
 /*                       OGRCloudantTableLayer()                         */
 /************************************************************************/
 
-OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
+OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDSIn,
                                            const char* pszName) :
-                                                        OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDS, pszName)
+                                                        OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDSIn, pszName)
 
 {
     bHasStandardSpatial = -1;
@@ -65,7 +65,7 @@ OGRCloudantTableLayer::~OGRCloudantTableLayer()
     }
 
     if (pszSpatialDDoc)
-        free((void*)pszSpatialDDoc);
+        CPLFree(pszSpatialDDoc);
 }
 
 /************************************************************************/
@@ -230,9 +230,10 @@ void OGRCloudantTableLayer::GetSpatialView()
             return;
         }
 
-        pszSpatialDDoc = (char*) calloc(strlen(papszTokens[0]) + strlen(papszTokens[1]) + 2, 1);
+        const size_t nLen = strlen(papszTokens[0]) + strlen(papszTokens[1]) + 2;
+        pszSpatialDDoc = (char*) CPLCalloc(nLen, 1);
 
-        sprintf(pszSpatialDDoc, "%s/%s", papszTokens[0], papszTokens[1]);
+        snprintf(pszSpatialDDoc, nLen, "%s/%s", papszTokens[0], papszTokens[1]);
 
         CSLDestroy(papszTokens);  
 

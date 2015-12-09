@@ -1192,7 +1192,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     poXYZ_DS->nRasterYSize = nYSize;
     poXYZ_DS->nBands = 1;
     poXYZ_DS->SetBand( 1, new XYZRasterBand( poXYZ_DS, 1, eReqDT ) );
-    /* If outputing to stdout, we can't reopen it --> silence warning */
+    /* If writing to stdout, we can't reopen it --> silence warning */
     CPLPushErrorHandler(CPLQuietErrorHandler);
     poXYZ_DS->fp = VSIFOpenL( pszFilename, "rb" );
     CPLPopErrorHandler();

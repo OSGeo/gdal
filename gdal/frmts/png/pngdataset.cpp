@@ -1905,7 +1905,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
 
-    /* If outputing to stdout, we can't reopen it, so we'll return */
+    /* If writing to stdout, we can't reopen it, so return */
     /* a fake dataset to make the caller happy */
     if( CSLTestBoolean(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
     {
@@ -1986,9 +1986,9 @@ static void png_gdal_error( png_structp png_ptr, const char *error_message )
     CPLError( CE_Failure, CPLE_AppDefined, 
               "libpng: %s", error_message );
 
-    // We have to use longjmp instead of a C++ exception because 
-    // libpng is generally not built as C++ and so won't honour unwind
-    // semantics.  Ugg. 
+    // We have to use longjmp instead of a C++ exception because
+    // libpng is generally not built as C++ and so will not honour unwind
+    // semantics.  Ugh.
 
     jmp_buf* psSetJmpContext = reinterpret_cast<jmp_buf *>(
         png_get_error_ptr( png_ptr ) );
@@ -2002,7 +2002,8 @@ static void png_gdal_error( png_structp png_ptr, const char *error_message )
 /*                          png_gdal_warning()                          */
 /************************************************************************/
 
-static void png_gdal_warning( CPL_UNUSED png_structp png_ptr, const char *error_message )
+static void png_gdal_warning( CPL_UNUSED png_structp png_ptr,
+                              const char *error_message )
 {
     CPLError( CE_Warning, CPLE_AppDefined,
               "libpng: %s", error_message );

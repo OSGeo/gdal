@@ -235,9 +235,9 @@ void GRIBRasterBand::FindPDSTemplate()
             char szByte[10];
 
             if( i == 9 )
-                sprintf( szByte, "%d", pabyBody[i-5] );
+                snprintf( szByte, sizeof(szByte), "%d", pabyBody[i-5] );
             else
-                sprintf( szByte, " %d", pabyBody[i-5] );
+                snprintf( szByte, sizeof(szByte), " %d", pabyBody[i-5] );
             osOctet += szByte;
         }
 

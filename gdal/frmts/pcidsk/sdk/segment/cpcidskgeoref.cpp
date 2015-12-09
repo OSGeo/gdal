@@ -443,18 +443,18 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
                )
         {
             if( *cp == 'D' || *cp == 'd' )
-                sprintf( earthmodel, "D%03d", i );
+                snprintf( earthmodel, sizeof(earthmodel), "D%03d", i );
             else
-                sprintf( earthmodel, "E%03d", i );
+                snprintf( earthmodel, sizeof(earthmodel), "E%03d", i );
         }
         else
         {
-            sprintf( earthmodel, "    " );
+            snprintf( earthmodel, sizeof(earthmodel), "    " );
         }
     }
     else
     {
-        sprintf( earthmodel, "    " );
+        snprintf( earthmodel, sizeof(earthmodel), "    " );
     }
 
 /* -------------------------------------------------------------------- */
@@ -495,13 +495,13 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
 
             zone = ABS(zone);
 
-            sprintf( local_buf,
+            snprintf( local_buf, sizeof(local_buf),
                      "UTM   %3d %c %4s", 
                      zone, zone_code, earthmodel );
         }
         else
         {	
-            sprintf( local_buf, 
+            snprintf( local_buf, sizeof(local_buf), 
                      "UTM         %4s", 
                      earthmodel );
         }
@@ -512,16 +512,16 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
     }
     else if( STARTS_WITH_CI(local_buf, "MET") )
     {
-        sprintf( local_buf, "METRE       %4s", earthmodel );
+        snprintf( local_buf, sizeof(local_buf), "METRE       %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "FEET") || STARTS_WITH_CI(local_buf, "FOOT"))
     {
-        sprintf( local_buf, "FOOT        %4s", earthmodel );
+        snprintf( local_buf, sizeof(local_buf), "FOOT        %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LAT") ||
              STARTS_WITH_CI(local_buf, "LON") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "LONG/LAT    %4s",
                  earthmodel );
     }
@@ -542,152 +542,152 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
             strcpy( local_buf, "SPIF " );
 
         if( nSPZone != 0 )
-            sprintf( local_buf + 5, "%4d   %4s",nSPZone,earthmodel);
+            snprintf( local_buf + 5, sizeof(local_buf)-5, "%4d   %4s",nSPZone,earthmodel);
         else
-            sprintf( local_buf + 5, "       %4s",earthmodel);
+            snprintf( local_buf + 5, sizeof(local_buf)-5, "       %4s",earthmodel);
 
     }
     else if( STARTS_WITH_CI(local_buf, "ACEA ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "ACEA        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "AE ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "AE          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "EC ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "EC          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "ER ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "ER          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "GNO ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "GNO         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "GVNP") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "GVNP        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LAEA_ELL") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "LAEA_ELL    %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LAEA") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "LAEA        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LCC_1SP") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "LCC_1SP     %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LCC ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "LCC         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "MC ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "MC          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "MER ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "MER         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "MSC ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "MSC         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "OG ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "OG          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "OM ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "OM          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "PC ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "PC          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "PS ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "PS          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "ROB ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "ROB         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "SG ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "SG          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "SIN ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "SIN         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "SOM ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "SOM         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "TM ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "TM          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "VDG ") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "VDG         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "UPSA") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "UPSA        %4s",
                  earthmodel );
     }
@@ -702,70 +702,70 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
         else
             ups_zone = ' ';
 
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "UPS       %c %4s",
                  ups_zone, earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "GOOD") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "GOOD        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "NZMG") )
     {
-        sprintf( local_buf, 
+        snprintf( local_buf, sizeof(local_buf), 
                  "NZMG        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "CASS") )
     {
         if( STARTS_WITH_CI(earthmodel, "D000") )
-            sprintf( local_buf,  "CASS        %4s", "E010" );
+            snprintf( local_buf, sizeof(local_buf),  "CASS        %4s", "E010" );
         else
-            sprintf( local_buf,  "CASS        %4s", earthmodel );
+            snprintf( local_buf, sizeof(local_buf),  "CASS        %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "RSO ") )
     {
         if( STARTS_WITH_CI(earthmodel, "D000") )
-            sprintf( local_buf,  "RSO         %4s", "E010" );
+            snprintf( local_buf, sizeof(local_buf),  "RSO         %4s", "E010" );
         else
-            sprintf( local_buf,  "RSO         %4s", earthmodel );
+            snprintf( local_buf, sizeof(local_buf),  "RSO         %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "KROV") )
     {
         if( STARTS_WITH_CI(earthmodel, "D000") )
-            sprintf( local_buf,  "KROV        %4s", "E002" );
+            snprintf( local_buf, sizeof(local_buf),  "KROV        %4s", "E002" );
         else
-            sprintf( local_buf,  "KROV        %4s", earthmodel );
+            snprintf( local_buf, sizeof(local_buf),  "KROV        %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "KRON") )
     {
         if( STARTS_WITH_CI(earthmodel, "D000") )
-            sprintf( local_buf,  "KRON        %4s", "E002" );
+            snprintf( local_buf, sizeof(local_buf),  "KRON        %4s", "E002" );
         else
-            sprintf( local_buf,  "KRON        %4s", earthmodel );
+            snprintf( local_buf, sizeof(local_buf),  "KRON        %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "SGDO") )
     {
         if( STARTS_WITH_CI(earthmodel, "D000") )
-            sprintf( local_buf,  "SGDO        %4s", "E910" );
+            snprintf( local_buf, sizeof(local_buf),  "SGDO        %4s", "E910" );
         else
-            sprintf( local_buf,  "SGDO        %4s", earthmodel );
+            snprintf( local_buf, sizeof(local_buf),  "SGDO        %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LBSG") )
     {
         if( STARTS_WITH_CI(earthmodel, "D000") )
-            sprintf( local_buf,  "LBSG        %4s", "E202" );
+            snprintf( local_buf, sizeof(local_buf),  "LBSG        %4s", "E202" );
         else
-            sprintf( local_buf,  "LBSG        %4s", earthmodel );
+            snprintf( local_buf, sizeof(local_buf),  "LBSG        %4s", earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "ISIN") )
     {
         if( STARTS_WITH_CI(earthmodel, "D000") )
-            sprintf( local_buf,  "ISIN        %4s", "E700" );
+            snprintf( local_buf, sizeof(local_buf),  "ISIN        %4s", "E700" );
         else
-            sprintf( local_buf,  "ISIN        %4s", earthmodel );
+            snprintf( local_buf, sizeof(local_buf),  "ISIN        %4s", earthmodel );
     }
 /* -------------------------------------------------------------------- */
 /*      This may be a user projection. Just reformat the earth model    */
@@ -773,7 +773,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
 /* -------------------------------------------------------------------- */
     else
     {
-        sprintf( local_buf, "%-11.11s %4s", geosysIn.c_str(), earthmodel );
+        snprintf( local_buf, sizeof(local_buf), "%-11.11s %4s", geosysIn.c_str(), earthmodel );
     }
 
     return local_buf;

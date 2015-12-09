@@ -1811,10 +1811,10 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         }
         else if( EQUAL(papszArgv[i],"-not_strict")  )
             psOptions->bStrict = FALSE;
-            
+
         else if( EQUAL(papszArgv[i],"-strict")  )
             psOptions->bStrict = TRUE;
-            
+
         else if( EQUAL(papszArgv[i],"-sds")  )
         {
             if( psOptionsForBinary )

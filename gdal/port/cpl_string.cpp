@@ -1714,9 +1714,9 @@ char **CSLAddNameValue(char **papszStrList,
     if (pszName == NULL || pszValue==NULL)
         return papszStrList;
 
-    char *pszLine = static_cast<char *>(
-        CPLMalloc(strlen(pszName)+strlen(pszValue)+2) );
-    CPLsprintf( pszLine, "%s=%s", pszName, pszValue );
+    const size_t nLen = strlen(pszName)+strlen(pszValue)+2;
+    char *pszLine = static_cast<char *>(CPLMalloc(nLen) );
+    snprintf( pszLine, nLen, "%s=%s", pszName, pszValue );
     papszStrList = CSLAddString( papszStrList, pszLine );
     CPLFree( pszLine );
 
@@ -1786,9 +1786,9 @@ char **CSLSetNameValue( char **papszList,
              */
             else
             {
-                *papszPtr = static_cast<char *>(
-                    CPLMalloc(strlen(pszName)+strlen(pszValue)+2) );
-                CPLsprintf( *papszPtr, "%s%c%s", pszName, cSep, pszValue );
+                const size_t nLen2 = strlen(pszName)+strlen(pszValue)+2;
+                *papszPtr = static_cast<char *>(CPLMalloc(nLen2) );
+                snprintf( *papszPtr, nLen2, "%s%c%s", pszName, cSep, pszValue );
             }
             return papszList;
         }
@@ -1903,7 +1903,8 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     if( nLength == -1 )
         nLength = static_cast<int>(strlen(pszInput));
 
-    char *pszOutput = static_cast<char *>( CPLMalloc( nLength * 6 + 1 ) );
+    const size_t nSizeAlloc = nLength * 6 + 1;
+    char *pszOutput = static_cast<char *>( CPLMalloc( nSizeAlloc ) );
 
     if( nScheme == CPLES_BackslashQuotable )
     {
@@ -2017,7 +2018,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             }
             else
             {
-                CPLsprintf( pszOutput+iOut, "%%%02X",
+                snprintf( pszOutput+iOut, nSizeAlloc - iOut, "%%%02X",
                             static_cast<unsigned char>( pszInput[iIn] ) );
                 iOut += 3;
             }
@@ -2534,7 +2535,7 @@ CPLValueType CPLGetValueType(const char* pszValue)
 \verbatim
 char szDest[5];
 if (CPLStrlcpy(szDest, "abcde", sizeof(szDest)) >= sizeof(szDest))
-    fprintf(stderr, "truncation occured !\n");
+    fprintf(stderr, "truncation occurred !\n");
 \endverbatim
 
  * @param pszDest   destination buffer
@@ -2587,7 +2588,7 @@ size_t CPLStrlcpy(char* pszDest, const char* pszSrc, size_t nDestSize)
 char szDest[5];
 CPLStrlcpy(szDest, "ab", sizeof(szDest));
 if (CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest))
-    fprintf(stderr, "truncation occured !\n");
+    fprintf(stderr, "truncation occurred !\n");
 \endverbatim
 
  * @param pszDest   destination buffer. Must be NUL terminated before
@@ -2596,7 +2597,7 @@ if (CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest))
  * @param nDestSize size of destination buffer (including space for the
  *         NUL terminator character)
  *
- * @return the thoretical length of the destination string after concatenation
+ * @return the theoretical length of the destination string after concatenation
  *         (=strlen(pszDest_before) + strlen(pszSrc)).
  *         If strlen(pszDest_before) >= nDestSize, then it returns
  *         nDestSize + strlen(pszSrc)

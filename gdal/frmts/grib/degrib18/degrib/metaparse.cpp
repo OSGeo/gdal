@@ -726,7 +726,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
             errSprintf ("Missing info on radius of Earth.\n");
             return -2;
          }
-         /* Check if our m assumption was valid. If it wasn't, they give us
+         /* Check if our m assumption was valid. If it was not, they give us
           * 6371 km, which we convert to 6.371 < 6.4 */
          if (meta->gds.majEarth < 6.4) {
             meta->gds.majEarth = meta->gds.majEarth * 1000.;
@@ -764,7 +764,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
          }
-         /* Check if our km assumption was valid. If it wasn't, they give us
+         /* Check if our km assumption was valid. If it was not, they give us
           * 6371000 m, which is > 6400. */
          if (meta->gds.majEarth > 6400) {
             meta->gds.majEarth = meta->gds.majEarth / 1000.;
@@ -789,7 +789,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
          }
-         /* Check if our m assumption was valid. If it wasn't, they give us
+         /* Check if our m assumption was valid. If it was not, they give us
           * 6371 km, which we convert to 6.371 < 6.4 */
          if (meta->gds.majEarth < 6.4) {
             meta->gds.majEarth = meta->gds.majEarth * 1000.;
@@ -1035,7 +1035,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
 int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
-   static sInt4 unit2sec[] = {
+   static const sInt4 unit2sec[] = {
       60, 3600, 86400L, 0, 0,
       0, 0, 0, 0, 0,
       10800, 21600L, 43200L
@@ -1084,7 +1084,7 @@ int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
 int ParseSect4Time2sec (sInt4 time, int unit, double *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
-   static sInt4 unit2sec[] = {
+   static const sInt4 unit2sec[] = {
       60, 3600, 86400L, 0, 0,
       0, 0, 0, 0, 0,
       10800, 21600L, 43200L, 1
@@ -2638,7 +2638,7 @@ void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
    qsort (freq, numFreq, sizeof (freq[0]), freqCompare);
 
    mallocSprintf (ans, "%s | count\n", comment);
-   sprintf (format, "%%.%df | %%d\n", decimal);
+   snprintf (format, sizeof(format), "%%.%df | %%d\n", decimal);
    for (i = 0; i < numFreq; i++) {
       reallocSprintf (ans, format, myRound (freq[i].value, decimal),
                       freq[i].cnt);

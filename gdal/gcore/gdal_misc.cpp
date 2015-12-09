@@ -1122,8 +1122,8 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
     {
         if ( pnGCPCount && ppasGCPs )
         {
-            CPLDebug( "GDAL", 
-                "GDALLoadOziMapFile(%s) found file, wasn't able to derive a\n"
+            CPLDebug( "GDAL",
+                "GDALLoadOziMapFile(%s) found file, was not able to derive a\n"
                 "first order geotransform.  Using points as GCPs.",
                 pszFilename );
 
@@ -1306,8 +1306,8 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
     {
         if (pnGCPCount && ppasGCPs)
         {
-            CPLDebug( "GDAL", 
-                "GDALLoadTabFile(%s) found file, wasn't able to derive a\n"
+            CPLDebug( "GDAL",
+                "GDALLoadTabFile(%s) found file, was not able to derive a\n"
                 "first order geotransform.  Using points as GCPs.",
                 pszFilename );
 
@@ -2646,7 +2646,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
                 printf( "  Supports: Open() - Open existing dataset.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
-                printf( "  Supports: Create() - Create writeable dataset.\n" );
+                printf( "  Supports: Create() - Create writable dataset.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
                 printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
@@ -2752,7 +2752,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         }
 
 /* -------------------------------------------------------------------- */
-/*      carry through unrecognised options.                             */
+/*      Carry through unrecognized options.                             */
 /* -------------------------------------------------------------------- */
         else
         {
@@ -2776,7 +2776,7 @@ static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
 {
     char szFullKey[200];
 
-    sprintf( szFullKey, "%s", pszKey );
+    snprintf( szFullKey, sizeof(szFullKey), "%s", pszKey );
 
     const char *pszValue = CSLFetchNameValue( papszMD, szFullKey );
 
@@ -2888,7 +2888,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /*      file.  Check that we are the dependent file of the aux          */
 /*      file, or if we aren't verify that the dependent file does       */
 /*      not exist, likely mean it is us but some sort of renaming       */
-/*      has occured.                                                    */
+/*      has occurred.                                                   */
 /* -------------------------------------------------------------------- */
     CPLString osJustFile = CPLGetFilename(pszBasename); // without dir
     CPLString osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);

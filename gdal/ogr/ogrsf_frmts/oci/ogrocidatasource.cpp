@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-static int anEPSGOracleMapping[] = 
+static const int anEPSGOracleMapping[] = 
 {
     /* Oracle SRID, EPSG GCS/PCS Code */
     
@@ -98,7 +98,7 @@ OGROCIDataSource::~OGROCIDataSource()
 /************************************************************************/
 
 int OGROCIDataSource::Open( const char * pszNewName,
-                            char** papszOpenOptions,
+                            char** papszOpenOptionsIn,
                             int bUpdate,
                             int bTestOpen )
 
@@ -130,10 +130,10 @@ int OGROCIDataSource::Open( const char * pszNewName,
 
     if( pszNewName[4] == '\0' )
     {
-        pszUserid = CPLStrdup(CSLFetchNameValueDef(papszOpenOptions, "USER", ""));
-        pszPassword = CSLFetchNameValueDef(papszOpenOptions, "PASSWORD", "");
-        pszDatabase = CSLFetchNameValueDef(papszOpenOptions, "DBNAME", "");
-        const char* pszTables = CSLFetchNameValue(papszOpenOptions, "TABLES");
+        pszUserid = CPLStrdup(CSLFetchNameValueDef(papszOpenOptionsIn, "USER", ""));
+        pszPassword = CSLFetchNameValueDef(papszOpenOptionsIn, "PASSWORD", "");
+        pszDatabase = CSLFetchNameValueDef(papszOpenOptionsIn, "DBNAME", "");
+        const char* pszTables = CSLFetchNameValue(papszOpenOptionsIn, "TABLES");
         if( pszTables )
             papszTableList = CSLTokenizeStringComplex(pszTables, ",", TRUE, FALSE );
     }
@@ -225,7 +225,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
                 if( EQUAL(papszRow[1],pszUserid) )
                     strcpy( szFullTableName, papszRow[0] );
                 else
-                    sprintf( szFullTableName, "%s.%s", 
+                    snprintf( szFullTableName, sizeof(szFullTableName), "%s.%s", 
                              papszRow[1], papszRow[0] );
 
                 if( CSLFindString( papszTableList, szFullTableName ) == -1 )
@@ -530,7 +530,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     if( CSLFetchNameValue( papszOptions, "SRID" ) != NULL )
         strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );     
     else if( poSRS != NULL )
-        sprintf( szSRSId, "%d", FetchSRSId( poSRS ) );
+        snprintf( szSRSId, sizeof(szSRSId), "%d", FetchSRSId( poSRS ) );
     else
         strcpy( szSRSId, "NULL" );
 
@@ -560,14 +560,14 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     {
         if (eType == wkbNone)
         {
-            sprintf( szCommand,
+            snprintf( szCommand, sizeof(szCommand),
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY)",
                      pszSafeLayerName, pszExpectedFIDName);
         }
         else
         {
-            sprintf( szCommand,
+            snprintf( szCommand, sizeof(szCommand),
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY, "
                      "%s %s%s )",
@@ -775,7 +775,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
     OGROCIStatement oStatement( GetSession() );
     char            szSelect[200], **papszResult;
 
-    sprintf( szSelect, 
+    snprintf( szSelect, sizeof(szSelect),
              "SELECT WKTEXT, AUTH_SRID, AUTH_NAME FROM MDSYS.CS_SRS "
              "WHERE SRID = %d AND WKTEXT IS NOT NULL", nId );
 
@@ -992,13 +992,13 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*                           GetLayerByName()                           */
 /************************************************************************/
 
-OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
+OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszNameIn )
 
 {
     OGROCILayer *poLayer = NULL;
     int  i, count;
 
-    if ( !pszName )
+    if ( !pszNameIn )
 	return NULL;
 
     count = GetLayerCount();
@@ -1008,13 +1008,13 @@ OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
     {
         poLayer = papoLayers[i];
 
-        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+        if( strcmp( pszNameIn, poLayer->GetName() ) == 0 )
         {
             return poLayer;
         }
     }
 
-    char *pszSafeLayerName = CPLStrdup( pszName );
+    char *pszSafeLayerName = CPLStrdup( pszNameIn );
     poSession->CleanName( pszSafeLayerName );
 
     /* then case insensitive and laundered */

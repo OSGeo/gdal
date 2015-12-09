@@ -78,9 +78,9 @@ OGRLayer* OGRCloudantDataSource::OpenDatabase(const char* pszLayerName)
         if (pszLastSlash)
         {
             osEscapedName = pszLastSlash + 1;
-            char* pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
-            osTableName = pszName;
-            CPLFree(pszName);
+            char* l_pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
+            osTableName = l_pszName;
+            CPLFree(l_pszName);
             *pszLastSlash = 0;
         }
         osURL = pszURL;
@@ -238,7 +238,7 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
@@ -249,7 +249,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
         return NULL;
     }
 
-    char *pszLayerName = CPLStrlwr(CPLStrdup(pszName));
+    char *pszLayerName = CPLStrlwr(CPLStrdup(l_pszName));
     CPLString osLayerName = pszLayerName;
     CPLFree(pszLayerName);
 
@@ -338,9 +338,8 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
 
             if (pszEpsg != NULL)
             {
-                const char * pszUrn = "urn:ogc:def:crs:epsg::";
-                CPLStrlcpy(szSrid, pszUrn, sizeof(szSrid));
-                if (CPLStrlcpy(szSrid + sizeof(pszUrn), pszEpsg, sizeof(szSrid)) >= sizeof(szSrid))
+                if( snprintf(szSrid, sizeof(szSrid), "urn:ogc:def:crs:epsg::%s",
+                             pszEpsg) >= (int)sizeof(szSrid) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Unable to parse SRID");
                     return NULL;

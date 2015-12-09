@@ -305,11 +305,11 @@ void DeleteCeosSARVolume(CeosSARVolume_t *volume);
 void RegisterRecipes(void);
 void FreeRecipes(void);
 
-void AddRecipe( int ( *function )( CeosSARVolume_t *volume, void *token ),
-		void *token, const char *name );
+void AddRecipe( int ( *function )( CeosSARVolume_t *volume, const void *token ),
+		const void *token, const char *name );
 
-int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token );
-int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token );
+int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token );
+int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token );
 
 /* ceoscalib.c function declarations */
 

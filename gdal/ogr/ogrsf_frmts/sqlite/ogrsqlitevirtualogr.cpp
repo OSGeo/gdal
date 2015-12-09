@@ -58,11 +58,7 @@ void OGR2SQLITE_Register()
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 //#define DEBUG_OGR2SQLITE
 
-#if defined(SPATIALITE_AMALGAMATION)
 #include "ogrsqlite3ext.h"
-#else
-#include "sqlite3ext.h"
-#endif
 
 /* Declaration of sqlite3_api structure */
 static SQLITE_EXTENSION_INIT1
@@ -163,10 +159,10 @@ void OGR2SQLITEModule::SetHandleSQLFunctions(void* hHandleSQLFunctionsIn)
 /*                            AddExtraDS()                              */
 /************************************************************************/
 
-int OGR2SQLITEModule::AddExtraDS(OGRDataSource* poDS)
+int OGR2SQLITEModule::AddExtraDS(OGRDataSource* poDSIn)
 {
     int nRet = (int)apoExtraDS.size();
-    apoExtraDS.push_back(poDS);
+    apoExtraDS.push_back(poDSIn);
     return nRet;
 }
 
@@ -1322,7 +1318,7 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
             poFeature->GetFieldAsDateTime(nCol, &nYear, &nMonth, &nDay,
                                           &nHour, &nMinute, &nSecond, &nTZ);
             char szBuffer[64];
-            sprintf(szBuffer, "%04d-%02d-%02d", nYear, nMonth, nDay);
+            snprintf(szBuffer, sizeof(szBuffer), "%04d-%02d-%02d", nYear, nMonth, nDay);
             sqlite3_result_text(pContext,
                                 szBuffer,
                                 -1, SQLITE_TRANSIENT);
@@ -1337,9 +1333,9 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
                                         &nHour, &nMinute, &fSecond, &nTZ );
             char szBuffer[64];
             if( OGR_GET_MS(fSecond) != 0 )
-                sprintf(szBuffer, "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
+                snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
             else
-                sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
+                snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
             sqlite3_result_text(pContext,
                                 szBuffer,
                                 -1, SQLITE_TRANSIENT);
@@ -2372,11 +2368,11 @@ static const struct sqlite3_module sOGR2SQLITESpatialIndex =
 /*                              Setup()                                 */
 /************************************************************************/
 
-int OGR2SQLITEModule::Setup(sqlite3* hDB)
+int OGR2SQLITEModule::Setup(sqlite3* hDBIn)
 {
     int rc;
 
-    this->hDB = hDB;
+    this->hDB = hDBIn;
 
     rc = sqlite3_create_module_v2(hDB, "VirtualOGR", &sOGR2SQLITEModule, this,
                                   OGR2SQLITEDestroyModule);

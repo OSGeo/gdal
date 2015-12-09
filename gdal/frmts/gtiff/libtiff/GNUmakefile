@@ -43,7 +43,7 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-ALL_C_FLAGS =	$(CFLAGS_NOFTRAPV) $(CPPFLAGS)
+ALL_C_FLAGS =	$(CFLAGS_NOFTRAPV) $(CPPFLAGS) -DDONT_DEPRECATE_SPRINTF
 
 ifeq ($(LIBZ_SETTING),internal) 
 XTRA_OPT =      -I../../zlib 

@@ -55,7 +55,8 @@ AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wm
 AX_CHECK_COMPILE_FLAG([-Werror -Wformat], [C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wformat -Werror=format-security -Wno-format-nonliteral], [C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wshadow], [SHADOW_WFLAGS="-Wshadow"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"])
 
 dnl Error out on things that will fail with MSVC
 AX_CHECK_COMPILE_FLAG([-Werror -Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"])
@@ -77,7 +78,7 @@ AC_SUBST(C_WFLAGS,$C_WFLAGS)
 AC_SUBST(NO_UNUSED_PARAMETER_FLAG,$NO_UNUSED_PARAMETER_FLAG)
 AC_SUBST(NO_SIGN_COMPARE,$NO_SIGN_COMPARE)
 AC_SUBST(NO_NON_VIRTUAL_DTOR_FLAG,$NO_NON_VIRTUAL_DTOR_FLAG)
-AC_SUBST(SHADOW_WFLAGS,$SHADOW_WFLAGS)
+AC_SUBST(NO_LOGICAL_OP_FLAG,$NO_LOGICAL_OP_FLAG)
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -162,7 +163,7 @@ AC_CHECK_TYPES([int8, int16, int32],,,
 
 dnl We need the following lines for libtiff too.
 HAVE_IEEEFP=1
-AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format suported by the machine])
+AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format supported by the machine])
 
 dnl Check the native cpu bit order (also libtiff stuff).
 AC_MSG_CHECKING([native cpu bit order])
@@ -440,6 +441,49 @@ fi
 
 AC_SUBST(AVXFLAGS,$AVXFLAGS)
 AC_SUBST(HAVE_AVX_AT_COMPILE_TIME,$HAVE_AVX_AT_COMPILE_TIME)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for --enable-lto
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([to enable LTO (link time optimization) build])
+
+AC_ARG_ENABLE(lto,
+              AS_HELP_STRING([--enable-lto],
+                             [enable LTO(link time optimization) (disabled by default)]))
+
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+
+if test "x$enable_lto" = "xyes" ; then
+
+  dnl remove existing -g.
+
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"` 
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"` 
+
+  dnl add -flto
+
+  CXXFLAGS="$CXXFLAGS -flto"
+  CFLAGS="$CFLAGS -flto"
+  LDFLAGS="$LDFLAGS -flto"
+
+  dnl in case we have avx available by default, then we can compile everything
+  dnl with -flto
+  if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+    if test "$AVXFLAGS" = ""; then
+        CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+        CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+    fi
+  fi
+
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(CFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
+AC_SUBST(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if we need -lws2_32

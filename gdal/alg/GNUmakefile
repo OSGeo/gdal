@@ -35,12 +35,14 @@ ifeq ($(QHULL_SETTING),internal)
 CPPFLAGS 	:=	-DINTERNAL_QHULL -Ilibqhull $(CPPFLAGS)
 endif
 
-CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS) $(SHADOW_WFLAGS)
+CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.$(OBJ_EXT) gdalgridsse.$(OBJ_EXT)
 
+# We use CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT to avoid the whole library to be compiled with -mavx
+# if -mavx is not the default
 gdalgridavx.$(OBJ_EXT):   gdalgridavx.cpp
-	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 gdalgridsse.$(OBJ_EXT):   gdalgridsse.cpp
 	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(SSEFLAGS) $(CPPFLAGS) -c -o $@ $<

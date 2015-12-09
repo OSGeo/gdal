@@ -103,7 +103,6 @@ def ogr_fgdb_1():
     options = ['COLUMN_TYPES=smallint=esriFieldTypeSmallInteger,float=esriFieldTypeSingle,guid=esriFieldTypeGUID,xml=esriFieldTypeXML']
 
     for data in datalist:
-        #import pdb; pdb.set_trace()
         if data[1] == ogr.wkbNone:
             lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options )
         elif data[0] == 'multipatch':
@@ -563,7 +562,7 @@ def ogr_fgdb_9():
 
     in_names = [ 'FROM', # reserved keyword
                  '1NUMBER', # starting with a number
-                 'WITH SPACE AND !$*!- special characters', # unallowed characters
+                 'WITH SPACE AND !$*!- special characters', # banned characters
                  'sde_foo', # reserved prefixes
                  _160char, # OK
                  _160char + 'A', # too long
@@ -1207,7 +1206,7 @@ def ogr_fgdb_19():
         return 'fail'
     ds2 = None
 
-    # Successfull StartTransaction() finally !
+    # Successful StartTransaction() finally!
     lyr = ds.GetLayer(0)
     lyr = ds.GetLayer(0) # again
     old_count = lyr.GetFeatureCount()
@@ -1917,7 +1916,7 @@ def ogr_fgdb_20():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # This FID exists as a FGDB ID, but shouldn't be user visible
+    # This FID exists as a FGDB ID, but should not be user visible.
     f.SetFID(3)
     ret = lyr.SetFeature(f)
     if ret != ogr.OGRERR_NON_EXISTING_FEATURE:

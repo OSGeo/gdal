@@ -699,8 +699,10 @@ void field2kml (
                             !(isGX == TRUE && static_cast<kmldom::GxAltitudeModeEnum>(iAltitudeMode) == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
                             CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                         {
-                            CPLError(CE_Warning, CPLE_NotSupported,
-                                "altitudeMode!=clampToGround && altitudeMode!=clampToSeaFloor unsupported with tesselate=1");
+                            CPLError( CE_Warning, CPLE_NotSupported,
+                                      "altitudeMode!=clampToGround && "
+                                      "altitudeMode!=clampToSeaFloor "
+                                      "unsupported with tessellate=1" );
                         }
                         else
                         {
@@ -1482,7 +1484,7 @@ void kml2field (
 
                 /***** find the field index *****/
 
-                int iField = -1;
+                iField = -1;
 
                 if ( poKmlSimpleData->has_name (  ) ) {
                     const string oName = poKmlSimpleData->get_name (  );
@@ -1514,7 +1516,7 @@ void kml2field (
                     CPLString osName = data->get_name();
                     if (bLaunderFieldNames)
                         osName = OGRLIBKMLLayer::LaunderFieldNames(osName);
-                    int iField = poOgrFeat->GetFieldIndex ( osName );
+                    iField = poOgrFeat->GetFieldIndex ( osName );
                     if (iField >= 0)
                     {
                         poOgrFeat->SetField ( iField, data->get_value().c_str() );

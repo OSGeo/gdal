@@ -87,7 +87,7 @@ OGRILI1DataSource::~OGRILI1DataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, int bTestOpen )
+int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptionsIn, int bTestOpen )
 
 {
     FILE        *fp;
@@ -99,10 +99,10 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
         return FALSE;
     }
     
-    if( CSLFetchNameValue(papszOpenOptions, "MODEL") != NULL )
+    if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != NULL )
     {
         osBasename = pszNewName;
-        osModelFilename = CSLFetchNameValue(papszOpenOptions, "MODEL");
+        osModelFilename = CSLFetchNameValue(papszOpenOptionsIn, "MODEL");
     }
     else
     {
@@ -159,8 +159,8 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
     if( poReader == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be ILI1 but the ILI1 reader can't\n"
-                  "be instantiated, likely because Xerces support wasn't\n"
+                  "File %s appears to be ILI1 but the ILI1 reader cannot\n"
+                  "be instantiated, likely because Xerces support was not\n"
                   "configured in.",
                   pszNewName );
         return FALSE;
@@ -180,9 +180,9 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
     }
 
-    //Parse model and read data - without surface join and area polygonizing
+    // Parse model and read data - without surface join and area polygonizing.
     poReader->ReadFeatures();
-    
+
     if( bResetConfigOption )
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", NULL);
 

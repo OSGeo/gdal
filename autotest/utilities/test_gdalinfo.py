@@ -199,7 +199,7 @@ def test_gdalinfo_8():
 
     # We will blow an exception if the file does not exist now!
     os.remove('../gcore/data/byte.tif.aux.xml')
-    
+
     return 'success'
 
 ###############################################################################
@@ -211,7 +211,7 @@ def test_gdalinfo_9():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/fake_nsif.ntf')
     if ret.find('BLOCKA=010000001000000000') != -1:
-        gdaltest.post_reason( 'unexpectingly got extra MD.' )
+        gdaltest.post_reason( 'got unexpected extra MD.' )
         print(ret)
         return 'fail'
 
@@ -697,7 +697,7 @@ def test_gdalinfo_36():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/fake_nsif.ntf')
     ret = json.loads(ret)
     if 'TRE' in ret['metadata']:
-        gdaltest.post_reason( 'unexpectingly got extra MD.' )
+        gdaltest.post_reason( 'got unexpected extra MD.' )
         print(ret)
         return 'fail'
 

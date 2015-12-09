@@ -204,7 +204,7 @@ static const LocationNameId asLocationTable[] =
     { "ColorTableIndexRecord", 153 }
 };
 
-const char* GetLocationNameFromId(int nID)
+static const char* GetLocationNameFromId(int nID)
 {
     unsigned int i;
     for(i=0;i<sizeof(asLocationTable) / sizeof(asLocationTable[0]);i++)
@@ -704,16 +704,16 @@ int main( int nArgc, char ** papszArgv )
                 char szFilename[32];
                 char szRadix[32];
                 if (bExtractSHPInMem)
-                    sprintf(szRadix, "/vsimem/nitf_segment_%d", iSegment + 1);
+                    snprintf(szRadix, sizeof(szRadix), "/vsimem/nitf_segment_%d", iSegment + 1);
                 else
-                    sprintf(szRadix, "nitf_segment_%d", iSegment + 1);
+                    snprintf(szRadix, sizeof(szRadix), "nitf_segment_%d", iSegment + 1);
 
                 if (NITFDESExtractShapefile(psDES, szRadix))
                 {
 #ifdef OGR_ENABLED
                     OGRDataSourceH hDS;
                     OGRRegisterAll();
-                    sprintf(szFilename, "%s.SHP", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.SHP", szRadix);
                     hDS = OGROpen(szFilename, FALSE, NULL);
                     if (hDS)
                     {
@@ -744,11 +744,11 @@ int main( int nArgc, char ** papszArgv )
 
                 if (bExtractSHPInMem)
                 {
-                    sprintf(szFilename, "%s.SHP", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.SHP", szRadix);
                     VSIUnlink(szFilename);
-                    sprintf(szFilename, "%s.SHX", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.SHX", szRadix);
                     VSIUnlink(szFilename);
-                    sprintf(szFilename, "%s.DBF", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.DBF", szRadix);
                     VSIUnlink(szFilename);
                 }
             }

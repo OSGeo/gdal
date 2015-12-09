@@ -49,11 +49,11 @@ g2int g2_gribend(unsigned char *cgrib)
 
       g2int iofst,lencurr,len,ilen,isecnum;
       g2int   ierr,lengrib;
-      static unsigned char G=0x47;       // 'G'
-      static unsigned char R=0x52;       // 'R'
-      static unsigned char I=0x49;       // 'I'
-      static unsigned char B=0x42;       // 'B'
-      static unsigned char seven=0x37;   // '7'
+      const unsigned char G=0x47;       // 'G'
+      const unsigned char R=0x52;       // 'R'
+      const unsigned char I=0x49;       // 'I'
+      const unsigned char B=0x42;       // 'B'
+      const unsigned char seven=0x37;   // '7'
  
       ierr=0;
 //

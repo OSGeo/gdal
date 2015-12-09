@@ -651,7 +651,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "PRODUCT_TYPE", poDS->GetKeyword( "TYPE"));
 
         if (EQUAL( poDS->GetKeyword( "M94_INSTRUMENT.DETECTOR_ID"), "MEX_HRSC_SRC" )) {
-            static const char *apszKeywords[] =  {
+            static const char * const apszKeywords[] =  {
                         "M94_ORBIT.IMAGE_TIME",
                         "FILE.EVENT_TYPE",
                         "FILE.PROCESSING_LEVEL_ID",
@@ -665,7 +665,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
             }
         } else {
-            static const char *apszKeywords[] =  {
+            static const char * const apszKeywords[] =  {
                 "M94_ORBIT.START_TIME", "M94_ORBIT.STOP_TIME",
                 "M94_INSTRUMENT.DETECTOR_ID",
                 "M94_CAMERAS.MACROPIXEL_SIZE",
@@ -691,7 +691,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if (bIsDTM && EQUAL( poDS->GetKeyword( "MAP.TARGET_NAME"), "MARS" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "MARS_EXPRESS" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
-        static const char *apszKeywords[] = {
+        static const char * const apszKeywords[] = {
             "DTM.DTM_MISSING_DN", "DTM.DTM_OFFSET", "DTM.DTM_SCALING_FACTOR", "DTM.DTM_A_AXIS_RADIUS", 
             "DTM.DTM_B_AXIS_RADIUS", "DTM.DTM_C_AXIS_RADIUS", "DTM.DTM_DESC", "DTM.DTM_MINIMUM_DN",
             "DTM.DTM_MAXIMUM_DN", NULL };
@@ -706,7 +706,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /******************   DAWN   ******************************/
     else if (EQUAL( poDS->GetKeyword( "INSTRUMENT_ID"), "FC2" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
-        static const char *apszKeywords[] =  {"ORBIT_NUMBER","FILTER_NUMBER",
+        static const char * const apszKeywords[] =  {"ORBIT_NUMBER","FILTER_NUMBER",
         "FRONT_DOOR_STATUS",
         "FIRST_LINE",
         "FIRST_LINE_SAMPLE",
@@ -732,7 +732,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     else if (bIsDTM && EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
-        static const char *apszKeywords[] = {
+        static const char * const apszKeywords[] = {
             "DTM_MISSING_DN", "DTM_OFFSET", "DTM_SCALING_FACTOR", "DTM_A_AXIS_RADIUS", 
             "DTM_B_AXIS_RADIUS", "DTM_C_AXIS_RADIUS", "DTM_MINIMUM_DN",
             "DTM_MAXIMUM_DN", "MAP_PROJECTION_TYPE", "COORDINATE_SYSTEM_NAME",

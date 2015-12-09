@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+namespace OGRXLSX {
+
 /************************************************************************/
 /*                            OGRXLSXLayer()                            */
 /************************************************************************/
@@ -289,13 +291,13 @@ int OGRXLSXDataSource::Create( const char * pszFilename,
 /*                           startElementCbk()                          */
 /************************************************************************/
 
-static void XMLCALL startElementCbk(void *pUserData, const char *pszName,
+static void XMLCALL startElementCbk(void *pUserData, const char *pszNameIn,
                                     const char **ppszAttr)
 {
-    ((OGRXLSXDataSource*)pUserData)->startElementCbk(pszName, ppszAttr);
+    ((OGRXLSXDataSource*)pUserData)->startElementCbk(pszNameIn, ppszAttr);
 }
 
-void OGRXLSXDataSource::startElementCbk(const char *pszName,
+void OGRXLSXDataSource::startElementCbk(const char *pszNameIn,
                                        const char **ppszAttr)
 {
     if (bStopParsing) return;
@@ -303,10 +305,10 @@ void OGRXLSXDataSource::startElementCbk(const char *pszName,
     nWithoutEventCounter = 0;
     switch(stateStack[nStackDepth].eVal)
     {
-        case STATE_DEFAULT: startElementDefault(pszName, ppszAttr); break;
-        case STATE_SHEETDATA:   startElementTable(pszName, ppszAttr); break;
-        case STATE_ROW:     startElementRow(pszName, ppszAttr); break;
-        case STATE_CELL:    startElementCell(pszName, ppszAttr); break;
+        case STATE_DEFAULT: startElementDefault(pszNameIn, ppszAttr); break;
+        case STATE_SHEETDATA:   startElementTable(pszNameIn, ppszAttr); break;
+        case STATE_ROW:     startElementRow(pszNameIn, ppszAttr); break;
+        case STATE_CELL:    startElementCell(pszNameIn, ppszAttr); break;
         case STATE_TEXTV:   break;
         default:            break;
     }
@@ -317,12 +319,12 @@ void OGRXLSXDataSource::startElementCbk(const char *pszName,
 /*                            endElementCbk()                           */
 /************************************************************************/
 
-static void XMLCALL endElementCbk(void *pUserData, const char *pszName)
+static void XMLCALL endElementCbk(void *pUserData, const char *pszNameIn)
 {
-    ((OGRXLSXDataSource*)pUserData)->endElementCbk(pszName);
+    ((OGRXLSXDataSource*)pUserData)->endElementCbk(pszNameIn);
 }
 
-void OGRXLSXDataSource::endElementCbk(const char *pszName)
+void OGRXLSXDataSource::endElementCbk(const char *pszNameIn)
 {
     if (bStopParsing) return;
 
@@ -332,9 +334,9 @@ void OGRXLSXDataSource::endElementCbk(const char *pszName)
     switch(stateStack[nStackDepth].eVal)
     {
         case STATE_DEFAULT: break;
-        case STATE_SHEETDATA:   endElementTable(pszName); break;
-        case STATE_ROW:     endElementRow(pszName); break;
-        case STATE_CELL:    endElementCell(pszName); break;
+        case STATE_SHEETDATA:   endElementTable(pszNameIn); break;
+        case STATE_ROW:     endElementRow(pszNameIn); break;
+        case STATE_CELL:    endElementCell(pszNameIn); break;
         case STATE_TEXTV:   break;
         default:            break;
     }
@@ -573,10 +575,10 @@ void OGRXLSXDataSource::DetectHeaderLine()
 /*                          startElementDefault()                       */
 /************************************************************************/
 
-void OGRXLSXDataSource::startElementDefault(const char *pszName,
+void OGRXLSXDataSource::startElementDefault(const char *pszNameIn,
                                             CPL_UNUSED const char **ppszAttr)
 {
-    if (strcmp(pszName, "sheetData") == 0)
+    if (strcmp(pszNameIn, "sheetData") == 0)
     {
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
@@ -589,10 +591,10 @@ void OGRXLSXDataSource::startElementDefault(const char *pszName,
 /*                          startElementTable()                        */
 /************************************************************************/
 
-void OGRXLSXDataSource::startElementTable(const char *pszName,
+void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
                                          const char **ppszAttr)
 {
-    if (strcmp(pszName, "row") == 0)
+    if (strcmp(pszNameIn, "row") == 0)
     {
         PushState(STATE_ROW);
 
@@ -615,11 +617,11 @@ void OGRXLSXDataSource::startElementTable(const char *pszName,
 /*                           endElementTable()                          */
 /************************************************************************/
 
-void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszName)
+void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
-        CPLAssert(strcmp(pszName, "sheetData") == 0);
+        CPLAssert(strcmp(pszNameIn, "sheetData") == 0);
 
         if (nCurLine == 0 ||
             (nCurLine == 1 && apoFirstLineValues.size() == 0))
@@ -664,10 +666,10 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszName)
 /*                            startElementRow()                         */
 /************************************************************************/
 
-void OGRXLSXDataSource::startElementRow(const char *pszName,
+void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
                                        const char **ppszAttr)
 {
-    if (strcmp(pszName, "c") == 0)
+    if (strcmp(pszNameIn, "c") == 0)
     {
         PushState(STATE_CELL);
 
@@ -725,11 +727,11 @@ void OGRXLSXDataSource::startElementRow(const char *pszName,
 /*                            endElementRow()                           */
 /************************************************************************/
 
-void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszName)
+void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
-        CPLAssert(strcmp(pszName, "row") == 0);
+        CPLAssert(strcmp(pszNameIn, "row") == 0);
 
         OGRFeature* poFeature;
         size_t i;
@@ -883,14 +885,14 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszName)
 /*                           startElementCell()                         */
 /************************************************************************/
 
-void OGRXLSXDataSource::startElementCell(const char *pszName,
+void OGRXLSXDataSource::startElementCell(const char *pszNameIn,
                                          CPL_UNUSED const char **ppszAttr)
 {
-    if (osValue.size() == 0 && strcmp(pszName, "v") == 0)
+    if (osValue.size() == 0 && strcmp(pszNameIn, "v") == 0)
     {
         PushState(STATE_TEXTV);
     }
-    else if (osValue.size() == 0 && strcmp(pszName, "t") == 0)
+    else if (osValue.size() == 0 && strcmp(pszNameIn, "t") == 0)
     {
         PushState(STATE_TEXTV);
     }
@@ -900,11 +902,11 @@ void OGRXLSXDataSource::startElementCell(const char *pszName,
 /*                            endElementCell()                          */
 /************************************************************************/
 
-void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszName)
+void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszNameIn)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
-        CPLAssert(strcmp(pszName, "c") == 0);
+        CPLAssert(strcmp(pszNameIn, "c") == 0);
 
         if (osValueType == "stringLookup")
         {
@@ -950,8 +952,8 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer* poLayer, int nSheetId)
     int bUpdatedBackup = bUpdated;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementCbk, OGRXLSX::endElementCbk);
+    XML_SetCharacterDataHandler(oParser, OGRXLSX::dataHandlerCbk);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fp, 0, SEEK_SET );
@@ -1004,13 +1006,13 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer* poLayer, int nSheetId)
 /*                          startElementSSCbk()                         */
 /************************************************************************/
 
-static void XMLCALL startElementSSCbk(void *pUserData, const char *pszName,
+static void XMLCALL startElementSSCbk(void *pUserData, const char *pszNameIn,
                                     const char **ppszAttr)
 {
-    ((OGRXLSXDataSource*)pUserData)->startElementSSCbk(pszName, ppszAttr);
+    ((OGRXLSXDataSource*)pUserData)->startElementSSCbk(pszNameIn, ppszAttr);
 }
 
-void OGRXLSXDataSource::startElementSSCbk(const char *pszName,
+void OGRXLSXDataSource::startElementSSCbk(const char *pszNameIn,
                                           CPL_UNUSED const char **ppszAttr)
 {
     if (bStopParsing) return;
@@ -1020,7 +1022,7 @@ void OGRXLSXDataSource::startElementSSCbk(const char *pszName,
     {
         case STATE_DEFAULT:
         {
-            if (strcmp(pszName,"t") == 0)
+            if (strcmp(pszNameIn,"t") == 0)
             {
                 PushState(STATE_T);
                 osCurrentString = "";
@@ -1037,12 +1039,12 @@ void OGRXLSXDataSource::startElementSSCbk(const char *pszName,
 /*                           endElementSSCbk()                          */
 /************************************************************************/
 
-static void XMLCALL endElementSSCbk(void *pUserData, const char *pszName)
+static void XMLCALL endElementSSCbk(void *pUserData, const char *pszNameIn)
 {
-    ((OGRXLSXDataSource*)pUserData)->endElementSSCbk(pszName);
+    ((OGRXLSXDataSource*)pUserData)->endElementSSCbk(pszNameIn);
 }
 
-void OGRXLSXDataSource::endElementSSCbk(CPL_UNUSED const char *pszName)
+void OGRXLSXDataSource::endElementSSCbk(CPL_UNUSED const char *pszNameIn)
 {
     if (bStopParsing) return;
 
@@ -1110,8 +1112,8 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE* fpSharedStrings)
         return;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementSSCbk, ::endElementSSCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerSSCbk);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementSSCbk, OGRXLSX::endElementSSCbk);
+    XML_SetCharacterDataHandler(oParser, OGRXLSX::dataHandlerSSCbk);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fpSharedStrings, 0, SEEK_SET );
@@ -1164,19 +1166,19 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE* fpSharedStrings)
 /*                          startElementWBCbk()                         */
 /************************************************************************/
 
-static void XMLCALL startElementWBCbk(void *pUserData, const char *pszName,
+static void XMLCALL startElementWBCbk(void *pUserData, const char *pszNameIn,
                                     const char **ppszAttr)
 {
-    ((OGRXLSXDataSource*)pUserData)->startElementWBCbk(pszName, ppszAttr);
+    ((OGRXLSXDataSource*)pUserData)->startElementWBCbk(pszNameIn, ppszAttr);
 }
 
-void OGRXLSXDataSource::startElementWBCbk(const char *pszName,
+void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
                                        const char **ppszAttr)
 {
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
-    if (strcmp(pszName,"sheet") == 0)
+    if (strcmp(pszNameIn,"sheet") == 0)
     {
         const char* pszSheetName = GetAttributeValue(ppszAttr, "name", NULL);
         /*const char* pszSheetId = GetAttributeValue(ppszAttr, "sheetId", NULL);*/
@@ -1197,7 +1199,7 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszName,
 void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE* fpWorkbook)
 {
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementWBCbk, NULL);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementWBCbk, NULL);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fpWorkbook, 0, SEEK_SET );
@@ -1245,19 +1247,19 @@ void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE* fpWorkbook)
 /*                       startElementStylesCbk()                        */
 /************************************************************************/
 
-static void XMLCALL startElementStylesCbk(void *pUserData, const char *pszName,
+static void XMLCALL startElementStylesCbk(void *pUserData, const char *pszNameIn,
                                     const char **ppszAttr)
 {
-    ((OGRXLSXDataSource*)pUserData)->startElementStylesCbk(pszName, ppszAttr);
+    ((OGRXLSXDataSource*)pUserData)->startElementStylesCbk(pszNameIn, ppszAttr);
 }
 
-void OGRXLSXDataSource::startElementStylesCbk(const char *pszName,
+void OGRXLSXDataSource::startElementStylesCbk(const char *pszNameIn,
                                        const char **ppszAttr)
 {
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
-    if (strcmp(pszName,"numFmt") == 0)
+    if (strcmp(pszNameIn,"numFmt") == 0)
     {
         const char* pszFormatCode = GetAttributeValue(ppszAttr, "formatCode", NULL);
         const char* pszNumFmtId = GetAttributeValue(ppszAttr, "numFmtId", "-1");
@@ -1278,11 +1280,11 @@ void OGRXLSXDataSource::startElementStylesCbk(const char *pszName,
                 apoMapStyleFormats[nNumFmtId] = XLSXFieldTypeExtended(OFTReal);
         }
     }
-    else if (strcmp(pszName,"cellXfs") == 0)
+    else if (strcmp(pszNameIn,"cellXfs") == 0)
     {
         bInCellXFS = TRUE;
     }
-    else if (bInCellXFS && strcmp(pszName,"xf") == 0)
+    else if (bInCellXFS && strcmp(pszNameIn,"xf") == 0)
     {
         const char* pszNumFmtId = GetAttributeValue(ppszAttr, "numFmtId", "-1");
         int nNumFmtId = atoi(pszNumFmtId);
@@ -1318,17 +1320,17 @@ void OGRXLSXDataSource::startElementStylesCbk(const char *pszName,
 /*                       endElementStylesCbk()                          */
 /************************************************************************/
 
-static void XMLCALL endElementStylesCbk(void *pUserData, const char *pszName)
+static void XMLCALL endElementStylesCbk(void *pUserData, const char *pszNameIn)
 {
-    ((OGRXLSXDataSource*)pUserData)->endElementStylesCbk(pszName);
+    ((OGRXLSXDataSource*)pUserData)->endElementStylesCbk(pszNameIn);
 }
 
-void OGRXLSXDataSource::endElementStylesCbk(const char *pszName)
+void OGRXLSXDataSource::endElementStylesCbk(const char *pszNameIn)
 {
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
-    if (strcmp(pszName,"cellXfs") == 0)
+    if (strcmp(pszNameIn,"cellXfs") == 0)
     {
         bInCellXFS = FALSE;
     }
@@ -1344,7 +1346,7 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE* fpStyles)
         return;
 
     oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementStylesCbk, ::endElementStylesCbk);
+    XML_SetElementHandler(oParser, OGRXLSX::startElementStylesCbk, OGRXLSX::endElementStylesCbk);
     XML_SetUserData(oParser, this);
 
     VSIFSeekL( fpStyles, 0, SEEK_SET );
@@ -1656,7 +1658,9 @@ static void BuildColString(char szCol[5], int nCol)
     while(nCol >= 26)
     {
         nCol /= 26;
-        nCol --; /* We wouldn't need that if this was a proper base 26 numeration scheme ! */
+        // We would not need a decrement if this was a proper base 26
+        // numeration scheme.
+        nCol --;
         szCol[k++] = (nCol % 26) + 'A';
     }
     szCol[k] = 0;
@@ -1964,8 +1968,6 @@ static void WriteDotRels(const char* pszName)
 
 void OGRXLSXDataSource::FlushCache()
 {
-    int i;
-
     if (!bUpdated)
         return;
 
@@ -2008,7 +2010,7 @@ void OGRXLSXDataSource::FlushCache()
     std::vector<std::string> oStringList;
 
     //VSIMkdir(CPLSPrintf("/vsizip/%s/xl/worksheets", pszName),0755);
-    for(i=0;i<nLayers;i++)
+    for(int i=0;i<nLayers;i++)
     {
         WriteLayer(pszName, GetLayer(i), i, oStringMap, oStringList);
     }
@@ -2034,3 +2036,5 @@ void OGRXLSXDataSource::FlushCache()
 
     return;
 }
+
+} /* end of OGRXLSX namespace */

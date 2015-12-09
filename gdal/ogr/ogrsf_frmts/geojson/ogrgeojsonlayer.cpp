@@ -167,6 +167,7 @@ void OGRGeoJSONLayer::DetectGeometryType()
                 CPLDebug( "GeoJSON",
                     "Detected layer of mixed-geometry type features." );
                 GetLayerDefn()->SetGeomType( DefaultGeometryType );
+                delete poFeature;
                 break;
             }
         }

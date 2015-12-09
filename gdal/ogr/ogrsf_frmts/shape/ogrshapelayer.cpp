@@ -629,7 +629,7 @@ OGRErr OGRShapeLayer::SetAttributeFilter( const char * pszAttributeFilter )
 /************************************************************************/
 /*                           SetNextByIndex()                           */
 /*                                                                      */
-/*      If we already have an FID list, we can easily resposition       */
+/*      If we already have an FID list, we can easily reposition        */
 /*      ourselves in it.                                                */
 /************************************************************************/
 
@@ -1560,9 +1560,9 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     }
 
     while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 10 )
-        sprintf( szNewFieldName, "%.8s_%.1d", pszTmp, nRenameNum++ );
+        snprintf( szNewFieldName, sizeof(szNewFieldName), "%.8s_%.1d", pszTmp, nRenameNum++ );
     while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 100 )
-        sprintf( szNewFieldName, "%.8s%.2d", pszTmp, nRenameNum++ );
+        snprintf( szNewFieldName, sizeof(szNewFieldName), "%.8s%.2d", pszTmp, nRenameNum++ );
 
     CPLFree( pszTmp );
     pszTmp = NULL;

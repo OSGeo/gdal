@@ -215,8 +215,8 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 
     VSILFILE* fp = (VSILFILE* )fpInL;
 
-    TIFFDirEntry *poTIFFDirEntry;
-    TIFFDirEntry *poTIFFDir;
+    GDALEXIFTIFFDirEntry *poTIFFDirEntry;
+    GDALEXIFTIFFDirEntry *poTIFFDir;
     const struct tagname *poExifTags ;
     const struct intr_tag *poInterTags = intr_tags;
     const struct gpsname *poGPSTags;
@@ -249,13 +249,13 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
         return CE_Warning;
     }
 
-    poTIFFDir = (TIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(TIFFDirEntry));
+    poTIFFDir = (GDALEXIFTIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(GDALEXIFTIFFDirEntry));
 
 /* -------------------------------------------------------------------- */
 /*      Read all directory entries                                      */
 /* -------------------------------------------------------------------- */
-    n = static_cast<int>(VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp));
-    if (n != nEntryCount*sizeof(TIFFDirEntry))
+    n = static_cast<int>(VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(GDALEXIFTIFFDirEntry),fp));
+    if (n != nEntryCount*sizeof(GDALEXIFTIFFDirEntry))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Could not read all directories");
@@ -357,7 +357,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
-        int nDataWidth = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
+        int nDataWidth = TIFFDataWidth((GDALEXIFTIFFDataType) poTIFFDirEntry->tdir_type);
         space = poTIFFDirEntry->tdir_count * nDataWidth;
 
         /* Previous multiplication could overflow, hence this additional check */

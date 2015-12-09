@@ -36,10 +36,10 @@ CPL_CVSID("$Id: ogrdxflayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
 /*                         OGRDXFBlocksLayer()                          */
 /************************************************************************/
 
-OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDS )
+OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     ResetReading();
 

@@ -175,7 +175,7 @@ void CPCIDSK_ARRAY::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSK_ARRAY::Synchronize()

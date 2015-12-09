@@ -39,10 +39,10 @@ CPL_CVSID("$Id$");
 /*                            OGRDXFLayer()                             */
 /************************************************************************/
 
-OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDS )
+OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     iNextFID = 0;
 
@@ -291,12 +291,12 @@ private:
     double adfAY[3];
     
 public:
-    OCSTransformer( double adfN[3] ) {
+    OCSTransformer( double adfNIn[3] ) {
         static const double dSmall = 1.0 / 64.0;
         static const double adfWZ[3] = {0, 0, 1};
         static const double adfWY[3] = {0, 1, 0};
 
-        memcpy( this->adfN, adfN, sizeof(double)*3 );
+        memcpy( this->adfN, adfNIn, sizeof(double)*3 );
 
     if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
             CrossProduct(adfWY, adfN, adfAX);
@@ -1343,7 +1343,7 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
 
 {
     char szLineBuf[257];
-    int nCode, nDegree = -1, nFlags = -1, bClosed = FALSE, i;
+    int nCode, nDegree = -1, bClosed = FALSE, i;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     std::vector<double> adfControlPoints;
 
@@ -1366,10 +1366,12 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
             break;
 
           case 70:
-            nFlags = atoi(szLineBuf);
-            if( nFlags & 1 )
+          {
+            int l_nFlags = atoi(szLineBuf);
+            if( l_nFlags & 1 )
                 bClosed = TRUE;
             break;
+          }
 
           case 71:
             nDegree = atoi(szLineBuf);

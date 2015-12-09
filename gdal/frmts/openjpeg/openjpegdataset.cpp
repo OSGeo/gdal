@@ -3486,7 +3486,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             GUInt32 nBoxSize32 = (GUInt32)nBoxSize;
             if( (vsi_l_offset)nBoxSize32 != nBoxSize )
             {
-                /*  Shouldn't happen hopefully */
+                /*  Should not happen hopefully */
                 if( (bGeoreferencingCompatOfGeoJP2 || poGMLJP2Box) && bGeoBoxesAfter )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
