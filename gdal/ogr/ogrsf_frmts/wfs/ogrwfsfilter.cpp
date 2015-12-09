@@ -300,8 +300,8 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
             return FALSE;
         osFilter += CPLSPrintf("<%sLiteral>", psOptions->pszNSPrefix);
 
-        /* Escape value according to above special characters */
-        /* For URL compatibility reason, we remap the OGR SQL '%' wildchard into '*' */
+        // Escape value according to above special characters.  For URL
+        // compatibility reason, we remap the OGR SQL '%' wildcard into '*'.
         i = 0;
         ch = poExpr->papoSubExpr[1]->string_value[i];
         if (ch == '\'' || ch == '"')

@@ -4561,7 +4561,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
         for( i = 0; i < GetLayerCount(); i++ )
         {
             poLayer = GetLayer(i);
-        
+
             if( EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
         }
@@ -4588,7 +4588,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we weren't given a field name, drop all indexes.             */
+/*      If we were not given a field name, drop all indexes.            */
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 

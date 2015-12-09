@@ -159,8 +159,8 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptionsIn,
     if( poReader == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be ILI1 but the ILI1 reader can't\n"
-                  "be instantiated, likely because Xerces support wasn't\n"
+                  "File %s appears to be ILI1 but the ILI1 reader cannot\n"
+                  "be instantiated, likely because Xerces support was not\n"
                   "configured in.",
                   pszNewName );
         return FALSE;
@@ -180,9 +180,9 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptionsIn,
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
     }
 
-    //Parse model and read data - without surface join and area polygonizing
+    // Parse model and read data - without surface join and area polygonizing.
     poReader->ReadFeatures();
-    
+
     if( bResetConfigOption )
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", NULL);
 

@@ -726,7 +726,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
             errSprintf ("Missing info on radius of Earth.\n");
             return -2;
          }
-         /* Check if our m assumption was valid. If it wasn't, they give us
+         /* Check if our m assumption was valid. If it was not, they give us
           * 6371 km, which we convert to 6.371 < 6.4 */
          if (meta->gds.majEarth < 6.4) {
             meta->gds.majEarth = meta->gds.majEarth * 1000.;
@@ -764,7 +764,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
          }
-         /* Check if our km assumption was valid. If it wasn't, they give us
+         /* Check if our km assumption was valid. If it was not, they give us
           * 6371000 m, which is > 6400. */
          if (meta->gds.majEarth > 6400) {
             meta->gds.majEarth = meta->gds.majEarth / 1000.;
@@ -789,7 +789,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
          }
-         /* Check if our m assumption was valid. If it wasn't, they give us
+         /* Check if our m assumption was valid. If it was not, they give us
           * 6371 km, which we convert to 6.371 < 6.4 */
          if (meta->gds.majEarth < 6.4) {
             meta->gds.majEarth = meta->gds.majEarth * 1000.;

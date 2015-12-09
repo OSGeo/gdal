@@ -499,7 +499,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( EQUAL(oField.GetNameRef(),"OGC_FID") )
             continue;
 
-        /* config option just in case we wouldn't want that in some cases */
+        /* Config option just in case we would not want that in some cases */
         if( (eFieldType == OFTTime || eFieldType == OFTDate ||
              eFieldType == OFTDateTime) &&
             CSLTestBoolean(

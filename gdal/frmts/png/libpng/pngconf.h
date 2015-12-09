@@ -361,7 +361,7 @@
 
 #ifdef PNG_SETJMP_SUPPORTED
 /* This is an attempt to force a single setjmp behaviour on Linux.  If
- * the X config stuff didn't define _BSD_SOURCE we wouldn't need this.
+ * the X config stuff did not define _BSD_SOURCE we would not need this.
  *
  * You can bypass this test if you know that your application uses exactly
  * the same setjmp.h that was included when libpng was built.  Only define

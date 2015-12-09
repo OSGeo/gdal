@@ -5,7 +5,7 @@ http://sourceforge.net/projects/giflib
 
 Changes:
  o Select only lib files needed.
- o Hacked in O_BINARY support whereever O_BINARY is defined.
+ o Hacked in O_BINARY support wherever O_BINARY is defined.
  o Modify include section of c files
  o Apply patch for http://trac.osgeo.org/gdal/ticket/2542
  o Apply Debian 01-cve.dpatch to fix CVE-2005-2974 and CVE-2005-3350

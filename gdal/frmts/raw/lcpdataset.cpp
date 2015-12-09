@@ -1234,7 +1234,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
     /*
-    ** Set the linear units if the metadata item wasn't already set, and we
+    ** Set the linear units if the metadata item was not already set, and we
     ** have an SRS.
     */
     if( bSetLinearUnits && !EQUAL( pszWkt, "" ) )

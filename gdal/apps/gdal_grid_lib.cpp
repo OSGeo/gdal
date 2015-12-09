@@ -234,7 +234,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
 /*                          ProcessGeometry()                           */
 /*                                                                      */
 /*  Extract point coordinates from the geometry reference and set the   */
-/*  Z value as requested. Test whther we are in the clipped region      */
+/*  Z value as requested. Test whether we are in the clipped region     */
 /*  before processing.                                                  */
 /************************************************************************/
 

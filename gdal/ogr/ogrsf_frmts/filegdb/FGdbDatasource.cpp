@@ -387,7 +387,7 @@ bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
 
                 // do something with it
                 // For now, we just ignore dataset containers and only open the children
-                //std::wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << std::endl;
+                // std::wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << std::endl;
 
                 if (!LoadLayersOld(datasetTypes, childDatasets[childDatasetIndex]))
                     errorsEncountered = true;
@@ -399,7 +399,7 @@ bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
 
     if ((!childrenFound) && parent != L"\\")
     {
-        //wcout << "Opening " << parent << "...";
+        // wcout << "Opening " << parent << "...";
         Table* pTable = new Table;
         if (FAILED(hr = m_pGeodatabase->OpenTable(parent,*pTable)))
         {

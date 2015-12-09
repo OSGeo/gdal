@@ -449,7 +449,7 @@ Version 1.2.4 (2003-07-23)
 
  - mitab_spatialref.cpp, mitab_coodsys.cpp: Fixed up regional mercator logic.
    It was screwing up transverse mercator with non-zero latitude when writing
-   to tab, and wasn't being written properly to .mif. NFW
+   to tab, and was not being written properly to .mif. NFW
 
  - mitab_feature.cpp: fixed C++ style true/false where TRUE/FALSE required.
    As per GDAL Bugzilla 311.  NFW

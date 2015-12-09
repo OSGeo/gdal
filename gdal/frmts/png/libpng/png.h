@@ -126,7 +126,7 @@
 
 /*
  * The contributing authors would like to thank all those who helped
- * with testing, bug fixes, and patience.  This wouldn't have been
+ * with testing, bug fixes, and patience.  This would not have been
  * possible without all of you.
  *
  * Thanks to Frank J. T. Wojcik for helping with the documentation.

@@ -1200,7 +1200,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         }
     }
 
-    // In case NBITS wasn't set on the spectral bands, clamp the values
+    // In case NBITS was not set on the spectral bands, clamp the values
     // if overshoot might have occurred.
     int nBitDepth = psOptions->nBitDepth;
     if( nBitDepth && (eResampleAlg == GRIORA_Cubic ||

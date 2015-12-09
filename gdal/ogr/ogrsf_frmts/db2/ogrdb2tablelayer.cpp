@@ -370,8 +370,8 @@ int OGRDB2TableLayer::FetchSRSId()
             nSRSId = atoi( oStatement.GetColData( 0 ) );
     }
 
-// if it wasn't found there, try to get it from the data table.
-// this only works if there is spatial data in the first row
+// If it was not found there, try to get it from the data table.
+// This only works if there is spatial data in the first row.
     if (nSRSId < 0 )
     {
         oStatement.Clear();

@@ -835,7 +835,7 @@ def ogr_pg_17():
     return 'success'
 
 ###############################################################################
-# Test getting a layer by name that wasn't previously a layer.
+# Test getting a layer by name that was not previously a layer.
 
 def ogr_pg_18():
 

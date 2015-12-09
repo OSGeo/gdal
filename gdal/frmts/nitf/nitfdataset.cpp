@@ -1183,8 +1183,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
              ( poDS->bGotGeoTransform == FALSE ) &&
              nGCPCount >= 4 )
     {
-        CPLDebug( "GDAL", 
-                  "NITFDataset::Open() wasn't able to derive a first order\n"
+        CPLDebug( "GDAL",
+                  "NITFDataset::Open() was not able to derive a first order\n"
                   "geotransform.  It will be returned as GCPs.");
 
         poDS->nGCPCount = nGCPCount;

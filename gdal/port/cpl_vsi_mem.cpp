@@ -290,7 +290,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
             errno = EACCES;
             return -1;
         }
-        else // Writeable files are zero-extended by seek past end.
+        else // Writable files are zero-extended by seek past end.
         {
             bExtendFileAtNextWrite = TRUE;
         }

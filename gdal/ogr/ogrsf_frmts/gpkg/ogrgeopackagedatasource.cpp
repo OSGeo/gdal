@@ -108,7 +108,7 @@ static const TilingSchemeDefinition asTilingShemes[] =
 /* via a PRAGMA statement, so we have to write directly into the */
 /* file header here. */
 /* We do this at the *end* of initialization so that there is */
-/* data to write down to a file, and we'll have a writeable file */
+/* data to write down to a file, and we will have a writable file */
 /* once we close the SQLite connection */
 OGRErr GDALGeoPackageDataset::SetApplicationId()
 {

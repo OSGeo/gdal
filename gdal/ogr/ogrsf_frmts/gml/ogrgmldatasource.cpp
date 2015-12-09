@@ -590,10 +590,10 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                 m_bGetSecondaryGeometryOption );
     if( poReader == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s appears to be GML but the GML reader can't\n"
-                  "be instantiated, likely because Xerces or Expat support wasn't\n"
-                  "configured in.", 
+                  "be instantiated, likely because Xerces or Expat support was\n"
+                  "not configured in.",
                   pszFilename );
         VSIFCloseL( fp );
         return false;
