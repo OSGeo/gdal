@@ -43,7 +43,7 @@
 ## @class Geo::OSR::SpatialReference
 # @brief A spatial reference system.
 #
-# <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
+# <a href="http://www.gdal.ogr/classOGRSpatialReference.html">Documentation
 # of the underlying C++ class at www.gdal.org</a>
 
 ## @ignore ImportFromEPSGA
@@ -76,7 +76,7 @@
 # - ERMapper: listref: [Projection, Datum, Units]
 # - MapInfoCS: MapInfo style co-ordinate system definition
 #
-# For more information, consult the import methods in <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">OGR documentation</a>.
+# For more information, consult the import methods in <a href="http://www.gdal.ogr/classOGRSpatialReference.html">OGR documentation</a>.
 #
 # @note ImportFrom* methods also exist but are not documented here.
 #
