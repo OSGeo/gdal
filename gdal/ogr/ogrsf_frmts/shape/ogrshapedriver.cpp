@@ -237,30 +237,28 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 void RegisterOGRShape()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "ESRI Shapefile" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "ESRI Shapefile" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "ESRI Shapefile" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "ESRI Shapefile" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_shape.html" );
+    poDriver->SetDescription( "ESRI Shapefile" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Shapefile" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_shape.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DBF with any encoding supported by CPLRecode or to \"\" to avoid any recoding'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "  <Option name='ADJUST_TYPE' type='boolean' description='Whether to read whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer field types if possible' default='NO'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>" );
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='SHPT' type='string-select' description='type of shape' default='automatically detected'>"
 "    <Value>POINT</Value>"
@@ -280,16 +278,15 @@ void RegisterOGRShape()
 "  <Option name='SPATIAL_INDEX' type='boolean' description='To create a spatial index.' default='NO'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRShapeDriverOpen;
-        poDriver->pfnIdentify = OGRShapeDriverIdentify;
-        poDriver->pfnCreate = OGRShapeDriverCreate;
-        poDriver->pfnDelete = OGRShapeDriverDelete;
+    poDriver->pfnOpen = OGRShapeDriverOpen;
+    poDriver->pfnIdentify = OGRShapeDriverIdentify;
+    poDriver->pfnCreate = OGRShapeDriverCreate;
+    poDriver->pfnDelete = OGRShapeDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -139,23 +139,20 @@ void RegisterOGRMySQL()
 {
     if (! GDAL_CHECK_VERSION("MySQL driver"))
         return;
-  
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "MySQL" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "MySQL" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "MySQL" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "MySQL" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_mysql.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MYSQL:" );
+    poDriver->SetDescription( "MySQL" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MySQL" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mysql.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MYSQL:" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='DBNAME' type='string' description='Database name' required='true'/>"
 "  <Option name='PORT' type='int' description='Port'/>"
@@ -165,9 +162,10 @@ void RegisterOGRMySQL()
 "  <Option name='TABLES' type='string' description='Restricted set of tables to list (comma separated)'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
     "  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
@@ -178,16 +176,17 @@ void RegisterOGRMySQL()
     "  <Option name='FID64' type='boolean' description='Whether to create the FID column with BIGINT type to handle 64bit wide ids' default='NO'/>"
     "  <Option name='ENGINE' type='string' description='Database engine to use.'/>"
     "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time Binary" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
 
-        poDriver->pfnOpen = OGRMySQLDriverOpen;
-        poDriver->pfnIdentify = OGRMySQLDriverIdentify;
-        poDriver->pfnCreate = OGRMySQLDriverCreate;
-        poDriver->pfnUnloadDriver = OGRMySQLDriverUnload;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGRMySQLDriverOpen;
+    poDriver->pfnIdentify = OGRMySQLDriverIdentify;
+    poDriver->pfnCreate = OGRMySQLDriverCreate;
+    poDriver->pfnUnloadDriver = OGRMySQLDriverUnload;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

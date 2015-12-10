@@ -98,23 +98,21 @@ static CPLErr OGRGPXDriverDelete( const char *pszFilename )
 void RegisterOGRGPX()
 
 {
-    if (! GDAL_CHECK_VERSION("OGR/GPX driver"))
+    if( !GDAL_CHECK_VERSION("OGR/GPX driver") )
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "GPX" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "GPX" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "GPX" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GPX" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpx" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_gpx.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "GPX" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPX" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpx" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gpx.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 #ifdef WIN32
 "  <Option name='LINEFORMAT' type='string-select' description='end-of-line sequence' default='CRLF'>"
@@ -129,18 +127,17 @@ void RegisterOGRGPX()
 "  <Option name='GPX_EXTENSIONS_NS_URL' type='string' description='Namespace URI' default='http://osgeo.org/gdal'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='FORCE_GPX_TRACK' type='boolean' description='Whether to force layers with geometries of type wkbLineString as tracks' default='NO'/>"
 "  <Option name='FORCE_GPX_ROUTE' type='boolean' description='Whether to force layers with geometries of type wkbMultiLineString (with single line string in them) as routes' default='NO'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRGPXDriverOpen;
-        poDriver->pfnCreate = OGRGPXDriverCreate;
-        poDriver->pfnDelete = OGRGPXDriverDelete;
+    poDriver->pfnOpen = OGRGPXDriverOpen;
+    poDriver->pfnCreate = OGRGPXDriverCreate;
+    poDriver->pfnDelete = OGRGPXDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

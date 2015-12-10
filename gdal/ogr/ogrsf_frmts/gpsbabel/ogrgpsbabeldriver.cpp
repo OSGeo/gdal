@@ -178,37 +178,33 @@ void RegisterOGRGPSBabel()
     if (! GDAL_CHECK_VERSION("OGR/GPSBabel driver"))
         return;
 
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "GPSBabel" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GPSBabel" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GPSBabel" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GPSBabel" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_gpsbabel.html" );
+    poDriver->SetDescription( "GPSBabel" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPSBabel" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gpsbabel.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GPSBABEL:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GPSBABEL:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='FILENAME' type='string' description='Filename to open'/>"
 "  <Option name='GPSBABEL_DRIVER' type='string' description='Name of the GPSBabel to use'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='GPSBABEL_DRIVER' type='string' description='Name of the GPSBabel to use'/>"
 "</CreationOptionList>");
 
-        poDriver->pfnOpen = OGRGPSBabelDriverOpen;
-        poDriver->pfnIdentify = OGRGPSBabelDriverIdentify;
-        poDriver->pfnCreate = OGRGPSBabelDriverCreate;
-        poDriver->pfnDelete = OGRGPSBabelDriverDelete;
+    poDriver->pfnOpen = OGRGPSBabelDriverOpen;
+    poDriver->pfnIdentify = OGRGPSBabelDriverIdentify;
+    poDriver->pfnCreate = OGRGPSBabelDriverCreate;
+    poDriver->pfnDelete = OGRGPSBabelDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

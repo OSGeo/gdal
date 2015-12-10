@@ -113,11 +113,9 @@ void RegisterOGRGMT()
 
 {
     OGRSFDriver* poDriver = new OGRGmtDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "GMT ASCII Vectors (.gmt)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GMT ASCII Vectors (.gmt)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gmt" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_gmt.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gmt.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

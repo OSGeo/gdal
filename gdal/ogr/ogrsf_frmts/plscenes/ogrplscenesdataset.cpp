@@ -582,23 +582,18 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
 void RegisterOGRPLSCENES()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "PLSCENES" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "PLSCENES" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "PLSCENES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Planet Labs Scenes API" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "drv_plscenes.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLSCENES:" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetDescription( "PLSCENES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Planet Labs Scenes API" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_plscenes.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLSCENES:" );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='API_KEY' type='string' description='Account API key' required='true'/>"
 "  <Option name='SCENE' type='string' description='Scene id (for raster fetching)'/>"
@@ -606,9 +601,8 @@ void RegisterOGRPLSCENES()
 "  <Option name='RANDOM_ACCESS' type='boolean' description='Whether raster should be accessed in random access mode (but with potentially not optimal throughput). If no, in-memory ingestion is done' default='YES'/>"
 "</OpenOptionList>");
 
-        poDriver->pfnOpen = OGRPLScenesDataset::Open;
-        poDriver->pfnIdentify = OGRPLScenesDataset::Identify;
+    poDriver->pfnOpen = OGRPLScenesDataset::Open;
+    poDriver->pfnIdentify = OGRPLScenesDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

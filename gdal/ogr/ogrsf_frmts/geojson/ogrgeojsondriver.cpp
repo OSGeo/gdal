@@ -506,11 +506,9 @@ void RegisterOGRGeoJSON()
 
     poDriver->SetDescription( "GeoJSON" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "GeoJSON" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoJSON" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json geojson topojson" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drv_geojson.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_geojson.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
@@ -520,7 +518,8 @@ void RegisterOGRGeoJSON()
 "  <Option name='NATIVE_DATA' type='boolean' description='Whether to store the native JSon representation at FeatureCollection and Feature level' default='NO'/>"
 "</OpenOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
@@ -531,8 +530,9 @@ void RegisterOGRGeoJSON()
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String IntegerList Integer64List RealList StringList" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String IntegerList "
+                               "Integer64List RealList StringList" );
 
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;

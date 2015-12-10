@@ -102,21 +102,18 @@ static GDALDataset *OGRDGNDriverCreate( const char * pszName,
 void RegisterOGRDGN()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "DGN" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "DGN" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "DGN" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Microstation DGN" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dgn" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_dgn.html" );
+    poDriver->SetDescription( "DGN" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Microstation DGN" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dgn" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_dgn.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='3D' type='boolean' description='whether 2D (seed_2d.dgn) or 3D (seed_3d.dgn) seed file should be used. This option is ignored if the SEED option is provided'/>"
 "  <Option name='SEED' type='string' description='Filename of seed file to use'/>"
@@ -131,12 +128,12 @@ void RegisterOGRDGN()
 "  <Option name='ORIGIN' type='string' description='Value as x,y,z. Override the origin of the design plane. By default the origin from the seed file is used.'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                               "<LayerCreationOptionList/>" );
 
-        poDriver->pfnOpen = OGRDGNDriverOpen;
-        poDriver->pfnIdentify = OGRDGNDriverIdentify;
-        poDriver->pfnCreate = OGRDGNDriverCreate;
+    poDriver->pfnOpen = OGRDGNDriverOpen;
+    poDriver->pfnIdentify = OGRDGNDriverIdentify;
+    poDriver->pfnCreate = OGRDGNDriverCreate;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

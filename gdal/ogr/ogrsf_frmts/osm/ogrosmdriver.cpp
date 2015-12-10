@@ -85,25 +85,22 @@ static GDALDataset *OGROSMDriverOpen( GDALOpenInfo* poOpenInfo )
 
 void RegisterOGROSM()
 {
-    if (! GDAL_CHECK_VERSION("OGR/OSM driver"))
+    if( !GDAL_CHECK_VERSION("OGR/OSM driver") )
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "OSM" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "OSM" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "OSM" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OpenStreetMap XML and PBF" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "osm pbf" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_osm.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "OSM" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OpenStreetMap XML and PBF" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "osm pbf" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_osm.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='CONFIG_FILE' type='string' description='Configuration filename.'/>"
 "  <Option name='USE_CUSTOM_INDEXING' type='boolean' description='Whether to enable custom indexing.' default='YES'/>"
@@ -112,10 +109,9 @@ void RegisterOGROSM()
 "  <Option name='INTERLEAVED_READING' type='boolean' description='Whether to enable interleaved reading.' default='NO'/>"
 "</OpenOptionList>" );
 
-        poDriver->pfnOpen = OGROSMDriverOpen;
-        poDriver->pfnIdentify = OGROSMDriverIdentify;
+    poDriver->pfnOpen = OGROSMDriverOpen;
+    poDriver->pfnIdentify = OGROSMDriverIdentify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

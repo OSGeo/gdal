@@ -224,28 +224,23 @@ extern "C"
 void RegisterOGRTAB()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "MapInfo File" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "MapInfo File" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "MapInfo File" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "MapInfo File" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tab mif mid" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_mitab.html" );
-
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "MapInfo File" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MapInfo File" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tab mif mid" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mitab.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='BOUNDS' type='string' description='Custom bounds. Expect format is xmin,ymin,xmax,ymax'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='FORMAT' type='string-select' description='type of MapInfo format'>"
 "    <Value>MIF</Value>"
@@ -256,17 +251,17 @@ void RegisterOGRTAB()
 "    <Value>OPTIMIZED</Value>"
 "  </Option>"
 "</CreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date DateTime Time" );
 
-        poDriver->pfnOpen = OGRTABDriverOpen;
-        poDriver->pfnIdentify = OGRTABDriverIdentify;
-        poDriver->pfnCreate = OGRTABDriverCreate;
-        poDriver->pfnDelete = OGRTABDriverDelete;
-        poDriver->pfnUnloadDriver = OGRTABDriverUnload;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Real String Date DateTime Time" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGRTABDriverOpen;
+    poDriver->pfnIdentify = OGRTABDriverIdentify;
+    poDriver->pfnCreate = OGRTABDriverCreate;
+    poDriver->pfnDelete = OGRTABDriverDelete;
+    poDriver->pfnUnloadDriver = OGRTABDriverUnload;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 
 }

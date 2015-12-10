@@ -121,12 +121,14 @@ void RegisterOGRMSSQLSpatial()
 {
     if (! GDAL_CHECK_VERSION("OGR/MSSQLSpatial driver"))
         return;
+
     OGRSFDriver* poDriver = new OGRMSSQLSpatialDriver;
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Microsoft SQL Server Spatial Database" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_mssqlspatial.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+                               "Microsoft SQL Server Spatial Database" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mssqlspatial.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
@@ -151,9 +153,12 @@ void RegisterOGRMSSQLSpatial()
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
 "</LayerCreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date Time DateTime Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date Time "
+                               "DateTime Binary" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
- 	poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
- 	poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

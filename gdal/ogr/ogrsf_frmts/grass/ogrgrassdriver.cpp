@@ -75,9 +75,9 @@ OGRDataSource *OGRGRASSDriver::Open( const char * pszFilename,
 OGRDataSource *OGRGRASSDriver::CreateDataSource( const char * pszName,
                                                  char **papszOptions )
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
-	      "CreateDataSource is not supported by GRASS driver.\n" );
-            
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "CreateDataSource is not supported by GRASS driver.\n" );
+
     return NULL;
 }
 
@@ -87,7 +87,7 @@ OGRDataSource *OGRGRASSDriver::CreateDataSource( const char * pszName,
 OGRErr OGRGRASSDriver::DeleteDataSource( const char *pszDataSource )
 {
     CPLError( CE_Failure, CPLE_AppDefined,
-	      "DeleteDataSource is not supported by GRASS driver" );
+              "DeleteDataSource is not supported by GRASS driver" );
 
     return OGRERR_FAILURE;
 }
@@ -105,23 +105,19 @@ int OGRGRASSDriver::TestCapability( const char * pszCap )
 /************************************************************************/
 void RegisterOGRGRASS()
 {
-    OGRGRASSDriver	*poDriver;
-
     if (! GDAL_CHECK_VERSION("OGR/GRASS driver"))
         return;
 
-    if( GDALGetDriverByName( "OGR_GRASS" ) == NULL )
-    {
-        poDriver = new OGRGRASSDriver();
-        
-        poDriver->SetDescription( "GRASS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "GRASS Vectors (5.7+)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "drv_grass.html" );
+    if( GDALGetDriverByName( "OGR_GRASS" ) != NULL )
+        return;
 
-        OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
-    }
+    OGRGRASSDriver *poDriver = new OGRGRASSDriver();
+
+    poDriver->SetDescription( "GRASS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS Vectors (5.7+)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_grass.html" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
 

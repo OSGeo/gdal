@@ -239,29 +239,27 @@ static CPLErr OGRSQLiteDriverDelete( const char *pszName )
 void RegisterOGRSQLite()
 
 {
-    if (! GDAL_CHECK_VERSION("SQLite driver"))
+    if( !GDAL_CHECK_VERSION("SQLite driver") )
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "SQLite" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "SQLite" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "SQLite" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "SQLite / Spatialite" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_sqlite.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sqlite db" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetDescription( "SQLite" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SQLite / Spatialite" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sqlite.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sqlite db" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
 "  <Option name='LIST_VIRTUAL_OGR' type='boolean' description='Whether VirtualOGR virtual tables should be listed. Should only be enabled on trusted datasources to avoid potential safety issues' default='NO'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 #ifdef HAVE_SPATIALITE
 "  <Option name='SPATIALITE' type='boolean' description='Whether to create a Spatialite database' default='NO'/>"
@@ -270,7 +268,7 @@ void RegisterOGRSQLite()
 "  <Option name='INIT_WITH_EPSG' type='boolean' description='Whether to insert the content of the EPSG CSV files into the spatial_ref_sys table ' default='NO'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='FORMAT' type='string-select' description='Format of geometry columns'>"
 "    <Value>WKB</Value>"
@@ -290,20 +288,20 @@ void RegisterOGRSQLite()
 "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
 "  <Option name='FID' type='string' description='Name of the FID column to create' default='OGC_FID'/>"
 "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time Binary" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRSQLiteDriverOpen;
-        poDriver->pfnIdentify = OGRSQLiteDriverIdentify;
-        poDriver->pfnCreate = OGRSQLiteDriverCreate;
-        poDriver->pfnDelete = OGRSQLiteDriverDelete;
-        poDriver->pfnUnloadDriver = OGRSQLiteDriverUnload;
+    poDriver->pfnOpen = OGRSQLiteDriverOpen;
+    poDriver->pfnIdentify = OGRSQLiteDriverIdentify;
+    poDriver->pfnCreate = OGRSQLiteDriverCreate;
+    poDriver->pfnDelete = OGRSQLiteDriverDelete;
+    poDriver->pfnUnloadDriver = OGRSQLiteDriverUnload;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

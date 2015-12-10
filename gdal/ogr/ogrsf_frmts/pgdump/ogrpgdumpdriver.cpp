@@ -65,21 +65,18 @@ static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
 void RegisterOGRPGDump()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "PGDUMP" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "PGDUMP" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "PGDUMP" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                    "PostgreSQL SQL dump" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                    "drv_pgdump.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sql" );
+    poDriver->SetDescription( "PGDUMP" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PostgreSQL SQL dump" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pgdump.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sql" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
     "<CreationOptionList>"
     #ifdef WIN32
     "  <Option name='LINEFORMAT' type='string-select' description='end-of-line sequence' default='CRLF'>"
@@ -91,7 +88,7 @@ void RegisterOGRPGDump()
     "  </Option>"
     "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='GEOM_TYPE' type='string-select' description='Format of geometry columns' default='geometry'>"
     "    <Value>geometry</Value>"
@@ -125,16 +122,18 @@ void RegisterOGRPGDump()
     "  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=pg_field_type (separated by comma) to force the PG column type of fields to be created'/>"
     "  <Option name='POSTGIS_VERSION' type='string' description='Can be set to 2.0 or 2.2 for PostGIS 2.0/2.2 compatibility. Important to set it correctly if using non-linear geometry types'/>"
     "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time IntegerList Integer64List RealList "
+                               "StringList Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->pfnCreate = OGRPGDumpDriverCreate;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnCreate = OGRPGDumpDriverCreate;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

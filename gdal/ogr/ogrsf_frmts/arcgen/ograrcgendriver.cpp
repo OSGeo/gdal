@@ -111,24 +111,18 @@ static GDALDataset *OGRARCGENDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRARCGEN()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "ARCGEN" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "ARCGEN" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "ARCGEN" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Arc/Info Generate" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_arcgen.html" );
+    poDriver->SetDescription( "ARCGEN" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Arc/Info Generate" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_arcgen.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRARCGENDriverOpen;
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
-        poDriver->pfnOpen = OGRARCGENDriverOpen;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

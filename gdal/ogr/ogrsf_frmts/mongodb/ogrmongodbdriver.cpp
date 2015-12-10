@@ -2770,28 +2770,25 @@ static GDALDataset* OGRMongoDBDriverCreate( const char * pszName,
 
 void RegisterOGRMongoDB()
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "MongoDB" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "MongoDB" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "MongoDB" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "MongoDB" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_mongodb.html" );
+    poDriver->SetDescription( "MongoDB" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MongoDB" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mongodb.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MongoDB:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MongoDB:" );
 
 #if 0
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-"<CreationOptionList>"
-"</CreationOptionList>");
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList>"
+                               "</CreationOptionList>");
 #endif
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing collection with the layer name to be created' default='NO'/>"
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='geometry'/>"
@@ -2802,7 +2799,7 @@ void RegisterOGRMongoDB()
 "  <Option name='IGNORE_SOURCE_ID' type='boolean' description='Whether to ignore _id field in features passed to CreateFeature()' default='NO'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='URI' type='string' description='Connection URI' />"
 "  <Option name='HOST' type='string' description='Server hostname' />"
@@ -2828,13 +2825,12 @@ void RegisterOGRMongoDB()
 "  <Option name='BULK_INSERT' type='boolean' description='Whether to use bulk insert for feature creation' default='YES'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
 
-        poDriver->pfnOpen = OGRMongoDBDriverOpen;
-        poDriver->pfnIdentify = OGRMongoDBDriverIdentify;
-        poDriver->pfnUnloadDriver = OGRMongoDBDriverUnload;
-        //poDriver->pfnCreate = OGRMongoDBDriverCreate;
+    poDriver->pfnOpen = OGRMongoDBDriverOpen;
+    poDriver->pfnIdentify = OGRMongoDBDriverIdentify;
+    poDriver->pfnUnloadDriver = OGRMongoDBDriverUnload;
+    //poDriver->pfnCreate = OGRMongoDBDriverCreate;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

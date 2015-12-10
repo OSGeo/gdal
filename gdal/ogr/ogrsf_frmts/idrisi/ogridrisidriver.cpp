@@ -101,8 +101,7 @@ void RegisterOGRIdrisi()
 
 {
     OGRSFDriver* poDriver = new OGRIdrisiDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Idrisi Vector (.vct)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Idrisi Vector (.vct)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vct" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);

@@ -101,25 +101,20 @@ static GDALDataset *OGRGTMDriverCreate( const char * pszName,
 
 void RegisterOGRGTM()
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "GPSTrackMaker" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GPSTrackMaker" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GPSTrackMaker" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GPSTrackMaker" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gtm gtz" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_gtm.html" );
+    poDriver->SetDescription( "GPSTrackMaker" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPSTrackMaker" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gtm gtz" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gtm.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRGTMDriverOpen;
+    poDriver->pfnCreate = OGRGTMDriverCreate;
 
-        poDriver->pfnOpen = OGRGTMDriverOpen;
-        poDriver->pfnCreate = OGRGTMDriverCreate;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -117,9 +117,7 @@ void RegisterOGRGFT()
 
 {
     OGRSFDriver* poDriver = new OGRGFTDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Google Fusion Tables" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_gft.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Google Fusion Tables" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gft.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

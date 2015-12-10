@@ -106,24 +106,19 @@ static GDALDataset *OGROpenAirDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGROpenAir()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "OpenAir" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "OpenAir" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "OpenAir" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OpenAir" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_openair.html" );
+    poDriver->SetDescription( "OpenAir" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OpenAir" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_openair.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGROpenAirDriverOpen;
 
-        poDriver->pfnOpen = OGROpenAirDriverOpen;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

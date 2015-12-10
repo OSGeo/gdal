@@ -66,24 +66,20 @@ static GDALDataset *OGRHTFDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRHTF()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "HTF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "HTF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "HTF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+    poDriver->SetDescription( "HTF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Hydrographic Transfer Vector" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_htf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_htf.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRHTFDriverOpen;
 
-        poDriver->pfnOpen = OGRHTFDriverOpen;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

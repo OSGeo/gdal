@@ -88,25 +88,21 @@ static GDALDataset* OGRElasticSearchDriverCreate( const char * pszName,
 void RegisterOGRElastic() {
     if (!GDAL_CHECK_VERSION("OGR/Elastic Search driver"))
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "ElasticSearch" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "ElasticSearch" ) != NULL )
+      return;
 
-        poDriver->SetDescription( "ElasticSearch" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                    "Elastic Search" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                    "drv_elasticsearch.html" );
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "ES:" );
+    poDriver->SetDescription( "ElasticSearch" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Elastic Search" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_elasticsearch.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "ES:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-    "<CreationOptionList/>");
-
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='INDEX_NAME' type='string' description='Name of the index to create (or reuse). By default the index name is the layer name.'/>"
     "  <Option name='MAPPING_NAME' type='string' description='Name of the mapping type within the index.' default='FeatureCollection'/>"
@@ -131,7 +127,7 @@ void RegisterOGRElastic() {
     "  <Option name='FID' type='string' description='Field name, with integer values, to use as FID' default='ogc_fid'/>"
     "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='HOST' type='string' description='Server hostname' default='localhost'/>"
 "  <Option name='PORT' type='integer' description='Server port' default='9200'/>"
@@ -144,12 +140,14 @@ void RegisterOGRElastic() {
 "  <Option name='FID' type='string' description='Field name, with integer values, to use as FID' default='ogc_fid'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time IntegerList Integer64List RealList "
+                               "StringList Binary" );
 
-        poDriver->pfnIdentify = OGRElasticSearchDriverIdentify;
-        poDriver->pfnOpen = OGRElasticSearchDriverOpen;
-        poDriver->pfnCreate = OGRElasticSearchDriverCreate;
+    poDriver->pfnIdentify = OGRElasticSearchDriverIdentify;
+    poDriver->pfnOpen = OGRElasticSearchDriverOpen;
+    poDriver->pfnCreate = OGRElasticSearchDriverCreate;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

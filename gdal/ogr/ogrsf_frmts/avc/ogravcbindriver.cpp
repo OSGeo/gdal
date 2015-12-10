@@ -100,21 +100,17 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRAVCBin()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "AVCBin" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "AVCBin" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "AVCBin" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Arc/Info Binary Coverage" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_avcbin.html" );
+    poDriver->SetDescription( "AVCBin" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Arc/Info Binary Coverage" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_avcbin.html" );
 
-        poDriver->pfnOpen = OGRAVCBinDriverOpen;
+    poDriver->pfnOpen = OGRAVCBinDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
