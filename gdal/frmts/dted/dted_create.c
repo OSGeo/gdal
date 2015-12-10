@@ -94,6 +94,8 @@ static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... )
 {
     va_list args;
     char    szWork[512];
+    // Quiet coverity by staring off nul terminated.
+    szWork[0] = '\0';
 
     va_start(args, pszFormat);
     CPLvsnprintf( szWork, sizeof(szWork), pszFormat, args );
