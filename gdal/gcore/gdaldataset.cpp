@@ -786,7 +786,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
  * @return a pointer to an internal projection reference string.  It should
  * not be altered, freed or expected to last for long. 
  *
- * @see http://www.gdal.ogr/osr_tutorial.html
+ * @see http://www.gdal.org/osr_tutorial.html
  */
 
 const char *GDALDataset::GetProjectionRef()
