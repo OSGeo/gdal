@@ -389,25 +389,20 @@ static GDALDataset *OGRIDFDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRIDF()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "IDF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "IDF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "IDF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "INTREST Data Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_idf.html" );
+    poDriver->SetDescription( "IDF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "INTREST Data Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_idf.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnIdentify = OGRIDFDriverIdentify;
+    poDriver->pfnOpen = OGRIDFDriverOpen;
 
-        poDriver->pfnIdentify = OGRIDFDriverIdentify;
-        poDriver->pfnOpen = OGRIDFDriverOpen;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

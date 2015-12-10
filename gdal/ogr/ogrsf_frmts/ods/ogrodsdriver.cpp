@@ -220,13 +220,17 @@ void RegisterOGRODS()
 
 {
     OGRSFDriver* poDriver = new OGRODSDriver;
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "Open Document/ LibreOffice / OpenOffice Spreadsheet " );
+                                "Open Document/ LibreOffice / "
+                               "OpenOffice Spreadsheet " );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ods" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_ods.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ods.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time Binary" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time Binary" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
 

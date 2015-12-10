@@ -95,28 +95,23 @@ static GDALDataset *OGRILI2DriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRILI2() {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "Interlis 2" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "Interlis 2" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "Interlis 2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Interlis 2" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_ili.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xtf xml ili" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetDescription( "Interlis 2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Interlis 2" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ili.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xtf xml ili" );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='MODEL' type='string' description='Filename of the model in IlisMeta format (.imd)'/>"
 "</OpenOptionList>" );
 
-        poDriver->pfnOpen = OGRILI2DriverOpen;
-        poDriver->pfnCreate = OGRILI2DriverCreate;
+    poDriver->pfnOpen = OGRILI2DriverOpen;
+    poDriver->pfnCreate = OGRILI2DriverCreate;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

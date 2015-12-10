@@ -139,10 +139,10 @@ int OGRIngresDriver::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
     if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;     
+        return TRUE;
     if( EQUAL(pszCap,ODrCCreateDataSource) )
         return TRUE;
-        
+
     return FALSE;
 }
 
@@ -153,7 +153,7 @@ int OGRIngresDriver::TestCapability( const char * pszCap )
 void RegisterOGRIngres()
 
 {
-    if (! GDAL_CHECK_VERSION("Ingres"))
+    if( !GDAL_CHECK_VERSION("Ingres") )
         return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(new OGRIngresDriver);
 }

@@ -66,22 +66,19 @@ static GDALDataset *OGRAVCE00DriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRAVCE00()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "AVCE00" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "AVCE00" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "AVCE00" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Arc/Info E00 (ASCII) Coverage" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_avce00.html" );
+    poDriver->SetDescription( "AVCE00" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Arc/Info E00 (ASCII) Coverage" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_avce00.html" );
 
-        poDriver->pfnOpen = OGRAVCE00DriverOpen;
+    poDriver->pfnOpen = OGRAVCE00DriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

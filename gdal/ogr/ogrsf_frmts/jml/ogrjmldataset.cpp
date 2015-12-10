@@ -210,40 +210,36 @@ extern "C"
 
 void RegisterOGRJML()
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "JML" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "JML" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "JML" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OpenJUMP JML" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jml" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_jml.html" );
+    poDriver->SetDescription( "JML" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OpenJUMP JML" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jml" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_jml.html" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "   <Option name='CREATE_R_G_B_FIELD' type='boolean' description='Whether to create a R_G_B field' default='YES'/>"
 "   <Option name='CREATE_OGR_STYLE_FIELD' type='boolean' description='Whether to create a OGR_STYLE field' default='NO'/>"
 "</LayerCreationOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-"<CreationOptionList/>"
-);
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>" );
 
-        poDriver->pfnOpen = OGRJMLDataset::Open;
-        poDriver->pfnIdentify = OGRJMLDataset::Identify;
-        poDriver->pfnCreate = OGRJMLDataset::Create;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGRJMLDataset::Open;
+    poDriver->pfnIdentify = OGRJMLDataset::Identify;
+    poDriver->pfnCreate = OGRJMLDataset::Create;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 
 }

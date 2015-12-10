@@ -117,17 +117,14 @@ static CPLErr OGRDB2DriverDelete( const char *pszFilename )
 
 void RegisterOGRDB2()
 {
-    GDALDriver *poDriver;
-    CPLDebug( "OGR_DB2Driver::RegisterOGRDB2", "");
+    if( GDALGetDriverByName("DB2ODBC") != NULL )
+        return;
 
-    if (GDALGetDriverByName("DB2ODBC") != NULL) return;
-
-    poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription( "DB2ODBC" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "IBM DB2 Spatial Database" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drv_db2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_db2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");
 
@@ -185,7 +182,8 @@ void RegisterOGRDB2()
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
-                               "Integer Integer64 Real String Date Time DateTime Binary" );
+                               "Integer Integer64 Real String Date Time "
+                               "DateTime Binary" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
@@ -198,5 +196,4 @@ void RegisterOGRDB2()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
-
 }

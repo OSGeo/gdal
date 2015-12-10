@@ -136,23 +136,20 @@ static CPLErr OGRGeoPackageDriverDelete( const char *pszFilename )
 
 void RegisterOGRGeoPackage()
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "GPKG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GPKG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GPKG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetDescription( "GPKG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GeoPackage" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_geopackage.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_geopackage.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
 #define COMPRESSION_OPTIONS \
 "  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>" \
@@ -166,7 +163,7 @@ void RegisterOGRGeoPackage()
 "  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
 "  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>"
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='TABLE' type='string' description='Name of tile user-table'/>"
 "  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
 "  <Option name='BAND_COUNT' type='int' min='1' max='4' description='Number of raster bands' default='4'/>"
@@ -179,7 +176,7 @@ void RegisterOGRGeoPackage()
 COMPRESSION_OPTIONS
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
 "  <Option name='RASTER_TABLE' type='string' description='Name of tile user table'/>"
 "  <Option name='APPEND_SUBDATASET' type='boolean' description='Set to YES to add a new tile user table to an existing GeoPackage instead of replacing it' default='NO'/>"
 "  <Option name='RASTER_IDENTIFIER' type='string' description='Human-readable identifier (e.g. short name)'/>"
@@ -212,7 +209,7 @@ COMPRESSION_OPTIONS
 "  </Option>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='geom' deprecated_alias='GEOMETRY_COLUMN'/>"
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
@@ -224,20 +221,21 @@ COMPRESSION_OPTIONS
 "  <Option name='IDENTIFIER' type='string' description='Identifier of the layer, as put in the contents table'/>"
 "  <Option name='DESCRIPTION' type='string' description='Description of the layer, as put in the contents table'/>"
 "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Binary" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->pfnOpen = OGRGeoPackageDriverOpen;
-        poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;
-        poDriver->pfnCreate = OGRGeoPackageDriverCreate;
-        poDriver->pfnCreateCopy = GDALGeoPackageDataset::CreateCopy;
-        poDriver->pfnDelete = OGRGeoPackageDriverDelete;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRGeoPackageDriverOpen;
+    poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;
+    poDriver->pfnCreate = OGRGeoPackageDriverCreate;
+    poDriver->pfnCreateCopy = GDALGeoPackageDataset::CreateCopy;
+    poDriver->pfnDelete = OGRGeoPackageDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

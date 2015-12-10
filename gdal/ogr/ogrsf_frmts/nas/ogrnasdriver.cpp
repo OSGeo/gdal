@@ -139,11 +139,9 @@ void RegisterOGRNAS()
 
     poDriver->SetDescription( "NAS" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "NAS - ALKIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NAS - ALKIS" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drv_nas.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_nas.html" );
 
     poDriver->pfnOpen = OGRNASDriverOpen;
     poDriver->pfnIdentify = OGRNASDriverIdentify;

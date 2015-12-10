@@ -105,30 +105,25 @@ static GDALDataset *OGRTigerDriverCreate( const char * pszName,
 }
 
 /************************************************************************/
-/*                           RegisterOGRTiger()                           */
+/*                           RegisterOGRTiger()                         */
 /************************************************************************/
 
 void RegisterOGRTiger()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "TIGER" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "TIGER" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "TIGER" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "U.S. Census TIGER/Line" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_tiger.html" );
+    poDriver->SetDescription( "TIGER" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "U.S. Census TIGER/Line" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_tiger.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRTigerDriverOpen;
+    poDriver->pfnCreate = OGRTigerDriverCreate;
 
-        poDriver->pfnOpen = OGRTigerDriverOpen;
-        poDriver->pfnCreate = OGRTigerDriverCreate;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

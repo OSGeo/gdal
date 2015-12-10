@@ -224,28 +224,26 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
 void RegisterOGRCSV()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "CSV" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "CSV" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "CSV" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Comma Separated Value (.csv)" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "csv" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_csv.html" );
+    poDriver->SetDescription( "CSV" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Comma Separated Value (.csv)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "csv" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_csv.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='GEOMETRY' type='string-select' description='how to encode geometry fields'>"
 "    <Value>AS_WKT</Value>"
 "  </Option>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='SEPARATOR' type='string-select' description='field separator' default='COMMA'>"
 "    <Value>COMMA</Value>"
@@ -272,7 +270,7 @@ void RegisterOGRCSV()
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column. Only used if GEOMETRY=AS_WKT' default='WKT'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 #if 0
 "  <Option name='SEPARATOR' type='string-select' description='field separator' default='AUTO'>"
@@ -306,15 +304,15 @@ void RegisterOGRCSV()
 "  <Option name='EMPTY_STRING_AS_NULL' type='boolean' description='Whether to consider empty strings as null fields on reading' default='NO'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time" );
 
-        poDriver->pfnOpen = OGRCSVDriverOpen;
-        poDriver->pfnIdentify = OGRCSVDriverIdentify;
-        poDriver->pfnCreate = OGRCSVDriverCreate;
-        poDriver->pfnDelete = OGRCSVDriverDelete;
+    poDriver->pfnOpen = OGRCSVDriverOpen;
+    poDriver->pfnIdentify = OGRCSVDriverIdentify;
+    poDriver->pfnCreate = OGRCSVDriverCreate;
+    poDriver->pfnDelete = OGRCSVDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

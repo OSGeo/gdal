@@ -107,22 +107,19 @@ void RegisterOGRPG()
 {
     if (! GDAL_CHECK_VERSION("PG driver"))
         return;
-    
-    if( GDALGetDriverByName( "PostgreSQL" ) == NULL )
-    {
-        GDALDriver* poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "PostgreSQL" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                  "PostgreSQL/PostGIS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    if( GDALGetDriverByName( "PostgreSQL" ) != NULL )
+        return;
 
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                    "drv_pg.html" );
+    GDALDriver* poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PG:" );
+    poDriver->SetDescription( "PostgreSQL" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PostgreSQL/PostGIS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PG:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='DBNAME' type='string' description='Database name'/>"
 "  <Option name='PORT' type='int' description='Port'/>"
@@ -137,9 +134,10 @@ void RegisterOGRPG()
 "  <Option name='CLOSING_STATEMENTS' type='string' description='SQL statements() to send on the PostgreSQL client connection after any other ones'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='GEOM_TYPE' type='string-select' description='Format of geometry columns' default='geometry'>"
 "    <Value>geometry</Value>"
@@ -162,17 +160,19 @@ void RegisterOGRPG()
 "  <Option name='EXTRACT_SCHEMA_FROM_LAYER_NAME' type='boolean' description='Whether a dot in a layer name should be considered as the separator for the schema and table name' default='YES'/>"
 "  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=pg_field_type (separated by comma) to force the PG column type of fields to be created'/>"
 "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->pfnOpen = OGRPGDriverOpen;
-        poDriver->pfnIdentify = OGRPGDriverIdentify;
-        poDriver->pfnCreate = OGRPGDriverCreate;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time IntegerList Integer64List RealList "
+                               "StringList Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGRPGDriverOpen;
+    poDriver->pfnIdentify = OGRPGDriverIdentify;
+    poDriver->pfnCreate = OGRPGDriverCreate;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

@@ -102,20 +102,18 @@ void RegisterOGRGeoRSS()
 {
     if (! GDAL_CHECK_VERSION("OGR/GeoRSS driver"))
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "GeoRSS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "GeoRSS" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "GeoRSS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GeoRSS" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_georss.html" );
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "GeoRSS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoRSS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_georss.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='FORMAT' type='string-select' description='whether the document must be in RSS 2.0 or Atom 1.0 format' default='RSS'>"
 "    <Value>RSS</Value>"
@@ -136,14 +134,13 @@ void RegisterOGRGeoRSS()
 "  <Option name='AUTHOR_NAME' type='string' description='(ATOM only) value put inside the <author><name> element in the header'/>"
 "  <Option name='ID' type='string' description='(ATOM only) value put inside the <id> element in the header.'/>"
 "</CreationOptionList>");
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                               "<LayerCreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRGeoRSSDriverOpen;
+    poDriver->pfnCreate = OGRGeoRSSDriverCreate;
+    poDriver->pfnDelete = OGRGeoRSSDriverDelete;
 
-        poDriver->pfnOpen = OGRGeoRSSDriverOpen;
-        poDriver->pfnCreate = OGRGeoRSSDriverCreate;
-        poDriver->pfnDelete = OGRGeoRSSDriverDelete;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

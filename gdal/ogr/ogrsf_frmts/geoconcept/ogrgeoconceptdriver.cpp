@@ -257,7 +257,7 @@ void RegisterOGRGeoconcept()
 "  <Option name='CONFIG' type='string' description='path to the GCT file that describes the GeoConcept types definitions.'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='FEATURETYPE' type='string' description='TYPE.SUBTYPE : defines the feature to be created. The TYPE corresponds to one of the Name found in the GCT file for a type section. The SUBTYPE corresponds to one of the Name found in the GCT file for a sub-type section within the previous type section'/>"
 "</LayerCreationOptionList>");

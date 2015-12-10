@@ -190,24 +190,21 @@ static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
  RegisterOGRLIBKML()
 ******************************************************************************/
 
-void RegisterOGRLIBKML (
-     )
+void RegisterOGRLIBKML ()
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "LIBKML" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "LIBKML" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "LIBKML" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Keyhole Markup Language (LIBKML)" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "kml kmz" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_libkml.html" );
+    poDriver->SetDescription( "LIBKML" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Keyhole Markup Language (LIBKML)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "kml kmz" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_libkml.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='AUTHOR_NAME' type='string' description='Name in <atom:Author> element'/>"
 "  <Option name='AUTHOR_URI' type='string' description='URI in <atom:Author> element'/>"
@@ -239,7 +236,7 @@ void RegisterOGRLIBKML (
 "  <Option name='UPDATE_TARGETHREF' type='string' description='If set, a NetworkLinkControl KML file with an <Update> element will be generated'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='NAME' type='string' description='Value of <name> element of layer container'/>"
 "  <Option name='VISIBILITY' type='integer' description='Value of <visibility> element of layer container (0/1)'/>"
@@ -330,16 +327,15 @@ void RegisterOGRLIBKML (
 "  <Option name='LISTSTYLE_ICON_HREF' type='string' description='URL of the icon to display for the layer folder. Sets the href element of the <ItemIcon> element'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Real String" );
 
-        poDriver->pfnOpen = OGRLIBKMLDriverOpen;
-        poDriver->pfnIdentify = OGRLIBKMLDriverIdentify;
-        poDriver->pfnCreate = OGRLIBKMLDriverCreate;
-        poDriver->pfnDelete = OGRLIBKMLDriverDelete;
-        poDriver->pfnUnloadDriver = OGRLIBKMLDriverUnload;
+    poDriver->pfnOpen = OGRLIBKMLDriverOpen;
+    poDriver->pfnIdentify = OGRLIBKMLDriverIdentify;
+    poDriver->pfnCreate = OGRLIBKMLDriverCreate;
+    poDriver->pfnDelete = OGRLIBKMLDriverDelete;
+    poDriver->pfnUnloadDriver = OGRLIBKMLDriverUnload;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

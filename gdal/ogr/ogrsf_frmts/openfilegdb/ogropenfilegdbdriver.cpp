@@ -176,27 +176,23 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGROpenFileGDB()
 
 {
-    if (! GDAL_CHECK_VERSION("OGR OpenFileGDB"))
+    if( !GDAL_CHECK_VERSION("OGR OpenFileGDB") )
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "OpenFileGDB" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "OpenFileGDB" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "OpenFileGDB" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "ESRI FileGDB" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_openfilegdb.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "OpenFileGDB" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI FileGDB" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_openfilegdb.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGROpenFileGDBDriverOpen;
-        poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;
+    poDriver->pfnOpen = OGROpenFileGDBDriverOpen;
+    poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -165,37 +165,35 @@ static CPLErr OGRSelafinDriverDelete( const char *pszFilename ) {
 /************************************************************************/
 /*                           RegisterOGRSelafin()                       */
 /************************************************************************/
+
 void RegisterOGRSelafin() {
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "Selafin" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "Selafin" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "Selafin" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "Selafin" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Selafin" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_selafin.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "Selafin" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "Selafin" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Selafin" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_selafin.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='TITLE' type='string' description='Title of the datasource, stored in the Selafin file. The title must not hold more than 72 characters.'/>"
 "  <Option name='DATE' type='string' description='Starting date of the simulation. Each layer in a Selafin file is characterized by a date, counted in seconds since a reference date. This option allows providing the reference date. The format of this field must be YYYY-MM-DD_hh:mm:ss'/>"
 "</CreationOptionList>");
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='DATE' type='float' description='Date of the time step, in seconds, relative to the starting date of the simulation.'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRSelafinDriverOpen;
-        poDriver->pfnIdentify = OGRSelafinDriverIdentify;
-        poDriver->pfnCreate = OGRSelafinDriverCreate;
-        poDriver->pfnDelete = OGRSelafinDriverDelete;
+    poDriver->pfnOpen = OGRSelafinDriverOpen;
+    poDriver->pfnIdentify = OGRSelafinDriverIdentify;
+    poDriver->pfnCreate = OGRSelafinDriverCreate;
+    poDriver->pfnDelete = OGRSelafinDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
