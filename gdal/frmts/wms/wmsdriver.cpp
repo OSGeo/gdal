@@ -41,6 +41,8 @@
 #include "minidriver_arcgis_server.h"
 #include "minidriver_iip.h"
 
+#include <limits>
+
 /************************************************************************/
 /*              GDALWMSDatasetGetConfigFromURL()                        */
 /************************************************************************/
@@ -159,6 +161,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         nTileSize = 1024;
 
     int nXSize, nYSize;
+    double dXSize, dYSize;
 
     int nOverviewCount = (osOverviewCount.size()) ? atoi(osOverviewCount) : 20;
 
@@ -172,29 +175,50 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             dfMinResolution *= 2;
         }
 
-        nXSize = (int) ((dfMaxX - dfMinX) / dfMinResolution + 0.5);
-        nYSize = (int) ((dfMaxY - dfMinY) / dfMinResolution + 0.5);
+        // Determine a suitable size that doesn't overflow max int.
+        dXSize = ((dfMaxX - dfMinX) / dfMinResolution + 0.5);
+        dYSize = ((dfMaxY - dfMinY) / dfMinResolution + 0.5);
+
+        while (dXSize > (std::numeric_limits<int>::max)() || 
+               dYSize > (std::numeric_limits<int>::max)())
+        {
+            dfMinResolution *= 2;
+
+            dXSize = ((dfMaxX - dfMinX) / dfMinResolution + 0.5);
+            dYSize = ((dfMaxY - dfMinY) / dfMinResolution + 0.5);
+        }
     }
     else
     {
         double dfRatio = (dfMaxX - dfMinX) / (dfMaxY - dfMinY);
         if (dfRatio > 1)
         {
-            nXSize = nTileSize;
-            nYSize = (int) (nXSize / dfRatio);
+            dXSize = nTileSize;
+            dYSize = dXSize / dfRatio;
         }
         else
         {
-            nYSize = nTileSize;
-            nXSize = (int) (nYSize * dfRatio);
+            dYSize = nTileSize;
+            dXSize = dYSize * dfRatio;
         }
 
         if (nOverviewCount < 0 || nOverviewCount > 20)
             nOverviewCount = 20;
 
-        nXSize = nXSize * (1 << nOverviewCount);
-        nYSize = nYSize * (1 << nOverviewCount);
+        dXSize = dXSize * (1 << nOverviewCount);
+        dYSize = dYSize * (1 << nOverviewCount);
+
+        // Determine a suitable size that doesn't overflow max int.
+        while (dXSize > (std::numeric_limits<int>::max)() || 
+               dYSize > (std::numeric_limits<int>::max)())
+        {
+            dXSize /= 2;
+            dYSize /= 2;
+        }
     }
+
+    nXSize = (int) dXSize;
+    nYSize = (int) dYSize;
 
     int bTransparent = osTransparent.size() ? CSLTestBoolean(osTransparent) : FALSE;
 
