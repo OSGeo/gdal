@@ -29,7 +29,7 @@ pszName:  the name for the new data source. UTF-8 encoded.
 
 papszOptions:  a StringList of name=value options. Options are driver
 specific, and driver information can be found at the following
-url:http://www.gdal.org/ogr/ogr_formats.html
+url:http://www.gdal.ogr/ogr_formats.html
 
 NULL is returned on failure, or a new OGRDataSource handle on success.
 ";
@@ -152,7 +152,7 @@ pszNewName:  the name for the new data source.
 
 papszOptions:  a StringList of name=value options. Options are driver
 specific, and driver information can be found at the following
-url:http://www.gdal.org/ogr/ogr_formats.html
+url:http://www.gdal.ogr/ogr_formats.html
 
 NULL is returned on failure, or a new OGRDataSource handle on success.
 ";

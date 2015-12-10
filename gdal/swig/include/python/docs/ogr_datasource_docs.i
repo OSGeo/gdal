@@ -59,7 +59,7 @@ no constraints on the types geometry to be written.
 
 papszOptions:  a StringList of name=value options. Options are driver
 specific, and driver information can be found at the following
-url:http://www.gdal.org/ogr/ogr_formats.html
+url:http://www.gdal.ogr/ogr_formats.html
 
 NULL is returned on failure, or a new OGRLayer handle on success.
 Example: ";

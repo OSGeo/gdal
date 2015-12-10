@@ -54,7 +54,7 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  *
  * This function will drive any of the following that are configured into
  * GDAL.  See <a href="http://gdal.org/formats_list.html">raster list</a> and
- * <a href="http://gdal.org/ogr/ogr_formats.html">vector full list</a>
+ * <a href="http://gdal.ogr/ogr_formats.html">vector full list</a>
  *
  * This function should generally be called once at the beginning of the application.
  */
