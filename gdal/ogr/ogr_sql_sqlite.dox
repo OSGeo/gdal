@@ -129,7 +129,7 @@ OGRFeature(SELECT):2
 
 The <b>ogr_datasource_load_layers(datasource_name[, update_mode[, prefix]])</b>
 function can be used to automatically load all the layers of a datasource as
-<a href="http://gdal.org/ogr/drv_sqlite.html">VirtualOGR tables</a>.<p>
+<a href="http://gdal.ogr/drv_sqlite.html">VirtualOGR tables</a>.<p>
 
 \code
 sqlite> SELECT load_extension('libgdal.so');
