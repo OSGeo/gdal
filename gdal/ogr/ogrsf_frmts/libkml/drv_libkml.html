@@ -42,7 +42,7 @@
   
   <p>
     You may specify a
-    <a href="http://www.gdal.ogr/ogr_arch.html#ogr_arch_data_source">datasource </a>
+    <a href="http://www.gdal.org/ogr_arch.html#ogr_arch_data_source">datasource </a>
     as a kml file <code>somefile.kml</code> , 
     a directory <code>somedir/</code> , or a kmz file <code>somefile.kmz</code> .
   </p>
@@ -65,7 +65,7 @@
     in a kmz file, or style.kml in a directory, as one or more
     <a href="https://developers.google.com/kml/documentation/kmlreference#style">
     &lt;Style&gt;</a> elements. Not all of
-    <a href="http://www.gdal.ogr/ogr_feature_style.html">OGR Feature Style</a>
+    <a href="http://www.gdal.org/ogr_feature_style.html">OGR Feature Style</a>
     can translate into KML.
   </p>
   
@@ -172,7 +172,7 @@
   <h2>Layer</h2>
   
   <p>
-    <a href="http://www.gdal.ogr/ogr_arch.html#ogr_arch_layer">
+    <a href="http://www.gdal.org/ogr_arch.html#ogr_arch_layer">
     Layers</a> are mapped to kml files as a
     <a href="https://developers.google.com/kml/documentation/kmlreference#document">
     &lt;Document&gt;</a>
@@ -299,7 +299,7 @@
   <h2>Feature</h2>
   
   <p>
-    An OGR <a href="http://www.gdal.ogr/ogr_arch.html#ogr_arch_feature">feature</a>
+    An OGR <a href="http://www.gdal.org/ogr_arch.html#ogr_arch_feature">feature</a>
     generally translates to kml as a
     <a href="https://developers.google.com/kml/documentation/kmlreference#placemark">
     &lt;Placemark&gt;</a>, and vice-versa.
@@ -726,7 +726,7 @@
   
   <p>
     Translation of OGR
-    <a href="http://www.gdal.ogr/ogr_arch.html#ogr_arch_geometry">
+    <a href="http://www.gdal.org/ogr_arch.html#ogr_arch_geometry">
     Geometry</a> to KML Geometry is pretty strait forwards with only a couple
     of exceptions. Point to 
     <a href="https://developers.google.com/kml/documentation/kmlreference#point">
@@ -770,8 +770,8 @@ Writing to /dev/stdout or /vsistdout/ is also supported.<p>
  
   <p>
     The following bash script will build a
-    <a href="http://www.gdal.ogr/drv_csv.html">csv</a> file and a
-    <a href="http://www.gdal.ogr/drv_vrt.html">vrt</a> file, and then
+    <a href="http://www.gdal.org/drv_csv.html">csv</a> file and a
+    <a href="http://www.gdal.org/drv_vrt.html">vrt</a> file, and then
     translate them to KML using 
     <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a> into a .kml file with
     timestamps and styling.
