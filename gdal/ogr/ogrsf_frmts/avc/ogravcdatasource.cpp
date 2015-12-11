@@ -35,12 +35,10 @@ CPL_CVSID("$Id$");
 /*                          OGRAVCDataSource()                          */
 /************************************************************************/
 
-OGRAVCDataSource::OGRAVCDataSource()
-
-{
-    poSRS = NULL;
-    pszCoverageName = NULL;
-}
+OGRAVCDataSource::OGRAVCDataSource() :
+    poSRS(NULL),
+    pszCoverageName(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRAVCDataSource()                          */
@@ -73,6 +71,6 @@ const char *OGRAVCDataSource::GetCoverageName()
 {
     if( pszCoverageName == NULL )
         return "";
-    else
-        return pszCoverageName;
+
+    return pszCoverageName;
 }

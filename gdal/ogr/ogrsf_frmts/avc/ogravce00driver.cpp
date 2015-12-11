@@ -38,8 +38,6 @@ CPL_CVSID("$Id: ogravcbindriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 static GDALDataset *OGRAVCE00DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRAVCE00DataSource *poDSE00;
-
     if( poOpenInfo->eAccess == GA_Update )
         return NULL;
     if( !poOpenInfo->bStatOK )
@@ -47,7 +45,7 @@ static GDALDataset *OGRAVCE00DriverOpen( GDALOpenInfo* poOpenInfo )
     if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "E00") )
         return NULL;
 
-    poDSE00 = new OGRAVCE00DataSource();
+    OGRAVCE00DataSource *poDSE00 = new OGRAVCE00DataSource();
 
     if( poDSE00->Open( poOpenInfo->pszFilename, TRUE )
         && poDSE00->GetLayerCount() > 0 )

@@ -39,35 +39,36 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
-                                AVCE00Section *psSectionIn )
-        : OGRAVCLayer( psSectionIn->eType, poDSIn )
-
+                                AVCE00Section *psSectionIn ) :
+    OGRAVCLayer( psSectionIn->eType, poDSIn ),
+    m_psSection(psSectionIn),
+    hFile(NULL),
+    poArcLayer(NULL),
+    bNeedReset(FALSE),
+    hTable(NULL),
+    nTableBaseField(-1),
+    nTableAttrIndex(-1),
+    nNextFID(1)
 {
-    m_psSection = psSectionIn;
-    hFile = NULL;
-    poArcLayer = NULL;
-    bNeedReset = FALSE;
-    nNextFID = 1;
-
-    hTable = NULL;
-    nTableBaseField = -1;
-    nTableAttrIndex = -1;
-
     SetupFeatureDefinition( m_psSection->pszName );
-    
+
     szTableName[0] = '\0';
     if( m_psSection->eType == AVCFilePAL )
-        snprintf( szTableName, sizeof(szTableName), "%s.PAT", poDS->GetCoverageName() );
+        snprintf( szTableName, sizeof(szTableName), "%s.PAT",
+                  poDS->GetCoverageName() );
     else if( m_psSection->eType == AVCFileRPL )
-        snprintf( szTableName, sizeof(szTableName), "%s.PAT%s", poDS->GetCoverageName(),
-                 m_psSection->pszName );
+        snprintf( szTableName, sizeof(szTableName), "%s.PAT%s",
+                  poDS->GetCoverageName(), m_psSection->pszName );
     else if( m_psSection->eType == AVCFileARC )
-        snprintf( szTableName, sizeof(szTableName), "%s.AAT", poDS->GetCoverageName() );
+        snprintf( szTableName, sizeof(szTableName), "%s.AAT",
+                  poDS->GetCoverageName() );
     else if( m_psSection->eType == AVCFileLAB )
     {
-        AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
+        AVCE00ReadPtr psInfo
+            = static_cast<OGRAVCBinDataSource *>( poDS) ->GetInfo();
 
-        snprintf( szTableName, sizeof(szTableName), "%s.PAT", poDS->GetCoverageName() );
+        snprintf( szTableName, sizeof(szTableName), "%s.PAT",
+                  poDS->GetCoverageName() );
 
         for( int iSection = 0; iSection < psInfo->numSections; iSection++ )
         {
@@ -127,7 +128,8 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     if( hFile == NULL )
     {
-        AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
+        AVCE00ReadPtr psInfo
+            = static_cast<OGRAVCBinDataSource *>( poDS )->GetInfo();
 
         hFile = AVCBinReadOpen(psInfo->pszCoverPath, 
                                m_psSection->pszFilename, 
@@ -140,7 +142,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /*      Read the raw feature - the -3 fid is a special flag             */
 /*      indicating serial access.                                       */
 /* -------------------------------------------------------------------- */
-    void *pFeature;
+    void *pFeature = NULL;
 
     if( nFID == -3 )
     {
@@ -155,7 +157,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
         bNeedReset = TRUE;
         pFeature = AVCBinReadObject( hFile, (int)nFID );
     }
-        
+
     if( pFeature == NULL )
         return NULL;
 
@@ -240,8 +242,8 @@ int OGRAVCBinLayer::TestCapability( const char * pszCap )
 {
     if( eSectionType == AVCFileARC && EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
-    else 
-        return OGRAVCLayer::TestCapability( pszCap );
+
+    return OGRAVCLayer::TestCapability( pszCap );
 }
 
 /************************************************************************/
@@ -261,11 +263,10 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
     if( poArcLayer == NULL )
     {
-        int	i;
-
-        for( i = 0; i < poDS->GetLayerCount(); i++ )
+        for( int i = 0; i < poDS->GetLayerCount(); i++ )
         {
-            OGRAVCBinLayer *poLayer = (OGRAVCBinLayer *) poDS->GetLayer(i);
+            OGRAVCBinLayer *poLayer
+                = static_cast<OGRAVCBinLayer *>( poDS->GetLayer(i) );
 
             if( poLayer->eSectionType == AVCFileARC )
                 poArcLayer = poLayer;
@@ -276,16 +277,13 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
     }
 
 /* -------------------------------------------------------------------- */
-/*	Read all the arcs related to this polygon, making a working	*/
-/*	copy of them since the one returned by AVC is temporary.	*/
+/*      Read all the arcs related to this polygon, making a working     */
+/*      copy of them since the one returned by AVC is temporary.        */
 /* -------------------------------------------------------------------- */
     OGRGeometryCollection oArcs;
-    int		iArc;
 
-    for( iArc = 0; iArc < psPAL->numArcs; iArc++ )
+    for( int iArc = 0; iArc < psPAL->numArcs; iArc++ )
     {
-        OGRFeature *poArc;
-
         if( psPAL->pasArcs[iArc].nArcId == 0 )
             continue;
 
@@ -297,7 +295,8 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
         if( psPAL->pasArcs[iArc].nAdjPoly == psPAL->nPolyId )
             continue;
 
-        poArc = poArcLayer->GetFeature( ABS(psPAL->pasArcs[iArc].nArcId) );
+        OGRFeature *poArc
+            = poArcLayer->GetFeature( ABS(psPAL->pasArcs[iArc].nArcId) );
 
         if( poArc == NULL )
             return FALSE;
@@ -309,12 +308,11 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
         OGRFeature::DestroyFeature( poArc );
     }
 
-    OGRErr  eErr;
-    OGRPolygon *poPolygon;
-
-    poPolygon = (OGRPolygon *) 
-        OGRBuildPolygonFromEdges( (OGRGeometryH) &oArcs, TRUE, FALSE,  
-                                  0.0, &eErr );
+    OGRErr eErr;
+    OGRPolygon *poPolygon
+      = static_cast<OGRPolygon *>(
+        OGRBuildPolygonFromEdges( (OGRGeometryH) &oArcs, TRUE, FALSE,
+                                  0.0, &eErr ) );
     if( poPolygon != NULL )
         poFeature->SetGeometryDirectly( poPolygon );
 
@@ -338,17 +336,17 @@ int OGRAVCBinLayer::CheckSetupTable()
 /* -------------------------------------------------------------------- */
 /*      Scan for the indicated section.                                 */
 /* -------------------------------------------------------------------- */
-    AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
-    int           iSection;
-    AVCE00Section *l_psSection = NULL;
-    char	  szPaddedName[65];
-    
+    AVCE00ReadPtr psInfo
+        = static_cast<OGRAVCBinDataSource *>( poDS )->GetInfo();
+    char szPaddedName[65];
+
     snprintf( szPaddedName, sizeof(szPaddedName), "%s%32s", szTableName, " " );
     szPaddedName[32] = '\0';
 
-    for( iSection = 0; iSection < psInfo->numSections; iSection++ )
+    AVCE00Section *l_psSection = NULL;
+    for( int iSection = 0; iSection < psInfo->numSections; iSection++ )
     {
-        if( EQUAL(szPaddedName,psInfo->pasSections[iSection].pszName) 
+        if( EQUAL(szPaddedName,psInfo->pasSections[iSection].pszName)
             && psInfo->pasSections[iSection].eType == AVCFileTABLE )
             l_psSection = psInfo->pasSections + iSection;
     }
@@ -365,18 +363,18 @@ int OGRAVCBinLayer::CheckSetupTable()
     hTable = AVCBinReadOpen( psInfo->pszInfoPath,  szTableName,
                              psInfo->eCoverType, AVCFileTABLE,
                              psInfo->psDBCSInfo);
-    
+
     if( hTable == NULL )
     {
         szTableName[0] = '\0';
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup attributes.                                               */
 /* -------------------------------------------------------------------- */
     nTableBaseField = poFeatureDefn->GetFieldCount();
-    
+
     AppendTableDefinition( hTable->hdr.psTableDef );
 
 /* -------------------------------------------------------------------- */
@@ -396,7 +394,8 @@ int OGRAVCBinLayer::CheckSetupTable()
 int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
 
 {
-    AVCE00ReadPtr psInfo = ((OGRAVCBinDataSource *) poDS)->GetInfo();
+    AVCE00ReadPtr psInfo
+        = static_cast<OGRAVCBinDataSource *>( poDS)->GetInfo();
 
     if( szTableName[0] == '\0' )
         return FALSE;
@@ -423,15 +422,14 @@ int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
 /*      nTableAttrIndex will already be setup to refer to the           */
 /*      PolyId field.                                                   */
 /* -------------------------------------------------------------------- */
-    int	nRecordId;
-    void *hRecord;
+    int nRecordId;
 
     if( nTableAttrIndex == -1 )
-        nRecordId = (int) poFeature->GetFID();
+        nRecordId = static_cast<int>( poFeature->GetFID() );
     else
         nRecordId = poFeature->GetFieldAsInteger( nTableAttrIndex );
 
-    hRecord = AVCBinReadObject( hTable, nRecordId );
+    void *hRecord = AVCBinReadObject( hTable, nRecordId );
     if( hRecord == NULL )
         return FALSE;
 
@@ -442,8 +440,3 @@ int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
                                  hTable->hdr.psTableDef, 
                                  (AVCField *) hRecord );
 }
-
-
-
-
-

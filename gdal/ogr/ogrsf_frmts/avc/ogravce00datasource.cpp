@@ -61,7 +61,7 @@ OGRAVCE00DataSource::~OGRAVCE00DataSource()
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 }
 
@@ -76,7 +76,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Open the source file.  Suppress error reporting if we are in    */
 /*      TestOpen mode.                                                  */
 /* -------------------------------------------------------------------- */
-    int bCompressed = FALSE;
+    bool bCompressed = false;
 
     if( bTestOpen )
         CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -84,9 +84,9 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
     psE00 = AVCE00ReadOpenE00(pszNewName);
 
     if( CPLGetLastErrorNo() == CPLE_OpenFailed
-        && strstr(CPLGetLastErrorMsg(),"compressed E00") != NULL ) 
+        && strstr(CPLGetLastErrorMsg(), "compressed E00") != NULL )
     {
-        bCompressed = TRUE;
+        bCompressed = true;
     }
 
     if( bTestOpen )
@@ -97,7 +97,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
 
     if( psE00 == NULL )
     {
-        if( bCompressed ) 
+        if( bCompressed )
         {
             CPLError(CE_Failure, CPLE_OpenFailed, 
                      "This looks like a compressed E00 file and cannot be "
@@ -115,13 +115,11 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Create layers for the "interesting" sections of the coverage.   */
 /* -------------------------------------------------------------------- */
-    int iSection;
-
-    papoLayers = (OGRAVCE00Layer **)
-        CPLCalloc( sizeof(OGRAVCE00Layer *), psE00->numSections );
+    papoLayers = static_cast<OGRAVCE00Layer **>(
+        CPLCalloc( sizeof(OGRAVCE00Layer *), psE00->numSections ) );
     nLayers = 0;
 
-    for( iSection = 0; iSection < psE00->numSections; iSection++ )
+    for( int iSection = 0; iSection < psE00->numSections; iSection++ )
     {
         AVCE00Section *psSec = psE00->pasSections + iSection;
 
@@ -147,17 +145,15 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
           {
 #if 0
               poSRS = new OGRSpatialReference();
-              char  **papszPRJ;
-              AVCE00File *hFile;
-              
-              hFile = AVCE00ReadOpen(psE00->pszCoverPath, 
-                                     psSec->pszFilename, 
-                                     psE00->eCoverType, 
-                                     psSec->eType,
-                                     psE00->psDBCSInfo);
+              AVCE00File *hFile
+                  = AVCE00ReadOpen( psE00->pszCoverPath,
+                                    psSec->pszFilename,
+                                    psE00->eCoverType,
+                                    psSec->eType,
+                                    psE00->psDBCSInfo);
               if( hFile && poSRS == NULL )
               {
-                  papszPRJ = AVCE00ReadNextPrj( hFile );
+                  char **papszPRJ = AVCE00ReadNextPrj( hFile );
 
                   poSRS = new OGRSpatialReference();
                   if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
@@ -177,14 +173,14 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
             ;
         }
     }
-    
+
     return nLayers > 0;
 }
 
 int OGRAVCE00DataSource::CheckAddTable( AVCE00Section *psTblSection )
 {
-    int i, nCount = 0;
-    for (i = 0; i < nLayers; ++i)
+    int nCount = 0;
+    for (int i = 0; i < nLayers; ++i)
     {
         if (papoLayers[i]->CheckSetupTable(psTblSection))
             ++nCount;
@@ -196,7 +192,7 @@ int OGRAVCE00DataSource::CheckAddTable( AVCE00Section *psTblSection )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCE00DataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRAVCE00DataSource::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -210,8 +206,8 @@ OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -219,31 +215,31 @@ OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
 /************************************************************************/
 OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
 {
-    if (NULL == poSRS && psE00 != NULL)
-    /* if (psE00 != NULL) */
-    {
-        int iSection;
-        AVCE00Section *psSec;
-        char **pszPRJ;
+    if (poSRS != NULL)
+        return poSRS;
+    if (psE00 == NULL)
+        return NULL;
 
-        for( iSection = 0; iSection < psE00->numSections; iSection++ )
+
+    for( int iSection = 0; iSection < psE00->numSections; iSection++ )
+    {
+        AVCE00Section *psSec = psE00->pasSections + iSection;
+        if (psSec->eType == AVCFilePRJ)
         {
-            psSec = psE00->pasSections + iSection;
-            if (psSec->eType == AVCFilePRJ)
+            AVCE00ReadGotoSectionE00(psE00, psSec, 0);
+            char **pszPRJ
+                = static_cast<char **>( AVCE00ReadNextObjectE00(psE00) );
+            poSRS = new OGRSpatialReference();
+            if( poSRS->importFromESRI( pszPRJ ) != OGRERR_NONE )
             {
-		        AVCE00ReadGotoSectionE00(psE00, psSec, 0);
-	            pszPRJ = (char **)AVCE00ReadNextObjectE00(psE00);
-                poSRS = new OGRSpatialReference();
-                if( poSRS->importFromESRI( pszPRJ ) != OGRERR_NONE )
-                {
-                    CPLError( CE_Warning, CPLE_AppDefined, 
-                              "Failed to parse PRJ section, ignoring." );
-                    delete poSRS;
-                    poSRS = NULL;
-                }
-                break;
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Failed to parse PRJ section, ignoring." );
+                delete poSRS;
+                poSRS = NULL;
             }
+            break;
         }
     }
+
     return poSRS;
 }
