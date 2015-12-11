@@ -38,9 +38,6 @@ CPL_CVSID("$Id$");
 static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRAVCBinDataSource	*poDS;
-    OGRAVCE00DataSource *poDSE00;
-
     if( poOpenInfo->eAccess == GA_Update )
         return NULL;
     if( !poOpenInfo->bStatOK )
@@ -56,13 +53,12 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
             char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
             if( papszSiblingFiles != NULL )
             {
-                int i;
-                int bFoundCandidateFile = FALSE;
-                for( i = 0; papszSiblingFiles[i] != NULL; i++ )
+                bool bFoundCandidateFile = false;
+                for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
                 {
                     if( EQUAL(CPLGetExtension(papszSiblingFiles[i]), "ADF") )
                     {
-                        bFoundCandidateFile = TRUE;
+                        bFoundCandidateFile = true;
                         break;
                     }
                 }
@@ -72,7 +68,7 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
         }
     }
 
-    poDS = new OGRAVCBinDataSource();
+    OGRAVCBinDataSource *poDS = new OGRAVCBinDataSource();
 
     if( poDS->Open( poOpenInfo->pszFilename, TRUE )
         && poDS->GetLayerCount() > 0 )
@@ -81,7 +77,7 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
     }
     delete poDS;
 
-    poDSE00 = new OGRAVCE00DataSource();
+    OGRAVCE00DataSource *poDSE00 = new OGRAVCE00DataSource();
 
     if( poDSE00->Open( poOpenInfo->pszFilename, TRUE )
         && poDSE00->GetLayerCount() > 0 )

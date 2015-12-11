@@ -99,8 +99,8 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Create layers for the "interesting" sections of the coverage.   */
 /* -------------------------------------------------------------------- */
 
-    papoLayers = (OGRLayer **)
-        CPLCalloc( sizeof(OGRLayer *), psAVC->numSections );
+    papoLayers = static_cast<OGRLayer **>(
+        CPLCalloc( sizeof(OGRLayer *), psAVC->numSections ) );
     nLayers = 0;
 
     for( int iSection = 0; iSection < psAVC->numSections; iSection++ )
@@ -172,6 +172,6 @@ OGRLayer *OGRAVCBinDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
