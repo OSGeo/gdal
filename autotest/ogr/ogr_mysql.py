@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test MySQL driver functionality.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot ogr>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -101,7 +101,7 @@ def ogr_mysql_2():
 
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -150,7 +150,7 @@ def ogr_mysql_3():
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mysql_lyr.GetNextFeature()
-        
+
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
                                           max_error = 0.001 ) != 0:
             return 'fail'
@@ -236,7 +236,7 @@ def ogr_mysql_4():
 
 
     return 'success'
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -247,7 +247,7 @@ def ogr_mysql_5():
 
     # E. Rouault : unlike PostgresSQL driver : None is sorted in last position 
     expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None ]
-    
+
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
 
     if sql_lyr.GetFeatureCount() != 11:
@@ -262,7 +262,7 @@ def ogr_mysql_5():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
 
@@ -333,12 +333,12 @@ def ogr_mysql_7():
     gdaltest.mysql_lyr.SetAttributeFilter( None )
 
     gdaltest.mysql_lyr.SetSpatialFilter( None )
-    
+
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Write a feature with too long a text value for a fixed length text field.
 # The driver should now truncate this (but with a debug message).  Also,
@@ -360,7 +360,7 @@ def ogr_mysql_8():
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('POINT(0 0)') )
     gdaltest.mysql_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
-    
+
     gdaltest.mysql_lyr.SetAttributeFilter( "PRFEDEA = 'CrazyKey'" )
     feat_read = gdaltest.mysql_lyr.GetNextFeature()
 
@@ -372,11 +372,11 @@ def ogr_mysql_8():
         gdaltest.post_reason( 'Vvalue not properly escaped or truncated:' \
                               + feat_read.GetField( 'shortname' ) )
         return 'fail'
-                              
+
     feat_read.Destroy()
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Verify inplace update of a feature with SetFeature().
 
@@ -407,7 +407,7 @@ def ogr_mysql_9():
     if feat is None:
         gdaltest.post_reason( 'GetFeature(%d) failed.' % fid )
         return 'fail'
-        
+
     shortname = feat.GetField( 'SHORTNAME' )
     if shortname[:5] != 'Reset':
         gdaltest.post_reason( 'SetFeature() did not update SHORTNAME, got %s.'\
@@ -478,7 +478,7 @@ def ogr_mysql_15():
     expect = [169]
 
     query = 'eas_id = 169'
-    
+
     for id in range(1000):
         query = query + (' or eas_id = %d' % (id+1000)) 
 
@@ -504,7 +504,7 @@ def ogr_mysql_16():
     expect = [169]
 
     query = 'eas_id = 169'
-    
+
     for id in range(1000):
         query = query + (' or eas_id = %d' % (id+1000))
 
@@ -577,7 +577,7 @@ def ogr_mysql_19():
     if layer is None:
         gdaltest.post_reason( 'did not get tpoly layer' )
         return 'fail'
-    
+
     extent = layer.GetExtent()
     expect = ( 478315.53125, 481645.3125, 4762880.5, 4765610.5 )
 
@@ -746,7 +746,7 @@ def ogr_mysql_72():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
-    
+
     # Regular layer with 32 bit IDs
     lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone)
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
@@ -763,7 +763,7 @@ def ogr_mysql_72():
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone, options = ['FID64=YES', 'OVERWRITE=YES'])
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
         gdaltest.post_reason('fail')
@@ -778,7 +778,7 @@ def ogr_mysql_72():
     if lyr.SetFeature(f) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     gdaltest.mysql_ds = None
     # Test with normal protocol
     gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
@@ -825,7 +825,7 @@ def ogr_mysql_25():
         gdaltest.post_reason('fail')
         return 'fail'
     f = None
-    
+
     # Error case: missing non-nullable field
     if False:
         # hum mysql seems OK with unset non-nullable fields ??
@@ -943,7 +943,7 @@ def ogr_mysql_26():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_mysql_cleanup():
 

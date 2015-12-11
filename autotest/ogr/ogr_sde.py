@@ -5,20 +5,20 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR ArcSDE driver.
 # Author:   Howard Butler <hobu.inc@gmail.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -92,17 +92,15 @@ def ogr_sde_2():
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
                                       ('WHEN', ogr.OFTDateTime) ] )
-    
+
     #######################################################
     # Copy in poly.shp
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
 
-
-    
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -114,13 +112,13 @@ def ogr_sde_2():
 
     dst_feat.Destroy()
     return 'success'
-    
+
 
 def ogr_sde_3():
     "Test basic version locking"
     if gdaltest.sde_dr is None:
         return 'skip'
-        
+
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
 
@@ -128,7 +126,7 @@ def ogr_sde_3():
     if ds2 is not None:
         gdaltest.post_reason('A locked version was able to be opened')
         return 'fail'
-        
+
     ds.Destroy()
 
     return 'success'
@@ -146,7 +144,7 @@ def ogr_sde_4():
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
     ds = ogr.Open(base, update=1)
     ds.Destroy()
-    
+
     gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
@@ -172,10 +170,10 @@ def ogr_sde_5():
     f1 = l1.GetFeature(1)
     f1.SetField("PRFEDEA",'SDE.TESTING')
     l1.SetFeature(f1)
-    
+
     ds.Destroy()
     del ds
-    
+
     default = 'DEFAULT'
     gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
 
@@ -186,14 +184,14 @@ def ogr_sde_5():
     l2 = ds2.GetLayerByName('SDE.TPOLY')
 
     f2 = l2.GetFeature(1)
-    
+
     f2.SetField("PRFEDEA",'SDE.DEFAULT')
     f2.SetField("WHEN", 2008, 3, 19, 16, 15, 00, 0)
 
     l2.SetFeature(f2)
     ds2.Destroy()
     del ds2
-    
+
     ds3 = ogr.Open(base)
     l3 = ds3.GetLayerByName('SDE.TPOLY')
     f3 = l3.GetFeature(1)
@@ -293,10 +291,10 @@ def ogr_sde_8():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     ref = osr.SpatialReference()
     ref.ImportFromWkt('LOCAL_CS["IMAGE"]')
-    
+
     ds = ogr.Open(base, update=1)
     lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = [ 'OVERWRITE=YES' ] )
     ref.ImportFromEPSG(4326)
@@ -306,17 +304,17 @@ def ogr_sde_8():
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
                                       ('WHEN', ogr.OFTDateTime) ] )
-    
+
     #######################################################
     # Copy in poly.shp
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
 
 
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -328,7 +326,7 @@ def ogr_sde_8():
 
     dst_feat.Destroy()
     return 'success'
-    
+
 def ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -349,7 +347,7 @@ gdaltest_list = [
     ogr_sde_6,
     ogr_sde_7,
     ogr_sde_8,
-    
+
     ogr_sde_cleanup 
 ]
 

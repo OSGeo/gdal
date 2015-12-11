@@ -181,7 +181,7 @@ def ogr_geom_boundary_point():
 # Test OGRGeometry::getBoundary() result for multipoint.
 
 def ogr_geom_boundary_multipoint():
-    
+
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -199,7 +199,7 @@ def ogr_geom_boundary_multipoint():
 # Test OGRGeometry::getBoundary() result for linestring.
 
 def ogr_geom_boundary_linestring():
-    
+
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -329,7 +329,7 @@ def ogr_geom_build_from_edges_3():
             return 'fail'
     except:
         pass
-    
+
     src_geom = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (LINESTRING(0 1,2 3),POINT(0 1),LINESTRING(0 1,-2 3),LINESTRING(-2 3,2 3))')
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -793,7 +793,7 @@ def ogr_geom_getpoints():
         gdaltest.post_reason('did not get expected points (8)')
         print(points)
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
@@ -834,11 +834,10 @@ def ogr_geom_mixed_coordinate_dimension():
         return 'fail'
 
     return 'success'
-    
-   
+
 ###############################################################################
 # Test GetEnvelope3D()
- 
+
 def ogr_geom_getenvelope3d():
 
     g = ogr.CreateGeometryFromWkt('POINT EMPTY')
@@ -910,7 +909,7 @@ def ogr_geom_getenvelope3d():
 # Test importing/exporting XXX Z EMPTY
 
 def ogr_geom_z_empty():
-    
+
     for geom in [ 'POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING', \
                   'MULTIPOLYGON', 'GEOMETRYCOLLECTION', 'CIRCULARSTRING', 'COMPOUNDCURVE', \
                   'CURVEPOLYGON', 'MULTICURVE', 'MULTISURFACE' ]:
@@ -935,7 +934,7 @@ def ogr_geom_z_empty():
 # Test HasCurveGeometry and GetLinearGeometry
 
 def ogr_geom_getlineargeometry():
-    
+
     for geom in [ 'POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING',
                   'MULTIPOLYGON', 'GEOMETRYCOLLECTION',
                   ('CIRCULARSTRING', 'LINESTRING'),
@@ -1060,34 +1059,34 @@ def ogr_geom_circularstring():
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
-        
+
     p = g1.Value(0)
     expected_p = ogr.CreateGeometryFromWkt('POINT (0 0)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
-        
+
     p = g1.Value(length / 6.0)
     expected_p = ogr.CreateGeometryFromWkt('POINT (0.292893218813453 0.707106781186548)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
         gdaltest.post_reason('fail')
         print(p)
-        
+
     p = g1.Value(length / 3.0)
     expected_p = ogr.CreateGeometryFromWkt('POINT (1 1)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
-        
+
     p = g1.Value(length / 2.0)
     expected_p = ogr.CreateGeometryFromWkt('POINT (1.707106781186547 0.707106781186547)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
-        
+
     p = g1.Value(2 * length / 3.0)
     expected_p = ogr.CreateGeometryFromWkt('POINT (2 0)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
@@ -1101,7 +1100,7 @@ def ogr_geom_circularstring():
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
-        
+
     p = g1.Value(length + 1)
     expected_p = ogr.CreateGeometryFromWkt('POINT (1 -1)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
@@ -1311,7 +1310,7 @@ def ogr_geom_circularstring():
             print(g1)
             print(g2)
             return 'fail'
-    
+
     # Test stroking of full circle with Z
     in_wkt = 'CIRCULARSTRING (0 0 1,1 0 2,0 0 1)'
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
@@ -1648,7 +1647,7 @@ def ogr_geom_compoundcurve():
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
-        
+
     p = g1.Value(math.pi / 2.0)
     expected_p = ogr.CreateGeometryFromWkt('POINT (1 1 20)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
@@ -1676,7 +1675,7 @@ def ogr_geom_compoundcurve():
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
-        
+
     wkb = g1.ExportToWkb()
     isowkb = g1.ExportToIsoWkb()
     if wkb != isowkb:
@@ -2597,7 +2596,7 @@ def ogr_geom_multisurface():
 # Test GetCurveGeometry
 
 def ogr_geom_getcurvegeometry():
-    
+
     for geom in [ 'POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING',
                   'MULTIPOLYGON', 'GEOMETRYCOLLECTION',
                   'CIRCULARSTRING',
@@ -2848,7 +2847,7 @@ def ogr_geom_getcurvegeometry():
         gdaltest.post_reason('fail')
         print(g3)
         return 'fail'
-        
+
     # Test default ( implicit option ADD_INTERMEDIATE_POINT=STEALTH )
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,1.2 1.0,2 0)')
     g2 = g1.GetLinearGeometry()
@@ -2883,7 +2882,7 @@ def ogr_geom_getcurvegeometry():
         gdaltest.post_reason('fail')
         print(g3)
         return 'fail'
-        
+
     # Test option ADD_INTERMEDIATE_POINT=YES
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,1.2 1.0,2 0)')
     g2 = g1.GetLinearGeometry(options = ['ADD_INTERMEDIATE_POINT=YES'])
@@ -2892,7 +2891,7 @@ def ogr_geom_getcurvegeometry():
         gdaltest.post_reason('fail')
         print(g3)
         return 'fail'
-        
+
     # Test with big coordinates. The points are (2,49),(3,50),(4,49) reprojected from EPSG:4326 to EPSG:32631
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (426857.987717275 5427937.52346616,500000.000000001 5538630.70286887,573142.012282726 5427937.52346616)')
     g2 = g1.GetLinearGeometry()

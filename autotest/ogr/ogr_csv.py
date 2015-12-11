@@ -153,7 +153,7 @@ def ogr_csv_3():
     #######################################################
     # Create layer (.csv file)
     gdaltest.csv_lyr1 = ogr_csv_copy_layer( 'pm1', None )
-    
+
     # Check that we cannot add a new field now
     if gdaltest.csv_lyr1.TestCapability(ogr.OLCCreateField) != 0:
         gdaltest.post_reason('fail')
@@ -1316,7 +1316,7 @@ def ogr_csv_32():
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str3')).GetType() != ogr.OFTInteger:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     # We limit to the first 2 lines
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
         open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'QUOTED_FIELDS_AS_STRING=YES'])
@@ -1460,7 +1460,7 @@ def ogr_csv_33():
             f.DumpReadable()
             return 'fail'
     ds = None
-    
+
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/subtypes.csv')
     lyr = ds.CreateLayer('test', options = ['CREATE_CSVT=YES'])
     fld = ogr.FieldDefn('b', ogr.OFTInteger)
@@ -1479,7 +1479,7 @@ def ogr_csv_33():
     lyr.CreateFeature(f)
     f = None
     ds = None
-    
+
     ds = ogr.Open('/vsimem/subtypes.csv')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger or \
@@ -1531,7 +1531,7 @@ def ogr_csv_34():
             f.DumpReadable()
             return 'fail'
     ds = None
-    
+
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/int64.csv')
     lyr = ds.CreateLayer('test', options = ['CREATE_CSVT=YES'])
     fld = ogr.FieldDefn('int64', ogr.OFTInteger64)
@@ -1541,7 +1541,7 @@ def ogr_csv_34():
     lyr.CreateFeature(f)
     f = None
     ds = None
-    
+
     ds = ogr.Open('/vsimem/int64.csv')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1560,7 +1560,7 @@ def ogr_csv_34():
 # Test comma separator
 
 def ogr_csv_35():
-    
+
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_35.csv',
 """FIELD_1  "FIELD 2" FIELD_3
 VAL1   "VAL 2"   "VAL 3"  
@@ -1591,7 +1591,7 @@ VAL1   "VAL 2"   "VAL 3"
     f = gdal.VSIFOpenL('/vsimem/ogr_csv_35.csv', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data.find('FIELD_1 "FIELD 2"') < 0 or data.find('VAL1 "VAL 2"') < 0:
         gdaltest.post_reason('fail')
         print(data)
@@ -1605,7 +1605,7 @@ VAL1   "VAL 2"   "VAL 3"
 # Test GEOM_POSSIBLE_NAMES open option
 
 def ogr_csv_36():
-    
+
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_36.csv',
 """id,mygeometry,format
 1,"POINT(1 2)",wkt
@@ -1686,7 +1686,7 @@ def ogr_csv_36():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     # Check KEEP_GEOM_COLUMNS=NO
     ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR, \
         open_options = ['GEOM_POSSIBLE_NAMES=mygeometry', 'KEEP_GEOM_COLUMNS=NO'])
@@ -1700,7 +1700,7 @@ def ogr_csv_36():
         f.DumpReadable()
         return 'fail'
     ds = None
-    
+
     gdal.Unlink('/vsimem/ogr_csv_36.csv')
 
     return 'success'
@@ -1709,7 +1709,7 @@ def ogr_csv_36():
 # Test X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES and Z_POSSIBLE_NAMES open options
 
 def ogr_csv_37():
-    
+
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_37.csv',
 """id,y,other,x,z
 1,49,a,2,100
@@ -1757,7 +1757,7 @@ def ogr_csv_37():
         f.DumpReadable()
         return 'fail'
     ds = None
-    
+
     # Check KEEP_GEOM_COLUMNS=NO
     ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR, \
         open_options = ['X_POSSIBLE_NAMES=long,x', 'Y_POSSIBLE_NAMES=lat,y', 'KEEP_GEOM_COLUMNS=NO'])
@@ -1771,7 +1771,7 @@ def ogr_csv_37():
         f.DumpReadable()
         return 'fail'
     ds = None
-    
+
     gdal.Unlink('/vsimem/ogr_csv_37.csv')
 
     return 'success'
@@ -1780,7 +1780,7 @@ def ogr_csv_37():
 # Test GeoCSV WKT type
 
 def ogr_csv_38():
-    
+
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_38.csv')
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
@@ -1817,7 +1817,7 @@ def ogr_csv_38():
 # Test GeoCSV CoordX and CoordY types
 
 def ogr_csv_39():
-    
+
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_39.csv')
     lyr = ds.CreateLayer('ogr_csv_38', options = ['GEOMETRY=AS_XY', 'CREATE_CSVT=YES'])
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
@@ -1905,7 +1905,7 @@ def ogr_csv_41():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_41.csv')
-    
+
     return 'success'
 
 ###############################################################################

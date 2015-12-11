@@ -5,21 +5,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR INDEX support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -52,7 +52,7 @@ def ogr_index_1():
         pass
 
     gdal.PopErrorHandler()
-    
+
     drv = ogr.GetDriverByName('MapInfo File')
     gdaltest.p_ds = drv.CreateDataSource( 'index_p.mif' )
     gdaltest.p_lyr = gdaltest.p_ds.CreateLayer( 'index_p' )
@@ -104,10 +104,10 @@ def ogr_index_2():
     gdaltest.s_ds.Release()
     gdaltest.s_lyr = None
     gdaltest.s_ds = None
-    
+
     gdaltest.s_ds = ogr.OpenShared( 'join_t.dbf', update = 1 )
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName( 'join_t' )
-                                  
+
     return 'success'
 
 ###############################################################################
@@ -117,7 +117,7 @@ def ogr_index_3():
 
     expect = [ 'Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
                'Value 1' ]
-    
+
     sql_lyr = gdaltest.p_ds.ExecuteSQL( \
         'SELECT * FROM index_p p ' \
         + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY ' )
@@ -171,7 +171,7 @@ def ogr_index_6():
     gdaltest.s_lyr.SetAttributeFilter( "VALUE='Value 5'" )
 
     expect = [ 5 ]
-    
+
     tr = ogrtest.check_features_against_list( gdaltest.s_lyr, 'SKEY', expect )
     if tr:
         return 'success'
@@ -184,9 +184,9 @@ def ogr_index_6():
 def ogr_index_7():
 
     gdaltest.s_lyr.SetAttributeFilter( 'SKEY < 3' )
-    
+
     expect = [ 0, 1, 2 ]
-    
+
     tr = ogrtest.check_features_against_list( gdaltest.s_lyr, 'SKEY', expect )
 
     if tr:
@@ -201,7 +201,7 @@ def ogr_index_8():
 
     expect = [ 'Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
                'Value 1' ]
-    
+
     sql_lyr = gdaltest.p_ds.ExecuteSQL( \
         'SELECT * FROM index_p p ' \
         + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY ' )
@@ -347,7 +347,7 @@ def ogr_index_10():
     if feat is not None:
         gdaltest.post_reason('failed')
         return 'fail'
-        
+
     lyr.SetAttributeFilter("intfield IN ('1')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()

@@ -5,21 +5,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR DODS driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -68,7 +68,7 @@ def ogr_dods_1():
     except:
         gdaltest.dods_profiles = None
         gdaltest.dods_normalized = None
-        
+
     if gdaltest.dods_profiles is None:
         gdaltest.dods_ds = None
         gdaltest.post_reason('profiles layer missing, likely AIS stuff not working.' )
@@ -91,7 +91,7 @@ def ogr_dods_2():
     if feat.GetField('time') != -1936483200000:
         gdaltest.post_reason( 'time wrong' )
         return 'fail'
-    
+
     if feat.GetField('profile.depth') != [0,10,20,30,39]:
         gdaltest.post_reason( 'depth wrong' )
         return 'fail'
@@ -127,7 +127,7 @@ def ogr_dods_3():
         return 'fail'
 
     expected = [14.8100004196167,14.8100004196167,14.8100004196167,14.60999965667725,14.60999965667725]
-    
+
     gdaltest.dods_normalized.ResetReading()
     for i in range(5):
         feat = gdaltest.dods_normalized.GetNextFeature()
@@ -135,15 +135,15 @@ def ogr_dods_3():
         if feat.GetField('time') != -1936483200000:
             gdaltest.post_reason( 'time wrong' )
             return 'fail'
-    
+
         if abs(feat.GetField('T_20')-expected[i]) > 0.001:
             gdaltest.post_reason( 'T_20 wrong' )
             return 'fail'
-        
+
         if ogrtest.check_feature_geometry( feat, 'POINT (4.30000019 5.36999989)')\
                != 0:
             return 'fail'
-        
+
         feat.Destroy()
         feat = None
 
@@ -170,7 +170,7 @@ def ogr_dods_4():
     if feat.GetField('time') != -1936483200000:
         gdaltest.post_reason( 'time wrong' )
         return 'fail'
-    
+
     if feat.GetField('profile.depth') != [0,10,20,30,39]:
         gdaltest.post_reason( 'depth wrong' )
         return 'fail'
@@ -200,7 +200,7 @@ def ogr_dods_5():
 
     if ogrtest.dods_drv is None:
         return 'skip'
-    
+
     srv = 'http://uhslc1.soest.hawaii.edu/cgi-bin/nph-nc/fast/m004.nc.dds'
     if gdaltest.gdalurlopen(srv) is None:
         return 'skip'
@@ -219,7 +219,7 @@ def ogr_dods_5():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_dods_cleanup():
 

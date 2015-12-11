@@ -1466,7 +1466,7 @@ def ogr_libkml_read_write_style():
     lyr.CreateFeature(feat)
     feat = None
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_write.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()

@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR translation of WKT and WKB geometries.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -60,7 +60,7 @@ class gml_geom_unit:
 
         ######################################################################
         # Create geometry from GML. 
-        
+
         geom_gml = ogr.CreateGeometryFromGML( gml )
 
         if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
@@ -133,7 +133,7 @@ def gml_pos_polygon():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test GML 3.x "posList" element for a linestring.
 
@@ -230,7 +230,7 @@ def gml_out_point_srs():
     if gml is None or len(gml) == 0:
         gdaltest.post_reason( 'Conversion to GML failed.')
         return 'fail'
-    
+
     if gml[0:31] != '<gml:Point srsName="EPSG:4326">':
         gdaltest.post_reason( 'No srsName attribute in GML output')
         return 'fail'
@@ -249,7 +249,7 @@ def gml_out_point3d_srs():
     if gml is None or len(gml) == 0:
         gdaltest.post_reason( 'Conversion to GML failed.')
         return 'fail'
-    
+
     if gml[0:31] != '<gml:Point srsName="EPSG:4326">':
         gdaltest.post_reason( 'No srsName attribute in GML output')
         return 'fail'
@@ -260,7 +260,7 @@ def gml_out_point3d_srs():
 # Test of LineString geometry with SRS assigned
 
 def gml_out_linestring_srs():
- 
+
     wkt = open('data/wkb_wkt/5.wkt').read()
 
     gml = _CreateGMLWithSRSFromWkt( wkt, 4326 )
@@ -268,7 +268,7 @@ def gml_out_linestring_srs():
     if gml is None or len(gml) == 0:
         gdaltest.post_reason( 'Conversion to GML failed.')
         return 'fail'
-    
+
     if gml[0:36] != '<gml:LineString srsName="EPSG:4326">':
         gdaltest.post_reason( 'No srsName attribute in GML output')
         return 'fail'
@@ -279,7 +279,7 @@ def gml_out_linestring_srs():
 # Test of Polygon geometry with SRS assigned
 
 def gml_out_polygon_srs():
- 
+
     wkt = open('data/wkb_wkt/6.wkt').read()
 
     gml = _CreateGMLWithSRSFromWkt( wkt, 4326 )
@@ -298,7 +298,7 @@ def gml_out_polygon_srs():
 # Test of MultiPoint geometry with SRS assigned
 
 def gml_out_multipoint_srs():
- 
+
     wkt = open('data/wkb_wkt/11.wkt').read()
 
     gml = _CreateGMLWithSRSFromWkt( wkt, 4326 )
@@ -317,7 +317,7 @@ def gml_out_multipoint_srs():
 # Test of MultiLineString geometry with SRS assigned
 
 def gml_out_multilinestring_srs():
- 
+
     wkt = open('data/wkb_wkt/2.wkt').read()
 
     gml = _CreateGMLWithSRSFromWkt( wkt, 4326 )
@@ -336,7 +336,7 @@ def gml_out_multilinestring_srs():
 # Test of MultiPolygon geometry with SRS assigned
 
 def gml_out_multipolygon_srs():
- 
+
     wkt = open('data/wkb_wkt/4.wkt').read()
 
     gml = _CreateGMLWithSRSFromWkt( wkt, 4326 )
@@ -362,7 +362,7 @@ def gml_out_multipolygon_srs():
 # Test of GeometryCollection with SRS assigned
 
 def gml_out_geometrycollection_srs():
- 
+
     wkt = open('data/wkb_wkt/3.wkt').read()
 
     gml = _CreateGMLWithSRSFromWkt( wkt, 4326 )
@@ -470,7 +470,7 @@ def gml_Curve_with_pointProperty():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test GML MultiCurve
 
@@ -881,7 +881,7 @@ def gml_ConcatenatedDeduplication():
 # Test OGRFormatDouble() to check for rounding errors (would also apply for KML output, or ogrinfo output)
 
 def gml_out_precision():
-    
+
     geom = ogr.CreateGeometryFromWkt('POINT(93538.15 1.23456789)')
     expected_gml = '<gml:Point><gml:coordinates>93538.15,1.23456789</gml:coordinates></gml:Point>'
     got_gml = geom.ExportToGML()
@@ -1350,7 +1350,7 @@ def gml_CompositeSurface_in_surfaceMembers():
 # Test <gml:PolygonPatch> with only Interior ring (#5421)
 
 def gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
- 
+
     gml = """<gml:MultiSurface>
                <gml:surfaceMember>
                  <gml:Surface>
@@ -1483,7 +1483,7 @@ def gml_with_xml_header_and_comments():
 # Test srsDimension attribute on top-level geometry and not on posList (#5606)
 
 def gml_srsDimension_topgeometry():
- 
+
     gml = """<gml:Surface srsName="EPSG:25832" srsDimension="3">
     <gml:patches>
         <gml:PolygonPatch>
@@ -1716,7 +1716,7 @@ def gml_ArcString():
     if geom.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0)':
         print(geom.ExportToWkt())
         return 'fail'
-        
+
     gml = """<gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString>"""
     geom = ogr.CreateGeometryFromGML( gml )
     if geom.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)':
