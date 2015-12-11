@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Selafin driver testing.
 # Author:   François Hissel <francois.hissel@gmail.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014, François Hissel <francois.hissel@gmail.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -49,7 +49,7 @@ def ogr_selafin_create_ds():
     except:
         pass
     selafin_drv = ogr.GetDriverByName('Selafin')
-    
+
     gdaltest.selafin_ds = selafin_drv.CreateDataSource( 'tmp/tmp.slf' )
 
 

@@ -69,7 +69,7 @@ def ogr_sql_sqlite_available():
 # Tests that don't involve geometry
 
 def ogr_sql_sqlite_1():
-    
+
     ret = ogr_sql_sqlite_available()
     if ret == 'fail':
         gdaltest.post_reason('fail')
@@ -216,7 +216,7 @@ def ogr_sql_sqlite_1():
             return 'fail'
         feat = None
         ds.ReleaseResultSet( sql_lyr )
-        
+
         # Test SELECT with filters
 
         # Success filters
@@ -1496,14 +1496,14 @@ def ogr_sql_sqlite_26():
     geom2_wkt = 'POLYGON((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5))'
     geom3_wkt = 'POLYGON((0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25))'
     geom4_wkt = 'POLYGON((1 0,1 1,2 1,2 0,1 0))'
-    
+
     # Test ST_Buffer
     op_str = 'Buffer'
     sql_lyr = ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'),0.1)" % (op_str, geom1_wkt), dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
     geom_sql = feat.GetGeometryRef()
     ds.ReleaseResultSet(sql_lyr)
-    
+
     geom = ogr.CreateGeometryFromWkt(geom1_wkt)
     geom_geos = geom.Buffer(0.1)
 
@@ -1730,12 +1730,12 @@ def ogr_sql_sqlite_29():
     got_wkt = f.GetGeometryRef().ExportToWkt()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
-    
+
     if geom_type != ogr.wkbCircularString:
         gdaltest.post_reason('fail')
         print(geom_type)
         return 'fail'
-    
+
     if got_wkt != 'CIRCULARSTRING (0 0,1 0,0 0)':
         gdaltest.post_reason('fail')
         print(got_wkt)

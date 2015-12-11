@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test BNA driver functionality.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -214,23 +214,23 @@ def ogr_bna_6():
     ret = ogr_bna_write( ['LINEFORMAT=LF','MULTILINE=NO', 'COORDINATE_PRECISION=3'] )
     if ret != 'success':
         return ret
-        
+
     size = os.stat('tmp/out.bna').st_size
     if size != 1479:
         gdaltest.post_reason('Got size %d. Expected %d' % (size, 1479))
         return 'fail'
 
     os.remove( 'tmp/out.bna' )
-    
+
     ret = ogr_bna_write( ['LINEFORMAT=CRLF','MULTILINE=NO', 'COORDINATE_PRECISION=3'] )
     if ret != 'success':
         return ret
-        
+
     size = os.stat('tmp/out.bna').st_size
     if size != 1487:
         gdaltest.post_reason('Got size %d. Expected %d' % (size, 1487))
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################

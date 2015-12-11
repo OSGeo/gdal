@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR Memory driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -74,7 +74,7 @@ def ogr_mem_2():
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
                                       ('WHEN', ogr.OFTDateTime) ] )
-    
+
     #######################################################
     # Copy in poly.shp
 
@@ -83,10 +83,10 @@ def ogr_mem_2():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -109,7 +109,7 @@ def ogr_mem_3():
         return 'skip'
 
     expect = [168, 169, 166, 158, 165]
-    
+
     gdaltest.mem_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.mem_lyr,
                                               'eas_id', expect )
@@ -152,14 +152,14 @@ def ogr_mem_4():
 
         wkt = open( 'data/wkb_wkt/'+item+'.wkt' ).read()
         geom = ogr.CreateGeometryFromWkt( wkt )
-        
+
         ######################################################################
         # Write geometry as a new memory feature.
-    
+
         dst_feat.SetGeometryDirectly( geom )
         dst_feat.SetField( 'PRFEDEA', item )
         gdaltest.mem_lyr.CreateFeature( dst_feat )
-        
+
         ######################################################################
         # Read back the feature and get the geometry.
 
@@ -180,7 +180,7 @@ def ogr_mem_5():
         return 'skip'
 
     expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None ]
-    
+
     sql_lyr = gdaltest.mem_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
@@ -191,7 +191,7 @@ def ogr_mem_5():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
 
@@ -216,7 +216,7 @@ def ogr_mem_6():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test spatial filtering. 
 
@@ -235,17 +235,17 @@ def ogr_mem_7():
     if gdaltest.mem_lyr.TestCapability( ogr.OLCFastSpatialFilter ):
         gdaltest.post_reason( 'OLCFastSpatialFilter capability test should have failed.' )
         return 'fail'
-    
+
     tr = ogrtest.check_features_against_list( gdaltest.mem_lyr, 'eas_id',
                                               [ 158 ] )
 
     gdaltest.mem_lyr.SetSpatialFilter( None )
-    
+
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test adding a new field.
 
@@ -303,7 +303,7 @@ def ogr_mem_9():
         return 'fail'
 
     old_count = gdaltest.mem_lyr.GetFeatureCount()
-    
+
     ####################################################################
     # Delete target feature.
 
@@ -341,7 +341,7 @@ def ogr_mem_9():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test GetDriver() / name bug (#1674)
 #
@@ -362,12 +362,12 @@ def ogr_mem_10():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Verify that we can delete layers properly
 
 def ogr_mem_11():
-    
+
     if gdaltest.mem_ds.TestCapability( 'DeleteLayer' ) == 0:
         gdaltest.post_reason ('Deletelayer TestCapability failed.' )
         return 'fail'
@@ -405,7 +405,7 @@ def ogr_mem_11():
         return 'failure'
 
     return 'success'
-    
+
 ###############################################################################
 # Test some date handling
 def ogr_mem_12():

@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test various OGR SQL support options.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -64,7 +64,7 @@ def ogr_sql_1():
 def ogr_sql_2():
 
     expect = [168, 169, 166, 158, 165]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select distinct eas_id from poly where eas_id < 170' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
@@ -82,7 +82,7 @@ def ogr_sql_2():
 def ogr_sql_3():
 
     expect = [158, 165, 166, 168, 169]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select distinct eas_id from poly where eas_id < 170 order by eas_id' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
@@ -100,7 +100,7 @@ def ogr_sql_3():
 def ogr_sql_3_desc():
 
     expect = [169, 168, 166, 165, 158]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select distinct eas_id from poly where eas_id < 170 order by eas_id desc' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
@@ -118,7 +118,7 @@ def ogr_sql_3_desc():
 def ogr_sql_4():
 
     expect = ['_158_', '_165_', '_166_', '_168_', '_170_', '_171_', '_179_']
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select distinct name from idlink order by name asc' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'name', expect )
@@ -167,7 +167,7 @@ def ogr_sql_5():
 def ogr_sql_6():
 
     expect = [ 10 ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select count(*) from poly' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'count_*', expect )
@@ -185,7 +185,7 @@ def ogr_sql_6():
 def ogr_sql_7():
 
     expect = [ 7, 8 ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select eas_id, fid from poly where eas_id in (158,165)' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
@@ -203,7 +203,7 @@ def ogr_sql_7():
 def ogr_sql_8():
 
     expect = [ '35043369', '35043408' ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id in (158,165)' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'PRFEDEA', expect )
@@ -221,7 +221,7 @@ def ogr_sql_8():
 def ogr_sql_9():
 
     expect = [ '35043369', '35043408' ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from "poly" where eas_id in (158,165)' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'PRFEDEA', expect )
@@ -239,7 +239,7 @@ def ogr_sql_9():
 def ogr_sql_10():
 
     expect = [170]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( "select eas_id from poly where prfedea ilike '%413'" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
@@ -257,7 +257,7 @@ def ogr_sql_10():
 def ogr_sql_11():
 
     expect = [None]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( "select max(eas_id) from empty" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'max_eas_id', expect )
@@ -275,7 +275,7 @@ def ogr_sql_11():
 def ogr_sql_12():
 
     expect = []
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id from empty" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
@@ -294,7 +294,7 @@ def ogr_sql_13():
 
     expect = ['POLYGON','POLYGON','POLYGON','POLYGON','POLYGON',
               'POLYGON','POLYGON','POLYGON','POLYGON','POLYGON']
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( "select ogr_geometry from poly where ogr_geometry = 'POLYGON'" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'ogr_geometry', expect )
@@ -334,7 +334,7 @@ def ogr_sql_14():
 def ogr_sql_15():
 
     expect = [ 7 ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select fid,eas_id,prfedea from poly where fid = %d' % expect[0]  )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
@@ -386,11 +386,11 @@ def ogr_sql_17():
     if fld_def.GetType() != ogr.OFTString:
         gdaltest.post_reason( 'got wrong fid field type' )
         print(fld_def.GetType())
-        
+
     if fld_def.GetWidth() != 10:
         gdaltest.post_reason( 'got wrong fid field width' )
         print(fld_def.GetWidth())
-        
+
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(1)
 
     if fld_def.GetName() != 'data':
@@ -401,15 +401,15 @@ def ogr_sql_17():
     if fld_def.GetType() != ogr.OFTReal:
         gdaltest.post_reason( 'got wrong data field type' )
         print(fld_def.GetType())
-        
+
     if fld_def.GetWidth() != 7:
         gdaltest.post_reason( 'got wrong data field width' )
         print(fld_def.GetWidth())
-        
+
     if fld_def.GetPrecision() != 3:
         gdaltest.post_reason( 'got wrong data field precision' )
         print(fld_def.GetPrecision())
-        
+
     tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
 
     ds.ReleaseResultSet( sql_lyr )
@@ -434,7 +434,7 @@ def ogr_sql_18():
     ds = ogr.Open( name )
     if ds is None:
         return 'fail'
-    
+
     sql = 'select * from D\303\251parts'
     sql_lyr = ds.ExecuteSQL( sql )
     if sql_lyr is None:
@@ -581,7 +581,7 @@ def ogr_sql_23():
 def ogr_sql_24():
 
     result = 'success'
-    
+
     ds = ogr.Open( 'data/smalltest.dgn' )
 
     sql_layer = ds.ExecuteSQL( 'SELECT * from elements where colorindex=83 and type=3' )
@@ -913,10 +913,10 @@ def ogr_sql_30():
     val_count = feat.GetField(1)
 
     gdaltest.ds.ReleaseResultSet( sql_lyr )
-    
+
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
-    
+
     if val_count == 10:
         return 'success'
     else:
@@ -935,10 +935,10 @@ def ogr_sql_31():
     val = feat.GetField(0)
 
     gdaltest.ds.ReleaseResultSet( sql_lyr )
-    
+
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
-    
+
     if val is None:
         return 'success'
     else:
@@ -958,10 +958,10 @@ def ogr_sql_32():
     val = feat.GetField(0)
 
     gdaltest.ds.ReleaseResultSet( sql_lyr )
-    
+
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
-    
+
     if val is None:
         return 'success'
     else:
@@ -1110,7 +1110,7 @@ def ogr_sql_36():
             feat.DumpReadable()
             return 'fail'
         ds.ReleaseResultSet( sql_lyr )
-        
+
     return 'success'
 
 ###############################################################################
@@ -1487,14 +1487,14 @@ def ogr_sql_46():
     if sql_lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
 # Test NULL sorting (#6155)
 
 def ogr_sql_47():
-    
+
     ds = ogr.Open('data/sort_test.dbf')
     sql_lyr = ds.ExecuteSQL('SELECT * FROM sort_test ORDER BY text_value')
     prec_val = ''
@@ -1509,7 +1509,7 @@ def ogr_sql_47():
             return 'fail'
         prec_val = new_val
     ds.ReleaseResultSet(sql_lyr)
-    
+
     return 'success'
 
 

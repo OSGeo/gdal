@@ -7,10 +7,10 @@
 # Purpose:  Cloudant driver testing.
 # Author:   Norman Barker, norman at cloudant com
 #          Based on the CouchDB driver
-# 
+#
 ###############################################################################
 #  Copyright (c) 2014, Norman Barker <norman at cloudant com>
-
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -60,7 +60,7 @@ def ogr_cloudant_init():
     else:
         ogrtest.cloudant_test_server = 'https://yescandrephereddescamill:I1rhuWEIVDRvbpoQNOBW3pGV@normanb.cloudant.com'
         ogrtest.cloudant_test_url = 'https://normanb.cloudant.com'
-    
+
     ogrtest.cloudant_test_layer = 'gdaltest'
 
     if gdaltest.gdalurlopen(ogrtest.cloudant_test_url) is None:

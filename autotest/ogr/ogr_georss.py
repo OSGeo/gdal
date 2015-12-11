@@ -6,7 +6,7 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GeoRSS driver functionality.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
 #

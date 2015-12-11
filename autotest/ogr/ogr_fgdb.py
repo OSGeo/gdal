@@ -271,7 +271,7 @@ def ogr_fgdb_DeleteField():
     feat = lyr.GetNextFeature()
     feat.SetField("str2", "foo2_\xc3\xa9")
     lyr.SetFeature(feat)
-    
+
     # Test updating non-existing feature
     feat.SetFID(-10)
     if lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
@@ -615,7 +615,7 @@ def ogr_fgdb_10():
     srs_approx_2193 = srs_exact_2193.Clone()
     srs_approx_2193.MorphToESRI()
     srs_approx_2193.MorphFromESRI()
-    
+
     srs_not_in_db = osr.SpatialReference("""PROJCS["foo",
     GEOGCS["foo",
         DATUM["foo",
@@ -635,7 +635,7 @@ def ogr_fgdb_10():
     srs_approx_4230 = srs_exact_4230.Clone()
     srs_approx_4230.MorphToESRI()
     srs_approx_4230.MorphFromESRI()
-    
+
     srs_approx_intl = osr.SpatialReference()
     srs_approx_intl.ImportFromProj4('+proj=longlat +ellps=intl +no_defs')
 
@@ -649,7 +649,7 @@ def ogr_fgdb_10():
     lyr = ds.CreateLayer("srs_approx_2193", srs = srs_approx_2193, geom_type = ogr.wkbPoint)
 
     lyr = ds.CreateLayer("srs_approx_4230", srs = srs_approx_4230, geom_type = ogr.wkbPoint)
-    
+
     # will fail
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = ds.CreateLayer("srs_approx_intl", srs = srs_approx_intl, geom_type = ogr.wkbPoint)
@@ -703,7 +703,7 @@ def ogr_fgdb_11():
         shutil.rmtree("tmp/test.gdb")
     except:
         pass
-        
+
     f = open('data/test_filegdb_field_types.xml', 'rt')
     xml_def = f.read()
     f.close()
@@ -734,7 +734,7 @@ def ogr_fgdb_11():
     feat = None
 
     ds = None
-    
+
     ds = ogr.Open('tmp/test.gdb')
     lyr = ds.GetLayerByName('test')
     feat = lyr.GetNextFeature()
@@ -935,7 +935,7 @@ def ogr_fgdb_16():
 
     # Deregister OpenFileGDB again
     ogrtest.openfilegdb_drv.Deregister()
-    
+
     shutil.rmtree('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
 
     return ret
@@ -975,7 +975,7 @@ def ogr_fgdb_17():
         gdaltest.post_reason('fail')
         return 'fail'
     f = None
-    
+
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('field_not_nullable', 'not_null')
@@ -986,7 +986,7 @@ def ogr_fgdb_17():
         gdaltest.post_reason('fail')
         return 'fail'
     f = None
-    
+
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
@@ -1280,7 +1280,7 @@ def ogr_fgdb_19():
     if f.GetFID() != fid or f.GetField('field_string') != 'foo':
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     f = ogr.Feature(layer_created_before_transaction_defn)
     layer_created_before_transaction.CreateFeature(f)
 
@@ -1381,7 +1381,7 @@ def ogr_fgdb_19():
 
     f = ogr.Feature(lyr_defn)
     lyr.CreateFeature(f)
-    
+
     layer_created_during_transaction = ds.CreateLayer('layer_created_during_transaction', geom_type = ogr.wkbNone)
     layer_created_during_transaction.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
 
@@ -1510,7 +1510,7 @@ def ogr_fgdb_19():
     lyr.SetMetadataItem('foo', None)
 
     ds = None
-    
+
     if bPerLayerCopyingForTransaction:
 
         # Test an error case where we simulate a failure of destroying a
@@ -1545,7 +1545,7 @@ def ogr_fgdb_19():
                 gdaltest.post_reason('fail')
                 print(lst)
                 return 'fail'
-        
+
         # Test an error case where we simulate a failure in renaming
         # a file in original directory
         (bPerLayerCopyingForTransaction, ds) = ogr_fgdb_19_open_update('tmp/test.gdb')
@@ -1609,7 +1609,7 @@ def ogr_fgdb_19():
         ds = None
 
         shutil.rmtree('tmp/test.gdb.ogredited')
-        
+
         # Remove left over .tmp files
         lst = gdal.ReadDir('tmp/test.gdb')
         for filename in lst:
@@ -1839,7 +1839,7 @@ def ogr_fgdb_20():
     lyr = ds.CreateLayer('ogr_fgdb_20', geom_type = ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
-    
+
     ds.ExecuteSQL('CREATE INDEX ogr_fgdb_20_id ON ogr_fgdb_20(id)')
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -2010,7 +2010,7 @@ def ogr_fgdb_20():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    
+
     for (fid, fgdb_fid) in [ (3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10), (12, 11) ]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(fid)
@@ -2032,7 +2032,7 @@ def ogr_fgdb_20():
         return 'fail'
     f.SetField('id', f.GetFID())
     lyr.SetFeature(f)
-    
+
     lyr.ResetReading()
     expected = [ (2, None), (4, 3), (3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10) ]
     for (fid, fgdb_fid) in expected:
@@ -2102,7 +2102,7 @@ def ogr_fgdb_20():
     f.SetField('id', 3)
     lyr.CreateFeature(f)
     f = None
-    
+
     ds.CommitTransaction()
 
     # Multi-page indexes
@@ -2211,7 +2211,7 @@ def ogr_fgdb_20():
             return 'fail'
 
     ds = None
-    
+
     # Insert a new intermediate FIDs
     for (fid, fgdb_fid) in [ (1000000, 10000002), (1000001,10000002) ]:
 

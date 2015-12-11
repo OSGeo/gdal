@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR functionality against test shapefiles.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -152,12 +152,12 @@ def ogr_basic_5():
 
     gdaltest.lyr.SetAttributeFilter( 'FID = 3' )
     gdaltest.lyr.ResetReading()
-    
+
     feat1 = gdaltest.lyr.GetNextFeature()
     feat2 = gdaltest.lyr.GetNextFeature()
 
     gdaltest.lyr.SetAttributeFilter( None )
-    
+
     if feat1 is None or feat2 is not None:
         gdaltest.post_reason( 'unexpected result count.' )
         return 'fail'
@@ -197,7 +197,7 @@ def ogr_basic_7():
     feat = ogr.Feature(feat_defn)
     if not feat.Equal(feat):
         return 'fail'
-        
+
     try:
         feat.SetFieldIntegerList
     except:
@@ -234,7 +234,7 @@ def ogr_basic_7():
     feat_defn.AddFieldDefn(field_defn)
     field_defn = ogr.FieldDefn('field11', ogr.OFTInteger64)
     feat_defn.AddFieldDefn(field_defn)
-    
+
     feat = ogr.Feature(feat_defn)
     feat.SetFID(100)
     feat.SetField(0, 1)

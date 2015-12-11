@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR DXF driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -80,7 +80,7 @@ def ogr_dxf_1():
 
         gdaltest.sample_style = gdaltest.sample_text + '\\"abc\\"'
         gdaltest.sample_style = gdaltest.sample_style.encode('utf-8')
-        
+
         gdaltest.sample_text += '"abc"'
         gdaltest.sample_text = gdaltest.sample_text.encode('utf-8')
 
@@ -90,7 +90,7 @@ def ogr_dxf_1():
 # Read the first feature, an ellipse and see if it generally meets expectations.
 
 def ogr_dxf_2():
-    
+
     gdaltest.dxf_layer.ResetReading()
 
     feat = gdaltest.dxf_layer.GetNextFeature()
@@ -144,7 +144,7 @@ def ogr_dxf_2():
 # Second feature should be a partial ellipse.
 
 def ogr_dxf_3():
-    
+
     feat = gdaltest.dxf_layer.GetNextFeature()
 
     geom = feat.GetGeometryRef()
@@ -196,7 +196,7 @@ def ogr_dxf_5():
 # Fourth feature: MTEXT
 
 def ogr_dxf_6():
-    
+
     feat = gdaltest.dxf_layer.GetNextFeature()
 
     if ogrtest.check_feature_geometry( feat, 'POINT (84 126)' ):
@@ -311,7 +311,7 @@ def ogr_dxf_9():
     if feat.GetField( 'Text' ) != 'Second':
         gdaltest.post_reason( 'Did not get expected second mtext.' )
         return 'fail'
-    
+
     if feat.GetField( 'SubClasses' ) != 'AcDbEntity:AcDbMText':
         gdaltest.post_reason( 'Did not get expected subclasses.' )
         return 'fail'
@@ -356,7 +356,7 @@ def ogr_dxf_11():
 
     eo_ds = ogr.Open('data/entities_only.dxf')
     eo_lyr = eo_ds.GetLayer(0)
-    
+
     # Check first point.
     feat = eo_lyr.GetNextFeature()
 
@@ -461,11 +461,11 @@ def ogr_dxf_12():
     lyr = None
     ds = None
     ds = None
-    
+
     os.unlink( 'tmp/dxf_11.dxf' )
-        
+
     return 'success'
-    
+
 
 ###############################################################################
 # Check smoothed polyline.
@@ -537,7 +537,7 @@ def ogr_dxf_14():
     # previous test regarding caveats, etc.
 
     ds = ogr.Open( 'data/lwpolyline_smooth.dxf' )
-    
+
     layer = ds.GetLayer(0)
 
     feat = layer.GetNextFeature()
@@ -562,7 +562,7 @@ def ogr_dxf_14():
     if geom.GetPointCount() != 146:
         gdaltest.post_reason( 'did not get expected number of points, got %d' % (geom.GetPointCount()) )
         return 'fail'
-    
+
     if abs(geom.GetX(0)-251297.8179) > 0.001 \
        or abs(geom.GetY(0)-412226.8286) > 0.001:
         gdaltest.post_reason( 'first point (%g,%g) not expected location.' \
@@ -600,7 +600,7 @@ def ogr_dxf_15():
     # Read back.
     ds = ogr.Open('tmp/dxf_14.dxf')
     lyr = ds.GetLayer(0)
-    
+
     # Check first feature
     feat = lyr.GetNextFeature()
 
@@ -663,11 +663,11 @@ def ogr_dxf_15():
     if handseed != '00000053':
         gdaltest.post_reason( 'Did not get expected HANDSEED, got %s.' % handseed)
         return 'fail'
-    
+
     os.unlink( 'tmp/dxf_14.dxf' )
-        
+
     return 'success'
-    
+
 
 ###############################################################################
 # Test reading without DXF blocks inlined.
@@ -675,7 +675,7 @@ def ogr_dxf_15():
 def ogr_dxf_16():
 
     gdal.SetConfigOption( 'DXF_INLINE_BLOCKS', 'FALSE' )
-    
+
     dxf_ds = ogr.Open( 'data/assorted.dxf' )
 
     if dxf_ds is None:
@@ -718,7 +718,7 @@ def ogr_dxf_16():
     # Now we need to check the blocks layer and ensure it is as expected.
 
     dxf_layer = dxf_ds.GetLayer(0)
-    
+
     if dxf_layer.GetName() != 'blocks':
         gdaltest.post_reason( 'did not get expected layer name.' )
         return 'fail'
@@ -736,17 +736,17 @@ def ogr_dxf_16():
 
     if ogrtest.check_feature_geometry( feat, 'POINT (-1.495452348993292 0.813702013422821 0)' ):
         return 'fail'
-    
+
     # Second MTEXT 
     feat = dxf_layer.GetNextFeature()
     if feat.GetField( 'Text' ) != 'Second':
         gdaltest.post_reason( 'Did not get expected second mtext.' )
         return 'fail'
-    
+
     if feat.GetField( 'SubClasses' ) != 'AcDbEntity:AcDbMText':
         gdaltest.post_reason( 'Did not get expected subclasses.' )
         return 'fail'
-    
+
     if ogrtest.check_feature_geometry( feat, 'POINT (0.879677852348995 -0.263903355704699 0)' ):
         return 'fail'
 
@@ -763,7 +763,7 @@ def ogr_dxf_16():
     feat = None
 
     # cleanup
-    
+
     gdal.SetConfigOption( 'DXF_INLINE_BLOCKS', 'TRUE' )
 
     return 'success'
@@ -864,12 +864,12 @@ def ogr_dxf_17():
         return 'fail'
 
     # Cleanup
-    
+
     lyr = None
     ds = None
-    
+
     os.unlink( 'tmp/dxf_17.dxf' )
-        
+
     return 'success'
 
 ###############################################################################
@@ -921,7 +921,7 @@ def ogr_dxf_18():
         print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (1)" )
         return 'fail'
-        
+
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (0 0,25 25)' ):
         return 'fail'
 
@@ -935,7 +935,7 @@ def ogr_dxf_18():
         print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (2)" )
         return 'fail'
-        
+
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (5 5,30 30)' ):
         return 'fail'
 
@@ -949,17 +949,17 @@ def ogr_dxf_18():
         print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (3)" )
         return 'fail'
-        
+
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (5 5,40 30)' ):
         return 'fail'
 
     # Cleanup
-    
+
     lyr = None
     ds = None
-    
+
     os.unlink( 'tmp/dxf_18.dxf' )
-        
+
     return 'success'
 
 ###############################################################################
@@ -998,12 +998,12 @@ def ogr_dxf_19():
         return 'fail'
 
     # Cleanup
-    
+
     lyr = None
     ds = None
-    
+
     os.unlink( 'tmp/dxf_19.dxf' )
-        
+
     return 'success'
 
 ###############################################################################
@@ -1207,7 +1207,7 @@ def ogr_dxf_26():
 # Test reading a DXF file without .dxf extensions (#5994)
 
 def ogr_dxf_27():
-    
+
     gdal.FileFromMemBuffer('/vsimem/a_dxf_without_extension', open('data/solid.dxf').read())
 
     ds = ogr.Open('/vsimem/a_dxf_without_extension')
@@ -1217,7 +1217,7 @@ def ogr_dxf_27():
     gdal.Unlink('/vsimem/a_dxf_without_extension')
 
     return 'success'
-    
+
 ###############################################################################
 # cleanup
 

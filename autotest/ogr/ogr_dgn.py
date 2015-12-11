@@ -5,20 +5,20 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Some DGN Driver features.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -88,7 +88,7 @@ def ogr_dgn_3():
     if geom.GetCoordinateDimension() != 2:
         gdaltest.post_reason( 'expected 2d circle.' )
         return 'fail'
-    
+
     if geom.GetGeometryName() != 'LINESTRING':
         gdaltest.post_reason('Expected circle to be translated as LINESTRING.')
         return 'fail'
@@ -121,10 +121,10 @@ def ogr_dgn_4():
         return 'fail'
 
     wkt = 'POLYGON ((4.53550000 3.31700000,4.38320000 2.65170000,4.94410000 2.52350000,4.83200000 3.33310000,4.53550000 3.31700000))'
-    
+
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
-    
+
     if feat.GetStyleString() != 'BRUSH(fc:#b40000,id:"ogr-brush-0")':
         gdaltest.post_reason( 'Style string different than expected.' )
         return 'fail'
@@ -149,7 +149,7 @@ def ogr_dgn_5():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Use spatial filter to just pick the big circle.
 
@@ -161,7 +161,7 @@ def ogr_dgn_6():
     geom = ogr.CreateGeometryFromWkt( 'LINESTRING(1.0 8.55, 2.5 6.86)' )
     gdaltest.dgn_lyr.SetSpatialFilter( geom )
     geom.Destroy()
-    
+
     tr = ogrtest.check_features_against_list( gdaltest.dgn_lyr, 'Type', [15] )
     gdaltest.dgn_lyr.SetSpatialFilter( None )
 
@@ -189,7 +189,7 @@ def ogr_dgn_7():
     gdaltest.dgn_lyr.ResetReading()
 
     dst_feat = ogr.Feature( feature_def = dgn2_lyr.GetLayerDefn() )
-    
+
     feat = gdaltest.dgn_lyr.GetNextFeature()
     while feat is not None:
         dst_feat.SetFrom( feat )
@@ -248,7 +248,7 @@ def ogr_dgn_8():
     if geom.GetCoordinateDimension() != 2:
         gdaltest.post_reason( 'feature 2: expected 2d circle.' )
         return 'fail'
-    
+
     if geom.GetGeometryName() != 'MULTILINESTRING':
         gdaltest.post_reason('feature 2: Expected MULTILINESTRING.')
         return 'fail'
@@ -271,7 +271,7 @@ def ogr_dgn_8():
         return 'fail'
 
     wkt = 'POLYGON ((4.53550000 3.31700000,4.38320000 2.65170000,4.94410000 2.52350000,4.83200000 3.33310000,4.53550000 3.31700000))'
-    
+
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
 

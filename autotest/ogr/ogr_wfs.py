@@ -582,7 +582,7 @@ def ogr_wfs_geoserver_wfst():
         gdaltest.post_reason('cannot update feature')
         return 'fail'
     print('Feature %d updated !' % feat.GetFID())
-    
+
     if lyr.DeleteFeature(feat.GetFID()) != 0:
         gdaltest.post_reason('could not delete feature')
         return 'fail'
@@ -593,7 +593,7 @@ def ogr_wfs_geoserver_wfst():
     if lyr.StartTransaction() != 0:
         gdaltest.post_reason('CommitTransaction() failed')
         return 'fail'
-        
+
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
@@ -1156,7 +1156,7 @@ def ogr_wfs_vsimem_fail_because_exception():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 def ogr_wfs_vsimem_fail_because_invalid_xml_capabilities():
 
@@ -1179,7 +1179,7 @@ def ogr_wfs_vsimem_fail_because_invalid_xml_capabilities():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 def ogr_wfs_vsimem_fail_because_missing_featuretypelist():
 
@@ -1344,7 +1344,7 @@ def ogr_wfs_vsimem_wfs110_minimal_instance():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 def ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype():
 
@@ -1387,7 +1387,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype():
     if lyr_defn.GetFieldCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     lyr_defn = lyr.GetLayerDefn()
 
     return 'success'
@@ -1672,7 +1672,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits():
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1720,7 +1720,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits():
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1748,7 +1748,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits():
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1776,7 +1776,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCol
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1804,7 +1804,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml():
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1832,7 +1832,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExceptionRe
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
 
 
@@ -1861,7 +1861,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFe
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1895,9 +1895,9 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
-    
+
     return 'success'
-    
+
 ###############################################################################
 def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature():
 
@@ -2645,7 +2645,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
-    
+
     # Error case
     sql_lyr = ds.ExecuteSQL("SELECT ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5))')) FROM my_layer")
     gdal.PushErrorHandler()
@@ -2787,7 +2787,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'skip'
 
     wfs_insert_url = None
-    
+
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
@@ -3303,7 +3303,7 @@ def ogr_wfs_vsimem_wfs110_updatefeature():
         return 'skip'
 
     wfs_update_url = None
-    
+
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
@@ -3325,7 +3325,7 @@ def ogr_wfs_vsimem_wfs110_updatefeature():
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
-    
+
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('gml_id', 'my_layer.1')
     gdal.PushErrorHandler()
@@ -3409,7 +3409,7 @@ def ogr_wfs_vsimem_wfs110_updatefeature():
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
-    
+
 
     gdal.FileFromMemBuffer(wfs_update_url, "<foo/>")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3499,7 +3499,7 @@ def ogr_wfs_vsimem_wfs110_deletefeature():
         return 'skip'
 
     wfs_delete_url = None
-    
+
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
@@ -4514,7 +4514,6 @@ Content-Disposition: attachment; filename=my.json
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
-        
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart')
     lyr = ds.GetLayer(0)
@@ -4907,7 +4906,7 @@ xsi:schemaLocation="http://foo blabla
     gdal.PushErrorHandler()
     sql_lyr.SetAttributeFilter('"lyr1.gml_id" IS NOT NULL')
     gdal.PopErrorHandler()
-    
+
     sql_lyr.SetSpatialFilter(None)
     gdal.PushErrorHandler()
     sql_lyr.SetSpatialFilterRect(0,0,0,0)

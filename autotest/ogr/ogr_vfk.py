@@ -29,12 +29,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-	
+
 import os
 import sys
-	
+
 sys.path.append( '../pymod' )
- 	
+
 import gdaltest
 from osgeo import ogr
 
@@ -43,72 +43,72 @@ from osgeo import ogr
 # check number of fields and features
 
 def ogr_vfk_1():
-    
+
     try:
        gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
     except:
        gdaltest.vfk_drv = None
-    
+
     if gdaltest.vfk_drv is None:
        return 'skip'
-       
+
     try:
         os.remove('data/bylany.vfk.db')
     except:
         pass
-    
+
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
-    
+
     if gdaltest.vfk_ds is None:
         return 'fail'
-    
+
     if gdaltest.vfk_ds.GetLayerCount() != 61:
         gdaltest.post_reason('expected exactly 61 layers!')
         return 'fail'
-    
+
     gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayer(0)
-    
+
     if gdaltest.vfk_layer_par is None:
         gdaltest.post_reason('cannot get first layer')
         return 'fail'
-    
+
     if gdaltest.vfk_layer_par.GetName() != 'PAR':
         gdaltest.post_reason('did not get expected layer name "PAR"')
         return 'fail'
-    
+
     defn = gdaltest.vfk_layer_par.GetLayerDefn()
     if defn.GetFieldCount() != 28:
         gdaltest.post_reason('did not get expected number of fields, got %d' % defn.GetFieldCount())
         return 'fail'
-    
+
     fc = gdaltest.vfk_layer_par.GetFeatureCount()
     if fc != 1:
         gdaltest.post_reason('did not get expected feature count, got %d' % fc)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
 # Read the first feature from layer 'PAR', check envelope
 
 def ogr_vfk_2():
-    
+
     if gdaltest.vfk_drv is None:
        return 'skip'
-    
+
     gdaltest.vfk_layer_par.ResetReading()
-    
+
     feat = gdaltest.vfk_layer_par.GetNextFeature()
-    
+
     if feat.GetFID() != 1:
         gdaltest.post_reason('did not get expected fid for feature 1')
         return 'fail'
-    
+
     geom = feat.GetGeometryRef()
     if geom.GetGeometryType() != ogr.wkbPolygon:
         gdaltest.post_reason('did not get expected geometry type.')
         return 'fail'
-    
+
     envelope = geom.GetEnvelope()
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
     exp_area = 2010.5
@@ -123,49 +123,49 @@ def ogr_vfk_2():
 # Read features from layer 'SOBR', test attribute query
 
 def ogr_vfk_3():
-    
+
     if gdaltest.vfk_drv is None:
        return 'skip'
-    
+
     gdaltest.vfk_layer_sobr = gdaltest.vfk_ds.GetLayer(43)
-    
+
     if gdaltest.vfk_layer_sobr.GetName() != 'SOBR':
         gdaltest.post_reason('did not get expected layer name "SOBR"')
         return 'fail'
-    
+
     gdaltest.vfk_layer_sobr.SetAttributeFilter("CISLO_BODU = '55'")
-    
+
     gdaltest.vfk_layer_sobr.ResetReading()
-    
+
     feat = gdaltest.vfk_layer_sobr.GetNextFeature()
     count = 0
     while feat:
         feat = gdaltest.vfk_layer_sobr.GetNextFeature()
         count += 1
-    
+
     if count != 1:
         gdaltest.post_reason('did not get expected number of features, got %d' % count)
         return 'fail'
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Read features from layer 'SBP', test random access, check length
 
 def ogr_vfk_4():
-    
+
     if gdaltest.vfk_drv is None:
        return 'skip'
-    
+
     gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
-    
+
     if not gdaltest.vfk_layer_sbp:
         gdaltest.post_reason('did not get expected layer name "SBP"')
         return 'fail'
-    
+
     feat = gdaltest.vfk_layer_sbp.GetFeature(5)
     length = int (feat.geometry().Length())
-        
+
     if length != 10:
         gdaltest.post_reason('did not get expected length, got %d' % length)
         return 'fail'
@@ -228,12 +228,12 @@ def ogr_vfk_6():
     if defn.GetFieldCount() != 28:
         gdaltest.post_reason('did not get expected number of fields, got %d' % defn.GetFieldCount())
         return 'fail'
-    
+
     fc = gdaltest.vfk_layer_par.GetFeatureCount()
     if fc != 1:
         gdaltest.post_reason('did not get expected feature count, got %d' % fc)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -269,7 +269,7 @@ gdaltest_list = [
 
 if __name__ == '__main__':
     gdaltest.setup_run('ogr_vfk')
-    
+
     gdaltest.run_tests(gdaltest_list)
-    
+
     gdaltest.summarize()
