@@ -995,7 +995,7 @@ def ogr_geojson_23():
 
     gdal.Unlink('/vsimem/ogr_geojson_23.json')
 
-    if data.find('"bbox": [ 1.0, 10.0, 2.0, 20.0 ]') == -1:
+    if data.find('"bbox": [ 1, 10, 2, 20 ]') == -1:
         gdaltest.post_reason('did not find global bbox')
         print(data)
         return 'fail'
@@ -2176,7 +2176,7 @@ def ogr_geojson_45():
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_45.json')
     lyr = ds.CreateLayer('test', options = [
-            'NATIVE_DATA={ "type": "ignored", "foo": "bar", "bar": "baz", "features": "ignored" }',
+            'NATIVE_DATA={ "type": "ignored", "bbox": [ 0, 0, 0, 0 ], "foo": "bar", "bar": "baz", "features": "ignored" }',
             'NATIVE_MEDIA_TYPE=application/vnd.geo+json'] )
     f = ogr.Feature(lyr.GetLayerDefn())
     json_geom = """{ "type": "GeometryCollection", "foo_gc": "bar_gc", "geometries" : [ 
@@ -2199,7 +2199,8 @@ def ogr_geojson_45():
 
     gdal.Unlink('/vsimem/ogr_geojson_45.json')
 
-    if data.find('"foo": "bar"') < 0 or data.find('"bar": "baz"') < 0 or \
+    if data.find('"bbox": [ 0, 1, 2, 0, 1, 2 ],') < 0 or \
+       data.find('"foo": "bar"') < 0 or data.find('"bar": "baz"') < 0 or \
        data.find('"foo_feature": "bar_feature"') < 0 or \
        data.find('"foo_gc": "bar_gc"') < 0 or \
        data.find('"foo_point": "bar_point"') < 0 or data.find('3') < 0 or \
