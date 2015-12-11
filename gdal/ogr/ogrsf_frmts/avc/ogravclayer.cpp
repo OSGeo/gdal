@@ -568,9 +568,8 @@ int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
             if (nType == AVC_FT_CHAR)
             {
                 /* Remove trailing spaces in char fields */
-                int nLen = static_cast<int>(
-                    strlen( reinterpret_cast<char *>(
-                        pasFields[iField].pszStr) ) );
+                size_t nLen = strlen( reinterpret_cast<char *>(
+                    pasFields[iField].pszStr) );
                 while (nLen > 0 && pasFields[iField].pszStr[nLen-1] == ' ')
                     nLen--;
                 pasFields[iField].pszStr[nLen] = '\0';
