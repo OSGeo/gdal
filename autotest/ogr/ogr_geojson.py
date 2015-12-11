@@ -1025,7 +1025,7 @@ def ogr_geojson_23():
 
     gdal.Unlink('/vsimem/ogr_geojson_23.json')
 
-    if data.find('"bbox": [ 1.0, 10.0, 2.0, 20.0 ]') == -1:
+    if data.find('"bbox": [ 1, 10, 2, 20 ]') == -1:
         gdaltest.post_reason('did not find global bbox')
         print(data)
         return 'fail'
