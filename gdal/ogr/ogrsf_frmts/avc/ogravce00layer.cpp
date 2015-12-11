@@ -339,7 +339,7 @@ int OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
 
     OGRErr eErr;
     OGRPolygon *poPolygon = static_cast<OGRPolygon *>(
-        OGRBuildPolygonFromEdges( static_cast<OGRGeometryH>( &oArcs ),
+        OGRBuildPolygonFromEdges( reinterpret_cast<OGRGeometryH>( &oArcs ),
                                   TRUE, FALSE, 0.0, &eErr ) );
     if( poPolygon != NULL )
         poFeature->SetGeometryDirectly( poPolygon );
