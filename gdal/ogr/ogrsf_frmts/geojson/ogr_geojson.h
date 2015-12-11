@@ -37,7 +37,7 @@
 #include <vector> // used by OGRGeoJSONLayer
 #include "ogrgeojsonutils.h"
 
-#define SPACE_FOR_BBOX  80
+#define SPACE_FOR_BBOX  130
 
 class OGRGeoJSONDataSource;
 

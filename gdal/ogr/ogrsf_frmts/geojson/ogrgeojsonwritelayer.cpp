@@ -67,36 +67,27 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
 
     if( bWriteBBOX && sEnvelopeLayer.IsInit() )
     {
-        json_object* poObjBBOX = json_object_new_array();
-        json_object_array_add(poObjBBOX,
-                        json_object_new_double_with_precision(sEnvelopeLayer.MinX, nCoordPrecision));
-        json_object_array_add(poObjBBOX,
-                        json_object_new_double_with_precision(sEnvelopeLayer.MinY, nCoordPrecision));
+        CPLString osBBOX = "[ ";
+        osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinX);
+        osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinY);
         if( bBBOX3D )
-            json_object_array_add(poObjBBOX,
-                        json_object_new_double_with_precision(sEnvelopeLayer.MinZ, nCoordPrecision));
-        json_object_array_add(poObjBBOX,
-                        json_object_new_double_with_precision(sEnvelopeLayer.MaxX, nCoordPrecision));
-        json_object_array_add(poObjBBOX,
-                        json_object_new_double_with_precision(sEnvelopeLayer.MaxY, nCoordPrecision));
+            osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinZ);
+        osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MaxX);
+        osBBOX += CPLSPrintf("%.15g", sEnvelopeLayer.MaxY);
         if( bBBOX3D )
-            json_object_array_add(poObjBBOX,
-                        json_object_new_double_with_precision(sEnvelopeLayer.MaxZ, nCoordPrecision));
+            osBBOX += CPLSPrintf(", %.15g", sEnvelopeLayer.MaxZ);
+        osBBOX += " ]";
 
-        const char* pszBBOX = json_object_to_json_string( poObjBBOX );
-        if( poDS_->GetFpOutputIsSeekable() )
+        if( poDS_->GetFpOutputIsSeekable() && osBBOX.size() + 9 < SPACE_FOR_BBOX )
         {
             VSIFSeekL(fp, poDS_->GetBBOXInsertLocation(), SEEK_SET);
-            if (strlen(pszBBOX) + 9 < SPACE_FOR_BBOX)
-                VSIFPrintfL( fp, "\"bbox\": %s,", pszBBOX );
+            VSIFPrintfL( fp, "\"bbox\": %s,", osBBOX.c_str() );
             VSIFSeekL(fp, 0, SEEK_END);
         }
         else
         {
-            VSIFPrintfL( fp, ",\n\"bbox\": %s", pszBBOX );
+            VSIFPrintfL( fp, ",\n\"bbox\": %s", osBBOX.c_str() );
         }
-
-        json_object_put( poObjBBOX );
     }
 
     VSIFPrintfL( fp, "\n}\n" );
