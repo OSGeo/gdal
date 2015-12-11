@@ -376,7 +376,9 @@ void OGRODSDataSource::dataHandlerCbk(const char *data, int nLen)
         case STATE_TABLE:   break;
         case STATE_ROW:     break;
         case STATE_CELL:    break;
-        case STATE_TEXTP:   dataHandlerTextP(data, nLen);
+        case STATE_TEXTP:
+            dataHandlerTextP(data, nLen);
+            break;
         default:            break;
     }
 }

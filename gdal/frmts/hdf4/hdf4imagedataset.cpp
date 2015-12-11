@@ -851,6 +851,7 @@ HDF4ImageDataset::~HDF4ImageDataset()
                         break;
                     case H4ST_EOS_GRID:
                         GDclose( hHDF4 );
+                        break;
                     default:
                         break;
                 }
