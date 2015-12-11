@@ -50,13 +50,14 @@ static GDALDataset *OGRARCGENDriverOpen( GDALOpenInfo* poOpenInfo )
 
     /* Check that the first line is compatible with a generate file */
     /* and in particular contain >= 32 && <= 127 bytes */
-    int bFoundEOL = FALSE;
-    char* szFirstLine = CPLStrdup((const char*) poOpenInfo->pabyHeader);
+    bool bFoundEOL = false;
+    char* szFirstLine
+        = CPLStrdup(reinterpret_cast<char *>( poOpenInfo->pabyHeader ) );
     for(int i=0;szFirstLine[i] != '\0';i++)
     {
         if (szFirstLine[i] == '\n' || szFirstLine[i] == '\r')
         {
-            bFoundEOL = TRUE;
+            bFoundEOL = true;
             szFirstLine[i] = '\0';
             break;
         }
@@ -74,7 +75,7 @@ static GDALDataset *OGRARCGENDriverOpen( GDALOpenInfo* poOpenInfo )
     }
 
     char** papszTokens = CSLTokenizeString2( szFirstLine, " ,", 0 );
-    int nTokens = CSLCount(papszTokens);
+    const int nTokens = CSLCount(papszTokens);
     if (nTokens != 1 && nTokens != 3 && nTokens != 4)
     {
         CSLDestroy(papszTokens);
@@ -93,7 +94,7 @@ static GDALDataset *OGRARCGENDriverOpen( GDALOpenInfo* poOpenInfo )
     CSLDestroy(papszTokens);
     CPLFree(szFirstLine);
 
-    OGRARCGENDataSource   *poDS = new OGRARCGENDataSource();
+    OGRARCGENDataSource *poDS = new OGRARCGENDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
