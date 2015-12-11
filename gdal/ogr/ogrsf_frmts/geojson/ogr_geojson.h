@@ -38,7 +38,7 @@
 #include <vector> // used by OGRGeoJSONLayer
 #include "ogrgeojsonutils.h"
 
-#define SPACE_FOR_BBOX  80
+#define SPACE_FOR_BBOX  130
 
 class OGRGeoJSONDataSource;
 
@@ -90,9 +90,10 @@ class OGRGeoJSONWriteLayer : public OGRLayer
 {
 public:
     OGRGeoJSONWriteLayer( const char* pszName,
-                     OGRwkbGeometryType eGType,
-                     char** papszOptions,
-                     OGRGeoJSONDataSource* poDS );
+                          OGRwkbGeometryType eGType,
+                          char** papszOptions,
+                          bool bWriteFC_BBOXIn,
+                          OGRGeoJSONDataSource* poDS );
     ~OGRGeoJSONWriteLayer();
 
     //
@@ -115,6 +116,7 @@ private:
 
     int bWriteBBOX;
     int bBBOX3D;
+    bool bWriteFC_BBOX;
     OGREnvelope3D sEnvelopeLayer;
 
     int nCoordPrecision;

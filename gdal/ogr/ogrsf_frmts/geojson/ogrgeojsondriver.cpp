@@ -524,7 +524,7 @@ void RegisterOGRGeoJSON()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='WRITE_BBOX' type='boolean' description='whether to write a bbox property with the bounding box of the geometries at the feature and feature collection level' default='NO'/>"
-"  <Option name='COORDINATE_PRECISION' type='int' description='Number of decimal for coordinates' default='10'/>"
+"  <Option name='COORDINATE_PRECISION' type='int' description='Number of decimal for coordinates' default='15'/>"
 "  <Option name='NATIVE_DATA' type='string' description='FeatureCollection level elements.'/>"
 "  <Option name='NATIVE_MEDIA_TYPE' type='string' description='Format of NATIVE_DATA. Must be \"application/vnd.geo+json\", otherwise NATIVE_DATA will be ignored.'/>"
 "</LayerCreationOptionList>");
