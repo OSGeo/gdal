@@ -310,7 +310,7 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
 
     OGRErr eErr;
     OGRPolygon *poPolygon
-      = static_cast<OGRPolygon *>(
+      = reinterpret_cast<OGRPolygon *>(
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oArcs, TRUE, FALSE,
                                   0.0, &eErr ) );
     if( poPolygon != NULL )
