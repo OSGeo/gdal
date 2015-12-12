@@ -58,7 +58,7 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
     partialIndexTable(TRUE),
     offsetAndLineFeaturesTable(NULL)
 {
-    const char* iKnowHowToCount[]
+    static const char* const iKnowHowToCount[]
         = { "Primary", "Secondary", "Third", "Fourth", "Fifth" };
     char tmp[32];
 

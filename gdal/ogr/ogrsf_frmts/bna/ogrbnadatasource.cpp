@@ -169,9 +169,9 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         BNARecord* record;
         int curLine = 0;
-        const char* layerRadixName[]
+        static const char* const layerRadixName[]
             = { "points", "polygons", "lines", "ellipses"};
-        OGRwkbGeometryType wkbGeomTypes[]
+        static const OGRwkbGeometryType wkbGeomTypes[]
             = { wkbPoint, wkbMultiPolygon, wkbLineString, wkbPolygon };
 
 #if defined(BNA_FAST_DS_OPEN)
