@@ -1,5 +1,3 @@
-
-
 include ../../../GDALmake.opt
 
 OBJ	=	ogrbnadriver.o ogrbnadatasource.o ogrbnalayer.o ogrbnaparser.o

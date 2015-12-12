@@ -37,7 +37,7 @@
 static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-// -------------------------------------------------------------------- 
+// --------------------------------------------------------------------
 //      Does this appear to be a .bna file?
 // --------------------------------------------------------------------
     if( poOpenInfo->fpL == NULL ||
@@ -72,7 +72,7 @@ static GDALDataset *OGRBNADriverCreate( const char * pszName,
                                         CPL_UNUSED GDALDataType eDT,
                                         char **papszOptions )
 {
-    OGRBNADataSource   *poDS = new OGRBNADataSource();
+    OGRBNADataSource *poDS = new OGRBNADataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
@@ -92,8 +92,8 @@ static CPLErr OGRBNADriverDelete( const char *pszFilename )
 {
     if( VSIUnlink( pszFilename ) == 0 )
         return CE_None;
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
