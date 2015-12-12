@@ -3569,11 +3569,13 @@ def tiff_write_88():
     src_ds = gdal.Open('tmp/tiff_write_88_src.tif')
     # for testing only. We need to keep the file to check it was a bigtiff
     gdal.SetConfigOption('GTIFF_DELETE_ON_ERROR', 'NO')
+    gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', 'NO') # we don't want free space to be an issue here
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_88_dst.tif', src_ds,
             options = ['TILED=YES', 'COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('GTIFF_DELETE_ON_ERROR', None)
+    gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', None)
     del ds
     src_ds = None
 

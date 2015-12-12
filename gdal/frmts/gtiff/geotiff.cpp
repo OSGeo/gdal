@@ -12006,7 +12006,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( nCompression == COMPRESSION_NONE && 
         dfUncompressedImageSize >= 1e9 &&
-        !CSLFetchBoolean(papszParmList, "SPARSE_OK", FALSE) )
+        !CSLFetchBoolean(papszParmList, "SPARSE_OK", FALSE) &&
+        CSLTestBoolean(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
     {
         GIntBig nFreeDiskSpace = VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
         if( nFreeDiskSpace >= 0 &&
