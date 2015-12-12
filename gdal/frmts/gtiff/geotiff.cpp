@@ -12002,6 +12002,26 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check free space (only for big, non sparse, uncompressed)       */
+/* -------------------------------------------------------------------- */
+    if( nCompression == COMPRESSION_NONE && 
+        dfUncompressedImageSize >= 1e9 &&
+        !CSLFetchBoolean(papszParmList, "SPARSE_OK", FALSE) )
+    {
+        GIntBig nFreeDiskSpace = VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
+        if( nFreeDiskSpace >= 0 &&
+            nFreeDiskSpace < dfUncompressedImageSize )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Free disk space available is " CPL_FRMT_GIB " bytes, "
+                      "whereas " CPL_FRMT_GIB " are at least necessary.",
+                      nFreeDiskSpace,
+                      static_cast<GIntBig>(dfUncompressedImageSize) );
+            return NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Should the file be created as a bigtiff file?                   */
 /* -------------------------------------------------------------------- */
     const char *pszBIGTIFF = CSLFetchNameValue(papszParmList, "BIGTIFF");
@@ -12461,7 +12481,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     /* crystalized the directory. This way we avoid a directory rewriting */
 #if defined(BIGTIFF_SUPPORT)
     if( nCompression == COMPRESSION_JPEG &&
-        !STARTS_WITH(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_") &&        CSLTestBoolean(CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
+        !STARTS_WITH(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_") &&
+        CSLTestBoolean(CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
         CPLString osTmpFilenameIn;
         osTmpFilenameIn.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", hTIFF);

@@ -6227,6 +6227,19 @@ def tiff_write_142():
     return 'success'
 
 ###############################################################################
+# Check that we detect that free space isn't sufficient
+
+def tiff_write_143():
+
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_143.tif', 1000000000, 1000000000)
+    if ds is not None:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6398,6 +6411,7 @@ gdaltest_list = [
     tiff_write_140,
     tiff_write_141,
     tiff_write_142,
+    tiff_write_143,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
