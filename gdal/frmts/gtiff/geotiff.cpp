@@ -6457,7 +6457,16 @@ bool GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
     if( SubmitCompressionJob(tile, pabyData, cc, nBlockYSize) )
         return true;
 
-    return static_cast<int>(TIFFWriteEncodedTile(hTIFF, tile, pabyData, cc)) == cc;
+    // libtiff 4.0.6 or older do not always properly report write errors
+#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
+    CPLErr eBefore = CPLGetLastErrorType();
+#endif
+    bool bRet = static_cast<int>(TIFFWriteEncodedTile(hTIFF, tile, pabyData, cc)) == cc;
+#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
+    if( eBefore == CE_None && CPLGetLastErrorType() == CE_Failure )
+        bRet = FALSE;
+#endif
+    return bRet;
 }
 
 /************************************************************************/
@@ -6532,7 +6541,16 @@ bool GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
     if( SubmitCompressionJob(strip, pabyData, cc, nStripHeight) )
         return true;
 
-    return static_cast<int>(TIFFWriteEncodedStrip(hTIFF, strip, pabyData, cc)) == cc;
+    // libtiff 4.0.6 or older do not always properly report write errors
+#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
+    CPLErr eBefore = CPLGetLastErrorType();
+#endif
+    bool bRet = static_cast<int>(TIFFWriteEncodedStrip(hTIFF, strip, pabyData, cc)) == cc;
+#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION <= 20150912))
+    if( eBefore == CE_None && CPLGetLastErrorType() == CE_Failure )
+        bRet = FALSE;
+#endif
+    return bRet;
 }
 
 /************************************************************************/
