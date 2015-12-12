@@ -1701,6 +1701,18 @@ def error_handler(error_name = 'CPLQuietErrorHandler'):
     gdal.PopErrorHandler()
 
 ###############################################################################
+# Temporarily define a new value of block cache
+
+@contextlib.contextmanager
+def SetCacheMax(val):
+  oldval = gdal.GetCacheMax()
+  gdal.SetCacheMax(val)
+  try:
+    yield
+  finally:
+    gdal.SetCacheMax(oldval)
+
+###############################################################################
 run_func = gdaltestaux.run_func
 urlescape = gdaltestaux.urlescape
 gdalurlopen = gdaltestaux.gdalurlopen
