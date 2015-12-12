@@ -82,15 +82,8 @@ int OGRBNADataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
-#if 0
-    // TODO: Is this really false for both?
-    else if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return FALSE;
-    else
-        return FALSE;
-#else
+
     return FALSE;
-#endif
 }
 
 /************************************************************************/
