@@ -232,7 +232,6 @@ GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 #define CPLReadDir VSIReadDir
 char CPL_DLL **VSIReadDir( const char * );
 char CPL_DLL **VSIReadDirRecursive( const char *pszPath );
-char CPL_DLL **VSIReadDirWithLimit( const char *pszPath, int nMaxFiles );
 int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
