@@ -62,6 +62,7 @@ public:
     virtual char   **ReadDir( const char *pszDirname );
     virtual int      IsCaseSensitive( const char* pszFilename )
                       { (void) pszFilename; return FALSE; }
+    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
 };
 
 /************************************************************************/
@@ -869,6 +870,21 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
         
         return oDir.StealList();
     }
+}
+
+/************************************************************************/
+/*                        GetDiskFreeSpace()                            */
+/************************************************************************/
+
+GIntBig VSIWin32FilesystemHandler::GetDiskFreeSpace( const char* pszDirname )
+{
+    GIntBig nRet = -1;
+    ULARGE_INTEGER nFreeBytesAvailable;
+    if( GetDiskFreeSpaceEx(pszDirname, &nFreeBytesAvailable, NULL, NULL) )
+    {
+        nRet = static_cast<GIntBig>(nFreeBytesAvailable.QuadPart);
+    }
+    return nRet;
 }
 
 /************************************************************************/

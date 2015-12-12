@@ -194,6 +194,7 @@ AC_CHECK_FUNCS(lstat)
 AC_CHECK_FUNCS(posix_spawnp)
 AC_CHECK_FUNCS(vfork)
 AC_CHECK_FUNCS(mmap)
+AC_CHECK_FUNCS(statvfs)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.

@@ -18007,6 +18007,17 @@ _ACEOF
 fi
 done
 
+for ac_func in statvfs
+do :
+  ac_fn_c_check_func "$LINENO" "statvfs" "ac_cv_func_statvfs"
+if test "x$ac_cv_func_statvfs" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STATVFS 1
+_ACEOF
+
+fi
+done
+
 
 
 ac_ext=cpp
@@ -27312,7 +27323,7 @@ else
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
             HAVE_SQLITE3="no"
-            succees="no"
+            success="no"
 
 
 fi

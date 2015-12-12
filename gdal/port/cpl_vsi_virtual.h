@@ -86,6 +86,7 @@ public:
                       { (void) oldpath; (void)newpath; errno=ENOENT; return -1; }
     virtual int IsCaseSensitive( const char* pszFilename )
                       { (void) pszFilename; return TRUE; }
+    virtual GIntBig GetDiskFreeSpace( const char* /* pszDirname */ ) { return -1; }
 };
 
 /************************************************************************/
