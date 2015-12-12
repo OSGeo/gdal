@@ -537,9 +537,6 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
         //store
         return AddFeature(poOutLayer, pOutLine, dfPosBeg, dfPosEnd, 1.0, bQuiet);
     }
-
-    //should never reach here
-    return OGRERR_NONE;
 }
 
 //------------------------------------------------------------------------
