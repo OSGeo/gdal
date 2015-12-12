@@ -120,21 +120,21 @@ and http://64.145.236.125/forum/topic.asp?topic_id=1930&forum_id=1&Topic_Title=h
 // We allow that couples of coordinates on the same line may be separated only
 // by spaces (instead of being separated by a comma).
 
-static const char *STRING_NOT_TERMINATED
+static const char *const STRING_NOT_TERMINATED
     = "string not terminated when end of line occurred";
-static const char *MISSING_FIELDS            = "missing fields";
-static const char *BAD_INTEGER_NUMBER_FORMAT = "bad integer number format";
-static const char *BAD_FLOAT_NUMBER_FORMAT   = "bad float number format";
-static const char *STRING_EXPECTED           = "string expected";
-static const char *NUMBER_EXPECTED           = "number expected";
-static const char *INTEGER_NUMBER_EXPECTED   = "integer number expected";
-static const char *FLOAT_NUMBER_EXPECTED     = "float number expected";
-static const char *INVALID_GEOMETRY_TYPE     = "invalid geometry type";
-static const char *TOO_LONG_ID               = "too long id (> 256 characters)";
-static const char *MAX_BNA_IDS_REACHED       = "maximum number of IDs reached";
-static const char *NOT_ENOUGH_MEMORY
+static const char *const MISSING_FIELDS            = "missing fields";
+static const char *const BAD_INTEGER_NUMBER_FORMAT = "bad integer number format";
+static const char *const BAD_FLOAT_NUMBER_FORMAT   = "bad float number format";
+static const char *const STRING_EXPECTED           = "string expected";
+static const char *const NUMBER_EXPECTED           = "number expected";
+static const char *const INTEGER_NUMBER_EXPECTED   = "integer number expected";
+static const char *const FLOAT_NUMBER_EXPECTED     = "float number expected";
+static const char *const INVALID_GEOMETRY_TYPE     = "invalid geometry type";
+static const char *const TOO_LONG_ID               = "too long id (> 256 characters)";
+static const char *const MAX_BNA_IDS_REACHED       = "maximum number of IDs reached";
+static const char *const NOT_ENOUGH_MEMORY
     = "not enough memory for request number of coordinates";
-static const char *LINE_TOO_LONG             = "line too long";
+static const char *const LINE_TOO_LONG             = "line too long";
 
 static const int TMP_BUFFER_SIZE = 256;
 static const int LINE_BUFFER_SIZE = 1024;
