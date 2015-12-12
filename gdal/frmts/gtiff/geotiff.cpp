@@ -301,8 +301,8 @@ class GTiffDataset : public GDALPamDataset
 
     void*        pabyTempWriteBuffer;
     int          nTempWriteBufferSize;
-    int          WriteEncodedTile(uint32 tile, GByte* pabyData, int bPreserveDataBuffer);
-    int          WriteEncodedStrip(uint32 strip, GByte* pabyData, int bPreserveDataBuffer);
+    bool         WriteEncodedTile(uint32 tile, GByte* pabyData, int bPreserveDataBuffer);
+    bool         WriteEncodedStrip(uint32 strip, GByte* pabyData, int bPreserveDataBuffer);
 
     GTiffDataset* poMaskDS;
     GTiffDataset* poBaseDS;
@@ -6332,8 +6332,8 @@ void GTiffDataset::FillEmptyTiles()
 /*                        WriteEncodedTile()                            */
 /************************************************************************/
 
-int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
-                                   int bPreserveDataBuffer)
+bool GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
+                                    int bPreserveDataBuffer)
 {
     int cc = static_cast<int>(TIFFTileSize( hTIFF ));
     bool bNeedTileFill = false;
@@ -6439,32 +6439,32 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Attempt to write block %d whereas %d was expected",
                      tile,  nLastWrittenBlockId + 1);
-            return -1;
+            return false;
         }
         if( (int)VSIFWriteL(pabyData, 1, cc, fpToWrite) != cc )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Could not write %d bytes",
                      cc);
-            return -1;
+            return false;
         }
         nLastWrittenBlockId = tile;
-        return 0;
+        return true;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Should we do compression in a worker thread ?                   */
 /* -------------------------------------------------------------------- */
     if( SubmitCompressionJob(tile, pabyData, cc, nBlockYSize) )
-        return 0;
+        return true;
 
-    return static_cast<int>(TIFFWriteEncodedTile(hTIFF, tile, pabyData, cc));
+    return static_cast<int>(TIFFWriteEncodedTile(hTIFF, tile, pabyData, cc)) == cc;
 }
 
 /************************************************************************/
 /*                        WriteEncodedStrip()                           */
 /************************************************************************/
 
-int  GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
+bool GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
                                      int bPreserveDataBuffer)
 {
     int cc = static_cast<int>(TIFFStripSize( hTIFF ));
@@ -6514,25 +6514,25 @@ int  GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Attempt to write block %d whereas %d was expected",
                      strip,  nLastWrittenBlockId + 1);
-            return -1;
+            return false;
         }
         if( (int)VSIFWriteL(pabyData, 1, cc, fpToWrite) != cc )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Could not write %d bytes",
                      cc);
-            return -1;
+            return false;
         }
         nLastWrittenBlockId = strip;
-        return 0;
+        return true;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Should we do compression in a worker thread ?                   */
 /* -------------------------------------------------------------------- */
     if( SubmitCompressionJob(strip, pabyData, cc, nStripHeight) )
-        return 0;
+        return true;
 
-    return static_cast<int>(TIFFWriteEncodedStrip(hTIFF, strip, pabyData, cc));
+    return static_cast<int>(TIFFWriteEncodedStrip(hTIFF, strip, pabyData, cc)) == cc;
 }
 
 /************************************************************************/
@@ -6923,16 +6923,16 @@ CPLErr  GTiffDataset::WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data,
 
     if( TIFFIsTiled( hTIFF ) )
     {
-        if( WriteEncodedTile(tile_or_strip, (GByte*) data, 
-                             bPreserveDataBuffer) == -1 )
+        if( !(WriteEncodedTile(tile_or_strip, (GByte*) data, 
+                               bPreserveDataBuffer)) )
         {
             eErr = CE_Failure;
         }
     }
     else
     {
-        if( WriteEncodedStrip(tile_or_strip, (GByte *) data, 
-                              bPreserveDataBuffer) == -1 )
+        if( !(WriteEncodedStrip(tile_or_strip, (GByte *) data, 
+                                bPreserveDataBuffer)) )
         {
             eErr = CE_Failure;
         }
