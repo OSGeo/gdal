@@ -149,6 +149,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+    
+    virtual OGRErr		DeleteField( int iField );
 
     virtual OGRFeature  *GetNextRawFeature();
 

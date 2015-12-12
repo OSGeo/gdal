@@ -388,6 +388,15 @@ Error""")
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
+        """{}""")
+    gdal.PushErrorHandler()
+    fc = lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
         """{"rows":[{"foo":1}],
             "fields":{"foo":{"type":"number"}}}""")
     gdal.PushErrorHandler()
@@ -622,6 +631,8 @@ Error""")
     lyr.CreateFeature(f)
     lyr.SetFeature(f)
     lyr.DeleteFeature(0)
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    lyr.DeleteField(0)
     gdal.PopErrorHandler()
 
     ds = None
@@ -671,9 +682,9 @@ Error""")
     f = None
 
     fld_defn = ogr.FieldDefn('INTFIELD', ogr.OFTInteger)
-    gdal.PushErrorHandler()
-    ret = lyr.CreateField(fld_defn)
-    gdal.PopErrorHandler()
+    # No server answer
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(fld_defn)
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -684,9 +695,36 @@ Error""")
     if lyr.CreateField(fld_defn) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-
+   
     fld_defn = ogr.FieldDefn('boolfield', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
+
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "boolfield" BOOLEAN&api_key=foo""",
+        """{"rows":[],
+            "fields":{}}""")
+    if lyr.CreateField(fld_defn) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid field
+    with gdaltest.error_handler():
+        if lyr.DeleteField(-1) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # No server answer
+    with gdaltest.error_handler():
+        if lyr.DeleteField(0) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=ALTER TABLE "my_layer" DROP COLUMN "boolfield"&api_key=foo""",
+        """{"rows":[],
+            "fields":{}}""")
+    fld_pos = lyr.GetLayerDefn().GetFieldIndex(fld_defn.GetName())
+    if lyr.DeleteField(fld_pos) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "boolfield" BOOLEAN&api_key=foo""",
         """{"rows":[],
