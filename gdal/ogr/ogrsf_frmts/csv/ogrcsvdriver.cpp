@@ -42,8 +42,10 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
     if( poOpenInfo->fpL != NULL )
     {
-        CPLString osBaseFilename = CPLGetFilename(poOpenInfo->pszFilename);
-        CPLString osExt = OGRCSVDataSource::GetRealExtension(poOpenInfo->pszFilename);
+        const CPLString osBaseFilename
+            = CPLGetFilename(poOpenInfo->pszFilename);
+        const CPLString osExt
+            = OGRCSVDataSource::GetRealExtension(poOpenInfo->pszFilename);
 
         if (EQUAL(osBaseFilename, "NfdcFacilities.xls") ||
             EQUAL(osBaseFilename, "NfdcRunways.xls") ||
@@ -63,8 +65,10 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
               STARTS_WITH_CI(osBaseFilename, "NationalFedCodes_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStates_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStatesFedCodes_") ||
-              (strlen(osBaseFilename) > 2 && STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
-              (strlen(osBaseFilename) > 2 && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
+              (strlen(osBaseFilename) > 2
+               && STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
+              (strlen(osBaseFilename) > 2
+               && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
              (EQUAL(osExt, "txt") || EQUAL(osExt, "zip")) )
         {
             return TRUE;
@@ -110,7 +114,7 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
     if( OGRCSVDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
 
-    OGRCSVDataSource   *poDS = new OGRCSVDataSource();
+    OGRCSVDataSource *poDS = new OGRCSVDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE,
                      poOpenInfo->papszOpenOptions ) )
@@ -213,8 +217,8 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
 {
     if( CPLUnlinkTree( pszFilename ) == 0 )
         return CE_None;
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
