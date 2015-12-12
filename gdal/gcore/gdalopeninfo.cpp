@@ -94,7 +94,13 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
 #ifdef HAVE_READLINK
 retry:
 #endif
+
+#ifdef __FreeBSD__
+    /* FreeBSD 8 oddity: fopen(a_directory, "rb") returns non NULL */
+    bool bPotentialDirectory = (eAccess == GA_ReadOnly);
+#else
     bool bPotentialDirectory = false;
+#endif
 
     /* Check if the filename might be a directory of a special virtual file system */
     if( STARTS_WITH(pszFilename, "/vsizip/") ||
