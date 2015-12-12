@@ -821,5 +821,13 @@ namespace tut
         ensure( EQUAL(CPLFormFilename("\\\\$\\c:", "..", NULL), "\\\\$\\c:/..") ||
                 EQUAL(CPLFormFilename("\\\\$\\c:", "..", NULL), "\\\\$\\c:\\..") );
     }
-    
+
+    template<>
+    template<>
+    void object::test<13>()
+    {
+        ensure( VSIGetDiskFreeSpace("/vsimem/") > 0 );
+        ensure( VSIGetDiskFreeSpace(".") == -1 || VSIGetDiskFreeSpace(".") >= 0 );
+    }
+
 } // namespace tut

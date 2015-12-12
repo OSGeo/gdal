@@ -232,11 +232,13 @@ GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 #define CPLReadDir VSIReadDir
 char CPL_DLL **VSIReadDir( const char * );
 char CPL_DLL **VSIReadDirRecursive( const char *pszPath );
+char CPL_DLL **VSIReadDirWithLimit( const char *pszPath, int nMaxFiles );
 int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
 int CPL_DLL VSIRename( const char * oldpath, const char * newpath );
 char CPL_DLL *VSIStrerror( int );
+GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
 
 /* ==================================================================== */
 /*      Install special file access handlers.                           */

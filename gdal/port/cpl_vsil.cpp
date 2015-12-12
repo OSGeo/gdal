@@ -1087,6 +1087,27 @@ void *VSIFGetNativeFileDescriptorL( VSILFILE* fp )
     return poFileHandle->GetNativeFileDescriptor();
 }
 
+/************************************************************************/
+/*                      VSIGetDiskFreeSpace()                           */
+/************************************************************************/
+
+/**
+ * \brief Return free disk space available on the filesystem.
+ *
+ * This function returns the free disk space available on the filesystem.
+ *
+ * @param pszDirname a directory of the filesystem to query.
+ * @return The free space in bytes. Or -1 in case of error.
+ * @since GDAL 2.1
+ */
+
+GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
+{
+    VSIFilesystemHandler *poFSHandler = 
+        VSIFileManager::GetHandler( pszDirname );
+
+    return poFSHandler->GetDiskFreeSpace( pszDirname );
+}
 
 /************************************************************************/
 /* ==================================================================== */
