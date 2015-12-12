@@ -63,7 +63,7 @@ AX_CHECK_COMPILE_FLAG([-Werror -Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" C
 AX_CHECK_COMPILE_FLAG([-Werror -Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"])
 
 dnl -Wclobbered is not reliable on most gcc versions
-AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
+dnl AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
 
 AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
 AC_LANG_PUSH([C++])

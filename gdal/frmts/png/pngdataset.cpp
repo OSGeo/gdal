@@ -639,6 +639,20 @@ void PNGDataset::Restart()
 }
 
 /************************************************************************/
+/*                        safe_png_read_image()                         */
+/************************************************************************/
+
+static bool safe_png_read_image(png_structp hPNG,
+                                png_bytep *png_rows,
+                                jmp_buf     sSetJmpContext)
+{
+    if( setjmp( sSetJmpContext ) != 0 )
+        return false;
+    png_read_image( hPNG, png_rows );
+    return true;
+}
+
+/************************************************************************/
 /*                        LoadInterlacedChunk()                         */
 /************************************************************************/
 
@@ -698,8 +712,6 @@ CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
     if( nLastLineRead != -1 )
     {
         Restart();
-        if( setjmp( sSetJmpContext ) != 0 )
-            return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -722,16 +734,31 @@ CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
             png_rows[i] = dummy_row;
     }
 
-    png_read_image( hPNG, png_rows );
+    bool bRet = safe_png_read_image( hPNG, png_rows, sSetJmpContext );
 
     CPLFree( png_rows );
     CPLFree( dummy_row );
+    if( !bRet )
+        return CE_Failure;
 
     nLastLineRead = nBufferStartLine + nBufferLines - 1;
 
     return CE_None;
 }
 
+/************************************************************************/
+/*                        safe_png_read_rows()                          */
+/************************************************************************/
+
+static bool safe_png_read_rows(png_structp hPNG,
+                                png_bytep  row,
+                                jmp_buf    sSetJmpContext)
+{
+    if( setjmp( sSetJmpContext ) != 0 )
+        return false;
+    png_read_rows( hPNG, &row, NULL, 1 );
+    return true;
+}
 /************************************************************************/
 /*                            LoadScanline()                            */
 /************************************************************************/
@@ -749,9 +776,6 @@ CPLErr PNGDataset::LoadScanline( int nLine )
         nPixelOffset = 2 * GetRasterCount();
     else
         nPixelOffset = 1 * GetRasterCount();
-
-    if( setjmp( sSetJmpContext ) != 0 )
-        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      If the file is interlaced, we will load the entire image        */
@@ -774,8 +798,6 @@ CPLErr PNGDataset::LoadScanline( int nLine )
     if( nLine <= nLastLineRead )
     {
         Restart();
-        if( setjmp( sSetJmpContext ) != 0 )
-            return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -784,7 +806,8 @@ CPLErr PNGDataset::LoadScanline( int nLine )
     png_bytep row = pabyBuffer;
     while( nLine > nLastLineRead )
     {
-        png_read_rows( hPNG, &row, NULL, 1 );
+        if( !safe_png_read_rows( hPNG, row, sSetJmpContext ) )
+            return CE_Failure;
         nLastLineRead++;
     }
 
@@ -1435,6 +1458,34 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create the dataset.                                             */
+/* -------------------------------------------------------------------- */
+    VSILFILE *fpImage = VSIFOpenL( pszFilename, "wb" );
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create png file %s.\n", 
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize PNG access to the file.                              */
+/* -------------------------------------------------------------------- */
+    jmp_buf     sSetJmpContext;
+
+    png_structp hPNG = png_create_write_struct(
+        PNG_LIBPNG_VER_STRING, &sSetJmpContext, png_gdal_error, png_gdal_warning );
+    png_infop  psPNGInfo = png_create_info_struct( hPNG );
+
+    if( setjmp( sSetJmpContext ) != 0 )
+    {
+        VSIFCloseL( fpImage );
+        png_destroy_write_struct( &hPNG, &psPNGInfo );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Setup some parameters.                                          */
 /* -------------------------------------------------------------------- */
     int  nColorType=0;
@@ -1472,34 +1523,6 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         eType = GDT_UInt16;
         nBitDepth = 16;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create the dataset.                                             */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fpImage = VSIFOpenL( pszFilename, "wb" );
-    if( fpImage == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create png file %s.\n", 
-                  pszFilename );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Initialize PNG access to the file.                              */
-/* -------------------------------------------------------------------- */
-    jmp_buf     sSetJmpContext;
-
-    png_structp hPNG = png_create_write_struct(
-        PNG_LIBPNG_VER_STRING, &sSetJmpContext, png_gdal_error, png_gdal_warning );
-    png_infop  psPNGInfo = png_create_info_struct( hPNG );
-
-    if( setjmp( sSetJmpContext ) != 0 )
-    {
-        VSIFCloseL( fpImage );
-        png_destroy_write_struct( &hPNG, &psPNGInfo );
-        return NULL;
     }
 
     png_set_write_fn( hPNG, fpImage, png_vsi_write_data, png_vsi_flush );
