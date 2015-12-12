@@ -83,10 +83,13 @@ class OGRCSVLayer : public OGRLayer
     int                 bHiddenWKTColumn;
 
     /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
-    int                 iNfdcLongitudeS, iNfdcLatitudeS;
+    int                 iNfdcLongitudeS;
+    int                 iNfdcLatitudeS;
     int                 bDontHonourStrings;
 
-    int                 iLongitudeField, iLatitudeField, iZField;
+    int                 iLongitudeField;
+    int                 iLatitudeField;
+    int                 iZField;
 
     int                 bIsEurostatTSV;
     int                 nEurostatDims;
