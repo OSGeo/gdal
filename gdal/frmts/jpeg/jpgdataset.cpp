@@ -2168,6 +2168,25 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
                                int bUseInternalOverviews )
 
 {
+
+    JPGDataset  *poDS = new JPGDataset();
+    /* Will detect mismatch between compile-time and run-time libjpeg versions */
+    if (setjmp(poDS->sErrorStruct.setjmp_buffer)) 
+    {
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
+        if (poDS->sDInfo.data_precision == 12 && poDS->fpImage != NULL)
+        {
+            VSILFILE* fpImage = poDS->fpImage;
+            poDS->fpImage = NULL;
+            delete poDS;
+            return JPEGDataset12Open(pszFilename, fpImage, papszSiblingFiles,
+                                     nScaleFactor, bDoPAMInitialize, bUseInternalOverviews);
+        }
+#endif
+        delete poDS;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If it is a subfile, read the JPEG header.                       */
 /* -------------------------------------------------------------------- */
@@ -2257,7 +2276,6 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JPGDataset	*poDS = new JPGDataset();
     poDS->nQLevel = nQLevel;
     poDS->fpImage = fpImage;
 
@@ -2268,13 +2286,6 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
     VSIFSeekL( poDS->fpImage, poDS->nSubfileOffset, SEEK_SET );
 
     poDS->eAccess = GA_ReadOnly;
-
-    /* Will detect mismatch between compile-time and run-time libjpeg versions */
-    if (setjmp(poDS->sErrorStruct.setjmp_buffer)) 
-    {
-        delete poDS;
-        return NULL;
-    }
 
     poDS->sDInfo.err = jpeg_std_error( &(poDS->sJErr) );
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
@@ -2304,25 +2315,6 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
     poDS->LoadDefaultTables( 2 );
     poDS->LoadDefaultTables( 3 );
 #endif // !defined(JPGDataset)
-
-/* -------------------------------------------------------------------- */
-/*      If a fatal error occurs after this, we will return NULL         */
-/* -------------------------------------------------------------------- */
-    if (setjmp(poDS->sErrorStruct.setjmp_buffer)) 
-    {
-#if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
-        if (poDS->sDInfo.data_precision == 12)
-        {
-            fpImage = poDS->fpImage;
-            poDS->fpImage = NULL;
-            delete poDS;
-            return JPEGDataset12Open(pszFilename, fpImage, papszSiblingFiles,
-                                     nScaleFactor, bDoPAMInitialize, bUseInternalOverviews);
-        }
-#endif
-        delete poDS;
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
@@ -3229,6 +3221,17 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
     }
 
+    VSILFILE *fpImage = NULL;
+    GDALJPEGErrorStruct sErrorStruct;
+    sErrorStruct.bNonFatalErrorEncountered = FALSE;
+
+    if (setjmp(sErrorStruct.setjmp_buffer)) 
+    {
+        if( fpImage )
+            VSIFCloseL( fpImage );
+        return NULL;
+    }
+
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
@@ -3292,7 +3295,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fpImage = VSIFOpenL( pszFilename, "wb" );
+    fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -3304,14 +3307,6 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Initialize JPG access to the file.                              */
 /* -------------------------------------------------------------------- */
-    GDALJPEGErrorStruct sErrorStruct;
-    sErrorStruct.bNonFatalErrorEncountered = FALSE;
-
-    if (setjmp(sErrorStruct.setjmp_buffer)) 
-    {
-        VSIFCloseL( fpImage );
-        return NULL;
-    }
 
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
