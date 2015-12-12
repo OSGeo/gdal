@@ -618,7 +618,11 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
 /*                        GetDiskFreeSpace()                            */
 /************************************************************************/
 
-GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char* pszDirname )
+GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char* 
+#ifdef HAVE_STATVFS
+                                                         pszDirname
+#endif
+                                                       )
 {
     GIntBig nRet = -1;
 #ifdef HAVE_STATVFS
