@@ -28,7 +28,9 @@
  ****************************************************************************/
 
 // So that __USE_XOPEN2K is defined to have getaddrinfo
+#ifndef __sun__
 #define _XOPEN_SOURCE 600
+#endif
 
 #include "cpl_port.h"
 
