@@ -291,7 +291,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
 
     if( *pszHeaderNext == ';' )
         pszHeaderNext++;
-    
+
     return TRUE;
 }
 

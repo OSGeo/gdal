@@ -148,9 +148,9 @@ char *CPLRecodeStub( const char *pszSource,
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
-        
+
         utf8froma( pszResult, nCharCount*2+1, pszSource, nCharCount );
-        
+
         return pszResult;
     }
 
@@ -162,9 +162,9 @@ char *CPLRecodeStub( const char *pszSource,
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
-        
+
         utf8toa( pszSource, nCharCount, pszResult, nCharCount+1 );
-        
+
         return pszResult;
     }
 
@@ -233,7 +233,7 @@ char *CPLRecodeStub( const char *pszSource,
         }
 
         utf8froma( pszResult, nCharCount*2+1, pszSource, nCharCount );
-        
+
         return pszResult;
     }
 
@@ -254,9 +254,9 @@ char *CPLRecodeStub( const char *pszSource,
                       "Recode from UTF-8 to %s not supported, treated as UTF-8 to ISO8859-1.", 
                       pszDstEncoding );
         }
-        
+
         utf8toa( pszSource, nCharCount, pszResult, nCharCount+1 );
-        
+
         return pszResult;
     }
 
@@ -271,7 +271,7 @@ char *CPLRecodeStub( const char *pszSource,
                       "Recode from %s to %s not supported, no change applied.",
                       pszSrcEncoding, pszDstEncoding );
         }
-        
+
         return CPLStrdup(pszSource);
     }
 }
@@ -367,7 +367,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
         CPLRecodeStub( pszResult, CPL_ENC_UTF8, pszDstEncoding );
 
     CPLFree( pszResult );
-    
+
     return pszFinalResult;
 }
 

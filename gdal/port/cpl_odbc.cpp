@@ -193,7 +193,7 @@ int CPLODBCSession::CloseSession()
         SQLFreeConnect( m_hDBC );
         m_hDBC = NULL;
     }
-    
+
     if( m_hEnv!=NULL )
     {
         SQLFreeEnv( m_hEnv );
@@ -363,7 +363,7 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
 
 {
     CloseSession();
-    
+
     if( Failed( SQLAllocEnv( &m_hEnv ) ) )
         return FALSE;
 
@@ -615,7 +615,7 @@ int CPLODBCStatement::GetRowCountAffected()
 {
     SQLLEN nResultCount=0;
     SQLRowCount( m_hStmt, &nResultCount );
-    
+
     return (int)nResultCount;
 }
 
@@ -867,7 +867,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 /*      Pull out all the column values.                                 */
 /* -------------------------------------------------------------------- */
     SQLSMALLINT iCol;
-    
+
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[513];
@@ -1110,7 +1110,7 @@ int CPLODBCStatement::GetColId( const char *pszColName )
     for( SQLSMALLINT iCol = 0; iCol < m_nColCount; iCol++ )
         if( EQUAL(pszColName, m_papszColNames[iCol]) )
             return iCol;
-    
+
     return -1;
 }
 
@@ -1319,7 +1319,7 @@ void CPLODBCStatement::Clear()
     /* Closing the cursor if opened */
     if( m_hStmt != NULL )
         SQLFreeStmt( m_hStmt, SQL_CLOSE );
-    
+
     ClearColumnData();
 
     if( m_pszStatement != NULL )
@@ -1439,7 +1439,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 #endif
 
     m_nColCount = 500;
-    
+
     m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
@@ -1664,7 +1664,7 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
     while( Fetch() )
     {
         fprintf( fp, "Record %d\n", iRecord++ );
-        
+
         for( iCol = 0; iCol < GetColCount(); iCol++ )
         {
             fprintf( fp, "  %s: %s\n", GetColName(iCol), GetColData(iCol) );
@@ -1694,29 +1694,28 @@ CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
     {
       case SQL_CHAR:
         return "CHAR";
-        
+
       case SQL_NUMERIC:
         return "NUMERIC";
-        
+
       case SQL_DECIMAL:
         return "DECIMAL";
-        
+
       case SQL_INTEGER:
         return "INTEGER";
-        
+
       case SQL_SMALLINT:
         return "SMALLINT";
 
-        
       case SQL_FLOAT:
         return "FLOAT";
-        
+
       case SQL_REAL:
         return "REAL";
 
       case SQL_DOUBLE:
         return "DOUBLE";
-        
+
       case SQL_DATETIME:
         return "DATETIME";
 
@@ -1728,7 +1727,7 @@ CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
 
       case SQL_TYPE_TIME:
         return "TIME";
-        
+
       case SQL_TYPE_TIMESTAMP:
         return "TIMESTAMP";
 

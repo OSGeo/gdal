@@ -93,7 +93,7 @@ class VSICachedFile : public VSIVirtualHandle
     void          Demote( VSICacheChunk * );
 
     VSIVirtualHandle *poBase;
-    
+
     vsi_l_offset  nOffset;
     vsi_l_offset  nFileSize;
 
@@ -228,7 +228,7 @@ void VSICachedFile::FlushLRU()
     CPLAssert( nCacheUsed >= poBlock->nDataFilled );
 
     nCacheUsed -= poBlock->nDataFilled;
-    
+
     poLRUStart = poBlock->poLRUNext;
     if( poLRUEnd == poBlock )
         poLRUEnd = NULL;
@@ -257,7 +257,7 @@ void VSICachedFile::Demote( VSICacheChunk *poBlock )
     // already at end?
     if( poLRUEnd == poBlock )
         return;
-    
+
     if( poLRUStart == poBlock )
         poLRUStart = poBlock->poLRUNext;
 
@@ -273,7 +273,7 @@ void VSICachedFile::Demote( VSICacheChunk *poBlock )
     if( poLRUEnd != NULL )
         poLRUEnd->poLRUNext = poBlock;
     poLRUEnd = poBlock;
-    
+
     if( poLRUStart == NULL )
         poLRUStart = poBlock;
 }
@@ -420,7 +420,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
             LoadBlocks( iBlock, nBlocksToLoad, pBuffer, nSize * nCount );
         }
     }
-    
+
 /* ==================================================================== */
 /*      Copy data into the target buffer to the extent possible.        */
 /* ==================================================================== */
@@ -445,7 +445,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         nThisCopy = (size_t)
             ((nStartOffset + poBlock->nDataFilled) 
              - nAmountCopied - nOffset);
-        
+
         if( nThisCopy > nSize * nCount - nAmountCopied )
             nThisCopy = nSize * nCount - nAmountCopied;
 
@@ -459,7 +459,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
         nAmountCopied += nThisCopy;
     }
-    
+
     nOffset += nAmountCopied;
 
 /* -------------------------------------------------------------------- */

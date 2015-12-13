@@ -164,7 +164,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
                        NULL, nLastError,
                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
                        (LPTSTR) &lpMsgBuf, 0, NULL );
- 
+
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't load requested DLL: %s\n%d: %s", 
                   pszLibrary, nLastError, (const char *) lpMsgBuf );
@@ -182,7 +182,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
                   "Can't find requested entry point: %s\n", pszSymbolName );
         return NULL;
     }
-    
+
     return( pSymbol );
 }
 

@@ -51,7 +51,7 @@ class VSIBufferedReaderHandle : public VSIVirtualHandle
     int               bNeedBaseHandleSeek;
     int               bEOF;
     vsi_l_offset      nSheatFileSize;
-    
+
     int               SeekBaseTo(vsi_l_offset nTargetOffset);
 
   public:
