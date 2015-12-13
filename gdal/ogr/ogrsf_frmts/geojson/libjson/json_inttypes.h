@@ -23,6 +23,19 @@ typedef __int64 int64_t;
 #endif
 /* inttypes.h includes stdint.h */
 
+#ifndef PRId64
+#define PRId64 "lld"
+#endif
+#ifndef SCNd64
+#define SCNd64 "lld"
+#endif
+#ifndef INT32_MIN
+#define INT32_MIN (-2147483647-1)
+#endif
+#ifndef INT64_MIN
+#define INT64_MIN (-9223372036854775807LL-1)
+#endif
+
 #endif
 
 #endif
