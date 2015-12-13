@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdaldem testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -157,7 +157,7 @@ def test_gdaldem_hillshade_combined():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges
 
@@ -230,13 +230,13 @@ def test_gdaldem_hillshade_png():
     ds = gdal.Open('tmp/n43_hillshade.png')
     if ds is None:
         return 'fail'
-        
+
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 45587:
         gdaltest.post_reason('Bad checksum')
         print(cs)
         return 'fail'
-        
+
     ds = None
 
     return 'success'
@@ -253,13 +253,13 @@ def test_gdaldem_hillshade_png_compute_edges():
     ds = gdal.Open('tmp/n43_hillshade_compute_edges.png')
     if ds is None:
         return 'fail'
-        
+
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 50239:
         gdaltest.post_reason('Bad checksum')
         print(cs)
         return 'fail'
-        
+
     ds = None
 
     return 'success'
@@ -386,7 +386,7 @@ def test_gdaldem_color_relief():
     ds = None
 
     return 'success'
-    
+
 
 ###############################################################################
 # Test gdaldem color relief on a GMT .cpt file
@@ -432,7 +432,7 @@ def test_gdaldem_color_relief_cpt():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem color relief to VRT
 
@@ -468,7 +468,7 @@ def test_gdaldem_color_relief_vrt():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem color relief from a Float32 dataset
 
@@ -477,7 +477,7 @@ def test_gdaldem_color_relief_from_float32():
         return 'skip'
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
-        
+
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -ot Float32 ../gdrivers/data/n43.dt0 tmp/n43_float32.tif')
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.tif')
     ds = gdal.Open('tmp/n43_colorrelief_from_float32.tif')
@@ -502,7 +502,7 @@ def test_gdaldem_color_relief_from_float32():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem color relief to PNG
 
@@ -533,7 +533,7 @@ def test_gdaldem_color_relief_png():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem color relief from a Float32 to PNG
 
@@ -542,7 +542,7 @@ def test_gdaldem_color_relief_from_float32_to_png():
         return 'skip'
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
-        
+
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.png')
     ds = gdal.Open('tmp/n43_colorrelief_from_float32.png')
     if ds is None:
@@ -566,7 +566,7 @@ def test_gdaldem_color_relief_from_float32_to_png():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry
 
@@ -597,7 +597,7 @@ def test_gdaldem_color_relief_nearest_color_entry():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry and -of VRT
 
@@ -628,7 +628,7 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test gdaldem color relief with a nan nodata
 
@@ -646,7 +646,7 @@ NODATA_value nan
  0.0 0
  0 nan""")
     f.close()
-    
+
     f = open('tmp/nodata_nan_plt.txt', 'wt')
     f.write('0 0 0 0\n')
     f.write('nv 1 1 1\n')

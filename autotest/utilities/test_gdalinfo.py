@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdalinfo testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -114,7 +114,7 @@ def test_gdalinfo_5():
         os.remove('../gcore/data/byte.tif.aux.xml')
     except:
         pass
-    
+
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
     if ret.find('STATISTICS_MINIMUM=74') != -1:
         gdaltest.post_reason( 'got wrong minimum.' )
@@ -129,7 +129,7 @@ def test_gdalinfo_5():
 
     # We will blow an exception if the file does not exist now!
     os.remove('../gcore/data/byte.tif.aux.xml')
-    
+
     return 'success'
 
 ###############################################################################
@@ -184,7 +184,7 @@ def test_gdalinfo_8():
         os.remove('../gcore/data/byte.tif.aux.xml')
     except:
         pass
-    
+
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
     if ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') != -1:
         gdaltest.post_reason( 'did not expect histogram.' )
@@ -597,7 +597,7 @@ def test_gdalinfo_32():
         os.remove('../gcore/data/byte.tif.aux.xml')
     except:
         pass
-    
+
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif')
     ret = json.loads(ret)
     if '' in ret['bands'][0]['metadata']:
@@ -614,7 +614,7 @@ def test_gdalinfo_32():
 
     # We will blow an exception if the file does not exist now!
     os.remove('../gcore/data/byte.tif.aux.xml')
-    
+
     return 'success'
 
 ###############################################################################
@@ -667,7 +667,7 @@ def test_gdalinfo_35():
         os.remove('../gcore/data/byte.tif.aux.xml')
     except:
         pass
-    
+
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif')
     ret = json.loads(ret)
     if 'histogram' in ret['bands'][0]:
@@ -684,7 +684,7 @@ def test_gdalinfo_35():
 
     # We will blow an exception if the file does not exist now!
     os.remove('../gcore/data/byte.tif.aux.xml')
-    
+
     return 'success'
 
 ###############################################################################

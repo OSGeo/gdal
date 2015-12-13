@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  librarified ogr2ogr testing
 # Author:   Faza Mahamood <fazamhd @ gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -142,7 +142,7 @@ def test_ogr2ogr_lib_4():
         gdaltest.post_reason('wrong feature count')
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
-        
+
     feat10 = ds.GetLayer(0).GetFeature(10)
     if feat10.GetFieldAsDouble('AREA') != 215229.266:
         print(feat10.GetFieldAsDouble('AREA'))
@@ -198,7 +198,7 @@ def test_ogr2ogr_lib_6():
 # Test LCO
 
 def test_ogr2ogr_lib_7():
-    
+
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('/vsimem/poly.shp', srcDS, layerCreationOptions=['SHPT=POLYGONZ'])
     if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
