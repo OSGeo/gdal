@@ -51,21 +51,20 @@ static int OGRDGNDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRDGNDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRDGNDataSource    *poDS;
-    
     if( !OGRDGNDriverIdentify(poOpenInfo) )
         return NULL;
 
-    poDS = new OGRDGNDataSource();
+    OGRDGNDataSource *poDS = new OGRDGNDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, TRUE, (poOpenInfo->eAccess == GA_Update) )
+    if( !poDS->Open( poOpenInfo->pszFilename, TRUE,
+                     (poOpenInfo->eAccess == GA_Update) )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -73,10 +72,10 @@ static GDALDataset *OGRDGNDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRDGNDriverCreate( const char * pszName,
-                                        CPL_UNUSED int nBands,
-                                        CPL_UNUSED int nXSize,
-                                        CPL_UNUSED int nYSize,
-                                        CPL_UNUSED GDALDataType eDT,
+                                        int /* nBands */,
+                                        int /* nXSize */,
+                                        int /* nYSize */,
+                                        GDALDataType /* eDT */,
                                         char **papszOptions )
 {
 /* -------------------------------------------------------------------- */
@@ -91,8 +90,8 @@ static GDALDataset *OGRDGNDriverCreate( const char * pszName,
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
