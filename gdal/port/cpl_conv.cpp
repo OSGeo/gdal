@@ -29,6 +29,9 @@
  ****************************************************************************/
 
 // For uselocale
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
 #define _XOPEN_SOURCE 700
 
 // For atoll (at least for NetBSD)
@@ -981,7 +984,7 @@ GIntBig CPLAtoGIntBig( const char* pszString )
 #endif
 }
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(__sun__)
 
 // mingw atoll() doesn't return ERANGE in case of overflow
 static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
@@ -1033,7 +1036,7 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
     nVal = atol( pszString );
 #endif
     if( errno == ERANGE
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(__sun__)
         || CPLAtoGIntBigExHasOverflow(pszString, nVal)
 #endif
         )
