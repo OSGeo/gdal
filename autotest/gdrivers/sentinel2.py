@@ -1096,7 +1096,7 @@ def sentinel2_l1c_tile_6():
 
     # Just tell it doesn't crash without any tile
     gdal.Open('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml')
-    
+
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C_TILE:/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml:10m')
     if ds is not None:
@@ -1527,7 +1527,7 @@ def sentinel2_l1b_4():
         pprint.pprint(got_md)
         return 'fail'
     ds = None
-    
+
     ds = gdal.OpenEx('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m', open_options = ['ALPHA=YES'])
     if ds is None:
         gdaltest.post_reason('fail')

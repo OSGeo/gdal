@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for MrSID driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -90,10 +90,10 @@ def mrsid_1():
     PARAMETER["false_northing",1],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
-    
+
     #
     # MrSID SDK getWKT() method - DSDK 8 and newer?
-    # 
+    #
     prj = """PROJCS["MER         E000|",
     GEOGCS["NAD27",
         DATUM["North_American_Datum_1927",
@@ -110,7 +110,7 @@ def mrsid_1():
     PARAMETER["false_northing",0],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
-    
+
     ret = tst.testOpen( check_gt = gt, \
         check_stat = (0.0, 255.0, 103.319, 55.153), \
         check_approx_stat = (2.0, 243.0, 103.131, 43.978) )
@@ -152,7 +152,7 @@ def mrsid_2():
         return 'fail'
 
     ds = None
-    
+
     is_bytes = False
     try:
         if (isinstance(data, bytes) and not isinstance(data, str)):
@@ -174,7 +174,7 @@ def mrsid_2():
     if mean < 95 or mean > 105:
         gdaltest.post_reason( 'image mean out of range.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -193,9 +193,9 @@ def mrsid_3():
         return 'fail'
 
     new_stat = band.GetOverview(3).GetStatistics(0,1)
-    
+
     check_stat = (11.0, 230.0, 103.42607897153351, 39.952592422557757)
-    
+
     stat_epsilon = 0.0001
     for i in range(4):
         if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
@@ -204,7 +204,7 @@ def mrsid_3():
             print('new = ', new_stat)
             gdaltest.post_reason( 'Statistics differ.' )
             return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -240,7 +240,7 @@ def mrsid_4():
     PARAMETER["false_northing",0],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
-    
+
     ret = tst.testOpen( check_gt = gt, check_prj = prj, \
         check_stat = (0.0, 255.0, 103.112, 52.477), \
         check_approx_stat = (0.0, 255.0, 102.684, 51.614) )
@@ -441,7 +441,7 @@ def mrsid_11():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 def mrsid_online_1():
 
@@ -522,7 +522,7 @@ def mrsid_online_3():
     if maxdiff > 17:
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
-        
+
         gdaltest.compare_ds(ds, ds_ref,verbose=1)
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
@@ -572,9 +572,9 @@ def mrsid_cleanup():
         os.remove( 'data/mercator_new.sid.aux.xml' )
     except:
         pass
-    
+
     gdaltest.reregister_all_jpeg2000_drivers()
-    
+
     return 'success'
 
 gdaltest_list = [

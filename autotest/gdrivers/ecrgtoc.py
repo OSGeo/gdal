@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for ECRGTOC driver.
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -180,13 +180,13 @@ def ecrgtoc_3():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     gdal.Unlink('/vsimem/TOC.xml')
     gdal.Unlink('/vsimem/TOC.xml.1.ovr')
     gdal.Unlink('/vsimem/clfc/2/000000009s0013.lf2')
@@ -303,14 +303,14 @@ def ecrgtoc_4():
         gdaltest.post_reason('did not get subdataset')
         return 'fail'
     ds = None
-    
+
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml')
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('should not have got subdataset')
         return 'fail'
-    
+
     gdal.Unlink('/vsimem/TOC.xml')
 
     return 'success'

@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  WMTS driver test suite.
 # Author:   Even Rouault, even dot rouault at spatialys.com
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -48,7 +48,7 @@ def wmts_1():
     if gdaltest.wmts_drv is not None and gdal.GetDriverByName('WMS') is None:
         print('Missing WMS driver')
         gdaltest.wmts_drv = None
-    
+
     if gdaltest.wmts_drv is not None:
 
         gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
@@ -662,7 +662,7 @@ def wmts_14():
 
     gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal.xml', ds)
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/gdal_nominal.xml', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)

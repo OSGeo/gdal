@@ -6,12 +6,12 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Arc/Info ASCII Grid support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 2014, Kyle Shannon <kyle at pobox dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -117,7 +117,7 @@ def aaigrid_3():
     prj = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
     return tst.testCreateCopy( check_gt = 1, check_srs = prj )
-    
+
 ###############################################################################
 # Read subwindow.  Tests the tail recursion problem. 
 
@@ -367,13 +367,13 @@ def aaigrid_14():
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, ds.ReadRaster(0, 0, 20, 20, buf_type = gdal.GDT_Float32))
     ds = None
     gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/aaigrid_14.asc', mem_ds )
-    
+
     f = gdal.VSIFOpenL('/vsimem/aaigrid_14.asc', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
     gdal.GetDriverByName('AAIGRID').Delete('/vsimem/aaigrid_14.asc')
-    
+
     if data.find('107.0 123') < 0:
         gdaltest.post_reason('fail')
         print(data)

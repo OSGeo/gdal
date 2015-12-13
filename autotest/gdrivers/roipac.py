@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2014, Matthieu Volat <matthieu.volat@ujf-grenoble.fr>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -53,7 +53,7 @@ def roipac_1():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
-    
+
     return tst.testOpen( check_prj = prj,
                          check_gt = (-180.0083333, 0.0083333333, 0.0,
                                      -59.9916667, 0.0, -0.0083333333) )
@@ -109,7 +109,6 @@ gdaltest_list = [
     roipac_4,
     roipac_5,
     ]
-  
 
 
 if __name__ == '__main__':

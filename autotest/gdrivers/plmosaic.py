@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  PlanetLabs mosaic driver test suite.
 # Author:   Even Rouault, even dot rouault at spatialys.com
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Planet Labs
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -46,7 +46,7 @@ import gdaltest
 def plmosaic_1():
 
     gdaltest.plmosaic_drv = gdal.GetDriverByName('PLMosaic')
-    
+
     if gdaltest.plmosaic_drv is not None:
         return 'success'
     else:
@@ -97,7 +97,7 @@ def plmosaic_4():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root', """{""")
 
     gdal.PushErrorHandler()
@@ -118,7 +118,7 @@ def plmosaic_5():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root', """null""")
 
     gdal.PushErrorHandler()
@@ -139,7 +139,7 @@ def plmosaic_6():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root', """{}""")
 
     gdal.PushErrorHandler()
@@ -182,7 +182,7 @@ def plmosaic_8():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root', """{
     "links" : { "next": "/vsimem/root/?page=2" },
     "mosaics": [
@@ -254,7 +254,7 @@ def plmosaic_9bis():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -275,7 +275,7 @@ def plmosaic_10():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic"
 }""")
@@ -329,7 +329,7 @@ def plmosaic_12():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
@@ -360,7 +360,7 @@ def plmosaic_13():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
@@ -391,7 +391,7 @@ def plmosaic_13bis():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
@@ -422,7 +422,7 @@ def plmosaic_14():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
@@ -453,7 +453,7 @@ def plmosaic_15():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic",
     "title": "My Mosaic",
@@ -496,7 +496,7 @@ def plmosaic_16():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     try:
         shutil.rmtree('tmp/plmosaic_cache')
     except:
@@ -564,7 +564,7 @@ def plmosaic_17():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)
@@ -762,13 +762,13 @@ def plmosaic_18():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
-    
+
     shutil.rmtree('tmp/plmosaic_cache')
-    
+
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)    
-    
+
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
     if ret != """<LocationInfo>
   <Quad>
@@ -823,7 +823,7 @@ def plmosaic_18():
 }""")
 
     ds.FlushCache()
-    
+
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
     if ret != """<LocationInfo>
   <Quad>

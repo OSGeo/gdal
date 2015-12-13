@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test DTED support.
 # Author:   Mateusz Loskot <mateusz@loskot.net>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -89,7 +89,7 @@ def dted_3():
     prj = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
 
     return tst.testCreateCopy( check_gt = 1, check_srs = prj )
-    
+
 ###############################################################################
 # Read subwindow.  Tests the tail recursion problem. 
 
@@ -201,16 +201,16 @@ def dted_8():
 def dted_9():
 
     ds = gdal.Open( 'data/n43.dt0' )
-    
+
     bandSrc = ds.GetRasterBand(1)
-    
+
     driver = gdal.GetDriverByName( "GTiff" );
     dsDst = driver.Create( 'tmp/n53.dt1.tif', 601, 1201, 1, gdal.GDT_Int16 )
     dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     dsDst.SetGeoTransform((-80.0008333333333333, 0.001666666666667, 0, 54.0004166666666670, 0, -0.0008333333333333))
 
     bandDst = dsDst.GetRasterBand(1)
-    
+
     data = bandSrc.ReadRaster( 0, 0, 121, 121, 601, 1201, gdal.GDT_Int16 )
     bandDst.WriteRaster( 0, 0, 601, 1201, data, 601, 1201, gdal.GDT_Int16 )
 
@@ -354,11 +354,10 @@ gdaltest_list = [
     dted_15,
     dted_cleanup
     ]
-  
 
 
 if __name__ == '__main__':
-    
+
     gdaltest.setup_run( 'dted' )
 
     gdaltest.run_tests( gdaltest_list )

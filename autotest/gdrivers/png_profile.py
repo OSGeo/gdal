@@ -5,18 +5,18 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic support for ICC profile in PNG file.
-# 
+#
 ###############################################################################
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -208,7 +208,7 @@ def png_copy_options_colorimetric_data():
             if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
                 gdaltest.post_reason('fail')
                 return 'fail'
-    
+
     if float(md['PNG_GAMMA']) != 1.5:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -220,7 +220,7 @@ def png_copy_options_colorimetric_data():
     ds2 = None
 
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
-    
+
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
             gdaltest.post_reason('fail')
@@ -274,7 +274,7 @@ def png_copy_colorimetric_data():
     ds2 = None
 
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
-    
+
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
             gdaltest.post_reason('fail')
@@ -302,7 +302,7 @@ def png_copy_colorimetric_data():
     ds2 = None
 
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
-    
+
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
             gdaltest.post_reason('fail')

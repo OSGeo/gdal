@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SPOT DIMAP driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -41,7 +41,7 @@ import gdaltest
 # Open and verify a the GCPs and metadata.
 
 def dimap_1():
-    
+
     shutil.copy('data/dimap/METADATA.DIM', 'tmp')
     shutil.copy('data/dimap/IMAGERY.TIF', 'tmp')
     shutil.copy('data/rgbsmall.tif', 'tmp')
@@ -53,7 +53,7 @@ def dimap_1():
        or ds.RasterYSize != 6000:
         gdaltest.post_reason ( 'wrong size or bands' )
         return 'fail'
-        
+
     if ds.GetRasterBand(1).Checksum(0,0,100,100) != 21586:
         gdaltest.post_reason ( 'wrong checksum' )
         return 'fail'
@@ -62,12 +62,12 @@ def dimap_1():
     if md['PROCESSING_LEVEL'] != '1A':
         gdaltest.post_reason( 'metadata wrong.' )
         return 'fail'
-    
+
     md = ds.GetMetadata()
     if md['SPECTRAL_PHYSICAL_BIAS'] != '0.000000':
         gdaltest.post_reason( 'metadata wrong.' )
         return 'fail'
-    
+
     gcp_srs = ds.GetGCPProjection()
     if gcp_srs[:6] != 'GEOGCS' \
        or gcp_srs.find('WGS') == -1 \

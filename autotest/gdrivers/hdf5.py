@@ -396,7 +396,7 @@ def hdf5_11():
             print(got_gt)
             gdaltest.post_reason('fail')
             return 'fail'
-            
+
     ds = None
 
     if gdaltest.is_file_open('data/CSK_GEC.h5'):

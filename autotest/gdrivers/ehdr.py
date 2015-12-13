@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test EHdr format driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -85,9 +85,9 @@ def ehdr_4():
     ct.SetColorEntry( 1, (255,255,0,255) )
     ct.SetColorEntry( 2, (255,0,255,255) )
     ct.SetColorEntry( 3, (0,255,255,255) )
-    
+
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
-    
+
     ds.GetRasterBand( 1 ).SetNoDataValue( 17 )
 
     ds = None
@@ -116,7 +116,7 @@ def ehdr_5():
     ds = None
 
     gdal.GetDriverByName('EHdr').Delete( 'tmp/test_4.bil' )
-    
+
     return 'success'
 
 ###############################################################################
@@ -162,7 +162,7 @@ def ehdr_8():
     ds = None
 
     drv.Delete( 'tmp/ehdr_8.bil' )
-    
+
     return 'success'
 
 ###############################################################################
@@ -232,7 +232,7 @@ def ehdr_12():
 # Test statistics
 
 def ehdr_13():
-    
+
     try:
         os.unlink('data/byte.tif.aux.xml')
     except:

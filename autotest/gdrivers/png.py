@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for PNG driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -53,7 +53,7 @@ def png_2():
     tst = gdaltest.GDALTest( 'PNG', 'test.png', 1, 57921 )
 
     return tst.testCreateCopy()
-    
+
 ###############################################################################
 # Verify the geotransform, colormap, and nodata setting for test file. 
 
@@ -84,12 +84,12 @@ def png_3():
         if abs(gt[i] - gt_expected[i]) > 0.0001:
             print('expected:', gt_expected)
             print('got:', gt)
-            
+
             gdaltest.post_reason( 'Mixed locale world file read improperly.' )
             return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test RGB mode creation and reading.
 
@@ -124,7 +124,7 @@ def png_7():
 
     drv = gdal.GetDriverByName( 'PNG' )
     srcds = gdal.Open( 'data/tbbn2c16.png' )
-    
+
     dstds = drv.CreateCopy( 'tmp/png7.png', srcds )
     srcds = None
 
@@ -242,7 +242,7 @@ def png_11():
 def png_12():
     ds = gdal.Open( '../gcore/data/stefan_full_rgba.png' )
     cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
-    
+
     # Band interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
@@ -250,8 +250,8 @@ def png_12():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
-        
+        return 'fail'
+
     # Pixel interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
@@ -269,14 +269,14 @@ def png_12():
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'    
-    
+
     return 'success'
 
 ###############################################################################
 # Test metadata
 
 def png_13():
-    
+
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
     src_ds.SetMetadataItem('foo', 'bar')
     src_ds.SetMetadataItem('COPYRIGHT', 'copyright value')

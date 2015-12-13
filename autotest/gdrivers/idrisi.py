@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for RST/Idrisi driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -53,16 +53,16 @@ def idrisi_2():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def idrisi_3():
 
     tst = gdaltest.GDALTest( 'RST', 'float32.bil', 1, 27 )
 
     return tst.testCreate( new_filename = 'tmp/float32.rst', out_bands=1, vsimem = 1 )
-    
+
 ###############################################################################
-# 
+#
 
 def idrisi_4():
 
@@ -70,7 +70,7 @@ def idrisi_4():
 
     return tst.testCreateCopy( check_gt = 1, check_srs = 1,
                                new_filename = 'tmp/rgbsmall_cc.rst', vsimem = 1 )
-    
+
 ###############################################################################
 # Cleanup.
 

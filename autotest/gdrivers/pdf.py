@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -325,7 +325,7 @@ def pdf_ogcbp_dpi_300():
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
-    
+
 def pdf_ogcbp_lcc():
 
     if gdaltest.pdf_drv is None:
@@ -869,7 +869,7 @@ def pdf_update_gcps(dpi = 300):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
-        
+
     out_filename = 'tmp/pdf_update_gcps.pdf'
 
     src_ds = gdal.Open('data/byte.tif')
@@ -883,7 +883,7 @@ def pdf_update_gcps(dpi = 300):
             [ 2., 18., 0, 0 ],
             [ 16., 18., 0, 0 ],
             [ 16., 8., 0, 0 ] ]
-             
+
     for i in range(4):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
         gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
@@ -930,12 +930,12 @@ def pdf_update_gcps(dpi = 300):
         max_error = 0.0001
 
     ds = None
-    
+
     if got_wkt == '':
         gdaltest.post_reason('did not expect null GetProjectionRef')
         print(got_wkt)
         return 'fail'
-    
+
     if got_gcp_wkt != '':
         gdaltest.post_reason('did not expect non null GetGCPProjection')
         print(got_gcp_wkt)
@@ -946,7 +946,7 @@ def pdf_update_gcps(dpi = 300):
             gdaltest.post_reason('did not get expected gt')
             print(got_gt)
             return 'fail'
-            
+
     if got_gcp_count != 0:
         gdaltest.post_reason('did not expect GCPs')
         print(got_gcp_count)
@@ -974,7 +974,7 @@ def pdf_update_gcps_iso32000():
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
     ret = pdf_update_gcps()
     return ret
-    
+
 def pdf_update_gcps_ogc_bp():
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', 'OGC_BP')
     ret = pdf_update_gcps()
@@ -988,7 +988,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
-        
+
     out_filename = 'tmp/pdf_set_5_gcps_ogc_bp.pdf'
 
     src_ds = gdal.Open('data/byte.tif')
@@ -1001,11 +1001,11 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
             [ 2., 18., 0, 0 ],
             [ 16., 18., 0, 0 ],
             [ 16., 8., 0, 0 ] ]
-             
+
     for i in range(len(gcp)):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
         gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
-        
+
     # That way, GCPs will not resolve to a geotransform
     gcp[1][2] -= 100
 
@@ -1036,7 +1036,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     # Create PDF
     ds = gdaltest.pdf_drv.CreateCopy(out_filename, vrt_ds, options = ['GEO_ENCODING=OGC_BP', 'DPI=%d' % dpi])
     ds = None
-    
+
     vrt_ds = None
 
     # Check
@@ -1048,12 +1048,12 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     got_gcp_wkt = ds.GetGCPProjection()
     got_neatline = ds.GetMetadataItem('NEATLINE')
     ds = None
-    
+
     if got_wkt  != '':
         gdaltest.post_reason('did not expect non null GetProjectionRef')
         print(got_wkt)
         return 'fail'
-    
+
     if got_gcp_wkt == '':
         gdaltest.post_reason('did not expect null GetGCPProjection')
         print(got_gcp_wkt)
@@ -1065,12 +1065,12 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
             gdaltest.post_reason('did not get expected gt')
             print(got_gt)
             return 'fail'
-            
+
     if got_gcp_count != len(gcp):
         gdaltest.post_reason('did not get expected GCP count')
         print(got_gcp_count)
         return 'fail'
-        
+
     for i in range(got_gcp_count):
         if abs(got_gcps[i].GCPX - vrt_gcps[i].GCPX) > 1e-5 or \
            abs(got_gcps[i].GCPY - vrt_gcps[i].GCPY) > 1e-5 or \
@@ -1923,7 +1923,7 @@ def pdf_multipage():
 
     if gdaltest.pdf_drv is None:
         return 'skip'
-        
+
     # byte_and_rgbsmall_2pages.pdf was generated with :
     # 1) gdal_translate gcore/data/byte.tif byte.pdf -of PDF
     # 2) gdal_translate gcore/data/rgbsmall.tif rgbsmall.pdf -of PDF
@@ -1950,7 +1950,7 @@ def pdf_multipage():
         gdaltest.post_reason('wrong width')
         print(ds2.RasterXSize)
         return 'fail'
-    
+
     with gdaltest.error_handler():
         ds3 = gdal.Open('PDF:0:data/byte_and_rgbsmall_2pages.pdf')
     if ds3 is not None:
