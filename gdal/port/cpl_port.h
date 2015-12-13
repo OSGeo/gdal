@@ -478,6 +478,10 @@ static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr
 #  ifdef isinf 
 #    define CPLIsInf(x) isinf(x)
 #    define CPLIsFinite(x) (!isnan(x) && !isinf(x))
+#  elif defined(__sun__)
+#    include <ieeefp.h>
+#    define CPLIsInf(x)    (!finite(x) && !isnan(x))
+#    define CPLIsFinite(x) finite(x)
 #  else
 #    define CPLIsInf(x)    FALSE
 #    define CPLIsFinite(x) (!isnan(x))
