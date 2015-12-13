@@ -274,27 +274,7 @@ CPLErr BIGGIFDataset::ReOpen()
 /* -------------------------------------------------------------------- */
 /*      Find the first image record.                                    */
 /* -------------------------------------------------------------------- */
-    GifRecordType RecordType = TERMINATE_RECORD_TYPE;
-
-    while( DGifGetRecordType(hGifFile, &RecordType) != GIF_ERROR
-           && RecordType != TERMINATE_RECORD_TYPE
-           && RecordType != IMAGE_DESC_RECORD_TYPE )
-    {
-        /* Skip extension records found before IMAGE_DESC_RECORD_TYPE */
-        if (RecordType == EXTENSION_RECORD_TYPE)
-        {
-            int nFunction;
-            GifByteType *pExtData;
-            if (DGifGetExtension(hGifFile, &nFunction, &pExtData) == GIF_ERROR)
-                break;
-            while (pExtData != NULL)
-            {
-                if (DGifGetExtensionNext(hGifFile, &pExtData) == GIF_ERROR)
-                    break;
-            }
-        }
-    }
-
+    GifRecordType RecordType = FindFirstImage(hGifFile);
     if( RecordType != IMAGE_DESC_RECORD_TYPE )
     {
         GIFAbstractDataset::myDGifCloseFile( hGifFile );
