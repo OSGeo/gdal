@@ -7,11 +7,11 @@
 # Purpose:  Test basic GNMGdalNetwork class functionality.
 # Authors:  Mikhail Gusev (gusevmihs at gmail dot com)
 #           Dmitry Baryshnikov, polimax@mail.ru
-# 
+#
 ###############################################################################
 # Copyright (c) 2014, Mikhail Gusev
 # Copyright (c) 2014-2015, NextGIS <info@nextgis.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -51,17 +51,17 @@ def gnm_filenetwork_create():
         shutil.rmtree('tmp/test_gnm')
     except:
         pass
-        
+
     ogrtest.drv = None
     ogrtest.have_gnm = 0
-        
+
     try:
         ogrtest.drv = gdal.GetDriverByName('GNMFile')
     except:
         pass
 
     if ogrtest.drv is None:
-        return 'skip'    
+        return 'skip'
 
     ds = ogrtest.drv.Create( 'tmp/', 0, 0, 0, gdal.GDT_Unknown, options = ['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'] )
     # cast to GNM
@@ -87,7 +87,7 @@ def gnm_filenetwork_create():
 # Open file base network
 
 def gnm_filenetwork_open():
-    
+
     if not ogrtest.have_gnm:
         return 'skip'
 
@@ -114,7 +114,7 @@ def gnm_filenetwork_open():
 # Import layers into file base network
 
 def gnm_import():
-    
+
     if not ogrtest.have_gnm:
         return 'skip'
 
@@ -152,7 +152,7 @@ def gnm_autoconnect():
 
     if not ogrtest.have_gnm:
         return 'skip'
-        
+
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dgn = gnm.CastToGenericNetwork(ds)
     if dgn is None:
@@ -174,7 +174,7 @@ def gnm_graph_dijkstra():
 
     if not ogrtest.have_gnm:
         return 'skip'
-        
+
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -201,7 +201,7 @@ def gnm_graph_kshortest():
 
     if not ogrtest.have_gnm:
         return 'skip'
-        
+
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -228,7 +228,7 @@ def gnm_graph_connectedcomponents():
 
     if not ogrtest.have_gnm:
         return 'skip'
-        
+
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -252,11 +252,11 @@ def gnm_graph_connectedcomponents():
 ###############################################################################
 # Network deleting
 
-def gnm_delete(): 
+def gnm_delete():
 
     if not ogrtest.have_gnm:
         return 'skip'
-        
+
     gdal.GetDriverByName('GNMFile').Delete('tmp/test_gnm')
 
     try:
@@ -267,8 +267,7 @@ def gnm_delete():
         pass
 
     return 'success'
-           
-           
+
 
 gdaltest_list = [
     gnm_filenetwork_create,
