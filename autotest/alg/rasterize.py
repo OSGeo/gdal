@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RasterizeLayer() and related calls.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -45,14 +45,14 @@ def rasterize_1():
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
     sr = osr.SpatialReference( sr_wkt )
-    
+
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
                                                     gdal.GDT_Byte )
     target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
     target_ds.SetProjection( sr_wkt )
-    
+
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
@@ -60,18 +60,18 @@ def rasterize_1():
     rast_mem_lyr = rast_ogr_ds.CreateLayer( 'poly', srs=sr )
 
     # Add a polygon.
-    
+
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
-    
+
     feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
 
     rast_mem_lyr.CreateFeature( feat )
 
     # Add a linestring.
-    
+
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
-    
+
     feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
 
@@ -97,7 +97,7 @@ def rasterize_1():
 
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif',target_ds)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -107,14 +107,14 @@ def rasterize_2():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
-    
+
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create( '', 12, 12, 3,
                                                     gdal.GDT_Byte )
     target_ds.SetGeoTransform( (0,1,0,12,0,-1) )
     target_ds.SetProjection( sr_wkt )
-    
+
     # Create a memory layer to rasterize from.
 
     cutline_ds = ogr.Open( 'data/cutline.csv' )
@@ -142,7 +142,7 @@ def rasterize_2():
 
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif',target_ds)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -153,14 +153,14 @@ def rasterize_3():
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
     sr = osr.SpatialReference( sr_wkt )
-    
+
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
                                                     gdal.GDT_Byte )
     target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
     target_ds.SetProjection( sr_wkt )
-    
+
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
@@ -197,7 +197,7 @@ def rasterize_3():
         gdaltest.post_reason( 'Did not get expected image checksum' )
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_3.tif',target_ds)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -208,20 +208,20 @@ def rasterize_4():
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
     sr = osr.SpatialReference( sr_wkt )
-    
+
     # Create a memory raster to rasterize into.
     target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
                                                     gdal.GDT_Byte )
     target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
     target_ds.SetProjection( sr_wkt )
-    
+
     # Create a memory layer to rasterize from.
     rast_ogr_ds = ogr.GetDriverByName('Memory').CreateDataSource( 'wrk' )
     rast_mem_lyr = rast_ogr_ds.CreateLayer( 'poly', srs=sr )
     # Setup Schema
     ogrtest.quick_create_layer_def( rast_mem_lyr,
                                     [ ('CELSIUS', ogr.OFTReal) ] )
-    
+
     # Add polygons and linestrings and a field named CELSIUS.
     wkt_geom = ['POLYGON((1020 1030 40,1020 1045 30,1050 1045 20,1050 1030 35,1020 1030 40))',
                 'POLYGON((1010 1046 85,1015 1055 35,1055 1060 26,1054 1048 35,1010 1046 85))',
@@ -255,7 +255,7 @@ def rasterize_4():
         gdaltest.post_reason( 'Did not get expected image checksum' )
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_4.tif',target_ds)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -266,14 +266,14 @@ def rasterize_5():
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
     sr = osr.SpatialReference( sr_wkt )
-    
+
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
                                                     gdal.GDT_Byte )
     target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
     target_ds.SetProjection( sr_wkt )
-    
+
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
@@ -281,7 +281,7 @@ def rasterize_5():
     rast_mem_lyr = rast_ogr_ds.CreateLayer( 'poly', srs=sr )
 
     # Add polygons.
-    
+
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
     feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
@@ -293,7 +293,7 @@ def rasterize_5():
     rast_mem_lyr.CreateFeature( feat )
 
     # Add linestrings.
-    
+
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
     feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
@@ -325,7 +325,7 @@ def rasterize_5():
 
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif',target_ds)
         return 'fail'
-    
+
     return 'success'
 
 gdaltest_list = [

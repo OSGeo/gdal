@@ -73,7 +73,7 @@ def polygonize_1(is_int_polygonize = True):
 
     expect = [ 107, 123, 115, 115, 140, 148, 123, 140, 156,
                100, 101, 102, 103]
-    
+
     tr = ogrtest.check_features_against_list( mem_layer, 'DN', expect )
 
     # check at least one geometry.
@@ -83,7 +83,7 @@ def polygonize_1(is_int_polygonize = True):
         if ogrtest.check_feature_geometry( feat_read, 'POLYGON ((440720 3751200,440720 3751020,440900 3751020,440900 3751200,440720 3751200),(440780 3751140,440840 3751140,440840 3751080,440780 3751080,440780 3751140))' ) != 0:
             tr = 0
         feat_read.Destroy()
-        
+
     if tr:
         return 'success'
     else:
@@ -124,7 +124,7 @@ def polygonize_2():
 
     expect = [ 107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
                132, 156, 100, 101, 102, 103 ]
-    
+
     tr = ogrtest.check_features_against_list( mem_layer, 'DN', expect )
 
     if tr:
@@ -209,7 +209,7 @@ def polygonize_4():
 
     expect = [ 107, 123, 132, 115, 132, 115, 140, 148, 
                123, 140, 132, 156, 100, 101, 102, 103 ]
-    
+
     tr = ogrtest.check_features_against_list( mem_layer, 'DN', expect )
 
     if tr:
