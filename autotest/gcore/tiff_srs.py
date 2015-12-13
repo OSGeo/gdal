@@ -166,7 +166,7 @@ def tiff_srs_compd_cs():
 # Test reading a GeoTIFF with both StdParallel1 and ScaleAtNatOrigin defined (#5791)
 
 def tiff_srs_weird_mercator_2sp():
-    
+
     ds = gdal.Open('data/weird_mercator_2sp.tif')
     gdal.PushErrorHandler()
     wkt = ds.GetProjectionRef()
@@ -218,7 +218,7 @@ def tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
     sr.SetFromUserInput(wkt)
     wkt = sr.ExportToPrettyWkt()
     ds = None
-    
+
     if wkt != """PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",
     GEOGCS["GCS_WGS_1984",
         DATUM["D_WGS_1984",
@@ -236,7 +236,7 @@ def tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
         gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
@@ -334,7 +334,7 @@ def tiff_srs_angular_units():
         print(wkt)
         return 'fail'
     ds = None
-    
+
     gdal.Unlink('/vsimem/tiff_srs_angular_units.tif')
 
     return 'success'

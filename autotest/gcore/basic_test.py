@@ -630,7 +630,7 @@ gdaltest_list = [ basic_test_1,
 
 
 if __name__ == '__main__':
-    
+
     if len(sys.argv) == 3 and sys.argv[1] == "LICENSE":
         if sys.argv[2] == '0':
             gdal.SetConfigOption('GDAL_DATA', '/foo')

@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GDAL API PROXY mechanism
 # Author:    Even Rouault, <even dot rouault at mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -95,10 +95,10 @@ def gdal_api_proxy_3():
 # Test -nofork mode
 
 def gdal_api_proxy_4():
-    
+
     if sys.version_info < (2,6,0):
         return 'skip'
-        
+
     if sys.platform == 'win32':
         return 'skip'
 
@@ -387,7 +387,7 @@ def gdal_api_proxy_sub():
     if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
- 
+
     if ds.GetRasterBand(1).SetDefaultRAT(None) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -401,7 +401,7 @@ def gdal_api_proxy_sub():
     if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
- 
+
     if ds.GetRasterBand(1).SetDefaultRAT(None) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -410,7 +410,7 @@ def gdal_api_proxy_sub():
     if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
- 
+
     if ds.GetRasterBand(1).GetMinimum() is not None:
         gdaltest.post_reason('fail')
         return 'fail'

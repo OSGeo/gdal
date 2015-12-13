@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RFC 15 "mask band" default functionality (nodata/alpha/etc)
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -43,7 +43,7 @@ from osgeo import gdal
 def mask_1():
 
     ds = gdal.Open('data/byte.tif')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -59,8 +59,8 @@ def mask_1():
         gdaltest.post_reason( 'Got wrong mask checksum' )
         print(cs)
         return 'fail'
-    
-    return 'success' 
+
+    return 'success'
 
 ###############################################################################
 # Verify the checksum and flags for "nodata" case.
@@ -68,7 +68,7 @@ def mask_1():
 def mask_2():
 
     ds = gdal.Open('data/byte.vrt')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -84,8 +84,8 @@ def mask_2():
         gdaltest.post_reason( 'Got wrong mask checksum' )
         print(cs)
         return 'fail'
-    
-    return 'success' 
+
+    return 'success'
 
 ###############################################################################
 # Verify the checksum and flags for "alpha" case.
@@ -99,7 +99,7 @@ def mask_3():
         return 'fail'
 
     # Test first mask.
-    
+
     band = ds.GetRasterBand(1)
 
     if band.GetMaskFlags() != gdal.GMF_ALPHA + gdal.GMF_PER_DATASET:
@@ -116,7 +116,7 @@ def mask_3():
 
     band_2 = ds.GetRasterBand(2)
     band_3 = ds.GetRasterBand(3)
-    
+
     # We have commented the following tests as SWIG >= 1.3.37 is buggy !
     #  or str(band_2.GetMaskBand()) != str(band.GetMaskBand()) \
     #   or str(band_3.GetMaskBand()) != str(band.GetMaskBand())
@@ -136,8 +136,8 @@ def mask_3():
         gdaltest.post_reason( 'Got wrong alpha mask checksum' )
         print(cs)
         return 'fail'
-    
-    return 'success' 
+
+    return 'success'
 
 ###############################################################################
 # Copy a *real* masked dataset, and confirm masks copied properly.
@@ -145,7 +145,7 @@ def mask_3():
 def mask_4():
 
     src_ds = gdal.Open('../gdrivers/data/masked.jpg')
-    
+
     if src_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -223,7 +223,7 @@ def mask_5():
 
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
-    
+
     if ovr.GetMaskFlags() != gdal.GMF_PER_DATASET:
         gdaltest.post_reason( 'did not get expected mask flags' )
         print(ovr.GetMaskFlags())
@@ -232,7 +232,7 @@ def mask_5():
     msk = ovr.GetMaskBand()
     cs = msk.Checksum()
     expected_cs = 20505
-    
+
     if cs != expected_cs:
         gdaltest.post_reason( 'Did not get expected checksum' )
         print(cs)
@@ -253,7 +253,7 @@ def mask_6():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit.tif')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -272,8 +272,7 @@ def mask_6():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
-    return 'success' 
-
+    return 'success'
 
 ###############################################################################
 # Test a TIFF file with 3 bands and an embedded mask of 1 band of 1 bit
@@ -282,7 +281,7 @@ def mask_7():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test3_with_1mask_1bit.tif')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -302,7 +301,7 @@ def mask_7():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test a TIFF file with 1 band and an embedded mask of 8 bit.
@@ -311,7 +310,7 @@ def mask_7():
 def mask_8():
 
     ds = gdal.Open('data/test_with_mask_8bit.tif')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -328,7 +327,7 @@ def mask_8():
         print(cs)
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test a TIFF file with 3 bands with an embedded mask of 1 bit with 3 bands.
@@ -337,7 +336,7 @@ def mask_8():
 def mask_9():
 
     ds = gdal.Open('data/test3_with_mask_1bit.tif')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -355,7 +354,7 @@ def mask_9():
             print(cs)
             return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test a TIFF file with 3 bands with an embedded mask of 8 bit with 3 bands.
@@ -364,7 +363,7 @@ def mask_9():
 def mask_10():
 
     ds = gdal.Open('data/test3_with_mask_8bit.tif')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -382,7 +381,7 @@ def mask_10():
             print(cs)
             return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test a TIFF file with an overview, an embedded mask of 1 bit, and an embedded
@@ -392,7 +391,7 @@ def mask_11():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit_and_ovr.tif')
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -438,7 +437,7 @@ def mask_11():
         return 'fail'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-    
+
     return 'success' 
 
 
@@ -768,7 +767,7 @@ def mask_17_avg():
 
 def mask_18_avg():
     return mask_and_ovr(4, 'AVERAGE')
-    
+
 ###############################################################################
 # Test NODATA_VALUES mask
 
@@ -936,7 +935,7 @@ def mask_23():
 
     src_ds = drv.Create( 'tmp/mask_23_src.tif', 3000, 2000, 3, options = ['TILED=YES','SPARSE_OK=YES'] )
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    
+
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(15000000)
@@ -944,14 +943,14 @@ def mask_23():
     ds = drv.CreateCopy( 'tmp/mask_23_dst.tif', src_ds, options = ['TILED=YES','COMPRESS=JPEG'])
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     gdal.SetCacheMax(old_val)
-    
+
     del ds
     error_msg = gdal.GetLastErrorMsg()
     src_ds = None
 
     drv.Delete( 'tmp/mask_23_src.tif' )
     drv.Delete( 'tmp/mask_23_dst.tif' )    
-    
+
     # 'ERROR 1: TIFFRewriteDirectory:Error fetching directory count' was triggered before
     if error_msg != '':
         return 'fail'

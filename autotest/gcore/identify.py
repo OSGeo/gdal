@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test functioning of the IdentifyDriver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -52,7 +52,7 @@ def identify_1():
     if dr is None or dr.GetDescription() != 'GTiff':
         gdaltest.post_reason( 'Got wrong driver for byte.tif' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -62,14 +62,14 @@ def identify_2():
 
     if gdaltest.IdentifyDriver is None:
         return 'skip'
-    
+
     file_list = gdal.ReadDir( 'data' )
 
     dr = gdal.IdentifyDriver( 'data/byte.pnm.aux.xml', file_list )
     if dr is not None:
         gdaltest.post_reason( 'Got a driver for byte.pnm.aux.xml!' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -79,12 +79,12 @@ def identify_3():
 
     if gdaltest.IdentifyDriver is None:
         return 'skip'
-    
+
     dr = gdal.IdentifyDriver( 'data' )
     if dr is not None:
         gdaltest.post_reason( 'Got a driver for data directory!' )
         return 'fail'
-    
+
     return 'success'
 
 gdaltest_list = [
