@@ -87,7 +87,7 @@ class MetaCRSTest:
                                  float(test_line['tolOrd2']))
 
         return 'success'
-        
+
     def build_srs(self,type,crstext):
         if type == 'EPSG':
             srs = osr.SpatialReference()
@@ -99,12 +99,12 @@ class MetaCRSTest:
         else:
             gdaltest.post_reason( 'unsupported srs type: ' + type )
             return None
-            
+
     def testMetaCRS(self):
         result = self.parse_line()
         if result != 'success':
             return result
-        
+
         try:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( self.src_srs, self.dst_srs )
@@ -131,12 +131,12 @@ class MetaCRSTest:
 
         if self.src_srs.EPSGTreatsAsLatLong():
             self.src_xyz = (self.src_xyz[1],self.src_xyz[0],self.src_xyz[2])
-        
+
         result = ct.TransformPoint( self.src_xyz[0], self.src_xyz[1], self.src_xyz[2] )
 
         if self.src_srs.EPSGTreatsAsLatLong():
             result = (result[1],result[0],result[2])
-            
+
         ######################################################################
         # Check results.
         error = abs(result[0] - self.dst_xyz[0]) \
@@ -155,11 +155,11 @@ class MetaCRSTest:
             gdal.Debug( 'OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n' \
                         % (self.src_srs.ExportToPrettyWkt(),
                            self.dst_srs.ExportToPrettyWkt()) )
-                        
+
             return 'fail'
 
         return 'success'
-        
+
 ###############################################################################
 # When imported build a list of units based on the files available.
 

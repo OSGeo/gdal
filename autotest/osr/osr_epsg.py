@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test aspects of EPSG code lookup.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -42,7 +42,7 @@ from osgeo import osr
 # 	file with the adjusted central_meridian.
 
 def osr_epsg_1():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 26591 )
 
@@ -50,7 +50,7 @@ def osr_epsg_1():
         gdaltest.post_reason( 'Wrong central meridian, override missed?' )
         print(srs.ExportToPrettyWkt())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -58,7 +58,7 @@ def osr_epsg_1():
 #	from gcs.override.csv.
 
 def osr_epsg_2():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4312 )
 
@@ -67,7 +67,7 @@ def osr_epsg_2():
         gdaltest.post_reason( 'Wrong TOWGS84, override missed?' )
         print(srs.ExportToPrettyWkt())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -75,20 +75,20 @@ def osr_epsg_2():
 #       towgs84 values set properly (#3579)
 
 def osr_epsg_3():
-    
+
     for epsg in [3120,2172,2173,2174,2175,3333,3334,3335,3329,3330,3331,3332,3328,4179]:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG( epsg )
-    
+
         expected_towgs84 = [33.4,-146.6,-76.3,-0.359,-0.053,0.844,-0.84]
-    
+
         for i in range(6):
             if abs(float(srs.GetAttrValue( 'TOWGS84', i)) \
                 - expected_towgs84[i]) > 0.0005:
                 gdaltest.post_reason( 'For EPSG:%d. Wrong TOWGS84, override missed?' % epsg )
                 print(srs.ExportToPrettyWkt())
                 return 'fail'
-    
+
     return 'success'
 
 ###############################################################################

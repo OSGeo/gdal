@@ -74,12 +74,12 @@ class ProjTest:
             except:
                 #print( 'Did not find GRID:%s' % self.requirements[5:] )
                 return 'skip'
-        
+
         src = osr.SpatialReference()
         if src.SetFromUserInput( self.src_srs ) != 0:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.src_srs)
             return 'fail'
-        
+
         dst = osr.SpatialReference()
         if dst.SetFromUserInput( self.dst_srs ) != 0:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.dst_srs)
@@ -112,7 +112,7 @@ class ProjTest:
 
         ######################################################################
         # Transform source point to destination SRS.
-        
+
         result = ct.TransformPoint( self.src_xyz[0], self.src_xyz[1], self.src_xyz[2] )
 
         error = abs(result[0] - self.dst_xyz[0]) \
@@ -128,7 +128,7 @@ class ProjTest:
         # Now transform back.
 
         ct = osr.CoordinateTransformation( dst, src )
-        
+
         result = ct.TransformPoint( result[0], result[1], result[2] )
 
         error = abs(result[0] - self.src_xyz[0]) \
@@ -140,7 +140,7 @@ class ProjTest:
             return 'fail'
 
         return 'success'
-        
+
 ###############################################################################
 # Table of transformations, inputs and expected results (with a threshold)
 #
@@ -224,7 +224,7 @@ transform_list = [ \
      'No-op Optimization (geodetic)', None, None)
 
     ]
-    
+
 ###############################################################################
 # When imported build a list of units based on the files available.
 
