@@ -2507,10 +2507,11 @@ CPLValueType CPLGetValueType(const char* pszValue)
         }
     }
 
-    if( bIsReal && pszAfterExponent && strlen(pszAfterExponent) > 3 &&
-        CPLIsInf(CPLAtof(pszValueInit)) )
+    if( bIsReal && pszAfterExponent && strlen(pszAfterExponent) > 3 )
     {
-        return CPL_VALUE_STRING;
+        const double dfVal = CPLAtof(pszValueInit);
+        if( CPLIsInf(dfVal) )
+            return CPL_VALUE_STRING;
     }
 
     return (bIsReal) ? CPL_VALUE_REAL : CPL_VALUE_INTEGER;
