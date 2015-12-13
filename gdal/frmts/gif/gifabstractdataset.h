@@ -87,6 +87,7 @@ class GIFAbstractDataset : public GDALPamDataset
     static int          myEGifCloseFile( GifFileType *hGifFile );
     static int          ReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer, 
                                   int nBytesToRead );
+    static GifRecordType FindFirstImage( GifFileType* hGifFile );
 };
 
 /************************************************************************/
