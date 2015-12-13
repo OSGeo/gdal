@@ -6,12 +6,12 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some PROJ.4 specific translation issues.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 2014, Kyle Shannon <kyle at pobox dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -107,7 +107,7 @@ def osr_proj4_1():
 #
 
 def osr_proj4_2():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromProj4( "+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat +units=m" )
 
@@ -127,7 +127,7 @@ def osr_proj4_2():
 #
 
 def osr_proj4_3():
-    
+
     srs = osr.SpatialReference()
 
     try:
@@ -195,7 +195,7 @@ def osr_proj4_5():
         gdaltest.post_reason( 'round trip via PROJ.4 damaged srs?' )
         print(srs.ExportToPrettyWkt())
         print(srs2.ExportToPrettyWkt())
-    
+
     return 'success'
 
 ###############################################################################
@@ -205,7 +205,7 @@ def osr_proj4_5():
 def osr_proj4_6():
 
     expect_proj4 = '+proj=merc +lon_0=0 +lat_ts=46.1333331 +x_0=1000 +y_0=2000 +datum=WGS84 +units=m +no_defs '
-    
+
     wkt = """PROJCS["unnamed",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -223,7 +223,7 @@ def osr_proj4_6():
     PARAMETER["false_northing",2000],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromWkt(wkt)
     proj4 = srs.ExportToProj4()
@@ -269,7 +269,7 @@ def osr_proj4_6():
 #
 
 def osr_proj4_7():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 23700 )
 
@@ -386,7 +386,7 @@ def osr_proj4_10():
         print(srs.ExportToPrettyWkt())
         print(srs2.ExportToPrettyWkt())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -783,7 +783,7 @@ gdaltest_list = [
     osr_proj4_18,
     osr_proj4_19,
     osr_proj4_20 ]
-    
+
 
 if __name__ == '__main__':
 

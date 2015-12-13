@@ -7,11 +7,11 @@
 # Purpose:  Basic tests of OGRSpatialReference (OSR) operation, not including
 #           support for actual reprojection or use of EPSG tables.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -81,7 +81,7 @@ def osr_basic_1():
                                   % (utm_srs.GetAuthorityName( auth[0] ),
                                      auth[0]) )
             return 'fail'
-        
+
         if str(utm_srs.GetAuthorityCode( auth[0] )) != auth[1]:
             gdaltest.post_reason( 'Got code %s instead of %s for %s' \
                                   % (utm_srs.GetAuthorityName( auth[0] ),
@@ -94,7 +94,7 @@ def osr_basic_1():
 # Simple default NAD83 State Plane zone.
 
 def osr_basic_2():
-    
+
     srs = osr.SpatialReference()
     srs.SetStatePlane( 403, 1 )  # California III NAD83.
     #print srs.ExportToPrettyWkt()
@@ -125,7 +125,7 @@ def osr_basic_2():
                                   % (srs.GetAuthorityName( auth[0] ),
                                      auth[0]) )
             return 'fail'
-        
+
         if str(srs.GetAuthorityCode( auth[0] )) != auth[1]:
             gdaltest.post_reason( 'Got code %s instead of %s for %s' \
                                   % (srs.GetAuthorityCode( auth[0] ),
@@ -138,13 +138,13 @@ def osr_basic_2():
 # NAD83 State Plane zone, but overridden to be in Feet.
 
 def osr_basic_3():
-    
+
     srs = osr.SpatialReference()
 
     # California III NAD83 (feet)
     srs.SetStatePlane( 403, 1, 'Foot', 0.3048006096012192 )
     #print srs.ExportToPrettyWkt()
-    
+
     parm_list = \
               [ (osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
                 (osr.SRS_PP_STANDARD_PARALLEL_2, 37.06666666666667),
@@ -296,7 +296,7 @@ def osr_basic_8():
 
     if not 'SetLinearUnitsAndUpdateParameters' in dir(srs):
         return 'skip'
-    
+
     srs.SetFromUserInput( '+proj=tmerc +x_0=1000 +datum=WGS84 +units=m' )
     srs.SetLinearUnitsAndUpdateParameters( 'Foot', 0.3048 )
     fe = srs.GetProjParm( 'false_easting' )
@@ -451,7 +451,7 @@ def osr_basic_13():
     if srs.Validate() != 0:
         gdaltest.post_reason( 'epsg geoccs import does not validate!' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -623,37 +623,37 @@ def osr_basic_18():
 # Test well known GCS names against their corresponding EPSG definitions (#6080)
 
 def osr_basic_19():
-    
+
     sr = osr.SpatialReference()
     sr.SetWellKnownGeogCS('WGS84')
-    
+
     sr_ref = osr.SpatialReference()
     sr_ref.ImportFromEPSG(4326)
-    
+
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
         gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         print(sr_ref.ExportToWkt())
         return 'fail'
-    
+
     sr = osr.SpatialReference()
     sr.SetWellKnownGeogCS('WGS72')
-    
+
     sr_ref = osr.SpatialReference()
     sr_ref.ImportFromEPSG(4322)
-    
+
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
         gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         print(sr_ref.ExportToWkt())
         return 'fail'
-    
+
     sr = osr.SpatialReference()
     sr.SetWellKnownGeogCS('NAD27')
-    
+
     sr_ref = osr.SpatialReference()
     sr_ref.ImportFromEPSG(4267)
-    
+
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
         gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
@@ -662,10 +662,10 @@ def osr_basic_19():
 
     sr = osr.SpatialReference()
     sr.SetWellKnownGeogCS('NAD83')
-    
+
     sr_ref = osr.SpatialReference()
     sr_ref.ImportFromEPSG(4269)
-    
+
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
         gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
@@ -676,7 +676,7 @@ def osr_basic_19():
 
 ###############################################################################
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_basic_1,
     osr_basic_2,
     osr_basic_3,
