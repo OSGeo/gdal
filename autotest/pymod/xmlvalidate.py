@@ -352,7 +352,7 @@ def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_O
                 return False
 
     transform_abs_links_to_ref_links(target_dir + '/' + target_subdir)
-    
+
     return True
 
 ###############################################################################
@@ -426,7 +426,7 @@ def download_inspire_schemas(target_dir = '.', \
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd', target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd', base_dir = '.', force_download = force_download)
 
     transform_inspire_abs_links_to_ref_links(target_dir + '/' + target_subdir)
-    
+
     return True
 
 ###############################################################################
@@ -500,10 +500,10 @@ if __name__ == '__main__':
     ogc_schemas_location = None
     inspire_schemas_location = None
     application_schema_ns = 'http://mapserver.gis.umn.edu/mapserver'
-    
+
     if has_local_ogc_schemas('SCHEMAS_OPENGIS_NET'):
         ogc_schemas_location = 'SCHEMAS_OPENGIS_NET'
-    
+
     if has_local_inspire_schemas('inspire_schemas'):
         inspire_schemas_location = 'inspire_schemas'
         #transform_inspire_abs_links_to_ref_links('inspire_schemas')

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
-# 
+#
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Python Library supporting GDAL/OGR Test Suite
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -95,7 +95,7 @@ def run_tests( test_list ):
     if set_time:
         start_time = time.time()
     had_errors_this_script = 0
-    
+
     for test_item in test_list:
         if test_item is None:
             continue
@@ -113,10 +113,10 @@ def run_tests( test_list ):
 
         sys.stdout.write( outline )
         sys.stdout.flush()
-            
+
         reason = None
         result = run_func(func)
-        
+
         if result[:4] == 'fail':
             if had_errors_this_script == 0:
                 failure_summary.append( 'Script: ' + cur_name )
@@ -183,7 +183,7 @@ def summarize():
     global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
     global start_time, end_time
-    
+
     print('')
     if cur_name is not None:
         print('Test Script: %s' % cur_name)
@@ -375,11 +375,11 @@ class GDALTest:
         if ds is None:
             post_reason( 'Failed to open dataset: ' + wrk_filename )
             return 'fail'
-            
+
         if ds.GetDriver().ShortName != gdal.GetDriverByName( self.drivername ).ShortName:
             post_reason( 'The driver of the returned dataset is %s instead of %s.' % ( ds.GetDriver().ShortName, self.drivername ) )
             return 'fail'
-            
+
         if self.xsize == 0 and self.ysize == 0:
             self.xsize = ds.RasterXSize
             self.ysize = ds.RasterYSize
@@ -387,10 +387,10 @@ class GDALTest:
         # Do we need to check projection?
         if check_prj is not None:
             new_prj = ds.GetProjection()
-            
+
             src_osr = osr.SpatialReference()
             src_osr.SetFromUserInput( check_prj )
-            
+
             new_osr = osr.SpatialReference( wkt=new_prj )
 
             if not src_osr.IsSame(new_osr):
@@ -405,7 +405,7 @@ class GDALTest:
             # Default to 100th of pixel as our test value.
             if gt_epsilon is None:
                 gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
-                
+
             new_gt = ds.GetGeoTransform()
             for i in range(6):
                 if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
@@ -499,7 +499,7 @@ class GDALTest:
         src_ds = gdal.Open( wrk_filename )
         if self.band > 0:
             minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
-            
+
         src_prj = src_ds.GetProjection()
         src_gt = src_ds.GetGeoTransform()
 
@@ -537,7 +537,7 @@ class GDALTest:
             post_reason( 'Failed to create test file using CreateCopy method.'\
                          + '\n' + gdal.GetLastErrorMsg() )
             return 'fail'
-            
+
         if new_ds.GetDriver().ShortName != gdal.GetDriverByName( self.drivername ).ShortName:
             post_reason( 'The driver of the returned dataset is %s instead of %s.' % ( new_ds.GetDriver().ShortName, self.drivername ) )
             return 'fail'
@@ -615,7 +615,7 @@ class GDALTest:
         # Do we need to check the geotransform?
         if check_srs is not None:
             new_prj = new_ds.GetProjection()
-            
+
             src_osr = osr.SpatialReference( wkt=src_prj )
             new_osr = osr.SpatialReference( wkt=new_prj )
 
@@ -663,7 +663,7 @@ class GDALTest:
         if new_ds is None:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
-        
+
         src_ds = None
 
         try:
@@ -689,7 +689,7 @@ class GDALTest:
                 print('expect: ', minmax)
                 print('got: ', computed_minmax) 
                 return 'fail'
-        
+
         new_ds = None
 
         new_ds = gdal.Open( new_filename )
@@ -704,13 +704,13 @@ class GDALTest:
                     '    Got %d instead of %d.' \
                     % (new_ds.GetRasterBand(band).Checksum(),self.chksum))
                 return 'fail'
-            
+
             if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax and check_minmax:
                 post_reason( 'Did not get expected min/max values on reopened file.' )
                 return 'fail'
-        
+
         new_ds = None
-        
+
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
@@ -731,7 +731,7 @@ class GDALTest:
         if new_ds is None:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
-        
+
         gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
         if new_ds.SetGeoTransform( gt ) is not gdal.CE_None:
             post_reason( 'Failed to set geographic transformation.' )
@@ -760,7 +760,7 @@ class GDALTest:
             return 'fail'
 
         new_ds = None
-        
+
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
@@ -781,7 +781,7 @@ class GDALTest:
         if new_ds is None:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
-        
+
         gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
         if prj is None:
             # This is a challenging SRS since it has non-meter linear units.
@@ -789,7 +789,7 @@ class GDALTest:
 
         src_osr = osr.SpatialReference()
         src_osr.ImportFromWkt(prj)
-        
+
         new_ds.SetGeoTransform( gt )
         if new_ds.SetProjection( prj ) is not gdal.CE_None:
             post_reason( 'Failed to set geographic projection string.' )
@@ -808,7 +808,7 @@ class GDALTest:
             expected_osr = src_osr
         else:
             expected_osr.ImportFromWkt( expected_prj )
-            
+
         new_osr = osr.SpatialReference()
         new_osr.ImportFromWkt(new_ds.GetProjection())
         if not new_osr.IsSame(expected_osr):
@@ -820,7 +820,7 @@ class GDALTest:
             return 'fail'
 
         new_ds = None
-        
+
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
@@ -841,7 +841,7 @@ class GDALTest:
         if new_ds is None:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
-        
+
         dict = {}
         dict['TEST_KEY'] = 'TestValue'
         new_ds.SetMetadata( dict )
@@ -870,7 +870,7 @@ class GDALTest:
             return 'fail'
 
         new_ds = None
-        
+
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
@@ -891,7 +891,7 @@ class GDALTest:
         if new_ds is None:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
-        
+
         if self.options is None or not 'PIXELTYPE=SIGNEDBYTE' in self.options:
             nodata = 130
         else:
@@ -922,14 +922,14 @@ class GDALTest:
                 return 'fail'
 
         new_ds = None
-        
+
         if delete:
             new_ds = gdal.Open (new_filename)
             if new_ds.GetRasterBand(1).GetNoDataValue() is not None:
                 post_reason( 'Got nodata value whereas none was expected' )
                 return 'fail'
             new_ds = None
-        
+
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
@@ -937,7 +937,7 @@ class GDALTest:
 
     def testSetNoDataValueAndDelete(self):
         return self.testSetNoDataValue(delete = True)
-        
+
     def testSetDescription(self):
         if self.testDriver() == 'fail':
             return 'skip'
@@ -953,7 +953,7 @@ class GDALTest:
         if new_ds is None:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
-        
+
         description = "Description test string"
         new_ds.GetRasterBand(1).SetDescription(description)
 
@@ -970,7 +970,7 @@ class GDALTest:
             return 'fail'
 
         new_ds = None
-        
+
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
@@ -1088,7 +1088,7 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
 def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
-    
+
     if filename.startswith(base_dir + '/'):
         filename = filename[len(base_dir + '/'):]
 
@@ -1437,7 +1437,7 @@ def posinf():
         return float('inf')
     except:
         return 1e400
- 
+
 ###############################################################################
 # Return negative infinity
 
@@ -1539,7 +1539,7 @@ def find_lib_sunos(libname):
 
     pid = os.getpid()
     (lines, err) = runexternal_out_and_err('pmap %d' % pid)
-    
+
     for line in lines.split('\n'):
         if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:
             continue

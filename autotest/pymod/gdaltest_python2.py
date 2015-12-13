@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
-# 
+#
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Python Library supporting GDAL/OGR Test Suite
 # Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -45,12 +45,12 @@ def run_func(func):
     except SystemExit, x:
         import traceback
         traceback.print_exc()
-        
+
         raise x
     except:
         result = 'fail (blowup)'
         print(result)
-        
+
         import traceback
         traceback.print_exc()    
         return result
@@ -241,7 +241,7 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
     else:
         q_stderr = None
         ret_stderr = ''
-        
+
     if q_stdout is not None:
         ret_stdout = q_stdout.get()
     if q_stderr is not None:
@@ -252,7 +252,7 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
         ret_stderr = ret_stderr + '\nERROR ret code = %d' % waitcode
 
     return (ret_stdout, ret_stderr)
-    
+
 def runexternal_out_and_err(cmd, check_memleak = True):
     if 'TRAVIS_BRANCH' in os.environ:
         val = os.environ['TRAVIS_BRANCH']
@@ -273,14 +273,14 @@ def runexternal_out_and_err(cmd, check_memleak = True):
 
     (ret_stdin, ret_stdout, ret_stderr) = os.popen3(cmd)
     ret_stdin.close()
-    
+
     q_stdout = Queue()
     t_stdout = Thread(target=read_in_thread, args=(ret_stdout, q_stdout))
     q_stderr = Queue()
     t_stderr = Thread(target=read_in_thread, args=(ret_stderr, q_stderr))
     t_stdout.start()
     t_stderr.start()
-    
+
     out_str = q_stdout.get()
     err_str = q_stderr.get()
 
