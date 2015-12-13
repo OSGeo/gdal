@@ -36,27 +36,16 @@
 
 #include "jpgdataset.cpp"
 
-GDALDataset* JPEGDataset12Open(const char* pszFilename,
-                               VSILFILE* fpLin,
-                               char** papszSiblingFiles,
-                               int nScaleFactor,
-                               int bDoPAMInitialize,
-                               int bUseInternalOverviews);
+GDALDataset* JPEGDataset12Open(JPGDatasetOpenArgs* psArgs);
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-GDALDataset* JPEGDataset12Open(const char* pszFilename,
-                               VSILFILE* fpLin,
-                               char** papszSiblingFiles,
-                               int nScaleFactor,
-                               int bDoPAMInitialize,
-                               int bUseInternalOverviews)
+GDALDataset* JPEGDataset12Open(JPGDatasetOpenArgs* psArgs)
 {
-    return JPGDataset12::Open(pszFilename, fpLin, papszSiblingFiles, nScaleFactor,
-                              bDoPAMInitialize, bUseInternalOverviews);
+    return JPGDataset12::Open(psArgs);
 }
 
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,

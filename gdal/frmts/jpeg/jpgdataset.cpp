@@ -72,13 +72,19 @@ CPL_C_END
 #  pragma warning(disable:4611)
 #endif
 
+typedef struct
+{
+    const char* pszFilename;
+    VSILFILE* fpLin;
+    char** papszSiblingFiles;
+    int nScaleFactor;
+    int bDoPAMInitialize;
+    int bUseInternalOverviews;
+} JPGDatasetOpenArgs;
+
+
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
-GDALDataset* JPEGDataset12Open(const char* pszFilename,
-                               VSILFILE* fpLin,
-                               char** papszSiblingFiles,
-                               int nScaleFactor,
-                               int bDoPAMInitialize,
-                               int bUseInternalOverviews);
+GDALDataset* JPEGDataset12Open(JPGDatasetOpenArgs* psArgs);
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -285,12 +291,7 @@ class JPGDataset : public JPGDatasetCommon
                  JPGDataset();
                  ~JPGDataset();
 
-    static GDALDataset *Open( const char* pszFilename,
-                              VSILFILE* fpLin,
-                              char** papszSiblingFiles,
-                              int nScaleFactor,
-                              int bDoPAMInitialize,
-                              int bUseInternalOverviews );
+    static GDALDataset *Open( JPGDatasetOpenArgs* psArgs );
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -1365,7 +1366,14 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
 
     const char* pszSubfile = CPLSPrintf("JPEG_SUBFILE:%u,%d,%s",
                             nTIFFHEADER + nJpegIFOffset, nJpegIFByteCount, GetDescription());
-    return JPGDataset::Open(pszSubfile, NULL, NULL, 1, FALSE, FALSE);
+    JPGDatasetOpenArgs sArgs;
+    sArgs.pszFilename = pszSubfile;
+    sArgs.fpLin = NULL;
+    sArgs.papszSiblingFiles = NULL;
+    sArgs.nScaleFactor = 1;
+    sArgs.bDoPAMInitialize = FALSE;
+    sArgs.bUseInternalOverviews = FALSE;
+    return JPGDataset::Open(&sArgs);
 }
 
 /************************************************************************/
@@ -1439,8 +1447,14 @@ void JPGDatasetCommon::InitInternalOverviews()
                 {
                     break;
                 }
-                GDALDataset* poImplicitOverview =
-                    JPGDataset::Open(GetDescription(), NULL, NULL, 1 << (i + 1), FALSE, FALSE);
+                JPGDatasetOpenArgs sArgs;
+                sArgs.pszFilename = GetDescription();
+                sArgs.fpLin = NULL;
+                sArgs.papszSiblingFiles = NULL;
+                sArgs.nScaleFactor = 1 << (i + 1);
+                sArgs.bDoPAMInitialize = FALSE;
+                sArgs.bUseInternalOverviews = FALSE;
+                GDALDataset* poImplicitOverview = JPGDataset::Open(&sArgs);
                 if( poImplicitOverview == NULL )
                     break;
                 papoInternalOverviews[nInternalOverviewsCurrent] = poImplicitOverview;
@@ -2147,11 +2161,15 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
     VSILFILE* fpL = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
 
-    return JPGDataset::Open(poOpenInfo->pszFilename,
-                            fpL,
-                            poOpenInfo->GetSiblingFiles(),
-                            1, TRUE,
-                            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "USE_INTERNAL_OVERVIEWS", TRUE) );
+    JPGDatasetOpenArgs sArgs;
+    sArgs.pszFilename = poOpenInfo->pszFilename;
+    sArgs.fpLin = fpL;
+    sArgs.papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    sArgs.nScaleFactor = 1;
+    sArgs.bDoPAMInitialize = TRUE;
+    sArgs.bUseInternalOverviews = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "USE_INTERNAL_OVERVIEWS", TRUE);
+
+    return JPGDataset::Open(&sArgs);
 }
 
 #endif // !defined(JPGDataset)
@@ -2160,12 +2178,7 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *JPGDataset::Open( const char* pszFilename,
-                               VSILFILE* fpLin,
-                               char** papszSiblingFiles,
-                               int nScaleFactor,
-                               int bDoPAMInitialize,
-                               int bUseInternalOverviews )
+GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
 
 {
 
@@ -2179,13 +2192,20 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
             VSILFILE* fpImage = poDS->fpImage;
             poDS->fpImage = NULL;
             delete poDS;
-            return JPEGDataset12Open(pszFilename, fpImage, papszSiblingFiles,
-                                     nScaleFactor, bDoPAMInitialize, bUseInternalOverviews);
+            psArgs->fpLin = fpImage;
+            return JPEGDataset12Open(psArgs);
         }
 #endif
         delete poDS;
         return NULL;
     }
+
+    const char* pszFilename = psArgs->pszFilename;
+    VSILFILE* fpLin = psArgs->fpLin;
+    char** papszSiblingFiles = psArgs->papszSiblingFiles;
+    const int nScaleFactor = psArgs->nScaleFactor;
+    const int bDoPAMInitialize = psArgs->bDoPAMInitialize;
+    const int bUseInternalOverviews = psArgs->bUseInternalOverviews;
 
 /* -------------------------------------------------------------------- */
 /*      If it is a subfile, read the JPEG header.                       */
@@ -3551,7 +3571,16 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( CSLTestBoolean(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        JPGDataset *poDS = (JPGDataset*) Open( pszFilename, NULL, NULL, 1, TRUE, TRUE );
+
+        JPGDatasetOpenArgs sArgs;
+        sArgs.pszFilename = pszFilename;
+        sArgs.fpLin = NULL;
+        sArgs.papszSiblingFiles = NULL;
+        sArgs.nScaleFactor = 1;
+        sArgs.bDoPAMInitialize = TRUE;
+        sArgs.bUseInternalOverviews = TRUE;
+
+        JPGDataset *poDS = (JPGDataset*) Open( &sArgs );
         CPLPopErrorHandler();
         if( poDS )
         {
