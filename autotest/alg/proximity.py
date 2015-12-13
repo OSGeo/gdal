@@ -44,22 +44,22 @@ def proximity_1():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/pat.tif')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/proximity_1.tif', 25, 25, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.ComputeProximity( src_band, dst_band )
 
     cs_expected = 1941
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/proximity_1.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
@@ -75,10 +75,10 @@ def proximity_2():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/pat.tif')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/proximity_2.tif', 25, 25, 1, gdal.GDT_Float32 )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.ComputeProximity( src_band, dst_band,
                            options = [ 'VALUES=65,64',
                                        'MAXDIST=12',
@@ -87,14 +87,14 @@ def proximity_2():
 
     cs_expected = 3256
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/proximity_2.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
@@ -110,10 +110,10 @@ def proximity_3():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/pat.tif')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/proximity_3.tif', 25, 25, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.ComputeProximity( src_band, dst_band,
                           options = [ 'VALUES=65,64',
                                       'MAXDIST=12',
@@ -122,14 +122,14 @@ def proximity_3():
 
     cs_expected = 1465
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/proximity_3.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
