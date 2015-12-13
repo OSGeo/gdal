@@ -225,8 +225,8 @@ OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName,
     papszOptions = CSLInsertStrings( papszOptions, 0, papszExtraOptions );
 
     const bool b3DRequested
-        = CSLFetchBoolean( papszOptions, "3D",
-                           wkbHasZ(eGeomType) );
+        = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "3D",
+                           wkbHasZ(eGeomType) ));
 
     const char *pszSeed = CSLFetchNameValue( papszOptions, "SEED" );
     int nCreationFlags = 0;
