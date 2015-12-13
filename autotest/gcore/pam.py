@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test functioning of the PAM metadata support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -74,7 +74,7 @@ def pam_1():
         gdaltest.post_reason( 'xml does not match' )
         print(xml_md)
         return 'fail'
-    
+
     return 'success' 
 
 ###############################################################################
@@ -136,14 +136,14 @@ def pam_3():
     if band.GetNoDataValue() != 100:
         gdaltest.post_reason( 'nodata not saved via pam' )
         return 'fail'
-    
+
     ds = None
     ds = gdal.Open('tmp/pam.pnm', gdal.GA_Update)
     if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     ds = gdal.Open('tmp/pam.pnm')
     if ds.GetRasterBand(1).GetNoDataValue() is not None:
         gdaltest.post_reason('got nodata value whereas none was expected')
@@ -436,7 +436,7 @@ def pam_11():
 # Test histogram with 64bit counts
 
 def pam_12():
-    
+
     shutil.copy('data/byte.tif', 'tmp')
     open('tmp/byte.tif.aux.xml', 'wt').write("""<PAMDataset>
   <PAMRasterBand band="1">
@@ -476,9 +476,9 @@ def pam_12():
         gdaltest.post_reason('fail')
         print(aux_xml)
         return 'fail'
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Test various stuff with PAM disabled
 #
@@ -496,24 +496,24 @@ def pam_13():
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     gdal.PushErrorHandler()
     ret = ds.GetRasterBand(1).DeleteNoDataValue()
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     ds = None
-    
+
     if gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/tmp.pnm')
-    
+
     gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'YES' )
-    
+
     return 'success'
 
 

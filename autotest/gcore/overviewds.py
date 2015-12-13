@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GDALOverviewDataset
 # Author:   Even Rouault <even dot rouault at mines spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014 Even Rouault <even dot rouault at mines spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -55,12 +55,12 @@ def overviewds_1():
 # Nominal cases
 
 def overviewds_2():
-    
+
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
     ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
     ds = None
-    
+
     ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0only'])
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason('fail')
@@ -150,7 +150,7 @@ def overviewds_3():
     gcp3.GCPY = 3751320.000
     src_gcps = (gcp1, gcp2, gcp3)
     ds.SetGCPs(src_gcps, src_ds.GetProjectionRef())
-    
+
     tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_POLYNOMIAL' ] )
     (ref_success,ref_pnt) = tr.TransformPoint( 0, 20, 10 )
 
@@ -168,7 +168,7 @@ def overviewds_3():
     # Really check that the transformer works
     tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_POLYNOMIAL' ] )
     (success,pnt) = tr.TransformPoint( 0, 20 / 2.0, 10 / 2.0 )
-    
+
     for i in range(3):
         if abs(ref_pnt[i] - pnt[i]) > 1e-5:
             gdaltest.post_reason('fail')
@@ -194,7 +194,7 @@ def overviewds_4():
     shutil.copy('data/test_rpc.txt', 'tmp/byte_rpc.txt')
     ds = gdal.Open('tmp/byte.tif')
     rpc_md = ds.GetMetadata('RPC')
-    
+
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
     (ref_success,ref_pnt) = tr.TransformPoint( 0, 20, 10 )
 
@@ -203,7 +203,7 @@ def overviewds_4():
 
     ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
     got_md = ds.GetMetadata('RPC')
-    
+
     for key in rpc_md:
         if ds.GetMetadataItem(key, 'RPC') != got_md[key]:
             gdaltest.post_reason('fail')
@@ -225,7 +225,7 @@ def overviewds_4():
     # Really check that the transformer works
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
     (success,pnt) = tr.TransformPoint( 0, 20 / 2.0, 10 / 2.0 )
-    
+
     for i in range(3):
         if abs(ref_pnt[i] - pnt[i]) > 1e-5:
             gdaltest.post_reason('fail')
@@ -234,7 +234,7 @@ def overviewds_4():
             return 'fail'
 
     ds = None
-    
+
     try:
         os.remove('tmp/byte_rpc.txt')
     except:
@@ -246,13 +246,13 @@ def overviewds_4():
 # Test GEOLOCATION
 
 def overviewds_5():
-    
+
     shutil.copy('data/sstgeo.tif', 'tmp/sstgeo.tif')
     shutil.copy('data/sstgeo.vrt', 'tmp/sstgeo.vrt')
-    
+
     ds = gdal.Open('tmp/sstgeo.vrt')
     geoloc_md = ds.GetMetadata('GEOLOCATION')
-    
+
     tr = gdal.Transformer( ds, None, [ 'METHOD=GEOLOC_ARRAY' ] )
     (ref_success,ref_pnt) = tr.TransformPoint( 0, 20, 10 )
 
@@ -261,7 +261,7 @@ def overviewds_5():
 
     ds = gdal.OpenEx('tmp/sstgeo.vrt', open_options = ['OVERVIEW_LEVEL=0'])
     got_md = ds.GetMetadata('GEOLOCATION')
-    
+
     for key in geoloc_md:
         if ds.GetMetadataItem(key, 'GEOLOCATION') != got_md[key]:
             gdaltest.post_reason('fail')
@@ -291,7 +291,7 @@ def overviewds_5():
     tr = gdal.Transformer( ds, None, [ 'METHOD=GEOLOC_ARRAY' ] )
     expected_xyz = ( 20.0 / 2, 10.0 / 2, 0 )
     (success,pnt) = tr.TransformPoint( 1, ref_pnt[0], ref_pnt[1] )
-    
+
     for i in range(3):
         if abs(pnt[i] - expected_xyz[i]) > 0.5:
             gdaltest.post_reason('fail')
@@ -306,7 +306,7 @@ def overviewds_5():
 # Test VRT
 
 def overviewds_6():
-    
+
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
     ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )

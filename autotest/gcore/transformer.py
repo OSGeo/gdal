@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test the GenImgProjTransformer capabilities.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -187,7 +187,7 @@ def transformer_5():
         return 'fail'
 
     # Try with a different height.
-    
+
     (success,pnt) = tr.TransformPoint( 0, 20.5, 10.5, 30 )
 
     if not success \
@@ -309,7 +309,7 @@ def transformer_5():
         return 'fail'
 
     tr = None
-    
+
     # Test outside DEM extent : default behaviour --> error
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif' ] )
 
@@ -432,7 +432,7 @@ def transformer_8():
             gdaltest.post_reason( 'got wrong reverse transform result.' )
             return 'fail'
 
-   
+
     gdal.Unlink('/vsimem/dem.tif')
 
     return 'success' 
@@ -482,10 +482,10 @@ def transformer_9():
             print(pnt_optimized)
             return 'fail'
 
-   
+
     gdal.Unlink('/vsimem/dem.tif')
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test RPC DEM transform from geoid height to ellipsoidal height
@@ -542,7 +542,7 @@ def transformer_10():
             AUTHORITY["EPSG","9001"]],
         AXIS["Up",UP]]]""")
     vrt_dem = None
-    
+
     ds = gdal.Open('data/rpc.vrt')
 
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt' ] )
@@ -555,7 +555,7 @@ def transformer_10():
         print(success, pnt)
         gdaltest.post_reason( 'got wrong result.' )
         return 'fail'
-    
+
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt', 'RPC_DEM_APPLY_VDATUM_SHIFT=FALSE' ] )
     (success,pnt) = tr.TransformPoint( 1, 125.64828521533849, 39.869345204440144, 0 )
 
@@ -566,9 +566,9 @@ def transformer_10():
         print(success, pnt)
         gdaltest.post_reason( 'got wrong result.' )
         return 'fail'
-    
+
     gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
-    
+
     return 'success'
 
 ###############################################################################
@@ -628,8 +628,9 @@ disabled_gdaltest_list = [
     transformer_9
 ]
 
+
 if __name__ == '__main__':
-    
+
     gdaltest.setup_run( 'transformer' )
 
     gdaltest.run_tests( gdaltest_list )

@@ -622,7 +622,7 @@ def tiff_write_17():
         return 'fail'
     except:
         pass
-    
+
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open( 'tmp/tw_17.tif' )
     if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'),rpc_md):
@@ -682,7 +682,7 @@ def tiff_write_18():
         return 'fail'
     except:
         pass
-    
+
     # Open the dataset, and confirm the RPC/IMD data is still intact.
     ds = gdal.Open( 'tmp/tw_18.tif' )
 
@@ -776,7 +776,7 @@ def tiff_write_rpc_txt():
         return 'fail'
     except:
         pass
-    
+
     try:
         open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
     except:
@@ -950,11 +950,11 @@ def tiff_write_20():
     ds = gdal.Open( 'tmp/tags.tif', gdal.GA_Update )
     ds.SetMetadata( {} )
     ds = None
-    
+
     ds = gdal.Open( 'tmp/tags.tif' )
     got_md = ds.GetMetadata()
     ds = None
-    
+
     if got_md != {}:
         gdaltest.post_reason('expected empty metadata list, but got some')
         print(got_md)
@@ -2377,7 +2377,7 @@ def tiff_write_65():
 # Verify that we can write and read a band-interleaved GeoTIFF with 65535 bands (#2838)
 
 def tiff_write_66():
-    
+
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
 
@@ -2405,7 +2405,7 @@ def tiff_write_66():
 # Verify that we can write and read a pixel-interleaved GeoTIFF with 65535 bands (#2838)
 
 def tiff_write_67():
-    
+
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
 
@@ -4838,7 +4838,7 @@ def tiff_write_123():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123.tif')
-    
+
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_bgr.tif', 1,1,3,gdal.GDT_Byte)
     ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
@@ -4906,7 +4906,7 @@ def tiff_write_124():
 # Test out-of-memory conditions with SplitBand and SplitBitmapBand
 
 def tiff_write_125():
-    
+
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
 
@@ -5144,7 +5144,7 @@ def tiff_write_127():
         obj.SetMetadata({'key' : 'value'})
         obj = None
         ds = None
-        
+
         ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
         if obj.GetMetadataItem('key') != 'value':
@@ -5155,7 +5155,7 @@ def tiff_write_127():
         obj.SetMetadata({})
         obj = None
         ds = None
-        
+
         ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
         if len(obj.GetMetadata()) != 0:
@@ -5165,7 +5165,7 @@ def tiff_write_127():
         obj.SetMetadataItem('key', 'value')
         obj = None
         ds = None
-        
+
         ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
         if obj.GetMetadataItem('key') != 'value':
@@ -5175,7 +5175,7 @@ def tiff_write_127():
         obj.SetMetadataItem('key', None)
         obj = None
         ds = None
-        
+
         ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
         if len(obj.GetMetadata()) != 0:
@@ -5184,7 +5184,7 @@ def tiff_write_127():
             return 'fail'
         obj = None
         ds = None
-        
+
         statBuf = gdal.VSIStatL('/vsimem/tiff_write_127.tif.aux.xml')
         if statBuf is not None:
             gdaltest.post_reason('unexpected PAM file')
@@ -5227,7 +5227,7 @@ def tiff_write_128():
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
-    
+
     # Try with explicit CMYK photometric interpreation
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
@@ -5247,7 +5247,7 @@ def tiff_write_128():
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
-    
+
     # Try with more neutral colorspace in the case the source JPEG is not really CMYK (yes that happens !)
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
@@ -5304,7 +5304,7 @@ def tiff_write_129():
                     cs = ds.GetRasterBand(1).Checksum()
                 ds = None
                 gdaltest.tiff_drv.Delete('/vsimem/tiff_write_129.tif')
-                
+
                 if i == 0:
                     cs_ref = cs
                 elif cs != cs_ref:
@@ -5391,7 +5391,7 @@ def tiff_write_132():
     ds.SetMetadataItem('FOO', 'BAR')
     ds.GetRasterBand(1).SetMetadataItem('FOO', 'BAR')
     ds = None
-    
+
     # Check that PAM file exists
     if gdal.VSIStatL('/vsimem/tiff_write_132.tif.aux.xml') is None:
         gdaltest.post_reason('fail')
@@ -5402,7 +5402,7 @@ def tiff_write_132():
     ds.SetMetadataItem('FOO', 'BAZ')
     ds.GetRasterBand(1).SetMetadataItem('FOO', 'BAZ')
     ds = None
-    
+
     # Check that PAM file no longer exists
     if gdal.VSIStatL('/vsimem/tiff_write_132.tif.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -5415,7 +5415,7 @@ def tiff_write_132():
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_132.tif')
-    
+
     return 'success'
 
 ###############################################################################
@@ -5481,7 +5481,7 @@ def tiff_write_133():
     # Pixel interleaved
     out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=32' ])
     out_ds = None
-    
+
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
     ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
     gdal.SetConfigOption('TIFF_READ_STREAMING', None)
@@ -5519,7 +5519,7 @@ def tiff_write_133():
     # Tiled
     out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'TILED=YES' ])
     out_ds = None
-    
+
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
     ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
     gdal.SetConfigOption('TIFF_READ_STREAMING', None)
@@ -5558,7 +5558,7 @@ def tiff_write_133():
     # Band interleaved
     out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'INTERLEAVE=BAND' ])
     out_ds = None
-    
+
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
     ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
     gdal.SetConfigOption('TIFF_READ_STREAMING', None)
@@ -5581,7 +5581,7 @@ def tiff_write_133():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') >= 0:
         out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'BIGTIFF=YES' ])
         out_ds = None
-        
+
         gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
         ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
         gdal.SetConfigOption('TIFF_READ_STREAMING', None)
@@ -5598,7 +5598,7 @@ def tiff_write_133():
 
         ds = None
         gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133_dst.tif')
-    
+
     # Compression not supported
     gdal.PushErrorHandler()
     out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'COMPRESS=DEFLATE' ])
@@ -5621,7 +5621,7 @@ def tiff_write_133():
         return 'fail'
 
     src_ds = None
-    
+
     # Classical TIFF with IFD not at offset 8
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
     gdal.PushErrorHandler()
@@ -5639,7 +5639,7 @@ def tiff_write_133():
         ds.FlushCache()
         ds.SetGeoTransform([1,2,0,3,0,-2])
         ds = None
-        
+
         gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
         gdal.PushErrorHandler()
         ds = gdal.Open('/vsimem/tiff_write_133.tif')
@@ -5655,7 +5655,7 @@ def tiff_write_133():
         ds.WriteRaster(0, 1000-y-1, 1024, 1, ''.join('a' for i in range(3*1024)))
         ds.FlushCache()
     ds = None
-    
+
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
     gdal.PushErrorHandler()
     ds = gdal.Open('/vsimem/tiff_write_133.tif')
@@ -5698,7 +5698,7 @@ def tiff_write_133():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133.tif')
 
-    
+
     return 'success'
 
 ###############################################################################
@@ -5723,7 +5723,7 @@ def tiff_write_134():
         return 'fail'
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
-    
+
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134_src.tif', 1, 1, 3)
     src_ds.GetRasterBand(1).Fill(127)
     src_ds.GetRasterBand(2).Fill(127)
@@ -5831,7 +5831,7 @@ def tiff_write_135():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     gdal.Unlink('/vsimem/tiff_write_135.tif')
 
     return 'success'
@@ -5864,11 +5864,11 @@ def tiff_write_136():
 # Test multi-threaded writing
 
 def tiff_write_137():
-    
+
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137_src.tif', 4000, 4000)
     src_ds.GetRasterBand(1).Fill(1)
     expected_cs = src_ds.GetRasterBand(1).Checksum()
-    
+
     # Test NUM_THREADS as creation option
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
         options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
@@ -5898,7 +5898,7 @@ def tiff_write_137():
         print(cs)
         print(expected_cs)
         return 'fail'
-    
+
     # Ask data immediately while the block is compressed
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
                             options = ['BLOCKYSIZE=4000', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
@@ -6174,7 +6174,7 @@ def tiff_write_141():
     srs.ImportFromEPSG(3857)
     ds.SetProjection(srs.ExportToWkt())
     ds = None
-    
+
     ds = gdal.Open('/vsimem/tiff_write_141.tif')
     wkt = ds.GetProjectionRef()
     ds = None

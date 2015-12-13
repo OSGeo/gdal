@@ -377,7 +377,7 @@ def vrtmisc_12():
 # Test CreateCopy() preserve NBITS
 
 def vrtmisc_13():
-    
+
     ds = gdal.Open('data/oddsize1bit.tif')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
     if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':

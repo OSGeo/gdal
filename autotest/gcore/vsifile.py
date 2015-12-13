@@ -116,7 +116,7 @@ def vsifile_generic(filename):
     if statBuf is not None:
         gdaltest.post_reason('failure')
         return 'fail'
-    
+
     # Test append mode on non existing file
     fp = gdal.VSIFOpenL(filename, 'ab')
     gdal.VSIFWriteL('XX', 1, 2, fp)
@@ -131,7 +131,7 @@ def vsifile_generic(filename):
     if gdal.Unlink(filename) != 0:
         gdaltest.post_reason('failure')
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
