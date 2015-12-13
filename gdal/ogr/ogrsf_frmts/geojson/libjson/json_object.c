@@ -10,7 +10,7 @@
  *
  */
 
-#include "cpl_conv.h"
+#include "cpl_string.h"
 
 #include "config.h"
 
@@ -27,6 +27,9 @@
 #include "json_object.h"
 #include "json_object_private.h"
 #include "json_util.h"
+
+#undef snprintf
+#define snprintf CPLsnprintf
 
 #if !defined(HAVE_STRDUP) && defined(_MSC_VER)
   /* MSC has the version as _strdup */
