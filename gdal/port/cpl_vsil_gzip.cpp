@@ -164,7 +164,7 @@ class VSIGZipHandle : public VSIVirtualHandle
                   uLong expected_crc = 0,
                   int transparent = 0);
     ~VSIGZipHandle();
-    
+
     bool              IsInitOK() const { return inbuf != NULL; }
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
@@ -1770,7 +1770,7 @@ class VSIZipFilesystemHandler : public VSIArchiveFilesystemHandler
 
 public:
     virtual ~VSIZipFilesystemHandler();
-    
+
     virtual const char* GetPrefix() { return "/vsizip"; }
     virtual std::vector<CPLString> GetExtensions();
     virtual VSIArchiveReader* CreateReader(const char* pszZipFileName);

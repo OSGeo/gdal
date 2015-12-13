@@ -219,7 +219,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     int             bHasComputedFileSize;
     ExistStatus     eExists;
     int             bIsDirectory;
-    
+
     int             bCanTrustCandidateFileSize;
     int             bHasCandidateFileSize;
     vsi_l_offset    nCandidateFileSize;
@@ -1532,7 +1532,7 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 
     int nRet = (poHandle->Exists()) ? 0 : -1;
     pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
-    
+
     delete poHandle;
     return nRet;
 }
@@ -1616,7 +1616,7 @@ void VSIS3StreamingFSHandler::UpdateMapFromHandle(VSIS3HandleHelper * poS3Handle
 void VSIS3StreamingFSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper)
 {
     CPLMutexHolder oHolder( &hMutex );
-    
+
     std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )

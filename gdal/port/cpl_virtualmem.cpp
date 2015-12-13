@@ -157,7 +157,7 @@ typedef struct
 
     int          iLastPage;              /* last page accessed */
     int          nRetry;                 /* number of consecutive retries to that last page */
-    
+
     CPLVirtualMemCachePageCbk     pfnCachePage;       /* called when a page is mapped */
     CPLVirtualMemUnCachePageCbk   pfnUnCachePage;     /* called when a (writable) page is unmapped */
 
@@ -697,7 +697,7 @@ void CPLVirtualMemAddPage(CPLVirtualMemVMA* ctxt, void* target_addr, void* pPage
             assert(mprotect(target_addr, ctxt->sBase.nPageSize, PROT_READ | PROT_WRITE) == 0);
             /*fprintfstderr("memcpying page %d\n", iPage);*/
             memcpy(target_addr, pPageToFill, ctxt->sBase.nPageSize);
-            
+
             if( opType == OP_STORE && ctxt->sBase.eAccessMode == VIRTUALMEM_READWRITE )
             {
                 /* let (and mark) the page writable since the instruction that triggered */
@@ -1937,7 +1937,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
     CPLVirtualMem* ctxt = (CPLVirtualMem* )VSI_CALLOC_VERBOSE(1, sizeof(CPLVirtualMem));
     if( ctxt == NULL )
         return NULL;
-    
+
     void* addr = mmap(NULL, nMappingSize,
                       (eAccessMode == VIRTUALMEM_READWRITE) ? PROT_READ | PROT_WRITE : PROT_READ,
                       MAP_SHARED, fd, nAlignedOffset);

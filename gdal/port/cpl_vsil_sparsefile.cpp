@@ -104,7 +104,7 @@ public:
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
-    
+
     int              GetRecCounter() { return oRecOpenCount[CPLGetPID()]; }
     void             IncRecCounter() { oRecOpenCount[CPLGetPID()] ++; }
     void             DecRecCounter() { oRecOpenCount[CPLGetPID()] --; }

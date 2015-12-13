@@ -592,14 +592,14 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
     curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
-    
+
     /* Set timeout.*/
     const char *pszTimeout = CSLFetchNameValue( papszOptions, "TIMEOUT" );
     if (pszTimeout == NULL)
         pszTimeout = CPLGetConfigOption("GDAL_HTTP_TIMEOUT", NULL);
     if( pszTimeout != NULL )
         curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, atoi(pszTimeout) );
-    
+
     /* Set low speed time and limit.*/
     const char *pszLowSpeedTime = CSLFetchNameValue( papszOptions, "LOW_SPEED_TIME" );
     if (pszLowSpeedTime == NULL)
@@ -658,7 +658,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     {
         curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
     }
-    
+
     const char* pszCookie = CSLFetchNameValue(papszOptions, "COOKIE");
     if (pszCookie == NULL)
         pszCookie = CPLGetConfigOption("GDAL_HTTP_COOKIE", NULL);

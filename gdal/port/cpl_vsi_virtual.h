@@ -142,7 +142,7 @@ public:
     vsi_l_offset nFileSize;
     int nEntries;
     VSIArchiveEntry* entries;
-    
+
     VSIArchiveContent() : mTime(0), nFileSize(0), nEntries(0), entries(NULL) {}
     ~VSIArchiveContent();
 };

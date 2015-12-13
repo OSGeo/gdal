@@ -1010,7 +1010,7 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
             acc += 2 + 2 + dataSize;
         }
     }
-    
+
     if( !bHasUTF8Filename && szFileName != NULL &&
         (file_info.flag & (1 << 11)) == 0 &&
         file_info.size_filename<fileNameBufferSize )

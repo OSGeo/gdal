@@ -238,14 +238,14 @@ public:
     CPLString(void) {}
     CPLString( const std::string &oStr ) : gdal_std_string( oStr ) {}
     CPLString( const char *pszStr ) : gdal_std_string( pszStr ) {}
-    
+
     operator const char* (void) const { return c_str(); }
 
     char& operator[](std::string::size_type i)
     {
         return gdal_std_string::operator[](i);
     }
-    
+
     const char& operator[](std::string::size_type i) const
     {
         return gdal_std_string::operator[](i);
@@ -316,7 +316,7 @@ class CPL_DLL CPLStringList
     void   MakeOurOwnCopy();
     void   EnsureAllocation( int nMaxLength );
     int    FindSortedInsertionPoint( const char *pszLine );
-    
+
   public:
     CPLStringList();
     CPLStringList( char **papszList, int bTakeOwnership=TRUE );
@@ -334,10 +334,10 @@ class CPL_DLL CPLStringList
     CPLStringList &InsertString( int nInsertAtLineNo, const char *pszNewLine )
     { return InsertStringDirectly( nInsertAtLineNo, CPLStrdup(pszNewLine) ); }
     CPLStringList &InsertStringDirectly( int nInsertAtLineNo, char *pszNewLine);
-    
+
 //    CPLStringList &InsertStrings( int nInsertAtLineNo, char **papszNewLines );
 //    CPLStringList &RemoveStrings( int nFirstLineToDelete, int nNumToRemove=1 );
-    
+
     int    FindString( const char *pszTarget ) const
     { return CSLFindString( papszList, pszTarget ); }
     int    PartialFindString( const char *pszNeedle ) const

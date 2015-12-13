@@ -148,12 +148,12 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
     osCanonicalHeaders += "x-amz-date:";
     osCanonicalHeaders += osTimestamp;
     osCanonicalHeaders += "\n";
-    
+
     osCanonicalRequest += osCanonicalHeaders + "\n";
-    
+
     CPLString osSignedHeaders = "host;x-amz-content-sha256;x-amz-date";
     osCanonicalRequest += osSignedHeaders + "\n";
-    
+
     osCanonicalRequest += osXAMZContentSHA256;
 
 #ifdef DEBUG_VERBOSE
@@ -165,7 +165,7 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
 /* -------------------------------------------------------------------- */
     CPLString osStringToSign = "AWS4-HMAC-SHA256\n";
     osStringToSign += osTimestamp + "\n";
-    
+
     CPLString osYYMMDD(osTimestamp);
     osYYMMDD.resize(8);
 
@@ -186,7 +186,7 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
 /* -------------------------------------------------------------------- */
     GByte abySigningKeyIn[CPL_SHA256_HASH_SIZE];
     GByte abySigningKeyOut[CPL_SHA256_HASH_SIZE];
-    
+
     CPLString osFirstKey(CPLString("AWS4") + osSecretAccessKey);
     CPL_HMAC_SHA256( osFirstKey.c_str(), osFirstKey.size(),
                      osYYMMDD, osYYMMDD.size(),
@@ -511,7 +511,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
         CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
         return false;
     }
-    
+
     const char* pszCode = CPLGetXMLValue(psTree, "=Error.Code", NULL);
     if( pszCode == NULL )
     {
@@ -519,7 +519,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
         CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
         return false;
     }
-    
+
     if( EQUAL(pszCode, "AuthorizationHeaderMalformed") )
     {
         const char* pszRegion = CPLGetXMLValue(psTree, "=Error.Region", NULL);
@@ -534,7 +534,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
         CPLDestroyXMLNode(psTree);
         return true;
     }
-    
+
     if( EQUAL(pszCode, "PermanentRedirect") )
     {
         const char* pszEndpoint = CPLGetXMLValue(psTree, "=Error.Endpoint", NULL);
@@ -558,7 +558,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
         CPLDestroyXMLNode(psTree);
         return true;
     }
-    
+
     if( !EQUAL(pszCode, "NoSuchKey") )
     {
         const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", NULL); 
