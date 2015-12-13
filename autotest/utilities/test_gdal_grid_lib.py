@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_grid testing
 # Author:   Even Rouault <even dot rouault @ spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2015, Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -40,7 +40,7 @@ import gdaltest
 import ogrtest
 
 ###############################################################################
-# 
+#
 
 def test_gdal_grid_lib_1():
 
@@ -66,7 +66,7 @@ def test_gdal_grid_lib_1():
     shape_ds.ExecuteSQL('CREATE SPATIAL INDEX ON n43')
 
     shape_ds = None
-    
+
     spatFilter = None
     if ogrtest.have_geos():
         spatFilter = [ -180, -90, 180, 90 ]

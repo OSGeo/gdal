@@ -98,7 +98,7 @@ def test_gdal_translate_lib_2():
 # Test outputType option
 
 def test_gdal_translate_lib_3():
-    
+
     ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.Translate('tmp/test3.tif', ds, outputType = gdal.GDT_Int16)
     if ds is None:
@@ -330,7 +330,7 @@ def test_gdal_translate_lib_12():
 # Test metadataOptions
 
 def test_gdal_translate_lib_13():
-    
+
     ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.Translate('tmp/test13.tif', ds, metadataOptions = ['TIFFTAG_DOCUMENTNAME=test13'])
     if ds is None:

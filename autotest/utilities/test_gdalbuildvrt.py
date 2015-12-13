@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdalbuildvrt testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -252,7 +252,7 @@ def test_gdalbuildvrt_7():
     out_ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
     out_ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     out_ds.GetRasterBand(1).SetNoDataValue(256)
-    
+
     try:
         ff = '\xff'.encode('latin1')
     except:
@@ -306,7 +306,7 @@ def test_gdalbuildvrt_8():
         return 'skip'
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.05 0.05 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
-    
+
     ds = gdal.Open('tmp/mosaic2.vrt')
 
     gt = ds.GetGeoTransform()
@@ -319,7 +319,7 @@ def test_gdalbuildvrt_8():
     if ds.RasterXSize != 40 or ds.RasterYSize != 40:
         gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
         return 'fail'
-    
+
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
     return test_gdalbuildvrt_check()
@@ -345,11 +345,11 @@ def test_gdalbuildvrt_9():
     if ds.RasterXSize != 40 or ds.RasterYSize != 40:
         gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
         return 'fail'
-   
+
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
     return test_gdalbuildvrt_check()
-    
+
 ###############################################################################
 # Test explicit nodata setting (#3254)
 
@@ -387,7 +387,7 @@ def test_gdalbuildvrt_10():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test that we can stack ungeoreference single band images with -separate (#3432)
 
@@ -399,7 +399,7 @@ def test_gdalbuildvrt_11():
     out_ds.GetRasterBand(1).Fill(255)
     cs1 = out_ds.GetRasterBand(1).Checksum()
     out_ds = None
-    
+
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_11_2.tif', 10, 10, 1)
     out_ds.GetRasterBand(1).Fill(127)
     cs2 = out_ds.GetRasterBand(1).Checksum()
@@ -483,14 +483,14 @@ def test_gdalbuildvrt_14():
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/test_gdalbuildvrt_14.vrt ../gcore/data/byte.tif -r cubic -tr 30 30')
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/test_gdalbuildvrt_14_ref.vrt -r cubic -outsize 40 40')
-    
+
     ds = gdal.Open('tmp/test_gdalbuildvrt_14.vrt')
     ds_ref = gdal.Open('tmp/test_gdalbuildvrt_14_ref.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     cs_ref = ds_ref.GetRasterBand(1).Checksum()
     ds = None
     ds_ref = None
-    
+
     if cs != cs_ref:
         gdaltest.post_reason('fail')
         print(cs)
