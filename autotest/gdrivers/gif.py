@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for GIF driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -45,12 +45,12 @@ def gif_1():
     if gdaltest.gif_drv is None:
         gdaltest.post_reason( 'GIF driver not found!' )
         return 'false'
-    
+
     # Move the BIGGIF driver after the GIF driver.
     drv = gdal.GetDriverByName( 'BIGGIF' )
     drv.Deregister();
     drv.Register()
-    
+
     drv_md = gdaltest.gif_drv.GetMetadata()
     if drv_md['DMD_MIMETYPE'] != 'image/gif':
         gdaltest.post_reason( 'mime type is wrong' )
@@ -75,7 +75,7 @@ def gif_3():
                              options = [ 'INTERLACING=NO' ] )
 
     return tst.testCreateCopy()
-    
+
 ###############################################################################
 # Verify the colormap, and nodata setting for test file. 
 
@@ -102,7 +102,7 @@ def gif_4():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test creating an in memory copy.
 

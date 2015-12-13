@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test KEA driver
 # Author:   Even Rouault, <even dot rouault at spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -75,7 +75,7 @@ def kea_2():
         ret = tst.testCreateCopy( check_minmax = 1 )
         if ret != 'success':
             return ret
-            
+
     return 'success'
 
 ###############################################################################
@@ -98,7 +98,7 @@ def kea_3():
         ret = tst.testCreate( out_bands = 1, check_minmax = 1 )
         if ret != 'success':
             return ret
-            
+
     return 'success'
 
 ###############################################################################
@@ -128,7 +128,7 @@ def kea_4():
         return 'fail'
     src_ds = None
     ds = None
-    
+
     # Test updating a read-only file
     ds = gdaltest.kea_driver.Create('tmp/out.kea', 1, 1)
     ds.GetRasterBand(1).Fill(255)
@@ -204,7 +204,7 @@ def kea_4():
         return 'fail'
 
     ds = None
-    
+
     gdaltest.kea_driver.Delete('tmp/src.kea')
     gdaltest.kea_driver.Delete('tmp/out.kea')
 
@@ -400,7 +400,7 @@ def kea_7():
     gcps = [ gcp1, gcp2 ]
     ds.SetGCPs(gcps, "foo")
     ds = None
-    
+
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
@@ -456,7 +456,7 @@ def kea_8():
                 gdaltest.post_reason('fail')
                 return 'fail'
         ds = None
-        
+
         ds = gdal.Open('tmp/out.kea')
         out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
         ds = None
@@ -559,7 +559,7 @@ def kea_10():
             return 'fail'
         out2_ds.GetRasterBand(1).DeleteNoDataValue()
         out2_ds = None
-        
+
         ds = gdal.Open('tmp/out2.kea')
         if ds.GetRasterBand(1).GetNoDataValue() is not None:
             gdaltest.post_reason('fail')
@@ -577,10 +577,10 @@ def kea_10():
 def kea_11():
     if gdaltest.kea_driver is None:
         return 'skip'
-    
+
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     ds = None
-    
+
     ds = gdal.Open('tmp/out.kea', gdal.GA_Update)
     if ds.AddBand(gdal.GDT_Byte) != 0:
         gdaltest.post_reason('fail')
@@ -589,7 +589,7 @@ def kea_11():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     ds = gdal.Open('tmp/out.kea')
     if ds.RasterCount != 3:
         gdaltest.post_reason('fail')
@@ -601,7 +601,7 @@ def kea_11():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     gdaltest.kea_driver.Delete('tmp/out.kea')
 
     return 'success'
@@ -612,7 +612,7 @@ def kea_11():
 def kea_12():
     if gdaltest.kea_driver is None:
         return 'skip'
-    
+
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     if ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() != 0:
         gdaltest.post_reason('fail')
@@ -655,7 +655,7 @@ def kea_12():
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     rat = out2_ds.GetRasterBand(1).GetDefaultRAT()
-    
+
     for i in range(7):
         if rat.GetColOfUsage(rat.GetUsageOfCol(i)) != i:
             gdaltest.post_reason('fail')
@@ -715,7 +715,7 @@ def kea_12():
     rat.GetValueAsDouble( -1, 0 )
     rat.GetValueAsInt( -1, 0 ) 
     rat.GetValueAsString( -1, 0 )
-    
+
     rat.GetValueAsDouble( rat.GetColumnCount(), 0 )
     rat.GetValueAsInt( rat.GetColumnCount(), 0 ) 
     rat.GetValueAsString( rat.GetColumnCount(), 0 ) 
@@ -775,7 +775,7 @@ def kea_12():
 def kea_13():
     if gdaltest.kea_driver is None:
         return 'skip'
-    
+
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.kea_driver.CreateCopy("tmp/out.kea", src_ds)
     src_ds = None
@@ -815,7 +815,7 @@ def kea_13():
 def kea_14():
     if gdaltest.kea_driver is None:
         return 'skip'
-    
+
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
         gdaltest.post_reason('fail')

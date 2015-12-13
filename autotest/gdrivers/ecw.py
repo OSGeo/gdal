@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for ECW driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -158,7 +158,7 @@ def ecw_3():
             return 'fail'
 
     ds = None
-    
+
     if out_ds is None:
         if gdal.GetLastErrorMsg().find('ECW_ENCODE_KEY') >= 0:
             gdaltest.ecw_write = 0
@@ -314,7 +314,7 @@ def ecw_8():
         return 'skip'
 
     ds = gdal.Open( 'tmp/ecw_7.ntf' )
-    
+
     (exp_mean, exp_stddev) = (145.57, 43.1712)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
@@ -387,7 +387,7 @@ def ecw_10():
         pass
 
     ds = gdal.Open( 'tmp/ecw9.jp2' )
-    
+
     (exp_mean, exp_stddev) = (98.49, 57.7129)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
@@ -446,7 +446,7 @@ def ecw_12():
         return 'skip'
 
     ds = gdal.Open( 'tmp/test_11.ntf' )
-    
+
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-100) > 0.1 \
         or abs(geotransform[1]-0.1) > 0.001 \
@@ -494,7 +494,7 @@ def ecw_13():
     drv = gdal.GetDriverByName( 'MEM' )
     ds = drv.Create( 'workdata', 40, 40, 3, wrktype )
     ds.WriteRaster( 0, 0, 40, 40, raw_data, buf_type = wrktype )
-    
+
     checksums = ( ds.GetRasterBand(1).Checksum(),
                   ds.GetRasterBand(2).Checksum(),
                   ds.GetRasterBand(3).Checksum() )
@@ -547,7 +547,7 @@ def ecw_15():
         gdaltest.post_reason( 'GCPs wrong.' )
         print(gcps)
         return 'fail'
-    
+
     ds = None
 
     return 'success'
@@ -580,7 +580,7 @@ def ecw_16():
     AUTHORITY["EPSG","26711"]]
 """  
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
-    
+
     tst = gdaltest.GDALTest( 'JP2ECW', 'byte.jp2', 1, 50054 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
 
@@ -598,12 +598,12 @@ def ecw_17():
 
     ds = gdal.Open( 'data/int16.jp2' )
     ds_ref = gdal.Open( 'data/int16.tif' )
-    
+
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
 
     ds = None
     ds_ref = None
-    
+
     # Quite a bit of difference...
     if maxdiff > 6:
         gdaltest.post_reason('Image too different from reference')
@@ -639,10 +639,10 @@ def ecw_18():
     AUTHORITY["EPSG","26711"]]
 """  
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
-    
+
     tst = gdaltest.GDALTest( 'JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
-    
+
 ###############################################################################
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
@@ -650,11 +650,11 @@ def ecw_19():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
-    
+
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
-    
+
     expected_checksums = [ 64570, 57277, 56048, 61292]
-    
+
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
             gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
@@ -755,7 +755,7 @@ def ecw_22():
         print(wkt)
         gdaltest.post_reason( 'did not get expected SRS.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -792,7 +792,7 @@ def ecw_23():
         os.remove( 'tmp/spif83.ecw.aux.xml' )
     except:
         pass
-    
+
     return 'success'
 
 ###############################################################################
@@ -1388,7 +1388,7 @@ def ecw_36():
         </SimpleSource>
     </VRTRasterBand>
     </VRTDataset>""")
-    
+
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc312.ecw', vrt_ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand : 
@@ -1421,7 +1421,7 @@ def ecw_36():
 ###############################################################################
 # Make sure that band descriptions are preserved for version 2 ECW files when 
 # color space set implicitly to sRGB.
- 
+
 def ecw_37():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
@@ -1489,7 +1489,7 @@ def ecw_38():
 
     ds = None
     ds_ref = None
-    
+
     # Quite a bit of difference...
     if maxdiff > 0:
         gdaltest.post_reason('Image too different from reference')
@@ -1509,16 +1509,16 @@ def ecw_39():
         return 'skip'    
 
     ds = gdal.Open( 'data/jrc.ecw' )
-  
+
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrcstats.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
     ds = None;
     hist = (0, 255, 2, [3, 4])
 
     dswr.GetRasterBand(1).SetDefaultHistogram( 0, 255, [3, 4] )
     dswr = None
-    
+
     ds = gdal.Open( 'tmp/jrcstats.ecw');
-    
+
     result = (hist == ds.GetRasterBand(1).GetDefaultHistogram(force=0))
 
     ds = None    
@@ -2025,7 +2025,7 @@ def ecw_46():
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
-    
+
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
         return 'skip'
 
@@ -2045,7 +2045,7 @@ def ecw_online_1():
 def ecw_online_2():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
-    
+
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
         return 'skip'
 
@@ -2318,7 +2318,7 @@ def ecw_cleanup():
     except:
         pass
     gdaltest.reregister_all_jpeg2000_drivers()
-    
+
     return 'success'
 
 gdaltest_list = [

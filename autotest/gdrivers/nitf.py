@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for NITF driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -118,7 +118,7 @@ def nitf_4():
 
 def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_interp = True):
     ds = gdal.Open( 'tmp/test_create.ntf' )
-    
+
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = checksum1
     if chksum != chksum_expect:
@@ -224,7 +224,7 @@ def nitf_8():
        or md['NITF_BLOCKA_FRFC_LOC_01'] != '+41.283881+020.074924':
         gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -239,10 +239,10 @@ def nitf_9():
     ds = None
 
     ds = gdal.Open( 'tmp/nitf9.ntf' )
-    
+
     (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
-    
+
     if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
@@ -252,7 +252,7 @@ def nitf_9():
     if md['COMPRESSION'] != 'JPEG':
         gdaltest.post_reason( 'Did not get expected compression value.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -260,7 +260,7 @@ def nitf_9():
 # tricky.  Verify this is working. 
 
 def nitf_10():
-    
+
     src_ds = gdal.Open('tmp/nitf9.ntf')
     expected_cs = src_ds.GetRasterBand(2).Checksum()
     src_ds = None
@@ -672,7 +672,7 @@ def nitf_30():
     src_ds = gdal.Open( 'data/fake_nsif.ntf' )
     ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf30.ntf', src_ds )
     src_ds = None
-    
+
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
     if chksum != chksum_expect:
@@ -699,7 +699,7 @@ def nitf_30():
         return 'fail'
 
     ds = None
-    
+
     gdal.GetDriverByName('NITF').Delete( 'tmp/nitf30.ntf' )
 
     return 'success'
@@ -730,7 +730,7 @@ def nitf_31():
             return 'fail'
     except:
         pass
-        
+
     if md['CUSTOM'] != ' Test TRE1\\0MORE' \
        or md['TOTEST'] != 'SecondTRE':
         gdaltest.post_reason( 'Did not get expected TRE contents' )
@@ -792,7 +792,7 @@ def nitf_35():
 
     exp_text = """This is text data
 with a newline."""
-    
+
     md = ds.GetMetadata('TEXT')
     if md['DATA_0'] != exp_text:
         gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
@@ -800,7 +800,7 @@ with a newline."""
         return 'fail'
 
     exp_text = """Also, a second text segment is created."""
-    
+
     md = ds.GetMetadata('TEXT')
     if md['DATA_1'] != exp_text:
         gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
@@ -904,10 +904,10 @@ def nitf_38():
 
     ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf', gdal.GA_Update)
     ds.GetRasterBand(1).WriteRaster(0, 0, nXSize, nYSize, data)
-    
+
     # Create overviews
     ds.BuildOverviews( overviewlist = [2] )
-    
+
     ds = None
 
     ds = gdal.Open( 'NITF_IM:0:tmp/nitf38.ntf' )
@@ -921,7 +921,7 @@ def nitf_38():
         print(cs)
         gdaltest.post_reason( 'bad checksum for image of 998th subdataset' )
         return 'fail'
-        
+
     # Check the overview
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1087:
@@ -987,10 +987,10 @@ def nitf_39():
     ds = None
 
     ds = gdal.Open( 'tmp/nitf39.ntf' )
-    
+
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
-    
+
     if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
@@ -1157,7 +1157,7 @@ def nitf_43(driver_to_test, options):
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
-    
+
 def nitf_43_jasper():
     return nitf_43('JPEG2000', ['IC=C8'])
 
@@ -1180,18 +1180,18 @@ def nitf_44():
     out_ds = None
 
     ds = gdal.Open('tmp/nitf44.ntf')
-    
+
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 10000:
             return 'fail'
-    
+
     if ds.GetRasterBand(1).Checksum() != 57182:
         return 'fail'
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Check overviews on a JPEG compressed subdataset
 
@@ -1203,23 +1203,23 @@ def nitf_45():
         pass
 
     shutil.copyfile( 'data/two_images_jpeg.ntf', 'tmp/nitf45.ntf' )
-    
+
     ds = gdal.Open( 'NITF_IM:1:tmp/nitf45.ntf', gdal.GA_Update )
     ds.BuildOverviews( overviewlist = [2] )
     # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
     ds = None
-    
+
     ds = gdal.Open( 'NITF_IM:1:tmp/nitf45.ntf' )
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1086:
         print(cs)
         gdaltest.post_reason('did not get expected checksum for overview of subdataset')
         return 'fail'
-    
+
     ds = None
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Check overviews on a JPEG2000 compressed subdataset
 
@@ -1235,24 +1235,24 @@ def nitf_46(driver_to_test):
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
-    
+
     try:
         os.remove('tmp/nitf46.ntf.aux.xml')
     except:
         pass
-    
+
     try:
         os.remove('tmp/nitf46.ntf_0.ovr')
     except:
         pass
-        
+
     shutil.copyfile( 'data/two_images_jp2.ntf', 'tmp/nitf46.ntf' )
-    
+
     ds = gdal.Open( 'NITF_IM:1:tmp/nitf46.ntf', gdal.GA_Update )
     ds.BuildOverviews( overviewlist = [2] )
     # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
     ds = None
-    
+
     ds = gdal.Open( 'NITF_IM:1:tmp/nitf46.ntf' )
     if ds.GetRasterBand(1).GetOverview(0) is None:
         gdaltest.post_reason('no overview of subdataset')
@@ -1265,13 +1265,13 @@ def nitf_46(driver_to_test):
             ret = 'fail'
         else:
             ret = 'success'
-    
+
     ds = None
 
     gdaltest.reregister_all_jpeg2000_drivers()
-    
+
     return ret
-    
+
 def nitf_46_jp2ecw():
     return nitf_46('JP2ECW')
 
@@ -1340,9 +1340,9 @@ def nitf_48():
         print(cs)
         gdaltest.post_reason('did not get expected checksum for overview of subdataset')
         return 'fail'
-    
+
     ds = None
-    
+
     try:
         os.remove('tmp/rset.ntf.r0')
         os.remove('tmp/rset.ntf.r1')
@@ -1856,7 +1856,7 @@ def nitf_64():
             print(got_gt)
             return 'fail'
     ds = None
-    
+
 
     ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['SDE_TRE=YES'])
     ds = None
@@ -2061,11 +2061,11 @@ def nitf_70():
     ds = gdal.Open( 'tmp/nitf_70.ntf' )
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     ds = gdal.Open( 'tmp/nitf_70.tif' )
     cs_ref = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     gdal.GetDriverByName('NITF').Delete( 'tmp/nitf_70.ntf' )
     gdal.GetDriverByName('GTiff').Delete( 'tmp/nitf_70.tif' )
 
@@ -2194,27 +2194,27 @@ def nitf_online_7():
                 gdaltest.post_reason( 'got checksum %d for image %s' \
                                       % (cs, file) )
                 return 'fail'
-            
+
             if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != colorInterpretations[i]:
                 gdaltest.post_reason( 'got wrong color interp for image %s' \
                                       % file )
                 return 'fail'
         ds = None
-        
+
         #shutil.copyfile('tmp/cache/' + file, 'tmp/' + file)
         #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
         #data = ds.GetRasterBand(1).ReadRaster(0, 0, 1024, 1024)
         #ds.GetRasterBand(1).Fill(0)
         #ds = None
-        
+
         #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
         #ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
         #ds = None
-        
+
         #ds = gdal.Open('tmp/' + file)
         #print(ds.GetRasterBand(1).Checksum())
         #ds = None
-        
+
         #os.remove('tmp/' + file)
 
     return 'success'
@@ -2435,7 +2435,7 @@ def nitf_online_14():
         pass
 
     return 'success'
-    
+
 ###############################################################################
 # Test opening a IC=C8 NITF file with the various JPEG2000 drivers
 
@@ -2507,7 +2507,7 @@ def nitf_online_16(driver_to_test):
        ds.GetRasterBand(2).Checksum() == 4939 and \
        ds.GetRasterBand(3).Checksum() == 17734 :
         ret = 'success'
-        
+
     elif ds.RasterCount == 1 and \
        ds.GetRasterBand(1).Checksum() == 47664 and \
        ds.GetRasterBand(1).GetRasterColorTable() != None:
@@ -2636,7 +2636,7 @@ def nitf_online_18():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test CADRG tile crossing dateline (#3383)
 
@@ -2650,7 +2650,7 @@ def nitf_online_19():
 
     return tst.testOpen( check_gt = (174.375000000000000,0.010986328125000,0,
                                      51.923076923076927,0,-0.006760817307692) )
-    
+
 ###############################################################################
 # Check that the RPF attribute metadata was carried through.
 # Special case where the reported size of the attribute subsection is

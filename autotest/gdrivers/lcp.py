@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for LCP driver.
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -46,7 +46,7 @@ def lcp_1():
     if ds.RasterCount != 8:
         gdaltest.post_reason('wrong number of bands')
         return 'fail'
-        
+
     if ds.GetProjectionRef().find('NAD_1983_UTM_Zone_12N') == -1:
         gdaltest.post_reason("didn't get expect projection. Got : %s" % (ds.GetProjectionRef()))
         return 'fail'

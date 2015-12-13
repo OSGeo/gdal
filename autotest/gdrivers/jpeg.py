@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test JPEG format driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -171,7 +171,7 @@ def jpeg_3():
         pass
 
     return 'success'
-    
+
 ###############################################################################
 # Verify masked jpeg. 
 
@@ -181,7 +181,7 @@ def jpeg_4():
         gdalconst.GMF_ALL_VALID
     except:
         return 'skip'
-    
+
     ds = gdal.Open('data/masked.jpg')
 
     refband = ds.GetRasterBand(1)
@@ -197,7 +197,7 @@ def jpeg_4():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Verify CreateCopy() of masked jpeg.
 
@@ -207,7 +207,7 @@ def jpeg_5():
         gdalconst.GMF_ALL_VALID
     except:
         return 'skip'
-    
+
     ds = gdal.Open('data/masked.jpg')
 
     ds2 = gdal.GetDriverByName('JPEG').CreateCopy( 'tmp/masked.jpg', ds )
@@ -227,9 +227,9 @@ def jpeg_5():
     refband = None
     ds2 = None
     gdal.GetDriverByName('JPEG').Delete( 'tmp/masked.jpg' )
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Verify ability to open file with corrupt metadata (#1904).  Note the file
 # data/vophead.jpg is truncated to keep the size small, but this should
@@ -816,7 +816,7 @@ def jpeg_20():
         gdaltest.post_reason('failure')
         return 'fail'
     ds = None
-    
+
     gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_20.jpg')
 
     return 'success'
@@ -933,7 +933,7 @@ def jpeg_22():
 def jpeg_23():
     ds = gdal.Open( 'data/albania.jpg' )
     cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(3)]
-    
+
     # Band interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
@@ -941,8 +941,8 @@ def jpeg_23():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
-        
+        return 'fail'
+
     # Pixel interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 3, buf_band_space = 1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
@@ -950,7 +950,7 @@ def jpeg_23():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
+        return 'fail'
 
     # Pixel interleaved with padding
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 4, buf_band_space = 1)
@@ -959,8 +959,8 @@ def jpeg_23():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
-    
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

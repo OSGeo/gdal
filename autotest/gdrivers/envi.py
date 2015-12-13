@@ -8,11 +8,11 @@
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
 #
 # See also: gcore/envi_read.py for a driver focused on raster data types.
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -22,7 +22,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -60,7 +60,7 @@ def envi_1():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
-    
+
     return tst.testOpen( check_prj = prj,
                          check_gt = (-936408.178, 28.5, 0.0,
                                      2423902.344, 0.0, -28.5) )
@@ -72,7 +72,7 @@ def envi_2():
 
     tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
     return tst.testCreateCopy( check_gt = 1 )
-    
+
 ###############################################################################
 # Try the Create interface with an RGB image. 
 
@@ -80,7 +80,7 @@ def envi_3():
 
     tst = gdaltest.GDALTest( 'envi', 'rgbsmall.tif', 2, 21053 )
     return tst.testCreate()
-    
+
 ###############################################################################
 # Test LCC Projection.
 
@@ -298,7 +298,7 @@ def envi_13():
     val = ds.GetMetadataItem('sensor_type', 'ENVI')
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_13.dat')
-    
+
     if lines != 1:
         return 'fail'
 
@@ -322,7 +322,6 @@ gdaltest_list = [
     envi_12,
     envi_13,
     ]
-  
 
 
 if __name__ == '__main__':

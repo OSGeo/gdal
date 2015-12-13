@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -74,7 +74,8 @@ def ntv2_online_3():
 
     tst = gdaltest.GDALTest( 'NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute = 1 )
     return tst.testCreate( vsimem = 1 )
-    
+
+
 gdaltest_list = [
     ntv2_online_1,
     ntv2_online_2,

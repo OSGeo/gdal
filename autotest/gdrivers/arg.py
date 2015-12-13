@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  ARG Testing.
 # Author:   David Zwarg <dzwarg@azavea.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2012, David Zwarg <dzwarg@azavea.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -49,7 +49,7 @@ def encode(fmt, nodata, values):
     return ''.encode('ascii').join(chunks)
 
 ###############################################################################
-# 
+#
 def arg_init():
     try:
         gdaltest.argDriver = gdal.GetDriverByName('ARG')
@@ -58,7 +58,7 @@ def arg_init():
 
     if gdaltest.argDriver is None:
         return 'skip'
-        
+
     gdaltest.argJsontpl = """{
     "layer": "%(fmt)s",
     "type": "arg",
@@ -331,7 +331,7 @@ def arg_destroy():
             os.remove('data/arg-'+name+'.json')
 
     return 'success'
-    
+
 
 gdaltest_list = [
     arg_init,

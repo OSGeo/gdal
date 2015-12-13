@@ -176,7 +176,7 @@ def kmlsuperoverlay_4():
     gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
 
     return 'success'
- 
+
 ###############################################################################
 # Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
 
