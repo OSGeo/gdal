@@ -45,7 +45,7 @@ GDALJP2Box::GDALJP2Box( VSILFILE *fpIn )
     nBoxOffset = -1;
     nDataOffset = -1;
     nBoxLength = 0;
-    
+
     pabyData = NULL;
 }
 
@@ -163,7 +163,6 @@ int GDALJP2Box::ReadBox()
         if( VSIFReadL( abyXLBox, 8, 1, fpVSIL ) != 1 )
             return FALSE;
 
-        
         if( sizeof(nBoxLength) == 8 )
         {
             CPL_MSBPTR64( abyXLBox );
@@ -234,7 +233,7 @@ GByte *GDALJP2Box::ReadBoxData()
 
     if( VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET ) != 0 )
         return NULL;
-    
+
     char *pszData = (char *) VSI_MALLOC_VERBOSE((int)nDataLength + 1);
     if( pszData == NULL )
         return NULL;
@@ -285,7 +284,7 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
     }
 
     fprintf( fpOut, "\n" );
-    
+
     if( IsSuperBox() ) 
     {
         GDALJP2Box oSubBox( GetFILE() );
@@ -341,13 +340,13 @@ void GDALJP2Box::SetWritableData( int nLength, const GByte *pabyDataIn )
 
 {
     CPLFree( pabyData );
-    
+
     pabyData = (GByte *) CPLMalloc(nLength);
     memcpy( pabyData, pabyDataIn, nLength );
 
     nBoxOffset = -9; // virtual offsets for data length computation.
     nDataOffset = -1;
-    
+
     nBoxLength = 8 + nLength;
 }
 
@@ -464,7 +463,7 @@ GDALJP2Box *GDALJP2Box::CreateSuperBox( const char* pszType,
                 (int) papoBoxes[iBox]->GetDataLength() );
         pabyNext += papoBoxes[iBox]->GetDataLength();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create asoc box.                                                */
 /* -------------------------------------------------------------------- */
@@ -472,7 +471,7 @@ GDALJP2Box *GDALJP2Box::CreateSuperBox( const char* pszType,
 
     poAsoc->SetType( pszType );
     poAsoc->SetWritableData( nDataSize, pabyCompositeData );
-    
+
     CPLFree( pabyCompositeData );
 
     return poAsoc;
@@ -513,6 +512,6 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
 
     aoList[0] = &oLabel;
     aoList[1] = &oXML;
-    
+
     return CreateAsocBox( 2, aoList );
 }

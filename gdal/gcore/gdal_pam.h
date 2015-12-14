@@ -122,7 +122,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     virtual CPLXMLNode *SerializeToXML( const char *);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
-    
+
     virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL);
     virtual CPLErr TrySaveXML();
 
@@ -206,7 +206,7 @@ typedef struct {
 
     char           *pszUnitType;
     char           **papszCategoryNames;
-    
+
     double         dfOffset;
     double         dfScale;
 
@@ -235,7 +235,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
-    
+
     void   PamInitialize();
     void   PamClear();
 

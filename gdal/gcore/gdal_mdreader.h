@@ -27,7 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #ifndef GDAL_MDREADER_H_INCLUDED
 #define GDAL_MDREADER_H_INCLUDED
 
@@ -172,7 +172,7 @@ class CPL_DLL GDALMDReaderManager{
 public:
     GDALMDReaderManager();
     virtual ~GDALMDReaderManager();
-    
+
     /**
      * @brief Try to detect metadata reader correspondent to the provided 
      *        datasource path 

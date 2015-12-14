@@ -51,7 +51,7 @@ class GDALPamProxyDB
     CPLString   osProxyDBDir;
 
     int         nUpdateCounter;
-    
+
     std::vector<CPLString> aosOriginalFiles;
     std::vector<CPLString> aosProxyFiles;
 
@@ -155,10 +155,10 @@ void GDALPamProxyDB::LoadDB()
         osOriginal.assign( pszDBData + iNext );
 
         for( ; iNext < nBufLength && pszDBData[iNext] != '\0'; iNext++ ) {}
-        
+
         if( iNext == nBufLength )
             break;
-        
+
         iNext++;
 
         osProxy = osProxyDBDir;
@@ -170,7 +170,7 @@ void GDALPamProxyDB::LoadDB()
 
         aosOriginalFiles.push_back( osOriginal );
         aosProxyFiles.push_back( osProxy );
-    }        
+    }
 
     CPLFree( pszDBData );
 }
@@ -188,7 +188,7 @@ void GDALPamProxyDB::SaveDB()
 /* -------------------------------------------------------------------- */
     CPLString osDBName = 
         CPLFormFilename( osProxyDBDir, "gdal_pam_proxy", "dat" );
-    
+
     void *hLock = CPLLockFile( osDBName, 1.0 );
 
     // proceed even if lock fails - we need CPLBreakLockFile()!
@@ -333,7 +333,7 @@ const char *PamGetProxy( const char *pszOriginal )
     unsigned int i;
 
     poProxyDB->CheckLoadDB();
-    
+
     for( i = 0; i < poProxyDB->aosOriginalFiles.size(); i++ )
     {
         if( strcmp( poProxyDB->aosOriginalFiles[i], pszOriginal ) == 0 )
@@ -392,7 +392,7 @@ const char *PamAllocateProxy( const char *pszOriginal )
 
         i--;
     }
-    
+
     CPLString osOriginal = pszOriginal;
     CPLString osProxy;
     CPLString osCounter;

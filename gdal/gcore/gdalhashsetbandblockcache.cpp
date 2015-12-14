@@ -47,7 +47,7 @@ class GDALHashSetBandBlockCache: public GDALAbstractBandBlockCache
     public:
             GDALHashSetBandBlockCache(GDALRasterBand* poBand);
            ~GDALHashSetBandBlockCache();
-           
+
            virtual int              Init();
            virtual int              IsInitOK();
            virtual CPLErr           FlushCache();
@@ -93,8 +93,8 @@ static int GDALRasterBlockEqualFunc(const void* elt1, const void* elt2)
     GDALRasterBlock* poBlock2 = (GDALRasterBlock*) elt2;
     return poBlock1->GetXOff() == poBlock2->GetXOff() &&
            poBlock1->GetYOff() == poBlock2->GetYOff();
-} 
-        
+}
+
 /************************************************************************/
 /*                       GDALHashSetBandBlockCache()                    */
 /************************************************************************/
@@ -193,7 +193,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
 
         CPLHashSetClear(hSet);
     }
-    
+
     // Sort blocks by increasing y and then x in order to please some tests
     // like tiff_write_133
     std::sort(apoBlocks.begin(), apoBlocks.end(), GDALHashSetBandBlockCacheSortBlocks);
@@ -215,7 +215,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
                 eGlobalErr = eErr;
         }
     }
-    
+
     WaitKeepAliveCounter();
 
     return( eGlobalErr );

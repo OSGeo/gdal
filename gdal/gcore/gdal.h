@@ -906,7 +906,7 @@ typedef struct {
     double      adfLINE_DEN_COEFF[20];
     double      adfSAMP_NUM_COEFF[20];
     double      adfSAMP_DEN_COEFF[20];
-    
+
     double	dfMIN_LONG;
     double      dfMIN_LAT;
     double      dfMAX_LONG;

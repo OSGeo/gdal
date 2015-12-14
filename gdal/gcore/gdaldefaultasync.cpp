@@ -282,7 +282,7 @@ GDALDefaultAsyncReader( GDALDataset* poDSIn,
         for( int i = 0; i < nBandCount; i++ )
             panBandMap[i] = i+1;
     }
-    
+
     nPixelSpace = nPixelSpaceIn;
     nLineSpace = nLineSpaceIn;
     nBandSpace = nBandSpaceIn;
