@@ -591,7 +591,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
                              GDALDataType eDataType, int nBlockXSize, int nBlockYSize,
                              GByte abyCaps[16]);
         ~GDALClientRasterBand();
-        
+
         int GetSrvBand() const { return iSrvBand; }
         int SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
 
@@ -3538,7 +3538,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
     if( poSrcDS == NULL )
         CPLPopErrorHandler();
-    
+
     CPLSetThreadLocalConfigOption("GDAL_API_PROXY", pszOldValDup);
     CPLFree(pszOldValDup);
 
@@ -3683,7 +3683,7 @@ int GDALClientDataset::ProcessAsyncProgress()
     GDALConsumeErrors(p);
     return bRet;
 }
- 
+
 /************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
@@ -4415,7 +4415,7 @@ GDALClientRasterBand::~GDALClientRasterBand()
     std::map<CPLString, char**>::iterator oIterMD = aoMapMetadata.begin();
     for( ; oIterMD != aoMapMetadata.end(); ++oIterMD )
         CSLDestroy(oIterMD->second);
-    
+
     for(int i=0; i < (int)apoOldMaskBands.size(); i++)
         delete apoOldMaskBands[i];
 }
@@ -5561,7 +5561,7 @@ GDALRasterBand *GDALClientRasterBand::GetOverview(int iOverview)
 
     if( !GDALSkipUntilEndOfJunkMarker(p) )
         return NULL;
-    
+
     GDALRasterBand* poBand = NULL;
     if( !GDALPipeRead(p, (GDALClientDataset*) NULL, &poBand, abyCaps) )
         return NULL;
@@ -5709,7 +5709,7 @@ GDALRasterAttributeTable *GDALClientRasterBand::GetDefaultRAT()
     GDALRasterAttributeTable* poNewRAT = NULL;
     if( !GDALPipeRead(p, &poNewRAT) )
         return NULL;
-    
+
     if( poNewRAT != NULL && poRAT != NULL )
     {
         *poRAT = *poNewRAT;

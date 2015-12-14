@@ -929,7 +929,7 @@ CPLErr GDALRasterBlock::Internalize()
                 VSIFree(poBlock->pData);
             }
             poBlock->pData = NULL;
- 
+
             poBlock->GetBand()->AddBlockToFreeList(poBlock);
         }
     }

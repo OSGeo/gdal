@@ -951,7 +951,7 @@ CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
 /************************************************************************/
 
 #define MAX_GCP 30
- 
+
 int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                     double *padfGeoTransform, char **ppszWKT, 
                                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
@@ -1393,7 +1393,7 @@ int GDALReadTabFile2( const char * pszBaseFilename,
         pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
         fpTAB = VSIFOpenL( pszTAB, "rt" );
     }
-    
+
     if( fpTAB == NULL )
         return FALSE;
 
@@ -1468,7 +1468,7 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
         world[nLines] = CPLAtofM(line);
         ++nLines;
     }
-      
+
     if( nLines == 6 
         && (world[0] != 0.0 || world[2] != 0.0)
         && (world[3] != 0.0 || world[1] != 0.0) )
@@ -1578,7 +1578,7 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
         szDerivedExtension[1] = oBaseExt[oBaseExt.length()-1];
         szDerivedExtension[2] = 'w';
         szDerivedExtension[3] = '\0';
-        
+
         if( GDALReadWorldFile2( pszBaseFilename, szDerivedExtension,
                                 padfGeoTransform, papszSiblingFiles,
                                 ppszWorldFileNameOut ) )
@@ -1647,7 +1647,7 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
         pszTFW = CPLResetExtension( pszBaseFilename, szExtUpper );
         bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
     }
-    
+
     if( !bGotTFW )
         return FALSE;
 
@@ -2077,7 +2077,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     }
 
     double pl_normalize[6], geo_normalize[6];
-    
+
     pl_normalize[0] = -min_pixel / (max_pixel - min_pixel);
     pl_normalize[1] = 1.0 / (max_pixel - min_pixel);
     pl_normalize[2] = 0.0;
@@ -2187,7 +2187,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 
     GDALComposeGeoTransforms(pl_normalize, gt_normalized, gt1p2);
     GDALComposeGeoTransforms(gt1p2, inv_geo_normalize, padfGeoTransform);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Now check if any of the input points fit this poorly.           */
 /* -------------------------------------------------------------------- */
@@ -3017,7 +3017,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             }
             VSIFCloseL( fp );
         }
- 
+
         if( poODS != NULL )
         {
             const char *pszDep

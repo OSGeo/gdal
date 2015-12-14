@@ -1408,7 +1408,7 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
         VSIFCloseL(fp);
         return NULL;
     }
-    
+
     CPLXMLNode* psParent = NULL;
     if( memcmp(abyHeader, jpc_header, sizeof(jpc_header)) == 0 )
     {

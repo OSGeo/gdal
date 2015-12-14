@@ -60,7 +60,7 @@ public:
      * @return new copy of the RAT as an in-memory implementation.
      */
     virtual GDALDefaultRasterAttributeTable *Clone() const = 0;
-    
+
     /**
      * \brief Fetch table column count.
      *
@@ -102,7 +102,7 @@ public:
      * @return column type or GFT_Integer if the column index is illegal.
      */
     virtual GDALRATFieldType GetTypeOfCol( int ) const = 0;
-    
+
     /**
      * \brief Fetch column index for given usage.
      *
@@ -259,7 +259,7 @@ public:
 
     virtual CPLErr        InitializeFromColorTable( const GDALColorTable * );
     virtual GDALColorTable *TranslateToColorTable( int nEntryCount = -1 );
-    
+
     virtual void          DumpReadable( FILE * = NULL );
 };
 
@@ -313,13 +313,13 @@ public:
     ~GDALDefaultRasterAttributeTable();
 
     GDALDefaultRasterAttributeTable *Clone() const;
-    
+
     virtual int           GetColumnCount() const;
 
     virtual const char   *GetNameOfCol( int ) const;
     virtual GDALRATFieldUsage GetUsageOfCol( int ) const;
     virtual GDALRATFieldType GetTypeOfCol( int ) const;
-    
+
     virtual int           GetColOfUsage( GDALRATFieldUsage ) const;
 
     virtual int           GetRowCount() const;

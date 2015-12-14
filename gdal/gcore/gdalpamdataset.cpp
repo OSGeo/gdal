@@ -272,7 +272,7 @@ void GDALPamDataset::PamInitialize()
 #else
     static const char * const pszPamDefault = "NO";
 #endif
-    
+
     if( psPam || (nPamFlags & GPF_DISABLED) )
         return;
 
@@ -297,11 +297,11 @@ void GDALPamDataset::PamInitialize()
     psPam->bHasMetadata = FALSE;
 
     int iBand;
-    
+
     for( iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
         GDALRasterBand *poBand = GetRasterBand(iBand+1);
-        
+
         if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
@@ -667,7 +667,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
     if( psTree && psPam->osSubdatasetName.size() )
     {
         CPLXMLNode *psSubTree;
-        
+
         for( psSubTree = psTree->psChild; 
              psSubTree != NULL;
              psSubTree = psSubTree->psNext )
@@ -683,7 +683,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
             psSubTree = CPLGetXMLNode( psSubTree, "PAMDataset" );
             break;
         }
-        
+
         if( psSubTree != NULL )
             psSubTree = CPLCloneXMLTree( psSubTree );
 
@@ -788,7 +788,7 @@ CPLErr GDALPamDataset::TrySaveXML()
                 CPLCreateXMLNode( psSubTree, CXT_Attribute, "name" ),
                 CXT_Text, psPam->osSubdatasetName );
         }
-        
+
         CPLXMLNode *psOldPamDataset = CPLGetXMLNode( psSubTree, "PAMDataset");
         if( psOldPamDataset != NULL )
         {
@@ -804,7 +804,7 @@ CPLErr GDALPamDataset::TrySaveXML()
 /*      Try saving the auxiliary metadata.                               */
 /* -------------------------------------------------------------------- */
     int bSaved;
-    
+
     CPLPushErrorHandler( CPLQuietErrorHandler );
     bSaved = CPLSerializeXMLTreeToFile( psTree, psPam->pszPamFilename );
     CPLPopErrorHandler();
@@ -822,7 +822,7 @@ CPLErr GDALPamDataset::TrySaveXML()
 
         if( psPam->osPhysicalFilename.length() > 0 )
             pszBasename = psPam->osPhysicalFilename;
-            
+
         if( PamGetProxy(pszBasename) == NULL 
             && ((pszNewPam = PamAllocateProxy(pszBasename)) != NULL))
         {
@@ -840,7 +840,7 @@ CPLErr GDALPamDataset::TrySaveXML()
             eErr = CE_Warning;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
@@ -1035,7 +1035,7 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
                                         int nListBands, int *panBandList,
                                         GDALProgressFunc pfnProgress, 
                                         void * pProgressData )
-    
+
 {
 /* -------------------------------------------------------------------- */
 /*      Initialize PAM.                                                 */
@@ -1267,13 +1267,13 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
     {
         CPLString osPrelimOvr = GetDescription();
         osPrelimOvr += ":::OVR";
-        
+
         const char *pszProxyOvrFilename = PamAllocateProxy( osPrelimOvr );
         if( pszProxyOvrFilename == NULL )
             return NULL;
-        
+
         SetMetadataItem( "OVERVIEW_FILE", pszProxyOvrFilename, "OVERVIEWS" );
-        
+
         return pszProxyOvrFilename;
     }
 
@@ -1295,7 +1295,7 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
         if( pszOverviewFile == NULL 
             || !STARTS_WITH_CI(pszOverviewFile, ":::BASE:::") )
             return pszOverviewFile;
-        
+
         CPLString osPath;
 
         if( strlen(GetPhysicalFilename()) > 0 )
@@ -1480,7 +1480,7 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
     }
 
     GDALClose( poAuxDS );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Mark PAM info as clean.                                         */
 /* -------------------------------------------------------------------- */

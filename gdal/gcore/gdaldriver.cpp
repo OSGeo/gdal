@@ -226,7 +226,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
               GetDescription(), pszFilename, nXSize, nYSize, nBands, 
               GDALGetDataTypeName( eType ), 
               papszOptions );
-    
+
     if( pfnCreate != NULL )
     {
         poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
@@ -245,7 +245,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         if( poDS->GetDescription() == NULL
             || strlen(poDS->GetDescription()) == 0 )
             poDS->SetDescription( pszFilename );
-        
+
         if( poDS->poDriver == NULL )
             poDS->poDriver = this;
 
@@ -363,7 +363,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 {
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
-    
+
     CPLErrorReset();
 
 /* -------------------------------------------------------------------- */
@@ -819,7 +819,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         poDstDS = DefaultCreateCopy( pszFilename, poSrcDS, bStrict, 
                                   papszOptions, pfnProgress, pProgressData );
     }
-        
+
     CSLDestroy(papszOptionsToDelete);
     return poDstDS;
 }
@@ -844,7 +844,7 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
 {
     VALIDATE_POINTER1( hDriver, "GDALCreateCopy", NULL );
     VALIDATE_POINTER1( hSrcDS, "GDALCreateCopy", NULL );
-    
+
     return (GDALDatasetH) ((GDALDriver *) hDriver)->
         CreateCopy( pszFilename, (GDALDataset *) hSrcDS, bStrict, papszOptions,
                     pfnProgress, pProgressData );
@@ -948,7 +948,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hDS = (GDALDataset *) GDALOpenEx(pszFilename,0,NULL,NULL,NULL);
-        
+
     if( hDS == NULL )
     {
         if( CPLGetLastErrorNo() == 0 )
@@ -959,7 +959,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
     }
 
     char **papszFileList = GDALGetFileList( hDS );
-        
+
     GDALClose( hDS );
 
     if( CSLCount( papszFileList ) == 0 )
@@ -1036,7 +1036,7 @@ CPLErr GDALDriver::DefaultRename( const char * pszNewName,
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hDS = (GDALDataset *) GDALOpen(pszOldName,GA_ReadOnly);
-        
+
     if( hDS == NULL )
     {
         if( CPLGetLastErrorNo() == 0 )
@@ -1047,7 +1047,7 @@ CPLErr GDALDriver::DefaultRename( const char * pszNewName,
     }
 
     char **papszFileList = GDALGetFileList( hDS );
-        
+
     GDALClose( hDS );
 
     if( CSLCount( papszFileList ) == 0 )
@@ -1136,7 +1136,7 @@ CPLErr CPL_STDCALL GDALRenameDataset( GDALDriverH hDriver,
 {
     if( hDriver == NULL )
         hDriver = GDALIdentifyDriver( pszOldName, NULL );
-    
+
     if( hDriver == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1163,7 +1163,7 @@ CPLErr GDALDriver::DefaultCopyFiles( const char * pszNewName,
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hDS = (GDALDataset *) GDALOpen(pszOldName,GA_ReadOnly);
-        
+
     if( hDS == NULL )
     {
         if( CPLGetLastErrorNo() == 0 )
@@ -1174,7 +1174,7 @@ CPLErr GDALDriver::DefaultCopyFiles( const char * pszNewName,
     }
 
     char **papszFileList = GDALGetFileList( hDS );
-        
+
     GDALClose( hDS );
 
     if( CSLCount( papszFileList ) == 0 )
@@ -1259,7 +1259,7 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH hDriver,
 {
     if( hDriver == NULL )
         hDriver = GDALIdentifyDriver( pszOldName, NULL );
-    
+
     if( hDriver == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1459,7 +1459,7 @@ int GDALValidateOptions( const char* pszOptionList,
         return TRUE;
     if( pszOptionList == NULL )
         return TRUE;
-    
+
     CPLXMLNode* psNode = CPLParseXMLString(pszOptionList);
     if (psNode == NULL)
     {

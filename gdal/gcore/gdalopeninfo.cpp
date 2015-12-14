@@ -59,7 +59,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     if( strlen(pszFilenameIn) == 2 && pszFilenameIn[1] == ':' )
     {
         char    szAltPath[10];
-        
+
         strcpy( szAltPath, pszFilenameIn );
         strcat( szAltPath, "\\" );
         pszFilename = CPLStrdup( szAltPath );

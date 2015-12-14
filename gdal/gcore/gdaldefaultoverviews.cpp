@@ -124,7 +124,7 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 
 {
     poDS = poDSIn;
-    
+
 /* -------------------------------------------------------------------- */
 /*      If we were already initialized, destroy the old overview        */
 /*      file handle.                                                    */
@@ -398,7 +398,7 @@ int GDALOvLevelAdjust( int nOvLevel, int nXSize )
 
 {
     int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
-    
+
     return (int) (0.5 + nXSize / (double) nOXSize);
 }
 
@@ -412,13 +412,13 @@ int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
     if( nXSize >= nYSize / 2 && !(nXSize < nYSize && nXSize < nOvLevel) )
     {
         int     nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
-    
+
         return (int) (0.5 + nXSize / (double) nOXSize);
     }
     else
     {
         int     nOYSize = (nYSize + nOvLevel - 1) / nOvLevel;
-    
+
         return (int) (0.5 + nYSize / (double) nOYSize);
     }
 }
@@ -700,7 +700,7 @@ GDALDefaultOverviews::BuildOverviews(
         eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands, 
                                     nNewOverviews, panNewOverviewList, 
                                     pszResampling, pfnProgress, pProgressData );
-        
+
         // Probe for proxy overview filename. 
         if( eErr == CE_Failure )
         {

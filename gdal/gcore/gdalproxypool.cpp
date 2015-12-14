@@ -342,7 +342,7 @@ void GDALDatasetPool::_CloseDataset(const char* pszFileName, CPL_UNUSED GDALAcce
             refCountOfDisableRefCount --;
 
             GDALSetResponsiblePIDForCurrentThread(responsiblePID);
-            
+
             cur->poDS = NULL;
             cur->pszFileName[0] = '\0';
             break;

@@ -204,7 +204,7 @@ void GDALDataset::Init(int bForceCachedIOIn)
 /*      Set forced caching flag.                                        */
 /* -------------------------------------------------------------------- */
     bForceCachedIO = (GByte)bForceCachedIOIn;
-    
+
     m_poStyleTable = NULL;
     m_hPrivateData = VSI_CALLOC_VERBOSE(1, sizeof(GDALDatasetPrivate));
 }
@@ -893,7 +893,7 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 
 {
     CPLAssert( padfTransform != NULL );
-        
+
     padfTransform[0] = 0.0;     /* X Origin (top left corner) */
     padfTransform[1] = 1.0;     /* X Pixel size */
     padfTransform[2] = 0.0;
@@ -1406,7 +1406,7 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
                                     int nListBands, int *panBandList,
                                     GDALProgressFunc pfnProgress, 
                                     void * pProgressData )
-    
+
 {
     CPLErr   eErr;
     int      *panAllBandList = NULL;
@@ -1457,7 +1457,7 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
         pszResampling, nOverviews, panOverviewList, nListBands, panBandList, 
         pfnProgress, pProgressData );
 }
-    
+
 /************************************************************************/
 /*                          IBuildOverviews()                           */
 /*                                                                      */
@@ -1469,7 +1469,7 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
                                      int nListBands, int *panBandList,
                                      GDALProgressFunc pfnProgress, 
                                      void * pProgressData )
-    
+
 {
     if( oOvManager.IsInitialized() )
         return oOvManager.BuildOverviews( NULL, pszResampling, 
@@ -1480,7 +1480,7 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
     {
         ReportError( CE_Failure, CPLE_NotSupported,
                   "BuildOverviews() not supported for this dataset." );
-        
+
         return( CE_Failure );
     }
 }
@@ -1502,7 +1502,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg )
-    
+
 {
 
     const char* pszInterleave = NULL;
@@ -1519,7 +1519,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                    nPixelSpace, nLineSpace, nBandSpace,
                                    psExtraArg );
     }
-    
+
     if( eRWFlag == GF_Read &&
         (psExtraArg->eResampleAlg == GRIORA_Cubic ||
          psExtraArg->eResampleAlg == GRIORA_CubicSpline ||
@@ -1636,7 +1636,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         return eErr;
     }
-        
+
     return BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                    pData, nBufXSize, nBufYSize,
                                    eBufType, nBandCount, panBandMap,
@@ -1659,11 +1659,11 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg )
-    
+
 {
     int iBandIndex; 
     CPLErr eErr = CE_None;
-    
+
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
     void             *pProgressDataGlobal = psExtraArg->pProgressData;
 
@@ -1702,7 +1702,7 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
         if( nBandCount > 1 )
             GDALDestroyScaledProgress( psExtraArg->pProgressData );
     }
-    
+
     psExtraArg->pfnProgress = pfnProgressGlobal;
     psExtraArg->pProgressData = pProgressDataGlobal;
 
@@ -1902,7 +1902,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                   "The buffer into which the data should be read is null" );
         return CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
@@ -1929,7 +1929,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
         nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
-    
+
     if( nLineSpace == 0 )
     {
         nLineSpace = nPixelSpace * nBufXSize;
@@ -2015,14 +2015,14 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
  * @see GDALDataset::RasterIO()
  */
 
-CPLErr CPL_STDCALL 							
+CPLErr CPL_STDCALL
 GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                      int nXOff, int nYOff, int nXSize, int nYSize,
                      void * pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType,
                      int nBandCount, int *panBandMap,
                      int nPixelSpace, int nLineSpace, int nBandSpace )
-    
+
 {
     VALIDATE_POINTER1( hDS, "GDALDatasetRasterIO", CE_Failure );
 
@@ -2054,7 +2054,7 @@ GDALDatasetRasterIOEx( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                        GSpacing nPixelSpace, GSpacing nLineSpace,
                        GSpacing nBandSpace,
                        GDALRasterIOExtraArg* psExtraArg )
-    
+
 {
     VALIDATE_POINTER1( hDS, "GDALDatasetRasterIOEx", CE_Failure );
 
@@ -2239,7 +2239,7 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
         if( eErr != CE_None )
             return eErr;
     }
-    
+
     return CE_None;
 }
 
@@ -2257,7 +2257,7 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
                        int nXOff, int nYOff, int nXSize, int nYSize,
                        int nBufXSize, int nBufYSize, GDALDataType eDT, 
                        int nBandCount, int *panBandMap,char **papszOptions )
-    
+
 {
     VALIDATE_POINTER1( hDS, "GDALDatasetAdviseRead", CE_Failure );
 
@@ -2442,7 +2442,7 @@ CPLErr GDALDataset::CreateMaskBand( int nFlagsIn )
 
     ReportError( CE_Failure, CPLE_NotSupported,
               "CreateMaskBand() not supported for this dataset." );
-    
+
     return( CE_Failure );
 }
 
@@ -2623,7 +2623,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             CPLError(CE_Failure, CPLE_IllegalArg, "GDAL_OF_SHARED and GDAL_OF_INTERNAL are exclusive");
             return NULL;
         }
-        
+
         CPLMutexHolderD( &hDLMutex );
 
         if (phSharedDatasetSet != NULL)
@@ -2921,7 +2921,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
  * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
  * this handle can be cast to a GDALDataset *. 
  */
- 
+
 GDALDatasetH CPL_STDCALL 
 GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 {
@@ -3047,7 +3047,7 @@ static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
  */
 
 int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
-   
+
 {
     VALIDATE_POINTER1( fp, "GDALDumpOpenDatasets", 0 );
 
@@ -3393,7 +3393,7 @@ int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
  \brief Get the number of layers in this dataset.
 
  This function is the same as the C++ method GDALDataset::GetLayerCount()
- 
+
  @since GDAL 2.0
 
  @param hDS the dataset handle.
@@ -3419,7 +3419,7 @@ int GDALDatasetGetLayerCount( GDALDatasetH hDS )
  GDALDataset and should not be deleted by the application.
 
  This function is the same as the C++ method GDALDataset::GetLayer()
- 
+
  @since GDAL 2.0
 
  @param hDS the dataset handle.
@@ -3447,7 +3447,7 @@ OGRLayerH GDALDatasetGetLayer( GDALDatasetH hDS, int iLayer )
  GDALDataset and should not be deleted by the application.
 
  This function is the same as the C++ method GDALDataset::GetLayerByName()
- 
+
  @since GDAL 2.0
 
  @param hDS the dataset handle.
@@ -3475,7 +3475,7 @@ OGRLayerH GDALDatasetGetLayerByName( GDALDatasetH hDS, const char *pszName )
  the ODsCDeleteLayer capability will test TRUE on the GDALDataset.
 
  This method is the same as the C++ method GDALDataset::DeleteLayer().
- 
+
  @since GDAL 2.0
 
  @param hDS the dataset handle.
@@ -3510,7 +3510,7 @@ normally documented in the format specific documentation.
 
  This method is the same as the C function GDALDatasetCreateLayer() and the
  deprecated OGR_DS_CreateLayer(). 
- 
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param pszName the name for the new layer.  This should ideally not 
@@ -3591,7 +3591,7 @@ can be used to control driver specific creation options.  These options are
 normally documented in the format specific documentation. 
 
  This method is the same as the C++ method GDALDataset::CreateLayer().
- 
+
  @since GDAL 2.0
 
  @param hDS the dataset handle
@@ -3668,7 +3668,7 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
  The source layer may come from another dataset.
 
  This method is the same as the C++ method GDALDataset::CopyLayer()
- 
+
  @since GDAL 2.0
 
  @param hDS the dataset handle. 
@@ -3751,11 +3751,11 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
 
 /**
  \brief Returns dataset style table.
- 
+
  This function is the same as the C++ method GDALDataset::GetStyleTable()
- 
+
  @since GDAL 2.0
- 
+
  @param hDS the dataset handle
  @return handle to a style table which should not be modified or freed by the
  caller.
@@ -3765,7 +3765,7 @@ OGRStyleTableH GDALDatasetGetStyleTable( GDALDatasetH hDS )
 
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_GetStyleTable", NULL );
-    
+
     return (OGRStyleTableH) ((GDALDataset *) hDS)->GetStyleTable( );
 }
 
@@ -3775,14 +3775,14 @@ OGRStyleTableH GDALDatasetGetStyleTable( GDALDatasetH hDS )
 
 /**
  \brief Set dataset style table.
- 
+
  This function operate exactly as GDALDatasetSetStyleTable() except that it
  assumes ownership of the passed table.
- 
+
  This function is the same as the C++ method GDALDataset::SetStyleTableDirectly()
- 
+
  @since GDAL 2.0
- 
+
  @param hDS the dataset handle
  @param hStyleTable style table handle to set
 
@@ -3793,7 +3793,7 @@ void GDALDatasetSetStyleTableDirectly( GDALDatasetH hDS,
 
 {
     VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTableDirectly" );
-    
+
     ((GDALDataset *) hDS)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
 }
 
@@ -3803,14 +3803,14 @@ void GDALDatasetSetStyleTableDirectly( GDALDatasetH hDS,
 
 /**
  \brief Set dataset style table.
- 
+
  This function operate exactly as GDALDatasetSetStyleTableDirectly() except that it
  assumes ownership of the passed table.
- 
+
  This function is the same as the C++ method GDALDataset::SetStyleTable()
- 
+
  @since GDAL 2.0
- 
+
  @param hDS the dataset handle
  @param hStyleTable style table handle to set
 
@@ -3821,7 +3821,7 @@ void GDALDatasetSetStyleTable( GDALDatasetH hDS, OGRStyleTableH hStyleTable )
 {
     VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTable" );
     VALIDATE_POINTER0( hStyleTable, "OGR_DS_SetStyleTable" );
-    
+
     ((GDALDataset *) hDS)->SetStyleTable( (OGRStyleTable *) hStyleTable);
 }
 
@@ -3898,7 +3898,7 @@ This method is the same as the C function  OGR_DS_GetSummaryRefCount().
 In GDAL 1.X, this method used to be in the OGRDataSource class.
 
 @deprecated
- 
+
 @return the current summary reference count for the datasource and its layers.
 */
 
@@ -3940,7 +3940,7 @@ are no constraints on the types geometry to be written.
 specific.
 
  @return NULL is returned on failure, or a new OGRLayer handle on success. 
- 
+
  @since GDAL 2.0
 */
 
@@ -4033,7 +4033,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                                   poSrcDefn->GetGeomType(), papszOptions );
         }
     }
-    
+
     if( poDstLayer == NULL )
         return NULL;
 
@@ -4154,7 +4154,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         OGRFeature      *poDstFeature = NULL;
 
         poFeature = poSrcLayer->GetNextFeature();
-        
+
         if( poFeature == NULL )
             break;
 
@@ -4336,7 +4336,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
  This method is the same as the C function GDALDatasetDeleteLayer() and the
  deprecated OGR_DS_DeleteLayer().
- 
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param iLayer the index of the layer to delete. 
@@ -4351,7 +4351,7 @@ OGRErr GDALDataset::DeleteLayer( int iLayer )
     (void) iLayer;
     CPLError( CE_Failure, CPLE_NotSupported,
               "DeleteLayer() not supported by this dataset." );
-              
+
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -4367,7 +4367,7 @@ OGRErr GDALDataset::DeleteLayer( int iLayer )
 
  This method is the same as the C function GDALDatasetGetLayerByName() and the
  deprecated OGR_DS_GetLayerByName().
- 
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @param pszName the layer name of the layer to fetch.
@@ -4452,11 +4452,11 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
         for( i = 0; i < GetLayerCount(); i++ )
         {
             poLayer = GetLayer(i);
-            
+
             if( EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
         }
-        
+
         if( i >= GetLayerCount() )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -4681,11 +4681,11 @@ OGRErr GDALDataset::ProcessSQLDropTable( const char *pszSQLCommand )
     for( i = 0; i < GetLayerCount(); i++ )
     {
         poLayer = GetLayer(i);
-        
+
         if( EQUAL(poLayer->GetName(),papszTokens[2]) )
             break;
     }
-    
+
     if( i >= GetLayerCount() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -5233,7 +5233,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
         ProcessSQLCreateIndex( pszStatement );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle DROP INDEX statements specially.                         */
 /* -------------------------------------------------------------------- */
@@ -5242,7 +5242,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
         ProcessSQLDropIndex( pszStatement );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle DROP TABLE statements specially.                         */
 /* -------------------------------------------------------------------- */
@@ -5295,7 +5295,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
             return NULL;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Preparse the SQL statement.                                     */
 /* -------------------------------------------------------------------- */
@@ -5493,7 +5493,7 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
                             poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
             nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build the field list for all indicated tables.                  */
 /* -------------------------------------------------------------------- */
@@ -5509,13 +5509,13 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
         CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
     psParseInfo->sFieldList.ids = (int *) 
         CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-    
+
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
         swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
         GDALDataset *poTableDS = this;
         OGRLayer *poSrcLayer;
-        
+
         if( psTableDef->data_source != NULL )
         {
             poTableDS = (GDALDataset *) 
@@ -5607,7 +5607,7 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
         psParseInfo->sFieldList.ids[psParseInfo->sFieldList.count] = nFIDIndex + iField;
         psParseInfo->sFieldList.count++;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
@@ -5642,12 +5642,12 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
 
  This method is the same as the C function GDALDatasetReleaseResultSet() and the
  deprecated OGR_DS_ReleaseResultSet().
- 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
- @param poResultsSet the result of a previous ExecuteSQL() call.
 
-*/ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+ @param poResultsSet the result of a previous ExecuteSQL() call.
+*/
+
 void GDALDataset::ReleaseResultSet( OGRLayer * poResultsSet )
 
 {
@@ -5660,12 +5660,12 @@ void GDALDataset::ReleaseResultSet( OGRLayer * poResultsSet )
 
 /**
  \brief Returns dataset style table.
- 
+
  This method is the same as the C function GDALDatasetGetStyleTable() and the
  deprecated OGR_DS_GetStyleTable().
- 
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
+
  @return pointer to a style table which should not be modified or freed by the
  caller.
 */
@@ -5681,15 +5681,15 @@ OGRStyleTable *GDALDataset::GetStyleTable()
 
 /**
  \brief Set dataset style table.
- 
+
  This method operate exactly as SetStyleTable() except that it
  assumes ownership of the passed table.
- 
+
  This method is the same as the C function GDALDatasetSetStyleTableDirectly() and
  the deprecated OGR_DS_SetStyleTableDirectly().
- 
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
+
  @param poStyleTable pointer to style table to set
 
 */
@@ -5706,15 +5706,15 @@ void GDALDataset::SetStyleTableDirectly( OGRStyleTable *poStyleTable )
 
 /**
  \brief Set dataset style table.
- 
+
  This method operate exactly as SetStyleTableDirectly() except
  that it does not assume ownership of the passed table.
- 
+
  This method is the same as the C function GDALDatasetSetStyleTable() and the
  deprecated OGR_DS_SetStyleTable().
- 
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
+
  @param poStyleTable pointer to style table to set
 
 */
@@ -5747,7 +5747,7 @@ int GDALDataset::IsGenericSQLDialect(const char* pszDialect)
 
  This method is the same as the C function GDALDatasetGetLayerCount(),
  and the deprecated OGR_DS_GetLayerCount().
- 
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @return layer count.
@@ -5942,7 +5942,7 @@ OGRErr GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce)
  If no transaction is active, or the commit fails, will return 
  OGRERR_FAILURE. Datasources which do not support transactions will 
  always return OGRERR_UNSUPPORTED_OPERATION. 
- 
+
  Depending on drivers, this may or may not abort layer sequential readings that
  are active.
 
@@ -5966,7 +5966,7 @@ OGRErr GDALDataset::CommitTransaction()
  If no transaction is active, or the commit fails, will return 
  OGRERR_FAILURE. Datasources which do not support transactions will 
  always return OGRERR_UNSUPPORTED_OPERATION. 
- 
+
  Depending on drivers, this may or may not abort layer sequential readings that
  are active.
 

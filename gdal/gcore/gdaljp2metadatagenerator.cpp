@@ -640,7 +640,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
             oExpr.eType = GDALGMLJP2Expr_STRING_LITERAL;
             return oExpr;
         }
-        
+
         case GDALGMLJP2Expr_UUID:
         {
             CPLString osRet;
@@ -663,7 +663,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
                 osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
             return GDALGMLJP2Expr(osRet);
         }
-        
+
         case GDALGMLJP2Expr_STRING_LENGTH:
         {
             GDALGMLJP2Expr oExpr(CPLSPrintf("%d",
@@ -912,7 +912,7 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
     xmlXPathRegisterFunc(pXPathCtx, (const xmlChar *)"uuid", GDALGMLJP2XPathUUID);
 
     pXPathCtx->error = GDALGMLJP2XPathErrorHandler;
-    
+
     GDALGMLJP2RegisterNamespaces(pXPathCtx, xmlDocGetRootElement(pDoc));
 
     CPLString osXMLRes = GDALGMLJP2EvalExpr(osTemplate, pXPathCtx, pDoc);

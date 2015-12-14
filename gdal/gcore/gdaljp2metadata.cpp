@@ -139,9 +139,9 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
 
 {
     VSILFILE *fpLL;
-        
+
     fpLL = VSIFOpenL( pszFilename, "rb" );
-        
+
     if( fpLL == NULL )
     {
         CPLDebug( "GDALJP2Metadata", "Could not even open %s.", 
@@ -216,7 +216,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
 
             if( !oSubChildBox.ReadFirstChild( &oChildBox ) )
                 break;
-            
+
             while( strlen(oSubChildBox.GetType()) > 0 )
             {
                 if( EQUAL(oSubChildBox.GetType(),"lbl ") )
@@ -269,7 +269,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                 if( !oSubChildBox.ReadNextChild( &oChildBox ) )
                     break;
             }
-            
+
             if( pszLabel != NULL && pszXML != NULL )
             {
                 papszGMLMetadata = CSLSetNameValue( papszGMLMetadata, 
@@ -293,7 +293,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
             CPLFree( pszLabel );
             CPLFree( pszXML );
         }
-        
+
         if( !oChildBox.ReadNextChild( poGMLData ) )
             break;
     }
@@ -475,7 +475,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                         nHorzDen = pabyResData[6] * 256 + pabyResData[7];
                         nVertExp = pabyResData[8];
                         nHorzExp = pabyResData[9];
-                        
+
                         // compute in pixels/cm 
                         double dfVertRes = 
                             (nVertNum/(double)nVertDen) * pow(10.0,nVertExp)/100;
@@ -487,7 +487,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                             papszMetadata, 
                             "TIFFTAG_XRESOLUTION",
                             osFormatter.Printf("%g",dfHorzRes) );
-                        
+
                         papszMetadata = CSLSetNameValue( 
                             papszMetadata, 
                             "TIFFTAG_YRESOLUTION",
@@ -496,7 +496,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                             papszMetadata, 
                             "TIFFTAG_RESOLUTIONUNIT", 
                             "3 (pixels/cm)" );
-                        
+
                         CPLFree( pabyResData );
                     }
                 }
@@ -752,7 +752,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     CPLStripXMLNamespace( psDictTree, NULL, TRUE );
 
     CPLXMLNode *psDictRoot = CPLSearchXMLNode( psDictTree, "=Dictionary" );
-    
+
     if( psDictRoot == NULL )
     {
         CPLDestroyXMLNode( psDictTree );
@@ -775,7 +775,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 
         if( !EQUAL(psEntry->pszValue,"dictionaryEntry") )
             continue;
-        
+
         if( psEntry->psChild == NULL )
             continue;
 
@@ -794,7 +794,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     return psHit;
 }
 
-        
+
 /************************************************************************/
 /*                            GMLSRSLookup()                            */
 /*                                                                      */
@@ -885,7 +885,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     {
         psOriginPoint = CPLGetXMLNode( psRG, "origin.Point" );
 
-        
+
         CPLXMLNode *psOffset1 = CPLGetXMLNode( psRG, "offsetVector" );
         if( psOffset1 != NULL )
         {
@@ -1042,7 +1042,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         bNeedAxisFlip = false;
         CPLDebug( "GMLJP2", "Suppressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
-    
+
     if( pszSRSName && bNeedAxisFlip )
     {
         // Suppress explicit axis order in SRS definition
@@ -1054,12 +1054,12 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
         if (poPROJCS != NULL && oSRS.EPSGTreatsAsNorthingEasting())
             poPROJCS->StripNodes( "AXIS" );
-        
+
         CPLFree(pszProjection);
         oSRS.exportToWkt( &pszProjection );
 
     }
-    
+
     /* Some Pleiades files have explicit <gml:axisName>Easting</gml:axisName> */
     /* <gml:axisName>Northing</gml:axisName> to override default EPSG order */
     if( bNeedAxisFlip && psRG != NULL )
@@ -1226,7 +1226,7 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
     GDALJP2Box *poBox;
 
     poBox = GDALJP2Box::CreateUUIDBox( msi_uuid2, nGTBufSize, pabyGTBuf );
-    
+
     CPLFree( pabyGTBuf );
 
     return poBox;
@@ -1319,9 +1319,9 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     if( bNeedAxisFlip )
     {
         double dfTemp;
-        
+
         CPLDebug( "GMLJP2", "Flipping GML coverage axis order." );
-        
+
         dfTemp = adfOrigin[0];
         adfOrigin[0] = adfOrigin[1];
         adfOrigin[1] = dfTemp;
@@ -1417,7 +1417,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
                       "Unable to open GMLJP2OVERRIDE file." );
             return NULL;
         }
-        
+
         CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_END ));
         int nLength = (int) VSIFTellL( fp );
         pszGML = (char *) CPLCalloc(1,nLength+1);
@@ -1433,12 +1433,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
                                                 pszGML );
 
         GDALJP2Box *poGMLData = GDALJP2Box::CreateAsocBox( 2, apoGMLBoxes);
-        
+
         delete apoGMLBoxes[0];
         delete apoGMLBoxes[1];
 
         CPLFree( pszGML );
-        
+
         return poGMLData;
     }
 
@@ -1481,7 +1481,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         double dfTmp = dfLCX;
         dfLCX = dfLCY;
         dfLCY = dfTmp;
-        
+
         dfTmp = dfUCX;
         dfUCX = dfUCY;
         dfUCY = dfTmp;
@@ -1905,7 +1905,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         json_object* poFile = json_object_object_get(poMetadata, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
-                        
+
                         const char* pszContent = NULL;
                         json_object* poContent = json_object_object_get(poMetadata, "content");
                         if( poContent && json_object_get_type(poContent) == json_type_string )
