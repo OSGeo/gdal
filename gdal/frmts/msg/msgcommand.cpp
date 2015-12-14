@@ -392,7 +392,7 @@ std::string MSGCommand::sCycle(int iCycle)
   // 200405311115 should result in 200405311130
   // 200405311101 should result in 200405311115
   // 200412312345 should result in 200501010000
-  
+
   std::string sYear (sTimeStamp.substr(0, 4));
   std::string sMonth (sTimeStamp.substr(4, 2));
   std::string sDay (sTimeStamp.substr(6, 2));

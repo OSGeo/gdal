@@ -148,7 +148,7 @@ class SENTINEL2DatasetContainer: public GDALPamDataset
 class SENTINEL2Dataset : public VRTDataset
 {
         std::vector<CPLString>   aosNonJP2Files;
-        
+
         void   AddL1CL2ABandMetadata(SENTINEL2Level eLevel,
                                      CPLXMLNode* psRoot,
                                      const std::vector<CPLString>& aosBands);
@@ -164,7 +164,7 @@ class SENTINEL2Dataset : public VRTDataset
                 const std::vector<CPLString>& aosBands,
                 int nSaturatedVal,
                 int nNodataVal);
-        
+
     public:
                     SENTINEL2Dataset(int nXSize, int nYSize);
                     ~SENTINEL2Dataset();
@@ -627,7 +627,7 @@ static bool SENTINEL2GetGranuleInfo(SENTINEL2Level eLevel,
     int nEPSGCode = atoi(pszCSCode + strlen("EPSG:"));
     if( pnEPSGCode != NULL )
         *pnEPSGCode = nEPSGCode;
-    
+
     for(CPLXMLNode* psIter = psTileGeocoding->psChild; psIter != NULL;
                                                        psIter = psIter->psNext)
     {
@@ -1015,7 +1015,7 @@ char** SENTINEL2GetUserProductMetadata( CPLXMLNode* psMainMTD,
             }
         }
     }
-    
+
     CPLXMLNode* psL2A_QII = CPLGetXMLNode(psRoot, "L2A_Quality_Indicators_Info");
     if( psL2A_QII != NULL )
     {

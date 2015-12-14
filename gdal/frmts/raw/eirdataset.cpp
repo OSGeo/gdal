@@ -248,9 +248,9 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( fp == NULL )
         return NULL;
-    
+
     /* header example and description
-    
+
     IMAGINE_RAW_FILE // must be on first line, by itself
     WIDTH 581        // number of columns in the image
     HEIGHT 695       // number of rows in the image
@@ -262,7 +262,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     BYTE_ORDER       // LSB MSB; required for U16 U32 S16 S32 F32 F64
     DATA_OFFSET      // start of image data in raster file; default 0 bytes
     END_RAW_FILE     // end RAW file - stop reading
-    
+
     For a true color image with three bands (R, G, B) stored using 8 bits
     for each pixel in each band, DATA_TYPE equals U8 and NUM_LAYERS equals
     3 for a total of 24 bits per pixel.

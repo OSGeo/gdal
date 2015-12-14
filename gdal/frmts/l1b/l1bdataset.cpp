@@ -291,7 +291,7 @@ class L1BDataset : public GDALPamDataset
     int         bGuessDataFormat;
 
     int         bByteSwap;
-    
+
     int             bExposeMaskBand;
     GDALRasterBand* poMaskBand;
 
@@ -303,7 +303,7 @@ class L1BDataset : public GDALPamDataset
                                int *peLocationIndicator );
     CPLErr      ProcessDatasetHeader(const char* pszFilename);
     int         ComputeFileOffsets();
-    
+
     void        FetchMetadata();
     void        FetchMetadataNOAA15();
 
@@ -320,7 +320,7 @@ class L1BDataset : public GDALPamDataset
   public:
                 L1BDataset( L1BFileFormat );
                 ~L1BDataset();
-    
+
     virtual int GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
@@ -343,7 +343,7 @@ class L1BRasterBand : public GDALPamRasterBand
   public:
 
                 L1BRasterBand( L1BDataset *, int );
-    
+
 //    virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALRasterBand *GetMaskBand();
@@ -363,7 +363,7 @@ class L1BMaskBand: public GDALPamRasterBand
   public:
 
                 L1BMaskBand( L1BDataset * );
-    
+
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
@@ -514,7 +514,7 @@ CPLErr L1BRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 // Read 8-bit unpacked scanline
                 GByte   *byRawScan = (GByte *)CPLMalloc(poGDS->nRecordSize);
                 CPL_IGNORE_RET_VAL(VSIFReadL( byRawScan, 1, poGDS->nRecordSize, poGDS->fp ));
-                
+
                 iScan = (GUInt16 *)CPLMalloc(poGDS->GetRasterXSize()
                                              * poGDS->nBands * sizeof(GUInt16));
                 for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
@@ -526,7 +526,7 @@ CPLErr L1BRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         default: // NOTREACHED
             break;
     }
-    
+
     int nBlockSize = nBlockXSize * nBlockYSize;
     if (poGDS->eLocationIndicator == DESCEND)
     {
@@ -544,7 +544,7 @@ CPLErr L1BRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             j += poGDS->nBands;
         }
     }
-    
+
     CPLFree(iScan);
     return CE_None;
 }
@@ -1665,13 +1665,13 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         int nBlockSize = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_BLOCK_SIZE_OFF);
         CPLDebug("L1B", "Block Size of source Level 1b data set prior to processing = %d", nBlockSize);
         CPLDebug("L1B", "Count of Header Records in this Data Set = %d", nHeaderRecCount);
-        
+
         int nDataRecordCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_DATA_RECORD_COUNT_OFF);
         CPLDebug("L1B", "Count of Data Records = %d", nDataRecordCount);
-        
+
         int nCalibratedScanlineCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_CALIBRATED_SCANLINE_COUNT_OFF);
         CPLDebug("L1B", "Count of Calibrated, Earth Located Scan Lines = %d", nCalibratedScanlineCount);
-        
+
         int nMissingScanlineCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_MISSING_SCANLINE_COUNT_OFF);
         CPLDebug("L1B", "Count of Missing Scan Lines = %d", nMissingScanlineCount);
         if( nMissingScanlineCount != 0 )
@@ -1936,7 +1936,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
             break;
     }
     SetMetadataItem( "PROCESSING_CENTER",  pszText );
-    
+
     return CE_None;
 }
 
@@ -2534,7 +2534,7 @@ CPLErr L1BGeolocRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     CPLFree(pabyRecordHeader);
     GDALDeinitGCPs( poL1BDS->nGCPsPerLine, pasGCPList );
     CPLFree(pasGCPList);
-    
+
     return CE_None;
 }
 
@@ -3206,7 +3206,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "L1B", "Can't open file \"%s\".", osFilename.c_str() );
         goto bad;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
@@ -3380,7 +3380,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         poOutDS->SetMetadataItem( "LINE_OFFSET", "0", "GEOLOCATION" );
         poOutDS->SetMetadataItem( "LINE_STEP", "1", "GEOLOCATION" );
     }
-    
+
     if( poOutDS != poDS )
         return poOutDS;
 
@@ -3418,11 +3418,11 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     int iBand, i;
-    
+
     for( iBand = 1, i = 0; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new L1BRasterBand( poDS, iBand ));
-        
+
         // Channels descriptions
         if ( poDS->eSpacecraftID >= NOAA6 && poDS->eSpacecraftID <= METOP3 )
         {
@@ -3472,7 +3472,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
     }
-    
+
     if( poDS->bExposeMaskBand )
         poDS->poMaskBand = new L1BMaskBand(poDS);
 
@@ -3514,7 +3514,7 @@ void GDALRegister_L1B()
     if( GDALGetDriverByName( "L1B" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "L1B" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -91,7 +91,7 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
     papoSubfields = (DDFSubfieldDefn ** )
         CPLRealloc( papoSubfields, sizeof(void*) * nSubfieldCount );
     papoSubfields[nSubfieldCount-1] = poNewSFDefn;
-    
+
     if( bDontAddToFormat )
         return;
 
@@ -104,20 +104,20 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
         CPLFree( _formatControls );
         _formatControls = CPLStrdup( "()" );
     }
-    
+
     int nOldLen = static_cast<int>(strlen(_formatControls));
-    
+
     char *pszNewFormatControls = (char *) 
         CPLMalloc(nOldLen+3+strlen(poNewSFDefn->GetFormat()));
-    
+
     strcpy( pszNewFormatControls, _formatControls );
     pszNewFormatControls[nOldLen-1] = '\0';
     if( pszNewFormatControls[nOldLen-2] != '(' )
         strcat( pszNewFormatControls, "," );
-    
+
     strcat( pszNewFormatControls, poNewSFDefn->GetFormat() );
     strcat( pszNewFormatControls, ")" );
-    
+
     CPLFree( _formatControls );
     _formatControls = pszNewFormatControls;
 
@@ -155,7 +155,7 @@ int DDFFieldDefn::Create( const char *pszTagIn, const char *pszFieldName,
     this->pszTag = CPLStrdup( pszTagIn );
     _fieldName = CPLStrdup( pszFieldName );
     _arrayDescr = CPLStrdup( pszDescription );
-    
+
     _data_struct_code = eDataStructCode;
     _data_type_code = eDataTypeCode;
 
@@ -189,7 +189,7 @@ int DDFFieldDefn::GenerateDDREntry( char **ppachData,
         return TRUE;
 
     *ppachData = (char *) CPLMalloc( *pnLength+1 );
-    
+
     if( _data_struct_code == dsc_elementary )
         (*ppachData)[0] = '0';
     else if( _data_struct_code == dsc_vector )
@@ -198,7 +198,7 @@ int DDFFieldDefn::GenerateDDREntry( char **ppachData,
         (*ppachData)[0] = '2';
     else if( _data_struct_code == dsc_concatenated )
         (*ppachData)[0] = '3';
-    
+
     if( _data_type_code == dtc_char_string )
         (*ppachData)[1] = '0';
     else if( _data_type_code == dtc_implicit_point )
@@ -404,7 +404,7 @@ void DDFFieldDefn::Dump( FILE * fp )
       case dsc_concatenated:
         pszValue = "concatenated";
         break;
-        
+
       default:
         CPLAssert( FALSE );
         pszValue = "(unknown)";
@@ -417,27 +417,27 @@ void DDFFieldDefn::Dump( FILE * fp )
       case dtc_char_string:
         pszValue = "char_string";
         break;
-        
+
       case dtc_implicit_point:
         pszValue = "implicit_point";
         break;
-        
+
       case dtc_explicit_point:
         pszValue = "explicit_point";
         break;
-        
+
       case dtc_explicit_point_scaled:
         pszValue = "explicit_point_scaled";
         break;
-        
+
       case dtc_char_bit_string:
         pszValue = "char_bit_string";
         break;
-        
+
       case dtc_bit_string:
         pszValue = "bit_string";
         break;
-        
+
       case dtc_mixed_data_type:
         pszValue = "mixed_data_type";
         break;
@@ -447,7 +447,7 @@ void DDFFieldDefn::Dump( FILE * fp )
         pszValue = "(unknown)";
         break;
     }
-    
+
     fprintf( fp, "      _data_type_code = %s\n", pszValue );
 
     for( int i = 0; i < nSubfieldCount; i++ )
@@ -505,7 +505,7 @@ int DDFFieldDefn::BuildSubfields()
     for( int iSF = 0; iSF < nSFCount; iSF++ )
     {
         DDFSubfieldDefn *poSFDefn = new DDFSubfieldDefn;
-        
+
         poSFDefn->SetName( papszSubfieldNames[iSF] );
         AddSubfield( poSFDefn, TRUE );
     }
@@ -606,14 +606,14 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
         {
             const char *pszNext;
             nRepeat = atoi(pszSrc+iSrc);
-            
+
             // skip over repeat count.
             for( pszNext = pszSrc+iSrc; isdigit(*pszNext); pszNext++ )
                 iSrc++;
 
             char       *pszContents = ExtractSubstring( pszNext );
             char       *pszExpandedContents = ExpandFormat( pszContents );
-                
+
             for( int i = 0; i < nRepeat; i++ )
             {
                 if( strlen(pszExpandedContents) + strlen(pszDest) + 1 + 1 > nDestMax )
@@ -629,7 +629,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
             }
 
             iDst = strlen(pszDest);
-            
+
             if( pszNext[0] == '(' )
                 iSrc = iSrc + strlen(pszContents) + 2;
             else
@@ -653,7 +653,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
 
     return pszDest;
 }
-                                 
+
 /************************************************************************/
 /*                            ApplyFormats()                            */
 /*                                                                      */
@@ -667,7 +667,7 @@ int DDFFieldDefn::ApplyFormats()
 {
     char        *pszFormatList;
     char        **papszFormatItems;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the format string is contained within brackets.     */
 /* -------------------------------------------------------------------- */
@@ -678,7 +678,7 @@ int DDFFieldDefn::ApplyFormats()
         CPLError( CE_Warning, (CPLErrorNum)CPLE_DiscardedFormat,
                   "Format controls for `%s' field missing brackets:%s",
                   pszTag, _formatControls );
-        
+
         return FALSE;
     }
 
@@ -700,7 +700,7 @@ int DDFFieldDefn::ApplyFormats()
 /*      Apply the format items to subfields.                            */
 /* -------------------------------------------------------------------- */
     int iFormatItem;
-    
+
     for( iFormatItem = 0;
          papszFormatItems[iFormatItem] != NULL;
          iFormatItem++ )
@@ -716,7 +716,7 @@ int DDFFieldDefn::ApplyFormats()
         // by names?  This may be legal by the 8211 specification, but
         // isn't encountered in any formats we care about so we just
         // blow.
-        
+
         if( iFormatItem >= nSubfieldCount )
         {
             CPLError( CE_Warning, (CPLErrorNum)CPLE_DiscardedFormat,
@@ -724,7 +724,7 @@ int DDFFieldDefn::ApplyFormats()
                       pszTag );
             break;
         }
-        
+
         if( !papoSubfields[iFormatItem]->SetFormat(pszPastPrefix) )
         {
             CSLDestroy( papszFormatItems );
@@ -775,7 +775,7 @@ int DDFFieldDefn::ApplyFormats()
  *
  * @return The subfield pointer, or NULL if there isn't any such subfield.
  */
- 
+
 
 DDFSubfieldDefn *DDFFieldDefn::FindSubfieldDefn( const char * pszMnemonic )
 
@@ -811,7 +811,7 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
         CPLAssert( FALSE );
         return NULL;
     }
-             
+
     return papoSubfields[i];
 }
 
@@ -825,7 +825,7 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
 
 char *DDFFieldDefn::GetDefaultValue( int *pnSize )
 
-{                                                                       
+{
 /* -------------------------------------------------------------------- */
 /*      Loop once collecting the sum of the subfield lengths.           */
 /* -------------------------------------------------------------------- */

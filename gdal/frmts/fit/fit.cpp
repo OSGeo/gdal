@@ -161,7 +161,7 @@ int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
         default:
             UNSUPPORTED_COMBO();
         } // switch
-        
+
     case GCI_GreenBand:
     case GCI_SaturationBand:
     case GCI_LightnessBand:

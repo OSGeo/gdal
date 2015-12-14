@@ -350,14 +350,14 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
             CPLExtractRelativePath( pszVRTPath, poDS->GetDescription(),
                                     &bRelativeToVRT );
     }
-    
+
     CPLSetXMLValue( psSrc, "SourceFilename", pszRelativePath );
-    
+
     CPLCreateXMLNode( 
         CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ), 
                           CXT_Attribute, "relativeToVRT" ), 
         CXT_Text, bRelativeToVRT ? "1" : "0" );
-    
+
     if( !CSLTestBoolean(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE")) )
     {
         CPLCreateXMLNode( 
@@ -443,7 +443,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
                   "Missing <SourceFilename> element in VRTRasterBand." );
         return CE_Failure;
     }
-    
+
     // Backup original filename and relativeToVRT so as to be able to
     // serialize them identically again (#5985)
     m_osSourceFileNameOri = pszFilename;
@@ -597,18 +597,18 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         if (bGetMaskBand)
             ((GDALProxyPoolRasterBand*)proxyDS->GetRasterBand(nSrcBand))->AddSrcMaskBandDescription(eDataType, nBlockXSize, nBlockYSize);
     }
-    
+
     CSLDestroy(papszOpenOptions);
 
     CPLFree( pszSrcDSName );
-    
+
     if( poSrcDS == NULL )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Get the raster band.                                            */
 /* -------------------------------------------------------------------- */
-    
+
     m_poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
     if( m_poRasterBand == NULL )
     {
@@ -682,13 +682,13 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
             if( VSIStatExL( pszFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
                 return;
         }
-            
+
 /* -------------------------------------------------------------------- */
 /*      Is it already in the list ?                                     */
 /* -------------------------------------------------------------------- */
         if( CPLHashSetLookup(hSetFiles, pszFilename) != NULL )
             return;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Grow array if necessary                                         */
 /* -------------------------------------------------------------------- */
@@ -698,14 +698,14 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
             *ppapszFileList = (char **) CPLRealloc(
                         *ppapszFileList, sizeof(char*)  * (*pnMaxSize) );
         }
-            
+
 /* -------------------------------------------------------------------- */
 /*      Add the string to the list                                      */
 /* -------------------------------------------------------------------- */
         (*ppapszFileList)[*pnSize] = CPLStrdup(pszFilename);
         (*ppapszFileList)[(*pnSize + 1)] = NULL;
         CPLHashSetInsert(hSetFiles, (*ppapszFileList)[*pnSize]);
-        
+
         (*pnSize) ++;
     }
 }
@@ -866,7 +866,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     const double      dfScaleX = m_dfSrcXSize / m_dfDstXSize;
     const double      dfScaleY = m_dfSrcYSize / m_dfDstYSize;
-    
+
     *pdfReqXOff = (dfRXOff - m_dfDstXOff) * dfScaleX + m_dfSrcXOff;
     *pdfReqYOff = (dfRYOff - m_dfDstYOff) * dfScaleY + m_dfSrcYOff;
     *pdfReqXSize = dfRXSize * dfScaleX;
@@ -1492,7 +1492,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         double  dfYDst;
 
         dfYDst = (iBufLine / (double) nBufYSize) * nYSize + nYOff;
-        
+
         for( int iBufPixel = nOutXOff; 
              iBufPixel < nOutXOff + nOutXSize; 
              iBufPixel++ )
@@ -1541,7 +1541,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
             double dfSum = 0.0;
             int    nPixelCount = 0;
-            
+
             for( int iY = iYSrcStart; iY < iYSrcEnd; iY++ )
             {
                 if( iY < 0 || iY >= nReqYSize )
@@ -1677,7 +1677,7 @@ VRTComplexSource::VRTComplexSource()
     m_eScalingType = VRT_SCALING_NONE;
     m_dfScaleOff = 0.0;
     m_dfScaleRatio = 1.0;
-    
+
     m_padfLUTInputs = NULL;
     m_padfLUTOutputs = NULL;
     m_nLUTItemCount = 0;
@@ -1753,7 +1753,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
             CPLSetXMLValue( psSrc, "NODATA", 
                             CPLSPrintf("%.16g", m_dfNoDataValue) );
     }
-        
+
     switch( m_eScalingType )
     {
         case VRT_SCALING_NONE:
@@ -1892,7 +1892,7 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
             m_nLUTItemCount = 0;
             return CE_Failure;
         }
-        
+
         for ( nIndex = 0; nIndex < m_nLUTItemCount; nIndex++ )
         {
             m_padfLUTInputs[nIndex] = CPLAtof( papszValues[nIndex * 2] );
@@ -1910,10 +1910,10 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 		return CE_Failure;
 	    }
         }
-        
+
         CSLDestroy(papszValues);
     }
-    
+
     if( CPLGetXMLValue(psSrc, "ColorTableComponent", NULL) != NULL )
     {
         m_nColorTableComponent = atoi(CPLGetXMLValue(psSrc, "ColorTableComponent", "0"));
@@ -1999,7 +1999,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                             GSpacing nPixelSpace,
                             GSpacing nLineSpace,
                             GDALRasterIOExtraArg* psExtraArgIn)
-    
+
 {
     GDALRasterIOExtraArg sExtraArg;
 

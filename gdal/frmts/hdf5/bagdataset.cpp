@@ -472,7 +472,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The BAG driver does not support update access." );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the file as an HDF5 file.                                  */
 /* -------------------------------------------------------------------- */
@@ -573,7 +573,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
         delete poNBand;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Load the XML metadata.                                          */
 /* -------------------------------------------------------------------- */
@@ -723,7 +723,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         CPLDestroyXMLNode( psRoot );
         return eOGRErr;
     }
-    
+
     const char *pszSRCodeSpace = 
         CPLGetXMLValue( psRSI, "MD_ReferenceSystem.referenceSystemIdentifier.RS_Identifier.codeSpace.CharacterString", "" );
     if( !EQUAL( pszSRCodeSpace, "WKT" ) )
@@ -854,14 +854,14 @@ void GDALRegister_BAG( )
 
 {
     GDALDriver  *poDriver;
-    
+
     if (! GDAL_CHECK_VERSION("BAG"))
         return;
 
     if(  GDALGetDriverByName( "BAG" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "BAG" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

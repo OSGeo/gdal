@@ -293,7 +293,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
                       bWriteOGRAttributes);
 
     int iObj = 0;
-    
+
     char** papszLayerNames = CSLTokenizeString2(pszOGRDisplayLayerNames,",",0);
 
     for(int i=0;i<nLayers;i++)

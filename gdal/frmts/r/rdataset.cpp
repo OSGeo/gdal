@@ -253,7 +253,7 @@ const char *RDataset::ReadString()
     }
 
     size_t nLen = ReadInteger();
-        
+
     char *pachWrkBuf = (char *) VSIMalloc(nLen);
     if (pachWrkBuf == NULL)
     {
@@ -266,13 +266,13 @@ const char *RDataset::ReadString()
         CPLFree( pachWrkBuf );
         return "";
     }
-    
+
     if( bASCII )
     {
         /* suck up newline and any extra junk */
         ASCIIFGets();
     }
-    
+
     osLastStringRead.assign( pachWrkBuf, nLen );
     CPLFree( pachWrkBuf );
 
@@ -368,7 +368,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to route the file through the decompression          */
 /*      machinery?                                                      */
@@ -560,7 +560,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
                                         8, poDS->nRasterXSize * 8,
                                         GDT_Float64, !CPL_IS_LSB,
                                         TRUE, FALSE );
-                                      
+
         poDS->SetBand( iBand+1, poBand );
     }
 

@@ -77,7 +77,7 @@ class MBTilesDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform(double* padfGeoTransform);
     virtual const char* GetProjectionRef();
-    
+
     virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
 

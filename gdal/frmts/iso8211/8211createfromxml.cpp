@@ -61,14 +61,14 @@ int main(int nArgc, char* papszArgv[])
         printf( "Usage: 8211createfromxml filename.xml outfilename\n" );
         exit( 1 );
     }
-    
+
     CPLXMLNode* poRoot = CPLParseXMLFile( pszFilename );
     if( poRoot == NULL )
     {
         fprintf(stderr, "Cannot parse XML file '%s'\n", pszFilename);
         exit( 1 );
     }
-    
+
     CPLXMLNode* poXMLDDFModule = CPLSearchXMLNode(poRoot, "=DDFModule");
     if( poXMLDDFModule == NULL )
     {
@@ -152,7 +152,7 @@ int main(int nArgc, char* papszArgv[])
                 pszArrayDescr = "";
             else if( eStructCode == dsc_array )
                 pszArrayDescr = "*";
- 
+
             poFDefn->Create( CPLGetXMLValue(psIter, "tag", ""),
                              CPLGetXMLValue(psIter, "fieldName", ""),
                              pszArrayDescr,
@@ -199,7 +199,7 @@ int main(int nArgc, char* papszArgv[])
                         fprintf(stderr, "Can't find field '%s'\n", pszFieldName );
                         exit(1);
                     }
-                    
+
                     int nFieldOcc = oMapField[pszFieldName];
                     oMapField[pszFieldName] ++ ;
 

@@ -430,7 +430,7 @@ CPLErr BTDataset::SetGeoTransform( double *padfTransform )
     CPL_LSBPTR64( abyHeader + 36 );
     CPL_LSBPTR64( abyHeader + 44 );
     CPL_LSBPTR64( abyHeader + 52 );
-    
+
     bHeaderModified = TRUE;
 
     return eErr;
@@ -488,7 +488,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 
     nShortTemp = CPL_LSBWORD16( 1 );
     memcpy( abyHeader + 22, &nShortTemp, 2 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      UTM Zone                                                        */
 /* -------------------------------------------------------------------- */
@@ -500,7 +500,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 
     nShortTemp = CPL_LSBWORD16( nShortTemp );
     memcpy( abyHeader + 24, &nShortTemp, 2 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Datum                                                           */
 /* -------------------------------------------------------------------- */
@@ -554,7 +554,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
     BTDataset  *poDS = new BTDataset();
- 
+
     memcpy( poDS->abyHeader, poOpenInfo->pabyHeader, 256 );
 
 /* -------------------------------------------------------------------- */
@@ -576,7 +576,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     memcpy( &nIntTemp, poDS->abyHeader + 10, 4 );
     poDS->nRasterXSize = CPL_LSBWORD32( nIntTemp );
-    
+
     memcpy( &nIntTemp, poDS->abyHeader + 14, 4 );
     poDS->nRasterYSize = CPL_LSBWORD32( nIntTemp );
 
@@ -654,13 +654,13 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
     if( oSRS.GetRoot() == NULL )
     {
         GInt16 nUTMZone, nDatum, nHUnits;
-        
+
         memcpy( &nUTMZone, poDS->abyHeader + 24, 2 );
         nUTMZone = CPL_LSBWORD16( nUTMZone );
-        
+
         memcpy( &nDatum, poDS->abyHeader + 26, 2 );
         nDatum = CPL_LSBWORD16( nDatum );
-        
+
         memcpy( &nHUnits, poDS->abyHeader + 22, 2 );
         nHUnits = CPL_LSBWORD16( nHUnits );
 
@@ -668,7 +668,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
             oSRS.SetUTM( ABS(nUTMZone), nUTMZone > 0 );
         else if( nHUnits != 0 )
             oSRS.SetLocalCS( "Unknown" );
-        
+
         if( nHUnits == 1 )
             oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
         else if( nHUnits == 2 )
@@ -716,7 +716,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
                 oSRS.SetWellKnownGeogCS( "WGS84" );
-        }                
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -734,13 +734,13 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 
         memcpy( &dfLeft, poDS->abyHeader + 28, 8 );
         CPL_LSBPTR64( &dfLeft );
-        
+
         memcpy( &dfRight, poDS->abyHeader + 36, 8 );
         CPL_LSBPTR64( &dfRight );
-        
+
         memcpy( &dfBottom, poDS->abyHeader + 44, 8 );
         CPL_LSBPTR64( &dfBottom );
-        
+
         memcpy( &dfTop, poDS->abyHeader + 52, 8 );
         CPL_LSBPTR64( &dfTop );
 
@@ -750,10 +750,10 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[3] = dfTop;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = (dfBottom - dfTop) / poDS->nRasterYSize;
-        
+
         poDS->bGeoTransformValid = TRUE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Re-open the file with the desired access.                       */
 /* -------------------------------------------------------------------- */
@@ -854,30 +854,30 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 
     memset( abyHeader, 0, 256 );
     memcpy( abyHeader, "binterr1.3", 10 );
-    
+
     nTemp = CPL_LSBWORD32( nXSize );
     memcpy( abyHeader+10, &nTemp, 4 );
-    
+
     nTemp = CPL_LSBWORD32( nYSize );
     memcpy( abyHeader+14, &nTemp, 4 );
 
     nShortTemp = (GInt16) (CPL_LSBWORD16( (GInt16)(GDALGetDataTypeSize( eType ) / 8 )) );
     memcpy( abyHeader + 18, &nShortTemp, 2 );
-    
+
     if( eType == GDT_Float32 )
         abyHeader[20] = 1;
     else
         abyHeader[20] = 0;
-    
+
     nShortTemp = CPL_LSBWORD16( 1 ); /* meters */
     memcpy( abyHeader + 22, &nShortTemp, 2 );
-    
+
     nShortTemp = CPL_LSBWORD16( 0 ); /* not utm */
     memcpy( abyHeader + 24, &nShortTemp, 2 );
-    
+
     nShortTemp = CPL_LSBWORD16( -2 ); /* datum unknown */
     memcpy( abyHeader + 26, &nShortTemp, 2 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set dummy extents.                                              */
 /* -------------------------------------------------------------------- */
@@ -892,7 +892,7 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
     CPL_LSBPTR64( abyHeader + 36 );
     CPL_LSBPTR64( abyHeader + 44 );
     CPL_LSBPTR64( abyHeader + 52 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set dummy scale.                                                */
 /* -------------------------------------------------------------------- */
@@ -900,7 +900,7 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 
     memcpy( abyHeader + 62, &fScale, 4 );
     CPL_LSBPTR32( abyHeader + 62 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Write to disk.                                                  */
 /* -------------------------------------------------------------------- */

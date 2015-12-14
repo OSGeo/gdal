@@ -191,7 +191,6 @@ default:
    else
       papszFilterReturnNums = CSLTokenizeString(poxmlFilter->psChild->pszValue);
 
-   
    CPLXMLNode * poxmlAggregation = CPLGetXMLNode(poxmlBand, "AggregationMethod");
    if( poxmlAggregation == NULL )
       poxmlAggregation = CPLGetXMLNode(pods->poXMLPCView, "AggregationMethod");
@@ -435,7 +434,7 @@ CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * 
          }
       }
    }
-   
+
    delete[] Accumulator;
    return CE_None;
 }
@@ -641,7 +640,7 @@ CPLErr MG4LidarDataset::OpenZoomLevel( int iZoom )
       const char * name = "Z";
       if (xmlChannel && xmlChannel->psChild && xmlChannel->psChild->pszValue)
          name = xmlChannel->psChild->pszValue;
-      
+
       BandCount++;
       MG4LidarRasterBand *band = new MG4LidarRasterBand(this, BandCount, xmlBand, name);
       SetBand(BandCount, band);

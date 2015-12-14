@@ -128,7 +128,7 @@ class GRASSDataset : public GDALDataset
     char	*pszElement;   /* cellhd or group */
 
     struct Cell_head sCellInfo; /* raster region */ 
-    
+
     char	*pszProjection;
 
     double	adfGeoTransform[6];
@@ -194,7 +194,7 @@ class GRASSRasterBand : public GDALRasterBand
 
   private:
     CPLErr ResetReading( struct Cell_head * );
-    
+
 };
 
 
@@ -245,7 +245,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
 
     // GRASS modules usually do not waste space and only the format necessary to keep 
     // full raster values range is used -> no checks if shorter type could be used
-    
+
     if( nGRSType == CELL_TYPE ) {
 	if ( sCellInfo.format == 0 ) {  // 1 byte / cell -> possible range 0,255
 	    if ( bHaveMinMax && dfCellMin > 0 ) {
@@ -406,7 +406,7 @@ GRASSRasterBand::~GRASSRasterBand()
 
     if( hCell >= 0 )
         G_close_cell( hCell );
-    
+
     if ( pszCellName )
         G_free ( pszCellName );
 
@@ -537,15 +537,15 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 {
     /* GRASS library does that, we have only calculate and reset the region in map units
      * and if the region has changed, reopen the raster */
-    
+
     /* Calculate the region */
     struct Cell_head sWindow;
     struct Cell_head *psDsWindow;
-    
+
     if ( ! this->valid ) return CE_Failure;
 
     psDsWindow = &(((GRASSDataset *)poDS)->sCellInfo);
-    
+
     sWindow.north = psDsWindow->north - nYOff * psDsWindow->ns_res; 
     sWindow.south = sWindow.north - nYSize * psDsWindow->ns_res; 
     sWindow.west = psDsWindow->west + nXOff * psDsWindow->ew_res; 
@@ -555,7 +555,7 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 
     sWindow.cols = nBufXSize;
     sWindow.rows = nBufYSize;
-     
+
     /* Reset resolution */
     G_adjust_Cell_head ( &sWindow, 1, 1);
 
@@ -563,7 +563,7 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     {
         return CE_Failure;
     }
-    
+
     /* Read Data */
     CELL  *cbuf = NULL;
     FCELL *fbuf = NULL;
@@ -634,7 +634,7 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     if ( cbuf ) G_free ( cbuf );
     if ( fbuf ) G_free ( fbuf );
     if ( dbuf ) G_free ( dbuf );
-    
+
     return CE_None;
 }
 
@@ -745,13 +745,13 @@ GRASSDataset::GRASSDataset()
 
 GRASSDataset::~GRASSDataset()
 {
-    
+
     if ( pszGisdbase )
 	G_free ( pszGisdbase );
-    
+
     if ( pszLocation )
         G_free ( pszLocation );
-    
+
     if ( pszElement )
 	G_free ( pszElement );
 
@@ -777,7 +777,7 @@ const char *GRASSDataset::GetProjectionRef()
 CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform ) 
 {
     memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
-    
+
     return CE_None;
 }
 
@@ -795,9 +795,9 @@ bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
 {
     char *p, *ptr[5], *tmp;
     int  i = 0;
-    
+
     *gisdbase = *location = *mapset = *element = *name = NULL;
-    
+
     if ( !path || strlen(path) == 0 ) 
 	return false;
 
@@ -864,7 +864,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Set error function
     G_set_error_routine ( (GrassErrorHandler) Grass2CPLErrorHook );
-    
+
 
     // GISBASE is path to the directory where GRASS is installed,
     if ( !getenv( "GISBASE" ) ) {
@@ -897,7 +897,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
         G_free(pszName);
 	return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set GRASS variables                                             */
 /* -------------------------------------------------------------------- */
@@ -932,7 +932,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 	    G_free(pszGisdb); G_free(pszLoc); G_free(pszMapset); G_free(pszElem); G_free(pszName);
 	    return NULL;
 	}
-        
+
         for( int iRef = 0; iRef < ref.nfiles; iRef++ ) 
 	{
             papszCells = CSLAddString( papszCells, ref.file[iRef].name );
@@ -942,7 +942,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         I_free_group_ref( &ref );
     }
-    
+
     G_free( pszMapset );
     G_free( pszName );
 
@@ -959,7 +959,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->pszGisdbase = pszGisdb;
     poDS->pszLocation = pszLoc;
     poDS->pszElement = pszElem;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -983,7 +983,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] = poDS->sCellInfo.north;
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = -1 * poDS->sCellInfo.ns_res;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try to get a projection definition.                             */
 /* -------------------------------------------------------------------- */
@@ -1008,14 +1008,14 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 	    delete rb;
 	    delete poDS;
 	    return NULL;
-	}
+        }
 
         poDS->SetBand( iBand+1, rb );
     }
 
     CSLDestroy(papszCells);
     CSLDestroy(papszMapsets);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -1027,7 +1027,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
     return poDS;
 }
 
@@ -1038,21 +1038,21 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_GRASS()
 {
     GDALDriver	*poDriver;
-    
+
     if (! GDAL_CHECK_VERSION("GDAL/GRASS57 driver"))
         return;
 
     if( GDALGetDriverByName( "GRASS" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "GRASS" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "GRASS Rasters (5.7+)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_grass.html" );
-        
+
         poDriver->pfnOpen = GRASSDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

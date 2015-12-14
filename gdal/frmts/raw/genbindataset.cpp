@@ -762,7 +762,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( pszInterleaving == NULL )
         pszInterleaving = "BIL";
-    
+
     if( EQUAL(pszInterleaving,"BSQ") || EQUAL(pszInterleaving,"NA") )
     {
         nPixelOffset = nItemSize;

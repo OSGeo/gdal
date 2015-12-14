@@ -138,13 +138,13 @@ private:
     int KakaduClassId(int nClassId);
 
     CPLMutex *pGlobalMutex;
- 
+
     // support two communication threads to the server, a main and an overview thread
     volatile int bHighThreadRunning;
     volatile int bLowThreadRunning;
     volatile int bHighThreadFinished;
     volatile int bLowThreadFinished;
-    
+
     // transmission counts
     volatile long nHighThreadByteCount;
     volatile long nLowThreadByteCount;
@@ -233,7 +233,7 @@ public:
     JPIPKAKRasterBand( int, int, kdu_codestream *, int,
                        JPIPKAKDataset * );
     ~JPIPKAKRasterBand();
-    
+
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,

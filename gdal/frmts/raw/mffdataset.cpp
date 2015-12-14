@@ -1158,7 +1158,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
                     1, 1, fp ) == 1;
         VSIFCloseL( fp );
     }
-    
+
     if( !bOK )
     {
         CPLFree( pszBaseFilename );
@@ -1514,7 +1514,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
     CPLFree( padfTiepoints );
     bOK &= VSIFPrintfL( fp, "END\n" ) >= 0;
     VSIFCloseL( fp );
-    
+
     if( !bOK )
     {
         delete poDS;

@@ -70,7 +70,7 @@ class HDF4Dataset : public GDALPamDataset
     static char **HDF4EOSTokenizeAttrs( const char *pszString );
     static char **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
                                     char **ppszAttrClass, char **ppszAttrValue );
-     
+
   protected:
     int32	hGR;
     int32	hSD;
@@ -95,7 +95,7 @@ class HDF4Dataset : public GDALPamDataset
   public:
                 HDF4Dataset();
 		~HDF4Dataset();
-    
+
     virtual char      **GetMetadataDomainList();
     virtual char        **GetMetadata( const char * pszDomain = "" );
     static GDALDataset  *Open( GDALOpenInfo * );

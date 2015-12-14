@@ -29,7 +29,7 @@ void IssueSDEExtendedError ( int nErrorCode,
                            const char *pszFunction,
                            SE_CONNECTION* connection,
                            SE_STREAM* stream) {
- 
+
     SE_ERROR err;
     char szErrorMsg[SE_MAX_MESSAGE_LENGTH+1];
 
@@ -38,12 +38,11 @@ void IssueSDEExtendedError ( int nErrorCode,
 
     SE_error_get_string( nErrorCode, szErrorMsg );
 
-        
     if (connection)
         SE_connection_get_ext_error( *connection, &err );
     if (stream)
         SE_stream_get_ext_error( *stream, &err );
-    
+
     if (connection || stream) {
         CPLError ( CE_Failure, CPLE_AppDefined,
                    "%s: %d/%s ---- %s ---- %s ---- %s ---- %s",

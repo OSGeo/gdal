@@ -54,7 +54,7 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
             /* Try the old name */
             base_url = CPLGetXMLValue(config, "ServerUrl", "");
         }
-        
+
         if (base_url[0] != '\0') 
         {
             m_base_url = base_url;
@@ -76,10 +76,10 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
         {
 			m_transparent[i] = (char) tolower(m_transparent[i]);
         }
-        
+
 		m_layers = CPLGetXMLValue(config, "Layers", "");
     }
-    
+
 	if (ret == CE_None) 
 	{
 		const char* irs = CPLGetXMLValue(config, "SRS", "102100");
@@ -112,7 +112,7 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
                     (bbox_order[i] != 'X') && (bbox_order[i] != 'Y')) 
                     break;
             }
-            
+
             if (i == 4) 
             {
                 m_bbox_order = bbox_order;
@@ -166,7 +166,7 @@ void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageReque
 	    URLAppendF(url, "&transparent=%s", m_transparent.c_str());
     else
         URLAppendF(url, "&transparent=%s", "false");
-        
+
 	URLAppendF(url, "&time=");
 	URLAppendF(url, "&layerTimeOptions=");
 	URLAppendF(url, "&dynamicLayers=");

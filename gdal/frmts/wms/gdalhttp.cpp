@@ -108,7 +108,7 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
     psRequest->m_curl_error = reinterpret_cast<char *>(CPLMalloc(CURL_ERROR_SIZE + 1));
     psRequest->m_curl_error[0] = '\0';
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error);
-    
+
     CPLHTTPSetOptions(psRequest->m_curl_handle, papszOptionsDup);
 
     CSLDestroy(papszOptionsDup);
@@ -158,7 +158,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
     int still_running;
     int max_conn;
     int i, conn_i;
-    
+
     if( nRequestCount > 0 &&
         STARTS_WITH(pasRequest[0].pszURL, "/vsimem/") &&
         /* Disabled by default for potential security issues */

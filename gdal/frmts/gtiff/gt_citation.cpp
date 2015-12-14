@@ -427,7 +427,7 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
 {
     OGRBoolean ret = FALSE;
     char* lUnitName = NULL;
-    
+
     poSRS->GetLinearUnits( &lUnitName );
     if(!lUnitName || strlen(lUnitName) == 0  || EQUAL(lUnitName, "unknown"))
         *linearUnitIsSet = FALSE;
@@ -604,7 +604,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
                 if (hasUnits)
                 {
                     OGR_SRSNode *poUnit = poSRS->GetAttrNode( "PROJCS|UNIT" );
-      
+
                     if( poUnit != NULL && poUnit->GetChildCount() >= 2 )
                     {
                         CPLString unitName = poUnit->GetChild(0)->GetValue();

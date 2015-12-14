@@ -95,7 +95,7 @@ void DestroyWMSMiniDriverManager()
             g_mini_driver_manager = NULL;
         }
     }
-    
+
     if( g_mini_driver_manager_mutex != NULL )
     {
         CPLDestroyMutex(g_mini_driver_manager_mutex);

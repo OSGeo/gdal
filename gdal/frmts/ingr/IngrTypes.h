@@ -553,7 +553,7 @@ typedef     struct {
     memcpy( &ff, &bb[nn], ss);  \
     nn += ss;                   \
 }
-    
+
 #define STRC2BUF(bb, nn, ff)    \
 {                               \
     int ss = sizeof(ff);        \

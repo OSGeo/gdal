@@ -73,7 +73,7 @@ public:
 			     int nXSize, int nYSize, int nBands,
 			     GDALDataType eType,
 			     char** papszParmList);
-  
+
 };
 
 /************************************************************************/
@@ -156,7 +156,7 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 	     "Couldn't read image data from FITS file (%d).", status);
     return CE_Failure;
   }
-  
+
   return CE_None;
 }
 
@@ -395,7 +395,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 	     GetDescription());
     return CE_Failure;
   }
-  
+
   // Create the bands
   for (int i = 0; i < nBands; ++i)
     SetBand(i+1, new FITSRasterBand(this, i+1));
@@ -454,7 +454,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
       }
     }
   }
-  
+
   return CE_None;
 }
 
@@ -473,7 +473,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
     return NULL;
   if (memcmp(poOpenInfo->pabyHeader, fitsID, fitsIDLen))
     return NULL;
-  
+
   // Get access mode and attempt to open the file
   int status = 0;
   fitsfile* hFITS = 0;
@@ -607,7 +607,7 @@ void GDALRegister_FITS() {
 
     if( GDALGetDriverByName( "FITS" ) == NULL) {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "FITS" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
@@ -616,7 +616,7 @@ void GDALRegister_FITS() {
                                    "frmt_various.html#FITS" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 Int32 Float32 Float64" );
-        
+
         poDriver->pfnOpen = FITSDataset::Open;
         poDriver->pfnCreate = FITSDataset::Create;
         poDriver->pfnCreateCopy = NULL;

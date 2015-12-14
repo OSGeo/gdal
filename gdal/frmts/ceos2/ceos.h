@@ -254,7 +254,6 @@ typedef struct
     int NumberOfSamples;
     int Increment;
     TBool PossiblyFlipped;
-    
 } CeosRadarCalibration_t;
 
 

@@ -112,10 +112,10 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     nBands = nBandsRet;
 
     SE_RASBANDINFO band;
-    
+
     // grab our other stuff from the first band and hope for the best
     band = paohSDERasterBands[0];
-    
+
     LONG nXSRet, nYSRet;
     nSDEErr = SE_rasbandinfo_get_band_size( band, &nXSRet, &nYSRet );
     if( nSDEErr != SE_SUCCESS )
@@ -126,7 +126,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
 
     nRasterXSize = nXSRet;
     nRasterYSize = nYSRet;
-    
+
     SE_ENVELOPE extent;
     nSDEErr = SE_rasbandinfo_get_extent(band, &extent);
     if( nSDEErr != SE_SUCCESS )
@@ -181,7 +181,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         IssueSDEError( nSDEErr, "SE_rasterattr_create" );
         return CE_Fatal;
     }
-    
+
     // Grab the pointer for our member variable
 
     nSDEErr = SE_stream_create(hConnection, &hStream);
@@ -191,15 +191,15 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         return CE_Fatal;
     }
 
-    
+
     for (int i=0; i < nBands; i++) {
         SetBand( i+1, new SDERasterBand( this, i+1, -1, &(paohSDERasterBands[i]) ));
     }
 
     GDALRasterBand* b = GetRasterBand(1);
-    
+
     eDataType = b->GetRasterDataType();
-    
+
     SE_rasterinfo_free(raster);
 
     return CE_None;
@@ -213,19 +213,19 @@ CPLErr SDEDataset::ComputeRasterInfo() {
 CPLErr SDEDataset::GetGeoTransform( double * padfTransform )
 
 {
-    
+
     if (dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0)
         return CE_Fatal;
- 
+
     padfTransform[0] = dfMinX - 0.5*(dfMaxX - dfMinX) / (GetRasterXSize()-1);
     padfTransform[3] = dfMaxY + 0.5*(dfMaxY - dfMinY) / (GetRasterYSize()-1);
-    
+
     padfTransform[1] = (dfMaxX - dfMinX) / (GetRasterXSize()-1);
     padfTransform[2] = 0.0;
-        
+
     padfTransform[4] = 0.0;
     padfTransform[5] = -1 * (dfMaxY - dfMinY) / (GetRasterYSize()-1);
-    
+
     return CE_None;
 }
 
@@ -245,24 +245,24 @@ const char *SDEDataset::GetProjectionRef()
         IssueSDEError( nSDEErr, "SE_coordref_create" );
         return FALSE;
     }
-    
+
     if (!hRasterColumn){
         CPLError ( CE_Failure, CPLE_AppDefined,
                    "Raster Column not defined");        
         return ("");   
     }
-    
+
     nSDEErr = SE_rascolinfo_get_coordref(hRasterColumn, coordref);
 
     if (nSDEErr == SE_NO_COORDREF) {
         return ("");
     }
-    
+
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_coordref" );
     }    
-    
+
     char szWKT[SE_MAX_SPATIALREF_SRTEXT_LEN];
     nSDEErr = SE_coordref_get_description(coordref, szWKT);
     if (nSDEErr != SE_SUCCESS )
@@ -278,7 +278,7 @@ const char *SDEDataset::GetProjectionRef()
 
     poSRS->exportToWkt(&pszWKT);
     poSRS->Release();
-    
+
     return pszWKT;
 }
 
@@ -304,7 +304,7 @@ SDEDataset::SDEDataset(  )
     nBands              = 0;
     nRasterXSize        = 0;
     nRasterYSize        = 0;
-    
+
     dfMinX              = 0.0;
     dfMinY              = 0.0;
     dfMaxX              = 0.0;
@@ -328,19 +328,19 @@ SDEDataset::~SDEDataset()
 
     if (hRasterColumn)
         SE_rascolinfo_free(hRasterColumn);
-    
+
     if (hStream)
         SE_stream_free(hStream);
-        
+
     if (hAttributes)
         SE_rasterattr_free(hAttributes);
 
     if (hConnection)
         SE_connection_free(hConnection);
-        
+
     if (pszWKT)
         CPLFree(pszWKT);
-    
+
     if (pszLayerName)
         CPLFree(pszLayerName);
 
@@ -356,7 +356,7 @@ SDEDataset::~SDEDataset()
 GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    
+
 /* -------------------------------------------------------------------- */
 /*      If we aren't prefixed with SDE: then ignore this datasource.    */
 /* -------------------------------------------------------------------- */
@@ -438,14 +438,13 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     else {
         poDS->pszColumnName = CPLStrdup( "RASTER" );
     }
-    
+
     CPLDebug ("SDERASTER", "SDE Column name is '%s'", poDS->pszColumnName);
 
     if (CSLCount( papszTokens ) >= 6 ) {
 
         poDS->pszLayerName = CPLStrdup( papszTokens[5] );
 
-        
         nSDEErr =   SE_rascolinfo_create  (&(poDS->hRasterColumn));
         if( nSDEErr != SE_SUCCESS )
         {
@@ -470,7 +469,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
     } else {
- 
+
         nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection, 
                                                 &(poDS->paohSDERasterColumns), 
                                                 &(poDS->nSubDataCount));
@@ -482,7 +481,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.", 
                   poDS->nSubDataCount);
-                  
 
         for (int i = 0; i < poDS->nSubDataCount; i++) {
 
@@ -517,14 +515,14 @@ void GDALRegister_SDE()
 
 {
     GDALDriver  *poDriver;
-    
+
     if (! GDAL_CHECK_VERSION("SDE driver"))
         return;
 
     if( GDALGetDriverByName( "SDE" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "SDE" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

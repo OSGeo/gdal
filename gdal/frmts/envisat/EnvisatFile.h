@@ -100,7 +100,7 @@ int EnvisatFile_SetDatasetInfo( EnvisatFile *self,
                                 int ds_size,
                                 int num_dsr,
                                 int dsr_size );
-                              
+
 int EnvisatFile_ReadDatasetRecordChunk( EnvisatFile *self, 
                                     int ds_index,
                                     int record_index,
@@ -119,7 +119,6 @@ int EnvisatFile_ReadDatasetChunk( EnvisatFile *self,
                                   int offset, 
                                   int size,
                                   void *buffer );
-                                
 
 #ifndef FAILURE
 #  define FAILURE 1
