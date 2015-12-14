@@ -40,7 +40,7 @@ GDALMDReaderKompsat::GDALMDReaderKompsat(const char *pszPath,
                                                          papszSiblingFiles, 0 );
     m_osRPBSourceFilename = GDALFindAssociatedFile( pszPath, "RPC",
                                                          papszSiblingFiles, 0 );
-    
+
     if(m_osIMDSourceFilename.size())
         CPLDebug( "MDReaderDigitalGlobe", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
