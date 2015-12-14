@@ -243,7 +243,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
-    
+
     *ppszInput = (char *) pszInput;
     return OGRERR_NONE;
 }

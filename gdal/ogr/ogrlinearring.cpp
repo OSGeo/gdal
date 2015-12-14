@@ -185,9 +185,9 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
 /*      Get the vertex count.                                           */
 /* -------------------------------------------------------------------- */
     int         nNewNumPoints;
-    
+
     memcpy( &nNewNumPoints, pabyData, 4 );
-    
+
     if( OGR_SWAP( eByteOrder ) )
         nNewNumPoints = CPL_SWAP32(nNewNumPoints);
 
@@ -199,7 +199,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
     if (nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize)
         return OGRERR_CORRUPT_DATA;
     int nBufferMinSize = nPointSize * nNewNumPoints;
-   
+
     if( nBytesAvailable != -1 && nBufferMinSize > nBytesAvailable - 4 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -214,7 +214,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
         Make3D();
     else
         Make2D();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the vertices                                                */
 /* -------------------------------------------------------------------- */
@@ -231,7 +231,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
             memcpy( padfZ + i, pabyData + 4 + 24 * i + 16, 8 );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Byte swap if needed.                                            */
 /* -------------------------------------------------------------------- */
@@ -307,7 +307,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int b3D,
             CPL_SWAPDOUBLE( pabyData + 4 + 8 * i );
         }
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -416,8 +416,7 @@ int OGRLinearRing::isClockwise() const
 
     dx0 = paoPoints[next].x - paoPoints[v].x;
     dy0 = paoPoints[next].y - paoPoints[v].y;
-    
-    
+
     /* following */
     next = v + 1;
     if ( next >= nPointCount - 1 )
@@ -445,12 +444,12 @@ int OGRLinearRing::isClockwise() const
         else if ( crossproduct < 0 )  /* CW */
             return TRUE;
     }
-    
+
     /* ok, this is a degenerate case : the extent of the polygon is less than EPSILON */
     /* or 2 nearly identical points were found */
     /* Try with Green Formula as a fallback, but this is not a guarantee */
     /* as we'll probably be affected by numerical instabilities */
-    
+
     double dfSum = paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
 
     for (i=1; i<nPointCount-1; i++) {

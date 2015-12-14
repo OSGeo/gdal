@@ -465,7 +465,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
         StartPoint( poPoint );
         return;
     }
-    
+
     for(i=0;i<nPointCount-2;i+=2)
     {
         double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
@@ -489,7 +489,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
                     double      dfRatio;
 
                     dfRatio = (dfDistance - dfLength) / dfSegLength;
-                    
+
                     double alpha = alpha0 * (1 - dfRatio) + alpha2 * dfRatio;
                     double x = cx + R * cos(alpha), y = cy + R * sin(alpha);
 
@@ -499,7 +499,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
                     if( getCoordinateDimension() == 3 )
                         poPoint->setZ( padfZ[i] * (1 - dfRatio)
                                     + padfZ[i+2] * dfRatio );
-                    
+
                     return;
                 }
 
@@ -527,7 +527,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
                     if( getCoordinateDimension() == 3 )
                         poPoint->setZ( padfZ[i] * (1 - dfRatio)
                                     + padfZ[i+2] * dfRatio );
-                    
+
                     return;
                 }
 

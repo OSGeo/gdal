@@ -1254,7 +1254,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         CPLString osName = poHorizSRS->GetChild(0)->GetValue();
         osName += " + ";
         osName += "Unnamed Vertical Datum";
-        
+
         SetNode( "COMPD_CS", osName );
         GetRoot()->AddChild( poHorizSRS );
 
@@ -1266,7 +1266,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         osTarget += "|VERT_CS|VERT_DATUM";
 
         SetNode( osTarget, "Unnamed" );
-        
+
         poVERT_CS->GetChild(1)->AddChild( new OGR_SRSNode( "2005" ) );
         SetExtension( osTarget, "PROJ4_GRIDS", pszValue );
     }
@@ -1404,16 +1404,16 @@ static const char *LinearToProj4( double dfLinearConv,
     else if( EQUAL(pszLinearUnits,SRS_UL_FOOT) 
              || fabs(dfLinearConv - CPLAtof(SRS_UL_FOOT_CONV)) < 0.000000001 )
         return "ft";
-    
+
     else if( EQUAL(pszLinearUnits,"IYARD") || dfLinearConv == 0.9144 )
         return "yd";
 
     else if( dfLinearConv == 0.914401828803658 )
         return "us-yd";
-    
+
     else if( dfLinearConv == 0.001 )
         return "mm";
-    
+
     else if( dfLinearConv == 0.01 )
         return "cm";
 
@@ -1686,7 +1686,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 		GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
 		GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0) );
        *ppszProj4 = CPLStrdup( szProj4 );
-       
+
        return OGRERR_NONE;
     }
 
@@ -1856,7 +1856,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_IV) )
     {
         CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
@@ -1865,7 +1865,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_V) )
     {
         CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
@@ -1874,7 +1874,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_VI) )
     {
         CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
@@ -1980,7 +1980,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
     {
         CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),

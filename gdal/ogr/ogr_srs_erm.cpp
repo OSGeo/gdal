@@ -227,10 +227,10 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 
         else if( nEPSGGCSCode == 4322 )
             strcpy( pszDatum, "WGS72DOD" );
-        
+
         else if( nEPSGGCSCode == 4267 )
             strcpy( pszDatum, "NAD27" );
-        
+
         else if( nEPSGGCSCode == 4269 )
             strcpy( pszDatum, "NAD83" );
 
@@ -336,7 +336,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
         strcpy( pszUnits, "FEET" );
     else
         strcpy( pszUnits, "METERS" );
-       
+
     if( EQUAL(pszProj,"RAW") )
         return OGRERR_UNSUPPORTED_SRS;
     else

@@ -768,7 +768,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                   "Geographic system will be used.", pszProjection );
         *piProjSys = PAN_PROJ_NONE;
     }
- 
+
 /* -------------------------------------------------------------------- */
 /*      Translate the datum.                                            */
 /* -------------------------------------------------------------------- */
@@ -801,7 +801,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                   "Datum \"%s\" unsupported by \"Panorama\" GIS. "
                   "Trying to translate an ellipsoid definition.", pszDatum );
 #endif
-       
+
         for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
         {
             if ( aoEllips[i] )

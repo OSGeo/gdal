@@ -1729,7 +1729,7 @@ yyreduce:
             in->nOperation = SWQ_IN;
             in->PushSubExpression( (yyvsp[-5]) );
             in->ReverseSubExpressions();
-            
+
             (yyval) = new swq_expr_node( SWQ_NOT );
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( in );
@@ -2182,7 +2182,7 @@ yyreduce:
 
             delete (yyvsp[-3]);
             (yyvsp[-3]) = NULL;
-                    
+
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
@@ -2251,10 +2251,10 @@ yyreduce:
             }
 
             delete (yyvsp[-4]);
-            
+
             swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( (yyvsp[-1]) );
-                
+
             if( !context->poCurSelect->PushField( count, NULL, TRUE ) )
             {
                 delete count;

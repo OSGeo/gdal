@@ -307,7 +307,7 @@ int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
 
     swq_expr_node *poColumn = psExpr->papoSubExpr[0];
     swq_expr_node *poValue = psExpr->papoSubExpr[1];
-    
+
     if( poColumn->eNodeType != SNT_COLUMN
         || poValue->eNodeType != SNT_CONSTANT )
         return FALSE;
@@ -534,7 +534,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
 
     swq_expr_node *poColumn = psExpr->papoSubExpr[0];
     swq_expr_node *poValue = psExpr->papoSubExpr[1];
-    
+
     if( poColumn->eNodeType != SNT_COLUMN
         || poValue->eNodeType != SNT_CONSTANT )
         return NULL;
@@ -615,18 +615,18 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
         else
             sValue.Integer = (int) poValue->int_value;
         break;
-      
+
       case OFTInteger64:
         if (poValue->field_type == SWQ_FLOAT)
             sValue.Integer64 = (GIntBig) poValue->float_value;
         else
             sValue.Integer64 = poValue->int_value;
         break;
-        
+
       case OFTReal:
         sValue.Real = poValue->float_value;
         break;
-        
+
       case OFTString:
         sValue.String = poValue->string_value;
         break;
@@ -690,7 +690,7 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
             CSLDestroy( papszList );
             return NULL;
         }
-        
+
         if( CSLFindString( papszList, pszFieldName ) == -1 )
             papszList = CSLAddString( papszList, pszFieldName );
     }

@@ -156,7 +156,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
 
 {
     char        *pszWkt = NULL;
-    
+
     if( pszPrefix == NULL )
         pszPrefix = "";
 
@@ -881,7 +881,7 @@ int OGR_G_Equals( OGRGeometryH hGeom, OGRGeometryH hOther )
         CPLError ( CE_Failure, CPLE_ObjectNull, "hOther was NULL in OGR_G_Equals");
         return 0;
     }
-    
+
     return ((OGRGeometry *) hGeom)->Equals( (OGRGeometry *) hOther );
 }
 
@@ -1316,7 +1316,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
             }
         }
     }
-    
+
     *ppszInput = (char*) pszInput;
 
     return OGRERR_NONE;
@@ -1652,7 +1652,7 @@ OGRGeometry::IsValid(  ) const
 
     OGRBoolean bResult = FALSE;
     GEOSGeom hThisGeosGeom = NULL;
-    
+
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     hThisGeosGeom = exportToGEOS(hGEOSCtxt);
 
@@ -1725,7 +1725,7 @@ OGRGeometry::IsSimple(  ) const
 
     OGRBoolean bResult = FALSE;
     GEOSGeom hThisGeosGeom = NULL;
-    
+
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     hThisGeosGeom = exportToGEOS(hGEOSCtxt);
 
@@ -1798,7 +1798,7 @@ OGRGeometry::IsRing(  ) const
 
     OGRBoolean bResult = FALSE;
     GEOSGeom hThisGeosGeom = NULL;
-    
+
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     hThisGeosGeom = exportToGEOS(hGEOSCtxt);
 
@@ -2525,7 +2525,7 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     hOther = poOtherGeom->exportToGEOS(hGEOSCtxt);
     hThis = exportToGEOS(hGEOSCtxt);
-   
+
     int bIsErr = 0;
     double dfDistance = 0.0;
 
@@ -2722,7 +2722,7 @@ OGRGeometry *OGRGeometry::Boundary() const
     return NULL;
 
 #else
-    
+
     GEOSGeom hGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
     OGRGeometry *poOGRProduct = NULL;
@@ -3244,7 +3244,7 @@ OGRGeometry *OGRGeometry::Difference( UNUSED_IF_NO_GEOS const OGRGeometry *poOth
     return NULL;
 
 #else
-    
+
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hOtherGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
@@ -4029,7 +4029,7 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
 
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hOtherGeosGeom = NULL;
-    
+
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     hThisGeosGeom = exportToGEOS(hGEOSCtxt);
 
@@ -4123,7 +4123,7 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
 
     OGRGeometry *poGeom = ((OGRGeometry *) hGeom);
     OGRPoint *poCentroid = ((OGRPoint *) hCentroidPoint);
-    
+
     if( poCentroid == NULL )
         return OGRERR_FAILURE;
 
@@ -4191,7 +4191,7 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
 
         OGRGeometry *poInsidePointGeom = (OGRGeometry *) 
             OGRGeometryFactory::createFromGEOS(hGEOSCtxt,  hOtherGeosGeom );
- 
+
         GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
 
         if (poInsidePointGeom == NULL)
@@ -4781,7 +4781,7 @@ OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
 {
     OGRGeometry *poGeometry = NULL;
     unsigned int ewkbFlags = 0;
-    
+
     if (nLength < 5)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -5031,7 +5031,7 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData
 /*      Get the sub-geometry count.                                     */
 /* -------------------------------------------------------------------- */
     memcpy( &nGeomCount, pabyData + 5, 4 );
-    
+
     if( OGR_SWAP( eByteOrder ) )
         nGeomCount = CPL_SWAP32(nGeomCount);
 
@@ -5168,7 +5168,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
 
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
-    
+
     *ppszInput = (char *) pszInput;
     return OGRERR_NONE;
 }
@@ -5358,7 +5358,7 @@ OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType )
 
     else if( OGR_GT_IsSurface(eFGType) )
         eType = wkbMultiSurface;
-    
+
     else
         return wkbUnknown;
 
