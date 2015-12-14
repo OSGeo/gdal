@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-    
+
 /* ==================================================================== */
 /*      Standard types and defines normally supplied by cpl_port.h.     */
 /* ==================================================================== */
@@ -145,7 +145,7 @@ typedef enum
     CE_Warning = 2,
     CE_Failure = 3,
     CE_Fatal = 4
-  
+
 } CPLErr;
 
 #define CPLE_AppDefined			1
@@ -649,8 +649,6 @@ GDAL_ENTRY int (*pOCTTransform)( OGRCoordinateTransformationH hCT,
 #define SRS_PT_TUNISIA_MINING_GRID                                      \
                                 "Tunisia_Mining_Grid"
 #define SRS_PT_VANDERGRINTEN    "VanDerGrinten"
-
-                                
 
 #define SRS_PP_CENTRAL_MERIDIAN         "central_meridian"
 #define SRS_PP_SCALE_FACTOR             "scale_factor"
