@@ -2064,7 +2064,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                           GetIntSubfield( poFSPT, "RCID", 0 ) );
                 continue;
             }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the first and last nodes                                    */
 /* -------------------------------------------------------------------- */
@@ -2323,12 +2323,12 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
                     GetIntSubfield( poFSPT, "RCID", 0 ) );
                 continue;
             }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the line string.                                         */
 /* -------------------------------------------------------------------- */
             OGRLineString *poLine = new OGRLineString();
-        
+
 /* -------------------------------------------------------------------- */
 /*      Add the start node.                                             */
 /* -------------------------------------------------------------------- */
@@ -2441,7 +2441,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
     {
         int     nPRIM = poRecord->GetIntSubfield( "FRID", 0, "PRIM", 0 );
         OGRwkbGeometryType eGType;
-        
+
         if( nPRIM == PRIM_P )
             eGType = wkbPoint;
         else if( nPRIM == PRIM_L )
@@ -2607,7 +2607,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         return FALSE;
 
     pnRVER = (unsigned char *) poKey->GetSubfieldData( poRVER_SFD, NULL, 0 );
- 
+
     *pnRVER += 1;
 
 /* -------------------------------------------------------------------- */
@@ -3099,7 +3099,7 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
         if( poKeyField == NULL )
             return FALSE;
         const char      *pszKey = poKeyField->GetFieldDefn()->GetName();
-        
+
         if( EQUAL(pszKey,"VRID") || EQUAL(pszKey,"FRID"))
         {
             int         nRCNM = poRecord->GetIntSubfield( pszKey,0, "RCNM",0 );
@@ -3268,7 +3268,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         }
 
         DDFModule oUpdateModule;
-          
+
         //trying current dir first
         char    *pszUpdateFilename = 
             CPLStrdup(CPLResetExtension(pszPath,extension.c_str()));

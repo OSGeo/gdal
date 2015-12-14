@@ -42,7 +42,7 @@ OGRSOSILayer::OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn
     poHeaderDefn  = poHeadDefn;
     nNextFID      = 0;
     poNextSerial  = NULL;
-    
+
     SetDescription( poFeatureDefn->GetName() );
     if( poFeatureDefn->GetGeomFieldCount() > 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poParent->poSRS);
@@ -78,7 +78,7 @@ OGRErr OGRSOSILayer::CreateField (OGRFieldDefn *poField, CPL_UNUSED int bApproxO
 OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
     //short nNavn;
     long nSerial;
-    
+
     const char *pszSosi = NULL;
     switch (poFeatureDefn->GetGeomType()) {
         case wkbPoint: {
@@ -117,7 +117,7 @@ OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
     LC_WsGr(poFileadm); /* Writing the header here! */
     return OGRERR_NONE;
 }
-    
+
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -270,7 +270,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                 poFeature->SetField( iHNr, pszLine);
             }
         }
-        
+
         if( poGeom != NULL )
             poGeom->assignSpatialReference(poParent->poSRS);
 

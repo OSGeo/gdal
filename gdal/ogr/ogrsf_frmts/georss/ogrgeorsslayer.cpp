@@ -225,7 +225,7 @@ void OGRGeoRSSLayer::ResetReading()
 #ifdef HAVE_EXPAT
         if (oParser)
             XML_ParserFree(oParser);
-        
+
         oParser = OGRCreateExpatXMLParser();
         XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
         XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
@@ -904,12 +904,12 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
     {
         return ppoFeatureTab[nFeatureTabIndex++];
     }
-    
+
     if (VSIFEofL(fpGeoRSS))
         return NULL;
-    
+
     char aBuf[BUFSIZ];
-    
+
     CPLFree(ppoFeatureTab);
     ppoFeatureTab = NULL;
     nFeatureTabLength = 0;
@@ -932,7 +932,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
             bStopParsing = TRUE;
         }
     } while (!nDone && !bStopParsing && nFeatureTabLength == 0);
-    
+
     return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
 #else
     return NULL;

@@ -73,14 +73,14 @@ OGRGRASSDataSource::~OGRGRASSDataSource()
 {
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     if ( pszName ) CPLFree( pszName );
     if ( papoLayers ) CPLFree( papoLayers );
     if ( pszGisdbase ) G_free( pszGisdbase );
     if ( pszLocation ) G_free( pszLocation );
     if ( pszMapset ) G_free( pszMapset );
     if ( pszMap ) G_free( pszMap );
-    
+
     if (bOpened)
         Vect_close(&map);
 }
@@ -99,9 +99,9 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
                               int bTestOpen, int bSingleNewFileIn )
 {
     VSIStatBuf  stat;
-    
+
     CPLAssert( nLayers == 0 );
-    
+
     pszName = CPLStrdup( pszNewName ); // Released by destructor
 
 /* -------------------------------------------------------------------- */
@@ -116,7 +116,7 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 	}
 	return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is the given a regular file?                                    */
 /* -------------------------------------------------------------------- */
@@ -206,7 +206,7 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     CPLDebug ( "GRASS", "Num lines = %d", Vect_get_num_lines(&map) );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build a list of layers.                                         */
 /* -------------------------------------------------------------------- */
@@ -224,9 +224,9 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 	    CPLRealloc( papoLayers,  sizeof(OGRGRASSLayer *) * (nLayers+1) );
 	papoLayers[nLayers++] = poLayer;
     }
-    
+
     bOpened = TRUE;
-    
+
     return TRUE;
 }
 
@@ -279,11 +279,11 @@ bool OGRGRASSDataSource::SplitPath( char *path, char **gisdbase,
 {
     char *p, *ptr[5], *tmp;
     int  i = 0;
-    
+
     CPLDebug ( "GRASS", "OGRGRASSDataSource::SplitPath" );
-    
+
     *gisdbase = *location = *mapset = *map = NULL;
-    
+
     if ( !path || strlen(path) == 0 ) 
 	return false;
 

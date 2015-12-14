@@ -305,7 +305,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
     // Write all "set" fields. 
     for( ; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        
+
         OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
 
         if( poFeature->IsFieldSet( iField ) )

@@ -51,7 +51,7 @@ static int tr_isascii( const char * pszCString )
 
         pszCString++;
     }
-    
+
     return TRUE;
 }
 
@@ -71,7 +71,7 @@ int tr_strcmp( const char *pszCString, const XMLCh *panXMLString )
     {
         while( pszCString[i] != 0 && panXMLString[i] != 0 
                && pszCString[i] == panXMLString[i] ) {}
-        
+
         if( pszCString[i] == 0 && panXMLString[i] == 0 )
             return 0;
         else if( pszCString[i] < panXMLString[i] )
@@ -84,12 +84,12 @@ int tr_strcmp( const char *pszCString, const XMLCh *panXMLString )
 /*      Translated UTF8 to XMLCh for comparison.                        */
 /* -------------------------------------------------------------------- */
     XMLCh *panFirst = (XMLCh *) CPLCalloc(strlen(pszCString)+1,sizeof(XMLCh));
-    
+
     tr_strcpy( panFirst, pszCString );
-    
+
     while( panFirst[i] != 0 && panXMLString[i] != 0 
            && panFirst[i] == panXMLString[i] ) {}
-        
+
     if( panFirst[i] == 0 && panXMLString[i] == 0 )
     {
         CPLFree( panFirst );
@@ -132,7 +132,7 @@ void tr_strcpy( XMLCh *panXMLString, const char *pszCString )
     wchar_t *pwszUTF16;
 
     pwszUTF16 = CPLRecodeToWChar( pszCString, CPL_ENC_UTF8, "WCHAR_T" );
-    
+
     for( i = 0; pwszUTF16[i] != 0; i++ )
         panXMLString[i] = pwszUTF16[i];
 
@@ -178,10 +178,10 @@ void tr_strcpy( char *pszCString, const XMLCh *panXMLString )
     for( i = 0; panXMLString[i] != 0; i++ )
         pwszSource[i] = panXMLString[i];
     pwszSource[i] = 0;
-    
+
     char *pszResult = CPLRecodeFromWChar( pwszSource, 
                                           "WCHAR_T", CPL_ENC_UTF8 );
-    
+
     strcpy( pszCString, pszResult );
 
     CPLFree( pwszSource );
@@ -196,7 +196,7 @@ int tr_strlen( const XMLCh *panXMLString )
 
 {
     int nLength = 0;
-    
+
     while( *(panXMLString++) != 0 )
         nLength++;
 

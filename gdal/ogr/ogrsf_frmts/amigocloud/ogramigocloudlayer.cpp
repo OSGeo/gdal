@@ -42,7 +42,7 @@ OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDSIn)
     this->poDS = poDSIn;
 
     poFeatureDefn = NULL;
-    
+
     poCachedObj = NULL;
 
     osFIDColName = "amigo_id";

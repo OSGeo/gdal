@@ -114,7 +114,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 
         psBlock = &(oIt->second);
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Is this a geometry based block?                                 */
 /* -------------------------------------------------------------------- */

@@ -26,8 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
- 
+
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
 
@@ -40,7 +39,7 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
     char *pszErrMsg = NULL;
     //CPLDebug("GPKG", "exec(%s)", pszSQL);
     int rc = sqlite3_exec(poDb, pszSQL, NULL, NULL, &pszErrMsg);
-    
+
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -49,7 +48,7 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
         sqlite3_free( pszErrMsg );
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -79,7 +78,7 @@ OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
         &(poResult->nRowCount), 
         &(poResult->nColCount), 
         &(poResult->pszErrMsg) );
-    
+
     if( poResult->rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -98,7 +97,7 @@ OGRErr SQLResultFree(SQLResult * poResult)
 
     if ( poResult->pszErrMsg )
         sqlite3_free(poResult->pszErrMsg);
-        
+
     return OGRERR_NONE;
 }
 
@@ -106,10 +105,10 @@ const char* SQLResultGetColumn(const SQLResult * poResult, int iColNum)
 {
     if ( ! poResult ) 
         return NULL;
-        
+
     if ( iColNum < 0 || iColNum >= poResult->nColCount )
         return NULL;
-    
+
     return poResult->papszResult[iColNum];
 }
 
@@ -120,13 +119,13 @@ const char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowN
 
     int nCols = poResult->nColCount;
     int nRows = poResult->nRowCount;    
-        
+
     if ( iColNum < 0 || iColNum >= nCols )
         return NULL;
 
     if ( iRowNum < 0 || iRowNum >= nRows )
         return NULL;
-        
+
     return poResult->papszResult[ nCols + iRowNum * nCols + iColNum ];
 }
 
@@ -134,16 +133,16 @@ int SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRow
 {
     if ( ! poResult ) 
         return 0;
-        
+
     int nCols = poResult->nColCount;
     int nRows = poResult->nRowCount;
-    
+
     if ( iColNum < 0 || iColNum >= nCols )
         return 0;
 
     if ( iRowNum < 0 || iRowNum >= nRows )
         return 0;
-    
+
     char *pszValue = poResult->papszResult[ nCols + iRowNum * nCols + iColNum ];
     if ( ! pszValue )
         return 0;
@@ -155,11 +154,11 @@ int SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRow
 GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 {
     CPLAssert( poDb != NULL );
-    
+
     sqlite3_stmt *poStmt;
     int rc;
     GIntBig i;
-    
+
     /* Prepare the SQL */
     rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
     if ( rc != SQLITE_OK )
@@ -169,7 +168,7 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
         if ( err ) *err = OGRERR_FAILURE;
         return 0;
     }
-    
+
     /* Execute and fetch first row */
     rc = sqlite3_step(poStmt);
     if ( rc != SQLITE_ROW )
@@ -178,11 +177,11 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
         sqlite3_finalize(poStmt);
         return 0;
     }
-    
+
     /* Read the integer from the row */
     i = sqlite3_column_int64(poStmt, 0);
     sqlite3_finalize(poStmt);
-    
+
     if ( err ) *err = OGRERR_NONE;
     return i;
 }
@@ -260,7 +259,7 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
         return OFTReal;
     else if ( EQUAL("REAL", pszGpkgType) )
         return OFTReal;
-        
+
     /* String/binary types */
     else if ( STRNCASECMP("TEXT", pszGpkgType, 4) == 0 )
     {
@@ -268,10 +267,10 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
             nMaxWidth = atoi(pszGpkgType+5);
         return OFTString;
     }
-        
+
     else if ( STRNCASECMP("BLOB", pszGpkgType, 4) == 0 )
         return OFTBinary;
-        
+
     /* Date types */
     else if ( EQUAL("DATE", pszGpkgType) )
         return OFTDate;
@@ -386,7 +385,7 @@ int SQLiteFieldFromOGR(OGRFieldType nType)
 GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *pszWkb)
 {
     CPLAssert( poGeometry != NULL );
-    
+
     GByte *pabyPtr;
     GByte byFlags = 0;
     GByte byEnv = 1;
@@ -402,20 +401,20 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
     {
         szHeader += 8*2*iDims;
     }
-    
+
     /* Total BLOB size is header + WKB size */
     size_t szWkb = szHeader + poGeometry->WkbSize();
     GByte *pabyWkb = (GByte *)CPLMalloc(szWkb);
     if (pszWkb)
         *pszWkb = szWkb;
-    
+
     /* Header Magic */
     pabyWkb[0] = 0x47;
     pabyWkb[1] = 0x50;
 
     /* GPKG BLOB Version */
     pabyWkb[2] = 0;
-    
+
     /* Extended? No. */
 
     /* Envelope dimensionality? */
@@ -430,7 +429,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
         /* 2D envelope otherwise */      
         else
             byEnv = 1;
-    
+
     /* Empty? No envelope then. */
     if ( bEmpty )
     {
@@ -438,7 +437,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
         /* Set empty flag */
         byFlags |= (1 << 4);
     }
-    
+
     /* Set envelope flags */
     byFlags |= (byEnv << 1);
 
@@ -448,10 +447,10 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
 
     /* Write flags byte */
     pabyWkb[3] = byFlags;
-    
+
     /* Write srs_id */
     memcpy(pabyWkb+4, &iSrsId, 4);
-    
+
     /* Write envelope */
     if ( ! bEmpty && ! bPoint )
     {
@@ -477,9 +476,9 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
             padPtr[3] = oEnv.MaxY;
         }
     }
-    
+
     pabyPtr = pabyWkb + szHeader;
-    
+
     /* Use the wkbVariantIso for ISO SQL/MM output (differs for 3d geometry) */
     err = poGeometry->exportToWkb(eByteOrder, pabyPtr, wkbVariantIso);
     if ( err != OGRERR_NONE )
@@ -487,7 +486,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
         CPLFree(pabyWkb);
         return NULL;
     }
-    
+
     return pabyWkb; 
 }
 
@@ -529,7 +528,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
         iSrsId = CPL_SWAP32(iSrsId);
     }
     poHeader->iSrsId = iSrsId;
-    
+
     /* Envelope */
     double *padPtr = (double*)(pabyGpkg+8);
     if ( poHeader->iDims >= 2 )
@@ -556,20 +555,20 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
             CPL_SWAPDOUBLE(&(poHeader->MaxZ));
         }
     }
-    
+
     /* Header size in byte stream */
     poHeader->szHeader = 8 + 8*2*(poHeader->iDims);
-    
+
     return OGRERR_NONE;
 }
 
 OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs)
 {
     CPLAssert( pabyGpkg != NULL );
-    
+
     GPkgHeader oHeader;
     OGRGeometry *poGeom;
-    
+
     /* Read header */
     OGRErr err = GPkgHeaderFromWKB(pabyGpkg, &oHeader);
     if ( err != OGRERR_NONE )
@@ -607,17 +606,17 @@ OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
     {
         return OGRERR_FAILURE;
     }
-    
+
     poEnv->MinX = oHeader.MinX;
     poEnv->MaxX = oHeader.MaxX;
     poEnv->MinY = oHeader.MinY;
     poEnv->MaxY = oHeader.MaxY;
-    
+
     // if ( oHeader.iDims == 3 )
     // {
     //     poEnv->MinZ = oHeader.MinZ;
     //     poEnv->MaxZ = oHeader.MaxZ;
     // }
-    
+
     return OGRERR_NONE;
 }

@@ -502,7 +502,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
         {
             unsigned int nSize;
             GByte* pabyDataNewLimit;
- 
+
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             /* Inline reading of DenseInfo structure */

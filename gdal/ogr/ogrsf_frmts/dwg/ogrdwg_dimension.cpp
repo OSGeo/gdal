@@ -66,7 +66,7 @@ OGRFeature *OGRDWGLayer::TranslateDIMENSION( OdDbEntityPtr poEntity )
     OdRxClass *poClass = poEntity->isA();
     const OdString osName = poClass->name();
     const char *pszEntityClassName = (const char *) osName;
-    
+
     if( EQUAL(pszEntityClassName,"AcDbRotatedDimension") )
     {
         OdDbRotatedDimensionPtr poRDim = OdDbDimension::cast( poEntity );
@@ -75,7 +75,7 @@ OGRFeature *OGRDWGLayer::TranslateDIMENSION( OdDbEntityPtr poEntity )
         oTarget1 = poRDim->xLine2Point();
         oArrow1 = poRDim->dimLinePoint();
     }
-    
+
     else if( EQUAL(pszEntityClassName,"AcDbAlignedDimension") )
     {
         OdDbAlignedDimensionPtr poADim = OdDbDimension::cast( poEntity );
@@ -161,12 +161,12 @@ the approach is as above in all these cases.
         dfL1B = oTarget2.y - dfL1M * oTarget2.x;
 
         // convert vec2 + Arrow1 into y = mx + b format, call this L2
-        
+
         dfL2M = dfVec2Y / dfVec2X;
         dfL2B = oArrow1.y - dfL2M * oArrow1.x;
-        
+
         // Compute intersection x = (b2-b1) / (m1-m2)
-        
+
         dfArrowX2 = (dfL2B - dfL1B) / (dfL1M-dfL2M);
         dfArrowY2 = dfL2M * dfArrowX2 + dfL2B;
     }
@@ -199,7 +199,7 @@ the approach is as above in all these cases.
     dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec1X,dfVec1Y);
     dfVec1X *= dfScaleFactor;
     dfVec1Y *= dfScaleFactor;
-    
+
     // vector 2
     dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec2X,dfVec2Y);
     dfVec2X *= dfScaleFactor;
@@ -221,7 +221,7 @@ the approach is as above in all these cases.
     oLine.setPoint( 0, oTarget1.x, oTarget1.y );
     oLine.setPoint( 1, oArrow1.x + dfVec1X, oArrow1.y + dfVec1Y );
     poMLS->addGeometry( &oLine );
-    
+
     // dimension line from Target2 to Arrow2 with a small extension.
     oLine.setPoint( 0, oTarget2.x, oTarget2.y );
     oLine.setPoint( 1, dfArrowX2 + dfVec1X, dfArrowY2 + dfVec1Y );
@@ -282,7 +282,7 @@ the approach is as above in all these cases.
         if( pszValue != NULL )
             nColor = atoi(pszValue);
     }
-        
+
     if( nColor < 1 || nColor > 255 )
         nColor = 8;
 

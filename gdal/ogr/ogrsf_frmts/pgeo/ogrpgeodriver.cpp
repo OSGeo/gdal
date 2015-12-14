@@ -230,7 +230,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
             // Find default library in custom directory
             const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], NULL );
             CPLAssert( 0 != pszDriverFile );
-        
+
             strLibPath = pszDriverFile;
         }
 

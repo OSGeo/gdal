@@ -931,7 +931,7 @@ class TABBinBlockManager
     void        PushGarbageBlockAsLast(GInt32 nBlockPtr);
     GInt32      GetFirstGarbageBlock();
     GInt32      PopGarbageBlock();
-    
+
     void        SetName(const char* pszName);
 };
 
@@ -1077,7 +1077,7 @@ class TABMAPHeaderBlock: public TABRawBinBlock
 
     GInt16      m_nMAPVersionNumber;
     GInt16      m_nBlockSize;
-    
+
     double      m_dCoordsys2DistUnits;
     GInt32      m_nXMin;
     GInt32      m_nYMin;
@@ -1250,7 +1250,7 @@ class TABMAPObjectBlock: public TABRawBinBlock
     int         m_nCurObjectOffset; // -1 if there is no current object.
     int         m_nCurObjectId;     // -1 if there is no current object.
     TABGeomType m_nCurObjectType;   // TAB_GEOM_UNSET if there is no current object.
-    
+
     int         m_bLockCenter;
 
   public:
@@ -1327,7 +1327,7 @@ class TABMAPCoordBlock: public TABRawBinBlock
 
     int         m_nTotalDataSize;       // Num bytes in whole chain of blocks
     int         m_nFeatureDataSize;     // Num bytes for current feature coords
-    
+
     GInt32      m_nFeatureXMin;         // Used to keep track of current 
     GInt32      m_nFeatureYMin;         // feature MBR.
     GInt32      m_nFeatureXMax;
@@ -1519,7 +1519,7 @@ class TABMAPFile
     GInt32      m_YMinFilter;
     GInt32      m_XMaxFilter;
     GInt32      m_YMaxFilter;
-    
+
     int         m_bUpdated;
     int         m_bLastOpWasRead;
     int         m_bLastOpWasWrite;
@@ -1546,9 +1546,9 @@ class TABMAPFile
 
     int         LoadNextMatchingObjectBlock(int bFirstObject);
     TABRawBinBlock *PushBlock( int nFileOffset );
-    
+
     int         ReOpenReadWrite();
-    
+
   public:
     TABMAPFile();
     ~TABMAPFile();
@@ -1794,7 +1794,7 @@ class TABDATFile
     GInt32      m_nFirstRecordPtr;
     GBool       m_bWriteHeaderInitialized;
     GBool       m_bWriteEOF;
-    
+
     int         m_bUpdated;
 
     int         InitWriteHeader();
@@ -1835,7 +1835,7 @@ class TABDATFile
     TABRawBinBlock *GetRecordBlock(int nRecordId);
     GBool       IsCurrentRecordDeleted() { return m_bCurRecordDeletedFlag;};
     int         CommitRecordToFile();
-    
+
     int         MarkAsDeleted();
     int         MarkRecordAsExisting();
 

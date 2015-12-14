@@ -121,7 +121,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s is not a directory.\n",
                       pszName );
-            
+
             return NULL;
         }
     }
@@ -147,7 +147,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
                       "Failed to create directory %s\n"
                       "for shapefile datastore.\n",
                       pszName );
-            
+
             return NULL;
         }
     }
@@ -158,7 +158,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
     OGRShapeDataSource  *poDS = NULL;
 
     poDS = new OGRShapeDataSource();
-    
+
     GDALOpenInfo oOpenInfo( pszName, GA_Update );
     if( !poDS->Open( &oOpenInfo, FALSE, bSingleNewFile ) )
     {

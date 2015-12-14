@@ -92,7 +92,7 @@ static void NTFCount( const char * pszFile )
     fp = VSIFOpen( pszFile, "r" );
     if( fp == NULL )
         return;
-    
+
     do {
         if( poRecord != NULL )
             delete poRecord;
@@ -123,7 +123,7 @@ static void NTFDump( const char * pszFile, char **papszOptions )
     OGRNTFDataSource   oDS;
 
     oDS.SetOptionList( papszOptions );
-    
+
     if( !oDS.Open( pszFile ) )
         return;
 

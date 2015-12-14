@@ -54,7 +54,7 @@ class OGRSDTSLayer : public OGRLayer
 
     void                BuildPolygons();
     int                 bPolygonsBuilt;
-    
+
   public:
                         OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
                         ~OGRSDTSLayer();
@@ -63,11 +63,11 @@ class OGRSDTSLayer : public OGRLayer
     OGRFeature *        GetNextFeature();
 
 //    OGRFeature         *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
 //    GIntBig             GetFeatureCount( int );
-    
+
     int                 TestCapability( const char * );
 };
 
@@ -84,13 +84,13 @@ class OGRSDTSDataSource : public OGRDataSource
     OGRSDTSLayer        **papoLayers;
 
     OGRSpatialReference *poSRS;
-    
+
   public:
                         OGRSDTSDataSource();
                         ~OGRSDTSDataSource();
 
     int                 Open( const char * pszFilename, int bTestOpen );
-    
+
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );

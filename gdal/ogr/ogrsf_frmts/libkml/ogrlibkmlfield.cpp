@@ -269,7 +269,7 @@ static char* OGRLIBKMLSanitizeUTF8String(const char* pszString)
         poOgrLayer      pointer to the layer the feature is in
         poKmlFactory    pointer to the libkml dom factory
         poKmlPlacemark  pointer to the placemark to add to
- 
+
  returns:
         nothing
 
@@ -282,8 +282,6 @@ static char* OGRLIBKMLSanitizeUTF8String(const char* pszString)
 
 
 ******************************************************************************/
-
-
 
 void field2kml (
     OGRFeature * poOgrFeat,
@@ -318,7 +316,7 @@ void field2kml (
 
     struct fieldconfig oFC;
     get_fieldconfig( &oFC );
-    
+
     TimeSpanPtr poKmlTimeSpan = NULL;
 
     int nFields = poOgrFeat->GetFieldCount (  );
@@ -398,7 +396,7 @@ void field2kml (
 
                     continue;
                 }
-                
+
                 /***** timestamp *****/
 
                 else if ( EQUAL ( name, oFC.tsfield ) ) {
@@ -1178,7 +1176,7 @@ void kml2field (
 
     struct fieldconfig oFC;
     get_fieldconfig( &oFC );
-    
+
     /***** name *****/
 
     if ( poKmlFeature->has_name (  ) ) {
@@ -1236,7 +1234,7 @@ void kml2field (
     }
 
     /***** placemark *****/
-    
+
     PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
     GroundOverlayPtr poKmlGroundOverlay = AsGroundOverlay ( poKmlFeature );
     if ( poKmlPlacemark && poKmlPlacemark->has_geometry (  ) ) {
@@ -1320,9 +1318,9 @@ void kml2field (
             }
         }
     }
-    
+
     /***** camera *****/
-    
+
     else if ( poKmlPlacemark &&
               poKmlPlacemark->has_abstractview (  ) &&
               poKmlPlacemark->get_abstractview()->IsA( kmldom::Type_Camera) ) {

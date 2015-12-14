@@ -94,7 +94,7 @@ void    DGN2IEEEDouble(void * dbl)
 /*      Save the bits that we are discarding so we can round properly   */
 /* -------------------------------------------------------------------- */
     rndbits = dt.lo & 0x00000007;
-        
+
     dt.lo = dt.lo >> 3;
     dt.lo = (dt.lo & 0x1fffffff) | (dt.hi << 29);
 
@@ -141,7 +141,7 @@ void    IEEE2DGNDouble(void * dbl)
     GInt32      exponent;
     GInt32      sign;
     GByte       *src,*dest;
-        
+
 #ifdef CPL_LSB
     src  = (GByte *) dbl;
     dest = (GByte *) &dt;
@@ -219,7 +219,7 @@ void    IEEE2DGNDouble(void * dbl)
         dt.hi = dt.hi | (dt.lo >> 29);
         dt.hi = dt.hi & 0x007fffff;
         dt.hi = dt.hi | (exponent << 23) | sign;
-            
+
         dt.lo = dt.lo << 3;
     }
 

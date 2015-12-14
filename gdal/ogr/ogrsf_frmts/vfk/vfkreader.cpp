@@ -90,7 +90,7 @@ VFKReader::~VFKReader()
 
     if (m_poFD)
         VSIFClose(m_poFD);
-    
+
     /* clear data blocks */
     for (int i = 0; i < m_nDataBlockCount; i++)
         delete m_papoDataBlock[i];
@@ -118,7 +118,7 @@ char *GetDataBlockName(const char *pszLine)
 
 /*!
   \brief Read a line from file
- 
+
   \param bRecode do recoding
 
   \return a NULL terminated string which should be freed with CPLFree().
@@ -127,11 +127,11 @@ char *VFKReader::ReadLine(bool bRecode)
 {
     const char *pszRawLine;
     char *pszLine;
-    
+
     pszRawLine = CPLReadLine(m_poFD);
     if (pszRawLine == NULL)
         return NULL;
-    
+
     if (bRecode)
         pszLine = CPLRecode(pszRawLine,
                             m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
@@ -155,9 +155,9 @@ int VFKReader::ReadDataBlocks()
 {
     char       *pszLine, *pszBlockName;
     bool        bInHeader;
-    
+
     IVFKDataBlock *poNewDataBlock;
-    
+
     CPLAssert(NULL != m_pszFilename);
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
@@ -198,10 +198,10 @@ int VFKReader::ReadDataBlocks()
             /* process 'D' records in the header section */
             AddInfo(pszLine);
         }
-        
+
         CPLFree(pszLine);
     }
-    
+
     return m_nDataBlockCount;
 }
 
@@ -411,7 +411,7 @@ IVFKDataBlock *VFKReader::GetDataBlock(int i) const
 {
     if (i < 0 || i >= m_nDataBlockCount)
         return NULL;
-    
+
     return m_papoDataBlock[i];
 }
 
@@ -445,9 +445,9 @@ int VFKReader::LoadGeometry()
     for (int i = 0; i < m_nDataBlockCount; i++) {
         nfeatures += m_papoDataBlock[i]->LoadGeometry();
     }
-    
+
     CPLDebug("OGR_VFK", "VFKReader::LoadGeometry(): invalid=%ld", nfeatures);
-    
+
     return static_cast<int>(nfeatures);
 }
 

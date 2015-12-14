@@ -119,7 +119,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         return FALSE;
 
     oReader.Initialize( fp );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm we have a header section.                               */
 /* -------------------------------------------------------------------- */
@@ -164,7 +164,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
         if( EQUAL(szLineBuf,"SECTION") )
             ReadValue(szLineBuf);
-        
+
         if( EQUAL(szLineBuf,"CLASSES") )
         {
             while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1 
@@ -179,10 +179,10 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /* -------------------------------------------------------------------- */
         if( EQUAL(szLineBuf,"ENDSEC") )
             ReadValue(szLineBuf);
-        
+
         if( EQUAL(szLineBuf,"SECTION") )
             ReadValue(szLineBuf);
-        
+
         if( EQUAL(szLineBuf,"TABLES") )
         {
             ReadTablesSection();
@@ -209,10 +209,10 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
     {
         if( EQUAL(szLineBuf,"ENDSEC") )
             ReadValue(szLineBuf);
-        
+
         if( EQUAL(szLineBuf,"SECTION") )
             ReadValue(szLineBuf);
-        
+
         if( EQUAL(szLineBuf,"BLOCKS") )
         {
             ReadBlocksSection();
@@ -303,14 +303,14 @@ void OGRDXFDataSource::ReadLayerDefinition()
             oLayerProperties["Linetype"] = ACTextUnescape(szLineBuf,
                                                           GetEncoding());
             break;
-            
+
           case 62:
             oLayerProperties["Color"] = szLineBuf;
 
             if( atoi(szLineBuf) < 0 ) // Is layer off?
                 oLayerProperties["Hidden"] = "1";
             break;
-            
+
           case 70:
             oLayerProperties["Flags"] = szLineBuf;
             if( atoi(szLineBuf) & 0x01 ) // Is layer frozen?
@@ -329,7 +329,7 @@ void OGRDXFDataSource::ReadLayerDefinition()
 
     if( oLayerProperties.size() > 0 )
         oLayerTable[osLayerName] = oLayerProperties;
-    
+
     if( nCode == 0 )
         UnreadValue();
 }
@@ -385,7 +385,7 @@ void OGRDXFDataSource::ReadLineTypeDefinition()
               osLineTypeDef += "g";
           }
           break;
-            
+
           default:
             break;
         }
@@ -393,7 +393,7 @@ void OGRDXFDataSource::ReadLineTypeDefinition()
 
     if( osLineTypeDef != "" )
         oLineTypeTable[osLineTypeName] = osLineTypeDef;
-    
+
     if( nCode == 0 )
         UnreadValue();
 }
@@ -485,7 +485,7 @@ void OGRDXFDataSource::ReadHeaderSection()
         // fallback to the default 
         osEncoding = CPL_ENC_ISO8859_1;
     }
-                                       
+
     if( CPLGetConfigOption( "DXF_ENCODING", NULL ) != NULL )
         osEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
 

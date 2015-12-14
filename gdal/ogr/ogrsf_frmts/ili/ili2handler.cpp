@@ -37,9 +37,9 @@
 
 CPL_CVSID("$Id$");
 
-// 
+//
 // constants
-// 
+//
 static const char* const ILI2_DATASECTION = "DATASECTION";
 
 //
@@ -103,7 +103,7 @@ void ILI2Handler::startElement(
 
       // create the dom tree
       DOMElement *elem = (DOMElement*)dom_doc->createElement(qname);
-      
+
       // add all attributes
       unsigned int len = (unsigned int)(attrs.getLength());
       for (unsigned int index = 0; index < len; index++)
@@ -167,11 +167,11 @@ void ILI2Handler::characters( const XMLCh *const chars,
 
 void ILI2Handler::characters( const XMLCh *const chars,
                      CPL_UNUSED const unsigned int length ) {
-  
+
   // add the text element
   if (level >= 3) {
     char *tmpC = XMLString::transcode(chars);
-    
+
     // only add the text if it is not empty
     if (trim(tmpC) != "")
       dom_elem->appendChild(dom_doc->createTextNode(chars));

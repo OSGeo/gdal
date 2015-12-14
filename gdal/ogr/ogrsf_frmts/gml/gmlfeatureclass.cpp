@@ -607,7 +607,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                         CPLAtof(CPLGetXMLValue( psDSI, "ExtentYMax", "0.0" )) );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect property definitions.                                   */
 /* -------------------------------------------------------------------- */
@@ -633,7 +633,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
             poPDefn = new GMLPropertyDefn( 
                 pszName, CPLGetXMLValue( psThis, "ElementPath", NULL ) );
-            
+
             poPDefn->SetNullable(bNullable);
             if( EQUAL(pszType,"Untyped") )
                 poPDefn->SetType( GMLPT_Untyped );
@@ -736,7 +736,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
 
     CPLCreateXMLElementAndValue( psRoot, "Name", GetName() );
     CPLCreateXMLElementAndValue( psRoot, "ElementPath", GetElementName() );
-    
+
     if( m_nGeometryPropertyCount > 1 )
     {
         for(int i=0; i < m_nGeometryPropertyCount; i++)
@@ -751,7 +751,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             if( poGeomFDefn->GetSrcElement() != NULL && strlen(poGeomFDefn->GetSrcElement()) > 0 )
                 CPLCreateXMLElementAndValue( psPDefnNode, "ElementPath", 
                                              poGeomFDefn->GetSrcElement() );
-            
+
             if( poGeomFDefn->GetType() != 0 /* wkbUnknown */ )
             {
                 char szValue[128];
@@ -770,7 +770,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     else if( m_nGeometryPropertyCount == 1 )
     {
         GMLGeometryPropertyDefn* poGeomFDefn = m_papoGeometryProperty[0];
-        
+
         if( strlen(poGeomFDefn->GetName()) > 0 )
             CPLCreateXMLElementAndValue( psRoot, "GeometryName", 
                                          poGeomFDefn->GetName() );
@@ -778,7 +778,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         if( poGeomFDefn->GetSrcElement() != NULL && strlen(poGeomFDefn->GetSrcElement()) > 0 )
             CPLCreateXMLElementAndValue( psRoot, "GeometryElementPath", 
                                          poGeomFDefn->GetSrcElement() );
-        
+
         if( poGeomFDefn->GetType() != 0 /* wkbUnknown */ )
         {
             char szValue[128];
@@ -845,7 +845,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         if( m_pszExtraInfo )
             CPLCreateXMLElementAndValue( psDSI, "ExtraInfo", m_pszExtraInfo );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      emit property information.                                      */
 /* -------------------------------------------------------------------- */
@@ -865,12 +865,12 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
           case GMLPT_Untyped:
             pszTypeName = "Untyped";
             break;
-            
+
           case GMLPT_String:
           case GMLPT_Boolean:
             pszTypeName = "String";
             break;
-            
+
           case GMLPT_Integer:
           case GMLPT_Short:
           case GMLPT_Integer64:

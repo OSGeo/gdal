@@ -89,14 +89,14 @@ int OGRRECDataSource::Open( const char * pszFilename )
 
 {
     pszName = CPLStrdup( pszFilename );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the extension is REC.                               */
 /* -------------------------------------------------------------------- */
     if( !(strlen(pszFilename) > 4 &&
           EQUAL(pszFilename+strlen(pszFilename)-4,".rec") ) )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -106,7 +106,7 @@ int OGRRECDataSource::Open( const char * pszFilename )
     fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read a line, and verify that it consists of at least one        */
 /*      field that is a number greater than zero.                       */

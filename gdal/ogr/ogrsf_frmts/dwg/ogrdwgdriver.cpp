@@ -72,7 +72,7 @@ void OGRDWGDriver::Initialize()
         return;
 
     bInitialized = TRUE;
-    
+
     OdGeContext::gErrorFunc = ErrorHandler;
 
     odInitialize(&oServices);
@@ -117,7 +117,7 @@ OGRDataSource *OGRDWGDriver::Open( const char * pszFilename, int bUpdate )
 
 {
     Initialize();
-    
+
     OGRDWGDataSource   *poDS = new OGRDWGDataSource();
 
     if( !poDS->Open( &oServices, pszFilename ) )

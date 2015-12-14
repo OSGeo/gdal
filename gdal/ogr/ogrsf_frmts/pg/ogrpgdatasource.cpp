@@ -372,7 +372,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     pszName = CPLStrdup( pszNewName );
-    
+
     CPLString osConnectionName(pszName);
     const char* apszOpenOptions[] = { "dbname", "port", "user", "password",
                                       "host", "active_schema", "schemas", "tables" };
@@ -388,9 +388,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             osConnectionName += pszVal;
         }
     }
-    
+
     char* pszConnectionName = CPLStrdup(osConnectionName);
-    
+
 
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */
@@ -775,7 +775,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             // Turning off sequential scans for PostGIS < 0.8
             hResult = OGRPG_PQexec(hPGConn, "SET ENABLE_SEQSCAN = OFF");
-            
+
             CPLDebug( "PG", "SET ENABLE_SEQSCAN=OFF" );
         }
         else
@@ -1065,7 +1065,7 @@ void OGRPGDataSource::LoadTables()
                                 "SELECT c.relname, n.nspname, c.relkind FROM pg_class c, pg_namespace n "
                                 "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid)",
                                 pszAllowedRelations);
-                            
+
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
         if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
@@ -1476,7 +1476,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
-      
+
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
           pszTableName = OGRPGCommonLaunderName( pszDotPos + 1, "PG" ); //skip "."
       else
@@ -1623,13 +1623,13 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     if( poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
-        
+
     const char *pszGeometryType = OGRToOGCGeomType(eType);
 
     int bDifferedCreation = CSLTestBoolean(CPLGetConfigOption( "OGR_PG_DIFFERED_CREATION", "YES" ));
     if( !bHavePostGIS )
         bDifferedCreation = FALSE;  /* to avoid unnecessary implementation and testing burden */
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
@@ -1651,7 +1651,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                              CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) ? " UNLOGGED": "",
                              OGRPGEscapeColumnName(pszSchemaName).c_str(), 
                              OGRPGEscapeColumnName(pszTableName).c_str());
-    
+
     if( eType != wkbNone && !bHavePostGIS )
     {
         pszGFldName = "wkb_geometry";
@@ -1735,7 +1735,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult( hResult );
     }
-    
+
     if( !bDifferedCreation )
     {
         SoftStartTransaction();
@@ -1794,7 +1794,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
             OGRPGClearResult( hResult );
         }
-        
+
         if( eType != wkbNone && bHavePostGIS && bCreateSpatialIndex )
         {
     /* -------------------------------------------------------------------- */
@@ -1853,7 +1853,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetForcedDimension(nForcedDimension);
     poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
     poLayer->SetDifferedCreation(bDifferedCreation, osCreateTable);
-    
+
 
     /* HSTORE_COLUMNS existed at a time during GDAL 1.10dev */
     const char* pszHSTOREColumns = CSLFetchNameValue( papszOptions, "HSTORE_COLUMNS" );
@@ -1942,7 +1942,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
         return NULL;
 
     int  i;
-    
+
     /* first a case sensitive check */
     /* do NOT force loading of all registered tables */
     for( i = 0; i < nLayers; i++ )
@@ -1954,7 +1954,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
             return poLayer;
         }
     }
-        
+
     /* then case insensitive */
     for( i = 0; i < nLayers; i++ )
     {
@@ -2376,7 +2376,7 @@ OGRErr OGRPGDataSource::CommitTransaction()
     {
         CPLAssert(nSoftTransactionLevel > 0);
         bSavePointActive = FALSE;
-        
+
         eErr = DoTransactionCommand("RELEASE SAVEPOINT ogr_savepoint");
     }
     else
@@ -2476,7 +2476,7 @@ OGRErr OGRPGDataSource::SoftCommitTransaction()
 
 {
     EndCopy();
-    
+
     /*CPLDebug("PG", "poDS=%p SoftCommitTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
 
@@ -2509,7 +2509,7 @@ OGRErr OGRPGDataSource::SoftRollbackTransaction()
 
 {
     EndCopy();
-    
+
     /*CPLDebug("PG", "poDS=%p SoftRollbackTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
 
@@ -2600,7 +2600,7 @@ class OGRPGNoResetResultLayer : public OGRPGLayer
     virtual int         TestCapability( const char * ) { return FALSE; }
 
     virtual OGRFeature *GetNextFeature();
-    
+
     virtual CPLString   GetFromClauseForGetExtent() { CPLAssert(FALSE); return ""; }
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) { poGFldDefn->nSRSId = -1; }
 };
@@ -2709,7 +2709,7 @@ const char* OGRPGDataSource::GetMetadataItem(const char* pszKey,
             osDebugLastTransactionCommand = "";
             return pszRet;
         }
-            
+
     }
     return OGRDataSource::GetMetadataItem(pszKey, pszDomain);
 }
@@ -2747,7 +2747,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
-        
+
         GetLayerCount();
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
@@ -2818,11 +2818,11 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
             poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
 
             OGRPGClearResult( hResult );
-            
+
             osCommand.Printf( "CLOSE %s", "executeSQLCursor" );
             hResult = OGRPG_PQexec(hPGConn, osCommand );
             OGRPGClearResult( hResult );
-            
+
             SoftCommitTransaction();
 
             if( poSpatialFilter != NULL )

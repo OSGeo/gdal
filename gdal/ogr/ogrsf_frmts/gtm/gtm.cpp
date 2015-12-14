@@ -276,7 +276,7 @@ GTM::GTM()
     firstWaypointOffset = 0;
     actualWaypointOffset = 0;
     waypointFetched = 0;
-  
+
     firstTrackpointOffset = 0;
     actualTrackpointOffset = 0;
     trackpointFetched = 0;
@@ -301,7 +301,7 @@ bool GTM::Open(const char* pszFilenameIn)
 
     if (pGTMFile != NULL)
         VSIFCloseL(pGTMFile);
-        
+
     CPLFree(this->pszFilename);
     this->pszFilename = CPLStrdup(pszFilenameIn);
 
@@ -335,7 +335,7 @@ bool GTM::isValid()
         return FALSE;
     }
     buffer[12] = '\0';
-    
+
 /* -------------------------------------------------------------------- */
 /*      If it looks like a GZip header, this may be a .gtz file, so     */
 /*      try opening with the /vsigzip/ prefix                           */
@@ -366,7 +366,7 @@ bool GTM::isValid()
         }
         CPLFree(pszGZIPFileName);
     }
-    
+
     version = CPL_LSBINT16PTR(buffer);
     /*Skip string length */
     szHeader = buffer + 2;
@@ -382,7 +382,6 @@ bool GTM::readHeaderNumbers()
     if (pGTMFile == NULL)
         return FALSE;
 
-   
     /* I'm supposing that the user has already checked if the file is
        valid.  */
     /* Also, I'm ignoring some header parameters that are unnecessary
@@ -557,22 +556,22 @@ Waypoint* GTM::fetchNextWaypoint()
 
     /* Read Icon */
     icon = readUShort(pGTMFile);
-    
+
     /* Display number */
     readUChar(pGTMFile);
-    
+
     /* Waypoint date */
-    
+
     wptdate = readInt(pGTMFile);
     if (wptdate != 0)
         wptdate += GTM_EPOCH;
-    
+
     /* Rotation text angle */
     readUShort(pGTMFile);
-    
+
     /* Altitude */
     altitude = readFloat(pGTMFile);
-  
+
     Waypoint* poWaypoint = new Waypoint(latitude, longitude, altitude,
                                         name, comment, (int) icon, wptdate);
 
@@ -617,7 +616,7 @@ Track* GTM::fetchNextTrack()
     char* pszName;
     unsigned char type;
     int color;
-  
+
 
     /* Point to the actual track offset */
     if ( VSIFSeekL(pGTMFile, actualTrackOffset, SEEK_SET) != 0)
@@ -639,10 +638,10 @@ Track* GTM::fetchNextTrack()
 
     /* Read type */
     type = readUChar(pGTMFile);
-  
+
     /* Read color */
     color = readInt(pGTMFile);
-    
+
     Track* poTrack = new Track(pszName, type, color);
 
     CPLFree(pszName);
@@ -669,7 +668,7 @@ Track* GTM::fetchNextTrack()
         return NULL;
     }
     poTrack->addPoint(longitude, latitude, datetime, altitude);
-  
+
     do
     {
         /* NOTE: Parameters are passed by reference */
@@ -702,7 +701,7 @@ vsi_l_offset GTM::findFirstWaypointOffset()
     /* Skip header and datum */
     if ( VSIFSeekL(pGTMFile, headerSize + DATUM_SIZE, SEEK_SET) != 0)
         return 0;
-  
+
     /* Skip images */
     unsigned short stringSize;
     for (int i = 0; i < n_maps; ++i)
@@ -720,7 +719,7 @@ vsi_l_offset GTM::findFirstWaypointOffset()
         /* skip image comment string */
         if ( VSIFSeekL(pGTMFile, stringSize, SEEK_CUR) != 0)
             return 0;
-    
+
         /* skip the others image parameters */
         if ( VSIFSeekL(pGTMFile, 30, SEEK_CUR) != 0)
             return 0;
@@ -744,7 +743,7 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
     /* Seek file to the first Waypoint */
     if (VSIFSeekL(pGTMFile, firstWaypointOffset, SEEK_SET) != 0)
         return 0;
-  
+
     unsigned short stringSize;
     int bSuccess;
     /* Skip waypoints */
@@ -755,12 +754,12 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
             return 0;
         /* Read string comment size */
         stringSize = readUShort(pGTMFile, &bSuccess);
-    
+
         /* Skip to the next Waypoint */
         if (bSuccess == FALSE || VSIFSeekL(pGTMFile, stringSize + 15, SEEK_CUR) != 0)
             return 0;
     }
-  
+
     /* Skip waypoint styles */
     /* If we don't have waypoints, we don't have waypoint styles, even
        though the nwptstyles is telling the contrary. */
@@ -805,7 +804,7 @@ bool GTM::readTrackPoints(double& latitude, double& longitude, GIntBig& datetime
 
     /* Read latitude */
     latitude = readDouble(pGTMFile);
-  
+
     /* Read longitude */
     longitude = readDouble(pGTMFile);
 
@@ -813,11 +812,11 @@ bool GTM::readTrackPoints(double& latitude, double& longitude, GIntBig& datetime
     datetime = readInt(pGTMFile);
     if (datetime != 0)
         datetime += GTM_EPOCH;
-    
+
     /* Read start flag */
     if ( !readFile( &start, 1, 1 ) )
         return FALSE;
-        
+
     /* Read altitude */
     altitude = readFloat(pGTMFile);
 

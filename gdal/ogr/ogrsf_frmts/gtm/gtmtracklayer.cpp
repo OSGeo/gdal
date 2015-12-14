@@ -234,13 +234,13 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
                   "Features without geometry not supported by GTM writer in track layer." );
         return OGRERR_FAILURE;
     }
-   
+
     if (NULL != poCT)
     {
         poGeom = poGeom->clone();
         poGeom->transform( poCT );
     }
-    
+
     switch( poGeom->getGeometryType() )
     {
     case wkbLineString:
@@ -284,7 +284,7 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
         }
         break;
     }
-    
+
     default:
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -295,7 +295,7 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
         return OGRERR_FAILURE;
     }
     }
-    
+
     if (NULL != poCT)
         delete poGeom;
 
@@ -307,7 +307,7 @@ OGRFeature* GTMTrackLayer::GetNextFeature()
 {
     if (bError)
         return NULL;
-        
+
     while (poDS->hasNextTrack())
     {
         Track* poTrack = poDS->fetchNextTrack();
@@ -320,7 +320,7 @@ OGRFeature* GTMTrackLayer::GetNextFeature()
         }
         OGRFeature* poFeature = new OGRFeature( poFeatureDefn );
         OGRLineString* lineString = new OGRLineString ();
-    
+
         for (int i = 0; i < poTrack->getNumPoints(); ++i)
         {
             const TrackPoint* psTrackPoint = poTrack->getPoint(i);
@@ -351,7 +351,7 @@ GIntBig GTMTrackLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
         return poDS->getNTracks();
-        
+
     return OGRLayer::GetFeatureCount(bForce);
 }
 

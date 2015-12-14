@@ -171,7 +171,7 @@ class FileGDBGeomField: public FileGDBField
         double             GetMOrigin() const { return dfMOrigin; }
         double             GetMScale() const { return dfMScale; }
         double             GetMTolerance() const { return dfMTolerance; }
-        
+
         int                Has3D() const { return bHas3D; }
 };
 
@@ -265,7 +265,7 @@ class FileGDBTable
         void                        Init();
 
         GUIntBig                    nFilterXMin, nFilterXMax, nFilterYMin, nFilterYMax;
-        
+
         GUInt32                     nOffsetHeaderEnd;
 
         int                         ReadTableXHeader();
@@ -299,7 +299,7 @@ class FileGDBTable
        const FileGDBIndex*      GetIndex(int i) const { return apoIndexes[i]; }
 
        vsi_l_offset             GetOffsetInTableForRow(int iRow);
-       
+
        int                      HasDeletedFeaturesListed() const { return bHasDeletedFeaturesListed; }
 
        /* Next call to SelectRow() or GetFieldValue() invalidates previously returned values */

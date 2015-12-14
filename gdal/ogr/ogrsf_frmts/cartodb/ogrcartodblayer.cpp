@@ -42,7 +42,7 @@ OGRCARTODBLayer::OGRCARTODBLayer(OGRCARTODBDataSource* poDSIn)
     this->poDS = poDSIn;
 
     poFeatureDefn = NULL;
-    
+
     poCachedObj = NULL;
 
     ResetReading();

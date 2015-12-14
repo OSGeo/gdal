@@ -606,7 +606,7 @@ int S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
 
         nXCOO = CPL_LSBWORD32((GInt32) floor(padfX[i] * nCOMF + 0.5));
         nYCOO = CPL_LSBWORD32((GInt32) floor(padfY[i] * nCOMF + 0.5));
-        
+
         if( padfZ == NULL )
         {
             memcpy( pabyRawData + i * 8, &nYCOO, 4 );
@@ -667,7 +667,7 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         dfX = poPoint->getX();
         dfY = poPoint->getY();
         dfZ = poPoint->getZ();
-        
+
         if( dfZ == 0.0 )
             WriteGeometry( poRec, 1, &dfX, &dfY, NULL );
         else
@@ -754,7 +754,7 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         szName[2] = (char) ((nRCID & 0xff00) >> 8);
         szName[3] = (char) ((nRCID & 0xff0000) >> 16);
         szName[4] = (char) ((nRCID & 0xff000000) >> 24);
-        
+
         poRec->SetStringSubfield( "VRPT", 0, "NAME", 0, szName, 5 );
         poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 0, 
                                   poFeature->GetFieldAsInteger( "ORNT_0") );
@@ -764,7 +764,7 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
                                   poFeature->GetFieldAsInteger( "TOPI_0") );
         poRec->SetIntSubfield   ( "VRPT", 0, "MASK", 0, 
                                   poFeature->GetFieldAsInteger( "MASK_0") );
-        
+
         nRCID = poFeature->GetFieldAsInteger( "NAME_RCID_1");
         szName[0] = RCNM_VC;
         szName[1] = nRCID & 0xff;
@@ -861,7 +861,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
                               poFeature->GetFieldAsInteger( "OBJL") );
     poRec->SetIntSubfield   ( "FRID", 0, "RVER", 0, 1 ); /* always new insert*/
     poRec->SetIntSubfield   ( "FRID", 0, "RUIN", 0, 1 );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Add the FOID                                                    */
 /* -------------------------------------------------------------------- */
@@ -877,7 +877,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      ATTF support.                                                   */
 /* -------------------------------------------------------------------- */
-    
+
     if( poRegistrar != NULL 
         && poClassContentExplorer->SelectClass( poFeature->GetDefnRef()->GetName() )
         && !WriteATTF( poRec, poFeature ) )
@@ -947,7 +947,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
             // AGEN
             szLNAM[1] = GetHEXChar( papszLNAM_REFS[i] + 0 );
             szLNAM[0] = GetHEXChar( papszLNAM_REFS[i] + 2 );
-            
+
             // FIDN
             szLNAM[5] = GetHEXChar( papszLNAM_REFS[i] + 4 );
             szLNAM[4] = GetHEXChar( papszLNAM_REFS[i] + 6 );
@@ -1004,7 +1004,7 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
 /*      Loop over all attributes.                                       */
 /* -------------------------------------------------------------------- */
     papszAttrList = poClassContentExplorer->GetAttributeList(NULL); 
-    
+
     for( int iAttr = 0; papszAttrList[iAttr] != NULL; iAttr++ )
     {
         int iField = poFeature->GetFieldIndex( papszAttrList[iAttr] );
@@ -1013,7 +1013,7 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         int nATTLInt;
         GUInt16 nATTL;
         const char *pszATVL;
-        
+
         if( iField < 0 )
             continue;
 
@@ -1028,7 +1028,7 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         nATTL = CPL_LSBWORD16( nATTL );
         memcpy( achRawData + nRawSize, &nATTL, 2 );
         nRawSize += 2;
-        
+
         pszATVL = poFeature->GetFieldAsString( iField );
 
         // Special hack to handle special "empty" marker in integer fields.
@@ -1048,7 +1048,7 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         memcpy( achRawData + nRawSize, pszATVL, strlen(pszATVL) );
         nRawSize += static_cast<int>(strlen(pszATVL));
         achRawData[nRawSize++] = DDF_UNIT_TERMINATOR;
-    
+
         nACount++;
     }
 

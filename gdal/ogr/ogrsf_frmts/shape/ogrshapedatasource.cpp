@@ -112,11 +112,11 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 
 {
     CPLAssert( nLayers == 0 );
-    
+
     const char * pszNewName = poOpenInfo->pszFilename;
     int bUpdate = poOpenInfo->eAccess == GA_Update;
     papszOpenOptions = CSLDuplicate( poOpenInfo->papszOpenOptions );
-    
+
     pszName = CPLStrdup( pszNewName );
 
     bDSUpdate = bUpdate;
@@ -132,7 +132,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
     if( bSingleFileDataSource )
         return TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
@@ -145,7 +145,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build a list of filenames we figure are Shape files.            */
 /* -------------------------------------------------------------------- */
@@ -378,7 +378,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     }
     else
         hDBF = NULL;
-        
+
     if( hDBF == NULL && hSHP == NULL )
         return FALSE;
 
@@ -568,7 +568,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
                   OGRGeometryTypeToName(eType) );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      What filename do we use, excluding the extension?               */
 /* -------------------------------------------------------------------- */
@@ -611,7 +611,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         pszFilename = CPLStrdup(CPLFormFilename( NULL, pszFilenameWithoutExt, "shp" ));
 
         hSHP = SHPCreateLL( pszFilename, nShapeType, (SAHooks*) VSI_SHP_GetHook(l_b2GBLimit) );
-        
+
         if( hSHP == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -621,7 +621,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
             CPLFree( pszFilenameWithoutExt );
             return NULL;
         }
-        
+
         SHPSetFastModeReadObject( hSHP, TRUE );
 
         CPLFree( pszFilename );
@@ -920,7 +920,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
         }
         return NULL;
     }
-    
+
 /* ==================================================================== */
 /*      Handle command to drop a spatial index.                         */
 /* ==================================================================== */
@@ -965,7 +965,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /*      Parse into keywords.                                            */
 /* -------------------------------------------------------------------- */
     char **papszTokens = CSLTokenizeString( pszStatement );
-    
+
     if( CSLCount(papszTokens) < 5
         || !EQUAL(papszTokens[0],"CREATE")
         || !EQUAL(papszTokens[1],"SPATIAL")

@@ -265,7 +265,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
             }
         }
     }
-    
+
     if( poGeom == NULL )
         return NULL;
 

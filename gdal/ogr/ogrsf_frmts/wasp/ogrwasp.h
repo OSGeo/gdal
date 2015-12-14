@@ -199,7 +199,7 @@ class OGRWAsPDataSource : public OGRDataSource
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );
-    
+
     virtual int        TestCapability( const char * );
     OGRErr             Load( bool bSilent = false );
 };
@@ -216,7 +216,7 @@ class OGRWAsPDriver : public OGRSFDriver
 
     virtual const char*         GetName() { return "WAsP"; }
     virtual OGRDataSource*      Open( const char *, int );
-    
+
     virtual OGRDataSource       *CreateDataSource( const char *pszName,
                                                    char ** = NULL );
 

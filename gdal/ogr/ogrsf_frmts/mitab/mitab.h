@@ -219,7 +219,7 @@ class IMapInfoFile : public OGRLayer
     virtual int GetBounds(double &dXMin, double &dYMin, 
                           double &dXMax, double &dYMax,
                           GBool bForce = TRUE ) = 0;
-    
+
     virtual OGRSpatialReference *GetSpatialRef() = 0;
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
@@ -242,7 +242,7 @@ class IMapInfoFile : public OGRLayer
                                GBool bIndexed=FALSE, GBool bUnique=FALSE, 
                                int bApproxOK = TRUE) = 0;
     virtual OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
-    
+
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) = 0;
 
     virtual OGRErr CreateFeature(TABFeature *poFeature) = 0;
@@ -256,7 +256,7 @@ class IMapInfoFile : public OGRLayer
     virtual int  GetProjInfo(TABProjInfo *poPI) = 0;
     virtual int  SetProjInfo(TABProjInfo *poPI) = 0;
     virtual int  SetMIFCoordSys(const char *pszMIFCoordSys) = 0;
-    
+
     static int GetTABType( OGRFieldDefn *poField, TABFieldType* peTABType,
                            int *pnWidth);
 
@@ -341,7 +341,7 @@ class TABFile: public IMapInfoFile
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
-    
+
     virtual OGRErr      SyncToDisk();
 
     ///////////////
@@ -359,9 +359,9 @@ class TABFile: public IMapInfoFile
     virtual int GetBounds(double &dXMin, double &dYMin, 
                           double &dXMax, double &dYMax,
                           GBool bForce = TRUE );
-    
+
     virtual OGRSpatialReference *GetSpatialRef();
-    
+
     static OGRSpatialReference* GetSpatialRefFromTABProj(const TABProjInfo& sTABProj);
     static int                  GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
                                                          TABProjInfo& sTABProj, int& nParmCount);
@@ -430,7 +430,7 @@ class TABView: public IMapInfoFile
     TABAccess   m_eAccessMode;
     char        **m_papszTABFile;
     char        *m_pszVersion;
-    
+
     char        **m_papszTABFnames;
     TABFile     **m_papoTABFiles;
     int         m_numTABFiles;
@@ -481,7 +481,7 @@ class TABView: public IMapInfoFile
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    
+
     ///////////////
     // Read access specific stuff
     //
@@ -495,7 +495,7 @@ class TABView: public IMapInfoFile
     virtual int GetBounds(double &dXMin, double &dYMin, 
                           double &dXMax, double &dYMax,
                           GBool bForce = TRUE );
-    
+
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
@@ -600,7 +600,7 @@ class TABSeamless: public IMapInfoFile
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    
+
     ///////////////
     // Read access specific stuff
     //
@@ -614,7 +614,7 @@ class TABSeamless: public IMapInfoFile
     virtual int GetBounds(double &dXMin, double &dYMin, 
                           double &dXMax, double &dYMax,
                           GBool bForce = TRUE );
-    
+
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
@@ -681,7 +681,7 @@ class MIFFile: public IMapInfoFile
     TABFieldType *m_paeFieldType;
     GBool       *m_pabFieldIndexed;
     GBool       *m_pabFieldUnique;
-    
+
     double       m_dfXMultiplier;
     double       m_dfYMultiplier;
     double       m_dfXDisplacement;
@@ -728,7 +728,7 @@ class MIFFile: public IMapInfoFile
     //
     GBool       m_bPreParsed;
     GBool       m_bHeaderWrote;
-    
+
     int         WriteMIFHeader();
     void UpdateExtents(double dfX,double dfY);
 
@@ -757,7 +757,7 @@ class MIFFile: public IMapInfoFile
     ///////////////
     // Read access specific stuff
     //
-    
+
     virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
     virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
     virtual OGRFeatureDefn *GetLayerDefn();
@@ -767,7 +767,7 @@ class MIFFile: public IMapInfoFile
     virtual int GetBounds(double &dXMin, double &dYMin, 
                           double &dXMax, double &dYMax,
                           GBool bForce = TRUE );
-    
+
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
@@ -778,7 +778,7 @@ class MIFFile: public IMapInfoFile
     virtual GBool IsFieldUnique(int nFieldId);
 
     virtual int GetVersion() { return m_nVersion; };
-    
+
     ///////////////
     // Write access specific stuff
     //
@@ -1261,7 +1261,7 @@ class TABCustomPoint: public TABPoint,
 
     const char *GetSymbolNameRef()      { return GetFontNameRef(); };
     void        SetSymbolName(const char *pszName) {SetFontName(pszName);};
-    
+
     GByte       GetCustomSymbolStyle()              {return m_nCustomStyle;}
     void        SetCustomSymbolStyle(GByte nStyle)  {m_nCustomStyle = nStyle;}
 };
@@ -1809,7 +1809,7 @@ class TABCollection: public TABFeature,
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
-    
+
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
 

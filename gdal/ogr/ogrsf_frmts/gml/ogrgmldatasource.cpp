@@ -231,7 +231,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     if( poReader )
@@ -677,7 +677,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                            CSLT_STRIPENDSPACES );
     bool        bHaveSchema = false;
     bool        bSchemaDone = false;
- 
+
 /* -------------------------------------------------------------------- */
 /*      Is some GML Feature Schema (.gfs) TEMPLATE required ?           */
 /* -------------------------------------------------------------------- */
@@ -834,16 +834,16 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                     {
                         if( oNamespace.bUseGlobalSRSName )
                             bUseGlobalSRSName = true;
-                        
+
                         for( size_t iTypename = 0;
                                     iTypename < oNamespace.aoFeatureTypes.size();
                                     iTypename ++ )
                         {
                             const char* pszElementToFind = NULL;
-                            
+
                             GMLRegistryFeatureType& oFeatureType =
                                         oNamespace.aoFeatureTypes[iTypename];
-                            
+
                             if ( oFeatureType.osElementValue.size() ) 
                                 pszElementToFind = CPLSPrintf("%s:%s>%s",
                                                               oNamespace.osPrefix.c_str(),
@@ -973,7 +973,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             std::vector<GMLFeatureClass*> aosClasses;
             bool bFullyUnderstood = false;
             bHaveSchema = GMLParseXSD( osXSDFilename, aosClasses, bFullyUnderstood );
-            
+
             if( bHaveSchema && !bFullyUnderstood && bIsWFSJointLayer )
             {
                 CPLDebug("GML", "Schema found, but only partially understood. Cannot be used in a WFS join context");
@@ -1191,9 +1191,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         papoLayers[nLayers] = TranslateGMLSchema(poReader->GetClass(nLayers));
         nLayers++;
     }
-    
 
-    
+
+
     return true;
 }
 
@@ -1503,7 +1503,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             eFType = OFTStringList;
         else
             eFType = OFTString;
-        
+
         OGRFieldDefn oField( poProperty->GetName(), eFType );
         if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
           oField.SetName(poProperty->GetName()+4);
@@ -2139,7 +2139,7 @@ void OGRGMLDataSource::InsertHeader()
     for( iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
     {
         OGRFeatureDefn *poFDefn = GetLayer(iLayer)->GetLayerDefn();
-        
+
 /* -------------------------------------------------------------------- */
 /*      Emit initial stuff for a feature type.                          */
 /* -------------------------------------------------------------------- */
@@ -2407,12 +2407,12 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
         int nSchemaSize = (int) VSIFTellL( fpOutput ) - nSchemaStart;
         char *pszSchema = (char *) CPLMalloc(nSchemaSize+1);
-    
+
         VSIFSeekL( fpOutput, nSchemaStart, SEEK_SET );
 
         VSIFReadL( pszSchema, 1, nSchemaSize, fpOutput );
         pszSchema[nSchemaSize] = '\0';
-    
+
 /* -------------------------------------------------------------------- */
 /*      Move file data down by "schema size" bytes from after <?xml>    */
 /*      header so we have room insert the schema.  Move in pretty       */
@@ -2432,7 +2432,7 @@ void OGRGMLDataSource::InsertHeader()
             VSIFSeekL( fpOutput, nEndOfUnmovedData - nBytesToMove + nSchemaSize, 
                       SEEK_SET );
             VSIFWriteL( pszChunk, 1, nBytesToMove, fpOutput );
-        
+
             nEndOfUnmovedData -= nBytesToMove;
         }
 

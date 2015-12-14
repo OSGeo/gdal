@@ -161,7 +161,7 @@ typedef struct {
 
 typedef struct {
     DGNElemCore core;   /* must be at first position ! */
-    
+
     int         font_id;       /*!< Microstation font id, no list available*/
     int         justification; /*!< Justification, see DGNJ_* */
     double      length_mult;   /*!< Char width in master (if square) */
@@ -184,7 +184,7 @@ typedef struct {
 
 typedef struct {
     DGNElemCore core;   /* must be at first position ! */
-    
+
     int         totlength;     /*!< Total length of surface in words,
                                     excluding the first 19 words
                                     (header + totlength field) */
@@ -244,7 +244,7 @@ typedef struct {
     double      origin_x;       /*!< X origin of UOR space in master units(?)*/
     double      origin_y;       /*!< Y origin of UOR space in master units(?)*/
     double      origin_z;       /*!< Z origin of UOR space in master units(?)*/
-    
+
     long        uor_per_subunit;   /*!< UOR per subunit. */
     char        sub_units[3];      /*!< User name for subunits (2 chars)*/
     long        subunits_per_master; /*!< Subunits per master unit. */
@@ -271,10 +271,10 @@ typedef struct {
     char        name[7];           /*!< Cell name */
  unsigned short cclass;            /*!< Class bitmap */
  unsigned short levels[4];         /*!< Levels used in cell */
-    
+
     DGNPoint    rnglow;            /*!< X/Y/Z minimums for cell */
     DGNPoint    rnghigh;           /*!< X/Y/Z maximums for cell */
-    
+
     double      trans[9];          /*!< 2D/3D Transformation Matrix */
     DGNPoint    origin;            /*!< Cell Origin */
 
@@ -306,7 +306,7 @@ typedef struct {
  unsigned short levels[4];         /*!< Levels used in cell */
 
     char        description[28];   /*!< Description */
-    
+
 } DGNElemCellLibrary;
 
 /** 
@@ -418,7 +418,7 @@ typedef struct {
 
 typedef struct {
   DGNElemCore core;   /* must be at first position ! */
- 
+
   int       totlength; 	 	/*!<  Total length of the node
 				      (bytes = totlength * 2 + 38) */
   int       numelems;    	/*!<  Number of text strings */
@@ -787,7 +787,7 @@ unsigned char CPL_DLL *
                              int *pnEntityNum, int *pnMSLink, int *pnLinkSize);
 
 /* Write API */
-    
+
 int  CPL_DLL  DGNWriteElement( DGNHandle, DGNElemCore * );
 int  CPL_DLL  DGNResizeElement( DGNHandle, DGNElemCore *, int );
 DGNHandle CPL_DLL 
@@ -861,7 +861,7 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
                          DGNPoint *psRangeLow, DGNPoint *psRangeHigh, 
                          DGNPoint *psOrigin, double dfXScale, double dfYScale,
                          double dfRotation );
-                     
+
 DGNElemCore CPL_DLL *
 DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName, 
                               short nClass, short *panLevels, 

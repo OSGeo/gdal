@@ -233,7 +233,7 @@ class OGRPGLayer : public OGRLayer
     virtual const char *GetFIDColumn();
 
     virtual OGRErr      SetNextByIndex( GIntBig nIndex );
-    
+
     OGRPGDataSource    *GetDS() { return poDS; }
 
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) = 0;
@@ -284,23 +284,23 @@ class OGRPGTableLayer : public OGRPGLayer
 
     int                 bRetrieveFID;
     int                 bHasWarnedAlreadySetFID;
-    
+
     char              **papszOverrideColumnTypes;
     int                 nForcedSRSId;
     int                 nForcedDimension;
     int                 bCreateSpatialIndexFlag;
     int                 bInResetReading;
-    
+
     int                 bAutoFIDOnCreateViaCopy;
     int                 bUseCopyByDefault;
-    
+
     int                 bDifferedCreation;
     CPLString           osCreateTable;
-    
+
     int                 iFIDAsRegularColumnIndex;
 
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
-    
+
     OGRErr              RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField );
     OGRErr              RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField );
 
@@ -396,7 +396,7 @@ class OGRPGResultLayer : public OGRPGLayer
     char                *pszGeomTableSchemaName;
 
     CPLString           osWHERE;
-    
+
     virtual CPLString   GetFromClauseForGetExtent()
         { CPLString osStr("(");
           osStr += pszRawStatement; osStr += ")"; return osStr; }
@@ -467,7 +467,7 @@ class OGRPGDataSource : public OGRDataSource
     CPLString           GetCurrentSchema();
 
     int                 nUndefinedSRID;
-    
+
     char               *pszForcedTables;
     char              **papszSchemaList;
     int                 bHasLoadTables;
@@ -512,7 +512,7 @@ class OGRPGDataSource : public OGRDataSource
     int                 GetLayerCount();
     OGRLayer            *GetLayer( int );
     OGRLayer            *GetLayerByName(const char * pszName);
-    
+
     virtual void        FlushCache(void);
 
     virtual OGRLayer    *ICreateLayer( const char *,

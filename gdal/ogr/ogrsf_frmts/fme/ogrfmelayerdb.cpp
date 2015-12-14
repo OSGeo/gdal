@@ -157,7 +157,7 @@ OGRFeature *OGRFMELayerDB::GetNextFeature()
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
- 
+
 void OGRFMELayerDB::ResetReading()
 
 {
@@ -265,11 +265,11 @@ int OGRFMELayerDB::CreateReader()
 
     for( i = 0; i < poUserDirectives->entries(); i++ )
         poUDC->append( (*poUserDirectives)(i) );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Update the IDLIST to just select the desired table.             */
 /* -------------------------------------------------------------------- */
-    
+
     for( i = 0; i < poUDC->entries(); i++ )
     {
         if( EQUAL((const char *) (*poUDC)(i),"IDLIST") )
@@ -310,18 +310,18 @@ int OGRFMELayerDB::CreateReader()
                 poUDC->getElement( i+1, *poMacroValue );
 
                 m_poFilterGeom->getEnvelope( &oEnvelope );
-                
+
                 if( STARTS_WITH_CI(pszReaderName, "SDE") )
                 {
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MinX );
                     SetMacro( poMacroValue, "_SDE3MINX", szSEARCH_ENVELOPE );
-                    
+
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MinY );
                     SetMacro( poMacroValue, "_SDE3MINY", szSEARCH_ENVELOPE );
-                    
+
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MaxX );
                     SetMacro( poMacroValue, "_SDE3MAXX", szSEARCH_ENVELOPE );
-                    
+
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MaxY );
                     SetMacro( poMacroValue, "_SDE3MAXY", szSEARCH_ENVELOPE );
                 }
@@ -329,13 +329,13 @@ int OGRFMELayerDB::CreateReader()
                 {
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MinX );
                     SetMacro( poMacroValue, "_ORACLE_MINX", szSEARCH_ENVELOPE);
-                    
+
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MinY );
                     SetMacro( poMacroValue, "_ORACLE_MINY", szSEARCH_ENVELOPE);
-                    
+
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MaxX );
                     SetMacro( poMacroValue, "_ORACLE_MAXX", szSEARCH_ENVELOPE);
-                    
+
                     sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MaxY );
                     SetMacro( poMacroValue, "_ORACLE_MAXY", szSEARCH_ENVELOPE);
                 }
@@ -350,7 +350,7 @@ int OGRFMELayerDB::CreateReader()
             }
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create new reader with desired constraints.                     */
 /* -------------------------------------------------------------------- */

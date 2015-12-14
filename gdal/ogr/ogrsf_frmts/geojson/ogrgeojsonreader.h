@@ -72,7 +72,7 @@ struct GeoJSONObject
         eFeature,
         eFeatureCollection
     };
-    
+
     enum CoordinateDimension
     {
         eMinCoordinateDimension = 2,

@@ -1915,7 +1915,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
     }
-    
+
     /* setting the SQLite cache */
     if( iSqliteCacheMB > 0 )
     {
@@ -1934,7 +1934,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
             sqlite3_free( pszErrMsg );
         }
     }
-	
+
     if( !SetupParser() )
     {
         gmlHugeFileCleanUp ( &helper );

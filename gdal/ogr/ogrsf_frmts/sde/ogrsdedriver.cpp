@@ -59,7 +59,7 @@ const char *OGRSDEDriver::GetName()
 
 OGRDataSource *OGRSDEDriver::Open( const char * pszFilename,
                                    int bUpdate )
-    
+
 {
     OGRSDEDataSource     *poDS;
 
@@ -80,7 +80,7 @@ OGRDataSource *OGRSDEDriver::Open( const char * pszFilename,
 
 OGRDataSource *OGRSDEDriver::CreateDataSource( const char * pszName,
                                                char **papszOptions)
-    
+
 {
     OGRSDEDataSource     *poDS;
 

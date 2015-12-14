@@ -41,7 +41,7 @@ using kmldom::PlacemarkPtr;
         poOgrLayer      pointer to the layer the feature is in
         poKmlFactory    pointer to the libkml dom factory
         poKmlPlacemark  pointer to the placemark to add to
- 
+
  returns:
         nothing
 

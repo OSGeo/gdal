@@ -61,20 +61,20 @@ private:
                        ~OGRILI2Layer();
 
     OGRErr              ISetFeature(OGRFeature *poFeature);
-    
+
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
     GIntBig             GetFeatureCount( int bForce = TRUE );
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     CPLString           GetIliGeomType( const char* cFieldName) { return oGeomFieldInfos[cFieldName].iliGeomType; };
 
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
-    
+
     int                 TestCapability( const char * );
 };
 
@@ -86,7 +86,7 @@ class OGRILI2DataSource : public OGRDataSource
 {
   private:
     std::list<OGRLayer *> listLayer;
-    
+
     char        *pszName;
     ImdReader   *poImdReader;
     IILI2Reader *poReader;

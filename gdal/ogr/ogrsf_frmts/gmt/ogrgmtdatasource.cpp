@@ -58,7 +58,7 @@ OGRGmtDataSource::~OGRGmtDataSource()
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 }
 
@@ -209,7 +209,7 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
         {
             char *pszEscapedWkt = CPLEscapeString( pszValue, -1,
                                                    CPLES_BackslashQuotable );
-                                                   
+
             VSIFPrintfL( fp, "# @Jw\"%s\"\n", pszEscapedWkt );
             CPLFree( pszValue );
             CPLFree( pszEscapedWkt );

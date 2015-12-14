@@ -1158,7 +1158,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
 
         return OGRERR_NONE;
     }
-    
+
     else if( m_poReader->IsWFSJointLayer() && m_nDepth == m_nDepthFeature + 1 )
     {
     }

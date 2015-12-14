@@ -60,7 +60,7 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
         if( !bFoundCompatibleFile )
             return FALSE;
     }
- 
+
     OGRTigerDataSource  *poDS = new OGRTigerDataSource;
 
     if( !poDS->Open( poOpenInfo->pszFilename, TRUE ) )

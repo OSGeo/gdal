@@ -94,7 +94,7 @@ MIDDATAFile::MIDDATAFile()
     m_szLastRead[0] = '\0';
     m_szSavedLine[0] = '\0';
     m_pszDelimiter = "\t"; // Encom 2003 (was NULL)
-    
+
     m_dfXMultiplier = 1.0;
     m_dfYMultiplier = 1.0;
     m_dfXDisplacement = 0.0;
@@ -185,7 +185,7 @@ int MIDDATAFile::Close()
 {
     if (m_fp == NULL)
         return 0;
-   
+
     // Close file
     VSIFCloseL(m_fp);
     m_fp = NULL;
@@ -203,10 +203,10 @@ int MIDDATAFile::Close()
 const char *MIDDATAFile::GetLine()
 {
     const char *pszLine;
-    
+
     if (m_eAccessMode == TABRead)
     {
-        
+
         pszLine = CPLReadLineL(m_fp);
 
         if (pszLine == NULL)
@@ -296,7 +296,7 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
     char **papszToken ;
 
     papszToken = CSLTokenizeString(pszString);
-    
+
     //   printf("%s\n",pszString);
 
     if (CSLCount(papszToken) == 0)

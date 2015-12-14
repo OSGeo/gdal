@@ -95,12 +95,12 @@ class OGRDGNDataSource : public OGRDataSource
 {
     OGRDGNLayer     **papoLayers;
     int                 nLayers;
-    
+
     char                *pszName;
     DGNHandle           hDGN;
 
     char                **papszOptions;
-    
+
   public:
                         OGRDGNDataSource();
                         ~OGRDGNDataSource();

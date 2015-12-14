@@ -100,12 +100,12 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetKey( poSession );
-    
+
     if( oGetKey.GetPrimaryKeys( pszFeatureTableName, NULL, NULL ) 
         && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
+
         if( oGetKey.Fetch() ) // more than one field in key! 
         {
             CPLFree( pszFIDColumn );
@@ -152,7 +152,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
         CPLFree( pszFeatureTableName );
         return CE_Failure;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      If we got a geometry column, does it exist?  Is it binary?      */
 /* -------------------------------------------------------------------- */
@@ -312,7 +312,7 @@ int OGRWalkTableLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
-        
+
     else 
         return OGRWalkLayer::TestCapability( pszCap );
 }

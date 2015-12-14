@@ -97,7 +97,7 @@ public:
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) = 0;
 
     int TestCapability( const char* pszCap );
-    
+
     OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK );
 
 protected:
@@ -109,9 +109,9 @@ protected:
     OGRFeatureDefn* poFeatureDefn;
     int nNextFID;
     int nTotalFCount;
-    
+
     int bError;
-    
+
     static OGRErr CheckAndFixCoordinatesValidity( double& pdfLatitude, double& pdfLongitude );
 
 };
@@ -199,7 +199,7 @@ public:
     bool hasNextWaypoint();
     Waypoint* fetchNextWaypoint();
     void rewindWaypoint();
-  
+
     /* Functions to handle with tracks */
     int getNTracks();
     bool hasNextTrack();
@@ -224,7 +224,7 @@ public:
     int incNumTracks() { return ++numTracks; };
 private:
     VSILFILE* fpOutput;
-  
+
     /* GTM is not a contiguous file. We need two temporary files because
        trackpoints and tracks are stored separated and we don't know in
        advance how many trackpoints and tracks the new file will
@@ -239,10 +239,10 @@ private:
 
     GTM* poGTMFile;
     char* pszName;
-  
+
     OGRGTMLayer **papoLayers;
     int nLayers;
-  
+
     bool bIssuedCTError;
 
     /* Used for creating a new file */

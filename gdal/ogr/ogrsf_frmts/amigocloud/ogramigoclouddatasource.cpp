@@ -168,7 +168,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
                                     CPLGetConfigOption("AMIGOCLOUD_API_KEY", ""));
 
     CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
-    
+
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
 
     OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
@@ -728,9 +728,9 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
+
     CPLDebug( "AMIGOCLOUD", "RunSQL Response:%s", psResult->pabyData );
-    
+
     json_tokener* jstok = NULL;
     json_object* poObj = NULL;
 

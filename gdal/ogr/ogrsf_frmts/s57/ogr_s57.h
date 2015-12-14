@@ -64,7 +64,7 @@ class OGRS57Layer : public OGRLayer
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextUnfilteredFeature();
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual GIntBig     GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
@@ -90,7 +90,7 @@ class OGRS57DataSource : public OGRDataSource
     OGRSpatialReference *poSpatialRef;
 
     char                **papszOptions;
-    
+
     int                 nModules;
     S57Reader           **papoModules;
 
@@ -100,14 +100,14 @@ class OGRS57DataSource : public OGRDataSource
 
     int                 bExtentsSet;
     OGREnvelope         oExtents;
-    
+
   public:
                         OGRS57DataSource(char** papszOpenOptions = NULL);
                         ~OGRS57DataSource();
 
     void                SetOptionList( char ** );
     const char         *GetOption( const char * );
-    
+
     int                 Open( const char * pszName );
     int                 Create( const char *pszName, char **papszOptions );
 
@@ -137,7 +137,7 @@ class OGRS57Driver : public GDALDriver
   public:
                  OGRS57Driver();
                 ~OGRS57Driver();
-                
+
     static GDALDataset *Open( GDALOpenInfo* poOpenInfo );
     static GDALDataset *Create( const char * pszName,
                                 int nBands, int nXSize, int nYSize, GDALDataType eDT,

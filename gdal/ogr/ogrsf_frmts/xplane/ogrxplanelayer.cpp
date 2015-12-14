@@ -290,7 +290,7 @@ int  OGRXPlaneLayer::TestCapability( const char * pszCap )
         if (poReader == NULL && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
             return TRUE;
     }
-            
+
     return FALSE;
 }
 

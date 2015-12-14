@@ -58,7 +58,7 @@ OGRSXFLayer::OGRSXFLayer(VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const cha
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    
+
     poFeatureDefn->SetGeomType(wkbUnknown);
     if (poFeatureDefn->GetGeomFieldCount() != 0)
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(stSXFMapDescription.pSpatRef);

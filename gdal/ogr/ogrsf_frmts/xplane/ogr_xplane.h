@@ -46,10 +46,10 @@ class OGRXPlaneLayer : public OGRLayer
     int                nFeatureArraySize;
     int                nFeatureArrayMaxSize;
     int                nFeatureArrayIndex;
-    
+
     OGRFeature**       papoFeatures;
     OGRSpatialReference *poSRS;
-    
+
     OGRXPlaneDataSource* poDS;
 
   protected:
@@ -61,7 +61,7 @@ class OGRXPlaneLayer : public OGRLayer
 
   public:
     virtual                   ~OGRXPlaneLayer();
-    
+
     void                      SetDataSource(OGRXPlaneDataSource* poDS);
 
     void                      SetReader(OGRXPlaneReader* poReader);
@@ -109,7 +109,7 @@ class OGRXPlaneDataSource : public OGRDataSource
     virtual const char* GetName() { return pszName; }
 
     virtual int         TestCapability( const char * pszCap );
-    
+
     void                ReadWholeFileIfNecessary();
 };
 

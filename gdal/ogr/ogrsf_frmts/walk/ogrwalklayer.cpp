@@ -356,7 +356,7 @@ void OGRWalkLayer::LookupSpatialRef( const char * pszMemo )
     if ( strlen(pszProj4) > 0 )
     {
         poSRS = new OGRSpatialReference();
-    
+
         if( poSRS->importFromProj4( pszProj4 ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 

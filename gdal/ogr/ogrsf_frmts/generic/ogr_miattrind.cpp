@@ -176,10 +176,10 @@ OGRErr OGRMILayerAttrIndex::Initialize( const char *pszIndexPathIn,
     /* try to process the XML string directly */
     if (STARTS_WITH_CI(pszIndexPathIn, "<OGRMILayerAttrIndex>"))
         return LoadConfigFromXML(pszIndexPathIn);
-    
+
     pszMetadataFilename = CPLStrdup(
         CPLResetExtension( pszIndexPathIn, "idm" ) );
-    
+
     pszMIINDFilename = CPLStrdup(CPLResetExtension( pszIndexPathIn, "ind" ));
 
 /* -------------------------------------------------------------------- */
@@ -217,10 +217,10 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 /*      Open the index file.                                            */
 /* -------------------------------------------------------------------- */
     poINDFile = new TABINDFile();
-    
+
     if (pszMIINDFilename == NULL)
         pszMIINDFilename = CPLStrdup(CPLGetXMLValue(psRoot,"MIIDFilename",""));
-    
+
     if( pszMIINDFilename == NULL )
         return OGRERR_FAILURE;
 
@@ -337,7 +337,7 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
 
     CPLCreateXMLElementAndValue( psRoot, "MIIDFilename", 
                                  CPLGetFilename( pszMIINDFilename ) );
-    
+
     for( int i = 0; i < nIndexCount; i++ )
     {
         OGRMIAttrIndex *poAI = papoIndexList[i];
@@ -347,11 +347,11 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
 
         CPLCreateXMLElementAndValue( psIndex, "FieldIndex", 
                                      CPLSPrintf( "%d", poAI->iField ) );
-                                     
+
         CPLCreateXMLElementAndValue( psIndex, "FieldName", 
                                      poLayer->GetLayerDefn()->GetFieldDefn(poAI->iField)->GetNameRef() );
 
-                                     
+
         CPLCreateXMLElementAndValue( psIndex, "IndexIndex", 
                                      CPLSPrintf( "%d", poAI->iIndex ) );
     }
@@ -378,7 +378,7 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
     VSIFClose( fp );
 
     CPLFree( pszRawXML );
-    
+
     return eErr;
 }
 
@@ -392,11 +392,11 @@ OGRErr OGRMILayerAttrIndex::IndexAllFeatures( int iField )
     OGRFeature *poFeature;
 
     poLayer->ResetReading();
-    
+
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
         OGRErr eErr = AddToIndex( poFeature, iField );
-        
+
         delete poFeature;
 
         if( eErr != OGRERR_NONE )
@@ -428,7 +428,7 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
         {
             delete poINDFile;
             poINDFile = NULL;
-            
+
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Failed to create %s.",
                       pszMIINDFilename );
@@ -576,7 +576,7 @@ OGRErr OGRMILayerAttrIndex::DropIndex( int iField )
     delete poAI;
 
     nIndexCount--;
-             
+
 /* -------------------------------------------------------------------- */
 /*      Save the new configuration, or if there is nothing left try     */
 /*      to clean up the index files.                                    */
@@ -605,7 +605,7 @@ void OGRMILayerAttrIndex::AddAttrInd( int iField, int iINDIndex )
     nIndexCount++;
     papoIndexList = (OGRMIAttrIndex **) 
         CPLRealloc(papoIndexList, sizeof(void*) * nIndexCount);
-    
+
     papoIndexList[nIndexCount-1] = poAttrInd;
 }
 
@@ -827,12 +827,12 @@ GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, GIntBig* panFIDList, in
             panFIDList = (GIntBig *) CPLRealloc(panFIDList, sizeof(GIntBig)* (*nLength));
         }
         panFIDList[(*nFIDCount)++] = nFID - 1;
-        
+
         nFID = poINDFile->FindNext( iIndex, pabyKey );
     }
 
     panFIDList[*nFIDCount] = OGRNullFID;
-    
+
     return panFIDList;
 }
 

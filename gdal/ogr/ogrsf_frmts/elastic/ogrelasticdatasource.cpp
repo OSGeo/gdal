@@ -122,17 +122,17 @@ OGRErr OGRElasticDataSource::DeleteLayer( int iLayer )
     CPLString osLayerName = m_papoLayers[iLayer]->GetName();
     CPLString osIndex = m_papoLayers[iLayer]->GetIndexName();
     CPLString osMapping = m_papoLayers[iLayer]->GetMappingName();
-    
+
     CPLDebug( "ES", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete m_papoLayers[iLayer];
     memmove(m_papoLayers + iLayer, m_papoLayers + iLayer + 1,
             (m_nLayers - 1 - iLayer) * sizeof(OGRLayer*));
     m_nLayers --;
-    
+
     Delete(CPLSPrintf("%s/%s/_mapping/%s",
                       GetURL(), osIndex.c_str(), osMapping.c_str()));
-    
+
     return OGRERR_NONE;
 }
 
@@ -197,7 +197,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                          !STARTS_WITH_CI((const char*)psResult->pabyData, "{}");
         CPLHTTPDestroyResult(psResult);
     }
-    
+
     // Restore error state
     CPLErrorSetState( eLastErrorType, nLastErrorNo, osLastErrorMsg );
 
@@ -243,7 +243,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                 VSIFCloseL(fp);
             }
         }
-        
+
         if( !UploadFile(CPLSPrintf("%s/%s/%s/_mapping",
                             GetURL(), osLaunderedName.c_str(), m_pszMappingName),
                         pszLayerMapping) )
@@ -251,7 +251,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             return NULL;
         }
     }
-    
+
     OGRElasticLayer* poLayer = new OGRElasticLayer(osLaunderedName.c_str(),
                                                    osLaunderedName.c_str(),
                                                    m_pszMappingName,
@@ -261,7 +261,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     m_papoLayers[m_nLayers - 1] = poLayer;
 
     poLayer->FinalizeFeatureDefn(FALSE);
-    
+
     if( eGType != wkbNone )
     {
         const char* pszGeometryName = CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry");
@@ -271,7 +271,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     }
     if( pszLayerMapping )
         poLayer->SetManualMapping();
-    
+
     poLayer->SetIgnoreSourceID(CSLFetchBoolean(papszOptions, "IGNORE_SOURCE_ID", FALSE));
     poLayer->SetDotAsNestedField(CSLFetchBoolean(papszOptions, "DOT_AS_NESTED_FIELD", TRUE));
     poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
@@ -287,7 +287,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* pszPostContent)
 {
     char** papszOptions = NULL;
-    
+
     if( pszPostContent && pszPostContent[0] )
     {
         papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS",
@@ -313,7 +313,7 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
+
     if( STARTS_WITH((const char*) psResult->pabyData, "{\"error\":") )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
@@ -346,7 +346,7 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
         json_object_put(poObj);
         poObj = NULL;
     }
-    
+
     return poObj;
 }
 
@@ -375,7 +375,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     m_bFlattenNestedAttributes = CSLFetchBoolean(
             poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", TRUE);
     m_osFID = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "FID", "ogc_fid");
-    
+
     CPLHTTPResult* psResult = CPLHTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), NULL);
     if( psResult == NULL || psResult->pszErrBuf != NULL )
     {
@@ -400,7 +400,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     while( pszNextEOL && pszNextEOL > pszCur )
     {
         *pszNextEOL = '\0';
-        
+
         char* pszBeforeEOL = pszNextEOL - 1;
         while( *pszBeforeEOL == ' ' )
         {
@@ -455,7 +455,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
                     }
                 }
             }
-            
+
             json_object_put(poRes);
         }
 
@@ -569,7 +569,7 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         m_papoLayers[i]->SyncToDisk();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */

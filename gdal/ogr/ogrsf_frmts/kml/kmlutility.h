@@ -67,7 +67,7 @@ struct Feature
     Feature()
         : eType(Unknown), poGeom(NULL)
     {}
-    
+
     ~Feature()
     {
         delete poGeom;

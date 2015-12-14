@@ -464,13 +464,13 @@ OGRFeature *OGRLayer::GetFeature( GIntBig nFID )
         else
             delete poFeature;
     }
-    
+
     /* Restore filters */
     SetAttributeFilter(pszOldFilter);
     CPLFree(pszOldFilter);
     SetSpatialFilter(iOldGeomFieldFilter, poOldFilterGeom);
     delete poOldFilterGeom;
-    
+
     return poFeature;
 }
 
@@ -662,7 +662,7 @@ OGRErr OGRLayer::CreateField( OGRFieldDefn * poField, int bApproxOK )
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateField() not supported by this layer.\n" );
-              
+
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -871,7 +871,7 @@ OGRErr OGRLayer::CreateGeomField( OGRGeomFieldDefn * poField, int bApproxOK )
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateGeomField() not supported by this layer.\n" );
-              
+
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -1667,7 +1667,7 @@ OGRStyleTableH OGR_L_GetStyleTable( OGRLayerH hLayer )
 
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_GetStyleTable", NULL );
-    
+
     return (OGRStyleTableH) ((OGRLayer *) hLayer)->GetStyleTable( );
 }
 
@@ -1680,7 +1680,7 @@ void OGR_L_SetStyleTableDirectly( OGRLayerH hLayer,
 
 {
     VALIDATE_POINTER0( hLayer, "OGR_L_SetStyleTableDirectly" );
-    
+
     ((OGRLayer *) hLayer)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
 }
 
@@ -1694,7 +1694,7 @@ void OGR_L_SetStyleTable( OGRLayerH hLayer,
 {
     VALIDATE_POINTER0( hLayer, "OGR_L_SetStyleTable" );
     VALIDATE_POINTER0( hStyleTable, "OGR_L_SetStyleTable" );
-    
+
     ((OGRLayer *) hLayer)->SetStyleTable( (OGRStyleTable *) hStyleTable);
 }
 
@@ -1777,7 +1777,7 @@ OGRErr OGRLayer::SetIgnoredFields( const char **papszFields )
     }
     poDefn->SetGeometryIgnored( FALSE );
     poDefn->SetStyleIgnored( FALSE );
-    
+
     if ( papszFields == NULL )
         return OGRERR_NONE;
 
@@ -2337,7 +2337,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             delete x; 
             continue;
         }
-        
+
         OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
         pLayerMethod->ResetReading();
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
@@ -2430,7 +2430,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             delete x; 
             continue;
         }
-        
+
         OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
         ResetReading();
         while (OGRFeature *y = GetNextFeature()) {
@@ -2681,7 +2681,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
             delete x; 
             continue;
         }
-        
+
         OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
         pLayerMethod->ResetReading();
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
@@ -2743,7 +2743,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
             delete x; 
             continue;
         }
-        
+
         OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
         ResetReading();
         while (OGRFeature *y = GetNextFeature()) {
@@ -2989,7 +2989,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
             delete x; 
             continue;
         }
-        
+
         OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
         pLayerMethod->ResetReading();
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
@@ -3263,7 +3263,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
             delete x; 
             continue;
         }
-        
+
         OGRGeometry *x_geom_diff = x_geom->clone(); //this will be the geometry of a result feature
         pLayerMethod->ResetReading();
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
@@ -3508,7 +3508,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = set_result_schema(pLayerResult, poDefnInput, NULL, mapInput, NULL, 0, papszOptions);
     if (ret != OGRERR_NONE) goto done;
-    
+
     poDefnResult = pLayerResult->GetLayerDefn();
     ResetReading();
     while (OGRFeature *x = GetNextFeature()) {
@@ -3532,7 +3532,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
             delete x; 
             continue;
         }
-        
+
         OGRGeometry *geom = NULL; // this will be the geometry of the result feature 
         pLayerMethod->ResetReading();
         // incrementally add area from y to geom

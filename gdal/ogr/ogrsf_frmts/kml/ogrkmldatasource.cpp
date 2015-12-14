@@ -47,7 +47,7 @@ OGRKMLDataSource::OGRKMLDataSource()
     pszAltitudeMode_ = NULL;
     papoLayers_ = NULL;
     nLayers_ = 0;
-    
+
     fpOutput_ = NULL;
 
     papszCreateOptions_ = NULL;
@@ -230,7 +230,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
             poGeotype = wkbGeometryCollection;
         else
             poGeotype = wkbUnknown;
-        
+
         if (poGeotype != wkbUnknown && poKMLFile_->is25D())
             poGeotype = wkbSetZ(poGeotype);
 
@@ -253,9 +253,9 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
         papoLayers_[nCount] = poLayer;
     }
-    
+
     poSRS->Release();
-    
+
     return TRUE;	
 }
 #endif /* HAVE_EXPAT */
@@ -278,7 +278,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
         pszNameField_ = CPLStrdup(CSLFetchNameValue(papszOptions, "NameField"));
     else
         pszNameField_ = CPLStrdup("Name");
-    
+
     if (CSLFetchNameValue(papszOptions, "DescriptionField"))
         pszDescriptionField_ = CPLStrdup(CSLFetchNameValue(papszOptions, "DescriptionField"));
     else
@@ -306,14 +306,14 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
         CPLFree( pszAltitudeMode_ ); 
         pszAltitudeMode_ = NULL; 
     } 
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
 
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
-    
+
     pszName_ = CPLStrdup( pszName );
 
     fpOutput_ = VSIFOpenL( pszName, "wb" );
@@ -328,7 +328,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /*      Write out "standard" header.                                    */
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
-    
+
     VSIFPrintfL( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document id=\"root_doc\">\n" );
 
     return TRUE;
@@ -372,7 +372,7 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
         VSIFPrintfL( fpOutput_, "</Folder>\n");
         ((OGRKMLLayer*)GetLayer(GetLayerCount()-1))->SetClosedForWriting();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Ensure name is safe as an element name.                         */
 /* -------------------------------------------------------------------- */
@@ -385,18 +385,18 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
                   "Layer name '%s' adjusted to '%s' for XML validity.",
                   pszLayerName, pszCleanLayerName );
     }
-    
+
     if (GetLayerCount() > 0)
     {
         VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n", pszCleanLayerName);
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRKMLLayer *poLayer;
     poLayer = new OGRKMLLayer( pszCleanLayerName, poSRS, TRUE, eType, this );
-    
+
     CPLFree( pszCleanLayerName );
 
 /* -------------------------------------------------------------------- */
@@ -404,7 +404,7 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     papoLayers_ = (OGRKMLLayer **)
         CPLRealloc( papoLayers_,  sizeof(OGRKMLLayer *) * (nLayers_+1) );
-    
+
     papoLayers_[nLayers_++] = poLayer;
 
     return poLayer;

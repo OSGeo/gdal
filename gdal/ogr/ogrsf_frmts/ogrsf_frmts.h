@@ -75,11 +75,11 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     OGREnvelope  m_sFilterEnvelope;
     int          m_iGeomFieldFilter; // specify the index on which the spatial
                                      // filter is active.
-    
+
     int          FilterGeometry( OGRGeometry * );
     //int          FilterGeometry( OGRGeometry *, OGREnvelope* psGeometryEnvelope);
     int          InstallFilter( OGRGeometry * );
-    
+
     OGRErr       GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce );
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
@@ -138,7 +138,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRStyleTable *GetStyleTable();
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
-                            
+
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
 
     virtual OGRErr      StartTransaction() CPL_WARN_UNUSED_RESULT;
@@ -185,7 +185,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                                char** papszOptions = NULL, 
                                GDALProgressFunc pfnProgress = NULL, 
                                void * pProgressArg = NULL );
-    
+
     int                 Reference();
     int                 Dereference();
     int                 GetRefCount() const;
@@ -275,7 +275,7 @@ class CPL_DLL OGRSFDriver : public GDALDriver
     virtual const char  *GetName() OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
     virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) OGR_DEPRECATED("Use GDALDriver class instead") = 0;
-    
+
     virtual int            TestCapability( const char *pszCap ) OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,

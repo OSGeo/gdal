@@ -586,7 +586,7 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, GInt32 nValue)
         return NULL;
 
     int nKeyLength = m_papoIndexRootNodes[nIndexNumber-1]->GetKeyLength();
-    
+
     /*-----------------------------------------------------------------
      * Convert all int values to MSB using the right number of bytes
      * Note:
@@ -644,10 +644,10 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, const char *pszStr)
 
     /* Pad the end of the buffer with '\0' */
     for( ; i<nKeyLength; i++)
-    {   
+    {
         m_papbyKeyBuffers[nIndexNumber-1][i] = '\0';
     }
-        
+
     return m_papbyKeyBuffers[nIndexNumber-1];
 }
 
@@ -1144,8 +1144,8 @@ int TABINDNode::SetFieldType(TABFieldType eType)
                  "Index key length (%d) does not match field type (%s).",
                  m_nKeyLength, TABFIELDTYPE_2_STRING(eType) );
         return -1;
-    }           
-    
+    }
+
     m_eFieldType = eType;
 
     /*-----------------------------------------------------------------

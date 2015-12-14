@@ -93,7 +93,7 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
     for( i = 0; i < nPoints; i++ )
     {
         dfAngle = (psArc->startang + dfAngleStep * i) * DEG_TO_RAD;
-        
+
         ComputePointOnArc2D( psArc->primary_axis, 
                              psArc->secondary_axis,
                              psArc->rotation * DEG_TO_RAD,

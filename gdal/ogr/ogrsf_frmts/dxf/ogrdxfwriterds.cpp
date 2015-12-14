@@ -83,7 +83,7 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
                 VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
                 VSIFWriteL( "\n", 1, 1, fp );
             }
-                    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup temporary file.                                         */
 /* -------------------------------------------------------------------- */
@@ -463,7 +463,7 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
 
             if( !WriteValue( fpOut, nCode, szLineBuf ) )
                 return FALSE;
-                
+
             osSection = szLineBuf;
         }
 
@@ -476,7 +476,7 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
 
             osTable = szLineBuf;
         }
-        
+
         // If we are starting the first layer, then capture
         // the layer contents while copying so we can duplicate
         // it for any new layer definitions.
@@ -612,14 +612,14 @@ int OGRDXFWriterDS::FixupHANDSEED( VSILFILE *fpIn )
 
     VSIFSeekL( fpIn, nHANDSEEDOffset, SEEK_SET );
     VSIFReadL( szWorkBuf, 1, sizeof(szWorkBuf), fpIn );
-    
+
     while( szWorkBuf[i] != '\n' )
         i++;
 
     i++;
     if( szWorkBuf[i] == '\r' )
         i++;
-    
+
     CPLString osNewValue;
 
     osNewValue.Printf( "%08X", nHighestHandle + 1 );
@@ -810,12 +810,12 @@ int OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
                      osBlockName) )
         {
             iBlock++;
-            
+
             if( poLayer->CreateFeature( poBlocksLayer->apoBlocks[iBlock] )
                 != OGRERR_NONE )
                 return FALSE;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Write out the block definition postamble.                       */
 /* -------------------------------------------------------------------- */
@@ -919,7 +919,7 @@ long OGRDXFWriterDS::WriteEntityID( VSILFILE *fpIn, long nPreferredFID )
 
     if( nPreferredFID != OGRNullFID )
     {
-        
+
         osEntityID.Printf( "%X", (unsigned int) nPreferredFID );
         if( !CheckEntityID( osEntityID ) )
         {
@@ -934,7 +934,7 @@ long OGRDXFWriterDS::WriteEntityID( VSILFILE *fpIn, long nPreferredFID )
         osEntityID.Printf( "%X", nNextFID++ );
     }
     while( CheckEntityID( osEntityID ) );
-    
+
     aosUsedEntities.insert( osEntityID );
     WriteValue( fpIn, 5, osEntityID );
 

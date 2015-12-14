@@ -52,7 +52,7 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     bInvalidFIDFound = false;
     pszFIDPrefix = NULL;
     bFaceHoleNegative = false;
-        
+
     poDS = poDSIn;
 
     if ( STARTS_WITH_CI(pszName, "ogr:") )
@@ -366,7 +366,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
-        
 /* -------------------------------------------------------------------- */
 /*      Convert the whole feature into an OGRFeature.                   */
 /* -------------------------------------------------------------------- */
@@ -510,7 +509,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     poGeom->assignSpatialReference(poSRS);
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Test against the attribute query.                               */
 /* -------------------------------------------------------------------- */
@@ -810,7 +809,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
     // Write all "set" fields. 
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        
+
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
 
         if( poFeature->IsFieldSet( iField ) && iField != nGMLIdIndex )
@@ -993,7 +992,7 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     OGRFieldDefn oCleanCopy( poField );
     char *pszName = CPLStrdup( poField->GetNameRef() );
     CPLCleanXMLElementName( pszName );
-    
+
     if( strcmp(pszName,poField->GetNameRef()) != 0 )
     {
         if( !bApproxOK )
@@ -1015,7 +1014,7 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
     CPLFree( pszName );
 
-    
+
     poFeatureDefn->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;
@@ -1037,7 +1036,7 @@ OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
     OGRGeomFieldDefn oCleanCopy( poField );
     char *pszName = CPLStrdup( poField->GetNameRef() );
     CPLCleanXMLElementName( pszName );
-    
+
     if( strcmp(pszName,poField->GetNameRef()) != 0 )
     {
         if( !bApproxOK )
@@ -1059,7 +1058,7 @@ OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
 
     CPLFree( pszName );
 
-    
+
     poFeatureDefn->AddGeomFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;

@@ -211,7 +211,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /* -------------------------------------------------------------------- */
     if( VSIFSeek( fp, nRecordEnd, SEEK_SET ) != 0 )
         return -1;
-    
+
     return l_nLength;
 }
 

@@ -120,7 +120,7 @@ OGRSVGLayer::~OGRSVGLayer()
 #endif
     if (poFeatureDefn)
         poFeatureDefn->Release();
-    
+
     if( poSRS != NULL )
         poSRS->Release();
 
@@ -547,12 +547,12 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
     {
         return ppoFeatureTab[nFeatureTabIndex++];
     }
-    
+
     if (VSIFEofL(fpSVG))
         return NULL;
-    
+
     char aBuf[BUFSIZ];
-    
+
     CPLFree(ppoFeatureTab);
     ppoFeatureTab = NULL;
     nFeatureTabLength = 0;

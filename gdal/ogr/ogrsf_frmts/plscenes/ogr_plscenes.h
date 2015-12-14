@@ -46,11 +46,11 @@ class OGRPLScenesDataset: public GDALDataset
         int             bMustCleanPersistant;
         CPLString       osBaseURL;
         CPLString       osAPIKey;
-        
+
         int             nLayers;
         OGRPLScenesLayer  **papoLayers;
         std::map<OGRLayer*, OGRPLScenesLayer*> oMapResultSetToSourceLayer;
-        
+
         char             **GetBaseHTTPOptions();
         GDALDataset       *OpenRasterScene(GDALOpenInfo* poOpenInfo,
                                            CPLString osScene,
@@ -89,16 +89,16 @@ class OGRPLScenesLayer: public OGRLayer
             CPLString       osNextURL;
             CPLString       osRequestURL;
             CPLString       osQuery;
-            
+
             OGRGeoJSONDataSource *poGeoJSONDS;
             OGRLayer             *poGeoJSONLayer;
-            
+
             OGRGeometry    *poMainFilter;
-            
+
             int             nPageSize;
             int             bStillInFirstPage;
             int             bAcquiredAscending;
-            
+
             int             bFilterMustBeClientSideEvaluated;
             CPLString       osFilterURLPart;
 
@@ -125,11 +125,11 @@ class OGRPLScenesLayer: public OGRLayer
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
         virtual OGRErr      SetAttributeFilter( const char * );
-        
+
         virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
         virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-        
+
         void                SetMainFilterRect(double dfMinX, double dfMinY,
                                               double dfMaxX, double dfMaxY);
         void                SetAcquiredOrderingFlag(int bAcquiredAscendingIn)

@@ -658,7 +658,7 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
                  "Operation not available in read-only mode");
         return OGRERR_FAILURE;
     }
-    
+
     if( osFIDColName.size() == 0 )
         return OGRERR_FAILURE;
 
@@ -771,7 +771,7 @@ OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
     FlushDeferedInsert();
 
     GetLayerDefn();
-    
+
     if( osFIDColName.size() == 0 )
         return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 

@@ -480,7 +480,7 @@ std::size_t KMLNode::getNumFeatures()
     {
         std::size_t nNum = 0;
         kml_nodes_t::size_type size = pvpoChildren_->size();
-        
+
         for( kml_nodes_t::size_type i = 0; i < size; ++i )
         {
             if( (*pvpoChildren_)[i]->sName_ == "Placemark" )
@@ -713,7 +713,7 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 
     if(poFeat == NULL)
         return NULL;
-        
+
     // Create a feature structure
     Feature *psReturn = new Feature;
     // Build up the name

@@ -50,12 +50,12 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
 
     poStmt = poStmtIn;
     pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
-    
+
     /* Just to make test_ogrsf happy, but would/could need be extended to */
     /* other cases */
     if( STARTS_WITH_CI(pszBaseStatement, "SELECT * FROM ") )
     {
-        
+
         OGRLayer* poBaseLayer =
             poDSIn->GetLayerByName(pszBaseStatement + strlen("SELECT * FROM "));
         if( poBaseLayer != NULL )

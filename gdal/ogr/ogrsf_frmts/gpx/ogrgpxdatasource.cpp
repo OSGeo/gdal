@@ -201,7 +201,7 @@ OGRLayer * OGRGPXDataSource::ICreateLayer( const char * pszLayerName,
     nLayers++;
     papoLayers = (OGRGPXLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGPXLayer*));
     papoLayers[nLayers-1] = new OGRGPXLayer( pszName, pszLayerName, gpxGeomType, this, TRUE );
-    
+
     return papoLayers[nLayers-1];
 }
 
@@ -295,24 +295,24 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp == NULL)
         return FALSE;
-    
+
     validity = GPX_VALIDITY_UNKNOWN;
     CPLFree(pszVersion);
     pszVersion = NULL;
     bUseExtensions = FALSE;
     nElementsRead = 0;
-    
+
     XML_Parser oParser = OGRCreateExpatXMLParser();
     oCurrentParser = oParser;
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
-    
+
     char aBuf[BUFSIZ];
     int nDone;
     unsigned int nLen;
     int nCount = 0;
-    
+
     /* Begin to parse the file and look for the <gpx> element */
     /* It *MUST* be the first element of an XML file */
     /* So once we have read the first element, we know if we can */
@@ -362,11 +362,11 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
                 break;
         }
     } while (!nDone && nLen > 0 );
-    
+
     XML_ParserFree(oParser);
-    
+
     VSIFCloseL(fp);
-    
+
     if (validity == GPX_VALIDITY_VALID)
     {
         CPLDebug("GPX", "%s seems to be a GPX file.", pszFilename);
@@ -448,7 +448,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
                  pszFilename);
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
@@ -523,7 +523,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
             pszExtensionsNSURL = "http://osgeo.org/gdal";
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*     Output header of GPX file.                                       */
 /* -------------------------------------------------------------------- */

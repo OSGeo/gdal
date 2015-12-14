@@ -51,7 +51,7 @@ OGROCISelectLayer::OGROCISelectLayer( OGROCIDataSource *poDSIn,
     SetDescription( poFeatureDefn->GetName() );
 
     pszQueryStatement = CPLStrdup(pszQuery);
-    
+
     ResetReading();
 }
 

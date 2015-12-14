@@ -820,7 +820,7 @@ OGRSpatialReference *TABFile::GetSpatialRef()
      *----------------------------------------------------------------*/
     if (m_poSpatialRef != NULL)
         return m_poSpatialRef;
-    
+
 
     /*-----------------------------------------------------------------
      * Fetch the parameters from the header.
@@ -835,7 +835,7 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                  "GetSpatialRef() failed reading projection parameters.");
         return NULL;
     }
-    
+
     m_poSpatialRef = GetSpatialRefFromTABProj(sTABProj);
     return m_poSpatialRef;
 }
@@ -864,57 +864,57 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         pszUnitsName = "Kilometer";
         pszUnitsConv = "1000.0";
         break;
-            
+
       case 2:
         pszUnitsName = "IINCH";
         pszUnitsConv = "0.0254";
         break;
-            
+
       case 3:
         pszUnitsName = SRS_UL_FOOT;
         pszUnitsConv = SRS_UL_FOOT_CONV;
         break;
-            
+
       case 4:
         pszUnitsName = "IYARD";
         pszUnitsConv = "0.9144";
         break;
-            
+
       case 5:
         pszUnitsName = "Millimeter";
         pszUnitsConv = "0.001";
         break;
-            
+
       case 6:
         pszUnitsName = "Centimeter";
         pszUnitsConv = "0.01";
         break;
-            
+
       case 7:
         pszUnitsName = SRS_UL_METER;
         pszUnitsConv = "1.0";
         break;
-            
+
       case 8:
         pszUnitsName = SRS_UL_US_FOOT;
         pszUnitsConv = SRS_UL_US_FOOT_CONV;
         break;
-            
+
       case 9:
         pszUnitsName = SRS_UL_NAUTICAL_MILE;
         pszUnitsConv = SRS_UL_NAUTICAL_MILE_CONV;
         break;
-            
+
       case 30:
         pszUnitsName = SRS_UL_LINK;
         pszUnitsConv = SRS_UL_LINK_CONV;
         break;
-            
+
       case 31:
         pszUnitsName = SRS_UL_CHAIN;
         pszUnitsConv = SRS_UL_CHAIN_CONV;
         break;
-            
+
       case 32:
         pszUnitsName = SRS_UL_ROD;
         pszUnitsConv = SRS_UL_ROD_CONV;
@@ -1150,7 +1150,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
       case 17:
         poSpatialRef->SetGS( sTABProj.adProjParams[0], 0.0, 0.0 );
         break;
-        
+
         /*--------------------------------------------------------------
          * New Zealand Map Grid
          *-------------------------------------------------------------*/
@@ -1257,7 +1257,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     if( sTABProj.nProjId != 1 && poSpatialRef->GetRoot() != NULL )
     {
         OGR_SRSNode     *poUnits = new OGR_SRSNode("UNIT");
-        
+
         poSpatialRef->GetRoot()->AddChild(poUnits);
 
         poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
@@ -1290,7 +1290,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          iDatumInfo++ )
     {
         psDatumInfo = asDatumInfoList + iDatumInfo;
-        
+
         if( TAB_EQUAL(psDatumInfo->nEllipsoid, sTABProj.nEllipsoidId) &&
             ((sTABProj.nDatumId > 0 && 
               sTABProj.nDatumId == psDatumInfo->nMapInfoDatumID) ||
@@ -1416,14 +1416,14 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      *----------------------------------------------------------------*/
     double      dfPMOffset = 0.0;
     const char *pszPMName = "Greenwich";
-    
+
     if( /*sTABProj.nDatumId == 9999 ||*/ sTABProj.adDatumParams[4] != 0.0 )
     {
         dfPMOffset = sTABProj.adDatumParams[4];
 
         pszPMName = "non-Greenwich";
     }
-                    
+
     /*-----------------------------------------------------------------
      * Create a GEOGCS definition.
      *----------------------------------------------------------------*/
@@ -1522,13 +1522,13 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
      *----------------------------------------------------------------*/
     if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
         delete m_poSpatialRef;
-    
+
     m_poSpatialRef = poSpatialRef->Clone();
 
     TABProjInfo     sTABProj;
     int             nParmCount;
     GetTABProjFromSpatialRef(poSpatialRef, sTABProj, nParmCount);
-    
+
     /*-----------------------------------------------------------------
      * Set the new parameters in the .MAP header.
      * This will also trigger lookup of default bounds for the projection.
@@ -1555,7 +1555,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     sTABProj.adProjParams[0] = sTABProj.adProjParams[1] = 0.0;
     sTABProj.adProjParams[2] = sTABProj.adProjParams[3] = 0.0;
     sTABProj.adProjParams[4] = sTABProj.adProjParams[5] = 0.0;
-    
+
     sTABProj.nDatumId = 0;
     sTABProj.dDatumShiftX = 0.0;
     sTABProj.dDatumShiftY = 0.0;
@@ -1892,7 +1892,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
      * ============================================================== */
     const char *pszWKTDatum = poSpatialRef->GetAttrValue("DATUM");
     const MapInfoDatumInfo *psDatumInfo = NULL;
-    
+
     int nDatumEPSGCode = -1;
     const char *pszDatumAuthority = poSpatialRef->GetAuthorityName("DATUM");
     const char *pszDatumCode = poSpatialRef->GetAuthorityCode("DATUM");
@@ -1981,7 +1981,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
         CSLDestroy( papszFields );
     }
-    
+
     /*-----------------------------------------------------------------
      * We have a "real" datum name, and possibly an EPSG code for the
      * datum.  Try to look it up (using EPSG code first) and get the
@@ -2069,7 +2069,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         sTABProj.nDatumId = 157;
         sTABProj.nEllipsoidId = 54;
     }
-    
+
     /*-----------------------------------------------------------------
      * Translate the units
      *----------------------------------------------------------------*/

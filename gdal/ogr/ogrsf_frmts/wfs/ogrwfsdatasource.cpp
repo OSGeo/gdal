@@ -193,7 +193,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     apszGetCapabilities[0] = NULL;
     apszGetCapabilities[1] = NULL;
     bEmptyAsNull = TRUE;
-    
+
     bInvertAxisOrderIfLatLong = TRUE;
     bExposeGMLId = TRUE;
 }
@@ -540,7 +540,7 @@ int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
         bTransactionSupport = TRUE;
         return TRUE;
     }
-    
+
     CPLXMLNode* psOperationsMetadata =
         CPLGetXMLNode(psRoot, "OperationsMetadata");
     if (!psOperationsMetadata)
@@ -1078,7 +1078,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
             CPLAddXMLChild(psXML, CPLCloneXMLTree(psWFSCapabilities));
 
             int bOK = CPLSerializeXMLTreeToFile(psXML, pszFilename);
-            
+
             CPLDestroyXMLNode( psXML );
             CPLDestroyXMLNode( psXML2 );
 
@@ -2294,13 +2294,13 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                 /* base ExecuteSQL(), so that the OGRGenSQLResultsLayer references */
                 /* that temporary layer */
                 papoLayers[iLayer] = poDupLayer;
-                
+
                 OGRLayer* poResLayer = GDALDataset::ExecuteSQL( pszSQLWithoutOrderBy,
                                                                 poSpatialFilter,
                                                                 pszDialect,
                                                                 &oParseOptions );
                 papoLayers[iLayer] = poSrcLayer;
-                
+
                 CPLFree(pszSQLWithoutOrderBy);
 
                 if (poResLayer != NULL)

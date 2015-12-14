@@ -67,7 +67,7 @@ class VFKProperty
 {
 private:
     bool                    m_bIsNull;
-    
+
     int                     m_nValue;
     double                  m_dValue;
     CPLString               m_strValue;
@@ -79,7 +79,7 @@ public:
     explicit VFKProperty(const char*);
     explicit VFKProperty(CPLString const&);
     virtual ~VFKProperty();
-    
+
     VFKProperty(VFKProperty const& other);
     VFKProperty& operator=(VFKProperty const& other);
 
@@ -116,7 +116,7 @@ public:
     void                 SetGeometryType(OGRwkbGeometryType);
 
     bool                 IsValid() const { return m_bValid; }
-    
+
     IVFKDataBlock       *GetDataBlock() const { return m_poDataBlock; }
     OGRwkbGeometryType   GetGeometryType() const { return m_nGeometryType; }
     bool                 SetGeometry(OGRGeometry *, const char * = NULL);
@@ -133,7 +133,7 @@ class VFKFeature : public IVFKFeature
 {
 private:
     typedef std::vector<VFKProperty> VFKPropertyList;
-    
+
     VFKPropertyList      m_propertyList;
 
     bool                 SetProperty(int, const char *);
@@ -147,7 +147,7 @@ private:
 
 public:
     VFKFeature(IVFKDataBlock *, GIntBig);
-    
+
     bool                 SetProperties(const char *);
     const VFKProperty   *GetProperty(int) const;
     const VFKProperty   *GetProperty(const char *) const;
@@ -274,7 +274,7 @@ public:
     IVFKFeature       *GetFirstFeature();
     IVFKFeature       *GetLastFeature();
     int                SetNextFeature(const IVFKFeature *);
-    
+
     OGRwkbGeometryType SetGeometryType();
     OGRwkbGeometryType GetGeometryType() const;
 
@@ -353,7 +353,7 @@ protected:
 
 public:
     virtual ~IVFKReader();
-    
+
     virtual bool           IsLatin2() const = 0;
     virtual bool           IsSpatial() const = 0;
     virtual bool           IsPreProcessed() const = 0;

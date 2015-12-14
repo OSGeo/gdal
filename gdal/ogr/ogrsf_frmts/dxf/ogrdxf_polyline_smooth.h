@@ -71,7 +71,7 @@ public:
             y *= s;
         }
 
-          
+
     double length() const
         {
             return (sqrt(x*x + y*y));

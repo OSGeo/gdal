@@ -41,9 +41,9 @@ CPL_CVSID("$Id$");
 OGRVFKDataSource::OGRVFKDataSource()
 {
     pszName    = NULL;
-    
+
     poReader   = NULL;
-    
+
     papoLayers = NULL;
     nLayers    = 0;
 }
@@ -54,10 +54,10 @@ OGRVFKDataSource::OGRVFKDataSource()
 OGRVFKDataSource::~OGRVFKDataSource()
 {
     CPLFree(pszName);
-    
+
     if (poReader)
         delete poReader;
-    
+
     for(int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
@@ -76,7 +76,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 {
     FILE * fp;
     char   szHeader[1000];
-    
+
     /* open the source file */
     fp = VSIFOpen(pszNewName, "r");
     if (fp == NULL) {
@@ -84,7 +84,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
             CPLError(CE_Failure, CPLE_OpenFailed, 
                      "Failed to open VFK file `%s'",
                      pszNewName);
-        
+
         return FALSE;
     }
 
@@ -97,12 +97,12 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
             return FALSE;
         }
         szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
-        
+
         // TODO: improve check
         if (!STARTS_WITH(szHeader, "&H")) {
             VSIFClose(fp);
             return FALSE;
-        } 
+        }
     }
 
     /* We assume now that it is VFK. Close and instantiate a
@@ -110,7 +110,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     VSIFClose(fp);
 
     pszName = CPLStrdup(pszNewName);
-    
+
     poReader = CreateVFKReader(pszNewName);
     if (poReader == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined, 
@@ -119,18 +119,18 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
                  pszNewName);
         return FALSE;
     }
-   
+
     /* read data blocks, i.e. &B */
     poReader->ReadDataBlocks();
-    
+
     /* get list of layers */
     papoLayers = (OGRVFKLayer **) CPLCalloc(sizeof(OGRVFKLayer *), poReader->GetDataBlockCount());
-    
+
     for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
         papoLayers[iLayer] = CreateLayerFromBlock(poReader->GetDataBlock(iLayer));
         nLayers++;
     }
-    
+
     /* read data records if required */
     if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES")))
         poReader->ReadDataRecords();
@@ -149,7 +149,7 @@ OGRLayer *OGRVFKDataSource::GetLayer(int iLayer)
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    
+
     return papoLayers[iLayer];
 }
 
@@ -196,9 +196,9 @@ OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataB
             oField.SetWidth(poProperty->GetWidth());
         if(poProperty->GetPrecision() > 0)
             oField.SetPrecision(poProperty->GetPrecision());
-        
+
         poLayer->GetLayerDefn()->AddFieldDefn(&oField);
     }
-    
+
     return poLayer;
 }

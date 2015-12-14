@@ -55,7 +55,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     CPLString   osDbName;
     CPLString   osCommand;
     VSIStatBufL sStatBufDb, sStatBufVfk;
-    
+
     /* open tmp SQLite DB (re-use DB file if already exists) */
     pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
     if (pszDbNameConf) {
@@ -75,12 +75,12 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     m_pszDBname[nLen] = 0;
     CPLDebug("OGR-VFK", "Using internal DB: %s",
              m_pszDBname);
-    
+
     if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_SPATIAL", "YES")))
 	m_bSpatial = TRUE;    /* build geometry from DB */
     else
 	m_bSpatial = FALSE;   /* store also geometry in DB */
-    
+
     m_bNewDb = TRUE;
     if (VSIStatL(osDbName, &sStatBufDb) == 0) {
 	if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
@@ -151,7 +151,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
     }
     CPLDebug("OGR-VFK", "Internal DB (%s) closed",
              m_pszDBname);
-    
+
     /* delete tmp SQLite DB if requested */
     if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO"))) {
         CPLDebug("OGR-VFK", "Internal DB (%s) deleted",
@@ -174,9 +174,9 @@ int VFKReaderSQLite::ReadDataBlocks()
     CPLString osSQL;
     const char *pszName, *pszDefn;
     IVFKDataBlock *poNewDataBlock;
-    
+
     sqlite3_stmt *hStmt;
-    
+
     osSQL.Printf("SELECT table_name, table_defn FROM %s", VFK_DB_TABLE);
     hStmt = PrepareStatement(osSQL.c_str());
     while(ExecuteSQL(hStmt) == OGRERR_NONE) {
@@ -187,7 +187,7 @@ int VFKReaderSQLite::ReadDataBlocks()
         poNewDataBlock->SetProperties(pszDefn);
         VFKReader::AddDataBlock(poNewDataBlock, NULL);
     }
-    
+
     if (m_nDataBlockCount == 0) {
         CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0));
         /* CREATE TABLE ... */
@@ -196,7 +196,7 @@ int VFKReaderSQLite::ReadDataBlocks()
 
         StoreInfo2DB();
     }
-    
+
     return nDataBlocks;
 }
 
@@ -204,9 +204,9 @@ int VFKReaderSQLite::ReadDataBlocks()
   \brief Load data records (&D)
 
   Call VFKReader::OpenFile() before this function.
-  
+
   \param poDataBlock limit to selected data block or NULL for all
-  
+
   \return number of data records or -1 on error
 */
 int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
@@ -215,18 +215,18 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     int         iDataBlock;
     const char *pszName;
     CPLString   osSQL;
-    
+
     IVFKDataBlock *poDataBlockCurrent;
-    
+
     sqlite3_stmt *hStmt;
-    
+
     pszName = NULL;
     nDataRecords = 0;
-    
+
     if (poDataBlock) { /* read records only for selected data block */
         /* table name */
         pszName = poDataBlock->GetName();
-        
+
         /* check for existing records (re-use already inserted data) */
         osSQL.Printf("SELECT num_records FROM %s WHERE "
                      "table_name = '%s'",
@@ -240,7 +240,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     }
     else {
                       /* read all data blocks */
-        
+
         /* check for existing records (re-use already inserted data) */
         osSQL.Printf("SELECT COUNT(*) FROM %s WHERE num_records = -1", VFK_DB_TABLE);
         hStmt = PrepareStatement(osSQL.c_str());
@@ -249,7 +249,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
             nDataRecords = 0;     /* -> read from DB */
         else
             nDataRecords = -1;    /* -> read from VFK file */
-        
+
         sqlite3_finalize(hStmt);
     }
 
@@ -262,12 +262,12 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         poDataBlockCurrent = NULL;
         for (iDataBlock = 0; iDataBlock < GetDataBlockCount(); iDataBlock++) {
             poDataBlockCurrent = GetDataBlock(iDataBlock);
-           
+
             if (poDataBlock && poDataBlock != poDataBlockCurrent)
                 continue;
 
             poDataBlockCurrent->SetFeatureCount(0); /* avoid recursive call */
-            
+
             pszName = poDataBlockCurrent->GetName();
             CPLAssert(NULL != pszName);
 
@@ -306,7 +306,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     else {                          /* read from VFK file and insert records into DB */
         /* begin transaction */
         ExecuteSQL("BEGIN");
-        
+
         /* INSERT ... */
         nDataRecords = VFKReader::ReadDataRecords(poDataBlock);
 
@@ -314,22 +314,22 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         poDataBlockCurrent = NULL;
         for (iDataBlock = 0; iDataBlock < GetDataBlockCount(); iDataBlock++) {
             poDataBlockCurrent = GetDataBlock(iDataBlock);
-            
+
             if (poDataBlock && poDataBlock != poDataBlockCurrent)
                 continue;
-            
+
             osSQL.Printf("UPDATE %s SET num_records = %d WHERE "
                          "table_name = '%s'",
                          VFK_DB_TABLE, poDataBlockCurrent->GetRecordCount(),
                          poDataBlockCurrent->GetName());
-            
+
             ExecuteSQL(osSQL);
         }
-        
+
         /* commit transaction */
         ExecuteSQL("COMMIT");
     }
-    
+
     return nDataRecords;
 }
 
@@ -473,7 +473,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
             /* create extra indices for OP */
             CreateIndex("OB_BUD",        pszBlockName, "BUD_ID", FALSE);
         }
-        
+
         /* update VFK_DB_TABLE meta-table */
         osCommand.Printf("INSERT INTO %s (file_name, table_name, "
                          "num_records, num_features, num_geometries, table_defn) VALUES "
@@ -484,13 +484,13 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
 
         sqlite3_finalize(hStmt);
     }
-        
+
     return VFKReader::AddDataBlock(poDataBlock, NULL);
 }
 
 /*!
   \brief Prepare SQL statement
-  
+
   \param pszSQLCommand SQL statement to be prepared
 
   \return pointer to sqlite3_stmt instance or NULL on error
@@ -499,21 +499,21 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
 {
     int rc;
     sqlite3_stmt *hStmt = NULL;
-    
+
     CPLDebug("OGR-VFK", "VFKReaderSQLite::PrepareStatement(): %s", pszSQLCommand);
 
     rc = sqlite3_prepare(m_poDB, pszSQLCommand, -1,
                          &hStmt, NULL);
-    
+
     if (rc != SQLITE_OK) {
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "In PrepareStatement(): sqlite3_prepare(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(m_poDB));
-        
+
         if(hStmt != NULL) {
             sqlite3_finalize(hStmt);
         }
-        
+
         return NULL;
     }
 
@@ -530,7 +530,7 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
 OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
 {
     int rc;
-    
+
     // assert
 
     rc = sqlite3_step(hStmt);
@@ -539,7 +539,7 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
             sqlite3_finalize(hStmt);
             return OGRERR_NOT_ENOUGH_DATA;
         }
-        
+
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "In ExecuteSQL(): sqlite3_step:\n  %s", 
                  sqlite3_errmsg(m_poDB));
@@ -547,7 +547,7 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
             sqlite3_finalize(hStmt);
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 
 }
@@ -563,7 +563,7 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
 OGRErr VFKReaderSQLite::ExecuteSQL(const char *pszSQLCommand, bool bQuiet)
 {
     char *pszErrMsg = NULL;
-    
+
     if (SQLITE_OK != sqlite3_exec(m_poDB, pszSQLCommand, NULL, NULL, &pszErrMsg)) {
         if (!bQuiet)
             CPLError(CE_Failure, CPLE_AppDefined, 
@@ -573,7 +573,7 @@ OGRErr VFKReaderSQLite::ExecuteSQL(const char *pszSQLCommand, bool bQuiet)
             CPLError(CE_Warning, CPLE_AppDefined, 
                      "In ExecuteSQL(%s): %s",
                      pszSQLCommand, pszErrMsg);
-        
+
         return  OGRERR_FAILURE;
     }
 
@@ -590,7 +590,7 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
 {
     CPLString     osCommand;
     CPLString     osValue;
-    
+
     const char   *pszBlockName;
 
     OGRFieldType  ftype;
@@ -598,10 +598,10 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
     const VFKProperty *poProperty;
 
     VFKFeatureSQLite *poNewFeature;
-    
+
     pszBlockName = poDataBlock->GetName();
     osCommand.Printf("INSERT INTO '%s' VALUES(", pszBlockName);
-    
+
     for (int i = 0; i < poDataBlock->GetPropertyCount(); i++) {
         ftype = poDataBlock->GetProperty(i)->GetType();
         poProperty = poFeature->GetProperty(i);
@@ -639,17 +639,17 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
 
     if (ExecuteSQL(osCommand.c_str(), TRUE) != OGRERR_NONE)
         return OGRERR_FAILURE;
-    
+
     if (EQUAL(pszBlockName, "SBP")) {
         poProperty = poFeature->GetProperty("PORADOVE_CISLO_BODU");
         CPLAssert(NULL != poProperty);
         if (!EQUAL(poProperty->GetValueS(), "1"))
             return OGRERR_NONE;
     }
-        
+
     poNewFeature = new VFKFeatureSQLite(poDataBlock, poDataBlock->GetRecordCount(RecordValid) + 1,
                                         poFeature->GetFID());
     poDataBlock->AddFeature(poNewFeature);
-    
+
     return OGRERR_NONE;
 }

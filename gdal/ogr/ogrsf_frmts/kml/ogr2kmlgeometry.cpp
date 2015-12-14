@@ -88,7 +88,7 @@ static void MakeKMLCoordinate( char *pszTarget, size_t nTargetLen,
                         x);
                 bFirstWarning = FALSE;
             }
-    
+
             if (x > 180)
                 x -= ((int) ((x+180)/360)*360);
             else if (x < -180)
@@ -252,7 +252,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         MakeKMLCoordinate( szCoordinate, sizeof(szCoordinate),
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
                            TRUE );
-                           
+
         if (NULL == szAltitudeMode) 
         { 
             _GrowBuffer( *pnLength + strlen(szCoordinate) + 70, 
@@ -297,7 +297,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 
         AppendCoordinateList( (OGRLineString *) poGeometry, 
                               ppszText, pnLength, pnMaxLength );
-        
+
         if( bRing )
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</LinearRing>" );
@@ -341,7 +341,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<innerBoundaryIs>" );
-            
+
             if( !OGR2KMLGeometryAppend( poRing, ppszText, pnLength, 
                                         pnMaxLength, szAltitudeMode ) )
             {
@@ -429,7 +429,7 @@ CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 /*      Add minxy coordinate.                                           */
 /* -------------------------------------------------------------------- */
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "coord" );
-    
+
     MakeKMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0, 
                        FALSE );
     pszY = strstr(szCoordinate,",") + 1;
@@ -442,7 +442,7 @@ CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 /*      Add maxxy coordinate.                                           */
 /* -------------------------------------------------------------------- */
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "coord" );
-    
+
     MakeKMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0, 
                        FALSE );
     pszY = strstr(szCoordinate,",") + 1;

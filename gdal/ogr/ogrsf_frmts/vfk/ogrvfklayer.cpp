@@ -97,13 +97,13 @@ int OGRVFKLayer::TestCapability(const char * pszCap)
     if (EQUAL(pszCap, OLCRandomRead)) {
         return TRUE; /* ? */
     }
-    
+
     return FALSE;
 }
 
 /*!
   \brief Reset reading
-  
+
   \todo To be implemented
 */
 void OGRVFKLayer::ResetReading()
@@ -168,7 +168,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
         /* skip feature with unknown geometry type */
         if (poVFKFeature->GetGeometryType() == wkbUnknown)
             continue;
-        
+
         OGRFeature* poOGRFeature = GetFeature(poVFKFeature);
         if (poOGRFeature)
             return poOGRFeature;
@@ -187,55 +187,55 @@ OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
     IVFKFeature *poVFKFeature;
 
     poVFKFeature = poDataBlock->GetFeature(nFID);
-    
+
     if (!poVFKFeature)
         return NULL;
 
     CPLAssert(nFID == poVFKFeature->GetFID());
     CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=" CPL_FRMT_GIB, GetName(), nFID);
-    
+
     return GetFeature(poVFKFeature);
 }
 
 /*!
   \brief Get feature (private)
-  
+
   \return pointer to OGRFeature or NULL not found
 */
 OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
 {
     OGRGeometry *poGeom;
-    
+
     /* skip feature with unknown geometry type */
     if (poVFKFeature->GetGeometryType() == wkbUnknown)
         return NULL;
-    
+
     /* get features geometry */
     poGeom = CreateGeometry(poVFKFeature);
     if (poGeom != NULL)
         poGeom->assignSpatialReference(poSRS);
-    
+
     /* does it satisfy the spatial query, if there is one? */
     if (m_poFilterGeom != NULL && poGeom && !FilterGeometry(poGeom)) {
         return NULL;
     }
-    
+
     /* convert the whole feature into an OGRFeature */
     OGRFeature *poOGRFeature = new OGRFeature(GetLayerDefn());
     poOGRFeature->SetFID(poVFKFeature->GetFID());
     // poOGRFeature->SetFID(++m_iNextFeature);
-    
+
     poVFKFeature->LoadProperties(poOGRFeature);
-    
+
     /* test against the attribute query */
     if (m_poAttrQuery != NULL &&
         !m_poAttrQuery->Evaluate(poOGRFeature)) {
         delete poOGRFeature;
         return NULL;
     }
-    
+
     if (poGeom)
         poOGRFeature->SetGeometryDirectly(poGeom->clone());
-    
+
     return poOGRFeature;
 }

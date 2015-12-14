@@ -228,7 +228,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                 }
             }
         }
-        
+
         if( psOptions->poFDefn == NULL && psOptions->poDS == NULL )
             pszFieldname = poExpr->string_value;
 
@@ -407,7 +407,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         osFilter += ">";
         return TRUE;
     }
-    
+
     if( poExpr->nOperation == SWQ_CUSTOM_FUNC &&
         EQUAL(poExpr->string_value, "ST_MakeEnvelope") )
     {

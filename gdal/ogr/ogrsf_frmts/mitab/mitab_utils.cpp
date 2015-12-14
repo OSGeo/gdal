@@ -348,14 +348,14 @@ GBool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL  sStatBuf;
     int         i;
-    
+
     /*-----------------------------------------------------------------
      * First try using filename as provided
      *----------------------------------------------------------------*/
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
+    }
 
     /*-----------------------------------------------------------------
      * Try using uppercase extension (we assume that fname contains a '.')
@@ -368,8 +368,8 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
-    
+    }
+
     /*-----------------------------------------------------------------
      * Try using lowercase extension
      *----------------------------------------------------------------*/
@@ -541,7 +541,7 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
         }
     }
     pszWorkString[j++] = '\0';
-   
+
     return pszWorkString;
 }
 
@@ -747,7 +747,7 @@ int TABUnitIdFromString(const char *pszName)
     const MapInfoUnitsInfo *psList;
 
     psList = gasUnitsList;
-    
+
     if( pszName == NULL )
         return 13;
 

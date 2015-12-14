@@ -77,7 +77,7 @@ class OGROpenFileGDBLayer : public OGRLayer
     OGRFeature       *GetCurrentFeature();
 
     FileGDBOGRGeometryConverter* m_poGeomConverter;
-    
+
     int               m_iFieldToReadAsBinary;
 
     FileGDBIterator      *m_poIterator;
@@ -103,7 +103,7 @@ public:
                                             const char* pszGeomName = NULL,
                                             OGRwkbGeometryType eGeomType = wkbUnknown);
   virtual              ~OGROpenFileGDBLayer();
-  
+
   const std::string&    GetXMLDefinition() { return m_osDefinition; }
   const std::string&    GetXMLDocumentation() { return m_osDocumentation; }
   int                   GetAttrIndexUse() { return (m_poIterator == NULL) ? 0 : (m_bIteratorSufficientToEvaluateFilter) ? 2 : 1; }
@@ -195,7 +195,7 @@ public:
   virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
 
   virtual int         TestCapability( const char * );
-  
+
   virtual char      **GetFileList();
 };
 

@@ -110,7 +110,7 @@ char **S57FileCollector( const char *pszDataset )
     poRecord = oModule.ReadRecord();
     if( poRecord == NULL )
         return NULL;
-    
+
     if( poRecord->FindField( "CATD" ) == NULL
         || oModule.FindFieldDefn("CATD")->FindSubfieldDefn( "IMPL" ) == NULL )
     {

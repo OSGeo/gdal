@@ -66,7 +66,7 @@ class OGRDXFBlocksLayer : public OGRLayer
     OGRDXFDataSource   *poDS;
 
     OGRFeatureDefn     *poFeatureDefn;
-    
+
     GIntBig             iNextFID;
     size_t              iNextSubFeature;
 
@@ -102,7 +102,7 @@ class OGRDXFLayer : public OGRLayer
     void                ClearPendingFeatures();
 
     std::map<CPLString,CPLString> oStyleProperties;
-    
+
     void                TranslateGenericProperty( OGRFeature *poFeature, 
                                                   int nCode, char *pszValue );
     void                PrepareLineStyle( OGRFeature *poFeature );
@@ -155,9 +155,9 @@ class OGRDXFReader
 public:
     OGRDXFReader();
     ~OGRDXFReader();
-    
+
     void                Initialize( VSILFILE * fp );
-    
+
     VSILFILE           *fp;
 
     int                 iSrcBufferOffset;
@@ -338,7 +338,7 @@ class OGRDXFBlocksWriterLayer : public OGRLayer
 class OGRDXFWriterDS : public OGRDataSource
 {
     friend class OGRDXFWriterLayer;
-    
+
     int                 nNextFID;
 
     CPLString           osName;
@@ -379,7 +379,7 @@ class OGRDXFWriterDS : public OGRDataSource
 
     int                 Open( const char * pszFilename, 
                               char **papszOptions );
-    
+
     const char          *GetName() { return osName; }
 
     int                 GetLayerCount();

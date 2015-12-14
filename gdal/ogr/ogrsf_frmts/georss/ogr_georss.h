@@ -123,7 +123,7 @@ class OGRGeoRSSLayer : public OGRLayer
     void               AddStrToSubElementValue(const char* pszStr);
 #endif
     int                IsStandardField(const char* pszName);
-    
+
   public:
                         OGRGeoRSSLayer(const char *pszFilename,
                                     const char* layerName,
@@ -134,14 +134,14 @@ class OGRGeoRSSLayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
-    
+
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
 
     OGRFeatureDefn *    GetLayerDefn();
-    
+
     int                 TestCapability( const char * );
-    
+
     GIntBig             GetFeatureCount( int bForce );
 
     void                LoadSchema();
@@ -177,7 +177,7 @@ class OGRGeoRSSDataSource : public OGRDataSource
 
     /*  Export related */
     VSILFILE           *fpOutput; /* Virtual file API */
-    
+
 #ifdef HAVE_EXPAT
     OGRGeoRSSValidity   validity;
 #endif
@@ -196,27 +196,27 @@ class OGRGeoRSSDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename,
                               int bUpdate );
-    
+
     int                 Create( const char *pszFilename, 
                               char **papszOptions );
-    
+
     const char*         GetName() { return pszName; }
 
     int                 GetLayerCount() { return nLayers; }
     OGRLayer*           GetLayer( int );
-    
+
     OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
                                     char ** papszOptions );
 
     int                 TestCapability( const char * );
-    
+
     VSILFILE *          GetOutputFP() { return fpOutput; }
     OGRGeoRSSFormat     GetFormat() { return eFormat; }
     OGRGeoRSSGeomDialect GetGeomDialect() { return eGeomDialect; }
     int                 GetUseExtensions() { return bUseExtensions; }
-    
+
 #ifdef HAVE_EXPAT
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
     void                dataHandlerValidateCbk(const char *data, int nLen);
