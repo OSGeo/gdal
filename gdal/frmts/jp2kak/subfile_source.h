@@ -132,10 +132,10 @@ class subfile_source : public kdu_compressed_source {
           assert(file != NULL);
           if( file == NULL )
               return false;
-          
+
           if (!(capabilities & KDU_SOURCE_CAP_SEEKABLE))
               return false;
-          
+
           if( VSIFSeekL( file, subfile_offset+offset, SEEK_SET ) == 0 )
               return true;
           else
@@ -171,6 +171,6 @@ class subfile_source : public kdu_compressed_source {
 
     int subfile_offset;
     int subfile_size;
-    
+
     VSILFILE *file;
   };

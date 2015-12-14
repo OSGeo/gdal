@@ -2233,7 +2233,7 @@ std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPdfium::GetValues()
         // No object for this key
         if(!poVal)
           continue;
-        
+
         const char* pszKey = key.c_str();
         // Objects exists in the map
         if(m_map.find(pszKey) != m_map.end())

@@ -72,7 +72,7 @@ class MSGRasterBand : public GDALRasterBand
 class MSGDataset : public GDALDataset
 {
   friend class MSGRasterBand;
-  
+
   public:
     MSGDataset();
     ~MSGDataset();

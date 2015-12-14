@@ -53,9 +53,9 @@ typedef struct {
 
 typedef struct {
     /* Private information */
-    
+
     AIGTileInfo *pasTileInfo;
-    
+
     int		bHasWarned;
 
     /* public information */
@@ -67,10 +67,10 @@ typedef struct {
 
 #define AIG_CELLTYPE_INT		1
 #define AIG_CELLTYPE_FLOAT		2    
-    
+
     GInt32	nBlockXSize;
     GInt32	nBlockYSize;
-    
+
     GInt32	nBlocksPerRow;
     GInt32	nBlocksPerColumn;
 

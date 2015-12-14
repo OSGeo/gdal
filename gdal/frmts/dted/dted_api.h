@@ -195,7 +195,6 @@ typedef enum {
     DTEDMD_MAX = 23
 } DTEDMetaDataCode;
 
-    
 char *DTEDGetMetadata( DTEDInfo *, DTEDMetaDataCode );
 int   DTEDSetMetadata( DTEDInfo *, DTEDMetaDataCode, const char *);
 

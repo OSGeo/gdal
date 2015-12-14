@@ -366,7 +366,7 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 
     CPLFree( poH5Object->pszUnderscorePath );
     poH5Object->pszUnderscorePath = NULL;
-    
+
     if( poH5Object->native > 0 )
         H5Tclose( poH5Object->native );
     poH5Object->native = 0;

@@ -73,7 +73,6 @@
 
 #define GET_BAND_DATA(raster, nband, nodatasize, datasize) \
     ((raster) + RASTER_HEADER_SIZE + (nband) * BAND_SIZE(nodatasize, datasize) - (datasize))
-    
 
 #define GEOTRSFRM_TOPLEFT_X            0
 #define GEOTRSFRM_WE_RES               1
@@ -168,7 +167,6 @@ char * ReplaceQuotes(const char *, int);
 char * ReplaceSingleQuotes(const char *, int);
 char ** ParseConnectionString(const char *);
 GBool TranslateDataType(const char *, GDALDataType *, int *, GBool *);
-        
 
 class PostGISRasterRasterBand;
 class PostGISRasterTileDataset;
@@ -226,7 +224,7 @@ private:
     int nOverviewCount;
     PostGISRasterDataset* poParentDS;
     PostGISRasterDataset** papoOverviewDS;
-    
+
     std::map<CPLString, PostGISRasterTileDataset*> oMapPKIDToRTDS;
 
     GBool bAssumeMultiBandReadPattern;
@@ -238,7 +236,7 @@ private:
 
     GBool bHasTriedHasSpatialIndex;
     GBool bHasSpatialIndex;
-    
+
     GBool bBuildQuadTreeDynamically;
 
     GBool bTilesSameDimension;
@@ -254,7 +252,7 @@ private:
 		int *);
     BandMetadata * GetBandsMetadata(int *);
     PROverview * GetOverviewTables(int *);
-    
+
     PostGISRasterTileDataset* BuildRasterTileDataset(const char* pszMetadata,
                                                      const char* pszPKID,
                                                      int nBandsFetched,
@@ -304,7 +302,7 @@ public:
  * PostGIS Raster bands
  **********************************************************************/
 class PostGISRasterTileRasterBand;
- 
+
 class PostGISRasterRasterBand : public VRTSourcedRasterBand {
     friend class PostGISRasterDataset;
 protected:
@@ -386,9 +384,8 @@ private:
     GBool bIsOffline;
 
     GBool IsCached();
-    
+
     VRTSource* poSource;
-	
 	
 public:
 	PostGISRasterTileRasterBand(

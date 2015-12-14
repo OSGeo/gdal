@@ -185,14 +185,14 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
                   sErr.c_str() );
         return FALSE;
     }
-      
+
 
 // We're confident the string is formatted as an MSG command_line
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    
+
     MSGDataset   *poDS;
     poDS = new MSGDataset();
     poDS->command = command; // copy it
@@ -254,11 +254,11 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     // The following are 3 different try-outs for also setting the ellips a and b parameters.
     // We leave them out for now however because this does not work. In gdalwarp, when choosing some
     // specific target SRS, the result is an error message:
-    // 
+    //
     // ERROR 1: geocentric transformation missing z or ellps
     // ERROR 1: GDALWarperOperation::ComputeSourceWindow() failed because
     // the pfnTransformer failed.
-    // 
+    //
     // I can't explain the reason for the message at this time (could be a problem in the way the SRS is set here,
     // but also a bug in Proj.4 or GDAL.
     /*
@@ -301,7 +301,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetBand( iBand+1, new MSGRasterBand( poDS, iBand+1 ) );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -313,7 +313,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
     return( poDS );
 }
 
@@ -496,7 +496,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       strip_number = poGDS->command.iNrStrips(iChannel) - nBlockYOff;
 
     std::string strip_input_file = poGDS->command.sFileName(iSatellite, nBand, strip_number);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the input file                                             */
 /* -------------------------------------------------------------------- */
@@ -528,15 +528,15 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             // When iLowerShift > 0, the lower HRV image is shifted to the right
             // When iLowerShift < 0, the lower HRV image is shifted to the left
             // The available raster may be wider than needed, so that time series don't fall outside the raster.
-            
+
             if (nBlockYOff <= iSplitBlock)
               iShift = -iLowerShift;
             // iShift < 0 means upper image moves to the left
             // iShift > 0 means upper image moves to the right
           }
-          
+
           std::auto_ptr< unsigned char > ibuf( new unsigned char[nb_ibytes]);
-          
+
           if (ibuf.get() == 0)
           {
              CPLError( CE_Failure, CPLE_AppDefined, 
@@ -545,13 +545,13 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           }
 
           i_file.read( (char *)(ibuf.get()), nb_ibytes);
-          
+
           Util::CDataFieldCompressedImage  img_compressed(ibuf.release(),
                                   nb_ibytes*8,
                                   (unsigned char)chunk_bpp,
                                   chunk_width,
                                   chunk_height      );
-          
+
           Util::CDataFieldUncompressedImage img_uncompressed;
 
           //****************************************************
@@ -748,7 +748,7 @@ void GDALRegister_MSG()
     if( GDALGetDriverByName( "MSG" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "MSG" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

@@ -4,7 +4,7 @@
  * Purpose:  Tools for PostGIS Raster driver
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
- * 
+ *
  * Author:	 David Zwarg, dzwarg@azavea.com
  *
  * Last changes: $Id: $
@@ -33,8 +33,7 @@
  * SOFTWARE.
  **********************************************************************/
  #include "postgisraster.h"
- 
- 
+
  /**********************************************************************
  * \brief Replace the quotes by single quotes in the input string
  *

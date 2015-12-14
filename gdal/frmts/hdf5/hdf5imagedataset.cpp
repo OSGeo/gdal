@@ -515,7 +515,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
         osSubdatasetName = papszName[2];
-    
+
     poDS->SetSubdatasetName( osSubdatasetName );
 
     CSLDestroy(papszName);
@@ -875,7 +875,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
         CPLFree( Latitude );
         CPLFree( Longitude );
     }
-    
+
     if( LatitudeDatasetID > 0 )
         H5Dclose(LatitudeDatasetID);
     if( LongitudeDatasetID > 0 )
@@ -982,7 +982,7 @@ void HDF5ImageDataset::IdentifyProductType()
         if(EQUAL(pszMissionId,"CSK"))
         {
             iSubdatasetType = CSK_PRODUCT;
-             
+
             const char *osMissionLevel = NULL;
 
             if(GetMetadataItem("Product_Type")!=NULL)
@@ -995,7 +995,7 @@ void HDF5ImageDataset::IdentifyProductType()
 
                 if(STARTS_WITH_CI(osMissionLevel, "SCS"))
                     iCSKProductType  = PROD_CSK_L1A;
-                
+
                 if(STARTS_WITH_CI(osMissionLevel, "DGM"))
                     iCSKProductType  = PROD_CSK_L1B;
 

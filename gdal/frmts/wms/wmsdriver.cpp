@@ -117,7 +117,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
     if (osSRSValue.size() == 0)
         osSRSValue = "EPSG:4326";
-    
+
     if (osBBOX.size() == 0)
     {
         if (osBBOXOrder.compare("yxYX") == 0)
@@ -398,7 +398,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     }
 
     char* pszEscapedURL = CPLEscapeString(osURL.c_str(), -1, CPLES_XML);
-    
+
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
@@ -565,7 +565,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         CPLDebug("WMS", "Did not get max y");
         return NULL;
     }
-    
+
     if (nWKID == 102100)
         nWKID = 3857;
 

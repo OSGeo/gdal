@@ -85,7 +85,7 @@ const char *HFAField::Initialize( const char * pszInput )
 
     if( *pszInput == '\0' )
         return NULL;
-    
+
     pszInput++;
 
 /* -------------------------------------------------------------------- */
@@ -217,7 +217,7 @@ const char *HFAField::Initialize( const char * pszInput )
     pszFieldName[i] = '\0';
 
     pszInput += i+1;
-    
+
     return( pszInput );
 }
 
@@ -269,25 +269,25 @@ void HFAField::Dump( FILE * fp )
 
 {
     const char	*pszTypeName;
-    
+
     switch( chItemType )
     {
       case '1':
         pszTypeName = "U1";
         break;
-        
+
       case '2':
         pszTypeName = "U2";
         break;
-        
+
       case '4':
         pszTypeName = "U4";
         break;
-        
+
       case 'c':
         pszTypeName = "UCHAR";
         break;
-        
+
       case 'C':
         pszTypeName = "CHAR";
         break;
@@ -295,47 +295,47 @@ void HFAField::Dump( FILE * fp )
       case 'e':
         pszTypeName = "ENUM";
         break;
-        
+
       case 's':
         pszTypeName = "USHORT";
         break;
-        
+
       case 'S':
         pszTypeName = "SHORT";
         break;
-        
+
       case 't':
         pszTypeName = "TIME";
         break;
-        
+
       case 'l':
         pszTypeName = "ULONG";
         break;
-        
+
       case 'L':
         pszTypeName = "LONG";
         break;
-        
+
       case 'f':
         pszTypeName = "FLOAT";
         break;
-        
+
       case 'd':
         pszTypeName = "DOUBLE";
         break;
-        
+
       case 'm':
         pszTypeName = "COMPLEX";
         break;
-        
+
       case 'M':
         pszTypeName = "DCOMPLEX";
         break;
-        
+
       case 'b':
         pszTypeName = "BASEDATA";
         break;
-        
+
       case 'o':
         pszTypeName = pszItemObjectType;
         break;
@@ -348,7 +348,7 @@ void HFAField::Dump( FILE * fp )
         CPLAssert( FALSE );
         pszTypeName = "Unknown";
     }
-    
+
     CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "    %-19s %c %s[%d];\n",
                 pszTypeName,
                 chPointer ? chPointer : ' ',
@@ -441,7 +441,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     if( (chItemType == 'c' || chItemType == 'C') && chReqType == 's' )
     {
         int	nBytesToCopy;
-        
+
         if( nBytes == -1 )
         {
             if( pValue == NULL )
@@ -502,7 +502,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
             "HFAField::SetInstValue() not supported yet for pointer values." );
-        
+
         return CE_Failure;
     }
     else
@@ -587,7 +587,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
           memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
       }
       break;
-        
+
       case 't':
       case 'l':
       {
@@ -606,11 +606,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
           memcpy( pabyData + nIndexValue*4, &nNumber, 4 );
       }
       break;
-      
+
       case 'L':
       {
           GInt32	nNumber = nIntValue;
-          
+
           if( nIndexValue*4 + 4 > nDataSize )
           {
               CPLError( CE_Failure, CPLE_AppDefined,
@@ -624,11 +624,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
           memcpy( pabyData + nIndexValue*4, &nNumber, 4 );
       }
       break;
-      
+
       case 'f':
       {
           float		fNumber = (float) dfDoubleValue;
-          
+
           if( nIndexValue*4 + 4 > nDataSize )
           {
               CPLError( CE_Failure, CPLE_AppDefined,
@@ -642,11 +642,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
           memcpy( pabyData + nIndexValue*4, &fNumber, 4 );
       }
       break;
-        
+
       case 'd':
       {
           double	dfNumber = dfDoubleValue;
-          
+
           if( nIndexValue*8 + 8 > nDataSize )
           {
               CPLError( CE_Failure, CPLE_AppDefined,
@@ -662,7 +662,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       break;
 
     case 'b': 
-    { 
+    {
         GInt32 nRows = 1; 
         GInt32 nColumns = 1; 
         GInt16 nBaseItemType;
@@ -677,7 +677,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
         // Are we using special index values to update the rows, columnrs
         // or type?
-        
+
         if( nIndexValue == -3 )
             nBaseItemType = (GInt16) nIntValue;
         else if( nIndexValue == -2 )
@@ -696,7 +696,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         HFAStandard( 2, &nBaseItemType ); 
         memcpy ( pabyData + 8, &nBaseItemType, 2 ); 
         HFAStandard( 2, &nBaseItemType ); // swap back for our use.
-        
+
         if( nBaseItemType < EPT_MIN || nBaseItemType > EPT_MAX )
             return CE_Failure;
         EPTType eBaseItemType = static_cast<EPTType>(nBaseItemType);
@@ -861,7 +861,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                       nOffset, nDataOffset+8 );
 #endif            
         }
-        
+
         pabyData += 8;
 
         nDataOffset += 8;
@@ -932,7 +932,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           dfDoubleRet = nIntRet;
       }
       break;
-        
+
       case 't':
       case 'l':
       {
@@ -948,7 +948,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           dfDoubleRet = nIntRet;
       }
       break;
-      
+
       case 'L':
       {
           GInt32	nNumber;
@@ -963,7 +963,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           dfDoubleRet = nIntRet;
       }
       break;
-      
+
       case 'f':
       {
           float		fNumber;
@@ -978,7 +978,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           nIntRet = (int) fNumber;
       }
       break;
-        
+
       case 'd':
       {
           double	dfNumber;
@@ -1001,7 +1001,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
           if( nDataSize < 12 )
               return FALSE;
-        
+
           memcpy( &nRows, pabyData, 4 );
           HFAStandard( 4, &nRows );
           memcpy( &nColumns, pabyData+4, 4 );
@@ -1300,7 +1300,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
 {
     int		nCount;
     int		nInstBytes = 0;
-    
+
     if( nBytes > -1 )
         return nBytes;
 
@@ -1331,7 +1331,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
 
         GInt32 nRows, nColumns;
         GInt16 nBaseItemType;
-        
+
         memcpy( &nRows, pabyData, 4 );
         HFAStandard( 4, &nRows );
         memcpy( &nColumns, pabyData+4, 4 );
@@ -1343,7 +1343,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
         EPTType eBaseItemType = static_cast<EPTType>(nBaseItemType);
 
         nInstBytes += 12;
-        
+
         if (nRows < 0 || nColumns < 0)
             return -1;
         if (nColumns != 0 && nRows > INT_MAX / nColumns)
@@ -1467,7 +1467,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
 
         return;
     }
-            
+
 /* -------------------------------------------------------------------- */
 /*      For BASEDATA objects, we want to first dump their dimension     */
 /*      and type.                                                       */
@@ -1495,7 +1495,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
                         pszPrefix, pszFieldName ));
         }
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Dump each entry in the field array.                             */
 /* -------------------------------------------------------------------- */
@@ -1506,7 +1506,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
         else
             CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s[%d] = ",
                         pszPrefix, pszFieldName, iEntry ));
-        
+
         switch( chItemType )
         {
           case 'f':
@@ -1556,11 +1556,11 @@ void HFAField::DumpInstValue( FILE *fpOut,
                 int		nByteOffset;
 
                 CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "\n" ));
-                
+
                 nByteOffset = static_cast<int>(((GByte *) pReturn) - pabyData);
-            
+
                 snprintf( szLongFieldName, sizeof(szLongFieldName), "%s    ", pszPrefix );
-            
+
                 if( poItemObjectType )
                     poItemObjectType->DumpInstValue( fpOut,
                                                      pabyData + nByteOffset,

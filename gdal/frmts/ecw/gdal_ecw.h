@@ -103,7 +103,7 @@ public:
     virtual void UpdateXLBox(void);
 
     void    SetData( int nDataLength, const unsigned char *pabyDataIn );
-    
+
     int     GetDataLength() { return nDataLength; }
     unsigned char *GetData() { return pabyData; }
 };
@@ -121,14 +121,14 @@ class VSIIOStream : public CNCSJPCIOStream
   private: 
     char     *m_Filename;
   public:
-    
+
     INT64    startOfJPData;
     INT64    lengthOfJPData;
     VSILFILE    *fpVSIL;
     BOOLEAN      bWritable;
     BOOLEAN      bSeekable;
     int      nFileViewCount;
-    
+
     int      nCOMState;
     int      nCOMLength;
     GByte    abyCOMType[2];
@@ -164,10 +164,10 @@ class VSIIOStream : public CNCSJPCIOStream
         }
         return oErr;
     }        
-        
+
 #if ECWSDK_VERSION >= 40
     virtual VSIIOStream *Clone() {
-        
+
         VSILFILE *fpNewVSIL = VSIFOpenL( m_Filename, "rb" );
         if (fpNewVSIL == NULL) 
         {
@@ -229,7 +229,7 @@ class VSIIOStream : public CNCSJPCIOStream
     virtual bool NCS_FASTCALL Seek() {
         return bSeekable;
     }
-    
+
     virtual bool NCS_FASTCALL Seek(INT64 offset, Origin origin = CURRENT) {
         bool success = false;
         switch(origin) {
@@ -240,7 +240,7 @@ class VSIIOStream : public CNCSJPCIOStream
             case CURRENT:
               success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_CUR));
               break;
-                
+
             case END:
               success = (0 == VSIFSeekL(fpVSIL, offset, SEEK_END));
               break;
@@ -283,7 +283,7 @@ class VSIIOStream : public CNCSJPCIOStream
                       "Read(%d) failed @ " CPL_FRMT_GIB ", ignoring failure.",
                       count, (VSIFTellL( fpVSIL ) - startOfJPData) );
         }
-        
+
         return true;
     }
 
@@ -345,7 +345,7 @@ class VSIIOStream : public CNCSJPCIOStream
                 nCOMState = 0;
             }
         }
-        
+
         if( 1 != VSIFWriteL(buffer, count, 1, fpVSIL) )
         {
             CPLDebug( "ECW", "VSIIOStream::Write(%d) failed.", 
@@ -378,7 +378,7 @@ private:
 
     static NCSEcwReadStatus RefreshCB( NCSFileView * );
     NCSEcwReadStatus ReadToBuffer();
-    
+
 public:
     ECWAsyncReader();
     virtual ~ECWAsyncReader();
@@ -484,9 +484,9 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     int         bDatumCodeChanged;
     int         bUnitsCodeChanged;
     void        WriteHeader();
-    
+
     int         bUseOldBandRasterIOImplementation;
-    
+
     int         bPreventCopyingSomeMetadata;
 
     int         nBandIndexToPromoteTo8Bit;
@@ -505,7 +505,7 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
   public:
         ECWDataset(int bIsJPEG2000);
         ~ECWDataset();
-                
+
     static GDALDataset *Open( GDALOpenInfo *, int bIsJPEG2000 );
     static int          IdentifyJPEG2000( GDALOpenInfo * poOpenInfo );
     static GDALDataset *OpenJPEG2000( GDALOpenInfo * );
@@ -570,7 +570,7 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
 class ECWRasterBand : public GDALPamRasterBand
 {
     friend class ECWDataset;
-    
+
     // NOTE: poDS may be altered for NITF/JPEG2000 files!
     ECWDataset     *poGDS;
 

@@ -62,7 +62,7 @@ class AAIGRasterBand;
 class CPL_DLL AAIGDataset : public GDALPamDataset
 {
     friend class AAIGRasterBand;
-    
+
     VSILFILE   *fp;
 
     char        **papszPrj;
@@ -83,7 +83,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     double      adfGeoTransform[6];
     int         bNoDataSet;
     double      dfNoDataValue;
-    
+
 
     virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
 
@@ -208,7 +208,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-    
+
     if( poODS->Seek( panLineOffset[nBlockYOff] ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -263,10 +263,10 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             else
                 ((GInt32 *) pImage)[iPixel] = (GInt32) atoi(szToken);
         }
-        
+
         iPixel++;
     }
-    
+
     if( nBlockYOff < poODS->nRasterYSize - 1 )
         panLineOffset[nBlockYOff + 1] = poODS->Tell();
 
@@ -535,7 +535,7 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
         i + 1 < nTokens && j + 1 < nTokens)
     {
         adfGeoTransform[0] = CPLAtofM( papszTokens[i + 1] );
-       
+
         /* Small hack to compensate from insufficient precision in cellsize */
         /* parameter in datasets of http://ccafs-climate.org/data/A2a_2020s/hccpr_hadcm3 */
         if ((nRasterXSize % 360) == 0 &&
@@ -545,7 +545,7 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
         {
             dfCellDX = dfCellDY = 360.0 / nRasterXSize;
         }
-            
+
         adfGeoTransform[1] = dfCellDX;
         adfGeoTransform[2] = 0.0;
         adfGeoTransform[3] = CPLAtofM( papszTokens[j + 1] )
@@ -752,7 +752,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
             pszDataType = NULL;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse the header.                                               */
 /* -------------------------------------------------------------------- */
@@ -774,7 +774,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
                   poOpenInfo->pszFilename );
         delete poDS;
         return NULL;
-    } 
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Find the start of real data.                                    */
@@ -790,7 +790,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
             delete poDS;
             return NULL;
         }
-        
+
         if( poOpenInfo->pabyHeader[i-1] == '\n' 
             || poOpenInfo->pabyHeader[i-2] == '\n' 
             || poOpenInfo->pabyHeader[i-1] == '\r' 
@@ -1284,14 +1284,14 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
     {
         CPLString osResult;
         char    **papszTokens;
-        
+
         papszTokens = CSLTokenizeString(papszNV[iLine]);
 
         if( CSLCount(papszTokens) > 1 )
             osResult = papszTokens[1];
         else
             osResult = pszDefaultValue;
-        
+
         CSLDestroy( papszTokens );
         return osResult;
     }
@@ -1309,7 +1309,7 @@ void GDALRegister_AAIGrid()
     if( GDALGetDriverByName( "AAIGrid" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "AAIGrid" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
@@ -1339,7 +1339,7 @@ void GDALRegister_AAIGrid()
         poDriver->pfnOpen = AAIGDataset::Open;
         poDriver->pfnIdentify = AAIGDataset::Identify;
         poDriver->pfnCreateCopy = AAIGDataset::CreateCopy;
-        
+
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }

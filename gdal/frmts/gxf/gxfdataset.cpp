@@ -48,7 +48,7 @@ class GXFRasterBand;
 class GXFDataset : public GDALPamDataset
 {
     friend class GXFRasterBand;
-    
+
     GXFHandle	hGXF;
 
     char	*pszProjection;
@@ -58,7 +58,7 @@ class GXFDataset : public GDALPamDataset
   public:
                 GXFDataset();
 		~GXFDataset();
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
@@ -74,7 +74,7 @@ class GXFDataset : public GDALPamDataset
 class GXFRasterBand : public GDALPamRasterBand
 {
     friend class GXFDataset;
-    
+
   public:
 
     		GXFRasterBand( GXFDataset *, int );
@@ -93,7 +93,7 @@ GXFRasterBand::GXFRasterBand( GXFDataset *poDSIn, int nBandIn )
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    
+
     eDataType = poDSIn->eDataType;
 
     nBlockXSize = poDS->GetRasterXSize();
@@ -138,17 +138,17 @@ CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         if( padfBuffer == NULL )
             return CE_Failure;
         eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, padfBuffer );
-        
+
         for( i = 0; i < nBlockXSize; i++ )
             pafBuffer[i] = (float) padfBuffer[i];
-    
+
         CPLFree( padfBuffer );
     }
     else if (eDataType == GDT_Float64)
         eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, (double*)pImage );
     else
         eErr = CE_Failure;
-    
+
     return eErr;
 }
 
@@ -212,7 +212,7 @@ CPLErr GXFDataset::GetGeoTransform( double * padfTransform )
     // take into account that GXF is point or center of pixel oriented.
     padfTransform[0] = dfXOrigin - 0.5*padfTransform[1] - 0.5*padfTransform[2];
     padfTransform[3] = dfYOrigin - 0.5*padfTransform[4] - 0.5*padfTransform[5];
-    
+
     return CE_None;
 }
 
@@ -235,7 +235,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     GXFHandle	hGXF;
     int		i, bFoundKeyword, bFoundIllegal;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Before trying GXFOpen() we first verify that there is at        */
 /*      least one "\n#keyword" type signature in the first chunk of     */
@@ -269,8 +269,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( !bFoundKeyword || bFoundIllegal )
         return NULL;
-    
-    
+
 /* -------------------------------------------------------------------- */
 /*      At this point it is plausible that this is a GXF file, but      */
 /*      we also now verify that there is a #GRID keyword before         */
@@ -302,12 +301,12 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    
+
     hGXF = GXFOpen( poOpenInfo->pszFilename );
-    
+
     if( hGXF == NULL )
         return( NULL );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -319,14 +318,14 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     GXFDataset 	*poDS;
 
     poDS = new GXFDataset();
-    
+
     const char* pszGXFDataType = CPLGetConfigOption("GXF_DATATYPE", "Float32");
     GDALDataType eDT = GDALGetDataTypeByName(pszGXFDataType);
     if (!(eDT == GDT_Float32 || eDT == GDT_Float64))
@@ -338,7 +337,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->hGXF = hGXF;
     poDS->eDataType = eDT;
-    
+
 /* -------------------------------------------------------------------- */
 /*	Establish the projection.					*/
 /* -------------------------------------------------------------------- */
@@ -391,7 +390,7 @@ void GDALRegister_GXF()
     if( GDALGetDriverByName( "GXF" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "GXF" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

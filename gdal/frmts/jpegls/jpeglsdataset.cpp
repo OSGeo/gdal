@@ -178,7 +178,6 @@ CPLErr JPEGLSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
         }
     }
-    
 
     return CE_None;
 }
@@ -606,7 +605,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (nBits != 8 && nBits != 16)
             sParams.bitspersample = nBits;
     }
-    
+
     sParams.components = nBands;
     JLS_ERROR eError = JpegLsEncode(pabyDataCompressed, nCompressedSize,
                                     &nWritten,
@@ -683,7 +682,7 @@ void GDALRegister_JPEGLS()
 "   </Option>"
 "   <Option name='LOSS_FACTOR' type='int' default='0' description='0 = lossless, 1 = near lossless, > 1 lossless'/>"
 "</CreationOptionList>\n" );
-        
+
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnIdentify = JPEGLSDataset::Identify;

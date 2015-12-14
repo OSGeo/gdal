@@ -203,7 +203,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
   public:
                 JP2OpenJPEGDataset();
                 ~JP2OpenJPEGDataset();
-    
+
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *CreateCopy( const char * pszFilename,
@@ -285,7 +285,7 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int iOvrLevel);
-    
+
     virtual int HasArbitraryOverviews() { return poCT == NULL; }
 };
 
@@ -878,7 +878,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
                     }
                 }
             }
-            
+
             if( bPromoteTo8Bit )
             {
                 for(int j=0;j<nHeightToRead;j++)
@@ -894,7 +894,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         {
             CPLAssert((int)psImage->comps[iBand-1].w >= nWidthToRead);
             CPLAssert((int)psImage->comps[iBand-1].h >= nHeightToRead);
-            
+
             if( bPromoteTo8Bit )
             {
                 for(int j=0;j<nHeightToRead;j++)
@@ -1230,7 +1230,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
                 }
 
                 WriteXMPBox(fp, this, NULL);
-                
+
                 VSIFTruncateL( fp, VSIFTellL(fp) );
 
                 VSIFCloseL( fp );
@@ -1238,7 +1238,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
             else
             {
                 VSIFCloseL( fp );
-                
+
                 CPLDebug("OPENJPEG", "Rewriting whole file");
 
                 const char* apszOptions[] = {
@@ -1397,7 +1397,7 @@ int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
                     sizeof(jp2_box_jp) ) == 0
            ) )
         return TRUE;
-    
+
     else
         return FALSE;
 }
@@ -1495,7 +1495,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                                          nCodeStreamLength);
 
     opj_image_t * psImage = NULL;
-    
+
     if( pStream == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
@@ -2343,7 +2343,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     const char* pszYCC = CSLFetchNameValue(papszOptions, "YCC");
     int bYCC = ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
             CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
-    
+
     /* TODO: when OpenJPEG 2.2 is released, make this conditional */
     /* Depending on the way OpenJPEG <= r2950 is built, YCC with 4 bands might work on
      * Debug mode, but this relies on unreliable stack buffer overflows, so
@@ -2358,7 +2358,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         bYCC = FALSE;
     }
-    
+
     if( bYCBCR420 && bYCC )
     {
         if( pszYCC != NULL )
@@ -2368,7 +2368,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         bYCC = FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Deal with codeblocks size                                       */
 /* -------------------------------------------------------------------- */
@@ -2988,7 +2988,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 if( nCTComponentCount == 4 )
                     pclrBox.AppendUInt8((GByte)psEntry->c4);
             }
-            
+
             cmapBox.SetType("cmap");
             for(int i=0;i<nCTComponentCount;i++)
             {
@@ -3596,14 +3596,14 @@ void GDALRegister_JP2OpenJPEG()
 
 {
     GDALDriver  *poDriver;
-    
+
     if (! GDAL_CHECK_VERSION("JP2OpenJPEG driver"))
         return;
 
     if( GDALGetDriverByName( "JP2OpenJPEG" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "JP2OpenJPEG" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );

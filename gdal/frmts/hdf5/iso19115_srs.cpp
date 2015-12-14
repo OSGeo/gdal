@@ -80,14 +80,14 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
 /* -------------------------------------------------------------------- */
     const char *pszDatum = 
         CPLGetXMLValue( psRSI, "MD_CRS.datum.RS_Identifier.code", "" );
-    
+
     if( strlen(pszDatum) > 0 
         && poThis->SetWellKnownGeogCS( pszDatum ) != OGRERR_NONE )
     {
         CPLDestroyXMLNode( psRoot );
         return OGRERR_FAILURE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Then try to extract the projection.                             */
 /* -------------------------------------------------------------------- */
@@ -144,7 +144,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
         CPLDestroyXMLNode( psRoot );
         return OGRERR_FAILURE;
     }
-    
+
     CPLDestroyXMLNode( psRoot );
 
     return OGRERR_NONE;

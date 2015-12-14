@@ -138,17 +138,17 @@ const int Conversions::LOFF    = 1856;
 void Conversions::convert_pixel_to_geo(double line, double column, double&longitude, double& latitude) {
     double x = (column - COFF - 0.0) / double(CFAC >> 16);
     double y = (line - LOFF - 0.0) / double(LFAC >> 16);
-    
+
     double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*1737121856); 
     double sn = (altitude*cos(x)*cos(y) - sd)/(SQR(cos(y)) + 1.006803*SQR(sin(y)));
     double s1 = altitude - sn*cos(x)*cos(y);
     double s2 = sn*sin(x)*cos(y);
     double s3 = -sn*sin(y);
     double sxy = sqrt(s1*s1 + s2*s2);
-    
+
     longitude = atan(s2/s1);
     latitude  = atan(1.006803*s3/sxy);
-    
+
     longitude = longitude / M_PI * 180.0;
     latitude  = latitude  / M_PI * 180.0;
 }
@@ -156,29 +156,28 @@ void Conversions::convert_pixel_to_geo(double line, double column, double&longit
 void Conversions::compute_pixel_xyz(double line, double column, double& x,double& y, double& z) {
     double asamp = -(column - (nlines/2.0 + 0.5)) * step;
     double aline = (line - (nlines/2.0 + 0.5)) * step;
-    
+
     asamp *= deg_to_rad;
     aline *= deg_to_rad;
-    
+
     double tanal = tan(aline);
     double tanas = tan(asamp);
-    
+
     double p = -1;
     double q = tanas;
     double r = tanal * sqrt(1 + q*q);
-    
+
    double a = q*q + (r*req/rpol)*(r*req/rpol) + p*p;
     double b = 2 * altitude * p;
     double c = altitude * altitude  - req*req;
-    
+
     double det = b*b - 4*a*c;
-     
+
     if (det > 0) {
         double k = (-b - sqrt(det))/(2*a);
         x = altitude + k*p;
         y = k * q;
         z = k * r;
-        
     } else {
         fprintf(stderr, "Warning: pixel not visible\n");
     }
@@ -191,13 +190,13 @@ double Conversions::compute_pixel_area_sqkm(double line, double column) {
 
     compute_pixel_xyz(line-0.5, column-0.5, x1, y1, z1);
     compute_pixel_xyz(line+0.5, column-0.5, x2, y2, z2);
-    
+
     double xlen = sqrt(SQR(x1 - x2) + SQR(y1 - y2) + SQR(z1 - z2));
-    
+
     compute_pixel_xyz(line-0.5, column+0.5, x2, y2, z2);
-    
+
     double ylen = sqrt(SQR(x1 - x2) + SQR(y1 - y2) + SQR(z1 - z2));
-    
+
     return xlen*ylen;
 }
 

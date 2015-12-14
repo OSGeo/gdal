@@ -137,7 +137,7 @@ class WMTSDataset : public GDALPamDataset
                                 WMTSTileMatrixSet& oTMS);
     static int          ReadTMLimits(CPLXMLNode* psTMSLimits,
                                      std::map<CPLString, WMTSTileMatrixLimits>& aoMapTileMatrixLimits);
-  
+
   public:
                  WMTSDataset();
     virtual     ~WMTSDataset();
@@ -179,7 +179,7 @@ class WMTSBand : public GDALPamRasterBand
 {
   public:
                   WMTSBand(WMTSDataset* poDS, int nBand);
-                 
+
     virtual GDALRasterBand* GetOverview(int nLevel);
     virtual int GetOverviewCount();
     virtual GDALColorInterp GetColorInterpretation();
@@ -230,7 +230,7 @@ CPLErr WMTSBand::IRasterIO( GDALRWFlag eRWFlag,
                             GDALRasterIOExtraArg* psExtraArg )
 {
     WMTSDataset* poGDS = (WMTSDataset*) poDS;
-    
+
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
         && poGDS->apoDatasets.size() > 1 && eRWFlag == GF_Read )
     {
@@ -921,7 +921,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     if (!Identify(poOpenInfo))
         return NULL;
-    
+
     CPLXMLNode* psXML = NULL;
     CPLString osTileFormat;
     CPLString osInfoFormat;
@@ -1559,7 +1559,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             // Clip with implied BoundingBox of the most precise TM
             // Useful for http://tileserver.maptiler.com/wmts
             const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
-            
+
             // For https://data.linz.govt.nz/services;key=XXXXXXXX/wmts/1.0.0/set/69/WMTSCapabilities.xml
             // only clip in Y since there's a warp over dateline
             //sAOI.MinX = MAX(sAOI.MinX, oTM.dfTLX);

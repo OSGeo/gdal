@@ -1763,7 +1763,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
 
         GDALColorTable *poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
-        
+
         int nEntryCount = poCT->GetColorEntryCount();
         int nMaxEntryCount = 1 << nBitDepth;
         if( nEntryCount > nMaxEntryCount )

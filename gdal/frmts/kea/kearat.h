@@ -56,7 +56,7 @@ public:
     virtual const char   *GetNameOfCol( int ) const;
     virtual GDALRATFieldUsage GetUsageOfCol( int ) const;
     virtual GDALRATFieldType GetTypeOfCol( int ) const;
-    
+
     virtual int           GetColOfUsage( GDALRATFieldUsage ) const;
 
     virtual int           GetRowCount() const;

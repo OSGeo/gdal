@@ -114,13 +114,11 @@ typedef struct {
 
     char	*pszUnitName;
     double	dfUnitToMeter;
-    
 
     double	dfZMaximum;
     double	dfZMinimum;
 
     long	*panRawLineOffset;
-    
 } GXFInfo_t;
 
 #endif /* ndef GXFOPEN_H_INCLUDED */

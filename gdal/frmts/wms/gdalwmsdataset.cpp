@@ -372,7 +372,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             }
         }
     }
-    
+
     // UserPwd 
     const char *pszUserPwd = CPLGetXMLValue(config, "UserPwd", "");
     if (pszUserPwd[0] != '\0')
@@ -381,11 +381,11 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     const char *pszUserAgent = CPLGetXMLValue(config, "UserAgent", "");
     if (pszUserAgent[0] != '\0')
         m_osUserAgent = pszUserAgent;
-    
+
     const char *pszReferer = CPLGetXMLValue(config, "Referer", "");
     if (pszReferer[0] != '\0')
         m_osReferer = pszReferer;
-    
+
     if (ret == CE_None) {
         const char *pszHttpZeroBlockCodes = CPLGetXMLValue(config, "ZeroBlockHttpCodes", "");
         if(pszHttpZeroBlockCodes[0] == '\0') {

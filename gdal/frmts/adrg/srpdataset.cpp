@@ -79,7 +79,7 @@ class SRPDataset : public GDALPamDataset
 public:
     SRPDataset();
     virtual     ~SRPDataset();
-    
+
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * padfGeoTransform );
 
@@ -126,7 +126,7 @@ SRPRasterBand::SRPRasterBand( SRPDataset *poDSIn, int nBandIn )
 {
     this->poDS = poDSIn;
     this->nBand = nBandIn;
-    
+
     eDataType = GDT_Byte;
 
     nBlockXSize = 128;
@@ -214,7 +214,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
         offset = l_poDS->offsetInIMG + nBlock * 128 * 128;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Seek to target location.                                        */
 /* -------------------------------------------------------------------- */
@@ -255,7 +255,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                      "Cannot read data at offset %d", offset);
             return CE_Failure;
         }
-        
+
         CPLAssert( l_poDS->PVB == 8 );
         CPLAssert( l_poDS->PCB == 4 || l_poDS->PCB == 8 );
 
@@ -319,7 +319,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         CPLFree( pabyCData );
     }
-    
+
     return CE_None;
 }
 
@@ -350,7 +350,7 @@ SRPDataset::~SRPDataset()
     {
         VSIFCloseL(fdIMG);
     }
-    
+
     if (TILEINDEX)
     {
         delete [] TILEINDEX;
@@ -449,16 +449,16 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         CPLDebug( "SRP", "Failed to extract STR, or not 4." );
         return FALSE;
     }
-        
+
     int SCA = record->GetIntSubfield( "GEN", 0, "SCA", 0, &bSuccess );
     CPLDebug("SRP", "SCA=%d", SCA);
-        
+
     ZNA = record->GetIntSubfield( "GEN", 0, "ZNA", 0, &bSuccess );
     CPLDebug("SRP", "ZNA=%d", ZNA);
-        
+
     double PSP = record->GetFloatSubfield( "GEN", 0, "PSP", 0, &bSuccess );
     CPLDebug("SRP", "PSP=%f", PSP);
-        
+
     ARV = record->GetIntSubfield( "GEN", 0, "ARV", 0, &bSuccess );
     CPLDebug("SRP", "ARV=%d", ARV);
 
@@ -511,14 +511,14 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
             *c = 0;
     }
     CPLDebug("SRP", "BAD=%s", osBAD.c_str());
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the tile map if available.                                 */
 /* -------------------------------------------------------------------- */
     const char* pszTIF = record->GetStringSubfield( "SPR", 0, "TIF", 0 );
     int TIF = pszTIF != NULL && EQUAL(pszTIF,"Y");
     CPLDebug("SRP", "TIF=%d", TIF);
-    
+
     if (TIF)
     {
         field = record->FindField( "TIM" );
@@ -538,7 +538,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         {
             return FALSE;
         }
-    
+
         TILEINDEX = new int [NFL * NFC];
         const char* ptr = field->GetData();
         char offset[30]={0};
@@ -552,7 +552,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
             //CPLDebug("SRP", "TSI[%d]=%d", i, TILEINDEX[i]);
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the .IMG file.  Try to recover gracefully if the case      */
 /*      of the filename is wrong.                                       */
@@ -566,7 +566,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         CPLError( CE_Failure, CPLE_AppDefined, "Cannot find %s", osImgName.c_str());
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Establish the offset to the first byte of actual image data     */
 /*      in the IMG file, skipping the ISO8211 header.                   */
@@ -618,24 +618,24 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
             return FALSE;
         }
     }
-    
+
     if (VSIFEofL(fdIMG))
     {
         return FALSE;
     }
-    
+
     CPLDebug("SRP", "Img offset data = %d", offsetInIMG);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Establish the SRP Dataset.                                     */
 /* -------------------------------------------------------------------- */
     nRasterXSize = NFC * 128;
     nRasterYSize = NFL * 128;
-    
+
     char szValue[32];
     snprintf(szValue, sizeof(szValue), "%d", SCA);
     SetMetadataItem( "SRP_SCA", szValue );
-    
+
     nBands = 1;
     for( i = 0; i < nBands; i++ )
         SetBand( i+1, new SRPRasterBand( this, i+1 ) );
@@ -991,8 +991,6 @@ SRPDataset* SRPDataset::OpenDataset(
     poDS->osGENFileName = pszGENFileName;
     poDS->osIMGFileName = pszIMGFileName;
 
-
-    
     poDS->SetMetadataItem( "SRP_NAM", osNAM );
     poDS->SetMetadataItem( "SRP_PRODUCT", osPRT );
 
@@ -1004,9 +1002,7 @@ SRPDataset* SRPDataset::OpenDataset(
     }
 
     return poDS;
-
 }
-
 
 
 /************************************************************************/
@@ -1613,7 +1609,7 @@ void GDALRegister_SRP()
     if( GDALGetDriverByName( "SRP" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "SRP" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

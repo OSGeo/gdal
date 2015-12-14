@@ -84,7 +84,7 @@ GeoRasterDataset::~GeoRasterDataset()
     {
         delete poMaskBand;
     }
-    
+
     CPLFree( pszProjection );
     CSLDestroy( papszSubdatasets );
 }
@@ -242,7 +242,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         poGRD->poMaskBand = new GeoRasterRasterBand( poGRD, 0, DEFAULT_BMP_MASK );
     }
-    
+
     //  -------------------------------------------------------------------
     //  Check for filter Nodata environment variable, default is YES
     //  -------------------------------------------------------------------
@@ -708,7 +708,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         delete poGRD;
         return NULL;
     }
-    
+
     //  -------------------------------------------------------------------
     //  Prepare an identification string
     //  -------------------------------------------------------------------
@@ -1227,7 +1227,7 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
     {
         return CE_Failure;
     }
-    
+
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     bGeoTransform = true;
@@ -1484,11 +1484,11 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     // ----------------------------------------------------------------
 
     OGRSpatialReference *poSRS2 = oSRS.Clone();
-    
+
     poSRS2->StripCTParms();
 
     double dfAngularUnits = poSRS2->GetAngularUnits( NULL );
-    
+
     if( fabs(dfAngularUnits - 0.0174532925199433) < 0.0000000000000010 )
     {
         /* match the precision used on Oracle for that particular value */
@@ -1503,7 +1503,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         delete poSRS2;
         return CE_Failure;
     }
-    
+
     const char *pszProjName = poSRS2->GetAttrValue( "PROJECTION" );
 
     if( pszProjName )
@@ -1619,52 +1619,52 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
             strncpy( pszStart, "Latitude_Of_Center", 
                                         strlen(SRS_PP_LATITUDE_OF_CENTER) );
         }
-                
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_ORIGIN) ) != NULL )
         {
             strncpy( pszStart, "Latitude_Of_Origin", 
                                         strlen(SRS_PP_LATITUDE_OF_ORIGIN) );
         }
-                
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LONGITUDE_OF_CENTER) ) != NULL )
         {
             strncpy( pszStart, "Longitude_Of_Center", 
                                         strlen(SRS_PP_LONGITUDE_OF_CENTER) );
         }
-                
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_PSEUDO_STD_PARALLEL_1) ) != NULL )
         {
             strncpy( pszStart, "Pseudo_Standard_Parallel_1", 
                                         strlen(SRS_PP_PSEUDO_STD_PARALLEL_1) );
         }
-                
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_SCALE_FACTOR) ) != NULL )
         {
             strncpy( pszStart, "Scale_Factor", strlen(SRS_PP_SCALE_FACTOR) );
         }
-                
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_1) ) != NULL )
         {
             strncpy( pszStart, "Standard_Parallel_1", 
                                         strlen(SRS_PP_STANDARD_PARALLEL_1) );
         }
-                
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) != NULL )
         {
             strncpy( pszStart, "Standard_Parallel_2", 
                                         strlen(SRS_PP_STANDARD_PARALLEL_2) );
-        }                
-                
+        }
+
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) != NULL )
         {
             strncpy( pszStart, "Standard_Parallel_2", 
                                         strlen(SRS_PP_STANDARD_PARALLEL_2) );
-        }                
-        
+        }
+
         // ----------------------------------------------------------------
         // Fix Unit name
         // ----------------------------------------------------------------
-        
+
         if( ( pszStart = strstr(pszCloneWKT, "metre") ) != NULL )
         {
             strncpy( pszStart, SRS_UL_METER, strlen(SRS_UL_METER) );
@@ -1677,16 +1677,16 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     OWConnection* poConnection  = poGeoRaster->poConnection;
     OWStatement* poStmt = NULL;
-    
+
     int nNewSRID = 0;    
-   
+
     const char *pszFuncName = "FIND_GEOG_CRS";
-  
+
     if( poSRS2->IsProjected() )
     {
         pszFuncName = "FIND_PROJ_CRS";
     }
-    
+
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  LIST SDO_SRID_LIST;"
@@ -1700,7 +1700,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         "END;",
             pszFuncName,
             pszCloneWKT ) );
-        
+
     poStmt->BindName( ":out", &nNewSRID );
 
     CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -1720,14 +1720,14 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     // --------------------------------------------------------------------
     // Search by simplified WKT or insert it as a user defined SRS
     // --------------------------------------------------------------------
-    
+
     int nCounter = 0;
 
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT COUNT(*) FROM MDSYS.CS_SRS WHERE WKTEXT = '%s'", pszCloneWKT));
-    
+
     poStmt->Define( &nCounter );
-            
+
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
     if( poStmt->Execute() && nCounter > 0 )
@@ -1740,7 +1740,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         if( poStmt->Execute() )
         {
             CPLPopErrorHandler();
-            
+
             poGeoRaster->SetGeoReference( nNewSRID );
             CPLFree( pszCloneWKT );
             return CE_None;
@@ -1748,7 +1748,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     }
 
     CPLPopErrorHandler();
-    
+
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  MAX_SRID NUMBER := 0;\n"
@@ -1771,24 +1771,24 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     if( poStmt->Execute() )
     {
         CPLPopErrorHandler();
-            
+
         poGeoRaster->SetGeoReference( nNewSRID );
     }
     else
     {
         CPLPopErrorHandler();
-            
+
         poGeoRaster->SetGeoReference( UNKNOWN_CRS );
 
         CPLError( CE_Warning, CPLE_UserInterrupt,
             "Insufficient privileges to insert reference system to "
             "table MDSYS.CS_SRS." );
-        
+
         eError = CE_Warning;
     }
 
     CPLFree( pszCloneWKT );
-    
+
     return eError;
 }
 
@@ -1859,7 +1859,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         poStmt = poConnection->CreateStatement( 
             "SELECT   DISTINCT TABLE_NAME, OWNER FROM ALL_SDO_GEOR_SYSDATA\n"
             "  ORDER  BY TABLE_NAME ASC" );
-        
+
         char szTable[OWNAME];
         char szOwner[OWNAME];
 
@@ -1908,7 +1908,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 
         poStmt->Define( szColumn );
         poStmt->Define( szOwner );
-        
+
         if( poStmt->Execute() )
         {
             int nCount = 1;
@@ -1931,7 +1931,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             }
             while( poStmt->Fetch() );
         }
-        
+
         return;
     }
 
@@ -2080,7 +2080,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     {
         bInternal = false;
     }
-        
+
     //  -----------------------------------------------------------
     //  Pyramids applies to the whole dataset not to a specific band
     //  -----------------------------------------------------------
@@ -2169,7 +2169,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     //  -----------------------------------------------------------
     //  If Pyramid was done internally on the server exit here
     //  -----------------------------------------------------------
-    
+
     if( bInternal )
     {
         pfnProgress( 1 , NULL, pProgressData );
@@ -2259,7 +2259,7 @@ CPLErr GeoRasterDataset::CreateMaskBand( int /*nFlags*/ )
     {
         return CE_Failure;
     }
-    
+
     poGeoRaster->bHasBitmapMask = true;
 
     return CE_None;

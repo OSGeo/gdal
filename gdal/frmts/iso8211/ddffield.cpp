@@ -100,14 +100,14 @@ void DDFField::Dump( FILE * fp )
             fprintf( fp, "      ...\n" );
             break;
         }
-        
+
         for( int i = 0; i < poDefn->GetSubfieldCount(); i++ )
         {
             int         nBytesConsumed;
 
             poDefn->GetSubfield(i)->DumpData( pachData + iOffset,
                                               nDataSize - iOffset, fp );
-        
+
             poDefn->GetSubfield(i)->GetDataLength( pachData + iOffset,
                                                    nDataSize - iOffset,
                                                    &nBytesConsumed );
@@ -149,7 +149,7 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
 
 {
     int         iOffset = 0;
-    
+
     if( poSFDefn == NULL )
         return NULL;
 
@@ -315,14 +315,14 @@ const char *DDFField::GetInstanceData( int nInstance,
         DDFSubfieldDefn *poLastSubfield;
         int              nLastSubfieldWidth;
         const char          *pachLastData;
-        
+
         poLastSubfield = poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
-        
+
         pachLastData = GetSubfieldData( poLastSubfield, &nBytesRemaining2, 
                                         nInstance );
         poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2, 
                                        &nLastSubfieldWidth );
-        
+
         *pnInstanceSize = 
             nBytesRemaining1 - (nBytesRemaining2 - nLastSubfieldWidth);
     }

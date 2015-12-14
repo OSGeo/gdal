@@ -53,7 +53,7 @@ PostGISRasterDriver::~PostGISRasterDriver() {
 
 /***************************************************************************
  * \brief Create a PQconn object and store it in a list
- * 
+ *
  * The PostGIS Raster driver keeps the connection with the PostgreSQL database
  * server for as long it leaves. Following PostGISRasterDataset instance 
  * can re-use the existing connection as long it used the same database, 
@@ -71,7 +71,7 @@ PGconn* PostGISRasterDriver::GetConnection(const char* pszConnectionString,
         const char * pszDbnameIn, const char * pszHostIn, const char * pszPortIn, const char * pszUserIn)
 {
     PGconn * poConn = NULL;
-    
+
     if( pszHostIn == NULL ) pszHostIn = "(null)";
     if( pszPortIn == NULL ) pszPortIn = "(null)";
     if( pszUserIn == NULL ) pszUserIn = "(null)";

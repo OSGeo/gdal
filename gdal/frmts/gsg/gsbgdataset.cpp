@@ -566,7 +566,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
         return NULL;
     }
- 
+
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
@@ -933,7 +933,7 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
                   pszFilename );
         return NULL;
     }
-    
+
     CPLErr eErr = WriteHeader( fp, (GInt16) nXSize, (GInt16) nYSize,
 			       0.0, nXSize, 0.0, nYSize, 0.0, 0.0 );
     if( eErr != CE_None )
@@ -1147,7 +1147,7 @@ void GDALRegister_GSBG()
     if( GDALGetDriverByName( "GSBG" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "GSBG" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

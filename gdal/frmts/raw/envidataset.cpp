@@ -540,7 +540,7 @@ void ENVIDataset::FlushCache()
         bOK &= VSIFPrintfL( fp, "%s = %s\n", poKey.c_str(), papszTokens[1]) >= 0;
         CSLDestroy( papszTokens );
     }
-    
+
     if( !bOK )
         return;
 
@@ -949,7 +949,7 @@ void ENVIDataset::WriteProjectionInfo()
         CPLFree(pszProjESRI);
         pszProjESRI = NULL;
     }
-    
+
     if( !bOK )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Write error");
@@ -2401,7 +2401,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->GetRasterBand(1)->SetCategoryNames( papszClassNames );
         CSLDestroy( papszClassNames );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Apply colormap if we have one.					*/
 /* -------------------------------------------------------------------- */

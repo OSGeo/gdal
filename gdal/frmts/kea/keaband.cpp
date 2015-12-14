@@ -745,7 +745,7 @@ GDALColorInterp KEARasterBand::GetColorInterpretation()
     {
         return GCI_GrayIndex;
     }
-        
+
     GDALColorInterp egdalinterp;
     switch(ekeainterp)
     {
@@ -802,7 +802,7 @@ GDALColorInterp KEARasterBand::GetColorInterpretation()
             egdalinterp = GCI_GrayIndex;
             break;
     }
-        
+
     return egdalinterp;
 }
 

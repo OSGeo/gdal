@@ -73,7 +73,7 @@ typedef struct {
     char    **papszMetadata;
 
     CPLXMLNode *psNITFSpecNode;
-    
+
 } NITFFile;
 
 /* -------------------------------------------------------------------- */
@@ -138,7 +138,7 @@ typedef struct {
     int        nBitsPerSample;
 
     NITFBandInfo *pasBandInfo;
-    
+
     char       chIMODE;
 
     int        nBlocksPerRow;
@@ -174,7 +174,7 @@ typedef struct {
     int        nIALVL;
     int        nIDLVL;
     char       szIMAG[5];
-    
+
     int        bNoDataSet;
     int        nNoDataValue;
 
@@ -182,7 +182,7 @@ typedef struct {
     char    *pachTRE;
 
     /* Internal information not for application use. */
-    
+
     int        nWordSize;
     GUIntBig   nPixelOffset;
     GUIntBig   nLineOffset;
@@ -192,7 +192,7 @@ typedef struct {
     GUIntBig    *panBlockStart;
 
     char       **papszMetadata;
-    
+
     GUInt32 *apanVQLUT[4];
 
     int     nLocCount;

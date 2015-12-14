@@ -190,7 +190,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         this->eDataType = GDT_Float64;
         dfNoData = -12345.0;
     }
-    
+
     nBlockXSize = poDS->nRasterXSize;;
     nBlockYSize = 1;
 
@@ -263,10 +263,10 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     char *pachNullBuf;
-    
+
     pachNullBuf = (char *) CPLMalloc(nBlockXSize);
     G_get_null_value_row( hCell, pachNullBuf, nBlockYOff );
-            
+
     if( eDataType == GDT_Float32 || eDataType == GDT_Float64 
         || eDataType == GDT_UInt32 )
     {
@@ -284,12 +284,11 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     ((double *) pImage)[i] = dfNoData;
             }
         }
-        
     }
     else
     {
         GUInt32 *panRow = (GUInt32 *) CPLMalloc(4 * nBlockXSize);
-        
+
         G_get_raster_row( hCell, panRow, nBlockYOff, nGRSType  );
 
         for( int i = 0; i < nBlockXSize; i++ )
@@ -441,7 +440,7 @@ const char *GRASSDataset::GetProjectionRef()
 CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform ) 
 {
     memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
-    
+
     return CE_None;
 }
 
@@ -476,7 +475,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
         G_free( pszMapset );
         G_free( pszCell );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Check if this is a valid GRASS imagery group.                   */
 /* -------------------------------------------------------------------- */
@@ -486,7 +485,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         I_init_group_ref( &ref );
         I_get_group_ref( pszCell, &ref );
-        
+
         for( int iRef = 0; iRef < ref.nfiles; iRef++ )
         {
             papszCells = CSLAddString( papszCells, ref.file[iRef].name );
@@ -511,12 +510,12 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* notdef: should only allow read access to an existing cell, right? */
     poDS->eAccess = poOpenInfo->eAccess;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
     struct Cell_head	sCellInfo;
-    
+
     if( G_get_cellhd( papszCells[0], papszMapsets[0], &sCellInfo ) != 0 )
     {
         /* notdef: report failure. */
@@ -563,7 +562,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
                                             papszMapsets[iBand], 
                                             papszCells[iBand] ) );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -575,7 +574,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
     return poDS;
 }
 
@@ -587,21 +586,21 @@ void GDALRegister_GRASS()
 
 {
     GDALDriver	*poDriver;
-    
+
     if (! GDAL_CHECK_VERSION("GDAL/GRASS driver"))
         return;
 
     if( GDALGetDriverByName( "GRASS" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "GRASS" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "GRASS Database Rasters" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_grass.html" );
-        
+
         poDriver->pfnOpen = GRASSDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

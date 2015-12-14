@@ -104,7 +104,7 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
         }
         poRAT->CreateColumn(sName, eGDALType, eGDALUsage);
         poRAT->SetRowCount(static_cast<int>(m_poKEATable->getSize()));
-        
+
         if( m_poKEATable->getSize() == 0 )
             continue;
 
@@ -750,7 +750,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 return CE_Failure;
             }
-            
+
             if( eRWFlag == GF_Write )
             {
                 // convert user supplied strings to doubles

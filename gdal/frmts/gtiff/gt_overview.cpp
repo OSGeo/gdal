@@ -73,7 +73,7 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
 #endif
 
     TIFFCreateDirectory( hTIFF );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup TIFF fields.                                              */
 /* -------------------------------------------------------------------- */
@@ -336,7 +336,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         if (nCompression < 0)
             return CE_Failure;
     }
-    
+
     if( nCompression == COMPRESSION_JPEG && nBitsPerPixel > 8 )
     {  
         if( nBitsPerPixel > 16 )
@@ -692,7 +692,7 @@ GTIFFBuildOverviews( const char * pszFilename,
     hODS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
     if( hODS == NULL )
         return CE_Failure;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to set the jpeg quality?                             */
 /* -------------------------------------------------------------------- */
@@ -831,4 +831,3 @@ GTIFFBuildOverviews( const char * pszFilename,
 
     return eErr;
 }
-    

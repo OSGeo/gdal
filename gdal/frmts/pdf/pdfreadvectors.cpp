@@ -604,7 +604,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
     int nParenthesisLevel = 0;
     int nArrayLevel = 0;
     int nBTLevel = 0;
-    
+
     int bCollectAllObjects = poResources != NULL && !bInitBDCStack && !bMatchQ;
 
     GraphicState oGS;
@@ -614,7 +614,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
     std::vector<double> oCoords;
     int bHasFoundFill = FALSE;
     int bHasMultiPart = FALSE;
-    
+
     szToken[0] = '\0';
 
     if (bInitBDCStack)

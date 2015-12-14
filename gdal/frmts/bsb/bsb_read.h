@@ -76,8 +76,7 @@ int CPL_DLL BSBWritePCT( BSBInfo *psInfo,
                          int nPCTSize, unsigned char *pabyPCT );
 int CPL_DLL BSBWriteScanline( BSBInfo *psInfo, 
                               unsigned char *pabyScanlineBuf );
-                            
-CPL_C_END
 
+CPL_C_END
 
 #endif /* ndef BSBREAD_H_INCLUDED */

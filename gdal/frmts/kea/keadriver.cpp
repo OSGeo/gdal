@@ -45,7 +45,7 @@ void GDALRegister_KEA()
     if( GDALGetDriverByName( "KEA" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "KEA" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

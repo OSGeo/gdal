@@ -1920,7 +1920,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 /* -------------------------------------------------------------------- */
 
     if( !( EQUAL(szGridMappingName,"" ) ) ) {
-        
+
         snprintf(szTemp,sizeof(szTemp), "%s#%s", szGridMappingValue,CF_GRD_MAPPING_NAME);
         pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
 
@@ -4776,7 +4776,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     size_t ydim;
     poDS->nYDimID = paDimIds[nd-2];
     nc_inq_dimlen ( cdfid, poDS->nYDimID, &ydim );
-    
+
     if( xdim > INT_MAX || ydim > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -4790,7 +4790,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
-    
+
     poDS->nRasterXSize = static_cast<int>(xdim);
     poDS->nRasterYSize = static_cast<int>(ydim);
 

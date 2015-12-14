@@ -75,7 +75,7 @@ void DDFSubfieldDefn::SetName( const char * pszNewName )
 
 {
     int         i;
-    
+
     CPLFree( pszName );
 
     pszName = CPLStrdup( pszNewName );
@@ -111,7 +111,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
     }
     else
         bIsVariable = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Interpret the format string.                                    */
 /* -------------------------------------------------------------------- */
@@ -125,7 +125,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
       case 'R':
         eType = DDFFloat;
         break;
-        
+
       case 'I':
       case 'S':
         eType = DDFInt;
@@ -324,7 +324,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
                     break;
                 } 
             }
-            
+
             nLength++;
         }
 
@@ -496,7 +496,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0.0;
               }
-            
+
             case SInt:
               if( nFormatWidth == 1 )
                   return( *((signed char *) abyData) );
@@ -509,7 +509,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0.0;
               }
-            
+
             case FloatReal:
               if( nFormatWidth == 4 )
                   return( *((float *) pabyData) );
@@ -632,7 +632,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0;
               }
-            
+
             case SInt:
               if( nFormatWidth == 4 )
                   return( *((GInt32 *) pabyData) );
@@ -645,7 +645,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0;
               }
-            
+
             case FloatReal:
               if( nFormatWidth == 4 )
                   return( (int) *((float *) pabyData) );

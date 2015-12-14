@@ -221,7 +221,7 @@ CPLErr BPGDataset::Uncompress()
         return CE_Failure;
     }
     BPGDecoderOutputFormat eOutputFormat;
-    
+
     if( GetRasterBand(1)->GetRasterDataType() == GDT_Byte )
         eOutputFormat = (nBands == 1 || nBands == 3) ? BPG_OUTPUT_FORMAT_RGB24 :
                                                        BPG_OUTPUT_FORMAT_RGBA32;
