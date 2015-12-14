@@ -75,22 +75,22 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     {
         m_nBulkUpload = atoi(CSLFetchNameValueDef(papszOptions, "BULK_SIZE", "1000000"));
     }
-    
+
     m_osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
     m_bStoreFields = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "STORE_FIELDS", false));
-    
+
     const char* pszStoredFields = CSLFetchNameValue(papszOptions, "STORED_FIELDS");
     if( pszStoredFields )
         m_papszStoredFields = CSLTokenizeString2(pszStoredFields, ",", 0);
     else
         m_papszStoredFields = NULL;
-    
+
     const char* pszNotAnalyzedFields = CSLFetchNameValue(papszOptions, "NOT_ANALYZED_FIELDS");
     if( pszNotAnalyzedFields )
         m_papszNotAnalyzedFields = CSLTokenizeString2(pszNotAnalyzedFields, ",", 0);
     else
         m_papszNotAnalyzedFields = NULL;
-    
+
     const char* pszNotIndexedFields = CSLFetchNameValue(papszOptions, "NOT_INDEXED_FIELDS");
     if( pszNotIndexedFields )
         m_papszNotIndexedFields = CSLTokenizeString2(pszNotIndexedFields, ",", 0);
@@ -101,15 +101,15 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     SetDescription( m_poFeatureDefn->GetName() );
     m_poFeatureDefn->Reference();
     m_poFeatureDefn->SetGeomType(wkbNone);
-    
+
     AddFieldDefn("_id", OFTString, std::vector<CPLString>());
-    
+
     if( m_osESSearch.size() )
     {
         AddFieldDefn("_index", OFTString, std::vector<CPLString>());
         AddFieldDefn("_type", OFTString, std::vector<CPLString>());
     }
-    
+
     m_bFeatureDefnFinalized = FALSE;
     m_bSerializeMapping = FALSE;
     m_bManualMapping = FALSE;
@@ -137,14 +137,14 @@ OGRElasticLayer::~OGRElasticLayer() {
     SyncToDisk();
 
     ResetReading();
-    
+
     json_object_put(m_poSpatialFilter);
 
     for(int i=0;i<(int)m_apoCT.size();i++)
         delete m_apoCT[i];
 
     m_poFeatureDefn->Release();
-    
+
     CSLDestroy(m_papszStoredFields);
     CSLDestroy(m_papszNotAnalyzedFields);
     CSLDestroy(m_papszNotIndexedFields);
@@ -187,7 +187,7 @@ void OGRElasticLayer::AddGeomFieldDefn( const char* pszName,
     poSRS_WGS84->SetFromUserInput(SRS_WKT_WGS84);
     oFieldDefn.SetSpatialRef(poSRS_WGS84);
     poSRS_WGS84->Dereference();
-    
+
     m_poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
 
     m_apoCT.push_back(NULL);
@@ -241,16 +241,16 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
             {
                 std::vector<CPLString> aosNewPaths = aosPath;
                 aosNewPaths.push_back(it.key);
-                
+
                 InitFeatureDefnFromMapping(it.val, pszPrefix, aosNewPaths);
-                
+
                 continue;
             }
             else if( m_poDS->m_bFlattenNestedAttributes )
             {
                 std::vector<CPLString> aosNewPaths = aosPath;
                 aosNewPaths.push_back(it.key);
-                
+
                 CPLString osPrefix;
                 if( pszPrefix[0] )
                 {
@@ -258,9 +258,9 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                     osPrefix += ".";
                 }
                 osPrefix += it.key;
-                
+
                 InitFeatureDefnFromMapping(it.val, osPrefix, aosNewPaths);
-                
+
                 continue;
             }
         }
@@ -408,9 +408,9 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
 {
     if( m_bFeatureDefnFinalized )
         return;
-    
+
     m_bFeatureDefnFinalized = TRUE;
-    
+
     int nFeatureCountToEstablishFeatureDefn = m_poDS->m_nFeatureCountToEstablishFeatureDefn;
     if( m_osESSearch.size() && nFeatureCountToEstablishFeatureDefn <= 0 )
         nFeatureCountToEstablishFeatureDefn = 1;
@@ -575,14 +575,14 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
             }
 
             json_object_put(poResponse);
-            
+
             if( nFeatureCountToEstablishFeatureDefn > 0 &&
                 nAlreadyQueried >= nFeatureCountToEstablishFeatureDefn )
             {
                 break;
             }
         }
-        
+
         ResetReading();
     }
 
@@ -660,7 +660,7 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
             if( m_poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
                 return;
             aosPath.push_back(pszKey);
-            
+
             json_object_iter it;
             it.key = NULL;
             it.val = NULL;
@@ -685,7 +685,7 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
         if( m_poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
             return;
     }*/
-    
+
     if( m_poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
         return;
 
@@ -747,7 +747,7 @@ OGRErr OGRElasticLayer::SyncToDisk()
 {
     if( WriteMapIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
-    
+
     if( !PushIndex() )
         return OGRERR_FAILURE;
 
@@ -760,9 +760,9 @@ OGRErr OGRElasticLayer::SyncToDisk()
 /************************************************************************/
 
 OGRFeatureDefn * OGRElasticLayer::GetLayerDefn() {
-    
+
     FinalizeFeatureDefn();
-    
+
     return m_poFeatureDefn;
 }
 
@@ -934,16 +934,16 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         {
             continue;
         }
-        
+
         const char* pszId = NULL;
         json_object* poId = json_object_object_get(poHit, "_id");
         if( poId != NULL && json_object_get_type(poId) == json_type_string )
             pszId = json_object_get_string(poId);
-        
+
         OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
         if( pszId )
             poFeature->SetField("_id", pszId);
-        
+
         if( m_osESSearch.size() )
         {
             json_object* poIndex = json_object_object_get(poHit, "_index");
@@ -954,10 +954,10 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
             if( poType != NULL && json_object_get_type(poType) == json_type_string )
                 poFeature->SetField("_type", json_object_get_string(poType));
         }
-        
+
         if( m_poDS->m_bJSonField )
             poFeature->SetField("_json", json_object_to_json_string(poSource));
-        
+
         BuildFeature(poFeature, poSource, CPLString());
         if( poFeature->GetFID() < 0 )
             poFeature->SetFID( ++m_iCurID );
@@ -1031,7 +1031,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                 continue;
             }
         }
-        
+
         if( osPath.size() )
             osCurPath = osPath + "." + it.key;
         else
@@ -1359,7 +1359,7 @@ CPLString OGRElasticLayer::BuildMap() {
     for(int i=1;i<m_poFeatureDefn->GetFieldCount();i++)
     {
         OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-        
+
         json_object* poContainer = GetContainerForMapping(poMappingProperties,
                                                           m_aaosFieldPaths[i],
                                                           oMap);
@@ -1554,7 +1554,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
         default: break;
     }
     json_object_object_add(geometry, "type", json_object_new_string(pszGeomType));
-    
+
     switch( wkbFlatten(poGeom->getGeometryType()) )
     {
         case wkbPoint:
@@ -1566,7 +1566,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             json_object_array_add(coordinates, json_object_new_double_with_precision(poPoint->getY(), nPrecision));
             break;
         }
-        
+
         case wkbLineString:
         {
             OGRLineString* poLS = (OGRLineString*)poGeom;
@@ -1605,7 +1605,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             }
             break;
         }
-        
+
         case wkbMultiPoint:
         {
             OGRMultiPoint* poMP = (OGRMultiPoint*)poGeom;
@@ -1621,7 +1621,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             }
             break;
         }
-        
+
         case wkbMultiLineString:
         {
             OGRMultiLineString* poMLS = (OGRMultiLineString*)poGeom;
@@ -1642,7 +1642,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             }
             break;
         }
-                
+
         case wkbMultiPolygon:
         {
             OGRMultiPolygon* poMP = (OGRMultiPolygon*)poGeom;
@@ -1672,7 +1672,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             }
             break;
         }
-                        
+
         case wkbGeometryCollection:
         {
             OGRGeometryCollection* poGC = (OGRGeometryCollection*)poGeom;
@@ -1686,11 +1686,11 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             }
             break;
         }
-        
+
         default:
             break;
     }
-    
+
 }
 
 /************************************************************************/
@@ -1701,7 +1701,7 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
 {
     if( m_bManualMapping )
         return OGRERR_NONE;
-    
+
     // Check to see if the user has elected to only write out the mapping file
     // This method will only write out one layer from the vector file in cases where there are multiple layers
     if (m_osWriteMapFilename.size()) {
@@ -1727,7 +1727,7 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
             return OGRERR_FAILURE;
         }
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -1766,7 +1766,7 @@ static json_object* GetContainerForFeature( json_object* poContainer,
 
 CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 {
-    
+
     CPLString fields;
     int nJSonFieldIndex = m_poFeatureDefn->GetFieldIndex("_json");
     if( nJSonFieldIndex >= 0 && poFeature->IsFieldSet(nJSonFieldIndex) )
@@ -1871,10 +1871,10 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
             if(!poFeature->IsFieldSet( i ) ) {
                     continue;
             }
-            
+
             json_object* poContainer = GetContainerForFeature(fieldObject, m_aaosFieldPaths[i], oMap);
             const char* pszLastComponent = m_aaosFieldPaths[i][(int)m_aaosFieldPaths[i].size()-1];
-            
+
             switch (m_poFeatureDefn->GetFieldDefn(i)->GetType()) {
                 case OFTInteger:
                     if( m_poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean )
@@ -1992,7 +1992,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
         fields = json_object_to_json_string(fieldObject);
         json_object_put(fieldObject);
     }
-    
+
     return fields;
 }
 
@@ -2006,7 +2006,7 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 
     if( WriteMapIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
-    
+
     if (m_osWriteMapFilename.size())
         return OGRERR_NONE;
 
@@ -2018,7 +2018,7 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
     }
 
     CPLString osFields(BuildJSonFromFeature(poFeature));
-    
+
     const char* pszId = NULL;
     if( poFeature->IsFieldSet(0) && !m_bIgnoreSourceID )
         pszId = poFeature->GetFieldAsString(0);
@@ -2055,7 +2055,7 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
                 pszId = json_object_get_string(poId);
                 poFeature->SetField(0, pszId);
             }
-        
+
         }
         json_object_put(poRes);
     }
@@ -2081,13 +2081,13 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid FID");
         return OGRERR_FAILURE;
     }
-    
+
     if( WriteMapIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     PushIndex();
-    
+
     CPLString osFields(BuildJSonFromFeature(poFeature));
-    
+
     // TODO? we should theoretically detect if the provided _id doesn't exist
     CPLString osURL(CPLSPrintf("%s/%s/%s/%s",
                                m_poDS->GetURL(), m_osIndexName.c_str(),
@@ -2099,7 +2099,7 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
     }
     //CPLDebug("ES", "SetFeature(): %s", json_object_to_json_string(poRes));
     json_object_put(poRes);
-    
+
     return OGRERR_NONE;
 }
 
@@ -2114,7 +2114,7 @@ int OGRElasticLayer::PushIndex() {
 
     int bRet = m_poDS->UploadFile(CPLSPrintf("%s/_bulk", m_poDS->GetURL()), m_osBulkContent);
     m_osBulkContent.clear();
-    
+
     return bRet;
 }
 
@@ -2139,11 +2139,11 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
         }
         return OGRERR_FAILURE;
     }
-    
+
     std::vector<CPLString> aosPath;
     if( m_osMappingName == "FeatureCollection" )
         aosPath.push_back("properties");
-    
+
     if( m_bDotAsNestedField )
     {
         char** papszTokens = CSLTokenizeString2(poFieldDefn->GetNameRef(), ".", 0);
@@ -2153,7 +2153,7 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
     }
     else
         aosPath.push_back(poFieldDefn->GetNameRef());
-    
+
     AddFieldDefn( poFieldDefn->GetNameRef(),
                   poFieldDefn->GetType(),
                   aosPath,
@@ -2181,7 +2181,7 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
                   poFieldIn->GetNameRef());
         return OGRERR_FAILURE;
     }
-    
+
     if( m_eGeomTypeMapping == ES_GEOMTYPE_GEO_POINT &&
         m_poFeatureDefn->GetGeomFieldCount() > 0 )
     {
@@ -2217,9 +2217,9 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
         m_abIsGeoPoint.push_back(TRUE);
         aosPath.push_back("coordinates");
     }
-    
+
     m_aaosGeomFieldPaths.push_back(aosPath);
-    
+
     m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = m_poFeatureDefn->GetGeomFieldCount();
 
     m_poFeatureDefn->AddGeomFieldDefn( &oFieldDefn );
@@ -2367,9 +2367,9 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
         return;
     }
     m_iGeomFieldFilter = iGeomField;
-    
+
     InstallFilter( poGeomIn );
-    
+
     json_object_put(m_poSpatialFilter);
     m_poSpatialFilter = NULL;
 
@@ -2413,12 +2413,12 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
     }
 
     m_poSpatialFilter = json_object_new_object();
-    
+
     if( m_abIsGeoPoint[iGeomField] )
     {
         json_object* geo_bounding_box = json_object_new_object();
         json_object_object_add(m_poSpatialFilter, "geo_bounding_box", geo_bounding_box);
-        
+
         CPLString osPath = BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]);
 
         json_object* field = json_object_new_object();
@@ -2428,7 +2428,7 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
         json_object_object_add(field, "top_left", top_left);
         json_object_object_add(top_left, "lat", json_object_new_double(sEnvelope.MaxY));
         json_object_object_add(top_left, "lon", json_object_new_double(sEnvelope.MinX));
-        
+
         json_object* bottom_right = json_object_new_object();
         json_object_object_add(field, "bottom_right", bottom_right);
         json_object_object_add(bottom_right, "lat", json_object_new_double(sEnvelope.MinY));
@@ -2438,25 +2438,25 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
     {
         json_object* geo_shape = json_object_new_object();
         json_object_object_add(m_poSpatialFilter, "geo_shape", geo_shape);
-        
+
         CPLString osPath = BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]);
-        
+
         json_object* field = json_object_new_object();
         json_object_object_add(geo_shape, osPath.c_str(), field);
-        
+
         json_object* shape = json_object_new_object();
         json_object_object_add(field, "shape", shape);
-        
+
         json_object_object_add(shape, "type", json_object_new_string("envelope"));
-        
+
         json_object* coordinates = json_object_new_array();
         json_object_object_add(shape, "coordinates", coordinates);
-        
+
         json_object* top_left = json_object_new_array();
         json_object_array_add(top_left, json_object_new_double(sEnvelope.MinX));
         json_object_array_add(top_left, json_object_new_double(sEnvelope.MaxY));
         json_object_array_add(coordinates, top_left);
-        
+
         json_object* bottom_right = json_object_new_array();
         json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MaxX));
         json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MinY));
@@ -2481,7 +2481,7 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
         }
         return OGRERR_FAILURE;
     }
-    
+
     if( !m_abIsGeoPoint[iGeomField] )
         return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
 
@@ -2500,7 +2500,7 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     json_object* poTopLeftLat = json_ex_get_object_by_path(poTopLeft, "lat");
     json_object* poBottomRightLon = json_ex_get_object_by_path(poBottomRight, "lon");
     json_object* poBottomRightLat = json_ex_get_object_by_path(poBottomRight, "lat");
-    
+
     OGRErr eErr;
     if( poTopLeftLon == NULL || poTopLeftLat == NULL ||
         poBottomRightLon == NULL || poBottomRightLat == NULL )
@@ -2513,7 +2513,7 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
         double dfMaxY = json_object_get_double( poTopLeftLat );
         double dfMaxX = json_object_get_double( poBottomRightLon );
         double dfMinY = json_object_get_double( poBottomRightLat );
-        
+
         psExtent->MinX = dfMinX;
         psExtent->MaxY = dfMaxY;
         psExtent->MaxX = dfMaxX;

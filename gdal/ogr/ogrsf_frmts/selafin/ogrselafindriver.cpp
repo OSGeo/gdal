@@ -63,7 +63,7 @@ static GDALDataset *OGRSelafinDriverOpen( GDALOpenInfo* poOpenInfo ) {
 
     if( OGRSelafinDriverIdentify(poOpenInfo) == 0 )
         return NULL;
-    
+
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
     if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE) ) {
         delete poDS;

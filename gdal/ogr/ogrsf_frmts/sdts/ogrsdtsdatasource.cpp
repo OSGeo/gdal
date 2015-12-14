@@ -103,14 +103,14 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 
 {
     pszName = CPLStrdup( pszFilename );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the extension is DDF if we are testopening.         */
 /* -------------------------------------------------------------------- */
     if( bTestOpen && !(strlen(pszFilename) > 4 &&
         EQUAL(pszFilename+strlen(pszFilename)-4,".ddf")) )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Check a few bits of the header to see if it looks like an       */
 /*      SDTS file (really, if it looks like an ISO8211 file).           */
@@ -123,7 +123,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
         fp = VSIFOpen( pszFilename, "rb" );
         if( fp == NULL )
             return FALSE;
-        
+
         if( VSIFRead( pachLeader, 1, 10, fp ) != 10
             || (pachLeader[5] != '1' && pachLeader[5] != '2'
                 && pachLeader[5] != '3' )
@@ -146,7 +146,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     {
         delete poTransfer;
         poTransfer = NULL;
-        
+
         return FALSE;
     }
 
@@ -165,14 +165,14 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     if( EQUAL(poXREF->pszDatum,"NAS") )
         poSRS->SetGeogCS("NAD27", "North_American_Datum_1927",
                          "Clarke 1866", 6378206.4, 294.978698213901 );
-    
+
     else if( EQUAL(poXREF->pszDatum,"NAX") )
         poSRS->SetGeogCS("NAD83", "North_American_Datum_1983",
                          "GRS 1980", 6378137, 298.257222101 );
-    
+
     else if( EQUAL(poXREF->pszDatum,"WGC") )
         poSRS->SetGeogCS("WGS 72", "WGS_1972", "NWL 10D", 6378135, 298.26 );
-    
+
     else if( EQUAL(poXREF->pszDatum,"WGE") )
         poSRS->SetGeogCS("WGS 84", "WGS_1984",
                          "WGS 84", 6378137, 298.257223563 );
@@ -189,19 +189,19 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     for( int iLayer = 0; iLayer < poTransfer->GetLayerCount(); iLayer++ )
     {
         SDTSIndexedReader       *poReader;
-        
+
         if( poTransfer->GetLayerType( iLayer ) == SLTRaster )
             continue;
 
         poReader = poTransfer->GetLayerIndexedReader( iLayer );
         if( poReader == NULL )
             continue;
-        
+
         papoLayers = (OGRSDTSLayer **)
             CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
         papoLayers[nLayers-1] = new OGRSDTSLayer( poTransfer, iLayer, this );
     }
-    
+
     return TRUE;
 }
 

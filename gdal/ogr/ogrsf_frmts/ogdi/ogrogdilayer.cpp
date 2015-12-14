@@ -258,7 +258,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
         m_nTotalShapeCount = m_iNextShapeId - m_nFilteredOutShapes;
         return NULL;
     }
-   
+
     poFeature = new OGRFeature(m_poFeatureDefn);
 
     poFeature->SetFID( m_iNextShapeId++ );
@@ -511,7 +511,7 @@ void OGROGDILayer::BuildFeatureDefn()
 /* -------------------------------------------------------------------- */
 /*      Feature Defn name will be "<OGDILyrName>_<FeatureFamily>"       */
 /* -------------------------------------------------------------------- */
-    
+
     switch(m_eFamily)
     {
       case Point:
@@ -535,7 +535,7 @@ void OGROGDILayer::BuildFeatureDefn()
         eLayerGeomType = wkbUnknown;
         break;
     }
-    
+
     char* pszFeatureDefnName;
     if (m_poODS->LaunderLayerNames())
     {
@@ -556,7 +556,7 @@ void OGROGDILayer::BuildFeatureDefn()
     SetDescription( m_poFeatureDefn->GetName() );
     CPLFree(pszFeatureDefnName);
     pszFeatureDefnName = NULL;
-    
+
     m_poFeatureDefn->SetGeomType(eLayerGeomType);
     m_poFeatureDefn->Reference();
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSpatialRef);
@@ -636,5 +636,4 @@ void OGROGDILayer::BuildFeatureDefn()
 
         m_poFeatureDefn->AddFieldDefn( &oField );
     }
-    
 }

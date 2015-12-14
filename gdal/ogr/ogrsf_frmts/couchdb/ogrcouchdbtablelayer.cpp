@@ -77,7 +77,7 @@ OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDSIn,
     dfMaxY = 0;
 
     nCoordPrecision = atoi(CPLGetConfigOption("OGR_COUCHDB_COORDINATE_PRECISION", "-1"));
-    
+
     SetDescription( osName );
 }
 
@@ -1215,7 +1215,7 @@ int OGRCouchDBTableLayer::GetMaximumId()
         json_object_put(poAnswerObj);
         return -1;
     }
-    
+
     json_object* poRow = json_object_array_get_idx(poRows, 0);
     if ( poRow == NULL ||
             !json_object_is_type(poRow, json_type_object) )

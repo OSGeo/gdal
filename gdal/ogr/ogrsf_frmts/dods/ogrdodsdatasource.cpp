@@ -62,7 +62,7 @@ OGRDODSDataSource::~OGRDODSDataSource()
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     if( poConnection != NULL )
@@ -96,7 +96,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         oConstraints = pszFound;
         *pszFound = '\0';
     }
-        
+
     pszFound = strstr(pszWrkURL,"?");
     if( pszFound )
     {
@@ -116,7 +116,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         pszWrkURL[nLen-5] = '\0';
     else if( strcmp(pszWrkURL+nLen-5,".html") == 0 )
         pszWrkURL[nLen-5] = '\0';
-        
+
     oBaseURL = pszWrkURL;
     CPLFree( pszWrkURL );
 

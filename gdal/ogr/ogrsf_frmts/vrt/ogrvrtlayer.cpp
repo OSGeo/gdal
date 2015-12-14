@@ -1519,7 +1519,7 @@ retry:
                 pabyWKB = CPLHexToBinary( pszWKT, &nBytes );
                 bNeedFree = TRUE;
             }
-            
+
             if( pabyWKB != NULL )
             {
                 OGRGeometry *poGeom = NULL;
@@ -1633,12 +1633,12 @@ OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
 /*      to setup an appropriate query to get it.                        */
 /* -------------------------------------------------------------------- */
     OGRFeature      *poSrcFeature, *poFeature;
-    
+
     if( iFIDField == -1 )
     {
         poSrcFeature = poSrcLayer->GetFeature( nFeatureId );
     }
-    else 
+    else
     {
         const char* pszFID = poSrcLayer->GetLayerDefn()->GetFieldDefn(iFIDField)->GetNameRef();
         char* pszFIDQuery = (char*)CPLMalloc(strlen(pszFID) + 64);
@@ -1648,13 +1648,13 @@ OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
         poSrcLayer->SetSpatialFilter( NULL );
         poSrcLayer->SetAttributeFilter( pszFIDQuery );
         CPLFree(pszFIDQuery);
-        
+
         poSrcFeature = poSrcLayer->GetNextFeature();
     }
 
     if( poSrcFeature == NULL )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate feature and return it.                                */
 /* -------------------------------------------------------------------- */
@@ -1718,7 +1718,7 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
         if( poVRTFeature->GetStyleString() != NULL )
             poSrcFeat->SetStyleString(poVRTFeature->GetStyleString());
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle the geometry.  Eventually there will be several more     */
 /*      supported options.                                              */

@@ -45,7 +45,7 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
     const char  *pszText;
 
     CPLAssert( EQUAL(poRecord->GetField(1,2),"42") );
-    
+
     snprintf( szValType, sizeof(szValType), "%s", poRecord->GetField(13,14) );
     snprintf( szFInter, sizeof(szFInter), "%s", poRecord->GetField(15,19) );
 
@@ -66,10 +66,10 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
         while( *pszText != '\\' && *pszText != '\0' )
             szVal[iLen++] = *(pszText++);
         szVal[iLen] = '\0';
-        
+
         if( *pszText == '\\' )
             pszText++;
-        
+
         iLen = 0;
         while( *pszText != '\\' && *pszText != '\0' )
             szDes[iLen++] = *(pszText++);

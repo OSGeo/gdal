@@ -142,7 +142,7 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer( const char * pszLayerName,
     nLayers++;
     papoLayers = (OGRGeoRSSLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGeoRSSLayer*));
     papoLayers[nLayers-1] = new OGRGeoRSSLayer( pszName, pszLayerName, this, poSRS, TRUE );
-    
+
     return papoLayers[nLayers-1];
 }
 
@@ -238,20 +238,20 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp == NULL)
         return FALSE;
-    
+
     validity = GEORSS_VALIDITY_UNKNOWN;
-    
+
     XML_Parser oParser = OGRCreateExpatXMLParser();
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
     oCurrentParser = oParser;
-    
+
     char aBuf[BUFSIZ];
     int nDone;
     unsigned int nLen;
     int nCount = 0;
-    
+
     /* Begin to parse the file and look for the <rss> or <feed> element */
     /* It *MUST* be the first element of an XML file */
     /* So once we have read the first element, we know if we can */
@@ -295,11 +295,11 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 break;
         }
     } while (!nDone && nLen > 0 );
-    
+
     XML_ParserFree(oParser);
-    
+
     VSIFCloseL(fp);
-    
+
     if (validity == GEORSS_VALIDITY_VALID)
     {
         CPLDebug("GeoRSS", "%s seems to be a GeoRSS file.", pszFilename);
@@ -357,7 +357,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
                  pszFilename);
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */

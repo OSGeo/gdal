@@ -118,7 +118,7 @@ OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDSIn,
     bAcquiredAscending = -1;
     bFilterMustBeClientSideEvaluated = FALSE;
     ResetReading();
-    
+
     if( poObjCount10 != NULL )
     {
         json_object* poCount = json_object_object_get(poObjCount10, "count");
@@ -298,7 +298,7 @@ CPLString OGRPLScenesLayer::BuildURL(int nFeatures)
         osURL += "&order_by=acquired%20asc";
     else if( bAcquiredAscending == 0 )
         osURL += "&order_by=acquired%20desc";
-    
+
     if( m_poFilterGeom != NULL || poMainFilter != NULL )
     {
         OGRGeometry* poIntersection = NULL;
@@ -409,7 +409,7 @@ int OGRPLScenesLayer::GetNextPage()
     oReader.SetFlattenNestedAttributes(true, '.');
     oReader.ReadLayer( poGeoJSONDS, "layer", poObj);
     poGeoJSONLayer = poGeoJSONDS->GetLayer(0);
-    
+
     // Get URL of next page
     osNextURL = "";
     if( poGeoJSONLayer )
@@ -505,7 +505,7 @@ OGRErr OGRPLScenesLayer::SetAttributeFilter( const char *pszQuery )
 
     return eErr;
 }
-  
+
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -594,7 +594,7 @@ OGRFeature* OGRPLScenesLayer::GetNextRawFeature()
         poGeom->assignSpatialReference(poSRS);
         poFeature->SetGeometryDirectly(poGeom);
     }
-    
+
     for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
@@ -678,7 +678,7 @@ OGRErr OGRPLScenesLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     GetFeatureCount();
     if( nFeatureCount > 0 && nFeatureCount < nPageSize )
         return OGRLayer::GetExtentInternal(0, psExtent, bForce);
-    
+
     psExtent->MinX = -180;
     psExtent->MinY = -90;
     psExtent->MaxX = 180;

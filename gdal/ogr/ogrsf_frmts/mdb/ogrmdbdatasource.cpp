@@ -421,7 +421,7 @@ OGRSpatialReference* OGRMDBDataSource::GetGeomediaSRS(const char* pszGCoordSyste
         return NULL;
 
     poGCoordSystemTable->ResetReading();
-    
+
     OGRFeature* poFeature;
     while((poFeature = poGCoordSystemTable->GetNextFeature()) != NULL)
     {

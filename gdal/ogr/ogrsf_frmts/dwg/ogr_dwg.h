@@ -86,7 +86,7 @@ class OGRDWGBlocksLayer : public OGRLayer
     OGRDWGDataSource   *poDS;
 
     OGRFeatureDefn     *poFeatureDefn;
-    
+
     int                 iNextFID;
     unsigned int        iNextSubFeature;
 
@@ -122,7 +122,7 @@ class OGRDWGLayer : public OGRLayer
     void                ClearPendingFeatures();
 
     std::map<CPLString,CPLString> oStyleProperties;
-    
+
     void                TranslateGenericProperties( OGRFeature *poFeature, 
                                                     OdDbEntityPtr poEntity );
     void                PrepareLineStyle( OGRFeature *poFeature );
@@ -259,7 +259,7 @@ class OGRDWGDriver : public OGRSFDriver
 {
     int     bInitialized;
     void    Initialize();
-    
+
     OdStaticRxObject<OGRDWGServices> oServices;
 
     static void ErrorHandler( OdResult oRes );

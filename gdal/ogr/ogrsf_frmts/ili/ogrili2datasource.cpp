@@ -319,7 +319,7 @@ OGRLayer *OGRILI2DataSource::GetLayer( int iLayer )
     i++;
     layerIt++;
   }
-  
+
   if (i == iLayer) {
     OGRILI2Layer *tmpLayer = (OGRILI2Layer *)*layerIt;
     return tmpLayer;

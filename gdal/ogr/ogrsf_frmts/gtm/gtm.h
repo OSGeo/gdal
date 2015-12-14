@@ -64,9 +64,8 @@
 
 /* GTM_EPOCH is defined as the unix time for the 31 dec 1989 00:00:00 */
 #define GTM_EPOCH 631065600
-    
-#endif
 
+#endif
 
 void appendDouble(void* pBuffer, double val);
 void appendFloat(void* pBuffer, float val);
@@ -125,7 +124,7 @@ public:
           unsigned char type,
           int color);
     ~Track();
-  
+
     const char* getName();
     unsigned char getType();
     int getColor();

@@ -50,24 +50,24 @@ public:
     int classify(KML* poKML, int nRecLevel = 0);
     void eliminateEmpty(KML* poKML);
     bool hasOnlyEmpty() const;
-    
+
     void setType(Nodetype type);
     Nodetype getType() const;
-    
+
     void setName(std::string const& name);
     const std::string& getName() const;
-    
+
     void setLevel(std::size_t level);
     std::size_t getLevel() const;
-    
+
     void addAttribute(Attribute* poAttr);
-    
+
     void setParent(KMLNode* poNode);
     KMLNode* getParent() const;
-    
+
     void addChildren(KMLNode* poNode);
     std::size_t countChildren();
-    
+
     KMLNode* getChild(std::size_t index) const;
 
     void addContent(std::string const& text);
@@ -84,7 +84,7 @@ public:
 
     std::size_t getNumFeatures();
     Feature* getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount);
-    
+
     OGRGeometry* getGeometry(Nodetype eType = Unknown);
 
     int is25D() { return b25D_; }

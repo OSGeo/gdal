@@ -53,7 +53,7 @@ void OGRDWGDataSource::ReadBlocksSection()
     OdDbBlockTableRecordPtr  poModelSpace, poBlock;
     OdDbBlockTablePtr pTable = GetDB()->getBlockTableId().safeOpenObject();
     OdDbSymbolTableIteratorPtr pBlkIter = pTable->newIterator();
-    
+
     for (pBlkIter->start(); ! pBlkIter->done(); pBlkIter->step())
     {
         poBlock = pBlkIter->getRecordId().safeOpenObject();
@@ -130,7 +130,7 @@ OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry(
 /*      polygon, multipolygon, multilinestring or multipoint but        */
 /*      I'll put that off till it would be meaningful.                  */
 /* -------------------------------------------------------------------- */
-    
+
     return poCollection;
 }
 

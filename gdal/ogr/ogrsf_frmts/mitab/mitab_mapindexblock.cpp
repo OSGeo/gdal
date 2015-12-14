@@ -359,7 +359,7 @@ int     TABMAPIndexBlock::ReadAllEntries()
     CPLAssert(m_numEntries <= TAB_MAX_ENTRIES_INDEX_BLOCK);
     if (m_numEntries == 0)
         return 0;
-    
+
     if (GotoByteInBlock( 0x004 ) != 0)
         return -1;
 
@@ -634,7 +634,7 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     }
 
     int nBestCandidate = ChooseSubEntryForInsert(nXMin,nYMin,nXMax,nYMax);
-       
+
     CPLAssert(nBestCandidate != -1);
     if (nBestCandidate == -1)
         return -1;  /* This should never happen! */
@@ -659,10 +659,10 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
         m_poCurChild->SetMAPBlockManagerRef(m_poBlockManagerRef);
         bFound = TRUE;
     }
-                
+
     if (poBlock)
         delete poBlock;
-            
+
     CPLPopErrorHandler();
     CPLErrorReset();
 
@@ -841,7 +841,7 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
         }
 
         int nBestCandidate = ChooseSubEntryForInsert(nXMin,nYMin,nXMax,nYMax);
-       
+
         CPLAssert(nBestCandidate != -1);
 
         if (nBestCandidate != -1)
@@ -866,10 +866,10 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
                 m_poCurChild->SetMAPBlockManagerRef(m_poBlockManagerRef);
                 bFound = TRUE;
             }
-                
+
             if (poBlock)
                 delete poBlock;
-            
+
             CPLPopErrorHandler();
             CPLErrorReset();
         }
@@ -1369,7 +1369,7 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
                                m_asEntries[iEntry].YMax,
                                m_asEntries[iEntry].nBlockPtr);
     }
-    
+
     /*-----------------------------------------------------------------
      * Transfer current child object to new node.
      *----------------------------------------------------------------*/
@@ -1491,7 +1491,7 @@ void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
             m_nMinX = m_asEntries[i].XMin;
         if (m_asEntries[i].XMax > m_nMaxX)
             m_nMaxX = m_asEntries[i].XMax;
-    
+
         if (m_asEntries[i].YMin < m_nMinY)
             m_nMinY = m_asEntries[i].YMin;
         if (m_asEntries[i].YMax > m_nMaxY)

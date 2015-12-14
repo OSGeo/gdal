@@ -199,9 +199,9 @@ static void OGRLIBKMLPostProcessOutput(std::string& oKml)
  method to write a single file ds .kml at ds destroy
 
  Args:          none
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 void OGRLIBKMLDataSource::WriteKml (
@@ -299,9 +299,9 @@ static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory* poFactory,
  method to write a ds .kmz at ds destroy
 
  Args:          none
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 void OGRLIBKMLDataSource::WriteKmz (
@@ -591,11 +591,11 @@ void OGRLIBKMLDataSource::FlushCache (
 
 /******************************************************************************
  OGRLIBKMLDataSource Destructor
- 
+
  Args:          none
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
@@ -610,12 +610,12 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
 
     if (! EQUAL(pszStylePath, ""))
         CPLFree ( pszStylePath );
-    
+
     for ( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree ( papoLayers );
-    
+
     CSLDestroy( m_papszOptions );
 
     //delete m_poStyleTable;
@@ -627,9 +627,9 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
  method to parse a schemas out of a document
 
  Args:          poKmlDocument   pointer to the document to parse
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 SchemaPtr OGRLIBKMLDataSource::FindSchema (
@@ -684,7 +684,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
             poKmlDocument = AsDocument ( m_poKmlDocKml );
 
     }
-    
+
 
     if ( poKmlDocument) {
 
@@ -736,7 +736,7 @@ Method to allocate memory for the layer array, create the layer,
                 bUpdate         true if the layer is writeable
                 nGuess          a guess at the number of additional layers
                                 we are going to need
- 
+
  Returns:       Pointer to the new layer
 ******************************************************************************/
 
@@ -868,9 +868,9 @@ int OGRLIBKMLDataSource::ParseLayers (
 
 /******************************************************************************
  function to get the container from the kmlroot
- 
+
  Args:          poKmlRoot   the root element
- 
+
  Returns:       root if its a container, if its a kml the container it
                 contains, or NULL
 
@@ -1046,10 +1046,10 @@ int OGRLIBKMLDataSource::OpenKml (
 
 /******************************************************************************
  method to open a kmz file
- 
+
  Args:          pszFilename file to open
                 bUpdate     update mode
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
@@ -1273,16 +1273,16 @@ int OGRLIBKMLDataSource::OpenKmz (
 
     delete poKmlKmzfile;
     m_isKmz = TRUE;
-    
+
     return TRUE;
 }
 
 /******************************************************************************
  method to open a dir
- 
+
  Args:          pszFilename Dir to open
                 bUpdate     update mode
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
@@ -1403,10 +1403,10 @@ int OGRLIBKMLDataSource::OpenDir (
 
 /******************************************************************************
  Method to open a datasource
- 
+
  Args:          pszFilename Darasource to open
                 bUpdate     update mode
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
@@ -1492,7 +1492,7 @@ int OGRLIBKMLDataSource::Open (
 
         if (strstr(szBuffer, "<kml>") || strstr(szBuffer, "<kml xmlns="))
             return OpenKml ( pszFilename, bUpdate );
-        
+
         return FALSE;
     }
 }
@@ -1822,15 +1822,15 @@ int OGRLIBKMLDataSource::CreateDir (
 
 /******************************************************************************
  method to create a datasource
- 
+
  Args:          pszFilename     the datasource to create
                 papszOptions    datasource creation options
- 
+
  Returns:       True on success, false on failure
- 
+
  env vars:
   LIBKML_USE_DOC.KML         default: yes
- 
+
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::Create (
@@ -1877,9 +1877,9 @@ int OGRLIBKMLDataSource::Create (
 
 /******************************************************************************
  method to get a layer by index
- 
+
  Args:          iLayer      the index of the layer to get
- 
+
  Returns:       pointer to the layer, or NULL if the layer does not exist
 
 ******************************************************************************/
@@ -1896,9 +1896,9 @@ OGRLayer *OGRLIBKMLDataSource::GetLayer (
 
 /******************************************************************************
  method to get a layer by name
- 
+
  Args:          pszname     name of the layer to get
- 
+
  Returns:       pointer to the layer, or NULL if the layer does not exist
 
 ******************************************************************************/
@@ -1919,9 +1919,9 @@ OGRLayer *OGRLIBKMLDataSource::GetLayerByName (
 
 /******************************************************************************
  method to DeleteLayers in a .kml datasource
- 
+
  Args:          iLayer  index of the layer to delete
- 
+
  Returns:       OGRERR_NONE on success, OGRERR_FAILURE on failure
 
 ******************************************************************************/
@@ -1953,9 +1953,9 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKml (
 
 /******************************************************************************
  method to DeleteLayers in a .kmz datasource
- 
+
  Args:          iLayer  index of the layer to delete
- 
+
  Returns:       OGRERR_NONE on success, OGRERR_FAILURE on failure
 
 ******************************************************************************/
@@ -2073,12 +2073,12 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer (
 
 /******************************************************************************
  method to create a layer in a single file .kml
- 
+
  Args:          pszLayerName    name of the layer to create
                 poOgrSRS        the SRS of the layer
                 eGType          the layers geometry type
                 papszOptions    layer creation options
- 
+
  Returns:       return a pointer to the new layer or NULL on failure
 
 ******************************************************************************/
@@ -2092,7 +2092,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml (
 
     OGRLIBKMLLayer *poOgrLayer = NULL;
     ContainerPtr poKmlLayerContainer = NULL;
-    
+
     if( m_poKmlDSContainer != NULL )
     {
         if( CSLFetchBoolean( papszOptions, "FOLDER", FALSE ) )
@@ -2189,12 +2189,12 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
 
 /******************************************************************************
 ICreateLayer()
- 
+
  Args:          pszLayerName    name of the layer to create
                 poOgrSRS        the SRS of the layer
                 eGType          the layers geometry type
                 papszOptions    layer creation options
- 
+
  Returns:       return a pointer to the new layer or NULL on failure
 
 ******************************************************************************/
@@ -2208,7 +2208,7 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
 
     if ( !bUpdate )
         return NULL;
-    
+
     if( (IsKmz () || IsDir ()) && EQUAL(pszLayerName, "doc") )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2271,7 +2271,7 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
                                 pszCameraAltitudeMode);
         }
     }
-    
+
     const char* pszRegionAdd = CSLFetchNameValueDef(papszOptions, "ADD_REGION", "FALSE");
     const char* pszRegionXMin = CSLFetchNameValue(papszOptions, "REGION_XMIN");
     const char* pszRegionYMin = CSLFetchNameValue(papszOptions, "REGION_YMIN");
@@ -2302,7 +2302,7 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
                 poOgrLayer->SetRegionBounds(xmin, ymin, xmax, ymax);
         }
     }
-    
+
     const char* pszSOHref = CSLFetchNameValue(papszOptions, "SO_HREF");
     const char* pszSOName = CSLFetchNameValue(papszOptions, "SO_NAME");
     const char* pszSODescription = CSLFetchNameValue(papszOptions, "SO_DESCRIPTION");
@@ -2336,7 +2336,7 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
                                      pszSOSizeXUnits,
                                      pszSOSizeYUnits);
     }
-    
+
     const char* pszListStyleType = CSLFetchNameValue(papszOptions, "LISTSTYLE_TYPE");
     const char* pszListStyleIconHref = CSLFetchNameValue(papszOptions, "LISTSTYLE_ICON_HREF");
     if( poOgrLayer != NULL )
@@ -2359,9 +2359,9 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
 
 /******************************************************************************
  method to get a datasources style table
- 
+
  Args:          none
- 
+
  Returns:       pointer to the datasources style table, or NULL if it does
                 not have one
 
@@ -2376,9 +2376,9 @@ OGRStyleTable *OGRLIBKMLDataSource::GetStyleTable (
 
 /******************************************************************************
   method to write a style table to a single file .kml ds
- 
+
  Args:          poStyleTable    pointer to the style table to add
- 
+
  Returns:       nothing
 
 ******************************************************************************/
@@ -2409,9 +2409,9 @@ void OGRLIBKMLDataSource::SetStyleTable2Kml (
 
 /******************************************************************************
  method to write a style table to a kmz ds
- 
+
  Args:          poStyleTable    pointer to the style table to add
- 
+
  Returns:       nothing
 
 ******************************************************************************/
@@ -2434,13 +2434,13 @@ void OGRLIBKMLDataSource::SetStyleTable2Kmz (
 
 /******************************************************************************
  method to write a style table to a datasource
- 
+
  Args:          poStyleTable    pointer to the style table to add
- 
+
  Returns:       nothing
 
  note: this method assumes ownership of the style table
- 
+
 ******************************************************************************/
 
 void OGRLIBKMLDataSource::SetStyleTableDirectly (

@@ -85,7 +85,7 @@ public:
     OGRFeature *        GetNextRawFeature();
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    
+
     int         TestCapability( const char * ) { return FALSE; }
 
     virtual const char * GetFIDColumn (); 
@@ -124,7 +124,7 @@ public:
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
@@ -200,12 +200,12 @@ class OGRWalkDriver : public OGRODBCMDBDriver
 {
 public:
                 ~OGRWalkDriver();
-                
+
     const char    *GetName();
     OGRDataSource *Open( const char *, int );
 
     OGRDataSource *CreateDataSource( const char *, char ** );
-    
+
     int            TestCapability( const char * );
 };
 

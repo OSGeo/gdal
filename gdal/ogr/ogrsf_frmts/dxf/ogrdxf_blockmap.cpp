@@ -136,7 +136,7 @@ OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry(
 /*      polygon, multipolygon, multilinestring or multipoint but        */
 /*      I'll put that off till it would be meaningful.                  */
 /* -------------------------------------------------------------------- */
-    
+
     return poCollection;
 }
 

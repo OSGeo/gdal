@@ -169,33 +169,33 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
     {
         Feature *poFeatureKML = NULL;
         poFeatureKML = poKMLFile->getFeature(iNextKMLId_++, nLastAsked, nLastCount);
-    
+
         if(poFeatureKML == NULL)
             return NULL;
-    
+
         CPLAssert( poFeatureKML != NULL );
-    
+
         OGRFeature *poFeature = new OGRFeature( poFeatureDefn_ );
-        
+
         if(poFeatureKML->poGeom)
         {
             poFeature->SetGeometryDirectly(poFeatureKML->poGeom);
             poFeatureKML->poGeom = NULL;
         }
-    
+
         // Add fields
         poFeature->SetField( poFeatureDefn_->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
         poFeature->SetField( poFeatureDefn_->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
         poFeature->SetFID( iNextKMLId_ - 1 );
-    
+
         // Clean up
         delete poFeatureKML;
-    
+
         if( poFeature->GetGeometryRef() != NULL && poSRS_ != NULL)
         {
             poFeature->GetGeometryRef()->assignSpatialReference( poSRS_ );
         }
-    
+
         /* Check spatial/attribute filters */
         if ((m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) ) &&
             (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) )
@@ -543,13 +543,13 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             poWGS84Geom = poFeature->GetGeometryRef();
         }
-	
+
         // TODO - porting
         // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
         pszGeometry = 
             OGR_G_ExportToKML( (OGRGeometryH)poWGS84Geom,
                                poDS_->GetAltitudeMode());
-        
+
         VSIFPrintfL( fp, "      %s\n", pszGeometry );
         CPLFree( pszGeometry );
 
@@ -561,7 +561,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
             delete poWGS84Geom;
         }
     }
-    
+
     VSIFPrintfL( fp, "  </Placemark>\n" );
     nWroteFeatureCount_++;
     return OGRERR_NONE;

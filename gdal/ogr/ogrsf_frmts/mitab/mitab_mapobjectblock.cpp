@@ -367,7 +367,7 @@ int     TABMAPObjectBlock::CommitToFile()
     WriteInt16(TABMAP_OBJECT_BLOCK);    // Block type code
     m_numDataBytes = m_nSizeUsed - MAP_OBJECT_HEADER_SIZE;
     WriteInt16((GInt16)m_numDataBytes);         // num. bytes used
-    
+
     WriteInt32(m_nCenterX);
     WriteInt32(m_nCenterY);
 
@@ -441,7 +441,7 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 
         WriteInt16(TABMAP_OBJECT_BLOCK);// Block type code
         WriteInt16(0);                  // num. bytes used, excluding header
-    
+
         // MBR center here... will be written in CommitToFile()
         WriteInt32(0);
         WriteInt32(0);
@@ -659,13 +659,13 @@ int     TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
     // Maintain MBR of this object block.
     UpdateMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY);
     UpdateMBR(poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
-   
+
     /*-----------------------------------------------------------------
      * Keep track of object type, ID and start address for use by
      * CommitNewObject()
      *----------------------------------------------------------------*/
     nStartAddress = GetFirstUnusedByteOffset();
-    
+
     // Backup MBR and bLockCenter as they will be reset by GotoByteInFile()
     // that will call InitBlockFromData()
     GInt32 nXMin, nYMin, nXMax, nYMax;
@@ -1346,7 +1346,7 @@ int TABMAPObjFontPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteByte( 0 );
     poObjBlock->WriteByte( 0 );
     poObjBlock->WriteByte( 0 );
-    
+
     poObjBlock->WriteInt16(m_nAngle);
 
     poObjBlock->WriteIntCoord(m_nX, m_nY, IsCompressedType());
@@ -1539,7 +1539,7 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     poObjBlock->WriteInt16((GInt16)m_nStartAngle);
     poObjBlock->WriteInt16((GInt16)m_nEndAngle);
-    
+
     // An arc is defined by its defining ellipse's MBR:
     poObjBlock->WriteIntMBRCoord(m_nArcEllipseMinX, m_nArcEllipseMinY, 
                                  m_nArcEllipseMaxX, m_nArcEllipseMaxY, 
@@ -1869,7 +1869,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         /* 6 * int32 */
         SIZE_OF_REGION_PLINE_MINI_HDR = SIZE_OF_MPOINT_MINI_HDR = 24;
     }
-  
+
     if (nVersion >= 800)
     {
         /* extra 4 bytes for num_segments in Region/Pline mini-headers */

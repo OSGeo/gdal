@@ -525,7 +525,7 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
             dfLonFirstRwy = adfLon[0];
             bRunwayFound = TRUE;
         }
-        
+
         if (nAPTType == APT_SEAPLANE_HEADER || eSurfaceCode == 13)
         {
             /* Special case for water-runways. No special record in V8.10 */
@@ -602,7 +602,7 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
                                         (aeRunwayLightingCode[0] >= 2 && aeRunwayLightingCode[0] <= 5) ? "Yes" : "None" /* pszEdgeLighting */,
                                         bHasDistanceRemainingSigns);
             }
-            
+
             if (poStopwayLayer)
             {
                 for(int i=0;i<2;i++)
@@ -644,7 +644,7 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
             dfLonFirstRwy = dfLon;
             bRunwayFound = TRUE;
         }
-        
+
         if (poHelipadLayer)
         {
             poHelipadLayer->AddFeature(osAptICAO, osHelipadName, dfLat, dfLon,
@@ -771,7 +771,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
                                     RunwayEdgeLightingEnumeration.GetText(eEdgeLighting),
                                     bHasDistanceRemainingSigns);
     }
-            
+
     if (poStopwayLayer)
     {
         for(int i=0;i<2;i++)
@@ -969,7 +969,7 @@ OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
         CPLDebug("XPLANE", "Discarded degenerated polygon at line %d", nLineNumber);
         return NULL;
     }
-        
+
     for(int i=0;i<poPolygon->getNumInteriorRings();i++)
     {
         OGRLinearRing* poInternalRing = poPolygon->getInteriorRing(i);
@@ -988,7 +988,7 @@ OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
             i --;
             continue;
         }
-        
+
         int nOutside = 0;
         int jOutside = -1;
         for(int j=0;j<poInternalRing->getNumPoints();j++)
@@ -1867,7 +1867,7 @@ OGRXPlaneAPTLayer::OGRXPlaneAPTLayer() : OGRXPlaneLayer("APT")
     OGRFieldDefn oType("type", OFTInteger );
     oType.SetWidth( 1 );
     poFeatureDefn->AddFieldDefn( &oType );
-    
+
     OGRFieldDefn oFieldElev("elevation_m", OFTReal );
     oFieldElev.SetWidth( 8 );
     oFieldElev.SetPrecision( 2 );
@@ -2179,12 +2179,12 @@ OGRFeature*
     double dfTrack12 = OGRXPlane_Track(dfLat1, dfLon1, dfLat2, dfLon2);
     double dfTrack21 = OGRXPlane_Track(dfLat2, dfLon2, dfLat1, dfLon1);
     double adfLat[4], adfLon[4];
-    
+
     OGRXPlane_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 - 90, &adfLat[0], &adfLon[0]);
     OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 + 90, &adfLat[1], &adfLon[1]);
     OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 - 90, &adfLat[2], &adfLon[2]);
     OGRXPlane_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 + 90, &adfLat[3], &adfLon[3]);
-    
+
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
     int i;
@@ -2260,14 +2260,14 @@ OGRFeature*
 
     double dfLat2, dfLon2;
     double adfLat[4], adfLon[4];
-    
+
     OGRXPlane_ExtendPosition(dfLatThreshold, dfLonThreshold, dfStopwayLength, 180 + dfRunwayHeading, &dfLat2, &dfLon2);
-    
+
     OGRXPlane_ExtendPosition(dfLatThreshold, dfLonThreshold, dfWidth / 2, dfRunwayHeading - 90, &adfLat[0], &adfLon[0]);
     OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading - 90, &adfLat[1], &adfLon[1]);
     OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading + 90, &adfLat[2], &adfLon[2]);
     OGRXPlane_ExtendPosition(dfLatThreshold, dfLonThreshold, dfWidth / 2, dfRunwayHeading + 90, &adfLat[3], &adfLon[3]);
-    
+
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
     int i;
@@ -2420,12 +2420,12 @@ OGRFeature*
     double dfTrack12 = OGRXPlane_Track(dfLat1, dfLon1, dfLat2, dfLon2);
     double dfTrack21 = OGRXPlane_Track(dfLat2, dfLon2, dfLat1, dfLon1);
     double adfLat[4], adfLon[4];
-    
+
     OGRXPlane_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 - 90, &adfLat[0], &adfLon[0]);
     OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 + 90, &adfLat[1], &adfLon[1]);
     OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 - 90, &adfLat[2], &adfLon[2]);
     OGRXPlane_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 + 90, &adfLat[3], &adfLon[3]);
-    
+
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
     int i;
@@ -3190,7 +3190,7 @@ OGRXPlaneTaxiLocationLayer::OGRXPlaneTaxiLocationLayer() : OGRXPlaneLayer("TaxiL
 
     OGRFieldDefn oFieldAirplaneTypes("airplane_types", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldAirplaneTypes );
-    
+
     OGRFieldDefn oFieldName("name", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldName );
 }

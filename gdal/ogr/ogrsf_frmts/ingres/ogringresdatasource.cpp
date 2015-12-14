@@ -58,7 +58,7 @@ SetConnParam(II_PTR *connHandle,
 	
     while( setconnParm.sc_genParm.gp_completed == FALSE )
         IIapi_wait( &waitParm );
-	
+
     if (setconnParm.sc_genParm.gp_errorHandle)
     {
         OGRIngresStatement::ReportError( &(setconnParm.sc_genParm), 
@@ -70,7 +70,7 @@ SetConnParam(II_PTR *connHandle,
         /* save the handle   */
         *connHandle = setconnParm.sc_connHandle;
     }
-   
+
     return (setconnParm.sc_genParm.gp_status);
 }
 
@@ -105,7 +105,7 @@ OGRIngresDataSource::~OGRIngresDataSource()
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
 #ifdef notdef
@@ -132,7 +132,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 
 {
     CPLAssert( nLayers == 0 );
-  
+
  #define MAX_TARGET_STRING_LENGTH 512
     char pszDBTarget[MAX_TARGET_STRING_LENGTH];
 
@@ -156,7 +156,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 
     if( pszTables != NULL )
         papszTableNames = CSLTokenizeStringComplex(pszTables,"/",TRUE,FALSE);
-   
+
 /* -------------------------------------------------------------------- */
 /*      Add support to dynamic vnode if passed                          */
 /* -------------------------------------------------------------------- */
@@ -246,13 +246,13 @@ int OGRIngresDataSource::Open( const char *pszFullName,
             return FALSE;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try to connect to the database.                                 */
 /* -------------------------------------------------------------------- */
     IIAPI_CONNPARM	connParm;
     IIAPI_WAITPARM	waitParm = { -1 };
-    
+
     memset( &connParm, 0, sizeof(connParm) );
     connParm.co_genParm.gp_callback = NULL;
     connParm.co_genParm.gp_closure = NULL;
@@ -269,7 +269,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
         connParm.co_timeout = atoi(CSLFetchNameValue(papszOptions,"timeout"));
 
     IIapi_connect( &connParm );
-       
+
     while( connParm.co_genParm.gp_completed == FALSE )
 	IIapi_wait( &waitParm );
 
@@ -284,7 +284,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     }
 
     pszName = CPLStrdup( pszFullName );
-    
+
     bDSUpdate = bUpdate;
 
     // Check for new or old Ingres spatial library
@@ -315,7 +315,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     if( papszTableNames == NULL )
     {
         OGRIngresStatement oStmt( hConn );
-        
+
         if( oStmt.ExecuteSQL( "select table_name from iitables where system_use = 'U' and table_name not like 'iietab_%'" ) )
         {
             char **papszFields;
@@ -419,7 +419,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
     char            szCommand[1024];
     INGRES_RES       *hResult;
     OGRErr	    eErr = OGRERR_NONE;
- 
+
     sprintf( szCommand, "DESCRIBE geometry_columns" );
     if( ingres_query(GetConn(), szCommand ) )
     {
@@ -439,9 +439,8 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
         }
         else
             CPLDebug("INGRES","Creating geometry_columns metadata table");
- 
     }
- 
+
     // make sure to attempt to free results of successful queries
     hResult = ingres_store_result( GetConn() );
     if( hResult != NULL )
@@ -449,7 +448,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
         ingres_free_result( hResult );
         hResult = NULL;   
     }
- 
+
     sprintf( szCommand, "DESCRIBE spatial_ref_sys" );
     if( ingres_query(GetConn(), szCommand ) )
     {
@@ -466,9 +465,8 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
         }
         else
             CPLDebug("INGRES","Creating spatial_ref_sys metadata table");
- 
-    }    
- 
+    }
+
     // make sure to attempt to free results of successful queries
     hResult = ingres_store_result( GetConn() );
     if( hResult != NULL )
@@ -476,7 +474,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
         ingres_free_result( hResult );
         hResult = NULL;
     }
- 
+
     return eErr;
 #endif
     return OGRERR_NONE;
@@ -495,7 +493,7 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
     char         szCommand[1024];
     char           **papszRow;
     OGRIngresStatement oStatement(GetConn());
-            
+
     if( nId < 0 )
         return NULL;
 
@@ -523,10 +521,10 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
          nId );
 
     oStatement.ExecuteSQL(szCommand);
-        
+
     char    *pszWKT = NULL;
     papszRow = NULL;
-    
+
 
     papszRow = oStatement.GetRow();
 
@@ -673,13 +671,12 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             {
                 nSRSId = *((II_INT4 *)papszRow[0]) + 1;
             }
-             
+
         }
         else
             nSRSId = USER_DEFINED_SR_START+1;
+    }
 
-    }  
-    
     if(pszAuthName == NULL || strlen(pszAuthName) == 0)
     {
         poSRS->AutoIdentifyEPSG();
@@ -771,7 +768,7 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     poLayer = new OGRIngresResultLayer( this, pszSQLCommand, poStatement );
     EstablishActiveLayer( poLayer );
-        
+
     return poLayer;
 }
 
@@ -817,13 +814,13 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return OGRERR_FAILURE;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
     CPLString osLayerName = papoLayers[iLayer]->GetLayerDefn()->GetName();
-    
+
     CPLDebug( "INGRES", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete papoLayers[iLayer];
@@ -840,7 +837,7 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
     sprintf( szCommand,
              "DROP TABLE %s ",
              osLayerName.c_str() );
-    
+
     if( oStmt.ExecuteSQL( szCommand ) )
     {
         CPLDebug("INGRES","Dropped table %s.", osLayerName.c_str());
@@ -931,7 +928,7 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
 
     if( pszGeometryType != NULL )
         /* user selected type */;
-    
+
     else if( wkbFlatten(eType) == wkbPoint )
         pszGeometryType = "POINT";
 
@@ -995,7 +992,7 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
     /*      adding tot the srs table if needed.                             */
     /* -------------------------------------------------------------------- */
     int nSRSId = -1;
-    
+
     if( poSRS != NULL && IsNewIngres() == TRUE )
         nSRSId = FetchSRSId( poSRS );
 

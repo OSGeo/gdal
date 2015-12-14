@@ -285,7 +285,7 @@ class CPL_DLL S57Reader
 
     int                 iPointOffset;
     OGRFeature          *poMultiPoint;
-    
+
     int                 Aall;               // see RecodeByDSSI() function
     int                 Nall;               // see RecodeByDSSI() function
     bool                needAallNallSetup;  // see RecodeByDSSI() function

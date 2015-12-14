@@ -55,7 +55,7 @@ class OGRSVGLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     OGRSVGDataSource*  poDS;
     CPLString          osLayerName;
-    
+
     SVGGeometryType    svgGeomType;
 
     int                nTotalFeatures;
@@ -106,14 +106,14 @@ class OGRSVGLayer : public OGRLayer
     virtual GIntBig             GetFeatureCount( int bForce = TRUE );
 
     virtual OGRFeatureDefn *    GetLayerDefn();
-    
+
     virtual int                 TestCapability( const char * );
 
 #ifdef HAVE_EXPAT
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);
     void                dataHandlerCbk(const char *data, int nLen);
-    
+
     void                startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr);
     void                endElementLoadSchemaCbk(const char *pszName);
     void                dataHandlerLoadSchemaCbk(const char *data, int nLen);
@@ -158,7 +158,7 @@ class OGRSVGDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 
-    
+
 #ifdef HAVE_EXPAT
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
     void                dataHandlerValidateCbk(const char *data, int nLen);

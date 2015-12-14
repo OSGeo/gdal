@@ -54,7 +54,7 @@ public:
     static const char* const DefaultName;
     static const char* const DefaultFIDColumn;
     static const OGRwkbGeometryType DefaultGeometryType;
- 
+
     OGRGeoJSONLayer( const char* pszName,
                      OGRSpatialReference* poSRS,
                      OGRwkbGeometryType eGType,
@@ -66,7 +66,7 @@ public:
     //
     virtual const char* GetFIDColumn();
     virtual int         TestCapability( const char * pszCap );
-    
+
     virtual OGRErr      SyncToDisk();
     //
     // OGRGeoJSONLayer Interface
@@ -146,7 +146,7 @@ public:
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char** papszOptions = NULL );
     int TestCapability( const char* pszCap );
-    
+
     void AddLayer( OGRGeoJSONLayer* poLayer );
 
     //
@@ -160,7 +160,7 @@ public:
         eGeometryPreserve,
         eGeometryAsCollection,
     };
-    
+
     void SetGeometryTranslation( GeometryTranslation type );
 
     enum AttributesTranslation
@@ -190,10 +190,10 @@ private:
     OGRGeoJSONWriteLayer** papoLayersWriter_;
     int nLayers_;
     VSILFILE* fpOut_;
-    
+
     //
     // Translation/Creation control flags
-    // 
+    //
     GeometryTranslation flTransGeom_;
     AttributesTranslation flTransAttrs_;
     int bOtherPages_;  // ESRI Feature Service specific.

@@ -139,7 +139,7 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
             pszGeomColumn = CPLStrdup(pszColName);
             continue;
         }
-        
+
         switch( poMDBTable->GetColumnType(iCol) )
         {
           case MDB_Boolean:

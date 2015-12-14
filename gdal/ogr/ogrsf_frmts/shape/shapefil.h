@@ -171,7 +171,7 @@ extern "C" {
 /*      is disabled.                                                    */
 /* -------------------------------------------------------------------- */
 #define DISABLE_MULTIPATCH_MEASURE
-    
+
 /* -------------------------------------------------------------------- */
 /*      SHPAPI_CALL                                                     */
 /*                                                                      */
@@ -218,7 +218,7 @@ extern "C" {
 #ifndef SHPAPI_CALL1
 #  define SHPAPI_CALL1(x)      x SHPAPI_CALL
 #endif
-    
+
 /* -------------------------------------------------------------------- */
 /*      Macros for controlling CVSID and ensuring they don't appear     */
 /*      as unreferenced variables resulting in lots of warnings.        */
@@ -284,7 +284,7 @@ typedef struct
     SAFile 	fpSHX;
 
     int		nShapeType;				/* SHPT_* */
-    
+
     unsigned int 	nFileSize;				/* SHP file */
 
     int         nRecords;
@@ -299,7 +299,7 @@ typedef struct
 
     unsigned char *pabyRec;
     int         nBufSize;
-    
+
     int            bFastModeReadObject;
     unsigned char *pabyObjectBuf;
     int            nObjectBufSize;
@@ -352,7 +352,7 @@ struct tagSHPObject
     int		nParts;
     int		*panPartStart;
     int		*panPartType;
-    
+
     int		nVertices;
     double	*padfX;
     double	*padfY;
@@ -456,17 +456,17 @@ typedef struct shape_tree_node
 
     int		nSubNodes;
     struct shape_tree_node *apsSubNode[MAX_SUBNODE];
-    
+
 } SHPTreeNode;
 
 typedef struct
 {
     SHPHandle   hSHP;
-    
+
     int		nMaxDepth;
     int		nDimension;
     int         nTotalCount;
-    
+
     SHPTreeNode	*psRoot;
 } SHPTree;
 
@@ -571,7 +571,7 @@ typedef	struct
 
     int         nWorkFieldLength;
     char        *pszWorkField;
-    
+
     int		bNoHeader;
     int		bUpdated;
 
@@ -583,7 +583,7 @@ typedef	struct
 
     int         iLanguageDriver;
     char        *pszCodePage;
-    
+
     int         nUpdateYearSince1900; /* 0-255 */
     int         nUpdateMonth; /* 1-12 */
     int         nUpdateDay; /* 1-31 */
@@ -683,7 +683,7 @@ int SHPAPI_CALL DBFMarkRecordDeleted( DBFHandle psDBF, int iShape,
 
 DBFHandle SHPAPI_CALL
       DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename );
- 
+
 void	SHPAPI_CALL
       DBFClose( DBFHandle hDBF );
 void    SHPAPI_CALL

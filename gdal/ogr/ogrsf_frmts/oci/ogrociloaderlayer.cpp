@@ -56,10 +56,10 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     poFeatureDefn = new OGRFeatureDefn( pszTableName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    
+
     pszGeomName = CPLStrdup( pszGeomColIn );
     pszFIDName = (char*)CPLGetConfigOption( "OCI_FID", "OGR_FID" );
-    
+
 
     nSRID = nSRIDIn;
     poSRS = poDSIn->FetchSRS( nSRID );
@@ -128,7 +128,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 /*      Dermine our operation mode.                                     */
 /* -------------------------------------------------------------------- */
     const char *pszLDRMode = CSLFetchNameValue( papszOptions, "LOADER_MODE" );
-    
+
     if( pszLDRMode != NULL && EQUAL(pszLDRMode,"VARIABLE") )
         nLDRMode = LDRM_VARIABLE;
     else if( pszLDRMode != NULL && EQUAL(pszLDRMode,"BINARY") )
@@ -157,7 +157,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
                       pszDataFilename );
             return;
         }
-            
+
         VSIFPrintf( fpLoader, "INFILE %s \"var 8\"\n", pszDataFilename );
     }
     const char *pszExpectedFIDName = 
@@ -548,7 +548,7 @@ OGRErr OGROCILoaderLayer::ICreateFeature( OGRFeature *poFeature )
     if( poFeature->GetGeometryRef() != NULL )
     {
         OGREnvelope  sThisExtent;
-        
+
         poFeature->GetGeometryRef()->getEnvelope( &sThisExtent );
         sExtent.Merge( sThisExtent );
     }
@@ -624,7 +624,6 @@ void OGROCILoaderLayer::FinalizeNewLayer()
                   "Layer %s appears to have no geometry ... not setting SDO DIMINFO metadata.", 
                   poFeatureDefn->GetName() );
         return;
-                  
     }
 
 /* -------------------------------------------------------------------- */
@@ -644,17 +643,17 @@ void OGROCILoaderLayer::FinalizeNewLayer()
     dfXMax = sExtent.MaxX + dfResSize * 3;
     dfXRes = dfResSize;
     ParseDIMINFO( "DIMINFO_X", &dfXMin, &dfXMax, &dfXRes );
-    
+
     dfYMin = sExtent.MinY - dfResSize * 3;
     dfYMax = sExtent.MaxY + dfResSize * 3;
     dfYRes = dfResSize;
     ParseDIMINFO( "DIMINFO_Y", &dfYMin, &dfYMax, &dfYRes );
-    
+
     dfZMin = -100000.0;
     dfZMax = 100000.0;
     dfZRes = 0.002;
     ParseDIMINFO( "DIMINFO_Z", &dfZMin, &dfZMax, &dfZRes );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Prepare dimension update statement.                             */
 /* -------------------------------------------------------------------- */

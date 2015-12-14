@@ -257,7 +257,7 @@ bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
 bool OGRESRIJSONReader::AddFeature( OGRFeature* poFeature )
 {
     bool bAdded = false;
-  
+
     if( NULL != poFeature )
     {
         poLayer_->AddFeature( poFeature );
@@ -361,7 +361,7 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
                 return poFeature;
         }
     }
-    
+
     if( NULL != poObjGeom )
     {
         OGRGeometry* poGeometry = ReadGeometry( poObjGeom );
@@ -714,7 +714,7 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
     }
 
     OGRLineString* poLine = NULL;
-    
+
     json_object* poObjPaths = OGRGeoJSONFindMemberByName( poObj, "paths" );
     if( NULL == poObjPaths )
     {
@@ -731,7 +731,7 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
             "Invalid \'paths\' member." );
         return NULL;
     }
-    
+
     poLine = new OGRLineString();
     const int nPaths = json_object_array_length( poObjPaths );
     for(int iPath = 0; iPath < nPaths; iPath ++)
@@ -856,7 +856,7 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
             }
         }
     }
-    
+
     OGRGeometry* poRet = OGRGeometryFactory::organizePolygons( papoGeoms,
                                                                nRings,
                                                                NULL,

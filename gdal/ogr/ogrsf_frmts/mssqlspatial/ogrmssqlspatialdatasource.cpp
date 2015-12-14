@@ -117,7 +117,7 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName( const char* pszLayerName )
 {
     if (!pszLayerName)
         return NULL;
-    
+
     char *pszTableName = NULL;
     char *pszSchemaName = NULL;
 
@@ -135,7 +135,7 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName( const char* pszLayerName )
       pszSchemaName = CPLStrdup("dbo");
       pszTableName = CPLStrdup( pszLayerName );
     }
-    
+
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(pszTableName,papoLayers[iLayer]->GetTableName()) && 
@@ -195,7 +195,7 @@ OGRErr OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
     int bInTransaction = oSession.IsInTransaction();
     if (!bInTransaction)
         oSession.BeginTransaction();
-    
+
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -236,7 +236,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
     if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
         nCoordDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
-        
+
     /* MSSQL Schema handling:
        Extract schema name from input layer name or passed with -lco SCHEMA.
        Set layer name to "schema.table" or to "table" if schema is not
@@ -249,7 +249,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
       pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
-      
+
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
           pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
       else
@@ -316,7 +316,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
         if( !pszGeomType )
             pszGeomType = "geometry";
-        
+
         if( !EQUAL(pszGeomType, "geometry")
             && !EQUAL(pszGeomType, "geography"))
         {
@@ -371,10 +371,10 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     if( eType != wkbNone && bUseGeometryColumns)
     {
         const char *pszGeometryType = OGRToOGCGeomType(eType);
-      
+
         oStmt.Appendf( "DELETE FROM geometry_columns WHERE f_table_schema = '%s' "
             "AND f_table_name = '%s'\n", pszSchemaName, pszTableName );
-    
+
         oStmt.Appendf("INSERT INTO [geometry_columns] ([f_table_catalog], [f_table_schema] ,[f_table_name], "
             "[f_geometry_column],[coord_dimension],[srid],[geometry_type]) VALUES ('%s', '%s', '%s', '%s', %d, %d, '%s')\n", 
             pszCatalog, pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszGeometryType );
@@ -415,7 +415,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     int bInTransaction = oSession.IsInTransaction();
     if (!bInTransaction)
         oSession.BeginTransaction();
-        
+
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -467,7 +467,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
     if( bFID64 )
         poLayer->SetMetadataItem(OLMD_FID64, "YES");
-    
+
     if (poLayer->Initialize(pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszWKT, eType) == CE_Failure)
     {
         CPLFree( pszSchemaName );
@@ -518,7 +518,7 @@ int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char 
     papoLayers = (OGRMSSQLSpatialTableLayer **)
         CPLRealloc( papoLayers,  sizeof(OGRMSSQLSpatialTableLayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
-    
+
     return TRUE;
 }
 
@@ -625,7 +625,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
                 CPLError( CE_Failure, CPLE_AppDefined,
                     "Invalid geometry type specified: %s,"
                       " MSSQL:*\n", pszGeometryFormat );
-                
+
                 CPLFree(pszTableSpec);
                 CPLFree(pszGeometryFormat);
                 CPLFree(pszConnectionName);
@@ -644,14 +644,14 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                       "'%s' does not contain the 'database' portion\n", pszNewName );
-        
+
         CPLFree(pszTableSpec);
         CPLFree(pszGeometryFormat);
         CPLFree(pszConnectionName);
         CPLFree(pszDriver);
         return FALSE;
     }
-    
+
     pszName = CPLStrdup(pszNewName);
 
     char  **papszTableNames=NULL;
@@ -819,7 +819,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     if (papszTableNames == NULL && bUseGeometryColumns)
     {
         CPLODBCStatement oStmt( &oSession );
-        
+
         /* Use join to make sure the existence of the referred column/table */
         oStmt.Append( "SELECT f_table_schema, f_table_name, f_geometry_column, coord_dimension, g.srid, srtext, geometry_type FROM dbo.geometry_columns g JOIN INFORMATION_SCHEMA.COLUMNS ON f_table_schema = TABLE_SCHEMA and f_table_name = TABLE_NAME and f_geometry_column = COLUMN_NAME left outer join dbo.spatial_ref_sys s on g.srid = s.srid");
 
@@ -854,7 +854,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     if (papszTableNames == NULL)
     {
         CPLODBCStatement oStmt( &oSession );
-            
+
         oStmt.Append( "SELECT sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, sys.columns.name from sys.columns join sys.types on sys.columns.system_type_id = sys.types.system_type_id and sys.columns.user_type_id = sys.types.user_type_id join sys.objects on sys.objects.object_id = sys.columns.object_id join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and (sys.objects.type = 'U' or sys.objects.type = 'V')");
 
         if( oStmt.ExecuteSQL() )
@@ -873,7 +873,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
 
     int nSRId, nCoordDimension;
     OGRwkbGeometryType eType;
-        
+
     for( int iTable = 0; 
          papszTableNames != NULL && papszTableNames[iTable] != NULL; 
          iTable++ )
@@ -911,7 +911,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
 
     CPLFree(pszGeometryFormat);
     CPLFree(pszConnectionName);
-    
+
     bDSUpdate = bUpdate;
 
     return TRUE;
@@ -943,9 +943,9 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
-        
+
         OGRLayer* poLayer = GetLayerByName(pszLayerName);
-        
+
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             if( papoLayers[iLayer] == poLayer )
@@ -993,7 +993,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
         }
         return NULL;
     }
-    
+
     /* Execute the command natively */
     CPLODBCStatement *poStmt = new CPLODBCStatement( &oSession );
     poStmt->Append( pszSQLCommand );
@@ -1020,9 +1020,9 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    
+
     OGRMSSQLSpatialSelectLayer *poLayer = NULL;
-        
+
     poLayer = new OGRMSSQLSpatialSelectLayer( this, poStmt );
 
     if( poSpatialFilter != NULL )
@@ -1092,12 +1092,12 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
         int bInTransaction = oSession.IsInTransaction();
         if (!bInTransaction)
             oSession.BeginTransaction();
-    
+
         if( !oStmt.ExecuteSQL() )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                         "Error initializing the metadata tables : %s", GetSession()->GetLastError() );
-            
+
             if (!bInTransaction)
                 oSession.RollbackTransaction();
 
@@ -1314,7 +1314,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
     nSRSId = nAuthorityCode;
 
     oStmt.Clear();
-    
+
     int bInTransaction = oSession.IsInTransaction();
     if (!bInTransaction)
         oSession.BeginTransaction();
@@ -1331,7 +1331,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
 /* -------------------------------------------------------------------- */
 /*      Get the current maximum srid in the srs table.                  */
 /* -------------------------------------------------------------------- */
-    
+
     if (nSRSId == 0)
     {
         oStmt.Clear();
@@ -1352,7 +1352,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
         CPLFree(pszWKT);
         return 0;
     }
-    
+
     oStmt.Clear();
     if( nAuthorityCode > 0 )
     {
@@ -1408,7 +1408,7 @@ OGRErr OGRMSSQLSpatialDataSource::StartTransaction(CPL_UNUSED int bForce)
                     "Failed to start transaction: %s", oSession.GetLastError() );
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -1439,7 +1439,7 @@ OGRErr OGRMSSQLSpatialDataSource::CommitTransaction()
         if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
             papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_CREATED);
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -1457,13 +1457,13 @@ OGRErr OGRMSSQLSpatialDataSource::RollbackTransaction()
         if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
             papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_DISABLED);
     }
-    
+
     if (!oSession.RollbackTransaction())
      {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Failed to roll back transaction: %s", oSession.GetLastError() );
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 }

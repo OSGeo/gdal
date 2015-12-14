@@ -89,7 +89,7 @@ OGRDataSource *OGRIngresDriver::Open( const char * pszFilename,
     }
 
     CSLDestroy( papszOptions );
-    
+
     return poDS;
 }
 

@@ -51,7 +51,7 @@ class OGRElasticDataSource;
 
 class OGRElasticLayer : public OGRLayer {
     OGRElasticDataSource                *m_poDS;
-    
+
     CPLString                            m_osIndexName;
     CPLString                            m_osMappingName;
 
@@ -70,9 +70,9 @@ class OGRElasticLayer : public OGRLayer {
 
     CPLString                            m_osBulkContent;
     int                                  m_nBulkUpload;
-    
+
     CPLString                            m_osFID;
-    
+
     std::vector< std::vector<CPLString> > m_aaosFieldPaths;
     std::map< CPLString, int>             m_aosMapToFieldIndex;
 
@@ -82,17 +82,17 @@ class OGRElasticLayer : public OGRLayer {
     std::vector< int >                    m_abIsGeoPoint;
     ESGeometryTypeMapping                 m_eGeomTypeMapping;
     CPLString                             m_osPrecision;
-    
+
     CPLString                             m_osScrollID;
     GIntBig                               m_iCurID;
     GIntBig                               m_nNextFID;
     int                                   m_iCurFeatureInPage;
     std::vector<OGRFeature*>              m_apoCachedFeatures;
     int                                   m_bEOF;
-    
+
     json_object*                          m_poSpatialFilter;
     CPLString                             m_osJSONFilter;
-    
+
     int                                   m_bIgnoreSourceID;
     int                                   m_bDotAsNestedField;
 
@@ -119,7 +119,7 @@ class OGRElasticLayer : public OGRLayer {
     CPLString                             BuildJSonFromFeature(OGRFeature *poFeature);
 
     static CPLString                      BuildPathFromArray(const std::vector<CPLString>& aosPath);
-    
+
     void                                  AddFieldDefn( const char* pszName,
                                             OGRFieldType eType,
                                             const std::vector<CPLString>& aosPath,
@@ -153,7 +153,7 @@ public:
     virtual int         TestCapability(const char *);
 
     virtual GIntBig     GetFeatureCount(int bForce);
-    
+
     virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
     virtual OGRErr      SetAttributeFilter(const char* pszFilter);
@@ -162,15 +162,15 @@ public:
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual OGRErr      SyncToDisk();
-    
+
     void                FinalizeFeatureDefn(int bReadFeatures = TRUE);
     void                InitFeatureDefnFromMapping(json_object* poSchema,
                                     const char* pszPrefix,
                                     const std::vector<CPLString>& aosPath);
-    
+
     const CPLString&    GetIndexName() const { return m_osIndexName; }
     const CPLString&    GetMappingName() const { return m_osMappingName; }
-    
+
     void                SetIgnoreSourceID(int bFlag) { m_bIgnoreSourceID = bFlag; }
     void                SetManualMapping() { m_bManualMapping = TRUE; }
     void                SetDotAsNestedField(int bFlag) { m_bDotAsNestedField = bFlag; }
@@ -202,7 +202,7 @@ public:
     int                 m_nFeatureCountToEstablishFeatureDefn;
     int                 m_bJSonField;
     int                 m_bFlattenNestedAttributes;
-    
+
     int Open(GDALOpenInfo* poOpenInfo);
 
     int Create(const char *pszFilename,
@@ -220,7 +220,7 @@ public:
                                     OGRwkbGeometryType eType,
                                     char ** papszOptions);
     virtual OGRErr      DeleteLayer( int iLayer );
-    
+
     virtual OGRLayer   *ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
                                             const char *pszDialect );

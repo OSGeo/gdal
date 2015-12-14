@@ -111,7 +111,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
     OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
     if (poLayer)
         return poLayer;
-        
+
     char* pszGeomColumnName = NULL;
     char* l_pszName = CPLStrdup(pszLayerName);
     char *pszLeftParenthesis = strchr(l_pszName, '(');
@@ -123,7 +123,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
         if (len > 0 && pszGeomColumnName[len - 1] == ')')
             pszGeomColumnName[len - 1] = '\0';
     }
-    
+
     CPLString osTableId(l_pszName);
     for(int i=0;i<nLayers;i++)
     {

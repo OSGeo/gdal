@@ -107,9 +107,9 @@ VFKProperty& VFKProperty::operator=(VFKProperty const& other)
 
 /*!
   \brief Get string property
-  
+
   \param escape TRUE to escape characters for SQL
-  
+
   \return string buffer
 */
 const char *VFKProperty::GetValueS(bool escape) const

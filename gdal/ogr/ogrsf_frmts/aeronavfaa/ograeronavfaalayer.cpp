@@ -413,7 +413,6 @@ OGRAeronavFAARouteLayer::OGRAeronavFAARouteLayer( VSILFILE* fp, const char* pszL
         OGRFieldDefn oField( "NAME", OFTString );
         poFeatureDefn->AddFieldDefn( &oField );
     }
-    
 }
 
 

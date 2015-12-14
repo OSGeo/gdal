@@ -212,7 +212,7 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     int nTables = json_object_array_length(poAnswerObj);
-    
+
     for(int i=0;i<nTables;i++)
     {
         json_object* poAnswerObjDBName = json_object_array_get_idx(poAnswerObj, i);
@@ -359,7 +359,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
         json_object_object_add(poStIndexes, "spatial", poSpatial);
         json_object_object_add(poSpatial, "index", 
             json_object_new_string("function(doc) {if (doc.geometry && doc.geometry.coordinates && doc.geometry.coordinates.length != 0){st_index(doc.geometry);}}"));
-        
+
         if (bSrid)
             json_object_object_add(poStIndexes, "srsid", json_object_new_string(szSrid));
 

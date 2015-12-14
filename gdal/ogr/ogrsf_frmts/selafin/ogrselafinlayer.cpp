@@ -355,7 +355,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         }
         poHeader->setUpdated();
         CPLFree(anMap);
-        
+
     }
 
     // Now comes the real insertion. Since values have to be inserted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
@@ -513,7 +513,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
     for (int i=iField;i<poHeader->nVar;++i) poHeader->papszVariables[i]=poHeader->papszVariables[i+1];
     poHeader->papszVariables=(char**)CPLRealloc(poHeader->papszVariables,sizeof(char*)*poHeader->nVar);
     poFeatureDefn->DeleteFieldDefn(iField);
-    
+
     // Now comes the real deletion. Since values have to be deleted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
     VSILFILE *fpNew;
     const char *pszTempfile=CPLGenerateTempFilename(0);
@@ -713,6 +713,6 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
     // If everything went fine, we overwrite the new file with the content of the old one. This way, even if something goes bad, we can still recover the layer. The copy process is format-agnostic.
     MoveOverwrite(poHeader->fp,fpNew);
     VSIUnlink(pszTempfile);
+
     return OGRERR_NONE;
-    
 }

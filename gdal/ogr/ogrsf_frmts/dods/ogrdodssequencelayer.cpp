@@ -61,7 +61,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
         if( strlen(oLayerName.c_str()) > 0 )
             pszLayerName = oLayerName.c_str();
     }
-        
+
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     poFeatureDefn->Reference();
 
@@ -188,7 +188,7 @@ Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
 int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar, 
                                        const char *pszPathToVar,
                                        const char *pszPathToSequence )
-    
+
 {
     OGRFieldDefn oField( "", OFTInteger );
 
@@ -200,7 +200,7 @@ int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
     else
         oField.SetName( CPLSPrintf( "%s.%s", pszPathToVar, 
                                     poFieldVar->name().c_str() ) );
-                                    
+
 /* -------------------------------------------------------------------- */
 /*      Capture this field definition.                                  */
 /* -------------------------------------------------------------------- */
@@ -273,7 +273,7 @@ int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
         OGRDODSGetVarPath(poFieldVar).c_str(), "dds", 
         poTargetVar, poSuperSeq );
 
-    
+
     if( pszPathToSequence )
         papoFields[poFeatureDefn->GetFieldCount()-1]->pszPathToSequence 
             = CPLStrdup( pszPathToSequence );
@@ -336,7 +336,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           signed char byVal;
           void *pValPtr = &byVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) byVal;
       }
@@ -346,7 +346,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GInt16 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -356,7 +356,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GUInt16 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -366,7 +366,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GInt32 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -376,7 +376,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GUInt32 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -515,7 +515,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               signed char byVal;
               void *pValPtr = &byVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, byVal );
           }
@@ -525,7 +525,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GInt16 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, nIntVal );
           }
@@ -535,7 +535,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GUInt16 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, nIntVal );
           }
@@ -545,7 +545,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GInt32 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, nIntVal );
           }
@@ -555,7 +555,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GUInt32 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, (int) nIntVal );
           }
@@ -585,7 +585,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             break;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle data nested in sequences.                                */
 /* -------------------------------------------------------------------- */
@@ -623,7 +623,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             continue;
 
         nSubSeqCount = poSubSeq->number_of_rows();
-            
+
 /* -------------------------------------------------------------------- */
 /*      Allocate array to put values into.                              */
 /* -------------------------------------------------------------------- */
@@ -664,37 +664,37 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
               {
                   signed char byVal;
                   void *pValPtr = &byVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = byVal;
               }
               break;
-              
+
               case dods_int16_c:
               {
                   GInt16 nIntVal;
                   void *pValPtr = &nIntVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
               break;
-              
+
               case dods_uint16_c:
               {
                   GUInt16 nIntVal;
                   void *pValPtr = &nIntVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
               break;
-              
+
               case dods_int32_c:
               {
                   GInt32 nIntVal;
                   void *pValPtr = &nIntVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
@@ -704,7 +704,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
               {
                   GUInt32 nIntVal;
                   void *pValPtr = &nIntVal;
-              
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
@@ -754,7 +754,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             CSLDestroy( papszStrList );
         }
     }
-    
+
 /* ==================================================================== */
 /*      Fetch the geometry.                                             */
 /* ==================================================================== */
@@ -771,7 +771,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /*      If we can't find the values in attributes then use the more     */
 /*      general mechanism to fetch the value.                           */
 /* -------------------------------------------------------------------- */
-        
+
         if( iXField == -1 || iYField == -1 
             || (oZField.bValid && iZField == -1) )
         {
@@ -789,7 +789,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             const double *padfX, *padfY, *padfZ = NULL;
             int nPointCount, i;
             OGRLineString *poLS = new OGRLineString();
-            
+
             padfX = poFeature->GetFieldAsDoubleList( iXField, &nPointCount );
             padfY = poFeature->GetFieldAsDoubleList( iYField, &nPointCount );
             if( iZField != -1 )

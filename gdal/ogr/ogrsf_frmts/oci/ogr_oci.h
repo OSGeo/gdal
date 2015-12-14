@@ -108,7 +108,7 @@ class CPL_DLL OGROCISession {
     char       *pszUserid;
     char       *pszPassword;
     char       *pszDatabase;
-    
+
   public:
              OGROCISession();
     virtual ~OGROCISession();
@@ -118,7 +118,7 @@ class CPL_DLL OGROCISession {
                                const char *pszDatabase );
 
     int      Failed( sword nStatus, const char *pszFunction = NULL );
-        
+
     CPLErr   GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                           ub2 *pnOCIType, ub4 *pnOCILen );
 
@@ -127,7 +127,7 @@ class CPL_DLL OGROCISession {
     OCIType *PinTDO( const char * );
 
   private:
-    
+
 };
 
 OGROCISession CPL_DLL*
@@ -156,11 +156,11 @@ class CPL_DLL OGROCIStatement {
     CPLErr       Execute( const char * pszStatement,
                           int nMode = -1 );
     void         Clean();
-    
+
     OGRFeatureDefn *GetResultDefn() { return poDefn; }
 
     char       **SimpleFetchRow();
-    
+
     int          GetAffectedRows() const { return nAffectedRows; }
 
   private:    
@@ -211,7 +211,7 @@ public:
 /************************************************************************/
 
 class OGROCIDataSource;
-    
+
 class OGROCILayer : public OGRLayer
 {
   protected:
@@ -343,7 +343,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     int                 iNextFIDToWrite;
 
     char                *pszLoaderFilename;
-    
+
     FILE                *fpLoader;
     int                 bHeaderWritten;
 
@@ -379,7 +379,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    
+
     virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
     virtual int         TestCapability( const char * );
@@ -431,7 +431,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
     SDO_GEOMETRY_TYPE **papsWriteGeomMap;
     SDO_GEOMETRY_ind   *pasWriteGeomInd;
     SDO_GEOMETRY_ind  **papsWriteGeomIndMap;
-    
+
     void              **papWriteFields;
     OCIInd            **papaeWriteFieldInd;
     int                *panWriteFIDs;
@@ -463,7 +463,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( GIntBig nFID );
-    
+
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
@@ -501,7 +501,7 @@ class OGROCIDataSource : public OGRDataSource
 {
     OGROCILayer       **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
     char               *pszDBName;
 
@@ -514,7 +514,7 @@ class OGROCIDataSource : public OGRDataSource
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
-    
+
   public:
                         OGROCIDataSource();
                         ~OGROCIDataSource();
@@ -543,7 +543,7 @@ class OGROCIDataSource : public OGRDataSource
 
     void                TruncateLayer( const char * );
     void                ValidateLayer( const char * );
-    
+
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );

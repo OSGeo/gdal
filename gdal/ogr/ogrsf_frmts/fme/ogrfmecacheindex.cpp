@@ -130,7 +130,7 @@ int OGRFMECacheIndex::Load()
         psTree = CPLCreateXMLNode( NULL, CXT_Element, "OGRFMECacheIndex" );
         return TRUE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Load the data from the file.                                    */
 /* -------------------------------------------------------------------- */
@@ -154,7 +154,7 @@ int OGRFMECacheIndex::Load()
     psTree = CPLParseXMLString( pszIndexBuffer );
 
     CPLFree( pszIndexBuffer );
-    
+
     return psTree != NULL;
 }
 
@@ -376,7 +376,7 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
 
         if( !EQUAL(psDSNode->pszValue,"DataSource") )
             continue;
-        
+
 /* -------------------------------------------------------------------- */
 /*      When was this datasource last accessed?                         */
 /* -------------------------------------------------------------------- */
@@ -384,7 +384,7 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
 
         sscanf( CPLGetXMLValue( psDSNode, "LastUseTime", "0" ), 
                 "%lu", &nLastUseTime );
-        
+
 /* -------------------------------------------------------------------- */
 /*      When was this datasource created.                               */
 /* -------------------------------------------------------------------- */
@@ -454,11 +454,11 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
             {
                 CPLDebug( "OGRFMECacheIndex", "Failed to open FME index %s.",
                           pszBase );
-                          
+
                 poSession->destroySpatialIndex( poIndex );
                 continue;
             }
-         
+
             poIndex->close( FME_TRUE );
             poSession->destroySpatialIndex( poIndex );
         }

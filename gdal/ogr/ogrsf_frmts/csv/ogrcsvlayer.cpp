@@ -1340,7 +1340,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 {
     if (fpCSV == NULL)
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the CSV record.                                            */
 /* -------------------------------------------------------------------- */
@@ -1540,7 +1540,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 poFeature->SetField( iOGRField, papszTokens[iAttr] );
             }
         }
-        
+
         iOGRField++;
     }
 
@@ -1658,7 +1658,7 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
 
     if( bNeedRewindBeforeRead )
         ResetReading();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
 /*      spatial criteria.                                               */
@@ -1767,7 +1767,7 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
             return OGRERR_FAILURE;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Seems ok, add to field list.                                    */
 /* -------------------------------------------------------------------- */
@@ -2139,7 +2139,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         char *pszEscaped;
-        
+
         if( iField > 0 || bHiddenWKTColumn )
             bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
 
@@ -2267,7 +2267,7 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
         return 0;
 
     ResetReading();
-    
+
     if( chDelimiter == '\t' && bDontHonourStrings )
     {
         char szBuffer[4096+1];

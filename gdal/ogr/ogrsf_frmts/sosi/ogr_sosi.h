@@ -82,7 +82,7 @@ class OGRSOSIDataSource : public OGRDataSource {
     char                *pszName;
     OGRSOSILayer        **papoLayers;
     int                 nLayers;
-    
+
 #define MODE_READING 0
 #define MODE_WRITING 1    
     int                 nMode;

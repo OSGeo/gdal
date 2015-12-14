@@ -105,7 +105,7 @@ class OGRMDBJavaEnv
 
     jclass short_class;
     jmethodID short_shortValue;
-    
+
     jclass integer_class;
     jmethodID integer_intValue;
 
@@ -219,7 +219,7 @@ typedef enum
 /************************************************************************/
 
 class OGRMDBDataSource;
-    
+
 class OGRMDBLayer : public OGRLayer
 {
   protected:
@@ -274,7 +274,7 @@ class OGRMDBLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual int         TestCapability( const char * );

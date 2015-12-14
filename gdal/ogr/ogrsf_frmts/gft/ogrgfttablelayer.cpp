@@ -208,7 +208,7 @@ int OGRGFTTableLayer::FetchDescribe()
 
         CPLHTTPDestroyResult(psResult);
     }
-    
+
     if (osGeomColumnName.size() > 0)
     {
         iGeometryField = poFeatureDefn->GetFieldIndex(osGeomColumnName);
@@ -296,7 +296,7 @@ int OGRGFTTableLayer::FetchDescribe()
             }
             CSLDestroy(papszTokens);
         }
-        
+
         if (iGeometryField < 0)
             poFeatureDefn->SetGeomType( wkbNone );
         else

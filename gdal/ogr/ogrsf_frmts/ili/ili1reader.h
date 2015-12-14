@@ -40,10 +40,10 @@ public:
     virtual     ~IILI1Reader();
 
     virtual int  OpenFile( const char *pszFilename ) = 0;
-    
+
     virtual int  ReadModel( ImdReader *poImdReader, const char *pszModelFilename, OGRILI1DataSource *poDS ) = 0;
     virtual int  ReadFeatures() = 0;       
-    
+
     virtual OGRLayer *GetLayer( int ) = 0;
     virtual OGRLayer *GetLayerByName( const char* ) = 0;
     virtual int  GetLayerCount() = 0;

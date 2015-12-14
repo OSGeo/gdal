@@ -146,6 +146,6 @@ OGRFeature *OGRDXFBlocksWriterLayer::FindBlock( const char *pszBlockName )
         if( pszThisName != NULL && strcmp(pszBlockName,pszThisName) == 0 )
             return apoBlocks[i];
     }
-    
+
     return NULL;
 }

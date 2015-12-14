@@ -42,7 +42,7 @@ class OGRIDFDataSource : public GDALDataset
     VSILFILE*           fpL;
     int                 bHasParsed;
     GDALDataset        *poMemDS;
-    
+
     void                Parse();
 
   public:

@@ -362,7 +362,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
     ub1 bOCINull;
     char *pszColName;
     char szTermColName[128];
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get basic parameter details.                                    */
 /* -------------------------------------------------------------------- */
@@ -401,7 +401,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 
     strncpy( szTermColName, pszColName, nColLen );
     szTermColName[nColLen] = '\0';
-    
+
     poOGRDefn->SetName( szTermColName );
     poOGRDefn->SetNullable( bOCINull );
 
@@ -517,7 +517,7 @@ void OGROCISession::CleanName( char * pszName )
     for( i = 0; pszName[i] != '\0'; i++ )
     {
         pszName[i] = static_cast<char>(toupper(pszName[i]));
-        
+
         if( (pszName[i] < '0' || pszName[i] > '9')
             && (pszName[i] < 'A' || pszName[i] > 'Z')
             && pszName[i] != '_' )

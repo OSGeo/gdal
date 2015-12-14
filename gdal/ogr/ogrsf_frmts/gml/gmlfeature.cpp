@@ -15,10 +15,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -41,7 +41,7 @@ GMLFeature::GMLFeature( GMLFeatureClass *poClass )
 {
     m_poClass = poClass;
     m_pszFID = NULL;
-    
+
     m_nPropertyCount = 0;
     m_pasProperties = NULL;
 
@@ -49,7 +49,7 @@ GMLFeature::GMLFeature( GMLFeatureClass *poClass )
     m_papsGeometry = m_apsGeometry;
     m_apsGeometry[0] = NULL;
     m_apsGeometry[1] = NULL;
-    
+
     m_papszOBProperties = NULL;
 }
 

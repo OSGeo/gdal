@@ -168,7 +168,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 {
     if( poSR == NULL )
         return NULL;
-    
+
     TABProjInfo     sTABProj;
     int             nParmCount;
     TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
@@ -188,7 +188,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
  * Translate the units
  *----------------------------------------------------------------*/
     const char  *pszMIFUnits = TABUnitIdToString(sTABProj.nUnitsId);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build coordinate system definition.                             */
 /* -------------------------------------------------------------------- */
@@ -221,7 +221,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX, sTABProj.dDatumShiftY, sTABProj.dDatumShiftZ );
         }
-        
+
         if( sTABProj.nDatumId == 9999 )
         {
             osCoordSys += CPLSPrintf(
@@ -238,7 +238,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     {
         if( sTABProj.nProjId != 0 )
             osCoordSys += "," ;
-        
+
         osCoordSys += CPLSPrintf(
                  " \"%s\"",
                  pszMIFUnits );
@@ -306,7 +306,7 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 
     if( pszCoordSys == NULL )
         return FALSE;
-    
+
     papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
 
     int iBounds = CSLFindString( papszFields, "Bounds" );
@@ -343,14 +343,14 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
 
     if( pszCoordSys == NULL )
         return -1;
-    
+
     /*-----------------------------------------------------------------
      * Parse the passed string into words.
      *----------------------------------------------------------------*/
     while(*pszCoordSys == ' ') pszCoordSys++;  // Eat leading spaces
     if( STARTS_WITH_CI(pszCoordSys, "CoordSys") )
         pszCoordSys += 9;
-    
+
     papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
 
     /*-----------------------------------------------------------------
@@ -440,7 +440,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
      *----------------------------------------------------------------*/
         int         iDatum;
         const MapInfoDatumInfo *psDatumInfo = NULL;
-        
+
         for(iDatum=0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++)
         {
             if( asDatumInfoList[iDatum].nMapInfoDatumID == nDatum )
@@ -470,7 +470,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
             psProj->adDatumParams[3] = psDatumInfo->dfDatumParm3;
             psProj->adDatumParams[4] = psDatumInfo->dfDatumParm4;
         }
-    }    
+    }
 
     /*-----------------------------------------------------------------
      * Fetch the units string.
@@ -489,7 +489,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         psProj->adProjParams[iParam] = CPLAtof(papszNextField[0]);
         papszNextField++;         
     }
-    
+
     CSLDestroy(papszFields);
 
     return 0;

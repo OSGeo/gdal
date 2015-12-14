@@ -90,7 +90,7 @@ void OGRIDFDataSource::Parse()
     int iFromNode = -1;
     int iToNode = -1;
     IDFLayerType eLayerType = LAYER_OTHER;
-    
+
     // We assume that layers are in the order Node, Link, LinkCoordinate
 
     while( true )
@@ -98,7 +98,7 @@ void OGRIDFDataSource::Parse()
         const char* pszLine = CPLReadLineL(fpL);
         if( pszLine == NULL )
             break;
-        
+
         if( strcmp(pszLine, "chs;ISO_LATIN_1") == 0)
         {
             bAdvertizeUTF8 = TRUE;
@@ -130,7 +130,7 @@ void OGRIDFDataSource::Parse()
                 char* apszOptions[2] = { NULL, NULL };
                 if( bAdvertizeUTF8 )
                     apszOptions[0] = (char*)"ADVERTIZE_UTF8=YES";
-                
+
                 if( EQUAL(osTablename, "Node") &&
                     (iX = CSLFindString(papszAtr, "X")) >= 0 &&
                     (iY = CSLFindString(papszAtr, "Y")) >= 0 )
@@ -166,7 +166,7 @@ void OGRIDFDataSource::Parse()
                 {
                     poCurLayer = poMemDS->CreateLayer(osTablename, NULL, wkbNone, apszOptions);
                 }
-                
+
                 if( CSLCount(papszAtr) == CSLCount(papszFrm) )
                 {
                     for(int i=0; papszAtr[i]; i++)
@@ -195,7 +195,7 @@ void OGRIDFDataSource::Parse()
                 CSLDestroy(papszAtr);
                 CSLDestroy(papszFrm);
             }
-            
+
             OGRErr eErr = OGRERR_NONE;
             char** papszTokens = CSLTokenizeStringComplex(pszLine + 4,";",TRUE,TRUE);
             OGRFeatureDefn* poFDefn = poCurLayer->GetLayerDefn();
@@ -256,7 +256,7 @@ void OGRIDFDataSource::Parse()
                     OGRGeometry* poGeom = new OGRPoint( dfX, dfY );
                     poGeom->assignSpatialReference(poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
                     poFeature->SetGeometryDirectly(poGeom);
-                    
+
                     GIntBig nCurLinkID = poFeature->GetFieldAsInteger64(iLinkID);
                     std::map<GIntBig, OGRLineString*>::iterator
                         oMapLinkCoordinateIter = oMapLinkCoordinate.find(nCurLinkID);
@@ -275,7 +275,7 @@ void OGRIDFDataSource::Parse()
                 delete poFeature;
             }
             CSLDestroy(papszTokens);
-            
+
             if( eErr == OGRERR_FAILURE )
                 break;
         }
@@ -318,7 +318,7 @@ void OGRIDFDataSource::Parse()
             poLinkLyr->ResetReading();
         }
     }
-    
+
     std::map<GIntBig, OGRLineString*>::iterator oMapLinkCoordinateIter =
                                                     oMapLinkCoordinate.begin();
     for(; oMapLinkCoordinateIter != oMapLinkCoordinate.end(); ++oMapLinkCoordinateIter)

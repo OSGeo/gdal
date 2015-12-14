@@ -417,14 +417,14 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 
     if( poGeom != NULL )
         poTABFeature->SetGeometryDirectly(poGeom->clone());
-    
+
     for (int i=0; i< poFeature->GetDefnRef()->GetFieldCount();i++)
     {
         poTABFeature->SetField(i,poFeature->GetRawFieldRef( i ));
     }
-    
+
     poTABFeature->SetFID(poFeature->GetFID());
-    
+
     return poTABFeature;
 }
 
@@ -448,7 +448,7 @@ OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
         poFeature->SetFID(poTABFeature->GetFID());
 
     delete poTABFeature;
-    
+
     return eErr;
 }
 
@@ -462,7 +462,7 @@ OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
 OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
 {
     OGRFeature *poFeatureRef;
-    
+
     /*fprintf(stderr, "GetFeature(%ld)\n", nFeatureId);*/
 
     poFeatureRef = GetFeatureRef(nFeatureId);

@@ -376,7 +376,7 @@ OGRErr OGRWAsPLayer::WriteElevation( OGRLineString * poGeom, const double & dfZ 
 
 {
     UNIQUEPTR< OGRLineString > poLine( Simplify( *poGeom ) );
-    
+
     const int iNumPoints = poLine->getNumPoints();
     if ( !iNumPoints ) return OGRERR_NONE; /* empty geom */
 
@@ -919,7 +919,7 @@ double OGRWAsPLayer::AvgZ( OGRGeometry * poGeom )
 //        // Recursive call
 //        recResults1[] = DouglasPeucker(PointList[1...index], epsilon)
 //        recResults2[] = DouglasPeucker(PointList[index...end], epsilon)
-// 
+//
 //        // Build the result list
 //        ResultList[] = {recResults1[1...end-1] recResults2[1...end]}
 //    } 

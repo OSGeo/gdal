@@ -43,7 +43,7 @@ int main( int nArgc, char ** papszArgv )
     char        **papszOptions = NULL;
     int         bReturnPrimitives = FALSE;
     char       *pszDataPath = NULL;
-    
+
     if( nArgc < 2 )
     {
         printf( "Usage: s57dump [-pen] [-split] [-lnam] [-return-prim] [-no-update]\n"
@@ -82,7 +82,7 @@ int main( int nArgc, char ** papszArgv )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_RETURN_LINKAGES, "ON" );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Load the class definitions into the registrar.                  */
 /* -------------------------------------------------------------------- */
@@ -94,7 +94,7 @@ int main( int nArgc, char ** papszArgv )
     S57ClassContentExplorer *poClassContentExplorer = NULL;
     if (bRegistrarLoaded)
         poClassContentExplorer = new S57ClassContentExplorer(&oRegistrar);
-            
+
 /* -------------------------------------------------------------------- */
 /*      Get a list of candidate files.                                  */
 /* -------------------------------------------------------------------- */
@@ -112,11 +112,11 @@ int main( int nArgc, char ** papszArgv )
     {
         printf( "<------------------------------------------------------------------------->\n" );
         printf( "\nFile: %s\n\n", papszFiles[iFile] );
-        
+
         S57Reader       oReader( papszFiles[iFile] );
 
         oReader.SetOptions( papszOptions );
-        
+
         int             nOptionFlags = oReader.GetOptionFlags();
 
         if( !oReader.Open( FALSE ) )
@@ -185,7 +185,7 @@ int main( int nArgc, char ** papszArgv )
             oReader.AddFeatureDefn( 
                 S57GenerateVectorPrimitiveFeatureDefn( RCNM_VF, nOptionFlags));
         }
-    
+
         oReader.AddFeatureDefn( S57GenerateDSIDFeatureDefn() );
 
         OGRFeature      *poFeature;

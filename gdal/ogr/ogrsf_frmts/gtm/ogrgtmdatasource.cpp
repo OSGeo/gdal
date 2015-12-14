@@ -166,15 +166,15 @@ OGRGTMDataSource::~OGRGTMDataSource()
 {
     if (fpTmpTrackpoints != NULL)
         VSIFCloseL( fpTmpTrackpoints );
-       
+
     if (fpTmpTracks != NULL)
         VSIFCloseL( fpTmpTracks );
-       
+
     WriteWaypointStyles();
     AppendTemporaryFiles();  
-  
+
     if( fpOutput != NULL )
-    { 
+    {
         /* Adjust header counters */
         VSIFSeekL(fpOutput, NWPTS_OFFSET, SEEK_SET);
         writeInt(fpOutput, numWaypoints);
@@ -192,7 +192,6 @@ OGRGTMDataSource::~OGRGTMDataSource()
         VSIFCloseL( fpOutput );
     }
 
- 
     if (papoLayers != NULL)
     {
         for( int i = 0; i < nLayers; i++ )
@@ -202,7 +201,7 @@ OGRGTMDataSource::~OGRGTMDataSource()
 
     if (pszName != NULL)
         CPLFree( pszName );
-  
+
     if (pszTmpTracks != NULL)
     {
         VSIUnlink( pszTmpTracks );
@@ -228,7 +227,7 @@ OGRGTMDataSource::~OGRGTMDataSource()
 int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
 {
     CPLAssert( pszFilename != NULL );
-    
+
     /* Should not happen as the driver already returned if bUpdate == NULL */
     if (bUpdate)
     {
@@ -236,7 +235,7 @@ int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
                  "GTM driver does not support opening in update mode");
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a GTM object and open the source file.                   */
 /* -------------------------------------------------------------------- */
@@ -275,7 +274,6 @@ int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
     /* We are going to create two layers, one for storing waypoints and
        another for storing tracks */
     papoLayers = (OGRGTMLayer **) CPLMalloc(sizeof(void*) * 2);
-  
 
     /* Create a spatial reference for WGS8*/
     OGRSpatialReference* poSRS = new OGRSpatialReference(NULL);   

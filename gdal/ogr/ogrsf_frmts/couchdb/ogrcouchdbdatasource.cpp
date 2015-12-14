@@ -216,7 +216,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
     bReadWrite = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
- 
+
     if (bHTTP)
         osURL = pszFilename;
     else
@@ -1037,7 +1037,7 @@ char* OGRCouchDBDataSource::GetETag(const char* pszURI)
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=CouchDB:%p", this));
     papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/json");
     papszOptions = CSLAddString(papszOptions, "NO_BODY=1");
-    
+
     if (osUserPwd.size())
     {
         CPLString osUserPwdOption("USERPWD=");
@@ -1061,7 +1061,7 @@ char* OGRCouchDBDataSource::GetETag(const char* pszURI)
     {
         papszTokens = 
             CSLTokenizeString2( CSLFetchNameValue(psResult->papszHeaders, "Etag"), "\"\r\n", 0 );
-        
+
         pszEtag = CPLStrdup(papszTokens[0]);
 
         CSLDestroy( papszTokens );

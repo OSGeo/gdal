@@ -63,7 +63,7 @@ static int OGRMySQLDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
     return STARTS_WITH_CI(poOpenInfo->pszFilename, "MYSQL:");
 }
- 
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -75,7 +75,7 @@ static GDALDataset *OGRMySQLDriverOpen( GDALOpenInfo* poOpenInfo )
 
     if( !OGRMySQLDriverIdentify(poOpenInfo) )
         return NULL;
- 
+
     {
         CPLMutexHolderD(&hMutex);
         if( !bInitialized )

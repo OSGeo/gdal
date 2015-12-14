@@ -96,7 +96,7 @@ class OGRMongoDBLayer: public OGRLayer
             int                      m_bCreateSpatialIndex;
             BulkOperationBuilder*    m_poBulkBuilder;
             int                      m_nFeaturesInBulk;
-            
+
             std::vector< std::vector<CPLString> > m_aaosFieldPaths;
 
             std::vector< std::vector<CPLString> > m_aaosGeomFieldPaths;
@@ -136,7 +136,7 @@ public:
                             const char* pszDatabase,
                             const char* pszCollection);
            ~OGRMongoDBLayer();
-           
+
             virtual OGRFeatureDefn* GetLayerDefn();
             virtual const char* GetName() { return m_poFeatureDefn->GetName(); }
             virtual void        ResetReading();
@@ -179,14 +179,14 @@ class OGRMongoDBDataSource: public GDALDataset
             CPLString     m_osFID;
             int           m_bUseOGRMetadata;
             int           m_bBulkInsert;
-            
+
             static int Initialize(char** papszOpenOptions);
             int        ListLayers(const char* pszDatabase);
 
 public:
             OGRMongoDBDataSource();
             ~OGRMongoDBDataSource();
-            
+
             int Open(const char* pszFilename, GDALAccess eAccess, char** papszOpenOptions);
             virtual int GetLayerCount() { return (int)m_apoLayers.size(); }
             virtual OGRLayer* GetLayer(int nIdx);
@@ -213,7 +213,7 @@ public:
             int              BulkInsert() const { return m_bBulkInsert; }
             const CPLString& GetFID() const { return m_osFID; }
 };
-     
+
 /************************************************************************/
 /*                            OGRMongoDBLayer()                         */
 /************************************************************************/
@@ -244,7 +244,7 @@ OGRMongoDBLayer::OGRMongoDBLayer(OGRMongoDBDataSource* poDS,
     m_bCreateSpatialIndex = TRUE;
     m_poBulkBuilder = NULL;
     m_nFeaturesInBulk = 0;
-    
+
     OGRFieldDefn oFieldDefn("_id", OFTString);
     std::vector<CPLString> aosPath;
     aosPath.push_back("_id");
@@ -430,7 +430,7 @@ OGRFieldType OGRMongoDBGetFieldTypeFromBSON( const BSONElement* poElt,
         {
             BSONElement& elt = oArray[i];
             eBSONType = elt.type();
-        
+
             bOnlyBoolean &= (eBSONType == Bool);
             if (eBSONType == NumberDouble)
                 eType = OFTRealList;
@@ -544,7 +544,7 @@ void OGRMongoDBLayer::AddOrUpdateField(const char* pszAttrName,
             m_apoCT.push_back(NULL);
         }
     }
-    
+
     if( m_poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
         return;
 
@@ -628,7 +628,7 @@ int OGRMongoDBLayer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapIndice
             BSONElement fid = obj.getField("fid");
             if( !fid.eoo() && fid.type() == String )
                 m_osFID = fid.String();
-            
+
             BSONElement fields = obj.getField("fields");
             if( !fields.eoo() && fields.type() == Array )
             {
@@ -665,7 +665,7 @@ int OGRMongoDBLayer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapIndice
                                 subtype.String() == "Boolean" )
                                 oFieldDefn.SetSubType(OFSTBoolean);
                             m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
-                            
+
                             std::vector<CPLString> aosPaths;
                             std::vector<BSONElement> oPathArray = path.Array();
                             for(int j=0;j<(int)oPathArray.size();j++)
@@ -678,7 +678,7 @@ int OGRMongoDBLayer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapIndice
                     }
                 }
             }
-            
+
             BSONElement geomfields = obj.getField("geomfields");
             if( !geomfields.eoo() && geomfields.type() == Array )
             {
@@ -704,7 +704,7 @@ int OGRMongoDBLayer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapIndice
                             oFieldDefn.SetSpatialRef(poSRS);
                             poSRS->Release();
                             m_poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
-                            
+
                             std::vector<CPLString> aosPaths;
                             std::vector<BSONElement> oPathArray = path.Array();
                             for(int j=0;j<(int)oPathArray.size();j++)
@@ -726,7 +726,7 @@ int OGRMongoDBLayer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapIndice
                     }
                 }
             }
-            
+
             m_bLayerMetadataUpdatable = TRUE;
             return TRUE;
         }
@@ -762,7 +762,7 @@ void OGRMongoDBLayer::EstablishFeatureDefn()
     {
         if( nCount < 0 )
             nCount = 0; /* unlimited */
-        
+
         try
         {
             UNIQUE_PTR<DBClientCursor> cursor = m_poDS->GetConn()->query(
@@ -952,7 +952,7 @@ static void OGRMongoDBReaderSetField( OGRLayer* poLayer,
         }
         return;
     }
-        
+
     if( bFlattenNestedAttributes && poElt->type() == Object )
     {
         BSONObj obj(poElt->Obj());
@@ -971,7 +971,7 @@ static void OGRMongoDBReaderSetField( OGRLayer* poLayer,
         }
         return ;
     }
-    
+
     int nField = poFeature->GetFieldIndex(pszAttrName);
     if( nField < 0 )
         return;
@@ -981,7 +981,7 @@ static void OGRMongoDBReaderSetField( OGRLayer* poLayer,
     OGRFieldType eType = poFieldDefn->GetType();
     if( eBSONType == jstNULL )
         return;
-    
+
     if( eBSONType == NumberInt )
         poFeature->SetField( nField, poElt->Int() );
     else if( eBSONType == NumberLong )
@@ -1201,11 +1201,11 @@ OGRFeature* OGRMongoDBLayer::GetNextFeature()
             if( !m_poCursor->more() )
                 return NULL;
             BSONObj obj = m_poCursor->nextSafe();
-            
+
             OGRFeature* poFeature = Translate(obj);
             if( poFeature->GetFID() < 0 )
                 poFeature->SetFID(++m_nIndex);
-            
+
             if((m_poFilterGeom == NULL
                 || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
@@ -1235,7 +1235,7 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
         EstablishFeatureDefn();
     if( m_poBulkBuilder )
         SyncToDisk();
-        
+
     if( m_osFID.size() == 0 )
     {
         BSONObj oQueryAttrBak(m_oQueryAttr), oQuerySpatBak(m_oQuerySpat);
@@ -1244,7 +1244,7 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
         m_oQuerySpat = oQuerySpatBak;
         return poFeature;
     }
-    
+
     try
     {
         UNIQUE_PTR<DBClientCursor> cursor = m_poDS->GetConn()->query(
@@ -1254,7 +1254,7 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
         if( !cursor->more() )
             return NULL;
         BSONObj obj = cursor->nextSafe();
-        
+
         OGRFeature* poFeature = Translate(obj);
         poFeature->SetFID(nFID);
         return poFeature;        
@@ -1285,7 +1285,7 @@ OGRErr OGRMongoDBLayer::DeleteFeature(GIntBig nFID)
         SyncToDisk();
     if( m_osFID.size() == 0 )
         return OGRERR_FAILURE;
-    
+
     try
     {
         BSONObj obj = m_poDS->GetConn()->findAndRemove(
@@ -1672,14 +1672,14 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
         //return obj2;
         return b.obj();
     }
-    
+
     if( poFeature->GetFID() >= 0 && m_osFID.size() )
     {
         b.append( m_osFID.c_str(), poFeature->GetFID() );
     }
-    
+
     CPLAssert((int)m_aaosFieldPaths.size() == m_poFeatureDefn->GetFieldCount());
-    
+
     if( !poFeature->IsFieldSet(0) || (!bUpdate && m_bIgnoreSourceID) )
     {
         const OID generated = OID::gen();
@@ -1688,12 +1688,12 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
     }
     else
         b.append("_id", OID(poFeature->GetFieldAsString(0)) );
-        
+
     IntOrMap* rootMap = new IntOrMap;
     rootMap->bIsMap = TRUE;
     rootMap->u.poMap = new std::map< CPLString, IntOrMap*>;
     std::map< std::vector<CPLString>, IntOrMap*> aoMap;
-    
+
     for(int i=1;i<m_poFeatureDefn->GetFieldCount();i++)
     {
         if( !poFeature->IsFieldSet(i) )
@@ -1730,11 +1730,11 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
             SerializeGeometry(b, poGeom, i, pszFieldName);
         }
     }
-    
+
     SerializeRecursive(b, poFeature, *(rootMap->u.poMap));
     delete rootMap->u.poMap;
     delete rootMap;       
-    
+
     return b.obj();
 }
 
@@ -1777,7 +1777,7 @@ OGRErr OGRMongoDBLayer::ICreateFeature( OGRFeature *poFeature )
         {
             m_poDS->GetConn()->insert( m_osQualifiedCollection, bsonObj );
         }
-        
+
         return OGRERR_NONE;
     }
     catch( const DBException &e )
@@ -1810,7 +1810,7 @@ OGRErr OGRMongoDBLayer::ISetFeature( OGRFeature *poFeature )
         CPLError(CE_Failure, CPLE_AppDefined, "_id field not set");
         return OGRERR_FAILURE;
     }
-    
+
     try
     {
         BSONObj obj( BuildBSONObjFromFeature(poFeature, TRUE) );
@@ -1868,7 +1868,7 @@ int OGRMongoDBLayer::TestCapability(const char* pszCap)
         return m_poDS->GetAccess() == GA_Update &&
                m_osFID.size() > 0;
     }
-    
+
     return FALSE;
 }
 
@@ -1879,7 +1879,7 @@ int OGRMongoDBLayer::TestCapability(const char* pszCap)
 OGRErr OGRMongoDBLayer::SetAttributeFilter(const char* pszFilter)
 {
     m_oQueryAttr = BSONObj();
-    
+
     if( pszFilter != NULL && pszFilter[0] == '{' )
     {
         OGRLayer::SetAttributeFilter(NULL);
@@ -2072,7 +2072,7 @@ OGRLayer *OGRMongoDBDataSource::GetLayerByName(const char* pszLayerName)
             pszLayerName = pszDot + 1;
         }
     }
-    
+
     return NULL;
 }
 
@@ -2099,7 +2099,7 @@ int OGRMongoDBDataSource::Initialize(char** papszOpenOptions)
         bStaticAllowInvalidCertificates = bAllowInvalidCertificates;
         bStaticAllowInvalidHostnames = bAllowInvalidHostnames;
         bStaticFIPSMode = bFIPSMode;
-        
+
         if( osPEMKeyFile.size() || osPEMKeyPassword.size() ||
             osCAFile.size() || osCRLFile.size() )
         {
@@ -2134,7 +2134,7 @@ int OGRMongoDBDataSource::Initialize(char** papszOpenOptions)
                  "Previous initialization of MongoDB failed");
         return FALSE;
     }
-    
+
     if( osPEMKeyFile != osStaticPEMKeyFile )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -2190,9 +2190,9 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
 {
     if( !Initialize(papszOpenOptionsIn) )
         return FALSE;
-    
+
     this->eAccess = eAccessIn;
-    
+
     const char* pszHost = CSLFetchNameValueDef(papszOpenOptionsIn, "HOST", "localhost");
     const char* pszPort = CSLFetchNameValueDef(papszOpenOptionsIn, "PORT", "27017");
     const char* pszURI = CSLFetchNameValue(papszOpenOptionsIn, "URI");
@@ -2220,7 +2220,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
              *    Authenticated connection to db 'bedrock' with user 'barney' and pwd 'rubble':
              *      string url = mongodb://barney:rubble@localhost/bedrock
              */
-            
+
             ConnectionString cs = ConnectionString::parse( pszURI, errmsg );
             if( !cs.isValid() )
             {
@@ -2349,7 +2349,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
                      "AUTH_DBNAME ignored when USER and PASSWORD open options are not specified.");
         }
     }
-    
+
     m_nBatchSize = atoi(CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_SIZE", "0"));
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         papszOpenOptionsIn, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
@@ -2360,7 +2360,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
     m_bUseOGRMetadata = CSLFetchBoolean(
             papszOpenOptionsIn, "USE_OGR_METADATA", TRUE);
     m_bBulkInsert = CSLFetchBoolean(papszOpenOptionsIn, "BULK_INSERT", TRUE);
-    
+
     int bRet = TRUE;
     if( m_osDatabase.size() == 0 )
     {
@@ -2405,7 +2405,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
 
     return bRet;
 }
-        
+
 /************************************************************************/
 /*                             ListLayers()                             */
 /************************************************************************/
@@ -2450,13 +2450,13 @@ OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName,
                  "Cannot create layer/collection when dataset opened without explicit database");
         return NULL;
     }
-    
+
     if( eAccess != GA_Update )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
         return NULL;
     }
-    
+
     for(int i=0; i<(int)m_apoLayers.size(); i++)
     {
         if( EQUAL(m_apoLayers[i]->GetName(), pszName) )
@@ -2477,7 +2477,7 @@ OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName,
             }
         }
     }
-    
+
     OGRMongoDBLayer* poLayer = new OGRMongoDBLayer(this, m_osDatabase, pszName);
 
     poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
@@ -2527,7 +2527,7 @@ OGRErr OGRMongoDBDataSource::DeleteLayer( int iLayer )
 
     delete m_apoLayers[iLayer];
     m_apoLayers.erase( m_apoLayers.begin() + iLayer );
-    
+
     try
     {
         m_poConn->findAndRemove(
@@ -2535,7 +2535,7 @@ OGRErr OGRMongoDBDataSource::DeleteLayer( int iLayer )
                 BSON("layer" << l_osCollection.c_str()), 
                 BSONObj(),
                 BSONObj());
-        
+
         return m_poConn->dropCollection(l_osQualifiedCollection) ? OGRERR_NONE: OGRERR_FAILURE;
     }
     catch( const DBException &e)
@@ -2620,7 +2620,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         m_apoLayers[i]->SyncToDisk();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
@@ -2642,7 +2642,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
         }
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Special case WRITE_OGR_METADATA command.                        */
 /* -------------------------------------------------------------------- */
@@ -2663,7 +2663,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
         poLayer->GetLayerDefn(); // force schema discovery
         poLayer->SetCreateLayerMetadata(TRUE);
         poLayer->SyncToDisk();
-        
+
         return NULL;
     }
 
@@ -2695,7 +2695,7 @@ void OGRMongoDBDataSource::ReleaseResultSet( OGRLayer * poLayer )
 {
     delete poLayer;
 }
-    
+
 /************************************************************************/
 /*                          OGRMongoDBDriverUnload()                    */
 /************************************************************************/

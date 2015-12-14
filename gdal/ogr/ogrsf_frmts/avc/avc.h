@@ -483,7 +483,7 @@ typedef struct AVCE00GenInfo_t
 {
     char        *pszBuf;
     int         nBufSize;
-    
+
     int         nPrecision;     /* AVC_SINGLE/DOUBLE_PREC       */
     int         iCurItem;
     int         numItems;

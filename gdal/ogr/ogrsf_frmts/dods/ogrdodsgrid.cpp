@@ -59,7 +59,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
         if( strlen(oLayerName.c_str()) > 0 )
             pszLayerName = oLayerName.c_str();
     }
-        
+
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     poFeatureDefn->Reference();
 
@@ -253,7 +253,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     {
         OGRDODSArrayRef *poRef = paoArrayRefs + iArray;
         OGRFieldDefn oArrayField( poRef->poArray->name().c_str(), OFTInteger );
-        
+
         switch( poRef->poArray->var()->type() )
         {
           case dods_byte_c:
@@ -563,8 +563,8 @@ int OGRDODSGridLayer::ProvideDataDDS()
         // Allocate appropriate raw data array, and pull out data into it.
         poRef->pRawData = CPLMalloc( poRef->poArray->width() );
         poRef->poArray->buf2val( &(poRef->pRawData) );
-    }        
-        
+    }
+
     // Setup pointers to each of the map objects.
     if( poTargetGrid != NULL )
     {
@@ -580,7 +580,7 @@ int OGRDODSGridLayer::ProvideDataDDS()
                 CPLMalloc( paoDimensions[iMap].poMap->width() );
             paoDimensions[iMap].poMap->buf2val( &(paoDimensions[iMap].pRawData) );
         }
-    }    
+    }
 
     return bResult;
 }

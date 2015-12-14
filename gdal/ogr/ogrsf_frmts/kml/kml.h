@@ -117,7 +117,7 @@ private:
 	std::string sError_;
 	// current KMLNode
 	KMLNode *poCurrent_;
-        
+
         XML_Parser oCurrentParser;
         int nDataHandlerCounter;
         int nWithoutEventCounter;

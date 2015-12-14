@@ -736,7 +736,7 @@ OGRErr OGRCSWLayer::SetAttributeFilter( const char * pszFilter )
 
     delete m_poAttrQuery;
     m_poAttrQuery = NULL;
-    
+
     if( pszFilter != NULL )
     {
         m_poAttrQuery = new OGRFeatureQuery();
@@ -932,7 +932,7 @@ int OGRCSWDataSource::Open( const char * pszFilename,
     CPLHTTPResult* psResult = SendGetCapabilities();
     if( psResult == NULL )
         return FALSE;
-    
+
     CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
     if (psXML == NULL)
     {

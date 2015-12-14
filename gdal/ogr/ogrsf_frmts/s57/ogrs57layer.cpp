@@ -111,7 +111,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 
 {
     OGRFeature  *poFeature = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Are we out of modules to request features from?                 */
 /* -------------------------------------------------------------------- */
@@ -123,7 +123,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 /*      feature.                                                        */
 /* -------------------------------------------------------------------- */
     S57Reader   *poReader = poDS->GetModule(nCurrentModule);
-    
+
     if( poReader != NULL )
     {
         poReader->SetNextFEIndex( nNextFEIndex, nRCNM );
@@ -154,7 +154,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
             poFeature->GetGeometryRef()->assignSpatialReference(
                 GetSpatialRef() );
     }
-    
+
     return poFeature;
 }
 
@@ -243,7 +243,7 @@ OGRErr OGRS57Layer::GetExtent( OGREnvelope *psExtent, int bForce )
 /************************************************************************/
 GIntBig OGRS57Layer::GetFeatureCount (int bForce)
 {
-    
+
     if( !TestCapability(OLCFastFeatureCount) )
         return OGRLayer::GetFeatureCount( bForce );
     else

@@ -173,7 +173,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
         CPLError(CE_Warning, CPLE_OpenFailed, "SXF open file %s failed", pszFilename);
         return FALSE;
     }
-    
+
     //read header
     nFileHeaderSize = sizeof(SXFHeader);
     SXFHeader stSXFFileHeader;
@@ -374,7 +374,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
         char* pszRecoded = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8);
         passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
-        
+
         memcpy(&passport.nScale, buff + 44, 4);
         CPL_LSBPTR32(&passport.nScale);
 

@@ -320,7 +320,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
 
     // From the CPG file
     // http://resources.arcgis.com/fr/content/kbase?fa=articleShow&d=21106
-    
+
     if( (atoi(pszCodePage) >= 437 && atoi(pszCodePage) <= 950)
         || (atoi(pszCodePage) >= 1250 && atoi(pszCodePage) <= 1258) )
     {
@@ -667,7 +667,7 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
     if (m_poFilterGeom != NULL && hSHP != NULL ) 
     {
         SHPObject   *psShape;
-        
+
         psShape = SHPReadObject( hSHP, iShapeId );
 
         // do not trust degenerate bounds on non-point geometries
@@ -706,7 +706,7 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
         poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
                                        iShapeId, NULL, osEncoding );
     }    
-    
+
     return poFeature;
 }
 
@@ -732,7 +732,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
     {
         ScanIndices();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Loop till we find a feature matching our criteria.              */
 /* -------------------------------------------------------------------- */
@@ -746,11 +746,11 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             {
                 return NULL;
             }
-            
+
             // Check the shape object's geometry, and if it matches
             // any spatial filter, return it.  
             poFeature = FetchShape((int)panMatchingFIDs[iMatchingFID] /*, &oShapeExtent*/);
-            
+
             iMatchingFID++;
 
         }
@@ -775,7 +775,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 
             iNextShapeId++;
         }
-        
+
         if( poFeature != NULL )
         {
             OGRGeometry* poGeom = poFeature->GetGeometryRef();
@@ -819,7 +819,7 @@ OGRFeature *OGRShapeLayer::GetFeature( GIntBig nFeatureId )
         }
 
         m_nFeaturesRead++;
-    
+
         return poFeature;
     }
 
@@ -970,7 +970,7 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
     {
         OGRGeometry     *poGeom = poFeature->GetGeometryRef();
         int             nShapeType;
-        
+
         switch( poGeom->getGeometryType() )
         {
           case wkbPoint:
@@ -1027,7 +1027,7 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
             ResetGeomType( nShapeType );
         }
     }
-    
+
     eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
                                osEncoding, &bTruncationWarningEmitted,
                                bRewindOnWrite );
@@ -1036,7 +1036,7 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
         nTotalShapeCount = hSHP->nRecords;
     else 
         nTotalShapeCount = hDBF->nRecords;
-    
+
     return eErr;
 }
 
@@ -1337,7 +1337,7 @@ OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
     psExtent->MinY = adMin[1];
     psExtent->MaxX = adMax[0];
     psExtent->MaxY = adMax[1];
-    
+
     if( CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) ||
         CPLIsNan(adMax[0]) || CPLIsNan(adMax[1]) )
     {
@@ -1350,9 +1350,9 @@ OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
         m_poAttrQuery = NULL;
         OGRGeometry* poFilterGeom = m_poFilterGeom;
         m_poFilterGeom = NULL;
-        
+
         eErr = OGRLayer::GetExtent(psExtent, bForce);
-        
+
         m_poAttrQuery = poAttrQuery;
         m_poFilterGeom = poFilterGeom;
         return eErr;
@@ -1469,7 +1469,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         return OGRERR_FAILURE;
 
     CPLAssert( NULL != poFieldDefn );
-    
+
     int         iNewField;
 
     if( !bUpdateAccess )
@@ -1515,7 +1515,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 /* -------------------------------------------------------------------- */
 /*      Normalize field name                                            */
 /* -------------------------------------------------------------------- */
-        
+
     char szNewFieldName[10 + 1];
     char * pszTmp = NULL;
     int nRenameNum = 1;
@@ -1554,7 +1554,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Failed to add field named '%s'",
                   poFieldDefn->GetNameRef() );
-                  
+
         CPLFree( pszTmp );
         return OGRERR_FAILURE;
     }
@@ -1566,7 +1566,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     CPLFree( pszTmp );
     pszTmp = NULL;
-    
+
     if( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1974,7 +1974,7 @@ int OGRShapeLayer::ResetGeomType( int nNewGeomType )
 /*      Update .shx header.                                             */
 /* -------------------------------------------------------------------- */
     nStartPos = (int)( hSHP->sHooks.FTell( hSHP->fpSHX ) );
-    
+
     if( hSHP->sHooks.FSeek( hSHP->fpSHX, 0, SEEK_SET ) != 0
         || hSHP->sHooks.FRead( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
         return FALSE;
@@ -2248,7 +2248,7 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
     CPLString osDirname(CPLGetPath(pszFullName));
     CPLString osBasename(CPLGetBasename(pszFullName));
-    
+
     CPLString osDBFName, osSHPName, osSHXName, osCPGName;
     char **papszCandidates = CPLReadDir( osDirname );
     int i = 0;
@@ -2273,12 +2273,12 @@ OGRErr OGRShapeLayer::Repack()
             else if (EQUAL(osCandidateExtension, "cpg"))
                 osCPGName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
         }
-        
+
         i++;
     }
     CSLDestroy(papszCandidates);
     papszCandidates = NULL;
-    
+
     if( hDBF != NULL && osDBFName.size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2396,7 +2396,7 @@ OGRErr OGRShapeLayer::Repack()
 
             return OGRERR_FAILURE;
         }
-            
+
         if( VSIRename( oTempFile, osDBFName ) != 0 )
         {
             CPLDebug( "Shape", "Can not rename DBF file: %s", VSIStrerror( errno ) );
@@ -2690,14 +2690,14 @@ OGRErr OGRShapeLayer::RecomputeExtent()
                   "RecomputeExtent");
         return OGRERR_FAILURE;
     }
-    
+
     if( hSHP == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The RECOMPUTE EXTENT operation is not permitted on a layer without .SHP file." );
         return OGRERR_FAILURE;
     }
-    
+
     double adBoundsMin[4] = { 0.0, 0.0, 0.0, 0.0 };
     double adBoundsMax[4] = { 0.0, 0.0, 0.0, 0.0 };
 
@@ -2755,7 +2755,7 @@ OGRErr OGRShapeLayer::RecomputeExtent()
         memcpy(hSHP->adBoundsMin, adBoundsMin, 4*sizeof(double));
         memcpy(hSHP->adBoundsMax, adBoundsMax, 4*sizeof(double));
     }
-    
+
     return OGRERR_NONE;
 }
 

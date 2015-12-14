@@ -317,7 +317,7 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
         GDALClose( poDSTile );
         return CE_None;
     }
-    
+
     if( nBands == 1 && nTileBandCount == 1 && poCT != NULL && m_poCT != NULL &&
              !poCT->IsSame(m_poCT) )
     {
@@ -411,7 +411,7 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
     }
 
     GDALClose( poDSTile );
-    
+
     return CE_None;
 }
 
@@ -462,7 +462,7 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol)
     }
     else
         pabyData = m_pabyCachedTiles;
-    
+
     return ReadTile(nRow, nCol, pabyData);
 }
 
@@ -476,7 +476,7 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
     int rc;
     int nBlockXSize, nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    
+
     if( pbIsLossyFormat ) *pbIsLossyFormat = FALSE;
 
     if( nRow < 0 || nCol < 0 || nRow >= m_nTileMatrixHeight ||
@@ -594,7 +594,7 @@ CPLErr GDALGeoPackageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     int nRowMax = nRowMin;
     if( poGDS->m_nShiftYPixelsMod )
         nRowMax ++;
-    
+
     int nColMin = nBlockXOff + poGDS->m_nShiftXTiles;
     int nColMax = nColMin;
     if( poGDS->m_nShiftXPixelsMod )
@@ -929,10 +929,10 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     int bTileDriverSupports2Bands = FALSE;
     int bTileDriverSupports4Bands = FALSE;
     int bTileDriverSupportsCT = FALSE;
-    
+
     if( nBands == 1 )
         GetRasterBand(1)->GetColorTable();
-    
+
     if( m_eTF == GPKG_TF_PNG_JPEG )
     {
         bTileDriverSupports1Band = TRUE;
@@ -1070,7 +1070,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
                 poMEM_RGB_DS->AddBand(GDT_Byte, papszOptions);
                 CSLDestroy(papszOptions);
             }
-            
+
             if( m_pabyHugeColorArray == NULL )
             {
                 if( nBlockXSize <= 65536 / nBlockYSize )

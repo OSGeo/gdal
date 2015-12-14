@@ -176,16 +176,16 @@ void OGRDWGDataSource::ReadLayerDefinitions()
         std::map<CPLString,CPLString> oLayerProperties;
 
         CPLString osLayerName = ACTextUnescape(poLD->getName(),GetEncoding());
-        
+
         oLayerProperties["Exists"] = "1";
-        
+
         OdDbLinetypeTableRecordPtr poLT = poLD->linetypeObjectId().safeOpenObject();
         oLayerProperties["Linetype"] = 
             ACTextUnescape(poLT->getName(),GetEncoding());
 
         osValue.Printf( "%d", poLD->colorIndex() );
         oLayerProperties["Color"] = osValue;
-            
+
         osValue.Printf( "%d", (int) poLD->lineWeight() );
         oLayerProperties["LineWeight"] = osValue;
 
@@ -228,7 +228,7 @@ void OGRDWGDataSource::ReadLineTypeDefinitions()
 {
     OdDbLinetypeTablePtr poTable = poDb->getLinetypeTableId().safeOpenObject();
     OdDbSymbolTableIteratorPtr poIter = poTable->newIterator();
-    
+
     for (poIter->start(); !poIter->done(); poIter->step())
     {
         CPLString osLineTypeName;
@@ -311,7 +311,7 @@ void OGRDWGDataSource::ReadHeaderSection()
         // fallback to the default 
         osEncoding = CPL_ENC_ISO8859_1;
     }
-                                       
+
     if( CPLGetConfigOption( "DWG_ENCODING", NULL ) != NULL )
         osEncoding = CPLGetConfigOption( "DWG_ENCODING", NULL );
 

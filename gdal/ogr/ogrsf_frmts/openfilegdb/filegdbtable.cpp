@@ -457,12 +457,12 @@ int FileGDBTable::GuessFeatureLocations()
 {
     VSIFSeekL(fpTable, 0, SEEK_END);
     nFileSize = VSIFTellL(fpTable);
-    
+
     int bReportDeletedFeatures =
         CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_REPORT_DELETED_FEATURES", "NO"));
 
     vsi_l_offset nOffset = 40 + nFieldDescLength;
-    
+
     if( nOffsetFieldDesc != 40 )
     {
         /* Check if there is a deleted field description at offset 40 */
@@ -1444,7 +1444,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTInteger; */
             sCurField.Integer = GetInt16(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(GInt16);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %d", iCol, nCurRow, sCurField.Integer); */
 
@@ -1461,7 +1461,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTInteger; */
             sCurField.Integer = GetInt32(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(GInt32);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %d", iCol, nCurRow, sCurField.Integer); */
 
@@ -1478,7 +1478,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTReal; */
             sCurField.Real = GetFloat32(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(float);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %f", iCol, nCurRow, sCurField.Real); */
 
@@ -1495,7 +1495,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTReal; */
             sCurField.Real = GetFloat64(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(double);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %f", iCol, nCurRow, sCurField.Real); */
 
@@ -1859,7 +1859,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
     if( nPoints == 0 )
         return TRUE;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, nToSkip) );
-    
+
     GUIntBig vxmin, vymin, vdx, vdy;
 
     returnErrorIf(pabyCur >= pabyEnd);
@@ -1867,7 +1867,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
     ReadVarUInt64NoCheck(pabyCur, vymin);
     ReadVarUInt64NoCheck(pabyCur, vdx);
     ReadVarUInt64NoCheck(pabyCur, vdy);
-    
+
     psOutFeatureEnvelope->MinX = vxmin / poGeomField->dfXYScale + poGeomField->dfXOrigin;
     psOutFeatureEnvelope->MinY = vymin / poGeomField->dfXYScale + poGeomField->dfYOrigin;
     psOutFeatureEnvelope->MaxX = (vxmin + vdx) / poGeomField->dfXYScale + poGeomField->dfXOrigin;
@@ -1955,7 +1955,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
     if( nPoints == 0 )
         return TRUE;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, nToSkip) );
-    
+
     GUIntBig vxmin, vymin, vdx, vdy;
 
     returnErrorIf(pabyCur >= pabyEnd);

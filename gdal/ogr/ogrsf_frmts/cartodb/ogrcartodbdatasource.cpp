@@ -168,7 +168,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename,
                                     CPLGetConfigOption("CARTODB_API_KEY", ""));
 
     CPLString osTables = OGRCARTODBGetOptionValue(pszFilename, "tables");
-    
+
     /*if( osTables.size() == 0 && osAPIKey.size() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -253,7 +253,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename,
                 "ORDER BY a.attnum "
                 "$$ LANGUAGE SQL");
     }
-    
+
     if (osTables.size() != 0)
     {
         char** papszTables = CSLTokenizeString2(osTables, ",", 0);
@@ -430,7 +430,7 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszNameIn,
             }
         }
     }
-    
+
     CPLString osName(pszNameIn);
     if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
     {
@@ -600,10 +600,10 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
+
     if( strlen((const char*)psResult->pabyData) < 1000 )
         CPLDebug( "CARTODB", "RunSQL Response:%s", psResult->pabyData );
-    
+
     json_tokener* jstok = NULL;
     json_object* poObj = NULL;
 
@@ -728,7 +728,7 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
-        
+
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             if( EQUAL(papoLayers[iLayer]->GetName(), 
@@ -740,7 +740,7 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
         }
         return NULL;
     }
-    
+
     if( !STARTS_WITH_CI(pszSQLCommand, "SELECT") &&
         !STARTS_WITH_CI(pszSQLCommand, "EXPLAIN") &&
         !STARTS_WITH_CI(pszSQLCommand, "WITH") )

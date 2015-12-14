@@ -358,7 +358,7 @@ FeaturePtr feat2kml (
             poKmlViewVolume->set_bottomfov(dfBottomFov);
             poKmlViewVolume->set_topfov(dfTopFov);
             poKmlViewVolume->set_near(dfNear);
-            
+
             if( bIsTiledPhotoOverlay )
             {
                 ImagePyramidPtr poKmlImagePyramid = poKmlFactory->CreateImagePyramid( );
@@ -551,7 +551,7 @@ FeaturePtr feat2kml (
         int iScaleX = poOgrFeat->GetFieldIndex(oFC.scalexfield);
         int iScaleY = poOgrFeat->GetFieldIndex(oFC.scaleyfield);
         int iScaleZ = poOgrFeat->GetFieldIndex(oFC.scalezfield);
-        
+
         ScalePtr scale = poKmlFactory->CreateScale();
         model->set_scale(scale);
         if( iScaleX >= 0 && poOgrFeat->IsFieldSet(iScaleX) )

@@ -106,9 +106,9 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
                 pszFileName     the filename of the layer
                 bNew            true if its a new layer
                 bUpdate         true if the layer is writeable
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
@@ -147,11 +147,11 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     /***** store the root element pointer *****/
 
     m_poKmlLayerRoot = poKmlRoot;
-    
+
     /***** store the layers container *****/
 
     m_poKmlLayer = poKmlContainer;
-    
+
     /* update container */
     m_poKmlUpdate = poKmlUpdate;
 
@@ -390,9 +390,9 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
  OGRLIBKMLLayer Destructor
 
  Args:          none
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
@@ -412,7 +412,7 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
  Method to get the next feature on the layer
 
  Args:          none
- 
+
  Returns:       The next feature, or NULL if there is no more
 
  this function copyed from the sqlite driver
@@ -443,9 +443,9 @@ OGRFeature *OGRLIBKMLLayer::GetNextFeature()
  Method to get the next feature on the layer
 
  Args:          none
- 
+
  Returns:       The next feature, or NULL if there is no more
-                
+
 ******************************************************************************/
 
 OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
@@ -453,7 +453,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
 {
     FeaturePtr poKmlFeature;
     OGRFeature *poOgrFeature = NULL;
-    
+
     if( m_poKmlLayer == NULL )
         return NULL;
 
@@ -464,7 +464,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
             break;
 
         /***** get the next kml feature in the container *****/
-        
+
         poKmlFeature = m_poKmlLayer->get_feature_array_at ( iFeature++ );
 
         /***** what type of kml feature in the container? *****/
@@ -486,7 +486,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
                                                 m_poOgrSRS );
                 }
                 break;
-                
+
             default:
                 break;
 
@@ -495,10 +495,10 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
     } while ( !poOgrFeature );
 
     /***** set the FID on the ogr feature *****/
-    
+
     if (poOgrFeature)
         poOgrFeature->SetFID(nFID ++);
-    
+
     return poOgrFeature;
 }
 
@@ -506,10 +506,10 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
  method to add a feature to a layer
 
  Args:          poOgrFeat   pointer to the feature to add
- 
+
  Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
                 not writeable
-                
+
 ******************************************************************************/
 
 OGRErr OGRLIBKMLLayer::ICreateFeature (
@@ -557,7 +557,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature (
     if( m_poKmlLayer != NULL )
     {
         nFeatures++;
-        
+
         const char* pszId = CPLSPrintf("%s.%d",
                         OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFeatures);
         poOgrFeat->SetFID(nFeatures);
@@ -597,7 +597,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature (
  method to update a feature to a layer. Only work on a NetworkLinkControl/Update
 
  Args:          poOgrFeat   pointer to the feature to update
- 
+
  Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
                 not writeable
 
@@ -618,7 +618,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
     ChangePtr poChange = poKmlFactory->CreateChange();
     poChange->add_object(poKmlFeature);
     m_poKmlUpdate->add_updateoperation(poChange);
-    
+
     const char* pszId = CPLSPrintf("%s." CPL_FRMT_GIB,
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), poOgrFeat->GetFID());
     poKmlFeature->set_targetid(pszId);
@@ -635,7 +635,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
  method to delete a feature to a layer. Only work on a NetworkLinkControl/Update
 
  Args:          nFID   id of the feature to delete
- 
+
  Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
                 not writeable
 
@@ -651,7 +651,7 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
     m_poKmlUpdate->add_updateoperation(poDelete);
     PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
     poDelete->add_feature(poKmlPlacemark);
-    
+
     const char* pszId = CPLSPrintf("%s." CPL_FRMT_GIB,
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFIDIn);
     poKmlPlacemark->set_targetid(pszId);
@@ -668,12 +668,12 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
  method to get the number of features on the layer
 
  Args:          bForce      no effect as of now
- 
+
  Returns:       the number of features on the layer
 
  Note:          the result can include links, folders and other items that are
                 not supported by OGR
-                
+
 ******************************************************************************/
 
 GIntBig OGRLIBKMLLayer::GetFeatureCount (
@@ -712,7 +712,7 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount (
                 default:
                     break;
 
-            } 
+            }
         }
     }
 
@@ -724,9 +724,9 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount (
 
  Args:          psExtent    pointer to the Envelope to store the result in
                 bForce      no effect as of now 
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
 OGRErr OGRLIBKMLLayer::GetExtent (
@@ -813,7 +813,7 @@ OGRErr OGRLIBKMLLayer::CreateField (
  Args:      none
 
  Returns    nothing
-                
+
 ******************************************************************************/
 
 OGRErr OGRLIBKMLLayer::SyncToDisk (
@@ -825,12 +825,12 @@ OGRErr OGRLIBKMLLayer::SyncToDisk (
 
 /******************************************************************************
  method to get a layers style table
- 
+
  Args:          none
- 
+
  Returns:       pointer to the layers style table, or NULL if it does
                 not have one
-                
+
 ******************************************************************************/
 
 OGRStyleTable *OGRLIBKMLLayer::GetStyleTable (
@@ -842,9 +842,9 @@ OGRStyleTable *OGRLIBKMLLayer::GetStyleTable (
 
 /******************************************************************************
  method to write a style table to a layer
- 
+
  Args:          poStyleTable    pointer to the style table to add
- 
+
  Returns:       nothing
 
  note: this method assumes ownership of the style table

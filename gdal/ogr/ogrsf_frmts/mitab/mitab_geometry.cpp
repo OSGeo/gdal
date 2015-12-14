@@ -178,9 +178,9 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         return OGRERR_FAILURE;
 
     for(k=1; k<=NUM_SCANLINES; k++) 
-    { 
+    {
         /* sample the shape in the y direction */
-    
+
         y = oEnv.MaxY - k*skip; 
 
         /* need to find a y that won't intersect any vertices exactly */  
@@ -226,7 +226,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         }
         else  
             y = (hi_y + lo_y)/2.0;    
-    
+
         nfound = 0;
         for(j=0; j<OGR_NUM_RINGS(poPoly); j++)   /* for each line */
         {
@@ -238,22 +238,22 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
             {
                 point2.x = poRing->getX(i);
                 point2.y = poRing->getY(i);
-        
+
                 if(EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE) 
                 {
                     if(point1.y == point2.y)
                         continue; /* ignore horizontal edges */
                     else
                         slope = (point2.x - point1.x) / (point2.y - point1.y);
-          
+
                     x = point1.x + (y - point1.y)*slope;
                     xintersect[nfound++] = x;
                 } /* End of checking this edge */
-        
+
                 point1 = point2;  /* Go on to next edge */
             }
         } /* Finished the scanline */
-    
+
         /* First, sort the intersections */
         do 
         {
@@ -267,7 +267,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
                 }
             }
         } while(wrong_order);
-    
+
         /* Great, now find longest span */
         //point1.y = point2.y = y;
         for(i=0; i < nfound; i += 2) 
@@ -357,7 +357,7 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
 
     poCentroid->setX( cent_weight_x / total_len );
     poCentroid->setY( cent_weight_y / total_len );
-  
+
     return OGRERR_NONE;
 }
 #endif
@@ -394,7 +394,7 @@ int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
         // Return the center point
         poLine->getPoint(poLine->getNumPoints()/2, poLabelPoint);
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -435,7 +435,7 @@ int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
             poLabelPoint->setY( (y1 + y2)/2.0 );
         }
     }
-    
+
     return OGRERR_NONE;
 }
 

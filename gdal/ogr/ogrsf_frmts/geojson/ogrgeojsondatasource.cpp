@@ -443,7 +443,7 @@ int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo )
     pszName_ = CPLStrdup( poOpenInfo->pszFilename );
 
     CPLAssert( NULL != pszGeoData_ );
-    
+
     if( poOpenInfo->eAccess == GA_Update )
     {
         VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb+");

@@ -87,11 +87,11 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
 /* -------------------------------------------------------------------- */
     {
     CPLODBCStatement oGetKey( poSession );
-    
+
     if( oGetKey.GetPrimaryKeys( pszTableName ) && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
+
         if( oGetKey.Fetch() ) // more than one field in key! 
         {
             CPLFree( pszFIDColumn );

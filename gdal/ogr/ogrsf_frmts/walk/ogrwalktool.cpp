@@ -40,7 +40,7 @@ OGRWalkArcCenterFromEdgePoints( double x_c0, double y_c0,
                                double x_c1, double y_c1, 
                                double x_c2, double y_c2, 
                                double *x_center, double *y_center )
-    
+
 {
 /* -------------------------------------------------------------------- */
 /*      Compute the inverse of the slopes connecting the first and      */
@@ -81,10 +81,10 @@ OGRWalkArcCenterFromEdgePoints( double x_c0, double y_c0,
 
     b1 = -1.0;
     b2 = -1.0;
-    
+
     c1 = (y1 - m1*x1);
     c2 = (y2 - m2*x2);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Compute the intersection of the two lines through the center    */
 /*      of the circle, using Kramers rule.                              */
@@ -205,7 +205,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
         p += 4;
 
         geom->linestring.segments = new CurveSegment[geom->linestring.numSegments];
-        
+
         for(i = 0; i < geom->linestring.numSegments; i++)
         {
             memcpy(&geom->linestring.segments[i].lineType, p, 4);
@@ -228,7 +228,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
         CPL_LSBPTR32(&geom->polygon.numRings);
         p += 4;
         geom->polygon.rings = new LineString[geom->polygon.numRings];
-        
+
         for(i = 0; i < geom->polygon.numRings; i++)
         {
             memcpy(&geom->polygon.rings[i].numSegments, p, 4);
@@ -236,7 +236,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
             p += 4;
             geom->polygon.rings[i].segments = 
                 new CurveSegment[geom->polygon.rings[i].numSegments];
-            
+
             for(j = 0; j < geom->polygon.rings[i].numSegments; j++)
             {
                 memcpy(&geom->polygon.rings[i].segments[j].lineType, p, 4);
@@ -270,7 +270,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
         p += 4;
         geom->mlinestring.WKBLineStrings = 
             new WKBLineString[geom->mlinestring.num_wkbLineStrings];
-        
+
         for(i = 0; i < geom->mlinestring.num_wkbLineStrings; i++)
         {
             memcpy(&geom->mlinestring.WKBLineStrings[i].numSegments, p, 4);
@@ -278,7 +278,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
             p += 4;
             geom->mlinestring.WKBLineStrings[i].segments = 
                 new CurveSegment[geom->mlinestring.WKBLineStrings[i].numSegments];
-            
+
             for(j = 0; j < geom->mlinestring.WKBLineStrings[i].numSegments; j++)
             {
                 memcpy(&geom->mlinestring.WKBLineStrings[i].segments[j].lineType, p, 4);
@@ -302,7 +302,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
         CPL_LSBPTR32(&geom->mpolygon.num_wkbPolygons);
         p += 4;
         geom->mpolygon.WKBPolygons = new WKBPolygon[geom->mpolygon.num_wkbPolygons];
-        
+
         for(i = 0; i < geom->mpolygon.num_wkbPolygons; i++)
         {
             memcpy(&geom->mpolygon.WKBPolygons[i].numRings, p, 4);
@@ -310,7 +310,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
             p += 4;
             geom->mpolygon.WKBPolygons[i].rings =
                 new LineString[geom->mpolygon.WKBPolygons[i].numRings];
-            
+
             for(j = 0; j < geom->mpolygon.WKBPolygons[i].numRings; j++)
             {
                 memcpy(&geom->mpolygon.WKBPolygons[i].rings[j].numSegments, p, 4);
@@ -318,7 +318,7 @@ static OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
                 p += 4;
                 geom->mpolygon.WKBPolygons[i].rings[j].segments =
                     new CurveSegment[geom->mpolygon.WKBPolygons[i].rings[j].numSegments];
-                
+
                 for(k = 0; k < geom->mpolygon.WKBPolygons[i].rings[j].numSegments; k++)
                 {
                     memcpy(&geom->mpolygon.WKBPolygons[i].rings[j].segments[k].lineType, p, 4);

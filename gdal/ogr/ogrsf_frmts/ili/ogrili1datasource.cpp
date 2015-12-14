@@ -98,7 +98,7 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptionsIn,
     {
         return FALSE;
     }
-    
+
     if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != NULL )
     {
         osBasename = pszNewName;
@@ -300,7 +300,7 @@ OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
     nLayers ++;
     papoLayers = (OGRILI1Layer**)CPLRealloc(papoLayers, sizeof(OGRILI1Layer*) * nLayers);
     papoLayers[nLayers-1] = poLayer;
-    
+
     return poLayer;
 }
 

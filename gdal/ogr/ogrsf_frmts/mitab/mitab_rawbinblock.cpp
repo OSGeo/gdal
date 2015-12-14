@@ -139,7 +139,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     m_nFileOffset = nOffset;
     m_nCurPos = 0;
     m_bModified = FALSE;
-    
+
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
@@ -231,7 +231,7 @@ int     TABRawBinBlock::CommitToFile()
                 nCurPos++;
             }
         }
-            
+
         if (nCurPos != m_nFileOffset)
             nStatus = -1; // Error message will follow below
 
@@ -244,7 +244,7 @@ int     TABRawBinBlock::CommitToFile()
      * we write only the part of the block that was used.
      *---------------------------------------------------------------*/
     int numBytesToWrite = m_bHardBlockSize?m_nBlockSize:m_nSizeUsed;
-    
+
     /*CPLDebug("MITAB", "Commiting to offset %d", m_nFileOffset);*/
 
     if (nStatus != 0 ||
@@ -404,7 +404,7 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
         m_nFileOffset = nFileOffset;
     else
         m_nFileOffset = 0;
-    
+
     if( m_fp != NULL && m_nFileSize < 0 && m_eAccess == TABReadWrite )
     {
         int nCurPos = (int)VSIFTellL(m_fp);
@@ -478,7 +478,7 @@ int     TABRawBinBlock::GotoByteInBlock(int nOffset)
     }
 
     m_nCurPos = nOffset;
-    
+
     m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
 
     return 0;
@@ -503,7 +503,7 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
  *
  * Move the block pointer to the specified position relative to the 
  * beginning of the file.  
- * 
+ *
  * In read access, the current block may be reloaded to contain a right
  * block of binary data if necessary.
  *

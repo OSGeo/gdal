@@ -71,7 +71,7 @@ S57ClassRegistrar::~S57ClassRegistrar()
 S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrarIn):
     poRegistrar(poRegistrarIn)
 {
-    
+
     iCurrentClass = -1;
 
     papszCurrentFields = NULL;
@@ -86,7 +86,7 @@ S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrarI
 S57ClassContentExplorer::~S57ClassContentExplorer()
 {
     CSLDestroy( papszTempResult );
-    
+
     if( papapszClassesFields != NULL )
     {
         for( int i = 0; i < poRegistrar->nClasses; i++ )
@@ -106,7 +106,7 @@ int S57ClassRegistrar::FindFile( const char *pszTarget,
 
 {
     const char *pszFilename;
-    
+
     if( pszDirectory == NULL )
     {
         pszFilename = CPLFindFile( "s57", pszTarget );
@@ -187,7 +187,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* ==================================================================== */
     if( pszProfile == NULL )
         pszProfile = CPLGetConfigOption( "S57_PROFILE", "" );
-    
+
     if( EQUAL(pszProfile, "Additional_Military_Layers") )
     {
        snprintf( szTargetFile, sizeof(szTargetFile), "s57objectclasses_%s.csv", "aml" );
@@ -263,7 +263,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     {
        strcpy( szTargetFile, "s57attributes.csv" );
     }
-       
+
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
         return FALSE;
 
@@ -344,7 +344,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
             }
         }
     } while( bModified );
-    
+
     return TRUE;
 }
 
@@ -469,7 +469,7 @@ char **S57ClassContentExplorer::GetAttributeList( const char * pszType )
 {
     if( iCurrentClass < 0 )
         return NULL;
-    
+
     CSLDestroy( papszTempResult );
     papszTempResult = NULL;
 
@@ -477,10 +477,10 @@ char **S57ClassContentExplorer::GetAttributeList( const char * pszType )
     {
         if( pszType != NULL && iColumn == 3 && !EQUAL(pszType,"a") )
             continue;
-        
+
         if( pszType != NULL && iColumn == 4 && !EQUAL(pszType,"b") )
             continue;
-        
+
         if( pszType != NULL && iColumn == 5 && !EQUAL(pszType,"c") )
             continue;
 
@@ -566,7 +566,7 @@ int    S57ClassRegistrar::FindAttrByAcronym( const char * pszName )
     while( iStart <= iEnd )
     {
         int     nCompareValue;
-        
+
         iCandidate = (iStart + iEnd)/2;
         nCompareValue =
             strcmp(pszName, aoAttrInfos[anAttrIndex[iCandidate]]->osAcronym);

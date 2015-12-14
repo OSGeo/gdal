@@ -120,13 +120,13 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         /* in order to make OGRGPXLayer::startElementCbk work */
         OGRFieldDefn oFieldTrackFID("track_fid", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldTrackFID );
-        
+
         OGRFieldDefn oFieldTrackSegID((bShortNames) ? "trksegid" : "track_seg_id", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldTrackSegID );
-        
+
         OGRFieldDefn oFieldTrackSegPointID((bShortNames) ? "trksegptid" : "track_seg_point_id", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldTrackSegPointID );
-        
+
         if (bWriteMode)
         {
             OGRFieldDefn oFieldName("track_name", OFTString );
@@ -138,7 +138,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         /* Don't move this code. See above */
         OGRFieldDefn oFieldRouteFID("route_fid", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldRouteFID );
-        
+
         OGRFieldDefn oFieldRoutePointID((bShortNames) ? "rteptid" : "route_point_id", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldRoutePointID );
 
@@ -157,20 +157,20 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     {
         poFeatureDefn->SetGeomType((bEleAs25D) ? wkbPoint25D : wkbPoint);
         /* Position info */
-        
+
         OGRFieldDefn oFieldEle("ele", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldEle );
-        
+
         OGRFieldDefn oFieldTime("time", OFTDateTime );
         poFeatureDefn->AddFieldDefn( &oFieldTime );
-        
+
 #ifdef HAVE_EXPAT
         if (gpxGeomType == GPX_TRACK_POINT &&
             gpxVersion && strcmp(gpxVersion, "1.0") == 0)
         {
             OGRFieldDefn oFieldCourse("course", OFTReal );
             poFeatureDefn->AddFieldDefn( &oFieldCourse );
-            
+
             OGRFieldDefn oFieldSpeed("speed", OFTReal );
             poFeatureDefn->AddFieldDefn( &oFieldSpeed );
         }
@@ -178,21 +178,21 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
 
         OGRFieldDefn oFieldMagVar("magvar", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldMagVar );
-    
+
         OGRFieldDefn oFieldGeoidHeight("geoidheight", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldGeoidHeight );
-            
+
         /* Description info */
-        
+
         OGRFieldDefn oFieldName("name", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldName );
-        
+
         OGRFieldDefn oFieldCmt("cmt", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldCmt );
-        
+
         OGRFieldDefn oFieldDesc("desc", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldDesc );
-        
+
         OGRFieldDefn oFieldSrc("src", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSrc );
 
@@ -201,7 +201,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         {
             OGRFieldDefn oFieldUrl("url", OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldUrl );
-            
+
             OGRFieldDefn oFieldUrlName("urlname", OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldUrlName );
         }
@@ -214,43 +214,43 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
                 snprintf(szFieldName, sizeof(szFieldName), "link%d_href", i);
                 OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
-                
+
                 snprintf(szFieldName, sizeof(szFieldName), "link%d_text", i);
                 OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldLinkText );
-                
+
                 snprintf(szFieldName, sizeof(szFieldName), "link%d_type", i);
                 OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
                 poFeatureDefn->AddFieldDefn( &oFieldLinkType );
             }
         }
-        
+
         OGRFieldDefn oFieldSym("sym", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSym );
-        
+
         OGRFieldDefn oFieldType("type", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldType );
-    
+
         /* Accuracy info */
-        
+
         OGRFieldDefn oFieldFix("fix", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldFix );
-        
+
         OGRFieldDefn oFieldSat("sat", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldSat );
-        
+
         OGRFieldDefn oFieldHdop("hdop", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldHdop );
-        
+
         OGRFieldDefn oFieldVdop("vdop", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldVdop );
-        
+
         OGRFieldDefn oFieldPdop("pdop", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldPdop );
-        
+
         OGRFieldDefn oFieldAgeofgpsdata("ageofdgpsdata", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldAgeofgpsdata );
-        
+
         OGRFieldDefn oFieldDgpsid("dgpsid", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldDgpsid );
     }
@@ -260,45 +260,45 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
             poFeatureDefn->SetGeomType((bEleAs25D) ? wkbMultiLineString25D : wkbMultiLineString);
         else
             poFeatureDefn->SetGeomType((bEleAs25D) ? wkbLineString25D : wkbLineString);
-        
+
         OGRFieldDefn oFieldName("name", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldName );
-        
+
         OGRFieldDefn oFieldCmt("cmt", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldCmt );
-        
+
         OGRFieldDefn oFieldDesc("desc", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldDesc );
-        
+
         OGRFieldDefn oFieldSrc("src", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSrc );
-        
+
         for(int i=1;i<=nMaxLinks;i++)
         {
             char szFieldName[32];
             snprintf(szFieldName, sizeof(szFieldName), "link%d_href", i);
             OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
-            
+
             snprintf(szFieldName, sizeof(szFieldName), "link%d_text", i);
             OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldLinkText );
-            
+
             snprintf(szFieldName, sizeof(szFieldName), "link%d_type", i);
             OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
             poFeatureDefn->AddFieldDefn( &oFieldLinkType );
         }
-        
+
         OGRFieldDefn oFieldNumber("number", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldNumber );
-        
+
         OGRFieldDefn oFieldType("type", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldType );
     }
-    
+
     /* Number of 'standard' GPX attributes */
     nGPXFields = poFeatureDefn->GetFieldCount();
-   
+
     ppoFeatureTab = NULL;
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
@@ -358,7 +358,7 @@ OGRGPXLayer::~OGRGPXLayer()
         XML_ParserFree(oParser);
 #endif
     poFeatureDefn->Release();
-    
+
     if( poSRS != NULL )
         poSRS->Release();
 
@@ -426,7 +426,7 @@ void OGRGPXLayer::ResetReading()
     CPLFree(pszSubElementValue);
     pszSubElementValue = NULL;
     nSubElementValueLen = 0;
-    
+
     int i;
     for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
         delete ppoFeatureTab[i];
@@ -442,7 +442,7 @@ void OGRGPXLayer::ResetReading()
 
     depthLevel = 0;
     interestingDepthLevel = 0;
-    
+
     trkFID = trkSegId = trkSegPtId = 0;
     rteFID = rtePtId = 0;
 }
@@ -571,7 +571,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     else if (gpxGeomType == GPX_ROUTE && strcmp(pszName, "rte") == 0)
     {
         interestingDepthLevel = depthLevel;
-        
+
         if (poFeature)
             delete poFeature;
 
@@ -678,7 +678,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             CPLFree(pszSubElementName);
             pszSubElementName = NULL;
             iCurrentField = -1;
-            
+
             if (strcmp(pszName, "link") == 0)
             {
                 iCountLink++;
@@ -723,7 +723,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                     else
                         bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
                                         pszName ) == 0);
-    
+
                     if (bMatch)
                     {
                         iCurrentField = iField;
@@ -906,7 +906,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             if (nSubElementValueLen)
             {
                 pszSubElementValue[nSubElementValueLen] = 0;
-    
+
                 double val = CPLAtof(pszSubElementValue);
                 int i = lineString->getNumPoints() - 1;
                 if (i >= 0)
@@ -1054,12 +1054,12 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     {
         return ppoFeatureTab[nFeatureTabIndex++];
     }
-    
+
     if (VSIFEofL(fpGPX))
         return NULL;
-    
+
     char aBuf[BUFSIZ];
-    
+
     CPLFree(ppoFeatureTab);
     ppoFeatureTab = NULL;
     nFeatureTabLength = 0;
@@ -1175,19 +1175,19 @@ int OGRGPXLayer::OGRGPX_WriteXMLExtension(const char* pszTagName,
         /* If we detect a Garmin GPX extension, add its xmlns */
         if (strcmp(pszTagName, "gpxx_WaypointExtension") == 0)
             pszXMLNS = " xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\"";
-            
+
         /* Don't XML escape here */
         char *pszUTF8 = OGRGPX_GetUTF8String( pszContent );
         poDS->PrintLine("    <%s%s>%s</%s>",
                    pszTagNameWithNS, (pszXMLNS) ? pszXMLNS : "", pszUTF8, pszTagNameWithNS);
         CPLFree(pszUTF8);
-        
+
         CPLFree(pszTagNameWithNS);
         CPLDestroyXMLNode(poXML);
-        
+
         return TRUE;
     }
-    
+
     return FALSE;
 }
 
@@ -1206,7 +1206,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
 {
     VSILFILE* fp = poDS->GetOutputFP();
     int i;
-    
+
     /* Begin with standard GPX fields */
     for(i=iFirstGPXField;i<nGPXFields;i++)
     { 
@@ -1385,13 +1385,13 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
     VSILFILE* fp = poDS->GetOutputFP();
     if (fp == NULL)
         return OGRERR_FAILURE;
-    
+
     char szLat[64];
     char szLon[64];
     char szAlt[64];
-    
+
     OGRGeometry     *poGeom = poFeatureIn->GetGeometryRef();
-    
+
     if (gpxGeomType == GPX_WPT)
     {
         if (poDS->GetLastGPXGeomTypeWritten() == GPX_ROUTE)
@@ -1407,7 +1407,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                         "Cannot write a 'wpt' element after a 'trk' element.\n");
             return OGRERR_FAILURE;
         }
-        
+
         poDS->SetLastGPXGeomTypeWritten(gpxGeomType);
 
         if ( poGeom == NULL || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
@@ -1984,7 +1984,7 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
                 }
                 else
                     bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszName ) == 0);
-                
+
                 if (bMatch)
                 {
                     currentFieldDefn = poFeatureDefn->GetFieldDefn(iField);
@@ -1996,7 +1996,7 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
                 char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
                 OGRFieldDefn newFieldDefn(pszCompatibleName, OFTInteger);
                 CPLFree(pszCompatibleName);
-                
+
                 poFeatureDefn->AddFieldDefn(&newFieldDefn);
                 currentFieldDefn = poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount() - 1);
 

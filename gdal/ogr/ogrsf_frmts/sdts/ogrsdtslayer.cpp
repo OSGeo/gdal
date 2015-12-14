@@ -55,7 +55,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
 /*      Define the feature.                                             */
 /* -------------------------------------------------------------------- */
     int         iCATDEntry = poTransfer->GetLayerCATDEntry( iLayer );
-    
+
     poFeatureDefn =
         new OGRFeatureDefn(poTransfer->GetCATD()->GetEntryModule(iCATDEntry));
     SetDescription( poFeatureDefn->GetName() );
@@ -92,7 +92,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
 /*      Add schema from referenced attribute records.                   */
 /* -------------------------------------------------------------------- */
     char        **papszATIDRefs = NULL;
-    
+
     if( poTransfer->GetLayerType(iLayer) != SLTAttr )
         papszATIDRefs = poReader->ScanModuleReferences();
     else
@@ -105,7 +105,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
     {
         SDTSAttrReader  *poAttrReader;
         DDFFieldDefn    *poFDefn;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Get the attribute table reader, and the associated user         */
 /*      attribute field.                                                */
@@ -124,7 +124,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
             poFDefn = poAttrReader->GetModule()->FindFieldDefn( "ATTS" );
         if( poFDefn == NULL )
             continue;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Process each user subfield on the attribute table into an       */
 /*      OGR field definition.                                           */
@@ -141,7 +141,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
                                                       poSFDefn->GetName() ) );
             else
                 pszFieldName = CPLStrdup( poSFDefn->GetName() );
-            
+
             switch( poSFDefn->GetType() )
             {
               case DDFString:
@@ -323,7 +323,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
       case SLTPoint:
       {
           SDTSRawPoint  *poPoint = (SDTSRawPoint *) poSDTSFeature;
-          
+
           poFeature->SetGeometryDirectly( new OGRPoint( poPoint->dfX,
                                                         poPoint->dfY,
                                                         poPoint->dfZ ) );
@@ -385,7 +385,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /*      Set attributes for any indicated attribute records.             */
 /* -------------------------------------------------------------------- */
     int         iAttrRecord;
-    
+
     for( iAttrRecord = 0; 
          iAttrRecord < poSDTSFeature->nAttributes; 
          iAttrRecord++)
@@ -406,7 +406,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
         AssignAttrRecordToFeature( poFeature, poTransfer, 
                                    ((SDTSAttrRecord *) poSDTSFeature)->poATTR);
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate the record id.                                        */
 /* -------------------------------------------------------------------- */
@@ -431,7 +431,7 @@ OGRFeature *OGRSDTSLayer::GetNextFeature()
 
 {
     OGRFeature  *poFeature = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
 /*      spatial criteria.                                               */

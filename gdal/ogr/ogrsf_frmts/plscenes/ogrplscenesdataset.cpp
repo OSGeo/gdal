@@ -244,7 +244,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
             CPLPopErrorHandler();
     }
     CSLDestroy(papszOptions);
-    
+
     if( psResult->pszErrBuf != NULL )
     {
         if( !(bQuiet404Error && strstr(psResult->pszErrBuf, "404")) )
@@ -256,7 +256,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
+
     if( psResult->pabyData == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Empty content returned by server");
@@ -288,7 +288,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
         json_object_put(poObj);
         poObj = NULL;
     }
-    
+
     return poObj;
 }
 
@@ -378,7 +378,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
                  osScene.c_str());
         return NULL;
     }
-    
+
     if( STARTS_WITH(osRasterURL, "http://") )
     {
         osRasterURL = "http://" + osAPIKey + ":@" + osRasterURL.substr(strlen("http://"));
@@ -522,7 +522,7 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
         CSLDestroy(papszOptions);
         return NULL;
     }
-    
+
     json_object_iter it;
     it.key = NULL;
     it.val = NULL;
@@ -545,7 +545,7 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
             poDS->papoLayers = (OGRPLScenesLayer**) CPLRealloc(poDS->papoLayers,
                                         sizeof(OGRPLScenesLayer*) * (poDS->nLayers + 1));
             poDS->papoLayers[poDS->nLayers ++] = poLayer;
-            
+
             const char* pszSpat = CSLFetchNameValue(papszOptions, "spat");
             if( pszSpat )
             {

@@ -47,7 +47,7 @@ OGRGFTResultLayer::OGRGFTResultLayer(OGRGFTDataSource* poDSIn,
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbUnknown );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    
+
     SetDescription( poFeatureDefn->GetName() );
 }
 

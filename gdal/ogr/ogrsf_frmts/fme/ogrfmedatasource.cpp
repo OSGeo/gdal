@@ -84,7 +84,7 @@ void FME_Logger( FME_MsgLevel severity, const char *message )
 
     if( pszMessageCopy[strlen(pszMessageCopy)-1] == '\n' )
         pszMessageCopy[strlen(pszMessageCopy)-1] = '\0';
-        
+
     CPLDebug( "FME_LOG", "%d:%s", severity, pszMessageCopy );
 
     CPLFree( pszMessageCopy );
@@ -146,7 +146,7 @@ static char *BuildTmpNam( const char *pszLayerName )
         else
             sprintf( szFilename, "%s%c%s_%s_%d", 
                      pszTmpDir, PATH_CHAR, kPROVIDERNAME, pszLayerName, i );
-        
+
         if( VSIStat( szFilename, &sStat ) != 0 )
             break;
     }
@@ -196,7 +196,7 @@ OGRFMEDataSource::~OGRFMEDataSource()
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
 /* -------------------------------------------------------------------- */
@@ -242,7 +242,7 @@ OGRFMEDataSource::~OGRFMEDataSource()
         else
             CPLDebug( kPROVIDERNAME, "Preserving cached reader on destructor");
     }
-    
+
     if( poSession != NULL )
     {
         if( --nSharedSessionRefCount == 0 )
@@ -304,7 +304,7 @@ char *OGRFMEDataSource::PromptForSource()
 
     poSession->destroyString( poSourceFormat );
     poSession->destroyString( poSourceDSName );
-        
+
     return pszResult;
 }
 
@@ -349,7 +349,7 @@ char *OGRFMEDataSource::ReadFileSource( const char *pszFilename )
                   "At least a readername and data source name is required." );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Apply extra values to user directives.                          */
 /* -------------------------------------------------------------------- */
@@ -449,7 +449,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
             || pszCompositeName[i] == '.' )
             break;
     }
-         
+
     if( (i < 2 || pszCompositeName[i] != ':' 
          || STARTS_WITH_CI(pszCompositeName, "OCI:")
          || STARTS_WITH_CI(pszCompositeName, "gltp:")
@@ -789,7 +789,7 @@ void OGRFMEDataSource::BuildSpatialIndexes()
 
         psCLI->poIndex = 
             poSession->createSpatialIndex( psCLI->pszIndFile, "WRITE", NULL );
-        
+
         if( psCLI->poIndex == NULL || psCLI->poIndex->open() != 0 )
         {
             CPLDebug( kPROVIDERNAME, 
@@ -810,7 +810,7 @@ void OGRFMEDataSource::BuildSpatialIndexes()
         CacheLayerInfo *psCLI = NULL;
 
         poFMEFeature->getFeatureType( *poFMEString );
-        
+
         for( iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             if( EQUAL(papoLayers[iLayer]->GetLayerDefn()->GetName(),
@@ -820,7 +820,7 @@ void OGRFMEDataSource::BuildSpatialIndexes()
                 break;
             }
         }
-        
+
         if( psCLI == NULL )
         {
             CPLDebug( "FME_LOG", 
@@ -835,7 +835,7 @@ void OGRFMEDataSource::BuildSpatialIndexes()
         FME_Real64  dfMinX, dfMaxX, dfMinY, dfMaxY;
 
         poFMEFeature->boundingBox( dfMinX, dfMaxX, dfMinY, dfMaxY );
-        
+
         if( psCLI->poIndex->entries() == 1 )
         {
             psCLI->sExtent.MinX = dfMinX;
@@ -896,14 +896,14 @@ void OGRFMEDataSource::BuildSpatialIndexes()
 
             psCLI->poIndex->close(FME_FALSE);
             poSession->destroySpatialIndex( psCLI->poIndex );
-            
+
             if( psCLI->pszCoordSys != NULL && !bCoordSysOverride )
             {
                 CPLDebug("FME_OLEDB", 
                          "Applying COORDSYS=%s to layer %s from feature scan.",
                          psCLI->pszCoordSys, 
                          papoLayers[iLayer]->GetLayerDefn()->GetName() );
-                       
+
                 poSpatialRef = FME2OGRSpatialRef( psCLI->pszCoordSys );
             }
 
@@ -916,11 +916,11 @@ void OGRFMEDataSource::BuildSpatialIndexes()
                 CPLDebug( "FME_LOG", "Setting geom type from %d to %d", 
                           poLayer->GetLayerDefn()->GetGeomType(),
                           psCLI->eBestGeomType );
-                          
+
                 poLayer->GetLayerDefn()->SetGeomType( psCLI->eBestGeomType );
             }
         }
-            
+
         CPLFree( psCLI->pszIndFile );
         CPLFree( psCLI->pszCoordSys );
     }
@@ -981,9 +981,9 @@ void OGRFMEDataSource::ClarifyGeometryClass(
         IFMEFeatureVector *poFeatVector;
 
         poFeatVector = poSession->createFeatureVector();
-        
+
         poFeature->splitAggregate( *poFeatVector );
-        
+
         for( int iPart = 0; iPart < (int)poFeatVector->entries(); iPart++ )
         {
             IFMEFeature      *poFMEPart = (*poFeatVector)(iPart);
@@ -1009,7 +1009,7 @@ void OGRFMEDataSource::ClarifyGeometryClass(
     // Is this 3D?
     if( poFeature->getDimension() == FME_THREE_D )
         eThisType = wkbSetZ(eThisType);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Now adjust the working type.                                    */
 /* -------------------------------------------------------------------- */
@@ -1085,10 +1085,10 @@ OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
                                    IFMEFeature * poGeomFeat,
                                    OGRwkbGeometryType eDesiredType  )
 {
-    
+
     FME_GeometryType      eGeomType = poGeomFeat->getGeometryType();
     int                   bForceToMulti = FALSE;
-    
+
     if( wkbFlatten(eDesiredType) == wkbGeometryCollection
         || wkbFlatten(eDesiredType) == wkbMultiPolygon )
         bForceToMulti = TRUE;
@@ -1112,7 +1112,7 @@ OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
         OGRLineString *poLine = new OGRLineString();
 
         poLine->setNumPoints( poGeomFeat->numCoords() );
-        
+
         for( int iPoint = 0; iPoint < (int) poGeomFeat->numCoords(); iPoint++ )
         {
             poLine->setPoint( iPoint, 
@@ -1133,7 +1133,7 @@ OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
         OGRPolygon *poPolygon = new OGRPolygon();
 
         poLine->setNumPoints( poGeomFeat->numCoords() );
-        
+
         for( int iPoint = 0; iPoint < (int)poGeomFeat->numCoords(); iPoint++ )
         {
             poLine->setPoint( iPoint, 
@@ -1163,9 +1163,9 @@ OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
         IFMEFeature      *poFMERing = NULL;
 
         poFeatVector = poSession->createFeatureVector();
-        
+
         poGeomFeat->getDonutParts( *poFeatVector );
-        
+
         for( int iPart = 0; iPart < (int)poFeatVector->entries(); iPart++ )
         {
             OGRLinearRing      *poRing;
@@ -1175,9 +1175,9 @@ OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
                 continue;
 
             poRing = new OGRLinearRing();
-            
+
             poRing->setNumPoints( poFMERing->numCoords() );
-        
+
             for( int iPoint=0; iPoint < (int)poFMERing->numCoords(); iPoint++ )
             {
                 poRing->setPoint( iPoint, 
@@ -1220,9 +1220,9 @@ OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
             poCollection = new OGRGeometryCollection();
 
         poFeatVector = poSession->createFeatureVector();
-        
+
         poGeomFeat->splitAggregate( *poFeatVector );
-        
+
         for( int iPart = 0; iPart < (int)poFeatVector->entries(); iPart++ )
         {
             OGRGeometry      *poOGRPart;
@@ -1257,7 +1257,7 @@ OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
         return NULL;
     }
 }
- 
+
 /************************************************************************/
 /*                           ProcessFeature()                           */
 /*                                                                      */
@@ -1294,7 +1294,7 @@ OGRFeature *OGRFMEDataSource::ProcessFeature( OGRFMELayer *poLayer,
 /*      Translate the geometry.                                         */
 /* -------------------------------------------------------------------- */
     OGRGeometry      *poOGRGeom = NULL;
-    
+
     poOGRGeom = ProcessGeometry( poLayer, poSrcFeature,
                                  poLayer->GetLayerDefn()->GetGeomType() );
     if( poOGRGeom != NULL )
@@ -1349,7 +1349,7 @@ void OGRFMEDataSource::OfferForConnectionCaching(IFMEUniversalReader *poReader,
         if( STARTS_WITH_CI((const char *) (*poUserDirectives)(i), "RUNTIME_MACROS") )
             pszRuntimeMacros = (*poUserDirectives)(i+1);
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Break into name/value pairs.                                    */
 /* -------------------------------------------------------------------- */
@@ -1392,7 +1392,7 @@ void OGRFMEDataSource::OfferForConnectionCaching(IFMEUniversalReader *poReader,
         if( strcmp(szDefinition, pasCachedConnections[i].pszDefinition) == 0 )
             return;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Added this reader to the cache.                                 */
 /* -------------------------------------------------------------------- */
@@ -1405,7 +1405,7 @@ void OGRFMEDataSource::OfferForConnectionCaching(IFMEUniversalReader *poReader,
     pasCachedConnections = (CachedConnection *) 
         CPLRealloc(pasCachedConnections, 
                    sizeof(CachedConnection) * nCachedConnectionCount);
-    
+
     pasCachedConnections[nCachedConnectionCount-1].poReader = poReader;
     pasCachedConnections[nCachedConnectionCount-1].pszReaderType = 
         CPLStrdup(pszReaderType);
@@ -1422,7 +1422,7 @@ int OGRFMEDataSource::IsPartOfConnectionCache( IFMEUniversalReader *poReader )
 
 {
     int            i;
-    
+
     for( i = 0; i < nCachedConnectionCount; i++ )
         if( poReader == pasCachedConnections[i].poReader )
             return TRUE;
@@ -1521,7 +1521,7 @@ IFMESession *OGRFMEDataSource::AcquireSession()
         {
             poSessionDirectives->append("FME_DEBUG");
             poSessionDirectives->append("BADNEWS");
-            
+
             err = poSharedSession->init( poSessionDirectives );
 
             poSharedSession->destroyStringArray( poSessionDirectives );

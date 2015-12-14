@@ -105,7 +105,7 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
         if( pszValue != NULL )
             nColor = atoi(pszValue);
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Setup the style string.                                         */
 /* -------------------------------------------------------------------- */
@@ -113,12 +113,12 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
     {
         CPLString osStyle;
         const unsigned char *pabyDWGColors = ACGetColorTable();
-        
+
         osStyle.Printf( "BRUSH(fc:#%02x%02x%02x)",
                         pabyDWGColors[nColor*3+0],
                         pabyDWGColors[nColor*3+1],
                         pabyDWGColors[nColor*3+2] );
-        
+
         poFeature->SetStyleString( osStyle );
     }
 

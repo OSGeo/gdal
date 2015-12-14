@@ -214,7 +214,7 @@ int OGRHTFDataSource::Open( const char * pszFilename )
         return FALSE;
     if (nZone == 0)
         return FALSE;
-  
+
     nLayers = 2;
     papoLayers = (OGRHTFLayer**) CPLMalloc(sizeof(OGRHTFLayer*) * 2);
     papoLayers[0] = new OGRHTFPolygonLayer(pszFilename, nZone, !bIsSouth);

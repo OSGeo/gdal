@@ -161,7 +161,7 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
 
     if( fp == NULL )
         return nOldVersion;
-    
+
     char        szHeader[115];
 
     if( VSIFReadL( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
@@ -171,7 +171,7 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
     }
 
     VSIFCloseL( fp );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is the record length 112?  If so, it is an older version        */
 /*      than 2002.                                                      */
@@ -239,7 +239,7 @@ void OGRTigerDataSource::AddLayer( OGRTigerLayer * poNewLayer )
     poNewLayer->SetDescription( poNewLayer->GetName() );
     papoLayers = (OGRTigerLayer **)
         CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
-    
+
     papoLayers[nLayers-1] = poNewLayer;
 }
 
@@ -308,14 +308,14 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build a list of filenames we figure are Tiger files.            */
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(stat.st_mode) )
     {
         char       szModule[128];
-        
+
         if( strlen(CPLGetFilename(pszFilename)) == 0 )
         {
             return FALSE;
@@ -388,7 +388,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      handling a whole directory.                                     */
 /* -------------------------------------------------------------------- */
     papszModules = NULL;
-    
+
     for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         if( bTestOpen || i == 0 )
@@ -406,7 +406,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
             if( fp == NULL )
                 continue;
-            
+
             if( VSIFReadL( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
             {
                 VSIFCloseL( fp );
@@ -431,7 +431,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 while( *pszRecStart == 10 || *pszRecStart == 13 )
                     pszRecStart++;
             }
-            
+
             if( pszRecStart[0] != '1' )
                 continue;
 
@@ -556,7 +556,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     AddLayer( new OGRTigerLayer( this,
                                  new TigerLandmarks( this,
                                                      papszModules[0]) ));
-    
+
     // RT8
     AddLayer( new OGRTigerLayer( this,
                                  new TigerAreaLandmarks( this,
@@ -568,7 +568,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                                    new TigerKeyFeatures( this,
                                                          papszModules[0]) ));
     }
-    
+
     // RTA, RTS
     AddLayer( new OGRTigerLayer( this,
                                  new TigerPolygon( this,
@@ -580,7 +580,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                                    new TigerPolygonCorrections( this,
                                                                 papszModules[0]) ));
     }
-    
+
     // RTC
     AddLayer( new OGRTigerLayer( this,
                                  new TigerEntityNames( this,
@@ -597,27 +597,27 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     AddLayer( new OGRTigerLayer( this,
                                  new TigerIDHistory( this,
                                                      papszModules[0]) ));
-    
+
     // RTI
     AddLayer( new OGRTigerLayer( this,
                                  new TigerPolyChainLink( this,
                                                        papszModules[0]) ));
-    
+
     // RTM
     AddLayer( new OGRTigerLayer( this,
                                  new TigerSpatialMetadata( this,
                                                            papszModules[0] ) ) );
-    
+
     // RTP
     AddLayer( new OGRTigerLayer( this,
                                  new TigerPIP( this,
                                                papszModules[0]) ));
-    
+
     // RTR
     AddLayer( new OGRTigerLayer( this,
                                  new TigerTLIDRange( this,
                                                      papszModules[0]) ));
-    
+
     // RTT
     if (nVersion >= TIGER_2002) {
       AddLayer( new OGRTigerLayer( this,
@@ -636,7 +636,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     AddLayer( new OGRTigerLayer( this,
                                  new TigerZipPlus4( this,
                                                      papszModules[0]) ));
-    
+
     return TRUE;
 }
 
@@ -769,7 +769,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptionsIn )
 
 {
     VSIStatBufL      stat;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try to create directory if it doesn't already exist.            */
 /* -------------------------------------------------------------------- */
@@ -957,7 +957,7 @@ void OGRTigerDataSource::DeleteModuleFiles( const char *pszModule )
 {
     char        **papszDirFiles = CPLReadDir( GetDirPath() );
     int         i, nCount = CSLCount(papszDirFiles);
-    
+
     for( i = 0; i < nCount; i++ )
     {
         if( EQUALN(pszModule,papszDirFiles[i],strlen(pszModule)) )

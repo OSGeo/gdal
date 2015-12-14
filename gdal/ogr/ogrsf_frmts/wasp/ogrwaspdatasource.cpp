@@ -127,7 +127,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
         oLayer.reset();
         return OGRERR_FAILURE;
     }
-    
+
     double dfValues[4];
     int iNumValues = 0;
     {

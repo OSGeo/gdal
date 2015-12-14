@@ -164,7 +164,7 @@ LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
     {
         oLayerDesc.osLayerName = osStr;
     }
-    
+
     oLayerDesc.osOriginalStr.resize(pszSQLCommand - pszOriginalStrStart);
 
     *ppszSQLCommand = pszSQLCommand;
@@ -905,7 +905,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                 CPLFree(pszTmpDBName);
                 return NULL;
             }
-            
+
             poLayer = poOtherDS->GetLayerByName(oLayerDesc.osLayerName);
             if( poLayer == NULL )
             {
@@ -1041,7 +1041,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( 0, poSpatialFilter );
-    
+
     if( poSingleSrcLayer != NULL )
         poLayer->SetMetadata( poSingleSrcLayer->GetMetadata( "NATIVE_DATA" ),
                               "NATIVE_DATA" );

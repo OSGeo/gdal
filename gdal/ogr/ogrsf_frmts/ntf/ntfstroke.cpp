@@ -103,10 +103,10 @@ int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
 
     b1 = -1.0;
     b2 = -1.0;
-    
+
     c1 = (y1 - m1*x1);
     c2 = (y2 - m2*x2);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Compute the intersection of the two lines through the center    */
 /*      of the circle, using Kramers rule.                              */
@@ -133,7 +133,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                   double dfAlongX, double dfAlongY,
                                   double dfEndX, double dfEndY,
                                   int nVertexCount )
-    
+
 {
     double      dfStartAngle, dfEndAngle, dfAlongAngle;
     double      dfCenterX, dfCenterY, dfRadius;
@@ -195,7 +195,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
     dfRadius = sqrt( (dfCenterX - dfStartX) * (dfCenterX - dfStartX)
                      + (dfCenterY - dfStartY) * (dfCenterY - dfStartY) );
-    
+
     return NTFStrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY, 
                                              dfRadius, 
                                              dfStartAngle, dfEndAngle,
@@ -221,7 +221,7 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
     dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
     poLine->setNumPoints( nVertexCount );
-        
+
     for( iPoint=0; iPoint < nVertexCount; iPoint++ )
     {
         double dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;

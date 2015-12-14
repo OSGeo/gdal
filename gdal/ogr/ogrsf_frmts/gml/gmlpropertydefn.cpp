@@ -168,7 +168,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
         }
         else
             bIsReal = (valueType == CPL_VALUE_REAL);
-    
+
         if( m_eType == GMLPT_String )
         {
             if( bSetWidth )

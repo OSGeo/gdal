@@ -1384,7 +1384,7 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
     char* pszXML = OGRGetXML_UTF8_EscapedString(pszLayerName);
     VSIFPrintfL(fp, "<table:table table:name=\"%s\">\n", pszXML);
     CPLFree(pszXML);
-    
+
     poLayer->ResetReading();
 
     OGRFeature* poFeature = poLayer->GetNextFeature();

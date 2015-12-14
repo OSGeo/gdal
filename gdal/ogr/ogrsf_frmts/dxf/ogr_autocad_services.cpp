@@ -85,14 +85,14 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
             wchar_t anWCharString[2];
             anWCharString[0] = (wchar_t) iChar;
             anWCharString[1] = 0;
-            
+
             char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
                                                     CPL_ENC_UCS2, 
                                                     CPL_ENC_UTF8 );
 
             osResult += pszUTF8Char;
             CPLFree( pszUTF8Char );
-            
+
             pszInput += 6;
         }
         else if( pszInput[0] == '\\'
@@ -105,7 +105,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
             // Not sure what \W and \T do, but we skip them. 
             // According to qcad rs_text.cpp, \A values are vertical
             // alignment, 0=bottom, 1=mid, 2=top but we ignore for now.
-            
+
             while( *pszInput != ';' && *pszInput != '\0' )
                 pszInput++;
         }
@@ -136,7 +136,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 
             osResult += pszUTF8Char;
             CPLFree( pszUTF8Char );
-            
+
             pszInput += 2;
         }
         else 
@@ -144,7 +144,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 
         pszInput++;
     }
-    
+
     return osResult;
 }
 
@@ -454,7 +454,7 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
 
         osPreAngle.assign( osOldStyle, 0, nAngleOff );
         osPostAngle.assign( osOldStyle, nEndOfAngleOff, std::string::npos );
-        
+
         dfOldAngle = CPLAtof( osOldStyle.c_str() + nAngleOff + 3 );
     }
     else
@@ -482,7 +482,7 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
     double dfOldScale = 1.0;
     CPLString osPreScale, osPostScale;
     size_t nScaleOff = osOldStyle.find( ",s:" );
-    
+
     if( nScaleOff != std::string::npos )
     {
         size_t nEndOfScaleOff = osOldStyle.find( ",", nScaleOff + 1 );
@@ -492,7 +492,7 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
 
         osPreScale.assign( osOldStyle, 0, nScaleOff );
         osPostScale.assign( osOldStyle, nEndOfScaleOff, std::string::npos );
-        
+
         dfOldScale = CPLAtof( osOldStyle.c_str() + nScaleOff + 3 );
     }
     else

@@ -73,7 +73,7 @@ public:
     void SetLayerNumber( int nLayer );
 
     void SetClosedForWriting() { bClosedForWriting = TRUE; }
-    
+
     CPLString WriteSchema();
 
 private:
@@ -120,7 +120,7 @@ public:
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char** papszOptions = NULL );
     int TestCapability( const char* pszCap );
-    
+
     //
     // OGRKMLDataSource Interface
     //

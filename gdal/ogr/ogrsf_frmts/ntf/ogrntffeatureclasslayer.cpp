@@ -60,7 +60,7 @@ OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn )
 
     oFCNum.SetWidth( 4 );
     poFeatureDefn->AddFieldDefn( &oFCNum );
-    
+
     OGRFieldDefn      oFCName( "FC_NAME", OFTString );
 
     oFCNum.SetWidth( 80 );
@@ -132,9 +132,9 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( GIntBig nFeatureId )
 
     if( nFeatureId < 0 || nFeatureId >= poDS->GetFCCount() )
         return NULL;
-    
+
     poDS->GetFeatureClass( (int)nFeatureId, &pszFCId, &pszFCName );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding feature.                                 */
 /* -------------------------------------------------------------------- */
@@ -143,7 +143,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( GIntBig nFeatureId )
     poFeature->SetField( 0, pszFCId );
     poFeature->SetField( 1, pszFCName );
     poFeature->SetFID( nFeatureId );
-    
+
     return poFeature;
 }
 

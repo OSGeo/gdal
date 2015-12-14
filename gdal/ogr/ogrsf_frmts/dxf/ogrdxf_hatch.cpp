@@ -130,7 +130,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
         if( pszValue != NULL )
             nColor = atoi(pszValue);
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Setup the style string.                                         */
 /* -------------------------------------------------------------------- */
@@ -138,12 +138,12 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     {
         CPLString osStyle;
         const unsigned char *pabyDXFColors = ACGetColorTable();
-        
+
         osStyle.Printf( "BRUSH(fc:#%02x%02x%02x)",
                         pabyDXFColors[nColor*3+0],
                         pabyDXFColors[nColor*3+1],
                         pabyDXFColors[nColor*3+2] );
-        
+
         poFeature->SetStyleString( osStyle );
     }
 
@@ -187,7 +187,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
         return OGRERR_FAILURE;
 
     int nEdgeCount = atoi(szLineBuf);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Loop reading edges.                                             */
 /* -------------------------------------------------------------------- */
@@ -208,7 +208,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             return OGRERR_FAILURE;
 
         int nEdgeType = atoi(szLineBuf);
-        
+
 /* -------------------------------------------------------------------- */
 /*      Process a line edge.                                            */
 /* -------------------------------------------------------------------- */
