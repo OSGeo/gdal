@@ -135,7 +135,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      initialize from the input stream.                               */
 /* -------------------------------------------------------------------- */
     poGeom = createGeometry( eGeometryType );
-    
+
     if( poGeom == NULL )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
@@ -283,12 +283,12 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     {
         poGeom = new OGRPolygon();
     }
-    
+
     else if( EQUAL(szToken,"GEOMETRYCOLLECTION") )
     {
         poGeom = new OGRGeometryCollection();
     }
-    
+
     else if( EQUAL(szToken,"MULTIPOLYGON") )
     {
         poGeom = new OGRMultiPolygon();
@@ -338,7 +338,7 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /*      Do the import.                                                  */
 /* -------------------------------------------------------------------- */
     eErr = poGeom->importFromWkt( &pszInput );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Assign spatial reference system.                                */
 /* -------------------------------------------------------------------- */
@@ -359,7 +359,7 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     {
         delete poGeom;
     }
-    
+
     return eErr;
 }
 
@@ -615,7 +615,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
 
         OGRPolygon *poOldPoly = (OGRPolygon *) poGC->getGeometryRef(iGeom);
         int   iRing;
-        
+
         if( poOldPoly->getExteriorRing() == NULL )
             continue;
 
@@ -624,7 +624,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         for( iRing = 0; iRing < poOldPoly->getNumInteriorRings(); iRing++ )
             poPolygon->addRingDirectly( poOldPoly->stealInteriorRing( iRing ) );
     }
-    
+
     delete poGC;
 
     return poPolygon;
@@ -719,7 +719,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 
         if( !bAllPoly )
             return poGeom;
-        
+
         OGRMultiPolygon *poMP = new OGRMultiPolygon();
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
@@ -831,7 +831,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
 
         if( !bAllPoint )
             return poGeom;
-        
+
         OGRMultiPoint *poMP = new OGRMultiPoint();
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
@@ -942,7 +942,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 
         if( !bAllLines )
             return poGeom;
-        
+
         OGRMultiLineString *poMP = new OGRMultiLineString();
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
@@ -1040,7 +1040,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             for( iRing = 0; iRing < poPoly->getNumInteriorRings()+1; iRing++ )
             {
                 OGRLineString *poNewLS, *poLR;
-                
+
                 if( iRing == 0 )
                 {
                     poLR = poPoly->getExteriorRing();
@@ -1049,10 +1049,10 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
                 }
                 else
                     poLR = poPoly->getInteriorRing(iRing-1);
-    
+
                 if (poLR == NULL || poLR->getNumPoints() == 0)
                     continue;
-                
+
                 poNewLS = new OGRLineString();
                 poNewLS->addSubLineString( poLR );
                 poMP->addGeometryDirectly( poNewLS );
@@ -1759,7 +1759,7 @@ OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )
     OGRGeometryH hGeom;
 
     hGeom = OGR_G_CreateFromGML( pszData );
-    
+
     return (OGRGeometry *) hGeom;
 }
 
@@ -2385,7 +2385,7 @@ static void Sub360ToLon( OGRGeometry* poGeom )
             {
                 Sub360ToLon((OGRGeometry*)OGR_G_GetGeometryRef((OGRGeometryH)poGeom, iGeom));
             }
-            
+
             break;
         }
 
@@ -2408,7 +2408,7 @@ static void Sub360ToLon( OGRGeometry* poGeom )
             }
             break;
         }
-            
+
         default:
             break;
     }
@@ -2427,7 +2427,7 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
         case wkbLineString:
             poMulti->addGeometry(poGeom);
             break;
-            
+
         case wkbMultiLineString:
         case wkbMultiPolygon:
         case wkbGeometryCollection:
@@ -2441,7 +2441,7 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
             }
             break;
         }
-            
+
         default:
             break;
     }
@@ -2543,7 +2543,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                 OGRGeometry* poGeom2 = poWorkGeom->Intersection(poRectangle2);
                 delete poRectangle1;
                 delete poRectangle2;
-                
+
                 if (poGeom1 != NULL && poGeom2 != NULL)
                 {
                     AddSimpleGeomToMulti(poMulti, poGeom1);
@@ -2554,7 +2554,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                 {
                     AddSimpleGeomToMulti(poMulti, poGeom);
                 }
-                
+
                 delete poGeom1;
                 delete poGeom2;
                 delete poDupGeom;
@@ -2562,10 +2562,10 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
             else
             {
                 poMulti->addGeometry(poGeom);
-            }   
+            }
             break;
         }
-            
+
         case wkbMultiLineString:
         case wkbMultiPolygon:
         case wkbGeometryCollection:
@@ -2579,7 +2579,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
             }
             break;
         }
-            
+
         default:
             break;
     }
@@ -2603,7 +2603,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
             return NULL;
         }
     }
-    
+
     if (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")))
     {
         OGRwkbGeometryType eType = wkbFlatten(poSrcGeom->getGeometryType());
@@ -2614,20 +2614,20 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
             eNewType = wkbMultiLineString;
         else
             eNewType = wkbGeometryCollection;
-        
+
         OGRGeometryCollection* poMulti =
             (OGRGeometryCollection* )createGeometry(eNewType);
-            
+
         double dfDateLineOffset = CPLAtofM(CSLFetchNameValueDef(papszOptions, "DATELINEOFFSET", "10"));
         if(dfDateLineOffset <= 0 || dfDateLineOffset >= 360)
             dfDateLineOffset = 10;
 
         CutGeometryOnDateLineAndAddToMulti(poMulti, poDstGeom, dfDateLineOffset);
-        
+
         if (poMulti->getNumGeometries() == 0)
         {
             delete poMulti;
-        }            
+        }
         else if (poMulti->getNumGeometries() == 1)
         {
             delete poDstGeom;
@@ -2727,7 +2727,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
         // Compute position on the unrotated ellipse. 
         dfEllipseX = cos(dfAngleOnEllipse) * dfPrimaryRadius;
         dfEllipseY = sin(dfAngleOnEllipse) * dfSecondaryRadius;
-        
+
         // Rotate this position around the center of the ellipse.
         dfArcX = dfCenterX 
             + dfEllipseX * cos(dfRotationRadians) 

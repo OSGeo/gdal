@@ -80,10 +80,10 @@ OGRCompoundCurve::~OGRCompoundCurve()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -92,7 +92,7 @@ OGRCompoundCurve& OGRCompoundCurve::operator=( const OGRCompoundCurve& other )
     if( this != &other)
     {
         OGRCurve::operator=( other );
-        
+
         oCC = other.oCC;
     }
     return *this;
@@ -325,7 +325,7 @@ void OGRCompoundCurve::Value( double dfDistance, OGRPoint *poPoint ) const
             dfLength += dfSegLength;
         }
     }
-    
+
     EndPoint( poPoint );
 }
 
@@ -371,10 +371,10 @@ OGRBoolean  OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
 {
     if( poOther == this )
         return TRUE;
-    
+
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
-    
+
     OGRCompoundCurve *poOCC = (OGRCompoundCurve *) poOther;
     return oCC.Equals(&(poOCC->oCC));
 }

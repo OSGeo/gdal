@@ -89,10 +89,10 @@ OGRGeometryCollection::~OGRGeometryCollection()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -101,9 +101,9 @@ OGRGeometryCollection& OGRGeometryCollection::operator=( const OGRGeometryCollec
     if( this != &other)
     {
         empty();
-        
+
         OGRGeometry::operator=( other );
-        
+
         for( int i = 0; i < other.nGeomCount; i++ )
         {
             addGeometry( other.papoGeoms[i] );
@@ -581,7 +581,7 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      preserved.                                                      */
 /* -------------------------------------------------------------------- */
     GUInt32 nGType = getGeometryType();
-    
+
     if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
     else if( eWkbVariant == wkbVariantPostGIS1 )
@@ -595,14 +595,14 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
         if( bIs3D )
             nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse); /* yes we explicitly set wkb25DBit */
     }
-    
+
     if( eByteOrder == wkbNDR )
         nGType = CPL_LSBWORD32( nGType );
     else
         nGType = CPL_MSBWORD32( nGType );
 
     memcpy( pabyData + 1, &nGType, 4 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
@@ -705,9 +705,9 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
 /* -------------------------------------------------------------------- */
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
-    
+
     *ppszInput = (char *) pszInput;
-    
+
     return OGRERR_NONE;
 }
 
@@ -911,7 +911,7 @@ OGRBoolean OGRGeometryCollection::Equals( OGRGeometry * poOther ) const
 {
     if( poOther == this )
         return TRUE;
-    
+
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
 
@@ -921,7 +921,7 @@ OGRBoolean OGRGeometryCollection::Equals( OGRGeometry * poOther ) const
     OGRGeometryCollection *poOGC = (OGRGeometryCollection *) poOther;
     if( getNumGeometries() != poOGC->getNumGeometries() )
         return FALSE;
-    
+
     // we should eventually test the SRS.
 
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )

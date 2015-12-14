@@ -869,7 +869,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
 {
     if( wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
         return OGRERR_UNSUPPORTED_OPERATION;
-    
+
     poGeom->closeRings();
     OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
     int nParts = 0;
@@ -1068,7 +1068,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
             CPL_SWAPDOUBLE( pabyPtr + 8*i );
     }
     pabyPtr += 16;
-    
+
     memcpy(pabyPtr, padfZ, 8 * nPoints);
     /* Swap box if needed. Shape doubles are always LSB */
     if( OGR_SWAP( wkbNDR ) )
@@ -1077,7 +1077,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
             CPL_SWAPDOUBLE( pabyPtr + 8*i );
     }
     pabyPtr +=  8 * nPoints;
-    
+
     CPLFree(panPartStart);
     CPLFree(panPartType);
     CPLFree(poPoints);
@@ -1516,7 +1516,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
       int bHasZ = (  nSHPType == SHPT_MULTIPOINTZ
                   || nSHPType == SHPT_MULTIPOINTZM );
 
-                
       memcpy( &nPoints, pabyShape + 36, 4 );
       CPL_LSBPTR32( &nPoints );
 
@@ -1528,7 +1527,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
       }
 
       nOffsetZ = 40 + 2*8*nPoints + 2*8;
-    
+
       OGRMultiPoint *poMultiPt = new OGRMultiPoint;
       *ppoGeom = poMultiPt;
 
@@ -1536,17 +1535,17 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
       {
           double x, y, z;
           OGRPoint *poPt = new OGRPoint;
-        
+
           /* Copy X */
           memcpy(&x, pabyShape + 40 + i*16, 8);
           CPL_LSBPTR64(&x);
           poPt->setX(x);
-        
+
           /* Copy Y */
           memcpy(&y, pabyShape + 40 + i*16 + 8, 8);
           CPL_LSBPTR64(&y);
           poPt->setY(y);
-        
+
           /* Copy Z */
           if ( bHasZ )
           {
@@ -1554,12 +1553,12 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
             CPL_LSBPTR64(&z);
             poPt->setZ(z);
           }
-        
+
           poMultiPt->addGeometryDirectly( poPt );
       }
-      
+
       poMultiPt->setCoordinateDimension( bHasZ ? 3 : 2 );
-      
+
       return OGRERR_NONE;
     }
 

@@ -81,10 +81,10 @@ OGRCurvePolygon::~OGRCurvePolygon()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -93,7 +93,7 @@ OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
     if( this != &other)
     {
         OGRSurface::operator=( other );
-        
+
         oCC = other.oCC;
     }
     return *this;
@@ -560,7 +560,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope * psEnvelope ) const
 /************************************************************************/
 /*                            getEnvelope()                             */
 /************************************************************************/
- 
+
 void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 {
@@ -576,13 +576,13 @@ OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
 {
     if( poOther == this )
         return TRUE;
-    
+
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
 
     if ( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
-    
+
     OGRCurvePolygon *poOPoly = (OGRCurvePolygon *) poOther;
     return oCC.Equals( &(poOPoly->oCC) );
 }

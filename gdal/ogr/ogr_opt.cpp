@@ -142,35 +142,35 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_CENTRAL_MERIDIAN, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_II,
     "Eckert II",
     SRS_PP_CENTRAL_MERIDIAN, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_III,
     "Eckert III",
     SRS_PP_CENTRAL_MERIDIAN, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_IV,
     "Eckert IV",
     SRS_PP_CENTRAL_MERIDIAN, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_V,
     "Eckert V",
     SRS_PP_CENTRAL_MERIDIAN, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_VI,
     "Eckert VI",
@@ -355,7 +355,7 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_CENTRAL_MERIDIAN, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_POLAR_STEREOGRAPHIC,
     "Polar Stereographic",
@@ -556,7 +556,7 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
             return papszList;
         }
     }
-    
+
     return NULL;
 }
 

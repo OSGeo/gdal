@@ -182,7 +182,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
     // Buffer for xmlns:gml and srsName attributes (srsName="...")
     char szAttributes[64] = { 0 };
     size_t nAttrsLength = 0;
-    
+
     szAttributes[0] = 0;
 
     const OGRSpatialReference* poSRS = NULL;
@@ -262,7 +262,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         MakeGMLCoordinate( szCoordinate, 
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
                            true );
-                           
+
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
 
@@ -306,7 +306,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         AppendCoordinateList( (OGRLineString *) poGeometry, 
                               ppszText, pnLength, pnMaxLength );
-        
+
         if( bRing )
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:LinearRing>" );
@@ -496,7 +496,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 /*      Add minxy coordinate.                                           */
 /* -------------------------------------------------------------------- */
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
-    
+
     MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0, 
                        false );
     pszY = strstr(szCoordinate,",") + 1;
@@ -509,7 +509,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 /*      Add maxxy coordinate.                                           */
 /* -------------------------------------------------------------------- */
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
-    
+
     MakeGMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0, 
                        false );
     pszY = strstr(szCoordinate,",") + 1;
@@ -608,7 +608,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         poParentSRS = poSRS = poGeometry->getSpatialReference();
 
     bool bCoordSwap = false;
-    
+
     if( pszNamespaceDecl != NULL )
     {
         snprintf( szAttributes + nAttrsLength,

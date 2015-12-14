@@ -294,7 +294,7 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
         return eErr;
 
     *ppszInput = (char *) pszInput;
-    
+
     return OGRERR_NONE;
 }
 

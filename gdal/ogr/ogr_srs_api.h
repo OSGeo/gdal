@@ -56,7 +56,7 @@ typedef enum {
     OAO_Up=5,
     OAO_Down=6
 } OGRAxisOrientation;
-    
+
 const char CPL_DLL *OSRAxisEnumToName( OGRAxisOrientation eOrientation );
 
 /* -------------------------------------------------------------------- */
@@ -402,7 +402,6 @@ OGRErr CPL_DLL OSRSetTOWGS84( OGRSpatialReferenceH hSRS,
                               double, double, double, 
                               double, double, double, double );
 OGRErr CPL_DLL OSRGetTOWGS84( OGRSpatialReferenceH hSRS, double *, int );
-                        
 
 OGRErr CPL_DLL OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
                                  const char *pszName,
@@ -472,7 +471,7 @@ OGRErr CPL_DLL OSRSetAxes( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
-    
+
 /** Azimuthal Equidistant */
 OGRErr CPL_DLL  OSRSetAE( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
@@ -523,14 +522,14 @@ OGRErr CPL_DLL OSRSetEquirectangular2( OGRSpatialReferenceH hSRS,
 /** Gall Stereograpic */
 OGRErr CPL_DLL OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
-    
+
 /** Goode Homolosine */
 OGRErr CPL_DLL OSRSetGH( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                          double dfFalseEasting, double dfFalseNorthing );
 
 /** Interrupted Goode Homolosine */
 OGRErr CPL_DLL OSRSetIGH( OGRSpatialReferenceH hSRS );
-    
+
 /** GEOS - Geostationary Satellite View */
 OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS, 
                            double dfCentralMeridian, double dfSatelliteHeight,
@@ -611,7 +610,7 @@ OGRErr CPL_DLL OSRSetLCCB( OGRSpatialReferenceH hSRS,
                            double dfStdP1, double dfStdP2,
                            double dfCenterLat, double dfCenterLong,
                            double dfFalseEasting, double dfFalseNorthing );
-    
+
 /** Miller Cylindrical */
 OGRErr CPL_DLL OSRSetMC( OGRSpatialReferenceH hSRS,
                          double dfCenterLat, double dfCenterLong,
@@ -643,7 +642,7 @@ OGRErr CPL_DLL OSRSetOS( OGRSpatialReferenceH hSRS,
                          double dfOriginLat, double dfCMeridian,
                          double dfScale,
                          double dfFalseEasting,double dfFalseNorthing);
-    
+
 /** Orthographic */
 OGRErr CPL_DLL OSRSetOrthographic( OGRSpatialReferenceH hSRS,
                                    double dfCenterLat, double dfCenterLong,
@@ -660,30 +659,30 @@ OGRErr CPL_DLL OSRSetPS( OGRSpatialReferenceH hSRS,
                          double dfCenterLat, double dfCenterLong,
                          double dfScale,
                          double dfFalseEasting, double dfFalseNorthing);
-    
+
 /** Robinson */
 OGRErr CPL_DLL OSRSetRobinson( OGRSpatialReferenceH hSRS,
                                double dfCenterLong, 
                                double dfFalseEasting, double dfFalseNorthing );
-    
+
 /** Sinusoidal */
 OGRErr CPL_DLL OSRSetSinusoidal( OGRSpatialReferenceH hSRS,
                                  double dfCenterLong, 
                                  double dfFalseEasting,
                                  double dfFalseNorthing );
-    
+
 /** Stereographic */
 OGRErr CPL_DLL OSRSetStereographic( OGRSpatialReferenceH hSRS,
                                     double dfCenterLat, double dfCenterLong,
                                     double dfScale,
                                     double dfFalseEasting,
                                     double dfFalseNorthing);
-    
+
 /** Swiss Oblique Cylindrical */
 OGRErr CPL_DLL OSRSetSOC( OGRSpatialReferenceH hSRS,
                           double dfLatitudeOfOrigin, double dfCentralMeridian,
                           double dfFalseEasting, double dfFalseNorthing );
-    
+
 /** Transverse Mercator
  *
  * Special processing available for Transverse Mercator with GDAL &gt;= 1.10 and PROJ &gt;= 4.8 :

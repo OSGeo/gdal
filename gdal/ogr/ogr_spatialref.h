@@ -68,13 +68,13 @@ class CPL_DLL OGR_SRSNode
 
     int         NeedsQuoting() const;
     OGRErr      importFromWkt( char **, int nRecLevel, int* pnNodes );
-    
+
   public:
                 OGR_SRSNode(const char * = NULL);
                 ~OGR_SRSNode();
 
     int         IsLeafNode() const { return nChildren == 0; }
-    
+
     int         GetChildCount() const { return nChildren; }
     OGR_SRSNode *GetChild( int );
     const OGR_SRSNode *GetChild( int ) const;
@@ -100,7 +100,7 @@ class CPL_DLL OGR_SRSNode
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToPrettyWkt( char **, int = 1) const;
-    
+
     OGRErr      applyRemapper( const char *pszNode, 
                                char **papszSrcValues, 
                                char **papszDstValues, 
@@ -152,11 +152,11 @@ class CPL_DLL OGRSpatialReference
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
                 OGRSpatialReference(const char * = NULL);
-                
+
     virtual    ~OGRSpatialReference();
-    
+
     static void DestroySpatialReference(OGRSpatialReference* poSRS);
-                
+
     OGRSpatialReference &operator=(const OGRSpatialReference&);
 
     int         Reference();
@@ -178,7 +178,7 @@ class CPL_DLL OGRSpatialReference
                                   double * ) const;
     OGRErr      exportToERM( char *pszProj, char *pszDatum, char *pszUnits );
     OGRErr      exportToMICoordSys( char ** ) const;
-    
+
     OGRErr      importFromWkt( char ** );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
@@ -203,7 +203,7 @@ class CPL_DLL OGRSpatialReference
                                const char *pszUnits );
     OGRErr      importFromUrl( const char * );
     OGRErr      importFromMICoordSys( const char * );
-    
+
     OGRErr      morphToESRI();
     OGRErr      morphFromESRI();
 
@@ -227,7 +227,7 @@ class CPL_DLL OGRSpatialReference
     OGR_SRSNode *GetRoot() { return poRoot; }
     const OGR_SRSNode *GetRoot() const { return poRoot; }
     void        SetRoot( OGR_SRSNode * );
-    
+
     OGR_SRSNode *GetAttrNode(const char *);
     const OGR_SRSNode *GetAttrNode(const char *) const;
     const char  *GetAttrValue(const char *, int = 0) const;
@@ -287,7 +287,7 @@ class CPL_DLL OGRSpatialReference
                             double = 0.0, double = 0.0, double = 0.0,
                             double = 0.0 );
     OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 ) const;
-    
+
     double      GetSemiMajor( OGRErr * = NULL ) const;
     double      GetSemiMinor( OGRErr * = NULL ) const;
     double      GetInvFlattening( OGRErr * = NULL ) const;
@@ -308,7 +308,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetExtension( const char *pszTargetKey, 
                               const char *pszName, 
                               const char *pszValue );
-    
+
     int         FindProjParm( const char *pszParameter,
                               const OGR_SRSNode *poPROJCS=NULL ) const;
     OGRErr      SetProjParm( const char *, double );
@@ -325,7 +325,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetACEA( double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
-    
+
     /** Azimuthal Equidistant */
     OGRErr      SetAE( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
@@ -333,7 +333,7 @@ class CPL_DLL OGRSpatialReference
     /** Bonne */
     OGRErr      SetBonne( double dfStdP1, double dfCentralMeridian,
                           double dfFalseEasting, double dfFalseNorthing );
-    
+
     /** Cylindrical Equal Area */
     OGRErr      SetCEA( double dfStdP1, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
@@ -379,7 +379,7 @@ class CPL_DLL OGRSpatialReference
     /** Gall Stereograpic */
     OGRErr      SetGS( double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
- 
+
     /** Gauss Schreiber Transverse Mercator */
     OGRErr      SetGaussSchreiberTMercator(double dfCenterLat, double dfCenterLong,
                                            double dfScale,
@@ -442,7 +442,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetLCCB( double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
-    
+
     /** Miller Cylindrical */
     OGRErr      SetMC( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
@@ -468,7 +468,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetOS( double dfOriginLat, double dfCMeridian,
                        double dfScale,
                        double dfFalseEasting,double dfFalseNorthing);
-    
+
     /** Orthographic */
     OGRErr      SetOrthographic( double dfCenterLat, double dfCenterLong,
                                  double dfFalseEasting,double dfFalseNorthing);
@@ -481,15 +481,15 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetPS( double dfCenterLat, double dfCenterLong,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing);
-    
+
     /** Robinson */
     OGRErr      SetRobinson( double dfCenterLong, 
                              double dfFalseEasting, double dfFalseNorthing );
-    
+
     /** Sinusoidal */
     OGRErr      SetSinusoidal( double dfCenterLong, 
                                double dfFalseEasting, double dfFalseNorthing );
-    
+
     /** Stereographic */
     OGRErr      SetStereographic( double dfCenterLat, double dfCenterLong,
                                   double dfScale,
@@ -498,7 +498,7 @@ class CPL_DLL OGRSpatialReference
     /** Swiss Oblique Cylindrical */
     OGRErr      SetSOC( double dfLatitudeOfOrigin, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
-    
+
     /** Transverse Mercator */
     OGRErr      SetTM( double dfCenterLat, double dfCenterLong,
                        double dfScale,
@@ -523,7 +523,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetTPED( double dfLat1, double dfLong1, 
                          double dfLat2, double dfLong2, 
                          double dfFalseEasting, double dfFalseNorthing );
-    
+
     /** VanDerGrinten */
     OGRErr      SetVDG( double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
@@ -569,12 +569,12 @@ class CPL_DLL OGRSpatialReference
  *
  * Also, see OGRCreateCoordinateTransformation() for creating transformations.
  */
- 
+
 class CPL_DLL OGRCoordinateTransformation
 {
 public:
     virtual ~OGRCoordinateTransformation() {}
-    
+
     static void DestroyCT(OGRCoordinateTransformation* poCT);
 
     // From CT_CoordinateTransformation

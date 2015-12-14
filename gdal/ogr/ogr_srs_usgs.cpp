@@ -470,7 +470,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "Wrong datum for State Plane projection %d. "
                               "Should be 0 or 8.", (int) iDatum );
-                
+
                 SetStatePlane( (int)iZone, bNAD83 );
             }
             break;
@@ -1127,7 +1127,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                   "Geographic system will be used.", pszProjection );
         *piProjSys = GEO;
     }
- 
+
 /* -------------------------------------------------------------------- */
 /*      Translate the datum.                                            */
 /* -------------------------------------------------------------------- */
@@ -1155,7 +1155,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                       "Datum \"%s\" unsupported by USGS GCTP. "
                       "Try to translate ellipsoid definition.", pszDatum );
 #endif
-            
+
             for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
             {
                 double  dfSM;

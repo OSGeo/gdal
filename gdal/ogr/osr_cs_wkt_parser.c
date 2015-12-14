@@ -1410,8 +1410,6 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-      
-
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires

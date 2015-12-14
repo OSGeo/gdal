@@ -512,7 +512,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
 
 void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i, 
                         double dfX, double dfY )
-    
+
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoint_2D" );
 

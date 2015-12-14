@@ -62,7 +62,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
         CPLsnprintf(pszBuffer, nBufferLen, "%s", "too_big");
         return;
     }
-    
+
     if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
         return;
 
@@ -293,7 +293,7 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
     else
     {
         int             iChar = 0;
-        
+
         while( iChar < OGR_WKT_TOKEN_MAX-1
                && ((*pszInput >= 'a' && *pszInput <= 'z')
                    || (*pszInput >= 'A' && *pszInput <= 'Z')
@@ -335,7 +335,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 
     if( pszInput == NULL )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Eat any leading white space.                                    */
 /* -------------------------------------------------------------------- */
@@ -350,7 +350,7 @@ const char * OGRWktReadPoints( const char * pszInput,
         CPLDebug( "OGR",
                   "Expected '(', but got %s in OGRWktReadPoints().\n",
                   pszInput );
-                  
+
         return pszInput;
     }
 
@@ -362,7 +362,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 /*      encountered.                                                    */
 /* ==================================================================== */
     char        szDelim[OGR_WKT_TOKEN_MAX];
-    
+
     do {
 /* -------------------------------------------------------------------- */
 /*      Read the X and Y values, verify they are numeric.               */
@@ -417,7 +417,7 @@ const char * OGRWktReadPoints( const char * pszInput,
         }
         else if ( *ppadfZ != NULL )
             (*ppadfZ)[*pnPointsRead] = 0.0;
-        
+
         (*pnPointsRead)++;
 
 /* -------------------------------------------------------------------- */
@@ -596,7 +596,7 @@ int OGRParseDate( const char *pszInput,
 /* -------------------------------------------------------------------- */
     while( *pszInput == ' ' )
         pszInput++;
-    
+
     if( strstr(pszInput,"-") != NULL || strstr(pszInput,"/") != NULL )
     {
         int nYear = atoi(pszInput);
@@ -649,7 +649,7 @@ int OGRParseDate( const char *pszInput,
 /* -------------------------------------------------------------------- */
     while( *pszInput == ' ' )
         pszInput++;
-    
+
     if( strstr(pszInput,":") != NULL )
     {
         psField->Date.Hour = (GByte)atoi(pszInput);
@@ -702,7 +702,7 @@ int OGRParseDate( const char *pszInput,
 /* -------------------------------------------------------------------- */
     while( *pszInput == ' ' )
         pszInput++;
-    
+
     if( *pszInput == '-' || *pszInput == '+' )
     {
         // +HH integral offset
@@ -1231,7 +1231,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
 {
     if ( ! (peGeometryType && pbIs3D) )
         return OGRERR_FAILURE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
@@ -1247,13 +1247,13 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
 /* -------------------------------------------------------------------- */
     int bIs3D = FALSE;
     int iRawType;
-    
+
     memcpy(&iRawType, pabyData + 1, 4);
     if ( OGR_SWAP(eByteOrder))
     {
         CPL_SWAP32PTR(&iRawType);
     }
-    
+
     /* Old-style OGC z-bit is flipped? */
     if ( wkb25DBitInternalUse & iRawType )
     {
@@ -1261,7 +1261,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         iRawType &= 0x000000FF;
         bIs3D = TRUE;        
     }
-    
+
     /* ISO SQL/MM style Z types (between 1001 and 1012)? */
     if ( iRawType >= 1001 && iRawType <= (int)wkbMultiSurfaceZ )
     {
@@ -1269,7 +1269,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         iRawType -= 1000;
         bIs3D = TRUE;
     }
-    
+
     /*  ISO SQL/MM Part3 draft -> Deprecated */
     /* See http://jtc1sc32.org/doc/N1101-1150/32N1107-WD13249-3--spatial.pdf  */
     if (iRawType == 1000001)
@@ -1342,7 +1342,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         iRawType = wkbGeometryCollection;
         bIs3D = TRUE;
     }
-    
+
     /* Sometimes the Z flag is in the 2nd byte? */
     if ( iRawType & (wkb25DBitInternalUse >> 16) )
     {
@@ -1350,7 +1350,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         iRawType &= 0x000000FF;
         bIs3D = TRUE;        
     }
-    
+
     if( eWkbVariant == wkbVariantPostGIS1 )
     {
         if( iRawType == POSTGIS15_CURVEPOLYGON )
@@ -1372,6 +1372,6 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
 
     *pbIs3D = bIs3D;
     *peGeometryType = (OGRwkbGeometryType)iRawType;
-    
+
     return OGRERR_NONE;
 }
