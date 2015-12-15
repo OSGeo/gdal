@@ -2249,6 +2249,7 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Corrupt subfile definition: %s", 
                       pszFilename );
+            delete poDS;
             return NULL;
         }
 
@@ -2263,6 +2264,7 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Could not find filename in subfile definition.");
+            delete poDS;
             return NULL;
         }
 
@@ -2287,6 +2289,7 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
             CPLError( CE_Failure, CPLE_OpenFailed,
                     "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp",
                     real_filename );
+            delete poDS;
             return NULL;
         }
     }
