@@ -516,6 +516,7 @@ void RegisterOGRGeoJSON()
 "  <Option name='NESTED_ATTRIBUTE_SEPARATOR' type='string' description='Separator between components of nested attributes' default='_'/>"
 "  <Option name='FEATURE_SERVER_PAGING' type='boolean' description='Whether to automatically scroll through results with a ArcGIS Feature Service endpoint'/>"
 "  <Option name='NATIVE_DATA' type='boolean' description='Whether to store the native JSon representation at FeatureCollection and Feature level' default='NO'/>"
+"  <Option name='ARRAY_AS_STRING' type='boolean' description='Whether to expose JSon arrays of strings, integers or reals as a OGR String' default='NO'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

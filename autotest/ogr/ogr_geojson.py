@@ -2329,6 +2329,30 @@ def ogr_geojson_48():
     return 'success'
 
 ###############################################################################
+# Test ARRAY_AS_STRING
+
+def ogr_geojson_49():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_49.json',
+"""{ "type": "Feature", "properties": { "foo": ["bar"] }, "geometry": null }""")
+
+    # Test read support
+    ds = gdal.OpenEx('/vsimem/ogr_geojson_49.json', open_options = ['ARRAY_AS_STRING=YES'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['foo'] != '[ "bar" ]':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -2413,6 +2437,7 @@ gdaltest_list = [
     ogr_geojson_46,
     ogr_geojson_47,
     ogr_geojson_48,
+    ogr_geojson_49,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

@@ -640,6 +640,10 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
     reader.SetStoreNativeData(
         CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptionsIn, "NATIVE_DATA", bDefaultNativeData)));
 
+    reader.SetArrayAsString(
+        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "ARRAY_AS_STRING",
+                CPLGetConfigOption("OGR_GEOJSON_ARRAY_AS_STRING", "NO")))));
+
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */
 /* -------------------------------------------------------------------- */

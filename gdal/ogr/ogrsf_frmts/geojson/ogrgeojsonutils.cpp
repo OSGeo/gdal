@@ -166,7 +166,8 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 #define MY_INT64_MIN ((((GIntBig)0x80000000) << 32))
 
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
-                                         OGRFieldSubType& eSubType )
+                                         OGRFieldSubType& eSubType,
+                                         bool bArrayAsString )
 {
     eSubType = OFSTNone;
 
@@ -208,6 +209,8 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
         return OFTString;
     else if( json_type_array == type )
     {
+        if( bArrayAsString )
+            return OFTString;
         int nSize = json_object_array_length(poObject);
         if (nSize == 0)
             return OFTStringList; /* we don't know, so let's assume it's a string list */
