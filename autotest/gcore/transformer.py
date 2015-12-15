@@ -610,6 +610,83 @@ def transformer_11():
 
     return 'success'
 
+###############################################################################
+# Test degenerate cases of TPS transformer
+
+def transformer_12():
+
+    ds = gdal.Open("""
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+  <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
+    <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/>
+    <GCP Id="" Pixel="20" Line="0" X="20" Y="0"/>
+    <GCP Id="" Pixel="0" Line="20" X="0" Y="20"/>
+    <GCP Id="" Pixel="20" Line="20" X="20" Y="20"/>
+    <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/> <!-- duplicate entry -->
+  </GCPList>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_TPS' ] )
+    if tr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open("""
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+  <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
+    <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/>
+    <GCP Id="" Pixel="20" Line="0" X="20" Y="0"/>
+    <GCP Id="" Pixel="0" Line="20" X="0" Y="20"/>
+    <GCP Id="" Pixel="20" Line="20" X="20" Y="20"/>
+    <GCP Id="" Pixel="0" Line="0" X="10" Y="10"/> <!-- same pixel,line -->
+  </GCPList>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_TPS' ] )
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open("""
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+  <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
+    <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/>
+    <GCP Id="" Pixel="20" Line="0" X="20" Y="0"/>
+    <GCP Id="" Pixel="0" Line="20" X="0" Y="20"/>
+    <GCP Id="" Pixel="20" Line="20" X="20" Y="20"/>
+    <GCP Id="" Pixel="10" Line="10" X="20" Y="20"/> <!-- same X,Y -->
+  </GCPList>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_TPS' ] )
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
@@ -622,6 +699,7 @@ gdaltest_list = [
     transformer_9,
     transformer_10,
     transformer_11,
+    transformer_12
     ]
 
 disabled_gdaltest_list = [
