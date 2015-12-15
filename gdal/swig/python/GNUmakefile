@@ -61,6 +61,8 @@ generate: ${WRAPPERS} gdal_array_wrap.cpp
 	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/gdal_array_wrap/" | patch -p0
 
 build:
+	rm -f setup_vars.ini
+	echo 'GNM_ENABLED=$(GNM_ENABLED)' >> setup_vars.ini
 	$(PYTHON) setup.py build
 
 egg:
