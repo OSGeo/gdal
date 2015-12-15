@@ -245,12 +245,13 @@ py_modules = ['gdal',
               'ogr',
               'osr',
               'gdalconst']
-              
-with open('setup_vars.ini') as f:
-    lines = f.readlines()
-    if 'GNM_ENABLED=yes' in lines:
-        GNM_ENABLED = True
-              
+
+if os.path.exists('setup_vars.ini'):
+    with open('setup_vars.ini') as f:
+        lines = f.readlines()
+        if 'GNM_ENABLED=yes' in lines:
+            GNM_ENABLED = True
+
 if GNM_ENABLED:
     ext_modules.append(gnm_module)
     py_modules.append('gnm')
