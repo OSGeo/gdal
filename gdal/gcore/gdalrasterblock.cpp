@@ -232,9 +232,9 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         if( strchr(pszCacheMax, '%') != NULL )
         {
             GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
-            if( nUsagePhysicalRAM )
-                nNewCacheMax = static_cast<GIntBig>(
-                                nUsagePhysicalRAM * CPLAtof(pszCacheMax) / 100);
+            double dfPct = CPLAtof(pszCacheMax) / 100.0;
+            if( nUsagePhysicalRAM > 0 && dfPct >= 0.0 && dfPct <= 1.0 )
+                nNewCacheMax = static_cast<GIntBig>(nUsagePhysicalRAM * dfPct);
             else
                 nNewCacheMax = nCacheMax;
         }
