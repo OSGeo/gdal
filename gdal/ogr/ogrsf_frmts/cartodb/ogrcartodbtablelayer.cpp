@@ -103,7 +103,7 @@ OGRCARTODBTableLayer::~OGRCARTODBTableLayer()
 
 {
     if( bDeferedCreation ) RunDeferedCreationIfNecessary();
-    FlushDeferedInsert();
+    CPL_IGNORE_RET_VAL(FlushDeferedInsert());
     RunDeferedCartoDBfy();
 }
 

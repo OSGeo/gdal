@@ -702,7 +702,7 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             papoLayers[iLayer]->RunDeferedCreationIfNecessary();
-            papoLayers[iLayer]->FlushDeferedInsert();
+            CPL_IGNORE_RET_VAL(papoLayers[iLayer]->FlushDeferedInsert());
             papoLayers[iLayer]->RunDeferedCartoDBfy();
         }
     }
