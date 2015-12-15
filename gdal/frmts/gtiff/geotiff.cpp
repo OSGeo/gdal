@@ -9491,8 +9491,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         // Lets treat large "one row" bitmaps using the scanline api.
         if( !TIFFIsTiled(hTIFF) 
             && nBlockYSize == nYSize 
-            && nYSize > 2000 )
+            && nYSize > 2000
+            /* libtiff does not support reading JBIG files with TIFFReadScanline() */
+            && nCompression != COMPRESSION_JBIG )
+        {
             bTreatAsSplitBitmap = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
