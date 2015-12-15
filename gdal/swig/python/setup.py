@@ -246,8 +246,10 @@ py_modules = ['gdal',
               'osr',
               'gdalconst']
               
-if fetch_config('gnm-enabled', '../../apps/gdal-config') == 'yes': 
-    GNM_ENABLED = True
+with open('setup_vars.ini') as f:
+    lines = f.readlines()
+    if 'GNM_ENABLED=yes' in lines:
+        GNM_ENABLED = True
               
 if GNM_ENABLED:
     ext_modules.append(gnm_module)
