@@ -130,6 +130,9 @@ results with a ArcGIS Feature Service endpoint.</li>
 Defaults to NO. This option can be used to improve round-tripping from GeoJSON to GeoJSON by preserving some extra
 JSon objects that would otherwise be ignored by the OGR abstraction. Note that
 ogr2ogr by default enable this option, unless you specify its -noNativeData switch.</li>
+<li><b>ARRAY_AS_STRING</b> = YES/NO: (GDAL &gt;= 2.1) Whether to expose JSon arrays
+of strings, integers or reals as a OGR String. Default is NO. Can also be set with
+the OGR_GEOJSON_ARRAY_AS_STRING configuration option.</li>
 </ul>
 
 <p>To explain FLATTEN_NESTED_ATTRIBUTES, consider the following GeoJSON fragment:</p>
