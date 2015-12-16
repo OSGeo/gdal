@@ -49,7 +49,7 @@ static const int VALS_PER_LINE = 5;
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_E00GRID(void);
+void GDALRegister_E00GRID();
 CPL_C_END
 
 /* g++ -fPIC -Wall -g frmts/e00grid/e00griddataset.cpp -shared -o gdal_E00GRID.so -Iport -Igcore -Iogr -L. -lgdal */

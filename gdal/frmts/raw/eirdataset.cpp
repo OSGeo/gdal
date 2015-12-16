@@ -35,7 +35,7 @@
 CPL_CVSID("$Id:  $");
 
 CPL_C_START
-void GDALRegister_EIR(void);
+void GDALRegister_EIR();
 CPL_C_END
 
 /************************************************************************/
@@ -538,7 +538,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
 /************************************************************************/
-/*                         GDALRegister_EIR()                          */
+/*                         GDALRegister_EIR()                           */
 /************************************************************************/
 
 void GDALRegister_EIR()

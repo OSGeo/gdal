@@ -112,7 +112,7 @@
 // CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_Terragen(void);
+void GDALRegister_Terragen();
 CPL_C_END
 
 
@@ -1105,7 +1105,7 @@ void GDALRegister_Terragen()
     if( GDALGetDriverByName( "Terragen" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "Terragen" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

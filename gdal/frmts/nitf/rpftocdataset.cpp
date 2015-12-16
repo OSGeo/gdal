@@ -1274,7 +1274,8 @@ void GDALRegister_RPFTOC()
 {
     if( GDALGetDriverByName( "RPFTOC" ) != NULL )
         return;
-    GDALDriver	*poDriver = new GDALDriver();
+
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "RPFTOC" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

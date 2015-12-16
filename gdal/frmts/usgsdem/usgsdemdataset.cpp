@@ -39,7 +39,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_USGSDEM(void);
+void GDALRegister_USGSDEM();
 CPL_C_END
 
 typedef struct {

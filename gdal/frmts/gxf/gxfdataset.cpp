@@ -34,7 +34,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_GXF(void);
+void GDALRegister_GXF();
 CPL_C_END
 
 /************************************************************************/
@@ -385,22 +385,19 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_GXF()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GXF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GXF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GXF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "GeoSoft Grid Exchange Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#GXF" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gxf" );
+    poDriver->SetDescription( "GXF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "GeoSoft Grid Exchange Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GXF" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gxf" );
 
-        poDriver->pfnOpen = GXFDataset::Open;
+    poDriver->pfnOpen = GXFDataset::Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

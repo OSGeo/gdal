@@ -45,7 +45,7 @@
 CPL_CVSID( "$Id$" );
 
 CPL_C_START
-void GDALRegister_IDRISI( void);
+void GDALRegister_IDRISI();
 CPL_C_END
 
 #ifdef WIN32
@@ -3291,7 +3291,7 @@ void GDALRegister_IDRISI()
     if( GDALGetDriverByName( "RST" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "RST" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

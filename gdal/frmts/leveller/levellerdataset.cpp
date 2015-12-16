@@ -38,7 +38,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_Leveller(void);
+void GDALRegister_Leveller();
 CPL_C_END
 
 static bool str_equal(const char *_s1, const char *_s2) {
@@ -1578,12 +1578,9 @@ void GDALRegister_Leveller()
 
     poDriver->SetDescription( "Leveller" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION,
-                               "ter" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Leveller heightfield" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_leveller.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ter" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Leveller heightfield" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_leveller.html" );
 
     poDriver->pfnIdentify = LevellerDataset::Identify;
     poDriver->pfnOpen = LevellerDataset::Open;

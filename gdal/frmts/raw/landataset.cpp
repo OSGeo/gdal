@@ -39,7 +39,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_LAN(void);
+void GDALRegister_LAN();
 CPL_C_END
 
 /**
@@ -1007,8 +1007,7 @@ void GDALRegister_LAN()
     if( GDALGetDriverByName( "LAN" ) != NULL )
         return;
 
-    GDALDriver	*poDriver;
-    poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "LAN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

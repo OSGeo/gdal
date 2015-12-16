@@ -38,7 +38,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_OGDI(void);
+void GDALRegister_OGDI();
 CPL_C_END
 
 /************************************************************************/
@@ -950,31 +950,27 @@ CPLErr OGDIDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GDALRegister_OGDI()                        */
+/*                          GDALRegister_OGDI()                         */
 /************************************************************************/
 
 void GDALRegister_OGDI()
 
 {
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("GDAL/OGDI driver"))
+    if( !GDAL_CHECK_VERSION( "GDAL/OGDI driver" ) )
         return;
 
-    if( GDALGetDriverByName( "OGDI" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "OGDI" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "OGDI" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "OGDI Bridge" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_ogdi.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = OGDIDataset::Open;
+    poDriver->SetDescription( "OGDI" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OGDI Bridge" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ogdi.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGDIDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

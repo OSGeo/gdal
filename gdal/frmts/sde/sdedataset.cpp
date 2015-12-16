@@ -514,24 +514,20 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_SDE()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("SDE driver"))
+    if( !GDAL_CHECK_VERSION( "SDE driver" ) )
         return;
 
-    if( GDALGetDriverByName( "SDE" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "SDE" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "SDE" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ESRI ArcSDE" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#SDE" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = SDEDataset::Open;
+    poDriver->SetDescription( "SDE" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI ArcSDE" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,  "frmt_various.html#SDE" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = SDEDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -44,7 +44,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_HDF4(void);
+void GDALRegister_HDF4();
 CPL_C_END
 
 extern const char * const pszGDALSignature;
@@ -1274,7 +1274,7 @@ static void HDF4UnloadDriver(CPL_UNUSED GDALDriver* poDriver)
 void GDALRegister_HDF4()
 
 {
-    if (! GDAL_CHECK_VERSION("HDF4 driver"))
+    if( !GDAL_CHECK_VERSION( "HDF4 driver" ) )
         return;
 
     if( GDALGetDriverByName( "HDF4" ) != NULL )
@@ -1299,5 +1299,4 @@ void GDALRegister_HDF4()
 #ifdef HDF4_PLUGIN
     GDALRegister_HDF4Image();
 #endif
-
 }

@@ -27,7 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- * 
+ *
  */
 
 #include "gdal_pam.h"
@@ -44,7 +44,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_GRIB(void);
+void GDALRegister_GRIB();
 CPL_C_END
 
 static CPLMutex *hGRIBMutex = NULL;
@@ -933,10 +933,8 @@ void GDALRegister_GRIB()
 
     poDriver->SetDescription( "GRIB" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "GRIdded Binary (.grb)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_grib.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRIdded Binary (.grb)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_grib.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grb" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

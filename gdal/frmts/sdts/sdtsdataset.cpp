@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 */
 
 CPL_C_START
-void    GDALRegister_SDTS(void);
+void GDALRegister_SDTS();
 CPL_C_END
 
 /************************************************************************/

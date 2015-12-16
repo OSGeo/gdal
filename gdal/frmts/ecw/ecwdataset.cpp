@@ -3402,7 +3402,7 @@ static void GDALDeregister_ECW( GDALDriver * )
 }
 
 /************************************************************************/
-/*                          GDALRegister_ECW()                        */
+/*                          GDALRegister_ECW()                          */
 /************************************************************************/
 
 /* Needed for v4.3 and v5.0 */
@@ -3413,50 +3413,49 @@ static void GDALDeregister_ECW( GDALDriver * )
 void GDALRegister_ECW()
 
 {
-#ifdef FRMT_ecw 
-    GDALDriver	*poDriver;
+#ifdef FRMT_ecw
+    GDALDriver *poDriver;
 
-    if (! GDAL_CHECK_VERSION("ECW driver"))
+    if( !GDAL_CHECK_VERSION( "ECW driver" ) )
         return;
 
-    if( GDALGetDriverByName( "ECW" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "ECW" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "ECW" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver = new GDALDriver();
 
-        CPLString osLongName = "ERDAS Compressed Wavelets (SDK ";
+    poDriver->SetDescription( "ECW" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+
+    CPLString osLongName = "ERDAS Compressed Wavelets (SDK ";
 
 #ifdef NCS_ECWSDK_VERSION_STRING
-        osLongName += NCS_ECWSDK_VERSION_STRING;
+    osLongName += NCS_ECWSDK_VERSION_STRING;
 #else
-        osLongName += "3.x";
+    osLongName += "3.x";
 #endif
-        osLongName += ")";
+    osLongName += ")";
 
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_ecw.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ecw.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
 
-        poDriver->pfnIdentify = ECWDataset::IdentifyECW;
-        poDriver->pfnOpen = ECWDataset::OpenECW;
-        poDriver->pfnUnloadDriver = GDALDeregister_ECW;
+    poDriver->pfnIdentify = ECWDataset::IdentifyECW;
+    poDriver->pfnOpen = ECWDataset::OpenECW;
+    poDriver->pfnUnloadDriver = GDALDeregister_ECW;
 #ifdef HAVE_COMPRESS
-// The create method does not work with SDK 3.3 ( crash in CNCSJP2FileView::WriteLineBIL() due to m_pFile being NULL )
+    // The create method does not work with SDK 3.3 ( crash in
+    // CNCSJP2FileView::WriteLineBIL() due to m_pFile being NULL ).
 #if ECWSDK_VERSION >= 50
-        poDriver->pfnCreate = ECWCreateECW;  
+    poDriver->pfnCreate = ECWCreateECW;
 #endif
-        poDriver->pfnCreateCopy = ECWCreateCopyECW;
+    poDriver->pfnCreateCopy = ECWCreateCopyECW;
 #if ECWSDK_VERSION >= 50
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16" );
-#else 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16" );
+#else
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,  "Byte" );
 #endif
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
 "   <Option name='PROJ' type='string' description='ECW Projection Name'/>"
@@ -3475,13 +3474,12 @@ void GDALRegister_ECW()
 
 "</CreationOptionList>" );
 #else
-        /* In read-only mode, we support VirtualIO. This is not the case */
-        /* for ECWCreateCopyECW() */
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    // In read-only mode, we support VirtualIO. This is not the case
+    // for ECWCreateCopyECW().
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 #endif /* def FRMT_ecw */
 }
 
@@ -3513,50 +3511,49 @@ GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo)
 void GDALRegister_JP2ECW()
 
 {
-#ifdef FRMT_ecw 
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("JP2ECW driver"))
+#ifdef FRMT_ecw
+    if( !GDAL_CHECK_VERSION( "JP2ECW driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JP2ECW" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "JP2ECW" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "JP2ECW" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        CPLString osLongName = "ERDAS JPEG2000 (SDK ";
+    poDriver->SetDescription( "JP2ECW" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+
+    CPLString osLongName = "ERDAS JPEG2000 (SDK ";
 
 #ifdef NCS_ECWSDK_VERSION_STRING
-        osLongName += NCS_ECWSDK_VERSION_STRING;
+    osLongName += NCS_ECWSDK_VERSION_STRING;
 #else
-        osLongName += "3.x";
+    osLongName += "3.x";
 #endif
-        osLongName += ")";
+    osLongName += ")";
 
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_jp2ecw.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2ecw.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
-        poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
+    poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
+    poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "</OpenOptionList>" );
 
 #ifdef HAVE_COMPRESS
-        poDriver->pfnCreate = ECWCreateJPEG2000;
-        poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->pfnCreate = ECWCreateJPEG2000;
+    poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 "
+                               "Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
 "   <Option name='PROJ' type='string' description='ECW Projection Name'/>"
@@ -3604,7 +3601,6 @@ void GDALRegister_JP2ECW()
 "</CreationOptionList>" );
 #endif
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 #endif /* def FRMT_ecw */
 }

@@ -51,7 +51,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_PNG(void);
+void GDALRegister_PNG();
 CPL_C_END
 
 // Define SUPPORT_CREATE if you want Create() call supported.

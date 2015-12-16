@@ -38,8 +38,8 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_AAIGrid(void);
-void    GDALRegister_GRASSASCIIGrid(void);
+void GDALRegister_AAIGrid();
+void GDALRegister_GRASSASCIIGrid();
 CPL_C_END
 
 static CPLString OSR_GDS( char **papszNV, const char * pszField, 
@@ -1304,30 +1304,28 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
 void GDALRegister_AAIGrid()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "AAIGrid" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "AAIGrid" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "AAIGrid" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Arc/Info ASCII Grid" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#AAIGrid" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "asc" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 Int32 Float32" );
+    poDriver->SetDescription( "AAIGrid" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Arc/Info ASCII Grid" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#AAIGrid" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "asc" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 Int32 Float32" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='FORCE_CELLSIZE' type='boolean' description='Force use of CELLSIZE, default is FALSE.'/>\n"
 "   <Option name='DECIMAL_PRECISION' type='int' description='Number of decimal when writing floating-point numbers(%f).'/>\n"
 "   <Option name='SIGNIFICANT_DIGITS' type='int' description='Number of significant digits when writing floating-point numbers(%g).'/>\n"
 "</CreationOptionList>\n" );
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionLists>\n"
 "   <Option name='DATATYPE' type='string-select' description='Data type to be used.'>\n"
 "       <Value>Int32</Value>\n"
@@ -1336,12 +1334,11 @@ void GDALRegister_AAIGrid()
 "   </Option>\n"
 "</OpenOptionLists>\n" );
 
-        poDriver->pfnOpen = AAIGDataset::Open;
-        poDriver->pfnIdentify = AAIGDataset::Identify;
-        poDriver->pfnCreateCopy = AAIGDataset::CreateCopy;
+    poDriver->pfnOpen = AAIGDataset::Open;
+    poDriver->pfnIdentify = AAIGDataset::Identify;
+    poDriver->pfnCreateCopy = AAIGDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 
 /************************************************************************/
@@ -1351,24 +1348,21 @@ void GDALRegister_AAIGrid()
 void GDALRegister_GRASSASCIIGrid()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "GRASSASCIIGrid" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GRASSASCIIGrid" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GRASSASCIIGrid" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GRASS ASCII Grid" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#GRASSASCIIGrid" );
+    poDriver->SetDescription( "GRASSASCIIGrid" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS ASCII Grid" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#GRASSASCIIGrid" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = GRASSASCIIDataset::Open;
-        poDriver->pfnIdentify = GRASSASCIIDataset::Identify;
+    poDriver->pfnOpen = GRASSASCIIDataset::Open;
+    poDriver->pfnIdentify = GRASSASCIIDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

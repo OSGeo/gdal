@@ -1982,27 +1982,25 @@ GDALDataset *WMTSDataset::CreateCopy( const char * pszFilename,
 void GDALRegister_WMTS()
 
 {
-    GDALDriver  *poDriver;
 
-    if (! GDAL_CHECK_VERSION("WMTS driver"))
+    if( !GDAL_CHECK_VERSION( "WMTS driver" ) )
         return;
 
-    if( GDALGetDriverByName( "WMTS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "WMTS" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "WMTS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OGC Web Mab Tile Service" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_wmts.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WMTS:" );
+    poDriver->SetDescription( "WMTS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OGC Web Mab Tile Service" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_wmts.html" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WMTS:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='URL' type='string' description='URL that points to GetCapabilities response' required='YES'/>"
 "  <Option name='LAYER' type='string' description='Layer identifier'/>"
@@ -2011,10 +2009,9 @@ void GDALRegister_WMTS()
 "  <Option name='EXTENDBEYONDDATELINE' type='boolean' description='Whether to enable extend-beyond-dateline behaviour' default='NO'/>"
 "</OpenOptionList>");
 
-        poDriver->pfnOpen = WMTSDataset::Open;
-        poDriver->pfnIdentify = WMTSDataset::Identify;
-        poDriver->pfnCreateCopy = WMTSDataset::CreateCopy;
+    poDriver->pfnOpen = WMTSDataset::Open;
+    poDriver->pfnIdentify = WMTSDataset::Identify;
+    poDriver->pfnCreateCopy = WMTSDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

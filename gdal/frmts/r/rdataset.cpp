@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_R(void);
+void GDALRegister_R();
 CPL_C_END
 
 GDALDataset *
@@ -585,32 +585,28 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_R()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "R" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "R" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "R" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "R Object Data Store" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_r.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rda" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float32" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "R" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "R Object Data Store" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_r.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rda" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='ASCII' type='boolean' description='For ASCII output, default NO'/>"
 "   <Option name='COMPRESS' type='boolean' description='Produced Compressed output, default YES'/>"
 "</CreationOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = RDataset::Open;
-        poDriver->pfnIdentify = RDataset::Identify;
-        poDriver->pfnCreateCopy = RCreateCopy;
+    poDriver->pfnOpen = RDataset::Open;
+    poDriver->pfnIdentify = RDataset::Identify;
+    poDriver->pfnCreateCopy = RCreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

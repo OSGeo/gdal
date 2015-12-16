@@ -33,7 +33,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_JDEM(void);
+void GDALRegister_JDEM();
 CPL_C_END
 
 /************************************************************************/
@@ -364,7 +364,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                          GDALRegister_JDEM()                          */
+/*                          GDALRegister_JDEM()                         */
 /************************************************************************/
 
 void GDALRegister_JDEM()
@@ -373,14 +373,12 @@ void GDALRegister_JDEM()
     if( GDALGetDriverByName( "JDEM" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "JDEM" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Japanese DEM (.mem)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#JDEM" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Japanese DEM (.mem)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#JDEM" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

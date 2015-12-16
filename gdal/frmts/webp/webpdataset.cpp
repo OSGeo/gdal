@@ -36,7 +36,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_WEBP(void);
+void GDALRegister_WEBP();
 CPL_C_END
 
 /************************************************************************/
@@ -873,13 +873,10 @@ void GDALRegister_WEBP()
     poDriver->SetDescription( "WEBP" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "WEBP" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_webp.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_webp.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "webp" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/webp" );
-
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"

@@ -284,7 +284,7 @@ void GDALRegister_KRO()
     if( GDALGetDriverByName( "KRO" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "KRO" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

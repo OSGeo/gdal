@@ -38,7 +38,7 @@
 #include "georaster_priv.h"
 
 CPL_C_START
-void CPL_DLL GDALRegister_GEOR(void);
+void CPL_DLL GDALRegister_GEOR();
 CPL_C_END
 
 //  ---------------------------------------------------------------------------
@@ -2270,26 +2270,25 @@ CPLErr GeoRasterDataset::CreateMaskBand( int /*nFlags*/ )
 /*****************************************************************************/
 
 void CPL_DLL GDALRegister_GEOR()
-{
-    GDALDriver* poDriver;
 
-    if (! GDAL_CHECK_VERSION("GeoRaster driver"))
+{
+    if( !GDAL_CHECK_VERSION( "GeoRaster driver" ) )
         return;
 
-    if( GDALGetDriverByName( "GeoRaster" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "GeoRaster" ) != NULL )
+        return;
 
-        poDriver->SetDescription(  "GeoRaster" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Oracle Spatial GeoRaster" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_georaster.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 "
-                                   "Float64 CFloat32 CFloat64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription(  "GeoRaster" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Oracle Spatial GeoRaster" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_georaster.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                               "Float64 CFloat32 CFloat64" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='DESCRIPTION' type='string' description='Table Description'/>"
 "  <Option name='INSERT'      type='string' description='Column Values'/>"
@@ -2342,12 +2341,11 @@ void CPL_DLL GDALRegister_GEOR()
                                            "default='75'/>"
 "</CreationOptionList>" );
 
-        poDriver->pfnOpen       = GeoRasterDataset::Open;
-        poDriver->pfnCreate     = GeoRasterDataset::Create;
-        poDriver->pfnCreateCopy = GeoRasterDataset::CreateCopy;
-        poDriver->pfnIdentify   = GeoRasterDataset::Identify;
-        poDriver->pfnDelete     = GeoRasterDataset::Delete;
+    poDriver->pfnOpen       = GeoRasterDataset::Open;
+    poDriver->pfnCreate     = GeoRasterDataset::Create;
+    poDriver->pfnCreateCopy = GeoRasterDataset::CreateCopy;
+    poDriver->pfnIdentify   = GeoRasterDataset::Identify;
+    poDriver->pfnDelete     = GeoRasterDataset::Delete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

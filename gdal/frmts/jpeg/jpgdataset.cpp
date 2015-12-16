@@ -93,7 +93,7 @@ GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
 #endif
 
 CPL_C_START
-void	GDALRegister_JPEG(void);
+void GDALRegister_JPEG();
 CPL_C_END
 
 #include "vsidataio.h"
@@ -3706,24 +3706,20 @@ void GDALRegister_JPEG()
     if( GDALGetDriverByName( "JPEG" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALJPGDriver();
+    GDALDriver *poDriver = new GDALJPGDriver();
 
     poDriver->SetDescription( "JPEG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "JPEG JFIF" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_jpeg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "JPEG JFIF" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpeg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jpg jpeg" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpeg" );
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16" );
 #else
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 #endif
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

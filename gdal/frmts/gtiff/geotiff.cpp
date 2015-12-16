@@ -14926,6 +14926,7 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
 
     return nCompression;
 }
+
 /************************************************************************/
 /*                          GDALRegister_GTiff()                        */
 /************************************************************************/
@@ -14933,107 +14934,108 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
 void GDALRegister_GTiff()
 
 {
-    if( GDALGetDriverByName( "GTiff" ) == NULL )
-    {
-        char szCreateOptions[5000];
-        char szOptionalCompressItems[500];
-        bool bHasJPEG = false;
-        bool bHasLZW = false;
-        bool bHasDEFLATE = false;
-        bool bHasLZMA = false;
+    if( GDALGetDriverByName( "GTiff" ) != NULL )
+        return;
 
-        GDALDriver *poDriver = new GDALDriver();
+    char szCreateOptions[5000];
+    char szOptionalCompressItems[500];
+    bool bHasJPEG = false;
+    bool bHasLZW = false;
+    bool bHasDEFLATE = false;
+    bool bHasLZMA = false;
+
+    GDALDriver *poDriver = new GDALDriver();
 
 /* -------------------------------------------------------------------- */
 /*      Determine which compression codecs are available that we        */
 /*      want to advertise.  If we are using an old libtiff we won't     */
 /*      be able to find out so we just assume all are available.        */
 /* -------------------------------------------------------------------- */
-        strcpy( szOptionalCompressItems, 
-                "       <Value>NONE</Value>" );
+    strcpy( szOptionalCompressItems, "       <Value>NONE</Value>" );
 
 #if TIFFLIB_VERSION <= 20040919
-        strcat( szOptionalCompressItems, 
-                "       <Value>PACKBITS</Value>"
-                "       <Value>JPEG</Value>"
-                "       <Value>LZW</Value>"
-                "       <Value>DEFLATE</Value>" );
-        bHasLZW = bHasDEFLATE = true;
+    strcat( szOptionalCompressItems,
+            "       <Value>PACKBITS</Value>"
+            "       <Value>JPEG</Value>"
+            "       <Value>LZW</Value>"
+            "       <Value>DEFLATE</Value>" );
+    bHasLZW = bHasDEFLATE = true;
 #else
-        TIFFCodec	*c, *codecs = TIFFGetConfiguredCODECs();
+    TIFFCodec *c;
+    TIFFCodec *codecs = TIFFGetConfiguredCODECs();
 
-        for( c = codecs; c->name; c++ )
+    for( c = codecs; c->name; c++ )
+    {
+        if( c->scheme == COMPRESSION_PACKBITS )
+            strcat( szOptionalCompressItems,
+                    "       <Value>PACKBITS</Value>" );
+        else if( c->scheme == COMPRESSION_JPEG )
         {
-            if( c->scheme == COMPRESSION_PACKBITS )
-                strcat( szOptionalCompressItems,
-                        "       <Value>PACKBITS</Value>" );
-            else if( c->scheme == COMPRESSION_JPEG )
-            {
-                bHasJPEG = true;
-                strcat( szOptionalCompressItems,
-                        "       <Value>JPEG</Value>" );
-            }
-            else if( c->scheme == COMPRESSION_LZW )
-            {
-                bHasLZW = TRUE;
-                strcat( szOptionalCompressItems,
-                        "       <Value>LZW</Value>" );
-            }
-            else if( c->scheme == COMPRESSION_ADOBE_DEFLATE )
-            {
-                bHasDEFLATE = TRUE;
-                strcat( szOptionalCompressItems,
-                        "       <Value>DEFLATE</Value>" );
-            }
-            else if( c->scheme == COMPRESSION_CCITTRLE )
-                strcat( szOptionalCompressItems,
-                        "       <Value>CCITTRLE</Value>" );
-            else if( c->scheme == COMPRESSION_CCITTFAX3 )
-                strcat( szOptionalCompressItems,
-                        "       <Value>CCITTFAX3</Value>" );
-            else if( c->scheme == COMPRESSION_CCITTFAX4 )
-                strcat( szOptionalCompressItems,
-                        "       <Value>CCITTFAX4</Value>" );
-            else if( c->scheme == COMPRESSION_LZMA )
-            {
-                bHasLZMA = true;
-                strcat( szOptionalCompressItems,
-                        "       <Value>LZMA</Value>" );
-            }
+            bHasJPEG = true;
+            strcat( szOptionalCompressItems,
+                    "       <Value>JPEG</Value>" );
         }
-        _TIFFfree( codecs );
+        else if( c->scheme == COMPRESSION_LZW )
+        {
+            bHasLZW = TRUE;
+            strcat( szOptionalCompressItems,
+                    "       <Value>LZW</Value>" );
+        }
+        else if( c->scheme == COMPRESSION_ADOBE_DEFLATE )
+        {
+            bHasDEFLATE = TRUE;
+            strcat( szOptionalCompressItems,
+                    "       <Value>DEFLATE</Value>" );
+        }
+        else if( c->scheme == COMPRESSION_CCITTRLE )
+            strcat( szOptionalCompressItems,
+                    "       <Value>CCITTRLE</Value>" );
+        else if( c->scheme == COMPRESSION_CCITTFAX3 )
+            strcat( szOptionalCompressItems,
+                    "       <Value>CCITTFAX3</Value>" );
+        else if( c->scheme == COMPRESSION_CCITTFAX4 )
+            strcat( szOptionalCompressItems,
+                    "       <Value>CCITTFAX4</Value>" );
+        else if( c->scheme == COMPRESSION_LZMA )
+        {
+            bHasLZMA = true;
+            strcat( szOptionalCompressItems,
+                    "       <Value>LZMA</Value>" );
+        }
+    }
+    _TIFFfree( codecs );
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Build full creation option list.                                */
 /* -------------------------------------------------------------------- */
-        snprintf( szCreateOptions, sizeof(szCreateOptions), "%s%s%s", 
-"<CreationOptionList>"
-"   <Option name='COMPRESS' type='string-select'>",
-                 szOptionalCompressItems,
-"   </Option>");
-        if (bHasLZW || bHasDEFLATE)
-            strcat( szCreateOptions, ""        
-"   <Option name='PREDICTOR' type='int' description='Predictor Type (1=default, 2=horizontal differencing, 3=floating point prediction)'/>");
+    snprintf( szCreateOptions, sizeof(szCreateOptions), "%s%s%s",
+              "<CreationOptionList>"
+              "   <Option name='COMPRESS' type='string-select'>",
+              szOptionalCompressItems,
+              "   </Option>");
+    if (bHasLZW || bHasDEFLATE)
         strcat( szCreateOptions, ""
+"   <Option name='PREDICTOR' type='int' description='Predictor Type (1=default, 2=horizontal differencing, 3=floating point prediction)'/>");
+    strcat( szCreateOptions, ""
 "   <Option name='DISCARD_LSB' type='string' description='Number of least-significant bits to set to clear as a single value or comma-separated list of values for per-band values'/>" );
-        if (bHasJPEG)
-        {
-            strcat( szCreateOptions, ""
+    if (bHasJPEG)
+    {
+        strcat( szCreateOptions, ""
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>"
 "   <Option name='JPEGTABLESMODE' type='int' description='Content of JPEGTABLES tag. 0=no JPEGTABLES tag, 1=Quantization tables only, 2=Huffman tables only, 3=Both' default='1'/>" );
 #ifdef JPEG_DIRECT_COPY
-            strcat( szCreateOptions, ""
+        strcat( szCreateOptions, ""
 "   <Option name='JPEG_DIRECT_COPY' type='boolean' description='To copy without any decompression/recompression a JPEG source file' default='NO'/>");
 #endif
-        }
-        if (bHasDEFLATE)
-            strcat( szCreateOptions, ""
-"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>");
-        if (bHasLZMA)
-            strcat( szCreateOptions, ""
-"   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>");
+    }
+    if (bHasDEFLATE)
         strcat( szCreateOptions, ""
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>");
+    if (bHasLZMA)
+        strcat( szCreateOptions, ""
+"   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>");
+    strcat( szCreateOptions, ""
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
@@ -15109,19 +15111,18 @@ void GDALRegister_GTiff()
 /* -------------------------------------------------------------------- */
 /*      Set the driver details.                                         */
 /* -------------------------------------------------------------------- */
-        poDriver->SetDescription( "GTiff" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoTIFF" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gtiff.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tif tiff" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 "
-                                   "Float64 CInt16 CInt32 CFloat32 CFloat64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
-                                   szCreateOptions );
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+    poDriver->SetDescription( "GTiff" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoTIFF" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gtiff.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tif tiff" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                               "Float64 CInt16 CInt32 CFloat32 CFloat64" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, szCreateOptions );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
 "   <Option name='GEOTIFF_KEYS_FLAVOR' type='string-select' default='STANDARD' description='Which flavor of GeoTIFF keys must be used (for writing)'>"
@@ -15129,21 +15130,20 @@ void GDALRegister_GTiff()
 "       <Value>ESRI_PE</Value>"
 "   </Option>"
 "</OpenOptionList>" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
 #ifdef INTERNAL_LIBTIFF
-        poDriver->SetMetadataItem( "LIBTIFF", "INTERNAL" );
+    poDriver->SetMetadataItem( "LIBTIFF", "INTERNAL" );
 #else
-        poDriver->SetMetadataItem( "LIBTIFF", TIFFLIB_VERSION_STR );
+    poDriver->SetMetadataItem( "LIBTIFF", TIFFLIB_VERSION_STR );
 #endif
 
-        poDriver->pfnOpen = GTiffDataset::Open;
-        poDriver->pfnCreate = GTiffDataset::Create;
-        poDriver->pfnCreateCopy = GTiffDataset::CreateCopy;
-        poDriver->pfnUnloadDriver = GDALDeregister_GTiff;
-        poDriver->pfnIdentify = GTiffDataset::Identify;
+    poDriver->pfnOpen = GTiffDataset::Open;
+    poDriver->pfnCreate = GTiffDataset::Create;
+    poDriver->pfnCreateCopy = GTiffDataset::CreateCopy;
+    poDriver->pfnUnloadDriver = GDALDeregister_GTiff;
+    poDriver->pfnIdentify = GTiffDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

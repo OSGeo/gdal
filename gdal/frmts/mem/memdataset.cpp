@@ -1202,15 +1202,14 @@ static CPLErr MEMDatasetDelete(CPL_UNUSED const char* fileName)
 void GDALRegister_MEM()
 
 {
-
     if( GDALGetDriverByName( "MEM" ) != NULL )
         return;
-    GDALDriver	*poDriver = new GDALDriver();
+
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "MEM" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "In Memory Raster" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "In Memory Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
                                "CInt16 CInt32 CFloat32 CFloat64" );
@@ -1223,10 +1222,11 @@ void GDALRegister_MEM()
 "   </Option>"
 "</CreationOptionList>" );
 
-/* Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for MEM driver. */
-/* Otherwise, bad user input can trigger easily a GDAL crash as random pointers can be passed as a string. */
-/* All code in GDAL tree using the MEM driver use the Create() method only, so Open() */
-/* is not needed, except for esoteric uses */
+    // Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for
+    // MEM driver.  Otherwise, bad user input can trigger easily a GDAL crash
+    // as random pointers can be passed as a string.  All code in GDAL tree
+    // using the MEM driver use the Create() method only, so Open() is not
+    // needed, except for esoteric uses.
 #ifndef GDAL_NO_OPEN_FOR_MEM_DRIVER
     poDriver->pfnOpen = MEMDataset::Open;
     poDriver->pfnIdentify = MEMDatasetIdentify;

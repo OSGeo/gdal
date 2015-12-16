@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_CPG(void);
+void GDALRegister_CPG();
 CPL_C_END
 
 
@@ -1623,7 +1623,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 }
 
 /************************************************************************/
-/*                         GDALRegister_CPG()                          */
+/*                         GDALRegister_CPG()                           */
 /************************************************************************/
 
 void GDALRegister_CPG()
@@ -1632,7 +1632,7 @@ void GDALRegister_CPG()
     if( GDALGetDriverByName( "CPG" ) != NULL )
       return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "CPG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

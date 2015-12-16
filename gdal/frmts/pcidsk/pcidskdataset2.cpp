@@ -2108,13 +2108,12 @@ void GDALRegister_PCIDSK()
     poDriver->SetDescription( "PCIDSK" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "PCIDSK Database File" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_pcidsk.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PCIDSK Database File" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_pcidsk.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32 CInt16 CFloat32" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 Float32 CInt16 CFloat32" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='INTERLEAVING' type='string-select' default='BAND' description='raster data organization'>"
@@ -2130,7 +2129,8 @@ void GDALRegister_PCIDSK()
 "   </Option>"
 "   <Option name='TILESIZE' type='int' default='127' description='Tile Size (INTERLEAVING=TILED only)'/>"
 "</CreationOptionList>" );
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                               "<LayerCreationOptionList/>" );
 
     poDriver->pfnIdentify = PCIDSK2Dataset::Identify;
     poDriver->pfnOpen = PCIDSK2Dataset::Open;

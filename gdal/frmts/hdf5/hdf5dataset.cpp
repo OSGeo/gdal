@@ -53,10 +53,8 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_HDF5(void);
+void GDALRegister_HDF5();
 CPL_C_END
-
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -70,22 +68,23 @@ CPL_C_END
 void GDALRegister_HDF5()
 
 {
-    GDALDriver	*poDriver;
-    if( GDALGetDriverByName("HDF5") == NULL )
-    {
-        poDriver = new GDALDriver();
-        poDriver->SetDescription("HDF5");
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                                  "Hierarchical Data Format Release 5");
-        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                                  "frmt_hdf5.html");
-        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hdf5");
-        poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-        poDriver->pfnOpen = HDF5Dataset::Open;
-        poDriver->pfnIdentify = HDF5Dataset::Identify;
-        GetGDALDriverManager()->RegisterDriver(poDriver);
-    }
+    if( GDALGetDriverByName( "HDF5" ) != NULL )
+        return;
+
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription("HDF5");
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Hierarchical Data Format Release 5");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                              "frmt_hdf5.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hdf5");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+
+    poDriver->pfnOpen = HDF5Dataset::Open;
+    poDriver->pfnIdentify = HDF5Dataset::Identify;
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 
 #ifdef HDF5_PLUGIN
     GDALRegister_HDF5Image();

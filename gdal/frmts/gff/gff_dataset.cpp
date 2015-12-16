@@ -333,12 +333,13 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 /*                          GDALRegister_GFF()                          */
 /************************************************************************/
 
-void GDALRegister_GFF(void)
+void GDALRegister_GFF()
 {
-    if ( GDALGetDriverByName("GFF") != NULL )
+    if( GDALGetDriverByName( "GFF" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+
     poDriver->SetDescription("GFF");
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem(

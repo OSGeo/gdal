@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_BMP(void);
+void GDALRegister_BMP();
 CPL_C_END
 
 // Enable if you want to see lots of BMP debugging output.

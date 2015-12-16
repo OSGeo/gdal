@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_OZI(void);
+void GDALRegister_OZI();
 CPL_C_END
 
 /************************************************************************/
@@ -676,21 +676,18 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_OZI()
 
 {
-    if (! GDAL_CHECK_VERSION("OZI driver"))
+    if( !GDAL_CHECK_VERSION( "OZI driver" ) )
         return;
 
     if( GDALGetDriverByName( "OZI" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "OZI" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "OziExplorer Image File" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_ozi.html" );
-
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OziExplorer Image File" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ozi.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OZIDataset::Open;

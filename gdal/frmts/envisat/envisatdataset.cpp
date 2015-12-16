@@ -42,7 +42,7 @@ CPL_C_START
 CPL_C_END
 
 CPL_C_START
-void	GDALRegister_Envisat(void);
+void GDALRegister_Envisat();
 CPL_C_END
 
 /************************************************************************/
@@ -1154,16 +1154,14 @@ void GDALRegister_Envisat()
     if( GDALGetDriverByName( "ESAT" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ESAT" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Envisat Image Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Envisat Image Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_various.html#Envisat" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "n1" );
-
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = EnvisatDataset::Open;

@@ -53,7 +53,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_GSAG(void);
+void GDALRegister_GSAG();
 CPL_C_END
 
 /************************************************************************/
@@ -1721,7 +1721,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_GSAG()                          */
+/*                          GDALRegister_GSAG()                         */
 /************************************************************************/
 
 void GDALRegister_GSAG()
@@ -1729,18 +1729,18 @@ void GDALRegister_GSAG()
 {
     if( GDALGetDriverByName( "GSAG" ) != NULL )
         return;
+
     GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "GSAG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Golden Software ASCII Grid (.grd)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GSAG" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GSAG" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-    			   "Byte Int16 UInt16 Int32 UInt32 "
-    			   "Float32 Float64" );
+                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Float32 Float64" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = GSAGDataset::Identify;

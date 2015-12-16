@@ -654,26 +654,22 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_JPEGLS()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("JPEGLS driver"))
+    if( !GDAL_CHECK_VERSION( "JPEGLS driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JPEGLS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "JPEGLS" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "JPEGLS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "JPEGLS" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_jpegls.html" );
-        //poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jls" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jls" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Byte Int16" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "JPEGLS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "JPEGLS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpegls.html" );
+    // poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jls" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jls" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='INTERLEAVE' type='string-select' default='BAND' description='File interleaving'>"
 "       <Value>PIXEL</Value>"
@@ -683,13 +679,12 @@ void GDALRegister_JPEGLS()
 "   <Option name='LOSS_FACTOR' type='int' default='0' description='0 = lossless, 1 = near lossless, > 1 lossless'/>"
 "</CreationOptionList>\n" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = JPEGLSDataset::Identify;
-        poDriver->pfnOpen = JPEGLSDataset::Open;
-        poDriver->pfnCreateCopy = JPEGLSDataset::CreateCopy;
+    poDriver->pfnIdentify = JPEGLSDataset::Identify;
+    poDriver->pfnOpen = JPEGLSDataset::Open;
+    poDriver->pfnCreateCopy = JPEGLSDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

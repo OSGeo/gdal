@@ -33,7 +33,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_CTG(void);
+void GDALRegister_CTG();
 CPL_C_END
 
 static const int HEADER_LINE_COUNT = 5;

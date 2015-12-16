@@ -57,7 +57,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_PDF(void);
+void GDALRegister_PDF();
 CPL_C_END
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
@@ -6730,41 +6730,37 @@ CPLString PDFSanitizeLayerName(const char* pszName)
 void GDALRegister_PDF()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("PDF driver"))
+    if( !GDAL_CHECK_VERSION( "PDF driver" ) )
         return;
 
-    if( GDALGetDriverByName( "PDF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "PDF" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "PDF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Geospatial PDF" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_pdf.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Byte" );
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "PDF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Geospatial PDF" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_pdf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
 
 #ifdef HAVE_POPPLER
-        poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );
+    poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );
 #endif // HAVE_POPPLER
 #ifdef HAVE_PODOFO
-        poDriver->SetMetadataItem( "HAVE_PODOFO", "YES" );
+    poDriver->SetMetadataItem( "HAVE_PODOFO", "YES" );
 #endif // HAVE_PODOFO
 #ifdef HAVE_PDFIUM
-        poDriver->SetMetadataItem( "HAVE_PDFIUM", "YES" );
+    poDriver->SetMetadataItem( "HAVE_PDFIUM", "YES" );
 #endif // HAVE_PDFIUM
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='COMPRESS' type='string-select' description='Compression method for raster data' default='DEFLATE'>\n"
 "     <Value>NONE</Value>\n"
@@ -6823,16 +6819,15 @@ void GDALRegister_PDF()
 "</CreationOptionList>\n" );
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, szOpenOptionList );
-        poDriver->pfnOpen = PDFDataset::Open;
-        poDriver->pfnIdentify = PDFDataset::Identify;
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, szOpenOptionList );
+    poDriver->pfnOpen = PDFDataset::Open;
+    poDriver->pfnIdentify = PDFDataset::Identify;
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 #endif // HAVE_POPPLER || HAVE_PODOFO || defined(HAVE_PDFIUM)
 
-        poDriver->pfnCreateCopy = GDALPDFCreateCopy;
-        poDriver->pfnCreate = PDFWritableVectorDataset::Create;
-        poDriver->pfnUnloadDriver = GDALPDFUnloadDriver;
+    poDriver->pfnCreateCopy = GDALPDFCreateCopy;
+    poDriver->pfnCreate = PDFWritableVectorDataset::Create;
+    poDriver->pfnUnloadDriver = GDALPDFUnloadDriver;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

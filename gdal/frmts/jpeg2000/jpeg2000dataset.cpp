@@ -38,7 +38,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_JPEG2000(void);
+void GDALRegister_JPEG2000();
 CPL_C_END
 
 // XXX: Part of code below extracted from the JasPer internal headers and
@@ -1344,36 +1344,35 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_JPEG2000()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("JPEG2000 driver"))
+    if( !GDAL_CHECK_VERSION( "JPEG2000 driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JPEG2000" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "JPEG2000" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "JPEG2000" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JPEG-2000 part 1 (ISO/IEC 15444-1), based on Jasper library" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_jpeg2000.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "JPEG2000" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "JPEG-2000 part 1 (ISO/IEC 15444-1), "
+                               "based on Jasper library" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpeg2000.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Int32 UInt32" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "</OpenOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='FORMAT' type='string-select' default='according to file extension. If unknown, default to J2K'>"
 "       <Value>JP2</Value>"
@@ -1409,10 +1408,9 @@ void GDALRegister_JPEG2000()
 "   <Option name='numgbits' type='string' />"
 "</CreationOptionList>"  );
 
-        poDriver->pfnIdentify = JPEG2000Dataset::Identify;
-        poDriver->pfnOpen = JPEG2000Dataset::Open;
-        poDriver->pfnCreateCopy = JPEG2000CreateCopy;
+    poDriver->pfnIdentify = JPEG2000Dataset::Identify;
+    poDriver->pfnOpen = JPEG2000Dataset::Open;
+    poDriver->pfnCreateCopy = JPEG2000CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

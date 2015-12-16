@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_PALSARJaxa(void);
+void GDALRegister_PALSARJaxa();
 CPL_C_END
 
 #if defined(WIN32)
@@ -652,21 +652,23 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 /*                      GDALRegister_PALSARJaxa()                       */
 /************************************************************************/
 
-void GDALRegister_PALSARJaxa() {
-    GDALDriver	*poDriver;
+void GDALRegister_PALSARJaxa()
 
-    if( GDALGetDriverByName( "JAXAPALSAR" ) == NULL ) {
-        poDriver = new GDALDriver();
-        poDriver->SetDescription( "JAXAPALSAR" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_palsar.html" );
-        poDriver->pfnOpen = PALSARJaxaDataset::Open;
-        poDriver->pfnIdentify = PALSARJaxaDataset::Identify;
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+{
+    if( GDALGetDriverByName( "JAXAPALSAR" ) != NULL )
+        return;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "JAXAPALSAR" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_palsar.html" );
+
+    poDriver->pfnOpen = PALSARJaxaDataset::Open;
+    poDriver->pfnIdentify = PALSARJaxaDataset::Identify;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_FAST(void);
+void GDALRegister_FAST();
 CPL_C_END
 
 // static const int ADM_STD_HEADER_SIZE = 4608;  // XXX: Format specification says it
@@ -1112,7 +1112,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                        GDALRegister_FAST()				*/
+/*                        GDALRegister_FAST()                           */
 /************************************************************************/
 
 void GDALRegister_FAST()
@@ -1121,8 +1121,7 @@ void GDALRegister_FAST()
     if( GDALGetDriverByName( "FAST" ) != NULL )
         return;
 
-    GDALDriver	*poDriver;
-    poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "FAST" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

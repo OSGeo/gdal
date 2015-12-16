@@ -1429,12 +1429,11 @@ void GDALRegister_ERS()
 
     poDriver->SetDescription( "ERS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "ERMapper .ers Labelled" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_ers.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ERMapper .ers Labelled" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ers.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
+                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Float32 Float64" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

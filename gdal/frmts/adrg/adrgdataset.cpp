@@ -2234,7 +2234,7 @@ void GDALRegister_ADRG()
     if( GDALGetDriverByName( "ADRG" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ADRG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

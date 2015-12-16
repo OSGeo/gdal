@@ -59,7 +59,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_HDF4(void);
+void GDALRegister_HDF4();
 CPL_C_END
 
 static const int HDF4_SDS_MAXNAMELEN = 65;
@@ -3915,7 +3915,7 @@ void GDALRegister_HDF4Image()
     if( GDALGetDriverByName( "HDF4Image" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "HDF4Image" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
