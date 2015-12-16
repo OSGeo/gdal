@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 
 
 CPL_C_START
-void	GDALRegister_RASDAMAN(void);
+void GDALRegister_RASDAMAN();
 CPL_C_END
 
 
@@ -700,25 +700,21 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          GDALRegister_RASDAMAN()                     */
 /************************************************************************/
 
-extern void GDALRegister_RASDAMAN()
+void GDALRegister_RASDAMAN()
 
 {
-  GDALDriver	*poDriver;
+  if( GDALGetDriverByName( "RASDAMAN" ) != NULL )
+      return;
 
-  if( GDALGetDriverByName( "RASDAMAN" ) == NULL )
-  {
-    poDriver = new GDALDriver();
+  GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "RASDAMAN" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "RASDAMAN" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_rasdaman.html" );
+  poDriver->SetDescription( "RASDAMAN" );
+  poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+  poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "RASDAMAN" );
+  poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rasdaman.html" );
 
-    poDriver->pfnOpen = RasdamanDataset::Open;
+  poDriver->pfnOpen = RasdamanDataset::Open;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
-  }
+  GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

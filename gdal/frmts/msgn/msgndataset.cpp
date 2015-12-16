@@ -37,7 +37,7 @@ using namespace msg_native_format;
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void   GDALRegister_MSGN(void);
+void GDALRegister_MSGN();
 CPL_C_END
 
 typedef enum {
@@ -536,28 +536,25 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                          GDALRegister_MSGN()                          */
+/*                          GDALRegister_MSGN()                         */
 /************************************************************************/
 
 void GDALRegister_MSGN()
 
 {
-    GDALDriver *poDriver;
+    if( GDALGetDriverByName( "MSGN" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "MSGN" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "MSGN" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "EUMETSAT Archive native (.nat)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_msgn.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nat" );
+    poDriver->SetDescription( "MSGN" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "EUMETSAT Archive native (.nat)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_msgn.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nat" );
 
-        poDriver->pfnOpen = MSGNDataset::Open;
+    poDriver->pfnOpen = MSGNDataset::Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

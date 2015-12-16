@@ -1455,31 +1455,27 @@ GDALDataset *JPIPKAKDataset::Open(GDALOpenInfo * poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALRegister_JPIPKAK()			*/
+/*                        GDALRegister_JPIPKAK()                        */
 /************************************************************************/
 
 void GDALRegister_JPIPKAK()
 {
-    GDALDriver *poDriver;
-	
-    if (! GDAL_CHECK_VERSION("JPIPKAK driver"))
+    if( !GDAL_CHECK_VERSION( "JPIPKAK driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JPIPKAK" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "JPIPKAK" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "JPIPKAK" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JPIP (based on Kakadu)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_jpipkak.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpp-stream" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = JPIPKAKDataset::Open;
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "JPIPKAK" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "JPIP (based on Kakadu)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpipkak.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpp-stream" );
+
+    poDriver->pfnOpen = JPIPKAKDataset::Open;
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 
 /************************************************************************/

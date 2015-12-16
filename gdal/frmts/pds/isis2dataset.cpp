@@ -49,7 +49,7 @@ static const int RECORD_SIZE = 512;
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_ISIS2(void);
+void GDALRegister_ISIS2();
 CPL_C_END
 
 /************************************************************************/
@@ -1185,5 +1185,4 @@ void GDALRegister_ISIS2()
     poDriver->pfnCreate = ISIS2Dataset::Create;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
-
 }

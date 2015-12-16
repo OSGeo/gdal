@@ -33,12 +33,12 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include <string.h>
+#include <fitsio.h>
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-#include <fitsio.h>
-void	GDALRegister_FITS(void);
+void GDALRegister_FITS();
 CPL_C_END
 
 /************************************************************************/
@@ -598,29 +598,29 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
 
 
 /************************************************************************/
-/*                          GDALRegister_FITS()                        */
+/*                          GDALRegister_FITS()                         */
 /************************************************************************/
 
-void GDALRegister_FITS() {
+void GDALRegister_FITS()
 
-    GDALDriver* poDriver;
+{
+    if( GDALGetDriverByName( "FITS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "FITS" ) == NULL) {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "FITS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Flexible Image Transport System" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#FITS" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 Int32 Float32 Float64" );
+    poDriver->SetDescription( "FITS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Flexible Image Transport System" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#FITS" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 Int32 Float32 Float64" );
 
-        poDriver->pfnOpen = FITSDataset::Open;
-        poDriver->pfnCreate = FITSDataset::Create;
-        poDriver->pfnCreateCopy = NULL;
+    poDriver->pfnOpen = FITSDataset::Open;
+    poDriver->pfnCreate = FITSDataset::Create;
+    poDriver->pfnCreateCopy = NULL;
 
-        GetGDALDriverManager()->RegisterDriver(poDriver);
-    }
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

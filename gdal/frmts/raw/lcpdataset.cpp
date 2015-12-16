@@ -37,7 +37,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_LCP(void);
+void GDALRegister_LCP();
 CPL_C_END
 
 static const size_t LCP_HEADER_SIZE = 7316;
@@ -1675,7 +1675,7 @@ void GDALRegister_LCP()
     if( GDALGetDriverByName( "LCP" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "LCP" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
@@ -1747,6 +1747,7 @@ void GDALRegister_LCP()
 "   <Option name='LATITUDE' type='int' default='' description='Set the latitude for the dataset, this overrides the driver trying to set it programmatically in EPSG:4269'/>"
 "   <Option name='DESCRIPTION' type='string' default='LCP file created by GDAL' description='A short description of the lcp file'/>"
 "</CreationOptionList>" );
+
     poDriver->pfnOpen = LCPDataset::Open;
     poDriver->pfnCreateCopy = LCPDataset::CreateCopy;
     poDriver->pfnIdentify = LCPDataset::Identify;

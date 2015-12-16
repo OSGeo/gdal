@@ -37,7 +37,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_ENVI(void);
+void GDALRegister_ENVI();
 CPL_C_END
 
 static const int anUsgsEsriZones[] =
@@ -2692,14 +2692,12 @@ void GDALRegister_ENVI()
     if( GDALGetDriverByName( "ENVI" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ENVI" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "ENVI .hdr Labelled" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ENVI" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ENVI .hdr Labelled" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#ENVI" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 "

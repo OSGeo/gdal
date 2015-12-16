@@ -39,7 +39,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_MFF(void);
+void GDALRegister_MFF();
 CPL_C_END
 
 enum {
@@ -1554,7 +1554,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
 
 /************************************************************************/
-/*                         GDALRegister_MFF()                          */
+/*                         GDALRegister_MFF()                           */
 /************************************************************************/
 
 void GDALRegister_MFF()
@@ -1563,16 +1563,14 @@ void GDALRegister_MFF()
     if( GDALGetDriverByName( "MFF" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "MFF" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                               "Vexcel MFF Raster" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                               "frmt_various.html#MFF" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Vexcel MFF Raster" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#MFF" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Float32 CInt16 CFloat32" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

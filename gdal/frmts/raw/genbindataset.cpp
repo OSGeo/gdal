@@ -35,7 +35,7 @@
 CPL_CVSID("$Id: ehdrdataset.cpp 12350 2007-10-08 17:41:32Z rouault $");
 
 CPL_C_START
-void	GDALRegister_GenBin(void);
+void GDALRegister_GenBin();
 CPL_C_END
 
 /* ==================================================================== */
@@ -862,7 +862,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                         GDALRegister_GenBin()                          */
+/*                         GDALRegister_GenBin()                        */
 /************************************************************************/
 
 void GDALRegister_GenBin()

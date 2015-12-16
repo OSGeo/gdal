@@ -33,7 +33,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_ROIPAC(void);
+void GDALRegister_ROIPAC();
 CPL_C_END
 
 /************************************************************************/
@@ -850,12 +850,12 @@ ROIPACRasterBand::ROIPACRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRa
 /*                        GDALRegister_ROIPAC()                         */
 /************************************************************************/
 
-void GDALRegister_ROIPAC( void )
+void GDALRegister_ROIPAC()
 {
-    if (!GDAL_CHECK_VERSION("ROI_PAC"))
+    if( !GDAL_CHECK_VERSION( "ROI_PAC" ) )
         return;
 
-    if ( GDALGetDriverByName( "ROI_PAC" ) != NULL )
+    if( GDALGetDriverByName( "ROI_PAC" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

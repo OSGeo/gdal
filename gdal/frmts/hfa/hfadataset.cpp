@@ -38,7 +38,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_HFA(void);
+void GDALRegister_HFA();
 CPL_C_END
 
 #ifndef R2D
@@ -6038,14 +6038,13 @@ void GDALRegister_HFA()
     if( GDALGetDriverByName( "HFA" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "HFA" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Erdas Imagine Images (.img)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_hfa.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hfa.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CFloat32 CFloat64" );

@@ -64,7 +64,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_GS7BG(void);
+void GDALRegister_GS7BG();
 CPL_C_END
 
 /************************************************************************/
@@ -1355,11 +1355,10 @@ void GDALRegister_GS7BG()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Golden Software 7 Binary Grid (.grd)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GS7BG" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GS7BG" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-        "Byte Int16 UInt16 Float32 Float64" );
+                               "Byte Int16 UInt16 Float32 Float64" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = GS7BGDataset::Identify;

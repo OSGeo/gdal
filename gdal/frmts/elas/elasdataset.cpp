@@ -37,7 +37,7 @@ using std::fill;
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_ELAS(void);
+void GDALRegister_ELAS();
 CPL_C_END
 
 typedef struct ELASHeader {
@@ -680,7 +680,7 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
 
 
 /************************************************************************/
-/*                          GDALRegister_ELAS()                        */
+/*                          GDALRegister_ELAS()                         */
 /************************************************************************/
 
 void GDALRegister_ELAS()

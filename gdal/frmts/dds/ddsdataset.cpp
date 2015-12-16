@@ -39,7 +39,7 @@
 CPL_CVSID("$Id: $");
 
 CPL_C_START
-void	GDALRegister_DDS(void);
+void GDALRegister_DDS();
 CPL_C_END
 
 using namespace crnlib;
@@ -334,7 +334,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
 void GDALRegister_DDS()
 {
-    if (GDALGetDriverByName( "DDS" ) != NULL)
+    if( GDALGetDriverByName( "DDS" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -347,28 +347,27 @@ void GDALRegister_DDS()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dds");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/dds");
 
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
-                              "<CreationOptionList>\n"
-                              "   <Option name='FORMAT' type='string-select' description='Texture format' default='DXT3'>\n"
-                              "     <Value>DXT1</Value>\n"
-                              "     <Value>DXT1A</Value>\n"
-                              "     <Value>DXT3</Value>\n"
-                              "     <Value>DXT5</Value>\n"
-                              "     <Value>ETC1</Value>\n"
-                              "   </Option>\n"
-                              "   <Option name='QUALITY' type='string-select' description='Compression Quality' default='NORMAL'>\n"
-                              "     <Value>SUPERFAST</Value>\n"
-                              "     <Value>FAST</Value>\n"
-                              "     <Value>NORMAL</Value>\n"
-                              "     <Value>BETTER</Value>\n"
-                              "     <Value>UBER</Value>\n"
-                              "   </Option>\n"
-                              "</CreationOptionList>\n" );
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>\n"
+        "   <Option name='FORMAT' type='string-select' description='Texture format' default='DXT3'>\n"
+        "     <Value>DXT1</Value>\n"
+        "     <Value>DXT1A</Value>\n"
+        "     <Value>DXT3</Value>\n"
+        "     <Value>DXT5</Value>\n"
+        "     <Value>ETC1</Value>\n"
+        "   </Option>\n"
+        "   <Option name='QUALITY' type='string-select' description='Compression Quality' default='NORMAL'>\n"
+        "     <Value>SUPERFAST</Value>\n"
+        "     <Value>FAST</Value>\n"
+        "     <Value>NORMAL</Value>\n"
+        "     <Value>BETTER</Value>\n"
+        "     <Value>UBER</Value>\n"
+        "   </Option>\n"
+        "</CreationOptionList>\n" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
     poDriver->pfnCreateCopy = DDSDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
-
 }

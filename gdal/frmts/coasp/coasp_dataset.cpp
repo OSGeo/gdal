@@ -42,7 +42,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_COASP(void);
+void GDALRegister_COASP();
 CPL_C_END
 
 static const int TYPE_GENERIC = 0;
@@ -536,9 +536,9 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 /*                         GDALRegister_COASP()                         */
 /************************************************************************/
 
-void GDALRegister_COASP(void)
+void GDALRegister_COASP()
 {
-    if ( GDALGetDriverByName( "COASP" ) != NULL )
+    if( GDALGetDriverByName( "COASP" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

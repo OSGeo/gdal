@@ -39,7 +39,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_AIGrid(void);
+void GDALRegister_AIGrid();
 CPL_C_END
 
 static CPLString OSR_GDS( char **papszNV, const char * pszField, 
@@ -1062,7 +1062,7 @@ static CPLErr AIGDelete( const char *pszDatasetname )
 }
 
 /************************************************************************/
-/*                          GDALRegister_AIG()                        */
+/*                          GDALRegister_AIG()                          */
 /************************************************************************/
 
 void GDALRegister_AIGrid()

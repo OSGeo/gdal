@@ -36,7 +36,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_ZMap(void);
+void GDALRegister_ZMap();
 CPL_C_END
 
 /************************************************************************/

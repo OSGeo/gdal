@@ -37,7 +37,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_SAR_CEOS(void);
+void GDALRegister_SAR_CEOS();
 CPL_C_END
 
 static GInt16 CastToGInt16(float val);

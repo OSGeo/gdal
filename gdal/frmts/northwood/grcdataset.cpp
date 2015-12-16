@@ -40,7 +40,8 @@
 #endif
 
 
-CPL_C_START void GDALRegister_NWT_GRC( void );
+CPL_C_START
+void GDALRegister_NWT_GRC();
 CPL_C_END
 /************************************************************************/
 /* ==================================================================== */
@@ -394,8 +395,8 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          GDALRegister_GRC()                          */
 /************************************************************************/
 
-void
-GDALRegister_NWT_GRC()
+void GDALRegister_NWT_GRC()
+
 {
     if( GDALGetDriverByName( "NWT_GRC" ) != NULL )
         return;
@@ -405,9 +406,9 @@ GDALRegister_NWT_GRC()
     poDriver->SetDescription( "NWT_GRC" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                             "Northwood Classified Grid Format .grc/.tab");
+                               "Northwood Classified Grid Format .grc/.tab");
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                             "frmt_various.html#northwood_grc" );
+                               "frmt_various.html#northwood_grc" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grc" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

@@ -50,7 +50,7 @@ static const double NULL3 = -3.4028226550889044521e+38;
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_PDS(void);
+void GDALRegister_PDS();
 CPL_C_END
 
 enum PDSLayout
@@ -1379,7 +1379,7 @@ void PDSDataset::CleanString( CPLString &osInput )
     CPLFree( pszWrk );
 }
 /************************************************************************/
-/*                         GDALRegister_PDS()                         */
+/*                         GDALRegister_PDS()                           */
 /************************************************************************/
 
 void GDALRegister_PDS()

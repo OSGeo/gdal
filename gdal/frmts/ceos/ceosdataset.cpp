@@ -34,7 +34,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_CEOS(void);
+void GDALRegister_CEOS();
 CPL_C_END
 
 /************************************************************************/

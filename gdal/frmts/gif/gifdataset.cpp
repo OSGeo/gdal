@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_GIF(void);
+void GDALRegister_GIF();
 
 #if !(defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5)
 
@@ -684,7 +684,7 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
 }
 
 /************************************************************************/
-/*                          GDALRegister_GIF()                        */
+/*                          GDALRegister_GIF()                          */
 /************************************************************************/
 
 void GDALRegister_GIF()
@@ -699,12 +699,10 @@ void GDALRegister_GIF()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Graphics Interchange Format (.gif)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_gif.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gif.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"

@@ -42,7 +42,7 @@ static const double NULL3 = -32768.0;
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_VICAR(void);
+void GDALRegister_VICAR();
 CPL_C_END
 
 /************************************************************************/

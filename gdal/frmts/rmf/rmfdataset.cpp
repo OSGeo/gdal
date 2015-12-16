@@ -36,7 +36,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_RMF(void);
+void GDALRegister_RMF();
 CPL_C_END
 
 static const int RMF_DEFAULT_BLOCKXSIZE = 256;

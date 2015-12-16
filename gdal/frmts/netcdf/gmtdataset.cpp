@@ -600,22 +600,19 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_GMT()
 
 {
-    if (! GDAL_CHECK_VERSION("GMT driver"))
+    if( !GDAL_CHECK_VERSION( "GMT driver" ) )
         return;
 
     if( GDALGetDriverByName( "GMT" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "GMT" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "GMT NetCDF Grid Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GMT" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GMT NetCDF Grid Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GMT" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nc" );
-
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Int16 Int32 Float32 Float64" );
 

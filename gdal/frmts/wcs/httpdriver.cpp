@@ -199,20 +199,17 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 void GDALRegister_HTTP()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "HTTP" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "HTTP" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "HTTP" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "HTTP Fetching Wrapper" );
+    poDriver->SetDescription( "HTTP" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "HTTP Fetching Wrapper" );
 
-        poDriver->pfnOpen = HTTPOpen;
+    poDriver->pfnOpen = HTTPOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

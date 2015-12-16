@@ -1604,24 +1604,21 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_SRP()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "SRP" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "SRP" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "SRP" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Standard Raster Product (ASRP/USRP)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#SRP" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "SRP" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Standard Raster Product (ASRP/USRP)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SRP" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = SRPDataset::Open;
+    poDriver->pfnOpen = SRPDataset::Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

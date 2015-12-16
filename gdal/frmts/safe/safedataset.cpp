@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_SAFE(void);
+void GDALRegister_SAFE();
 CPL_C_END
 
 /************************************************************************/
@@ -1087,7 +1087,8 @@ void GDALRegister_SAFE()
     poDriver->SetDescription( "SAFE" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Sentinel-1 SAR SAFE Product" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Sentinel-1 SAR SAFE Product" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_safe.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
 

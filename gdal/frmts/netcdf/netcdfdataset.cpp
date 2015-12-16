@@ -5819,7 +5819,7 @@ static void NCDFUnloadDriver(CPL_UNUSED GDALDriver* poDriver)
 void GDALRegister_netCDF()
 
 {
-    if (! GDAL_CHECK_VERSION("netCDF driver"))
+    if( !GDAL_CHECK_VERSION( "netCDF driver" ) )
         return;
 
     if( GDALGetDriverByName( "netCDF" ) != NULL )

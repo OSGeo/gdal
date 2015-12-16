@@ -986,39 +986,35 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_EPSILON()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("EPSILON driver"))
+    if( !GDAL_CHECK_VERSION( "EPSILON driver" ) )
         return;
 
-    if( GDALGetDriverByName( "EPSILON" ) == NULL )
+    if( GDALGetDriverByName( "EPSILON" ) != NULL )
+        return;
+
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "EPSILON" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Epsilon wavelets" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_epsilon.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+
+    CPLString osMethods;
+    char** papszFBID = eps_get_fb_info(EPS_FB_ID);
+    char** papszFBIDIter = papszFBID;
+    while(papszFBIDIter && *papszFBIDIter)
     {
-        poDriver = new GDALDriver();
+        osMethods += "       <Value>";
+        osMethods += *papszFBIDIter;
+        osMethods += "</Value>\n";
+        papszFBIDIter ++;
+    }
+    eps_free_fb_info(papszFBID);
 
-        poDriver->SetDescription( "EPSILON" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Epsilon wavelets" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_epsilon.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Byte" );
-
-        CPLString osMethods;
-        char** papszFBID = eps_get_fb_info(EPS_FB_ID);
-        char** papszFBIDIter = papszFBID;
-        while(papszFBIDIter && *papszFBIDIter)
-        {
-            osMethods += "       <Value>";
-            osMethods += *papszFBIDIter;
-            osMethods += "</Value>\n";
-            papszFBIDIter ++;
-        }
-        eps_free_fb_info(papszFBID);
-
-        CPLString osOptionList;
-        osOptionList.Printf(
+    CPLString osOptionList;
+    osOptionList.Printf(
 "<CreationOptionList>"
 "   <Option name='TARGET' type='int' description='target size reduction as a percentage of the original (0-100)' default='75'/>"
 "   <Option name='FILTER' type='string-select' description='Filter ID' default='daub97lift'>"
@@ -1034,15 +1030,14 @@ void GDALRegister_EPSILON()
 "   <Option name='RASTERLITE_OUTPUT' type='boolean' description='if Rasterlite header and footers must be inserted' default='FALSE'/>"
 "</CreationOptionList>", osMethods.c_str()  );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-                                   osOptionList.c_str() );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               osOptionList.c_str() );
 
-        poDriver->pfnOpen = EpsilonDataset::Open;
-        poDriver->pfnIdentify = EpsilonDataset::Identify;
-        poDriver->pfnCreateCopy = EpsilonDatasetCreateCopy;
+    poDriver->pfnOpen = EpsilonDataset::Open;
+    poDriver->pfnIdentify = EpsilonDataset::Identify;
+    poDriver->pfnCreateCopy = EpsilonDatasetCreateCopy;
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

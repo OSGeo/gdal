@@ -2839,43 +2839,40 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                        GDALRegister_JP2KAK()				*/
+/*                        GDALRegister_JP2KAK()                         */
 /************************************************************************/
 
 void GDALRegister_JP2KAK()
 
 {
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("JP2KAK driver"))
+    if( !GDAL_CHECK_VERSION( "JP2KAK driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JP2KAK" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "JP2KAK" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "JP2KAK" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JPEG-2000 (based on Kakadu " 
-                                   KDU_CORE_VERSION ")" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_jp2kak.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "JP2KAK" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "JPEG-2000 (based on Kakadu "
+                               KDU_CORE_VERSION ")" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2kak.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "</OpenOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='QUALITY' type='integer' description='0.01-100, 100 is lossless'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
@@ -2901,10 +2898,9 @@ void GDALRegister_JP2KAK()
 "   <Option name='Rweight' type='string'/>"
 "</CreationOptionList>" );
 
-        poDriver->pfnOpen = JP2KAKDataset::Open;
-        poDriver->pfnIdentify = JP2KAKDataset::Identify;
-        poDriver->pfnCreateCopy = JP2KAKCreateCopy;
+    poDriver->pfnOpen = JP2KAKDataset::Open;
+    poDriver->pfnIdentify = JP2KAKDataset::Identify;
+    poDriver->pfnCreateCopy = JP2KAKCreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

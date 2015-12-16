@@ -37,7 +37,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_XYZ(void);
+void GDALRegister_XYZ();
 CPL_C_END
 
 /************************************************************************/
@@ -1231,7 +1231,7 @@ void GDALRegister_XYZ()
     if( GDALGetDriverByName( "XYZ" ) != NULL )
       return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "XYZ" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

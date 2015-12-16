@@ -5630,9 +5630,7 @@ void GDALRegister_NITF()
     if( GDALGetDriverByName( "NITF" ) != NULL )
         return;
 
-    CPLString osCreationOptions;
-
-    osCreationOptions =
+    CPLString osCreationOptions =
 "<CreationOptionList>"
 "   <Option name='IC' type='string-select' default='NC' description='Compression mode. NC=no compression. "
 #ifdef JPEG_SUPPORTED
@@ -5681,7 +5679,9 @@ void GDALRegister_NITF()
 "   <Option name='TEXT' type='string' description='TEXT options as text-option-name=text-option-content'/>"
 "   <Option name='CGM' type='string' description='CGM options in cgm-option-name=cgm-option-content'/>";
 
-    for(unsigned int i=0;i<sizeof(asFieldDescription) / sizeof(asFieldDescription[0]); i++)
+    for( unsigned int i=0;
+         i < sizeof(asFieldDescription) / sizeof(asFieldDescription[0]);
+         i++)
     {
         osCreationOptions += CPLString().Printf(
             "   <Option name='%s' type='string' description='%s' maxsize='%d'/>",
@@ -5693,7 +5693,7 @@ void GDALRegister_NITF()
 "   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
 "   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>";
 
-    for(unsigned int i=0; apszFieldsBLOCKA[i] != NULL; i+=3)
+    for( unsigned int i=0; apszFieldsBLOCKA[i] != NULL; i+=3 )
     {
         char szFieldDescription[128];
         snprintf(szFieldDescription, sizeof(szFieldDescription),
@@ -5712,11 +5712,6 @@ void GDALRegister_NITF()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "National Imagery Transmission Format" );
 
-    poDriver->pfnIdentify = NITFDataset::Identify;
-    poDriver->pfnOpen = NITFDataset::Open;
-    poDriver->pfnCreate = NITFDataset::NITFDatasetCreate;
-    poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
-
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
@@ -5725,6 +5720,11 @@ void GDALRegister_NITF()
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->pfnIdentify = NITFDataset::Identify;
+    poDriver->pfnOpen = NITFDataset::Open;
+    poDriver->pfnCreate = NITFDataset::NITFDatasetCreate;
+    poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

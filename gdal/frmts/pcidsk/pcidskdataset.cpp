@@ -33,7 +33,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_PCIDSK(void);
+void GDALRegister_PCIDSK();
 CPL_C_END
 
 const int       nSegBlocks = 64;    // Number of blocks of Segment Pointers
@@ -1607,32 +1607,29 @@ PCIDSKDataset::CreateCopy( const char * pszFilename,
 void GDALRegister_PCIDSK()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "PCIDSK" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "PCIDSK" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "PCIDSK" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "PCIDSK Database File" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_pcidsk.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "PCIDSK" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PCIDSK Database File" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_pcidsk.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='FILEDESC1' type='string' description='The first line of descriptive text'/>"
 "   <Option name='FILEDESC2' type='string' description='The second line of descriptive text'/>"
 "   <Option name='BANDDESCn' type='string' description='Text describing contents of the specified band'/>"
-"</CreationOptionList>" ); 
+"</CreationOptionList>" );
 
-        poDriver->pfnIdentify = PCIDSKDataset::Identify;
-        poDriver->pfnOpen = PCIDSKDataset::Open;
-        poDriver->pfnCreate = PCIDSKDataset::Create;
-        poDriver->pfnCreateCopy = PCIDSKDataset::CreateCopy;
+    poDriver->pfnIdentify = PCIDSKDataset::Identify;
+    poDriver->pfnOpen = PCIDSKDataset::Open;
+    poDriver->pfnCreate = PCIDSKDataset::Create;
+    poDriver->pfnCreateCopy = PCIDSKDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

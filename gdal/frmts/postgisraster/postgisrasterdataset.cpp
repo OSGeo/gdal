@@ -46,7 +46,7 @@
 
 
 CPL_C_START
-void GDALRegister_PostGISRaster(void);
+void GDALRegister_PostGISRaster();
 CPL_C_END
 
 /** Note on read performance on mode=2:
@@ -3657,28 +3657,29 @@ GBool PostGISRasterDataset::PolygonFromCoords(
 }
 
 /***********************************************************************
- * GDALRegister_PostGISRaster()                
+ * GDALRegister_PostGISRaster()
  **********************************************************************/
-void GDALRegister_PostGISRaster() {
-    GDALDriver *poDriver;
+void GDALRegister_PostGISRaster()
 
-    if (! GDAL_CHECK_VERSION("PostGISRaster driver"))
+{
+    if( !GDAL_CHECK_VERSION( "PostGISRaster driver" ) )
         return;
 
-    if (GDALGetDriverByName("PostGISRaster") == NULL) {
-        poDriver = new PostGISRasterDriver();
+    if( GDALGetDriverByName( "PostGISRaster" ) != NULL )
+        return;
 
-        poDriver->SetDescription("PostGISRaster");
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                "PostGIS Raster driver");
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    GDALDriver *poDriver = new PostGISRasterDriver();
 
-        poDriver->pfnOpen = PostGISRasterDataset::Open;
-        poDriver->pfnIdentify = PostGISRasterDataset::Identify;
-        poDriver->pfnCreateCopy = PostGISRasterDataset::CreateCopy;
-        poDriver->pfnDelete = PostGISRasterDataset::Delete;
+    poDriver->SetDescription("PostGISRaster");
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "PostGIS Raster driver");
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver(poDriver);
-    }
+    poDriver->pfnOpen = PostGISRasterDataset::Open;
+    poDriver->pfnIdentify = PostGISRasterDataset::Identify;
+    poDriver->pfnCreateCopy = PostGISRasterDataset::CreateCopy;
+    poDriver->pfnDelete = PostGISRasterDataset::Delete;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

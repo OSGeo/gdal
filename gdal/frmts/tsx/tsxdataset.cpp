@@ -39,7 +39,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_TSX(void);
+void GDALRegister_TSX();
 CPL_C_END
 
 

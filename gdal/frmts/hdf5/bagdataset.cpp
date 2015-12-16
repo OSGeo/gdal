@@ -38,7 +38,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_BAG(void);
+void GDALRegister_BAG();
 CPL_C_END
 
 OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis, 
@@ -853,24 +853,21 @@ char **BAGDataset::GetMetadata( const char *pszDomain )
 void GDALRegister_BAG( )
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("BAG"))
+    if( !GDAL_CHECK_VERSION( "BAG" ) )
         return;
 
-    if(  GDALGetDriverByName( "BAG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "BAG" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "BAG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Bathymetry Attributed Grid" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_bag.html" );
-        poDriver->pfnOpen = BAGDataset::Open;
-        poDriver->pfnIdentify = BAGDataset::Identify;
+    GDALDriver *poDriver = new GDALDriver();
 
-        GetGDALDriverManager( )->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "BAG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Bathymetry Attributed Grid" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_bag.html" );
+    poDriver->pfnOpen = BAGDataset::Open;
+    poDriver->pfnIdentify = BAGDataset::Identify;
+
+    GetGDALDriverManager( )->RegisterDriver( poDriver );
 }

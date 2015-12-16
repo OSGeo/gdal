@@ -40,7 +40,7 @@ CPL_C_START
 CPL_C_END
 
 CPL_C_START
-void    GDALRegister_BLX(void);
+void GDALRegister_BLX();
 CPL_C_END
 
 class BLXDataset : public GDALPamDataset

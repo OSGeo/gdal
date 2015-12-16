@@ -43,8 +43,7 @@ LT_USE_LIDAR_NAMESPACE
 // #include "gdal_alg.h" // 1.6 and later have gridding algorithms
 
 CPL_C_START
-//void __declspec(dllexport) GDALRegister_MG4Lidar(void);
-void CPL_DLL GDALRegister_MG4Lidar(void);
+void CPL_DLL GDALRegister_MG4Lidar();
 CPL_C_END
 
 /************************************************************************/
@@ -911,35 +910,30 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                          GDALRegister_MG4Lidar()                        */
+/*                          GDALRegister_MG4Lidar()                     */
 /************************************************************************/
 
 void GDALRegister_MG4Lidar()
 
 {
-   GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("MG4Lidar driver"))
+    if( !GDAL_CHECK_VERSION( "MG4Lidar driver" ) )
         return;
 
-   if( GDALGetDriverByName( "MG4Lidar" ) == NULL )
-   {
-      poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "MG4Lidar" ) != NULL )
+        return;
 
-      poDriver->SetDescription( "MG4Lidar" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-      poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-         "MrSID Generation 4 / Lidar (.sid)" );
-      // To do:  update this help file in gdal.org
-      poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-         "frmt_mrsid_lidar.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-      poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "view" );
-      poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-         "Float64" );
+    poDriver->SetDescription( "MG4Lidar" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "MrSID Generation 4 / Lidar (.sid)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,  "frmt_mrsid_lidar.html" );
 
-      poDriver->pfnOpen = MG4LidarDataset::Open;
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "view" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float64" );
 
-      GetGDALDriverManager()->RegisterDriver( poDriver );
-   }
+    poDriver->pfnOpen = MG4LidarDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

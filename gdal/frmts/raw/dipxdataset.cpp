@@ -39,7 +39,7 @@ using std::fill;
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_DIPEx(void);
+void GDALRegister_DIPEx();
 CPL_C_END
 
 typedef struct {
@@ -378,7 +378,7 @@ void GDALRegister_DIPEx()
     if( GDALGetDriverByName( "DIPEx" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "DIPEx" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

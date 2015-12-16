@@ -41,7 +41,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_L1B(void);
+void GDALRegister_L1B();
 CPL_C_END
 
 typedef enum {                  // File formats
@@ -3509,25 +3509,21 @@ bad:
 void GDALRegister_L1B()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "L1B" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "L1B" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "L1B" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "NOAA Polar Orbiter Level 1b Data Set" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_l1b.html" );
+    poDriver->SetDescription( "L1B" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "NOAA Polar Orbiter Level 1b Data Set" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_l1b.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->pfnOpen = L1BDataset::Open;
+    poDriver->pfnIdentify = L1BDataset::Identify;
 
-        poDriver->pfnOpen = L1BDataset::Open;
-        poDriver->pfnIdentify = L1BDataset::Identify;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

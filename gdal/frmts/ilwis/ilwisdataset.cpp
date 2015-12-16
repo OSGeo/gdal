@@ -2036,8 +2036,7 @@ void GDALRegister_ILWIS()
 
     poDriver->SetDescription( "ILWIS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "ILWIS Raster Map" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ILWIS Raster Map" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mpr/mpl" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 Int32 Float64" );

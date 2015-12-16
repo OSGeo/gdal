@@ -37,7 +37,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_HKV(void);
+void GDALRegister_HKV();
 CPL_C_END
 
 /************************************************************************/
@@ -1816,7 +1816,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
 
 
 /************************************************************************/
-/*                         GDALRegister_HKV()                          */
+/*                         GDALRegister_HKV()                           */
 /************************************************************************/
 
 void GDALRegister_HKV()

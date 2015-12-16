@@ -743,20 +743,17 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
 void GDALRegister_MSG()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "MSG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "MSG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "MSG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "MSG HRIT Data" );
+    poDriver->SetDescription( "MSG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,  "MSG HRIT Data" );
 
-        poDriver->pfnOpen = MSGDataset::Open;
+    poDriver->pfnOpen = MSGDataset::Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

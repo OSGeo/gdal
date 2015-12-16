@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_RIK(void);
+void GDALRegister_RIK();
 CPL_C_END
 
 #define RIK_HEADER_DEBUG 0
@@ -1194,12 +1194,9 @@ void GDALRegister_RIK()
 
     poDriver->SetDescription( "RIK" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Swedish Grid RIK (.rik)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#RIK" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Swedish Grid RIK (.rik)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#RIK" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rik" );
-
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = RIKDataset::Open;

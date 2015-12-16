@@ -845,7 +845,7 @@ void GDALRegister_NTv2()
     if( GDALGetDriverByName( "NTv2" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "NTv2" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

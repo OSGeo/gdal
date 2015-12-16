@@ -37,7 +37,7 @@
 #include <map>
 
 CPL_C_START
-void CPL_DLL GDALRegister_KMLSUPEROVERLAY(void);
+void CPL_DLL GDALRegister_KMLSUPEROVERLAY();
 CPL_C_END
 
 /************************************************************************/

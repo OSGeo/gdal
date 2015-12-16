@@ -50,7 +50,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void GDALRegister_HDF5Image(void);
+void GDALRegister_HDF5Image();
 CPL_C_END
 
 /* release 1.6.3 or 1.6.4 changed the type of count in some api functions */
@@ -642,26 +642,23 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_HDF5Image( )
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("HDF5Image driver"))
+    if( !GDAL_CHECK_VERSION( "HDF5Image driver" ) )
         return;
 
-    if(  GDALGetDriverByName( "HDF5Image" ) == NULL )
-    {
-        poDriver = new GDALDriver( );
+    if( GDALGetDriverByName( "HDF5Image" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "HDF5Image" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "HDF5 Dataset" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_hdf5.html" );
-        poDriver->pfnOpen = HDF5ImageDataset::Open;
-        poDriver->pfnIdentify = HDF5ImageDataset::Identify;
+    GDALDriver *poDriver = new GDALDriver( );
 
-        GetGDALDriverManager( )->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "HDF5Image" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "HDF5 Dataset" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hdf5.html" );
+
+    poDriver->pfnOpen = HDF5ImageDataset::Open;
+    poDriver->pfnIdentify = HDF5ImageDataset::Identify;
+
+    GetGDALDriverManager( )->RegisterDriver( poDriver );
 }
 
 /************************************************************************/

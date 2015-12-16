@@ -264,7 +264,7 @@ void GDALRegister_LOSLAS()
     if( GDALGetDriverByName( "LOSLAS" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "LOSLAS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

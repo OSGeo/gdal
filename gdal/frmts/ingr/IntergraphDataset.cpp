@@ -873,7 +873,7 @@ void GDALRegister_INGR()
     if( GDALGetDriverByName( "INGR" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "INGR" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
@@ -882,9 +882,11 @@ void GDALRegister_INGR()
                                "frmt_IntergraphRaster.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-        "Byte Int16 Int32 Float32 Float64" );
+                               "Byte Int16 Int32 Float32 Float64" );
+
     poDriver->pfnOpen = IntergraphDataset::Open;
     poDriver->pfnCreate    = IntergraphDataset::Create;
     poDriver->pfnCreateCopy = IntergraphDataset::CreateCopy;
+
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

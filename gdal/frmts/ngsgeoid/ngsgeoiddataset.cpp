@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_NGSGEOID(void);
+void GDALRegister_NGSGEOID();
 CPL_C_END
 
 #define HEADER_SIZE (4 * 8 + 3 * 4)
@@ -418,8 +418,7 @@ void GDALRegister_NGSGEOID()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NOAA NGS Geoid Height Grids" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_ngsgeoid.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ngsgeoid.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bin" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

@@ -36,7 +36,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_BSB(void);
+void GDALRegister_BSB();
 CPL_C_END
 
 //Disabled as people may worry about the BSB patent
@@ -1160,14 +1160,13 @@ void GDALRegister_BSB()
     if( GDALGetDriverByName( "BSB" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "BSB" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Maptech BSB Nautical Charts" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#BSB" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#BSB" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #ifdef BSB_CREATE
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );

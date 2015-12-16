@@ -66,7 +66,7 @@ char *GPJ_grass_to_wkt(struct Key_Value *,
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_GRASS(void);
+void GDALRegister_GRASS();
 CPL_C_END
 
 #if GRASS_VERSION_MAJOR  >= 7
@@ -1037,25 +1037,21 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 void GDALRegister_GRASS()
 {
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("GDAL/GRASS57 driver"))
+    if( !GDAL_CHECK_VERSION( "GDAL/GRASS57 driver" ) )
         return;
 
-    if( GDALGetDriverByName( "GRASS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "GRASS" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "GRASS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "GRASS Rasters (5.7+)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_grass.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = GRASSDataset::Open;
+    poDriver->SetDescription( "GRASS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS Rasters (5.7+)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_grass.html" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = GRASSDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

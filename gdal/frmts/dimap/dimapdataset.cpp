@@ -38,7 +38,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_DIMAP(void);
+void GDALRegister_DIMAP();
 CPL_C_END
 
 /************************************************************************/

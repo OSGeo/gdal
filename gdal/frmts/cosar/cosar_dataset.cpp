@@ -43,7 +43,7 @@ const static int MAGIC1_OFFSET = 28; /* Magic number 1: 0x43534152 */
 // #define FILLER_MAGIC 0x7F7F7F7F  /* Filler value, we'll use this for a test */
 
 CPL_C_START
-void GDALRegister_COSAR(void);
+void GDALRegister_COSAR();
 CPL_C_END
 
 class COSARDataset : public GDALDataset
@@ -193,8 +193,10 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 
 
 /* register the driver with GDAL */
-void GDALRegister_COSAR() {
-    if (GDALGetDriverByName("cosar") != NULL)
+void GDALRegister_COSAR()
+
+{
+    if( GDALGetDriverByName( "cosar" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

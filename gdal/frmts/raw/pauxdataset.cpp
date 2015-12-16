@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_PAux(void);
+void GDALRegister_PAux();
 CPL_C_END
 
 /************************************************************************/

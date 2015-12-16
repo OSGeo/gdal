@@ -432,7 +432,7 @@ void GDALRegister_XPM()
     if( GDALGetDriverByName( "XPM" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "XPM" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

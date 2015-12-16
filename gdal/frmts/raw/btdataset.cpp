@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_BT(void);
+void GDALRegister_BT();
 CPL_C_END
 
 /************************************************************************/
@@ -930,26 +930,24 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 void GDALRegister_BT()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "BT" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "BT" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "BT" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+    poDriver->SetDescription( "BT" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "VTP .bt (Binary Terrain) 1.3 Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_various.html#BT" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bt" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Int16 Int32 Float32" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bt" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Int16 Int32 Float32" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = BTDataset::Open;
-        poDriver->pfnCreate = BTDataset::Create;
+    poDriver->pfnOpen = BTDataset::Open;
+    poDriver->pfnCreate = BTDataset::Create;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

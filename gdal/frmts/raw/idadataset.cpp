@@ -34,7 +34,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_IDA(void);
+void GDALRegister_IDA();
 CPL_C_END
 
 // convert a Turbo Pascal real into a double
@@ -1082,7 +1082,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_IDA()                          */
+/*                         GDALRegister_IDA()                           */
 /************************************************************************/
 
 void GDALRegister_IDA()

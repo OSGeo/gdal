@@ -48,7 +48,7 @@ static const double NULL3 = -3.4028226550889044521e+38;
 CPL_CVSID("$Id: isis3dataset.cpp 10646 2007-09-18 02:38:10Z xxxx $");
 
 CPL_C_START
-void GDALRegister_ISIS3(void);
+void GDALRegister_ISIS3();
 CPL_C_END
 
 class ISIS3Dataset;
