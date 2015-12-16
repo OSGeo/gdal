@@ -1083,7 +1083,8 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
     if( nBuckets > (INT_MAX - 10) / 12 )
         return NULL;
 
-    pszHistCounts = (char *) VSIMalloc(12 * nBuckets + 10);
+    const size_t nLen = 22 * static_cast<size_t>(nBuckets) + 10;
+    pszHistCounts = (char *) VSIMalloc(nLen);
     if( pszHistCounts == NULL )
         return NULL;
 
