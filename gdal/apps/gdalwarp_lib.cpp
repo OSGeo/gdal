@@ -33,6 +33,7 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "cpl_error.h"
+#include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "commonutils.h"
@@ -1308,6 +1309,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                       psOptions->papszTO );
             if(eError == CE_Failure)
             {
+                if( hTransformArg != NULL )
+                    GDALDestroyTransformer( hTransformArg );
+                GDALDestroyWarpOptions( psWO );
                 GDALWarpAppOptionsFree(psOptions);
 #ifdef OGR_ENABLED
                 if( hCutline != NULL )
@@ -1315,6 +1319,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 #endif
                 if( bMustCloseDstDSInCaseOfError )
                     GDALClose(hDstDS);
+                if( poSrcOvrDS )
+                    delete poSrcOvrDS;
                 return NULL;
             }
         }
@@ -1329,6 +1335,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             GDALSetMetadataItem(hDstDS, "SrcOvrLevel", CPLSPrintf("%d", psOptions->nOvLevel), NULL);
             if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
             {
+                if( hTransformArg != NULL )
+                    GDALDestroyTransformer( hTransformArg );
+                GDALDestroyWarpOptions( psWO );
                 GDALWarpAppOptionsFree(psOptions);
 #ifdef OGR_ENABLED
                 if( hCutline != NULL )
@@ -1336,6 +1345,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 #endif
                 if( bMustCloseDstDSInCaseOfError )
                     GDALClose(hDstDS);
+                if( poSrcOvrDS )
+                    delete poSrcOvrDS;
                 return NULL;
             }
 
@@ -2218,10 +2229,33 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     if( oTransformer.hSrcImageTransformer == NULL )
         return CE_Failure;
 
-    OGR_G_Transform( hMultiPolygon, 
+    OGRErr eErr = OGR_G_Transform( hMultiPolygon, 
                      (OGRCoordinateTransformationH) &oTransformer );
 
     GDALDestroyGenImgProjTransformer( oTransformer.hSrcImageTransformer );
+
+    if( eErr == OGRERR_FAILURE )
+    {
+        if( CSLTestBoolean(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+            CPLError(CE_Warning, CPLE_AppDefined, "Cutline transformation failed");
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cutline transformation failed");
+            OGR_G_DestroyGeometry( hMultiPolygon );
+            return CE_Failure;
+        }
+    }
+    else if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) )
+    {
+        if( CSLTestBoolean(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+            CPLError(CE_Warning, CPLE_AppDefined, "Cutline is not valid after transformation");
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cutline is not valid after transformation");
+            OGR_G_DestroyGeometry( hMultiPolygon );
+            return CE_Failure;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Convert aggregate geometry into WKT.                            */
