@@ -32,6 +32,8 @@
  *
  */
 
+/* stdio.h needed before including crnlib.h, since the later needs NULL to be defined */
+#include <stdio.h>
 #include "crnlib.h"
 #include "dds_defs.h"
 #include "gdal_frmts.h"
