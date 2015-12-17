@@ -1001,6 +1001,16 @@ public:
                                                int *pnPixelSpace,
                                                GIntBig *pnLineSpace,
                                                char **papszOptions );
+
+    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                          int nBuckets, GUIntBig * panHistogram,
+                          int bIncludeOutOfRange, int bApproxOK,
+                          GDALProgressFunc, void *pProgressData );
+
+    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, GUIntBig ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc, void *pProgressData);
 };
 
 /************************************************************************/
@@ -1484,6 +1494,39 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
     CPLDebug("GTiff", "GetVirtualMemAuto(): Defaulting to base implementation");
     return GDALRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace,
                                              pnLineSpace, papszOptions);
+}
+
+/************************************************************************/
+/*                           GetHistogram()                             */
+/************************************************************************/
+
+CPLErr  GTiffRasterBand::GetHistogram( double dfMin, double dfMax,
+                          int nBuckets, GUIntBig * panHistogram,
+                          int bIncludeOutOfRange, int bApproxOK,
+                          GDALProgressFunc pfnProgress, void *pProgressData )
+{
+    poGDS->LoadGeoreferencingAndPamIfNeeded();
+    return GDALPamRasterBand::GetHistogram(dfMin, dfMax, nBuckets, panHistogram,
+                                           bIncludeOutOfRange, bApproxOK,
+                                           pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                       GetDefaultHistogram()                          */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                             int *pnBuckets,
+                                             GUIntBig ** ppanHistogram,
+                                             int bForce,
+                                             GDALProgressFunc pfnProgress,
+                                             void *pProgressData )
+{
+    poGDS->LoadGeoreferencingAndPamIfNeeded();
+    return GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax,
+                                                  pnBuckets, ppanHistogram,
+                                                  bForce,
+                                                  pfnProgress, pProgressData);
 }
 
 /************************************************************************/
@@ -11585,8 +11628,18 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
+        CPLAssert(!bColorProfileMetadataChanged);
+        CPLAssert(!bMetadataChanged);
+        CPLAssert(!bGeoTIFFInfoChanged);
+        CPLAssert(!bNoDataChanged);
+
         TryLoadXML( GetSiblingFiles() );
         ApplyPamInfo();
+
+        bColorProfileMetadataChanged = FALSE;
+        bMetadataChanged = FALSE;
+        bGeoTIFFInfoChanged = FALSE;
+        bNoDataChanged = FALSE;
 
         int i;
         for(i=1;i<=nBands;i++)
