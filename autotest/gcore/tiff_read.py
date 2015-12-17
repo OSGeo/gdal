@@ -2248,6 +2248,40 @@ def tiff_read_empty_nodata_tag():
 
     return 'success'
 
+###############################################################################
+# Check that no auxiliary files are read with a simple Open(), reading
+# imagery and getting IMAGE_STRUCTURE metadata
+
+def tiff_read_strace_check():
+
+    if not sys.platform.startswith('linux'):
+        return 'skip'
+
+    python_exe = sys.executable
+    cmd = """strace -f %s -c "from osgeo import gdal; """ % python_exe + \
+            """ds = gdal.Open('../gcore/data/byte.tif');""" + \
+            """ds.ReadRaster();""" + \
+            """ds.GetMetadata('IMAGE_STRUCTURE');""" + \
+            """ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE');""" + \
+            """ " """ 
+    try:
+        (out, err) = gdaltest.runexternal_out_and_err(cmd)
+    except:
+        # strace not available
+        return 'skip'
+
+    lines_with_dotdot_gcore = []
+    for line in err.split('\n'):
+        if line.find('../gcore') >= 0:
+            lines_with_dotdot_gcore += [ line ]
+
+    if len(lines_with_dotdot_gcore) != 1:
+        gdaltest.post_reason('fail')
+        print(lines_with_dotdot_gcore)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -2302,6 +2336,7 @@ gdaltest_list.append( (tiff_read_tiff_metadata) )
 gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
 gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
 gdaltest_list.append( (tiff_read_empty_nodata_tag) )
+gdaltest_list.append( (tiff_read_strace_check) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
@@ -2317,7 +2352,7 @@ gdaltest_list.append( (tiff_read_md9) )
 gdaltest_list.append( (tiff_read_md10) )
 gdaltest_list.append( (tiff_read_md11) )
 
-#gdaltest_list = [ tiff_direct_and_virtual_mem_io ]
+#gdaltest_list = [ tiff_read_strace_check ]
 
 if __name__ == '__main__':
 
