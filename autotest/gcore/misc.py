@@ -464,6 +464,11 @@ def misc_9():
 
 def misc_10():
 
+    try:
+        os.remove('data/byte.tif.gz.properties')
+    except:
+        pass
+
     f = gdal.VSIFOpenL('/vsigzip/./data/byte.tif.gz', 'rb')
     gdal.VSIFReadL(1, 1, f)
     gdal.VSIFSeekL(f, 0, 2)
@@ -475,6 +480,11 @@ def misc_10():
     ar = struct.unpack('B' * 4, data)
     if ar != (73, 73, 42, 0):
         return 'fail'
+
+    try:
+        os.remove('data/byte.tif.gz.properties')
+    except:
+        pass
 
     return 'success'
 
