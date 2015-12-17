@@ -28,16 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "fit.h"
-#include "gstEndian.h"
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "fit.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gstEndian.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_FIT();
-CPL_C_END
 
 #define FIT_WRITE
 

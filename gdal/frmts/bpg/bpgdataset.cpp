@@ -28,8 +28,10 @@
  ****************************************************************************/
 
 #include <stdint.h>
-#include "gdal_pam.h"
+
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 // NOTE: build instructions
 // bpg Makefile needs to be modified to have -fPIC on CFLAGS:= at line 49 and LDFLAGS at line 54 before building bpg
@@ -40,10 +42,6 @@ CPL_C_START
 CPL_C_END
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_BPG();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

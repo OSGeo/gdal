@@ -30,16 +30,13 @@
 
 
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include <string.h>
 #include <fitsio.h>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_FITS();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

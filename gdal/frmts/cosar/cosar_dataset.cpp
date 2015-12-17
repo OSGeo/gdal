@@ -20,11 +20,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "gdal_priv.h"
-#include "cpl_port.h"
 #include "cpl_conv.h"
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+
 #include <string.h>
 
 /* Various offsets, in bytes */
@@ -41,10 +43,6 @@ const static int MAGIC1_OFFSET = 28; /* Magic number 1: 0x43534152 */
 
 // #define COSAR_MAGIC  0x43534152  /* String CSAR */
 // #define FILLER_MAGIC 0x7F7F7F7F  /* Filler value, we'll use this for a test */
-
-CPL_C_START
-void GDALRegister_COSAR();
-CPL_C_END
 
 class COSARDataset : public GDALDataset
 {

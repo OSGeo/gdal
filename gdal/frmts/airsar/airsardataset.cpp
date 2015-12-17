@@ -28,16 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "cpl_string.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_AirSAR();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

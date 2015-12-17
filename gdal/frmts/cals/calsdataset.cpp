@@ -27,14 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 
 #include "tiff.h"
 
 CPL_CVSID("$Id$");
-
-extern "C" void GDALRegister_CALS();
 
 /************************************************************************/
 /* ==================================================================== */

@@ -30,16 +30,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_minixml.h"
-#include "ogr_spatialref.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "gdal_proxy.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_DIMAP();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

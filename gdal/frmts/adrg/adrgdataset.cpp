@@ -26,10 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_pam.h"
+#include "gdal_frmts.h"
 #include "iso8211.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 

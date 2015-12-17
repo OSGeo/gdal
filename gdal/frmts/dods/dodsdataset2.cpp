@@ -65,17 +65,14 @@
 #include <Error.h>
 #include <escaping.h>
 
-#include "gdal_priv.h"		// GDAL
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 using namespace libdap;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_DODS();
-CPL_C_END
 
 /** Attribute names used to encode geo-referencing information. Note that
     these are not C++ objects to avoid problems with static global

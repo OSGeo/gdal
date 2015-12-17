@@ -28,19 +28,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
-#include "gdal_rat.h"
 #include "aigrid.h"
 #include "avc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_rat.h"
+#include "ogr_spatialref.h"
+
 #include <vector>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_AIGrid();
-CPL_C_END
 
 static CPLString OSR_GDS( char **papszNV, const char * pszField, 
                            const char *pszDefaultValue );

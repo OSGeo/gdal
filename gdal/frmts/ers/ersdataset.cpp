@@ -28,10 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "ershdrnode.h"
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 

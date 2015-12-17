@@ -33,17 +33,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
-#include "cpl_port.h"
 #include "cpl_conv.h"
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_COASP();
-CPL_C_END
 
 static const int TYPE_GENERIC = 0;
 static const int TYPE_GEOREF = 1;

@@ -30,7 +30,8 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
-#include <ogr_spatialref.h>
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
 #include "rawdataset.h"
 
 #include <json.h>

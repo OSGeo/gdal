@@ -32,15 +32,12 @@
  *
  */
 
-#include "gdal_pam.h"
 #include "crnlib.h"
 #include "dds_defs.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id: $");
-
-CPL_C_START
-void GDALRegister_DDS();
-CPL_C_END
 
 using namespace crnlib;
 

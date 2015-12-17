@@ -29,15 +29,13 @@
  ****************************************************************************/
 
 #include "dted_api.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_DTED();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

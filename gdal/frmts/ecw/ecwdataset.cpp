@@ -28,8 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_ecw.h"
 #include "cpl_minixml.h"
+#include "gdal_ecw.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "ogr_geometry.h"

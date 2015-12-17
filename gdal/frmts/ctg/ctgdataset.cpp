@@ -27,14 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_CTG();
-CPL_C_END
 
 static const int HEADER_LINE_COUNT = 5;
 

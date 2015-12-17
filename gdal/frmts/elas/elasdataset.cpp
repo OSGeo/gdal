@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #include <algorithm>
@@ -35,10 +36,6 @@
 using std::fill;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_ELAS();
-CPL_C_END
 
 typedef struct ELASHeader {
     ELASHeader();
