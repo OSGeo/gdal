@@ -181,6 +181,8 @@ class CPL_DLL GDALDefaultOverviews
                            char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
 
+    void       TransferSiblingFiles(char** papszSiblingFiles);
+
     int        IsInitialized();
 
     int        CloseDependentDatasets();
@@ -254,6 +256,8 @@ class CPL_DLL GDALOpenInfo
 
     int         TryToIngest(int nBytes);
     char      **GetSiblingFiles();
+    char      **StealSiblingFiles();
+    bool        AreSiblingFilesLoaded() const;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALOpenInfo);

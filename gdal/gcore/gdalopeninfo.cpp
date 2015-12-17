@@ -260,6 +260,29 @@ char** GDALOpenInfo::GetSiblingFiles()
     return papszSiblingFiles;
 }
 
+/************************************************************************/
+/*                         StealSiblingFiles()                          */
+/*                                                                      */
+/*      Same as GetSiblingFiles() except that the list is stealed       */
+/*      (ie ownership transferred to the caller) and the associated     */
+/*      member variable is set to NULL.                                 */
+/************************************************************************/
+
+char** GDALOpenInfo::StealSiblingFiles()
+{
+    char** papszRet = GetSiblingFiles();
+    papszSiblingFiles = NULL;
+    return papszRet;
+}
+
+/************************************************************************/
+/*                        AreSiblingFilesLoaded()                       */
+/************************************************************************/
+
+bool GDALOpenInfo::AreSiblingFilesLoaded() const
+{
+    return bHasGotSiblingFiles != FALSE;
+}
 
 /************************************************************************/
 /*                           TryToIngest()                              */

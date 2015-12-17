@@ -156,6 +156,20 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 }
 
 /************************************************************************/
+/*                         TransferSiblingFiles()                       */
+/*                                                                      */
+/*      Contrary to Initialize(), this sets papszInitSiblingFiles but   */
+/*      without duplicating the passed list. Which must be              */
+/*      "de-allocatable" with CSLDestroy()                              */
+/************************************************************************/
+
+void GDALDefaultOverviews::TransferSiblingFiles(char** papszSiblingFiles)
+{
+    CSLDestroy( papszInitSiblingFiles );
+    papszInitSiblingFiles = papszSiblingFiles;
+}
+
+/************************************************************************/
 /*                            OverviewScan()                            */
 /*                                                                      */
 /*      This is called to scan for overview files when a first          */
