@@ -459,7 +459,7 @@ class GTiffDataset : public GDALPamDataset
 
     CPLErr	   OpenOffset( TIFF *, GTiffDataset **ppoActiveDSRef, 
                                toff_t nDirOffset, int bBaseIn, GDALAccess, 
-                               int bAllowRGBAInterface = TRUE, int bReadGeoTransform = FALSE);
+                               int bAllowRGBAInterface = TRUE, bool bReadGeoTransform = false);
 
     static GDALDataset *OpenDir( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -9894,7 +9894,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
                           TIFFCurrentDirOffset(hTIFF), TRUE,
                           poOpenInfo->eAccess, 
-                          bAllowRGBAInterface, TRUE) != CE_None )
+                          bAllowRGBAInterface, true) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -10406,7 +10406,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 
     if( poDS->OpenOffset( hTIFF, &(poDS->poActiveDS),
                           nOffset, FALSE, GA_ReadOnly,
-                          bAllowRGBAInterface, TRUE ) != CE_None )
+                          bAllowRGBAInterface, true ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -10802,7 +10802,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                  toff_t nDirOffsetIn, 
 				 int bBaseIn, GDALAccess eAccessIn,
                                  int bAllowRGBAInterface,
-                                 int bReadGeoTransform )
+                                 bool bReadGeoTransform )
 
 {
     bool bTreatAsBitmap = false;
