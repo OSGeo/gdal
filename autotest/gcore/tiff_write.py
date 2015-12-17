@@ -4051,7 +4051,7 @@ def tiff_write_97():
         gdaltest.post_reason( 'did not get expected AREA_OR_POINT value' )
         return 'fail'
 
-    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', 'FALSE' )
+    gdal.SetConfigOption( 'GTIFF_POINT_GEO_IGNORE', None )
 
     # read back this file with pixelispoint behavior enabled.
 
