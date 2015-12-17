@@ -2142,7 +2142,8 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         if( GDALGetProjectionRef( hSrcDS ) != NULL 
             && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
             pszProjection = GDALGetProjectionRef( hSrcDS );
-        else if( GDALGetGCPProjection( hSrcDS ) != NULL )
+        else if( GDALGetGCPProjection( hSrcDS ) != NULL
+            && strlen(GDALGetGCPProjection( hSrcDS )) > 0 )
             pszProjection = GDALGetGCPProjection( hSrcDS );
         else if( GDALGetMetadata( hSrcDS, "RPC" ) != NULL )
             pszProjection = SRS_WKT_WGS84;
