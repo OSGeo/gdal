@@ -1043,7 +1043,7 @@ def vrtpansharpen_2():
     if vrt_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    gdal.GetDriverByName('GTiff').CreateCopy('out1.tif', vrt_ds)
+    #gdal.GetDriverByName('GTiff').CreateCopy('out1.tif', vrt_ds)
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
     if cs != [50261, 4735, 10000, 9742]:
         gdaltest.post_reason('fail')
@@ -1099,7 +1099,7 @@ def vrtpansharpen_2():
     if vrt_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    gdal.GetDriverByName('GTiff').CreateCopy('out2.tif', vrt_ds)
+    #gdal.GetDriverByName('GTiff').CreateCopy('out2.tif', vrt_ds)
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
     if cs != [50261, 4735, 10000, 9742]:
         gdaltest.post_reason('fail')

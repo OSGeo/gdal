@@ -78,6 +78,9 @@ def idrisi_cleanup():
     gdaltest.clean_tmp()
     try:
         os.unlink('data/rgbsmall.tif.aux.xml')
+        os.unlink('data/real.rst.aux.xml')
+        os.unlink('data/frmt09.cot.aux.xml')
+        os.unlink('data/byte.rst.aux.xml')
         print('FIXME?: data/rgbsmall.tif.aux.xml is produced by those tests') 
     except:
         pass

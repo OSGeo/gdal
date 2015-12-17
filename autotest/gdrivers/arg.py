@@ -205,7 +205,7 @@ def arg_blocksize():
     stat = os.stat('data/utm.arg')
 
     os.remove('data/utm-uneven-blocks.tif')
-    os.remove('data/utm.arg')
+    gdal.GetDriverByName('ARG').Delete('data/utm.arg')
 
     if stat.st_size != (xsize*ysize):
         return 'fail'
@@ -221,7 +221,7 @@ def arg_layername():
     if gdaltest.argDriver is None:
         return 'skip'
 
-    ds = gdal.Open('data/arg-int16.arg');
+    ds = gdal.Open('data/arg-int16.arg')
 
     lyr = 'ARG FTW'
 
@@ -244,11 +244,13 @@ def arg_layername():
     lyr2 = ds.GetMetadata()['LAYER']
 
     ds = None
-    os.remove('data/arg-int16-2.arg')
+    gdal.GetDriverByName('ARG').Delete('data/arg-int16-2.arg')
 
     # does the new dataset's layer match the layer set before copying
     if lyr2 != lyr:
         return 'fail'
+
+    os.unlink('data/arg-int16.arg.aux.xml')
 
     return 'success'
 
@@ -312,9 +314,8 @@ def arg_byteorder():
             tmp1.close()
             tmp2.close()
 
-            os.remove(basename+'.tif')
-            os.remove(basename+'2.arg')
-            os.remove(basename+'2.json')
+            gdal.GetDriverByName('GTiff').Delete(basename+'.tif')
+            gdal.GetDriverByName('ARG').Delete(basename+'2.arg')
 
             if data1 != data2:
                 return 'fail'
