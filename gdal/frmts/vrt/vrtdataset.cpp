@@ -788,11 +788,14 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLFree( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
-/*      Open overviews.                                                 */
+/*      Initialize info for later overview discovery.                   */
 /* -------------------------------------------------------------------- */
     if( fp != NULL && poDS != NULL )
-        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
-                                     poOpenInfo->GetSiblingFiles() );
+    {
+        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+        if( poOpenInfo->AreSiblingFilesLoaded() )
+            poDS->oOvManager.TransferSiblingFiles( poOpenInfo->StealSiblingFiles() );
+    }
 
     return poDS;
 }
