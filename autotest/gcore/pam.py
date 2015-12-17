@@ -197,9 +197,13 @@ def pam_6():
 
     ds = gdal.Open( 'data/f2r23.tif' )
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason( 'did not get expect .aux sourced nodata.' )
+        gdaltest.post_reason( 'did not get expected .aux sourced nodata.' )
         return 'fail'
     ds = None
+
+    if os.path.exists('data/f2r23.tif.aux.xml'):
+        gdaltest.post_reason( 'did not expect .aux.xml to be created.' )
+        return 'fail'
 
     return 'success'
 
