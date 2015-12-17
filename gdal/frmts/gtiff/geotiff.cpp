@@ -3135,7 +3135,7 @@ CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
             // Cancel any existing metadata from PAM file
             if( eAccess == GA_Update &&
                 GDALPamRasterBand::GetMetadata(pszDomain) != NULL )
-                GDALPamRasterBand::SetMetadata(papszMD, pszDomain);
+                GDALPamRasterBand::SetMetadata(NULL, pszDomain);
         }
     }
 
@@ -12917,7 +12917,7 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
         // Cancel any existing metadata from PAM file
         if( eAccess == GA_Update &&
             GDALPamDataset::GetMetadata(pszDomain) != NULL )
-            GDALPamDataset::SetMetadata(papszMD, pszDomain);
+            GDALPamDataset::SetMetadata(NULL, pszDomain);
     }
 
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
