@@ -28,16 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "bsb_read.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_BSB();
-CPL_C_END
 
 //Disabled as people may worry about the BSB patent
 //#define BSB_CREATE

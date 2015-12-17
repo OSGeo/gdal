@@ -28,21 +28,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "timedelta.hpp"
 #include "adsrange.hpp"
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_srs_api.h"
+#include "timedelta.hpp"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
 #include "EnvisatFile.h"
 #include "records.h"
-CPL_C_END
-
-CPL_C_START
-void GDALRegister_Envisat();
 CPL_C_END
 
 /************************************************************************/

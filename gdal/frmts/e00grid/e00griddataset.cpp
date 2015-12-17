@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
-#include "ogr_spatialref.h"
+#include "cpl_vsi_virtual.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "ogr_spatialref.h"
 
 /* Private import of e00read.c */
 #define E00ReadOpen         GDALE00GRIDReadOpen
@@ -47,10 +48,6 @@ static const int E00_DOUBLE_SIZE = 21;
 static const int VALS_PER_LINE = 5;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_E00GRID();
-CPL_C_END
 
 /* g++ -fPIC -Wall -g frmts/e00grid/e00griddataset.cpp -shared -o gdal_E00GRID.so -Iport -Igcore -Iogr -L. -lgdal */
 

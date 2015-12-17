@@ -30,18 +30,15 @@
 *
 */
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
-
-CPL_CVSID("$Id$");
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 CPL_C_START
 #include <blx.h>
 CPL_C_END
 
-CPL_C_START
-void GDALRegister_BLX();
-CPL_C_END
+CPL_CVSID("$Id$");
 
 class BLXDataset : public GDALPamDataset
 {
