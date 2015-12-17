@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 
 from osgeo import gdal, ogr
 import gdaltest
+import ogrtest
 
 ###############################################################################
 # Simple test
@@ -916,6 +917,30 @@ def test_gdalwarp_lib_125():
     return 'success'
 
 ###############################################################################
+# Test cutline with invalid geometry
+
+def test_gdalwarp_lib_126():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,0 1,1 0,0 0))')) # Self intersecting
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = '/vsimem/cutline.shp')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -989,6 +1014,7 @@ gdaltest_list = [
     test_gdalwarp_lib_123,
     test_gdalwarp_lib_124,
     test_gdalwarp_lib_125,
+    test_gdalwarp_lib_126,
     test_gdalwarp_lib_cleanup,
     ]
 
