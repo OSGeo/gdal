@@ -29,12 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <ctype.h>
-#include <climits>
-
 // We need cpl_port as first include to avoid VSIStatBufL being not
 // defined on i586-mingw32msvc.
 #include "cpl_port.h"
+
+#include <ctype.h>
+#include <climits>
+
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "gdal_frmts.h"
