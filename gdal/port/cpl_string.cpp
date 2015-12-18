@@ -977,7 +977,7 @@ const char *CPLSPrintf(const char *fmt, ...)
 /*      time.                                                           */
 /* -------------------------------------------------------------------- */
     int *pnBufIndex = reinterpret_cast<int *>( pachBufRingInfo );
-    const int nOffset = sizeof(int) + *pnBufIndex * CPLSPrintf_BUF_SIZE;
+    const size_t nOffset = sizeof(int) + *pnBufIndex * CPLSPrintf_BUF_SIZE;
     char *pachBuffer = pachBufRingInfo + nOffset;
 
     *pnBufIndex = (*pnBufIndex + 1) % CPLSPrintf_BUF_Count;

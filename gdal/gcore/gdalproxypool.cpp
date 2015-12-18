@@ -361,10 +361,10 @@ void GDALDatasetPool::Ref()
     CPLMutexHolderD( GDALGetphDLMutex() );
     if (singleton == NULL)
     {
-        int maxSize = atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
-        if (maxSize < 2 || maxSize > 1000)
-            maxSize = 100;
-        singleton = new GDALDatasetPool(maxSize);
+        int l_maxSize = atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
+        if (l_maxSize < 2 || l_maxSize > 1000)
+            l_maxSize = 100;
+        singleton = new GDALDatasetPool(l_maxSize);
     }
     if (singleton->refCountOfDisableRefCount == 0)
       singleton->refCount++;

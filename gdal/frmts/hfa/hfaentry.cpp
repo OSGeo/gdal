@@ -241,15 +241,15 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
         return NULL;
     }
 
-    GByte* pabyData = (GByte *) VSIMalloc(nMIFObjectSize);
-    if (pabyData == NULL)
+    GByte* l_pabyData = (GByte *) VSIMalloc(nMIFObjectSize);
+    if (l_pabyData == NULL)
         return NULL;
 
-    memcpy( pabyData, pszField, nMIFObjectSize );
+    memcpy( l_pabyData, pszField, nMIFObjectSize );
 
     return new HFAEntry(poContainer, pszMIFObjectPath,
                         osDictionary, osType,
-                        nMIFObjectSize, pabyData);
+                        nMIFObjectSize, l_pabyData);
 
 }
 
