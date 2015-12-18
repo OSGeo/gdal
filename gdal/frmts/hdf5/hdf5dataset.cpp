@@ -45,16 +45,12 @@
 #pragma warning( pop ) 
 #endif
 
-
-#include "gdal_priv.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
 #include "hdf5dataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_HDF5();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

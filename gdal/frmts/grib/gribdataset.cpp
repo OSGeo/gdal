@@ -30,8 +30,10 @@
  *
  */
 
-#include "gdal_pam.h"
 #include "cpl_multiproc.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "ogr_spatialref.h"
 
 #include "degrib18/degrib/degrib2.h"
 #include "degrib18/degrib/inventory.h"
@@ -39,13 +41,7 @@
 #include "degrib18/degrib/filedatasource.h"
 #include "degrib18/degrib/memorydatasource.h"
 
-#include "ogr_spatialref.h"
-
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_GRIB();
-CPL_C_END
 
 static CPLMutex *hGRIBMutex = NULL;
 

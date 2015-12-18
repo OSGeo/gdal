@@ -38,16 +38,13 @@
 #  define RAD2DEG (180.0/M_PI)
 #endif
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+
 #include <sstream>
 
-
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_IRIS();
-CPL_C_END
 
 #define ARRAY_ELEMENT_COUNT(x) ((sizeof(x))/sizeof(x[0]))
 

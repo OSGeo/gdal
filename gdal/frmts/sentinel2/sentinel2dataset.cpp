@@ -51,6 +51,8 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
+// TODO: Leave this declaration while Sentinel2 folks use this as a
+// plugin with GDAL 1.x.
 void GDALRegister_SENTINEL2();
 CPL_C_END
 

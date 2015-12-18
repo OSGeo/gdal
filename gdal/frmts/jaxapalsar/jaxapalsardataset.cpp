@@ -30,13 +30,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_PALSARJaxa();
-CPL_C_END
 
 #if defined(WIN32)
 #define SEP_STRING "\\"

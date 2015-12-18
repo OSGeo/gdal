@@ -28,11 +28,8 @@
  *
  */
 
+#include "gdal_frmts.h"
 #include "keadataset.h"
-
-CPL_C_START
-void CPL_DLL GDALRegister_KEA();
-CPL_C_END
 
 // method to register this driver
 void GDALRegister_KEA()

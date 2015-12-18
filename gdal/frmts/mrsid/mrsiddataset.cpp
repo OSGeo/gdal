@@ -30,10 +30,11 @@
 
 #define NO_DELETE
 
-#include "gdaljp2abstractdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
+#include "ogr_spatialref.h"
 #include <string>
 
 #include <geo_normalize.h>

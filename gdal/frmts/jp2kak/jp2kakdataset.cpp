@@ -28,10 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdaljp2abstractdataset.h"
-#include "gdaljp2metadata.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include "gdal_frmts.h"
+#include "gdaljp2abstractdataset.h"
+#include "gdaljp2metadata.h"
 
 #include "../mem/memdataset.h"
 
@@ -54,7 +55,7 @@ CPL_CVSID("$Id$");
     using namespace kdu_supp;
 #endif
 
-// #define KAKADU_JPX	1
+// #define KAKADU_JPX 1
 
 static int kakadu_initialized = FALSE;
 

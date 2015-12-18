@@ -38,10 +38,11 @@
 #include <algorithm>
 #include <fstream>
 
+#include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
-#include "cpl_conv.h"
 #include "cpl_vsi.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
 #include "../vrt/vrtdataset.h"

@@ -35,6 +35,7 @@
 #include <limits.h>
 #include <assert.h>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #ifndef DBL_MAX
@@ -62,10 +63,6 @@
 #endif /* SHRT_MAX */
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_GSBG();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

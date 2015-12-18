@@ -32,6 +32,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdalexif.h"
 #include "memdataset.h"
@@ -91,10 +92,6 @@ GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 #endif
-
-CPL_C_START
-void GDALRegister_JPEG();
-CPL_C_END
 
 #include "vsidataio.h"
 

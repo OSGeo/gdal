@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "memdataset.h"
 
 CPL_CVSID("$Id$");

@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
@@ -35,10 +36,6 @@
 using namespace msg_native_format;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_MSGN();
-CPL_C_END
 
 typedef enum {
     MODE_VISIR,     // Visible and Infrared bands (1 through 11) in 10-bit raw mode

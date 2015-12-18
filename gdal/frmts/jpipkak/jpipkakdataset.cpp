@@ -8,7 +8,7 @@
  ******************************************************************************
  * ITT Visual Information Systems grants you use of this code, under the 
  * following license:
- * 
+ *
  * Copyright (c) 2000-2007, ITT Visual Information Solutions 
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,10 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
 **/
 
+#include "gdal_frmts.h"
 #include "jpipkakdataset.h"
 
-
-/* 
+/*
 ** The following are for testing premature stream termination support.
 ** This is a mechanism to test handling of failed or incomplete reads 
 ** from the server, and is not normally active.  For this reason we
