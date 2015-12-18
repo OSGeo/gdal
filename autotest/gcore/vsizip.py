@@ -499,7 +499,6 @@ def vsizip_13():
         f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_13.zip/%d" % i, "wb")
         gdal.VSIFCloseL(f)
     gdal.VSIFCloseL(fmain)
-    
 
     lst = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip')
     if len(lst) < 4:
@@ -507,7 +506,7 @@ def vsizip_13():
         return 'fail'
     # Test truncation
     lst_truncated = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip', int(len(lst)/2))
-    if lst_truncated <= int(len(lst)/2):
+    if len(lst_truncated) <= int(len(lst)/2):
         gdaltest.post_reason('fail')
         return 'fail'
 
