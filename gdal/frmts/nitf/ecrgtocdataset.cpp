@@ -263,9 +263,9 @@ static GIntBig GetFromBase34(const char* pszVal, int nMaxSize)
             chVal = ch - '0';
         else if (ch >= 'a' && ch <= 'h')
             chVal = ch - 'a' + 10;
-        else if (ch >= 'j' && ch < 'n')
+        else if (ch >= 'j' && ch <= 'n')
             chVal = ch - 'a' + 10 - 1;
-        else if (ch > 'p' && ch <= 'z')
+        else if (ch >= 'p' && ch <= 'z')
             chVal = ch - 'a' + 10 - 2;
         else
         {
@@ -1077,7 +1077,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 osFilename = papszTokens[2];
                 osFilename += ":";
-                osFilename = papszTokens[3];
+                osFilename += papszTokens[3];
             }
             else
             {
@@ -1093,7 +1093,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
             osScale = papszTokens[2];
             osFilename = papszTokens[3];
             osFilename += ":";
-            osFilename = papszTokens[4];
+            osFilename += papszTokens[4];
         }
         else
         {
