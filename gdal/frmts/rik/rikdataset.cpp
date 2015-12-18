@@ -30,13 +30,10 @@
 
 #include <cfloat>
 #include <zlib.h>
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_RIK();
-CPL_C_END
 
 #define RIK_HEADER_DEBUG 0
 #define RIK_CLEAR_DEBUG 0

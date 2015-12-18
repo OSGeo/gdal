@@ -28,10 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
 #include "cpl_http.h"
 #include "cpl_minixml.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
 #include <vector>
 #include <set>
@@ -1982,7 +1983,6 @@ GDALDataset *WMTSDataset::CreateCopy( const char * pszFilename,
 void GDALRegister_WMTS()
 
 {
-
     if( !GDAL_CHECK_VERSION( "WMTS driver" ) )
         return;
 

@@ -29,15 +29,12 @@
 
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #include <cmath>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_ZMap();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

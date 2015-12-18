@@ -29,15 +29,12 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 
 #include "rmfdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_RMF();
-CPL_C_END
 
 static const int RMF_DEFAULT_BLOCKXSIZE = 256;
 static const int RMF_DEFAULT_BLOCKYSIZE = 256;

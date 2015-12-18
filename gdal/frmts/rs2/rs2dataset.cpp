@@ -29,14 +29,11 @@
  ****************************************************************************/
 
 #include "cpl_minixml.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_RS2();
-CPL_C_END
 
 typedef enum eCalibration_t {
     Sigma0 = 0,

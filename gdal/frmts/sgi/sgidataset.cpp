@@ -32,17 +32,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include "cpl_port.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_SGI();
-CPL_C_END
 
 struct ImageRec
 {

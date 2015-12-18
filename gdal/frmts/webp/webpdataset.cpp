@@ -27,17 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 #include "webp/decode.h"
 #include "webp/encode.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_WEBP();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
