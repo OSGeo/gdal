@@ -128,7 +128,7 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
     virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
 
 #ifdef VSI_COUNT_BYTES_READ
@@ -582,10 +582,11 @@ int VSIUnixStdioFilesystemHandler::Rmdir( const char * pszPathname )
 }
 
 /************************************************************************/
-/*                              ReadDir()                               */
+/*                              ReadDirEx()                             */
 /************************************************************************/
 
-char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
+char **VSIUnixStdioFilesystemHandler::ReadDirEx( const char *pszPath,
+                                                 int nMaxFiles )
 
 {
     if (strlen(pszPath) == 0)
@@ -600,7 +601,11 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
 
         struct dirent *psDirEntry;
         while( (psDirEntry = readdir(hDir)) != NULL )
+        {
             oDir.AddString( psDirEntry->d_name );
+            if( nMaxFiles > 0 && oDir.Count() > nMaxFiles )
+                break;
+        }
 
         closedir( hDir );
     }

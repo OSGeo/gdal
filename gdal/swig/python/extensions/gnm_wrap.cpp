@@ -179,8 +179,8 @@ template <typename T> T SwigValueInit() {
   creating a static or dynamic library from the SWIG runtime code.
   In 99.9% of the cases, SWIG just needs to declare them as 'static'.
 
-  But only do this if strictly necessary, i.e. if you have problems
-  with your compiler or such.
+  But only do this if strictly necessary, ie, if you have problems
+  with your compiler or suchlike.
 */
 
 #ifndef SWIGRUNTIME
@@ -1189,7 +1189,7 @@ SWIGRUNTIME PyObject* SWIG_PyInstanceMethod_New(PyObject *SWIGUNUSEDPARM(self), 
 #define SWIG_ConvertFunctionPtr(obj, pptr, type)        SWIG_Python_ConvertFunctionPtr(obj, pptr, type)
 #define SWIG_NewFunctionPtrObj(ptr, type)               SWIG_Python_NewPointerObj(NULL, ptr, type, 0)
 
-/* for C++ member pointers, i.e. member methods */
+/* for C++ member pointers, ie, member methods */
 #define SWIG_ConvertMember(obj, ptr, sz, ty)            SWIG_Python_ConvertPacked(obj, ptr, sz, ty)
 #define SWIG_NewMemberObj(ptr, sz, type)                SWIG_Python_NewPackedObj(ptr, sz, type)
 
@@ -1802,7 +1802,7 @@ swigobject_methods[] = {
 static PyMethodDef
 swigobject_methods[] = {
   {(char *)"disown",  (PyCFunction)SwigPyObject_disown,  METH_VARARGS,  (char *)"releases ownership of the pointer"},
-  {(char *)"acquire", (PyCFunction)SwigPyObject_acquire, METH_VARARGS,  (char *)"acquires ownership of the pointer"},
+  {(char *)"acquire", (PyCFunction)SwigPyObject_acquire, METH_VARARGS,  (char *)"aquires ownership of the pointer"},
   {(char *)"own",     (PyCFunction)SwigPyObject_own,     METH_VARARGS,  (char *)"returns/sets ownership of the pointer"},
   {(char *)"append",  (PyCFunction)SwigPyObject_append,  METH_VARARGS,  (char *)"appends another 'this' object"},
   {(char *)"next",    (PyCFunction)SwigPyObject_next,    METH_VARARGS,  (char *)"returns the next 'this' object"},
@@ -2766,7 +2766,7 @@ SWIG_Python_TypeQuery(const char *type)
 
 SWIGRUNTIME int
 SWIG_Python_AddErrMesg(const char* mesg, int infront)
-{
+{  
   if (PyErr_Occurred()) {
     PyObject *type = 0;
     PyObject *value = 0;
@@ -4018,15 +4018,14 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
         PyObject *item_list = PyMapping_Items( obj1 );
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
-
+          
           PyObject *k, *v;
           if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
             Py_DECREF(it);
-            PyErr_SetString( PyExc_TypeError,
-                             "Dictionary must contain tuples of strings" );
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
           }
-
+          
           int bFreeK, bFreeV;
           char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
           char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
@@ -4035,12 +4034,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
             Py_DECREF(it);
-            PyErr_SetString( PyExc_TypeError,
-                             "Dictionary must contain tuples of strings" );
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
           }
           arg2 = CSLAddNameValue( arg2, pszK, pszV );
-
+          
           GDALPythonFreeCStr(pszK, bFreeK);
           GDALPythonFreeCStr(pszV, bFreeV);
           Py_DECREF(it);
@@ -4049,8 +4047,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       }
     }
     else {
-      PyErr_SetString( PyExc_TypeError,
-                       "Argument must be dictionary or sequence of strings" );
+      PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
       SWIG_fail;
     }
   }

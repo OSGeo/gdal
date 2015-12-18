@@ -239,6 +239,7 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
 
 
     char**              ParseHTMLFileList(const char* pszFilename,
+                                          int nMaxFiles,
                                           char* pszData,
                                           bool* pbGotFileList);
 
@@ -247,12 +248,15 @@ protected:
 
     virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
     virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
-    virtual char** GetFileList(const char *pszFilename, bool* pbGotFileList);
+    virtual char** GetFileList(const char *pszFilename,
+                               int nMaxFiles,
+                               bool* pbGotFileList);
     virtual CPLString GetURLFromDirname( const CPLString& osDirname );
 
     void AnalyseS3FileList( const CPLString& osBaseURL,
                             const char* pszXML,
                             CPLStringList& osFileList,
+                            int nMaxFiles,
                             bool& bIsTruncated,
                             CPLString& osNextMarker );
 
@@ -267,8 +271,8 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
-            char   **ReadDir( const char *pszDirname, bool* pbGotFileList );
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
+            char   **ReadDir( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
             void     InvalidateDirContent( const char *pszDirname );
 
 
@@ -1905,7 +1909,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
         !STARTS_WITH(CPLGetExtension(osFilename), "zip") && !bSkipReadDir)
     {
-        char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
+        char** papszFileList = ReadDir(CPLGetDirname(osFilename), 0, &bGotFileList);
         const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
@@ -2113,6 +2117,7 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
 /************************************************************************/
 
 char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
+                                                   int nMaxFiles,
                                                    char* pszData,
                                                    bool* pbGotFileList)
 {
@@ -2276,6 +2281,9 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                                 brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
                                 brokendowntime.tm_hour, brokendowntime.tm_min, brokendowntime.tm_sec);
                     nCount ++;
+
+                    if( nMaxFiles > 0 && oFileList.Count() > nMaxFiles )
+                        break;
                 }
             }
         }
@@ -2293,6 +2301,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
 void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
                                         const char* pszXML,
                                         CPLStringList& osFileList,
+                                        int nMaxFiles,
                                         bool& bIsTruncated,
                                         CPLString& osNextMarker )
 {
@@ -2366,9 +2375,16 @@ void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
                     }
                 }
             }
+
+            if( nMaxFiles > 0 && osFileList.Count() > nMaxFiles )
+                break;
         }
-        osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
-        bIsTruncated = CPL_TO_BOOL(CSLTestBoolean(CPLGetXMLValue(psListBucketResult, "IsTruncated", "false")));
+
+        if( !(nMaxFiles > 0 && osFileList.Count() > nMaxFiles) )
+        {
+            osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
+            bIsTruncated = CPL_TO_BOOL(CSLTestBoolean(CPLGetXMLValue(psListBucketResult, "IsTruncated", "false")));
+        }
     }
     CPLDestroyXMLNode(psTree);
 }
@@ -2529,7 +2545,9 @@ CPLString VSICurlFilesystemHandler::GetURLFromDirname( const CPLString& osDirnam
 /*                          GetFileList()                               */
 /************************************************************************/
 
-char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGotFileList)
+char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
+                                             int nMaxFiles,
+                                             bool* pbGotFileList)
 {
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "GetFileList(%s)" , pszDirname);
@@ -2589,6 +2607,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
                 STARTS_WITH_CI(pszLine, "<HTML>"))
             {
                 papszFileList = ParseHTMLFileList(pszDirname,
+                                                  nMaxFiles,
                                                   sWriteFuncData.pBuffer,
                                                   pbGotFileList);
                 break;
@@ -2638,6 +2657,9 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
                         }
 
                         nCount ++;
+
+                        if( nMaxFiles > 0 && oFileList.Count() > nMaxFiles )
+                            break;
                     }
 
                     pszLine = c + 1;
@@ -2730,6 +2752,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
             AnalyseS3FileList( osBaseURL,
                                (const char*)sWriteFuncData.pBuffer,
                                osFileList,
+                               nMaxFiles,
                                bIsTruncated,
                                osNextMarker );
             // If the list is truncated, then don't report it
@@ -2742,6 +2765,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, bool* pbGot
         else
         {
             papszFileList = ParseHTMLFileList(pszDirname,
+                                              nMaxFiles,
                                               sWriteFuncData.pBuffer,
                                               pbGotFileList);
         }
@@ -2773,7 +2797,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     if (STARTS_WITH(osFilename, "/vsicurl/ftp") &&
         pszFilename[strlen(osFilename) - 1] == '/' && !bSkipReadDir)
     {
-        char** papszFileList = ReadDir(osFilename);
+        char** papszFileList = ReadDirEx(osFilename, 0);
         if (papszFileList)
         {
             pStatBuf->st_mode = S_IFDIR;
@@ -2792,7 +2816,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
              !bSkipReadDir)
     {
         bool bGotFileList;
-        char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
+        char** papszFileList = ReadDir(CPLGetDirname(osFilename), 0, &bGotFileList);
         const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
@@ -2858,7 +2882,9 @@ int VSICurlFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
 /*                             ReadDir()                                */
 /************************************************************************/
 
-char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, bool* pbGotFileList )
+char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname,
+                                          int nMaxFiles,
+                                          bool* pbGotFileList )
 {
     CPLString osDirname(pszDirname);
     while (osDirname[strlen(osDirname) - 1] == '/')
@@ -2898,7 +2924,8 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, bool* pbGotFil
     if (psCachedDirList == NULL)
     {
         psCachedDirList = (CachedDirList*) CPLMalloc(sizeof(CachedDirList));
-        psCachedDirList->papszFileList = GetFileList(osDirname, &psCachedDirList->bGotFileList);
+        psCachedDirList->papszFileList = GetFileList(osDirname, nMaxFiles,
+                                                     &psCachedDirList->bGotFileList);
         cacheDirList[osDirname] = psCachedDirList;
     }
 
@@ -2926,12 +2953,13 @@ void VSICurlFilesystemHandler::InvalidateDirContent( const char *pszDirname )
 }
 
 /************************************************************************/
-/*                             ReadDir()                                */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
-char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname )
+char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
+                                            int nMaxFiles )
 {
-    return ReadDir(pszDirname, NULL);
+    return ReadDir(pszDirname, nMaxFiles, NULL);
 }
 
 /************************************************************************/
@@ -3013,7 +3041,9 @@ class VSIS3FSHandler: public VSICurlFilesystemHandler
 protected:
     virtual CPLString GetFSPrefix() { return "/vsis3/"; }
     virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
-    virtual char** GetFileList(const char *pszFilename, bool* pbGotFileList);
+    virtual char** GetFileList(const char *pszFilename,
+                               int nMaxFiles,
+                               bool* pbGotFileList);
     virtual CPLString GetURLFromDirname( const CPLString& osDirname );
 
 public:
@@ -3788,7 +3818,9 @@ int VSIS3FSHandler::Unlink( const char *pszFilename )
 /*                           GetFileList()                              */
 /************************************************************************/
 
-char** VSIS3FSHandler::GetFileList( const char *pszDirname, bool* pbGotFileList )
+char** VSIS3FSHandler::GetFileList( const char *pszDirname,
+                                    int nMaxFiles,
+                                    bool* pbGotFileList )
 {
     // TODO: to implement
     if (ENABLE_DEBUG)
@@ -3888,6 +3920,7 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname, bool* pbGotFileList 
             AnalyseS3FileList( osBaseURL,
                                (const char*)sWriteFuncData.pBuffer,
                                osFileList,
+                               nMaxFiles,
                                bIsTrucated,
                                osNextMarker );
 

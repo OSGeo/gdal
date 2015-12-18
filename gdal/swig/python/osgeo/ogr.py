@@ -395,7 +395,7 @@ class Driver(MajorObject):
 
         papszOptions:  a StringList of name=value options. Options are driver
         specific, and driver information can be found at the following
-        url:http://www.gdal.org/ogr/ogr_formats.html
+        url:http://www.gdal.org/ogr_formats.html
 
         NULL is returned on failure, or a new OGRDataSource handle on success.
 
@@ -430,7 +430,7 @@ class Driver(MajorObject):
 
         papszOptions:  a StringList of name=value options. Options are driver
         specific, and driver information can be found at the following
-        url:http://www.gdal.org/ogr/ogr_formats.html
+        url:http://www.gdal.org/ogr_formats.html
 
         NULL is returned on failure, or a new OGRDataSource handle on success.
 
@@ -516,7 +516,7 @@ class Driver(MajorObject):
         sources.
 
         The #define macro forms of the capability names should be used in
-        preference to the strings themselves to avoid mispelling.
+        preference to the strings themselves to avoid misspelling.
 
         This function is the same as the C++ method
         OGRSFDriver::TestCapability().
@@ -771,7 +771,7 @@ class DataSource(MajorObject):
 
         papszOptions:  a StringList of name=value options. Options are driver
         specific, and driver information can be found at the following
-        url:http://www.gdal.org/ogr/ogr_formats.html
+        url:http://www.gdal.org/ogr_formats.html
 
         NULL is returned on failure, or a new OGRLayer handle on success.
         Example: 
@@ -860,7 +860,7 @@ class DataSource(MajorObject):
         ODsCCreateLayer: True if this datasource can create new layers.
 
         The #define macro forms of the capability names should be used in
-        preference to the strings themselves to avoid mispelling.
+        preference to the strings themselves to avoid misspelling.
 
         This function is the same as the C++ method
         OGRDataSource::TestCapability().
@@ -1369,7 +1369,7 @@ class Layer(MajorObject):
 
         nFeatureId:  the feature id of the feature to read.
 
-        an handle to a feature now owned by the caller, or NULL on failure.
+        an handle to a feature now owned by the caller, or NULL on failure. 
         """
         return _ogr.Layer_GetFeature(self, *args)
 
@@ -1402,7 +1402,7 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer from which feature are read.
 
-        an handle to a feature, or NULL if no more features are available.
+        an handle to a feature, or NULL if no more features are available. 
         """
         return _ogr.Layer_GetNextFeature(self, *args)
 
@@ -1700,7 +1700,7 @@ class Layer(MajorObject):
 
         OLCFastFeatureCount / "FastFeatureCount": TRUE if this layer can
         return a feature count (via OGR_L_GetFeatureCount()) efficiently ...
-        i.e. without counting the features. In some cases this will return TRUE
+        ie. without counting the features. In some cases this will return TRUE
         until a spatial filter is installed after which it will return FALSE.
 
         OLCFastGetExtent / "FastGetExtent": TRUE if this layer can return
@@ -1748,7 +1748,7 @@ class Layer(MajorObject):
         pszCap:  the name of the capability to test.
 
         TRUE if the layer has the requested capability, or FALSE otherwise.
-        OGRLayers will return FALSE for any unrecognized capabilities.
+        OGRLayers will return FALSE for any unrecognized capabilities. 
         """
         return _ogr.Layer_TestCapability(self, *args)
 
@@ -1883,7 +1883,7 @@ class Layer(MajorObject):
 
         OGRERR_NONE on success.
 
-        OGR 1.9.0
+        OGR 1.9.0 
         """
         return _ogr.Layer_ReorderField(self, *args)
 
@@ -3589,7 +3589,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition to add the field definition
         to.
 
-        hNewField:  handle to the new field definition.
+        hNewField:  handle to the new field definition. 
         """
         return _ogr.FeatureDefn_AddFieldDefn(self, *args)
 
@@ -3703,7 +3703,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        ignore state
+        ignore state 
         """
         return _ogr.FeatureDefn_IsGeometryIgnored(self, *args)
 
@@ -3725,7 +3725,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        bIgnore:  ignore state
+        bIgnore:  ignore state 
         """
         return _ogr.FeatureDefn_SetGeometryIgnored(self, *args)
 
@@ -3769,7 +3769,7 @@ class FeatureDefn(_object):
         hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
-        bIgnore:  ignore state
+        bIgnore:  ignore state 
         """
         return _ogr.FeatureDefn_SetStyleIgnored(self, *args)
 

@@ -138,7 +138,7 @@ public:
     virtual int      Unlink( const char *pszFilename );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
 
@@ -637,10 +637,11 @@ int VSIMemFilesystemHandler::Rmdir( const char * pszPathname )
 }
 
 /************************************************************************/
-/*                              ReadDir()                               */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
-char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
+char **VSIMemFilesystemHandler::ReadDirEx( const char *pszPath,
+                                           int nMaxFiles )
 
 {
     CPLMutexHolder oHolder( &hMutex );
@@ -684,6 +685,8 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
             papszDir[nItems+1] = NULL;
 
             nItems++;
+            if( nMaxFiles > 0 && nItems > nMaxFiles )
+                break;
         }
     }
 

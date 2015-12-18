@@ -59,7 +59,7 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
     virtual int      IsCaseSensitive( const char* pszFilename )
                       { (void) pszFilename; return FALSE; }
     virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
@@ -796,7 +796,8 @@ int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
 /*                              ReadDir()                               */
 /************************************************************************/
 
-char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
+char **VSIWin32FilesystemHandler::ReadDirEx( const char *pszPath,
+                                             int nMaxFiles )
 
 {
 #if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
@@ -821,6 +822,8 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
             {
                 oDir.AddStringDirectly(
                     CPLRecodeFromWChar(c_file.name,CPL_ENC_UCS2,CPL_ENC_UTF8));
+                if( nMaxFiles > 0 && oDir.Count() > nMaxFiles )
+                    break;
             } while( _wfindnext( hFile, &c_file ) == 0 );
 
             _findclose( hFile );
@@ -855,6 +858,8 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
             do
             {
                 oDir.AddString(c_file.name);
+                if( nMaxFiles > 0 && oDir.Count() > nMaxFiles )
+                    break;
             } while( _findnext( hFile, &c_file ) == 0 );
 
             _findclose( hFile );

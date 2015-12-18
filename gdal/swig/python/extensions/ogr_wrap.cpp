@@ -179,8 +179,8 @@ template <typename T> T SwigValueInit() {
   creating a static or dynamic library from the SWIG runtime code.
   In 99.9% of the cases, SWIG just needs to declare them as 'static'.
 
-  But only do this if strictly necessary, i.e. if you have problems
-  with your compiler or such.
+  But only do this if strictly necessary, ie, if you have problems
+  with your compiler or suchlike.
 */
 
 #ifndef SWIGRUNTIME
@@ -1189,7 +1189,7 @@ SWIGRUNTIME PyObject* SWIG_PyInstanceMethod_New(PyObject *SWIGUNUSEDPARM(self), 
 #define SWIG_ConvertFunctionPtr(obj, pptr, type)        SWIG_Python_ConvertFunctionPtr(obj, pptr, type)
 #define SWIG_NewFunctionPtrObj(ptr, type)               SWIG_Python_NewPointerObj(NULL, ptr, type, 0)
 
-/* for C++ member pointers, i.e. member methods */
+/* for C++ member pointers, ie, member methods */
 #define SWIG_ConvertMember(obj, ptr, sz, ty)            SWIG_Python_ConvertPacked(obj, ptr, sz, ty)
 #define SWIG_NewMemberObj(ptr, sz, type)                SWIG_Python_NewPackedObj(ptr, sz, type)
 
@@ -1802,7 +1802,7 @@ swigobject_methods[] = {
 static PyMethodDef
 swigobject_methods[] = {
   {(char *)"disown",  (PyCFunction)SwigPyObject_disown,  METH_VARARGS,  (char *)"releases ownership of the pointer"},
-  {(char *)"acquire", (PyCFunction)SwigPyObject_acquire, METH_VARARGS,  (char *)"acquires ownership of the pointer"},
+  {(char *)"acquire", (PyCFunction)SwigPyObject_acquire, METH_VARARGS,  (char *)"aquires ownership of the pointer"},
   {(char *)"own",     (PyCFunction)SwigPyObject_own,     METH_VARARGS,  (char *)"returns/sets ownership of the pointer"},
   {(char *)"append",  (PyCFunction)SwigPyObject_append,  METH_VARARGS,  (char *)"appends another 'this' object"},
   {(char *)"next",    (PyCFunction)SwigPyObject_next,    METH_VARARGS,  (char *)"returns the next 'this' object"},
@@ -5430,15 +5430,14 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
         PyObject *item_list = PyMapping_Items( obj1 );
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
-
+          
           PyObject *k, *v;
           if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
             Py_DECREF(it);
-            PyErr_SetString( PyExc_TypeError,
-                             "Dictionary must contain tuples of strings" );
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
           }
-
+          
           int bFreeK, bFreeV;
           char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
           char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
@@ -5447,12 +5446,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
             Py_DECREF(it);
-            PyErr_SetString( PyExc_TypeError,
-                             "Dictionary must contain tuples of strings" );
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
           }
           arg2 = CSLAddNameValue( arg2, pszK, pszV );
-
+          
           GDALPythonFreeCStr(pszK, bFreeK);
           GDALPythonFreeCStr(pszV, bFreeV);
           Py_DECREF(it);
@@ -5461,8 +5459,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       }
     }
     else {
-      PyErr_SetString( PyExc_TypeError,
-                       "Argument must be dictionary or sequence of strings" );
+      PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
       SWIG_fail;
     }
   }
@@ -24219,7 +24216,7 @@ static PyMethodDef SwigMethods[] = {
 		"sources.\n"
 		"\n"
 		"The #define macro forms of the capability names should be used in\n"
-		"preference to the strings themselves to avoid mispelling.\n"
+		"preference to the strings themselves to avoid misspelling.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRSFDriver::TestCapability().\n"
@@ -24501,7 +24498,7 @@ static PyMethodDef SwigMethods[] = {
 		"ODsCCreateLayer: True if this datasource can create new layers.\n"
 		"\n"
 		"The #define macro forms of the capability names should be used in\n"
-		"preference to the strings themselves to avoid mispelling.\n"
+		"preference to the strings themselves to avoid misspelling.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRDataSource::TestCapability().\n"
@@ -24888,7 +24885,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Fetch the next available feature from this layer.\n"
 		"\n"
-		"The returned feature becomes the responsiblity of the caller to delete\n"
+		"The returned feature becomes the responsibility of the caller to delete\n"
 		"with OGR_F_Destroy(). It is critical that all features associated with\n"
 		"an OGRLayer (more specifically an OGRFeatureDefn) be deleted before\n"
 		"that layer/datasource is deleted.\n"
@@ -25179,7 +25176,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OLCFastFeatureCount / \"FastFeatureCount\": TRUE if this layer can\n"
 		"return a feature count (via OGR_L_GetFeatureCount()) efficiently ...\n"
-		"i.e. without counting the features. In some cases this will return TRUE\n"
+		"ie. without counting the features. In some cases this will return TRUE\n"
 		"until a spatial filter is installed after which it will return FALSE.\n"
 		"\n"
 		"OLCFastGetExtent / \"FastGetExtent\": TRUE if this layer can return\n"
@@ -26564,7 +26561,7 @@ static PyMethodDef SwigMethods[] = {
 		"Parameters:\n"
 		"-----------\n"
 		"\n"
-                "hDefn:  handle to the feature definition on witch OGRFeature are based\n"
+		"hDefn:  handle to the feature definition on witch OGRFeature are based\n"
 		"on.\n"
 		"\n"
 		"the current reference count. \n"
@@ -27478,9 +27475,9 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Do these features intersect?\n"
 		"\n"
-		"Currently this is not implemented in a rigerous fashion, and generally\n"
+		"Currently this is not implemented in a rigorous fashion, and generally\n"
 		"just tests whether the envelopes of the two features intersect.\n"
-		"Eventually this will be made rigerous.\n"
+		"Eventually this will be made rigorous.\n"
 		"\n"
 		"This function is the same as the CPP method OGRGeometry::Intersects.\n"
 		"\n"

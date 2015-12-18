@@ -179,8 +179,8 @@ template <typename T> T SwigValueInit() {
   creating a static or dynamic library from the SWIG runtime code.
   In 99.9% of the cases, SWIG just needs to declare them as 'static'.
 
-  But only do this if strictly necessary, i.e. if you have problems
-  with your compiler or such.
+  But only do this if strictly necessary, ie, if you have problems
+  with your compiler or suchlike.
 */
 
 #ifndef SWIGRUNTIME
@@ -1189,7 +1189,7 @@ SWIGRUNTIME PyObject* SWIG_PyInstanceMethod_New(PyObject *SWIGUNUSEDPARM(self), 
 #define SWIG_ConvertFunctionPtr(obj, pptr, type)        SWIG_Python_ConvertFunctionPtr(obj, pptr, type)
 #define SWIG_NewFunctionPtrObj(ptr, type)               SWIG_Python_NewPointerObj(NULL, ptr, type, 0)
 
-/* for C++ member pointers, i.e. member methods */
+/* for C++ member pointers, ie, member methods */
 #define SWIG_ConvertMember(obj, ptr, sz, ty)            SWIG_Python_ConvertPacked(obj, ptr, sz, ty)
 #define SWIG_NewMemberObj(ptr, sz, type)                SWIG_Python_NewPackedObj(ptr, sz, type)
 
@@ -1802,7 +1802,7 @@ swigobject_methods[] = {
 static PyMethodDef
 swigobject_methods[] = {
   {(char *)"disown",  (PyCFunction)SwigPyObject_disown,  METH_VARARGS,  (char *)"releases ownership of the pointer"},
-  {(char *)"acquire", (PyCFunction)SwigPyObject_acquire, METH_VARARGS,  (char *)"acquires ownership of the pointer"},
+  {(char *)"acquire", (PyCFunction)SwigPyObject_acquire, METH_VARARGS,  (char *)"aquires ownership of the pointer"},
   {(char *)"own",     (PyCFunction)SwigPyObject_own,     METH_VARARGS,  (char *)"returns/sets ownership of the pointer"},
   {(char *)"append",  (PyCFunction)SwigPyObject_append,  METH_VARARGS,  (char *)"appends another 'this' object"},
   {(char *)"next",    (PyCFunction)SwigPyObject_next,    METH_VARARGS,  (char *)"returns the next 'this' object"},
@@ -2766,7 +2766,7 @@ SWIG_Python_TypeQuery(const char *type)
 
 SWIGRUNTIME int
 SWIG_Python_AddErrMesg(const char* mesg, int infront)
-{
+{  
   if (PyErr_Occurred()) {
     PyObject *type = 0;
     PyObject *value = 0;
@@ -4064,7 +4064,7 @@ SWIGINTERN void CPLVirtualMemShadow_Pin(CPLVirtualMemShadow *self,size_t start_o
         CPLVirtualMemPin(self->vmem, start_addr, nsize, bWriteOp);
     }
 
-/* Returned size is in bytes or 0 if an error occurred */
+/* Returned size is in bytes or 0 if an error occurred. */
 static
 GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                 int nBands, int* bandMap, int nBandMapArrayLength,
@@ -4697,7 +4697,7 @@ int GDALDatasetShadow_RasterCount_get( GDALDatasetShadow *h ) {
 }
 
 
-/* Returned size is in bytes or 0 if an error occurred */
+/* Returned size is in bytes or 0 if an error occurred. */
 static
 GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                  GIntBig nPixelSpace, GIntBig nLineSpace,
@@ -7028,11 +7028,15 @@ fail:
 SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
+  int arg2 = (int) 0 ;
   int bToFree1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
   char **result = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:ReadDir",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O|O:ReadDir",&obj0,&obj1)) SWIG_fail;
   {
     /* %typemap(in) (const char *utf8_path) */
     arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
@@ -7041,6 +7045,13 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
       PyErr_SetString( PyExc_RuntimeError, "not a string" );
       SWIG_fail;
     }
+  }
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ReadDir" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
   }
   {
     if (!arg1) {
@@ -7051,7 +7062,7 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)VSIReadDir((char const *)arg1);
+    result = (char **)VSIReadDirEx((char const *)arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -8741,15 +8752,14 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
         PyObject *item_list = PyMapping_Items( obj1 );
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
-
+          
           PyObject *k, *v;
           if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
             Py_DECREF(it);
-            PyErr_SetString( PyExc_TypeError,
-                             "Dictionary must contain tuples of strings" );
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
           }
-
+          
           int bFreeK, bFreeV;
           char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
           char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
@@ -8758,12 +8768,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
             Py_DECREF(it);
-            PyErr_SetString( PyExc_TypeError,
-                             "Dictionary must contain tuples of strings" );
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
           }
           arg2 = CSLAddNameValue( arg2, pszK, pszV );
-
+          
           GDALPythonFreeCStr(pszK, bFreeK);
           GDALPythonFreeCStr(pszV, bFreeV);
           Py_DECREF(it);
@@ -8772,8 +8781,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       }
     }
     else {
-      PyErr_SetString( PyExc_TypeError,
-                       "Argument must be dictionary or sequence of strings" );
+      PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
       SWIG_fail;
     }
   }
@@ -27880,7 +27888,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"PopFinderLocation", _wrap_PopFinderLocation, METH_VARARGS, (char *)"PopFinderLocation()"},
 	 { (char *)"FinderClean", _wrap_FinderClean, METH_VARARGS, (char *)"FinderClean()"},
 	 { (char *)"FindFile", _wrap_FindFile, METH_VARARGS, (char *)"FindFile(char const * pszClass, char const * utf8_path) -> char const *"},
-	 { (char *)"ReadDir", _wrap_ReadDir, METH_VARARGS, (char *)"ReadDir(char const * utf8_path) -> char **"},
+	 { (char *)"ReadDir", _wrap_ReadDir, METH_VARARGS, (char *)"ReadDir(char const * utf8_path, int nMaxFiles=0) -> char **"},
 	 { (char *)"ReadDirRecursive", _wrap_ReadDirRecursive, METH_VARARGS, (char *)"ReadDirRecursive(char const * utf8_path) -> char **"},
 	 { (char *)"SetConfigOption", _wrap_SetConfigOption, METH_VARARGS, (char *)"SetConfigOption(char const * pszKey, char const * pszValue)"},
 	 { (char *)"GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, (char *)"GetConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"},
