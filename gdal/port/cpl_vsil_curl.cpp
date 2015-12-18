@@ -272,7 +272,7 @@ public:
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
-            char   **ReadDir( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
+            char   **ReadDirInternal( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
             void     InvalidateDirContent( const char *pszDirname );
 
 
@@ -1909,7 +1909,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     if (strchr(CPLGetFilename(osFilename), '.') != NULL &&
         !STARTS_WITH(CPLGetExtension(osFilename), "zip") && !bSkipReadDir)
     {
-        char** papszFileList = ReadDir(CPLGetDirname(osFilename), 0, &bGotFileList);
+        char** papszFileList = ReadDirInternal(CPLGetDirname(osFilename), 0, &bGotFileList);
         const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
@@ -2816,7 +2816,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
              !bSkipReadDir)
     {
         bool bGotFileList;
-        char** papszFileList = ReadDir(CPLGetDirname(osFilename), 0, &bGotFileList);
+        char** papszFileList = ReadDirInternal(CPLGetDirname(osFilename), 0, &bGotFileList);
         const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
@@ -2879,10 +2879,10 @@ int VSICurlFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
 }
 
 /************************************************************************/
-/*                             ReadDir()                                */
+/*                             ReadDirInternal()                        */
 /************************************************************************/
 
-char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname,
+char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
                                           int nMaxFiles,
                                           bool* pbGotFileList )
 {
@@ -2959,7 +2959,7 @@ void VSICurlFilesystemHandler::InvalidateDirContent( const char *pszDirname )
 char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
                                             int nMaxFiles )
 {
-    return ReadDir(pszDirname, nMaxFiles, NULL);
+    return ReadDirInternal(pszDirname, nMaxFiles, NULL);
 }
 
 /************************************************************************/
