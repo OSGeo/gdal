@@ -432,6 +432,8 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     int nClients = 0;
     ClientInfo asClientInfos[MAX_CLIENTS];
 
+    memset( asClientInfos, 0, sizeof(asClientInfos) );
+
     if( !bFork )
         signal(SIGPIPE, SIG_IGN);
 
