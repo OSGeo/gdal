@@ -409,8 +409,6 @@ PCIDSK_SETTING=INTERNAL
 #PCIDSK_SETTING=EXTERNAL
 #PCIDSK_INCLUDE=-I\warmerda\pcidsk\src
 #PCIDSK_LIB=\warmerda\pcidsk\src\pcidsk.lib
-# Use the following alternative to use the old PCIDSK implementation
-#PCIDSK_SETTING=OLD
 
 # PostGIS Libraries
 #PG_INC_DIR = n:\pkg\libpq_win32\include

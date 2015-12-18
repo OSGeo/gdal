@@ -206,6 +206,7 @@ OGDI driver:
 OZI driver:
 
 PCIDSK driver:
+ * Remove the old driver (#6172)
 
 PCRaster driver:
 

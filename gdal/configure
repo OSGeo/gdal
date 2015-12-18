@@ -1707,7 +1707,7 @@ Optional Packages:
   --with-png=ARG        Include PNG support (ARG=internal, no or path)
   --with-dds=ARG        Include DDS support (ARG=no, or path)
   --with-gta=ARG        Include GTA support (ARG=no or libgta tree prefix)
-  --with-pcidsk=ARG     Path to external PCIDSK SDK, or internal (default), or old
+  --with-pcidsk=ARG     Path to external PCIDSK SDK or internal (default)
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
   --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
@@ -21021,11 +21021,11 @@ $as_echo_n "checking for PCIDSK... " >&6; }
 PCIDSK_LIB=
 PCIDSK_INCLUDE=
 
-if test "$with_pcidsk" = "old" -o "$with_pcidsk" = "no" ; then
+if test "$with_pcidsk" = "no" ; then
 
-  PCIDSK_SETTING=old
+  PCIDSK_SETTING=no
 
-  echo "pcidsk support using pre-PCIDSK SDK (old) implementation."
+  echo "pcidsk support disabled."
 
 elif test "$with_pcidsk" = "" -o "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
 
@@ -21043,12 +21043,16 @@ else
 
 fi
 
-PCIDSK_SETTING=$PCIDSK_SETTING
+if test "$with_pcidsk" != "no" ; then
 
-PCIDSK_LIB=$PCIDSK_LIB
+  PCIDSK_SETTING=$PCIDSK_SETTING
 
-PCIDSK_INCLUDE=$PCIDSK_INCLUDE
+  PCIDSK_LIB=$PCIDSK_LIB
 
+  PCIDSK_INCLUDE=$PCIDSK_INCLUDE
+
+
+fi
 
 
 
