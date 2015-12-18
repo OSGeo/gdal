@@ -172,7 +172,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     float* pafImage = (float*)pImage;
     int* panImage = (int*)pImage;
-    const float fNoData = (const float)poGDS->dfNoData;
+    const float fNoData = static_cast<float>(poGDS->dfNoData);
 
     /* A new data line begins on a new text line. So if the xsize */
     /* is not a multiple of VALS_PER_LINE, there are padding values */
