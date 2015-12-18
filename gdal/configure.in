@@ -1207,18 +1207,18 @@ dnl ---------------------------------------------------------------------------
 dnl Select PCIDSK options.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH([pcidsk], [  --with-pcidsk[=ARG]     Path to external PCIDSK SDK, or internal (default), or old],,)
+AC_ARG_WITH([pcidsk], [  --with-pcidsk[=ARG]     Path to external PCIDSK SDK or internal (default)],,)
 
 AC_MSG_CHECKING([for PCIDSK])
 
 PCIDSK_LIB=
 PCIDSK_INCLUDE=
 
-if test "$with_pcidsk" = "old" -o "$with_pcidsk" = "no" ; then
+if test "$with_pcidsk" = "no" ; then
 
-  PCIDSK_SETTING=old
+  PCIDSK_SETTING=no
 
-  echo "pcidsk support using pre-PCIDSK SDK (old) implementation."
+  echo "pcidsk support disabled."
 
 elif test "$with_pcidsk" = "" -o "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
 
@@ -1236,9 +1236,13 @@ else
 
 fi
 
-AC_SUBST([PCIDSK_SETTING], [$PCIDSK_SETTING])
-AC_SUBST([PCIDSK_LIB], [$PCIDSK_LIB])
-AC_SUBST([PCIDSK_INCLUDE], [$PCIDSK_INCLUDE])
+if test "$with_pcidsk" != "no" ; then
+
+  AC_SUBST([PCIDSK_SETTING], [$PCIDSK_SETTING])
+  AC_SUBST([PCIDSK_LIB], [$PCIDSK_LIB])
+  AC_SUBST([PCIDSK_INCLUDE], [$PCIDSK_INCLUDE])
+
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.
