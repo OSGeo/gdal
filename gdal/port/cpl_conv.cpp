@@ -646,6 +646,8 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
     size_t nChunkBytesRead = 0;
     int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
+    
+    szChunk[0] = 0;
 
     while( true )
     {
