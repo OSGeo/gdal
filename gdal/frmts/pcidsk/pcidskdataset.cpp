@@ -28,13 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pcidsk.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_PCIDSK();
-CPL_C_END
 
 const int       nSegBlocks = 64;    // Number of blocks of Segment Pointers
 const int       nGeoSegBlocks = 8;  // Number of blocks in GEO Segment

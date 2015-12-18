@@ -28,8 +28,9 @@
  ******************************************************************************/
 
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_pam.h"
+#include "gdal_frmts.h"
 #include "regex.h"
 #include <string>
 #include <memory>
@@ -37,11 +38,6 @@
 #include "rasdamandataset.h"
 
 CPL_CVSID("$Id$");
-
-
-CPL_C_START
-void GDALRegister_RASDAMAN();
-CPL_C_END
 
 
 class Subset

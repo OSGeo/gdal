@@ -28,15 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "../raw/rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_R();
-CPL_C_END
 
 GDALDataset *
 RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 

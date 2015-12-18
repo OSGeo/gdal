@@ -27,17 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_srs_api.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
 // g++ -g -Wall -fPIC frmts/raw/snodasdataset.cpp -shared -o gdal_SNODAS.so -Iport -Igcore -Ifrmts/raw -Iogr -L. -lgdal
-
-CPL_C_START
-void GDALRegister_SNODAS();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

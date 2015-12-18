@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "pcidskdataset2.h"
 
 CPL_CVSID("$Id$");

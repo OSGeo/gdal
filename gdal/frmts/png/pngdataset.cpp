@@ -41,6 +41,7 @@
  */
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "png.h"
 
@@ -49,10 +50,6 @@
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_PNG();
-CPL_C_END
 
 // Define SUPPORT_CREATE if you want Create() call supported.
 // Note: callers must provide blocks in increasing Y order.

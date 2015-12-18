@@ -38,11 +38,12 @@
 #endif
 #include <vector>
 
-#include "gdaljp2abstractdataset.h"
-#include "cpl_string.h"
-#include "gdaljp2metadata.h"
-#include "cpl_multiproc.h"
 #include "cpl_atomic_ops.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdaljp2abstractdataset.h"
+#include "gdaljp2metadata.h"
 #include "vrt/vrtdataset.h"
 
 CPL_CVSID("$Id$");

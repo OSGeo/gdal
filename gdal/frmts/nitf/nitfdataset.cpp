@@ -31,8 +31,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include "cpl_csv.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "nitfdataset.h"
 
 CPL_CVSID("$Id$");

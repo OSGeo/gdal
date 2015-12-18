@@ -29,14 +29,11 @@
  ****************************************************************************/
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_FAST();
-CPL_C_END
 
 // static const int ADM_STD_HEADER_SIZE = 4608;  // XXX: Format specification says it
 static const int ADM_HEADER_SIZE = 5000;  // should be 4608, but some vendors

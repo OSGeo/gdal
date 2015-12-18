@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "northwood.h"
 
@@ -38,11 +39,6 @@
 #include "../../ogr/ogrsf_frmts/mitab/mitab.h"
 #endif
 #endif
-
-
-CPL_C_START
-void GDALRegister_NWT_GRD();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

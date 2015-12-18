@@ -29,16 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_port.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_LCP();
-CPL_C_END
 
 static const size_t LCP_HEADER_SIZE = 7316;
 static const int LCP_MAX_BANDS = 10;
