@@ -35,6 +35,10 @@
 #define _INC_STAT
 #endif
 
+#if defined(INTERNAL_QHULL)
+#define DONT_DEPRECATE_SPRINTF
+#endif
+
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
