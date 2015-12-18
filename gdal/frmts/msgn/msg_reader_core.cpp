@@ -324,12 +324,12 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
             band_count--;
 
             if (visir_line.channelId != 12) { // not the HRV channel
-                _visir_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
-                _visir_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
+                _visir_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
+                _visir_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing += _visir_packet_size;
             } else {
-                _hrv_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
-                _hrv_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
+                _hrv_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
+                _hrv_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing +=  3*_hrv_packet_size;
                 CPL_IGNORE_RET_VAL(VSIFSeek(fin, 2*gp_header.packetLength, SEEK_CUR ));
             }

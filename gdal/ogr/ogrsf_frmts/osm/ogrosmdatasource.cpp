@@ -740,8 +740,8 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
         return FALSE;
     }
 
-    int nBucket = (int)(psNode->nID / NODE_PER_BUCKET);
-    int nOffInBucket = psNode->nID % NODE_PER_BUCKET;
+    int nBucket = static_cast<int>(psNode->nID / NODE_PER_BUCKET);
+    int nOffInBucket = static_cast<int>(psNode->nID % NODE_PER_BUCKET);
     int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
     int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
@@ -900,7 +900,7 @@ void OGROSMDataSource::LookupNodes( )
         int iNextFreeBucket = 0;
         for(unsigned int i = 0; i < nReqIds; i++)
         {
-            int nIndInHashArray = HASH_ID_FUNC(panReqIds[i]) % HASHED_INDEXES_ARRAY_SIZE;
+            int nIndInHashArray = static_cast<int>(HASH_ID_FUNC(panReqIds[i]) % HASHED_INDEXES_ARRAY_SIZE);
             int nIdx = panHashedIndexes[nIndInHashArray];
             if( nIdx == -1 )
             {
@@ -1109,8 +1109,8 @@ void OGROSMDataSource::LookupNodesCustom( )
         if( !VALID_ID_FOR_CUSTOM_INDEXING(id) )
             continue;
 
-        int nBucket = (int)(id / NODE_PER_BUCKET);
-        int nOffInBucket = id % NODE_PER_BUCKET;
+        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
 
         if( nBucket >= nBuckets )
@@ -1181,8 +1181,8 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
     {
         GIntBig id = panReqIds[i];
 
-        int nBucket = (int)(id / NODE_PER_BUCKET);
-        int nOffInBucket = id % NODE_PER_BUCKET;
+        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
@@ -1280,8 +1280,8 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
     {
         GIntBig id = panReqIds[i];
 
-        int nBucket = (int)(id / NODE_PER_BUCKET);
-        int nOffInBucket = id % NODE_PER_BUCKET;
+        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
@@ -1643,9 +1643,9 @@ void OGROSMDataSource::ProcessWaysBatch()
         {
             for(i=0;i<psWayFeaturePairs->nRefs;i++)
             {
-                int nIndInHashArray =
+                int nIndInHashArray = static_cast<int>(
                     HASH_ID_FUNC(psWayFeaturePairs->panNodeRefs[i]) %
-                        HASHED_INDEXES_ARRAY_SIZE;
+                        HASHED_INDEXES_ARRAY_SIZE);
                 int nIdx = panHashedIndexes[nIndInHashArray];
                 if( nIdx < -1 )
                 {

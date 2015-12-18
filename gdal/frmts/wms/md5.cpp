@@ -115,7 +115,7 @@ struct cvs_MD5Context *ctx,
         memcpy(p, buf, t);
         cvs_MD5Transform (ctx->buf, ctx->in);
         buf += t;
-        len -= t;
+        len -= (unsigned)t;
     }
 
     /* Process data in 64-byte chunks */
@@ -145,7 +145,7 @@ struct cvs_MD5Context *ctx)
     unsigned char *p;
 
     /* Compute number of bytes mod 64 */
-    count = (ctx->bits[0] >> 3) & 0x3F;
+    count = (unsigned)((ctx->bits[0] >> 3) & 0x3F);
 
     /* Set the first char of padding to 0x80.  This is safe since there is
     always at least one byte free */

@@ -1083,7 +1083,7 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
         return CE_Failure;
     }
 
-    int nSize = nXSize * nYSize * sizeof(double);
+    int nSize = nXSize * nYSize * (int)sizeof(double);
     nTemp = CPL_LSBWORD32(nSize); // Mark size of data
     if( VSIFWriteL( (void *)&nTemp, sizeof(GInt32), 1, fp ) != 1 )
     {
