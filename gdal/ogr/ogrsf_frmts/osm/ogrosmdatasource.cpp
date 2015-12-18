@@ -1359,7 +1359,7 @@ static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
     GByte* pabyData = *ppabyData;
     while( true )
     {
-        if( (nVal & (~0x7fU)) == 0 )
+        if( (((GUInt32)nVal) & (~0x7fU)) == 0 )
         {
             *pabyData = (GByte)nVal;
             *ppabyData = pabyData + 1;
