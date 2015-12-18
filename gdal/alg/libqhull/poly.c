@@ -453,7 +453,7 @@ int qh_gethash(int hashsize, setT *set, int size, int firstindex, void *skipelem
     qh_fprintf(qh ferr, 6202, "qhull internal error: negative hashsize %d passed to qh_gethash [poly.c]\n", hashsize);
     qh_errexit2 (qh_ERRqhull, NULL, NULL);
   }
-  result= (unsigned)hash;
+  result= (unsigned)(hash & 0xFFFFFFFFU);
   result %= (unsigned)hashsize;
   /* result= 0; for debugging */
   return result;
