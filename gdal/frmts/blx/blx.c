@@ -567,6 +567,8 @@ int blx_encode_celldata(blxcontext_t *ctx,
     int lutsize=0;
 
     int i, j;
+    
+    lut[0].value = 0;
 
     *p++ = (unsigned char)(side/32-4); /* Resolution */
 
