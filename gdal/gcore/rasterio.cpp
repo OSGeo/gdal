@@ -1864,7 +1864,7 @@ inline void GDALCopyWordsComplexOutT(const Tin* const CPL_RESTRICT pSrcData, int
 
     for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
-        const Tin tValue = *reinterpret_cast<const Tin* const>(pSrcDataPtr + n * nSrcPixelStride);
+        const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + n * nSrcPixelStride);
         Tout* const pPixelOut = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
         GDALCopyWord(tValue, *pPixelOut);
 
