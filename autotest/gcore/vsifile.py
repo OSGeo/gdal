@@ -400,7 +400,7 @@ def vsifile_9():
         return 'fail'
     # Test truncation
     lst_truncated = gdal.ReadDir('.', int(len(lst)/2))
-    if lst_truncated <= int(len(lst)/2):
+    if len(lst_truncated) <= int(len(lst)/2):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -415,7 +415,7 @@ def vsifile_9():
         return 'fail'
     # Test truncation
     lst_truncated = gdal.ReadDir('/vsimem/mydir', int(len(lst)/2))
-    if lst_truncated <= int(len(lst)/2):
+    if len(lst_truncated) <= int(len(lst)/2):
         gdaltest.post_reason('fail')
         return 'fail'
 
