@@ -34,6 +34,7 @@
 #include <cfloat>
 #include <climits>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -52,12 +53,6 @@ CPL_CVSID("$Id$");
 #define	SG_NODATA_GDT_Int32		-2147483647
 #define	SG_NODATA_GDT_Float32	-99999.0
 #define	SG_NODATA_GDT_Float64	-99999.0
-
-
-CPL_C_START
-void GDALRegister_SAGA();
-CPL_C_END
-
 
 /************************************************************************/
 /* ==================================================================== */

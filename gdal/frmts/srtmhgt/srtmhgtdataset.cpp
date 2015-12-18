@@ -31,8 +31,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include "cpl_port.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -41,10 +42,6 @@
 static const GInt16 SRTMHG_NODATA_VALUE = -32768;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_SRTMHGT();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

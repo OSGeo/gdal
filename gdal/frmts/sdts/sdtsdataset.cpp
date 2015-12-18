@@ -28,9 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "sdts_al.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "sdts_al.h"
 
 CPL_CVSID("$Id$");
 
@@ -39,10 +40,6 @@ CPL_CVSID("$Id$");
 
  exclude
 */
-
-CPL_C_START
-void GDALRegister_SDTS();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

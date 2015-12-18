@@ -30,18 +30,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_minixml.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 #define MAX_GCPS 5000    //this should be more than enough ground control points
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_TSX();
-CPL_C_END
-
 
 enum ePolarization {
     HH=0,

@@ -102,6 +102,7 @@
 */
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -110,11 +111,6 @@
 #include <algorithm>
 
 // CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_Terragen();
-CPL_C_END
-
 
 const double kdEarthCircumPolar = 40007849;
 const double kdEarthCircumEquat = 40075004;

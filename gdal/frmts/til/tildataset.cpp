@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "cplkeywordparser.h"
 #include "gdal_mdreader.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_proxy.h"
 #include "ogr_spatialref.h"
