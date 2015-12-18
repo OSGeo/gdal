@@ -36,12 +36,14 @@
 #define _GNU_SOURCE
 #endif
 
+#include "cpl_port.h"  // Must be first.
+
 #include <set>
 
-#include "cpl_string.h"
 #include "cpl_csv.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_frmts.h"
