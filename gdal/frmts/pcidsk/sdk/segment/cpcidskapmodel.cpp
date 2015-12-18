@@ -366,7 +366,7 @@ namespace {
         eo_params = new PCIDSKAPModelEOParams("",
                                               earth_to_body,
                                               perspective_centre,
-                                              -1);
+                                              0 /* FIXME?: this was originally -1 */);
     
         std::vector<double> x3d(3);
         std::vector<double> y3d(3);
