@@ -62,22 +62,22 @@ CPL_CVSID("$Id$");
         }
 
 static const GUInt32 K[64] = {
-        0x428a2f98L, 0x71374491L, 0xb5c0fbcfL, 0xe9b5dba5L,
-        0x3956c25bL, 0x59f111f1L, 0x923f82a4L, 0xab1c5ed5L,
-        0xd807aa98L, 0x12835b01L, 0x243185beL, 0x550c7dc3L,
-        0x72be5d74L, 0x80deb1feL, 0x9bdc06a7L, 0xc19bf174L,
-        0xe49b69c1L, 0xefbe4786L, 0x0fc19dc6L, 0x240ca1ccL,
-        0x2de92c6fL, 0x4a7484aaL, 0x5cb0a9dcL, 0x76f988daL,
-        0x983e5152L, 0xa831c66dL, 0xb00327c8L, 0xbf597fc7L,
-        0xc6e00bf3L, 0xd5a79147L, 0x06ca6351L, 0x14292967L,
-        0x27b70a85L, 0x2e1b2138L, 0x4d2c6dfcL, 0x53380d13L,
-        0x650a7354L, 0x766a0abbL, 0x81c2c92eL, 0x92722c85L,
-        0xa2bfe8a1L, 0xa81a664bL, 0xc24b8b70L, 0xc76c51a3L,
-        0xd192e819L, 0xd6990624L, 0xf40e3585L, 0x106aa070L,
-        0x19a4c116L, 0x1e376c08L, 0x2748774cL, 0x34b0bcb5L,
-        0x391c0cb3L, 0x4ed8aa4aL, 0x5b9cca4fL, 0x682e6ff3L,
-        0x748f82eeL, 0x78a5636fL, 0x84c87814L, 0x8cc70208L,
-        0x90befffaL, 0xa4506cebL, 0xbef9a3f7L, 0xc67178f2L
+        0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U,
+        0x3956c25bU, 0x59f111f1U, 0x923f82a4U, 0xab1c5ed5U,
+        0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U,
+        0x72be5d74U, 0x80deb1feU, 0x9bdc06a7U, 0xc19bf174U,
+        0xe49b69c1U, 0xefbe4786U, 0x0fc19dc6U, 0x240ca1ccU,
+        0x2de92c6fU, 0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU,
+        0x983e5152U, 0xa831c66dU, 0xb00327c8U, 0xbf597fc7U,
+        0xc6e00bf3U, 0xd5a79147U, 0x06ca6351U, 0x14292967U,
+        0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU, 0x53380d13U,
+        0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U,
+        0xa2bfe8a1U, 0xa81a664bU, 0xc24b8b70U, 0xc76c51a3U,
+        0xd192e819U, 0xd6990624U, 0xf40e3585U, 0x106aa070U,
+        0x19a4c116U, 0x1e376c08U, 0x2748774cU, 0x34b0bcb5U,
+        0x391c0cb3U, 0x4ed8aa4aU, 0x5b9cca4fU, 0x682e6ff3U,
+        0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U,
+        0x90befffaU, 0xa4506cebU, 0xbef9a3f7U, 0xc67178f2U
 };
 
 #ifdef WORDS_BIGENDIAN
@@ -87,13 +87,13 @@ static const GUInt32 K[64] = {
 
 #else                           /* WORDS_BIGENDIAN */
 
-#define BYTESWAP(x) ((ROTR((x), 8) & 0xff00ff00L) |     \
-                     (ROTL((x), 8) & 0x00ff00ffL))
+#define BYTESWAP(x) ((ROTR((x), 8) & 0xff00ff00U) |     \
+                     (ROTL((x), 8) & 0x00ff00ffU))
 #define BYTESWAP64(x) _byteswap64(x)
 
 static inline GUInt64 _byteswap64(GUInt64 x)
 {
-        GUInt32 a = x >> 32;
+        GUInt32 a = (GUInt32) (x >> 32);
         GUInt32 b = (GUInt32) x;
         return ((GUInt64) BYTESWAP(b) << 32) | (GUInt64) BYTESWAP(a);
 }
@@ -114,18 +114,18 @@ static const GByte padding[64] = {
 void CPL_SHA256Init(CPL_SHA256Context * sc)
 {
         sc->totalLength = 0;
-        sc->hash[0] = 0x6a09e667L;
-        sc->hash[1] = 0xbb67ae85L;
-        sc->hash[2] = 0x3c6ef372L;
-        sc->hash[3] = 0xa54ff53aL;
-        sc->hash[4] = 0x510e527fL;
-        sc->hash[5] = 0x9b05688cL;
-        sc->hash[6] = 0x1f83d9abL;
-        sc->hash[7] = 0x5be0cd19L;
-        sc->bufferLength = 0L;
+        sc->hash[0] = 0x6a09e667U;
+        sc->hash[1] = 0xbb67ae85U;
+        sc->hash[2] = 0x3c6ef372U;
+        sc->hash[3] = 0xa54ff53aU;
+        sc->hash[4] = 0x510e527fU;
+        sc->hash[5] = 0x9b05688cU;
+        sc->hash[6] = 0x1f83d9abU;
+        sc->hash[7] = 0x5be0cd19U;
+        sc->bufferLength = 0U;
 }
 
-static GUInt32 burnStack(int size)
+static GUInt32 burnStack(size_t size)
 {
         GByte buf[128];
         GUInt32 ret = 0;
@@ -348,7 +348,7 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
         int needBurn = 0;
 
         if (sc->bufferLength) {
-                bufferBytesLeft = 64L - sc->bufferLength;
+                bufferBytesLeft = 64U - sc->bufferLength;
 
                 bytesToCopy = bufferBytesLeft;
                 if (bytesToCopy > len)
@@ -356,33 +356,33 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
 
                 memcpy(&sc->buffer.bytes[sc->bufferLength], data, bytesToCopy);
 
-                sc->totalLength += bytesToCopy * 8L;
+                sc->totalLength += bytesToCopy * 8U;
 
                 sc->bufferLength += bytesToCopy;
                 data = ((GByte *) data) + bytesToCopy;
                 len -= bytesToCopy;
 
-                if (sc->bufferLength == 64L) {
+                if (sc->bufferLength == 64U) {
                         CPL_SHA256Guts(sc, sc->buffer.words);
                         needBurn = 1;
-                        sc->bufferLength = 0L;
+                        sc->bufferLength = 0U;
                 }
         }
 
-        while (len > 63L) {
-                sc->totalLength += 512L;
+        while (len > 63U) {
+                sc->totalLength += 512U;
 
                 CPL_SHA256Guts(sc, (const GUInt32 *)data);
                 needBurn = 1;
 
-                data = ((GByte *) data) + 64L;
-                len -= 64L;
+                data = ((GByte *) data) + 64U;
+                len -= 64U;
         }
 
         if (len) {
                 memcpy(&sc->buffer.bytes[sc->bufferLength], data, len);
 
-                sc->totalLength += (GUInt32)len * 8L;
+                sc->totalLength += (GUInt32)len * 8U;
 
                 sc->bufferLength += (GUInt32)len;
         }
@@ -406,14 +406,14 @@ void CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE])
         GUInt64 lengthPad;
         int i;
 
-        bytesToPad = 120L - sc->bufferLength;
-        if (bytesToPad > 64L)
-                bytesToPad -= 64L;
+        bytesToPad = 120U - sc->bufferLength;
+        if (bytesToPad > 64U)
+                bytesToPad -= 64U;
 
         lengthPad = BYTESWAP64(sc->totalLength);
 
         CPL_SHA256Update(sc, padding, bytesToPad);
-        CPL_SHA256Update(sc, &lengthPad, 8L);
+        CPL_SHA256Update(sc, &lengthPad, 8U);
 
         if (hash) {
                 for (i = 0; i < CPL_SHA256_HASH_WORDS; i++) {

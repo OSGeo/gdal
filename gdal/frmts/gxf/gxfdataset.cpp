@@ -230,7 +230,7 @@ const char *GXFDataset::GetProjectionRef()
 GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    GXFHandle	hGXF;
+    GXFHandle	l_hGXF;
     int		i, bFoundKeyword, bFoundIllegal;
 
 /* -------------------------------------------------------------------- */
@@ -299,9 +299,9 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
 
-    hGXF = GXFOpen( poOpenInfo->pszFilename );
+    l_hGXF = GXFOpen( poOpenInfo->pszFilename );
 
-    if( hGXF == NULL )
+    if( l_hGXF == NULL )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
@@ -309,7 +309,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        GXFClose(hGXF);
+        GXFClose(l_hGXF);
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The GXF driver does not support update access to existing"
                   " datasets.\n" );
@@ -332,18 +332,18 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
         eDT = GDT_Float32;
     }
 
-    poDS->hGXF = hGXF;
+    poDS->hGXF = l_hGXF;
     poDS->eDataType = eDT;
 
 /* -------------------------------------------------------------------- */
 /*	Establish the projection.					*/
 /* -------------------------------------------------------------------- */
-    poDS->pszProjection = GXFGetMapProjectionAsOGCWKT( hGXF );
+    poDS->pszProjection = GXFGetMapProjectionAsOGCWKT( l_hGXF );
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    GXFGetRawInfo( hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL,
+    GXFGetRawInfo( l_hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL,
                    NULL, NULL, &(poDS->dfNoDataValue) );
 
     if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0)

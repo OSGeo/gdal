@@ -662,7 +662,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
             return NULL;
         }
 
-        pszRLBuffer = CPLReadLineBuffer( nBufLength + nChunkSize + 1 );
+        pszRLBuffer = CPLReadLineBuffer( static_cast<int>(nBufLength + nChunkSize + 1) );
         if( pszRLBuffer == NULL )
             return NULL;
 

@@ -418,7 +418,7 @@ int CPLHashSetRemoveInternal(CPLHashSet* set, const void* elt, int bDeferRehash)
             CPLHashSetRehash(set);
     }
 
-    int nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
+    int nHashVal = static_cast<int>(set->fnHashFunc(elt) % set->nAllocatedSize);
     CPLList* cur = set->tabList[nHashVal];
     CPLList* prev = NULL;
     while(cur)

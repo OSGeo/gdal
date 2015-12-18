@@ -3331,7 +3331,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             GDALPipeWrite(p, eErr);
             if( eErr != CE_Failure )
             {
-                GDALPipeWrite(p, nBuckets * sizeof(GUIntBig), panHistogram);
+                GDALPipeWrite(p, nBuckets * (int)sizeof(GUIntBig), panHistogram);
             }
             CPLFree(panHistogram);
         }
@@ -3353,7 +3353,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 GDALPipeWrite(p, dfMin);
                 GDALPipeWrite(p, dfMax);
                 GDALPipeWrite(p, nBuckets);
-                GDALPipeWrite(p, nBuckets * sizeof(GUIntBig) , panHistogram);
+                GDALPipeWrite(p, nBuckets * (int)sizeof(GUIntBig) , panHistogram);
             }
             CPLFree(panHistogram);
         }
@@ -3717,9 +3717,9 @@ CPLErr GDALClientDataset::IBuildOverviews( const char *pszResampling,
     if( !GDALPipeWrite(p, INSTR_IBuildOverviews) ||
         !GDALPipeWrite(p, pszResampling) ||
         !GDALPipeWrite(p, nOverviews) ||
-        !GDALPipeWrite(p, nOverviews * sizeof(int), panOverviewList) ||
+        !GDALPipeWrite(p, nOverviews * (int)sizeof(int), panOverviewList) ||
         !GDALPipeWrite(p, nListBands) ||
-        !GDALPipeWrite(p, nListBands * sizeof(int), panBandList) )
+        !GDALPipeWrite(p, nListBands * (int)sizeof(int), panBandList) )
         return CE_Failure;
 
     if( GDALServerLoop(p, NULL, pfnProgress, pProgressData) != 0 )
@@ -3796,7 +3796,7 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
         !GDALPipeWrite(p, nBufYSize) ||
         !GDALPipeWrite(p, eBufType) ||
         !GDALPipeWrite(p, nBandCount) ||
-        !GDALPipeWrite(p, nBandCount * sizeof(int), panBandMap) )
+        !GDALPipeWrite(p, nBandCount * (int)sizeof(int), panBandMap) )
         return CE_Failure;
 
     if( bDirectCopy )
@@ -4327,7 +4327,7 @@ CPLErr GDALClientDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSi
         !GDALPipeWrite(p, nBufYSize) ||
         !GDALPipeWrite(p, eDT) ||
         !GDALPipeWrite(p, nBandCount) ||
-        !GDALPipeWrite(p, panBandList ? nBandCount * sizeof(int) : 0, panBandList) ||
+        !GDALPipeWrite(p, panBandList ? nBandCount * (int)sizeof(int) : 0, panBandList) ||
         !GDALPipeWrite(p, papszOptions) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
@@ -4947,7 +4947,7 @@ CPLErr GDALClientRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
         !GDALPipeWrite(p, dfMin) ||
         !GDALPipeWrite(p, dfMax) ||
         !GDALPipeWrite(p, nBuckets) ||
-        !GDALPipeWrite(p, nBuckets * sizeof(GUIntBig), panHistogram) )
+        !GDALPipeWrite(p, nBuckets * (int)sizeof(GUIntBig), panHistogram) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
 }
@@ -5686,7 +5686,7 @@ CPLErr GDALClientRasterBand::BuildOverviews( const char * pszResampling,
     if( !WriteInstr(INSTR_Band_BuildOverviews) ||
         !GDALPipeWrite(p, pszResampling) ||
         !GDALPipeWrite(p, nOverviews) ||
-        !GDALPipeWrite(p, nOverviews * sizeof(int), panOverviewList) )
+        !GDALPipeWrite(p, nOverviews * (int)sizeof(int), panOverviewList) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
 }
@@ -5778,10 +5778,10 @@ CPLErr GDALClientRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int n
 
 GDALClientDataset* GDALClientDataset::CreateAndConnect()
 {
-    GDALServerSpawnedProcess* ssp = GDALServerSpawnAsync();
-    if( ssp == NULL )
+    GDALServerSpawnedProcess* l_ssp = GDALServerSpawnAsync();
+    if( l_ssp == NULL )
         return NULL;
-    return new GDALClientDataset(ssp);
+    return new GDALClientDataset(l_ssp);
 }
 
 /************************************************************************/
@@ -6050,19 +6050,19 @@ int GDALClientDataset::Identify( GDALOpenInfo * poOpenInfo )
 
     CLIENT_ENTER();
 
-    GDALServerSpawnedProcess* ssp = GDALServerSpawnAsync();
-    if( ssp == NULL )
+    GDALServerSpawnedProcess* l_ssp = GDALServerSpawnAsync();
+    if( l_ssp == NULL )
         return FALSE;
 
     char* pszCWD = CPLGetCurrentDir();
 
-    GDALPipe* p = ssp->p;
-    if( !GDALPipeWrite(p, INSTR_Identify) ||
-        !GDALPipeWrite(p, pszFilename) ||
-        !GDALPipeWrite(p, pszCWD) ||
-        !GDALSkipUntilEndOfJunkMarker(p) )
+    GDALPipe* l_p = l_ssp->p;
+    if( !GDALPipeWrite(l_p, INSTR_Identify) ||
+        !GDALPipeWrite(l_p, pszFilename) ||
+        !GDALPipeWrite(l_p, pszCWD) ||
+        !GDALSkipUntilEndOfJunkMarker(l_p) )
     {
-        GDALServerSpawnAsyncFinish(ssp);
+        GDALServerSpawnAsyncFinish(l_ssp);
         CPLFree(pszCWD);
         return FALSE;
     }
@@ -6070,13 +6070,13 @@ int GDALClientDataset::Identify( GDALOpenInfo * poOpenInfo )
     CPLFree(pszCWD);
 
     int bRet;
-    if( !GDALPipeRead(p, &bRet) )
+    if( !GDALPipeRead(l_p, &bRet) )
     {
-        GDALServerSpawnAsyncFinish(ssp);
+        GDALServerSpawnAsyncFinish(l_ssp);
         return FALSE;
     }
 
-    GDALServerSpawnAsyncFinish(ssp);
+    GDALServerSpawnAsyncFinish(l_ssp);
     return bRet;
 }
 
@@ -6273,14 +6273,14 @@ int GDALClientDataset::mCreate( const char * pszFilename,
 /************************************************************************/
 
 GDALDataset* GDALClientDataset::Create( const char * pszName,
-                                    int nXSize, int nYSize, int nBands,
+                                    int nXSize, int nYSize, int nBandsIn,
                                     GDALDataType eType,
                                     char ** papszOptions )
 {
     CLIENT_ENTER();
 
     GDALClientDataset* poDS = CreateAndConnect();
-    if( poDS != NULL && !poDS->mCreate(pszName, nXSize, nYSize, nBands,
+    if( poDS != NULL && !poDS->mCreate(pszName, nXSize, nYSize, nBandsIn,
                                        eType, papszOptions) )
     {
         delete poDS;
@@ -6303,18 +6303,18 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 
     CLIENT_ENTER();
 
-    GDALServerSpawnedProcess* ssp = GDALServerSpawnAsync();
-    if( ssp == NULL )
+    GDALServerSpawnedProcess* l_ssp = GDALServerSpawnAsync();
+    if( l_ssp == NULL )
         return CE_Failure;
 
-    GDALPipe* p = ssp->p;
-    if( !GDALClientDatasetQuietDelete(p, pszFilename) )
+    GDALPipe* l_p = l_ssp->p;
+    if( !GDALClientDatasetQuietDelete(l_p, pszFilename) )
     {
-        GDALServerSpawnAsyncFinish(ssp);
+        GDALServerSpawnAsyncFinish(l_ssp);
         return CE_Failure;
     }
 
-    GDALServerSpawnAsyncFinish(ssp);
+    GDALServerSpawnAsyncFinish(l_ssp);
     return CE_None;
 }
 

@@ -403,7 +403,7 @@ void GDALJP2Box::AppendUInt8( GByte nVal )
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Box::CreateUUIDBox( 
-    const GByte *pabyUUID, int nDataSize, const GByte *pabyData )
+    const GByte *pabyUUID, int nDataSize, const GByte *pabyDataIn )
 
 {
     GDALJP2Box *poBox;
@@ -412,7 +412,7 @@ GDALJP2Box *GDALJP2Box::CreateUUIDBox(
     poBox->SetType( "uuid" );
 
     poBox->AppendWritableData( 16, pabyUUID );
-    poBox->AppendWritableData( nDataSize, pabyData );
+    poBox->AppendWritableData( nDataSize, pabyDataIn );
 
     return poBox;
 }
