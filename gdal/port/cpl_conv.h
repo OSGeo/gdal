@@ -271,8 +271,8 @@ private:
     char *pszOldLocale;
 
     /* Make it non-copyable */
-    CPLLocaleC(CPLLocaleC&);
-    CPLLocaleC& operator=(CPLLocaleC&);
+    CPLLocaleC(const CPLLocaleC&);
+    CPLLocaleC& operator=(const CPLLocaleC&);
 };
 
 // Does the same as CPLLocaleC except that, when available, it tries to
@@ -297,8 +297,8 @@ private:
 #endif
 
     /* Make it non-copyable */
-    CPLThreadLocaleC(CPLThreadLocaleC&);
-    CPLThreadLocaleC& operator=(CPLThreadLocaleC&);
+    CPLThreadLocaleC(const CPLThreadLocaleC&);
+    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&);
 };
 
 #endif /* def __cplusplus */
