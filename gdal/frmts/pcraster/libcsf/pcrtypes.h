@@ -72,13 +72,13 @@ namespace pcr {
              Struct trait see cast drama as isMV fog INT2 in BandMapTest::Open2.
              See numeric_limit discussion in Josuttis.
 */
-  template<typename T> bool isMV(const T& v);
+  template<typename T> static bool isMV(const T& v);
 /*!
   \brief     Tests if the value pointed to by v is a missing value.
   \param     v Pointer to the value to be tested.
   \return    True if the value pointed to by v is a missing value.
 */
-  template<typename T> bool isMV(T* v) {
+  template<typename T> static bool isMV(T* v) {
     return isMV(*v);
   }
 
@@ -121,7 +121,7 @@ template<> inline bool isMV(std::string const& string)
     \brief     Sets the value pointed to by v to a missing value.
     \param     v Pointer to the value to be set.
   */
-  template<typename T> void setMV(T *v) {
+  template<typename T> static void setMV(T *v) {
     setMV(*v);
   }
 
@@ -190,7 +190,7 @@ inline void setMV(std::string& string)
  *   or optimize for I86, for gcc look into include/asm/string
  */
 template<typename T>
- void setMV(T *v, size_t n)
+static void setMV(T *v, size_t n)
 {
   for(size_t i=0; i<n; i++)
       pcr::setMV(v[i]);
@@ -198,7 +198,7 @@ template<typename T>
 
  namespace detail {
    template<typename T>
-    void setMVMemSet(T *v, size_t n) {
+    static void setMVMemSet(T *v, size_t n) {
       memset(v,MV_UINT1,n*sizeof(T));
     }
  }

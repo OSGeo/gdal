@@ -5224,7 +5224,7 @@ netCDFDataset::Create( const char * pszFilename,
 
 
 template <class T>
-CPLErr  NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
+static CPLErr  NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
                       int nXSize, int nYSize,
                       GDALProgressFunc pfnProgress, void * pProgressData )
 {

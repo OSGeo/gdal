@@ -163,7 +163,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
 }
 
 template <typename T>
-void CopyPixels(const T* const src, T* const dst,
+static void CopyPixels(const T* const src, T* const dst,
                 std::size_t offset, std::size_t count)
 {
     for (std::size_t i = 0; i < count; i++)
