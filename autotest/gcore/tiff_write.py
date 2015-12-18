@@ -6249,6 +6249,49 @@ def tiff_write_143():
     return 'success'
 
 ###############################################################################
+# Test creating a real BigTIFF file > 4 GB with multiple directories (on filesystems supporting sparse files)
+
+def tiff_write_144():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
+    # file !
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        return 'skip'
+
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_144.tif', 20, 20, 1, options = ['BIGTIFF=YES'])
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    # Extend the file to 4 GB
+    f = open('tmp/tiff_write_144.tif', 'rb+')
+    f.seek(4294967296, 0)
+    f.write(' ')
+    f.close()
+
+    ds = gdal.Open('tmp/tiff_write_144.tif', gdal.GA_Update)
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Open('tmp/tiff_write_144.tif')
+    got_cs = ds.GetRasterBand(1).Checksum()
+    got_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/tiff_write_144.tif')
+
+    if got_cs != 4873 or got_cs_ovr != 1218:
+        gdaltest.post_reason( 'fail' )
+        print(got_cs)
+        print(got_cs_ovr)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6421,6 +6464,7 @@ gdaltest_list = [
     tiff_write_141,
     tiff_write_142,
     tiff_write_143,
+    tiff_write_144,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
