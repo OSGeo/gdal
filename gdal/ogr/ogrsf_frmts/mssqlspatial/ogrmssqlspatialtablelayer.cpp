@@ -937,6 +937,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 
 
     int bNeedComma = FALSE;
+    SQLLEN nWKBLenBindParameter;
     if(poGeom != NULL && pszGeomColumn != NULL)
     {
         oStmt.Appendf( "[%s] = ", pszGeomColumn );
@@ -949,9 +950,10 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
             if( poGeom->exportToWkb( wkbNDR, pabyWKB ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY 
                 || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
             {
+                nWKBLenBindParameter = nWKBLen;
                 int nRetCode = SQLBindParameter(oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
                     SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY, 
-                    nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, (SQLLEN*)&nWKBLen);
+                    nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, &nWKBLenBindParameter);
                 if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
                 {
                     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
@@ -1212,6 +1214,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
+    SQLLEN nWKBLenBindParameter;
     if (oStatement.GetCommand()[strlen(oStatement.GetCommand()) - 1] != ']')
     {
         /* no fields were added */
@@ -1233,9 +1236,10 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
                 if( poGeom->exportToWkb( wkbNDR, pabyWKB ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY 
                     || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
                 {
+                    nWKBLenBindParameter = nWKBLen;
                     int nRetCode = SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
                         SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY, 
-                        nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, (SQLLEN*)&nWKBLen);
+                        nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, &nWKBLenBindParameter);
                     if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
                     {
                         if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
