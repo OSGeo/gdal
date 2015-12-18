@@ -164,7 +164,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     char       *pszRecord;
 
-    unsigned int data_length =  bytes_per_line + sizeof(SUB_VISIRLINE);
+    unsigned int data_length =  bytes_per_line + (unsigned int)sizeof(SUB_VISIRLINE);
     unsigned int data_offset = 0;
 
     if (open_mode != MODE_HRV) {

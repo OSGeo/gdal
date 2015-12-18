@@ -3180,7 +3180,7 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
             p_jpeg_write_m_byte( cinfo, 0 );
             p_jpeg_write_m_byte( cinfo, 0 );
 
-            p_jpeg_write_m_byte( cinfo, nJPEGIfByteCount & 0xff );
+            p_jpeg_write_m_byte( cinfo, static_cast<GByte>(nJPEGIfByteCount & 0xff) );
             p_jpeg_write_m_byte( cinfo, static_cast<GByte>(nJPEGIfByteCount >> 8) );
             p_jpeg_write_m_byte( cinfo, 0 );
             p_jpeg_write_m_byte( cinfo, 0 );

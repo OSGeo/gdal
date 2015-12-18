@@ -1509,7 +1509,7 @@ do {                                                                    \
     {
         OGRSpatialReference oSRS;
         GInt32  nProj =
-            (poDS->sHeader.iProjection) ? poDS->sHeader.iProjection : 1L;
+            (poDS->sHeader.iProjection) ? poDS->sHeader.iProjection : 1;
         double  padfPrjParams[8];
 
         padfPrjParams[0] = poDS->sHeader.dfStdP1;

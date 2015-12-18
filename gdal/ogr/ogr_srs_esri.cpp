@@ -46,7 +46,7 @@ int   RemapImgUTMNames(OGRSpatialReference* pOgr, const char* pszProjCSName,
 int   RemapNameBasedOnKeyName(OGRSpatialReference* pOgr, const char* pszName, 
                              const char* pszkeyName, char **mappingTable);
 int   RemapNamesBasedOnTwo(OGRSpatialReference* pOgr, const char* name1, const char* name2, 
-                             char **mappingTable, long nTableStepSize, 
+                             char **mappingTable, int nTableStepSize, 
                              char** pszkeyNames, long nKeys);
 int   RemapPValuesBasedOnProjCSAndPName(OGRSpatialReference* pOgr, 
                              const char* pszProgCSName, char **mappingTable);
@@ -2115,7 +2115,7 @@ int RemapNameBasedOnKeyName( OGRSpatialReference* pOgr, const char* pszName, con
 /************************************************************************/
 
 int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1, const char* name2, 
-                          char **mappingTable, long nTableStepSize, 
+                          char **mappingTable, int nTableStepSize, 
                           char** pszkeyNames, long nKeys )
 {
     int i;

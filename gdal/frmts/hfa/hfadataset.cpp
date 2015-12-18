@@ -3103,7 +3103,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         if( ( poRAT->GetTypeOfCol(col) == GFT_Real ) || bIsColorCol || (poRAT->GetUsageOfCol(col) == GFU_PixelCount) )
         {
             int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
-                                            nRowCount * sizeof(double) );
+                                            (GUInt32)nRowCount * (GUInt32)sizeof(double) );
             poColumn->SetIntField( "columnDataPtr", nOffset );
             poColumn->SetStringField( "dataType", "real" );
 
@@ -3165,7 +3165,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         else if (poRAT->GetTypeOfCol(col) == GFT_Integer)
         {
             int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
-                                            nRowCount * sizeof(GInt32) );
+                                            (GUInt32)nRowCount * (GUInt32)sizeof(GInt32) );
             poColumn->SetIntField( "columnDataPtr", nOffset );
             poColumn->SetStringField( "dataType", "integer" );
 

@@ -167,10 +167,10 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    min = *(pds++);
    MEMCPY_BIG (&li_temp, pds, sizeof (sInt4));
    pds += 4;
-   t_year = li_temp / 1000000L;
-   li_temp -= t_year * 1000000L;
-   t_month = li_temp / 10000L;
-   li_temp -= t_month * 10000L;
+   t_year = li_temp / 1000000;
+   li_temp -= t_year * 1000000;
+   t_month = li_temp / 10000;
+   li_temp -= t_month * 10000;
    t_day = li_temp / 100;
    t_hour = li_temp - t_day * 100;
    if ((t_year != year) || (t_month != month) || (t_day != day) ||
@@ -185,8 +185,8 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID1 = li_temp;
-   pdsMeta->CCC = li_temp / 1000000L;
-   li_temp -= pdsMeta->CCC * 1000000L;
+   pdsMeta->CCC = li_temp / 1000000;
+   li_temp -= pdsMeta->CCC * 1000000;
    pdsMeta->FFF = li_temp / 1000;
    li_temp -= pdsMeta->FFF * 1000;
    pdsMeta->B = li_temp / 100;
@@ -194,39 +194,39 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID2 = li_temp;
-   pdsMeta->V = li_temp / 100000000L;
-   li_temp -= pdsMeta->V * 100000000L;
+   pdsMeta->V = li_temp / 100000000;
+   li_temp -= pdsMeta->V * 100000000;
    pdsMeta->LLLL = li_temp / 10000;
    pdsMeta->UUUU = li_temp - pdsMeta->LLLL * 10000;
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID3 = li_temp;
-   pdsMeta->T = li_temp / 100000000L;
-   li_temp -= pdsMeta->T * 100000000L;
-   pdsMeta->RR = li_temp / 1000000L;
-   li_temp -= pdsMeta->RR * 1000000L;
-   pdsMeta->Oper = li_temp / 100000L;
-   li_temp -= pdsMeta->Oper * 100000L;
+   pdsMeta->T = li_temp / 100000000;
+   li_temp -= pdsMeta->T * 100000000;
+   pdsMeta->RR = li_temp / 1000000;
+   li_temp -= pdsMeta->RR * 1000000;
+   pdsMeta->Oper = li_temp / 100000;
+   li_temp -= pdsMeta->Oper * 100000;
    pdsMeta->HH = li_temp / 1000;
    pdsMeta->ttt = li_temp - pdsMeta->HH * 1000;
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID4 = li_temp;
-   W = li_temp / 1000000000L;
-   li_temp -= W * 1000000000L;
-   XXXX = li_temp / 100000L;
-   li_temp -= XXXX * 100000L;
+   W = li_temp / 1000000000;
+   li_temp -= W * 1000000000;
+   XXXX = li_temp / 100000;
+   li_temp -= XXXX * 100000;
    if (W) {
       XXXX = -1 * XXXX;
    }
-   YY = li_temp / 1000L;
-   li_temp -= YY * 1000L;
+   YY = li_temp / 1000;
+   li_temp -= YY * 1000;
    if (YY >= 50) {
       YY = -1 * (YY - 50);
    }
    pdsMeta->thresh = (XXXX / 10000.) * pow (10.0, YY);
    pdsMeta->I = li_temp / 100;
-   li_temp -= pdsMeta->I * 100L;
+   li_temp -= pdsMeta->I * 100;
    pdsMeta->S = li_temp / 10;
    pdsMeta->G = li_temp - pdsMeta->S * 10;
    project_hr = GRIB_UNSIGN_INT2 (*pds, pds[1]);
@@ -625,10 +625,10 @@ int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double *refTime)
 
    if (FREAD_BIG (&li_temp, sizeof (sInt4), 1, fp) != 1)
       goto error;
-   t_year = li_temp / 1000000L;
-   li_temp -= t_year * 1000000L;
-   t_month = li_temp / 10000L;
-   li_temp -= t_month * 10000L;
+   t_year = li_temp / 1000000;
+   li_temp -= t_year * 1000000;
+   t_month = li_temp / 10000;
+   li_temp -= t_month * 10000;
    t_day = li_temp / 100;
    t_hour = li_temp - t_day * 100;
 
@@ -1670,7 +1670,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
  * NOTES
  *****************************************************************************
  */
-#define SCALE_MISSING 10000L
+#define SCALE_MISSING 10000
 static void TDL_ScaleData (double *Src, sInt4 *Dst, sInt4 numData,
                            int DSF, int BSF, char *f_primMiss,
                            double *primMiss, char *f_secMiss,
@@ -4227,7 +4227,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    fputc (day, fp);
    fputc (hour, fp);
    fputc (min, fp);
-   li_temp = (year * 1000000L + month * 10000L + day * 100 + hour);
+   li_temp = (year * 1000000 + month * 10000 + day * 100 + hour);
    FWRITE_BIG (&li_temp, sizeof (sInt4), 1, fp);
    FWRITE_BIG (&ID1, sizeof (sInt4), 1, fp);
    FWRITE_BIG (&ID2, sizeof (sInt4), 1, fp);
