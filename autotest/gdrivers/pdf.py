@@ -1485,22 +1485,27 @@ def pdf_write_ogr():
         cs_tab = []
         rendering_options = ['RASTER', 'VECTOR', 'TEXT', 'RASTER,VECTOR', 'RASTER,TEXT', 'VECTOR,TEXT', 'RASTER,VECTOR,TEXT' ]
         for opt in rendering_options:
+            gdal.ErrorReset()
             ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options = ['RENDERING_OPTIONS=%s' % opt])
-            cs_tab.append(ds.GetRasterBand(1).Checksum())
+            cs = ds.GetRasterBand(1).Checksum()
+            # When misconfigured Poppler with fonts, use this to avoid error
+            if opt.find('TEXT') >= 0 and gdal.GetLastErrorMsg().find('font') >= 0:
+                cs = -cs
+            cs_tab.append(cs)
             ds = None
 
         # Test that all combinations give a different result
         for i in range(len(rendering_options)):
             #print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
             for j in range(i+1, len(rendering_options)):
-                if cs_tab[i] == cs_tab[j]:
+                if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     gdaltest.post_reason('fail')
                     print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
                     print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]) )
                     return 'fail'
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
-        if cs_tab[len(rendering_options)-1] != cs_ref:
+        if abs(cs_tab[len(rendering_options)-1]) != cs_ref:
             gdaltest.post_reason('fail')
             print(cs_ref)
             print(cs_tab[len(rendering_options)-1])

@@ -143,6 +143,7 @@ def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_liv
     import subprocess
     import shlex
     command = shlex.split(cmd)
+    command = [ elt.replace('\x00', '') for elt in command ]
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
     else:
@@ -224,6 +225,7 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
     import subprocess
     import shlex
     command = shlex.split(cmd)
+    command = [ elt.replace('\x00', '') for elt in command ]
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if p.stdout is not None:

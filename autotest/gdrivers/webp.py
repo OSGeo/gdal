@@ -110,7 +110,7 @@ def webp_4():
     gdal.Unlink('/vsimem/webp_4.webp')
 
     # 22849 is for libwebp 0.3.0
-    if cs1 != 22001 and cs1 != 22849 and cs1 != 34422:
+    if cs1 != 22001 and cs1 != 22849 and cs1 != 34422 and cs1 != 36652:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'
