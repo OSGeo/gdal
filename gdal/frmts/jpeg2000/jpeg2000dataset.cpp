@@ -28,18 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
-#include "cpl_string.h"
 
 #include <jasper/jasper.h>
 #include "jpeg2000_vsil_io.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_JPEG2000();
-CPL_C_END
 
 // XXX: Part of code below extracted from the JasPer internal headers and
 // must be in sync with JasPer version (this one works with JasPer 1.900.1)

@@ -28,14 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gxfopen.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gxfopen.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_GXF();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

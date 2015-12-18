@@ -28,13 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include "gdal_priv.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "cpl_csv.h"
-#include "ogr_spatialref.h"
-#include "gdal_pam.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_alg.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 #include "IntergraphDataset.h"
 #include "IntergraphBand.h"

@@ -34,6 +34,8 @@
 
 #include <string>
 
+#include "gdal_frmts.h"
+
 using std::string;
 
 /* used by ilwsicoordinatesystem.cpp */

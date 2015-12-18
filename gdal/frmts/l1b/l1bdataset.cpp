@@ -34,15 +34,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_L1B();
-CPL_C_END
 
 typedef enum {                  // File formats
     L1B_NONE,           // Not a L1B format

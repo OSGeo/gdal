@@ -30,15 +30,12 @@
 
 #include <libgrass.h>
 
-#include "gdal_priv.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_GRASS();
-CPL_C_END
 
 /************************************************************************/
 /*                         Grass2CPLErrorHook()                         */

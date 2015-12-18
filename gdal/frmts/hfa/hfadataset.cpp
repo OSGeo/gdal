@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_rat.h"
 #include "hfa_p.h"
@@ -36,10 +37,6 @@
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_HFA();
-CPL_C_END
 
 #ifndef R2D
 #  define R2D	(180/M_PI)

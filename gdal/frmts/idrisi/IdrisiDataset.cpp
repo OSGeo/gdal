@@ -32,21 +32,18 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-#include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
-#include "ogr_spatialref.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_alg.h"
+#include "gdal_priv.h"
 #include "gdal_rat.h"
+#include "ogr_spatialref.h"
 #include "idrisi.h"
 
 CPL_CVSID( "$Id$" );
-
-CPL_C_START
-void GDALRegister_IDRISI();
-CPL_C_END
 
 #ifdef WIN32
 #  define PATHDELIM       '\\'

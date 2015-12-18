@@ -37,16 +37,17 @@
 
 #include <string.h>
 #include <math.h>
+
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 #include "hdf.h"
 #include "mfhdf.h"
 
 #include "HdfEosDef.h"
-
-#include "gdal_priv.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
 
 #include "hdf4compat.h"
 #include "hdf4dataset.h"
@@ -55,12 +56,7 @@
 
 #include <algorithm>
 
-
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_HDF4();
-CPL_C_END
 
 static const int HDF4_SDS_MAXNAMELEN = 65;
 

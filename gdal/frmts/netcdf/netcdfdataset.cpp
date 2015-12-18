@@ -32,6 +32,7 @@
 
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "gdal_frmts.h"
 #include "netcdfdataset.h"
 
 #include <map> //for NCDFWriteProjAttribs()

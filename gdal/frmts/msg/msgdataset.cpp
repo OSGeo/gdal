@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+#include "gdal_frmts.h"
 #include "msgdataset.h"
 #include "prologue.h"
 #include "xritheaderparser.h"

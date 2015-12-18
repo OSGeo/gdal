@@ -37,8 +37,6 @@
 
 #include <math.h>
 
-extern "C" void GDALRegister_MBTiles();
-
 CPL_CVSID("$Id$");
 
 static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", NULL};

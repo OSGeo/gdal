@@ -88,15 +88,11 @@
 
 #include <limits.h>
 #include "cpl_port.h" // for snprintf for MSVC
-#include "gta_headers.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gta_headers.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_GTA();
-CPL_C_END
-
 
 /************************************************************************/
 /* Helper functions                                                     */
