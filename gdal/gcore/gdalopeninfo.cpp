@@ -246,7 +246,15 @@ char** GDALOpenInfo::GetSiblingFiles()
     bHasGotSiblingFiles = TRUE;
 
     CPLString osDir = CPLGetDirname( pszFilename );
-    papszSiblingFiles = VSIReadDir( osDir );
+    const int nMaxFiles = atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
+    papszSiblingFiles = VSIReadDirEx( osDir, nMaxFiles );
+    if( nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles )
+    {
+        CPLDebug("GDAL", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
+                 osDir.c_str());
+        CSLDestroy(papszSiblingFiles);
+        papszSiblingFiles = NULL;
+    }
 
     /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
     /* drivers. The MBTiles driver needs no companion file. */

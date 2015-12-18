@@ -11436,7 +11436,15 @@ char** GTiffDataset::GetSiblingFiles()
     else
     {
         m_bHasGotSiblingFiles = true;
-        papszSiblingFiles = VSIReadDir(CPLGetDirname(osFilename));
+        const int nMaxFiles = atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
+        papszSiblingFiles = VSIReadDirEx(CPLGetDirname(osFilename), nMaxFiles);
+        if( nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles )
+        {
+            CPLDebug("GTiff", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
+                     CPLGetDirname(osFilename));
+            CSLDestroy(papszSiblingFiles);
+            papszSiblingFiles = NULL;
+        }
         oOvManager.TransferSiblingFiles( papszSiblingFiles );
     }
     return papszSiblingFiles;
@@ -14730,9 +14738,10 @@ void GTiffDataset::LoadMetadata()
 char **GTiffDataset::GetFileList()
 
 {
+    LoadGeoreferencingAndPamIfNeeded();
+
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    LoadGeoreferencingAndPamIfNeeded();
     LoadMetadata();
     if(NULL != papszMetadataFiles)
     {
