@@ -82,6 +82,8 @@ public:
                       { (void) pszDirname; errno=ENOENT; return -1; }
     virtual char **ReadDir( const char *pszDirname ) 
                       { (void) pszDirname; return NULL; }
+    virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ ) 
+                      { return ReadDir(pszDirname); }
     virtual int Rename( const char *oldpath, const char *newpath )
                       { (void) oldpath; (void)newpath; errno=ENOENT; return -1; }
     virtual int IsCaseSensitive( const char* pszFilename )
@@ -183,7 +185,7 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
 
     virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = NULL);
     virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);

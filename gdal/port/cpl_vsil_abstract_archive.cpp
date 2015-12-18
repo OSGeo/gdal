@@ -581,10 +581,11 @@ int VSIArchiveFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
 }
 
 /************************************************************************/
-/*                             ReadDir()                                */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
-char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
+char** VSIArchiveFilesystemHandler::ReadDirEx( const char *pszDirname,
+                                               int nMaxFiles )
 {
     CPLString osInArchiveSubDir;
     char* archiveFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
@@ -592,7 +593,7 @@ char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
         return NULL;
     int lenInArchiveSubDir = static_cast<int>(strlen(osInArchiveSubDir));
 
-    char **papszDir = NULL;
+    CPLStringList oDir;
 
     const VSIArchiveContent* content = GetContentOfArchive(archiveFilename);
     if (!content)
@@ -625,7 +626,7 @@ char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
                 if (ENABLE_DEBUG)
                     CPLDebug("VSIArchive", "Add %s as in directory %s\n",
                             tmpFileName + lenInArchiveSubDir + 1, pszDirname);
-                papszDir = CSLAddString(papszDir, tmpFileName + lenInArchiveSubDir + 1);
+                oDir.AddString(tmpFileName + lenInArchiveSubDir + 1);
                 CPLFree(tmpFileName);
             }
         }
@@ -634,10 +635,13 @@ char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
         {
             /* Only list toplevel files and directories */
             if (ENABLE_DEBUG) CPLDebug("VSIArchive", "Add %s as in directory %s\n", fileName, pszDirname);
-            papszDir = CSLAddString(papszDir, fileName);
+            oDir.AddString(fileName);
         }
+
+        if( nMaxFiles > 0 && oDir.Count() > nMaxFiles )
+            break;
     }
 
     CPLFree(archiveFilename);
-    return papszDir;
+    return oDir.StealList();
 }

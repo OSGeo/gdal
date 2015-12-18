@@ -489,6 +489,32 @@ def vsizip_12():
 
     return 'success'
 
+###############################################################################
+# Test ReadDir() truncation
+
+def vsizip_13():
+
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_13.zip", "wb")
+    for i in range(10):
+        f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_13.zip/%d" % i, "wb")
+        gdal.VSIFCloseL(f)
+    gdal.VSIFCloseL(fmain)
+    
+
+    lst = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip')
+    if len(lst) < 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # Test truncation
+    lst_truncated = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip', int(len(lst)/2))
+    if lst_truncated <= int(len(lst)/2):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsizip/vsimem/vsizip_13.zip')
+
+    return 'success'
+
 
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
@@ -502,6 +528,7 @@ gdaltest_list = [ vsizip_1,
                   vsizip_10,
                   vsizip_11,
                   vsizip_12,
+                  vsizip_13,
                   ]
 
 
