@@ -302,6 +302,7 @@ def osr_compd_6():
     wkt = srs.ExportToPrettyWkt() 
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+        gdaltest.post_reason('fail')
         return 'fail'
     elif exp_wkt != wkt:
         print('warning they are equivalent, but not completely the same')
