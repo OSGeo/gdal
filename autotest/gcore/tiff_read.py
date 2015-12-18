@@ -867,7 +867,11 @@ def tiff_read_corrupted_gtiff():
 
 def tiff_read_tag_without_null_byte():
 
+    gdal.ErrorReset()
+    oldval = gdal.GetConfigOption('CPL_DEBUG')
+    gdal.SetConfigOption('CPL_DEBUG', 'OFF')
     ds = gdal.Open('data/tag_without_null_byte.tif')
+    gdal.SetConfigOption('CPL_DEBUG', oldval)
     if gdal.GetLastErrorType() != 0:
         gdaltest.post_reason( 'should have not emitted a warning, but only a CPLDebug() message' )
         return 'fail'
@@ -2259,6 +2263,7 @@ def tiff_read_strace_check():
 
     python_exe = sys.executable
     cmd = """strace -f %s -c "from osgeo import gdal; """ % python_exe + \
+            """gdal.SetConfigOption('CPL_DEBUG', 'OFF');""" + \
             """ds = gdal.Open('../gcore/data/byte.tif');""" + \
             """ds.ReadRaster();""" + \
             """ds.GetMetadata('IMAGE_STRUCTURE');""" + \
@@ -2278,6 +2283,24 @@ def tiff_read_strace_check():
     if len(lines_with_dotdot_gcore) != 1:
         gdaltest.post_reason('fail')
         print(lines_with_dotdot_gcore)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GDAL_READDIR_LIMIT_ON_OPEN
+
+def tiff_read_readdir_limit_on_open():
+
+    gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', '1')
+
+    ds = gdal.Open( 'data/md_kompsat.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', None)
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
         return 'fail'
 
     return 'success'
@@ -2337,6 +2360,7 @@ gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
 gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
 gdaltest_list.append( (tiff_read_empty_nodata_tag) )
 gdaltest_list.append( (tiff_read_strace_check) )
+gdaltest_list.append( (tiff_read_readdir_limit_on_open) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
