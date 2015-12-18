@@ -29,12 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// We need that as first include to avoid VSIStatBufL being not defined on i586-mingw32msvc
-#include "cpl_port.h"
-
 #include <ctype.h>
-#include <limits.h>
+#include <climits>
 
+// We need cpl_port as first include to avoid VSIStatBufL being not
+// defined on i586-mingw32msvc.
+#include "cpl_port.h"
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "gdal_frmts.h"
@@ -42,8 +42,8 @@
 
 CPL_CVSID("$Id$");
 
-static CPLString OSR_GDS( char **papszNV, const char * pszField, 
-                           const char *pszDefaultValue );
+static CPLString OSR_GDS( char **papszNV, const char * pszField,
+                          const char *pszDefaultValue );
 
 typedef enum
 {
@@ -68,7 +68,6 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     char        **papszPrj;
     CPLString   osPrjFilename;
     char        *pszProjection;
-
 
     unsigned char achReadBuf[256];
     GUIntBig    nBufferOffset;
@@ -100,9 +99,11 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     static int          Identify( GDALOpenInfo * );
     static CPLErr       Delete( const char *pszFilename );
     static CPLErr       Remove( const char *pszFilename, int bRepError );
-    static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-                                int bStrict, char ** papszOptions,
-                                GDALProgressFunc pfnProgress, void * pProgressData );
+    static GDALDataset *CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
