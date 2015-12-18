@@ -125,7 +125,7 @@ void CPL_SHA256Init(CPL_SHA256Context * sc)
         sc->bufferLength = 0U;
 }
 
-static GUInt32 burnStack(size_t size)
+static GUInt32 burnStack(int size)
 {
         GByte buf[128];
         GUInt32 ret = 0;
@@ -392,9 +392,9 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
                 // Clean stack state of CPL_SHA256Guts()
                 // We add dummy side effects to avoid burnStack() to be optimized away (#6157)
                 static GUInt32 accumulator = 0;
-                accumulator += burnStack(
+                accumulator += burnStack( static_cast<int>(
                         sizeof(GUInt32[74]) + sizeof(GUInt32 *[6]) +
-                        sizeof(int) + ((len%2) ? sizeof(int) : 0));
+                        sizeof(int) + ((len%2) ? sizeof(int) : 0)) );
                 if( accumulator == 0xDEADBEEF )
                     fprintf(stderr, "%s", "");
         }
