@@ -37,10 +37,11 @@
 #include "gdal_pdf.h"
 
 #include "cpl_vsi_virtual.h"
+#include "cpl_spawn.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
-#include "cpl_spawn.h"
 
 #ifdef HAVE_POPPLER
 #include "cpl_multiproc.h"
@@ -55,10 +56,6 @@
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_PDF();
-CPL_C_END
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 

@@ -28,16 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_CPG();
-CPL_C_END
-
 
 enum Interleave {BSQ, BIL, BIP};
 

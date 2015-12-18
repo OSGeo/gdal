@@ -27,14 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_ROIPAC();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

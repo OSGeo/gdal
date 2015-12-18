@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "northwood.h"
 
@@ -39,10 +40,6 @@
 #endif
 #endif
 
-
-CPL_C_START
-void GDALRegister_NWT_GRC();
-CPL_C_END
 /************************************************************************/
 /* ==================================================================== */
 /*                             NWT_GRCDataset                           */

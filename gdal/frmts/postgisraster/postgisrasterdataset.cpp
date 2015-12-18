@@ -4,7 +4,7 @@
  * Purpose:  GDAL Dataset implementation for PostGIS Raster driver
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
- * 
+ *
  * Author:	 David Zwarg, dzwarg@azavea.com
  *
  * Last changes: $Id: $
@@ -33,6 +33,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  **********************************************************************/
+
+#include "gdal_frmts.h"
 #include "postgisraster.h"
 #include <math.h>
 
@@ -43,11 +45,6 @@
 /* PostgreSQL defaults */
 #define DEFAULT_SCHEMA          "public"
 #define DEFAULT_COLUMN          "rast"
-
-
-CPL_C_START
-void GDALRegister_PostGISRaster();
-CPL_C_END
 
 /** Note on read performance on mode=2:
 

@@ -42,16 +42,13 @@ static const int NULL2 = -32768;
 static const double NULL3 = -3.4028226550889044521e+38;
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_proxy.h"
 #include "nasakeywordhandler.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_PDS();
-CPL_C_END
 
 enum PDSLayout
 {

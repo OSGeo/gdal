@@ -28,17 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
 #include <ctype.h>
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 #include "atlsci_spheroid.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_HKV();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

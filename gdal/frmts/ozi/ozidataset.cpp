@@ -27,16 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "zlib.h"
 
 /* g++ -fPIC -g -Wall frmts/ozi/ozidataset.cpp -shared -o gdal_OZI.so -Iport -Igcore -Iogr -L. -lgdal  */
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_OZI();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

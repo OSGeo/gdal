@@ -30,6 +30,7 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "atlsci_spheroid.h"
 
@@ -37,10 +38,6 @@
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_MFF();
-CPL_C_END
 
 enum {
   MFFPRJ_NONE,

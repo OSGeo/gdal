@@ -41,16 +41,13 @@ static const double NULL3 = -3.4028226550889044521e+38;
 
 static const int RECORD_SIZE = 512;
 
-#include "rawdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "nasakeywordhandler.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_ISIS2();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */

@@ -27,12 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "pcrasterdataset.h"
-
-CPL_C_START
-void GDALRegister_PCRaster();
-CPL_C_END
 
 void GDALRegister_PCRaster()
 {

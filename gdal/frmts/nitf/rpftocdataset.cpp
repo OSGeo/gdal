@@ -29,6 +29,7 @@
 
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_proxy.h"
 #include "ogr_spatialref.h"

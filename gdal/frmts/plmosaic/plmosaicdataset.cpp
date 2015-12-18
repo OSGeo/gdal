@@ -29,6 +29,7 @@
 
 #include "cpl_http.h"
 #include "cpl_minixml.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
@@ -37,8 +38,6 @@
 #include <json.h>
 
 CPL_CVSID("$Id$");
-
-extern "C" void GDALRegister_PLMOSAIC();
 
 // g++ -fPIC -g -Wall frmts/plmosaic/*.cpp -shared -o gdal_PLMOSAIC.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/geojson/libjson -L. -lgdal
 

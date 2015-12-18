@@ -28,15 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id: ehdrdataset.cpp 12350 2007-10-08 17:41:32Z rouault $");
-
-CPL_C_START
-void GDALRegister_GenBin();
-CPL_C_END
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */

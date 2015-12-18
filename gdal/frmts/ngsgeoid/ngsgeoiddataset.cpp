@@ -29,14 +29,11 @@
 
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_NGSGEOID();
-CPL_C_END
 
 #define HEADER_SIZE (4 * 8 + 3 * 4)
 

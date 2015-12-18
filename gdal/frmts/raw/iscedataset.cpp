@@ -27,13 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_ISCE();
-CPL_C_END
 
 static const char * const apszISCE2GDALDatatypes[] = {
     "BYTE:Byte",

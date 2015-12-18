@@ -29,13 +29,10 @@
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
+#include "gdal_frmts.h"
 #include "gdal_rat.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_IDA();
-CPL_C_END
 
 // convert a Turbo Pascal real into a double
 static double tp2c(GByte *r);

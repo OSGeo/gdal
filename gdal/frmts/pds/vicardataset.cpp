@@ -33,6 +33,7 @@ static const int NULL2 = -32768;
 static const double NULL3 = -32768.0;
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include "vicarkeywordhandler.h"
@@ -40,10 +41,6 @@ static const double NULL3 = -32768.0;
 #include <string>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_VICAR();
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
