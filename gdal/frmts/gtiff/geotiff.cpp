@@ -6715,7 +6715,7 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
                     // (if using TIFFWriteEncodedStrip/Tile first, TIFFWriteBufferSetup()
                     // is automatically called)
                     // This should likely rather fixed in libtiff itself...
-                    TIFFWriteBufferSetup(hTIFF, NULL, (size_t)-1);
+                    TIFFWriteBufferSetup(hTIFF, NULL, -1);
                 }
             }
         }
