@@ -219,11 +219,11 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
 /* Goto a particular metadata item, listed by number */
 int COASPMetadataReader::GotoMetadataItem(int nItemNumber)
 {
-	if (nItemNumber > nMetadataCount || nItemNumber < 0) {
-		nItemNumber = 0;
-		return 0;
+	if (nItemNumber >= nMetadataCount || nItemNumber < 0) {
+            nCurrentItem = 0;
 	}
-	nCurrentItem = nItemNumber;
+	else
+            nCurrentItem = nItemNumber;
 	return nCurrentItem;
 }
 
