@@ -5716,8 +5716,8 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     {
 #ifdef not_supported
         if (poProjDict->Get("StandardParallelOne") == NULL)
-        {
 #endif
+        {
         double dfCenterLat = Get(poProjDict, "OriginLatitude");
         double dfCenterLong = Get(poProjDict, "CentralMeridian");
         double dfScale = Get(poProjDict, "ScaleFactor");
@@ -5726,8 +5726,8 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         oSRS.SetMercator( dfCenterLat, dfCenterLong,
                           dfScale,
                           dfFalseEasting, dfFalseNorthing );
-#ifdef not_supported
         }
+#ifdef not_supported
         else
         {
             double dfStdP1 = Get(poProjDict, "StandardParallelOne");
