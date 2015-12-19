@@ -132,7 +132,7 @@ void CPCIDSKADS40ModelSegment::SetPath(const std::string& oPath)
     }
     else
     {
-        throw PCIDSKException("The size of the path cannot be"
+        return ThrowPCIDSKException("The size of the path cannot be"
                               " bigger than 504 characters.");
     }
 }

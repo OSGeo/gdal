@@ -433,7 +433,7 @@ char *CPCIDSKVectorSegment::GetData( int section, uint32 offset,
     }
     else
     {
-        ThrowPCIDSKException("Unexpected case");
+        return (char*)ThrowPCIDSKExceptionPtr("Unexpected case");
     }
 
 /* -------------------------------------------------------------------- */
@@ -572,7 +572,7 @@ void CPCIDSKVectorSegment::FlushDataBuffer( int section )
     }
     else
     {
-        ThrowPCIDSKException("Unexpected case");
+        return ThrowPCIDSKException("Unexpected case");
     }
 
     if( ! *pbuf_dirty || pbuf->buffer_size == 0 )
@@ -967,7 +967,7 @@ void CPCIDSKVectorSegment::GetVertices( ShapeId shape_id,
     int shape_index = IndexFromShapeId( shape_id );
 
     if( shape_index == -1 )
-        ThrowPCIDSKException( "Attempt to call GetVertices() on non-existing shape id '%d'.",
+        return ThrowPCIDSKException( "Attempt to call GetVertices() on non-existing shape id '%d'.",
                               (int) shape_id );
 
     AccessShapeByIndex( shape_index );
@@ -1083,7 +1083,7 @@ void CPCIDSKVectorSegment::GetFields( ShapeId id,
     int shape_index = IndexFromShapeId( id );
 
     if( shape_index == -1 )
-        ThrowPCIDSKException( "Attempt to call GetFields() on non-existing shape id '%d'.",
+        return ThrowPCIDSKException( "Attempt to call GetFields() on non-existing shape id '%d'.",
                               (int) id );
 
     AccessShapeByIndex( shape_index );
@@ -1158,13 +1158,13 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
 /* -------------------------------------------------------------------- */
     if( default_value->GetType() != type )
     {
-        ThrowPCIDSKException( "Attempt to add field with a default value of "
+        return ThrowPCIDSKException( "Attempt to add field with a default value of "
                               "a different type than the field." );
     }
 
     if( type == FieldTypeNone )
     {
-        ThrowPCIDSKException( "Creating fields of type None not supported." );
+        return ThrowPCIDSKException( "Creating fields of type None not supported." );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1184,7 +1184,7 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
 /* -------------------------------------------------------------------- */
     if( shape_count > 0 )
     {
-        ThrowPCIDSKException( "Support for adding fields in populated layers "
+        return ThrowPCIDSKException( "Support for adding fields in populated layers "
                               "has not yet been implemented." );
     }
 }
@@ -1220,7 +1220,7 @@ ShapeId CPCIDSKVectorSegment::CreateShape( ShapeId id )
         PopulateShapeIdMap();
         if( shapeid_map.count(id) > 0 )
         {
-            ThrowPCIDSKException( "Attempt to create a shape with id '%d', but that already exists.", id );
+            return ThrowPCIDSKException( 0, "Attempt to create a shape with id '%d', but that already exists.", id );
         }
     }
 
@@ -1253,7 +1253,7 @@ void CPCIDSKVectorSegment::DeleteShape( ShapeId id )
     int shape_index = IndexFromShapeId( id );
 
     if( shape_index == -1 )
-        ThrowPCIDSKException( "Attempt to call DeleteShape() on non-existing shape '%d'.",
+        return ThrowPCIDSKException( "Attempt to call DeleteShape() on non-existing shape '%d'.",
                               (int) id );
 
 /* ==================================================================== */
@@ -1316,7 +1316,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
     int shape_index = IndexFromShapeId( id );
 
     if( shape_index == -1 )
-        ThrowPCIDSKException( "Attempt to call SetVertices() on non-existing shape '%d'.",
+        return ThrowPCIDSKException( "Attempt to call SetVertices() on non-existing shape '%d'.",
                               (int) id );
 
     PCIDSKBuffer vbuf( static_cast<int>(list.size()) * 24 + 8 );
@@ -1401,12 +1401,12 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
     const std::vector<ShapeField> *listp = NULL;
 
     if( shape_index == -1 )
-        ThrowPCIDSKException( "Attempt to call SetFields() on non-existing shape id '%d'.",
+        return ThrowPCIDSKException( "Attempt to call SetFields() on non-existing shape id '%d'.",
                               (int) id );
 
     if( list_in.size() > vh.field_names.size() )
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException( 
             "Attempt to write %d fields to a layer with only %d fields.", 
             static_cast<int>(list_in.size()), static_cast<int>(vh.field_names.size()) );
     }

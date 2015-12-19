@@ -161,7 +161,7 @@ void PCIDSK::SwapPixels(void* const data,
         SwapData(data, DataTypeSize(type) / 2, static_cast<int>(count) * 2);
         break;
     default:
-        ThrowPCIDSKException("Unknown data type passed to SwapPixels."
+        return ThrowPCIDSKException("Unknown data type passed to SwapPixels."
             "This is a software bug. Please contact your vendor.");
     }
 }
@@ -234,7 +234,7 @@ void PCIDSK::SwapData( void* const data, const int size, const int wcount )
         }
     }
     else
-        ThrowPCIDSKException( "Unsupported data size in SwapData()" );
+        return ThrowPCIDSKException( "Unsupported data size in SwapData()" );
 }
 
 /************************************************************************/
@@ -304,7 +304,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
             && compression != "NONE"
             && compression != "QUADTREE" )
         {
-            ThrowPCIDSKException( "Unsupported tile compression scheme '%s' requested.",
+            return ThrowPCIDSKException( "Unsupported tile compression scheme '%s' requested.",
                                   compression.c_str() );
         }
     }    

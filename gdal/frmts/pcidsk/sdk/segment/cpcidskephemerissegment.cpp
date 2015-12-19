@@ -377,7 +377,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 
     if ( as == NULL)
     {
-	throw PCIDSKException("The AvhrrSeg is NULL.");
+	return ThrowPCIDSKException("The AvhrrSeg is NULL.");
     }
 
 /* -------------------------------------------------------------------- */
@@ -728,7 +728,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
     else if (STARTS_WITH(seg_data.Get(nPos,8), "NO_DATA "))
         l_segment->Type = OrbNone;
     else
-        throw PCIDSKException("Invalid Orbit type found: [%s]", 
+        return (EphemerisSeg_t*)ThrowPCIDSKExceptionPtr("Invalid Orbit type found: [%s]", 
                               seg_data.Get(nPos,8));
 
 /* -------------------------------------------------------------------- */
@@ -788,7 +788,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 
         if (nData != AttitudeSeg->NumberOfLine)
         {
-            throw PCIDSKException("Number of data line read (%d) "
+            return (EphemerisSeg_t*)ThrowPCIDSKExceptionPtr("Number of data line read (%d) "
                      "does not matches with what is specified in "
                      "the l_segment (%d).\n", nData, 
                      AttitudeSeg->NumberOfLine);
@@ -922,7 +922,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 
         if (RadarSeg->NumberData != nData)
         {
-            throw PCIDSKException("Number "
+            return (EphemerisSeg_t*)ThrowPCIDSKExceptionPtr("Number "
 		     "of data lines read (%d) does not match with"
                      "\nwhat is specified in l_segment (%d).\n", nData, 
                      RadarSeg->NumberData);
@@ -1146,7 +1146,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
         seg_data.Put("NO_DATA ",nPos,8);
     else
     {
-        throw PCIDSKException("Invalid Orbit type."); 
+        return ThrowPCIDSKException("Invalid Orbit type."); 
     }
 
 /* ==================================================================== */
@@ -1162,7 +1162,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 
         if (AttitudeSeg == NULL)
         {
-            throw PCIDSKException("The AttitudeSeg is NULL.");
+            return ThrowPCIDSKException("The AttitudeSeg is NULL.");
         }
 
 /* -------------------------------------------------------------------- */
@@ -1228,7 +1228,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 
         if (nData != AttitudeSeg->NumberOfLine)
         {
-            throw PCIDSKException("Number of data line written"
+            return ThrowPCIDSKException("Number of data line written"
 		    " (%d) does not match with\nwhat is specified "
 		    " in the segment (%d).\n", 
 		    nData, AttitudeSeg->NumberOfLine);
@@ -1247,7 +1247,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 
         if (RadarSeg == NULL)
         {
-            throw PCIDSKException("The RadarSeg is NULL.");
+            return ThrowPCIDSKException("The RadarSeg is NULL.");
         }
 
 /* -------------------------------------------------------------------- */

@@ -130,7 +130,7 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
 
     if( file == NULL )
     {
-        ThrowPCIDSKException( "Attempt to set metadata on an unassociated MetadataSet, likely an overview channel." );
+        return ThrowPCIDSKException( "Attempt to set metadata on an unassociated MetadataSet, likely an overview channel." );
     }
 
     md_set[key] = value;

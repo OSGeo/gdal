@@ -131,10 +131,10 @@ void SysBlockMap::PartialLoad()
     ReadFromFile( count_data.buffer, 0, 512 );
 
     if( !STARTS_WITH(count_data.buffer, "VERSION") )
-        ThrowPCIDSKException( "SysBlockMap::PartialLoad() - block map corrupt." );
+        return ThrowPCIDSKException( "SysBlockMap::PartialLoad() - block map corrupt." );
 
     if( count_data.GetInt( 7, 3 ) != 1 )
-        ThrowPCIDSKException( "SysBlockMap::PartialLoad() - unsupported version." );
+        return ThrowPCIDSKException( "SysBlockMap::PartialLoad() - unsupported version." );
 
 /* -------------------------------------------------------------------- */
 /*      Establish our SysVirtualFile array based on the number of       */
@@ -384,7 +384,7 @@ SysVirtualFile *SysBlockMap::GetVirtualFile( int image )
     PartialLoad();
 
     if( image < 0 || image >= (int) virtual_files.size() )
-        ThrowPCIDSKException( "GetImageSysFile(%d): invalid image index",
+        return (SysVirtualFile*)ThrowPCIDSKExceptionPtr( "GetImageSysFile(%d): invalid image index",
                               image );
 
     if( virtual_files[image] != NULL )

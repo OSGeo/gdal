@@ -167,7 +167,7 @@ void VecSegHeader::InitializeExisting()
 
     if( memcmp( vs->GetData( sec_raw, 0, NULL, 24 ), magic, 24 ) != 0 )
     {
-        ThrowPCIDSKException( "Unexpected vector header values, possibly it is not a V6 vector segment?" );
+        return ThrowPCIDSKException( "Unexpected vector header values, possibly it is not a V6 vector segment?" );
     }
     
 /* -------------------------------------------------------------------- */

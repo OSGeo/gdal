@@ -60,7 +60,7 @@ static void JpegError(j_common_ptr cinfo)
     char buf[256];
 
     cinfo->err->format_message(cinfo, buf);
-    ThrowPCIDSKException( "%s", buf );
+    return ThrowPCIDSKException( "%s", buf );
 }
 
 /************************************************************************/
@@ -109,7 +109,7 @@ void PCIDSK::LibJPEG_DecompressBlock(
     if (sJCompInfo.image_width != (unsigned int)xsize ||
         sJCompInfo.image_height != (unsigned int)ysize)
     {
-        ThrowPCIDSKException("Tile Size wrong in LibJPEG_DecompressTile(), got %dx%d, expected %dx%d.",
+        return ThrowPCIDSKException("Tile Size wrong in LibJPEG_DecompressTile(), got %dx%d, expected %dx%d.",
                              sJCompInfo.image_width,
                              sJCompInfo.image_height,
                              xsize, ysize );

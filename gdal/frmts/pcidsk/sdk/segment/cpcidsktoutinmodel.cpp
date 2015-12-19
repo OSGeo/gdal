@@ -312,12 +312,12 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 
     if( SRITModel->nSensor == -999)
     {
-        throw PCIDSKException("Invalid Sensor : %s.",
+        return (SRITInfo_t*)ThrowPCIDSKExceptionPtr("Invalid Sensor : %s.",
                               SRITModel->OrbitPtr->SatelliteSensor.c_str());
     }
     if( SRITModel->nModel == -999)
     {
-	throw PCIDSKException("Invalid Model from sensor number: %d.",
+        return (SRITInfo_t*)ThrowPCIDSKExceptionPtr("Invalid Model from sensor number: %d.",
                               SRITModel->nSensor);
     }
 
@@ -742,7 +742,7 @@ int  CPCIDSKToutinModelSegment::GetSensor( EphemerisSeg_t *OrbitPtr)
         nSensor = NEW;
     else
     {
-        throw PCIDSKException("Invalid Sensor %s",
+        return ThrowPCIDSKException(0, "Invalid Sensor %s",
             OrbitPtr->SatelliteSensor.c_str());
     }
 
@@ -884,7 +884,7 @@ int CPCIDSKToutinModelSegment::GetModel( int nSensor )
         break;
 
     default:
-        throw PCIDSKException("Invalid sensor type.");
+        return ThrowPCIDSKException(0, "Invalid sensor type.");
         break;
     }
 

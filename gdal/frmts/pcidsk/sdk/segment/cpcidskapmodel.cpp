@@ -228,7 +228,7 @@ CPCIDSKAPModelSegment::~CPCIDSKAPModelSegment()
 unsigned int CPCIDSKAPModelSegment::GetWidth(void) const
 {
     if (!filled_) {
-        ThrowPCIDSKException("Failed to determine width from APModel.");
+        return ThrowPCIDSKException(0 , "Failed to determine width from APModel.");
     }
     return width_;
 }
@@ -236,7 +236,7 @@ unsigned int CPCIDSKAPModelSegment::GetWidth(void) const
 unsigned int CPCIDSKAPModelSegment::GetHeight(void) const
 {
     if (!filled_) {
-        ThrowPCIDSKException("Failed to determine height from APModel.");
+        return ThrowPCIDSKException(0, "Failed to determine height from APModel.");
     }
     return height_;
 }
@@ -244,7 +244,7 @@ unsigned int CPCIDSKAPModelSegment::GetHeight(void) const
 unsigned int CPCIDSKAPModelSegment::GetDownsampleFactor(void) const
 {
     if (!filled_) {
-        ThrowPCIDSKException("Failed to determine APModel downsample factor.");
+        return ThrowPCIDSKException(0, "Failed to determine APModel downsample factor.");
     }
     return downsample_;
 }
@@ -330,7 +330,7 @@ namespace {
         if(!STARTS_WITH(buf.buffer,"APMODEL "))
         {
             std::string magic(buf.buffer, 8);
-            ThrowPCIDSKException("Bad segment magic found. Found: [%s] expecting [APMODEL ]",
+            return ThrowPCIDSKException("Bad segment magic found. Found: [%s] expecting [APMODEL ]",
                 magic.c_str());
         }
 
@@ -504,7 +504,7 @@ void CPCIDSKAPModelSegment::UpdateFromDisk(void)
     // Start reading in the APModel segment. APModel segments should be
     // 7 blocks long.
     if (data_size < (1024 + 7 * 512)) {
-        ThrowPCIDSKException("APMODEL segment is smaller than expected. A "
+        return ThrowPCIDSKException("APMODEL segment is smaller than expected. A "
             "segment of size %d was found", static_cast<int>(data_size));
     }
     buf.SetSize( (int) (data_size - 1024) );

@@ -218,3 +218,29 @@ void PCIDSK::ThrowPCIDSKException( const char *fmt, ... )
 
     throw ex;
 }
+
+int PCIDSK::ThrowPCIDSKException( int /*ret_unused*/, const char *fmt, ... )
+
+{
+    std::va_list args;
+    PCIDSKException ex;
+
+    va_start( args, fmt );
+    ex.vPrintf( fmt, args );
+    va_end( args );
+
+    throw ex;
+}
+
+void* PCIDSK::ThrowPCIDSKExceptionPtr( const char *fmt, ... )
+
+{
+    std::va_list args;
+    PCIDSKException ex;
+
+    va_start( args, fmt );
+    ex.vPrintf( fmt, args );
+    va_end( args );
+
+    throw ex;
+}

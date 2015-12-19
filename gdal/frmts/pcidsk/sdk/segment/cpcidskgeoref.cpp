@@ -109,7 +109,7 @@ void CPCIDSKGeoref::Load()
         seg_data.Get(32,16,geosys);
         
         if( seg_data.GetInt(48,8) != 3 || seg_data.GetInt(56,8) != 3 )
-            ThrowPCIDSKException( "Unexpected number of coefficients in POLYNOMIAL GEO segment." );
+            return ThrowPCIDSKException( "Unexpected number of coefficients in POLYNOMIAL GEO segment." );
 
         a1   = seg_data.GetDouble(212+26*0,26);
         a2   = seg_data.GetDouble(212+26*1,26);
@@ -129,7 +129,7 @@ void CPCIDSKGeoref::Load()
         seg_data.Get(32,16,geosys);
         
         if( seg_data.GetInt(48,8) != 3 || seg_data.GetInt(56,8) != 3 )
-            ThrowPCIDSKException( "Unexpected number of coefficients in POLYNOMIAL GEO segment." );
+            return ThrowPCIDSKException( "Unexpected number of coefficients in POLYNOMIAL GEO segment." );
 
         a1   = seg_data.GetDouble(1980+26*0,26);
         a2   = seg_data.GetDouble(1980+26*1,26);
@@ -158,7 +158,7 @@ void CPCIDSKGeoref::Load()
 
     else
     {
-        ThrowPCIDSKException( "Unexpected GEO segment type: %s", 
+        return ThrowPCIDSKException( "Unexpected GEO segment type: %s", 
                               seg_data.Get(0,16) );
     }
 
@@ -323,7 +323,7 @@ void CPCIDSKGeoref::WriteParameters( std::vector<double> const& parms )
     Load();
 
     if( parms.size() < 17 )
-        ThrowPCIDSKException( "Did not get expected number of parameters in WriteParameters()" );
+        return ThrowPCIDSKException( "Did not get expected number of parameters in WriteParameters()" );
 
     unsigned int i;
 

@@ -114,7 +114,7 @@ void CTiledChannel::EstablishAccess() const
         file->GetSegment( SEG_SYS, "SysBMDir" ));
 
     if( bmap == NULL )
-        ThrowPCIDSKException( "Unable to find SysBMDir segment." );
+        return ThrowPCIDSKException( "Unable to find SysBMDir segment." );
 
     vfile = bmap->GetVirtualFile( image );
 
@@ -137,12 +137,12 @@ void CTiledChannel::EstablishAccess() const
     pixel_type = GetDataTypeFromName(data_type);
     if (pixel_type == CHN_UNKNOWN)
     {
-        ThrowPCIDSKException( "Unknown channel type: %s", 
+        return ThrowPCIDSKException( "Unknown channel type: %s", 
                               data_type.c_str() );
     }
     if( block_width <= 0 || block_height <= 0 )
     {
-        ThrowPCIDSKException( "Invalid blocksize: %d x %d", 
+        return ThrowPCIDSKException( "Invalid blocksize: %d x %d", 
                               block_width, block_height );
     }
 
@@ -359,14 +359,14 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
     if( xoff < 0 || xoff + xsize > GetBlockWidth()
         || yoff < 0 || yoff + ysize > GetBlockHeight() )
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException( 0,
             "Invalid window in ReadBloc(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
             xoff, yoff, xsize, ysize );
     }
 
     if( block_index < 0 || block_index >= tile_count )
     {
-        ThrowPCIDSKException( "Requested non-existent block (%d)", 
+        return ThrowPCIDSKException( 0, "Requested non-existent block (%d)", 
                               block_index );
     }
 
@@ -447,7 +447,7 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
     }
     else
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException( 0,
             "Unable to read tile of unsupported compression type: %s",
             compression.c_str() );
     }
@@ -515,7 +515,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
 
 {
     if( !file->GetUpdatable() )
-        throw PCIDSKException( "File not open for update in WriteBlock()" );
+        return ThrowPCIDSKException(0, "File not open for update in WriteBlock()" );
 
     InvalidateOverviews();
 
@@ -524,7 +524,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
 
     if( block_index < 0 || block_index >= tile_count )
     {
-        ThrowPCIDSKException( "Requested non-existent block (%d)", 
+        return ThrowPCIDSKException( 0, "Requested non-existent block (%d)", 
                               block_index );
     }
 
@@ -595,7 +595,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
     }
     else
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException( 0,
             "Unable to write tile of unsupported compression type: %s",
             compression.c_str() );
     }
@@ -720,7 +720,7 @@ void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
 
             if( dst_offset + count * pixel_size > oDecompressedData.buffer_size)
             {
-                ThrowPCIDSKException( "RLE compressed tile corrupt, overrun avoided." );
+                return ThrowPCIDSKException( "RLE compressed tile corrupt, overrun avoided." );
             }
 
             while( count-- > 0 )
@@ -741,7 +741,7 @@ void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
             if( dst_offset + count*pixel_size > oDecompressedData.buffer_size
                 || src_offset + count*pixel_size > oCompressedData.buffer_size)
             {
-                ThrowPCIDSKException( "RLE compressed tile corrupt, overrun avoided." );
+                return ThrowPCIDSKException( "RLE compressed tile corrupt, overrun avoided." );
             }
 
             memcpy( dst + dst_offset, src + src_offset, 
@@ -758,7 +758,7 @@ void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
     if( src_offset != oCompressedData.buffer_size 
         || dst_offset != oDecompressedData.buffer_size ) 
     {
-        ThrowPCIDSKException( "RLE compressed tile corrupt, result incomplete." );
+        return ThrowPCIDSKException( "RLE compressed tile corrupt, result incomplete." );
     }
 }
 
@@ -888,7 +888,7 @@ void CTiledChannel::JPEGDecompressBlock( PCIDSKBuffer &oCompressedData,
                                
 {
     if( file->GetInterfaces()->JPEGDecompressBlock == NULL )
-        ThrowPCIDSKException( "JPEG decompression not enabled in the PCIDSKInterfaces of this build." );
+        return ThrowPCIDSKException( "JPEG decompression not enabled in the PCIDSKInterfaces of this build." );
 
     file->GetInterfaces()->JPEGDecompressBlock( 
         (uint8 *) oCompressedData.buffer, oCompressedData.buffer_size,
@@ -904,7 +904,7 @@ void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
                                        PCIDSKBuffer &oCompressedData )
 {
     if( file->GetInterfaces()->JPEGCompressBlock == NULL )
-        ThrowPCIDSKException( "JPEG compression not enabled in the PCIDSKInterfaces of this build." );
+        return ThrowPCIDSKException( "JPEG compression not enabled in the PCIDSKInterfaces of this build." );
 
 /* -------------------------------------------------------------------- */
 /*      What quality should we be using?                                */

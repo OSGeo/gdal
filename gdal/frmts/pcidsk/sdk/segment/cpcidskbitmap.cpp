@@ -242,7 +242,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
 
     if( block_index < 0 || block_index >= GetBlockCount() )
     {
-        ThrowPCIDSKException( "Requested non-existent block (%d)", 
+        return ThrowPCIDSKException(0, "Requested non-existent block (%d)", 
                               block_index );
     }
 /* -------------------------------------------------------------------- */
@@ -257,14 +257,14 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
         if( win_xoff < 0 || win_xoff + win_xsize > GetBlockWidth()
             || win_yoff < 0 || win_yoff + win_ysize > GetBlockHeight() )
         {
-            ThrowPCIDSKException( 
+            return ThrowPCIDSKException( 0,
                 "Invalid window in CPCIDSKBitmap::ReadBlock(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
                 win_xoff, win_yoff, win_xsize, win_ysize );
         }
 
         wrk_buffer = (uint8 *) malloc((size_t) block_size);
         if( wrk_buffer == NULL )
-            ThrowPCIDSKException( "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()", 
+            return ThrowPCIDSKException(0, "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()", 
                                   (int) block_size );
     }
 
@@ -346,8 +346,7 @@ int CPCIDSKBitmap::GetOverviewCount()
 
 PCIDSKChannel *CPCIDSKBitmap::GetOverview( int i )
 {
-    ThrowPCIDSKException("Non-existent overview %d requested on bitmap segment.", i);
-    return NULL;
+    return (PCIDSKChannel*) ThrowPCIDSKExceptionPtr("Non-existent overview %d requested on bitmap segment.", i);
 }
 
 /************************************************************************/
@@ -503,7 +502,7 @@ void CPCIDSKBitmap::SetChanInfo( CPL_UNUSED std::string filename, CPL_UNUSED uin
                                  CPL_UNUSED uint64 pixel_offset, CPL_UNUSED uint64 line_offset,
                                  CPL_UNUSED bool little_endian )
 {
-    ThrowPCIDSKException( "Attempt to SetChanInfo() on a bitmap." );
+    return ThrowPCIDSKException( "Attempt to SetChanInfo() on a bitmap." );
 }
 
 /************************************************************************/
@@ -529,5 +528,5 @@ void CPCIDSKBitmap::SetEChanInfo( CPL_UNUSED std::string filename, CPL_UNUSED in
                                   CPL_UNUSED int exoff, CPL_UNUSED int eyoff,
                                   CPL_UNUSED int exsize, CPL_UNUSED int eysize )
 {
-    ThrowPCIDSKException( "Attempt to SetEChanInfo() on a bitmap." );
+    return ThrowPCIDSKException( "Attempt to SetEChanInfo() on a bitmap." );
 }
