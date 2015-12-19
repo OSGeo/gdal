@@ -36,17 +36,12 @@ CPL_CVSID("$Id$");
 /*                         OGRAmigoCloudLayer()                            */
 /************************************************************************/
 
-OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDSIn)
-
+OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDSIn) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    osFIDColName("amigo_id"),
+    poCachedObj(NULL)
 {
-    this->poDS = poDSIn;
-
-    poFeatureDefn = NULL;
-
-    poCachedObj = NULL;
-
-    osFIDColName = "amigo_id";
-
     ResetReading();
 }
 

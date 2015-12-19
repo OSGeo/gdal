@@ -39,21 +39,16 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename, const char* pszOp
 /*                        OGRAmigoCloudDataSource()                        */
 /************************************************************************/
 
-OGRAmigoCloudDataSource::OGRAmigoCloudDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-    pszProjetctId = NULL;
-
-    bReadWrite = FALSE;
-    bUseHTTPS = FALSE;
-
-    bMustCleanPersistant = FALSE;
-    bHasOGRMetadataFunction = -1;
-}
+OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
+    pszName(NULL),
+    pszProjetctId(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bReadWrite(FALSE),
+    bUseHTTPS(FALSE),
+    bMustCleanPersistant(FALSE),
+    bHasOGRMetadataFunction(-1)
+{}
 
 /************************************************************************/
 /*                       ~OGRAmigoCloudDataSource()                        */

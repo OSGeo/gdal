@@ -99,18 +99,20 @@ static std::string json_encode(const std::string &value) {
 /*                        OGRAmigoCloudTableLayer()                        */
 /************************************************************************/
 
-OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource* poDSIn,
-                                           const char* pszName) :
-                                           OGRAmigoCloudLayer(poDSIn)
-
+OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(
+    OGRAmigoCloudDataSource* poDSIn,
+    const char* pszName ) :
+    OGRAmigoCloudLayer(poDSIn),
+    osDatasetId(CPLString(pszName)),
+    nNextFID(-1),
+    bDeferedCreation(FALSE)
 {
-    osDatasetId = CPLString(pszName);
     osTableName = CPLString("dataset_") + osDatasetId;
     SetDescription( osDatasetId );
-    nNextFID = -1;
-    bDeferedCreation = FALSE;
 
-    nMaxChunkSize = atoi(CPLGetConfigOption("AMIGOCLOUD_MAX_CHUNK_SIZE", "15")) * 1024 * 1024;
+    nMaxChunkSize = atoi(
+        CPLGetConfigOption(
+            "AMIGOCLOUD_MAX_CHUNK_SIZE", "15" ) ) * 1024 * 1024;
 }
 
 /************************************************************************/

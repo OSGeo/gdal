@@ -37,24 +37,16 @@ CPL_CVSID("$Id$");
 /*                            OGRCouchDBLayer()                             */
 /************************************************************************/
 
-OGRCouchDBLayer::OGRCouchDBLayer(OGRCouchDBDataSource* poDSIn)
-
-{
-    this->poDS = poDSIn;
-
-    nNextInSeq = 0;
-
-    poSRS = NULL;
-
-    poFeatureDefn = NULL;
-
-    nOffset = 0;
-    bEOF = FALSE;
-
-    poFeatures = NULL;
-
-    bGeoJSONDocument = TRUE;
-}
+OGRCouchDBLayer::OGRCouchDBLayer(OGRCouchDBDataSource* poDSIn) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    poSRS(NULL),
+    nNextInSeq(0),
+    nOffset(0),
+    bEOF(FALSE),
+    poFeatures(NULL),
+    bGeoJSONDocument(TRUE)
+{}
 
 /************************************************************************/
 /*                            ~OGRCouchDBLayer()                            */
