@@ -2081,6 +2081,33 @@ def ogr_mitab_38():
     return 'success'
 
 ###############################################################################
+# Read various geometry types from .mif
+
+def ogr_mitab_39():
+
+    ds = ogr.Open('data/all_geoms.mif')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/all_geoms.mif.golden.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+
+    while True:
+        f = lyr.GetNextFeature()
+        f_ref = lyr_ref.GetNextFeature()
+        if f is None:
+            if f_ref is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
+           f.GetStyleString() != f_ref.GetStyleString() :
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2132,6 +2159,7 @@ gdaltest_list = [
     ogr_mitab_36,
     ogr_mitab_37,
     ogr_mitab_38,
+    ogr_mitab_39,
     ogr_mitab_cleanup
     ]
 
