@@ -274,7 +274,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     binary data at the same time.
     */
 
-    bool         bDone = FALSE;
     int          nRows = -1, nCols = -1, nBands = 1;
     int          nSkipBytes = 0;
     int          nLineCount = 0;
@@ -291,7 +290,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // parse the header file
     const char *pszLine;
-    while( !bDone && (pszLine = CPLReadLineL( fp )) != NULL )
+    while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
         nLineCount++;
 
@@ -300,7 +299,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         if ( (nLineCount > 50) || EQUAL(pszLine,"END_RAW_FILE") ) {
-            bDone = TRUE;
             break;
         }
 

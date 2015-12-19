@@ -1553,7 +1553,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             sAOI.MaxY = oTM.dfTLY;
             sAOI.MaxX = oTM.dfTLX + oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth;
             sAOI.MinY = oTM.dfTLY - oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
-            bHasAOI = TRUE;
+            /*bHasAOI = TRUE;*/
         }
         else
         {

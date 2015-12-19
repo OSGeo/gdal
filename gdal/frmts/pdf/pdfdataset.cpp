@@ -4263,7 +4263,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         /* Sanity check to validate page count */
         if( iPage != nPages )
-            poPagePodofo = poDocPodofo->GetPage(nPages - 1);
+            CPL_IGNORE_RET_VAL( poDocPodofo->GetPage(nPages - 1) );
 
         poPagePodofo = poDocPodofo->GetPage(iPage - 1);
     }

@@ -358,8 +358,6 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
         }
         else
         { // copy over mixed data. 
-            nRepeatCount = 1;
-
             for( nRepeatCount = 1;
                  iX + nRepeatCount < image->xsize && nRepeatCount < 127;
                  nRepeatCount++ )

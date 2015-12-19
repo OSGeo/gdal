@@ -757,8 +757,6 @@ int CPCIDSKToutinModelSegment::GetModel( int nSensor )
 {
     int  nModel;
 
-    nModel = -999;
-
     switch (nSensor)
     {
     case PLA_1:
