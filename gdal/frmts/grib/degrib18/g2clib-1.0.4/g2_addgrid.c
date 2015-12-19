@@ -71,7 +71,6 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
 //$$$
 {
 
-      g2int ierr;
       const unsigned char G=0x47;       // 'G'
       const unsigned char R=0x52;       // 'R'
       const unsigned char I=0x49;       // 'I'
@@ -83,15 +82,13 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
       g2int   i,j,temp,ilen,isecnum,nbits;
       xxtemplate *mapgrid=0;
  
-      ierr=0;
 //
 //  Check to see if beginning of GRIB message exists
 //
       if ( cgrib[0]!=G || cgrib[1]!=R || cgrib[2]!=I || cgrib[3]!=B ) {
         printf("g2_addgrid: GRIB not found in given message.\n");
         printf("g2_addgrid: Call to routine gribcreate required to initialize GRIB message.\n");
-        ierr=-1;
-        return(ierr);
+        return(-1);
       }
 //
 //  Get current length of GRIB message
@@ -103,8 +100,7 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
       if ( cgrib[lencurr-4]==seven && cgrib[lencurr-3]==seven &&
            cgrib[lencurr-2]==seven && cgrib[lencurr-1]==seven ) {
         printf("g2_addgrid: GRIB message already complete.  Cannot add new section.\n");
-        ierr=-2;
-        return(ierr);
+        return(-2);
       }
 //
 //  Loop through all current sections of the GRIB message to
@@ -126,8 +122,7 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
           printf("g2_addgrid: Section byte counts don''t add to total.\n");
           printf("g2_addgrid: Sum of section byte counts = %d\n",len);
           printf("g2_addgrid: Total byte count in Section 0 = %d\n",lencurr);
-          ierr=-3;
-          return(ierr);
+          return(-3);
         }
       }
 //
@@ -136,8 +131,7 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
       if ( (isecnum!=1) && (isecnum!=2) && (isecnum!=7) ) {
         printf("g2_addgrid: Section 3 can only be added after Section 1, 2 or 7.\n");
         printf("g2_addgrid: Section ',isecnum,' was the last found in given GRIB message.\n");
-        ierr=-4;
-        return(ierr);
+        return(-4);
       }
 //
 //  Add Section 3  - Grid Definition Section
@@ -167,8 +161,7 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
       if (igds[0] == 0) {
         mapgrid=getgridtemplate(igds[4]);
         if (mapgrid == 0) {       // undefined template
-          ierr=-5;
-          return(ierr);
+          return(-5);
         }
         //
         //   Extend the Grid Definition Template, if necessary.

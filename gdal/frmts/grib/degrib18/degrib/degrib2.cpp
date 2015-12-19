@@ -996,7 +996,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
             }
             /* Don't need to do the following, but we do in case code
              * changes. */
-            c_ipack = (char *) IS->ipack;
+            /*c_ipack = (char *) IS->ipack;*/
          }
       }
       IS->nd5 = nd5;

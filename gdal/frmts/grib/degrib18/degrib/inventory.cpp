@@ -628,23 +628,23 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    /* Try to convert lenTime to hourly. */
    if (timeRangeUnit == 0) {
       lenTime = (sInt4) (lenTime / 60.);
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 1) {
    } else if (timeRangeUnit == 2) {
       lenTime = lenTime * 24;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 10) {
       lenTime = lenTime * 3;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 11) {
       lenTime = lenTime * 6;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 12) {
       lenTime = lenTime * 12;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 13) {
       lenTime = (sInt4) (lenTime / 3600.);
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else {
       printf ("Can't handle this timeRangeUnit\n");
       myAssert (timeRangeUnit == 1);

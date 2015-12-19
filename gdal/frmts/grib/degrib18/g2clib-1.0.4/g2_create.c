@@ -65,20 +65,17 @@ g2int g2_create(unsigned char *cgrib,g2int *listsec0,g2int *listsec1)
 //$$$
 {
 
-      g2int  ierr;
       g2int   zero=0,one=1;
       g2int   mapsec1len=MAPSEC1LEN;
       g2int   mapsec1[MAPSEC1LEN]={ 2,2,1,1,1,2,1,1,1,1,1,1,1 };
       g2int   i,lensec0,lensec1,iofst,ibeg,nbits,len;
 
-      ierr=0;
 //
 //  Currently handles only GRIB Edition 2.
 //  
       if (listsec0[1] != 2) {
         printf("g2_create: can only code GRIB edition 2.");
-        ierr=-1;
-        return (ierr);
+        return (-1);
       }
 //
 //  Pack Section 0 - Indicator Section 
