@@ -1181,11 +1181,23 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /*      If pixel and line spaceing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
-    if( nPixelSpace == 0 )
+    if( nPixelSpace != 0 )
         nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
+    if( nPixelSpace != GDALGetDataTypeSize( eBufType ) / 8 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                "GDALRasterizeLayersBuf(): unsupported value of nPixelSpace" );
+        return CE_Failure;
+    }
 
     if( nLineSpace == 0 )
         nLineSpace = nPixelSpace * nBufXSize;
+    if( nPixelSpace != nPixelSpace * nBufXSize )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                "GDALRasterizeLayersBuf(): unsupported value of nPixelSpace" );
+        return CE_Failure;
+    }
 
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
