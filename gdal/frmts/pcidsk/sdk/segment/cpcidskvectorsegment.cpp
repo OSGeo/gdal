@@ -1408,7 +1408,7 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
     {
         ThrowPCIDSKException( 
             "Attempt to write %d fields to a layer with only %d fields.", 
-            list_in.size(), vh.field_names.size() );
+            static_cast<int>(list_in.size()), static_cast<int>(vh.field_names.size()) );
     }
 
     if( list_in.size() < vh.field_names.size() )

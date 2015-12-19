@@ -505,7 +505,7 @@ void CPCIDSKAPModelSegment::UpdateFromDisk(void)
     // 7 blocks long.
     if (data_size < (1024 + 7 * 512)) {
         ThrowPCIDSKException("APMODEL segment is smaller than expected. A "
-            "segment of size %d was found", data_size);
+            "segment of size %d was found", static_cast<int>(data_size));
     }
     buf.SetSize( (int) (data_size - 1024) );
     ReadFromFile(buf.buffer, 0, data_size - 1024);

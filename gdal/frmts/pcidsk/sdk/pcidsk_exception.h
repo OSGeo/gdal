@@ -52,7 +52,7 @@ namespace PCIDSK
         std::string   message;
     };
 
-    void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... );
+    void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
 
 } // end namespace PCIDSK
 
