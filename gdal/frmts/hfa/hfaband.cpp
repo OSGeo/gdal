@@ -161,7 +161,6 @@ CPLErr HFABand::LoadOverviews()
                 continue;
             }
 
-            pszName = pszEnd + 2;
             pszEnd[0] = '\0';
 
             char *pszJustFilename = CPLStrdup(CPLGetFilename(pszFilename));

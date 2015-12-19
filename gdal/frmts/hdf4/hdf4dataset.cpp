@@ -838,8 +838,6 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poDS->bIsHDFEOS
          || CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
     {
-        bIsHDF  = false;
-
 /* -------------------------------------------------------------------- */
 /*  Process swath layers.                                               */
 /* -------------------------------------------------------------------- */

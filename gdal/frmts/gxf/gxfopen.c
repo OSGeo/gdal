@@ -101,7 +101,6 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
             strcpy( pszHTitle, "#EOF" );
             return( NULL );
         }
-        i = 0;
     }
 
 /* -------------------------------------------------------------------- */

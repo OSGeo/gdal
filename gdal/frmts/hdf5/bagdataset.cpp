@@ -327,6 +327,8 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    H5S_SELECT_SET,
                                    offset, NULL,
                                    count, NULL );
+    if( status < 0 )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Create memory space to receive the data                         */
@@ -339,6 +341,8 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   H5S_SELECT_SET,
                                   mem_offset, NULL,
                                   count, NULL);
+    if( status < 0 )
+        return CE_Failure;
 
     status = H5Dread ( hDatasetID,
                        native,

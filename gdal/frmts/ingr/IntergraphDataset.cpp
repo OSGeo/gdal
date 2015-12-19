@@ -795,6 +795,8 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                     eType, 0, 0, NULL );
                 if( eErr != CE_None )
                 {
+                    CPLFree( pData );
+                    delete poDstDS;
                     return NULL;
                 }
                 eErr = poDstBand->RasterIO( GF_Write, 
@@ -804,14 +806,18 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                     eType, 0, 0, NULL );
                 if( eErr != CE_None )
                 {
+                    CPLFree( pData );
+                    delete poDstDS;
                     return NULL;
                 }
             }
             if( ( eErr == CE_None ) && ( ! pfnProgress( 
                 ( iYOffset + 1 ) / ( double ) nYSize, NULL, pProgressData ) ) )
             {
-                eErr = CE_Failure;
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()" );
+                CPLFree( pData );
+                delete poDstDS;
+                return NULL;
             }
         }
         CPLFree( pData );
