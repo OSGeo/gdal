@@ -1210,7 +1210,6 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     {
         nRun     = 256;
         nValue   = 0;
-        previous = 0;
         do
         {
             previous = nRun;

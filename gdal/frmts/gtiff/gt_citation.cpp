@@ -649,7 +649,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
                 strcpy(units, "international_feet");
             else if(strstr(osLCCT, "meter"))
                 strcpy(units, "meters");
-            hasUnits = TRUE;
+            /*hasUnits = TRUE;*/
         }
     }
 

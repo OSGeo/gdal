@@ -736,6 +736,8 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
                 panRLELineOffset[nBlockYOff] + nBytesConsumed;
     }
 
+    CPL_IGNORE_RET_VAL(nBytesRead); /* FIXME ? */
+
     // --------------------------------------------------------------------
     // Reshape blocks if needed
     // --------------------------------------------------------------------
@@ -1153,7 +1155,7 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
         if (nLastCount != 0)
         {
             pOutput[nRLECount++] = static_cast<GInt16>(CPL_LSBWORD16(nLastCount));
-            nLastCount = 0;
+            /*nLastCount = 0;*/
             nValue ^= 1;
         }
 

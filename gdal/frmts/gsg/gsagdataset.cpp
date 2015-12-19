@@ -431,7 +431,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		return CE_Failure;
 	    }
 	    szLineBuf[nCharsRead] = '\0';
-	    szStart = szEnd = szLineBuf;
+	    szEnd = szLineBuf;
 	    continue;
 	}
 	else if( *szEnd == '\0'
