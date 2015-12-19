@@ -42,8 +42,10 @@ namespace PCIDSK
 
     class PCIDSKException : public std::exception
     {
+        friend void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
+        PCIDSKException() {}
     public:
-        PCIDSKException(const char *fmt, ... );
+        PCIDSKException(const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
         virtual ~PCIDSKException() throw();
 
         void vPrintf( const char *fmt, std::va_list list );

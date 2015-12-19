@@ -210,7 +210,7 @@ void PCIDSK::ThrowPCIDSKException( const char *fmt, ... )
 
 {
     std::va_list args;
-    PCIDSKException ex("");
+    PCIDSKException ex;
 
     va_start( args, fmt );
     ex.vPrintf( fmt, args );
