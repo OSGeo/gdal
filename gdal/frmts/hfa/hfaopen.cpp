@@ -268,6 +268,7 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
     {
         VSIFCloseL( fp );
         psBase->psDependent = HFAOpen( oRRDFilename, "rb" );
+        // FIXME? this is not going to be reused but recreated...
     }
 
 /* -------------------------------------------------------------------- */
@@ -275,6 +276,8 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
 /* -------------------------------------------------------------------- */
     HFAInfo_t *psDep;
     psDep = psBase->psDependent = HFACreateLL( oRRDFilename );
+    if( psDep == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Add the DependentFile node with the pointer back to the         */
@@ -400,7 +403,8 @@ void HFAClose( HFAHandle hHFA )
 {
     int		i;
 
-    if( hHFA->eAccess == HFA_Update && (hHFA->bTreeDirty || hHFA->poDictionary->bDictionaryTextDirty) )
+    if( hHFA->eAccess == HFA_Update && (hHFA->bTreeDirty ||
+        (hHFA->poDictionary != NULL && hHFA->poDictionary->bDictionaryTextDirty)) )
         HFAFlush( hHFA );
 
     if( hHFA->psDependent != NULL )
@@ -1926,6 +1930,11 @@ HFAHandle HFACreateLL( const char * pszFilename )
 
     bRet &= VSIFWriteL( (void *) psInfo->pszDictionary, 
                 strlen(psInfo->pszDictionary)+1, 1, fp ) > 0;
+    if( !bRet )
+    {
+        HFAClose( psInfo );
+        return NULL;
+    }
 
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 

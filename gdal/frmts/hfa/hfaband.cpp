@@ -1992,6 +1992,8 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     if( CSLTestBoolean( CPLGetConfigOption( "HFA_USE_RRD", "NO" ) ) )
     {
         psRRDInfo = HFACreateDependent( psInfo );
+        if( psRRDInfo == NULL )
+            return -1;
 
         poParent = psRRDInfo->poRoot->GetNamedChild( GetBandName() );
 
