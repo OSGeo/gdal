@@ -969,7 +969,13 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         poPanchroBand->RasterIO(GF_Read,
                 nXOff, nYOff, nXSize, nYSize, pPanBuffer, nXSize, nYSize,
                 eWorkDataType, 0, 0, NULL);
-    
+    if( eErr != CE_None )
+    {
+        VSIFree(pUpsampledSpectralBuffer);
+        VSIFree(pPanBuffer);
+        return CE_Failure;
+    }
+
     int nTasks = 0;
     if( poThreadPool )
     {
@@ -1059,6 +1065,13 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                         nXSizeExtract, nYSizeExtract,
                         eWorkDataType, 0, 0, NULL);
             }
+        }
+        if( eErr != CE_None )
+        {
+            VSIFree(pSpectralBuffer);
+            VSIFree(pUpsampledSpectralBuffer);
+            VSIFree(pPanBuffer);
+            return CE_Failure;
         }
     
         /* Create a MEM dataset that wraps the input buffer */
@@ -1197,6 +1210,12 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                         nXSize, nYSize,
                         eWorkDataType, 0, 0, &sExtraArg);
             }
+        }
+        if( eErr != CE_None )
+        {
+            VSIFree(pUpsampledSpectralBuffer);
+            VSIFree(pPanBuffer);
+            return CE_Failure;
         }
     }
 
