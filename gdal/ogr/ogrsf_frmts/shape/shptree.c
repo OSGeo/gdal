@@ -638,7 +638,8 @@ SHPTreeFindLikelyShapes( SHPTree * hTree,
 /*      Sort the id array                                               */
 /* -------------------------------------------------------------------- */
 
-    qsort(panShapeList, *pnShapeCount, sizeof(int), compare_ints);
+    if( panShapeList != NULL )
+        qsort(panShapeList, *pnShapeCount, sizeof(int), compare_ints);
 
     return panShapeList;
 }
