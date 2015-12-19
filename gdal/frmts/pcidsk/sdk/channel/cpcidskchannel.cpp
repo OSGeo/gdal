@@ -233,8 +233,8 @@ bool CPCIDSKChannel::IsOverviewValid( int overview_index )
     EstablishOverviewInfo();
 
     if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
-        return (bool)ThrowPCIDSKException(0, "Non existent overview (%d) requested.", 
-                              overview_index );
+        return ThrowPCIDSKException(0, "Non existent overview (%d) requested.", 
+                              overview_index ) != 0;
 
     int sis_id, validity=0;
 
