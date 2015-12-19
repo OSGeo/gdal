@@ -46,10 +46,11 @@ void qh_fprintf(FILE *fp, int msgcode, const char *fmt, ... ) {
     }
     va_start(args, fmt);
 #if qh_QHpointer
-    if (qh_qh && qh ANNOTATEoutput) {
+    if (qh_qh && qh ANNOTATEoutput)
 #else
-    if (qh ANNOTATEoutput) {
+    if (qh ANNOTATEoutput)
 #endif
+    {
       fprintf(fp, "[QH%.4d]", msgcode);
     }else if (msgcode >= MSG_ERROR && msgcode < MSG_STDERR ) {
       fprintf(fp, "QH%.4d ", msgcode);
