@@ -860,12 +860,13 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Do we have a source alpha band?                                 */
 /* -------------------------------------------------------------------- */
+        int bEnableSrcAlpha = psOptions->bEnableSrcAlpha;
         if( GDALGetRasterColorInterpretation( 
                 GDALGetRasterBand(hSrcDS,GDALGetRasterCount(hSrcDS)) ) 
             == GCI_AlphaBand 
-            && !psOptions->bEnableSrcAlpha )
+            && !bEnableSrcAlpha )
         {
-            psOptions->bEnableSrcAlpha = TRUE;
+            bEnableSrcAlpha = TRUE;
             if( !psOptions->bQuiet )
                 printf( "Using band %d of source image as alpha.\n", 
                         GDALGetRasterCount(hSrcDS) );
@@ -1013,7 +1014,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Setup band mapping.                                             */
 /* -------------------------------------------------------------------- */
-        if( psOptions->bEnableSrcAlpha )
+        if( bEnableSrcAlpha )
             psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS) - 1;
         else
             psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS);
@@ -1030,10 +1031,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Setup alpha bands used if any.                                  */
 /* -------------------------------------------------------------------- */
-        if( psOptions->bEnableSrcAlpha )
+        if( bEnableSrcAlpha )
             psWO->nSrcAlphaBand = GDALGetRasterCount(hWrkSrcDS);
 
-        if( !psOptions->bEnableDstAlpha 
+        int bEnableDstAlpha = psOptions->bEnableDstAlpha;
+        if( !bEnableDstAlpha 
             && GDALGetRasterCount(hDstDS) == psWO->nBandCount+1 
             && GDALGetRasterColorInterpretation( 
                 GDALGetRasterBand(hDstDS,GDALGetRasterCount(hDstDS))) 
@@ -1043,10 +1045,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 printf( "Using band %d of destination image as alpha.\n", 
                         GDALGetRasterCount(hDstDS) );
                 
-            psOptions->bEnableDstAlpha = TRUE;
+            bEnableDstAlpha = TRUE;
         }
 
-        if( psOptions->bEnableDstAlpha )
+        if( bEnableDstAlpha )
             psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
 
 /* -------------------------------------------------------------------- */
