@@ -11471,7 +11471,8 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
         m_bReadGeoTransform = false;
 
-        SetDirectory();
+        if( !SetDirectory() )
+            return;
 
         GTIF    *psGTIF = GTIFNew( hTIFF ); // I wonder how expensive this is?
 
