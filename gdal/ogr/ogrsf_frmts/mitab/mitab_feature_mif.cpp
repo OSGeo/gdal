@@ -2280,6 +2280,7 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
         if (STARTS_WITH_CI(pszLine, "REGION"))
         {
+            delete m_poRegion;
             m_poRegion = new TABRegion(GetDefnRef());
             if (m_poRegion->ReadGeometryFromMIFFile(fp) != 0)
             {
@@ -2293,6 +2294,7 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         else if (STARTS_WITH_CI(pszLine, "LINE") ||
                  STARTS_WITH_CI(pszLine, "PLINE"))
         {
+            delete m_poPline;
             m_poPline = new TABPolyline(GetDefnRef());
             if (m_poPline->ReadGeometryFromMIFFile(fp) != 0)
             {
@@ -2305,6 +2307,7 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         }
         else if (STARTS_WITH_CI(pszLine, "MULTIPOINT"))
         {
+            delete m_poMpoint;
             m_poMpoint = new TABMultiPoint(GetDefnRef());
             if (m_poMpoint->ReadGeometryFromMIFFile(fp) != 0)
             {
