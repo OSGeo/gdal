@@ -447,10 +447,10 @@ private:
 
     void CreateDT()
     {
-        this->poDT = new HFAEntry( this->hHFA->papoBand[this->nBand-1]->psInfo, 
-                             this->osName, "Edsc_Table",
-                             this->hHFA->papoBand[this->nBand-1]->poNode );
-        this->poDT->SetIntField( "numrows", nRows );
+        poDT = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo, 
+                              osName, "Edsc_Table",
+                              hHFA->papoBand[nBand-1]->poNode );
+        poDT->SetIntField( "numrows", nRows );
     }
 
 public:
@@ -1727,7 +1727,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
                                 GDALRATFieldType eFieldType, 
                                 GDALRATFieldUsage eFieldUsage )
 {
-    if( this->eAccess == GA_ReadOnly )
+    if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
             "Dataset not open in update mode");
@@ -1735,7 +1735,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     }
 
     // do we have a descriptor table already?
-    if( this->poDT == NULL || !EQUAL(this->poDT->GetType(),"Edsc_Table") )
+    if( poDT == NULL || !EQUAL(poDT->GetType(),"Edsc_Table") )
         CreateDT();
 
     int bConvertColors = FALSE;
@@ -1787,9 +1787,9 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     HFAEntry *poColumn = poDT->GetNamedChild(pszFieldName);
 
     if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
-        poColumn = new HFAEntry( this->hHFA->papoBand[this->nBand-1]->psInfo,
+        poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                      pszFieldName, "Edsc_Column",
-                                     this->poDT );
+                                     poDT );
 
     poColumn->SetIntField( "numRows", this->nRows );
     int nElementSize = 0;
@@ -1857,9 +1857,9 @@ CPLErr HFARasterAttributeTable::SetLinearBinning( double dfRow0MinIn, double dfB
     /* we should have an Edsc_BinFunction */
     HFAEntry *poBinFunction = this->poDT->GetNamedChild( "#Bin_Function#" );
     if( poBinFunction == NULL || !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
-        poBinFunction = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
-                                      "#Bin_Function#", "Edsc_BinFunction",
-                                      this->poDT );
+        poBinFunction = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
+                                       "#Bin_Function#", "Edsc_BinFunction",
+                                       poDT );
 
     // Because of the BaseData we have to hardcode the size. 
     poBinFunction->MakeData( 30 );
@@ -3017,7 +3017,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 /* -------------------------------------------------------------------- */
     HFAEntry * poDT = hHFA->papoBand[nBand-1]->poNode->GetNamedChild( "Descriptor_Table" );
     if( poDT == NULL || !EQUAL(poDT->GetType(),"Edsc_Table") )
-        poDT = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+        poDT = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                              "Descriptor_Table", "Edsc_Table",
                              hHFA->papoBand[nBand-1]->poNode );
 
@@ -3031,7 +3031,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         /* then it should have an Edsc_BinFunction */
         HFAEntry *poBinFunction = poDT->GetNamedChild( "#Bin_Function#" );
         if( poBinFunction == NULL || !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
-            poBinFunction = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+            poBinFunction = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                           "#Bin_Function#", "Edsc_BinFunction",
                                           poDT );
 
@@ -3085,7 +3085,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         HFAEntry *poColumn = poDT->GetNamedChild(pszName);
 
         if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
-	    poColumn = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+	    poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                      pszName, "Edsc_Column",
                                      poDT );
 

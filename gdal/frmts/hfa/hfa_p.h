@@ -255,9 +255,7 @@ class HFAEntry
     int         bIsMIFObject;
 
                 HFAEntry();
-                HFAEntry( HFAEntry *poContainer,
-                          const char *pszMIFObjectPath,
-                          const char * pszDictionary,
+                HFAEntry( const char * pszDictionary,
                           const char * pszTypeName,
                           int nDataSizeIn,
                           GByte* pabyDataIn );
@@ -271,6 +269,11 @@ public:
                           HFAEntry * poParent, HFAEntry *poPrev);
 
                  HFAEntry( HFAInfo_t *psHFA, 
+                          const char *pszNodeName,
+                          const char *pszTypeName,
+                          HFAEntry *poParent );
+
+    static HFAEntry* New( HFAInfo_t *psHFA, 
                           const char *pszNodeName,
                           const char *pszTypeName,
                           HFAEntry *poParent );

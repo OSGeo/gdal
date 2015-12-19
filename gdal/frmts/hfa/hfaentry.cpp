@@ -181,6 +181,22 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
 }
 
 /************************************************************************/
+/*                              New()                                   */
+/*                                                                      */
+/*      Construct an HFAEntry in memory, with the intention that it     */
+/*      would be written to disk later.                                 */
+/************************************************************************/
+
+HFAEntry* HFAEntry::New( HFAInfo_t * psHFAIn,
+                         const char * pszNodeName,
+                         const char * pszTypeName,
+                         HFAEntry * poParentIn )
+{
+    CPLAssert( poParentIn != NULL );
+    return new HFAEntry(psHFAIn, pszNodeName, pszTypeName, poParentIn);
+}
+
+/************************************************************************/
 /*                      BuildEntryFromMIFObject()                       */
 /*                                                                      */
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
@@ -247,8 +263,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
 
     memcpy( l_pabyData, pszField, nMIFObjectSize );
 
-    return new HFAEntry(poContainer, pszMIFObjectPath,
-                        osDictionary, osType,
+    return new HFAEntry(osDictionary, osType,
                         nMIFObjectSize, l_pabyData);
 
 }
@@ -259,9 +274,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
 /************************************************************************/
 
-HFAEntry::HFAEntry( CPL_UNUSED HFAEntry * poContainer,
-                    CPL_UNUSED const char *pszMIFObjectPath,
-                    const char * pszDictionary,
+HFAEntry::HFAEntry( const char * pszDictionary,
                     const char * pszTypeName,
                     int nDataSizeIn,
                     GByte* pabyDataIn ) :
