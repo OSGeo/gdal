@@ -464,7 +464,7 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
                     /* Replace the hi and process the rest normally */
 		    printbuf_memappend_fast(tok->pb, (char*)utf8_replacement_char, 3);
                   }
-                  got_hi_surrogate = 0;
+                  /*got_hi_surrogate = 0;*/
                 }
 
 		if (tok->ucs_char < 0x80) {

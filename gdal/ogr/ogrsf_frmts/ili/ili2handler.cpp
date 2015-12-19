@@ -68,7 +68,7 @@ ILI2Handler::~ILI2Handler() {
   // remove all elements
   DOMNode *tmpNode = dom_doc->getFirstChild();
   while (tmpNode != NULL) {
-    tmpNode = dom_doc->removeChild(tmpNode);
+    /*tmpNode = */dom_doc->removeChild(tmpNode);
     tmpNode = dom_doc->getFirstChild();
   }
 
@@ -131,7 +131,7 @@ void ILI2Handler::endElement(
       m_poReader->AddFeature(childElem);
 
       // remove the child element
-      childElem = (DOMElement*)dom_elem->removeChild(childElem);
+      /*childElem = (DOMElement*)*/dom_elem->removeChild(childElem);
     } else if (level >= 3) {
 
       // go to the parent element

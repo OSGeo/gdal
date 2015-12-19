@@ -98,7 +98,6 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
     }
 
     CPLMutexHolderD(&hMutex);
-    Geodatabase* pGeoDatabase = NULL;
 
     FGdbDatabaseConnection* pConnection = oMapConnections[pszFilename];
     if( pConnection != NULL )
@@ -110,14 +109,13 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
             return NULL;
         }
 
-        pGeoDatabase = pConnection->m_pGeodatabase;
         pConnection->m_nRefCount ++;
         CPLDebug("FileGDB", "ref_count of %s = %d now", pszFilename,
                  pConnection->m_nRefCount);
     }
     else
     {
-        pGeoDatabase = new Geodatabase;
+        Geodatabase* pGeoDatabase = new Geodatabase;
         hr = ::OpenGeodatabase(StringToWString(pszFilename), *pGeoDatabase);
 
         if (FAILED(hr))

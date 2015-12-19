@@ -1192,9 +1192,9 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                     pItem->gmlNodeTo = posNode;
                     pItem->bIsNodeToHref = bIsHref;
                 }
-                pszGmlId = NULL;
-                bIsHref = false;
-                cOrientation = '+';
+                /*pszGmlId = NULL;*/
+                /*bIsHref = false; */
+                /*cOrientation = '+';*/
             }
         }
         psChild = psChild->psNext;

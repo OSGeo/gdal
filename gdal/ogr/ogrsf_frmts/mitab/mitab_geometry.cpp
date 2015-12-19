@@ -203,7 +203,6 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
             }
         }
 
-        n=0;
         for(j=0; j<OGR_NUM_RINGS(poPoly); j++) 
         {
             OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);

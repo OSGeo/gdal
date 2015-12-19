@@ -502,7 +502,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             if( bHasValidGeometryName )
             {
                 AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType, -1, true ) );
-                bHasValidGeometryName = false;
+                /*bHasValidGeometryName = false;*/
                 bHasValidGeometryElementPath = false;
                 bHasFoundGeomType = false;
                 pszGPath = "";
@@ -520,7 +520,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             {
                 AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType, -1, true ) );
                 bHasValidGeometryName = false;
-                bHasValidGeometryElementPath = false;
+                /*bHasValidGeometryElementPath = false;*/
                 bHasFoundGeomType = false;
                 pszGName = "";
                 nGeomType = wkbUnknown;
@@ -538,10 +538,9 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType, -1, true ) );
                 bHasValidGeometryName = false;
                 bHasValidGeometryElementPath = false;
-                bHasFoundGeomType = false;
+                /*bHasFoundGeomType = false;*/
                 pszGName = "";
                 pszGPath = "";
-                nGeomType = wkbUnknown;
             }
             const char* pszGeometryType = CPLGetXMLValue( psThis, NULL, NULL );
             nGeomType = wkbUnknown;

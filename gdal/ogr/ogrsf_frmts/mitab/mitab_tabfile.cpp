@@ -750,7 +750,7 @@ int TABFile::ParseTABFileFields()
                                                     " \t(),;",
                                                     TRUE, FALSE);
                 numTok = CSLCount(papszTok);
-                nStatus = -1;
+
                 CPLAssert(m_poDefn);
                 poFieldDefn = NULL;
                 if (numTok >= 3 && EQUAL(papszTok[1], "char"))

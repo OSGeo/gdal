@@ -2128,8 +2128,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     // Get each point and add them to the multipoint feature
     for(i=0; i<nNumPoint; i++)
     {
-        pszLine = fp->GetLine();
-        papszToken = CSLTokenizeString2(fp->GetLastLine(), 
+        papszToken = CSLTokenizeString2(fp->GetLine(), 
                                         " \t", CSLT_HONOURSTRINGS);
         if (CSLCount(papszToken) !=2)
         {

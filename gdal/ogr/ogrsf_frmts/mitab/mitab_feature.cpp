@@ -3606,7 +3606,6 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
         /*-------------------------------------------------------------
          * Establish number of polygons based on geometry type
          *------------------------------------------------------------*/
-        OGRPolygon      *poPolygon=NULL;
         OGRMultiPolygon *poMultiPolygon = NULL;
         int             iCurRing = 0;
         int             numOGRPolygons = 0;
@@ -3618,7 +3617,6 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
         }
         else
         {
-            poPolygon = (OGRPolygon*)poGeom;
             numOGRPolygons = 1;
         }
 
@@ -3628,6 +3626,7 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
         iCurRing = 0;
         for(int iPoly=0; poRing == NULL && iPoly < numOGRPolygons; iPoly++)
         {
+            OGRPolygon      *poPolygon;
             if (poMultiPolygon)
                 poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
             else
@@ -3670,7 +3669,6 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
         /*-------------------------------------------------------------
          * Establish number of polygons based on geometry type
          *------------------------------------------------------------*/
-        OGRPolygon      *poPolygon=NULL;
         OGRMultiPolygon *poMultiPolygon = NULL;
         int             iCurRing = 0;
         int             numOGRPolygons = 0;
@@ -3682,7 +3680,6 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
         }
         else
         {
-            poPolygon = (OGRPolygon*)poGeom;
             numOGRPolygons = 1;
         }
 
@@ -3692,6 +3689,7 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
         iCurRing = 0;
         for(int iPoly=0; poRing == NULL && iPoly < numOGRPolygons; iPoly++)
         {
+            OGRPolygon* poPolygon;
             if (poMultiPolygon)
                 poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
             else
@@ -7326,8 +7324,8 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             return -1;
 
         // Set new coord block ptr for next object
-        if (poCoordBlock)
-            nCurCoordBlockPtr = poCoordBlock->GetCurAddress();
+        /*if (poCoordBlock)
+            nCurCoordBlockPtr = poCoordBlock->GetCurAddress();*/
     }
 
 
@@ -7389,8 +7387,8 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             return -1;
 
         // Set new coord block ptr for next object
-        if (poCoordBlock)
-            nCurCoordBlockPtr = poCoordBlock->GetCurAddress();
+        /*if (poCoordBlock)
+            nCurCoordBlockPtr = poCoordBlock->GetCurAddress();*/
     }
 
     /*-----------------------------------------------------------------
@@ -7441,8 +7439,8 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             return -1;
 
         // Set new coord block ptr for next object (not really useful here)
-        if (poCoordBlock)
-            nCurCoordBlockPtr = poCoordBlock->GetCurAddress();
+        /*if (poCoordBlock)
+            nCurCoordBlockPtr = poCoordBlock->GetCurAddress();*/
     }
 
     /*-----------------------------------------------------------------

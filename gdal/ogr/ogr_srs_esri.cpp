@@ -1275,6 +1275,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Remap parameters used for Albers.                               */
 /* -------------------------------------------------------------------- */
+    CPL_IGNORE_RET_VAL(pszProjection); /* we don't remove the previous pszProjection assignment, to easy mainability */
     pszProjection = GetAttrValue("PROJECTION");
     poProjCS = GetAttrNode( "PROJCS" );
 
