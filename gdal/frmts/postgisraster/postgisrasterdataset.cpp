@@ -155,7 +155,9 @@ PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
 
     else {
         resolutionStrategy = USER_RESOLUTION;
+#ifdef DEBUG_VERBOSE
         pszTmp = "USER";
+#endif
     }
 
 #ifdef DEBUG_VERBOSE

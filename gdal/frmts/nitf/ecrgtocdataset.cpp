@@ -354,7 +354,7 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
     if (nZone < 0)
     {
         nUpperZoneFrames = -nBottomZoneFrames;
-        nBottomZoneFrames = nUpperZoneFrames - nRows;
+        /*nBottomZoneFrames = nUpperZoneFrames - nRows;*/
     }
 
     const double dfUpperZoneTopLat = dfFrameLatHeight * nUpperZoneFrames;

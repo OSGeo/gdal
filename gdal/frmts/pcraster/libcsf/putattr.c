@@ -152,7 +152,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 				if (CsfWriteAttrBlock(m, prevBlockPos, &b))
 				{
 					M_ERROR(WRITE_ERROR);
-					resultPos = 0;
+					/*resultPos = 0;*/
 				}
 			}
 			InitBlock(&b);

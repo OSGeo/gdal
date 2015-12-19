@@ -246,7 +246,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       reinterpret_cast<GByte*>( pImage ),
                                       nRawBytes );
                 CPLFree( pabyTile );
-                nTileBytes = nRawBytes;
+                /*nTileBytes = nRawBytes;*/
             }
             else
             {

@@ -2902,8 +2902,9 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     if (bWriteOGRAttributes)
     {
         iField = -1;
-        if (pszOGRDisplayField &&
-            (iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRDisplayField)) >= 0)
+        if (pszOGRDisplayField )
+            iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRDisplayField);
+        if( iField >= 0 )
             osFeatureName = OGR_F_GetFieldAsString(hFeat, iField);
         else
             osFeatureName = CPLSPrintf("feature%d", iObjLayer + 1);

@@ -1044,7 +1044,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             }
             else {
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", "Scod"));
-                nLastVal = 0;
+                /*nLastVal = 0;*/
             }
             READ_MARKER_FIELD_UINT8_COMMENT("SGcod_Progress",
                                             (nLastVal == 0) ? "LRCP" :
@@ -1095,7 +1095,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             }
             else {
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", "SPcod_cbstyle"));
-                nLastVal = 0;
+                /*nLastVal = 0;*/
             }
             READ_MARKER_FIELD_UINT8_COMMENT("SPcod_transformation",
                                             (nLastVal == 0) ? "9-7 irreversible":

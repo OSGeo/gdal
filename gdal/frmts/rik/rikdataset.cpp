@@ -758,7 +758,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         // Read unknown string
 
-        projLength = GetRikString( poOpenInfo->fpL, projection, sizeof(projection) );
+        /*projLength =*/ GetRikString( poOpenInfo->fpL, projection, sizeof(projection) );
 
         // Read map north edge
 
