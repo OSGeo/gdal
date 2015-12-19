@@ -1071,7 +1071,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                    dfSemiMajor, dfInvFlattening,
                    pszPM, l_dfFromGreenwich );
 
-        bFullyDefined = true;
+        /*bFullyDefined = true;*/
     }
 
 /* -------------------------------------------------------------------- */

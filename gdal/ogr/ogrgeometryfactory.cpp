@@ -2870,7 +2870,7 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom, bool bO
     {
         OGRGeometryCollection *poNewGC = (OGRGeometryCollection *) poGC->getLinearGeometry();
         delete poGC;
-        poGeom = poGC = poNewGC;
+        poGC = poNewGC;
     }
 
     if( poGC->getNumGeometries() == 0 )
