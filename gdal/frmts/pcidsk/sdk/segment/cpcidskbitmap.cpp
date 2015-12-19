@@ -344,10 +344,9 @@ int CPCIDSKBitmap::GetOverviewCount()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-PCIDSKChannel *CPCIDSKBitmap::GetOverview( CPL_UNUSED int i )
+PCIDSKChannel *CPCIDSKBitmap::GetOverview( int i )
 {
-    // The %d is ignored in the exception.
-    ThrowPCIDSKException("Non-existent overview %d requested on bitmap segment.");
+    ThrowPCIDSKException("Non-existent overview %d requested on bitmap segment.", i);
     return NULL;
 }
 
