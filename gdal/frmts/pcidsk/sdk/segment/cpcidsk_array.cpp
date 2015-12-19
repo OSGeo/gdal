@@ -85,7 +85,7 @@ void CPCIDSK_ARRAY::Load()
         oStream << "Invalid array dimension " << nDimension;
         oStream << " stored in the segment.";
         std::string oMsg = oStream.str();
-        throw PCIDSKException(oMsg.c_str());
+        throw PCIDSKException("%s", oMsg.c_str());
     }
     mnDimension = static_cast<unsigned char>(nDimension);
 
@@ -98,7 +98,7 @@ void CPCIDSK_ARRAY::Load()
             std::stringstream oStream;
             oStream << "Invalid size " << nSize << " for dimension " << i+1;
             std::string oMsg = oStream.str();
-            throw PCIDSKException(oMsg.c_str());
+            throw PCIDSKException("%s", oMsg.c_str());
         }
 		moSizes.push_back( nSize );
     }
