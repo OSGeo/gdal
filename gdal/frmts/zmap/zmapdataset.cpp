@@ -663,7 +663,8 @@ GDALDataset* ZMapDataset::CreateCopy( const char * pszFilename,
         if (!bEOLPrinted)
             VSIFPrintfL(fp, "\n");
 
-        if (!pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData))
+        if (pfnProgress != NULL &&
+            !pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData))
         {
             eErr = CE_Failure;
             break;
