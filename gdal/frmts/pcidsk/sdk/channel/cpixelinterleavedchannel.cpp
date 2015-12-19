@@ -88,7 +88,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
     if( win_xoff < 0 || win_xoff + win_xsize > GetBlockWidth()
         || win_yoff < 0 || win_yoff + win_ysize > GetBlockHeight() )
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException(0, 
             "Invalid window in ReadBloc(): win_xoff=%d,win_yoff=%d,xsize=%d,ysize=%d",
             win_xoff, win_yoff, win_xsize, win_ysize );
     }
@@ -148,7 +148,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
             }
         }
         else
-            ThrowPCIDSKException( "Unsupported pixel type..." );
+            return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
     
     file->UnlockBlock( 0 );
@@ -180,7 +180,7 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
 
 {
     if( !file->GetUpdatable() )
-        throw PCIDSKException( "File not open for update in WriteBlock()" );
+        return ThrowPCIDSKException(0, "File not open for update in WriteBlock()" );
 
     InvalidateOverviews();
 
@@ -248,7 +248,7 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
             }
         }
         else
-            ThrowPCIDSKException( "Unsupported pixel type..." );
+            return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
     
     file->UnlockBlock( 1 );

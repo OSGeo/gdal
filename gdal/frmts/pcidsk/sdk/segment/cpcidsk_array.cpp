@@ -85,7 +85,7 @@ void CPCIDSK_ARRAY::Load()
         oStream << "Invalid array dimension " << nDimension;
         oStream << " stored in the segment.";
         std::string oMsg = oStream.str();
-        throw PCIDSKException("%s", oMsg.c_str());
+        return ThrowPCIDSKException("%s", oMsg.c_str());
     }
     mnDimension = static_cast<unsigned char>(nDimension);
 
@@ -98,7 +98,7 @@ void CPCIDSK_ARRAY::Load()
             std::stringstream oStream;
             oStream << "Invalid size " << nSize << " for dimension " << i+1;
             std::string oMsg = oStream.str();
-            throw PCIDSKException("%s", oMsg.c_str());
+            return ThrowPCIDSKException("%s", oMsg.c_str());
         }
 		moSizes.push_back( nSize );
     }
@@ -210,7 +210,7 @@ void CPCIDSK_ARRAY::SetDimensionCount(unsigned char nDim)
 {
     if(nDim < 1 || nDim > 8)
     {
-        throw PCIDSKException("An array cannot have a "
+        return ThrowPCIDSKException("An array cannot have a "
             "dimension bigger than 8 or smaller than 1.");
     }
     mnDimension = nDim;
@@ -239,7 +239,7 @@ void CPCIDSK_ARRAY::SetSizes(const std::vector<unsigned int>& oSizes)
 {
     if(oSizes.size() != GetDimensionCount())
     {
-        throw PCIDSKException("You need to specify the sizes"
+        return ThrowPCIDSKException("You need to specify the sizes"
             " for each dimension of the array");
     }
 
@@ -247,7 +247,7 @@ void CPCIDSK_ARRAY::SetSizes(const std::vector<unsigned int>& oSizes)
     {
         if(oSizes[i] == 0)
         {
-            throw PCIDSKException("You cannot define the size of a dimension to 0.");
+            return ThrowPCIDSKException("You cannot define the size of a dimension to 0.");
         }
     }
     moSizes = oSizes;
@@ -298,7 +298,7 @@ void CPCIDSK_ARRAY::SetArray(const std::vector<double>& oArray)
 
     if(nLength != oArray.size())
     {
-        throw PCIDSKException("the size of this array doesn't match "
+        return ThrowPCIDSKException("the size of this array doesn't match "
             "the size specified in GetSizes(). See documentation for"
             " more information.");
     }

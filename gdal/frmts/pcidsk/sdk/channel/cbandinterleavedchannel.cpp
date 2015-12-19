@@ -134,7 +134,7 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
     if( xoff < 0 || xoff + xsize > GetBlockWidth()
         || yoff < 0 || yoff + ysize > GetBlockHeight() )
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException( 0,
             "Invalid window in ReadBloc(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
             xoff, yoff, xsize, ysize );
     }
@@ -210,7 +210,7 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
     PCIDSKInterfaces *interfaces = file->GetInterfaces();
 
     if( !file->GetUpdatable() )
-        throw PCIDSKException( "File not open for update in WriteBlock()" );
+        return ThrowPCIDSKException(0, "File not open for update in WriteBlock()" );
 
     InvalidateOverviews();
 
@@ -321,7 +321,7 @@ void CBandInterleavedChannel
 
 {
     if( ih_offset == 0 )
-        ThrowPCIDSKException( "No Image Header available for this channel." );
+        return ThrowPCIDSKException( "No Image Header available for this channel." );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the existing image header.                                */
@@ -458,15 +458,17 @@ std::string CBandInterleavedChannel::MassageLink( std::string filename_in ) cons
         
         if (seg_num == 0)
         {
-            throw PCIDSKException("Unable to find link segment. Link name: %s",
+            ThrowPCIDSKException("Unable to find link segment. Link name: %s",
                                   filename_in.c_str());
+            return "";
         }
         
         CLinkSegment* link_seg = 
             dynamic_cast<CLinkSegment*>(file->GetSegment(seg_num));
         if (link_seg == NULL)
         {
-            throw PCIDSKException("Failed to get Link Information Segment.");
+            ThrowPCIDSKException("Failed to get Link Information Segment.");
+            return "";
         }
         
         filename_in = link_seg->GetPath();

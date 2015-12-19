@@ -180,7 +180,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
     if( xoff < 0 || xoff + xsize > GetBlockWidth()
         || yoff < 0 || yoff + ysize > GetBlockHeight() )
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException( 0,
             "Invalid window in ReadBlock(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
             xoff, yoff, xsize, ysize );
     }
@@ -212,7 +212,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
     int dst_blockx, dst_blocky;
 
     if( temp_buffer == NULL )
-        ThrowPCIDSKException( "Failed to allocate temporary block buffer." );
+        return ThrowPCIDSKException(0, "Failed to allocate temporary block buffer." );
 
     dst_blockx = block_index % blocks_per_row;
     dst_blocky = block_index / blocks_per_row;
@@ -409,7 +409,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
     AccessDB();
 
     if( !file->GetUpdatable() || !writable )
-        throw PCIDSKException( "File not open for update in WriteBlock()" );
+        return ThrowPCIDSKException(0, "File not open for update in WriteBlock()" );
 
 /* -------------------------------------------------------------------- */
 /*      Pass the request on directly in the simple case.                */
@@ -437,7 +437,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
     int dst_blockx, dst_blocky;
 
     if( temp_buffer == NULL )
-        ThrowPCIDSKException( "Failed to allocate temporary block buffer." );
+        return ThrowPCIDSKException(0, "Failed to allocate temporary block buffer." );
 
     dst_blockx = block_index % blocks_per_row;
     dst_blocky = block_index / blocks_per_row;
@@ -671,7 +671,7 @@ void CExternalChannel::SetEChanInfo( std::string filenameIn, int echannelIn,
 
 {
     if( ih_offset == 0 )
-        ThrowPCIDSKException( "No Image Header available for this channel." );
+        return ThrowPCIDSKException( "No Image Header available for this channel." );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the existing image header.                                */

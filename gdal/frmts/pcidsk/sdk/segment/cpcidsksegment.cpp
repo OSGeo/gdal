@@ -166,7 +166,7 @@ void CPCIDSKSegment::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
 {
     if( offset+size+1024 > data_size )
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException( 
             "Attempt to read past end of segment %d (%d bytes at offset %d)",
             segment, (int) offset, (int) size );
     file->ReadFromFile( buffer, offset + data_offset + 1024, size );
@@ -183,7 +183,7 @@ void CPCIDSKSegment::WriteToFile( const void *buffer, uint64 offset, uint64 size
         CPCIDSKFile *poFile = dynamic_cast<CPCIDSKFile *>(file);
         
         if (poFile == NULL) {
-            ThrowPCIDSKException("Attempt to dynamic_cast the file interface "
+            return ThrowPCIDSKException("Attempt to dynamic_cast the file interface "
                 "to a CPCIDSKFile failed. This is a programmer error, and should "
                 "be reported to your software provider.");
         }

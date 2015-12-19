@@ -116,7 +116,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         interleaving = "FILE";
     }
     else
-        ThrowPCIDSKException( "PCIDSK::Create() options '%s' not recognised.",
+        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr( "PCIDSK::Create() options '%s' not recognised.",
                               options.c_str() );
 #if 0
     if( strstr(options.c_str(),"NOZERO") != NULL )
@@ -142,7 +142,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     
     if( !regular && strcmp(interleaving,"FILE") != 0 )
     {
-        ThrowPCIDSKException( 
+        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr( 
            "Requested mixture of band types not supported for interleaving=%s.",
            interleaving );
     }

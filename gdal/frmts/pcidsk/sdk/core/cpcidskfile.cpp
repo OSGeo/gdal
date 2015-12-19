@@ -223,7 +223,7 @@ PCIDSKChannel *CPCIDSKFile::GetChannel( int band )
 
 {
     if( band < 1 || band > channel_count )
-        ThrowPCIDSKException( "Out of range band (%d) requested.", 
+        return (PCIDSKChannel*)ThrowPCIDSKExceptionPtr( "Out of range band (%d) requested.", 
                               band );
 
     return channels[band-1];
@@ -484,7 +484,7 @@ void CPCIDSKFile::InitializeFromHeader()
 
         last_block_data = malloc((size_t) block_size);
         if( last_block_data == NULL )
-            ThrowPCIDSKException( "Allocating %d bytes for scanline buffer failed.", 
+            return ThrowPCIDSKException( "Allocating %d bytes for scanline buffer failed.", 
                                        (int) block_size );
 
         last_block_mutex = interfaces.CreateMutex();
@@ -577,7 +577,7 @@ void CPCIDSKFile::InitializeFromHeader()
         }
 
         else
-            ThrowPCIDSKException( "Unsupported interleaving:%s", 
+            return ThrowPCIDSKException( "Unsupported interleaving:%s", 
                                        interleaving.c_str() );
 
         channels.push_back( channel );
@@ -595,7 +595,7 @@ void CPCIDSKFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
     interfaces.io->Seek( io_handle, offset, SEEK_SET );
     if( interfaces.io->Read( buffer, 1, size, io_handle ) != size )
-        ThrowPCIDSKException( "PCIDSKFile:Failed to read %d bytes at %d.", 
+        return ThrowPCIDSKException( "PCIDSKFile:Failed to read %d bytes at %d.", 
                                    (int) size, (int) offset );
 }
 
@@ -613,7 +613,7 @@ void CPCIDSKFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 
     interfaces.io->Seek( io_handle, offset, SEEK_SET );
     if( interfaces.io->Write( buffer, 1, size, io_handle ) != size )
-        ThrowPCIDSKException( "PCIDSKFile:Failed to write %d bytes at %d.",
+        return ThrowPCIDSKException( "PCIDSKFile:Failed to write %d bytes at %d.",
                                    (int) size, (int) offset );
 }
 
@@ -626,7 +626,7 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
 
 {
     if( last_block_data == NULL )
-        ThrowPCIDSKException( "ReadAndLockBlock() called on a file that is not pixel interleaved." );
+        return ThrowPCIDSKExceptionPtr( "ReadAndLockBlock() called on a file that is not pixel interleaved." );
 
 /* -------------------------------------------------------------------- */
 /*      Default, and validate windowing.                                */
@@ -639,7 +639,7 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
 
     if( win_xoff < 0 || win_xoff+win_xsize > GetWidth() )
     {
-        ThrowPCIDSKException( "CPCIDSKFile::ReadAndLockBlock(): Illegal window - xoff=%d, xsize=%d", 
+        return ThrowPCIDSKExceptionPtr( "CPCIDSKFile::ReadAndLockBlock(): Illegal window - xoff=%d, xsize=%d", 
                                    win_xoff, win_xsize );
     }
 
@@ -694,10 +694,10 @@ void CPCIDSKFile::WriteBlock( int block_index, void *buffer )
 
 {
     if( !GetUpdatable() )
-        throw PCIDSKException( "File not open for update in WriteBlock()" );
+        return ThrowPCIDSKException( "File not open for update in WriteBlock()" );
 
     if( last_block_data == NULL )
-        ThrowPCIDSKException( "WriteBlock() called on a file that is not pixel interleaved." );
+        return ThrowPCIDSKException( "WriteBlock() called on a file that is not pixel interleaved." );
 
     WriteToFile( buffer,
                  first_line_offset + block_index*block_size,
@@ -773,7 +773,7 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
         new_file.file = interfaces.OpenEDB( filename, "r" );
 
     if( new_file.file == NULL )
-        ThrowPCIDSKException( "Unable to open file '%s'.", 
+        return (bool)ThrowPCIDSKException( 0, "Unable to open file '%s'.", 
                               filename.c_str() );
 
 /* -------------------------------------------------------------------- */
@@ -842,7 +842,7 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
         new_file.io_handle = interfaces.io->Open( filename, "r" );
         
     if( new_file.io_handle == NULL )
-        ThrowPCIDSKException( "Unable to open file '%s'.", 
+        return ThrowPCIDSKException( "Unable to open file '%s'.", 
                               filename.c_str() );
 
 /* -------------------------------------------------------------------- */
@@ -872,7 +872,7 @@ void CPCIDSKFile::DeleteSegment( int segment )
     PCIDSKSegment *poSeg = GetSegment( segment );
 
     if( poSeg == NULL )
-        ThrowPCIDSKException( "DeleteSegment(%d) failed, segment does not exist.", segment );
+        return ThrowPCIDSKException( "DeleteSegment(%d) failed, segment does not exist.", segment );
 
 /* -------------------------------------------------------------------- */
 /*      Wipe associated metadata.                                       */
@@ -1015,7 +1015,7 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
     }
     
     if( segment > segment_count )
-        ThrowPCIDSKException( "All %d segment pointers in use.", segment_count);
+        return ThrowPCIDSKException(0, "All %d segment pointers in use.", segment_count);
 
 /* -------------------------------------------------------------------- */
 /*      If the segment does not have a data area already, identify      */
