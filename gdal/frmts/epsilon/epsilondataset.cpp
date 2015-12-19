@@ -307,13 +307,13 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
         if (eps_decode_truecolor_block (pTempData[0], pTempData[1], pTempData[2],
                                         poGDS->pabyBlockData, &hdr) != EPS_OK)
         {
-            for(iBand=0;iBand<poGDS->nBands;iBand++)
+            for(iBand=0;iBand<3;iBand++)
                 CPLFree(pTempData[iBand]);
             memset(pImage, 0, nBlockXSize * nBlockYSize);
             return CE_Failure;
         }
 
-        for(iBand=0;iBand<poGDS->nBands;iBand++)
+        for(iBand=0;iBand<3;iBand++)
             CPLFree(pTempData[iBand]);
 
         poGDS->nBufferedBlock = nBlock;
@@ -324,7 +324,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
         if (nBand == 1)
         {
             int iOtherBand;
-            for(iOtherBand=2;iOtherBand<=poGDS->nBands;iOtherBand++)
+            for(iOtherBand=2;iOtherBand<=3;iOtherBand++)
             {
                 GDALRasterBlock *poBlock;
 
