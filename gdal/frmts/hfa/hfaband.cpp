@@ -1648,7 +1648,7 @@ CPLErr HFABand::SetNoDataValue( double dfValue )
 
     if ( poNDNode == NULL )
     {
-        poNDNode = new HFAEntry( psInfo,
+        poNDNode = HFAEntry::New( psInfo,
                                  "Eimg_NonInitializedValue",
                                  "Eimg_NonInitializedValue",
                                  poNode );
@@ -1889,7 +1889,7 @@ CPLErr HFABand::SetPCT( int nColors,
     poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
     if( poEdsc_Table == NULL 
         || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
-        poEdsc_Table = new HFAEntry( psInfo, "Descriptor_Table", 
+        poEdsc_Table = HFAEntry::New( psInfo, "Descriptor_Table", 
                                      "Edsc_Table", poNode );
 
     poEdsc_Table->SetIntField( "numrows", nColors );
@@ -1902,7 +1902,7 @@ CPLErr HFABand::SetPCT( int nColors,
         = poEdsc_Table->GetNamedChild( "#Bin_Function#" );
     if( poEdsc_BinFunction == NULL 
         || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
-        poEdsc_BinFunction = new HFAEntry( psInfo, "#Bin_Function#", 
+        poEdsc_BinFunction = HFAEntry::New( psInfo, "#Bin_Function#", 
                                            "Edsc_BinFunction", 
                                            poEdsc_Table );
 
@@ -1937,7 +1937,7 @@ CPLErr HFABand::SetPCT( int nColors,
         HFAEntry *poEdsc_Column = poEdsc_Table->GetNamedChild( pszName );
         if( poEdsc_Column == NULL 
             || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
-            poEdsc_Column = new HFAEntry( psInfo, pszName, "Edsc_Column", 
+            poEdsc_Column = HFAEntry::New( psInfo, pszName, "Edsc_Column", 
                                           poEdsc_Table );
 
         poEdsc_Column->SetIntField( "numRows", nColors );
@@ -2001,7 +2001,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
         if( poParent == NULL )
         {
             poParent = 
-                new HFAEntry( psRRDInfo, GetBandName(),
+                HFAEntry::New( psRRDInfo, GetBandName(),
                               "Eimg_Layer", psRRDInfo->poRoot );
         }
     }
@@ -2080,7 +2080,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     HFAEntry *poRRDNamesList = poNode->GetNamedChild("RRDNamesList");
     if( poRRDNamesList == NULL )
     {
-        poRRDNamesList = new HFAEntry( psInfo, "RRDNamesList", 
+        poRRDNamesList = HFAEntry::New( psInfo, "RRDNamesList", 
                                        "Eimg_RRDNamesList", 
                                        poNode );
         poRRDNamesList->MakeData( 23+16+8+ 3000 /* hack for growth room*/ );
