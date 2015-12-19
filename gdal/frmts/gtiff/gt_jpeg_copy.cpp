@@ -30,6 +30,10 @@
 #include "cpl_vsi.h"
 #include "gt_jpeg_copy.h"
 
+#ifndef BIGTIFF_SUPPORT
+#define tmsize_t tsize_t
+#endif
+
 /* Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly */
 /* useful for debugging purposes */
 
