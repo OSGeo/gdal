@@ -2334,7 +2334,8 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
             int nLocalCounter = nCounter;
             CPLReleaseMutex(sJob.hCondMutex);
 
-            if( !pfnProgress( nLocalCounter / (double) nYSize, "", pProgressArg ) )
+            if( pfnProgress != NULL &&
+                !pfnProgress( nLocalCounter / (double) nYSize, "", pProgressArg ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 bStop = TRUE;
