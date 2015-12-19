@@ -12029,8 +12029,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
     int                 nCompression = COMPRESSION_NONE;
-    int                 nPredictor = PREDICTOR_NONE, nJpegQuality = -1, nZLevel = -1,
-                        nLZMAPreset = -1, nJpegTablesMode = -1;
+    int                 nPredictor = PREDICTOR_NONE;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -12110,10 +12109,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( pszValue  != NULL )
         nPredictor =  atoi( pszValue );
 
-    nZLevel = GTiffGetZLevel(papszParmList);
-    nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
-    nJpegQuality = GTiffGetJpegQuality(papszParmList);
-    nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
+    int nZLevel = GTiffGetZLevel(papszParmList);
+    int nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
+    int nJpegQuality = GTiffGetJpegQuality(papszParmList);
+    int nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 
 /* -------------------------------------------------------------------- */
 /*      Streaming related code                                          */
@@ -12802,10 +12801,12 @@ int GTiffDataset::GuessJPEGQuality(int& bOutHasQuantizationTable,
     CPLAssert( nCompression == COMPRESSION_JPEG );
     uint32 nJPEGTableSize = 0;
     void* pJPEGTable = NULL;
-    bOutHasQuantizationTable = FALSE;
-    bOutHasHuffmanTable = FALSE;
     if( !TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
+    {
+        bOutHasQuantizationTable = FALSE;
+        bOutHasHuffmanTable = FALSE;
         return -1;
+    }
 
     bOutHasQuantizationTable = GTIFFFindNextTable((const GByte*)pJPEGTable, 0xDB, nJPEGTableSize, NULL) != NULL;
     bOutHasHuffmanTable = GTIFFFindNextTable((const GByte*)pJPEGTable, 0xC4, nJPEGTableSize, NULL) != NULL;
