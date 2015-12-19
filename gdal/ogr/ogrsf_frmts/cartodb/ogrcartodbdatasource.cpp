@@ -36,24 +36,19 @@ CPL_CVSID("$Id$");
 /*                        OGRCARTODBDataSource()                        */
 /************************************************************************/
 
-OGRCARTODBDataSource::OGRCARTODBDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-    pszAccount = NULL;
-
-    bReadWrite = FALSE;
-    bBatchInsert = TRUE;
-    bUseHTTPS = FALSE;
-
-    bMustCleanPersistant = FALSE;
-    bHasOGRMetadataFunction = -1;
-    nPostGISMajor = 2;
-    nPostGISMinor = 0;
-}
+OGRCARTODBDataSource::OGRCARTODBDataSource() :
+    pszName(NULL),
+    pszAccount(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bReadWrite(FALSE),
+    bBatchInsert(TRUE),
+    bUseHTTPS(FALSE),
+    bMustCleanPersistant(FALSE),
+    bHasOGRMetadataFunction(-1),
+    nPostGISMajor(2),
+    nPostGISMinor(0)
+{}
 
 /************************************************************************/
 /*                       ~OGRCARTODBDataSource()                        */

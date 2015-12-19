@@ -39,21 +39,13 @@ CPL_CVSID("$Id$");
 /*                        OGRCloudantDataSource()                       */
 /************************************************************************/
 
-OGRCloudantDataSource::OGRCloudantDataSource()
-
-{
-
-}
+OGRCloudantDataSource::OGRCloudantDataSource() {}
 
 /************************************************************************/
 /*                       ~OGRCloudantDataSource()                       */
 /************************************************************************/
 
-OGRCloudantDataSource::~OGRCloudantDataSource()
-
-{
-
-}
+OGRCloudantDataSource::~OGRCloudantDataSource() {}
 
 /************************************************************************/
 /*                             OpenDatabase()                           */

@@ -35,9 +35,10 @@ CPL_CVSID("$Id");
 /*                          OGRAmigoCloudResultLayer()                     */
 /************************************************************************/
 
-OGRAmigoCloudResultLayer::OGRAmigoCloudResultLayer( OGRAmigoCloudDataSource* poDSIn,
-                                              const char * pszRawQueryIn ) :
-                                              OGRAmigoCloudLayer(poDSIn)
+OGRAmigoCloudResultLayer::OGRAmigoCloudResultLayer(
+    OGRAmigoCloudDataSource* poDSIn,
+    const char * pszRawQueryIn ) :
+    OGRAmigoCloudLayer(poDSIn)
 {
     osBaseSQL = pszRawQueryIn;
     SetDescription( "result" );

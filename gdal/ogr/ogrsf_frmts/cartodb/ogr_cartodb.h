@@ -225,7 +225,8 @@ class OGRCARTODBDataSource : public OGRDataSource
 
     int                 bHasOGRMetadataFunction;
 
-    int                 nPostGISMajor, nPostGISMinor;
+    int                 nPostGISMajor;
+    int                 nPostGISMinor;
 
   public:
                         OGRCARTODBDataSource();

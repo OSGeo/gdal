@@ -36,15 +36,11 @@ CPL_CVSID("$Id$");
 /*                         OGRCARTODBLayer()                            */
 /************************************************************************/
 
-OGRCARTODBLayer::OGRCARTODBLayer(OGRCARTODBDataSource* poDSIn)
-
+OGRCARTODBLayer::OGRCARTODBLayer(OGRCARTODBDataSource* poDSIn) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    poCachedObj(NULL)
 {
-    this->poDS = poDSIn;
-
-    poFeatureDefn = NULL;
-
-    poCachedObj = NULL;
-
     ResetReading();
 }
 
