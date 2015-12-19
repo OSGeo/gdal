@@ -2348,19 +2348,19 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
         {
             osCommand.Printf( "DROP TABLE 'idx_%s_%s'", pszEscapedLayerName,
                               OGRSQLiteEscape(pszGeometryColumn).c_str());
-            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
+            CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
 
             osCommand.Printf( "DROP TABLE 'idx_%s_%s_node'", pszEscapedLayerName,
                               OGRSQLiteEscape(pszGeometryColumn).c_str());
-            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
+            CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
 
             osCommand.Printf( "DROP TABLE 'idx_%s_%s_parent'", pszEscapedLayerName,
                               OGRSQLiteEscape(pszGeometryColumn).c_str());
-            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
+            CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
 
             osCommand.Printf( "DROP TABLE 'idx_%s_%s_rowid'", pszEscapedLayerName,
                               OGRSQLiteEscape(pszGeometryColumn).c_str());
-            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
+            CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
         }
     }
     return OGRERR_NONE;
