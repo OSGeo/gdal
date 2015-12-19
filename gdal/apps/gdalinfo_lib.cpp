@@ -197,8 +197,8 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 
     papszFileList = GDALGetFileList( hDataset );
 
-    if( CSLCount(papszFileList) == 0 )
-    {   
+    if( papszFileList == NULL || *papszFileList == NULL )
+    {
         if(bJson)
         {
             json_object *poFiles = json_object_new_array();   
@@ -1300,7 +1300,7 @@ static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
         bIsxml = true;
 
     char **papszMetadata = GDALGetMetadata( hObject, pszDomain );
-    if( CSLCount(papszMetadata) > 0 )
+    if( papszMetadata != NULL && *papszMetadata != NULL )
     {
         if(bJson && !bIsxml)
             poDomain = json_object_new_object();
@@ -1452,7 +1452,8 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
             papszExtraMDDomainsExpanded = CSLDuplicate(papszExtraMDDomains);
         }
 
-        for( int iMDD = 0; iMDD < CSLCount(papszExtraMDDomainsExpanded); iMDD++ )
+        for( int iMDD = 0; papszExtraMDDomainsExpanded != NULL &&
+                           papszExtraMDDomainsExpanded[iMDD] != NULL; iMDD++ )
         {
             char pszDisplayedname[256];
             snprintf(pszDisplayedname, 256, "Metadata (%s)", papszExtraMDDomainsExpanded[iMDD]);
