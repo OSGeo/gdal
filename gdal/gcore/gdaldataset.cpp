@@ -4455,9 +4455,10 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 
             if( EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
+            poLayer = NULL;
         }
 
-        if( i >= GetLayerCount() )
+        if( poLayer == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "CREATE INDEX ON failed, no such layer as `%s'.",
