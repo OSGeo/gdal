@@ -55,7 +55,6 @@ OGROCIWritableLayer::OGROCIWritableLayer()
 
     bLaunderColumnNames = TRUE;
     bTruncationReported = FALSE;
-    nSRID = -1;
     poSRS = NULL;
 
     papszOptions = NULL;
