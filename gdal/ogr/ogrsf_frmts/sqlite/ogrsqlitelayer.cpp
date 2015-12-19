@@ -3195,16 +3195,19 @@ void OGRSQLiteLayer::ClearStatement()
 int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
                                     const char* pszValue )
 {
-    int nYear = 0, nMonth = 0, nDay = 0,
-        nHour = 0, nMinute = 0;
-    float fSecond = 0;
+    int nYear = 0;
+    int nMonth = 0;
+    int nDay = 0;
+    int nHour = 0;
+    int nMinute = 0;
+    float fSecond = 0.0f;
 
-    /* YYYY-MM-DD HH:MM:SS or YYYY-MM-DD HH:MM:SS.SSS */
-    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
-    nMinute = 0; fSecond = 0;
+    /* YYYY-MM-DD HH:MM:SS.SSS */
     if( sscanf(pszValue, "%04d-%02d-%02d %02d:%02d:%f",
                 &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond) == 6 ||
         sscanf(pszValue, "%04d/%02d/%02d %02d:%02d:%f",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond) == 6 ||
+        sscanf(pszValue, "%04d-%02d-%02dT%02d:%02d:%f",
                 &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond) == 6 )
     {
         if( poFeature )
@@ -3214,11 +3217,11 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     }
 
     /* YYYY-MM-DD HH:MM */
-    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
-    nMinute = 0;
     if( sscanf(pszValue, "%04d-%02d-%02d %02d:%02d",
                 &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 ||
         sscanf(pszValue, "%04d/%02d/%02d %02d:%02d",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 ||
+        sscanf(pszValue, "%04d-%02d-%02dT%02d:%02d",
                 &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 )
     {
         if( poFeature )
@@ -3227,32 +3230,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
         return OFTDateTime;
     }
 
-    /*  YYYY-MM-DDTHH:MM:SS or YYYY-MM-DDTHH:MM:SS.SSS */
-    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
-    nMinute = 0; fSecond = 0;
-    if( sscanf(pszValue, "%04d-%02d-%02dT%02d:%02d:%f",
-                &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond) == 6 )
-    {
-        if( poFeature )
-            poFeature->SetField( iField, nYear, nMonth, nDay,
-                                 nHour, nMinute, fSecond, 0);
-        return OFTDateTime;
-    }
-
-    /* YYYY-MM-DDTHH:MM */
-    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
-    nMinute = 0;
-    if( sscanf(pszValue, "%04d-%02d-%02dT%02d:%02d",
-                &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 )
-    {
-        if( poFeature )
-            poFeature->SetField( iField, nYear, nMonth, nDay,
-                                 nHour, nMinute, 0, 0);
-        return OFTDateTime;
-    }
-
     /* YYYY-MM-DD */
-    nYear = 0; nMonth = 0; nDay = 0;
     if( sscanf(pszValue, "%04d-%02d-%02d",
                 &nYear, &nMonth, &nDay) == 3 ||
         sscanf(pszValue, "%04d/%02d/%02d",
@@ -3264,8 +3242,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
         return OFTDate;
     }
 
-    /*  HH:MM:SS or HH:MM:SS.SSS */
-    nDay = 0; nHour = 0; fSecond = 0;
+    /*  HH:MM:SS.SSS */
     if( sscanf(pszValue, "%02d:%02d:%f",
         &nHour, &nMinute, &fSecond) == 3 )
     {
@@ -3276,7 +3253,6 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     }
 
     /*  HH:MM */
-    nHour = 0; nMinute = 0;
     if( sscanf(pszValue, "%02d:%02d", &nHour, &nMinute) == 2 )
     {
         if( poFeature )
