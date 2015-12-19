@@ -773,8 +773,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
         new_file.file = interfaces.OpenEDB( filename, "r" );
 
     if( new_file.file == NULL )
-        return (bool)ThrowPCIDSKException( 0, "Unable to open file '%s'.", 
-                              filename.c_str() );
+        return ThrowPCIDSKException( 0, "Unable to open file '%s'.", 
+                              filename.c_str() ) != 0;
 
 /* -------------------------------------------------------------------- */
 /*      Push the new file into the list of files managed for this       */
