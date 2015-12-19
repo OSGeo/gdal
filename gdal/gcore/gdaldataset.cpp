@@ -4565,9 +4565,10 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 
             if( EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
+            poLayer = NULL;
         }
 
-        if( i >= GetLayerCount() )
+        if( poLayer == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "CREATE INDEX ON failed, no such layer as `%s'.",
@@ -4685,9 +4686,10 @@ OGRErr GDALDataset::ProcessSQLDropTable( const char *pszSQLCommand )
 
         if( EQUAL(poLayer->GetName(),papszTokens[2]) )
             break;
+        poLayer = NULL;
     }
 
-    if( i >= GetLayerCount() )
+    if( poLayer == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "DROP TABLE failed, no such layer as `%s'.",
