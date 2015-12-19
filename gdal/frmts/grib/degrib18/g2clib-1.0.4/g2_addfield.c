@@ -112,7 +112,6 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //
 //$$$
 {
-      g2int ierr;
       const unsigned char G=0x47;       // 'G'
       const unsigned char R=0x52;       // 'R'
       const unsigned char I=0x49;       // 'I'
@@ -133,15 +132,13 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       xxtemplate  *mappds,*mapdrs;
       const unsigned int allones=4294967295u;
  
-      ierr=0;
 //
 //  Check to see if beginning of GRIB message exists
 //
       if ( cgrib[0]!=G || cgrib[1]!=R || cgrib[2]!=I || cgrib[3]!=B ) {
         printf("g2_addfield: GRIB not found in given message.\n");
         printf("g2_addfield: Call to routine g2_create required to initialize GRIB message.\n");
-        ierr=-1;
-        return(ierr);
+        return(-1);
       }
 //
 //  Get current length of GRIB message
@@ -153,8 +150,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       if ( cgrib[lencurr-4]==s7 && cgrib[lencurr-3]==s7 &&
            cgrib[lencurr-2]==s7 && cgrib[lencurr-1]==s7 ) {
         printf("g2_addfield: GRIB message already complete.  Cannot add new section.\n");
-        ierr=-2;
-        return(ierr);
+        return(-2);
       }
 //
 //  Loop through all current sections of the GRIB message to
@@ -190,8 +186,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
           printf("g2_addfield: Section byte counts don''t add to total.\n");
           printf("g2_addfield: Sum of section byte counts = %d\n",len);
           printf("g2_addfield: Total byte count in Section 0 = %d\n",lencurr);
-          ierr=-3;
-          return(ierr);
+          return(-3);
         }
       }
 //
@@ -200,8 +195,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       if ( (isecnum != 3) && (isecnum != 7) ) {
         printf("g2_addfield: Sections 4-7 can only be added after Section 3 or 7.\n");
         printf("g2_addfield: Section ',isecnum,' was the last found in given GRIB message.\n");
-        ierr=-4;
-        return(ierr);
+        return(-4);
 //
 //  Sections 4 through 7 can only be added if section 3 was previously defined.
 //
@@ -210,8 +204,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
         printf("g2_addfield: Sections 4-7 can only be added if Section 3 was previously included.\n");
         printf("g2_addfield: Section 3 was not found in given GRIB message.\n");
         printf("g2_addfield: Call to routine addgrid required to specify Grid definition.\n");
-        ierr=-6;
-        return(ierr);
+        return(-6);
       }
 //
 //  Add Section 4  - Product Definition Section
@@ -229,8 +222,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       //
       mappds=getpdstemplate(ipdsnum);
       if (mappds == 0) {          // undefined template
-        ierr=-5;
-        return(ierr);
+        return(-5);
       }
       //
       //   Extend the Product Definition Template, if necessary.
@@ -300,8 +292,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       //
       mapdrs=getdrstemplate(idrsnum);
       if (mapdrs == 0) {
-        ierr=-5;
-        return(ierr);
+        return(-5);
       }
       //
       //  contract data field, removing data at invalid grid points,
@@ -389,16 +380,14 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 #endif  /* USE_PNG */
       else {
         printf("g2_addfield: Data Representation Template 5.%d not yet implemented.\n",idrsnum);
-        ierr=-7;
-        return(ierr);
+        return(-7);
       }
       if ( ibmap == 0 || ibmap==254 ) {      // free temp space
          if (fld != pfld) free(pfld);
       }
       if ( lcpack < 0 ) {
         if( cpack != 0 ) free(cpack);
-        ierr=-10;
-        return(ierr);
+        return(-10);
       }
 
 //
@@ -459,8 +448,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       if ((ibmap==254) && ( ! isprevbmap)) {
         printf("g2_addfield: Requested previously defined bitmap,");
         printf(" but one does not exist in the current GRIB message.\n");
-        ierr=-8;
-        return(ierr);
+        return(-8);
       }
       //
       //   Calculate length of section 6 and store it in octets

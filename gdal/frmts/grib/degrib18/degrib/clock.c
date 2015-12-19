@@ -2280,7 +2280,7 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
             goto errorReturn;
          }
       }
-      lenStack = 0;
+      /*lenStack = 0;*/
    }
    if (!f_time) {
       if (f_ampm != -1) {

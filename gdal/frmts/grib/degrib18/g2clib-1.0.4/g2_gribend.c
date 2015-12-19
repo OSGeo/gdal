@@ -48,21 +48,19 @@ g2int g2_gribend(unsigned char *cgrib)
 {
 
       g2int iofst,lencurr,len,ilen,isecnum;
-      g2int   ierr,lengrib;
+      g2int   lengrib;
       const unsigned char G=0x47;       // 'G'
       const unsigned char R=0x52;       // 'R'
       const unsigned char I=0x49;       // 'I'
       const unsigned char B=0x42;       // 'B'
       const unsigned char seven=0x37;   // '7'
  
-      ierr=0;
 //
 //  Check to see if beginning of GRIB message exists
 //
       if ( cgrib[0]!=G || cgrib[1]!=R || cgrib[2]!=I || cgrib[3]!=B ) {
         printf("g2_gribend: GRIB not found in given message.\n");
-        ierr=-1;
-        return (ierr);
+        return (-1);
       }
 //
 //  Get current length of GRIB message
@@ -88,8 +86,7 @@ g2int g2_gribend(unsigned char *cgrib)
           printf("g2_gribend: Section byte counts don''t add to total.\n");
           printf("g2_gribend: Sum of section byte counts = %d\n",(int)len);
           printf("g2_gribend: Total byte count in Section 0 = %d\n",(int)lencurr);
-          ierr=-3;
-          return (ierr);
+          return (-3);
         }
       }
 //
@@ -98,8 +95,7 @@ g2int g2_gribend(unsigned char *cgrib)
       if ( isecnum != 7 ) {
         printf("g2_gribend: Section 8 can only be added after Section 7.\n");
         printf("g2_gribend: Section %d was the last found in given GRIB message.\n",isecnum);
-        ierr=-4;
-        return (ierr);
+        return (-4);
       }
 //
 //  Add Section 8  - End Section
