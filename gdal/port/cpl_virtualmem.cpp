@@ -311,11 +311,11 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
         {
             int nbits = 0;
             nPageSize = (size_t)nPageSizeHint;
-            while(nPageSize > 0)
+            do
             {
                 nPageSize >>= 1;
                 nbits ++;
-            }
+            } while(nPageSize > 0);
             nPageSize = (size_t)1 << (nbits - 1);
             if( nPageSize < (size_t)nPageSizeHint )
                 nPageSize <<= 1;
