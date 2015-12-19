@@ -410,7 +410,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     std::map<int,int>::iterator aMapDstBandToSpectralBandIter;
     int nBitDepth = 0;
     int bFoundNonMatchingGT = FALSE;
-    double adfPanGT[6];
+    double adfPanGT[6] = { 0, 0, 0, 0, 0, 0 };
     int bPanGeoTransformValid = FALSE;
     if( poPanDataset )
         bPanGeoTransformValid = ( poPanDataset->GetGeoTransform(adfPanGT) == CE_None );
