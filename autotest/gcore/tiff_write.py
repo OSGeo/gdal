@@ -4810,10 +4810,11 @@ def tiff_write_122():
 
 def tiff_write_123():
 
-    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_src.tif', 1,1,3,gdal.GDT_Int16)
-    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_src.tif', 1,1,5,gdal.GDT_Int16)
     src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
     src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     src_ds = None
     statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_src.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     if statBuf is not None:
@@ -4821,6 +4822,12 @@ def tiff_write_123():
         return 'fail'
     src_ds = gdal.Open('/vsimem/tiff_write_123_src.tif')
     if src_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if src_ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if src_ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -4832,6 +4839,12 @@ def tiff_write_123():
         return 'fail'
     ds = gdal.Open('/vsimem/tiff_write_123.tif')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if src_ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if src_ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
