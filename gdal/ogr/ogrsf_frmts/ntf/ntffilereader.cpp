@@ -1123,14 +1123,16 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
     if( iValue < 0 )
         return FALSE;
 
+    CPLAssert(papszValues != NULL);
 /* -------------------------------------------------------------------- */
 /*      Process the attribute value ... this really only has a          */
 /*      useful effect for real numbers.                                 */
 /* -------------------------------------------------------------------- */
     char        *pszAttLongName, *pszAttValue, *pszCodeDesc;
 
-    ProcessAttValue( pszAttName, papszValues[iValue],
-                     &pszAttLongName, &pszAttValue, &pszCodeDesc );
+    if( !ProcessAttValue( pszAttName, papszValues[iValue],
+                     &pszAttLongName, &pszAttValue, &pszCodeDesc ) )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Apply the value to the field using the simple set string        */
