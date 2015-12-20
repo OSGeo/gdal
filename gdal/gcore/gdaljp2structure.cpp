@@ -274,7 +274,7 @@ static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         if( nRemainingLength >= 1 )
         {
             AddField(psDecodedContent, "IPR", *pabyIter);
-            pabyIter += 1;
+            /*pabyIter += 1;*/
             nRemainingLength -= 1;
         }
         if( nRemainingLength > 0 )
@@ -351,7 +351,7 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                         (nVal == 16) ? "sRGB" :
                         (nVal == 17) ? "greyscale":
                         (nVal == 18) ? "sYCC" : NULL);
-            pabyIter += 4;
+            /*pabyIter += 4;*/
             nRemainingLength -= 4;
         }
         if( nRemainingLength > 0 )
@@ -611,7 +611,7 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         {
             AddField(psDecodedContent, CPLSPrintf("HR%cE", chC), *pabyIter);
             nExpH = *pabyIter;
-            pabyIter += 1;
+            /*pabyIter += 1;*/
             nRemainingLength -= 1;
         }
         if( nRemainingLength == 0 )

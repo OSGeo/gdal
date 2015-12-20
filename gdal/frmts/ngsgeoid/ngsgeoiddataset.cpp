@@ -275,7 +275,7 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
     {
         CPL_MSBPTR32(&nNLON);
     }
-    pBuffer += 4;
+    /*pBuffer += 4;*/
 
     /*CPLDebug("NGSGEOID", "SLAT=%f, WLON=%f, DLAT=%f, DLON=%f, NLAT=%d, NLON=%d, IKIND=%d",
              dfSLAT, dfWLON, dfDLAT, dfDLON, nNLAT, nNLON, nIKIND);*/

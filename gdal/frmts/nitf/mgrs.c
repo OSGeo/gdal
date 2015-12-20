@@ -414,7 +414,7 @@ static long Make_MGRS_String (char* MGRS,
   if (Northing >= 99999.5)
     Northing = 99999.0;
   north = (long)(Northing/divisor);
-  i += sprintf (MGRS+i, "%*.*ld", (int) Precision, (int) Precision, north);
+  /*i += */sprintf (MGRS+i, "%*.*ld", (int) Precision, (int) Precision, north);
   return (error_code);
 } /* Make_MGRS_String */
 

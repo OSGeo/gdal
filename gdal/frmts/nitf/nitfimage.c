@@ -688,7 +688,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     nExtendedTREBytes - 3 );
 
             psImage->nTREBytes += (nExtendedTREBytes - 3);
-            nOffset += nExtendedTREBytes;
+            /*nOffset += nExtendedTREBytes;*/
         }
     }
 
