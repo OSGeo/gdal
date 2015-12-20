@@ -711,7 +711,8 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             if( pszCondition != NULL )
                 poPDefn->SetCondition(pszCondition);
 
-            AddProperty( poPDefn );
+            if( AddProperty( poPDefn ) < 0 )
+                delete poPDefn;
         }
     }
 
