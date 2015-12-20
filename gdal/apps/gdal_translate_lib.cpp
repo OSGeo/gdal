@@ -1991,7 +1991,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                                                  papszArgv[++i] );
         }
 
-        else if( EQUAL(papszArgv[i],"-outsize") && i+2 < argc )
+        else if( EQUAL(papszArgv[i],"-outsize") && i+2 < argc && papszArgv[i+1] != NULL )
         {
             ++i;
             if( papszArgv[i][strlen(papszArgv[i])-1] == '%' )
@@ -2057,13 +2057,14 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             i++;
         }   
 
-        else if( EQUAL(papszArgv[i],"-expand") && i+1 < argc )
+        else if( EQUAL(papszArgv[i],"-expand") && i+1 < argc && papszArgv[i+1] != NULL )
         {
-            if (EQUAL(papszArgv[i+1], "gray"))
+            i++;
+            if (EQUAL(papszArgv[i], "gray"))
                 psOptions->nRGBExpand = 1;
-            else if (EQUAL(papszArgv[i+1], "rgb"))
+            else if (EQUAL(papszArgv[i], "rgb"))
                 psOptions->nRGBExpand = 3;
-            else if (EQUAL(papszArgv[i+1], "rgba"))
+            else if (EQUAL(papszArgv[i], "rgba"))
                 psOptions->nRGBExpand = 4;
             else
             {
@@ -2073,7 +2074,6 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                 GDALTranslateOptionsFree(psOptions);
                 return NULL;
             }
-            i++;
         }
 
         else if( EQUAL(papszArgv[i], "-stats") )
