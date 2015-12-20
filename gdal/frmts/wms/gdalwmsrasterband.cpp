@@ -147,7 +147,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                 }
             }
             if (need_this_block) {
-                if (m_parent_dataset->m_offline_mode) {
+                if (/*m_parent_dataset->m_offline_mode */ download_blocks == NULL) {
                     if (!advise_read) {
                         void *p = 0;
                         if ((ix == x) && (iy == y)) p = buffer;
