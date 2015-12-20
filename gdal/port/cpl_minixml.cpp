@@ -859,7 +859,8 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
 /*      Did we pop all the way out of our stack?                        */
 /* -------------------------------------------------------------------- */
-    if( CPLGetLastErrorType() != CE_Failure && sContext.papsStack != NULL )
+    if( CPLGetLastErrorType() != CE_Failure && sContext.nStackSize > 0 &&
+        sContext.papsStack != NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Parse error at EOF, not all elements have been closed,\n"
