@@ -1773,7 +1773,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         poDS->sHeader.nXTiles * poDS->sHeader.nYTiles * 4 * 2;
     poDS->paiTiles = reinterpret_cast<GUInt32 *>(
         CPLCalloc( poDS->sHeader.nTileTblSize, 1 ) );
-    nCurPtr += poDS->sHeader.nTileTblSize;
+    /*nCurPtr += poDS->sHeader.nTileTblSize;*/
     const GUInt32 nTileSize = poDS->sHeader.nTileWidth * poDS->sHeader.nTileHeight
         * GDALGetDataTypeSize( eType ) / 8;
     poDS->sHeader.nSize =

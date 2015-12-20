@@ -156,7 +156,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
         gbit(cgrib,&lensec,iofst,32);        // Get Length of Section
         iofst=iofst+32;
         gbit(cgrib,&isecnum,iofst,8);         // Get Section number
-        iofst=iofst+8;
+        /*iofst=iofst+8;*/
         ipos=ipos+lensec;                 // Update beginning of section pointer
         if (ipos > (istart+lengrib)) {
           printf("g2_info: '7777'  not found at end of GRIB message.\n");

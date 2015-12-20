@@ -1254,7 +1254,7 @@ char *HFAGetPEString( HFAHandle hHFA )
 /*      Skip ahead to the actual string.                                */
 /* -------------------------------------------------------------------- */
     pabyData += 30;
-    nDataSize -= 30;
+    /*nDataSize -= 30;*/
 
     return CPLStrdup( (const char *) pabyData );
 }
