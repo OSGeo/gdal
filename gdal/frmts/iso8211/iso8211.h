@@ -448,6 +448,7 @@ class CPL_ODLL DDFRecord
     int         Read();
     void        Clear();
     int         ResetDirectory();
+    void        RemoveIsCloneFlag() { bIsClone = FALSE; }
 
   private:
 
