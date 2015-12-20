@@ -124,7 +124,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     int i;
 
-    for( i = 1; i < argc; i++ )
+    for( i = 1; i < argc && argv[i] != NULL; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
