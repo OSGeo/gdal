@@ -191,6 +191,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                     CPLError( CE_Failure, CPLE_OpenFailed,
                               "Island (OEY) encountered, "
                               "but not yet supported.");
+                    delete poOuter;
                     return NULL;
                 }
                 nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);
