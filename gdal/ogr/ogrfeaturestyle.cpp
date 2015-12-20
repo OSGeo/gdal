@@ -1824,7 +1824,7 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
         {
             if ( EQUAL(pasStyle[j].pszToken, papszStylePair[0]) )
             {
-                if (nTokens == 2 && pasStyle[j].bGeoref == TRUE)
+                if (papszStylePair[1] != NULL && pasStyle[j].bGeoref == TRUE)
                     SetInternalInputUnitFromParam(papszStylePair[1]);
 
                 // Set either the actual value of style parameter or "1"
@@ -1832,7 +1832,7 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
                 // "1" means that boolean parameter is present in the style
                 // string.
                 OGRStyleTool::SetParamStr( pasStyle[j], pasValue[j],
-                                    (nTokens == 2) ? papszStylePair[1] : "1" );
+                                    (papszStylePair[1] != NULL) ? papszStylePair[1] : "1" );
 
                 break;
             }
