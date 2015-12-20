@@ -194,7 +194,7 @@ class RPFTOCSubDataset : public VRTDataset
     void SetCachedTile(const char* tileFileName, int nBlockXOff, int nBlockYOff,
                        const void* pData, int dataSize)
     {
-        if (dataSize > cachedTileDataSize)
+        if (cachedTileData == NULL || dataSize > cachedTileDataSize)
         {
             cachedTileData = CPLRealloc(cachedTileData, dataSize);
             cachedTileDataSize = dataSize;
