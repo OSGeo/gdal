@@ -40,7 +40,10 @@ CPL_CVSID("$Id$");
 void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrValue)
 {
     if (!pszStrValue)
+    {
         poStatement->Append("null");
+        return;
+    }
 
     size_t  iIn, iOut , nTextLen = strlen(pszStrValue);
     char    *pszEscapedText = (char *) CPLMalloc(nTextLen*2 + 3);
