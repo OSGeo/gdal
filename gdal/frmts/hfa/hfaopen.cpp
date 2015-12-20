@@ -1127,7 +1127,8 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
 
     // invert
 
-    HFAInvGeoTransform( adfXForm, padfGeoTransform );
+    if( !HFAInvGeoTransform( adfXForm, padfGeoTransform ) )
+        memset( padfGeoTransform, 0, sizeof(padfGeoTransform) );
 
     // Adjust origin from center of top left pixel to top left corner
     // of top left pixel.
@@ -2727,7 +2728,14 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         poNode = hHFA->poRoot;
     else
         return CE_Failure;
-
+#ifdef DEBUG
+    /* To please Clang Static Analyzer */
+    if( poNode == NULL )
+    {
+        CPLAssert(FALSE);
+        return CE_Failure;
+    }
+#endif
 /* -------------------------------------------------------------------- */
 /*      Check if the Metadata is an "known" entity which should be      */
 /*      stored in a better place.                                       */
@@ -3356,6 +3364,8 @@ int HFAReadXFormStack( HFAHandle hHFA,
                 adfGT[5] = sForward.polycoefmtx[3];
 
                 bSuccess = HFAInvGeoTransform( adfGT, adfInvGT );
+                if( !bSuccess )
+                    memset( adfInvGT, 0, sizeof(adfInvGT) );
 
                 sReverse.order = sForward.order;
                 sReverse.polycoefvector[0] = adfInvGT[0];
@@ -3827,7 +3837,8 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     adfAdjTransform[3] += adfAdjTransform[5] * 0.5;
 
     // Invert
-    HFAInvGeoTransform( adfAdjTransform, adfRevTransform );
+    if( !HFAInvGeoTransform( adfAdjTransform, adfRevTransform ) )
+        memset(adfRevTransform, 0, sizeof(adfRevTransform));
 
     // Assign to polynomial object.
 
