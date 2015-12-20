@@ -139,29 +139,19 @@ static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
     if ( !VSIStatL ( pszName, &sStatBuf ) && VSI_ISDIR ( sStatBuf.st_mode ) ) {
 
         char **papszDirList = VSIReadDir ( pszName );
-
-        if ( papszDirList == NULL ) {
-            if ( VSIRmdir ( pszName ) < 0 )
-                return CE_Failure;
-        }
-
-        int nFiles = CSLCount ( papszDirList );
-        int iFile;
-
-        for ( iFile = 0; iFile < nFiles; iFile++ ) {
+        for ( int iFile = 0; papszDirList != NULL &&
+                             papszDirList[iFile] != NULL; iFile++ ) {
             if ( CE_Failure ==
                  OGRLIBKMLDriverDelete ( papszDirList[iFile] ) ) {
                 CSLDestroy ( papszDirList );
                 return CE_Failure;
             }
         }
+        CSLDestroy ( papszDirList );
 
         if ( VSIRmdir ( pszName ) < 0 ) {
-            CSLDestroy ( papszDirList );
             return CE_Failure;
         }
-
-        CSLDestroy ( papszDirList );
     }
 
    /***** kml *****/
