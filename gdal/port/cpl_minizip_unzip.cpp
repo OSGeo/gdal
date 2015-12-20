@@ -198,7 +198,7 @@ static int unzlocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
                              uLong *pX)
 {
     uLong x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -220,7 +220,7 @@ static int unzlocal_getLong (const zlib_filefunc_def* pzlib_filefunc_def,
                             uLong *pX)
 {
     uLong x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -250,7 +250,7 @@ static int unzlocal_getLong64 (const zlib_filefunc_def* pzlib_filefunc_def,
                             uLong64 *pX)
 {
     uLong64 x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
