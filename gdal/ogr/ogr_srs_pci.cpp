@@ -677,7 +677,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 SetAuthority( "SPHEROID", "EPSG", nEPSGCode );
 
             // Do we have 7 datum shift parameters?
-            if( CSLCount(papszDatumDefn) >= 15 
+            if( papszDatumDefn != NULL &&
+                CSLCount(papszDatumDefn) >= 15 
                 && CPLAtof(papszDatumDefn[14]) != 0.0 )
             {
                 double dfScale = CPLAtof(papszDatumDefn[14]);
@@ -697,7 +698,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             }
 
             // Do we have 7 datum shift parameters?
-            else if( CSLCount(papszDatumDefn) == 11 
+            else if( papszDatumDefn != NULL &&
+                     CSLCount(papszDatumDefn) == 11 
                      && (CPLAtof(papszDatumDefn[3]) != 0.0 
                          || CPLAtof(papszDatumDefn[4]) != 0.0 
                          || CPLAtof(papszDatumDefn[5]) != 0.0 ) )
