@@ -520,7 +520,7 @@ ParseXPM( const char *pszInput,
             pszNext++;
     }
 
-    if( CSLCount(papszXPMList) < 3 || *pszNext != '}' )
+    if( papszXPMList == NULL || CSLCount(papszXPMList) < 3 || *pszNext != '}' )
     {
         CSLDestroy( papszXPMList );
         return NULL;
