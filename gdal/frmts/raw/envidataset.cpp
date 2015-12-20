@@ -2248,6 +2248,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     int nPixelOffset, nLineOffset;
     vsi_l_offset nBandOffset;
     bool bIntOverflow = false;
+    CPLAssert(nDataSize != 0);
+    CPLAssert(nBands != 0);
 
     if( STARTS_WITH_CI(pszInterleave, "bil") )
     {
