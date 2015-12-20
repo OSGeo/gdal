@@ -2528,7 +2528,8 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
 /*      Update total shape count.                                       */
 /* -------------------------------------------------------------------- */
-    nTotalShapeCount = hDBF->nRecords;
+    if( hDBF != NULL )
+        nTotalShapeCount = hDBF->nRecords;
     bSHPNeedsRepack = FALSE;
 
     return OGRERR_NONE;
