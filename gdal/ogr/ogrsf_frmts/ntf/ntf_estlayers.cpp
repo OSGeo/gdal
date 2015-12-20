@@ -678,7 +678,8 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
     // POLY_ID
-    poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
+    if( papoGroup[iRec] != NULL )
+        poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
@@ -874,7 +875,8 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
     // POLY_ID
-    poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
+    if( papoGroup[iRec] != NULL )
+        poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
