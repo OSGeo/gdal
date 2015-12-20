@@ -327,13 +327,15 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     if (SRITModel->OrbitPtr->AttitudeSeg != NULL ||
         SRITModel->OrbitPtr->RadarSeg != NULL)
     {
-        if (SRITModel->OrbitPtr->Type == OrbAttitude)
+        AttitudeSeg_t *attitudeSeg
+            = SRITModel->OrbitPtr->AttitudeSeg;
+
+        if (SRITModel->OrbitPtr->Type == OrbAttitude &&
+            attitudeSeg != NULL)
         {
             int  ndata;
-            AttitudeSeg_t *attitudeSeg
-                = SRITModel->OrbitPtr->AttitudeSeg;
 
-            ndata = SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine;
+            ndata = attitudeSeg->NumberOfLine;
 
             for (i=0; i<ndata; i++)
             {
@@ -455,7 +457,8 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
         SRITModel->OrbitPtr->RadarSeg != NULL ||
         SRITModel->OrbitPtr->AvhrrSeg != NULL )
     {
-        if (SRITModel->OrbitPtr->Type == OrbAttitude) 
+        if (SRITModel->OrbitPtr->Type == OrbAttitude &&
+            SRITModel->OrbitPtr->AttitudeSeg != NULL) 
 	{
 	    if (SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine != 0)
                 seg_data.Put("3",nPos+20,1);
