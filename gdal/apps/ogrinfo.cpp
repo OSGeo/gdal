@@ -373,7 +373,7 @@ int main( int nArgc, char ** papszArgv )
     /* coverity[tainted_data] */
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
-        if ( CSLCount(papszLayers) == 0 )
+        if ( papszLayers == NULL || *papszLayers == NULL )
         {
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
@@ -796,7 +796,8 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
             papszExtraMDDomainsExpanded = CSLDuplicate(papszExtraMDDomains);
         }
 
-        for( int iMDD = 0; iMDD < CSLCount(papszExtraMDDomainsExpanded); iMDD++ )
+        for( int iMDD = 0; papszExtraMDDomainsExpanded != NULL &&
+                           papszExtraMDDomainsExpanded[iMDD] != NULL; iMDD++ )
         {
             char pszDisplayedname[256];
             snprintf(pszDisplayedname, 256, "Metadata (%s)", papszExtraMDDomainsExpanded[iMDD]);
