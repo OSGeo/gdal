@@ -1192,10 +1192,10 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 
     if( nLineSpace == 0 )
         nLineSpace = nPixelSpace * nBufXSize;
-    if( nPixelSpace != nPixelSpace * nBufXSize )
+    if( nLineSpace != nPixelSpace * nBufXSize )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                "GDALRasterizeLayersBuf(): unsupported value of nPixelSpace" );
+                "GDALRasterizeLayersBuf(): unsupported value of nLineSpace" );
         return CE_Failure;
     }
 
