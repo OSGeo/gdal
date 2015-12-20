@@ -689,7 +689,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
     int iChunk;
     double dfTotalPixels = 0;
 
-    for( iChunk = 0; iChunk < nChunkListCount; iChunk++ )
+    for( iChunk = 0; pasChunkList != NULL && iChunk < nChunkListCount; iChunk++ )
     {
         GDALWarpChunk *pasThisChunk = pasChunkList + iChunk;
         double dfChunkPixels = pasThisChunk->dsx * (double) pasThisChunk->dsy;
@@ -703,7 +703,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 /* -------------------------------------------------------------------- */
     double dfPixelsProcessed=0.0;
 
-    for( iChunk = 0; iChunk < nChunkListCount; iChunk++ )
+    for( iChunk = 0; pasChunkList != NULL && iChunk < nChunkListCount; iChunk++ )
     {
         GDALWarpChunk *pasThisChunk = pasChunkList + iChunk;
         double dfChunkPixels = pasThisChunk->dsx * (double) pasThisChunk->dsy;
@@ -881,7 +881,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 /* -------------------------------------------------------------------- */
 /*      Launch thread for this chunk.                                   */
 /* -------------------------------------------------------------------- */
-        if( iChunk < nChunkListCount )
+        if( pasChunkList != NULL && iChunk < nChunkListCount )
         {
             GDALWarpChunk *pasThisChunk = pasChunkList + iChunk;
             double dfChunkPixels = pasThisChunk->dsx * (double) pasThisChunk->dsy;
