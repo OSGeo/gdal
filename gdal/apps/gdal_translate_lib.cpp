@@ -513,7 +513,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     const char          *pszProjection;
     const char *pszSource = NULL;
     int bGotBounds = FALSE;
-    int bDefBands = TRUE;
+    int bAllBandsInOrder = TRUE;
     CPLString osProjSRS;
 
     if(pbUsageError)
@@ -521,12 +521,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if(psOptions->adfULLR[0] != 0.0 || psOptions->adfULLR[1] != 0.0 || psOptions->adfULLR[2] != 0.0 || psOptions->adfULLR[3] != 0.0)
         bGotBounds = TRUE;
-
-    if(psOptions->panBandList != NULL)
-    {
-        if( psOptions->panBandList[psOptions->nBandCount-1] != psOptions->nBandCount )
-                bDefBands = FALSE;
-    }
 
     pszSource = GDALGetDescription(hSrcDataset);
 
@@ -617,7 +611,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*	Build band list to translate					*/
 /* -------------------------------------------------------------------- */
-    if( psOptions->nBandCount == 0 )
+    if( psOptions->panBandList == NULL )
     {
         psOptions->nBandCount = GDALGetRasterCount( hSrcDataset );
         if( psOptions->nBandCount == 0 )
@@ -643,10 +637,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                 GDALTranslateOptionsFree(psOptions);
                 return NULL;
             }
+
+            if( psOptions->panBandList[i] != i+1 )
+                bAllBandsInOrder = FALSE;
         }
 
         if( psOptions->nBandCount != GDALGetRasterCount( hSrcDataset ) )
-            bDefBands = FALSE;
+            bAllBandsInOrder = FALSE;
     }
 
     if( psOptions->nScaleRepeat > psOptions->nBandCount )
@@ -839,7 +836,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if( psOptions->eOutputType == GDT_Unknown 
         && psOptions->nScaleRepeat == 0 && psOptions->nExponentRepeat == 0 && !psOptions->bUnscale
-        && CSLCount(psOptions->papszMetadataOptions) == 0 && bDefBands 
+        && CSLCount(psOptions->papszMetadataOptions) == 0 && bAllBandsInOrder 
         && psOptions->eMaskMode == MASK_AUTO
         && bSpatialArrangementPreserved
         && psOptions->nGCPCount == 0 && !bGotBounds
