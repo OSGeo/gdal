@@ -425,8 +425,10 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
     pFeature = poPkLayer->GetNextFeature();
     if (NULL != pFeature)
     {
-        dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
-        dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);
+        // FIXME: Clang Static Analyzer rightly found that the following
+        // code is dead
+        /*dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
+        dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);*/
         OGRFeature::DestroyFeature(pFeature);
     }
     else
