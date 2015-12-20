@@ -469,7 +469,7 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
     eShoulderCode = atoi(papszTokens[11]);
     eMarkings = atoi(papszTokens[12]);
     RET_IF_FAIL(readDoubleWithBounds(&dfSmoothness, 13, "runway smoothness", 0., 1.));
-    bool bHasDistanceRemainingSigns = atoi(papszTokens[14]);
+    bool bHasDistanceRemainingSigns = CPL_TO_BOOL(atoi(papszTokens[14]));
     if (nTokens == 16)
     {
         adfVisualGlidePathAngle[0] = atoi(papszTokens[15]) / 100.;
@@ -698,9 +698,9 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
     eSurfaceCode = atoi(papszTokens[2]);
     eShoulderCode = atoi(papszTokens[3]);
     RET_IF_FAIL(readDoubleWithBounds(&dfSmoothness, 4, "runway smoothness", 0., 1.));
-    bool bHasCenterLineLights = atoi(papszTokens[5]);
+    bool bHasCenterLineLights = CPL_TO_BOOL(atoi(papszTokens[5]));
     eEdgeLighting = atoi(papszTokens[6]);
-    bool bHasDistanceRemainingSigns = atoi(papszTokens[7]);
+    bool bHasDistanceRemainingSigns = CPL_TO_BOOL(atoi(papszTokens[7]));
 
     for( nRwy=0; nRwy<=1 ; nRwy++ )
     {
@@ -729,7 +729,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
         {
             const int eMarkings = atoi(papszTokens[8 + 9*nRwy + 5]);
             const int eApproachLightingCode = atoi(papszTokens[8 + 9*nRwy + 6]);
-            const bool bHasTouchdownLights = atoi(papszTokens[8 + 9*nRwy + 7]);
+            const bool bHasTouchdownLights = CPL_TO_BOOL(atoi(papszTokens[8 + 9*nRwy + 7]));
             const int eREIL = atoi(papszTokens[8 + 9*nRwy + 8]);
 
             apoRunwayThreshold[nRwy] =
@@ -796,7 +796,7 @@ void OGRXPlaneAptReader::ParseWaterRunwayRecord()
     RET_IF_FAIL(assertMinCol(9));
 
     RET_IF_FAIL(readDouble(&dfWidth, 1, "runway width"));
-    bool bBuoys = atoi(papszTokens[2]);
+    bool bBuoys = CPL_TO_BOOL(atoi(papszTokens[2]));
 
     for( int i=0;i<2;i++)
     {
@@ -1756,7 +1756,7 @@ void OGRXPlaneAptReader::ParseWindsockRecord()
     double dfLat, dfLon;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
 
-    bool bIsIllumnited = atoi(papszTokens[3]);
+    bool bIsIllumnited = CPL_TO_BOOL(atoi(papszTokens[3]));
     CPLString osName = readStringUntilEnd(4);
 
     if (poAPTWindsockLayer)
