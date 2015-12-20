@@ -2003,7 +2003,7 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
     if (!bInFeature || currentDepth >= featureDepth + 1)
     {
         int nDimension = 2;
-        for(int i = 0; ppszAttr[i] != NULL; i+=2)
+        for(int i = 0; ppszAttr[i] != NULL && ppszAttr[i+1] != NULL; i+=2)
         {
             if (strcmp(ppszAttr[i], "srsDimension") == 0)
             {
