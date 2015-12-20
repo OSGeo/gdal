@@ -745,16 +745,16 @@ int     TABRawBinBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
  **********************************************************************/
 GByte  TABRawBinBlock::ReadByte()
 {
-    GByte byValue;
+    GByte byValue = 0;
 
-    ReadBytes(1, (GByte*)(&byValue));
+    ReadBytes(1, &byValue);
 
     return byValue;
 }
 
 GInt16  TABRawBinBlock::ReadInt16()
 {
-    GInt16 n16Value;
+    GInt16 n16Value = 0;
 
     ReadBytes(2, (GByte*)(&n16Value));
 
@@ -767,7 +767,7 @@ GInt16  TABRawBinBlock::ReadInt16()
 
 GInt32  TABRawBinBlock::ReadInt32()
 {
-    GInt32 n32Value;
+    GInt32 n32Value = 0;
 
     ReadBytes(4, (GByte*)(&n32Value));
 
@@ -780,7 +780,7 @@ GInt32  TABRawBinBlock::ReadInt32()
 
 float   TABRawBinBlock::ReadFloat()
 {
-    float fValue;
+    float fValue = 0.0f;
 
     ReadBytes(4, (GByte*)(&fValue));
 
@@ -792,7 +792,7 @@ float   TABRawBinBlock::ReadFloat()
 
 double  TABRawBinBlock::ReadDouble()
 {
-    double dValue;
+    double dValue = 0.0;
 
     ReadBytes(8, (GByte*)(&dValue));
 
