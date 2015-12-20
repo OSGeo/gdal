@@ -72,7 +72,9 @@ typedef struct _curve_data
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-static void Usage(const char* pszAdditionalMsg, int bShort = TRUE)
+static void Usage(const char* pszAdditionalMsg, int bShort = TRUE) CPL_NO_RETURN;
+
+static void Usage(const char* pszAdditionalMsg, int bShort)
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
