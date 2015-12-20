@@ -7225,13 +7225,14 @@ static void GTiffFillStreamableOffsetAndCount(TIFF* hTIFF, int nSize)
     TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
     toff_t* panOffset = NULL, *panSize = NULL;
-    int nBlockCount = ( TIFFIsTiled(hTIFF) ) ? TIFFNumberOfTiles(hTIFF) : TIFFNumberOfStrips(hTIFF);
-    TIFFGetField( hTIFF, TIFFIsTiled(hTIFF) ? TIFFTAG_TILEOFFSETS : TIFFTAG_STRIPOFFSETS, &panOffset );
-    TIFFGetField( hTIFF, TIFFIsTiled(hTIFF) ? TIFFTAG_TILEBYTECOUNTS : TIFFTAG_STRIPBYTECOUNTS, &panSize );
+    const bool bIsTiled = CPL_TO_BOOL( TIFFIsTiled(hTIFF) );
+    int nBlockCount = ( bIsTiled ) ? TIFFNumberOfTiles(hTIFF) : TIFFNumberOfStrips(hTIFF);
+    TIFFGetField( hTIFF, bIsTiled ? TIFFTAG_TILEOFFSETS : TIFFTAG_STRIPOFFSETS, &panOffset );
+    TIFFGetField( hTIFF, bIsTiled ? TIFFTAG_TILEBYTECOUNTS : TIFFTAG_STRIPBYTECOUNTS, &panSize );
     toff_t nOffset = nSize;
-    int nBlocksPerBand = 0;
+    int nBlocksPerBand = 1; /* trick to avoid clang static analyzer raising false positive about divide by zero later */
     uint32 nRowsPerStrip = 0;
-    if( !TIFFIsTiled(hTIFF)  )
+    if( !bIsTiled  )
     {
         TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP, &nRowsPerStrip);
         if( nRowsPerStrip > (uint32)nYSize )
@@ -7240,9 +7241,9 @@ static void GTiffFillStreamableOffsetAndCount(TIFF* hTIFF, int nSize)
     }
     for(int i=0;i<nBlockCount;i++)
     {
-        int cc = TIFFIsTiled(hTIFF) ? static_cast<int>(TIFFTileSize(hTIFF)) :
-                                      static_cast<int>(TIFFStripSize(hTIFF));
-        if( !TIFFIsTiled(hTIFF)  )
+        int cc = bIsTiled ? static_cast<int>(TIFFTileSize(hTIFF)) :
+                            static_cast<int>(TIFFStripSize(hTIFF));
+        if( !bIsTiled  )
         {
 /* -------------------------------------------------------------------- */
 /*      If this is the last strip in the image, and is partial, then    */
