@@ -38,17 +38,14 @@ CPL_CVSID("$Id$");
 /*                        OGRDODSSequenceLayer()                        */
 /************************************************************************/
 
-OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn, 
+OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
                                             const char *pszTargetIn,
-                                            AttrTable *poOGRLayerInfoIn )
-
-        : OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn )
-
+                                            AttrTable *poOGRLayerInfoIn ) :
+    OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn ),
+    pszSubSeqPath("profile"), // hardcode for now.
+    iLastSuperSeq(-1),
+    panSubSeqSize(NULL)
 {
-    pszSubSeqPath = "profile"; // hardcode for now. 
-    panSubSeqSize = NULL;
-    iLastSuperSeq = -1;
-
 /* -------------------------------------------------------------------- */
 /*      What is the layer name?                                         */
 /* -------------------------------------------------------------------- */

@@ -38,14 +38,19 @@ CPL_CVSID("$Id$");
 /*                          OGRDODSGridLayer()                          */
 /************************************************************************/
 
-OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn, 
-                                            const char *pszTargetIn,
-                                            AttrTable *poOGRLayerInfoIn )
-
-        : OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn )
-
+OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
+                                    const char *pszTargetIn,
+                                    AttrTable *poOGRLayerInfoIn ) :
+    OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn ),
+    poTargetGrid(NULL),
+    poTargetArray(NULL),
+    nArrayRefCount(0),
+    paoArrayRefs(NULL),
+    nDimCount(0),
+    paoDimensions(NULL),
+    nMaxRawIndex(0),
+    pRawData(NULL)
 {
-    pRawData = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      What is the layer name?                                         */

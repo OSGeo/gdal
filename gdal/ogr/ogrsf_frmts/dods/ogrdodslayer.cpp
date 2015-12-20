@@ -36,28 +36,24 @@ CPL_CVSID("$Id$");
 /*                            OGRDODSLayer()                            */
 /************************************************************************/
 
-OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn, 
+OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
                             const char *pszTargetIn,
-                            AttrTable *poOGRLayerInfoIn )
-
+                            AttrTable *poOGRLayerInfoIn ) :
+    poFeatureDefn(NULL),
+    poSRS(NULL),
+    iNextShapeId(0),
+    poDS(poDSIn),
+    pszQuery(NULL),
+    pszFIDColumn (NULL),
+    pszTarget(CPLStrdup( pszTargetIn )),
+    papoFields(NULL),
+    bDataLoaded(FALSE),
+    poConnection(NULL),
+    poDataDDS(new DataDDS( poDSIn->poBTF )),
+    poTargetVar(NULL),
+    poOGRLayerInfo(poOGRLayerInfoIn),
+    bKnowExtent(FALSE)
 {
-    poDS = poDSIn;
-    poFeatureDefn = NULL;
-    pszQuery = NULL;
-    pszFIDColumn = NULL;
-    poSRS = NULL;
-    iNextShapeId = 0;
-    pszTarget = CPLStrdup( pszTargetIn );
-    papoFields = NULL;
-
-    bDataLoaded = FALSE;
-    poConnection = NULL;
-    poTargetVar = NULL;
-    poOGRLayerInfo = poOGRLayerInfoIn;
-    bKnowExtent = FALSE;
-
-    poDataDDS = new DataDDS( poDSIn->poBTF );
-
 /* ==================================================================== */
 /*      Harvest some metadata if available.                             */
 /* ==================================================================== */

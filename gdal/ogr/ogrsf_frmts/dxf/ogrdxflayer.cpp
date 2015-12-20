@@ -39,14 +39,11 @@ CPL_CVSID("$Id$");
 /*                            OGRDXFLayer()                             */
 /************************************************************************/
 
-OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDSIn )
-
+OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDSIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn( "entities" )),
+    iNextFID(0)
 {
-    this->poDS = poDSIn;
-
-    iNextFID = 0;
-
-    poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields( poFeatureDefn );
