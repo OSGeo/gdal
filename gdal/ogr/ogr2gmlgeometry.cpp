@@ -605,7 +605,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
     if (poParentSRS)
         poSRS = poParentSRS;
     else
-        poParentSRS = poSRS = poGeometry->getSpatialReference();
+        poSRS = poGeometry->getSpatialReference();
 
     bool bCoordSwap = false;
 
