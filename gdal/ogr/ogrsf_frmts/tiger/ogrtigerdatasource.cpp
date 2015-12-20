@@ -467,7 +467,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
     nModules = CSLCount( papszModules );
 
-    if( nModules == 0 )
+    if( nModules == 0 || papszModules == NULL )
     {
         if( !bTestOpen )
         {
