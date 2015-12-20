@@ -3692,6 +3692,12 @@ SWIG_FromCharPtr(const char *cptr)
 }
 
 
+char **wrapper_VSIReadDirEx( const char * utf8_path, int nMaxFiles = 0 )
+{
+    return VSIReadDirEx(utf8_path, nMaxFiles);
+}
+
+
 const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDefault = NULL )
 {
     return CPLGetConfigOption( pszKey, pszDefault );
@@ -7062,7 +7068,7 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)VSIReadDirEx((char const *)arg1,arg2);
+    result = (char **)wrapper_VSIReadDirEx((char const *)arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {

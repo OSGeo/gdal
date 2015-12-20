@@ -150,7 +150,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (pop_finder_location) CPLPopFinderLocation;
 %rename (finder_clean) CPLFinderClean;
 %rename (find_file) CPLFindFile;
-%rename (read_dir) VSIReadDirEx;
+%rename (read_dir) wrapper_VSIReadDirEx;
 %rename (read_dir_recursive) VSIReadDirRecursive;
 %rename (mkdir) VSIMkdir;
 %rename (rmdir) VSIRmdir;
@@ -173,7 +173,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (PopFinderLocation) CPLPopFinderLocation;
 %rename (FinderClean) CPLFinderClean;
 %rename (FindFile) CPLFindFile;
-%rename (ReadDir) VSIReadDirEx;
+%rename (ReadDir) wrapper_VSIReadDirEx;
 %rename (ReadDirRecursive) VSIReadDirRecursive;
 %rename (Mkdir) VSIMkdir;
 %rename (Rmdir) VSIRmdir;
@@ -291,7 +291,12 @@ void CPLFinderClean();
 const char * CPLFindFile( const char *pszClass, const char *utf8_path );
 
 %apply (char **CSL) {char **};
-char **VSIReadDirEx( const char * utf8_path, int nMaxFiles = 0 );
+%inline {
+char **wrapper_VSIReadDirEx( const char * utf8_path, int nMaxFiles = 0 )
+{
+    return VSIReadDirEx(utf8_path, nMaxFiles);
+}
+}
 %clear char **;
 
 %apply (char **CSL) {char **};
