@@ -1128,7 +1128,7 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
     // invert
 
     if( !HFAInvGeoTransform( adfXForm, padfGeoTransform ) )
-        memset( padfGeoTransform, 0, sizeof(padfGeoTransform) );
+        memset( padfGeoTransform, 0, 6 * sizeof(double) );
 
     // Adjust origin from center of top left pixel to top left corner
     // of top left pixel.
