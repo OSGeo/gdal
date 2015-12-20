@@ -523,19 +523,28 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
     case wkbPoint:
         {
             if (!TranslateWalkPoint((OGRPoint *)poGeom, &geom->point))
+            {
+                delete poGeom;
                 return OGRERR_CORRUPT_DATA;
+            }
         }
         break;
     case wkbLineString:
         {
             if (!TranslateWalkLineString((OGRLineString *)poGeom, &geom->linestring))
+            {
+                delete poGeom;
                 return OGRERR_CORRUPT_DATA;
+            }
         }
         break;
     case wkbPolygon:
         {
             if (!TranslateWalkPolygon((OGRPolygon *)poGeom, &geom->polygon))
+            {
+                delete poGeom;
                 return OGRERR_CORRUPT_DATA;
+            }
         }
         break;
     case wkbMultiPoint:
@@ -544,7 +553,11 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
             {
                 OGRPoint* poPoint = new OGRPoint();
                 if (!TranslateWalkPoint(poPoint, &geom->mpoint.WKBPoints[i]))
+                {
+                    delete poPoint;
+                    delete poGeom;
                     return OGRERR_CORRUPT_DATA;
+                }
                 ((OGRMultiPoint *)poGeom)->addGeometryDirectly(poPoint);
             }
         }
@@ -555,7 +568,11 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
             {
                 OGRLineString* poLS = new OGRLineString();
                 if (!TranslateWalkLineString(poLS, &geom->mlinestring.WKBLineStrings[i]))
+                {
+                    delete poLS;
+                    delete poGeom;
                     return OGRERR_CORRUPT_DATA;
+                }
                 ((OGRMultiLineString *)poGeom)->addGeometryDirectly(poLS);
             }
         }
@@ -566,7 +583,11 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
             {
                 OGRPolygon* poPolygon = new OGRPolygon();
                 if (!TranslateWalkPolygon(poPolygon, &geom->mpolygon.WKBPolygons[i]))
+                {
+                    delete poPolygon;
+                    delete poGeom;
                     return OGRERR_CORRUPT_DATA;
+                }
                 ((OGRMultiPolygon *)poGeom)->addGeometryDirectly(poPolygon);
             }
         }
@@ -582,7 +603,11 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
                         {
                             OGRPoint* poPoint = new OGRPoint();
                             if (!TranslateWalkPoint(poPoint, &sg->point))
+                            {
+                                delete poPoint;
+                                delete poGeom;
                                 return OGRERR_CORRUPT_DATA;
+                            }
                             ((OGRGeometryCollection *)poGeom)->addGeometryDirectly(poPoint);
                         }
                         break;
@@ -590,7 +615,11 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
                         {
                             OGRLineString* poLS = new OGRLineString();
                             if (!TranslateWalkLineString(poLS, &sg->linestring))
+                            {
+                                delete poLS;
+                                delete poGeom;
                                 return OGRERR_CORRUPT_DATA;
+                            }
                             ((OGRGeometryCollection *)poGeom)->addGeometryDirectly(poLS);
                         }
                         break;
@@ -598,16 +627,25 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
                         {
                             OGRPolygon* poPolygon = new OGRPolygon();    
                             if (!TranslateWalkPolygon(poPolygon, &sg->polygon))
+                            {
+                                delete poPolygon;
+                                delete poGeom;
                                 return OGRERR_CORRUPT_DATA;
+                            }
                             ((OGRGeometryCollection *)poGeom)->addGeometryDirectly(poPolygon);
                         }
                         break;
-                    default: return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-                }                
+                    default:
+                    {
+                        delete poGeom;
+                        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+                    }
+                }
             }
         }
         break;
     default:
+        delete poGeom;
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 

@@ -3871,14 +3871,23 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
                 break;
         }
     }
-    else                                            // Should never happen
+    else
+    {
+        // Should never happen
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
+    }
 
     if ( iSDS < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't create SDS with rank %ld for file %s",
                   static_cast<long>( poDS->iRank ), pszFilename );
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
     }
 

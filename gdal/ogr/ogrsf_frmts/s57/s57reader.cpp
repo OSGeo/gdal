@@ -2181,6 +2181,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                     if( poXCOO == NULL || poYCOO == NULL )
                     {
                         CPLDebug( "S57", "XCOO or YCOO are NULL" );
+                        delete poLine;
+                        delete poMLS;
                         return;
                     }
 
