@@ -4123,6 +4123,9 @@ static void GWKGeneralCaseThread( void* pData)
                                         &dfValueReal, &dfValueImag );
                 }
                 else
+#ifdef DEBUG
+                if( psWrkStruct != NULL ) /* only usefull for clang static analyzer */
+#endif
                 {
                     psWrkStruct->pfnGWKResample( poWK, iBand, 
                                  padfX[iDstX]-poWK->nSrcXOff,
