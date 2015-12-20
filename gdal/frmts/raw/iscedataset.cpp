@@ -493,7 +493,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ISCE domain       */
 /* -------------------------------------------------------------------- */
-    for (int i = 0; i < CSLCount( papszXmlProps ); i++)
+    for (int i = 0; papszXmlProps != NULL && papszXmlProps[i] != NULL; i++)
     {
         char **papszTokens;
         papszTokens = CSLTokenizeString2( papszXmlProps[i],
