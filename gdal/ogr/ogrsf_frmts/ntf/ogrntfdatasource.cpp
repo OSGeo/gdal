@@ -259,7 +259,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     papoNTFFileReader = (NTFFileReader **)
         CPLCalloc(sizeof(void*), CSLCount(papszFileList));
 
-    for( i = 0; papszFileList[i] != NULL; i++ )
+    for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
     {
         if( bTestOpen )
         {
