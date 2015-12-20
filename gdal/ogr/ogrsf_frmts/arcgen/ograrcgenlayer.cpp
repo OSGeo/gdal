@@ -151,10 +151,9 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
     }
 
     CPLString osID;
-    OGRLinearRing* poLR =
-        (wkbFlatten(eType) == wkbPolygon) ? new OGRLinearRing() : NULL;
     OGRLineString* poLS =
-        (wkbFlatten(eType) == wkbLineString) ? new OGRLineString() : poLR;
+        (wkbFlatten(eType) == wkbPolygon) ? new OGRLinearRing() :
+                                            new OGRLineString();
     while( true )
     {
         const char* pszLine = CPLReadLine2L(fp,256,NULL);
@@ -172,7 +171,7 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
             if (wkbFlatten(eType) == wkbPolygon)
             {
                 OGRPolygon* poPoly = new OGRPolygon();
-                poPoly->addRingDirectly(poLR);
+                poPoly->addRingDirectly((OGRLinearRing*)poLS);
                 poFeature->SetGeometryDirectly(poPoly);
             }
             else
