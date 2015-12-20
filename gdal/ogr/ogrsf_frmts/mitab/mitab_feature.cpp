@@ -584,7 +584,6 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
 #endif
 
     CPLAssert(poDATFile);
-    CPLAssert(panIndexNo || GetDefnRef()->GetFieldCount() == 0);
 
     numFields = poDATFile->GetNumFields();
 
@@ -600,6 +599,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
             nStatus = poDATFile->WriteIntegerField( (int)GetFID(), poINDFile, 0 );
             continue;
         }
+        CPLAssert(panIndexNo != NULL);
 
         switch(poDATFile->GetFieldType(iField))
         {
