@@ -1308,7 +1308,6 @@ int FileGDBIndexIterator::GetNextRow()
         else
         {
             int nComp;
-            bMatch = FALSE;
             switch( eFieldType )
             {
                 case FGFT_INT16:
@@ -1377,6 +1376,8 @@ int FileGDBIndexIterator::GetNextRow()
                     break;
             }
 
+            bMatch = FALSE;
+            CPL_IGNORE_RET_VAL(bMatch);
             switch( eOp )
             {
                 case FGSO_LT:

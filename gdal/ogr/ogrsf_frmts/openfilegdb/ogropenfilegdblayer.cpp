@@ -1040,7 +1040,8 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
 
                 if( FillTargetValueFromSrcExpr(poFieldDefn, &sValue, poValue) )
                 {
-                    FileGDBSQLOp eOp;
+                    FileGDBSQLOp eOp = FGSO_EQ; 
+                    CPL_IGNORE_RET_VAL(eOp);
                     if( poColumn == poNode->papoSubExpr[0] )
                     {
                         switch( poNode->nOperation )
@@ -1051,7 +1052,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                             case SWQ_EQ: eOp = FGSO_EQ; break;
                             case SWQ_GE: eOp = FGSO_GE; break;
                             case SWQ_GT: eOp = FGSO_GT; break;
-                            default: eOp = FGSO_EQ; CPLAssert(FALSE); break;
+                            default: CPLAssert(FALSE); break;
                         }
                     }
                     else
@@ -1066,7 +1067,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                             case SWQ_EQ: eOp = FGSO_EQ; break;
                             case SWQ_GE: eOp = FGSO_LE; break;
                             case SWQ_GT: eOp = FGSO_LT; break;
-                            default: eOp = FGSO_EQ; CPLAssert(FALSE); break;
+                            default: CPLAssert(FALSE); break;
                         }
                     }
 

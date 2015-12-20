@@ -117,7 +117,6 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
         if( pszDSNStringTemplate == NULL )
         {
-            pszOptionName = "";
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
         }
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))

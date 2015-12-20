@@ -1350,7 +1350,8 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
                 continue;
         }
 
-        GUInt32 nLength;
+        GUInt32 nLength = 0;
+        CPL_IGNORE_RET_VAL(nLength);
         switch( apoFields[j]->eType )
         {
             case FGFT_STRING:
@@ -1378,7 +1379,6 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             case FGFT_UUID_2: nLength = UUID_SIZE_IN_BYTES; break;
 
             default:
-                nLength = 0;
                 CPLAssert(FALSE);
                 break;
         }

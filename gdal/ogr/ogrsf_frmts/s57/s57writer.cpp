@@ -846,9 +846,9 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add the FRID.                                                   */
 /* -------------------------------------------------------------------- */
-    DDFField *poField;
+    /*DDFField *poField;*/
 
-    poField = poRec->AddField( poModule->FindFieldDefn( "FRID" ) );
+    /*poField = */poRec->AddField( poModule->FindFieldDefn( "FRID" ) );
 
     poRec->SetIntSubfield   ( "FRID", 0, "RCNM", 0, 100 );
     poRec->SetIntSubfield   ( "FRID", 0, "RCID", 0, 
@@ -865,7 +865,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add the FOID                                                    */
 /* -------------------------------------------------------------------- */
-    poField = poRec->AddField( poModule->FindFieldDefn( "FOID" ) );
+    /*poField = */poRec->AddField( poModule->FindFieldDefn( "FOID" ) );
 
     poRec->SetIntSubfield   ( "FOID", 0, "AGEN", 0, 
                               poFeature->GetFieldAsInteger( "AGEN") );
@@ -918,7 +918,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
             pabyRawData[i*8 + 7] = (GByte) panMASK[i];
         }
 
-        poField = poRec->AddField( poModule->FindFieldDefn( "FSPT" ) );
+        DDFField* poField = poRec->AddField( poModule->FindFieldDefn( "FSPT" ) );
         poRec->SetFieldRaw( poField, 0, 
                             (const char *) pabyRawData, nRawDataSize );
         CPLFree( pabyRawData );

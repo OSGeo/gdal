@@ -2158,9 +2158,6 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                 /* omit point, already present */
             }
 
-            // remember the coordinates of the last point
-            dlastfX = dfX; dlastfY = dfY;
-
 /* -------------------------------------------------------------------- */
 /*      Collect the vertices.                                           */
 /*      Iterate over all the SG2D fields in the Spatial record          */
@@ -2224,6 +2221,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                     }
                 }
             }
+
+            // remember the coordinates of the last point
             dlastfX = dfX; dlastfY = dfY;
 
 /* -------------------------------------------------------------------- */

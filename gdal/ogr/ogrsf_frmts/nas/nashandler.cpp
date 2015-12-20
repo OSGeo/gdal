@@ -674,7 +674,6 @@ void NASHandler::characters( const XMLCh* const chars_in,
         if( m_pszCurField == NULL )
         {
             m_pszCurField = pszTranslated;
-            nCurFieldLength = static_cast<int>(strlen(m_pszCurField));
         }
         else
         {
