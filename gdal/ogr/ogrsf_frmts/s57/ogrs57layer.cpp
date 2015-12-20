@@ -82,7 +82,7 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
 OGRS57Layer::~OGRS57Layer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 )
     {
         CPLDebug( "S57", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead, 
