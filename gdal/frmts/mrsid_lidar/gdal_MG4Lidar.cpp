@@ -422,7 +422,7 @@ CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * 
                static_cast<DTYPE *>(pImage)[offset] > value)
                static_cast<DTYPE *>(pImage)[offset] = value;
          }
-         else if (EQUAL(Aggregation, "Mean"))
+         else if (EQUAL(Aggregation, "Mean") && Accumulator != NULL)
          {
             DTYPE value = GetChannelElement<DTYPE>(*channel, i);
             Accumulator[offset].count++;
