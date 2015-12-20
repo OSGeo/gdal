@@ -2387,6 +2387,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
             else
             {
                 rc = SQLITE_OK;
+                CPL_IGNORE_RET_VAL(rc);
                 CPLAssert(0);
             }
         }

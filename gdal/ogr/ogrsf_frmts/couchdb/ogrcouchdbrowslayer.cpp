@@ -106,7 +106,7 @@ int OGRCouchDBRowsLayer::FetchNextRows()
     {
         if (!bHasEsperluet)
         {
-            bHasEsperluet = TRUE;
+            /*bHasEsperluet = TRUE;*/
             osURI += "?";
         }
 

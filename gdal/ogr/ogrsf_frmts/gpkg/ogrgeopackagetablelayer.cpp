@@ -408,11 +408,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
 
     if ( poFeatureDefn->GetGeomFieldCount() )
     {
-        if( !bNeedComma )
-        {
-            bNeedComma = TRUE;
-        }
-        else 
+        if( bNeedComma )
         {
             osSQLFront += ", ";
             osSQLBack += ", ";
