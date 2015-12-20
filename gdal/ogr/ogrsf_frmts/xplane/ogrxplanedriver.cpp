@@ -57,8 +57,8 @@ OGRDataSource *OGRXPlaneDriver::Open( const char * pszFilename, int bUpdate )
 
     OGRXPlaneDataSource   *poDS = new OGRXPlaneDataSource();
 
-    bool bReadWholeFile = CSLTestBoolean(
-        CPLGetConfigOption("OGR_XPLANE_READ_WHOLE_FILE", "TRUE"));
+    bool bReadWholeFile = CPL_TO_BOOL(CSLTestBoolean(
+        CPLGetConfigOption("OGR_XPLANE_READ_WHOLE_FILE", "TRUE")));
 
     if( !poDS->Open( pszFilename, bReadWholeFile ) )
     {
