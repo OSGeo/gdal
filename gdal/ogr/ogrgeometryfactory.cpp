@@ -3035,16 +3035,16 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     if( !OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) &&
          OGR_GT_IsSubClassOf(OGR_GT_GetCollection(eType), eTargetType) )
     {
-        OGRGeometryCollection* poRet = (OGRGeometryCollection*)createGeometry(eTargetType);
-        if( poRet )
+        OGRGeometry* poRet = createGeometry(eTargetType);
+        if( poRet == NULL)
         {
-            poRet->assignSpatialReference(poGeom->getSpatialReference());
-            if( eType == wkbLineString )
-                poGeom = OGRCurve::CastToLineString( (OGRCurve*)poGeom );
-            poRet->addGeometryDirectly(poGeom);
-        }
-        else
             delete poGeom;
+            return NULL;
+        }
+        poRet->assignSpatialReference(poGeom->getSpatialReference());
+        if( eType == wkbLineString )
+            poGeom = OGRCurve::CastToLineString( (OGRCurve*)poGeom );
+        ((OGRGeometryCollection*)poRet)->addGeometryDirectly(poGeom);
         return poRet;
     }
 
