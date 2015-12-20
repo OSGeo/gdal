@@ -418,6 +418,10 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn )
         if (nPointCount < iPoint + 1)
             return;
     }
+#ifdef DEBUG
+    if( paoPoints == NULL )
+        return;
+#endif
 
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
@@ -543,7 +547,11 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 
 {
     setNumPoints( nPointsIn, FALSE );
-    if (nPointCount < nPointsIn)
+    if (nPointCount < nPointsIn 
+#ifdef DEBUG
+        || paoPoints == NULL
+#endif
+        )
         return;
 
     if( nPointsIn )
@@ -791,7 +799,11 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
     int nPointsToAdd = ABS(nEndVertex-nStartVertex) + 1;
 
     setNumPoints( nPointsToAdd + nOldPoints, FALSE );
-    if (nPointCount < nPointsToAdd + nOldPoints)
+    if (nPointCount < nPointsToAdd + nOldPoints
+#ifdef DEBUG
+        || paoPoints == NULL
+#endif
+        )
         return;
 
 /* -------------------------------------------------------------------- */
