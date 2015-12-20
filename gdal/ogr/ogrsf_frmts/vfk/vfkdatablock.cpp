@@ -794,7 +794,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
         if (ipcb == 1) {
             if (!oOGRLine.IsEmpty()) {
                 oOGRLine.setCoordinateDimension(2); /* force 2D */
-                if (!poLine->SetGeometry(&oOGRLine))
+                if (poLine != NULL && !poLine->SetGeometry(&oOGRLine))
                     nInvalid++;
                 oOGRLine.empty(); /* restore line */
             }
