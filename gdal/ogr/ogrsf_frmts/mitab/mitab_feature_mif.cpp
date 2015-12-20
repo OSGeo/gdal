@@ -531,7 +531,7 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if( pszLine != NULL )
         papszToken = CSLTokenizeStringComplex(pszLine," ,()\t",
                                               TRUE,FALSE);
-    if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
+    if (papszToken != NULL && CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
     {
         SetSymbolNo((GInt16)atoi(papszToken[1]));
         SetSymbolColor((GInt32)atoi(papszToken[2]));
