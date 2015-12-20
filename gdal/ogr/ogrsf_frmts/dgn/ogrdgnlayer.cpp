@@ -41,9 +41,12 @@ CPL_CVSID("$Id$");
 
 OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
                           int bUpdateIn ) :
+    poFeatureDefn(new OGRFeatureDefn( pszName )),
     iNextShapeId(0),
     hDGN(hDGNIn),
     bUpdate(bUpdateIn)
+    // Unused:
+    // bHaveSimpleQuery(FALSE)
 {
 
 /* -------------------------------------------------------------------- */
@@ -74,7 +77,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
 /* -------------------------------------------------------------------- */
 /*      Create the feature definition.                                  */
 /* -------------------------------------------------------------------- */
-    poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
@@ -164,7 +166,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
 /* -------------------------------------------------------------------- */
 /*      Create template feature for evaluating simple expressions.      */
 /* -------------------------------------------------------------------- */
-    bHaveSimpleQuery = FALSE;
     poEvalFeature = new OGRFeature( poFeatureDefn );
 
     /* TODO: I am intending to keep track of simple attribute queries (ones

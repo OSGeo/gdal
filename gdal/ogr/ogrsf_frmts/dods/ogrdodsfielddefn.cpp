@@ -37,18 +37,16 @@ CPL_CVSID("$Id$");
 /*                          OGRDODSFieldDefn()                          */
 /************************************************************************/
 
-OGRDODSFieldDefn::OGRDODSFieldDefn()
-
-{
-    pszFieldName = NULL;
-    pszFieldScope = NULL;
-    iFieldIndex = -1;
-    pszFieldValue = NULL;
-    bValid = FALSE;
-    pszPathToSequence = NULL;
-    bRelativeToSuperSequence = FALSE;
-    bRelativeToSequence = FALSE;
-}
+OGRDODSFieldDefn::OGRDODSFieldDefn() :
+    bValid(FALSE),
+    pszFieldName(NULL),
+    pszFieldScope(NULL),
+    iFieldIndex(-1),
+    pszFieldValue(NULL),
+    pszPathToSequence(NULL),
+    bRelativeToSuperSequence(FALSE),
+    bRelativeToSequence(FALSE)
+{}
 
 /************************************************************************/
 /*                         ~OGRDODSFieldDefn()                          */

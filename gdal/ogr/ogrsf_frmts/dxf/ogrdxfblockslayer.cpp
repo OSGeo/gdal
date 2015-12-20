@@ -36,14 +36,12 @@ CPL_CVSID("$Id: ogrdxflayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
 /*                         OGRDXFBlocksLayer()                          */
 /************************************************************************/
 
-OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn )
-
+OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
-    this->poDS = poDSIn;
-
     ResetReading();
 
-    poFeatureDefn = new OGRFeatureDefn( "blocks" );
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields( poFeatureDefn );

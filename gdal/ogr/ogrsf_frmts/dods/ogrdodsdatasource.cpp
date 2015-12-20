@@ -37,15 +37,14 @@ CPL_CVSID("$Id$");
 /*                         OGRDODSDataSource()                          */
 /************************************************************************/
 
-OGRDODSDataSource::OGRDODSDataSource()
-
+OGRDODSDataSource::OGRDODSDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    poConnection(NULL),
+    poBTF(new BaseTypeFactory())
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    poConnection = NULL;
-
-    poBTF = new BaseTypeFactory();
+    // TODO: This implies that the order in the class declaration is wrong.
     poDDS = new DDS( poBTF );
 }
 
@@ -56,11 +55,9 @@ OGRDODSDataSource::OGRDODSDataSource()
 OGRDODSDataSource::~OGRDODSDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree( papoLayers );

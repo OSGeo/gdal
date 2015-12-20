@@ -126,10 +126,15 @@ class OGRCSWDataSource : public OGRDataSource
 /*                           OGRCSWLayer()                              */
 /************************************************************************/
 
-OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn)
+OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn("records")),
+    poBaseDS(NULL),
+    poBaseLayer(NULL),
+    nPagingStartIndex(0),
+    nFeatureRead(0),
+    nFeaturesInCurrentPage(0)
 {
-    this->poDS = poDSIn;
-    poFeatureDefn = new OGRFeatureDefn("records");
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbPolygon);
@@ -209,13 +214,6 @@ OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn)
         OGRFieldDefn oField("raw_xml", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
     }
-
-    poBaseDS = NULL;
-    poBaseLayer = NULL;
-
-    nPagingStartIndex = 0;
-    nFeatureRead = 0;
-    nFeaturesInCurrentPage = 0;
 
     poSRS->Release();
 }
@@ -837,13 +835,12 @@ void OGRCSWLayer::BuildQuery()
 /*                          OGRCSWDataSource()                          */
 /************************************************************************/
 
-OGRCSWDataSource::OGRCSWDataSource()
-{
-    pszName = NULL;
-    poLayer = NULL;
-    bFullExtentRecordsAsNonSpatial = FALSE;
-    nMaxRecords = 500;
-}
+OGRCSWDataSource::OGRCSWDataSource() :
+    pszName(NULL),
+    nMaxRecords(500),
+    poLayer(NULL),
+    bFullExtentRecordsAsNonSpatial(FALSE)
+{}
 
 /************************************************************************/
 /*                         ~OGRCSWDataSource()                          */
