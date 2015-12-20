@@ -28,6 +28,9 @@
  ****************************************************************************/
 
 #if defined(JPEG_DUAL_MODE_8_12)
+
+#undef ENABLE_LIBJPEG_NO_RETURN
+
 #define LIBJPEG_12_PATH   "libjpeg12/jpeglib.h" 
 #define JPGDataset        JPGDataset12
 #define GDALJPEGErrorStruct     GDALJPEGErrorStruct12

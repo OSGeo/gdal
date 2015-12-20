@@ -31,6 +31,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#undef ENABLE_LIBJPEG_NO_RETURN
+
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
