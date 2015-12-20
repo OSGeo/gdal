@@ -2800,6 +2800,8 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 
         for( i = 0; i < MIN(10,psDefnIn->nParms); i++ )
             adfParm[i] = psDefnIn->ProjParm[i];
+        for( ; i < 10; i++)
+            adfParm[i] = 0;
 
         adfParm[0] /= psDefnIn->UOMAngleInDegrees;
         adfParm[1] /= psDefnIn->UOMAngleInDegrees;
