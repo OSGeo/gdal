@@ -1949,7 +1949,8 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
     if( !DBFFlushRecord( psDBF ) )
         return FALSE;
 
-    panFieldOffsetNew = (int *) malloc(sizeof(int) * psDBF->nFields);
+    /* a simple malloc() would be enough, but calloc() helps clang static analyzer */
+    panFieldOffsetNew = (int *) calloc(sizeof(int), psDBF->nFields);
     panFieldSizeNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
     panFieldDecimalsNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
     pachFieldTypeNew = (char *) malloc(sizeof(char) *  psDBF->nFields);
