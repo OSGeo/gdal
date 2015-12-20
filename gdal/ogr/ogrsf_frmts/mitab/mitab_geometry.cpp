@@ -172,6 +172,8 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         /* count total number of points */
         n += OGR_GET_RING(poPoly, j)->getNumPoints();
     }
+    if( n == 0 )
+        return OGRERR_FAILURE;
 
     xintersect = (double *)calloc(n, sizeof(double));
     if (xintersect == NULL)
