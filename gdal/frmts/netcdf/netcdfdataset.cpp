@@ -3833,7 +3833,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                     NCDF_ERR(status);
                 }
 
-                if ( j % (nRasterYSize/10) == 0 ) {
+                if ( (nRasterYSize/10) >0 && (j % (nRasterYSize/10) == 0) ) {
                     dfProgress += 0.08;
                     pfnProgress( dfProgress , NULL, pProgressData );
                 }
