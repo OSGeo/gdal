@@ -253,7 +253,7 @@ unsigned int CPCIDSKAPModelSegment::GetDownsampleFactor(void) const
 PCIDSKAPModelIOParams const& CPCIDSKAPModelSegment::GetInteriorOrientationParams(void) const
 {
     if (io_params_ == NULL) {
-        ThrowPCIDSKException("There was a failure in reading the APModel IO params.");
+        throw PCIDSKException("There was a failure in reading the APModel IO params.");
     }
     return *io_params_;
 }
@@ -262,7 +262,7 @@ PCIDSKAPModelIOParams const& CPCIDSKAPModelSegment::GetInteriorOrientationParams
 PCIDSKAPModelEOParams const& CPCIDSKAPModelSegment::GetExteriorOrientationParams(void) const
 {
     if (eo_params_ == NULL) {
-        ThrowPCIDSKException("There was a failure in reading the APModel EO params.");
+        throw PCIDSKException("There was a failure in reading the APModel EO params.");
     }
     return *eo_params_;
 }
@@ -270,7 +270,7 @@ PCIDSKAPModelEOParams const& CPCIDSKAPModelSegment::GetExteriorOrientationParams
 PCIDSKAPModelMiscParams const& CPCIDSKAPModelSegment::GetAdditionalParams(void) const
 {
     if (misc_params_ == NULL) {
-        ThrowPCIDSKException("There was a failure in reading the APModel camera params.");
+        throw PCIDSKException("There was a failure in reading the APModel camera params.");
     }
     return *misc_params_;
 }
