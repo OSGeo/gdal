@@ -81,11 +81,10 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
 OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
                                                         CPL_UNUSED char **papszOptions )
 {
-    OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
-
     if( !STARTS_WITH_CI(pszName, "MSSQL:") )
         return NULL;
 
+    OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
     if( !poDS->Open( pszName, TRUE, TRUE ) )
     {
         delete poDS;

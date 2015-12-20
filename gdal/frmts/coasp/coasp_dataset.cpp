@@ -398,6 +398,8 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	poDS->fpBinHV = NULL;
 	poDS->fpBinVH = NULL;
 	poDS->fpBinVV = NULL;
+        poDS->nGCPCount = 0;
+        poDS->pasGCP = NULL;
 
 	poDS->pszFileName = VSIStrdup(poOpenInfo->pszFilename);
 
@@ -509,7 +511,8 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 		free(pszBase);
 		free(pszDir);
 		delete poDS;
-
+                delete poItem;
+                delete poReader; 
 		return NULL;
 	}
 
@@ -519,9 +522,6 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	free(pszBase);
 	free(pszDir);
-
-	poDS->nGCPCount = 0;
-	poDS->pasGCP = NULL;
 
 	delete poItem;
 	delete poReader; 

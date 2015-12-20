@@ -1857,7 +1857,11 @@ ValueRange::ValueRange(string sRng) :
 
     char *p1 = strchr(sRange, ':');
     if (0 == p1)
+    {
+        delete[] sRange;
+        init();
         return;
+    }
 
     char *p3 = strstr(sRange, ",offset=");
     if (0 == p3)

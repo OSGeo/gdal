@@ -282,6 +282,9 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
   if (ls->getNumPoints() > 1) {
     ogrCurve->addCurveDirectly(ls);
   }
+  else {
+    delete ls;
+  }
   return ogrCurve;
 }
 
