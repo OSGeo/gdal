@@ -441,9 +441,13 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
     adfDisplacedThresholdLength[0] = atoi(papszTokens[6]) * FEET_TO_METER;
     if (strchr(papszTokens[6], '.') != NULL)
         adfDisplacedThresholdLength[1] = atoi(strchr(papszTokens[6], '.') + 1) * FEET_TO_METER;
+    else
+        adfDisplacedThresholdLength[1] = 0;
     adfStopwayLength[0] = atoi(papszTokens[7]) * FEET_TO_METER;
     if (strchr(papszTokens[7], '.') != NULL)
         adfStopwayLength[1] = atoi(strchr(papszTokens[7], '.') + 1) * FEET_TO_METER;
+    else
+        adfStopwayLength[1] = 0;
     RET_IF_FAIL(readDouble(&dfWidth, 8, "width"));
     dfWidth *= FEET_TO_METER;
     if (strlen(papszTokens[9]) == 6)
@@ -686,10 +690,8 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
     double dfSmoothness;
     int bHasCenterLineLights, bHasDistanceRemainingSigns;
     int eEdgeLighting;
-    int nCurToken;
     int nRwy = 0;
     double adfLat[2], adfLon[2];
-    OGRFeature* apoRunwayThreshold[2] = { NULL, NULL };
     double dfLength;
     CPLString aosRunwayId[2];
     double adfDisplacedThresholdLength[2];
@@ -705,22 +707,16 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
     eEdgeLighting = atoi(papszTokens[6]);
     bHasDistanceRemainingSigns = atoi(papszTokens[7]);
 
-    for( nRwy=0, nCurToken = 8 ; nRwy<=1 ; nRwy++, nCurToken += 9 )
+    for( nRwy=0; nRwy<=1 ; nRwy++ )
     {
         double dfLat, dfLon;
-        int eMarkings, eApproachLightingCode, eREIL;
-        int bHasTouchdownLights;
 
-        aosRunwayId[nRwy] = papszTokens[nCurToken + 0]; /* for example : 08, 24R, or xxx */
-        RET_IF_FAIL(readLatLon(&dfLat, &dfLon, nCurToken + 1));
+        aosRunwayId[nRwy] = papszTokens[8 + 9*nRwy + 0]; /* for example : 08, 24R, or xxx */
+        RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 8 + 9*nRwy + 1));
         adfLat[nRwy] = dfLat; 
         adfLon[nRwy] = dfLon;
-        RET_IF_FAIL(readDouble(&adfDisplacedThresholdLength[nRwy], nCurToken + 3, "displaced threshold length"));
-        RET_IF_FAIL(readDouble(&adfStopwayLength[nRwy], nCurToken + 4, "stopway/blastpad/over-run length"));
-        eMarkings = atoi(papszTokens[nCurToken + 5]);
-        eApproachLightingCode = atoi(papszTokens[nCurToken + 6]);
-        bHasTouchdownLights = atoi(papszTokens[nCurToken + 7]);
-        eREIL = atoi(papszTokens[nCurToken + 8]);
+        RET_IF_FAIL(readDouble(&adfDisplacedThresholdLength[nRwy], 8 + 9*nRwy + 3, "displaced threshold length"));
+        RET_IF_FAIL(readDouble(&adfStopwayLength[nRwy], 8 + 9*nRwy + 4, "stopway/blastpad/over-run length"));
 
         if (!bRunwayFound)
         {
@@ -728,13 +724,23 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
             dfLonFirstRwy = dfLon;
             bRunwayFound = TRUE;
         }
+    }
 
-        if (poRunwayThresholdLayer)
+    dfLength = OGRXPlane_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
+    if (poRunwayThresholdLayer)
+    {
+        OGRFeature* apoRunwayThreshold[2] = { NULL, NULL };
+        for( nRwy=0; nRwy<=1 ; nRwy++ )
         {
+            const int eMarkings = atoi(papszTokens[8 + 9*nRwy + 5]);
+            const int eApproachLightingCode = atoi(papszTokens[8 + 9*nRwy + 6]);
+            const int bHasTouchdownLights = atoi(papszTokens[8 + 9*nRwy + 7]);
+            const int eREIL = atoi(papszTokens[8 + 9*nRwy + 8]);
+
             apoRunwayThreshold[nRwy] =
                 poRunwayThresholdLayer->AddFeature  
                     (osAptICAO, aosRunwayId[nRwy],
-                    dfLat, dfLon, dfWidth,
+                    adfLat[nRwy], adfLon[nRwy], dfWidth,
                     RunwaySurfaceEnumeration.GetText(eSurfaceCode),
                     RunwayShoulderEnumeration.GetText(eShoulderCode),
                     dfSmoothness, bHasCenterLineLights,
@@ -745,11 +751,6 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
                     bHasTouchdownLights,
                     RunwayREILEnumeration.GetText(eREIL));
         }
-    }
-
-    dfLength = OGRXPlane_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
-    if (poRunwayThresholdLayer)
-    {
         poRunwayThresholdLayer->SetRunwayLengthAndHeading(apoRunwayThreshold[0], dfLength,
                                     OGRXPlane_Track(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
         poRunwayThresholdLayer->SetRunwayLengthAndHeading(apoRunwayThreshold[1], dfLength,
@@ -794,7 +795,6 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
 void OGRXPlaneAptReader::ParseWaterRunwayRecord()
 {
     double adfLat[2], adfLon[2];
-    OGRFeature* apoWaterRunwayThreshold[2] = {NULL, NULL};
     double dfWidth, dfLength;
     int bBuoys;
     CPLString aosRunwayId[2];
@@ -809,20 +809,19 @@ void OGRXPlaneAptReader::ParseWaterRunwayRecord()
     {
         aosRunwayId[i] = papszTokens[3 + 3*i];
         RET_IF_FAIL(readLatLon(&adfLat[i], &adfLon[i], 4 + 3*i));
-
-        if (poWaterRunwayThresholdLayer)
-        {
-            apoWaterRunwayThreshold[i] =
-                poWaterRunwayThresholdLayer->AddFeature  
-                    (osAptICAO, aosRunwayId[i], adfLat[i], adfLon[i], dfWidth, bBuoys);
-        }
-
     }
 
     dfLength = OGRXPlane_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
 
     if (poWaterRunwayThresholdLayer)
     {
+        OGRFeature* apoWaterRunwayThreshold[2] = {NULL, NULL};
+        for(i=0;i<2;i++)
+        {
+            apoWaterRunwayThreshold[i] =
+                poWaterRunwayThresholdLayer->AddFeature  
+                    (osAptICAO, aosRunwayId[i], adfLat[i], adfLon[i], dfWidth, bBuoys);
+        }
         poWaterRunwayThresholdLayer->SetRunwayLengthAndHeading(apoWaterRunwayThreshold[0], dfLength,
                                     OGRXPlane_Track(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
         poWaterRunwayThresholdLayer->SetRunwayLengthAndHeading(apoWaterRunwayThreshold[1], dfLength,
