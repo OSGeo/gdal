@@ -1125,10 +1125,13 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if (tabPolygons)
         delete[] tabPolygons;
 
-    poGeometry->getEnvelope(&sEnvelope);
-    SetGeometryDirectly(poGeometry);
+    if( poGeometry )
+    {
+        poGeometry->getEnvelope(&sEnvelope);
+        SetGeometryDirectly(poGeometry);
 
-    SetMBR(sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX, sEnvelope.MaxY);
+        SetMBR(sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX, sEnvelope.MaxY);
+    }
 
     while (((pszLine = fp->GetLine()) != NULL) && 
            fp->IsValidFeature(pszLine) == FALSE)
