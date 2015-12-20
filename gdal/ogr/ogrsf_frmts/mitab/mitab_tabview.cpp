@@ -1497,7 +1497,8 @@ int  TABRelation::Init(const char *pszViewName,
             CPLError(CE_Warning, CPLE_IllegalArg,
                      "Selected Field %s not found in source tables %s and %s",
                      papszSelectedFields[i], 
-                     poMainDefn->GetName(), poRelDefn->GetName());
+                     poMainDefn?poMainDefn->GetName():"(null)",
+                     poRelDefn?poRelDefn->GetName():"(null)");
         }
     }
     CSLDestroy(papszSelectedFields);
