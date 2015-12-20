@@ -1852,7 +1852,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
                                        OGRFeature * poFeature )
 
 {
-    int         nRCNM, nRCID;
+    int         nRCNM = 0, nRCID;
 
 /* -------------------------------------------------------------------- */
 /*      Feature the spatial record containing the point.                */
@@ -1900,7 +1900,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 
 {
     DDFField    *poFSPT;
-    int         nRCNM, nRCID;
+    int         nRCNM = 0, nRCID;
     DDFRecord   *poSRecord;
 
 /* -------------------------------------------------------------------- */
