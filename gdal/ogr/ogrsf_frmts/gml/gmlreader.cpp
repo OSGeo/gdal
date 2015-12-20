@@ -549,7 +549,7 @@ GMLFeature *GMLReader::NextFeatureXerces()
 
             m_bReadStarted = true;
 
-            if (m_GMLInputSource == NULL)
+            if (m_poSAXReader == NULL || m_GMLInputSource == NULL)
                 return NULL;
 
             if( !m_poSAXReader->parseFirst( *m_GMLInputSource, m_oToFill ) )
