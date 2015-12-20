@@ -1023,7 +1023,7 @@ long Convert_MGRS_To_UPS ( char   *MGRS,
   double false_northing;      /* False northing for 3rd letter              */
   double grid_easting;        /* easting for 100,000 meter grid square      */
   double grid_northing;       /* northing for 100,000 meter grid square     */
-  long zone;
+  long zone = 0;
   long letters[MGRS_LETTERS];
   long in_precision;
   int l_index = 0;
