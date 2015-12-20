@@ -640,7 +640,7 @@ struct jpeg_decompress_struct {
 
 /* Error handler object */
 
-#if defined(__GNUC__) && __GNUC__ >= 3
+#if defined(__GNUC__) && __GNUC__ >= 3 && defined(ENABLE_LIBJPEG_NO_RETURN)
 #define LIBJPEG_NO_RETURN                                __attribute__((noreturn))
 #else
 #define LIBJPEG_NO_RETURN
