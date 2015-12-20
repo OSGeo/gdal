@@ -1695,14 +1695,8 @@ void    INGR_DGN2IEEEDouble(void * dbl)
     src = (unsigned char *) &dt;
     dest = (unsigned char *) dbl;
 
-    dest[0] = src[4];
-    dest[1] = src[5];
-    dest[2] = src[6];
-    dest[3] = src[7];
-    dest[4] = src[0];
-    dest[5] = src[1];
-    dest[6] = src[2];
-    dest[7] = src[3];
+    memcpy(dest + 0, src + 4, 4);
+    memcpy(dest + 4, src + 0, 4);
 #else
     memcpy( dbl, &dt, 8 );
 #endif
