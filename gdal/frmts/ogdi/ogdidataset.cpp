@@ -764,9 +764,9 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( CSLCount(papszMatrices) + CSLCount(papszImages) == 1 )
     {
-        if( CSLCount(papszMatrices) == 1 )
+        if( papszMatrices != NULL && *papszMatrices != NULL )
             OverrideGlobalInfo( poDS, papszMatrices[0] );
-        else
+        else if( papszImages != NULL && *papszImages != NULL )
             OverrideGlobalInfo( poDS, papszImages[0] );
     }
 
