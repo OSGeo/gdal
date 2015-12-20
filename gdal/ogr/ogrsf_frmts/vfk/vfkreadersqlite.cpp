@@ -221,7 +221,6 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     sqlite3_stmt *hStmt;
 
     pszName = NULL;
-    nDataRecords = 0;
 
     if (poDataBlock) { /* read records only for selected data block */
         /* table name */

@@ -344,7 +344,6 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
             CPLAssert(0);
         }
 
-        psIter = psXML->psChild;
         for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)
         {
             if (psIter->eType == CXT_Element)

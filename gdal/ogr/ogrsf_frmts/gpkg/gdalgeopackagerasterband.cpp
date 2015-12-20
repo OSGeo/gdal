@@ -899,12 +899,12 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
 #endif
                 char* pszErrMsg = NULL;
                 int rc = sqlite3_exec(GetDB(), pszSQL, NULL, NULL, &pszErrMsg);
-                if( rc == SQLITE_OK )
-                    eErr = CE_None;
-                else
+                if( rc != SQLITE_OK )
+                {
                     CPLError(CE_Failure, CPLE_AppDefined,
                             "Failure when deleting tile (row=%d,col=%d) at zoom_level=%d : %s",
                             nRow, nCol, m_nZoomLevel, pszErrMsg ? pszErrMsg : "");
+                }
                 sqlite3_free(pszSQL);
                 sqlite3_free(pszErrMsg);
                 return CE_None;

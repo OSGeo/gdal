@@ -827,6 +827,7 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         osSQL += ")";
     }
+    CPL_IGNORE_RET_VAL(bMustComma);
 
     if( !bHasUserFieldMatchingFID && osFIDColName.size() && nNextFID >= 0 )
     {
