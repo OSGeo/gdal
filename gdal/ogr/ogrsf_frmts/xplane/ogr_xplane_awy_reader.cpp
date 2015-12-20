@@ -149,14 +149,13 @@ void    OGRXPlaneAwyReader::ParseRecord()
     const char* pszAirwaySegmentName;
     double dfLat1, dfLon1;
     double dfLat2, dfLon2;
-    int bIsHigh;
     int nBaseFL, nTopFL;
 
     pszFirstPointName = papszTokens[0];
     RET_IF_FAIL(readLatLon(&dfLat1, &dfLon1, 1));
     pszSecondPointName = papszTokens[3];
     RET_IF_FAIL(readLatLon(&dfLat2, &dfLon2, 4));
-    bIsHigh = atoi(papszTokens[6]) == 2;
+    bool bIsHigh = atoi(papszTokens[6]) == 2;
     nBaseFL = atoi(papszTokens[7]);
     nTopFL = atoi(papszTokens[8]);
     pszAirwaySegmentName = papszTokens[9];
