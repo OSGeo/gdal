@@ -2144,7 +2144,8 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
     adfCT[1] = psPoint->y;
     adfCT[2] = psPoint->z;
 
-    for( i = 0; i < psDGN->dimension; i++ )
+    const int nIter = MIN(3, psDGN->dimension);
+    for( i = 0; i < nIter; i++ )
     {
         GInt32 nCTI;
         unsigned char *pabyCTI = (unsigned char *) &nCTI;
