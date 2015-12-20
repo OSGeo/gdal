@@ -230,7 +230,6 @@ CPLString OGRXPlaneReader::readStringUntilEnd(int iFirstTokenIndice)
     CPLString osResult;
     if (nTokens > iFirstTokenIndice)
     {
-        int i;
         int nIDsToSum = nTokens - iFirstTokenIndice;
         const unsigned char* pszStr = (const unsigned char*)papszTokens[iFirstTokenIndice];
         for(int j=0;pszStr[j];j++)
@@ -240,7 +239,7 @@ CPLString OGRXPlaneReader::readStringUntilEnd(int iFirstTokenIndice)
             else
                 CPLDebug("XPlane", "Line %d : string with non ASCII characters", nLineNumber);
         }
-        for(i=1;i<nIDsToSum;i++)
+        for( int i=1; i < nIDsToSum; i++ )
         {
             osResult += " ";
             pszStr = (const unsigned char*)papszTokens[iFirstTokenIndice + i];
@@ -305,8 +304,7 @@ OGRXPlaneEnumeration::OGRXPlaneEnumeration(const char *pszEnumerationName,
 
 const char* OGRXPlaneEnumeration::GetText(int eValue)
 {
-    int i;
-    for(i=0;i<m_nElements;i++)
+    for( int i=0; i < m_nElements; i++ )
     {
         if (m_osElements[i].eValue == eValue)
             return m_osElements[i].pszText;
@@ -322,10 +320,9 @@ const char* OGRXPlaneEnumeration::GetText(int eValue)
 
 int OGRXPlaneEnumeration::GetValue(const char* pszText)
 {
-    int i;
     if (pszText != NULL)
     {
-        for(i=0;i<m_nElements;i++)
+        for( int i=0; i < m_nElements; i++ )
         {
             if (strcmp(m_osElements[i].pszText, pszText) == 0)
                 return m_osElements[i].eValue;

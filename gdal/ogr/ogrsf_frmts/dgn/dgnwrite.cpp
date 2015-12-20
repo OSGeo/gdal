@@ -881,7 +881,6 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
     DGNElemMultiPoint *psMP;
     DGNElemCore *psCore;
     DGNInfo *psDGN = (DGNInfo *) hDGN;
-    int i;
     DGNPoint sMin, sMax;
 
     CPLAssert( nType == DGNT_LINE 
@@ -950,7 +949,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
         psCore->raw_data[36] = (unsigned char) (nPointCount % 256);
         psCore->raw_data[37] = (unsigned char) (nPointCount/256);
 
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
             DGNInverseTransformPointToInt( psDGN, pasVertices + i, 
                                            psCore->raw_data + 38 
                                            + psDGN->dimension * i * 4 );
@@ -962,7 +961,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
     sMin = sMax = pasVertices[0];
-    for( i = 1; i < nPointCount; i++ )
+    for( int i = 1; i < nPointCount; i++ )
     {
         sMin.x = MIN(pasVertices[i].x,sMin.x);
         sMin.y = MIN(pasVertices[i].y,sMin.y);
