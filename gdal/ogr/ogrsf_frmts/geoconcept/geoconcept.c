@@ -2265,6 +2265,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   else
   {
     *theSubType= _getSubType_GCIO(theClass,whereSubType);
+    CPLAssert(*theSubType != NULL);
   }
   snprintf(tdst, kItemSize_GCIO-1, "%s.%s", GetTypeName_GCIO(theClass), GetSubTypeName_GCIO(*theSubType));
   tdst[kItemSize_GCIO-1]= '\0';
