@@ -1568,7 +1568,8 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
     adfCT[1] = (psPoint->y + psDGN->origin_y) / psDGN->scale;
     adfCT[2] = (psPoint->z + psDGN->origin_z) / psDGN->scale;
 
-    for( i = 0; i < psDGN->dimension; i++ )
+    const int nIter = MIN(3, psDGN->dimension);
+    for( i = 0; i < nIter; i++ )
     {
         GInt32 nCTI;
         unsigned char *pabyCTI = (unsigned char *) &nCTI;
