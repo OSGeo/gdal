@@ -998,8 +998,8 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
     {
         CPLDebug( "GEOCONCEPT",
                   "This SysCoord value: %d:%d was translated to : %s",
-                  GetSysCoordSystemID_GCSRS(syscoord),
-                  GetSysCoordTimeZone_GCSRS(syscoord),
+                  syscoord ? GetSysCoordSystemID_GCSRS(syscoord) : -1,
+                  syscoord ? GetSysCoordTimeZone_GCSRS(syscoord) : -1,
                   pszWKT );
         CPLFree( pszWKT );
     }
