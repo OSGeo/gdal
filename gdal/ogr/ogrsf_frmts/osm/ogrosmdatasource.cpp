@@ -3070,7 +3070,6 @@ int OGROSMDataSource::SetCacheSize()
                       "Unrecognized value for PRAGMA cache_size : %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
-            rc = SQLITE_OK;
         }
     }
     return TRUE;
