@@ -6401,12 +6401,10 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         default:
             CPLDebug( "GDAL_netCDF", "NCDFGetAttr unsupported type %d for attribute %s",
                       nAttrType,pszAttrName);
-            CPLFree( pszAttrValue );
-            pszAttrValue = NULL;
             break;
     }
 
-    if ( nAttrLen > 1  && nAttrType!= NC_CHAR )    
+    if ( nAttrLen > 1  && nAttrType!= NC_CHAR )
         NCDFSafeStrcat(&pszAttrValue, "}", &nAttrValueSize);
 
     /* set return values */
