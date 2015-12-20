@@ -64,7 +64,7 @@ static const MetadataItem asMetadata[] =
 CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
 {
     CPLXMLNode* psIter = psXML;
-    while(psIter)
+    do
     {
         if (psIter->eType == CXT_Element)
         {
@@ -78,7 +78,7 @@ CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
             }
         }
         psIter = psIter->psNext;
-    }
+    } while(psIter);
 
     psIter = psXML->psChild;
     while(psIter)
