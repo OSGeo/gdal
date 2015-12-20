@@ -464,10 +464,9 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
 /* -------------------------------------------------------------------- */
 /*      Do we have this field indexed already?                          */
 /* -------------------------------------------------------------------- */
-    int i;
     OGRFieldDefn *poFldDefn=poLayer->GetLayerDefn()->GetFieldDefn(iField);
 
-    for( i = 0; i < nIndexCount; i++ )
+    for( int i = 0; i < nIndexCount; i++ )
     {
         if( papoIndexList[i]->iField == iField )
         {
@@ -547,10 +546,10 @@ OGRErr OGRMILayerAttrIndex::DropIndex( int iField )
 /* -------------------------------------------------------------------- */
 /*      Do we have this field indexed already?                          */
 /* -------------------------------------------------------------------- */
-    int i;
     OGRFieldDefn *poFldDefn=poLayer->GetLayerDefn()->GetFieldDefn(iField);
 
-    for( i = 0; i < nIndexCount; i++ )
+    int i = 0;
+    for( ; i < nIndexCount; i++ )
     {
         if( papoIndexList[i]->iField == iField )
             break;

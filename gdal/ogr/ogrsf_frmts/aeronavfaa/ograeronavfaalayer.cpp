@@ -246,8 +246,7 @@ OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
         poFeature->SetFID(nNextFID ++);
 
-        int i;
-        for(i=0;i<psRecordDesc->nFields;i++)
+        for( int i=0; i < psRecordDesc->nFields; i++ )
         {
             int nWidth = psRecordDesc->pasFields[i].nLastCol - psRecordDesc->pasFields[i].nStartCol + 1;
             strncpy(szBuffer, pszLine + psRecordDesc->pasFields[i].nStartCol - 1, nWidth);
@@ -356,8 +355,7 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
         poFeature->SetFID(nNextFID ++);
 
-        int i;
-        for(i=0;i<psRecordDesc->nFields;i++)
+        for( int i=0; i < psRecordDesc->nFields; i++ )
         {
             int nWidth = psRecordDesc->pasFields[i].nLastCol - psRecordDesc->pasFields[i].nStartCol + 1;
             strncpy(szBuffer, pszLine + psRecordDesc->pasFields[i].nStartCol - 1, nWidth);
@@ -608,8 +606,7 @@ OGRAeronavFAAIAPLayer::OGRAeronavFAAIAPLayer( VSILFILE* fp,
 
     psRecordDesc = &IAP;
 
-    int i;
-    for(i=0;i<psRecordDesc->nFields;i++)
+    for( int i=0; i < psRecordDesc->nFields; i++ )
     {
         OGRFieldDefn oField( psRecordDesc->pasFields[i].pszFieldName, psRecordDesc->pasFields[i].eType );
         oField.SetWidth(psRecordDesc->pasFields[i].nLastCol - psRecordDesc->pasFields[i].nStartCol + 1);
@@ -715,8 +712,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
         poFeature->SetField(2, osAPTName);
         poFeature->SetField(3, osAPTId);
 
-        int i;
-        for(i=0;i<psRecordDesc->nFields;i++)
+        for( int i=0; i<psRecordDesc->nFields; i++)
         {
             int nWidth = psRecordDesc->pasFields[i].nLastCol - psRecordDesc->pasFields[i].nStartCol + 1;
             strncpy(szBuffer, pszLine + psRecordDesc->pasFields[i].nStartCol - 1, nWidth);

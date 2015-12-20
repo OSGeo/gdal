@@ -2179,8 +2179,7 @@ OGRFeature*
 
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
-    int i;
-    for(i=0;i<4;i++)
+    for( int i=0; i < 4; i++ )
         linearRing->setPoint(i, adfLon[i], adfLat[i]);
     linearRing->setPoint(4, adfLon[0], adfLat[0]);
     OGRPolygon* polygon = new OGRPolygon();
@@ -2262,8 +2261,7 @@ OGRFeature*
 
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
-    int i;
-    for(i=0;i<4;i++)
+    for( int i=0; i<4; i++ )
         linearRing->setPoint(i, adfLon[i], adfLat[i]);
     linearRing->setPoint(4, adfLon[0], adfLat[0]);
     OGRPolygon* polygon = new OGRPolygon();
@@ -2420,8 +2418,7 @@ OGRFeature*
 
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
-    int i;
-    for(i=0;i<4;i++)
+    for( int i=0; i<4; i++ )
         linearRing->setPoint(i, adfLon[i], adfLat[i]);
     linearRing->setPoint(4, adfLon[0], adfLat[0]);
     OGRPolygon* polygon = new OGRPolygon();
@@ -2612,8 +2609,7 @@ OGRFeature*
 
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
-    int i;
-    for(i=0;i<4;i++)
+    for( int i=0; i<4; i++ )
         linearRing->setPoint(i, adfLon[i], adfLat[i]);
     linearRing->setPoint(4, adfLon[0], adfLat[0]);
     OGRPolygon* polygon = new OGRPolygon();
@@ -2709,8 +2705,7 @@ OGRFeature*
 
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
-    int i;
-    for(i=0;i<4;i++)
+    for( int i=0; i<4; i++ )
         linearRing->setPoint(i, adfLon[i], adfLat[i]);
     linearRing->setPoint(4, adfLon[0], adfLat[0]);
     OGRPolygon* polygon = new OGRPolygon();

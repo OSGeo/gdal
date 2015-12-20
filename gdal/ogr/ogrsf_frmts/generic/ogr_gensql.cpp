@@ -1222,9 +1222,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
         /*      Operation - start by unparsing all the subexpressions.       */
         /* ----------------------------------------------------------------- */
         std::vector<char*> apszSubExpr;
-        int i;
-
-        for( i = 0; i < poExpr->nSubExprCount; i++ )
+        for( int i = 0; i < poExpr->nSubExprCount; i++ )
         {
             CPLString osSubExpr = GetFilterForJoin(poExpr->papoSubExpr[i], poSrcFeat,
                                                    poJoinLayer, secondary_table);
@@ -1242,7 +1240,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
         /* ----------------------------------------------------------------- */
         /*      cleanup subexpressions.                                      */
         /* ----------------------------------------------------------------- */
-        for( i = 0; i < poExpr->nSubExprCount; i++ )
+        for( int i = 0; i < poExpr->nSubExprCount; i++ )
             CPLFree( apszSubExpr[i] );
 
         return osExpr;

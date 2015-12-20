@@ -441,8 +441,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             if (interestFeatureType == BNA_READ_ALL ||
                 interestFeatureType == currentFeatureType)
             {
-              int i;
-              for(i=0;i<NB_MAX_BNA_IDS;i++)
+              for( int i=0; i < NB_MAX_BNA_IDS; i++ )
               {
                 if (tmpBufferLength[i] && tmpBuffer[i][0])
                 {
