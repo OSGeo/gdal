@@ -194,7 +194,7 @@ UnionColorMap(const ColorMapObject * ColorIn1,
     NewBitSize = BitSize(CrntSlot);
     RoundUpTo = (1 << NewBitSize);
 
-    if (RoundUpTo != ColorUnion->ColorCount) {
+    if (RoundUpTo > 0 && RoundUpTo != ColorUnion->ColorCount) {
         register GifColorType *Map = ColorUnion->Colors;
 
         /* 
