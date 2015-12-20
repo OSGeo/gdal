@@ -182,7 +182,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
 OGRDGNLayer::~OGRDGNLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 )
     {
         CPLDebug( "Mem", "%d features read on layer '%s'.",
                   static_cast<int>( m_nFeaturesRead ),
