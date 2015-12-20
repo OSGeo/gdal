@@ -75,6 +75,8 @@ int GTIFWriteKeys(GTIF *gt)
     {
         tempData.tk_asciiParams =
             (char *)_GTIFcalloc(tempData.tk_asciiParamsLength + 1);
+        if( tempData.tk_asciiParams == NULL )
+            return 0;
         tempData.tk_asciiParams[tempData.tk_asciiParamsLength] = '\0';
     }
 
@@ -83,7 +85,14 @@ int GTIFWriteKeys(GTIF *gt)
     entptr = (KeyEntry*)(gt->gt_short + 4);
     for (i=0; i< gt->gt_num_keys; i++,entptr++)
     {
-        if (!WriteKey(gt,&tempData,entptr,keyptr+sortkeys[i])) return 0;
+        if (!WriteKey(gt,&tempData,entptr,keyptr+sortkeys[i]))
+        {
+            if (tempData.tk_asciiParamsLength > 0)
+            {
+                _GTIFFree (tempData.tk_asciiParams);
+            }
+            return 0;
+        }
     }	
 	
     /* Write out the Key Directory */
@@ -149,6 +158,8 @@ static int WriteKey(GTIF* gt, TempKeyData* tempData,
             ((double*)keyptr->gk_data - gt->gt_double);
         break;
       case TYPE_ASCII:
+        if( tempData->tk_asciiParams == NULL )
+            return 0;
         entptr->ent_location = GTIFF_ASCIIPARAMS;
         entptr->ent_val_offset = (pinfo_t) tempData->tk_asciiParamsOffset;
         _GTIFmemcpy (tempData->tk_asciiParams + tempData->tk_asciiParamsOffset
@@ -174,7 +185,12 @@ static int SortKeys(GTIF* gt,int *sortkeys)
 {
     int i, did_work;
 
-    for( i = 0; i < gt->gt_num_keys; i++ )
+    /* A bit convoluted to make Clang Static Analyzer happy */
+    if( gt->gt_num_keys <= 0 )
+        return 1;
+
+    sortkeys[0] = 1;
+    for( i = 1; i < gt->gt_num_keys; i++ )
         sortkeys[i] = i+1;
 
     do {  /* simple bubble sort */
