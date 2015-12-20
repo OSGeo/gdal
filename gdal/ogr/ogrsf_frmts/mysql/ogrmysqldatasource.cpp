@@ -614,7 +614,7 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
              nSRSId, pszWKT );
 
     if( !mysql_query( GetConn(), osCommand ) )
-        hResult = mysql_store_result( GetConn() );
+        /*hResult = */ mysql_store_result( GetConn() ); /* FIXME ? */
 
     // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );

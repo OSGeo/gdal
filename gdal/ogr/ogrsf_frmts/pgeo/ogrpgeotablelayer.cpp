@@ -132,6 +132,7 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     if( eOGRType != wkbUnknown && eOGRType != wkbNone && bHasZ )
         eOGRType = wkbSetZ(eOGRType);
+    CPL_IGNORE_RET_VAL(eOGRType);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */

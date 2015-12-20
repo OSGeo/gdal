@@ -898,7 +898,10 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
         if (lSeek!=0)
         {
             if (ZSEEK(s->z_filefunc, s->filestream,lSeek,ZLIB_FILEFUNC_SEEK_CUR)==0)
+            {
                 lSeek=0;
+                CPL_IGNORE_RET_VAL(lSeek);
+            }
             else
                 err=UNZ_ERRNO;
         }
@@ -1421,9 +1424,9 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3 (unzFile file, int* method,
         }
     }
 
-    if ((s->cur_file_info.compression_method!=0) &&
+    /*if ((s->cur_file_info.compression_method!=0) &&
         (s->cur_file_info.compression_method!=Z_DEFLATED))
-        err=UNZ_BADZIPFILE;
+        err=UNZ_BADZIPFILE;*/
 
     pfile_in_zip_read_info->crc32_wait=s->cur_file_info.crc;
     pfile_in_zip_read_info->crc32=0;
