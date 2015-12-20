@@ -217,7 +217,7 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
 
     int matchcount=CSLCount(substs);
     int keycount=CSLCount(keys);
-    if (keycount<matchcount)
+    if (keycount<matchcount || keys == NULL)
     {
         CSLDestroy(papszTokens);
         return;
