@@ -214,38 +214,38 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
     OGRSpatialReference* poSRS = NULL;
     if (pszSRSName)
     {
-        int i;
-
-        poSRS = new OGRSpatialReference();
-
         const char *pszHandle = strrchr( pszSRSName, ':' );
         if( pszHandle != NULL )
+        {
             pszHandle += 1;
 
-        for( i = 0; apszURNNames[i*2+0] != NULL; i++ )
-        {
-            const char *pszTarget = apszURNNames[i*2+0];
-            int nTLen = static_cast<int>(strlen(pszTarget));
+            poSRS = new OGRSpatialReference();
 
-            // Are we just looking for a prefix match?
-            if( pszTarget[nTLen-1] == '*' )
+            for( int i = 0; apszURNNames[i*2+0] != NULL; i++ )
             {
-                if( EQUALN(pszTarget,pszHandle,nTLen-1) )
-                    pszSRSName = apszURNNames[i*2+1];
-            }
-            else
-            {
-                if( EQUAL(pszTarget,pszHandle) )
-                    pszSRSName = apszURNNames[i*2+1];
-            }
-        }
+                const char *pszTarget = apszURNNames[i*2+0];
+                int nTLen = static_cast<int>(strlen(pszTarget));
 
-        if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
-        {
-            CPLDebug( "NAS", "Failed to translate srsName='%s'",
-                      pszSRSName );
-            delete poSRS;
-            poSRS = NULL;
+                // Are we just looking for a prefix match?
+                if( pszTarget[nTLen-1] == '*' )
+                {
+                    if( EQUALN(pszTarget,pszHandle,nTLen-1) )
+                        pszSRSName = apszURNNames[i*2+1];
+                }
+                else
+                {
+                    if( EQUAL(pszTarget,pszHandle) )
+                        pszSRSName = apszURNNames[i*2+1];
+                }
+            }
+
+            if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
+            {
+                CPLDebug( "NAS", "Failed to translate srsName='%s'",
+                        pszSRSName );
+                delete poSRS;
+                poSRS = NULL;
+            }
         }
     }
 
