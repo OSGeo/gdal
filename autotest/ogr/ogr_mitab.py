@@ -2108,6 +2108,27 @@ def ogr_mitab_39():
     return 'success'
 
 ###############################################################################
+# Read various geometry types from .mif but potentially truncated
+
+def ogr_mitab_40():
+
+    lines = open('data/all_geoms.mif', 'rt').readlines()
+
+    for i in range(len(lines)):
+        content = ''.join(l for l in lines[0:i])
+        gdal.FileFromMemBuffer('/vsimem/ogr_mitab_40.mif', content)
+        with gdaltest.error_handler():
+            ds = ogr.Open('/vsimem/ogr_mitab_40.mif')
+            if ds is not None:
+                lyr = ds.GetLayer(0)
+                for f in lyr:
+                    pass
+
+    gdal.Unlink('/vsimem/ogr_mitab_40.mif')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2160,6 +2181,7 @@ gdaltest_list = [
     ogr_mitab_37,
     ogr_mitab_38,
     ogr_mitab_39,
+    ogr_mitab_40,
     ogr_mitab_cleanup
     ]
 
