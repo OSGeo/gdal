@@ -259,18 +259,13 @@ SGIRasterBand::SGIRasterBand(SGIDataset* poDSIn, int nBandIn)
 {
   poDS = poDSIn;
   nBand = nBandIn;
-  if(poDS == NULL)
-  {
-    eDataType = GDT_Byte;
-  }
-  else
-  {
-    if(static_cast<int>( poDSIn->image.bpc ) == 1)
+
+  if(static_cast<int>( poDSIn->image.bpc ) == 1)
       eDataType = GDT_Byte;
-    else
+  else
       eDataType = GDT_Int16;
-  }
-  nBlockXSize = poDSIn->nRasterXSize;;
+
+  nBlockXSize = poDSIn->nRasterXSize;
   nBlockYSize = 1;
 }
 
