@@ -45,10 +45,10 @@ clean:
 	rm -f *.o $(O_OBJ) libjpeg12/*.c libjpeg12/*.h
 
 ../o/%.$(OBJ_EXT):	libjpeg/%.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -DENABLE_LIBJPEG_NO_RETURN $< -o $@
 
 ../o/%.$(OBJ_EXT):	libjpeg12/%.c
-	$(CC) -c $(XTRA_OPT_12) $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CC) -c $(XTRA_OPT_12) $(CPPFLAGS) $(CFLAGS) -DENABLE_LIBJPEG_NO_RETURN $< -o $@
 
 all:	$(OBJ:.o=.$(OBJ_EXT))
 
