@@ -2635,7 +2635,8 @@ void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
       }
    }
 
-   qsort (freq, numFreq, sizeof (freq[0]), freqCompare);
+   if( freq )
+     qsort (freq, numFreq, sizeof (freq[0]), freqCompare);
 
    mallocSprintf (ans, "%s | count\n", comment);
    snprintf (format, sizeof(format), "%%.%df | %%d\n", decimal);
