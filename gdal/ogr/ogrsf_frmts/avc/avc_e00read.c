@@ -1306,7 +1306,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
         }
     }
 
-    if ((numTables = CSLCount(papszTables)) > 0)
+    if (papszTables != NULL && (numTables = CSLCount(papszTables)) > 0)
     {
         iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections), 
                                       &(psInfo->numSections), numTables+2);
