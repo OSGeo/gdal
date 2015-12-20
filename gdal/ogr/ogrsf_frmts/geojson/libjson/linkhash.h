@@ -282,7 +282,7 @@ extern int lh_table_delete(struct lh_table *t, const void *k);
 
 extern int lh_table_length(struct lh_table *t);
 
-void lh_abort(const char *msg, ...);
+void lh_abort(const char *msg, ...) CPL_NO_RETURN;
 void lh_table_resize(struct lh_table *t, int new_size);
 
 #ifdef __cplusplus
