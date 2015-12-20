@@ -4085,6 +4085,33 @@ def ogr_shape_87():
     return 'success'
 
 ###############################################################################
+# Test REPACK after SetFeature() and geometry change, without DBF
+
+def ogr_shape_88():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_88.shp')
+    lyr = ds.CreateLayer('ogr_shape_88')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_shape_88.dbf')
+
+    ds = ogr.Open('/vsimem/ogr_shape_88.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1,2 2)'))
+    lyr.SetFeature(f)
+
+    ds.ExecuteSQL('REPACK ogr_shape_88')
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_shape_cleanup():
@@ -4119,6 +4146,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_83.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_84.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_85.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_88.shp' )
 
     return 'success'
 
@@ -4212,6 +4240,7 @@ gdaltest_list = [
     ogr_shape_85,
     ogr_shape_86,
     ogr_shape_87,
+    ogr_shape_88,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
