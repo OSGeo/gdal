@@ -640,9 +640,16 @@ struct jpeg_decompress_struct {
 
 /* Error handler object */
 
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define LIBJPEG_NO_RETURN                                __attribute__((noreturn))
+#else
+#define LIBJPEG_NO_RETURN
+#endif
+
+
 struct jpeg_error_mgr {
   /* Error exit handler: does not return to caller */
-  JMETHOD(void, error_exit, (j_common_ptr cinfo));
+  JMETHOD(void, error_exit, (j_common_ptr cinfo)) LIBJPEG_NO_RETURN;
   /* Conditionally emit a trace or warning message */
   JMETHOD(void, emit_message, (j_common_ptr cinfo, int msg_level));
   /* Routine that actually outputs a trace or error message */
