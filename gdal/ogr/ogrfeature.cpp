@@ -2509,10 +2509,10 @@ int OGRFeature::GetFieldAsDateTime( int iField,
                                     int *pnTZFlag )
 {
     float fSecond;
-    int nRet = GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
+    int bRet = GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
                                    &fSecond, pnTZFlag);
-    if( pnSecond ) *pnSecond = (int)fSecond;
-    return nRet;
+    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    return bRet;
 }
 
 /************************************************************************/
@@ -2551,12 +2551,12 @@ int OGR_F_GetFieldAsDateTime( OGRFeatureH hFeat, int iField,
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTime", 0 );
 
     float fSecond;
-    int nRet =((OGRFeature *)hFeat)->GetFieldAsDateTime( iField,
+    int bRet =((OGRFeature *)hFeat)->GetFieldAsDateTime( iField,
                                                       pnYear, pnMonth, pnDay,
                                                       pnHour, pnMinute,&fSecond,
                                                       pnTZFlag );
-    if( pnSecond ) *pnSecond = (int)fSecond;
-    return nRet;
+    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    return bRet;
 }
 
 /************************************************************************/
@@ -3082,7 +3082,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                 pszValue, ",:()", 0 );
         }
 
-        if( CSLCount(papszValueList) == 0
+        if( papszValueList == NULL || *papszValueList == NULL
             || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
         {
             /* do nothing - the count does not match entries */
