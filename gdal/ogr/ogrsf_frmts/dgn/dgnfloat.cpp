@@ -117,14 +117,8 @@ void    DGN2IEEEDouble(void * dbl)
     src = (unsigned char *) &dt;
     dest = (unsigned char *) dbl;
 
-    dest[0] = src[4];
-    dest[1] = src[5];
-    dest[2] = src[6];
-    dest[3] = src[7];
-    dest[4] = src[0];
-    dest[5] = src[1];
-    dest[6] = src[2];
-    dest[7] = src[3];
+    memcpy(dest + 0, src + 4, 4);
+    memcpy(dest + 4, src + 0, 4);
 #else
     memcpy( dbl, &dt, 8 );
 #endif
@@ -230,14 +224,10 @@ void    IEEE2DGNDouble(void * dbl)
     dest = (GByte *) dbl;
 
 #ifdef CPL_LSB
-    dest[2] = src[0];
-    dest[3] = src[1];
-    dest[0] = src[2];
-    dest[1] = src[3];
-    dest[6] = src[4];
-    dest[7] = src[5];
-    dest[4] = src[6];
-    dest[5] = src[7];
+    memcpy(dest + 2, src + 0, 2);
+    memcpy(dest + 0, src + 2, 2);
+    memcpy(dest + 6, src + 4, 2);
+    memcpy(dest + 4, src + 6, 2);
 #else
     dest[1] = src[0];
     dest[0] = src[1];
