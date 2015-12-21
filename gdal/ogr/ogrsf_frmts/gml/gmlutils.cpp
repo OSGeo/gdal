@@ -194,9 +194,8 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                                           bool bFaceHoleNegative)
 {
     OGRGeometry* poGeom = NULL;
-    int i;
     OGRGeometryCollection* poCollection = NULL;
-    for(i=0;papsGeometry[i] != NULL;i++)
+    for( int i=0; papsGeometry[i] != NULL; i++ )
     {
         OGRGeometry* poSubGeom = GML2OGRGeometry_XMLNode( papsGeometry[i],
                                                           nPseudoBoolGetSecondaryGeometryOption,

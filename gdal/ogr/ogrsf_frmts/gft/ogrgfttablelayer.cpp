@@ -573,11 +573,9 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     osSQL += osTableName;
     osSQL += "' (";
 
-    int i;
-
     /* If there are longitude and latitude fields, use the latitude */
     /* field as the LOCATION field */
-    for(i=0;i<poFeatureDefn->GetFieldCount();i++)
+    for( int i=0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char* pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
         if (EQUAL(pszName, "latitude") || EQUAL(pszName, "lat") ||
@@ -607,7 +605,8 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
         poFeatureDefn->SetGeomType( eGTypeForCreation );
     }
 
-    for(i=0;i<poFeatureDefn->GetFieldCount();i++)
+    int i = 0;
+    for( ; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if (i > 0)
             osSQL += ", ";

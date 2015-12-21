@@ -455,8 +455,7 @@ void GMLReader::CleanupParser()
         XML_ParserFree(oParser);
     oParser = NULL;
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i=nFeatureTabIndex; i < nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
