@@ -5773,7 +5773,9 @@ int netCDFDataset::DefVarDeflate(
             size_t chunksize[ MAX_NC_DIMS ];
             int nd;
             nc_inq_varndims( cdfid, nVarId, &nd );
-            for( int i=0; i<nd; i++ ) chunksize[i] = (size_t)1;
+            chunksize[0] = (size_t)1;
+            chunksize[1] = (size_t)1;
+            for( int i=2; i<nd; i++ ) chunksize[i] = (size_t)1;
             chunksize[nd-1] = (size_t)nRasterXSize;
 
             CPLDebug( "GDAL_netCDF", 
