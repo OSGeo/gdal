@@ -1840,7 +1840,12 @@ void DGNBuildIndex( DGNInfo *psDGN )
             }
             else
             {
-                memcpy( &(psDGN->min_x), anRegion, sizeof(GInt32) * 6 );
+                psDGN->min_x = anRegion[0];
+                psDGN->min_y = anRegion[1];
+                psDGN->min_z = anRegion[2];
+                psDGN->max_x = anRegion[3];
+                psDGN->max_y = anRegion[4];
+                psDGN->max_z = anRegion[5];
                 psDGN->got_bounds = TRUE;
             }
         }
