@@ -1047,6 +1047,7 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
     segptr.Put( data_blocks+2, 23, 9 );
 
     // Update in memory copy of segment pointers.
+    assert(segment >= 1);
     memcpy( segment_pointers.buffer+(segment-1)*32, segptr.buffer, 32);
 
     // Update on disk. 
