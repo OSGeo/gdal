@@ -69,7 +69,7 @@ NTFRecord::NTFRecord( FILE * fp )
         while( nNewLength > 0 && szLine[nNewLength-1] == ' ' )
                szLine[--nNewLength] = '\0';
 
-        if( szLine[nNewLength-1] != '%' )
+        if( nNewLength < 2 || szLine[nNewLength-1] != '%' )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Corrupt NTF record, missing end '%%'." );
@@ -92,7 +92,7 @@ NTFRecord::NTFRecord( FILE * fp )
         }
         else
         {
-            if( !EQUALN(szLine,"00",2) )
+            if( !EQUALN(szLine,"00",2) || nNewLength < 4 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Invalid line");
                 VSIFree(pszData);
