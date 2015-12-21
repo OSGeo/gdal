@@ -132,7 +132,8 @@ void tr_strcpy( XMLCh *panXMLString, const char *pszCString )
 
     pwszUTF16 = CPLRecodeToWChar( pszCString, CPL_ENC_UTF8, "WCHAR_T" );
 
-    for( int i = 0; pwszUTF16[i] != 0; i++ )
+    int i = 0;
+    for( ; pwszUTF16[i] != 0; i++ )
         panXMLString[i] = pwszUTF16[i];
 
     panXMLString[i] = 0;
@@ -173,7 +174,8 @@ void tr_strcpy( char *pszCString, const XMLCh *panXMLString )
 /* -------------------------------------------------------------------- */
     wchar_t *pwszSource = (wchar_t *) CPLCalloc(sizeof(wchar_t),
                                                 tr_strlen(panXMLStringOriginal)+1 );
-    for( int i = 0; panXMLString[i] != 0; i++ )
+    int i = 0;
+    for( ; panXMLString[i] != 0; i++ )
         pwszSource[i] = panXMLString[i];
     pwszSource[i] = 0;
 
