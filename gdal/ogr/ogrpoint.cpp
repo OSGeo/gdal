@@ -355,7 +355,8 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
     else
     {
-        memcpy( pabyData+5, &x, 16 );
+        memcpy( pabyData+5, &x, 8 );
+        memcpy( pabyData+5+8, &y, 8 );
         if( getCoordinateDimension() == 3 )
         {
             memcpy( pabyData + 5 + 16, &z, 8 );
