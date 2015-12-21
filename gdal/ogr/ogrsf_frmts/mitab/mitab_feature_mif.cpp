@@ -1326,8 +1326,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             CSLDestroy(papszToken);
             papszToken = CSLTokenizeString2(fp->GetLine(), 
                                             " \t", CSLT_HONOURSTRINGS);
-            if (CSLCount(papszToken) !=1 )
-              m_dRoundXRadius = m_dRoundYRadius = atof(papszToken[1])/2.0;
+            if (CSLCount(papszToken) ==1 )
+              m_dRoundXRadius = m_dRoundYRadius = CPLAtof(papszToken[0])/2.0;
         }
     }
     CSLDestroy(papszToken);
