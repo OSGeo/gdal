@@ -426,7 +426,8 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol)
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     if( m_nShiftXPixelsMod )
     {
-        for( int i = 0; i < 4; i++ )
+        int i = 0;
+        for( ; i < 4; i++ )
         {
             if( m_asCachedTilesDesc[i].nRow == nRow &&
                 m_asCachedTilesDesc[i].nCol == nCol )
