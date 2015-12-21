@@ -1652,6 +1652,9 @@ void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
     char szWork[400];
     char* pszWork;
 
+    if( nLength <= 0 )
+        return;
+
     if (nLength >= (int)(sizeof(szWork) - 1))
         pszWork = (char*)CPLMalloc(nLength + 1);
     else
