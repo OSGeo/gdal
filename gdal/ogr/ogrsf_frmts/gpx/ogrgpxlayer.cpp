@@ -365,8 +365,7 @@ OGRGPXLayer::~OGRGPXLayer()
     CPLFree(pszSubElementName);
     CPLFree(pszSubElementValue);
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i = nFeatureTabIndex; i < nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
 
@@ -427,8 +426,7 @@ void OGRGPXLayer::ResetReading()
     pszSubElementValue = NULL;
     nSubElementValueLen = 0;
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i = nFeatureTabIndex;i<nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
@@ -457,8 +455,7 @@ void OGRGPXLayer::ResetReading()
 static char* OGRGPX_GetOGRCompatibleTagName(const char* pszName)
 {
     char* pszModName = CPLStrdup(pszName);
-    int i;
-    for(i=0;pszModName[i] != 0;i++)
+    for( int i = 0; pszModName[i] != 0; i++ )
     {
         if (pszModName[i] == ':')
             pszModName[i] = '_';
@@ -760,8 +757,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             AddStrToSubElementValue(
                (ppszAttr[0] == NULL) ? CPLSPrintf("<%s>", pszName) :
                                     CPLSPrintf("<%s ", pszName));
-            int i;
-            for (i = 0; ppszAttr[i]; i += 2)
+            for( int i = 0; ppszAttr[i]; i += 2 )
             {
                 AddStrToSubElementValue(
                     CPLSPrintf("%s=\"%s\" ", ppszAttr[i], ppszAttr[i + 1]));
@@ -1113,8 +1109,7 @@ static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
     }
 
     char* pszModName = CPLStrdup(pszName);
-    int i;
-    for(i=0;pszModName[i] != 0;i++)
+    for( int i = 0;pszModName[i] != 0; i++ )
     {
         if (pszModName[i] == ' ')
             pszModName[i] = '_';
@@ -1197,18 +1192,17 @@ int OGRGPXLayer::OGRGPX_WriteXMLExtension(const char* pszTagName,
 
 static void AddIdent(VSILFILE* fp, int nIdentLevel)
 {
-    int i;
-    for(i=0;i<nIdentLevel;i++)
+    for( int i=0;i < nIdentLevel ; i++)
         VSIFPrintfL(fp, "  ");
 }
 
 void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLevel )
 {
     VSILFILE* fp = poDS->GetOutputFP();
-    int i;
 
     /* Begin with standard GPX fields */
-    for(i=iFirstGPXField;i<nGPXFields;i++)
+    int i = iFirstGPXField;
+    for( ; i < nGPXFields; i++ )
     { 
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
         if( poFeatureIn->IsFieldSet( i ) )
@@ -1503,10 +1497,9 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
         }
 
         int n = (line) ? line->getNumPoints() : 0;
-        int i;
         poDS->PrintLine("<rte>");
         WriteFeatureAttributes(poFeatureIn);
-        for(i=0;i<n;i++)
+        for( int i = 0; i < n; i++ )
         {
             double lat = line->getY(i);
             double lon = line->getX(i);
@@ -1557,11 +1550,10 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             {
                 OGRLineString* line = (OGRLineString*)poGeom;
                 int n = line->getNumPoints();
-                int i;
                 poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeatureIn);
                 poDS->PrintLine("  <trkseg>");
-                for(i=0;i<n;i++)
+                for( int  i =0;i<n;i++)
                 {
                     double lat = line->getY(i);
                     double lon = line->getX(i);
@@ -1588,8 +1580,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                 int nGeometries = ((OGRGeometryCollection*)poGeom)->getNumGeometries ();
                 poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeatureIn);
-                int j;
-                for(j=0;j<nGeometries;j++)
+                for( int j = 0; j < nGeometries; j++ )
                 {
                     OGRLineString* line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(j) );
                     int n = (line) ? line->getNumPoints() : 0;
@@ -2021,12 +2012,10 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
 
 static int OGRGPXIsInt(const char* pszStr)
 {
-    int i;
-
     while(*pszStr == ' ')
         pszStr++;
 
-    for(i=0;pszStr[i];i++)
+    for( int i = 0; pszStr[i]; i++ )
     {
         if (pszStr[i] == '+' || pszStr[i] == '-')
         {

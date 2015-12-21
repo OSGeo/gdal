@@ -27,34 +27,37 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_georss.h"
 #include "cpl_conv.h"
 #include "cpl_minixml.h"
 #include "ogr_api.h"
+#include "ogr_georss.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
-static const char* const apszAllowedATOMFieldNamesWithSubElements[] = { "author", "contributor", NULL };
+static const char* const apszAllowedATOMFieldNamesWithSubElements[] =
+    { "author", "contributor", NULL };
 
 static
-const char* const apszAllowedRSSFieldNames[] = {  "title", "link", "description", "author",
-                                            "category", "category_domain",
-                                            "comments",
-                                            "enclosure_url", "enclosure_length", "enclosure_type",
-                                            "guid", "guid_isPermaLink",
-                                            "pubDate",
-                                            "source", "source_url", NULL};
+const char* const apszAllowedRSSFieldNames[] =
+    {  "title", "link", "description", "author",
+       "category", "category_domain",
+       "comments",
+       "enclosure_url", "enclosure_length", "enclosure_type",
+       "guid", "guid_isPermaLink",
+       "pubDate",
+       "source", "source_url", NULL};
 
 static
-const char* const apszAllowedATOMFieldNames[] = { "category_term", "category_scheme", "category_label",
-                                            "content", "content_type", "content_xml_lang", "content_xml_base",
-                                            "summary", "summary_type", "summary_xml_lang", "summary_xml_base",
-                                            "author_name", "author_uri", "author_email",
-                                            "contributor_name", "contributor_uri", "contributor_email",
-                                            "link_href", "link_rel", "link_type", "link_length",
-                                            "id", "published", "rights", "source",
-                                            "title", "updated", NULL };
+const char* const apszAllowedATOMFieldNames[] =
+    { "category_term", "category_scheme", "category_label",
+      "content", "content_type", "content_xml_lang", "content_xml_base",
+      "summary", "summary_type", "summary_xml_lang", "summary_xml_base",
+      "author_name", "author_uri", "author_email",
+      "contributor_name", "contributor_uri", "contributor_email",
+      "link_href", "link_rel", "link_type", "link_length",
+      "id", "published", "rights", "source",
+      "title", "updated", NULL };
 
 #define IS_LAT_ELEMENT(pszName) (STARTS_WITH(pszName, "geo:lat") || \
                                  STARTS_WITH(pszName, "icbm:lat") || \
@@ -252,8 +255,7 @@ void OGRGeoRSSLayer::ResetReading()
         CPLHashSetDestroy(setOfFoundFields);
     setOfFoundFields = NULL;
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i=nFeatureTabIndex; i < nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
@@ -302,8 +304,7 @@ void OGRGeoRSSLayer::AddStrToSubElementValue(const char* pszStr)
 static char* OGRGeoRSS_GetOGRCompatibleTagName(const char* pszName)
 {
     char* pszModName = CPLStrdup(pszName);
-    int i;
-    for(i=0;pszModName[i] != 0;i++)
+    for( int i=0; pszModName[i] != 0; i++ )
     {
         if (pszModName[i] == ':')
             pszModName[i] = '_';
@@ -317,8 +318,9 @@ static char* OGRGeoRSS_GetOGRCompatibleTagName(const char* pszName)
 
 static int OGRGeoRSSLayerATOMTagHasSubElement(const char* pszName)
 {
-    unsigned int i;
-    for(i=0;apszAllowedATOMFieldNamesWithSubElements[i] != NULL;i++)
+    for( unsigned int i=0;
+         apszAllowedATOMFieldNamesWithSubElements[i] != NULL;
+         i++ )
     {
         if (strcmp(pszName, apszAllowedATOMFieldNamesWithSubElements[i]) == 0)
             return TRUE;
@@ -545,10 +547,8 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
 static void OGRGeoRSSLayerTrimLeadingAndTrailingSpaces(char* pszStr)
 {
-    int i;
-
     /* Trim leading spaces, tabs and newlines */
-    i = 0;
+    int i = 0;
     while(pszStr[i] != '\0' &&
           (pszStr[i] == ' ' || pszStr[i] == '\t' || pszStr[i] == '\n'))
         i ++;
@@ -720,8 +720,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
                 {
                     OGRLineString* poLineString = new OGRLineString ();
                     poGeom = poLineString;
-                    int i;
-                    for(i=0;i<nTokens;i+=2)
+                    for( int i = 0; i<nTokens; i+=2 )
                     {
                         poLineString->addPoint( CPLAtof(papszTokens[i+1]),
                                               CPLAtof(papszTokens[i]) );
@@ -735,8 +734,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
                     poPolygon->addRingDirectly(poLinearRing);
                     if (strcmp(pszName, "georss:polygon") == 0)
                     {
-                        int i;
-                        for(i=0;i<nTokens;i+=2)
+                        for( int i=0; i < nTokens; i+=2 )
                         {
                             poLinearRing->addPoint( CPLAtof(papszTokens[i+1]),
                                                     CPLAtof(papszTokens[i]) );
@@ -946,8 +944,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
 static int OGRGeoRSSLayerIsStandardFieldInternal(const char* pszName,
                                                  const char* const * papszNames)
 {
-    unsigned int i;
-    for( i = 0; papszNames[i] != NULL; i++)
+    for( unsigned int i = 0; papszNames[i] != NULL; i++)
     {
         if (strcmp(pszName, papszNames[i]) == 0)
         {
@@ -1174,8 +1171,9 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
         /* <author><name>...</name><uri>...</uri></author */
         if (eFormat == GEORSS_ATOM)
         {
-            unsigned int k;
-            for (k=0;apszAllowedATOMFieldNamesWithSubElements[k] != NULL;k++)
+            for( unsigned int k=0;
+                 apszAllowedATOMFieldNamesWithSubElements[k] != NULL;
+                 k++ )
             {
                 if (strcmp(pszElementName, apszAllowedATOMFieldNamesWithSubElements[k]) == 0 &&
                     pszAttributeName != NULL)
@@ -1186,8 +1184,7 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
                     VSIFPrintfL(fp, "      <%s>\n", pszElementName);
 
-                    int j;
-                    for(j = i; j < nFieldCount; j ++)
+                    for( int j = i; j < nFieldCount; j++ )
                     {
                         poFieldDefn = poFeatureDefn->GetFieldDefn( j );
                         if ( ! poFeatureIn->IsFieldSet( j ) )
@@ -1373,9 +1370,8 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
             char* pszTagName = CPLStrdup(pszName);
             if (IsStandardField(pszName) == FALSE)
             {
-                int j;
                 int nCountUnderscore = 0;
-                for(j=0;pszTagName[j] != 0;j++)
+                for( int j=0; pszTagName[j] != 0; j++ )
                 {
                     if (pszTagName[j] == '_')
                     {
@@ -1768,12 +1764,10 @@ void OGRGeoRSSLayer::LoadSchema()
 
 static int OGRGeoRSSIsInt(const char* pszStr)
 {
-    int i;
-
     while(*pszStr == ' ')
         pszStr++;
 
-    for(i=0;pszStr[i];i++)
+    for( int i=0; pszStr[i]; i++ )
     {
         if (pszStr[i] == '+' || pszStr[i] == '-')
         {

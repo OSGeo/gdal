@@ -144,8 +144,6 @@ void OGRGMLLayer::ResetReading()
 OGRFeature *OGRGMLLayer::GetNextFeature()
 
 {
-    int i;
-
     if (bWriter)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -226,7 +224,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         else if( iNextGMLId == 0 )
         {
             int j = 0;
-            i = static_cast<int>(strlen( pszGML_FID ))-1;
+            int i = static_cast<int>(strlen( pszGML_FID ))-1;
             while( i >= 0 && pszGML_FID[i] >= '0'
                           && pszGML_FID[i] <= '9' && j<20)
                 i--, j++;
@@ -281,7 +279,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             papoGeometries = (OGRGeometry**)
                 CPLCalloc( poFeatureDefn->GetGeomFieldCount(), sizeof(OGRGeometry*) );
             const char* pszSRSName = poDS->GetGlobalSRSName();
-            for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+            for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
             {
                 const CPLXMLNode* psGeom = poGMLFeature->GetGeometryRef(i);
                 if( psGeom != NULL )
@@ -325,7 +323,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 papoGeometries[m_iGeomFieldFilter] &&
                 !FilterGeometry( papoGeometries[m_iGeomFieldFilter] ) )
             {
-                for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+                for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
                 {
                     delete papoGeometries[i];
                 }
@@ -401,8 +399,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                   int nCount = psGMLProperty->nSubProperties;
                   int *panIntList = (int *) CPLMalloc(sizeof(int) * nCount );
 
-                  for( i = 0; i < nCount; i++ )
-                      panIntList[i] = atoi(psGMLProperty->papszSubProperties[i]);
+                  for( int i = 0; i < nCount; i++ )
+                      panIntList[i]
+                          = atoi(psGMLProperty->papszSubProperties[i]);
 
                   poOGRFeature->SetField( iDstField, nCount, panIntList );
                   CPLFree( panIntList );
@@ -414,8 +413,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                   int nCount = psGMLProperty->nSubProperties;
                   GIntBig *panIntList = (GIntBig *) CPLMalloc(sizeof(GIntBig) * nCount );
 
-                  for( i = 0; i < nCount; i++ )
-                      panIntList[i] = CPLAtoGIntBig(psGMLProperty->papszSubProperties[i]);
+                  for( int i = 0; i < nCount; i++ )
+                      panIntList[i]
+                          = CPLAtoGIntBig(psGMLProperty->papszSubProperties[i]);
 
                   poOGRFeature->SetField( iDstField, nCount, panIntList );
                   CPLFree( panIntList );
@@ -427,8 +427,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                   int nCount = psGMLProperty->nSubProperties;
                   double *padfList = (double *)CPLMalloc(sizeof(double)*nCount);
 
-                  for( i = 0; i < nCount; i++ )
-                      padfList[i] = CPLAtof(psGMLProperty->papszSubProperties[i]);
+                  for( int i = 0; i < nCount; i++ )
+                      padfList[i]
+                          = CPLAtof(psGMLProperty->papszSubProperties[i]);
 
                   poOGRFeature->SetField( iDstField, nCount, padfList );
                   CPLFree( padfList );
@@ -464,10 +465,13 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                   int nCount = psGMLProperty->nSubProperties;
                   int *panIntList = (int *) CPLMalloc(sizeof(int) * nCount );
 
-                  for( i = 0; i < nCount; i++ )
+                  for( int i = 0; i < nCount; i++ )
                   {
-                      panIntList[i] = ( strcmp(psGMLProperty->papszSubProperties[i], "true") == 0 ||
-                                        strcmp(psGMLProperty->papszSubProperties[i], "1") == 0 );
+                      panIntList[i] = (
+                          strcmp(psGMLProperty->papszSubProperties[i],
+                                 "true") == 0 ||
+                          strcmp(psGMLProperty->papszSubProperties[i],
+                                 "1") == 0 );
                   }
 
                   poOGRFeature->SetField( iDstField, nCount, panIntList );
@@ -488,7 +492,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         /* the attribute filter may use a special field like OGR_GEOMETRY */
         if( papoGeometries != NULL )
         {
-            for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+            for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
             {
                 poOGRFeature->SetGeomFieldDirectly( i, papoGeometries[i] );
             }
@@ -499,12 +503,13 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             poOGRFeature->SetGeometryDirectly( poGeom );
 
         /* Assign SRS */
-        for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+        for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
             poGeom = poOGRFeature->GetGeomFieldRef(i);
             if( poGeom != NULL )
             {
-                OGRSpatialReference* poSRS = poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
+                OGRSpatialReference* poSRS
+                    = poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
                 if (poSRS != NULL)
                     poGeom->assignSpatialReference(poSRS);
             }

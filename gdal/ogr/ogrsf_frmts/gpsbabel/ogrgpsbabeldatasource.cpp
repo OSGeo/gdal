@@ -132,8 +132,7 @@ int OGRGPSBabelDataSource::IsSpecialFile(const char* pszFilename)
 
 int OGRGPSBabelDataSource::IsValidDriverName(const char* pszGPSBabelDriverName)
 {
-    int i;
-    for(i=0;pszGPSBabelDriverName[i] != '\0';i++)
+    for( int i = 0; pszGPSBabelDriverName[i] != '\0'; i++ )
     {
         char ch = pszGPSBabelDriverName[i];
         if (!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||

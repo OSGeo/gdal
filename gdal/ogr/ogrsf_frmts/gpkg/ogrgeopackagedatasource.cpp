@@ -470,8 +470,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
 
 GDALGeoPackageDataset::~GDALGeoPackageDataset()
 {
-    int i;
-
     SetPamFlags(0);
 
     if( m_poParentDS == NULL && m_osRasterTable.size() &&
@@ -497,9 +495,9 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
         VSIUnlink(m_osTempDBFilename);
     }
 
-    for( i = 0; i < m_nLayers; i++ )
+    for( int i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
-    for( i = 0; i < m_nOverviewCount; i++ )
+    for( int i = 0; i < m_nOverviewCount; i++ )
         delete m_papoOverviewDS[i];
 
     CPLFree( m_papoLayers );
@@ -517,7 +515,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
 int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 {
-    int i;
     OGRErr err;
 
     CPLAssert( m_nLayers == 0 );
@@ -588,7 +585,9 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         "gpkg_contents"
     };
 
-    for ( i = 0; i < (int)(sizeof(aosGpkgTables) / sizeof(aosGpkgTables[0])); i++ )
+    for ( int i = 0;
+          i < (int)(sizeof(aosGpkgTables) / sizeof(aosGpkgTables[0]));
+          i++ )
     {
         SQLResult oResult;
         char *pszSQL = sqlite3_mprintf("pragma table_info('%q')", aosGpkgTables[i].c_str());
@@ -648,7 +647,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             m_papoLayers = (OGRGeoPackageTableLayer**)CPLMalloc(sizeof(OGRGeoPackageTableLayer*) * oResult.nRowCount);
 
-            for ( i = 0; i < oResult.nRowCount; i++ )
+            for ( int i = 0; i < oResult.nRowCount; i++ )
             {
                 const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
                 if ( ! pszTableName )
@@ -739,7 +738,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             bRet = TRUE;
 
             int nSDSCount = 0;
-            for ( i = 0; i < oResult.nRowCount; i++ )
+            for ( int i = 0; i < oResult.nRowCount; i++ )
             {
                 const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
                 const char *pszIdentifier = SQLResultGetValue(&oResult, 1, i);
@@ -3628,9 +3627,8 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
     {
-        unsigned int i;
-        for(i=0;i<sizeof(apszFuncsWithSideEffects)/
-                  sizeof(apszFuncsWithSideEffects[0]);i++)
+        for( unsigned int i=0; i < sizeof(apszFuncsWithSideEffects) /
+               sizeof(apszFuncsWithSideEffects[0]); i++ )
         {
             if( EQUALN(apszFuncsWithSideEffects[i], pszSQLCommand + 7,
                        strlen(apszFuncsWithSideEffects[i])) )

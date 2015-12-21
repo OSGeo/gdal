@@ -217,9 +217,8 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn, const char
     {
         if (strcmp(pszNameIn, "gpx") == 0)
         {
-            int i;
             validity = GPX_VALIDITY_VALID;
-            for(i=0; ppszAttr[i] != NULL; i+= 2)
+            for( int i = 0; ppszAttr[i] != NULL; i += 2)
             {
                 if (strcmp(ppszAttr[i], "version") == 0)
                 {

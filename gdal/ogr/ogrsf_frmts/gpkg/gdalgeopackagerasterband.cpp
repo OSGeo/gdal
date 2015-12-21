@@ -363,10 +363,9 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
         /* Expand color indexed to RGB(A) */
         if( poCT != NULL )
         {
-            int i;
             GByte abyCT[4*256];
             int nEntries = MIN(256, poCT->GetColorEntryCount());
-            for(i=0;i<nEntries;i++)
+            for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
                 abyCT[4*i] = (GByte)psEntry->c1;
@@ -374,14 +373,14 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
                 abyCT[4*i+2] = (GByte)psEntry->c3;
                 abyCT[4*i+3] = (GByte)psEntry->c4;
             }
-            for(;i<256;i++)
+            for( int i = nEntries; i < 256; i++ )
             {
                 abyCT[4*i] = 0;
                 abyCT[4*i+1] = 0;
                 abyCT[4*i+2] = 0;
                 abyCT[4*i+3] = 0;
             }
-            for(i=0;i<nBlockXSize * nBlockYSize;i++)
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
             {
                 GByte byVal = pabyTileData[i];
                 pabyTileData[i] = abyCT[4*byVal];
@@ -427,8 +426,7 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol)
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     if( m_nShiftXPixelsMod )
     {
-        int i;
-        for(i = 0; i < 4; i ++)
+        for( int i = 0; i < 4; i++ )
         {
             if( m_asCachedTilesDesc[i].nRow == nRow &&
                 m_asCachedTilesDesc[i].nCol == nCol )
@@ -778,8 +776,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
 
     int bAllDirty = TRUE;
     int bAllNonDirty = TRUE;
-    int i;
-    for(i=0;i<nBands;i++)
+    for( int i = 0; i < nBands; i++ )
     {
         if( m_asCachedTilesDesc[0].abBandDirty[i] )
             bAllNonDirty = FALSE;
@@ -797,7 +794,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     int bIsLossyFormat = FALSE;
     if( !bAllDirty )
     {
-        for(i=1;i<=3;i++)
+        for( int i = 1; i <= 3; i++ )
         {
             m_asCachedTilesDesc[i].nRow = -1;
             m_asCachedTilesDesc[i].nCol = -1;
@@ -805,7 +802,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         }
         ReadTile(nRow, nCol, m_pabyCachedTiles + 4 * nBlockXSize * nBlockYSize,
                  &bIsLossyFormat);
-        for(i=0;i<nBands;i++)
+        for( int i = 0; i < nBands; i++ )
         {
             if( !m_asCachedTilesDesc[0].abBandDirty[i] )
             {
@@ -881,7 +878,8 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     if( m_poCT == NULL && nAlphaBand != 0 )
     {
         GByte byFirstAlphaVal =  m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize];
-        for(i=1;i<nBlockXSize * nBlockYSize;i++)
+        int i = 1;
+        for( ; i < nBlockXSize * nBlockYSize; i++ )
         {
             if( m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize + i] != byFirstAlphaVal )
                 break;
@@ -1006,7 +1004,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             nTileBands = 3;
             if( bTileDriverSupports4Bands )
             {
-                for(i=0;i<m_poCT->GetColorEntryCount();i++)
+                for( int i = 0; i < m_poCT->GetColorEntryCount(); i++ )
                 {
                     const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
                     if( psEntry->c4 == 0 )
@@ -1032,7 +1030,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             }
         }
 
-        for(i=0;i<nTileBands;i++)
+        for( int i = 0; i < nTileBands; i++ )
         {
             char** papszOptions = NULL;
             char szDataPointer[32];
@@ -1058,7 +1056,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         {
             GDALDataset* poMEM_RGB_DS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
                                                   0, GDT_Byte, NULL);
-            for(i=0;i<3;i++)
+            for( int i = 0; i < 3; i++ )
             {
                 char** papszOptions = NULL;
                 char szDataPointer[32];
@@ -1111,7 +1109,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         {
             GByte abyCT[4*256];
             int nEntries = MIN(256, m_poCT->GetColorEntryCount());
-            for(i=0;i<nEntries;i++)
+            for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
                 abyCT[4*i] = (GByte)psEntry->c1;
@@ -1119,7 +1117,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
                 abyCT[4*i+2] = (GByte)psEntry->c3;
                 abyCT[4*i+3] = (GByte)psEntry->c4;
             }
-            for(;i<256;i++)
+            for( int i = nEntries; i<256 ;i++ )
             {
                 abyCT[4*i] = 0;
                 abyCT[4*i+1] = 0;
@@ -1133,6 +1131,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
                 memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
                 memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
             }
+            int i;  // TODO: Rename the variable to make it clean what it is.
             for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
             {
                 if( iXOff > 0 )

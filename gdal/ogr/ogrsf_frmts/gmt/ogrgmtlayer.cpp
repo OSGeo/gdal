@@ -509,8 +509,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         }
         else if( osLine[0] == '#' )
         {
-            int i;
-            for( i = 0;
+            for( int i = 0;
                  papszKeyedValues != NULL && papszKeyedValues[i] != NULL; 
                  i++ )
             {

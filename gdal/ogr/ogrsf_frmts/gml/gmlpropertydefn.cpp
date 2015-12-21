@@ -116,8 +116,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
 /* -------------------------------------------------------------------- */
     bool bIsReal = false;
 
-    int j;
-    for(j=0;j<psGMLProperty->nSubProperties;j++)
+    for( int j=0; j < psGMLProperty->nSubProperties; j++ )
     {
         if (j > 0)
         {
