@@ -366,16 +366,24 @@ def ogr_vdv_8():
         open('tmp/ogr_vdv_8/empty.x10', 'wb').write('tbl; foo\natr;\nfrm;\n'.encode('latin1'))
         # 0555 = 365
         os.chmod('tmp/ogr_vdv_8', 365)
-        ds = ogr.Open('tmp/ogr_vdv_8', update = 1)
-        gdal.PushErrorHandler()
-        lyr = ds.CreateLayer('another_layer')
-        gdal.PopErrorHandler()
-        # 0755 = 493
-        os.chmod('tmp/ogr_vdv_8', 493)
-        shutil.rmtree('tmp/ogr_vdv_8')
-        if lyr is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        try:
+            open('tmp/ogr_vdv_8/another_file','wb').close()
+            shutil.rmtree('tmp/ogr_vdv_8')
+            do_test = False
+        except:
+            do_test = True
+        if do_test:
+            ds = ogr.Open('tmp/ogr_vdv_8', update = 1)
+            gdal.PushErrorHandler()
+            lyr = ds.CreateLayer('another_layer')
+            gdal.PopErrorHandler()
+            # 0755 = 493
+            os.chmod('tmp/ogr_vdv_8', 493)
+            ds = None
+            shutil.rmtree('tmp/ogr_vdv_8')
+            if lyr is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
 
     out_filename = '/vsimem/vdv/ogr_vdv_8.x10'
     ds = ogr.GetDriverByName('VDV').CreateDataSource(out_filename)
