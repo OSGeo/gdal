@@ -90,7 +90,7 @@
         <Field name_en="POINT_NO" name_de="ORT_NR" type="num" width="6" cond=">0"/>
         <Field name_en="POINT_DESC" name_de="ORT_NAME" type="char" width="40"/>
         <Field name_en="STOP_NO" name_de="ORT_REF_ORT" type="num" width="6" cond=">0"/>
-        <Field name_en="STOP_TYPE" name_de="ORT_TYP_NR" type="num" width="2" cond="1-2"/>
+        <Field name_en="STOP_TYPE" name_de="ORT_REF_ORT_TYP" type="num" width="2" cond="1-2"/>
         <Field name_en="STOP_LONG_NO" name_de="ORT_REF_ORT_LANGNR" type="num" width="7" cond=">0,NULL"/>
         <Field name_en="STOP_ABBR" name_de="ORT_REF_ORT_KUERZEL" type="char" width="8"/>
         <Field name_en="STOP_DESC" name_de="ORT_REF_ORT_NAME" type="char" width="40"/>
