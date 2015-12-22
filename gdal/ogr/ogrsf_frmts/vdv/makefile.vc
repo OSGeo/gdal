@@ -1,5 +1,5 @@
 
-OBJ	=	ogridfdatasource.obj
+OBJ	=	ogrvdvdatasource.obj
 EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
