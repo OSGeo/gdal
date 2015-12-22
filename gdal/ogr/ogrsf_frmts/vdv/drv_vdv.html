@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>VDV - VDV-451/VDV-452/INTREST Data Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>VDV - VDV-451/VDV-452/INTREST Data Format</h1>
+
+(GDAL/OGR &gt;= 2.1.0)<p>
+
+This driver can read and create text files following the VDV-451 file format, which is a text
+format similar to CSV files, potentially containing several layers within the same file.<p>
+
+It supports in particular reading 2 "profiles" :
+<ul>
+<li>(read/write) VDV-452 standard for route network / timetable</li>
+<li>(read/only) "INTREST Data format" used by the <a href="https://www.data.gv.at/katalog/dataset/3fefc838-791d-4dde-975b-a4131a54e7c5">
+Austrian official open government street graph</a></li>
+</ul>
+
+<p>
+The generic reader/writer for VDV-451/VDV-452 can support arbitrarily large files. For
+the INTREST data case, for combined layers in a single file, the driver ingests
+the whole file in memory to reconstruct the Link layer.</p>
+
+<p>Interleave reading among layers is supported in files with multiple layers.</p>
+
+<h2>Creations issues</h2>
+
+<p>The driver can create new layers (either in the same file, or in separate
+files in the same directory). It can append a new layer into an existing file, but
+it cannot append/edit/delete features to an existing layer, or modify the
+attribute structure of an existing layer after features have been written.</p>
+
+<p>The following dataset creation options are available:</p>
+<ul>
+<li><b>SINGLE_FILE</b>=YES/NO. Whether several layers should be put in the same
+file. If NO, the name is assumed to be a directory name. Defaults to YES.</li>
+</ul>
+
+<p>The following layer creation options are available:</p>
+<ul>
+<li><b>EXTENSION</b>=string. Extension used when creation files in separate layers,
+i.e. only for SINGLE_FILE=NO dataset creation option. Defaults to x10.</li>
+<li><b>PROFILE</b>=GENERIC/VDV-452/VDV-452-ENGLISH/VDV-452-GERMAN. Defaults to GENERIC.
+Describe which profile the writer should conform to. VDV-452 will restrict layer and field names
+to be the one allowed by the VDV-452 standard (either in English or German).
+VDV-452-ENGLISH and VDV-452-GERMAN will restrict the VDV-452 to the specified
+language. The configuration file describing VDV-452 table and field names is
+<a href="http://svn.osgeo.org/gdal/trunk/gdal/data/vdv452.xml">vdv452.xml</a>
+located in the GDAL_DATA directory.</li>
+<li><b>PROFILE_STRICT</b>=YES/NO. Whether checks of profile should be strict.
+In strict mode, unexpected layer or field names will be rejected. Defaults to NO.</li>
+<li><b>CREATE_ALL_FIELDS</b>=YES/NO. Whether all fields of predefined profiles
+should be created at layer creation. Defaults to YES.</li>
+<li><b>STANDARD_HEADER</b>=YES/NO. Whether to write standard header fields (i.e
+mod, src, chs, ver, ifv, dve, fft). If set to NO, only explicitly specified HEADER_xxx
+fields will be written. Defaults to YES.</li>
+<li><b>HEADER_SRC</b>=string: Value of the src header field. Defaults to UNKNOWN.</li>
+<li><b>HEADER_SRC_DATE</b>=string: Value of the date of the src header field as DD.MM.YYYY. Defaults to current date (in GMT).</li>
+<li><b>HEADER_SRC_TIME</b>=string: Value of the time of the src header field as HH.MM.SS. Defaults to current time (in GMT)</li>
+<li><b>HEADER_CHS</b>=string: Value of the chs header field. Defaults to ISO8859-1.</li>
+<li><b>HEADER_VER</b>=string: Value of the ver header field. Defaults to 1.4.</li>
+<li><b>HEADER_IFV</b>=string: Value of the ifv header field. Defaults to 1.4.</li>
+<li><b>HEADER_DVE</b>=string: Value of the dve header field. Defaults to 1.4.</li>
+<li><b>HEADER_FFT</b>=string: Value of the fft header field. Defaults to '' (empty string).</li>
+<li><b>HEADER_</b><i>xxx</i>=string: Value of the <i>xxx</i> (user defined) header field.</li>
+</ul>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://www.vdv.de/vdv-schrift-451.pdfx?forced=true">VDV-451 file format</a> (German)</li>
+<li><a href="https://www.vdv.de/452--sdsv15.pdfx?forced=true">VDV-452 data model</a> (German)</li>
+<li><a href="http://open.gip.gv.at/ogd/0_dokumentation_gipat_ogd.pdf">Austrian INTREST data format</a> (German)</li>
+</ul>
+
+</body>
+</html>

@@ -285,8 +285,8 @@ void OGRRegisterAllInternal()
 #ifdef MONGODB_ENABLED
     RegisterOGRMongoDB();
 #endif
-#ifdef IDF_ENABLED
-    RegisterOGRIDF();
+#ifdef VDV_ENABLED
+    RegisterOGRVDV();
 #endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
