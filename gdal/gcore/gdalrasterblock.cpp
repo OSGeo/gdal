@@ -232,6 +232,11 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         if( strchr(pszCacheMax, '%') != NULL )
         {
             GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
+            // For some reason, coverity pretends that this will overflow...
+            // "Multiply operation overflows on operands static_cast<double>(nUsagePhysicalRAM)
+            // and CPLAtof(pszCacheMax). Example values for operands: CPLAtof(pszCacheMax) = 2251799813685248, 
+            // static_cast<double>(nUsagePhysicalRAM) = -9223372036854775808."
+            /* coverity[overflow] */
             double dfCacheMax = static_cast<double>(nUsagePhysicalRAM) * CPLAtof(pszCacheMax) / 100.0;
             if( dfCacheMax >= 0 && dfCacheMax < 1e15 )
                 nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
@@ -264,7 +269,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                  nCacheMax / (1024 * 1024));
         bCacheMaxInitialized = true;
     }
-
+    /* coverity[overflow_sink] */
     return nCacheMax;
 }
 
