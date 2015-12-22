@@ -142,28 +142,26 @@ void OGRXPlaneAwyReader::Read()
 /*                            ParseRecord()                             */
 /************************************************************************/
 
-void    OGRXPlaneAwyReader::ParseRecord()
+void OGRXPlaneAwyReader::ParseRecord()
 {
-    const char* pszFirstPointName;
-    const char* pszSecondPointName;
-    const char* pszAirwaySegmentName;
     double dfLat1, dfLon1;
     double dfLat2, dfLon2;
-    int nBaseFL, nTopFL;
 
-    pszFirstPointName = papszTokens[0];
+    const char* pszFirstPointName = papszTokens[0];
     RET_IF_FAIL(readLatLon(&dfLat1, &dfLon1, 1));
-    pszSecondPointName = papszTokens[3];
+    const char* pszSecondPointName = papszTokens[3];
     RET_IF_FAIL(readLatLon(&dfLat2, &dfLon2, 4));
-    bool bIsHigh = atoi(papszTokens[6]) == 2;
-    nBaseFL = atoi(papszTokens[7]);
-    nTopFL = atoi(papszTokens[8]);
-    pszAirwaySegmentName = papszTokens[9];
+    const bool bIsHigh = atoi(papszTokens[6]) == 2;
+    const int nBaseFL = atoi(papszTokens[7]);
+    const int nTopFL = atoi(papszTokens[8]);
+    const char* pszAirwaySegmentName = papszTokens[9];
 
     if (poAirwayIntersectionLayer)
     {
-        poAirwayIntersectionLayer->AddFeature(pszFirstPointName, dfLat1, dfLon1);
-        poAirwayIntersectionLayer->AddFeature(pszSecondPointName, dfLat2, dfLon2);
+        poAirwayIntersectionLayer->AddFeature(pszFirstPointName,
+                                              dfLat1, dfLon1);
+        poAirwayIntersectionLayer->AddFeature(pszSecondPointName,
+                                              dfLat2, dfLon2);
     }
 
     if (poAirwaySegmentLayer)
@@ -177,7 +175,9 @@ void    OGRXPlaneAwyReader::ParseRecord()
 */
         if (strchr(pszAirwaySegmentName, '-'))
         {
-            char** papszSegmentNames = CSLTokenizeString2( pszAirwaySegmentName, "-", CSLT_HONOURSTRINGS );
+            char** papszSegmentNames
+                = CSLTokenizeString2( pszAirwaySegmentName, "-",
+                                      CSLT_HONOURSTRINGS );
             int i = 0;
             while(papszSegmentNames[i])
             {
@@ -248,7 +248,6 @@ OGRFeature*
                                              int    nBaseFL,
                                              int    nTopFL)
 {
-    int nCount = 0;
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
     if (fabs(dfLon1 - dfLon2) < 270)
     {
@@ -282,6 +281,8 @@ OGRFeature*
         multiLineString->addGeometryDirectly( lineString2 );
         poFeature->SetGeometryDirectly( multiLineString );
     }
+
+    int nCount = 0;
     poFeature->SetField( nCount++, pszAirwaySegmentName );
     poFeature->SetField( nCount++, pszFirstPointName );
     poFeature->SetField( nCount++, pszSecondPointName );
@@ -333,9 +334,12 @@ static unsigned long OGRXPlaneAirwayHashDouble(const double& dfVal)
 
 static unsigned long HashAirwayIntersectionFeatureFunc(const void* _feature)
 {
-    OGRFeature* feature = (OGRFeature*)_feature;
-    OGRPoint* point = (OGRPoint*) feature->GetGeometryRef();
-    unsigned long hash = CPLHashSetHashStr((unsigned char*)feature->GetFieldAsString(0));
+    OGRFeature* feature = reinterpret_cast<OGRFeature *>(
+        const_cast<void *>(_feature));
+    OGRPoint* point = reinterpret_cast<OGRPoint *>( feature->GetGeometryRef() );
+    unsigned long hash = CPLHashSetHashStr(
+        reinterpret_cast<unsigned char*>(const_cast<char *>(
+            feature->GetFieldAsString(0))));
     const double x = point->getX();
     const double y = point->getY();
     return hash ^ OGRXPlaneAirwayHashDouble(x) ^ OGRXPlaneAirwayHashDouble(y);
@@ -347,7 +351,7 @@ static unsigned long HashAirwayIntersectionFeatureFunc(const void* _feature)
 
 static void FreeAirwayIntersectionFeatureFunc(void* _feature)
 {
-    delete (OGRFeature*)_feature;
+    delete reinterpret_cast<OGRFeature*>(_feature);
 }
 
 /************************************************************************/
