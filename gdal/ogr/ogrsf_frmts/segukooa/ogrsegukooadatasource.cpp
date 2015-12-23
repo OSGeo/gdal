@@ -123,11 +123,15 @@ int OGRSEGUKOOADataSource::Open( const char * pszFilename )
             return FALSE;
         }
 
-        nLayers = 2;
-        papoLayers = (OGRLayer**) CPLMalloc(2 * sizeof(OGRLayer*));
+        nLayers = 1;
+        int bNoLineLayer = CSLTestBoolean(CPLGetConfigOption("UKOOAP190_NO_LINE_LAYER", "NO"));
+        if (!bNoLineLayer)
+            nLayers++;
+        papoLayers = (OGRLayer**) CPLMalloc(nLayers * sizeof(OGRLayer*));
         papoLayers[0] = new OGRUKOOAP190Layer(pszName, fp);
-        papoLayers[1] = new OGRSEGUKOOALineLayer(pszName,
-                                         new OGRUKOOAP190Layer(pszName, fp2));
+        if (!bNoLineLayer)
+            papoLayers[1] = new OGRSEGUKOOALineLayer(pszName,
+                                             new OGRUKOOAP190Layer(pszName, fp2));
 
         return TRUE;
     }
@@ -178,12 +182,16 @@ int OGRSEGUKOOADataSource::Open( const char * pszFilename )
             return FALSE;
         }
 
-        nLayers = 2;
-        papoLayers = (OGRLayer**) CPLMalloc(2 * sizeof(OGRLayer*));
+        nLayers = 1;
+        int bNoLineLayer = CSLTestBoolean(CPLGetConfigOption("SEGP1_NO_LINE_LAYER", "NO"));
+        if (!bNoLineLayer)
+            nLayers++;
+        papoLayers = (OGRLayer**) CPLMalloc(nLayers * sizeof(OGRLayer*));
         papoLayers[0] = new OGRSEGP1Layer(pszName, fp, nLatitudeCol);
-        papoLayers[1] = new OGRSEGUKOOALineLayer(pszName,
-                                         new OGRSEGP1Layer(pszName, fp2,
-                                                           nLatitudeCol));
+        if (!bNoLineLayer)
+            papoLayers[1] = new OGRSEGUKOOALineLayer(pszName,
+                                             new OGRSEGP1Layer(pszName, fp2,
+                                                               nLatitudeCol));
 
         return TRUE;
     }
