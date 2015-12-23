@@ -206,13 +206,13 @@ typedef struct
 
 class CPL_DLL DDFRecordIndex
 {
-    int         bSorted;
+    bool        bSorted;
 
     int         nRecordCount;
     int         nRecordMax;
 
-    int         nLastObjlPos;            /* rjensen. added for FindRecordByObjl() */
-    int         nLastObjl;                  /* rjensen. added for FindRecordByObjl() */
+    int         nLastObjlPos;  // Added for FindRecordByObjl().
+    int         nLastObjl;     // Added for FindRecordByObjl().
 
     DDFIndexedRecord *pasRecords;
 
@@ -227,7 +227,7 @@ public:
 
     DDFRecord  *FindRecord( int nKey );
 
-    DDFRecord  *FindRecordByObjl( int nObjl );    /* rjensen. added for FindRecordByObjl() */
+    DDFRecord  *FindRecordByObjl( int nObjl );  // Added for FindRecordByObjl().
 
     void        Clear();
 

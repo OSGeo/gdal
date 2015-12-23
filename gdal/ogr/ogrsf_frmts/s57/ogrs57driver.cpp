@@ -41,10 +41,7 @@ static CPLMutex* hS57RegistrarMutex = NULL;
 /*                            OGRS57Driver()                            */
 /************************************************************************/
 
-OGRS57Driver::OGRS57Driver()
-
-{
-}
+OGRS57Driver::OGRS57Driver() {}
 
 /************************************************************************/
 /*                           ~OGRS57Driver()                            */
@@ -74,14 +71,14 @@ static int OGRS57DriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes < 10 )
-        return FALSE;
-    const char* pachLeader = (const char* )poOpenInfo->pabyHeader;
+        return false;
+    const char* pachLeader = reinterpret_cast<char *>( poOpenInfo->pabyHeader );
     if( (pachLeader[5] != '1' && pachLeader[5] != '2'
                 && pachLeader[5] != '3' )
             || pachLeader[6] != 'L'
             || (pachLeader[8] != '1' && pachLeader[8] != ' ') )
     {
-        return FALSE;
+        return false;
     }
     return strstr( pachLeader, "DSID") != NULL;
 }
@@ -93,7 +90,6 @@ static int OGRS57DriverIdentify( GDALOpenInfo* poOpenInfo )
 GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 
 {
-
     if( !OGRS57DriverIdentify(poOpenInfo) )
         return NULL;
 
@@ -120,21 +116,19 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 GDALDataset *OGRS57Driver::Create( const char * pszName,
-                                   CPL_UNUSED int nBands,
-                                   CPL_UNUSED int nXSize,
-                                   CPL_UNUSED int nYSize,
-                                   CPL_UNUSED GDALDataType eDT,
+                                   int /* nBands */,
+                                   int /* nXSize */,
+                                   int /* nYSize */,
+                                   GDALDataType /* eDT */,
                                    char **papszOptions )
 {
     OGRS57DataSource *poDS = new OGRS57DataSource();
 
     if( poDS->Create( pszName, papszOptions ) )
         return poDS;
-    else
-    {
-        delete poDS;
-        return NULL;
-    }
+
+    delete poDS;
+    return NULL;
 }
 
 /************************************************************************/

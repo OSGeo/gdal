@@ -98,7 +98,7 @@ class OGRS57DataSource : public OGRDataSource
 
     S57ClassContentExplorer* poClassContentExplorer;
 
-    int                 bExtentsSet;
+    bool                bExtentsSet;
     OGREnvelope         oExtents;
 
   public:
