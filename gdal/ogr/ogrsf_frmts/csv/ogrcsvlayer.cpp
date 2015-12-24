@@ -1813,7 +1813,7 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
     panGeomFieldIndex[poFeatureDefn->GetFieldCount() - 1] =
         poFeatureDefn->GetGeomFieldCount() - 1;
 
-    return OGRERR_FAILURE;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
