@@ -42,12 +42,10 @@ CPL_CVSID("$Id$");
 char **S57FileCollector( const char *pszDataset )
 
 {
-    VSIStatBuf  sStatBuf;
-    char        **papszRetList = NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Stat the dataset, and fail if it isn't a file or directory.     */
 /* -------------------------------------------------------------------- */
+    VSIStatBuf  sStatBuf;
     if( CPLStat( pszDataset, &sStatBuf ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -61,19 +59,18 @@ char **S57FileCollector( const char *pszDataset )
 /*      We handle directories by scanning for all S-57 data files in    */
 /*      them, but not for catalogs.                                     */
 /* -------------------------------------------------------------------- */
+    char **papszRetList = NULL;
+
     if( VSI_ISDIR(sStatBuf.st_mode) )
     {
         char    **papszDirFiles = CPLReadDir( pszDataset );
-        int     iFile;
         DDFModule oModule;
 
-        for( iFile = 0;
+        for( int iFile = 0;
              papszDirFiles != NULL && papszDirFiles[iFile] != NULL;
              iFile++ )
         {
-            char        *pszFullFile;
-
-            pszFullFile = CPLStrdup(
+            char *pszFullFile = CPLStrdup(
                 CPLFormFilename( pszDataset, papszDirFiles[iFile], NULL ) );
 
             // Add to list if it is an S-57 _data_ file.
@@ -96,7 +93,6 @@ char **S57FileCollector( const char *pszDataset )
 /*      Note that the caller may still open it and fail.                */
 /* -------------------------------------------------------------------- */
     DDFModule   oModule;
-    DDFRecord   *poRecord;
 
     if( !oModule.Open(pszDataset) )
     {
@@ -107,7 +103,7 @@ char **S57FileCollector( const char *pszDataset )
         return NULL;
     }
 
-    poRecord = oModule.ReadRecord();
+    DDFRecord   *poRecord = oModule.ReadRecord();
     if( poRecord == NULL )
         return NULL;
 
@@ -153,14 +149,14 @@ char **S57FileCollector( const char *pszDataset )
         if( poRecord->FindField( "CATD" ) != NULL
             && EQUAL(poRecord->GetStringSubfield("CATD",0,"IMPL",0),"BIN") )
         {
-            const char  *pszFile, *pszWholePath;
-
-            pszFile = poRecord->GetStringSubfield("CATD",0,"FILE",0);
+            const char  *pszFile
+                = poRecord->GetStringSubfield("CATD", 0, "FILE", 0);
 
             // Often there is an extra ENC_ROOT in the path, try finding 
             // this file. 
 
-            pszWholePath = CPLFormFilename( pszCatDir, pszFile, NULL );
+            const char  *pszWholePath
+                = CPLFormFilename( pszCatDir, pszFile, NULL );
             if( CPLStat( pszWholePath, &sStatBuf ) != 0
                 && pszRootDir != NULL )
             {

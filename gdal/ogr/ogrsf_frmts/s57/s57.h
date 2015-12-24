@@ -260,7 +260,7 @@ class CPL_DLL S57Reader
     int                 nCOMF;  /* Coordinate multiplier */
     int                 nSOMF;  /* Vertical (sounding) multiplier */
 
-    int                 bFileIngested;
+    bool                bFileIngested;
     DDFRecordIndex      oVI_Index;
     DDFRecordIndex      oVC_Index;
     DDFRecordIndex      oVE_Index;
@@ -313,8 +313,8 @@ class CPL_DLL S57Reader
 
     int                 ApplyRecordUpdate( DDFRecord *, DDFRecord * );
 
-    int                 bMissingWarningIssued;
-    int                 bAttrWarningIssued;
+    bool                bMissingWarningIssued;
+    bool                bAttrWarningIssued;
 
   public:
                         S57Reader( const char * );
