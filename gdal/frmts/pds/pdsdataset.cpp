@@ -1138,7 +1138,9 @@ int PDSDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
     return strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
-                  "PDS_VERSION_ID") != NULL;
+                  "PDS_VERSION_ID") != NULL ||
+           strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
+                  "ODL_VERSION_ID") != NULL;
 }
 
 /************************************************************************/
@@ -1150,7 +1152,9 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify( poOpenInfo ) )
         return NULL;
 
-    if( strstr((const char *)poOpenInfo->pabyHeader,"PDS3") == NULL )
+    if( strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
+                  "PDS_VERSION_ID") != NULL &&
+        strstr((const char *)poOpenInfo->pabyHeader,"PDS3") == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "It appears this is an older PDS image type.  Only PDS_VERSION_ID = PDS3 are currently supported by this gdal PDS reader.");
