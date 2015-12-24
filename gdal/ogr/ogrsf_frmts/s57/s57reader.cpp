@@ -2402,7 +2402,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
-    OGRPolygon  *poPolygon = static_cast<OGRPolygon *>(
+    OGRPolygon  *poPolygon = reinterpret_cast<OGRPolygon *>(
         OGRBuildPolygonFromEdges( reinterpret_cast<OGRGeometryH>( poLines ),
                                   TRUE, FALSE, 0.0, &eErr ) );
     if( eErr != OGRERR_NONE )
