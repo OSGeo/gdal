@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "s57.h"
-#include "ogr_api.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
+#include "s57.h"
 
 CPL_CVSID("$Id$");
 
@@ -86,9 +86,8 @@ int S57Writer::Close()
 int S57Writer::CreateS57File( const char *pszFilename )
 
 {
-    DDFModule  oModule;
-    DDFFieldDefn *poFDefn;
-
+    // TODO: What was oModule for if it was unused?
+    // DDFModule  oModule;
     Close();
 
     nNext0001Index = 1;
@@ -102,10 +101,13 @@ int S57Writer::CreateS57File( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create the '0000' definition.                                   */
 /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    DDFFieldDefn *poFDefn = new DDFFieldDefn();
 
-    poFDefn->Create( "0000", "", "0001DSIDDSIDDSSI0001DSPM0001VRIDVRIDATTVVRIDVRPCVRIDVRPTVRIDSGCCVRIDSG2DVRIDSG3D0001FRIDFRIDFOIDFRIDATTFFRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT",
-                     dsc_elementary, 
+    poFDefn->Create( "0000", "",
+                     "0001DSIDDSIDDSSI0001DSPM0001VRIDVRIDATTVVRIDVRPCVRID"
+                     "VRPTVRIDSGCCVRIDSG2DVRIDSG3D0001FRIDFRIDFOIDFRIDATTF"
+                     "FRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT",
+                     dsc_elementary,
                      dtc_char_string );
 
     poModule->AddField( poFDefn );
@@ -115,7 +117,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     poFDefn = new DDFFieldDefn();
 
-    poFDefn->Create( "0001", "ISO 8211 Record Identifier", "", 
+    poFDefn->Create( "0001", "ISO 8211 Record Identifier", "",
                      dsc_elementary, dtc_bit_string,
                      "(b12)" );
 
@@ -356,7 +358,9 @@ int S57Writer::CreateS57File( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     poFDefn = new DDFFieldDefn();
 
-    poFDefn->Create( "FFPC", "Feature record to feature object pointer control field", "",
+    poFDefn->Create( "FFPC",
+                     "Feature record to feature object pointer control field",
+                     "",
                      dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "FFUI", "b11" );
@@ -370,7 +374,8 @@ int S57Writer::CreateS57File( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     poFDefn = new DDFFieldDefn();
 
-    poFDefn->Create( "FFPT", "Feature record to feature object pointer field", "*",
+    poFDefn->Create( "FFPT", "Feature record to feature object pointer field",
+                     "*",
                      dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "LNAM", "B(64)" );
@@ -384,7 +389,9 @@ int S57Writer::CreateS57File( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     poFDefn = new DDFFieldDefn();
 
-    poFDefn->Create( "FSPC", "Feature record to spatial record pointer control field", "",
+    poFDefn->Create( "FSPC",
+                     "Feature record to spatial record pointer control field",
+                     "",
                      dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "FSUI", "b11" );
@@ -398,7 +405,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     poFDefn = new DDFFieldDefn();
 
-    poFDefn->Create( "FSPT", "Feature record to spatial record pointer field", 
+    poFDefn->Create( "FSPT", "Feature record to spatial record pointer field",
                      "*", dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "NAME", "B(40)" );
@@ -487,13 +494,18 @@ int S57Writer::WriteDSID( int nEXPP /*1*/, int nINTU /*4*/,
     poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, 0 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NALL", 0, 0 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOMR", 0, nNOMR ); // Meta records
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOCR", 0, 0 ); // Cartographic records are not permitted in ENC
+    // Cartographic records are not permitted in ENC.
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOCR", 0, 0 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOGR", 0, nNOGR ); // Geo records
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOLR", 0, nNOLR ); // Collection records
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOIN", 0, nNOIN ); // Isolated node records
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOCN", 0, nNOCN ); // Connected node records
+    // Collection records.
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOLR", 0, nNOLR );
+    // Isolated node records.
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOIN", 0, nNOIN );
+    // Connected node records.
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOCN", 0, nNOCN );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOED", 0, nNOED ); // Edge records
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOFA", 0, 0 ); // Face are not permitted in chain node structure
+    // Face are not permitted in chain node structure.
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOFA", 0, 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Write out the record.                                           */
@@ -530,7 +542,8 @@ int S57Writer::WriteDSPM( int nHDAT, int nVDAT, int nSDAT, int nCSCL )
 
     poRec->SetIntSubfield   ( "DSPM", 0, "RCNM", 0, 20 );
     poRec->SetIntSubfield   ( "DSPM", 0, "RCID", 0, 1 );
-    poRec->SetIntSubfield   ( "DSPM", 0, "HDAT", 0, nHDAT ); // Must be 2 for ENC
+    // Must be 2 for ENC.
+    poRec->SetIntSubfield   ( "DSPM", 0, "HDAT", 0, nHDAT );
     poRec->SetIntSubfield   ( "DSPM", 0, "VDAT", 0, nVDAT );
     poRec->SetIntSubfield   ( "DSPM", 0, "SDAT", 0, nSDAT );
     poRec->SetIntSubfield   ( "DSPM", 0, "CSCL", 0, nCSCL );
@@ -560,14 +573,13 @@ int S57Writer::WriteDSPM( int nHDAT, int nVDAT, int nSDAT, int nCSCL )
 DDFRecord *S57Writer::MakeRecord()
 
 {
+    unsigned char abyData[2] = {
+        nNext0001Index % 256,
+        static_cast<unsigned char>( nNext0001Index / 256 )
+    };
+
     DDFRecord *poRec = new DDFRecord( poModule );
-    DDFField *poField;
-    unsigned char abyData[2];
-
-    abyData[0] = nNext0001Index % 256;
-    abyData[1] = (unsigned char) (nNext0001Index / 256); 
-
-    poField = poRec->AddField( poModule->FindFieldDefn( "0001" ) );
+    DDFField *poField = poRec->AddField( poModule->FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, (const char *) abyData, 2 );
 
     nNext0001Index++;
@@ -579,33 +591,33 @@ DDFRecord *S57Writer::MakeRecord()
 /*                           WriteGeometry()                            */
 /************************************************************************/
 
-int S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount, 
+int S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
                               double *padfX, double *padfY, double *padfZ )
 
 {
     const char *pszFieldName = "SG2D";
-    DDFField *poField;
-    int nRawDataSize, i, nSuccess;
-    unsigned char *pabyRawData;
 
     if( padfZ != NULL )
         pszFieldName = "SG3D";
 
-    poField = poRec->AddField( poModule->FindFieldDefn( pszFieldName ) );
+    DDFField *poField
+        = poRec->AddField( poModule->FindFieldDefn( pszFieldName ) );
 
+    int nRawDataSize;
     if( padfZ )
         nRawDataSize = 12 * nVertCount;
     else
         nRawDataSize = 8 * nVertCount;
 
-    pabyRawData = (unsigned char *) CPLMalloc(nRawDataSize);
+    unsigned char *pabyRawData
+        = static_cast<unsigned char *>( CPLMalloc(nRawDataSize) );
 
-    for( i = 0; i < nVertCount; i++ )
+    for( int i = 0; i < nVertCount; i++ )
     {
-        GInt32 nXCOO, nYCOO, nVE3D;
-
-        nXCOO = CPL_LSBWORD32((GInt32) floor(padfX[i] * nCOMF + 0.5));
-        nYCOO = CPL_LSBWORD32((GInt32) floor(padfY[i] * nCOMF + 0.5));
+        const GInt32 nXCOO = CPL_LSBWORD32(
+            static_cast<GInt32>( floor(padfX[i] * nCOMF + 0.5)) );
+        const GInt32 nYCOO = CPL_LSBWORD32(
+            static_cast<GInt32>( floor(padfY[i] * nCOMF + 0.5)) );
 
         if( padfZ == NULL )
         {
@@ -614,15 +626,17 @@ int S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
         }
         else
         {
-            nVE3D = CPL_LSBWORD32((GInt32) floor( padfZ[i] * nSOMF + 0.5 ));
+            const GInt32 nVE3D = CPL_LSBWORD32(
+                static_cast<GInt32>( floor( padfZ[i] * nSOMF + 0.5 )) );
             memcpy( pabyRawData + i * 12, &nYCOO, 4 );
             memcpy( pabyRawData + i * 12 + 4, &nXCOO, 4 );
             memcpy( pabyRawData + i * 12 + 8, &nVE3D, 4 );
         }
     }
 
-    nSuccess = poRec->SetFieldRaw( poField, 0, 
-                                   (const char *) pabyRawData, nRawDataSize );
+    int nSuccess = poRec->SetFieldRaw(
+        poField, 0,
+        reinterpret_cast<const char *>( pabyRawData ), nRawDataSize );
 
     CPLFree( pabyRawData );
 
