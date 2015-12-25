@@ -139,7 +139,10 @@ int main( int nArgc, char ** papszArgv )
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
     
     if( nArgc < 1 )
+    {
+        papszArgv = NULL;
         goto exit;
+    }
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {

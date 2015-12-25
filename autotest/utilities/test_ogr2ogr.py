@@ -2545,6 +2545,32 @@ def test_ogr2ogr_62():
 
     return 'success'
 
+###############################################################################
+# Test --formats
+
+def test_ogr2ogr_63():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' --formats')
+    if ret.find('Supported Formats') < 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        print(err)
+        return 'fail'
+    if err.find('ERROR') >= 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        print(err)
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2608,7 +2634,8 @@ gdaltest_list = [
     test_ogr2ogr_59,
     test_ogr2ogr_60,
     test_ogr2ogr_61,
-    test_ogr2ogr_62
+    test_ogr2ogr_62,
+    test_ogr2ogr_63
     ]
 
 if __name__ == '__main__':
