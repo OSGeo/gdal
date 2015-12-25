@@ -1559,7 +1559,10 @@ OGRErr OGRLayer::SetIgnoredFields( const char **papszFields )
     {
         poDefn->GetFieldDefn(iField)->SetIgnored( FALSE );
     }
-    poDefn->SetGeometryIgnored( FALSE );
+    for( int iField = 0; iField < poDefn->GetGeomFieldCount(); iField++ )
+    {
+        poDefn->GetGeomFieldDefn(iField)->SetIgnored( FALSE );
+    }
     poDefn->SetStyleIgnored( FALSE );
     
     if ( papszFields == NULL )
