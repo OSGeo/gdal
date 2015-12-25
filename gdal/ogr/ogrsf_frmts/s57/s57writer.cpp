@@ -574,7 +574,7 @@ DDFRecord *S57Writer::MakeRecord()
 
 {
     unsigned char abyData[2] = {
-        nNext0001Index % 256,
+        static_cast<unsigned char>( nNext0001Index % 256 ),
         static_cast<unsigned char>( nNext0001Index / 256 )
     };
 
