@@ -108,6 +108,7 @@ def ogr_basic_3():
     poly.AddGeometryDirectly( ring )
 
     gdaltest.lyr.SetSpatialFilter( poly )
+    gdaltest.lyr.SetSpatialFilter( gdaltest.lyr.GetSpatialFilter() )
     gdaltest.lyr.ResetReading()
 
     count = gdaltest.lyr.GetFeatureCount()
