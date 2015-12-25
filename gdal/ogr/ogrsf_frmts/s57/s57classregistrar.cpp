@@ -29,9 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "s57.h"
 
 CPL_CVSID("$Id$");
 
@@ -425,36 +425,36 @@ int S57ClassContentExplorer::GetOBJL()
 {
     if( iCurrentClass >= 0 )
         return atoi(poRegistrar->apszClassesInfo[iCurrentClass]);
-    else
-        return -1;
+
+    return -1;
 }
 
 /************************************************************************/
 /*                           GetDescription()                           */
 /************************************************************************/
 
-const char * S57ClassContentExplorer::GetDescription()
+const char * S57ClassContentExplorer::GetDescription() const
 
 {
     if( iCurrentClass >= 0 && papszCurrentFields[0] != NULL )
         return papszCurrentFields[1];
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
 /*                             GetAcronym()                             */
 /************************************************************************/
 
-const char * S57ClassContentExplorer::GetAcronym()
+const char * S57ClassContentExplorer::GetAcronym() const
 
 {
-    if( iCurrentClass >= 0 
-        && papszCurrentFields[0] != NULL 
+    if( iCurrentClass >= 0
+        && papszCurrentFields[0] != NULL
         && papszCurrentFields[1] != NULL )
         return papszCurrentFields[2];
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -503,7 +503,7 @@ char **S57ClassContentExplorer::GetAttributeList( const char * pszType )
 /*                            GetClassCode()                            */
 /************************************************************************/
 
-char S57ClassContentExplorer::GetClassCode()
+char S57ClassContentExplorer::GetClassCode() const
 
 {
     if( iCurrentClass >= 0
@@ -512,11 +512,11 @@ char S57ClassContentExplorer::GetClassCode()
         && papszCurrentFields[2] != NULL
         && papszCurrentFields[3] != NULL
         && papszCurrentFields[4] != NULL
-        && papszCurrentFields[5] != NULL 
+        && papszCurrentFields[5] != NULL
         && papszCurrentFields[6] != NULL )
         return papszCurrentFields[6][0];
-    else
-        return '\0';
+
+    return '\0';
 }
 
 /************************************************************************/
@@ -547,8 +547,8 @@ const S57AttrInfo *S57ClassRegistrar::GetAttrInfo(int iAttr)
 {
     if( iAttr < 0 || iAttr >= (int) aoAttrInfos.size() )
         return NULL;
-    else 
-        return aoAttrInfos[iAttr];
+
+    return aoAttrInfos[iAttr];
 }
 
 /************************************************************************/
@@ -558,16 +558,14 @@ const S57AttrInfo *S57ClassRegistrar::GetAttrInfo(int iAttr)
 int    S57ClassRegistrar::FindAttrByAcronym( const char * pszName )
 
 {
-    int         iStart, iEnd, iCandidate;
-
-    iStart = 0;
-    iEnd = nAttrCount-1;
+    int iStart = 0;
+    int iEnd = nAttrCount-1;
 
     while( iStart <= iEnd )
     {
         int     nCompareValue;
 
-        iCandidate = (iStart + iEnd)/2;
+        const int iCandidate = (iStart + iEnd)/2;
         nCompareValue =
             strcmp(pszName, aoAttrInfos[anAttrIndex[iCandidate]]->osAcronym);
 

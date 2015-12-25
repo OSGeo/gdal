@@ -140,7 +140,7 @@ int main( int nArgc, char ** papszArgv )
 
                 if( poClassContentExplorer->SelectClass( i ) )
                 {
-                    printf( "%d: %s/%s\n",
+                    printf( "%u: %s/%s\n",
                             i,
                             poClassContentExplorer->GetAcronym(),
                             poClassContentExplorer->GetDescription() );

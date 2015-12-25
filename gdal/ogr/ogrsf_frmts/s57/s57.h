@@ -182,12 +182,12 @@ class S57ClassContentExplorer
     int         NextClass() { return SelectClassByIndex(iCurrentClass+1); }
 
     int         GetOBJL();
-    const char *GetDescription();
-    const char *GetAcronym();
+    const char *GetDescription() const;
+    const char *GetAcronym() const;
 
     char      **GetAttributeList( const char * = NULL );
 
-    char        GetClassCode();
+    char        GetClassCode() const;
     char      **GetPrimitives();
 };
 
