@@ -1260,7 +1260,7 @@ void OGR_L_SetSpatialFilterRectEx( OGRLayerH hLayer,
 int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 
 {
-    if( m_poFilterGeom == NULL && poFilter == NULL )
+    if( m_poFilterGeom == poFilter )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
