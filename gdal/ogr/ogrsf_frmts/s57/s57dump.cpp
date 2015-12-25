@@ -152,7 +152,7 @@ int main( int nArgc, char ** papszArgv )
                 }
                 else
                 {
-                    printf( "%d: unrecognized ... treat as generic.\n", i );
+                    printf( "%u: unrecognized ... treat as generic.\n", i );
                     bGeneric = true;
                 }
             }
