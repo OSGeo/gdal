@@ -1138,7 +1138,8 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn) :
         {
             const int nBaseSamples = poGDS->nSamplesPerPixel - count;
 
-            if( nBand > nBaseSamples 
+            if( nBand > nBaseSamples
+                && nBand-nBaseSamples-1 < count
                 && (v[nBand-nBaseSamples-1] == EXTRASAMPLE_ASSOCALPHA
                     || v[nBand-nBaseSamples-1] == EXTRASAMPLE_UNASSALPHA) )
                 eBandInterp = GCI_AlphaBand;
@@ -4352,7 +4353,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                 }
             }
 
-            if( nBand > nBaseSamples )
+            if( nBand > nBaseSamples && nBand - nBaseSamples - 1 < count )
             {
                 // We need to allocate a new array as (current) libtiff
                 // versions will not like that we reuse the array we got from
@@ -13370,7 +13371,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) )
         {
             int nBaseSamples = nBands - count;
-            if( nBands > nBaseSamples )
+            if( nBands > nBaseSamples && nBands - nBaseSamples - 1 < count )
             {
                 // We need to allocate a new array as (current) libtiff
                 // versions will not like that we reuse the array we got from
