@@ -118,7 +118,9 @@ private:
     bool bStoreNativeData_;
     bool bArrayAsString_;
 
-    bool bFlattenGeocouchSpatiallistFormat;
+    // bFlatten... is a tri-state boolean with -1 being unset.
+    int bFlattenGeocouchSpatiallistFormat;
+
     bool bFoundId;
     bool bFoundRev;
     bool bFoundTypeFeature;
