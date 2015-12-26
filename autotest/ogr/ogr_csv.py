@@ -88,8 +88,16 @@ def ogr_csv_2():
     if gdaltest.csv_ds is None:
         return 'skip'
 
+    with gdaltest.error_handler():
+        if gdaltest.csv_ds.CreateLayer('foo') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if gdaltest.csv_ds.DeleteLayer(0) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     lyr = gdaltest.csv_ds.GetLayerByName( 'prime_meridian' )
-    
+
     f = ogr.Feature(lyr.GetLayerDefn())
     with gdaltest.error_handler():
         if lyr.CreateField(ogr.FieldDefn('foo')) == 0:
@@ -239,6 +247,14 @@ def ogr_csv_7():
        or gdaltest.csv_tmpds.GetLayer(0).GetName() != 'pm2':
         gdaltest.post_reason( 'Layer not destroyed properly?' )
         return 'fail'
+
+    with gdaltest.error_handler():
+        if gdaltest.csv_tmpds.DeleteLayer(-1) == 0:
+            gdaltest.post_reason( 'fail' )
+            return 'fail'
+        if gdaltest.csv_tmpds.DeleteLayer(gdaltest.csv_tmpds.GetLayerCount()) == 0:
+            gdaltest.post_reason( 'fail' )
+            return 'fail'
 
     gdaltest.csv_tmpds = None
 
@@ -506,6 +522,11 @@ def ogr_csv_12():
         gdaltest.csv_lyr2.CreateFeature( dst_feat )
 
         feat = srclyr.GetNextFeature()
+
+    with gdaltest.error_handler():
+        if gdaltest.csv_tmpds.CreateLayer( 'testcsvt_copy' ) is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     #######################################################
     # Closes everything and reopen
