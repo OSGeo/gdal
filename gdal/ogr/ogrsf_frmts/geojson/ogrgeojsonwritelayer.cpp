@@ -46,8 +46,8 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
                                            OGRGeoJSONDataSource* poDS )
     : poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), nOutCounter_( 0 )
 {
-    bWriteBBOX = CSLTestBoolean(CSLFetchNameValueDef(
-        papszOptions, "WRITE_BBOX", "FALSE")) == TRUE;
+    bWriteBBOX = CPL_TO_BOOL( CSLTestBoolean(CSLFetchNameValueDef(
+        papszOptions, "WRITE_BBOX", "FALSE")) );
     bBBOX3D = false;
     bWriteFC_BBOX = bWriteFC_BBOXIn;
 
