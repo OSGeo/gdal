@@ -2361,6 +2361,24 @@ def tiff_read_minisblack_as_rgba():
 
     return 'success'
 
+###############################################################################
+# 
+def tiff_read_colortable_as_rgba():
+
+    if not gdaltest.supports_force_rgba:
+        return 'skip'
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('data/test_average_palette.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [2433,2433,2433,4873]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+    ds = None
+
+    return 'success'
 
 ###############################################################################################
 
@@ -2419,6 +2437,7 @@ gdaltest_list.append( (tiff_read_empty_nodata_tag) )
 gdaltest_list.append( (tiff_read_strace_check) )
 gdaltest_list.append( (tiff_read_readdir_limit_on_open) )
 gdaltest_list.append( (tiff_read_minisblack_as_rgba) )
+gdaltest_list.append( (tiff_read_colortable_as_rgba) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
