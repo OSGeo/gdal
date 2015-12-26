@@ -123,8 +123,8 @@ static bool ParsePoint(json_object* poPoint, double* pdfX, double* pdfY)
 /*                             ParseArc()                               */
 /************************************************************************/
 
-static void ParseArc(OGRLineString* poLS, json_object* poArcsDB, int nArcID,
-                     int bReverse, ScalingParams* psParams)
+static void ParseArc( OGRLineString* poLS, json_object* poArcsDB, int nArcID,
+                      int bReverse, ScalingParams* psParams)
 {
     json_object* poArcDB = json_object_array_get_idx(poArcsDB, nArcID);
     if( poArcDB == NULL || json_type_array != json_object_get_type(poArcDB) )
@@ -306,14 +306,14 @@ static void ParseObject(const char* pszId,
     json_object* poProperties = OGRGeoJSONFindMemberByName(poObj, "properties");
     if( poProperties != NULL && json_type_object == json_object_get_type(poProperties) )
     {
-        int nField = -1;
         json_object_iter it;
         it.key = NULL;
         it.val = NULL;
         it.entry = NULL;
         json_object_object_foreachC( poProperties, it )
         {
-            nField = poFeature->GetFieldIndex(it.key);
+            const int nField
+                = poFeature->GetFieldIndex(it.key);
             OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key, it.val, FALSE, 0);
         }
     }
@@ -406,14 +406,14 @@ static void EstablishLayerDefn(OGRFeatureDefn* poDefn,
 /*                        ParseObjectMain()                             */
 /************************************************************************/
 
-static int  ParseObjectMain(const char* pszId, json_object* poObj,
-                            OGRGeoJSONDataSource* poDS,
-                            OGRGeoJSONLayer **ppoMainLayer,
-                            json_object* poArcs,
-                            ScalingParams* psParams,
-                            int nPassNumber)
+static bool ParseObjectMain( const char* pszId, json_object* poObj,
+                             OGRGeoJSONDataSource* poDS,
+                             OGRGeoJSONLayer **ppoMainLayer,
+                             json_object* poArcs,
+                             ScalingParams* psParams,
+                             int nPassNumber )
 {
-    int bNeedSecondPass = FALSE;
+    bool bNeedSecondPass = false;
 
     if( poObj != NULL && json_type_object == json_object_get_type( poObj ) )
     {
@@ -495,7 +495,7 @@ static int  ParseObjectMain(const char* pszId, json_object* poObj,
                     }
                     OGRFeatureDefn* poDefn = (*ppoMainLayer)->GetLayerDefn();
                     EstablishLayerDefn(poDefn, poObj);
-                    bNeedSecondPass = TRUE;
+                    bNeedSecondPass = true;
                 }
                 else
                     ParseObject(pszId, poObj, *ppoMainLayer, poArcs, psParams);
@@ -583,7 +583,9 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         json_object_object_foreachC( poObjects, it )
         {
             json_object* poObj = it.val;
-            bNeedSecondPass |= ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs, &sParams, 1);
+            bNeedSecondPass |= ParseObjectMain( it.key, poObj, poDS,
+                                                &poMainLayer, poArcs, &sParams,
+                                                1);
         }
         if( bNeedSecondPass )
         {

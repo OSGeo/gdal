@@ -118,8 +118,11 @@ private:
     bool bStoreNativeData_;
     bool bArrayAsString_;
 
-    int bFlattenGeocouchSpatiallistFormat;
-    bool bFoundId, bFoundRev, bFoundTypeFeature, bIsGeocouchSpatiallistFormat;
+    bool bFlattenGeocouchSpatiallistFormat;
+    bool bFoundId;
+    bool bFoundRev;
+    bool bFoundTypeFeature;
+    bool bIsGeocouchSpatiallistFormat;
 
     //
     // Copy operations not supported.

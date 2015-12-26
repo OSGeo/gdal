@@ -26,9 +26,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#include "ogr_geojson.h"
+
 #include <cpl_conv.h>
-#include "cpl_http.h"
+#include <cpl_http.h>
+#include "ogr_geojson.h"
 
 class OGRESRIFeatureServiceDataset;
 
@@ -42,8 +43,8 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
         OGRFeatureDefn* poFeatureDefn;
         GIntBig         nFeaturesRead;
         GIntBig         nLastFID;
-        int             bOtherPage;
-        int             bUseSequentialFID;
+        bool            bOtherPage;
+        bool            bUseSequentialFID;
 
     public:
         OGRESRIFeatureServiceLayer(OGRESRIFeatureServiceDataset* poDS);
@@ -53,7 +54,8 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
         OGRFeature* GetNextFeature();
         GIntBig GetFeatureCount( int bForce = TRUE );
         OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-        virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+        virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
+                                       int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
         int TestCapability( const char* pszCap );
         OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
@@ -92,13 +94,14 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
 /*                       OGRESRIFeatureServiceLayer()                   */
 /************************************************************************/
 
-OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(OGRESRIFeatureServiceDataset* poDSIn) :
+OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(
+    OGRESRIFeatureServiceDataset* poDSIn) :
+    poDS(poDSIn),
     nFeaturesRead(0),
     nLastFID(0),
     bOtherPage(FALSE),
     bUseSequentialFID(FALSE)
 {
-    this->poDS = poDSIn;
     OGRFeatureDefn* poSrcFeatDefn = poDS->GetUnderlyingLayer()->GetLayerDefn();
     poFeatureDefn = new OGRFeatureDefn(poSrcFeatDefn->GetName());
     SetDescription(poFeatureDefn->GetName());
@@ -439,8 +442,8 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                "FEATURE_SERVER_PAGING");
-        int bHasResultOffset = CPLURLGetValue( poOpenInfo->pszFilename,
-                                               "resultOffset").size() > 0;
+        bool bHasResultOffset = CPLURLGetValue( poOpenInfo->pszFilename,
+                                                "resultOffset").size() > 0;
         if( (!bHasResultOffset && (pszFSP == NULL || CSLTestBoolean(pszFSP))) ||
             (bHasResultOffset && pszFSP != NULL && CSLTestBoolean(pszFSP)) )
         {

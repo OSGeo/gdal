@@ -46,8 +46,9 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
                                            OGRGeoJSONDataSource* poDS )
     : poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), nOutCounter_( 0 )
 {
-    bWriteBBOX = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
-    bBBOX3D = FALSE;
+    bWriteBBOX = CSLTestBoolean(CSLFetchNameValueDef(
+        papszOptions, "WRITE_BBOX", "FALSE"));
+    bBBOX3D = false;
     bWriteFC_BBOX = bWriteFC_BBOXIn;
 
     poFeatureDefn_->Reference();
@@ -135,7 +136,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         poGeometry->getEnvelope(&sEnvelope);
 
         if( poGeometry->getCoordinateDimension() == 3 )
-            bBBOX3D = TRUE;
+            bBBOX3D = true;
 
         sEnvelopeLayer.Merge(sEnvelope);
     }
