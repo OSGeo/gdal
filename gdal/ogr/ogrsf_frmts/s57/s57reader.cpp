@@ -3302,9 +3302,8 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         if( file )
         {
             VSIFCloseL( file );
-            // TODO: How to properly silence MS VS? warning C4800
-            // when casting an int to a bool?
-            bSuccess = TRUE == oUpdateModule.Open( pszUpdateFilename, TRUE );
+            bSuccess = CPL_TO_BOOL(
+                oUpdateModule.Open( pszUpdateFilename, TRUE ) );
             if( bSuccess )
             {
                 CPLDebug( "S57", "Applying feature updates from %s.",
@@ -3325,7 +3324,8 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
             remotefile.append( CPLGetBasename(pszPath) );
             remotefile.append( "." );
             remotefile.append( extension );
-            bSuccess = TRUE == oUpdateModule.Open( remotefile.c_str(), TRUE );
+            bSuccess = CPL_TO_BOOL(
+                oUpdateModule.Open( remotefile.c_str(), TRUE ) );
 
             if( bSuccess )
                 CPLDebug( "S57", "Applying feature updates from %s.",
