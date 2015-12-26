@@ -2139,19 +2139,31 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 const char* pszLengthVar = CPLGetXMLValue(psIter, "length_var", NULL);
                 if (pszLengthVar != NULL)
                 {
-                    char** papszMDIter = papszMD;
-                    while(papszMDIter != NULL && *papszMDIter != NULL)
+                    // Preferably look for item at the same level as ours.
+                    const char* pszLengthValue =
+                        CSLFetchNameValue( papszMD,  CPLSPrintf("%s%s", pszMDPrefix, pszLengthVar) );
+                    if( pszLengthValue != NULL )
                     {
-                        if (strstr(*papszMDIter, pszLengthVar) != NULL)
+                        nLength = atoi(pszLengthValue);
+                    }
+                    else
+                    {
+                        char** papszMDIter = papszMD;
+                        while(papszMDIter != NULL && *papszMDIter != NULL)
                         {
-                            const char* pszEqual = strchr(*papszMDIter, '=');
-                            if (pszEqual != NULL)
+                            if (strstr(*papszMDIter, pszLengthVar) != NULL)
                             {
-                                nLength = atoi(pszEqual + 1);
-                                break;
+                                const char* pszEqual = strchr(*papszMDIter, '=');
+                                if (pszEqual != NULL)
+                                {
+                                    nLength = atoi(pszEqual + 1);
+                                    // Voluntary missing break so as to find the
+                                    // "closest" item to ours in case it is not
+                                    // defined in the same level
+                                }
                             }
+                            papszMDIter ++;
                         }
-                        papszMDIter ++;
                     }
                 }
             }
