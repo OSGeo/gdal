@@ -593,7 +593,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
                 json_object* poExceededTransferLimit =
                     json_object_object_get(poObj, "exceededTransferLimit");
                 if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
-                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
+                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit) == TRUE;
             }
             reader.ReadLayers( this );
         }
@@ -659,7 +659,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
                 json_object* poExceededTransferLimit =
                     json_object_object_get(poProperties, "exceededTransferLimit");
                 if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
-                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
+                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit) == TRUE;
             }
         }
 
