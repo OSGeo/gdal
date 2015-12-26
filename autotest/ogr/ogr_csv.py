@@ -154,17 +154,19 @@ def ogr_csv_3():
     # Create layer (.csv file)
     gdaltest.csv_lyr1 = ogr_csv_copy_layer( 'pm1', None )
 
-    # Check that we cannot add a new field now
-    if gdaltest.csv_lyr1.TestCapability(ogr.OLCCreateField) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    field_defn = ogr.FieldDefn('dummy', ogr.OFTString)
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = gdaltest.csv_lyr1.CreateField(field_defn)
-    gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    # No longer valid since we have editing capabilities
+    if False:
+        # Check that we cannot add a new field now
+        if gdaltest.csv_lyr1.TestCapability(ogr.OLCCreateField) != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        field_defn = ogr.FieldDefn('dummy', ogr.OFTString)
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ret = gdaltest.csv_lyr1.CreateField(field_defn)
+        gdal.PopErrorHandler()
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return 'success'
 
@@ -1931,6 +1933,287 @@ def ogr_csv_42():
     return 'success'
 
 ###############################################################################
+# Test editing capabilities
+
+def ogr_csv_43():
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_43.csv')
+    lyr = ds.CreateLayer('ogr_csv_43', options = ['GEOMETRY=AS_WKT', 'CREATE_CSVT=YES'])
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('id', 1)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    lyr.SetNextByIndex(0)
+    f = lyr.GetNextFeature()
+    if f['id'] != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
+
+    if lyr.TestCapability(ogr.OLCCreateField) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString)) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString)) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    f = lyr.GetFeature(1)
+    f.SetField('foo', 'bar')
+    if lyr.TestCapability(ogr.OLCRandomWrite) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(1)
+    if f['id'] != 1 or f['foo'] != 'bar' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f['id'] != 1 or f['foo'] != 'bar' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('id', 2)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(3 50)'))
+    f.SetField('foo', 'baz')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(2)
+    if f['id'] != 2 or f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.SetNextByIndex(1)
+    f = lyr.GetNextFeature()
+    if f['id'] != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
+    
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_csv_43.csv', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(2)
+    if f['id'] != 2 or f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
+    if lyr.TestCapability(ogr.OLCDeleteField) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if lyr.DeleteField(-1) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    if lyr.DeleteField( lyr.GetLayerDefn().GetFieldIndex('foo') ) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCDeleteFeature) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.DeleteFeature(2) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.DeleteFeature(2) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.DeleteFeature(3) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeature(2) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeature(3) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 3
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetFID() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    if lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString)) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(1)
+    if f['foo'] == 'bar':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(3)
+    if f.GetFID() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_csv_43.csv', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(2)
+    if f['id'] != 3:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
+    if lyr.DeleteField( lyr.GetLayerDefn().GetFieldIndex('foo') ) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetFID() != 3:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if lyr.DeleteFeature(f.GetFID()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    with gdaltest.error_handler():
+        lyr.SetSpatialFilter(-1, None)
+    with gdaltest.error_handler():
+        lyr.SetSpatialFilter(1, None)
+    lyr.SetSpatialFilterRect(0, 0, 100, 100)
+    lyr.SetSpatialFilterRect(0, 0, 0, 100, 100)
+    lyr.SetSpatialFilter(0, lyr.GetSpatialFilter())
+    lyr.SetSpatialFilter(lyr.GetSpatialFilter())
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetExtent() != (2.0, 2.0, 49.0, 49.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetExtent(geom_field = 0) != (2.0, 2.0, 49.0, 49.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        lyr.GetExtent(geom_field = -1)
+    lyr.SetAttributeFilter(None)
+        
+    if lyr.TestCapability(ogr.OLCCurveGeometries) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCTransactions) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.StartTransaction()
+    lyr.RollbackTransaction()
+    lyr.CommitTransaction()
+    
+    if lyr.GetGeometryColumn() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFIDColumn() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    if lyr.TestCapability(ogr.OLCReorderFields) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.ReorderFields([0, 1]) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if lyr.ReorderFields([0, -1]) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    if lyr.AlterFieldDefn(0, fld_defn, 0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if lyr.AlterFieldDefn(-1, fld_defn, 0) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    
+    f = lyr.GetFeature(2)
+    f.SetGeomField(0, ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    if lyr.TestCapability(ogr.OLCCreateGeomField) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.CreateGeomField(ogr.GeomFieldDefn('geom__WKT_2')) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(2)
+    f.SetGeomField(1, ogr.CreateGeometryFromWkt('POINT (3 4)'))
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    f = None
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_csv_43.csv', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(2)
+    if f['WKT'] != 'POINT (1 2)' or f['_WKT_2'] != 'POINT (3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_43.csv')
+    return 'success'
+    
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -2007,6 +2290,7 @@ gdaltest_list = [
     ogr_csv_40,
     ogr_csv_41,
     ogr_csv_42,
+    ogr_csv_43,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

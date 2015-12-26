@@ -1360,7 +1360,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     int         iAttr;
     int         iOGRField = 0;
-    int         nAttrCount = MIN(CSLCount(papszTokens), nCSVFieldCount );
+    int         nAttrCount = MIN(CSLCount(papszTokens), nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
     CPLValueType eType;
 
     for( iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
@@ -1370,7 +1370,16 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
         {
             continue;
         }
-        int iGeom = panGeomFieldIndex[iAttr];
+        int iGeom;
+        if( bHiddenWKTColumn )
+        {
+            if(iAttr == 0)
+                iGeom = 0;
+            else
+                iGeom = panGeomFieldIndex[iAttr - 1];
+        }
+        else
+            iGeom = panGeomFieldIndex[iAttr];
         if( iGeom >= 0 )
         {
             if ( papszTokens[iAttr][0] != '\0'&&
@@ -1404,7 +1413,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 }
                 CPLPopErrorHandler();
             }
-            if( !bKeepGeomColumns )
+            if( !bKeepGeomColumns || (iAttr == 0 && bHiddenWKTColumn) )
                 continue;
         }
 
@@ -1703,38 +1712,28 @@ int OGRCSVLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                            CreateField()                             */
+/*                          PreCreateField()                            */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
-
+OGRCSVCreateFieldAction OGRCSVLayer::PreCreateField( OGRFeatureDefn* poFeatureDefn,
+                                    OGRFieldDefn *poNewField, int bApproxOK )
 {
-/* -------------------------------------------------------------------- */
-/*      If we have already written our field names, then we are not     */
-/*      allowed to add new fields.                                      */
-/* -------------------------------------------------------------------- */
-    if( !TestCapability(OLCCreateField) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to create new fields after first feature written.");
-        return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Does this duplicate an existing field?                          */
 /* -------------------------------------------------------------------- */
-    if( poFeatureDefn->GetFieldIndex( poNewField->GetNameRef() ) != -1 )
+    if( poFeatureDefn->GetFieldIndex( poNewField->GetNameRef() ) >= 0 )
     {
-        if( poFeatureDefn->GetGeomFieldIndex( poNewField->GetNameRef() ) != -1 )
-            return OGRERR_NONE;
-        if( poFeatureDefn->GetGeomFieldIndex( CPLSPrintf("geom_%s", poNewField->GetNameRef()) ) != -1 )
-            return OGRERR_NONE;
-
+        if( poFeatureDefn->GetGeomFieldIndex( poNewField->GetNameRef() ) >= 0 ||
+            poFeatureDefn->GetGeomFieldIndex( CPLSPrintf("geom_%s", poNewField->GetNameRef()) ) >= 0 )
+        {
+            return CREATE_FIELD_DO_NOTHING;
+        }
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create field %s, but a field with this name already exists.",
                   poNewField->GetNameRef() );
 
-        return OGRERR_FAILURE;
+        return CREATE_FIELD_ERROR;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1764,9 +1763,35 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
                       "Attempt to create field of type %s, but this is not supported\n"
                       "for .csv files.",
                       poNewField->GetFieldTypeName( poNewField->GetType() ) );
-            return OGRERR_FAILURE;
+            return CREATE_FIELD_ERROR;
         }
     }
+    return CREATE_FIELD_PROCEED;
+}
+
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If we have already written our field names, then we are not     */
+/*      allowed to add new fields.                                      */
+/* -------------------------------------------------------------------- */
+    if( !TestCapability(OLCCreateField) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create new fields after first feature written.");
+        return OGRERR_FAILURE;
+    }
+    
+    OGRCSVCreateFieldAction eAction = PreCreateField( poFeatureDefn, poNewField, bApproxOK );
+    if( eAction == CREATE_FIELD_DO_NOTHING )
+        return OGRERR_NONE;
+    if( eAction == CREATE_FIELD_ERROR )
+        return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      Seems ok, add to field list.                                    */
@@ -1787,7 +1812,7 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 /************************************************************************/
 
 OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
-                                     CPL_UNUSED int bApproxOK )
+                                     int /* bApproxOK */ )
 {
     if( !TestCapability(OLCCreateGeomField) )
     {
@@ -1795,10 +1820,31 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
                   "Unable to create new fields after first feature written.");
         return OGRERR_FAILURE;
     }
+/* -------------------------------------------------------------------- */
+/*      Does this duplicate an existing field?                          */
+/* -------------------------------------------------------------------- */
+    if( poFeatureDefn->GetGeomFieldIndex( poGeomField->GetNameRef() ) >= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create geom field %s, but a field with this name already exists.",
+                  poGeomField->GetNameRef() );
+
+        return OGRERR_FAILURE;
+    }
 
     poFeatureDefn->AddGeomFieldDefn( poGeomField );
 
     const char* pszName = poGeomField->GetNameRef();
+    if( EQUAL(pszName, "") )
+    {
+        int nIdx = poFeatureDefn->GetFieldIndex("WKT");
+        if( nIdx >= 0 )
+        {
+            panGeomFieldIndex[nIdx] = poFeatureDefn->GetGeomFieldCount() - 1;
+            return OGRERR_NONE;
+        }
+        pszName = "WKT";
+    }
     if( STARTS_WITH_CI(pszName, "geom_") )
         pszName += strlen("geom_");
     if( !EQUAL(pszName, "WKT") && !STARTS_WITH_CI(pszName, "_WKT") )
@@ -2259,7 +2305,14 @@ void OGRCSVLayer::SetWriteBOM(int bWriteBOMIn)
 GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
 {
     if (m_poFilterGeom != NULL || m_poAttrQuery != NULL)
-        return OGRLayer::GetFeatureCount(bForce);
+    {
+        GIntBig nRet = OGRLayer::GetFeatureCount(bForce);
+        if( nRet >= 0 )
+        {
+            nTotalFeatures = nNextFID - 1;
+        }
+        return nRet;
+    }
 
     if (nTotalFeatures >= 0)
         return nTotalFeatures;
@@ -2316,4 +2369,18 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
     ResetReading();
 
     return nTotalFeatures;
+}
+
+/************************************************************************/
+/*                          SyncToDisk()                                */
+/************************************************************************/
+
+OGRErr OGRCSVLayer::SyncToDisk()
+{
+    if( bInWriteMode && fpCSV != NULL )
+    {
+        if( VSIFFlushL(fpCSV) != 0 )
+            return OGRERR_FAILURE;
+    }
+    return OGRERR_NONE;
 }
