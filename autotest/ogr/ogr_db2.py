@@ -297,27 +297,26 @@ def ogr_db2_capabilities():
 
 def ogr_db2_listdrivers():
     cnt = ogr.GetDriverCount()
-    print cnt
     formatsList = []  # Empty List
 
     for i in range(cnt):
         driver = ogr.GetDriver(i)
         driverName = driver.GetName()
-#        print driverName
-        if not driverName in formatsList:
+        # print driverName
+        if driverName not in formatsList:
             formatsList.append(driverName)
 
     formatsList.sort() # Sorting the messy list of ogr drivers
 
     for i in formatsList:
-        print i
+        print(i)
 
     return 'success'
 
 gdaltest_list = [
     ogr_db2_check_driver,
     ogr_db2_init,
-#    ogr_db2_listdrivers,
+    # ogr_db2_listdrivers,
     ogr_db2_GetSpatialRef,
     ogr_db2_GetExtent,
     ogr_db2_GetFeature,
@@ -332,5 +331,5 @@ if __name__ == '__main__':
     if os.name == 'nt':
         gdaltest.run_tests( gdaltest_list )
     else:
-        print "These tests only run on Windows"
+        print("These tests only run on Windows")
     gdaltest.summarize()
