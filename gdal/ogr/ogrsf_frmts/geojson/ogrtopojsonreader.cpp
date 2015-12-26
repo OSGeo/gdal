@@ -579,7 +579,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         it.key = NULL;
         it.val = NULL;
         it.entry = NULL;
-        int bNeedSecondPass = FALSE;
+        bool bNeedSecondPass = false;
         json_object_object_foreachC( poObjects, it )
         {
             json_object* poObj = it.val;
@@ -602,7 +602,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     else if( json_type_array == json_object_get_type( poObjects ) )
     {
         const int nObjects = json_object_array_length(poObjects);
-        int bNeedSecondPass = FALSE;
+        bool bNeedSecondPass = false;
         for(int i=0; i<nObjects; i++)
         {
             json_object* poObj = json_object_array_get_idx(poObjects, i);
