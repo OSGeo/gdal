@@ -1166,11 +1166,20 @@ def ogr_csv_28():
 def ogr_csv_29():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('tmp/ogr_csv_29', options = ['GEOMETRY=AS_WKT'])
+    if ds.TestCapability(ogr.ODsCCurveGeometries) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
     if lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_lyr1_EPSG_4326", ogr.wkbPoint)) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_lyr2_EPSG_32632", ogr.wkbPolygon))
+    if lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_lyr2_EPSG_32632", ogr.wkbPolygon)) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_lyr2_EPSG_32632", ogr.wkbPolygon)) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
     ds = None
 
     ds = ogr.Open('tmp/ogr_csv_29', update = 1)
