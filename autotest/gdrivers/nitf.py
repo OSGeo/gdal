@@ -2077,6 +2077,57 @@ def nitf_70():
     return 'success'
 
 ###############################################################################
+# Test reading ENGRDA TRE (#6285)
+
+def nitf_71():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_71.ntf', 1, 1, options = \
+             ['TRE=ENGRDA=0123456789012345678900210012345678901230123X01200000002XY01X01230123X01200000001X'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_71.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_71.ntf' )
+
+    expected_data = """<tres>
+  <tre name="ENGRDA" location="image">
+    <field name="RESRC" value="01234567890123456789" />
+    <field name="RECNT" value="002" />
+    <repeated name="RECORDS" number="2">
+      <group index="0">
+        <field name="ENGLN" value="10" />
+        <field name="ENGLBL" value="0123456789" />
+        <field name="ENGMTXC" value="0123" />
+        <field name="ENGMTXR" value="0123" />
+        <field name="ENGTYP" value="X" />
+        <field name="ENGDTS" value="0" />
+        <field name="ENGDTU" value="12" />
+        <field name="ENGDATC" value="00000002" />
+        <field name="ENGDATA" value="XY" />
+      </group>
+      <group index="1">
+        <field name="ENGLN" value="01" />
+        <field name="ENGLBL" value="X" />
+        <field name="ENGMTXC" value="0123" />
+        <field name="ENGMTXR" value="0123" />
+        <field name="ENGTYP" value="X" />
+        <field name="ENGDTS" value="0" />
+        <field name="ENGDTU" value="12" />
+        <field name="ENGDATC" value="00000001" />
+        <field name="ENGDATA" value="X" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    if data != expected_data:
+        print(data)
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -3085,6 +3136,7 @@ gdaltest_list = [
     nitf_68,
     nitf_69,
     nitf_70,
+    nitf_71,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
