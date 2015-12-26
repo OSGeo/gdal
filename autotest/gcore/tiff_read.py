@@ -107,6 +107,16 @@ def tiff_check_alpha():
         return 'fail'
 
     ds = None
+    
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('data/stefan_full_greyalpha.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [1970,1970,1970,10807]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+	ds = None
 
     # RGB + alpha
 
@@ -118,6 +128,17 @@ def tiff_check_alpha():
         return 'fail'
 
     ds = None
+    
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('data/stefan_full_rgba.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    # FIXME? Not the same as without GTIFF_FORCE_RGBA=YES
+    if got_cs != [11547, 57792, 35643, 10807]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+	ds = None
 
     # RGB + undefined
 
@@ -129,6 +150,16 @@ def tiff_check_alpha():
         return 'fail'
 
     ds = None
+    
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('data/stefan_full_rgba_photometric_rgb.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [12603, 58561, 36064, 10807]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+	ds = None
 
     return 'success'
 
@@ -2305,6 +2336,23 @@ def tiff_read_readdir_limit_on_open():
 
     return 'success'
 
+###############################################################################
+# 
+def tiff_read_minisblac_as_rgba():
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('data/byte.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [4672,4672,4672,4873]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+	ds = None
+
+    return 'success'
+
+
 ###############################################################################################
 
 for item in init_list:
@@ -2361,6 +2409,7 @@ gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
 gdaltest_list.append( (tiff_read_empty_nodata_tag) )
 gdaltest_list.append( (tiff_read_strace_check) )
 gdaltest_list.append( (tiff_read_readdir_limit_on_open) )
+gdaltest_list.append( (tiff_read_minisblac_as_rgba) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
