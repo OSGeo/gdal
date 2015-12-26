@@ -135,13 +135,16 @@ void OGREditableLayer::DetectNextFID()
 
 int OGREditableLayer::GetSrcGeomFieldIndex(int iGeomField)
 {
-    if( iGeomField < 0 || iGeomField >= m_poEditableFeatureDefn->GetGeomFieldCount() )
+    if( m_poDecoratedLayer == NULL ||
+        iGeomField < 0 ||
+        iGeomField >= m_poEditableFeatureDefn->GetGeomFieldCount() )
+    {
         return -1;
+    }
     OGRGeomFieldDefn* poGeomFieldDefn =
                 m_poEditableFeatureDefn->GetGeomFieldDefn(iGeomField);
-    if( poGeomFieldDefn == NULL )
-        return -1;
-    return m_poEditableFeatureDefn->GetGeomFieldIndex(poGeomFieldDefn->GetNameRef());
+    return m_poDecoratedLayer->GetLayerDefn()->GetGeomFieldIndex(
+                                                poGeomFieldDefn->GetNameRef());
 }
 
 /************************************************************************/
