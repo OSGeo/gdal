@@ -263,15 +263,16 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
     CPLErrorReset();
     if( bSuccess )
     {
-        int bHasDate = strchr( pszStr, '/' ) != NULL ||
-                        strchr( pszStr, '-' ) != NULL;
-        int bHasTime = strchr( pszStr, ':' ) != NULL;
+        const bool bHasDate = strchr( pszStr, '/' ) != NULL ||
+            strchr( pszStr, '-' ) != NULL;
+        const bool  bHasTime = strchr( pszStr, ':' ) != NULL;
         if( bHasDate && bHasTime )
             return OFTDateTime;
         else if( bHasDate )
             return OFTDate;
         else
             return OFTTime;
+        // TODO: What if both are false?
     }
     return OFTString;
 }
@@ -300,6 +301,6 @@ const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
         return "MultiPolygon";
     else if( wkbGeometryCollection == eType || wkbGeometryCollection25D == eType )
         return "GeometryCollection";
-    else
-        return "Unknown";
+
+    return "Unknown";
 }

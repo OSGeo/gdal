@@ -260,7 +260,8 @@ static void OGRGeoJSONPatchGeometry( json_object* poJSonGeometry,
 /*                           OGRGeoJSONWriteFeature                     */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, int bWriteBBOX, int nCoordPrecision )
+json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, int bWriteBBOX,
+                                     int nCoordPrecision )
 {
     CPLAssert( NULL != poFeature );
 
@@ -297,7 +298,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, int bWriteBBOX, int 
                 }
                 if( strcmp(it.key, "bbox") == 0 )
                 {
-                    bWriteBBOX = TRUE;
+                    bWriteBBOX = true;
                     continue;
                 }
                 if( strcmp(it.key, "geometry") == 0 )
@@ -885,7 +886,7 @@ char* OGR_G_ExportToJsonEx( OGRGeometryH hGeometry, char** papszOptions )
 {
     VALIDATE_POINTER1( hGeometry, "OGR_G_ExportToJson", NULL );
 
-    OGRGeometry* poGeometry = (OGRGeometry*) (hGeometry);
+    OGRGeometry* poGeometry = reinterpret_cast<OGRGeometry *>( hGeometry );
 
     const int nCoordPrecision
         = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));

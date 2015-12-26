@@ -37,19 +37,19 @@
 /*                           OGRGeoJSONReader                           */
 /************************************************************************/
 
-OGRGeoJSONReader::OGRGeoJSONReader()
-    : poGJObject_( NULL ),
-        bGeometryPreserve_( true ),
-        bAttributesSkip_( false ),
-        bFlattenNestedAttributes_ (false),
-        chNestedAttributeSeparator_ (0),
-        bStoreNativeData_(false),
-        bArrayAsString_(false),
-        bFlattenGeocouchSpatiallistFormat (-1),
-      bFoundId (false),
-      bFoundRev(false),
-      bFoundTypeFeature(false),
-      bIsGeocouchSpatiallistFormat(false)
+OGRGeoJSONReader::OGRGeoJSONReader() :
+    poGJObject_(NULL),
+    bGeometryPreserve_(true),
+    bAttributesSkip_(false),
+    bFlattenNestedAttributes_(false),
+    chNestedAttributeSeparator_(0),
+    bStoreNativeData_(false),
+    bArrayAsString_(false),
+    bFlattenGeocouchSpatiallistFormat(-1),
+    bFoundId(false),
+    bFoundRev(false),
+    bFoundTypeFeature(false),
+    bIsGeocouchSpatiallistFormat(false)
 { }
 
 /************************************************************************/
@@ -411,11 +411,11 @@ bool OGRGeoJSONReader::GenerateLayerDefn( OGRGeoJSONLayer* poLayer, json_object*
         if( NULL != poObjFeatures
             && json_type_array == json_object_get_type( poObjFeatures ) )
         {
-            json_object* poObjFeature = NULL;
             const int nFeatures = json_object_array_length( poObjFeatures );
             for( int i = 0; i < nFeatures; ++i )
             {
-                poObjFeature = json_object_array_get_idx( poObjFeatures, i );
+                json_object* poObjFeature
+                    = json_object_array_get_idx( poObjFeatures, i );
                 if( !GenerateFeatureDefn( poLayer, poObjFeature ) )
                 {
                     CPLDebug( "GeoJSON", "Create feature schema failure." );
@@ -982,14 +982,14 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
             }
         }
 
-        int nField = -1;
         json_object_iter it;
         it.key = NULL;
         it.val = NULL;
         it.entry = NULL;
         json_object_object_foreachC( poObjProps, it )
         {
-            nField = poFeature->GetFieldIndex(it.key);
+            const int nField
+                = poFeature->GetFieldIndex(it.key);
             OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key, it.val,
                                      bFlattenNestedAttributes_,
                                      chNestedAttributeSeparator_);
@@ -1110,14 +1110,12 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer, json_object* 
     if( json_type_array == json_object_get_type( poObjFeatures ) )
     {
         /* bool bAdded = false; */
-        OGRFeature* poFeature = NULL;
-        json_object* poObjFeature = NULL;
-
         const int nFeatures = json_object_array_length( poObjFeatures );
         for( int i = 0; i < nFeatures; ++i )
         {
-            poObjFeature = json_object_array_get_idx( poObjFeatures, i );
-            poFeature = ReadFeature( poLayer, poObjFeature );
+            json_object* poObjFeature
+                = json_object_array_get_idx( poObjFeatures, i );
+            OGRFeature* poFeature = ReadFeature( poLayer, poObjFeature );
             /* bAdded = */ AddFeature( poLayer, poFeature );
             //CPLAssert( bAdded );
         }
@@ -1762,10 +1760,10 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
             poCollection = new OGRGeometryCollection();
         }
 
-        json_object* poObjGeom = NULL;
         for( int i = 0; i < nGeoms; ++i )
         {
-            poObjGeom = json_object_array_get_idx( poObjGeoms, i );
+            json_object* poObjGeom
+                = json_object_array_get_idx( poObjGeoms, i );
             if (poObjGeom == NULL)
             {
                 CPLDebug( "GeoJSON", "Skipping null sub-geometry");
