@@ -254,6 +254,23 @@
         </loop>
     </tre>
 
+    <!-- STDI-0002 Appendix N -->
+    <tre name="ENGRDA">
+        <field name="RESRC" length="20" type="string"/>
+        <field name="RECNT" length="3" type="integer" minval="1"/>
+        <loop counter="RECNT" md_prefix="RECORD_%d_" name="RECORDS">
+            <field name="ENGLN" length="2" type="integer" minval="1"/>
+            <field name="ENGLBL" length_var="ENGLN" type="string"/>
+            <field name="ENGMTXC" length="4" type="integer" minval="1"/>
+            <field name="ENGMTXR" length="4" type="integer" minval="1"/>
+            <field name="ENGTYP" length="1" type="string"/>
+            <field name="ENGDTS" length="1" type="integer"/>
+            <field name="ENGDTU" length="2" type="string"/>
+            <field name="ENGDATC" length="8" type="integer" minval="1" maxval="99999932"/>
+            <field name="ENGDATA" length_var="ENGDATC"/>
+        </loop>
+    </tre>
+
     <tre name="GEOLOB" length="48" location="image">
         <field name="ARV" length="9" type="real"/>
         <field name="BRV" length="9" type="real"/>
