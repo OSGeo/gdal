@@ -36,8 +36,8 @@ OGRLayerDecorator::OGRLayerDecorator(OGRLayer* poDecoratedLayer,
                                         m_poDecoratedLayer(poDecoratedLayer),
                                         m_bHasOwnership(bTakeOwnership)
 {
-    SetDescription( poDecoratedLayer->GetDescription() );
     CPLAssert(poDecoratedLayer != NULL);
+    SetDescription( poDecoratedLayer->GetDescription() );
 }
 
 OGRLayerDecorator::~OGRLayerDecorator()
@@ -198,6 +198,13 @@ OGRErr      OGRLayerDecorator::AlterFieldDefn( int iField, OGRFieldDefn* poNewFi
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
     return m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
+}
+
+OGRErr      OGRLayerDecorator::CreateGeomField( OGRGeomFieldDefn *poField,
+                                            int bApproxOK )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    return m_poDecoratedLayer->CreateGeomField(poField, bApproxOK);
 }
 
 OGRErr      OGRLayerDecorator::SyncToDisk()

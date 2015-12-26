@@ -80,6 +80,9 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
 
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
+                                         int bApproxOK = TRUE );
+
     virtual OGRErr      SyncToDisk();
 
     virtual OGRStyleTable *GetStyleTable();
