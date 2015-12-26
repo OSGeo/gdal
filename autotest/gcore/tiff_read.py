@@ -112,7 +112,7 @@ def tiff_check_alpha():
     ds = gdal.Open('data/stefan_full_greyalpha.tif')
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
     gdaltest.supports_force_rgba = False
-    if ds.RasterCount == 2:
+    if ds.RasterCount == 4:
         gdaltest.supports_force_rgba = True
     if gdaltest.supports_force_rgba:
         got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
