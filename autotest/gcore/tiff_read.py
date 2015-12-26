@@ -111,12 +111,16 @@ def tiff_check_alpha():
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('data/stefan_full_greyalpha.tif')
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
-    if got_cs != [1970,1970,1970,10807]:
-        gdaltest.post_reason( 'fail')
-        print(got_cs)
-        return 'fail'
-    ds = None
+    gdaltest.supports_force_rgba = False
+    if ds.RasterCount == 2:
+        gdaltest.supports_force_rgba = True
+    if gdaltest.supports_force_rgba:
+        got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+        if got_cs != [1970,1970,1970,10807]:
+            gdaltest.post_reason( 'fail')
+            print(got_cs)
+            return 'fail'
+        ds = None
 
     # RGB + alpha
 
@@ -129,16 +133,17 @@ def tiff_check_alpha():
 
     ds = None
     
-    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
-    ds = gdal.Open('data/stefan_full_rgba.tif')
-    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
-    # FIXME? Not the same as without GTIFF_FORCE_RGBA=YES
-    if got_cs != [11547, 57792, 35643, 10807]:
-        gdaltest.post_reason( 'fail')
-        print(got_cs)
-        return 'fail'
-    ds = None
+    if gdaltest.supports_force_rgba:
+        gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+        ds = gdal.Open('data/stefan_full_rgba.tif')
+        gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+        got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+        # FIXME? Not the same as without GTIFF_FORCE_RGBA=YES
+        if got_cs != [11547, 57792, 35643, 10807]:
+            gdaltest.post_reason( 'fail')
+            print(got_cs)
+            return 'fail'
+        ds = None
 
     # RGB + undefined
 
@@ -151,15 +156,16 @@ def tiff_check_alpha():
 
     ds = None
     
-    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
-    ds = gdal.Open('data/stefan_full_rgba_photometric_rgb.tif')
-    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
-    if got_cs != [12603, 58561, 36064, 10807]:
-        gdaltest.post_reason( 'fail')
-        print(got_cs)
-        return 'fail'
-    ds = None
+    if gdaltest.supports_force_rgba:
+        gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+        ds = gdal.Open('data/stefan_full_rgba_photometric_rgb.tif')
+        gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+        got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+        if got_cs != [12603, 58561, 36064, 10807]:
+            gdaltest.post_reason( 'fail')
+            print(got_cs)
+            return 'fail'
+        ds = None
 
     return 'success'
 
@@ -2339,6 +2345,9 @@ def tiff_read_readdir_limit_on_open():
 ###############################################################################
 # 
 def tiff_read_minisblack_as_rgba():
+
+    if not gdaltest.supports_force_rgba:
+        return 'skip'
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('data/byte.tif')
