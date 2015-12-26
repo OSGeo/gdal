@@ -4,7 +4,7 @@ OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj ogr_gensql.obj \
 		ogr_attrind.obj ogr_miattrind.obj ogrlayerdecorator.obj \
 		ogrwarpedlayer.obj ogrunionlayer.obj ogrlayerpool.obj \
 		ogrmutexedlayer.obj ogrmutexeddatasource.obj \
-		ogremulatedtransaction.obj
+		ogremulatedtransaction.obj ogreditablelayer.obj
 
 
 GDAL_ROOT	=	..\..\..
