@@ -116,7 +116,7 @@ def tiff_check_alpha():
         gdaltest.post_reason( 'fail')
         print(got_cs)
         return 'fail'
-	ds = None
+    ds = None
 
     # RGB + alpha
 
@@ -138,7 +138,7 @@ def tiff_check_alpha():
         gdaltest.post_reason( 'fail')
         print(got_cs)
         return 'fail'
-	ds = None
+    ds = None
 
     # RGB + undefined
 
@@ -159,7 +159,7 @@ def tiff_check_alpha():
         gdaltest.post_reason( 'fail')
         print(got_cs)
         return 'fail'
-	ds = None
+    ds = None
 
     return 'success'
 
@@ -2338,7 +2338,7 @@ def tiff_read_readdir_limit_on_open():
 
 ###############################################################################
 # 
-def tiff_read_minisblac_as_rgba():
+def tiff_read_minisblack_as_rgba():
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('data/byte.tif')
@@ -2348,7 +2348,7 @@ def tiff_read_minisblac_as_rgba():
         gdaltest.post_reason( 'fail')
         print(got_cs)
         return 'fail'
-	ds = None
+    ds = None
 
     return 'success'
 
@@ -2409,7 +2409,7 @@ gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
 gdaltest_list.append( (tiff_read_empty_nodata_tag) )
 gdaltest_list.append( (tiff_read_strace_check) )
 gdaltest_list.append( (tiff_read_readdir_limit_on_open) )
-gdaltest_list.append( (tiff_read_minisblac_as_rgba) )
+gdaltest_list.append( (tiff_read_minisblack_as_rgba) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
