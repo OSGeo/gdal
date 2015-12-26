@@ -89,6 +89,15 @@ def ogr_csv_2():
         return 'skip'
 
     lyr = gdaltest.csv_ds.GetLayerByName( 'prime_meridian' )
+    
+    f = ogr.Feature(lyr.GetLayerDefn())
+    with gdaltest.error_handler():
+        if lyr.CreateField(ogr.FieldDefn('foo')) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.CreateFeature(f) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return ogr_csv_check_layer(lyr, False)
 
@@ -2228,7 +2237,42 @@ def ogr_csv_43():
 
     gdal.Unlink('/vsimem/ogr_csv_43.csv')
     return 'success'
-    
+
+###############################################################################
+# Test seeking back while creating
+
+def ogr_csv_44():
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_44.csv')
+    lyr = ds.CreateLayer('ogr_csv_44', options = ['GEOMETRY=AS_WKT'])
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('id', 1)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    f = lyr.GetFeature(1)
+    if f['id'] != 1 or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('id', 2)
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(2)
+    if f['id'] != 2 or f.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_44.csv')
+    return 'success'
+
 ###############################################################################
 #
 
@@ -2307,6 +2351,7 @@ gdaltest_list = [
     ogr_csv_41,
     ogr_csv_42,
     ogr_csv_43,
+    ogr_csv_44,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
