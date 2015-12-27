@@ -41,7 +41,7 @@ from osgeo import gdal, osr
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('byte.tif', 1, 4672, None),
     ('int10.tif', 1, 4672, None),
     ('int12.tif', 1, 4672, None),
@@ -81,7 +81,8 @@ def tiff_read_off():
     if ds.GetRasterBand(1).Checksum() != 4672:
         return 'fail'
 
-    # Check that georeferencing is read properly when accessing "GTIFF_DIR" subdatasets (#3478)
+    # Check that georeferencing is read properly when accessing
+    # "GTIFF_DIR" subdatasets (#3478)
     gt = ds.GetGeoTransform()
     if gt != (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0):
         gdaltest.post_reason('did not get expected geotransform')
@@ -107,7 +108,7 @@ def tiff_check_alpha():
         return 'fail'
 
     ds = None
-    
+
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('data/stefan_full_greyalpha.tif')
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
@@ -132,7 +133,7 @@ def tiff_check_alpha():
         return 'fail'
 
     ds = None
-    
+
     if gdaltest.supports_force_rgba:
         gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
         ds = gdal.Open('data/stefan_full_rgba.tif')
@@ -155,7 +156,7 @@ def tiff_check_alpha():
         return 'fail'
 
     ds = None
-    
+
     if gdaltest.supports_force_rgba:
         gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
         ds = gdal.Open('data/stefan_full_rgba_photometric_rgb.tif')
@@ -984,7 +985,7 @@ def tiff_read_rpc_tif():
     ds = None
 
     if rpc_md['HEIGHT_OFF'] != '300':
-        gdaltest.post_reason('HEIGHT_OFF wrong:'+rpc_md['HEIGHT_OFF'])        
+        gdaltest.post_reason('HEIGHT_OFF wrong:'+rpc_md['HEIGHT_OFF'])
         return 'fail'
 
     if rpc_md['LINE_DEN_COEFF'].find('1 -0.00520769693945429') != 0:
@@ -2299,13 +2300,13 @@ def tiff_read_strace_check():
         return 'skip'
 
     python_exe = sys.executable
-    cmd = """strace -f %s -c "from osgeo import gdal; """ % python_exe + \
-            """gdal.SetConfigOption('CPL_DEBUG', 'OFF');""" + \
-            """ds = gdal.Open('../gcore/data/byte.tif');""" + \
-            """ds.ReadRaster();""" + \
-            """ds.GetMetadata('IMAGE_STRUCTURE');""" + \
-            """ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE');""" + \
-            """ " """ 
+    cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
+        "gdal.SetConfigOption('CPL_DEBUG', 'OFF');"
+        "ds = gdal.Open('../gcore/data/byte.tif');"
+        "ds.ReadRaster();"
+        "ds.GetMetadata('IMAGE_STRUCTURE');"
+        "ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE');"
+        " \" " )
     try:
         (out, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
@@ -2343,7 +2344,7 @@ def tiff_read_readdir_limit_on_open():
     return 'success'
 
 ###############################################################################
-# 
+#
 def tiff_read_minisblack_as_rgba():
 
     if not gdaltest.supports_force_rgba:
@@ -2362,7 +2363,7 @@ def tiff_read_minisblack_as_rgba():
     return 'success'
 
 ###############################################################################
-# 
+#
 def tiff_read_colortable_as_rgba():
 
     if not gdaltest.supports_force_rgba:
@@ -2380,7 +2381,7 @@ def tiff_read_colortable_as_rgba():
 
     return 'success'
 
-###############################################################################################
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2462,4 +2463,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
