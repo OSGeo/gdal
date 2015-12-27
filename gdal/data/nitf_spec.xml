@@ -271,6 +271,29 @@
         </loop>
     </tre>
 
+    <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Table E-12 -->
+    <tre name="EXPLTB" length="101" location="image">
+        <field name="ANGLE_TO_NORTH" length="7" type="real" minval="0.0" maxval="359.999"/>
+        <field name="ANGLE_TO_NORTH_ACCY" length="6" type="real" min="0.0" maxval="44.999"/>
+        <field name="SQUINT_ANGLE" length="7" type="real" min="-60.0" maxval="85.0"/>
+        <field name="SQUINT_ANGLE_ACCY" length="6" type="real" min="0.0" maxval="44.999"/>
+        <field name="MODE" length="3" type="string"/>
+        <field length="16" fixed_value="                "/>
+        <field name="GRAZE_ANG" length="5" type="real" unit="degrees" minval="0.0" maxval="90.00"/>
+        <field name="GRAZE_ANG_ACCY" length="5" type="real" unit="degrees" minval="0.0" maxval="90.00"/>
+        <field name="SLOPE_ANG" length="5" type="real" unit="degrees" minval="0.0" maxval="90.00"/>
+        <field name="POLAR" length="2" type="string"/>
+        <field name="NSAMP" length="5" type="integer" minval="1" maxval="99999"/>
+        <field length="1" fixed_value="0"/>
+        <!-- SEQ_NUM is a string because it is <R>, so it may contain a space -->
+        <field name="SEQ_NUM" length="1" type="string"/>
+        <field name="PRIME_ID" length="12" type="string"/>
+        <field name="PRIME_BE" length="15" type="string"/>
+        <field length="1" fixed_value="0"/>
+        <field name="N_SEC" length="2" type="integer" minval="0" maxval="99"/>
+        <field name="IPR" length="2" type="integer" unit="feet" minval="0" maxval="99"/>
+    </tre>
+
     <tre name="GEOLOB" length="48" location="image">
         <field name="ARV" length="9" type="real"/>
         <field name="BRV" length="9" type="real"/>
@@ -424,6 +447,40 @@
         <field name="C_AL_DC" length="9" type="real" minval="-1.0" maxval="1.0"/>
         <field name="TOTAL_TILES_COLS" length="3" type="integer" minval="1" maxval="999"/>
         <field name="TOTAL_TILES_ROWS" length="5" type="integer" minval="1" maxval="99999"/>
+    </tre>
+
+    <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Table E-21 -->
+    <tre name="PATCHB" size="121" location="image">
+        <field name="PAT_NO" length="4" type="integer" minval="1" maxval="999"/>
+        <!-- LAST_PAT_LEVEL is a string because it is <R>, so it may contain only a space -->
+        <field name="LAST_PAT_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <field name="LNSTRT" length="7" type="integer" minval="1" maxval="9999999"/>
+        <field name="LNSTOP" length="7" type="integer" minval="20" maxval="9999999"/>
+        <field name="AZL" length="5" type="integer" units="lines" minval="20" maxval="99999"/>
+        <!-- NVL is a string because it is <R> -->
+        <field name="NVL" length="5" type="string" units="lines"/>
+        <!-- FVL is a string because it is <R> -->
+        <field name="FVL" length="3" type="string" minval="1" maxval="681"/>
+        <field name="NPIXEL" length="5" type="integer" units="pixels" minval="1" maxval="99999"/>
+        <field name="FVPIX" length="5" type="integer" units="pixels" minval="1" maxval="99999"/>
+        <!-- FRAME is a string because it is <R> -->
+        <field name="FRAME" length="3" type="string" minval="1" maxval="512"/>
+        <field name="UTC" length="8" type="real" units="seconds" minval="0.0" maxval="86399.99"/>
+        <field name="SHEAD" length="7" type="real" units="degrees" minval="0.0" maxval="359.999"/>
+        <!-- GRAVITY is a string because it is <R> -->
+        <field name="GRAVITY" length="7" type="string" units="feet/sec^2"/>
+        <field name="INS_V_NC" length="5" type="integer" units="feet/sec" minval="-9999" maxval="9999"/>
+        <field name="INS_V_EC" length="5" type="integer" units="feet/sec" minval="-9999" maxval="9999"/>
+        <field name="INS_V_DC" length="5" type="integer" units="feet/sec" minval="-9999" maxval="9999"/>
+        <!-- OFFLAT and OFFLONG are string because they are <R> -->
+        <field name="OFFLAT" length="8" type="string" units="seconds"/>
+        <field name="OFFLONG" length="8" type="string" units="seconds"/>
+        <field name="TRACK" length="3" type="integer" units="degrees" minval="0" maxval="359"/>
+        <field name="GSWEEP" length="6" type="real" units="degrees" minval="0.0" maxval="120.0"/>
+        <!-- SHEAR is a string because it is <R> -->
+        <field name="SHEAR" length="8" type="string"/>
+        <!-- BATCH_NO is a string because it is <R> -->
+        <field name="BATCH_NO" length="6" type="string"/>
     </tre>
 
     <tre name="PIAIMB" md_prefix="NITF_PIAIMB_" length="337" location="image">
