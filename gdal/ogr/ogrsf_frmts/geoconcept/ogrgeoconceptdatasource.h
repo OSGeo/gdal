@@ -48,8 +48,8 @@ class OGRGeoconceptDataSource : public OGRDataSource
     char                *_pszDirectory;
     char                *_pszExt;
     char               **_papszOptions;
-    int                  _bSingleNewFile;
-    int                  _bUpdate;
+    bool                 _bSingleNewFile;
+    bool                 _bUpdate;
     GCExportFileH       *_hGXT;
 
   public:
