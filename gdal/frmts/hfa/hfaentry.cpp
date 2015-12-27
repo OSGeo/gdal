@@ -464,6 +464,12 @@ void HFAEntry::LoadData()
 {
     if( pabyData != NULL || nDataSize == 0 )
         return;
+    if( nDataSize > INT_MAX - 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid value for nDataSize = %u", nDataSize);
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read data.                                 */
