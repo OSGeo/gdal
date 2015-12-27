@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.41 2015-11-22 15:31:03 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.43 2015-12-27 20:14:11 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -704,7 +704,7 @@ PixarLogSetupDecode(TIFF* tif)
 	}
 
 	if (inflateInit(&sp->stream) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg);
+		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg ? sp->stream.msg : "(null)");
 		return (0);
 	} else {
 		sp->state |= PLSTATE_INIT;
@@ -791,14 +791,14 @@ PixarLogDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 		if (state == Z_DATA_ERROR) {
 			TIFFErrorExt(tif->tif_clientdata, module,
 			    "Decoding error at scanline %lu, %s",
-			    (unsigned long) tif->tif_row, sp->stream.msg);
+			    (unsigned long) tif->tif_row, sp->stream.msg ? sp->stream.msg : "(null)");
 			if (inflateSync(&sp->stream) != Z_OK)
 				return (0);
 			continue;
 		}
 		if (state != Z_OK) {
 			TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
-			    sp->stream.msg);
+			    sp->stream.msg ? sp->stream.msg : "(null)");
 			return (0);
 		}
 	} while (sp->stream.avail_out > 0);
@@ -900,7 +900,7 @@ PixarLogSetupEncode(TIFF* tif)
 	}
 
 	if (deflateInit(&sp->stream, sp->quality) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg);
+		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg ? sp->stream.msg : "(null)");
 		return (0);
 	} else {
 		sp->state |= PLSTATE_INIT;
@@ -1175,7 +1175,7 @@ PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	do {
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
 			TIFFErrorExt(tif->tif_clientdata, module, "Encoder error: %s",
-			    sp->stream.msg);
+			    sp->stream.msg ? sp->stream.msg : "(null)");
 			return (0);
 		}
 		if (sp->stream.avail_out == 0) {
@@ -1217,7 +1217,7 @@ PixarLogPostEncode(TIFF* tif)
 		    break;
 		default:
 			TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
-			sp->stream.msg);
+			sp->stream.msg ? sp->stream.msg : "(null)");
 		    return (0);
 		}
 	} while (state != Z_STREAM_END);
@@ -1287,7 +1287,7 @@ PixarLogVSetField(TIFF* tif, uint32 tag, va_list ap)
 			if (deflateParams(&sp->stream,
 			    sp->quality, Z_DEFAULT_STRATEGY) != Z_OK) {
 				TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
-					sp->stream.msg);
+					sp->stream.msg ? sp->stream.msg : "(null)");
 				return (0);
 			}
 		}
