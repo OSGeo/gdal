@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal2tiles.py testing
 # Author:   Even Rouault <even dot rouault @ spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault @ spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -51,7 +51,7 @@ def test_gdal2tiles_py_1():
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
 
-    expected_cs = [ 25350, 28185, 6147, 59026 ]
+    expected_cs = [ 1063, 3724, 45464, 28620 ]
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_cs[i]:
             gdaltest.post_reason('wrong checksum for band %d' % (i+1))
@@ -78,7 +78,7 @@ def test_gdal2tiles_py_2():
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
 
-    expected_cs = [ 8130, 10496, 65274, 63715 ]
+    expected_cs = [ 23914, 26462, 9227, 65476 ]
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_cs[i]:
             gdaltest.post_reason('wrong checksum for band %d' % (i+1))

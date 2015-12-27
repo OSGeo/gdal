@@ -744,28 +744,24 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
         else:
             raise Exception("No input file was specified")
 
-        log2 = lambda x: math.log10(x) / math.log10(2)
-        self.min_zoom = int(max( math.ceil(log2(self.in_ds.RasterXSize/float(self.tilesize))),
-                                   math.ceil(log2(self.in_ds.RasterYSize/float(self.tilesize)))))
-
-        # This checks if the upper bound of the zoom range specified is >= log2(max(width, height)/tilesize)
-        # If not, it asks the user if scaling to the upper bound is necessary
-        # If the user doesn't require it, the program terminates
-        
-        if self.tmaxz < self.min_zoom:
-            print("The upper bound of the zoom range should be atleast %d." % self.min_zoom)
-            response = raw_input ("Scale to the minimum zoom value %d? Enter y to confirm and n to terminate\n" % self.min_zoom)
-            if response in ['y','Y']:
-                self.tmaxz = self.min_zoom
-            else:
-                self.error("Terminaing")
-
         if self.options.verbose:
             print("Input file:", "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize, self.in_ds.RasterCount))
 
         if not self.in_ds:
             # Note: GDAL prints the ERROR message too
             self.error("It is not possible to open the input file '%s'." % self.input )
+
+        log2 = lambda x: math.log10(x) / math.log10(2)
+        self.min_zoom = int(max( math.ceil(log2(self.in_ds.RasterXSize/float(self.tilesize))),
+                               math.ceil(log2(self.in_ds.RasterYSize/float(self.tilesize)))))
+        # This checks if the upper bound of the zoom range specified is >= log2(max(width, height)/tilesize)
+        # If not, it resets the upper bound to the required value given above
+
+        if self.options.zoom:
+            if self.tmaxz < self.min_zoom:
+                print("The upper bound of the zoom range should be atleast %d." % self.min_zoom)
+                response = raw_input ("Scaling to the minimum zoom value %d\n" % self.min_zoom)
+                self.tmaxz = self.min_zoom
 
         # Read metadata from the input file
         if self.in_ds.RasterCount == 0:
@@ -1004,6 +1000,7 @@ gdal2tiles temp.vrt""" % self.input )
                 self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
 
             # TODO: Maps crossing 180E (Alaska?)
+
             # Get the minimal zoom level (map covers area equivalent to one tile)
             if self.tminz == None:
                 self.tminz = self.mercator.ZoomForPixelSize( self.out_gt[1] * max( self.out_ds.RasterXSize, self.out_ds.RasterYSize) / float(self.tilesize) )
@@ -1049,7 +1046,7 @@ gdal2tiles temp.vrt""" % self.input )
 
         if self.options.profile == 'raster':
 
-            # log2 = lambda x: math.log10(x) / math.log10(2) # log2 (base 2 logarithm)
+            log2 = lambda x: math.log10(x) / math.log10(2) # log2 (base 2 logarithm)
 
             self.nativezoom = int(max( math.ceil(log2(self.out_ds.RasterXSize/float(self.tilesize))),
                                        math.ceil(log2(self.out_ds.RasterYSize/float(self.tilesize)))))
