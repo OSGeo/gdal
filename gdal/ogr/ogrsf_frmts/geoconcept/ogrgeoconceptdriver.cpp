@@ -70,7 +70,7 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
 
     OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE, bUpdate ) )
+    if( !poDS->Open( pszFilename, true, CPL_TO_BOOL(bUpdate) ) )
     {
         delete poDS;
         return NULL;

@@ -83,8 +83,8 @@ OGRGeoconceptDataSource::~OGRGeoconceptDataSource()
 /*      Open an existing file.                                          */
 /************************************************************************/
 
-int OGRGeoconceptDataSource::Open( const char* pszName, int bTestOpen,
-                                   int bUpdate )
+int OGRGeoconceptDataSource::Open( const char* pszName, bool bTestOpen,
+                                   bool bUpdate )
 
 {
 /* -------------------------------------------------------------------- */
