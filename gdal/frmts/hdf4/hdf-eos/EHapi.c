@@ -664,7 +664,7 @@ EHgetversion(int32 fid, char *version)
 
     uint8           access;	/* Access code */
     int32           dum;	/* Dummy variable */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
+    int32           sdInterfaceID = 0;	/* HDF SDS interface ID */
     int32           attrIndex;	/* HDFEOS version attribute index */
     int32           count;	/* Version string size */
 
