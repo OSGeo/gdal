@@ -10206,6 +10206,7 @@ void GTiffDataset::ScanDirectories()
         /* Embedded mask of the main image */
         else if ((nSubType & FILETYPE_MASK) != 0 &&
                  (nSubType & FILETYPE_REDUCEDIMAGE) == 0 &&
+                 iDirIndex != 1 &&
                  poMaskDS == NULL )
         {
             poMaskDS = new GTiffDataset();
@@ -10242,7 +10243,8 @@ void GTiffDataset::ScanDirectories()
         /* Embedded mask of an overview */
         /* The TIFF6 specification allows the combination of the FILETYPE_xxxx masks */
         else if ((nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
-                 (nSubType & FILETYPE_MASK) != 0)
+                 (nSubType & FILETYPE_MASK) != 0 &&
+                 iDirIndex != 1)
         {
             GTiffDataset* poDS = new GTiffDataset();
             if( poDS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, FALSE, 
