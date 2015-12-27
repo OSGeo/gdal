@@ -112,7 +112,7 @@ typedef struct
 } BMPFileHeader;
 
 // File header size in bytes:
-const int       BFH_SIZE = 14;
+static const int       BFH_SIZE = 14;
 
 typedef struct
 {
