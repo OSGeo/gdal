@@ -760,7 +760,6 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
         if self.options.zoom:
             if self.tmaxz < self.min_zoom:
                 print("The upper bound of the zoom range should be atleast %d." % self.min_zoom)
-                response = raw_input ("Scaling to the minimum zoom value %d\n" % self.min_zoom)
                 self.tmaxz = self.min_zoom
 
         # Read metadata from the input file
