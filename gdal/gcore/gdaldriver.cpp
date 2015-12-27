@@ -437,10 +437,10 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 
         // Does this appear to be a supported creation option on this driver?
         const char *pszOptionList =
-            GetMetadataItem( GDAL_DMD_CREATIONDATATYPES );
+            GetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST );
 
         if( pszOptionList == NULL 
-            || strstr(pszOptionList,apszOptItems[iOptItem]) != NULL )
+            || strstr(pszOptionList,apszOptItems[iOptItem]) == NULL )
             continue;
 
         papszCreateOptions = CSLSetNameValue( papszCreateOptions,
