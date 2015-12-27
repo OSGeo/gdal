@@ -47,6 +47,7 @@ init_list = [
     ('next_literalrow.tif', 1, 4, None),
     ('next_literalspan.tif', 1, 4, None),
     ('next_default_case.tif', 1, 4, None),
+    ('thunder.tif', 1, 3, None),
     ('int10.tif', 1, 4672, None),
     ('int12.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, None),
