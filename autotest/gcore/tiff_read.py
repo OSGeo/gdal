@@ -44,6 +44,9 @@ gdaltest_list = []
 init_list = [
     ('byte.tif', 1, 4672, None),
     ('uint16_sgilog.tif', 1, 4672, None),
+    ('next_literalrow.tif', 1, 4, None),
+    ('next_literalspan.tif', 1, 4, None),
+    ('next_default_case.tif', 1, 4, None),
     ('int10.tif', 1, 4672, None),
     ('int12.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, None),
