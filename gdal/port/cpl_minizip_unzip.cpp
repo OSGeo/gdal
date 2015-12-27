@@ -957,7 +957,7 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                      file_info.size_filename<=fileNameBufferSize &&
                      szFileName != NULL )
             {
-                int version;
+                int version = 0;
                 if (unzlocal_getByte(&s->z_filefunc, s->filestream,&version) != UNZ_OK)
                     err=UNZ_ERRNO;
                 if( version != 1 )
