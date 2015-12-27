@@ -1,4 +1,4 @@
-/* $Id: tif_next.c,v 1.17 2015-12-27 16:55:20 erouault Exp $ */
+/* $Id: tif_next.c,v 1.18 2015-12-27 17:14:52 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -103,10 +103,10 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 		}
 		default: {
 			uint32 npixels = 0, grey;
+			tmsize_t op_offset = 0;
 			uint32 imagewidth = tif->tif_dir.td_imagewidth;
             if( isTiled(tif) )
                 imagewidth = tif->tif_dir.td_tilewidth;
-            tmsize_t op_offset = 0;
 
 			/*
 			 * The scanline is composed of a sequence of constant
