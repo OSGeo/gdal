@@ -43,6 +43,7 @@ gdaltest_list = []
 
 init_list = [
     ('byte.tif', 1, 4672, None),
+    ('uint16_sgilog.tif', 1, 4672, None),
     ('int10.tif', 1, 4672, None),
     ('int12.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, None),
@@ -2382,6 +2383,26 @@ def tiff_read_colortable_as_rgba():
     return 'success'
 
 ###############################################################################
+#
+def tiff_read_logl_as_rgba():
+
+    if not gdaltest.supports_force_rgba:
+        return 'skip'
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('data/uint16_sgilog.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    # I'm pretty sure this isn't the expected result...
+    if got_cs != [0,0,0,4873]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2439,6 +2460,7 @@ gdaltest_list.append( (tiff_read_strace_check) )
 gdaltest_list.append( (tiff_read_readdir_limit_on_open) )
 gdaltest_list.append( (tiff_read_minisblack_as_rgba) )
 gdaltest_list.append( (tiff_read_colortable_as_rgba) )
+gdaltest_list.append( (tiff_read_logl_as_rgba) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
