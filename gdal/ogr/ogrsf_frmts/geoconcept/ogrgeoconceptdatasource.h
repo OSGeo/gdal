@@ -56,7 +56,7 @@ class OGRGeoconceptDataSource : public OGRDataSource
                    OGRGeoconceptDataSource();
                   ~OGRGeoconceptDataSource();
 
-    int            Open( const char* pszName, int bTestOpen, int bUpdate );
+    int            Open( const char* pszName, bool bTestOpen, bool bUpdate );
     int            Create( const char* pszName, char** papszOptions );
 
     const char*    GetName() { return _pszName; }
