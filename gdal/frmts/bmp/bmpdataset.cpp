@@ -215,7 +215,7 @@ class BMPDataset : public GDALPamDataset
 
     BMPFileHeader       sFileHeader;
     BMPInfoHeader       sInfoHeader;
-    int                 nColorTableSize, nColorElems;
+    int                 nColorElems;
     GByte               *pabyColorTable;
     GDALColorTable      *poColorTable;
     double              adfGeoTransform[6];
@@ -868,7 +868,7 @@ CPLErr BMPComprRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 BMPDataset::BMPDataset() :
-    nColorTableSize(0), nColorElems(0), pabyColorTable(NULL),
+    nColorElems(0), pabyColorTable(NULL),
     poColorTable(NULL), bGeoTransformValid(FALSE), pszFilename(NULL), fp(NULL)
 {
     nBands = 0;
@@ -1176,26 +1176,43 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 8:
         {
             poDS->nBands = 1;
+            int nColorTableSize;
+            int nMaxColorTableSize = 1 << poDS->sInfoHeader.iBitCount;
             // Allocate memory for colour table and read it
             if ( poDS->sInfoHeader.iClrUsed )
-                poDS->nColorTableSize = poDS->sInfoHeader.iClrUsed;
+            {
+                if( poDS->sInfoHeader.iClrUsed > (GUInt32)nMaxColorTableSize )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Wrong value for iClrUsed: %u",
+                             poDS->sInfoHeader.iClrUsed );
+                    delete poDS;
+                    return NULL;
+                }
+                nColorTableSize = poDS->sInfoHeader.iClrUsed;
+            }
             else
-                poDS->nColorTableSize = 1 << poDS->sInfoHeader.iBitCount;
+                nColorTableSize = nMaxColorTableSize;
+
             poDS->pabyColorTable =
-                (GByte *)VSI_MALLOC2_VERBOSE( poDS->nColorElems, poDS->nColorTableSize );
+                (GByte *)VSI_MALLOC2_VERBOSE( poDS->nColorElems, nColorTableSize );
             if (poDS->pabyColorTable == NULL)
             {
-                poDS->nColorTableSize = 0;
                 break;
             }
 
-            VSIFSeekL( poDS->fp, BFH_SIZE + poDS->sInfoHeader.iSize, SEEK_SET );
-            VSIFReadL( poDS->pabyColorTable, poDS->nColorElems,
-                      poDS->nColorTableSize, poDS->fp );
+            if( VSIFSeekL( poDS->fp, BFH_SIZE + poDS->sInfoHeader.iSize, SEEK_SET ) != 0 ||
+                VSIFReadL( poDS->pabyColorTable, poDS->nColorElems,
+                           nColorTableSize, poDS->fp ) != (size_t)nColorTableSize )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot read color table");
+                delete poDS;
+                return NULL;
+            }
 
             GDALColorEntry oEntry;
             poDS->poColorTable = new GDALColorTable();
-            for( int i = 0; i < poDS->nColorTableSize; i++ )
+            for( int i = 0; i < nColorTableSize; i++ )
             {
                 oEntry.c1 = poDS->pabyColorTable[i * poDS->nColorElems + 2]; // Red
                 oEntry.c2 = poDS->pabyColorTable[i * poDS->nColorElems + 1]; // Green
