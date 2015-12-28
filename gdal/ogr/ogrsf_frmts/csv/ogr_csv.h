@@ -57,6 +57,8 @@ typedef enum
     CREATE_FIELD_ERROR
 } OGRCSVCreateFieldAction;
 
+void OGRCSVDriverRemoveFromMap(const char* pszName, GDALDataset* poDS);
+
 /************************************************************************/
 /*                             OGRCSVLayer                              */
 /************************************************************************/

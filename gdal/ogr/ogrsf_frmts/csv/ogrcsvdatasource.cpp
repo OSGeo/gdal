@@ -290,6 +290,9 @@ OGRCSVDataSource::~OGRCSVDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
+    if( bUpdate )
+        OGRCSVDriverRemoveFromMap(pszName, this);
+
     CPLFree( pszName );
 }
 
