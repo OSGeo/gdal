@@ -64,7 +64,7 @@ OGRGmtDataSource::~OGRGmtDataSource()
 int OGRGmtDataSource::Open( const char *pszFilename, int bUpdateIn )
 
 {
-    bUpdate = bUpdateIn;
+    bUpdate = CPL_TO_BOOL( bUpdateIn );
 
     OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, bUpdate );
     if( !poLayer->bValidFile )
