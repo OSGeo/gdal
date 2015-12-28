@@ -2304,6 +2304,32 @@ def ogr_csv_44():
     return 'success'
 
 ###############################################################################
+# Test QGIS use case that consists in reopening a file just after calling 
+# CreateField() on the main dataset and assuming that file is already serialized.
+
+def ogr_csv_45():
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_45.csv')
+    lyr = ds.CreateLayer('ogr_csv_45', options = ['GEOMETRY=AS_WKT'])
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_csv_45.csv', update = 1)
+    lyr = ds.GetLayer(0)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTInteger))
+
+    ds2 = ogr.Open('/vsimem/ogr_csv_45.csv')
+    lyr2 = ds2.GetLayer(0)
+    if lyr2.GetLayerDefn().GetFieldCount() != 3:
+        return 'fail'
+    ds2 = None
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_45.csv')
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -2382,6 +2408,7 @@ gdaltest_list = [
     ogr_csv_42,
     ogr_csv_43,
     ogr_csv_44,
+    ogr_csv_45,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

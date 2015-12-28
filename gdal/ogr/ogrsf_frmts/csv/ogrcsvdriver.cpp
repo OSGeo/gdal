@@ -30,8 +30,13 @@
 
 #include "ogr_csv.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
+#include <map>
 
 CPL_CVSID("$Id$");
+
+static CPLMutex* hMutex = NULL;
+static std::map<CPLString, GDALDataset*> *poMap = NULL;
 
 /************************************************************************/
 /*                         OGRCSVDriverIdentify()                       */
@@ -105,6 +110,24 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
+/*                        OGRCSVDriverRemoveFromMap()                   */
+/************************************************************************/
+
+void OGRCSVDriverRemoveFromMap(const char* pszName, GDALDataset* poDS)
+{
+    if( poMap == NULL )
+        return;
+    CPLMutexHolderD(&hMutex);
+    std::map<CPLString, GDALDataset*>::iterator oIter = poMap->find(pszName);
+    if( oIter != poMap->end() )
+    {
+        GDALDataset* poOtherDS = oIter->second;
+        if( poDS == poOtherDS )
+            poMap->erase(oIter);
+    }
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -114,6 +137,18 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
     if( OGRCSVDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
 
+    if( poMap != NULL )
+    {
+        CPLMutexHolderD(&hMutex);
+        std::map<CPLString, GDALDataset*>::iterator oIter =
+            poMap->find(poOpenInfo->pszFilename);
+        if( oIter != poMap->end() )
+        {
+            GDALDataset* poOtherDS = oIter->second;
+            poOtherDS->FlushCache();
+        }
+    }
+
     OGRCSVDataSource *poDS = new OGRCSVDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE,
@@ -121,6 +156,17 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         delete poDS;
         poDS = NULL;
+    }
+
+    if( poOpenInfo->eAccess == GA_Update && poDS != NULL )
+    {
+        CPLMutexHolderD(&hMutex);
+        if( poMap == NULL )
+            poMap = new std::map<CPLString, GDALDataset*>();
+        if( poMap->find(poOpenInfo->pszFilename) == poMap->end() )
+        {
+            (*poMap)[poOpenInfo->pszFilename] = poDS;
+        }
     }
 
     return poDS;
@@ -221,6 +267,20 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
     return CE_Failure;
 }
 
+
+/************************************************************************/
+/*                           OGRCSVDriverUnload()                       */
+/************************************************************************/
+
+static void OGRCSVDriverUnload( GDALDriver* )
+{
+    if( hMutex != NULL )
+        CPLDestroyMutex(hMutex);
+    hMutex = NULL;
+    delete poMap;
+    poMap = NULL;
+}
+
 /************************************************************************/
 /*                           RegisterOGRCSV()                           */
 /************************************************************************/
@@ -317,6 +377,7 @@ void RegisterOGRCSV()
     poDriver->pfnIdentify = OGRCSVDriverIdentify;
     poDriver->pfnCreate = OGRCSVDriverCreate;
     poDriver->pfnDelete = OGRCSVDriverDelete;
+    poDriver->pfnUnloadDriver = OGRCSVDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
