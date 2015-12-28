@@ -2034,7 +2034,7 @@ OGRErr OGRCSVLayer::WriteHeader()
 
         /* The CSV driver will not recognize single column tables, so add */
         /* a fake second blank field */
-        if( poFeatureDefn->GetFieldCount() == 1 ||
+        if( (poFeatureDefn->GetFieldCount() == 1 && !bHiddenWKTColumn) ||
             (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn) )
         {
             if (fpCSV) bOK &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
