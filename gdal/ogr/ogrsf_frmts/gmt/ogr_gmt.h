@@ -45,12 +45,10 @@ class OGRGmtLayer : public OGRLayer
 
     int                 iNextFID;
 
-    OGRwkbGeometryType  eWkbType;
+    bool                bUpdate;
+    bool                bHeaderComplete;
 
-    int                 bUpdate;
-    int                 bHeaderComplete;
-
-    int                 bRegionComplete;
+    bool                bRegionComplete;
     OGREnvelope         sRegion;
     vsi_l_offset        nRegionOffset;
 
@@ -102,7 +100,7 @@ class OGRGmtDataSource : public OGRDataSource
 
     char                *pszName;
 
-    int                 bUpdate;
+    bool                bUpdate;
 
   public:
                         OGRGmtDataSource();
