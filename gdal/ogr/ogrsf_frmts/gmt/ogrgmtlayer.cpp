@@ -37,21 +37,18 @@ CPL_CVSID("$Id: ogrgmtlayer.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 /*                            OGRGmtLayer()                             */
 /************************************************************************/
 
-OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn )
-
+OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
+    poSRS(NULL),
+    poFeatureDefn(NULL),
+    iNextFID(0),
+    bUpdate(CPL_TO_BOOL(bUpdateIn)),
+    // Assume header complete in readonly mode.
+    bHeaderComplete(CPL_TO_BOOL(!bUpdate)),
+    bRegionComplete(false),
+    nRegionOffset(0),
+    papszKeyedValues(NULL),
+    bValidFile(FALSE)
 {
-    poSRS = NULL;
-
-    bUpdate = bUpdateIn;
-    iNextFID = 0;
-    bValidFile = FALSE;
-    bHeaderComplete = !bUpdate; // assume header complete in readonly mode.
-    eWkbType = wkbUnknown;
-    poFeatureDefn = NULL;
-    papszKeyedValues = NULL;
-
-    bRegionComplete = FALSE;
-    nRegionOffset = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Open file.                                                      */
@@ -67,14 +64,17 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn )
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    CPLString osFieldNames, osFieldTypes, osGeometryType, osRegion;
-    CPLString osWKT, osProj4, osEPSG;
+    CPLString osFieldNames;
+    CPLString osFieldTypes;
+    CPLString osGeometryType;
+    CPLString osRegion;
+    CPLString osWKT;
+    CPLString osProj4;
+    CPLString osEPSG;
     vsi_l_offset nStartOfLine = VSIFTellL(fp);
 
     while( ReadLine() && osLine[0] == '#' )
     {
-        int iKey;
-
         if( strstr( osLine, "FEATURE_DATA" ) )
         {
             bHeaderComplete = TRUE;
@@ -85,8 +85,8 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn )
         if( STARTS_WITH_CI(osLine, "# REGION_STUB ") )
             nRegionOffset = nStartOfLine;
 
-        for( iKey = 0; 
-             papszKeyedValues != NULL && papszKeyedValues[iKey] != NULL; 
+        for( int iKey = 0;
+             papszKeyedValues != NULL && papszKeyedValues[iKey] != NULL;
              iKey++ )
         {
             if( papszKeyedValues[iKey][0] == 'N' )
@@ -202,14 +202,13 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn )
 /* -------------------------------------------------------------------- */
     if( osFieldNames.length() || osFieldTypes.length() )
     {
-        char **papszFN = CSLTokenizeStringComplex( osFieldNames, "|", 
+        char **papszFN = CSLTokenizeStringComplex( osFieldNames, "|",
                                                    TRUE, TRUE );
-        char **papszFT = CSLTokenizeStringComplex( osFieldTypes, "|", 
+        char **papszFT = CSLTokenizeStringComplex( osFieldTypes, "|",
                                                    TRUE, TRUE );
-        int nFieldCount = MAX(CSLCount(papszFN),CSLCount(papszFT));
-        int iField;
+        const int nFieldCount = MAX(CSLCount(papszFN),CSLCount(papszFT));
 
-        for( iField = 0; iField < nFieldCount; iField++ )
+        for( int iField = 0; iField < nFieldCount; iField++ )
         {
             OGRFieldDefn oField("", OFTString );
 
@@ -248,7 +247,7 @@ OGRGmtLayer::~OGRGmtLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "Gmt", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -259,8 +258,8 @@ OGRGmtLayer::~OGRGmtLayer()
     if( nRegionOffset != 0 && bUpdate )
     {
         VSIFSeekL( fp, nRegionOffset, SEEK_SET );
-        VSIFPrintfL( fp, "# @R%.12g/%.12g/%.12g/%.12g", 
-                     sRegion.MinX, 
+        VSIFPrintfL( fp, "# @R%.12g/%.12g/%.12g/%.12g",
+                     sRegion.MinX,
                      sRegion.MaxX,
                      sRegion.MinY,
                      sRegion.MaxY );
@@ -314,25 +313,25 @@ int OGRGmtLayer::ReadLine()
 /* -------------------------------------------------------------------- */
 /*      If this is a comment line with keyed values, parse them.        */
 /* -------------------------------------------------------------------- */
-    size_t i;
 
     if( osLine[0] != '#' || osLine.find_first_of('@') == std::string::npos )
         return TRUE;
 
-    for( i = 0; i < osLine.length(); i++ )
+    for( size_t i = 0; i < osLine.length(); i++ )
     {
         if( osLine[i] == '@' )
         {
-            size_t iValEnd;
-            int bInQuotes = FALSE;
+            bool bInQuotes = false;
 
+            size_t iValEnd;
             for( iValEnd = i+2; iValEnd < osLine.length(); iValEnd++ )
             {
                 if( !bInQuotes && isspace((unsigned char)osLine[iValEnd]) )
                     break;
 
-                if( bInQuotes && osLine[iValEnd] == '\\' 
-                    && iValEnd < osLine.length()-1 )
+                if( bInQuotes
+                    && iValEnd < osLine.length()-1
+                    && osLine[iValEnd] == '\\' )
                 {
                     iValEnd++;
                 }
@@ -340,10 +339,10 @@ int OGRGmtLayer::ReadLine()
                     bInQuotes = !bInQuotes;
             }
 
-            CPLString osValue = osLine.substr(i+2,iValEnd-i-2);
+            const CPLString osValue = osLine.substr(i+2,iValEnd-i-2);
 
             // Unecape contents
-            char *pszUEValue = CPLUnescapeString( osValue, NULL, 
+            char *pszUEValue = CPLUnescapeString( osValue, NULL,
                                                   CPLES_BackslashQuotable );
 
             CPLString osKeyValue = osLine.substr(i+1,1);
@@ -365,12 +364,12 @@ int OGRGmtLayer::ReadLine()
 void OGRGmtLayer::ResetReading()
 
 {
-    if( iNextFID != 0 )
-    {
-        iNextFID = 0;
-        VSIFSeekL( fp, 0, SEEK_SET );
-        ReadLine();
-    }
+    if( iNextFID == 0 )
+        return;
+
+    iNextFID = 0;
+    VSIFSeekL( fp, 0, SEEK_SET );
+    ReadLine();
 }
 
 /************************************************************************/
@@ -384,8 +383,8 @@ void OGRGmtLayer::ResetReading()
 int OGRGmtLayer::ScanAheadForHole()
 
 {
-    CPLString osSavedLine = osLine;
-    vsi_l_offset nSavedLocation = VSIFTellL( fp );
+    const CPLString osSavedLine = osLine;
+    const vsi_l_offset nSavedLocation = VSIFTellL( fp );
 
     while( ReadLine() && osLine[0] == '#' )
     {
@@ -396,8 +395,8 @@ int OGRGmtLayer::ScanAheadForHole()
     VSIFSeekL( fp, nSavedLocation, SEEK_SET );
     osLine = osSavedLine;
 
-    // We don't actually restore papszKeyedValues, but we 
-    // assume it doesn't matter since this method is only called
+    // We do not actually restore papszKeyedValues, but we
+    // assume it does not matter since this method is only called
     // when processing the '>' line.
 
     return FALSE;
@@ -414,20 +413,20 @@ int OGRGmtLayer::ScanAheadForHole()
 int OGRGmtLayer::NextIsFeature()
 
 {
-    CPLString osSavedLine = osLine;
-    vsi_l_offset nSavedLocation = VSIFTellL( fp );
-    int bReturn = FALSE;
+    const CPLString osSavedLine = osLine;
+    const vsi_l_offset nSavedLocation = VSIFTellL( fp );
+    bool bReturn = false;
 
     ReadLine();
 
     if( osLine[0] == '#' && strstr(osLine,"@D") != NULL )
-        bReturn = TRUE;
+        bReturn = true;
 
     VSIFSeekL( fp, nSavedLocation, SEEK_SET );
     osLine = osSavedLine;
 
-    // We don't actually restore papszKeyedValues, but we 
-    // assume it doesn't matter since this method is only called
+    // We do not actually restore papszKeyedValues, but we
+    // assume it does not matter since this method is only called
     // when processing the '>' line.
 
     return bReturn;
@@ -441,7 +440,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
 {
 #if 0
-    int  bMultiVertex =
+    int bMultiVertex =
         poFeatureDefn->GetGeomType() != wkbPoint
         && poFeatureDefn->GetGeomType() != wkbUnknown;
 #endif
@@ -458,7 +457,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
         if( osLine[0] == '>' )
         {
-            if( poGeom != NULL 
+            if( poGeom != NULL
                 && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
             {
                 OGRMultiPolygon *poMP = (OGRMultiPolygon *) poGeom;
@@ -480,7 +479,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 else
                     break; /* done geometry */
             }
-            else if( poGeom != NULL 
+            else if( poGeom != NULL
                      && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
             {
                 if( ScanAheadForHole() )
@@ -489,8 +488,8 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 else
                     break; /* done geometry */
             }
-            else if( poGeom != NULL 
-                     && (wkbFlatten(poGeom->getGeometryType()) 
+            else if( poGeom != NULL
+                     && (wkbFlatten(poGeom->getGeometryType())
                          == wkbMultiLineString)
                      && !NextIsFeature() )
             {
@@ -510,7 +509,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         else if( osLine[0] == '#' )
         {
             for( int i = 0;
-                 papszKeyedValues != NULL && papszKeyedValues[i] != NULL; 
+                 papszKeyedValues != NULL && papszKeyedValues[i] != NULL;
                  i++ )
             {
                 if( papszKeyedValues[i][0] == 'D' )
@@ -519,9 +518,12 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         }
         else
         {
-            // Parse point line. 
-            double dfX, dfY, dfZ = 0.0;
-            int nDim = CPLsscanf( osLine, "%lf %lf %lf", &dfX, &dfY, &dfZ );
+            // Parse point line.
+            double dfX;
+            double dfY;
+            double dfZ = 0.0;
+            const int nDim
+                = CPLsscanf( osLine, "%lf %lf %lf", &dfX, &dfY, &dfZ );
 
             if( nDim >= 2 )
             {
@@ -535,7 +537,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
                       case wkbPolygon:
                         poGeom = new OGRPolygon();
-                        ((OGRPolygon *) poGeom)->addRingDirectly(
+                        reinterpret_cast<OGRPolygon *>(poGeom)->addRingDirectly(
                             new OGRLinearRing() );
                         break;
 
@@ -545,7 +547,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                           poPoly->addRingDirectly( new OGRLinearRing() );
 
                           poGeom = new OGRMultiPolygon();
-                          ((OGRMultiPolygon *) poGeom)->
+                          reinterpret_cast<OGRMultiPolygon *>(poGeom)->
                               addGeometryDirectly( poPoly );
                       }
                       break;
@@ -556,8 +558,8 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
                       case wkbMultiLineString:
                         poGeom = new OGRMultiLineString();
-                        ((OGRMultiLineString *) poGeom)->addGeometryDirectly(
-                            new OGRLineString() );
+                        reinterpret_cast<OGRMultiLineString *>(poGeom)->
+                            addGeometryDirectly(new OGRLineString() );
                         break;
 
                       case wkbPoint:
@@ -572,26 +574,27 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 switch( wkbFlatten(poGeom->getGeometryType()) )
                 {
                   case wkbPoint:
-                    ((OGRPoint *) poGeom)->setX( dfX );
-                    ((OGRPoint *) poGeom)->setY( dfY );
+                    reinterpret_cast<OGRPoint *>(poGeom)->setX( dfX );
+                    reinterpret_cast<OGRPoint *>(poGeom)->setY( dfY );
                     if( nDim == 3 )
-                        ((OGRPoint *) poGeom)->setZ( dfZ );
+                        reinterpret_cast<OGRPoint *>(poGeom)->setZ( dfZ );
                     break;
 
                   case wkbLineString:
                     if( nDim == 3 )
-                        ((OGRLineString *)poGeom)->addPoint(dfX,dfY,dfZ);
+                        reinterpret_cast<OGRLineString *>(poGeom)->
+                            addPoint( dfX, dfY, dfZ);
                     else
-                        ((OGRLineString *)poGeom)->addPoint(dfX,dfY);
+                        reinterpret_cast<OGRLineString *>(poGeom)->
+                            addPoint( dfX, dfY );
                     break;
 
                   case wkbPolygon:
                   case wkbMultiPolygon:
                   {
-                      OGRPolygon *poPoly;
-                      OGRLinearRing *poRing;
+                      OGRPolygon *poPoly = NULL;
 
-                      if( wkbFlatten(poGeom->getGeometryType()) 
+                      if( wkbFlatten(poGeom->getGeometryType())
                           == wkbMultiPolygon )
                       {
                           OGRMultiPolygon *poMP = (OGRMultiPolygon *) poGeom;
@@ -599,8 +602,9 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                               poMP->getNumGeometries() - 1 );
                       }
                       else
-                          poPoly = (OGRPolygon *) poGeom;
+                          poPoly = reinterpret_cast<OGRPolygon *>(poGeom);
 
+                      OGRLinearRing *poRing = NULL;
                       if( poPoly->getNumInteriorRings() == 0 )
                           poRing = poPoly->getExteriorRing();
                       else
@@ -608,24 +612,22 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                               poPoly->getNumInteriorRings()-1 );
 
                       if( nDim == 3 )
-                        poRing->addPoint(dfX,dfY,dfZ);
+                          poRing->addPoint( dfX, dfY, dfZ );
                       else
-                        poRing->addPoint(dfX,dfY);
+                          poRing->addPoint( dfX, dfY );
                   }
                   break;
 
                   case wkbMultiLineString:
                   {
                       OGRMultiLineString *poML = (OGRMultiLineString *) poGeom;
-                      OGRLineString *poLine;
-
-                      poLine = (OGRLineString *) 
-                          poML->getGeometryRef( poML->getNumGeometries()-1 );
+                      OGRLineString *poLine = reinterpret_cast<OGRLineString *>(
+                          poML->getGeometryRef( poML->getNumGeometries() -1 ) );
 
                       if( nDim == 3 )
-                        poLine->addPoint(dfX,dfY,dfZ);
+                          poLine->addPoint( dfX, dfY, dfZ );
                       else
-                        poLine->addPoint(dfX,dfY);
+                          poLine->addPoint( dfX, dfY );
                   }
                   break;
 
@@ -657,9 +659,8 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 /*      Process field values.                                           */
 /* -------------------------------------------------------------------- */
     char **papszFD = CSLTokenizeStringComplex( osFieldData, "|", TRUE, TRUE );
-    int iField; 
 
-    for( iField = 0; papszFD != NULL && papszFD[iField] != NULL; iField++ )
+    for( int iField = 0; papszFD != NULL && papszFD[iField] != NULL; iField++ )
     {
         if( iField >= poFeatureDefn->GetFieldCount() )
             break;
@@ -695,10 +696,8 @@ OGRFeature *OGRGmtLayer::GetNextFeature()
         {
             return poFeature;
         }
-        else
-        {
-            delete poFeature;
-        }
+
+        delete poFeature;
     }
 
     return NULL;
@@ -715,16 +714,15 @@ OGRErr OGRGmtLayer::CompleteHeader( OGRGeometry *poThisGeom )
 
 {
 /* -------------------------------------------------------------------- */
-/*      If we don't already have a geometry type, try to work one       */
+/*      If we do not already have a geometry type, try to work one      */
 /*      out and write it now.                                           */
 /* -------------------------------------------------------------------- */
-    if( poFeatureDefn->GetGeomType() == wkbUnknown 
+    if( poFeatureDefn->GetGeomType() == wkbUnknown
         && poThisGeom != NULL )
     {
-        const char *pszGeom;
-
         poFeatureDefn->SetGeomType(wkbFlatten(poThisGeom->getGeometryType()));
 
+        const char *pszGeom = NULL;
         switch( wkbFlatten(poFeatureDefn->GetGeomType()) )
         {
           case wkbPoint:
@@ -756,11 +754,10 @@ OGRErr OGRGmtLayer::CompleteHeader( OGRGeometry *poThisGeom )
 /* -------------------------------------------------------------------- */
 /*      Prepare and write the field names and types.                    */
 /* -------------------------------------------------------------------- */
-    CPLString osFieldNames, osFieldTypes;
+    CPLString osFieldNames;
+    CPLString osFieldTypes;
 
-    int iField;
-
-    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         if( iField > 0 )
         {
@@ -815,8 +812,8 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 {
     if( !bUpdate )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, 
-                  "Can't create features on read-only dataset." );
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Cannot create features on read-only dataset." );
         return OGRERR_FAILURE;
     }
 
@@ -838,7 +835,7 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( poGeom == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Features without geometry not supported by GMT writer." );
         return OGRERR_FAILURE;
     }
@@ -846,7 +843,7 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
     if( poFeatureDefn->GetGeomType() == wkbUnknown )
         poFeatureDefn->SetGeomType(wkbFlatten(poGeom->getGeometryType()));
 
-    // Do we need a vertex collection marker grouping vertices. 
+    // Do we need a vertex collection marker grouping vertices.
     if( poFeatureDefn->GetGeomType() != wkbPoint )
         VSIFPrintfL( fp, ">\n" );
 
@@ -855,34 +852,33 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( poFeatureDefn->GetFieldCount() > 0 )
     {
-        int iField;
         CPLString osFieldData;
 
-        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
             OGRFieldType eFType=poFeatureDefn->GetFieldDefn(iField)->GetType();
             const char *pszRawValue = poFeature->GetFieldAsString(iField);
-            char *pszEscapedVal;
 
             if( iField > 0 )
                 osFieldData += "|";
 
-            // We don't want prefix spaces for numeric values.
+            // We do not want prefix spaces for numeric values.
             if( eFType == OFTInteger || eFType == OFTReal )
                 while( *pszRawValue == ' ' )
                     pszRawValue++;
 
-            if( strchr(pszRawValue,' ') || strchr(pszRawValue,'|') 
+            if( strchr(pszRawValue,' ') || strchr(pszRawValue,'|')
                 || strchr(pszRawValue, '\t') || strchr(pszRawValue, '\n') )
             {
-                pszEscapedVal = 
-                    CPLEscapeString( pszRawValue, 
-                                     -1, CPLES_BackslashQuotable );
+                osFieldData += "\"";
+
+                char *pszEscapedVal
+                    = CPLEscapeString( pszRawValue,
+                                       -1, CPLES_BackslashQuotable );
+                osFieldData += pszEscapedVal;
+                CPLFree( pszEscapedVal );
 
                 osFieldData += "\"";
-                osFieldData += pszEscapedVal;
-                osFieldData += "\"";
-                CPLFree( pszEscapedVal );
             }
             else
                 osFieldData += pszRawValue;
@@ -894,7 +890,7 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Write Geometry                                                  */
 /* -------------------------------------------------------------------- */
-    return WriteGeometry( (OGRGeometryH) poGeom, TRUE );
+    return WriteGeometry( reinterpret_cast<OGRGeometryH>(poGeom), TRUE );
 }
 
 /************************************************************************/
@@ -916,10 +912,9 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 /* -------------------------------------------------------------------- */
     if( OGR_G_GetGeometryCount( hGeom ) > 0 )
     {
-        int iGeom;
         OGRErr eErr = OGRERR_NONE;
 
-        for( iGeom = 0; 
+        for( int iGeom = 0;
              iGeom < OGR_G_GetGeometryCount(hGeom) && eErr == OGRERR_NONE;
              iGeom++ )
         {
@@ -957,22 +952,22 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 /* -------------------------------------------------------------------- */
 /*      Dump vertices.                                                  */
 /* -------------------------------------------------------------------- */
-    int iPoint, nPointCount = OGR_G_GetPointCount(hGeom);
-    int nDim = OGR_G_GetCoordinateDimension(hGeom);
+    const int nPointCount = OGR_G_GetPointCount(hGeom);
+    const int nDim = OGR_G_GetCoordinateDimension(hGeom);
 
-    for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+    for( int iPoint = 0; iPoint < nPointCount; iPoint++ )
     {
-        char   szLine[128];
-        double dfX = OGR_G_GetX( hGeom, iPoint );
-        double dfY = OGR_G_GetY( hGeom, iPoint );
-        double dfZ = OGR_G_GetZ( hGeom, iPoint );
+        const double dfX = OGR_G_GetX( hGeom, iPoint );
+        const double dfY = OGR_G_GetY( hGeom, iPoint );
+        const double dfZ = OGR_G_GetZ( hGeom, iPoint );
 
         sRegion.Merge( dfX, dfY );
+        char szLine[128];
         OGRMakeWktCoordinate( szLine, dfX, dfY, dfZ, nDim );
         if( VSIFPrintfL( fp, "%s\n", szLine ) < 1 )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
-                      "Gmt write failure: %s", 
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Gmt write failure: %s",
                       VSIStrerror( errno ) );
             return OGRERR_FAILURE;
         }
@@ -1013,20 +1008,19 @@ int OGRGmtLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) )
+    if( EQUAL(pszCap,OLCSequentialWrite) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    if( EQUAL(pszCap,OLCFastGetExtent) )
         return bRegionComplete;
 
-    else if( EQUAL(pszCap,OLCCreateField) )
+    if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
 
-    else 
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -1038,14 +1032,14 @@ OGRErr OGRGmtLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 {
     if( !bUpdate )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, 
-                  "Can't create fields on read-only dataset." );
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Cannot create fields on read-only dataset." );
         return OGRERR_FAILURE;
     }
 
     if( bHeaderComplete )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to create fields after features have been created.");
         return OGRERR_FAILURE;
     }
@@ -1065,13 +1059,13 @@ OGRErr OGRGmtLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
       default:
         if( !bApproxOK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Field %s is of unsupported type %s.", 
-                      poField->GetNameRef(), 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Field %s is of unsupported type %s.",
+                      poField->GetNameRef(),
                       poField->GetFieldTypeName( poField->GetType() ) );
             return OGRERR_FAILURE;
-        } 
-        else if( poField->GetType() == OFTDate 
+        }
+        else if( poField->GetType() == OFTDate
                  || poField->GetType() == OFTTime )
         {
             OGRFieldDefn oModDef( poField );
@@ -1079,7 +1073,7 @@ OGRErr OGRGmtLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
             poFeatureDefn->AddFieldDefn( poField );
             return OGRERR_NONE;
         }
-        else 
+        else
         {
             OGRFieldDefn oModDef( poField );
             oModDef.SetType( OFTString );
