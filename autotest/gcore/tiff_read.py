@@ -2407,6 +2407,16 @@ def tiff_read_logl_as_rgba():
     return 'success'
 
 ###############################################################################
+#
+def tiff_read_scanline_more_than_2GB():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/scanline_more_than_2GB.tif')
+    if ds is not None:
+        return 'fail'
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2465,6 +2475,7 @@ gdaltest_list.append( (tiff_read_readdir_limit_on_open) )
 gdaltest_list.append( (tiff_read_minisblack_as_rgba) )
 gdaltest_list.append( (tiff_read_colortable_as_rgba) )
 gdaltest_list.append( (tiff_read_logl_as_rgba) )
+gdaltest_list.append( (tiff_read_scanline_more_than_2GB) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
