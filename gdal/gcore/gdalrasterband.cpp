@@ -780,7 +780,7 @@ int GDALRasterBand::InitBlockInfo()
             (poDS->nOpenFlags & GDAL_OF_BLOCK_ACCESS_MASK) ==
                                             GDAL_OF_DEFAULT_BLOCK_ACCESS )
         {
-            bUseArray = ( nBlocksPerRow < 1024 * 1024  / nBlocksPerColumn );
+            bUseArray = ( static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn < 1024 * 1024  );
         }
         else if( (poDS->nOpenFlags & GDAL_OF_BLOCK_ACCESS_MASK) ==
                                             GDAL_OF_HASHSET_BLOCK_ACCESS )
