@@ -983,9 +983,12 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
                               uint32 *pnBytesConsumed )
 {
     unsigned int nSrcShorts = nSrcBytes / 2;
-
-    if ( nSrcShorts == 0 )
+    if (nSrcShorts == 0)
+    {
+        if( pnBytesConsumed != NULL )
+            *pnBytesConsumed = 0;
         return 0;
+    }
 
     unsigned int iInput = 0;
     unsigned int iOutput = 0;
@@ -1042,7 +1045,11 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
 {
     const unsigned int nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
+    {
+        if( pnBytesConsumed != NULL )
+            *pnBytesConsumed = 0;
         return 0;
+    }
 
     unsigned int   iInput = 0;
     unsigned int   iOutput = 0;
@@ -1196,7 +1203,11 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
 {
     unsigned int   nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
+    {
+        if( pnBytesConsumed != NULL )
+            *pnBytesConsumed = 0;
         return 0;
+    }
 
     unsigned int   iInput = 0;
     unsigned int   iOutput = 0;

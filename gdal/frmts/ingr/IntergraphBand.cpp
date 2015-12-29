@@ -680,20 +680,28 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     {
         nVirtualYSize = nRasterYSize % nBlockYSize;
     }
+    
+    int nExpectedOutputBytes = nVirtualXSize * nVirtualYSize;
+    if( eFormat == AdaptiveRGB ||
+        eFormat == ContinuousTone )
+    {
+        nExpectedOutputBytes *= 3;
+    }
 
     // --------------------------------------------------------------------
     // Decode Run Length
     // --------------------------------------------------------------------
 
+    int nOutputBytes;
     if( bTiled && eFormat == RunLengthEncoded )
     {
-        nBytesRead = 
+        nOutputBytes = 
             INGR_DecodeRunLengthBitonalTiled( pabyRLEBlock, pabyBlockBuf,  
                                               nRLESize, nBlockBufSize, NULL );
     }
     else if( bTiled || panRLELineOffset == NULL )
     {
-        nBytesRead = INGR_Decode( eFormat, pabyRLEBlock, pabyBlockBuf,  
+        nOutputBytes = INGR_Decode( eFormat, pabyRLEBlock, pabyBlockBuf,  
                                   nRLESize, nBlockBufSize, 
                                   NULL );
     }
@@ -713,10 +721,17 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
             {
                 // Pass NULL as destination so that no decompression 
                 // actually takes place.
-                INGR_Decode( eFormat,
+                if( (uint32)INGR_Decode( eFormat,
                              pabyRLEBlock + panRLELineOffset[iLine], 
                              NULL,  nRLESize - panRLELineOffset[iLine], nBlockBufSize,
-                             &nBytesConsumed );
+                             &nBytesConsumed ) < nBlockBufSize )
+                {
+                    memset( pImage, 0, nBlockXSize * nBlockYSize * 
+                                GDALGetDataTypeSize( eDataType ) / 8 );
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                        "Can't decode line %d", iLine );
+                    return CE_Failure;
+                }
 
                 if( iLine < nRasterYSize-1 )
                     panRLELineOffset[iLine+1] = 
@@ -725,18 +740,24 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
         }
 
         // Read the requested line.
-        nBytesRead = 
+        nOutputBytes = 
             INGR_Decode( eFormat,
                          pabyRLEBlock + panRLELineOffset[nBlockYOff], 
                          pabyBlockBuf,  nRLESize - panRLELineOffset[nBlockYOff], nBlockBufSize,
                          &nBytesConsumed );
-
-        if( nBlockYOff < nRasterYSize-1 )
+        if( nOutputBytes == nExpectedOutputBytes && nBlockYOff < nRasterYSize-1 )
             panRLELineOffset[nBlockYOff+1] = 
                 panRLELineOffset[nBlockYOff] + nBytesConsumed;
     }
 
-    CPL_IGNORE_RET_VAL(nBytesRead); /* FIXME ? */
+    if( nOutputBytes < nExpectedOutputBytes )
+    {
+        memset( pImage, 0, nBlockXSize * nBlockYSize * 
+                    GDALGetDataTypeSize( eDataType ) / 8 );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "Can't decode block (%d, %d)", nBlockXOff, nBlockYOff );
+        return CE_Failure;
+    }
 
     // --------------------------------------------------------------------
     // Reshape blocks if needed

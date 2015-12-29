@@ -215,6 +215,36 @@ def ingr_17():
 
     return 'success'
 
+###############################################################################
+# Test 'random access' in simple RLE
+
+def ingr_18():
+
+    ds = gdal.Open('data/frmt09.cot')
+    for y in range(ds.RasterYSize):
+        expected_data = ds.ReadRaster(0, y, ds.RasterXSize, 1)
+    ds = None
+    
+    ds = gdal.Open('data/frmt09.cot')
+    
+    ds.ReadRaster(0, 5, ds.RasterXSize, 1)
+    
+    got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
+    
+    if got_data != expected_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    ds.FlushCache()
+    
+    got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
+    
+    if got_data != expected_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ingr_1,
     ingr_2,
@@ -232,7 +262,8 @@ gdaltest_list = [
     ingr_14,
     ingr_15,
     ingr_16,
-    ingr_17 ]
+    ingr_17,
+    ingr_18 ]
 
 if __name__ == '__main__':
 
