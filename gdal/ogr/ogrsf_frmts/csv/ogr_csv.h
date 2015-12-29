@@ -99,6 +99,9 @@ class OGRCSVLayer : public OGRLayer
     int                 iLongitudeField;
     int                 iLatitudeField;
     int                 iZField;
+    CPLString           osXField;
+    CPLString           osYField;
+    CPLString           osZField;
 
     int                 bIsEurostatTSV;
     int                 nEurostatDims;
@@ -132,6 +135,9 @@ class OGRCSVLayer : public OGRLayer
     OGRCSVGeometryFormat GetGeometryFormat() const { return eGeometryFormat; }
     int                 HasHiddenWKTColumn() const { return bHiddenWKTColumn; }
     GIntBig             GetTotalFeatureCount() const { return nTotalFeatures; }
+    const CPLString&    GetXField() const { return osXField; }
+    const CPLString&    GetYField() const { return osYField; }
+    const CPLString&    GetZField() const { return osZField; }
 
     void                BuildFeatureDefn( const char* pszNfdcGeomField = NULL,
                                           const char* pszGeonamesGeomFieldPrefix = NULL,
