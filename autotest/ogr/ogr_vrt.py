@@ -3386,6 +3386,52 @@ def ogr_vrt_35():
     return 'success'
 
 ###############################################################################
+# Test editing direct geometries
+
+def ogr_vrt_36():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_vrt_36.shp')
+    lyr = ds.CreateLayer('ogr_vrt_36', geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('id'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = '1'
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 1)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_36.vrt',
+"""<OGRVRTDataSource>
+    <OGRVRTLayer name="ogr_vrt_36">
+        <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_36.shp</SrcDataSource>
+        <GeometryType>wkbPoint</GeometryType>
+        <LayerSRS>WGS84</LayerSRS>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""")
+
+    ds = ogr.Open('/vsimem/ogr_vrt_36.vrt', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_vrt_36.shp')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['id'] != '1':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_vrt_36.shp')
+    gdal.Unlink('/vsimem/ogr_vrt_36.vrt')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_vrt_cleanup():
@@ -3448,6 +3494,7 @@ gdaltest_list = [
     ogr_vrt_33,
     ogr_vrt_34,
     ogr_vrt_35,
+    ogr_vrt_36,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
