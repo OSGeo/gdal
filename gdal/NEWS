@@ -53,7 +53,7 @@ See MIGRATION_GUIDE.TXT
 Build(Unix):
  * Allow plugin for HDF4, HDF5, GeoRaster, FileGDB, OCI and PG
  * Add a --with-gnm option to enable GNM
- * Add --enable-lto swith to turn on link time optimization (GCC >= 5)
+ * Add --enable-lto switch to turn on link time optimization (GCC >= 5)
  * Add a lot of warning options when available in the compiler.
  * change detection test of podofo to work with podofo 0.9.3
  * Fix gdalserver compilation with recent GNU libc (such as in Arch Linux) (#6073)
