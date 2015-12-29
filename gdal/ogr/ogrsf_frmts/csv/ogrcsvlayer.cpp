@@ -603,6 +603,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             {
                 oField.SetType(OFTReal);
                 iLongitudeField = iField;
+                osXField = oField.GetNameRef();
                 if( bKeepGeomColumns )
                     poFeatureDefn->AddFieldDefn( &oField );
                 continue;
@@ -612,6 +613,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             {
                 oField.SetType(OFTReal);
                 iLatitudeField = iField;
+                osYField = oField.GetNameRef();
                 if( bKeepGeomColumns )
                     poFeatureDefn->AddFieldDefn( &oField );
                 continue;
@@ -621,6 +623,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             {
                 oField.SetType(OFTReal);
                 iZField = iField;
+                osZField = oField.GetNameRef();
                 if( bKeepGeomColumns )
                     poFeatureDefn->AddFieldDefn( &oField );
                 continue;
@@ -691,6 +694,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         {
             oField.SetType(OFTReal);
             iZField = iField;
+            osZField = oField.GetNameRef();
             if( !bKeepGeomColumns )
                 continue;
         }
@@ -752,6 +756,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         {
             oField.SetType(OFTReal);
             iLongitudeField = iField;
+            osXField = oField.GetNameRef();
             if( !bKeepGeomColumns )
                 continue;
         }
@@ -760,6 +765,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         {
             oField.SetType(OFTReal);
             iLatitudeField = iField;
+            osYField = oField.GetNameRef();
             if( !bKeepGeomColumns )
                 continue;
         }
@@ -794,6 +800,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         {
             oField.SetType(OFTReal);
             iLatitudeField = iField;
+            osYField = oField.GetNameRef();
             if( !bKeepGeomColumns )
                 continue;
         }
@@ -806,6 +813,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         {
             oField.SetType(OFTReal);
             iLongitudeField = iField;
+            osXField = oField.GetNameRef();
             if( !bKeepGeomColumns )
                 continue;
         }

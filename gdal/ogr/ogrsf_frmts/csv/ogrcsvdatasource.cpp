@@ -123,6 +123,30 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         }
     }
 
+    const bool bHasXY = ( m_poCSVLayer->GetXField().size() && m_poCSVLayer->GetYField().size() );
+    const bool bHasZ = ( m_poCSVLayer->GetZField().size() );
+    if( bHasXY && !CSLFetchBoolean(m_papszOpenOptions, "KEEP_GEOM_COLUMNS", TRUE) )
+    {
+        if( poCSVTmpLayer->GetLayerDefn()->GetFieldIndex(m_poCSVLayer->GetXField()) < 0 )
+        {
+            OGRFieldDefn oFieldDefn(m_poCSVLayer->GetXField(), OFTReal);
+            if( eErr == OGRERR_NONE )
+                eErr = poCSVTmpLayer->CreateField( &oFieldDefn );
+        }
+        if( poCSVTmpLayer->GetLayerDefn()->GetFieldIndex(m_poCSVLayer->GetYField()) < 0 )
+        {
+            OGRFieldDefn oFieldDefn(m_poCSVLayer->GetYField(), OFTReal);
+            if( eErr == OGRERR_NONE )
+                eErr = poCSVTmpLayer->CreateField( &oFieldDefn );
+        }
+        if( bHasZ && poCSVTmpLayer->GetLayerDefn()->GetFieldIndex(m_poCSVLayer->GetZField()) < 0 )
+        {
+            OGRFieldDefn oFieldDefn(m_poCSVLayer->GetZField(), OFTReal);
+            if( eErr == OGRERR_NONE )
+                eErr = poCSVTmpLayer->CreateField( &oFieldDefn );
+        }
+    }
+
     int nFirstGeomColIdx = 0;
     if( m_poCSVLayer->HasHiddenWKTColumn() )
     {
@@ -133,13 +157,16 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         nFirstGeomColIdx = 1;
     }
 
-    for( int i=nFirstGeomColIdx; eErr == OGRERR_NONE &&
-             i < poEditableFDefn->GetGeomFieldCount(); i++ )
+    if( !(poEditableFDefn->GetGeomFieldCount() == 1 && bHasXY) )
     {
-        OGRGeomFieldDefn oGeomFieldDefn( poEditableFDefn->GetGeomFieldDefn(i) );
-        if( poCSVTmpLayer->GetLayerDefn()->GetGeomFieldIndex(oGeomFieldDefn.GetNameRef()) >= 0 )
-            continue;
-        eErr = poCSVTmpLayer->CreateGeomField( &oGeomFieldDefn );
+        for( int i=nFirstGeomColIdx; eErr == OGRERR_NONE &&
+                i < poEditableFDefn->GetGeomFieldCount(); i++ )
+        {
+            OGRGeomFieldDefn oGeomFieldDefn( poEditableFDefn->GetGeomFieldDefn(i) );
+            if( poCSVTmpLayer->GetLayerDefn()->GetGeomFieldIndex(oGeomFieldDefn.GetNameRef()) >= 0 )
+                continue;
+            eErr = poCSVTmpLayer->CreateGeomField( &oGeomFieldDefn );
+        }
     }
     
     OGRFeature* poFeature;
@@ -149,6 +176,22 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
     {
         OGRFeature* poNewFeature = new OGRFeature( poCSVTmpLayer->GetLayerDefn() );
         poNewFeature->SetFrom(poFeature);
+        if( bHasXY )
+        {
+            OGRGeometry* poGeom = poFeature->GetGeometryRef();
+            if( poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+            {
+                poNewFeature->SetField( m_poCSVLayer->GetXField(),
+                                        static_cast<OGRPoint*>(poGeom)->getX());
+                poNewFeature->SetField( m_poCSVLayer->GetYField(),
+                                        static_cast<OGRPoint*>(poGeom)->getY());
+                if( bHasZ )
+                {
+                    poNewFeature->SetField( m_poCSVLayer->GetZField(),
+                                        static_cast<OGRPoint*>(poGeom)->getZ());
+                }
+            }
+        }
         eErr = poCSVTmpLayer->CreateFeature(poNewFeature);
         delete poFeature;
         delete poNewFeature;
@@ -758,7 +801,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
     OGRLayer* poLayer = poCSVLayer;
     if( bUpdate )
     {
-        poLayer = new OGRCSVEditableLayer(poCSVLayer, papszOpenOptions);
+        poLayer = new OGRCSVEditableLayer(poCSVLayer, papszOpenOptionsIn);
     }
     papoLayers[nLayers-1] = poLayer;
 
