@@ -1958,6 +1958,9 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
 {
     VALIDATE_POINTER1( pszAxis, "CPLDecToDMS", "" );
+    
+    if( CPLIsNan(dfAngle) )
+        return "Invalid angle";
 
     const double dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
     const double dfABSAngle = ABS(dfAngle) + dfEpsilon;
