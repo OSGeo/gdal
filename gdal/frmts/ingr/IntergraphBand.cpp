@@ -98,7 +98,13 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // -------------------------------------------------------------------- 
     // Get the image start from Words to Follow (WTF)
     // -------------------------------------------------------------------- 
-
+    if( nBandOffset > INT_MAX - (2 + ( 2 * ( hHeaderOne.WordsToFollow + 1 ) )) )
+    {
+        pabyBlockBuf = NULL;
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid header values");
+        return;
+    }
+    
     nDataOffset = nBandOffset + 2 + ( 2 * ( hHeaderOne.WordsToFollow + 1 ) );
 
     // -------------------------------------------------------------------- 
