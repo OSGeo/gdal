@@ -1042,7 +1042,7 @@ int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
    };
    if ((unit >= 0) && (unit < 13)) {
       if (unit2sec[unit] != 0) {
-         *ans = (double) (time * unit2sec[unit]);
+         *ans = (double) (time) * unit2sec[unit];
          return 0;
       }
    } else if (unit == 254) {
