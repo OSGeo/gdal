@@ -79,9 +79,23 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
     }
     eDataType = static_cast<EPTType>(nDataType);
 
-    /* FIXME? : risk of overflow in additions and multiplication */
+    if( nWidth > INT_MAX - (nBlockXSize - 1) ||
+        nHeight > INT_MAX - (nBlockYSize - 1) )
+    {
+        nWidth = nHeight = 0;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HFABand::HFABand : too big dimensions / block size");
+        return;
+    }
     nBlocksPerRow = (nWidth + nBlockXSize - 1) / nBlockXSize;
     nBlocksPerColumn = (nHeight + nBlockYSize - 1) / nBlockYSize;
+    if( nBlocksPerRow > INT_MAX / nBlocksPerColumn )
+    {
+        nWidth = nHeight = 0;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HFABand::HFABand : too big dimensions / block size");
+        return;
+    }
     nBlocks = nBlocksPerRow * nBlocksPerColumn;
 
 /* -------------------------------------------------------------------- */

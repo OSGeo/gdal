@@ -1010,7 +1010,11 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           HFAStandard( 2, &nBaseItemType );
           // We ignore the 2 byte objecttype value. 
 
-          if( nIndexValue < -3 || nIndexValue >= nRows * nColumns )
+          if( nIndexValue < -3 ||
+              nRows <= 0 ||
+              nColumns <= 0 ||
+              nRows > INT_MAX / nColumns ||
+              nIndexValue >= nRows * nColumns )
               return FALSE;
 
           pabyData += 12;
