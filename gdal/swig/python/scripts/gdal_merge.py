@@ -30,8 +30,8 @@
 # building the stack.
 # anssi.pekkarinen@fao.org
 
-import sys
 import math
+import sys
 import time
 
 from osgeo import gdal

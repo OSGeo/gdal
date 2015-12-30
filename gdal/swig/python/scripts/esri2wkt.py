@@ -29,13 +29,11 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import osr
-except ImportError:
-    import osr
-
-import sys
 import string
+import sys
+
+from osgeo import osr
+
 
 if len(sys.argv) < 2:
     print('Usage: esri2wkt.py <esri .prj file>')
@@ -54,4 +52,3 @@ if err != 0:
     print('Error = %d' % err)
 else:
     print(prj_srs.ExportToPrettyWkt())
-
