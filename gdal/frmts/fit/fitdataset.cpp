@@ -92,7 +92,7 @@ class FITRasterBand : public GDALPamRasterBand
 
 public:
 
-    FITRasterBand( FITDataset *, int );
+    FITRasterBand( FITDataset *, int nBandIn, int nBandsIn );
     ~FITRasterBand();
 
     // should override RasterIO eventually.
@@ -109,7 +109,7 @@ public:
 /*                           FITRasterBand()                            */
 /************************************************************************/
 
-FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn ) : tmpImage( NULL )
+FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) : tmpImage( NULL )
 
 {
     this->poDS = poDSIn;
@@ -130,18 +130,20 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn ) : tmpImage( NULL
 /*      Caculate the values for record offset calculations.             */
 /* -------------------------------------------------------------------- */
     bytesPerComponent = (GDALGetDataTypeSize(eDataType) / 8);
-    bytesPerPixel = poDSIn->nBands * bytesPerComponent;
+    if( bytesPerComponent == 0 )
+        return;
+    bytesPerPixel = nBandsIn * bytesPerComponent;
+    if( nBlockXSize <= 0 || nBlockYSize <= 0 ||
+        nBlockXSize > INT_MAX / (int)bytesPerPixel ||
+        nBlockYSize > INT_MAX / (nBlockXSize * (int)bytesPerPixel) )
+        return;
     recordSize = bytesPerPixel * nBlockXSize * nBlockYSize;
     numXBlocks =
         (unsigned long) ceil((double) poDSIn->info->xSize / nBlockXSize);
     numYBlocks =
         (unsigned long) ceil((double) poDSIn->info->ySize / nBlockYSize);
 
-    tmpImage = (char *) malloc(recordSize);
-    if (! tmpImage)
-        CPLError(CE_Fatal, CPLE_NotSupported, 
-                 "FITRasterBand couldn't allocate %lu bytes", recordSize);
-
+    tmpImage = (char *) VSI_MALLOC_VERBOSE(recordSize);
 /* -------------------------------------------------------------------- */
 /*      Set the access flag.  For now we set it the same as the         */
 /*      whole dataset, but eventually this should take account of       */
@@ -153,8 +155,7 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn ) : tmpImage( NULL
 
 FITRasterBand::~FITRasterBand()
 {
-    if ( tmpImage )
-        free ( tmpImage );
+    VSIFree ( tmpImage );
 }
 
 
@@ -979,8 +980,13 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nRasterXSize = head->xSize;
     poDS->nRasterYSize = head->ySize;
-    poDS->nBands = head->cSize;
 
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(head->cSize, FALSE))
+    {
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Check if 64 bit seek is needed.                                 */
 /* -------------------------------------------------------------------- */
@@ -1042,9 +1048,12 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < poDS->nBands; i++ )
+    for( int i = 0; i < (int)head->cSize; i++ )
     {
-        poDS->SetBand( i+1,  new FITRasterBand( poDS, i+1 ) ) ;
+        FITRasterBand* poBand = new FITRasterBand( poDS, i+1, (int)head->cSize );
+        poDS->SetBand( i+1,  poBand);
+        if( poBand->tmpImage == NULL )
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
