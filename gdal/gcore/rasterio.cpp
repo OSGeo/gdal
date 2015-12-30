@@ -71,6 +71,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         eFlushBlockErr = CE_None;
         return eErr;
     }
+    if( nBlockXSize <= 0 || nBlockYSize <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Invalid block size" );
+        return CE_Failure;
+    }
 
 /* ==================================================================== */
 /*      A common case is the data requested with the destination        */
