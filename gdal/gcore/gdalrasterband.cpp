@@ -757,11 +757,8 @@ int GDALRasterBand::InitBlockInfo()
         /* (reasonably) assumed in many places (GDALRasterBlock::Internalize(), */
         /* GDALRasterBand::Fill(), many drivers...) */
         /* As 10000 * 10000 * 16 < INT_MAX, we don't need to do the multiplication in other cases */
-
-        int nSizeInBytes = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
-
         GIntBig nBigSizeInBytes = (GIntBig)nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
-        if ((GIntBig)nSizeInBytes != nBigSizeInBytes)
+        if( nBigSizeInBytes > INT_MAX )
         {
             ReportError( CE_Failure, CPLE_NotSupported, "Too big block : %d * %d",
                         nBlockXSize, nBlockYSize );
