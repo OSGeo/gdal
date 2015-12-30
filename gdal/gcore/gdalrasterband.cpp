@@ -91,7 +91,7 @@ GDALRasterBand::~GDALRasterBand()
 
     delete poBandBlockCache;
 
-    if( nBlockReads > nBlocksPerRow * nBlocksPerColumn
+    if( static_cast<GIntBig>(nBlockReads) > static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn
         && nBand == 1 && poDS != NULL )
     {
         CPLDebug( "GDAL", "%d block reads on %d block band 1 of %s.",
