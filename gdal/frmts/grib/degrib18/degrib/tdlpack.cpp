@@ -521,7 +521,16 @@ int TDLP_Inventory (DataSource &fp, sInt4 tdlpLen, inventoryType *inv)
       errSprintf ("Ran out of data in PDS (TDLP_Inventory)\n");
       return -1;
    }
+   if( sectLen < 1 ) {
+       errSprintf ("Wrong sectLen (TDLP_Inventory)\n");
+       return -1;
+   }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
+   if( pds == NULL ) 
+   {
+      errSprintf ("Ran out of memory in PDS (TDLP_Inventory)\n");
+      return -1;
+   }
    *pds = sectLen;
    if (fp.DataSourceFread (pds + 1, sizeof (char), sectLen - 1) + 1 != sectLen) {
       errSprintf ("Ran out of file.\n");
