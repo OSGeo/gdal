@@ -321,11 +321,13 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         VSIFSeekL( poDS->fp, nBandOffset, SEEK_SET );
 
-        VSIFReadL( abyBuf, 1, SIZEOF_HDR1, poDS->fp );
+        if( VSIFReadL( abyBuf, 1, SIZEOF_HDR1, poDS->fp ) != SIZEOF_HDR1 )
+            break;
 
         INGR_HeaderOneDiskToMem( &poDS->hHeaderOne, abyBuf );
 
-        VSIFReadL( abyBuf, 1, SIZEOF_HDR2_A, poDS->fp );
+        if( VSIFReadL( abyBuf, 1, SIZEOF_HDR2_A, poDS->fp ) != SIZEOF_HDR2_A )
+            break;
 
         INGR_HeaderTwoADiskToMem( &poDS->hHeaderTwo, abyBuf );
 
