@@ -2082,12 +2082,20 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
     while(max_records != 0 && max_bytes != 0)
     {
+        iThisRecord++;
+
+        if( VSIFSeekL( fp, start, SEEK_SET ) != 0 ||
+            VSIFReadL( temp_buffer, 1, CEOS_HEADER_LENGTH, fp ) != CEOS_HEADER_LENGTH )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - cannot read record %d.",
+                      iThisRecord );
+            CPLFree(temp_body);
+            return CE_Failure;
+        }
         record = (CeosRecord_t *) CPLMalloc( sizeof( CeosRecord_t ) );
-        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, start, SEEK_SET ));
-        CPL_IGNORE_RET_VAL(VSIFReadL( temp_buffer, 1, CEOS_HEADER_LENGTH, fp ));
         record->Length = DetermineCeosRecordBodyLength( temp_buffer );
 
-        iThisRecord++;
         CeosToNative( &(record->Sequence), temp_buffer, 4, 4 );
 
         if( iThisRecord != record->Sequence )
@@ -2125,9 +2133,28 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             }
         }
 
-        CPL_IGNORE_RET_VAL(VSIFReadL( temp_body, 1, MAX(0,record->Length-CEOS_HEADER_LENGTH),fp));
+        int nToRead = MAX(0,record->Length-CEOS_HEADER_LENGTH);
+        if( nToRead == 0 ||
+            (int)VSIFReadL( temp_body, 1, nToRead,fp) != nToRead )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - cannot read record %d.",
+                      iThisRecord );
+            CPLFree(record);
+            CPLFree(temp_body);
+            return CE_Failure;
+        }
 
         InitCeosRecordWithHeader( record, temp_buffer, temp_body );
+        if( record->Length == 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - invalid record %d.",
+                      iThisRecord );
+            CPLFree(record);
+            CPLFree(temp_body);
+            return CE_Failure;
+        }
 
         if( CurrentType == record->TypeCode.Int32Code )
             record->Subsequence = ++CurrentSequence;
