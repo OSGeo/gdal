@@ -2572,7 +2572,7 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
 /* -------------------------------------------------------------------- */
         int nMaxNumChars = poColumn->GetIntField( "maxNumChars" );
 
-        if( nMaxNumChars == 0 )
+        if( nMaxNumChars <= 0 )
         {
             papszMD = CSLSetNameValue( papszMD, poColumn->GetName(), "" );
         }
