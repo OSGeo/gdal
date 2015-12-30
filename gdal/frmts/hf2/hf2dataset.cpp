@@ -180,7 +180,12 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                 GInt32 nVal;
                 VSIFReadL(&nVal, 4, 1, poGDS->fp);
                 CPL_LSBPTR32(&nVal);
-                VSIFReadL(pabyData, static_cast<size_t>(nWordSize * (nTileWidth - 1)), 1, poGDS->fp);
+                if( VSIFReadL(pabyData, static_cast<size_t>(nWordSize * (nTileWidth - 1)), 1, poGDS->fp) != 1 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "File too short");
+                    CPLFree(pabyData);
+                    return CE_Failure;
+                }
 #if defined(CPL_MSB)
                 if (nWordSize > 1)
                     GDALSwapWords(pabyData, nWordSize, nTileWidth - 1, nWordSize);
