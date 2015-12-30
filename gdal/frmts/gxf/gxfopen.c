@@ -126,7 +126,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 
         if( bContinuedLine )
         {
-            char* pszTmp = (char*) VSIMalloc((strlen(papszReturn[nReturnLineCount-1]) - 1) + strlen(pszTrimmedLine) + 1);
+            char* pszTmp = (char*) VSIMalloc(strlen(papszReturn[nReturnLineCount-1]) + strlen(pszTrimmedLine) + 1);
             if( pszTmp == NULL )
             {
                 CSLDestroy(papszReturn);
@@ -134,7 +134,10 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
                 return NULL;
             }
             strcpy(pszTmp, papszReturn[nReturnLineCount-1]);
-            strcpy(pszTmp + (strlen(papszReturn[nReturnLineCount-1]) - 1), pszTrimmedLine);
+            if( pszTrimmedLine[0] == '\0' )
+                pszTmp[strlen(papszReturn[nReturnLineCount-1]) - 1] = 0;
+            else
+                strcpy(pszTmp + (strlen(papszReturn[nReturnLineCount-1]) - 1), pszTrimmedLine);
             CPLFree(papszReturn[nReturnLineCount-1]);
             papszReturn[nReturnLineCount-1] = pszTmp;
         }
