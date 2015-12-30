@@ -5514,6 +5514,11 @@ OGRErr OSRSetVDG( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
 
 {
+    if( nZone < 0 || nZone > 60 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid zone: %d", nZone);
+        return OGRERR_FAILURE;
+    }
     SetProjection( SRS_PT_TRANSVERSE_MERCATOR );
     SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0 );
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, nZone * 6 - 183 );
