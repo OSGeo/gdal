@@ -171,6 +171,15 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     const int nDataTypeSize = nDepth / 8;
+    
+    if( nComp == 0 || nDataTypeSize == 0 ||
+        poDS->nRasterXSize > INT_MAX / (nComp * nDataTypeSize) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too large width / number of bands");
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create bands.                                                   */
