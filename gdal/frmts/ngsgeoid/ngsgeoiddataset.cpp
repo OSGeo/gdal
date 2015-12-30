@@ -119,7 +119,7 @@ CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     /* First values in the file corresponds to the south-most line of the imagery */
     VSIFSeekL(poGDS->fp,
-              HEADER_SIZE + (nRasterYSize - 1 - nBlockYOff) * nRasterXSize * 4,
+              HEADER_SIZE + static_cast<vsi_l_offset>(nRasterYSize - 1 - nBlockYOff) * nRasterXSize * 4,
               SEEK_SET);
 
     if (static_cast<int>(
