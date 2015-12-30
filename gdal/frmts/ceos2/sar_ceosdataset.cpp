@@ -2118,24 +2118,32 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             }
         }
 
-        if( record->Length > CurrentBodyLength )
+        if( record->Length <= CEOS_HEADER_LENGTH )
         {
-            if(CurrentBodyLength == 0 )
-            {
-                temp_body = (unsigned char *) CPLMalloc( record->Length );
-                CurrentBodyLength = record->Length;
-            }
-            else
-            {
-                temp_body = (unsigned char *) 
-                    CPLRealloc( temp_body, record->Length );
-                CurrentBodyLength = record->Length;
-            }
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - cannot read record %d.",
+                      iThisRecord );
+            CPLFree(record);
+            CPLFree(temp_body);
+            return CE_Failure;
         }
 
-        int nToRead = MAX(0,record->Length-CEOS_HEADER_LENGTH);
-        if( nToRead == 0 ||
-            (int)VSIFReadL( temp_body, 1, nToRead,fp) != nToRead )
+        if( record->Length > CurrentBodyLength )
+        {
+            unsigned char* temp_body_new = (unsigned char *) 
+                    VSI_REALLOC_VERBOSE( temp_body, record->Length );
+            if( temp_body_new == NULL )
+            {
+                CPLFree(record);
+                CPLFree(temp_body);
+                return CE_Failure;
+            }
+            temp_body = temp_body_new;
+            CurrentBodyLength = record->Length;
+        }
+
+        int nToRead = record->Length-CEOS_HEADER_LENGTH;
+        if( (int)VSIFReadL( temp_body, 1, nToRead,fp) != nToRead )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Corrupt CEOS File - cannot read record %d.",
