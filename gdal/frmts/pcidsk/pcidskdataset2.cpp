@@ -1202,7 +1202,7 @@ CPLErr PCIDSK2Dataset::SetGeoTransform( double * padfTransform )
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( const PCIDSKException& ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
@@ -1242,7 +1242,7 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( const PCIDSKException& ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
@@ -1301,7 +1301,7 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( const PCIDSKException& ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
@@ -1388,7 +1388,7 @@ const char *PCIDSK2Dataset::GetProjectionRef()
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( const PCIDSKException& ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
