@@ -319,8 +319,14 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     // Read block to memory
-    GByte *blockData = reinterpret_cast<GByte *>( CPLMalloc(nBlockSize) );
-    VSIFReadL( blockData, 1, nBlockSize, poRDS->fp );
+    GByte *blockData = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nBlockSize) );
+    if( blockData == NULL )
+        return CE_Failure;
+    if( VSIFReadL( blockData, 1, nBlockSize, poRDS->fp ) != nBlockSize )
+    {
+        VSIFree(blockData);
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read RLE block.                                                 */
@@ -329,16 +335,19 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GUInt32 imagePos = 0;
 
     if( poRDS->options == 0x01 ||
-        poRDS->options == 0x41 ) do
+        poRDS->options == 0x41 )
     {
-        GByte count = blockData[filePos++];
-        GByte color = blockData[filePos++];
-
-        for (GByte i = 0; i <= count; i++)
+        while( filePos+1 < nBlockSize && imagePos < pixels );
         {
-          reinterpret_cast<GByte *>( pImage )[imagePos++] = color;
+            GByte count = blockData[filePos++];
+            GByte color = blockData[filePos++];
+
+            for (GByte i = 0; imagePos < pixels && i <= count; i++)
+            {
+                reinterpret_cast<GByte *>( pImage )[imagePos++] = color;
+            }
         }
-    } while( filePos < nBlockSize && imagePos < pixels );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read LZW block.                                                 */
