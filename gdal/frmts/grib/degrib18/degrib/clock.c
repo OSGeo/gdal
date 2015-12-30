@@ -1736,8 +1736,6 @@ void Clock_ScanDate (double *l_clock, sInt4 year, int mon, int day)
    int i;
    sInt4 delt, temp, totDay;
 
-   myAssert ((mon >= 1) && (mon <= 12));
-
    /* Makes sure l_clock is zero'ed out. */
    *l_clock = 0;
 
