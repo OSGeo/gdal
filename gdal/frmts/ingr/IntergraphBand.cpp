@@ -189,8 +189,19 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // Allocate buffer for a Block of data
     // --------------------------------------------------------------------
 
+    if( nBlockYSize == 0 ||
+        nBlockXSize > INT_MAX / nBlockYSize ||
+        nBlockXSize > INT_MAX / 4 - 2 ||
+        GDALGetDataTypeSize( eDataType ) == 0 ||
+        nBlockYSize * (GDALGetDataTypeSize( eDataType ) / 8) > INT_MAX ||
+        nBlockXSize > INT_MAX / (nBlockYSize * (GDALGetDataTypeSize( eDataType ) / 8)) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big block size");
+        return;
+    }
+
     nBlockBufSize = nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8;
+                    (GDALGetDataTypeSize( eDataType ) / 8);
 
     if (eFormat == RunLengthEncoded)    
     {
@@ -544,7 +555,9 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
         {
             nBlockYSize = 1;
             panRLELineOffset = (uint32 *) 
-                CPLCalloc(sizeof(uint32),nRasterYSize);
+                VSI_CALLOC_VERBOSE(sizeof(uint32),nRasterYSize);
+            if( panRLELineOffset == NULL )
+                return;
             nFullBlocksY = nRasterYSize;
         }
         else
@@ -557,6 +570,11 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
                           hHeaderTwo.CatenatedFilePointer,
                           nDataOffset);
 
+        if( nBlockYSize == 0 || nBlockXSize > INT_MAX / nBlockYSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too big block size");
+            return;
+        }
         nBlockBufSize = nBlockXSize * nBlockYSize;
     }
     else
@@ -578,11 +596,16 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
     if( eFormat == AdaptiveRGB ||
         eFormat == ContinuousTone )
     {
+        if( nBlockBufSize > INT_MAX / 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too big block size");
+            return;
+        }
         nBlockBufSize *= 3;
     }
 
-    CPLFree( pabyBlockBuf );
-    pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
+    if( nBlockBufSize > 0 )
+        pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
     if (pabyBlockBuf == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBlockBufSize);
@@ -592,7 +615,10 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
     // Create a RLE buffer
     // ----------------------------------------------------------------
 
-    pabyRLEBlock = (GByte*) VSIMalloc( nRLESize );
+    if( nRLESize == 0 )
+        pabyRLEBlock = (GByte*) VSIMalloc( 1 );
+    else if( nRLESize < INT_MAX )
+        pabyRLEBlock = (GByte*) VSIMalloc( nRLESize );
     if (pabyRLEBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nRLESize);
