@@ -237,12 +237,12 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
         case GTIFF_GEOKEYDIRECTORY:
             keyptr->gk_data = (char *)(gt->gt_short+offset);
             if (gt->gt_nshorts < offset+count)
-                gt->gt_nshorts = offset+count;
+                return 0;
             break;
         case GTIFF_DOUBLEPARAMS:
             keyptr->gk_data = (char *)(gt->gt_double+offset);
             if (gt->gt_ndoubles < offset+count)
-                gt->gt_ndoubles = offset+count;
+                return 0;
             break;
         case GTIFF_ASCIIPARAMS:
             if( offset + count == tempData->tk_asciiParamsLength + 1 
