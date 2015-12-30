@@ -877,6 +877,13 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
         }
 
         INGR_JPEGAppDataDiskToMem(&hJpegData, abyBuf);
+        
+        if( hJpegData.RemainingLength == 0 ||
+            hJpegData.RemainingLength > INT_MAX ||
+            nNext > INT_MAX - hJpegData.RemainingLength )
+        {
+            return INGR_JPEGQDEFAULT;
+        }
 
         nNext += hJpegData.RemainingLength;
 
