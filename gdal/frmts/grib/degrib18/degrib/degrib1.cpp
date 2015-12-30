@@ -655,6 +655,11 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
       errSprintf ("Ran out of data in PDS (GRIB1_Inventory)\n");
       return -1;
    }
+   if( sectLen < 3 )
+   {
+       errSprintf ("Invalid sectLen.\n");
+       return -1;
+   }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
    if( pds == NULL )
    {
