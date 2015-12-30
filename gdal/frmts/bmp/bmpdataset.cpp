@@ -1157,6 +1157,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->sInfoHeader.iXPelsPerMeter, poDS->sInfoHeader.iYPelsPerMeter,
               poDS->sInfoHeader.iClrUsed, poDS->sInfoHeader.iClrImportant );
 #endif
+    
+    if( poDS->sInfoHeader.iHeight == INT_MIN )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     poDS->nRasterXSize = poDS->sInfoHeader.iWidth;
     poDS->nRasterYSize = (poDS->sInfoHeader.iHeight > 0)?
