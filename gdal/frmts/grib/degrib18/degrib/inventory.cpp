@@ -257,9 +257,20 @@ static int GRIB2SectToBuffer (DataSource &fp,
       }
       return -1;
    }
+   if( *secLen < sizeof(sInt4) )
+   {
+       errSprintf ("ERROR: Wrong secLen in GRIB2SectToBuffer\n");
+       return -1;
+   }
    if (*buffLen < *secLen) {
+      char* buffnew = (char *) realloc ((void *) *buff, *secLen * sizeof (char));
+      if( buffnew == NULL )
+      {
+           errSprintf ("ERROR: Ran out of memory in GRIB2SectToBuffer\n");
+           return -1;
+      }
       *buffLen = *secLen;
-      *buff = (char *) realloc ((void *) *buff, *buffLen * sizeof (char));
+      *buff = buffnew;
       buffer = *buff;
    }
 
