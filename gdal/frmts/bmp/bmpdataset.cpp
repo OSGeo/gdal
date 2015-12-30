@@ -723,8 +723,18 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         return;
     }
 
-    VSIFSeekL( poDSIn->fp, poDSIn->sFileHeader.iOffBits, SEEK_SET );
-    VSIFReadL( pabyComprBuf, 1, iComprSize, poDSIn->fp );
+    if( VSIFSeekL( poDSIn->fp, poDSIn->sFileHeader.iOffBits, SEEK_SET ) != 0 ||
+        VSIFReadL( pabyComprBuf, 1, iComprSize, poDSIn->fp ) < iComprSize )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Can't read from offset %ld in input file.", 
+                  (long) poDSIn->sFileHeader.iOffBits );
+        CPLFree(pabyComprBuf);
+        pabyComprBuf = NULL;
+        CPLFree(pabyUncomprBuf);
+        pabyUncomprBuf = NULL;
+        return;   
+    }
     unsigned int k, iLength = 0;
     unsigned int i = 0;
     unsigned int j = 0;
