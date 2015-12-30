@@ -335,7 +335,7 @@ int NWT_GRDDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Look for the header                                                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < 1024 )
         return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'H' ||
