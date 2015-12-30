@@ -289,6 +289,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
     nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
 
     if (nBlockXSize < (INT_MAX - 31) / poDSIn->sInfoHeader.iBitCount)
         nScanSize =
@@ -298,7 +299,6 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
         pabyScan = NULL;
         return;
     }
-    nBlockYSize = 1;
 
 #ifdef BMP_DEBUG
     CPLDebug( "BMP",
@@ -701,6 +701,15 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         return;
     }
 
+    if( poDSIn->sFileHeader.iSize <= poDSIn->sFileHeader.iOffBits ||
+        poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid header");
+        pabyComprBuf = NULL;
+        pabyUncomprBuf = NULL;
+        return;
+    }
+
     GUInt32 iComprSize = poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits;
     GUInt32 iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
 
@@ -740,11 +749,13 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
     unsigned int j = 0;
     if ( poDSIn->sInfoHeader.iBitCount == 8 )         // RLE8
     {
-        while( j < iUncomprSize && i < iComprSize )
+        while( i < iComprSize )
         {
             if ( pabyComprBuf[i] )
             {
                 iLength = pabyComprBuf[i++];
+                if( j == iUncomprSize )
+                    break;
                 while( iLength > 0 && j < iUncomprSize && i < iComprSize )
                 {
                     pabyUncomprBuf[j++] = pabyComprBuf[i];
@@ -755,6 +766,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
             else
             {
                 i++;
+                if( i == iComprSize )
+                    break;
                 if ( pabyComprBuf[i] == 0 )         // Next scanline
                 {
                     i++;
@@ -765,9 +778,14 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 }
                 else if ( pabyComprBuf[i] == 2 )    // Move to...
                 {
+                    if( j == iUncomprSize )
+                        break;
                     i++;
                     if ( i < iComprSize - 1 )
                     {
+                        if( pabyComprBuf[i+1] > INT_MAX / poDS->GetRasterXSize() ||
+                            static_cast<int>(pabyComprBuf[i+1]) * poDS->GetRasterXSize() > INT_MAX - static_cast<int>(j + pabyComprBuf[i]) )
+                            break;
                         j += pabyComprBuf[i] +
                              pabyComprBuf[i+1] * poDS->GetRasterXSize();
                         i += 2;
@@ -779,6 +797,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 {
                     if (i < iComprSize)
                         iLength = pabyComprBuf[i++];
+                    if( j == iUncomprSize )
+                        break;
                     for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                         pabyUncomprBuf[j++] = pabyComprBuf[i++];
                     if ( i & 0x01 )
@@ -789,11 +809,13 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
     }
     else                                            // RLE4
     {
-        while( j < iUncomprSize && i < iComprSize )
+        while( i < iComprSize )
         {
             if ( pabyComprBuf[i] )
             {
                 iLength = pabyComprBuf[i++];
+                if( j == iUncomprSize )
+                    break;
                 while( iLength > 0 && j < iUncomprSize && i < iComprSize )
                 {
                     if ( iLength & 0x01 )
@@ -807,6 +829,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
             else
             {
                 i++;
+                if( i == iComprSize )
+                    break;
                 if ( pabyComprBuf[i] == 0 )         // Next scanline
                 {
                     i++;
@@ -817,9 +841,14 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 }
                 else if ( pabyComprBuf[i] == 2 )    // Move to...
                 {
+                    if( j == iUncomprSize )
+                        break;
                     i++;
                     if ( i < iComprSize - 1 )
                     {
+                        if( pabyComprBuf[i+1] > INT_MAX / poDS->GetRasterXSize() ||
+                            static_cast<int>(pabyComprBuf[i+1]) * poDS->GetRasterXSize() > INT_MAX - static_cast<int>(j + pabyComprBuf[i]) )
+                            break;
                         j += pabyComprBuf[i] +
                              pabyComprBuf[i+1] * poDS->GetRasterXSize();
                         i += 2;
@@ -831,6 +860,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 {
                     if (i < iComprSize)
                         iLength = pabyComprBuf[i++];
+                    if( j == iUncomprSize )
+                        break;
                     for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                     {
                         if ( k & 0x01 )
@@ -843,6 +874,13 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 }
             }
         }
+    }
+    /* Validate that we have read all compressed data (we tolerate missing
+    /* end of image marker) and that we have filled all uncompressed data */
+    if( j < iUncomprSize || (i+1 != iComprSize && i+2 != iComprSize) )
+    {
+        CPLFree(pabyUncomprBuf);
+        pabyUncomprBuf = NULL;
     }
     // rcg, release compressed buffer here.
     CPLFree( pabyComprBuf );
