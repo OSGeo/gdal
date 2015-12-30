@@ -656,6 +656,11 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
       return -1;
    }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
+   if( pds == NULL )
+   {
+       errSprintf ("Ran out of memory.\n");
+       return -1;
+   }
    *pds = *temp;
    pds[1] = temp[1];
    pds[2] = temp[2];
