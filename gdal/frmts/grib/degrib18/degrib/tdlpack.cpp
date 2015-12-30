@@ -151,7 +151,10 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
       errSprintf ("Ran out of data in PDS (TDLP Section 1)\n");
       return -1;
    }
-   myAssert (sectLen <= 71);
+   if( sectLen > 71 ) {
+      errSprintf ("TDLP Section 1 is too big.\n");
+      return -1;
+   }
    if (sectLen < 39) {
       errSprintf ("TDLP Section 1 is too small.\n");
       return -1;
@@ -608,7 +611,10 @@ int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double *refTime)
       errSprintf ("Ran out of data in PDS (TDLP_RefTime)\n");
       return -1;
    }
-   myAssert (sectLen <= 71);
+   if( sectLen > 71 ) {
+      errSprintf ("TDLP Section 1 is too big.\n");
+      return -1;
+   }
    if (sectLen < 39) {
       errSprintf ("TDLP Section 1 is too small.\n");
       return -1;
@@ -701,7 +707,10 @@ static int ReadTDLPSect2 (uChar *gds, sInt4 tdlpLen, sInt4 *curLoc,
       errSprintf ("Ran out of data in GDS (TDLP Section 2)\n");
       return -1;
    }
-   myAssert (sectLen == 28);
+   if( sectLen != 28 ) {
+      errSprintf ("Wrong sectLen (TDLP Section 2)\n");
+      return -1;
+   }
 
    gridType = *(gds++);
    gdsMeta->Nx = GRIB_UNSIGN_INT2 (*gds, gds[1]);
