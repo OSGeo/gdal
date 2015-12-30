@@ -750,6 +750,12 @@ int GDALRasterBand::InitBlockInfo()
                   nRasterXSize, nRasterYSize );
         return FALSE;
     }
+    
+    if( GDALGetDataTypeSize(eDataType) == 0 )
+    {
+        ReportError( CE_Failure, CPLE_AppDefined, "Invalid data type" );
+        return FALSE;
+    }
 
     if (nBlockXSize >= 10000 || nBlockYSize >= 10000)
     {
