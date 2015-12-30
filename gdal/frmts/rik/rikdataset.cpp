@@ -337,7 +337,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poRDS->options == 0x01 ||
         poRDS->options == 0x41 )
     {
-        while( filePos+1 < nBlockSize && imagePos < pixels );
+        while( filePos+1 < nBlockSize && imagePos < pixels )
         {
             GByte count = blockData[filePos++];
             GByte color = blockData[filePos++];
