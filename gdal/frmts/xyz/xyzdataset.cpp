@@ -952,9 +952,16 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const double dfStepX = adfStepX[0];
     const double dfStepY = adfStepY[0] * bStepYSign;
-    const int nXSize = 1 + static_cast<int>((dfMaxX - dfMinX) / dfStepX + 0.5);
-    const int nYSize
-        = 1 + static_cast<int>((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
+    const double dfXSize = 1 + ((dfMaxX - dfMinX) / dfStepX + 0.5);
+    const double dfYSize = 1 + ((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
+    if( dfXSize < 0 || dfXSize > INT_MAX || dfYSize < 0 || dfYSize > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions");
+        VSIFCloseL(fp);
+        return NULL;
+    }
+    const int nXSize = static_cast<int>(dfXSize);
+    const int nYSize = static_cast<int>(dfYSize);
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("XYZ", "minx=%f maxx=%f stepx=%f", dfMinX, dfMaxX, dfStepX);
