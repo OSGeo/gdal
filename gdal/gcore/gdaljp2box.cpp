@@ -173,7 +173,11 @@ int GDALJP2Box::ReadBox()
             CPL_MSBPTR32( abyXLBox+4 );
             memcpy( &nBoxLength, abyXLBox+4, 4 );
         }
-
+        if( nBoxLength < 0 )
+        {
+            CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);
+            return FALSE;
+        }
         nDataOffset = nBoxOffset + 16;
     }
 
