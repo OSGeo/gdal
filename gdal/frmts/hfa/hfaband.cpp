@@ -79,8 +79,8 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
     }
     eDataType = static_cast<EPTType>(nDataType);
 
-    if( nWidth > INT_MAX - (nBlockXSize - 1) ||
-        nHeight > INT_MAX - (nBlockYSize - 1) )
+    if( nWidth - 1 > INT_MAX - nBlockXSize ||
+        nHeight - 1 > INT_MAX - nBlockYSize )
     {
         nWidth = nHeight = 0;
         CPLError(CE_Failure, CPLE_AppDefined,
