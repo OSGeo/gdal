@@ -69,6 +69,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 {
     GByte	abyHeader[12];
     CEOSRecord  *psRecord;
+    GUInt32 nRecordNumUInt32, nLengthUInt32;
 
 /* -------------------------------------------------------------------- */
 /*      Read the standard CEOS header.                                  */
@@ -93,35 +94,38 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
         CPL_SWAP32PTR( abyHeader + 8 );
     }
 
-    psRecord->nRecordNum = abyHeader[0] * 256 * 256 * 256
-                         + abyHeader[1] * 256 * 256
-                         + abyHeader[2] * 256
+    nRecordNumUInt32 = (abyHeader[0] << 24)
+                         + (abyHeader[1] << 16)
+                         + (abyHeader[2] << 8)
                          + abyHeader[3];
 
-    psRecord->nRecordType = abyHeader[4] * 256 * 256 * 256
-                          + abyHeader[5] * 256 * 256
-                          + abyHeader[6] * 256
-                          + abyHeader[7];
+    psRecord->nRecordType = (abyHeader[4] << 24)
+                         + (abyHeader[5] << 16)
+                         + (abyHeader[6] << 8)
+                         + abyHeader[7];
 
-    psRecord->nLength = abyHeader[8]  * 256 * 256 * 256
-                      + abyHeader[9]  * 256 * 256
-                      + abyHeader[10] * 256
-                      + abyHeader[11];
+    nLengthUInt32 = (abyHeader[8] << 24)
+                         + (abyHeader[9] << 16)
+                         + (abyHeader[10] << 8)
+                         + abyHeader[11];
 
 /* -------------------------------------------------------------------- */
 /*      Does it look reasonable?  We assume there can't be too many     */
 /*      records and that the length must be between 12 and 200000.      */
 /* -------------------------------------------------------------------- */
-    if( psRecord->nRecordNum < 0 || psRecord->nRecordNum > 200000
-        || psRecord->nLength < 12 || psRecord->nLength > 200000 )
+    if( nRecordNumUInt32 > 200000
+        || nLengthUInt32 < 12 || nLengthUInt32 > 200000 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CEOS record leader appears to be corrupt.\n"
-                  "Record Number = %d, Record Length = %d\n",
-                  psRecord->nRecordNum, psRecord->nLength );
+                  "Record Number = %u, Record Length = %u\n",
+                  nRecordNumUInt32, nLengthUInt32 );
         CPLFree( psRecord );
         return NULL;
     }
+    
+    psRecord->nRecordNum = (int)nRecordNumUInt32;
+    psRecord->nLength = (int)nLengthUInt32;
 
 /* -------------------------------------------------------------------- */
 /*      Read the remainder of the record into a buffer.  Ensure that    */
