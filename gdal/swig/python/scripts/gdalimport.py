@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Name:     gdalimport
 #  Project:  GDAL Python Interface
 #  Purpose:  Import a GDAL supported file to Tiled GeoTIFF, and build overviews
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,13 +29,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
-import sys
 import os.path
+import sys
+
+from osgeo import gdal
 
 gdal.AllRegister()
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -48,7 +45,7 @@ if len(argv) < 2:
 
 def progress_cb( complete, message, cb_data ):
     print('%s %d' % (cb_data, complete))
-    
+
 
 filename = argv[1]
 dataset = gdal.Open( filename )
@@ -84,6 +81,3 @@ new_dataset.BuildOverviews( "average", callback=progress_cb,
 new_dataset = None
 
 print('Done')
-
-
-

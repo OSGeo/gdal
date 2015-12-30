@@ -32,7 +32,8 @@ import os
 import sys
 import filecmp
 
-from osgeo import gdal, osr
+from osgeo import gdal
+from osgeo import osr
 
 #######################################################
 def compare_metadata(golden_md, new_md, id, options=[]):

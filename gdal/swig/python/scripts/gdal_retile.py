@@ -29,19 +29,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
-try:
-    from osgeo import gdal
-    from osgeo import ogr
-    from osgeo import osr
-except:
-    import gdal
-    import ogr
-    import osr
-
-import sys
-import os
 import math
+import os
+import sys
+
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 try:
     progress = gdal.TermProgress_nocb

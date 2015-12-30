@@ -2,25 +2,25 @@
 # -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for converting raster data to a vector polygon layer.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -30,12 +30,12 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import gdal, ogr, osr
-except ImportError:
-    import gdal, ogr, osr
-
 import sys
+
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
+
 
 def Usage():
     print("""
@@ -212,10 +212,3 @@ srcband = None
 src_ds = None
 dst_ds = None
 mask_ds = None
-
-
-
-
-
-
-
