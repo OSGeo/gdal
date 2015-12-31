@@ -2271,8 +2271,10 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Read data from the coord. block
          *------------------------------------------------------------*/
-        pasSecHdrs = (TABMAPCoordSecHdr*)CPLMalloc(numLineSections*
+        pasSecHdrs = (TABMAPCoordSecHdr*)VSI_MALLOC2_VERBOSE(numLineSections,
                                                    sizeof(TABMAPCoordSecHdr));
+        if( pasSecHdrs == NULL )
+            return -1;
 
         if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
             poCoordBlock = *ppoCoordBlock;
@@ -2293,7 +2295,12 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
-        panXY = (GInt32*)CPLMalloc(numPointsTotal*2*sizeof(GInt32));
+        panXY = (GInt32*)VSI_MALLOC2_VERBOSE(numPointsTotal,2*sizeof(GInt32));
+        if( panXY == NULL )
+        {
+            CPLFree(pasSecHdrs);
+            return -1;
+        }
 
         if (poCoordBlock->ReadIntCoords(bComprCoord,numPointsTotal,panXY) != 0)
         {
@@ -2556,9 +2563,13 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Build and write array of coord sections headers
          *------------------------------------------------------------*/
-        pasSecHdrs = (TABMAPCoordSecHdr*)CPLCalloc(numLines,
+        pasSecHdrs = (TABMAPCoordSecHdr*)VSI_CALLOC_VERBOSE(numLines,
                                                    sizeof(TABMAPCoordSecHdr));
-
+        if( pasSecHdrs == NULL )
+        {
+            return -1;
+        }
+        
         /*-------------------------------------------------------------
          * In calculation of nDataOffset, we have to take into account that
          * V450 header section uses int32 instead of int16 for numVertices
@@ -3091,8 +3102,10 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Read data from the coord. block
          *------------------------------------------------------------*/
-        pasSecHdrs = (TABMAPCoordSecHdr*)CPLMalloc(numLineSections*
+        pasSecHdrs = (TABMAPCoordSecHdr*)VSI_MALLOC2_VERBOSE(numLineSections,
                                                    sizeof(TABMAPCoordSecHdr));
+        if( pasSecHdrs == NULL )
+            return -1;
 
         if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
             poCoordBlock = *ppoCoordBlock;
@@ -3114,7 +3127,12 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             return -1;
         }
 
-        panXY = (GInt32*)CPLMalloc(numPointsTotal*2*sizeof(GInt32));
+        panXY = (GInt32*)VSI_MALLOC2_VERBOSE(numPointsTotal,2*sizeof(GInt32));
+        if( panXY == NULL )
+        {
+            CPLFree(pasSecHdrs);
+            return -1;
+        }
 
         if (poCoordBlock->ReadIntCoords(bComprCoord,numPointsTotal,panXY) != 0)
         {
