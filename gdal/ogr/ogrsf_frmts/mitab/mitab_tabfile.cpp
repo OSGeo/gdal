@@ -471,7 +471,8 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
 
         GetFeatureCountByType( numPoints, numLines, numRegions, numTexts);
 
-        numPoints += numTexts;
+        if( numPoints >= 0 && numTexts >= 0 && numPoints < INT_MAX - numTexts )
+            numPoints += numTexts;
         if( numPoints > 0 && numLines == 0 && numRegions == 0 )
             m_poDefn->SetGeomType( wkbPoint );
         else if( numPoints == 0 && numLines > 0 && numRegions == 0 )
