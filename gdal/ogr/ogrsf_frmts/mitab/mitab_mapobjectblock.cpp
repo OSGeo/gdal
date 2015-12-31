@@ -1017,6 +1017,18 @@ int TABMAPObjLine::WriteObj(TABMAPObjectBlock *poObjBlock)
  * Applies to PLINE, MULTIPLINE and REGION object types
  **********************************************************************/
 
+static void TABMAPObjAddComprOrg(GInt32& nVal, GInt32 nAdd)
+{
+    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
+        nVal = INT_MAX;
+    else if( nAdd == INT_MIN && nVal < 0 )
+        nVal = INT_MIN;
+    else if( nAdd < 0 && nVal < INT_MIN - nAdd )
+        nVal = INT_MIN;
+    else
+        nVal += nAdd;
+}
+
 /**********************************************************************
  *                   TABMAPObjPLine::ReadObj()
  *
@@ -1101,8 +1113,8 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nComprOrgX = poObjBlock->ReadInt32();
         m_nComprOrgY = poObjBlock->ReadInt32();
 
-        m_nLabelX += m_nComprOrgX;
-        m_nLabelY += m_nComprOrgY;
+        TABMAPObjAddComprOrg(m_nLabelX, m_nComprOrgX);
+        TABMAPObjAddComprOrg(m_nLabelY, m_nComprOrgY);
 
         m_nMinX = m_nComprOrgX + poObjBlock->ReadInt16();  // Read MBR
         m_nMinY = m_nComprOrgY + poObjBlock->ReadInt16();
@@ -1745,8 +1757,8 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nComprOrgX = poObjBlock->ReadInt32();
         m_nComprOrgY = poObjBlock->ReadInt32();
 
-        m_nLabelX += m_nComprOrgX;
-        m_nLabelY += m_nComprOrgY;
+        TABMAPObjAddComprOrg(m_nLabelX, m_nComprOrgX);
+        TABMAPObjAddComprOrg(m_nLabelY, m_nComprOrgY);
 
         m_nMinX = m_nComprOrgX + poObjBlock->ReadInt16();  // Read MBR
         m_nMinY = m_nComprOrgY + poObjBlock->ReadInt16();
