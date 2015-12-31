@@ -357,6 +357,14 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         const bool LZW_HAS_CLEAR_CODE = !!(blockData[4] & 0x80);
         const int LZW_MAX_BITS = blockData[4] & 0x1f; // Max 13
+        if( LZW_MAX_BITS > 13 )
+        {
+            CPLFree( blockData );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "RIK decompression failed. "
+                      "Invalid LZW_MAX_BITS." );
+            return CE_Failure;
+        }
         const int LZW_BITS_PER_PIXEL = 8;
         const int LZW_OFFSET = 5;
 
