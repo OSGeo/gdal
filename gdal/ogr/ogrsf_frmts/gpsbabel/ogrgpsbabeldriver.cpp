@@ -32,12 +32,6 @@
 
 #include "ogr_gpsbabel.h"
 
-/*
- g++ -g -Wall -fPIC  ogr/ogrsf_frmts/gpsbabel/*.cpp -shared \
-   -o ogr_GPSBabel.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts \
-   -Iogr/ogrsf_frmts/gpsbabel -L. -lgdal
-*/
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
