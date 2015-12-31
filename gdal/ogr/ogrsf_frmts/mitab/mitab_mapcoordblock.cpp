@@ -340,6 +340,18 @@ void     TABMAPCoordBlock::SetComprCoordOrigin(GInt32 nX, GInt32 nY)
     m_nComprOrgY = nY;
 }
 
+static void TABMAPCoordBlockAddComprOrg(GInt32& nVal, GInt32 nAdd)
+{
+    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
+        nVal = INT_MAX;
+    else if( nAdd == INT_MIN && nVal < 0 )
+        nVal = INT_MIN;
+    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
+        nVal = INT_MIN;
+    else
+        nVal += nAdd;
+}
+
 /**********************************************************************
  *                   TABMAPObjectBlock::ReadIntCoord()
  *
@@ -358,8 +370,10 @@ int     TABMAPCoordBlock::ReadIntCoord(GBool bCompressed,
 {
     if (bCompressed)
     {   
-        nX = m_nComprOrgX + ReadInt16();
-        nY = m_nComprOrgY + ReadInt16();
+        nX = ReadInt16();
+        nY = ReadInt16();
+        TABMAPCoordBlockAddComprOrg(nX, m_nComprOrgX);
+        TABMAPCoordBlockAddComprOrg(nY, m_nComprOrgY);
     }
     else
     {
@@ -399,8 +413,10 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
     {   
         for(i=0; i<numValues; i+=2)
         {
-            panXY[i]   = m_nComprOrgX + ReadInt16();
-            panXY[i+1] = m_nComprOrgY + ReadInt16();
+            panXY[i]   = ReadInt16();
+            panXY[i+1] = ReadInt16();
+            TABMAPCoordBlockAddComprOrg(panXY[i], m_nComprOrgX);
+            TABMAPCoordBlockAddComprOrg(panXY[i+1], m_nComprOrgY);
             if (CPLGetLastErrorType() != 0)
                 return -1;
         }
