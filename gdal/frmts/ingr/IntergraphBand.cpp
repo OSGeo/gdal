@@ -612,6 +612,8 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
         nBlockBufSize *= 3;
     }
 
+    CPLFree(pabyBlockBuf);
+    pabyBlockBuf = NULL;
     if( nBlockBufSize > 0 )
         pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
     if (pabyBlockBuf == NULL)
@@ -755,7 +757,8 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
             {
                 // Pass NULL as destination so that no decompression 
                 // actually takes place.
-                if( (uint32)INGR_Decode( eFormat,
+                if( nRLESize < panRLELineOffset[iLine] ||
+                    (uint32)INGR_Decode( eFormat,
                              pabyRLEBlock + panRLELineOffset[iLine], 
                              NULL,  nRLESize - panRLELineOffset[iLine], nBlockBufSize,
                              &nBytesConsumed ) < nBlockBufSize )
@@ -774,8 +777,10 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
         }
 
         // Read the requested line.
-        nOutputBytes = 
-            INGR_Decode( eFormat,
+        if( nRLESize < panRLELineOffset[nBlockYOff] )
+            nOutputBytes = 0;
+        else
+            nOutputBytes = INGR_Decode( eFormat,
                          pabyRLEBlock + panRLELineOffset[nBlockYOff], 
                          pabyBlockBuf,  nRLESize - panRLELineOffset[nBlockYOff], nBlockBufSize,
                          &nBytesConsumed );

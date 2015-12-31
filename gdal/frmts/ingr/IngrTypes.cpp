@@ -1142,6 +1142,8 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             bHeader = false;
             break;
         }
+        if( nWordsInScanline < 4 )
+            return 0;
 
         // If we get here, we add all the span values and see if they add up to the nBlockSize.
 
