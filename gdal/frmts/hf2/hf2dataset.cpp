@@ -32,6 +32,8 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <limits>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -126,6 +128,11 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
 
 {
     HF2Dataset *poGDS = (HF2Dataset *) poDS;
+    // NOTE: the use of nBlockXSize for the y dimensions is intended
+    
+    if( nRasterXSize - 1 > INT_MAX - nBlockXSize ||
+        nRasterYSize - 1 > INT_MAX - nBlockXSize )
+        return CE_Failure;
 
     const int nXBlocks = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
     const int nYBlocks = (nRasterYSize + nBlockXSize - 1) / nBlockXSize;
@@ -191,16 +198,36 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                     GDALSwapWords(pabyData, nWordSize, nTileWidth - 1, nWordSize);
 #endif
 
-                pafBlockData[nxoff * nBlockXSize * nBlockXSize + j * nBlockXSize + 0] = nVal * fScale + fOff;
+                double dfVal = nVal * (double)fScale + fOff;
+                if( dfVal > std::numeric_limits<float>::max() )
+                    dfVal = std::numeric_limits<float>::max();
+                else if( dfVal < std::numeric_limits<float>::min() )
+                    dfVal = std::numeric_limits<float>::min();
+                pafBlockData[nxoff * nBlockXSize * nBlockXSize + j * nBlockXSize + 0] = static_cast<float>(dfVal);
                 for(int i=1;i<nTileWidth;i++)
                 {
+                    int nInc;
                     if (nWordSize == 1)
-                        nVal += ((signed char*)pabyData)[i-1];
+                        nInc = ((signed char*)pabyData)[i-1];
                     else if (nWordSize == 2)
-                        nVal += ((GInt16*)pabyData)[i-1];
+                        nInc = ((GInt16*)pabyData)[i-1];
                     else
-                        nVal += ((GInt32*)pabyData)[i-1];
-                    pafBlockData[nxoff * nBlockXSize * nBlockXSize + j * nBlockXSize + i] = nVal * fScale + fOff;
+                        nInc = ((GInt32*)pabyData)[i-1];
+                    if( (nInc >= 0 && nVal > INT_MAX - nInc) ||
+                        (nInc == INT_MIN && nVal < 0) ||
+                        (nInc < 0 && nVal < INT_MIN - nInc ) )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO, "int32 overflow");
+                        CPLFree(pabyData);
+                        return CE_Failure;
+                    }
+                    nVal += nInc;
+                    dfVal = nVal * (double)fScale + fOff;
+                    if( dfVal > std::numeric_limits<float>::max() )
+                        dfVal = std::numeric_limits<float>::max();
+                    else if( dfVal < std::numeric_limits<float>::min() )
+                        dfVal = std::numeric_limits<float>::min();
+                    pafBlockData[nxoff * nBlockXSize * nBlockXSize + j * nBlockXSize + i] = static_cast<float>(dfVal);
                 }
             }
         }
