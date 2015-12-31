@@ -264,7 +264,16 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
         m_numRecords      = m_poHeaderBlock->ReadInt32();
         m_nFirstRecordPtr = m_poHeaderBlock->ReadInt16();
         m_nRecordSize     = m_poHeaderBlock->ReadInt16();
-
+        if( m_nFirstRecordPtr < 32 || m_nRecordSize <= 0 || m_numRecords < 0 )
+        {
+            VSIFCloseL(m_fp);
+            m_fp = NULL;
+            CPLFree(m_pszFname);
+            m_pszFname = NULL;
+            delete m_poHeaderBlock;
+            m_poHeaderBlock = NULL;
+            return -1;
+        }
         m_numFields = m_nFirstRecordPtr/32 - 1;
 
         /*-------------------------------------------------------------
@@ -294,7 +303,8 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
          * Record block size has to be a multiple of record size.
          *------------------------------------------------------------*/
         m_nBlockSize = ((1024/m_nRecordSize)+1)*m_nRecordSize;
-        m_nBlockSize = MIN(m_nBlockSize, (m_numRecords*m_nRecordSize));
+        if( m_numRecords < INT_MAX / m_nRecordSize )
+            m_nBlockSize = MIN(m_nBlockSize, (m_numRecords*m_nRecordSize));
 
         CPLAssert( m_poRecordBlock == NULL );
         m_poRecordBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
