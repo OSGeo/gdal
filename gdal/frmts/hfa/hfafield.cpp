@@ -249,6 +249,9 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
         poItemObjectType->CompleteDefn( poDict );
         if( poItemObjectType->nBytes == -1 )
             nBytes = -1;
+        else if( poItemObjectType->nBytes != 0 &&
+                 nItemCount > INT_MAX / poItemObjectType->nBytes )
+            nBytes = -1;
         else
             nBytes = poItemObjectType->nBytes * nItemCount;
 
@@ -257,7 +260,11 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
     }
     else
     {
-        nBytes = poDict->GetItemSize( chItemType ) * nItemCount;
+        const int nItemSize = poDict->GetItemSize( chItemType );
+        if( nItemSize != 0 && nItemCount > INT_MAX / nItemSize )
+            nBytes = -1;
+        else
+            nBytes = nItemSize * nItemCount;
     }
 }
 
