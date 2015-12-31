@@ -27,11 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_gpsbabel.h"
 #include "cpl_conv.h"
 #include "cpl_spawn.h"
 
-// g++ -g -Wall -fPIC  ogr/ogrsf_frmts/gpsbabel/*.cpp -shared -o ogr_GPSBabel.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpsbabel -L. -lgdal
+#include "ogr_gpsbabel.h"
+
+// g++ -g -Wall -fPIC  ogr/ogrsf_frmts/gpsbabel/*.cpp -shared \
+// -o ogr_GPSBabel.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts \
+// -Iogr/ogrsf_frmts/gpsbabel -L. -lgdal
 
 CPL_CVSID("$Id$");
 
@@ -39,30 +42,31 @@ CPL_CVSID("$Id$");
 /*                         OGRGPSBabelDriverIdentify()                  */
 /************************************************************************/
 
-static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
-                                              const char** ppszGSPBabelDriverName )
+static bool OGRGPSBabelDriverIdentifyInternal(
+    GDALOpenInfo* poOpenInfo,
+    const char** ppszGSPBabelDriverName )
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPSBABEL:") )
-        return TRUE;
+        return true;
 
     const char* pszGPSBabelDriverName = NULL;
     if( poOpenInfo->fpL == NULL )
-            return FALSE;
+            return false;
 
     if (memcmp(poOpenInfo->pabyHeader, "MsRcd", 5) == 0)
         pszGPSBabelDriverName = "mapsource";
     else if (memcmp(poOpenInfo->pabyHeader, "MsRcf", 5) == 0)
         pszGPSBabelDriverName = "gdb";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "<osm") != NULL)
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<osm") != NULL)
         pszGPSBabelDriverName = "osm";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "$GPGSA") != NULL ||
-                strstr((const char*)poOpenInfo->pabyHeader, "$GPGGA") != NULL)
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGSA") != NULL ||
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGGA") != NULL)
         pszGPSBabelDriverName = "nmea";
     else if (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "OziExplorer"))
         pszGPSBabelDriverName = "ozi";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "Grid") &&
-                strstr((const char*)poOpenInfo->pabyHeader, "Datum") &&
-                strstr((const char*)poOpenInfo->pabyHeader, "Header"))
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "Grid") &&
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "Datum") &&
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "Header"))
         pszGPSBabelDriverName = "garmin_txt";
     else if (poOpenInfo->pabyHeader[0] == 13 && poOpenInfo->pabyHeader[10] == 'M' && poOpenInfo->pabyHeader[11] == 'S' &&
                 (poOpenInfo->pabyHeader[12] >= '0' && poOpenInfo->pabyHeader[12] <= '9') &&
@@ -71,8 +75,8 @@ static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
                 (poOpenInfo->pabyHeader[14] == 1 || poOpenInfo->pabyHeader[14] == 2) && poOpenInfo->pabyHeader[15] == 0 &&
                 poOpenInfo->pabyHeader[16] == 0 && poOpenInfo->pabyHeader[17] == 0)
         pszGPSBabelDriverName = "mapsend";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "$PMGNWPL") != NULL ||
-                strstr((const char*)poOpenInfo->pabyHeader, "$PMGNRTE") != NULL)
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$PMGNWPL") != NULL ||
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$PMGNRTE") != NULL)
         pszGPSBabelDriverName = "magellan";
     else if (poOpenInfo->pabyHeader[0] == 'A' &&
                 poOpenInfo->pabyHeader[1] >= 'A' && poOpenInfo->pabyHeader[1] <= 'Z' &&
@@ -101,15 +105,16 @@ static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
 
     if( bGPSBabelFound )
         *ppszGSPBabelDriverName = pszGPSBabelDriverName;
-    return ( *ppszGSPBabelDriverName != NULL );
+    return *ppszGSPBabelDriverName != NULL;
 }
 
 static int OGRGPSBabelDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
     const char* pszGPSBabelDriverName = NULL;
-    return OGRGPSBabelDriverIdentifyInternal(poOpenInfo, &pszGPSBabelDriverName);
+    return OGRGPSBabelDriverIdentifyInternal( poOpenInfo,
+                                              &pszGPSBabelDriverName );
 }
-    
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -122,7 +127,7 @@ static GDALDataset *OGRGPSBabelDriverOpen( GDALOpenInfo* poOpenInfo )
         !OGRGPSBabelDriverIdentifyInternal(poOpenInfo, &pszGPSBabelDriverName))
         return NULL;
 
-    OGRGPSBabelDataSource   *poDS = new OGRGPSBabelDataSource();
+    OGRGPSBabelDataSource *poDS = new OGRGPSBabelDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, pszGPSBabelDriverName,
                      poOpenInfo->papszOpenOptions ) )
@@ -139,13 +144,13 @@ static GDALDataset *OGRGPSBabelDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGPSBabelDriverCreate( const char * pszName,
-                                             CPL_UNUSED int nBands,
-                                             CPL_UNUSED int nXSize,
-                                             CPL_UNUSED int nYSize,
-                                             CPL_UNUSED GDALDataType eDT,
+                                             int /* nBands */,
+                                             int /* nXSize */,
+                                             int /* nYSize */,
+                                             GDALDataType /* eDT */,
                                              char **papszOptions )
 {
-    OGRGPSBabelWriteDataSource   *poDS = new OGRGPSBabelWriteDataSource();
+    OGRGPSBabelWriteDataSource *poDS = new OGRGPSBabelWriteDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
@@ -165,8 +170,8 @@ static CPLErr OGRGPSBabelDriverDelete( const char *pszFilename )
 {
     if( VSIUnlink( pszFilename ) == 0 )
         return CE_None;
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
