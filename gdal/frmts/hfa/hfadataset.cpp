@@ -1904,7 +1904,8 @@ int HFARasterAttributeTable::GetLinearBinning( double *pdfRow0Min, double *pdfBi
 
 CPLXMLNode *HFARasterAttributeTable::Serialize() const
 {
-    if( ( GetRowCount() * GetColumnCount() ) > RAT_MAX_ELEM_FOR_CLONE )
+    if( GetRowCount() != 0 &&
+        GetColumnCount() > RAT_MAX_ELEM_FOR_CLONE / GetRowCount() )
         return NULL;
 
     return GDALRasterAttributeTable::Serialize();
