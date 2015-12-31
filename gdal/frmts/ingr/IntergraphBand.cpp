@@ -776,17 +776,19 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
             }
         }
 
-        // Read the requested line.
         if( nRLESize < panRLELineOffset[nBlockYOff] )
             nOutputBytes = 0;
         else
+        {
+            // Read the requested line.
             nOutputBytes = INGR_Decode( eFormat,
                          pabyRLEBlock + panRLELineOffset[nBlockYOff], 
                          pabyBlockBuf,  nRLESize - panRLELineOffset[nBlockYOff], nBlockBufSize,
                          &nBytesConsumed );
-        if( nOutputBytes == nExpectedOutputBytes && nBlockYOff < nRasterYSize-1 )
-            panRLELineOffset[nBlockYOff+1] = 
-                panRLELineOffset[nBlockYOff] + nBytesConsumed;
+            if( nOutputBytes == nExpectedOutputBytes && nBlockYOff < nRasterYSize-1 )
+                panRLELineOffset[nBlockYOff+1] = 
+                    panRLELineOffset[nBlockYOff] + nBytesConsumed;
+        }
     }
 
     if( nOutputBytes < nExpectedOutputBytes )
