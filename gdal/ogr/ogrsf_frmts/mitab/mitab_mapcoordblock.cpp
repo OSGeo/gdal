@@ -488,17 +488,41 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
             pasHdrs[i].numVertices = ReadInt32();
         else
             pasHdrs[i].numVertices = ReadInt16();
+        if( pasHdrs[i].numVertices < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "Invalid number of vertices for section %d", i);
+            return -1;
+        }
         if (nVersion >= 800)
             pasHdrs[i].numHoles = ReadInt32();
         else
             pasHdrs[i].numHoles = ReadInt16();
+        if( pasHdrs[i].numHoles < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "Invalid number of holes for section %d", i);
+            return -1;
+        }
         ReadIntCoord(bCompressed, pasHdrs[i].nXMin, pasHdrs[i].nYMin);
         ReadIntCoord(bCompressed, pasHdrs[i].nXMax, pasHdrs[i].nYMax);
         pasHdrs[i].nDataOffset = ReadInt32();
+        if( pasHdrs[i].nDataOffset < nTotalHdrSizeUncompressed )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "Invalid data offset for section %d", i);
+            return -1;
+        }
 
         if (CPLGetLastErrorType() != 0)
             return -1;
 
+        if( numVerticesTotal > INT_MAX - pasHdrs[i].numVertices )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "Invalid number of vertices for section %d", i);
+            return -1;
+        }
         numVerticesTotal += pasHdrs[i].numVertices;
 
 
