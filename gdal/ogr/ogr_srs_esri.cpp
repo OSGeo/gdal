@@ -2416,6 +2416,9 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
     }
     else /* Find state plane prj str by all inputs. */
     {
+        if( code < 0 || code > INT_MAX / 10 )
+            return OGRERR_FAILURE;
+
         /* Need to have a special EPSG-ESRI zone code mapping first. */
         for(int i=0; statePlaneZoneMapping[i] != 0; i+=3)
         {
