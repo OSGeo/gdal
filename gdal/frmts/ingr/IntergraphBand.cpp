@@ -407,7 +407,7 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     if( nBytesRead == 0 )
     {
         memset( pImage, 0, nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8 );
+                    (GDALGetDataTypeSize( eDataType ) / 8) );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n", 
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff );
@@ -429,7 +429,7 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     // --------------------------------------------------------------------
 
     memcpy( pImage, pabyBlockBuf, nBlockXSize * nBlockYSize * 
-        GDALGetDataTypeSize( eDataType ) / 8 );
+        (GDALGetDataTypeSize( eDataType ) / 8) );
 
 #ifdef CPL_MSB
     if( eDataType == GDT_Int16 || eDataType == GDT_UInt16)
@@ -467,7 +467,7 @@ int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
                 break;
         }
         memset( pImage, nColor, nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8 );
+                    (GDALGetDataTypeSize( eDataType ) / 8) );
         return TRUE;
     }
 
@@ -690,7 +690,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     if( nBytesRead == 0 )
     {
         memset( pImage, 0, nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8 );
+                    (GDALGetDataTypeSize( eDataType ) / 8) );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
@@ -761,7 +761,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
                              &nBytesConsumed ) < nBlockBufSize )
                 {
                     memset( pImage, 0, nBlockXSize * nBlockYSize * 
-                                GDALGetDataTypeSize( eDataType ) / 8 );
+                                (GDALGetDataTypeSize( eDataType ) / 8) );
                     CPLError( CE_Failure, CPLE_AppDefined, 
                         "Can't decode line %d", iLine );
                     return CE_Failure;
@@ -787,7 +787,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     if( nOutputBytes < nExpectedOutputBytes )
     {
         memset( pImage, 0, nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8 );
+                    (GDALGetDataTypeSize( eDataType ) / 8) );
         CPLError( CE_Failure, CPLE_AppDefined, 
             "Can't decode block (%d, %d)", nBlockXOff, nBlockYOff );
         return CE_Failure;
@@ -957,7 +957,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     if( nBytesRead == 0 )
     {
         memset( pImage, 0, nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8 );
+                    (GDALGetDataTypeSize( eDataType ) / 8) );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
@@ -999,7 +999,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     if( poGDS->hVirtual.poDS == NULL )
     {
         memset( pImage, 0, nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8 );
+                    (GDALGetDataTypeSize( eDataType ) / 8) );
         CPLError( CE_Failure, CPLE_AppDefined, 
 			"Unable to open virtual file.\n"
 			"Is the GTIFF and JPEG driver available?" );
