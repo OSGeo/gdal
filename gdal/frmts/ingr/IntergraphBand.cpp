@@ -71,6 +71,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
                                             int nBandIn,
                                             int nBandOffset,
                                             GDALDataType eType ) :
+    poColorTable(NULL),
+    nDataOffset(0),
     nBlockBufSize(0),
     nBandStart(nBandOffset),
     nRGBIndex(0),
