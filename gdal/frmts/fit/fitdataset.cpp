@@ -109,7 +109,13 @@ public:
 /*                           FITRasterBand()                            */
 /************************************************************************/
 
-FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) : tmpImage( NULL )
+FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
+        recordSize(0),
+        numXBlocks(0),
+        numYBlocks(0),
+        bytesPerComponent(0),
+        bytesPerPixel(0),
+        tmpImage( NULL )
 
 {
     this->poDS = poDSIn;
