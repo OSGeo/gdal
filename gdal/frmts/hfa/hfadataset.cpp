@@ -4223,7 +4223,8 @@ void ClearSR(HFAHandle hHFA)
 static int ESRIToUSGSZone( int nESRIZone )
 
 {
-
+    if( nESRIZone == INT_MIN )
+        return 0;
     if( nESRIZone < 0 )
         return ABS(nESRIZone);
 
