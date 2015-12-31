@@ -386,8 +386,9 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if (nProjType == 1)
     {
 	poDS->pszProjection = 
-            CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort, nZone, 
-                                  pszDatumLong, nZone * 6 - 183, pszUnits ));
+            CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort ? pszDatumShort : "", nZone, 
+                                  pszDatumLong ? pszDatumLong : "", nZone * 6 - 183,
+                                  pszUnits ? pszUnits : ""));
     }
     else
     {
