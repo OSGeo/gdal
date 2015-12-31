@@ -399,7 +399,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                 poBand = new VRTDerivedRasterBand( this, 0 );
             else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
                 poBand = new VRTRawRasterBand( this, 0 );
-            else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
+            else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") &&
+                     dynamic_cast<VRTWarpedDataset*>(this) != NULL )
                 poBand = new VRTWarpedRasterBand( this, 0 );
             //else if( EQUAL(pszSubclass, "VRTPansharpenedRasterBand") )
             //    poBand = new VRTPansharpenedRasterBand( this, 0 );
@@ -442,9 +443,11 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                 poBand = new VRTDerivedRasterBand( this, l_nBands+1 );
             else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
                 poBand = new VRTRawRasterBand( this, l_nBands+1 );
-            else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
+            else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") &&
+                     dynamic_cast<VRTWarpedDataset*>(this) != NULL )
                 poBand = new VRTWarpedRasterBand( this, l_nBands+1 );
-            else if( EQUAL(pszSubclass, "VRTPansharpenedRasterBand") )
+            else if( EQUAL(pszSubclass, "VRTPansharpenedRasterBand") &&
+                     dynamic_cast<VRTPansharpenedDataset*>(this) != NULL )
                 poBand = new VRTPansharpenedRasterBand( this, l_nBands+1 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
