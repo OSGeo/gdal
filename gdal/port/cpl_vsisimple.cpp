@@ -593,10 +593,6 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     size_t nOldSize;
     memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
     VSICheckMarkerEnd(ptr, 2 * sizeof(void*) + nOldSize);
-    ptr[2 * sizeof(void*) + nOldSize + 0] = 'I';
-    ptr[2 * sizeof(void*) + nOldSize + 1] = 'S';
-    ptr[2 * sizeof(void*) + nOldSize + 2] = 'V';
-    ptr[2 * sizeof(void*) + nOldSize + 3] = 'E';
 
     if (nMaxPeakAllocSize < 0)
     {
@@ -609,6 +605,11 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nNewSize - (GIntBig)nOldSize > nMaxCumulAllocSize)
         return NULL;
 #endif
+
+    ptr[2 * sizeof(void*) + nOldSize + 0] = 'I';
+    ptr[2 * sizeof(void*) + nOldSize + 1] = 'S';
+    ptr[2 * sizeof(void*) + nOldSize + 2] = 'V';
+    ptr[2 * sizeof(void*) + nOldSize + 3] = 'E';
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* newptr = NULL;
