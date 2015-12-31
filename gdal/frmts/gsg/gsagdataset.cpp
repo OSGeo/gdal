@@ -907,11 +907,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	szErrorMsg = "Unable to parse the number of Y axis grid rows.\n";
 	goto error;
     }
-    else if( nTemp > INT_MAX )
+    else if( nTemp > INT_MAX - 1 )
     {
 	CPLError( CE_Warning, CPLE_AppDefined,
 		  "Number of Y axis grid rows not representable.\n" );
-	poDS->nRasterYSize = INT_MAX;
+	poDS->nRasterYSize = INT_MAX - 1;
     }
     else if ( nTemp == 0)
     {
