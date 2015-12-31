@@ -502,7 +502,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     psDBF->nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
     psDBF->iLanguageDriver = pabyBuf[29];
 
-    if (nHeadLen < 32)
+    if (psDBF->nRecordLength == 0 || nHeadLen < 32)
     {
         psDBF->sHooks.FClose( psDBF->fp );
         if( pfCPG ) psDBF->sHooks.FClose( pfCPG );
