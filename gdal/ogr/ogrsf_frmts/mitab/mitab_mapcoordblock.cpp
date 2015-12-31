@@ -469,10 +469,14 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
      * V800 header section uses int32 for numHoles but there is no need
      * for the 2 alignment bytes so the size is the same as V450
      *------------------------------------------------------------*/
-    if (nVersion >= 450)
-        nTotalHdrSizeUncompressed = 28 * numSections;
-    else
-        nTotalHdrSizeUncompressed = 24 * numSections;
+    const int nSectionSize = (nVersion >= 450) ? 28 : 24;
+    if( numSections > INT_MAX / nSectionSize )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "Invalid numSections");
+        return -1;
+    }
+    nTotalHdrSizeUncompressed = nSectionSize * numSections;
 
     numVerticesTotal = 0;
 
