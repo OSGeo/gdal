@@ -266,7 +266,7 @@ class HFAEntry
 
 public:
     static HFAEntry* New( HFAInfo_t * psHFA, GUInt32 nPos,
-                          HFAEntry * poParent, HFAEntry *poPrev);
+                          HFAEntry * poParent, HFAEntry *poPrev) CPL_WARN_UNUSED_RESULT;
 
                  HFAEntry( HFAInfo_t *psHFA, 
                           const char *pszNodeName,
@@ -276,37 +276,37 @@ public:
     static HFAEntry* New( HFAInfo_t *psHFA, 
                           const char *pszNodeName,
                           const char *pszTypeName,
-                          HFAEntry *poParent );
+                          HFAEntry *poParent ) CPL_WARN_UNUSED_RESULT;
 
     virtual     ~HFAEntry();
 
-    static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath );
+    static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath ) CPL_WARN_UNUSED_RESULT;
 
     CPLErr      RemoveAndDestroy();
 
-    GUInt32	GetFilePos() { return nFilePos; }
+    GUInt32	GetFilePos() CPL_WARN_UNUSED_RESULT { return nFilePos; }
 
-    const char	*GetName() { return szName; }
+    const char	*GetName() CPL_WARN_UNUSED_RESULT { return szName; }
     void SetName( const char *pszNodeName );
 
-    const char  *GetType() { return szType; }
-    HFAType     *GetTypeObject();
+    const char  *GetType() CPL_WARN_UNUSED_RESULT { return szType; }
+    HFAType     *GetTypeObject() CPL_WARN_UNUSED_RESULT;
 
-    GByte      *GetData() { LoadData(); return pabyData; }
-    GUInt32	GetDataPos() { return nDataPos; }
-    GUInt32	GetDataSize() { return nDataSize; }
+    GByte      *GetData() CPL_WARN_UNUSED_RESULT { LoadData(); return pabyData; } 
+    GUInt32	GetDataPos() CPL_WARN_UNUSED_RESULT { return nDataPos; } 
+    GUInt32	GetDataSize() CPL_WARN_UNUSED_RESULT { return nDataSize; }
 
-    HFAEntry	*GetChild();
-    HFAEntry	*GetNext();
-    HFAEntry    *GetNamedChild( const char * );
+    HFAEntry	*GetChild() CPL_WARN_UNUSED_RESULT;
+    HFAEntry	*GetNext() CPL_WARN_UNUSED_RESULT;
+    HFAEntry    *GetNamedChild( const char * ) CPL_WARN_UNUSED_RESULT;
     std::vector<HFAEntry*> FindChildren( const char *pszName, 
-                                         const char *pszType);
+                                         const char *pszType) CPL_WARN_UNUSED_RESULT;
 
-    GInt32	GetIntField( const char *, CPLErr * = NULL );
-    double	GetDoubleField( const char *, CPLErr * = NULL );
-    const char	*GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL );
-    GIntBig     GetBigIntField( const char *, CPLErr * = NULL );
-    int         GetFieldCount( const char *, CPLErr * = NULL );
+    GInt32	GetIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    double	GetDoubleField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    const char	*GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL ) CPL_WARN_UNUSED_RESULT;
+    GIntBig     GetBigIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    int         GetFieldCount( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
 
     CPLErr      SetIntField( const char *, int );
     CPLErr      SetDoubleField( const char *, double );
