@@ -314,7 +314,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( poRDS->options == 0x00 || poRDS->options == 0x40 )
     {
-        VSIFReadL( pImage, 1, nBlockSize, poRDS->fp );
+        VSIFReadL( pImage, 1, nBlockXSize * nBlockYSize, poRDS->fp );
         return CE_None;
     }
 
