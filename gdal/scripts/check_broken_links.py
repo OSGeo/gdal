@@ -29,10 +29,9 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 import os
-import sys
 import requests
+import sys
 
 ok_set = dict()
 broken_set = {}
@@ -77,7 +76,7 @@ def check(filename):
                     ok_set[url] = True
             else:
                 checked_filename = os.path.join(os.path.dirname(filename), url)
-                #print(checked_filename)
+                # print(checked_filename)
                 if not os.path.exists(checked_filename):
                     print('ERROR: Broken link %s in %s' % (url, filename))
                     broken_set[url] = True
