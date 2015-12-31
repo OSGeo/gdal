@@ -379,8 +379,17 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         if( STARTS_WITH_CI(poGDS->pszProjection, "GEOGCS") )
             dyStart = dyStart / 3600.0;
 
-        int lygap = static_cast<int>(
-            (dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5);
+        double dygap = (dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5;
+        if( dygap <= INT_MIN || dygap >= INT_MAX || !CPLIsFinite(dygap) )
+        {
+            CPLFree(sBuffer.buffer);
+            return CE_Failure;
+        }
+        int lygap = static_cast<int>(dygap);
+        if( nCPoints <= 0 )
+            continue;
+        if( lygap > INT_MAX - nCPoints )
+            lygap = INT_MAX - nCPoints;
 
         for (int j=lygap; j < (nCPoints + lygap); j++)
         {
@@ -405,8 +414,11 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
                 if( GetRasterDataType() == GDT_Int16 )
                 {
+                    GUInt16 nVal = ( fComputedElev < -32768 ) ? -32768 :
+                                   ( fComputedElev > 32767 ) ? 32767 :
+                                   static_cast<GInt16>( fComputedElev );
                     reinterpret_cast<GInt16 *>( pImage )[i + iY*GetXSize()]
-                        = static_cast<GInt16>( fComputedElev );
+                        = nVal;
                 }
                 else
                 {
