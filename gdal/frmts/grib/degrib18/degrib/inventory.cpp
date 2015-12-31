@@ -658,7 +658,8 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       /*timeRangeUnit = 1;*/
    } else {
       printf ("Can't handle this timeRangeUnit\n");
-      myAssert (timeRangeUnit == 1);
+      //myAssert (timeRangeUnit == 1);
+      return -8;
    }
    if (lenTime == GRIB2MISSING_s4) {
       lenTime = 0;
