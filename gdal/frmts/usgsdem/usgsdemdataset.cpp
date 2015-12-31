@@ -58,7 +58,8 @@ static int ReadInt( VSILFILE *fp )
 {
     char c;
     int nRead = 0;
-    vsi_l_offset nOffset = VSIFTellL(fp);
+    char szBuffer[12];
+    bool bInProlog = true;
 
     while( true )
     {
@@ -66,39 +67,28 @@ static int ReadInt( VSILFILE *fp )
         {
             return 0;
         }
-        else
-            nRead ++;
-        if ( !isspace( static_cast<int>(c) ) )
-            break;
-    }
-
-    int nVal = 0;
-    int nSign = 1;
-    if (c == '-')
-        nSign = -1;
-    else if (c == '+')
-        nSign = 1;
-    else if (c >= '0' && c <= '9')
-        nVal = c - '0';
-    else
-    {
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nOffset + nRead, SEEK_SET));
-        return 0;
-    }
-
-    while( true )
-    {
-        if (VSIFReadL(&c, 1, 1, fp) != 1)
-            return nSign * nVal;
-        nRead ++;
-        if (c >= '0' && c <= '9')
-            nVal = nVal * 10 + (c - '0');
-        else
+        if( bInProlog )
         {
-            CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nOffset + (nRead - 1), SEEK_SET));
-            return nSign * nVal;
+            if ( !isspace( static_cast<int>(c) ) )
+            {
+                bInProlog = false;
+            }
         }
+        if( !bInProlog )
+        {
+            if( c != '-' && c != '+' && !(c >= '0' && c <= '9') )
+            {
+                CPL_IGNORE_RET_VAL(VSIFSeekL(fp, VSIFTellL(fp) - 1, SEEK_SET));
+                break;
+            }
+            if( nRead < 11 )
+                szBuffer[nRead] = c;
+            nRead ++;
+        }
+
     }
+    szBuffer[MIN(nRead, 11)] = 0;
+    return atoi(szBuffer);
 }
 
 typedef struct
@@ -152,7 +142,7 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
             break;
     }
 
-    int nVal = 0;
+    GIntBig nVal = 0;
     int nSign = 1;
     if (c == '-')
         nSign = -1;
@@ -174,7 +164,7 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
             if (psBuffer->cur_index >= psBuffer->buffer_size)
             {
                 if( pbSuccess ) *pbSuccess = TRUE;
-                return nSign * nVal;
+                return static_cast<int>(nSign * nVal);
             }
         }
 
@@ -182,12 +172,25 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
         if (c >= '0' && c <= '9')
         {
             psBuffer->cur_index ++;
-            nVal = nVal * 10 + (c - '0');
+            if( nVal * nSign < INT_MAX && nVal * nSign > INT_MIN )
+            {
+                nVal = nVal * 10 + (c - '0');
+                if( nVal * nSign > INT_MAX )
+                {
+                    nVal = INT_MAX;
+                    nSign = 1;
+                }
+                else if( nVal * nSign < INT_MIN )
+                {
+                    nVal = INT_MIN;
+                    nSign = 1;
+                }
+            }
         }
         else
         {
             if( pbSuccess ) *pbSuccess = TRUE;
-            return nSign * nVal;
+            return static_cast<int>(nSign * nVal);
         }
     }
 }
