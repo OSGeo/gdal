@@ -1126,8 +1126,8 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     if ( ! IsCompressedType() )
     {
         // Init. Compr. Origin to a default value in case type is ever changed
-        m_nComprOrgX = (m_nMinX + m_nMaxX) / 2;
-        m_nComprOrgY = (m_nMinY + m_nMaxY) / 2;
+        m_nComprOrgX = static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
     m_nPenId = poObjBlock->ReadByte();      // Pen index
@@ -1765,8 +1765,8 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nMaxY = poObjBlock->ReadInt32();
 
         // Init. Compr. Origin to a default value in case type is ever changed
-        m_nComprOrgX = (m_nMinX + m_nMaxX) / 2;
-        m_nComprOrgY = (m_nMinY + m_nMaxY) / 2;
+        m_nComprOrgX = static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
     if (CPLGetLastErrorNo() != 0)
@@ -2009,8 +2009,8 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nMaxY = poObjBlock->ReadInt32();
 
         // Init. Compr. Origin to a default value in case type is ever changed
-        m_nComprOrgX = (m_nMinX + m_nMaxX) / 2;
-        m_nComprOrgY = (m_nMinY + m_nMaxY) / 2;
+        m_nComprOrgX = static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
     if (CPLGetLastErrorNo() != 0)
