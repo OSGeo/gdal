@@ -560,6 +560,13 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         }
         nBlockXSize = atoi(CPLGetXMLValue(psSrcProperties,"BlockXSize","0"));
         nBlockYSize = atoi(CPLGetXMLValue(psSrcProperties,"BlockYSize","0"));
+        if( nRasterXSize < 0 || nRasterYSize < 0 || nBlockXSize < 0 || nBlockYSize < 0 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Invalid <SourceProperties> element in VRTRasterBand." );
+            CPLFree( pszSrcDSName );
+            return CE_Failure;
+        }
     }
 
     char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psSrc);
@@ -877,6 +884,18 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     *pdfReqYOff = (dfRYOff - m_dfDstYOff) * dfScaleY + m_dfSrcYOff;
     *pdfReqXSize = dfRXSize * dfScaleX;
     *pdfReqYSize = dfRYSize * dfScaleY;
+    
+    if( !CPLIsFinite(*pdfReqXOff) ||
+        !CPLIsFinite(*pdfReqYOff) ||
+        !CPLIsFinite(*pdfReqXSize) ||
+        !CPLIsFinite(*pdfReqYSize) ||
+        *pdfReqXOff > INT_MAX ||
+        *pdfReqYOff > INT_MAX ||
+        *pdfReqXSize < 0 ||
+        *pdfReqYSize < 0 )
+    {
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
@@ -896,9 +915,16 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 
     *pnReqXOff = (int) floor(*pdfReqXOff);
     *pnReqYOff = (int) floor(*pdfReqYOff);
-
-    *pnReqXSize = (int) floor(*pdfReqXSize + 0.5);
-    *pnReqYSize = (int) floor(*pdfReqYSize + 0.5);
+    
+    if( *pdfReqXSize > INT_MAX )
+        *pnReqXSize = INT_MAX;
+    else
+        *pnReqXSize = (int) floor(*pdfReqXSize + 0.5);
+    
+    if( *pdfReqYSize > INT_MAX )
+        *pnReqYSize = INT_MAX;
+    else
+        *pnReqYSize = (int) floor(*pdfReqYSize + 0.5);
 
 /* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
@@ -909,7 +935,8 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     if( *pnReqYSize == 0 )
         *pnReqYSize = 1;
 
-    if( *pnReqXOff + *pnReqXSize > m_poRasterBand->GetXSize() )
+    if( *pnReqXSize > INT_MAX - *pnReqXOff ||
+        *pnReqXOff + *pnReqXSize > m_poRasterBand->GetXSize() )
     {
         *pnReqXSize = m_poRasterBand->GetXSize() - *pnReqXOff;
         bModifiedX = TRUE;
@@ -920,7 +947,8 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         bModifiedX = TRUE;
     }
 
-    if( *pnReqYOff + *pnReqYSize > m_poRasterBand->GetYSize() )
+    if( *pnReqYSize > INT_MAX - *pnReqYOff ||
+        *pnReqYOff + *pnReqYSize > m_poRasterBand->GetYSize() )
     {
         *pnReqYSize = m_poRasterBand->GetYSize() - *pnReqYOff;
         bModifiedY = TRUE;
@@ -967,12 +995,23 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         dfScaleWinToBufX = nBufXSize / (double) nXSize;
 
-        *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX+0.001);
-        *pnOutXSize = (int) ceil((dfDstLRX - nXOff) * dfScaleWinToBufX-0.001) 
-            - *pnOutXOff;
+        const double dfOutXOff = (dfDstULX - nXOff) * dfScaleWinToBufX+0.001;
+        if( dfOutXOff <= 0 )
+            *pnOutXOff = 0;
+        else if( dfOutXOff > INT_MAX )
+            *pnOutXOff = INT_MAX;
+        else
+            *pnOutXOff = (int) (dfOutXOff);
+        double dfOutRightXOff = (dfDstLRX - nXOff) * dfScaleWinToBufX-0.001;
+        if( dfOutRightXOff < dfOutXOff )
+            return FALSE;
+        if( dfOutRightXOff > INT_MAX )
+            dfOutRightXOff = INT_MAX;
+        *pnOutXSize = (int) ceil(dfOutRightXOff) - *pnOutXOff;
 
         *pnOutXOff = MAX(0,*pnOutXOff);
-        if( *pnOutXOff + *pnOutXSize > nBufXSize )
+        if( *pnOutXSize > INT_MAX - *pnOutXOff ||
+            *pnOutXOff + *pnOutXSize > nBufXSize )
             *pnOutXSize = nBufXSize - *pnOutXOff;
     }
 
@@ -980,12 +1019,24 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         dfScaleWinToBufY = nBufYSize / (double) nYSize;
 
-        *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY+0.001);
-        *pnOutYSize = (int) ceil((dfDstLRY - nYOff) * dfScaleWinToBufY-0.001) 
-            - *pnOutYOff;
+        const double dfOutYOff = (dfDstULY - nYOff) * dfScaleWinToBufY+0.001;
+        if( dfOutYOff <= 0 )
+            *pnOutYOff = 0;
+        else if( dfOutYOff > INT_MAX )
+            *pnOutYOff = INT_MAX;
+        else
+            *pnOutYOff = (int) (dfOutYOff);
+        *pnOutYOff = (int) (dfOutYOff);
+        double dfOutTopYOff = (dfDstLRY - nYOff) * dfScaleWinToBufY-0.001;
+        if( dfOutTopYOff < dfOutYOff )
+            return FALSE;
+        if( dfOutTopYOff > INT_MAX )
+            dfOutTopYOff = INT_MAX;
+        *pnOutYSize = (int) ceil(dfOutTopYOff) - *pnOutYOff;
 
         *pnOutYOff = MAX(0,*pnOutYOff);
-        if( *pnOutYOff + *pnOutYSize > nBufYSize )
+        if( *pnOutYSize > INT_MAX - *pnOutYOff ||
+            *pnOutYOff + *pnOutYSize > nBufYSize )
             *pnOutYSize = nBufYSize - *pnOutYOff;
     }
 
