@@ -107,8 +107,15 @@ retry:
         STARTS_WITH(pszFilename, "/vsitar/") )
     {
         const char* pszExt = CPLGetExtension(pszFilename);
-        if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz") )
+        if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz")
+#ifdef DEBUG
+            /* For AFL, so that .cur_input is detected as the archive filename */
+            || EQUAL( CPLGetFilename(pszFilename), ".cur_input" )
+#endif
+          )
+        {
             bPotentialDirectory = true;
+        }
     }
     else if( STARTS_WITH(pszFilename, "/vsicurl/") )
     {

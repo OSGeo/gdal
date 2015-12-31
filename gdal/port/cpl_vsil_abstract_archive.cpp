@@ -304,6 +304,14 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             }
         }
 
+#ifdef DEBUG
+        /* For AFL, so that .cur_input is detected as the archive filename */
+        if( EQUALN( pszFilename + i, ".cur_input", strlen(".cur_input") ) )
+        {
+            nToSkip = static_cast<int>(strlen(".cur_input"));
+        }
+#endif
+
         if (nToSkip != 0)
         {
             VSIStatBufL statBuf;
