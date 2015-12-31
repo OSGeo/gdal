@@ -900,7 +900,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iStartRow < 0 || (iStartRow+iLength) > this->nRows )
+    if( iStartRow < 0 ||
+        iLength >= INT_MAX - iStartRow ||
+        (iStartRow+iLength) > this->nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
@@ -987,7 +989,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             }
             else
             {
-                if(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+                if(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
                     return CE_Failure;
 
                 if( eRWFlag == GF_Read )
@@ -1095,7 +1097,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iStartRow < 0 || (iStartRow+iLength) > this->nRows )
+    if( iStartRow < 0 ||
+        iLength >= INT_MAX - iStartRow ||
+        (iStartRow+iLength) > this->nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
@@ -1113,7 +1117,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
     {
         case GFT_Integer:
         {
-            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
                 return CE_Failure;
             GInt32 *panColData = (GInt32*)VSI_MALLOC2_VERBOSE(iLength, sizeof(GInt32));
             if( panColData == NULL )
@@ -1522,7 +1526,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
             padfData[i] = pnData[i] / 255.0;
     }
 
-    if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+    if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
     {
         CPLFree(padfData);
         return CE_Failure;
