@@ -40,6 +40,7 @@ CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
+bool    bSuperQuiet = false;
 int     bSummaryOnly = FALSE;
 GIntBig nFetchFID = OGRNullFID;
 char**  papszOptions = NULL;
@@ -131,6 +132,12 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet"))
             bVerbose = FALSE;
+        else if( EQUAL(papszArgv[iArg],"-qq") )
+        {
+            /* Undocumented: mainly only useful for afl testing */
+            bVerbose = FALSE;
+            bSuperQuiet = true;
+        }
         else if( EQUAL(papszArgv[iArg],"-fid") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -266,6 +273,9 @@ int main( int nArgc, char ** papszArgv )
     if( pszDialect != NULL && pszWHERE != NULL && pszSQLStatement == NULL )
         printf("Warning: -dialect is ignored with -where. Use -sql instead");
 
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    while (__AFL_LOOP(1000)) {
+#endif
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
@@ -293,12 +303,13 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( poDS == NULL )
     {
-        OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-
         printf( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 pszDataSource );
-
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+        continue;
+#else
+        OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
         for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
         {
             printf( "  -> %s\n", poR->GetDriver(iDriver)->GetDescription() );
@@ -306,6 +317,7 @@ int main( int nArgc, char ** papszArgv )
 
         nRet = 1;
         goto end;
+#endif
     }
 
     CPLAssert( poDriver != NULL);
@@ -462,14 +474,19 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
+    GDALClose( (GDALDatasetH)poDS );
+
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    }
+#else
 end:
+#endif
+
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     CSLDestroy( papszOptions );
     CSLDestroy( papszOpenOptions );
     CSLDestroy( papszExtraMDDomains );
-    if( poDS != NULL )
-        GDALClose( (GDALDatasetH)poDS );
     if (poSpatialFilter)
         OGRGeometryFactory::destroyGeometry( poSpatialFilter );
     CPLFree(pszSQLStatement);
@@ -547,9 +564,12 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
 /*      Report various overall information.                             */
 /* -------------------------------------------------------------------- */
-    printf( "\n" );
+    if( !bSuperQuiet )
+    {
+        printf( "\n" );
 
-    printf( "Layer name: %s\n", poLayer->GetName() );
+        printf( "Layer name: %s\n", poLayer->GetName() );
+    }
 
     GDALInfoReportMetadata( (GDALMajorObjectH)poLayer,
                             bListMDD,
@@ -683,7 +703,8 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     {
         while( (poFeature = poLayer->GetNextFeature()) != NULL )
         {
-            poFeature->DumpReadable( NULL, papszOptions );
+            if( !bSuperQuiet )
+                poFeature->DumpReadable( NULL, papszOptions );
             OGRFeature::DestroyFeature( poFeature );
         }
     }
