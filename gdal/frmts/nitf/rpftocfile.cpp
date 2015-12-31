@@ -289,17 +289,25 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         VSIFReadL( &toc->entries[i].nHorizFrames, 1, sizeof(int), fp);
         CPL_MSBPTR32( &toc->entries[i].nHorizFrames );
 
-        toc->entries[i].frameEntries = reinterpret_cast<RPFTocFrameEntry*>(
-            VSI_MALLOC3_VERBOSE( toc->entries[i].nVertFrames,
-                        toc->entries[i].nHorizFrames,
-                        sizeof(RPFTocFrameEntry) ) );
+        if( toc->entries[i].nHorizFrames == 0 ||
+            toc->entries[i].nVertFrames == 0 ||
+            toc->entries[i].nHorizFrames > INT_MAX / toc->entries[i].nVertFrames )
+        {
+            toc->entries[i].frameEntries = NULL;
+        }
+        else
+        {
+            toc->entries[i].frameEntries = reinterpret_cast<RPFTocFrameEntry*>(
+                VSI_CALLOC_VERBOSE( toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames,
+                                    sizeof(RPFTocFrameEntry) ) );
+        }
         if (toc->entries[i].frameEntries == NULL)
         {
+            toc->entries[i].nVertFrames = 0;
+            toc->entries[i].nHorizFrames = 0;
             RPFTOCFree(toc);
             return NULL;
         }
-        memset(toc->entries[i].frameEntries, 0,
-               toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
 
         CPLDebug("RPFTOC", "[%d] type=%s, compression=%s, scale=%s, zone=%s, producer=%s, nVertFrames=%d, nHorizFrames=%d",
                  i, toc->entries[i].type, toc->entries[i].compression, toc->entries[i].scale,
