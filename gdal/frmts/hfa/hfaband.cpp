@@ -1709,7 +1709,9 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
     const char *pszDict = 
         poBinFunc->GetStringField( "binFunction.MIFDictionary.string" );
     if( pszDict == NULL )
-        poBinFunc->GetStringField( "binFunction.MIFDictionary" );
+        pszDict = poBinFunc->GetStringField( "binFunction.MIFDictionary" );
+    if( pszDict == NULL )
+        return NULL;
 
     HFADictionary oMiniDict( pszDict );
 

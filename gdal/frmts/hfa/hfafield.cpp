@@ -1352,6 +1352,8 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
             return -1;
         if (nColumns != 0 && nRows > INT_MAX / nColumns)
             return -1;
+        if( nRows != 0 && ((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) > INT_MAX / nRows )
+            return -1;
         if (nColumns != 0 && ((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) * nRows > INT_MAX / nColumns)
             return -1;
         if (((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) * nRows * nColumns > INT_MAX - nInstBytes)
@@ -1363,6 +1365,8 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
     else if( poItemObjectType == NULL )
     {
         if (nCount != 0 && HFADictionary::GetItemSize(chItemType) > INT_MAX / nCount)
+            return -1;
+        if( nCount * HFADictionary::GetItemSize(chItemType) > INT_MAX - nInstBytes )
             return -1;
         nInstBytes += nCount * HFADictionary::GetItemSize(chItemType);
     }

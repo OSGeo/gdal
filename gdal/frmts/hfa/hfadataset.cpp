@@ -543,11 +543,14 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
                 }
             }
 
-            if( EQUAL(poDTChild->GetType(),"Edsc_BinFunction840") 
-                && EQUAL(poDTChild->GetStringField( "binFunction.type.string" ),
-                         "BFUnique") )
+            if( EQUAL(poDTChild->GetType(),"Edsc_BinFunction840") )
             {
-                AddColumn( "BinValues", GFT_Real, GFU_MinMax, 0, 0, poDTChild, TRUE);
+                const char* pszValue =
+                    poDTChild->GetStringField( "binFunction.type.string" );
+                if( pszValue && EQUAL(pszValue, "BFUnique") )
+                {
+                    AddColumn( "BinValues", GFT_Real, GFU_MinMax, 0, 0, poDTChild, TRUE);
+                }
             }
 
             if( !EQUAL(poDTChild->GetType(),"Edsc_Column") )
@@ -977,6 +980,8 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // probably could change HFAReadBFUniqueBins to only read needed rows
                 double *padfBinValues = HFAReadBFUniqueBins( aoFields[iField].poColumn, iStartRow+iLength );
+                if( padfBinValues == NULL )
+                    return CE_Failure;
                 memcpy(pdfData, &padfBinValues[iStartRow], sizeof(double) * iLength);
                 CPLFree(padfBinValues);
             }
@@ -1261,7 +1266,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iStartRow < 0 || (iStartRow+iLength) > this->nRows )
+    if( iStartRow < 0 ||
+        iLength >= INT_MAX - iStartRow ||
+        (iStartRow+iLength) > this->nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
@@ -1378,7 +1385,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         break;
         case GFT_String:
         {
-            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
                 return CE_Failure;
             char *pachColData = (char*)VSI_MALLOC2_VERBOSE(iLength, aoFields[iField].nElementSize);
             if( pachColData == NULL )
@@ -1426,11 +1433,11 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     for( int i = 0; i < this->nRows; i++ )
                     {
                         // seek to the old place
-                        CPL_IGNORE_RET_VAL(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (i*aoFields[iField].nElementSize), SEEK_SET ));
+                        CPL_IGNORE_RET_VAL(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(i)*aoFields[iField].nElementSize), SEEK_SET ));
                         // read in old data
                         CPL_IGNORE_RET_VAL(VSIFReadL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp ));
                         // seek to new place
-                        bool bOK = VSIFSeekL( hHFA->fp, nNewOffset + (i*nNewMaxChars), SEEK_SET ) == 0;
+                        bool bOK = VSIFSeekL( hHFA->fp, nNewOffset + (static_cast<vsi_l_offset>(i)*nNewMaxChars), SEEK_SET ) == 0;
                         // write data to new place
                         bOK &= VSIFWriteL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp) == 1;
                         // make sure there is a terminating null byte just to be safe
@@ -1463,7 +1470,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     }
 
                     // lastly seek to the right place in the new space ready to write
-                    if( VSIFSeekL( hHFA->fp, nNewOffset + (iStartRow*nNewMaxChars), SEEK_SET ) != 0 )
+                    if( VSIFSeekL( hHFA->fp, nNewOffset + (static_cast<vsi_l_offset>(iStartRow)*nNewMaxChars), SEEK_SET ) != 0 )
                     {
                         VSIFree(pachColData);
                         return CE_Failure;
@@ -2256,10 +2263,12 @@ void HFARasterBand::ReadHistogramMetadata()
     HFAEntry *poBinEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.#Bin_Function840#" );
 
     if( poBinEntry != NULL
-        && EQUAL(poBinEntry->GetType(),"Edsc_BinFunction840") 
-        && EQUAL(poBinEntry->GetStringField( "binFunction.type.string" ),
-                 "BFUnique") )
-        padfBinValues = HFAReadBFUniqueBins( poBinEntry, nNumBins );
+        && EQUAL(poBinEntry->GetType(),"Edsc_BinFunction840")  )
+    {
+        const char* pszValue = poBinEntry->GetStringField( "binFunction.type.string" );
+        if( pszValue && EQUAL(pszValue,"BFUnique") )
+            padfBinValues = HFAReadBFUniqueBins( poBinEntry, nNumBins );
+    }
 
     if( padfBinValues )
     {
