@@ -44,14 +44,17 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
         return -1; /* unsure */
-    if( poOpenInfo->fpL != NULL &&
-        (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "SHP") ||
-         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "SHX")) )
+    if( poOpenInfo->fpL == NULL )
+    {
+        return FALSE;
+    }
+    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    if (EQUAL(osExt, "SHP") ||  EQUAL(osExt, "SHX") )
     {
         return memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0A", 4) == 0 ||
                memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0D", 4) == 0;
     }
-    if( poOpenInfo->fpL != NULL && EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DBF") )
+    if( EQUAL(osExt, "DBF") )
     {
         if( poOpenInfo->nHeaderBytes < 32 )
             return FALSE;
@@ -71,6 +74,14 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
             return FALSE;
         return TRUE;
     }
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    if( !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
+        EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
+    {
+        return -1;
+    }
+#endif
     return FALSE;
 }
 
@@ -85,6 +96,19 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
 
     if( OGRShapeDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
+
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    if( poOpenInfo->fpL != NULL &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
+        EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
+    {
+        GDALOpenInfo oOpenInfo( (CPLString("/vsitar/") + poOpenInfo->pszFilename).c_str(),
+                                poOpenInfo->nOpenFlags );
+        oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+        return OGRShapeDriverOpen(&oOpenInfo);
+    }
+#endif
 
     poDS = new OGRShapeDataSource();
 
