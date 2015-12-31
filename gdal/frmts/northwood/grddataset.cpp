@@ -167,6 +167,8 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       void *pImage )
 {
     NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>( poDS );
+    if( nBlockXSize > INT_MAX / 2 )
+        return CE_Failure;
     const int nRecordSize = nBlockXSize * 2;
     unsigned short raw1;
 
@@ -176,7 +178,10 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                SEEK_SET );
 
     char *pszRecord = reinterpret_cast<char *>( CPLMalloc( nRecordSize ) );
-    VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
+    if( (int)VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp ) != nRecordSize )
+    {
+        return CE_Failure;
+    }
 
     if( nBand == 4 )                //Z values
     {
