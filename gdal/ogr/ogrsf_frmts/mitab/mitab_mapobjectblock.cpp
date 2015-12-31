@@ -1076,6 +1076,13 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_numLineSections = poObjBlock->ReadInt16();
     }
 
+    if( m_numLineSections < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                    "Invalid numLineSections");
+        return -1;
+    }
+
 #ifdef TABDUMP
     printf("PLINE/REGION: id=%d, type=%d, "
            "CoordBlockPtr=%d, CoordDataSize=%d, numLineSect=%d, bSmooth=%d\n",
