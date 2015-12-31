@@ -221,12 +221,16 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       void *pImage )
 {
     NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
-    const int nRecordSize = nBlockXSize *( poGDS->pGrd->nBitsPerPixel / 8 );
+    const int nBytesPerPixel = poGDS->pGrd->nBitsPerPixel / 8;
+    if( nBytesPerPixel <= 0 || nBlockXSize > INT_MAX / nBytesPerPixel )
+        return CE_Failure;
+    const int nRecordSize = nBlockXSize * nBytesPerPixel;
 
     if( nBand == 1 )
     {                            //grc's are just one band of indices
         VSIFSeekL( poGDS->fp, 1024 + nRecordSize * (vsi_l_offset)nBlockYOff, SEEK_SET );
-        VSIFReadL( pImage, 1, nRecordSize, poGDS->fp );
+        if( (int)VSIFReadL( pImage, 1, nRecordSize, poGDS->fp ) != nRecordSize )
+            return CE_Failure;
     }
     else
     {
