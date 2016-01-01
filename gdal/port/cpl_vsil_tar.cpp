@@ -200,10 +200,13 @@ int VSITarReader::GotoNextFile()
                         {
                             nNextFileSize = VSIFTellL(fp);
                             nNextFileSize -= m_abyBufferSize;
-                            nNextFileSize -= nCurOffset;
                             nNextFileSize += m_abyBufferIdx;
-                            m_nCurOffsetOld = nCurOffset;
-                            return TRUE;
+                            if( nNextFileSize >= nCurOffset )
+                            {
+                                nNextFileSize -= nCurOffset;
+                                m_nCurOffsetOld = nCurOffset;
+                                return TRUE;
+                            }
                         }
                         return FALSE;
                     }
@@ -224,9 +227,12 @@ int VSITarReader::GotoNextFile()
                     nNextFileSize = VSIFTellL(fp);
                     nNextFileSize -= m_abyBufferSize;
                     nNextFileSize += m_abyBufferIdx;
-                    nNextFileSize -= nCurOffset;
-                    m_nCurOffsetOld = nCurOffset;
-                    return TRUE;
+                    if( nNextFileSize >= nCurOffset )
+                    {
+                        nNextFileSize -= nCurOffset;
+                        m_nCurOffsetOld = nCurOffset;
+                        return TRUE;
+                    }
                 }
                 m_abyBufferIdx += (int)strlen("***NEWFILE***:");
                 int nFilenameStartIdx = m_abyBufferIdx;
