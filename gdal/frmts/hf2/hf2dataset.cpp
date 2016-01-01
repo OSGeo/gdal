@@ -312,7 +312,13 @@ int HF2Dataset::LoadBlockMap()
             for(int k = 0; k < nLines; k++)
             {
                 GByte nWordSize;
-                VSIFReadL(&nWordSize, 1, 1, fp);
+                if( VSIFReadL(&nWordSize, 1, 1, fp) != 1 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "File too short");
+                    VSIFree(panBlockOffset);
+                    panBlockOffset = NULL;
+                    return FALSE;
+                }
                 //printf("nWordSize=%d\n", nWordSize);
                 if (nWordSize == 1 || nWordSize == 2 || nWordSize == 4)
                     VSIFSeekL(fp, static_cast<vsi_l_offset>(4 + nWordSize * (nCols - 1)), SEEK_CUR);
