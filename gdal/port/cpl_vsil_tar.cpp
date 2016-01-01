@@ -188,7 +188,7 @@ int VSITarReader::GotoNextFile()
             {
                 if( m_abyBufferSize == 0 )
                 {
-                    m_abyBufferSize = VSIFReadL(m_abyBuffer, 1, 2048, fp);
+                    m_abyBufferSize = static_cast<int>(VSIFReadL(m_abyBuffer, 1, 2048, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
                 }
@@ -208,7 +208,7 @@ int VSITarReader::GotoNextFile()
                         return FALSE;
                     }
                     memcpy(m_abyBuffer, m_abyBuffer + 1024, 1024);
-                    m_abyBufferSize = VSIFReadL(m_abyBuffer + 1024, 1, 1024, fp);
+                    m_abyBufferSize = static_cast<int>(VSIFReadL(m_abyBuffer + 1024, 1, 1024, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
                     m_abyBufferIdx = 0;
