@@ -343,7 +343,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 else
                 {
                     nZone = (int) padfPrjParams[7];
-                    dfCenterLong = 6 * nZone - 3;
+                    dfCenterLong = 6 * (double)nZone - 3;
                 }
 
                 padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
