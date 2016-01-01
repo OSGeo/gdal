@@ -1896,7 +1896,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     /* file record header." (http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf, page 24) */
     /* Actually in that case the .shx content length is equal to the .shp content length + */
     /* 4 (16 bit words), representing the 8 bytes of the record header... */
-    if( nBytesRead == nEntitySize - 8 )
+    if( nBytesRead >= 8 && nBytesRead == nEntitySize - 8 )
     {
         /* Do a sanity check */
         int nSHPContentLength;
