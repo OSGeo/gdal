@@ -79,6 +79,8 @@ const char *HFAField::Initialize( const char * pszInput )
 /*      Read the number.                                                */
 /* -------------------------------------------------------------------- */
     nItemCount = atoi(pszInput);
+    if( nItemCount < 0 )
+        return NULL;
 
     while( *pszInput != '\0' && *pszInput != ':' )
         pszInput++;
@@ -256,7 +258,12 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
             nBytes = poItemObjectType->nBytes * nItemCount;
 
         if( chPointer == '*' && nBytes != -1 )
-            nBytes += 8; /* count, and offset */
+        {
+            if( nBytes > INT_MAX - 8 )
+                nBytes = -1;
+            else
+                nBytes += 8; /* count, and offset */
+        }
     }
     else
     {
