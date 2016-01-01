@@ -43,16 +43,23 @@ CPL_CVSID("$Id$");
 static int OGROSMDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if (poOpenInfo->fpL == NULL )
+    if (poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0)
         return FALSE;
-    const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
-    if( EQUAL(pszExt, "pbf") ||
-        EQUAL(pszExt, "osm") )
+    
+    if( strstr((const char*)poOpenInfo->pabyHeader, "<osm") != NULL )
+    {
         return TRUE;
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsicurl_streaming/") ||
-        strcmp(poOpenInfo->pszFilename, "/vsistdin/") == 0 ||
-        strcmp(poOpenInfo->pszFilename, "/dev/stdin/") == 0 )
-        return -1;
+    }
+    
+    int nLimitI = poOpenInfo->nHeaderBytes - static_cast<int>(strlen("OSMHeader"));
+    for(int i = 0; i < nLimitI; i++)
+    {
+        if( memcmp(poOpenInfo->pabyHeader + i, "OSMHeader", strlen("OSMHeader") ) == 0 )
+        {
+            return TRUE;
+        }
+    }
+
     return FALSE;
 }
 
