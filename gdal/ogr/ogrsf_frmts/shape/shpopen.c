@@ -620,7 +620,11 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
                         + (unsigned int)pabyBuf[25] * 256 * 256
                         + (unsigned int)pabyBuf[26] * 256
-                        + (unsigned int)pabyBuf[27]) * 2;
+                        + (unsigned int)pabyBuf[27]);
+    if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
+        psSHP->nFileSize *= 2;
+    else
+        psSHP->nFileSize = 0xFFFFFFFEU;
 
 /* -------------------------------------------------------------------- */
 /*  Read SHX file Header info                                           */
@@ -640,7 +644,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     }
 
     psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256
-        + pabyBuf[25] * 256 * 256 + pabyBuf[24] * 256 * 256 * 256;
+        + pabyBuf[25] * 256 * 256 + (pabyBuf[24] & 0x7F) * 256 * 256 * 256;
     psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8;
 
     psSHP->nShapeType = pabyBuf[32];
