@@ -775,14 +775,36 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     for( i = 0; i < psSHP->nRecords; i++ )
     {
-        int32		nOffset, nLength;
+        unsigned int		nOffset, nLength;
 
         memcpy( &nOffset, pabyBuf + i * 8, 4 );
         if( !bBigEndian ) SwapWord( 4, &nOffset );
 
         memcpy( &nLength, pabyBuf + i * 8 + 4, 4 );
         if( !bBigEndian ) SwapWord( 4, &nLength );
+        
+        if( nOffset > (unsigned int)INT_MAX )
+        {
+            char str[128];
+            snprintf( str, sizeof(str),
+                    "Invalid offset for entity %d", i);
 
+            psSHP->sHooks.Error( str );
+            SHPClose(psSHP);
+            free( pabyBuf );
+            return NULL;
+        }
+        if( nLength > (unsigned int)(INT_MAX / 2 - 4) )
+        {
+            char str[128];
+            snprintf( str, sizeof(str),
+                    "Invalid length for entity %d", i);
+
+            psSHP->sHooks.Error( str );
+            SHPClose(psSHP);
+            free( pabyBuf );
+            return NULL;
+        }
         psSHP->panRecOffset[i] = nOffset*2;
         psSHP->panRecSize[i] = nLength*2;
     }
@@ -1712,7 +1734,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
     if( psSHP->panRecOffset[hEntity] == 0 && psSHP->fpSHX != NULL )
     {
-        int32       nOffset, nLength;
+        unsigned int       nOffset, nLength;
 
         if( psSHP->sHooks.FSeek( psSHP->fpSHX, 100 + 8 * hEntity, 0 ) != 0 ||
             psSHP->sHooks.FRead( &nOffset, 1, 4, psSHP->fpSHX ) != 4 ||
@@ -1729,6 +1751,25 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if( !bBigEndian ) SwapWord( 4, &nOffset );
         if( !bBigEndian ) SwapWord( 4, &nLength );
 
+        if( nOffset > (unsigned int)INT_MAX )
+        {
+            char str[128];
+            snprintf( str, sizeof(str),
+                    "Invalid offset for entity %d", hEntity);
+
+            psSHP->sHooks.Error( str );
+            return NULL;
+        }
+        if( nLength > (unsigned int)(INT_MAX / 2 - 4) )
+        {
+            char str[128];
+            snprintf( str, sizeof(str),
+                    "Invalid length for entity %d", hEntity);
+
+            psSHP->sHooks.Error( str );
+            return NULL;
+        }
+        
         psSHP->panRecOffset[hEntity] = nOffset*2;
         psSHP->panRecSize[hEntity] = nLength*2;
     }
