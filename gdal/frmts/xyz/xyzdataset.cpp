@@ -373,7 +373,13 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     if( poGDS->bSameNumberOfValuesPerLine ) {
-        CPLAssert(poGDS->nDataLineNum == (nBlockYOff + 1) * nBlockXSize);
+        if( poGDS->nDataLineNum != (nBlockYOff + 1) * nBlockXSize )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "The file has not the same number of values per "
+                     "line as initialy thought. It must be somehow corrupted");
+            return CE_Failure;
+        }
     }
 
     nLastYOff = nBlockYOff;
