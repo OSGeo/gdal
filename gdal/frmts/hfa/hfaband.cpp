@@ -30,6 +30,7 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+#include "gdal_priv.h"
 
 /* include the compression code */
 
@@ -79,16 +80,9 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
     }
     eDataType = static_cast<EPTType>(nDataType);
 
-    if( nWidth - 1 > INT_MAX - nBlockXSize ||
-        nHeight - 1 > INT_MAX - nBlockYSize )
-    {
-        nWidth = nHeight = 0;
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "HFABand::HFABand : too big dimensions / block size");
-        return;
-    }
-    nBlocksPerRow = (nWidth - 1 + nBlockXSize) / nBlockXSize;
-    nBlocksPerColumn = (nHeight - 1 + nBlockYSize) / nBlockYSize;
+    nBlocksPerRow = DIV_ROUND_UP(nWidth, nBlockXSize);
+    nBlocksPerColumn = DIV_ROUND_UP(nHeight, nBlockYSize);
+
     if( nBlocksPerRow > INT_MAX / nBlocksPerColumn )
     {
         nWidth = nHeight = 0;

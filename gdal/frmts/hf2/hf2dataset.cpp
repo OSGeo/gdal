@@ -129,13 +129,9 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
 {
     HF2Dataset *poGDS = (HF2Dataset *) poDS;
     // NOTE: the use of nBlockXSize for the y dimensions is intended
-    
-    if( nRasterXSize - 1 > INT_MAX - nBlockXSize ||
-        nRasterYSize - 1 > INT_MAX - nBlockXSize )
-        return CE_Failure;
 
-    const int nXBlocks = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
-    const int nYBlocks = (nRasterYSize + nBlockXSize - 1) / nBlockXSize;
+    const int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    const int nYBlocks = DIV_ROUND_UP(nRasterYSize, nBlockXSize);
 
     if (!poGDS->LoadBlockMap())
         return CE_Failure;
