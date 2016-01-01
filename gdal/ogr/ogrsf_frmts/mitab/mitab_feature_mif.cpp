@@ -935,6 +935,13 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         }
         else
         {
+            if (nNumPoints < 2)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                            "Invalid number of vertices (%d) in PLINE "
+                            "segment.", nNumPoints);
+                return -1;
+            }
             poLine = new OGRLineString();
             const int MAX_INITIAL_POINTS = 100000;
             const int nInitialNumPoints = ( nNumPoints < MAX_INITIAL_POINTS ) ? nNumPoints : MAX_INITIAL_POINTS;
@@ -1141,6 +1148,16 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         if ((pszLine = fp->GetLine()) != NULL)
         {
             numSectionVertices = atoi(pszLine);
+        }
+        if (numSectionVertices < 2)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                    "Invalid number of points (%d) in REGION "
+                    "segment.", numSectionVertices);
+            for( ; iSection >= 0; --iSection )
+                delete tabPolygons[iSection];
+            VSIFree(tabPolygons);
+            return -1;
         }
 
         poRing = new OGRLinearRing();
