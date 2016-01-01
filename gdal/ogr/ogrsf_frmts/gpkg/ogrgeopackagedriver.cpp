@@ -45,6 +45,12 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
         return TRUE;
 
+#ifdef DEBUG
+    if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
+    {
+    }
+    else
+#endif
     /* Requirement 3: File name has to end in "gpkg" */
     /* http://opengis.github.io/geopackage/#_file_extension_name */
     if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") )
@@ -67,6 +73,12 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 68 + 4 ||
         memcmp(poOpenInfo->pabyHeader + 68, aGpkgId, 4) != 0 )
     {
+#ifdef DEBUG
+        if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
+        {
+            return FALSE;
+        }
+#endif
         CPLError( CE_Warning, CPLE_AppDefined, "GPKG: bad application_id on '%s'",
                   poOpenInfo->pszFilename);
     }
