@@ -832,6 +832,15 @@ char ** CSLTokenizeString2( const char * pszString,
         /* Try to find the next delimiter, marking end of token */
         for( ; *pszString != '\0'; ++pszString )
         {
+            /*
+             * Extend token buffer if we are running close to its end.
+             */
+            if( nTokenLen >= nTokenMax-3 )
+            {
+                nTokenMax = nTokenMax * 2 + 10;
+                pszToken = static_cast<char *>(
+                    CPLRealloc( pszToken, nTokenMax ));
+            }
 
             /* End if this is a delimiter skip it and break. */
             if( !bInString && strchr(pszDelimiters, *pszString) != NULL )
@@ -883,16 +892,6 @@ char ** CSLTokenizeString2( const char * pszString,
                 continue;
 
             bStartString = false;
-
-            /*
-             * Extend token buffer if we are running close to its end.
-             */
-            if( nTokenLen >= nTokenMax-3 )
-            {
-                nTokenMax = nTokenMax * 2 + 10;
-                pszToken = static_cast<char *>(
-                    CPLRealloc( pszToken, nTokenMax ));
-            }
 
             pszToken[nTokenLen] = *pszString;
             ++nTokenLen;
