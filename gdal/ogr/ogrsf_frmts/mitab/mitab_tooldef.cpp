@@ -240,6 +240,7 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
         {
             // An error happened reading this tool definition... stop now.
             nStatus = -1;
+            break;
         }
     }
 
