@@ -1908,6 +1908,20 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     m_nRegionDataSize = poObjBlock->ReadInt32();   // size of region data inc. section hdrs
     m_nPolylineDataSize = poObjBlock->ReadInt32(); // size of multipline data inc. section hdrs
 
+    if( m_nRegionDataSize < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                    "Invalid m_nRegionDataSize");
+        return -1;
+    }
+
+    if( m_nPolylineDataSize < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                    "Invalid m_nRegionDataSize");
+        return -1;
+    }
+
     if (nVersion < 800)
     {
         // Num Region/Pline section headers (int16 in V650)
@@ -1921,15 +1935,15 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nNumPLineSections = poObjBlock->ReadInt32();
     }
 
+    const int nPointSize = (IsCompressedType()) ? 2 * 2 : 2 * 4;
+    if( m_nNumMultiPoints < 0 || m_nNumMultiPoints > INT_MAX / nPointSize )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                    "Invalid m_nNumMultiPoints");
+        return -1;
+    }
 
-    if (IsCompressedType())
-    {
-        m_nMPointDataSize = m_nNumMultiPoints * 2 * 2;
-    }
-    else
-    {
-        m_nMPointDataSize = m_nNumMultiPoints * 2 * 4;
-    }
+    m_nMPointDataSize = m_nNumMultiPoints * nPointSize;
 
     /* NB. MapInfo counts 2 extra bytes per Region and Pline section header
      * in the RegionDataSize and PolylineDataSize values but those 2 extra 
@@ -1940,7 +1954,22 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
      *
      * We'll adjust the values in memory to be the corrected values.
      */
+    if( m_nNumRegSections < 0 || m_nNumRegSections > INT_MAX / 2 ||
+        m_nRegionDataSize < 2 * m_nNumRegSections )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                    "Invalid m_nNumRegSections / m_nRegionDataSize");
+        return -1;
+    }
     m_nRegionDataSize   = m_nRegionDataSize - (2 * m_nNumRegSections);
+
+    if( m_nNumPLineSections < 0 || m_nNumPLineSections > INT_MAX / 2 ||
+        m_nPolylineDataSize < 2 * m_nNumPLineSections )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                    "Invalid m_nNumPLineSections / m_nPolylineDataSize");
+        return -1;
+    }
     m_nPolylineDataSize = m_nPolylineDataSize - (2 * m_nNumPLineSections);
 
     /* Compute total coord block data size, required when splitting blocks */
@@ -1948,14 +1977,35 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     if(m_nNumRegSections > 0)
     {
+        if( m_nRegionDataSize > INT_MAX - SIZE_OF_REGION_PLINE_MINI_HDR ||
+            m_nCoordDataSize > INT_MAX - (SIZE_OF_REGION_PLINE_MINI_HDR + m_nRegionDataSize) )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                        "Invalid m_nCoordDataSize / m_nRegionDataSize");
+            return -1;
+        }
         m_nCoordDataSize += SIZE_OF_REGION_PLINE_MINI_HDR + m_nRegionDataSize;
     }
     if(m_nNumPLineSections > 0)
     {
+        if( m_nPolylineDataSize > INT_MAX - SIZE_OF_REGION_PLINE_MINI_HDR ||
+            m_nCoordDataSize > INT_MAX - (SIZE_OF_REGION_PLINE_MINI_HDR + m_nPolylineDataSize) )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                        "Invalid m_nCoordDataSize / m_nPolylineDataSize");
+            return -1;
+        }
         m_nCoordDataSize += SIZE_OF_REGION_PLINE_MINI_HDR + m_nPolylineDataSize;
     }
     if(m_nNumMultiPoints > 0)
     {
+        if( m_nMPointDataSize > INT_MAX - SIZE_OF_MPOINT_MINI_HDR ||
+            m_nCoordDataSize > INT_MAX - (SIZE_OF_MPOINT_MINI_HDR + m_nMPointDataSize) )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                        "Invalid m_nCoordDataSize / m_nMPointDataSize");
+            return -1;
+        }
         m_nCoordDataSize += SIZE_OF_MPOINT_MINI_HDR + m_nMPointDataSize;
     }
 
