@@ -150,6 +150,13 @@ class OGRDXFLayer : public OGRLayer
 /*      A class for very low level DXF reading without interpretation.  */
 /************************************************************************/
 
+#define DXF_READER_ERROR()\
+    do { CPLError(CE_Failure, CPLE_AppDefined, "%s, %d: error at line %d of %s", \
+         __FILE__, __LINE__, GetLineNumber(), GetName()); } while(0)
+#define DXF_LAYER_READER_ERROR()\
+    do { CPLError(CE_Failure, CPLE_AppDefined, "%s, %d: error at line %d of %s", \
+         __FILE__, __LINE__, poDS->GetLineNumber(), poDS->GetName()); } while(0)
+
 class OGRDXFReader
 {
 public:
@@ -223,27 +230,28 @@ class OGRDXFDataSource : public OGRDataSource
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp
-    void                ReadBlocksSection();
+    bool                ReadBlocksSection();
     OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
     DXFBlockDefinition *LookupBlock( const char *pszName );
     std::map<CPLString,DXFBlockDefinition> &GetBlockMap() { return oBlockMap; }
 
     // Layer and other Table Handling (ogrdatasource.cpp)
-    void                ReadTablesSection();
-    void                ReadLayerDefinition();
-    void                ReadLineTypeDefinition();
+    bool                ReadTablesSection();
+    bool                ReadLayerDefinition();
+    bool                ReadLineTypeDefinition();
     const char         *LookupLayerProperty( const char *pszLayer, 
                                              const char *pszProperty );
     const char         *LookupLineType( const char *pszName );
 
     // Header variables. 
-    void                ReadHeaderSection();
+    bool               ReadHeaderSection();
     const char         *GetVariable(const char *pszName, 
                                     const char *pszDefault=NULL );
 
     const char         *GetEncoding() { return osEncoding; }
 
     // reader related.
+    int  GetLineNumber() { return oReader.nLineNumber; }
     int  ReadValue( char *pszValueBuffer, int nValueBufferSize = 81 )
         { return oReader.ReadValue( pszValueBuffer, nValueBufferSize ); }
     void RestartEntities() 
