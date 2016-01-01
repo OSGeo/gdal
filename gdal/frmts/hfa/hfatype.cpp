@@ -163,8 +163,10 @@ void HFAType::CompleteDefn( HFADictionary * poDict )
         papoFields[i]->CompleteDefn( poDict );
         if( papoFields[i]->nBytes < 0 || nBytes == -1 )
             nBytes = -1;
-        else
+        else if( nBytes < INT_MAX - papoFields[i]->nBytes )
             nBytes += papoFields[i]->nBytes;
+        else
+            nBytes = -1;
     }
 
     bInCompleteDefn = FALSE;
