@@ -670,6 +670,21 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
         return( NULL );
     }
+    
+    /* If a lot of records are advertized, check that the file is big enough */
+    /* to hold them */
+    if( psSHP->nRecords >= 1024 * 1024 )
+    {
+        SAOffset nFileSize;
+        psSHP->sHooks.FSeek( psSHP->fpSHX, 0, 2 );
+        nFileSize = psSHP->sHooks.FTell( psSHP->fpSHX );
+        if( nFileSize > 100 &&
+            nFileSize/2 < (SAOffset)(psSHP->nRecords * 4 + 50) )
+        {
+            psSHP->nRecords = (int)((nFileSize - 100) / 8);
+        }
+        psSHP->sHooks.FSeek( psSHP->fpSHX, 100, 0 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the bounds.                                                */
@@ -1798,21 +1813,55 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     nEntitySize = psSHP->panRecSize[hEntity]+8;
     if( nEntitySize > psSHP->nBufSize )
     {
-        uchar* pabyRecNew = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
+        uchar* pabyRecNew;
+        int nNewBufSize = nEntitySize;
+        if( nNewBufSize < INT_MAX - nNewBufSize / 3 )
+            nNewBufSize += nNewBufSize / 3;
+        else
+            nNewBufSize = INT_MAX;
+
+        /* Before allocating too much memory, check that the file is big enough */
+        if( nEntitySize >= 10 * 1024 * 1024 &&
+            (psSHP->panRecOffset[hEntity] >= psSHP->nFileSize ||
+             (unsigned int)nEntitySize > psSHP->nFileSize - psSHP->panRecOffset[hEntity]) )
+        {
+            /* We do as is we didn't trust the file size in the header */
+            SAOffset nFileSize;
+            psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 2 );
+            nFileSize = psSHP->sHooks.FTell(psSHP->fpSHP);
+            if( nFileSize >= 0xFFFFFFFFU )
+                psSHP->nFileSize = 0xFFFFFFFFU;
+            else
+                psSHP->nFileSize = (unsigned int)nFileSize;
+
+            if( psSHP->panRecOffset[hEntity] >= psSHP->nFileSize ||
+                (unsigned int)nEntitySize > psSHP->nFileSize - psSHP->panRecOffset[hEntity] )
+            {
+                char str[128];
+                snprintf( str, sizeof(str),
+                         "Error in fread() reading object of size %u at offset %u from .shp file",
+                         nEntitySize, psSHP->panRecOffset[hEntity] );
+
+                psSHP->sHooks.Error( str );
+                return NULL;
+            }
+        }
+        
+        pabyRecNew = (uchar *) SfRealloc(psSHP->pabyRec,nNewBufSize);
         if (pabyRecNew == NULL)
         {
             char szError[200];
 
             snprintf( szError, sizeof(szError),
-                     "Not enough memory to allocate requested memory (nBufSize=%d). "
-                     "Probably broken SHP file", psSHP->nBufSize );
+                     "Not enough memory to allocate requested memory (nNewBufSize=%d). "
+                     "Probably broken SHP file", nNewBufSize);
             psSHP->sHooks.Error( szError );
             return NULL;
         }
 
         /* Only set new buffer size after successful alloc */
         psSHP->pabyRec = pabyRecNew;
-        psSHP->nBufSize = nEntitySize;
+        psSHP->nBufSize = nNewBufSize;
     }
 
     /* In case we were not able to reallocate the buffer on a previous step */
