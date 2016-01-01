@@ -107,6 +107,15 @@ static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
         return TRUE;
     }
 #endif
+
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    else if( EQUAL(CPLGetFilename(pszFilename), ".cur_input") )
+    {
+        return -1;
+    }
+#endif
+
     else
     {
         return FALSE;
@@ -154,6 +163,19 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
         }
         CSLDestroy(papszFiles);
         pszFilename = CPLFormFilename("", osSave.c_str(), NULL);
+    }
+#endif
+
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    if( poOpenInfo->fpL != NULL &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
+        EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
+    {
+        GDALOpenInfo oOpenInfo( (CPLString("/vsitar/") + poOpenInfo->pszFilename).c_str(),
+                                poOpenInfo->nOpenFlags );
+        oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+        return OGROpenFileGDBDriverOpen(&oOpenInfo);
     }
 #endif
 
