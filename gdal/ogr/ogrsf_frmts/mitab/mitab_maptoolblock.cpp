@@ -154,6 +154,15 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
     m_numDataBytes = ReadInt16();       /* Excluding 8 bytes header */
 
     m_nNextToolBlock = ReadInt32();
+    if( m_nNextToolBlock != 0 &&
+        (m_nNextToolBlock / m_nBlockSize) * m_nBlockSize == nOffset )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "InitBlockFromData(): self referencing block");
+        CPLFree(m_pabyBuf);
+        m_pabyBuf = NULL;
+        return -1;
+    }
 
     /*-----------------------------------------------------------------
      * The read ptr is now located at the beginning of the data part.
