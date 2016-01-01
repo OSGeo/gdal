@@ -40,19 +40,24 @@ static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
 // --------------------------------------------------------------------
 //      Does this appear to be a .bna file?
 // --------------------------------------------------------------------
-    if( poOpenInfo->fpL == NULL ||
-        !(EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "bna" )
-           || ((STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/") ||
-                STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsizip/")) &&
-               (strstr( poOpenInfo->pszFilename, ".bna") ||
-                strstr( poOpenInfo->pszFilename, ".BNA")))) )
+    const char* pszFilename = poOpenInfo->pszFilename;
+    if( STARTS_WITH_CI(pszFilename, "BNA:") )
+    {
+        pszFilename += 4;
+    }
+    else if( poOpenInfo->fpL == NULL ||
+        !(EQUAL( CPLGetExtension(pszFilename), "bna" )
+           || ((STARTS_WITH_CI(pszFilename, "/vsigzip/") ||
+                STARTS_WITH_CI(pszFilename, "/vsizip/")) &&
+               (strstr( pszFilename, ".bna") ||
+                strstr( pszFilename, ".BNA")))) )
     {
         return NULL;
     }
 
     OGRBNADataSource   *poDS = new OGRBNADataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
