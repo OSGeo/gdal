@@ -4112,6 +4112,102 @@ def ogr_shape_88():
     return 'success'
 
 ###############################################################################
+# Test reading geometry bigger than 10 MB
+
+def ogr_shape_89():
+    
+    import struct
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_89.shp')
+    lyr = ds.CreateLayer('ogr_shape_89')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    g = ogr.Geometry(ogr.wkbLineString)
+    g.AddPoint_2D(0, 0)
+    g.AddPoint_2D(1, 1)
+    f.SetGeometryDirectly(g)
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_shape_89.dbf')
+
+    # The declare file size doesn't match the real one
+    f = gdal.VSIFOpenL('/vsimem/ogr_shape_89.shx', 'rb+')
+    gdal.VSIFSeekL(f, 100 + 4, 0)
+    gdal.VSIFWriteL(struct.pack('>i', int((10 * 1024 * 1024) / 2)), 1, 4, f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/ogr_shape_89.shp')
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    if f is not None and f.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    f = gdal.VSIFOpenL('/vsimem/ogr_shape_89.shp', 'rb+')
+    gdal.VSIFSeekL(f, 100 + 8 + 10 * 1024 * 1024 - 1, 0)
+    gdal.VSIFWriteL(struct.pack('B', 0), 1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/ogr_shape_89.shp')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    if g.GetPointCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading a lot of geometries
+
+def ogr_shape_90():
+
+    import struct
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_90.shp')
+    lyr = ds.CreateLayer('ogr_shape_90')
+    g = ogr.CreateGeometryFromWkt('POINT(0 0)')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    lyr.CreateFeature(f)
+    ds = None
+    
+    gdal.Unlink('/vsimem/ogr_shape_90.dbf')
+
+    # The declare file size doesn't match the real one
+    f = gdal.VSIFOpenL('/vsimem/ogr_shape_90.shx', 'rb+')
+    filesize = int((100 + 8 * 1024 * 1024)/2)
+    gdal.VSIFSeekL(f, 24, 0)
+    gdal.VSIFWriteL(struct.pack('>i', filesize), 1, 4, f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/ogr_shape_90.shp')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    # Now it is consistent
+    f = gdal.VSIFOpenL('/vsimem/ogr_shape_90.shx', 'rb+')
+    gdal.VSIFSeekL(f, 100 + 8 * 1024 * 1024 - 1, 0)
+    gdal.VSIFWriteL(struct.pack('B', 0), 1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/ogr_shape_90.shp')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1024*1024:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_shape_cleanup():
@@ -4147,6 +4243,8 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_84.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_85.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_88.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_89.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_90.shp' )
 
     return 'success'
 
@@ -4241,6 +4339,8 @@ gdaltest_list = [
     ogr_shape_86,
     ogr_shape_87,
     ogr_shape_88,
+    ogr_shape_89,
+    ogr_shape_90,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
