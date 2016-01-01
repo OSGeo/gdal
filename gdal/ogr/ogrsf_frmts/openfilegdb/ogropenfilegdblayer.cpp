@@ -360,7 +360,9 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         }
     }
 
-    if( m_osDefinition.size() == 0 && m_iGeomFieldIdx >= 0 )
+    if( m_iGeomFieldIdx >= 0 &&
+        (m_osDefinition.size() == 0 ||
+         m_poFeatureDefn->OGRFeatureDefn::GetGeomFieldCount() == 0) )
     {
         /* FileGDB v9 case */
         FileGDBGeomField* poGDBGeomField =
