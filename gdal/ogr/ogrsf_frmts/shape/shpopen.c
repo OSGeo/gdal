@@ -645,7 +645,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256
         + pabyBuf[25] * 256 * 256 + (pabyBuf[24] & 0x7F) * 256 * 256 * 256;
-    psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8;
+    psSHP->nRecords = (psSHP->nRecords - 50) / 4;
 
     psSHP->nShapeType = pabyBuf[32];
 
