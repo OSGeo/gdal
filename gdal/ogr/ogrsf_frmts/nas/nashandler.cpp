@@ -236,6 +236,16 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 
             return;
         }
+        
+        if( m_osLastTypeName == "" )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "m_osLastTypeName == \"\"");
+                    
+            m_bIgnoreFeature = true;
+            m_nDepthFeature = m_nDepth;
+            m_nDepth ++;
+            return;
+        }
 
         m_bIgnoreFeature = false;
 
@@ -244,7 +254,6 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         m_nDepthFeature = m_nDepth;
         m_nDepth ++;
 
-        CPLAssert( m_osLastTypeName != "" );
         m_poReader->SetFeaturePropertyDirectly( "typeName", CPLStrdup(m_osLastTypeName) );
         m_poReader->SetFeaturePropertyDirectly( "context", CPLStrdup(pszLast) );
 
