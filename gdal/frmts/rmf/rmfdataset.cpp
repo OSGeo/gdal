@@ -1459,19 +1459,30 @@ do {                                                                    \
             eType = GDT_Float64;
     }
 
-    if (poDS->sHeader.nTileWidth == 0 ||
-        poDS->sHeader.nTileHeight == 0)
+    if (poDS->sHeader.nTileWidth == 0 || poDS->sHeader.nTileWidth > INT_MAX ||
+        poDS->sHeader.nTileHeight == 0 || poDS->sHeader.nTileHeight > INT_MAX)
     {
-        CPLDebug ("RMF", "Invalid tile dimension : %d x %d",
+        CPLDebug ("RMF", "Invalid tile dimension : %u x %u",
                   poDS->sHeader.nTileWidth, poDS->sHeader.nTileHeight);
         delete poDS;
         return NULL;
     }
+    
+    const int nDataSize = GDALGetDataTypeSize( eType ) / 8;
+    const int nBlockXSize = static_cast<int>(poDS->sHeader.nTileWidth);
+    const int nBlockYSize = static_cast<int>(poDS->sHeader.nTileHeight);
+    if( nDataSize == 0 ||
+        nBlockXSize > INT_MAX / nBlockYSize ||
+        nBlockYSize > INT_MAX / nDataSize ||
+        nBlockXSize > INT_MAX / (nBlockYSize * nDataSize) )
+    {
+        CPLDebug ("RMF", "Too big raster / tile dimension");
+        delete poDS;
+        return NULL;
+    }
 
-    poDS->nXTiles = ( poDS->nRasterXSize + poDS->sHeader.nTileWidth - 1 ) /
-        poDS->sHeader.nTileWidth;
-    poDS->nYTiles = ( poDS->nRasterYSize + poDS->sHeader.nTileHeight - 1 ) /
-        poDS->sHeader.nTileHeight;
+    poDS->nXTiles = DIV_ROUND_UP( poDS->nRasterXSize, nBlockXSize );
+    poDS->nYTiles = DIV_ROUND_UP( poDS->nRasterYSize, nBlockYSize );
 
 #ifdef DEBUG
     CPLDebug( "RMF", "Image is %d tiles wide, %d tiles long",
