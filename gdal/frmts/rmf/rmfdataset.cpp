@@ -1154,7 +1154,11 @@ do {                                                                    \
         GByte   abyHeader[RMF_HEADER_SIZE];
 
         VSIFSeekL( poDS->fp, 0, SEEK_SET );
-        VSIFReadL( abyHeader, 1, sizeof(abyHeader), poDS->fp );
+        if( VSIFReadL( abyHeader, 1, sizeof(abyHeader), poDS->fp ) != sizeof(abyHeader) )
+        {
+            delete poDS;
+            return NULL;
+        }
 
         if ( memcmp(abyHeader, RMF_SigMTW, sizeof(RMF_SigMTW)) == 0 )
             poDS->eRMFType = RMFT_MTW;
