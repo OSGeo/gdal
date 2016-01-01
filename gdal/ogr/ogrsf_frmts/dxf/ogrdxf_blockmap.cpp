@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /*                          ReadBlockSection()                          */
 /************************************************************************/
 
-void OGRDXFDataSource::ReadBlocksSection()
+bool OGRDXFDataSource::ReadBlocksSection()
 
 {
     char szLineBuf[257];
@@ -67,6 +67,11 @@ void OGRDXFDataSource::ReadBlocksSection()
                 osBlockName = szLineBuf;
 
             // anything else we want? 
+        }
+        if( nCode < 0 )
+        {
+            DXF_READER_ERROR();
+            return false;
         }
 
         if( EQUAL(szLineBuf,"ENDBLK") )
@@ -106,9 +111,15 @@ void OGRDXFDataSource::ReadBlocksSection()
         if( apoFeatures.size() > 0 )
             oBlockMap[osBlockName].apoFeatures = apoFeatures;
     }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
 
     CPLDebug( "DXF", "Read %d blocks with meaningful geometry.", 
               (int) oBlockMap.size() );
+    return true;
 }
 
 /************************************************************************/

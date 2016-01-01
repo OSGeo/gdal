@@ -456,6 +456,12 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
 
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -610,6 +616,12 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
 
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -749,6 +761,12 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
 
     OGRPoint* poGeom;
     if( bHaveZ )
@@ -818,6 +836,12 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
         }
+    }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
     }
 
     if( nCode == 0 )
@@ -937,6 +961,12 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
 
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -997,6 +1027,12 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Collect VERTEXes as a smooth polyline.                          */
@@ -1014,6 +1050,13 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         if( !EQUAL(szLineBuf,"VERTEX") )
         {
             while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf)))>0 ) {}
+            if( nCode < 0 )
+            {
+                DXF_LAYER_READER_ERROR();
+                delete poFeature;
+                return NULL;
+            }
+
             continue;
         }
 
@@ -1047,6 +1090,13 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 break;
             }
         }
+        if( nCode < 0 )
+        {
+            DXF_LAYER_READER_ERROR();
+            delete poFeature;
+            return NULL;
+        }
+
 
         // Ignore Spline frame control points ( see #4683 )
         if ((nVertexFlag & 16) == 0)
@@ -1116,6 +1166,12 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
         }
+    }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
     }
 
     if( nCode == 0 )
@@ -1205,6 +1261,12 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
         }
+    }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
     }
 
     if( nCode == 0 )
@@ -1303,6 +1365,12 @@ OGRFeature *OGRDXFLayer::TranslateARC()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
 
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -1378,6 +1446,12 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
         }
+    }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
     }
 
     if( nCode == 0 )
@@ -1509,6 +1583,12 @@ OGRFeature *OGRDXFLayer::Translate3DFACE()
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
         }
+    }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
     }
 
     if( nCode == 0 )
@@ -1644,6 +1724,12 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             TranslateGenericProperty(poFeature, nCode, szLineBuf);
             break;
         }
+    }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
     }
 
     CPLDebug("Corner coordinates are", "%f,%f,%f,%f,%f,%f,%f,%f", dfX1, dfY1,
@@ -1813,6 +1899,12 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
 
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -1940,10 +2032,9 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
     {
         // read ahead to an entity.
         while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 ) {}
-
-        if( nCode == -1 )
+        if( nCode < 0 )
         {
-            CPLDebug( "DXF", "Unexpected end of data without ENDSEC." );
+            DXF_LAYER_READER_ERROR();
             return NULL;
         }
 

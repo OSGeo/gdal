@@ -143,8 +143,13 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         if( CPLGetConfigOption( "DXF_ENCODING", NULL ) != NULL )
             osEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
 
-        ReadTablesSection();
-        ReadValue(szLineBuf);
+        if( !ReadTablesSection() )
+            return FALSE;
+        if( ReadValue(szLineBuf) < 0 )
+        {
+            DXF_READER_ERROR();
+            return FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -153,17 +158,34 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /* -------------------------------------------------------------------- */
     else /* if( EQUAL(szLineBuf,"HEADER") ) */
     {
-        ReadHeaderSection();
-        ReadValue(szLineBuf);
+        if( !ReadHeaderSection() )
+            return FALSE;
+        if( ReadValue(szLineBuf) < 0 )
+        {
+            DXF_READER_ERROR();
+            return FALSE;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Process the CLASSES section, if present.                        */
 /* -------------------------------------------------------------------- */
         if( EQUAL(szLineBuf,"ENDSEC") )
-            ReadValue(szLineBuf);
+        {
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
+        }
 
         if( EQUAL(szLineBuf,"SECTION") )
-            ReadValue(szLineBuf);
+        {
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
+        }
 
         if( EQUAL(szLineBuf,"CLASSES") )
         {
@@ -178,15 +200,32 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /*      Process the TABLES section, if present.                         */
 /* -------------------------------------------------------------------- */
         if( EQUAL(szLineBuf,"ENDSEC") )
-            ReadValue(szLineBuf);
+        {
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
+        }
 
         if( EQUAL(szLineBuf,"SECTION") )
-            ReadValue(szLineBuf);
+        {
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
+        }
 
         if( EQUAL(szLineBuf,"TABLES") )
         {
-            ReadTablesSection();
-            ReadValue(szLineBuf);
+            if( !ReadTablesSection() )
+                return FALSE;
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
         }
     }
 
@@ -208,15 +247,32 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
     if( !bEntitiesOnly )
     {
         if( EQUAL(szLineBuf,"ENDSEC") )
-            ReadValue(szLineBuf);
+        {
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
+        }
 
         if( EQUAL(szLineBuf,"SECTION") )
-            ReadValue(szLineBuf);
+        {
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
+        }
 
         if( EQUAL(szLineBuf,"BLOCKS") )
         {
-            ReadBlocksSection();
-            ReadValue(szLineBuf);
+            if( !ReadBlocksSection() )
+                return FALSE;
+            if( ReadValue(szLineBuf) < 0 )
+            {
+                DXF_READER_ERROR();
+                return FALSE;
+            }
         }
     }
 
@@ -227,10 +283,19 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /*      Now we are at the entities section, hopefully.  Confirm.        */
 /* -------------------------------------------------------------------- */
     if( EQUAL(szLineBuf,"SECTION") )
-        ReadValue(szLineBuf);
+    {
+        if( ReadValue(szLineBuf) < 0 )
+        {
+            DXF_READER_ERROR();
+            return FALSE;
+        }
+    }
 
     if( !EQUAL(szLineBuf,"ENTITIES") )
+    {
+        DXF_READER_ERROR();
         return FALSE;
+    }
 
     iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
     apoLayers[0]->ResetReading();
@@ -242,7 +307,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /*                         ReadTablesSection()                          */
 /************************************************************************/
 
-void OGRDXFDataSource::ReadTablesSection()
+bool OGRDXFDataSource::ReadTablesSection()
 
 {
     char szLineBuf[257];
@@ -257,6 +322,11 @@ void OGRDXFDataSource::ReadTablesSection()
 
         // Currently we are only interested in the LAYER table.
         nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
+        if( nCode < 0 )
+        {
+            DXF_READER_ERROR();
+            return false;
+        }
 
         if( nCode != 2 )
             continue;
@@ -267,20 +337,32 @@ void OGRDXFDataSource::ReadTablesSection()
                && !EQUAL(szLineBuf,"ENDTAB") )
         {
             if( nCode == 0 && EQUAL(szLineBuf,"LAYER") )
-                ReadLayerDefinition();
+            {
+                if( !ReadLayerDefinition() )
+                    return false;
+            }
             if( nCode == 0 && EQUAL(szLineBuf,"LTYPE") )
-                ReadLineTypeDefinition();
+            {
+                if( !ReadLineTypeDefinition() )
+                    return false;
+            }
         }
+    }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
     }
 
     CPLDebug( "DXF", "Read %d layer definitions.", (int) oLayerTable.size() );
+    return true;
 }
 
 /************************************************************************/
 /*                        ReadLayerDefinition()                         */
 /************************************************************************/
 
-void OGRDXFDataSource::ReadLayerDefinition()
+bool OGRDXFDataSource::ReadLayerDefinition()
 
 {
     char szLineBuf[257];
@@ -326,12 +408,18 @@ void OGRDXFDataSource::ReadLayerDefinition()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
 
     if( oLayerProperties.size() > 0 )
         oLayerTable[osLayerName] = oLayerProperties;
 
     if( nCode == 0 )
         UnreadValue();
+    return true;
 }
 
 /************************************************************************/
@@ -356,7 +444,7 @@ const char *OGRDXFDataSource::LookupLayerProperty( const char *pszLayer,
 /*                       ReadLineTypeDefinition()                       */
 /************************************************************************/
 
-void OGRDXFDataSource::ReadLineTypeDefinition()
+bool OGRDXFDataSource::ReadLineTypeDefinition()
 
 {
     char szLineBuf[257];
@@ -390,12 +478,18 @@ void OGRDXFDataSource::ReadLineTypeDefinition()
             break;
         }
     }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
 
     if( osLineTypeDef != "" )
         oLineTypeTable[osLineTypeName] = osLineTypeDef;
 
     if( nCode == 0 )
         UnreadValue();
+    return true;
 }
 
 /************************************************************************/
@@ -415,7 +509,7 @@ const char *OGRDXFDataSource::LookupLineType( const char *pszName )
 /*                         ReadHeaderSection()                          */
 /************************************************************************/
 
-void OGRDXFDataSource::ReadHeaderSection()
+bool OGRDXFDataSource::ReadHeaderSection()
 
 {
     char szLineBuf[257];
@@ -429,18 +523,29 @@ void OGRDXFDataSource::ReadHeaderSection()
 
         CPLString l_osName = szLineBuf;
 
-        ReadValue( szLineBuf, sizeof(szLineBuf) );
+        if(ReadValue( szLineBuf, sizeof(szLineBuf) )<0)
+        {
+            DXF_READER_ERROR();
+            return false;
+        }
 
         CPLString osValue = szLineBuf;
 
         oHeaderVariables[l_osName] = osValue;
     }
-
-    if (nCode != -1)
+    if( nCode < 0 )
     {
-        nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
-        UnreadValue();
+        DXF_READER_ERROR();
+        return false;
     }
+
+    nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
+    UnreadValue();
 
     /* Unusual DXF files produced by dxflib */
     /* such as http://www.ribbonsoft.com/library/architecture/plants/decd5.dxf */
@@ -455,11 +560,20 @@ void OGRDXFDataSource::ReadHeaderSection()
 
             CPLString l_osName = szLineBuf;
 
-            ReadValue( szLineBuf, sizeof(szLineBuf) );
+            if( ReadValue( szLineBuf, sizeof(szLineBuf) ) < 0 )
+            {
+                DXF_READER_ERROR();
+                return false;
+            }
 
             CPLString osValue = szLineBuf;
 
             oHeaderVariables[l_osName] = osValue;
+        }
+        if( nCode < 0 )
+        {
+            DXF_READER_ERROR();
+            return false;
         }
     }
 
@@ -492,6 +606,7 @@ void OGRDXFDataSource::ReadHeaderSection()
     if( osEncoding != CPL_ENC_ISO8859_1 )
         CPLDebug( "DXF", "Treating DXF as encoding '%s', $DWGCODEPAGE='%s'", 
                   osEncoding.c_str(), osCodepage.c_str() );
+    return true;
 }
 
 /************************************************************************/
