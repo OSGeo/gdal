@@ -87,8 +87,8 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
                  "HFABand::HFABand : too big dimensions / block size");
         return;
     }
-    nBlocksPerRow = (nWidth + nBlockXSize - 1) / nBlockXSize;
-    nBlocksPerColumn = (nHeight + nBlockYSize - 1) / nBlockYSize;
+    nBlocksPerRow = (nWidth - 1 + nBlockXSize) / nBlockXSize;
+    nBlocksPerColumn = (nHeight - 1 + nBlockYSize) / nBlockYSize;
     if( nBlocksPerRow > INT_MAX / nBlocksPerColumn )
     {
         nWidth = nHeight = 0;
