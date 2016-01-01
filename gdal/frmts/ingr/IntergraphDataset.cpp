@@ -325,6 +325,14 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
             break;
 
         INGR_HeaderOneDiskToMem( &poDS->hHeaderOne, abyBuf );
+        if( hHeaderOne.PixelsPerLine != poDS->hHeaderOne.PixelsPerLine ||
+            hHeaderOne.NumberOfLines != poDS->hHeaderOne.NumberOfLines )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Not all bands have same dimensions");
+            delete poDS;
+            return NULL;
+        }
 
         if( VSIFReadL( abyBuf, 1, SIZEOF_HDR2_A, poDS->fp ) != SIZEOF_HDR2_A )
             break;
