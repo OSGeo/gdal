@@ -118,6 +118,7 @@ class GSAGRasterBand : public GDALPamRasterBand
 
     vsi_l_offset *panLineOffset;
     int nLastReadLine;
+    size_t nMaxLineSize;
 
     double *padfRowMinZ;
     double *padfRowMaxZ;
@@ -169,6 +170,7 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     dfMinZ(0.0),
     dfMaxZ(0.0),
     nLastReadLine(0),
+    nMaxLineSize(128),
     padfRowMinZ(NULL),
     padfRowMaxZ(NULL),
     nMinZRow(-1),
@@ -299,7 +301,6 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GSAGDataset *poGDS = (GSAGDataset *)poDS;
     assert( poGDS != NULL );
 
-    static size_t nMaxLineSize = 128;
     double *pdfImage = (double *)pImage;
 
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
@@ -360,6 +361,14 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	if( szStart == szEnd )
 	{
 	    /* No number found */
+            if( *szStart == '.' )
+            {
+                CPLError( CE_Warning, CPLE_FileIO,
+                          "Unexpected value in grid row %d (expected floating "
+                          "point value, found \"%s\").\n",
+                          nBlockYOff, szStart );
+                return CE_Failure;
+            }
 
 	    /* Check if this was an expected failure */
 	    while( isspace( (unsigned char)*szStart ) )
