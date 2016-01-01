@@ -448,7 +448,12 @@ void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
 /*      Write out the .shx contents.                                    */
 /* -------------------------------------------------------------------- */
     panSHX = (int32 *) malloc(sizeof(int32) * 2 * psSHP->nRecords);
-
+    if( panSHX == NULL )
+    {
+        psSHP->sHooks.Error( "Failure allocatin panSHX" );
+        return;
+    }
+    
     for( i = 0; i < psSHP->nRecords; i++ )
     {
         panSHX[i*2  ] = psSHP->panRecOffset[i]/2;
@@ -1300,12 +1305,23 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
     if( nShapeId == -1 && psSHP->nRecords+1 > psSHP->nMaxRecords )
     {
-        psSHP->nMaxRecords =(int) ( psSHP->nMaxRecords * 1.3 + 100);
+        int nNewMaxRecords = psSHP->nMaxRecords + psSHP->nMaxRecords / 3 + 100;
+        unsigned int* panRecOffsetNew;
+        unsigned int* panRecSizeNew;
+        
+        panRecOffsetNew = (unsigned int *) 
+            SfRealloc(psSHP->panRecOffset,sizeof(unsigned int) * nNewMaxRecords );
+        if( panRecOffsetNew == NULL )
+            return -1;
+        psSHP->panRecOffset = panRecOffsetNew;
+        
+        panRecSizeNew = (unsigned int *) 
+            SfRealloc(psSHP->panRecSize,sizeof(unsigned int) * nNewMaxRecords );
+        if( panRecSizeNew == NULL )
+            return -1;
+        psSHP->panRecSize = panRecSizeNew;
 
-        psSHP->panRecOffset = (unsigned int *) 
-            SfRealloc(psSHP->panRecOffset,sizeof(unsigned int) * psSHP->nMaxRecords );
-        psSHP->panRecSize = (unsigned int *) 
-            SfRealloc(psSHP->panRecSize,sizeof(unsigned int) * psSHP->nMaxRecords );
+        psSHP->nMaxRecords = nNewMaxRecords;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1313,6 +1329,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
     pabyRec = (uchar *) malloc(psObject->nVertices * 4 * sizeof(double) 
                                + psObject->nParts * 8 + 128);
+    if( pabyRec == NULL )
+        return -1;
     
 /* -------------------------------------------------------------------- */
 /*  Extract vertices for a Polygon or Arc.				*/
@@ -1780,13 +1798,10 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     nEntitySize = psSHP->panRecSize[hEntity]+8;
     if( nEntitySize > psSHP->nBufSize )
     {
-        psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
-        if (psSHP->pabyRec == NULL)
+        uchar* pabyRecNew = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
+        if (pabyRecNew == NULL)
         {
             char szError[200];
-
-            /* Reallocate previous successful size for following features */
-            psSHP->pabyRec = (uchar *) malloc(psSHP->nBufSize);
 
             snprintf( szError, sizeof(szError),
                      "Not enough memory to allocate requested memory (nBufSize=%d). "
@@ -1796,6 +1811,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         }
 
         /* Only set new buffer size after successful alloc */
+        psSHP->pabyRec = pabyRecNew;
         psSHP->nBufSize = nEntitySize;
     }
 
