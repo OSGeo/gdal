@@ -601,8 +601,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    GInt32 nSize;
-    if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
+    GUInt32 nSize;
+    if( VSIFReadL( (void *)&nSize, sizeof(GUInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
@@ -643,7 +643,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPL_LSBPTR32( &nTag );
 
-        if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
+        if( VSIFReadL( (void *)&nSize, sizeof(GUInt32), 1, poDS->fp ) != 1 )
         {
             delete poDS;
             CPLError( CE_Failure, CPLE_FileIO,
@@ -655,7 +655,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if(nTag != nGRID_TAG)
         {
-            if( VSIFSeekL( poDS->fp, nSize, SEEK_SET ) != 0 )
+            if( VSIFSeekL( poDS->fp, nSize, SEEK_CUR ) != 0 )
             {
                 delete poDS;
                 CPLError( CE_Failure, CPLE_FileIO,
