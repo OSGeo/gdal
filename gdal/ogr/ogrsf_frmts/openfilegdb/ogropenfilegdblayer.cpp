@@ -199,6 +199,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
     CPLXMLNode* psTree = CPLParseXMLString(m_osDefinition.c_str());
     if( psTree == NULL )
     {
+        m_osDefinition = "";
         return FALSE;
     }
 
@@ -209,6 +210,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         psInfo = CPLSearchXMLNode( psTree, "=DETableInfo" );
     if( psInfo == NULL )
     {
+        m_osDefinition = "";
         CPLDestroyXMLNode(psTree);
         return FALSE;
     }
