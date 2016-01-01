@@ -375,6 +375,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		szStart++;
 
 	    /* Found sign at end of input, seek back to re-read it */
+            bool bOnlySign = false;
 	    if ( (*szStart == '-' || *szStart == '+') && *(szStart+1) == '\0' )
 	    {
 	    	if( VSIFSeekL( poGDS->fp, 
@@ -391,6 +392,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 		    return CE_Failure;
 		}
+		bOnlySign = true;
 	    }
 	    else if( *szStart != '\0' )
 	    {
@@ -431,7 +433,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 	    nCharsExamined += szStart - szLineBuf;
 	    nCharsRead = VSIFReadL( szLineBuf, 1, nLineBufSize - 1, poGDS->fp );
-	    if( nCharsRead == 0 )
+	    if( nCharsRead == 0 || (bOnlySign && nCharsRead == 1) )
 	    {
 		VSIFree( szLineBuf );
 		CPLError( CE_Failure, CPLE_FileIO,
