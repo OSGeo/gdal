@@ -2247,7 +2247,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     int	nDataSize = GDALGetDataTypeSize(eType)/8;
     int nPixelOffset, nLineOffset;
     vsi_l_offset nBandOffset;
-    bool bIntOverflow = false;
     CPLAssert(nDataSize != 0);
     CPLAssert(nBands != 0);
 
@@ -2255,7 +2254,13 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->interleave = BIL;
         poDS->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
-        if (nSamples > INT_MAX / (nDataSize * nBands)) bIntOverflow = true;
+        if (nSamples > INT_MAX / (nDataSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nDataSize * nSamples;
@@ -2264,7 +2269,13 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->interleave = BIP;
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
-        if (nSamples > INT_MAX / (nDataSize * nBands)) bIntOverflow = true;
+        if (nSamples > INT_MAX / (nDataSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize * nBands;
         nBandOffset = nDataSize;
@@ -2273,18 +2284,16 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->interleave = BSQ;
         poDS->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
-        if (nSamples > INT_MAX / nDataSize) bIntOverflow = true;
+        if (nSamples > INT_MAX / nDataSize)
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nLineOffset * nLines;
-    }
-
-    if (bIntOverflow)
-    {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Int overflow occurred.");
-        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
