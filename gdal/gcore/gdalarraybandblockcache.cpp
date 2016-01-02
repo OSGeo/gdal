@@ -57,8 +57,8 @@ class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
             explicit GDALArrayBandBlockCache(GDALRasterBand* poBand);
            ~GDALArrayBandBlockCache();
 
-           virtual int              Init();
-           virtual int              IsInitOK();
+           virtual bool             Init();
+           virtual bool             IsInitOK();
            virtual CPLErr           FlushCache();
            virtual CPLErr           AdoptBlock( GDALRasterBlock * );
            virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
@@ -106,7 +106,7 @@ GDALArrayBandBlockCache::~GDALArrayBandBlockCache()
 /*                                  Init()                              */
 /************************************************************************/
 
-int GDALArrayBandBlockCache::Init()
+bool GDALArrayBandBlockCache::Init()
 {
     if( poBand->nBlocksPerRow < SUBBLOCK_SIZE/2 )
     {
@@ -121,7 +121,7 @@ int GDALArrayBandBlockCache::Init()
             {
                 poBand->ReportError( CE_Failure, CPLE_OutOfMemory,
                                     "Out of memory in InitBlockInfo()." );
-                return FALSE;
+                return false;
             }
         }
         else
@@ -129,7 +129,7 @@ int GDALArrayBandBlockCache::Init()
             poBand->ReportError( CE_Failure, CPLE_NotSupported,
                                  "Too many blocks : %d x %d",
                                  poBand->nBlocksPerRow, poBand->nBlocksPerColumn );
-            return FALSE;
+            return false;
         }
     }
     else
@@ -148,7 +148,7 @@ int GDALArrayBandBlockCache::Init()
             {
                 poBand->ReportError( CE_Failure, CPLE_OutOfMemory,
                                     "Out of memory in InitBlockInfo()." );
-                return FALSE;
+                return false;
             }
 
         }
@@ -157,18 +157,18 @@ int GDALArrayBandBlockCache::Init()
             poBand->ReportError( CE_Failure, CPLE_NotSupported,
                                  "Too many subblocks : %d x %d",
                                  nSubBlocksPerRow, nSubBlocksPerColumn );
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                             IsInitOK()                               */
 /************************************************************************/
 
-int GDALArrayBandBlockCache::IsInitOK()
+bool GDALArrayBandBlockCache::IsInitOK()
 {
     return (!bSubBlockingActive) ?
         u.papoBlocks != NULL : u.papapoBlocks != NULL;
