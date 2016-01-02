@@ -410,7 +410,8 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               goto error;
             }
             nCoords = atoi(ptrBeginningOfNumber);
-            if (nCoords == 0 || nCoords == -1)
+            if (nCoords == 0 || nCoords == -1 || nCoords >= INT_MAX / 16 ||
+                nCoords <= INT_MIN / 16 )
             {
               detailedErrorMsg = INVALID_GEOMETRY_TYPE;
               goto error;
@@ -452,7 +453,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               }
 
               record->tabCoords =
-                  (double(*)[2])VSI_MALLOC_VERBOSE(record->nCoords * 2 * sizeof(double));
+                  (double(*)[2])VSI_MALLOC2_VERBOSE(record->nCoords, 2 * sizeof(double));
               if (record->tabCoords == NULL)
               {
                   detailedErrorMsg = NOT_ENOUGH_MEMORY;
