@@ -536,6 +536,11 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
     if( bIsClosed )
         oSmoothPolyline.Close();
 
+    if(oSmoothPolyline.IsEmpty())
+    {
+        return OGRERR_FAILURE;
+    }
+    
     poGC->addGeometryDirectly( oSmoothPolyline.Tesselate() );
 
 /* -------------------------------------------------------------------- */
