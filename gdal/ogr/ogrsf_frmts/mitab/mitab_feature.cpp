@@ -6557,6 +6557,11 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             poCoordBlock = *ppoCoordBlock;
         else
             poCoordBlock = poMapFile->GetCoordBlock(poMPointHdr->m_nCoordBlockPtr);
+        if( poCoordBlock == NULL )
+        {
+            delete poGeometry;
+            return -1;
+        }
         poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, 
                                           m_nComprOrgY);
 
@@ -7287,7 +7292,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Region Component
      *----------------------------------------------------------------*/
-    if(poCollHdr->m_nNumRegSections > 0)
+    if(poCoordBlock != NULL && poCollHdr->m_nNumRegSections > 0)
     {
         //
         // Build fake coord section header to pass to TABRegion::ReadGeom...()
