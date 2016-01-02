@@ -421,7 +421,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
                                                const char* pszFIDColumnName,
                                                const char* pszIdentifier,
                                                const char* pszDescription );
-    void                SetDeferedSpatialIndexCreation( int bFlag )
+    void                SetDeferedSpatialIndexCreation( bool bFlag )
                                 { bDeferedSpatialIndexCreation = bFlag; }
 
     void                CreateSpatialIndexIfNecessary();
