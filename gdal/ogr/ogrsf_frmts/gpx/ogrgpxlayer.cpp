@@ -37,11 +37,15 @@ CPL_CVSID("$Id$");
 
 static const int FLD_TRACK_FID = 0;
 static const int FLD_TRACK_SEG_ID = 1;
+#ifdef HAVE_EXPAT
 static const int FLD_TRACK_PT_ID = 2;
+#endif
 static const int FLD_TRACK_NAME = 3;
 
 static const int FLD_ROUTE_FID = 0;
+#ifdef HAVE_EXPAT
 static const int FLD_ROUTE_PT_ID = 1;
+#endif
 static const int FLD_ROUTE_NAME = 2;
 
 /************************************************************************/
@@ -452,7 +456,7 @@ void OGRGPXLayer::ResetReading()
 #ifdef HAVE_EXPAT
 
 /************************************************************************/
-/*                        startElementCbk()                            */
+/*                        startElementCbk()                             */
 /************************************************************************/
 
 /** Replace ':' from XML NS element name by '_' more OGR friendly */
@@ -470,8 +474,9 @@ static char* OGRGPX_GetOGRCompatibleTagName(const char* pszName)
 void OGRGPXLayer::AddStrToSubElementValue(const char* pszStr)
 {
     int len = (int)strlen(pszStr);
-    char* pszNewSubElementValue = (char*)
-            VSI_REALLOC_VERBOSE(pszSubElementValue, nSubElementValueLen + len + 1);
+    char* pszNewSubElementValue = static_cast<char *>(
+            VSI_REALLOC_VERBOSE(
+                pszSubElementValue, nSubElementValueLen + len + 1) );
     if (pszNewSubElementValue == NULL)
     {
         XML_StopParser(oParser, XML_FALSE);
@@ -826,9 +831,10 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                     }
                 }
 
-                ppoFeatureTab = (OGRFeature**)
-                        CPLRealloc(ppoFeatureTab,
-                                    sizeof(OGRFeature*) * (nFeatureTabLength + 1));
+                ppoFeatureTab = static_cast<OGRFeature **>(
+                    CPLRealloc(
+                        ppoFeatureTab,
+                        sizeof(OGRFeature*) * (nFeatureTabLength + 1) ) );
                 ppoFeatureTab[nFeatureTabLength] = poFeature;
                 nFeatureTabLength++;
             }
@@ -848,12 +854,14 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             {
                 if( poFeature->GetGeometryRef() != NULL )
                 {
-                    poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
+                    poFeature->GetGeometryRef()->
+                        assignSpatialReference( poSRS );
                 }
 
-                ppoFeatureTab = (OGRFeature**)
-                        CPLRealloc(ppoFeatureTab,
-                                    sizeof(OGRFeature*) * (nFeatureTabLength + 1));
+                ppoFeatureTab = static_cast<OGRFeature **>(
+                    CPLRealloc(
+                        ppoFeatureTab,
+                        sizeof(OGRFeature*) * (nFeatureTabLength + 1) ) );
                 ppoFeatureTab[nFeatureTabLength] = poFeature;
                 nFeatureTabLength++;
             }
@@ -899,8 +907,10 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
         else if (bEleAs25D &&
                  strcmp(pszName, "ele") == 0 &&
                  lineString != NULL &&
-                 ((gpxGeomType == GPX_ROUTE && depthLevel == interestingDepthLevel + 2) ||
-                 (gpxGeomType == GPX_TRACK && depthLevel == interestingDepthLevel + 3)))
+                 ((gpxGeomType == GPX_ROUTE &&
+                   depthLevel == interestingDepthLevel + 2) ||
+                 (gpxGeomType == GPX_TRACK &&
+                  depthLevel == interestingDepthLevel + 3)))
         {
             poFeature->GetGeometryRef()->setCoordinateDimension(3);
 
@@ -911,7 +921,8 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                 double val = CPLAtof(pszSubElementValue);
                 int i = lineString->getNumPoints() - 1;
                 if (i >= 0)
-                    lineString->setPoint(i, lineString->getX(i), lineString->getY(i), val);
+                    lineString->setPoint(
+                        i, lineString->getX(i), lineString->getY(i), val);
             }
 
             CPLFree(pszSubElementName);
@@ -1433,7 +1444,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             return OGRERR_FAILURE;
         }
 
-        OGRPoint* point = (OGRPoint*)poGeom;
+        OGRPoint* point = reinterpret_cast<OGRPoint*>(poGeom);
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(&lat, &lon);
@@ -1477,26 +1488,30 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             case wkbLineString:
             case wkbLineString25D:
             {
-                line = (OGRLineString*)poGeom;
+                line = reinterpret_cast<OGRLineString *>(poGeom);
                 break;
             }
 
             case wkbMultiLineString:
             case wkbMultiLineString25D:
             {
-                int nGeometries = ((OGRGeometryCollection*)poGeom)->getNumGeometries ();
+                int nGeometries = reinterpret_cast<OGRGeometryCollection *>(
+                    poGeom)->getNumGeometries ();
                 if (nGeometries == 0)
                 {
                     line = NULL;
                 }
                 else if (nGeometries == 1)
                 {
-                    line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(0) );
+                    line = reinterpret_cast<OGRLineString *>(
+                        reinterpret_cast<OGRGeometryCollection*>(
+                            poGeom)->getGeometryRef(0) );
                 }
                 else
                 {
                     CPLError( CE_Failure, CPLE_NotSupported,
-                            "Multiline with more than one line is not supported for 'rte' element.\n");
+                              "Multiline with more than one line is not "
+                              "supported for 'rte' element." );
                     return OGRERR_FAILURE;
                 }
                 break;
@@ -1511,7 +1526,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             }
         }
 
-        int n = (line) ? line->getNumPoints() : 0;
+        const int n = (line) ? line->getNumPoints() : 0;
         poDS->PrintLine("<rte>");
         WriteFeatureAttributes(poFeatureIn);
         for( int i = 0; i < n; i++ )
@@ -1563,7 +1578,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             case wkbLineString:
             case wkbLineString25D:
             {
-                OGRLineString* line = (OGRLineString*)poGeom;
+                OGRLineString* line = reinterpret_cast<OGRLineString *>(poGeom);
                 int n = line->getNumPoints();
                 poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeatureIn);
@@ -1601,7 +1616,9 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                 WriteFeatureAttributes(poFeatureIn);
                 for( int j = 0; j < nGeometries; j++ )
                 {
-                    OGRLineString* line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(j) );
+                    OGRLineString* line = reinterpret_cast<OGRLineString *>(
+                        reinterpret_cast<OGRGeometryCollection *>(
+                            poGeom)->getGeometryRef(j) );
                     const int n = (line) ? line->getNumPoints() : 0;
                     poDS->PrintLine("  <trkseg>");
                     for( int i=0; i<n; i++ )
@@ -1695,7 +1712,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         poDS->nLastRteId = poFeatureIn->GetFieldAsInteger(FLD_ROUTE_FID);
 
-        OGRPoint* point = (OGRPoint*)poGeom;
+        OGRPoint* point = reinterpret_cast<OGRPoint *>(poGeom);
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(&lat, &lon);
@@ -1786,7 +1803,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
         poDS->nLastTrkId = poFeatureIn->GetFieldAsInteger(FLD_TRACK_FID);
         poDS->nLastTrkSegId = poFeatureIn->GetFieldAsInteger(FLD_TRACK_SEG_ID);
 
-        OGRPoint* point = (OGRPoint*)poGeom;
+        OGRPoint* point = reinterpret_cast<OGRPoint*>(poGeom);
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(&lat, &lon);
