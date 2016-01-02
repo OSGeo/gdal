@@ -393,6 +393,15 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else if ( poGDS->sHeader.nBitDepth == 4 )
         {
             GByte *pabyTemp = pabyTile;
+            
+            if( nTileBytes != (nBlockSize+1) / 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Tile has %d bytes, %d were expected",
+                         nTileBytes, (nBlockSize+1) / 2 );
+                CPLFree( pabyTile );
+                return CE_Failure;
+            }
 
             for( GUInt32 i = 0; i < nBlockSize; i++ )
             {
@@ -408,7 +417,16 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else if ( poGDS->sHeader.nBitDepth == 1 )
         {
             GByte *pabyTemp = pabyTile;
-
+            
+            if( nTileBytes != (nBlockSize+7) / 8 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Tile has %d bytes, %d were expected",
+                         nTileBytes, (nBlockSize+7) / 8 );
+                CPLFree( pabyTile );
+                return CE_Failure;
+            }
+            
             for( GUInt32 i = 0; i < nBlockSize; i++ )
             {
                 switch ( i & 0x7 )
