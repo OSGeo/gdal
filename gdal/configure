@@ -4691,6 +4691,42 @@ fi
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -fno-operator-names" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -fno-operator-names... " >&6; }
+if ${ax_cv_check_cflags___Werror__fno_operator_names+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -fno-operator-names"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__fno_operator_names=yes
+else
+  ax_cv_check_cflags___Werror__fno_operator_names=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__fno_operator_names" >&5
+$as_echo "$ax_cv_check_cflags___Werror__fno_operator_names" >&6; }
+if test "x$ax_cv_check_cflags___Werror__fno_operator_names" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -fno-operator-names"
+else
+  :
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wno-sign-compare" >&5
 $as_echo_n "checking whether C compiler accepts -Werror -Wno-sign-compare... " >&6; }
 if ${ax_cv_check_cflags___Werror__Wno_sign_compare+:} false; then :
@@ -4725,6 +4761,8 @@ if test "x$ax_cv_check_cflags___Werror__Wno_sign_compare" = xyes; then :
 else
   :
 fi
+
+
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -4904,6 +4942,42 @@ fi
 $as_echo "$ax_cv_check_cxxflags___Werror__Woverloaded_virtual" >&6; }
 if test "x$ax_cv_check_cxxflags___Werror__Woverloaded_virtual" = xyes; then :
   CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"
+else
+  :
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -fno-operator-names" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -fno-operator-names... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__fno_operator_names+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -fno-operator-names"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__fno_operator_names=yes
+else
+  ax_cv_check_cxxflags___Werror__fno_operator_names=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__fno_operator_names" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__fno_operator_names" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__fno_operator_names" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"
 else
   :
 fi
