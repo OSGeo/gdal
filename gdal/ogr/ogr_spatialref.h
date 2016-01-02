@@ -539,6 +539,9 @@ class CPL_DLL OGRSpatialReference
     /** Quadrilateralized Spherical Cube */
     OGRErr      SetQSC(double dfCenterLat, double dfCenterLong);
 
+    /** Spherical, Cross-track, Height */
+    OGRErr      SetSCH( double dfPegLat, double dfPegLong,
+                        double dfPegHeading, double dfPegHgt);
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
                                const char *pszOverrideUnitName = NULL,
