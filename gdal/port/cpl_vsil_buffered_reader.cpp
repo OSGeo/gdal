@@ -41,7 +41,7 @@
 
 CPL_CVSID("$Id$");
 
-class VSIBufferedReaderHandle : public VSIVirtualHandle
+class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poBaseHandle;
     GByte*            pabyBuffer;

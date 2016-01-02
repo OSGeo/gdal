@@ -69,7 +69,7 @@ static void VSIStdinInit()
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinFilesystemHandler : public VSIFilesystemHandler
+class VSIStdinFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
                               VSIStdinFilesystemHandler();
@@ -87,7 +87,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinHandle : public VSIVirtualHandle
+class VSIStdinHandle CPL_FINAL : public VSIVirtualHandle
 {
   private:
     GUIntBig nCurOff;

@@ -121,7 +121,7 @@ typedef struct
     vsi_l_offset  out;
 } GZipSnapshot;
 
-class VSIGZipHandle : public VSIVirtualHandle
+class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poBaseHandle;
     vsi_l_offset      m_offset;
@@ -188,7 +188,7 @@ class VSIGZipHandle : public VSIVirtualHandle
 };
 
 
-class VSIGZipFilesystemHandler : public VSIFilesystemHandler 
+class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
 {
     CPLMutex* hMutex;
     VSIGZipHandle* poHandleLastGZipFile;
@@ -1002,7 +1002,7 @@ int VSIGZipHandle::Close()
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIGZipWriteHandle : public VSIVirtualHandle
+class VSIGZipWriteHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle*  m_poBaseHandle;
     z_stream           sStream;
@@ -1615,7 +1615,7 @@ void VSIInstallGZipFileHandler(void)
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIZipEntryFileOffset : public VSIArchiveEntryFileOffset
+class VSIZipEntryFileOffset CPL_FINAL : public VSIArchiveEntryFileOffset
 {
 public:
         unz_file_pos m_file_pos;
@@ -1633,7 +1633,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIZipReader : public VSIArchiveReader
+class VSIZipReader CPL_FINAL : public VSIArchiveReader
 {
     private:
         unzFile unzF;
@@ -1763,7 +1763,7 @@ int VSIZipReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 
 class VSIZipWriteHandle;
 
-class VSIZipFilesystemHandler : public VSIArchiveFilesystemHandler 
+class VSIZipFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler 
 {
     std::map<CPLString, VSIZipWriteHandle*> oMapZipWriteHandles;
     VSIVirtualHandle *OpenForWrite_unlocked( const char *pszFilename,
@@ -1795,7 +1795,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIZipWriteHandle : public VSIVirtualHandle
+class VSIZipWriteHandle CPL_FINAL : public VSIVirtualHandle
 {
    VSIZipFilesystemHandler *m_poFS;
    void                    *m_hZIP;

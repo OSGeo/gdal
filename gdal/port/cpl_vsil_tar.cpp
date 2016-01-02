@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-class VSITarEntryFileOffset : public VSIArchiveEntryFileOffset
+class VSITarEntryFileOffset CPL_FINAL : public VSIArchiveEntryFileOffset
 {
 public:
         GUIntBig m_nOffset;
@@ -77,7 +77,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSITarReader : public VSIArchiveReader
+class VSITarReader CPL_FINAL : public VSIArchiveReader
 {
     private:
         VSILFILE* fp;
@@ -344,7 +344,7 @@ int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 /* ==================================================================== */
 /************************************************************************/
 
-class VSITarFilesystemHandler : public VSIArchiveFilesystemHandler 
+class VSITarFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler 
 {
 public:
     virtual const char* GetPrefix() { return "/vsitar"; }

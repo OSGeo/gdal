@@ -3034,7 +3034,7 @@ int VSICurlUninstallReadCbk(VSILFILE* fp)
 /*                         VSIS3FSHandler                               */
 /************************************************************************/
 
-class VSIS3FSHandler: public VSICurlFilesystemHandler
+class VSIS3FSHandler CPL_FINAL : public VSICurlFilesystemHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
@@ -3062,7 +3062,7 @@ public:
 /*                            VSIS3Handle                               */
 /************************************************************************/
 
-class VSIS3Handle: public VSICurlHandle
+class VSIS3Handle CPL_FINAL : public VSICurlHandle
 {
     VSIS3HandleHelper* m_poS3HandleHelper;
 
@@ -3082,7 +3082,7 @@ class VSIS3Handle: public VSICurlHandle
 /*                            VSIS3WriteHandle                          */
 /************************************************************************/
 
-class VSIS3WriteHandle: public VSIVirtualHandle
+class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIS3FSHandler     *m_poFS;
     CPLString           m_osFilename;

@@ -49,7 +49,7 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIWin32FilesystemHandler : public VSIFilesystemHandler 
+class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
 {
 public:
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
@@ -71,7 +71,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIWin32Handle : public VSIVirtualHandle
+class VSIWin32Handle CPL_FINAL : public VSIVirtualHandle
 {
   public:
     HANDLE       hFile;
