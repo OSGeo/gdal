@@ -2034,7 +2034,7 @@ FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParentIn) :
 /*                      FileGDBOGRGeometryConverterImpl                 */
 /************************************************************************/
 
-class FileGDBOGRGeometryConverterImpl : public FileGDBOGRGeometryConverter
+class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConverter
 {
         const FileGDBGeomField      *poGeomField;
         GUInt32                     *panPointCount;

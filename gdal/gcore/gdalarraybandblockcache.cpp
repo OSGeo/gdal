@@ -42,9 +42,9 @@ CPL_CVSID("$Id$");
 /*                        GDALArrayBandBlockCache                       */
 /* ******************************************************************** */
 
-class GDALArrayBandBlockCache: public GDALAbstractBandBlockCache
+class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
 {
-    int               bSubBlockingActive;
+    bool              bSubBlockingActive;
     int               nSubBlocksPerRow;
     int               nSubBlocksPerColumn;
     union
@@ -81,7 +81,7 @@ GDALAbstractBandBlockCache* GDALArrayBandBlockCacheCreate(GDALRasterBand* poBand
 
 GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand* poBandIn) :
     GDALAbstractBandBlockCache(poBandIn),
-    bSubBlockingActive(FALSE),
+    bSubBlockingActive(false),
     nSubBlocksPerRow(0),
     nSubBlocksPerColumn(0)
 {
@@ -110,7 +110,7 @@ int GDALArrayBandBlockCache::Init()
 {
     if( poBand->nBlocksPerRow < SUBBLOCK_SIZE/2 )
     {
-        bSubBlockingActive = FALSE;
+        bSubBlockingActive = false;
 
         if (poBand->nBlocksPerRow < INT_MAX / poBand->nBlocksPerColumn)
         {
@@ -134,7 +134,7 @@ int GDALArrayBandBlockCache::Init()
     }
     else
     {
-        bSubBlockingActive = TRUE;
+        bSubBlockingActive = true;
 
         nSubBlocksPerRow = DIV_ROUND_UP(poBand->nBlocksPerRow, SUBBLOCK_SIZE);
         nSubBlocksPerColumn = DIV_ROUND_UP(poBand->nBlocksPerColumn, SUBBLOCK_SIZE);
@@ -251,11 +251,13 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 /* -------------------------------------------------------------------- */
     if( !bSubBlockingActive && u.papoBlocks != NULL )
     {
-        for( int iY = 0; iY < poBand->nBlocksPerColumn; iY++ )
+        const int nBlocksPerColumn = poBand->nBlocksPerColumn;
+        const int nBlocksPerRow = poBand->nBlocksPerRow;
+        for( int iY = 0; iY < nBlocksPerColumn; iY++ )
         {
-            for( int iX = 0; iX < poBand->nBlocksPerRow; iX++ )
+            for( int iX = 0; iX < nBlocksPerRow; iX++ )
             {
-                if( u.papoBlocks[iX + iY*poBand->nBlocksPerRow] != NULL )
+                if( u.papoBlocks[iX + iY*nBlocksPerRow] != NULL )
                 {
                     CPLErr eErr = FlushBlock( iX, iY, eGlobalErr == CE_None );
 

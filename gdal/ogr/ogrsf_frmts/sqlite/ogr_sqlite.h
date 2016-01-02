@@ -154,7 +154,7 @@ enum OGRSpatialiteGeomType
 /*                        OGRSQLiteGeomFieldDefn                        */
 /************************************************************************/
 
-class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
+class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
 {
     public:
         OGRSQLiteGeomFieldDefn( const char* pszNameIn, int iGeomColIn ) :
@@ -181,7 +181,7 @@ class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
 /*                        OGRSQLiteFeatureDefn                          */
 /************************************************************************/
 
-class OGRSQLiteFeatureDefn : public OGRFeatureDefn
+class OGRSQLiteFeatureDefn CPL_FINAL : public OGRFeatureDefn
 {
     public:
         OGRSQLiteFeatureDefn( const char * pszName = NULL ) :
@@ -647,7 +647,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 /*                   OGRSQLiteSingleFeatureLayer                        */
 /************************************************************************/
 
-class OGRSQLiteSingleFeatureLayer : public OGRLayer
+class OGRSQLiteSingleFeatureLayer CPL_FINAL : public OGRLayer
 {
   private:
     int                 nVal;
@@ -737,7 +737,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 /*                         OGRSQLiteDataSource                          */
 /************************************************************************/
 
-class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
+class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
 {
     OGRSQLiteLayer    **papoLayers;
     int                 nLayers;

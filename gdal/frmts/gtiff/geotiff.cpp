@@ -191,7 +191,7 @@ typedef struct
     int           bReady;
 } GTiffCompressionJob;
 
-class GTiffDataset : public GDALPamDataset
+class GTiffDataset CPL_FINAL : public GDALPamDataset
 {
     friend class GTiffRasterBand;
     friend class GTiffSplitBand;
@@ -516,7 +516,7 @@ class GTiffDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffJPEGOverviewDS : public GDALDataset
+class GTiffJPEGOverviewDS CPL_FINAL : public GDALDataset
 {
         friend class GTiffJPEGOverviewBand;
         GTiffDataset* poParentDS;
@@ -545,7 +545,7 @@ class GTiffJPEGOverviewDS : public GDALDataset
                                GDALRasterIOExtraArg* psExtraArg);
 };
 
-class GTiffJPEGOverviewBand : public GDALRasterBand
+class GTiffJPEGOverviewBand CPL_FINAL : public GDALRasterBand
 {
     public:
         GTiffJPEGOverviewBand(GTiffJPEGOverviewDS* poDS, int nBand);
@@ -966,54 +966,54 @@ public:
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg );
+                                  GDALRasterIOExtraArg* psExtraArg ) CPL_FINAL;
 
-    virtual const char *GetDescription() const;
-    virtual void        SetDescription( const char * );
+    virtual const char *GetDescription() const CPL_FINAL;
+    virtual void        SetDescription( const char * ) CPL_FINAL;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual CPLErr          SetColorTable( GDALColorTable * );
-    virtual double	    GetNoDataValue( int * );
-    virtual CPLErr	    SetNoDataValue( double );
-    virtual CPLErr DeleteNoDataValue();
+    virtual GDALColorInterp GetColorInterpretation() /*CPL_FINAL*/;
+    virtual GDALColorTable *GetColorTable() /*CPL_FINAL*/;
+    virtual CPLErr          SetColorTable( GDALColorTable * ) CPL_FINAL;
+    virtual double	    GetNoDataValue( int * ) CPL_FINAL;
+    virtual CPLErr	    SetNoDataValue( double ) CPL_FINAL;
+    virtual CPLErr DeleteNoDataValue() CPL_FINAL;
 
-    virtual double GetOffset( int *pbSuccess = NULL );
-    virtual CPLErr SetOffset( double dfNewValue );
-    virtual double GetScale( int *pbSuccess = NULL );
-    virtual CPLErr SetScale( double dfNewValue );
-    virtual const char* GetUnitType();
-    virtual CPLErr SetUnitType( const char *pszNewValue );
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual double GetOffset( int *pbSuccess = NULL ) CPL_FINAL;
+    virtual CPLErr SetOffset( double dfNewValue ) CPL_FINAL;
+    virtual double GetScale( int *pbSuccess = NULL ) CPL_FINAL;
+    virtual CPLErr SetScale( double dfNewValue ) CPL_FINAL;
+    virtual const char* GetUnitType() CPL_FINAL;
+    virtual CPLErr SetUnitType( const char *pszNewValue ) CPL_FINAL;
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_FINAL;
 
-    virtual char      **GetMetadataDomainList();
-    virtual CPLErr  SetMetadata( char **, const char * = "" );
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() CPL_FINAL;
+    virtual CPLErr  SetMetadata( char **, const char * = "" ) CPL_FINAL;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) CPL_FINAL;
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
-                                     const char* = "" );
+                                     const char* = "" ) CPL_FINAL;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
-    virtual int    GetOverviewCount();
-    virtual GDALRasterBand *GetOverview( int );
+                                         const char * pszDomain = "" ) CPL_FINAL;
+    virtual int    GetOverviewCount() CPL_FINAL;
+    virtual GDALRasterBand *GetOverview( int ) CPL_FINAL;
 
-    virtual GDALRasterBand *GetMaskBand();
-    virtual int             GetMaskFlags();
-    virtual CPLErr          CreateMaskBand( int nFlags );
+    virtual GDALRasterBand *GetMaskBand() CPL_FINAL;
+    virtual int             GetMaskFlags() CPL_FINAL;
+    virtual CPLErr          CreateMaskBand( int nFlags ) CPL_FINAL;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
                                                GIntBig *pnLineSpace,
-                                               char **papszOptions );
+                                               char **papszOptions ) CPL_FINAL;
 
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
                           int nBuckets, GUIntBig * panHistogram,
                           int bIncludeOutOfRange, int bApproxOK,
-                          GDALProgressFunc, void *pProgressData );
+                          GDALProgressFunc, void *pProgressData ) CPL_FINAL;
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                         int *pnBuckets, GUIntBig ** ppanHistogram,
                                         int bForce,
-                                        GDALProgressFunc, void *pProgressData);
+                                        GDALProgressFunc, void *pProgressData) CPL_FINAL;
 };
 
 /************************************************************************/
@@ -1179,7 +1179,7 @@ GTiffRasterBand::~GTiffRasterBand()
 /*                        FetchBufferDirectIO                           */
 /************************************************************************/
 
-class FetchBufferDirectIO
+class FetchBufferDirectIO CPL_FINAL
 {
     VSILFILE*    fp;
     GByte       *pTempBuffer;
@@ -1864,7 +1864,7 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*                        FetchBufferVirtualMemIO                       */
 /************************************************************************/
 
-class FetchBufferVirtualMemIO
+class FetchBufferVirtualMemIO CPL_FINAL
 {
     const GByte* pabySrcData;
     size_t       nMappingSize;
@@ -4756,7 +4756,7 @@ GDALRasterBand *GTiffRasterBand::GetMaskBand()
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffSplitBand : public GTiffRasterBand
+class GTiffSplitBand CPL_FINAL : public GTiffRasterBand
 {
     friend class GTiffDataset;
 
@@ -4897,7 +4897,7 @@ CPLErr GTiffSplitBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffRGBABand : public GTiffRasterBand
+class GTiffRGBABand CPL_FINAL : public GTiffRasterBand
 {
     friend class GTiffDataset;
 
@@ -5832,7 +5832,7 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffSplitBitmapBand : public GTiffBitmapBand
+class GTiffSplitBitmapBand CPL_FINAL : public GTiffBitmapBand
 {
     friend class GTiffDataset;
 
@@ -9510,7 +9510,7 @@ int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                            GTIFFErrorHandler()                       */
 /************************************************************************/
 
-class GTIFFErrorStruct
+class GTIFFErrorStruct CPL_FINAL
 {
 public:
     CPLErr type;

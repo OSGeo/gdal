@@ -767,16 +767,19 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #if 1
 
 #if __cplusplus >= 201103L
+#define CPL_FINAL final
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
     ClassName &operator=( const ClassName & ) = delete;
 #else
+#define CPL_FINAL
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ); \
     ClassName &operator=( const ClassName & );
 #endif
 
 #else
+#define CPL_FINAL
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName)
 #endif
 #endif /* __cplusplus */

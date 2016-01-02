@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /*                        GDALHashSetBandBlockCache                     */
 /* ******************************************************************** */
 
-class GDALHashSetBandBlockCache: public GDALAbstractBandBlockCache
+class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
 {
     CPLHashSet     *hSet;
     CPLLock        *hLock;

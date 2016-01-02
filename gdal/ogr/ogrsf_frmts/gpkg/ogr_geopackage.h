@@ -60,7 +60,7 @@ typedef enum
     GPKG_TF_WEBP
 } GPKGTileFormat;
 
-class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
+class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
 {
     friend class GDALGeoPackageRasterBand;
     friend class OGRGeoPackageTableLayer;
@@ -275,7 +275,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
 /*                        GDALGeoPackageRasterBand                      */
 /************************************************************************/
 
-class GDALGeoPackageRasterBand: public GDALPamRasterBand
+class GDALGeoPackageRasterBand CPL_FINAL: public GDALPamRasterBand
 {
     public:
                                 GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
@@ -350,7 +350,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 /*                        OGRGeoPackageTableLayer                       */
 /************************************************************************/
 
-class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
+class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 {
     char*                       m_pszTableName;
     int                         m_iSrs;
@@ -474,7 +474,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 /*                         OGRGeoPackageSelectLayer                     */
 /************************************************************************/
 
-class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
+class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
 {
     OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 
