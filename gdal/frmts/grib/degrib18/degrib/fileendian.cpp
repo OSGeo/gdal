@@ -330,7 +330,7 @@ int fileBitRead (void *Dst, size_t dstLen, uShort2 num_bits, FILE * fp,
                  uChar * gbuf, sChar * gbufLoc)
 {
    static uChar BitRay[] = { 0, 1, 3, 7, 15, 31, 63, 127, 255 };
-   register uChar buf_loc, buf, *ptr;
+   uChar buf_loc, buf, *ptr;
    uChar *dst = (uChar*)Dst;
    size_t num_bytes;
    uChar dst_loc;

@@ -5497,7 +5497,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Translate 1bit data to eight bit.                               */
 /* -------------------------------------------------------------------- */
         int	  iDstOffset=0, iLine;
-        register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
+        const GByte * const pabyBlockBuf = poGDS->pabyBlockBuf;
 
         for( iLine = 0; iLine < nBlockYSize; iLine++ )
         {
@@ -5684,7 +5684,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
-        register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
+        const GByte * const pabyBlockBuf = poGDS->pabyBlockBuf;
+        const int nBitsPerSample = poGDS->nBitsPerSample;
         iPixel = 0;
 
         for( iY = 0; iY < nBlockYSize; iY++ )
@@ -5695,15 +5696,15 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 int  nOutWord = 0;
 
-                for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
+                for( iBit = 0; iBit < nBitsPerSample; iBit++ )
                 {
                     if( pabyBlockBuf[iBitOffset>>3]
                         & (0x80 >>(iBitOffset & 7)) )
-                        nOutWord |= (1 << (poGDS->nBitsPerSample - 1 - iBit));
+                        nOutWord |= (1 << (nBitsPerSample - 1 - iBit));
                     iBitOffset++;
                 }
 
-                iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
+                iBitOffset= iBitOffset + iPixelBitSkip - nBitsPerSample;
 
                 if( eDataType == GDT_Byte )
                     ((GByte *) pImage)[iPixel++] = (GByte) nOutWord;
