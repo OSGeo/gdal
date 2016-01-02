@@ -688,6 +688,9 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
             pasNodes[nNodes].nID = nID;
             pasNodes[nNodes].dfLat = .000000001 * (psCtxt->nLatOffset + (psCtxt->nGranularity * nLat));
             pasNodes[nNodes].dfLon = .000000001 * (psCtxt->nLonOffset + (psCtxt->nGranularity * nLon));
+            if( pasNodes[nNodes].dfLon < -180 || pasNodes[nNodes].dfLon > 180 ||
+                pasNodes[nNodes].dfLat < -90 || pasNodes[nNodes].dfLat > 90 )
+                GOTO_END_ERROR;
             pasNodes[nNodes].sInfo.bTimeStampIsStr = FALSE;
             pasNodes[nNodes].sInfo.ts.nTimeStamp = nTimeStamp;
             pasNodes[nNodes].sInfo.nChangeset = nChangeset;
@@ -906,6 +909,10 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
             SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
         }
     }
+
+    if( sNode.dfLon < -180 || sNode.dfLon > 180 ||
+        sNode.dfLat < -90 || sNode.dfLat > 90 )
+        GOTO_END_ERROR;
 
     if( pabyData != pabyDataLimit )
         GOTO_END_ERROR;
@@ -2029,13 +2036,23 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
     if( psCtxt->bInNode && strcmp(pszName, "node") == 0 )
     {
-        psCtxt->pasNodes[0].nTags = psCtxt->nTags;
-        psCtxt->pasNodes[0].pasTags = psCtxt->pasTags;
+        if( psCtxt->pasNodes[0].dfLon < -180 || psCtxt->pasNodes[0].dfLon > 180 ||
+            psCtxt->pasNodes[0].dfLat < -90 || psCtxt->pasNodes[0].dfLat > 90 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid lon=%f lat=%f",
+                     psCtxt->pasNodes[0].dfLon,
+                     psCtxt->pasNodes[0].dfLat);
+        }
+        else
+        {
+            psCtxt->pasNodes[0].nTags = psCtxt->nTags;
+            psCtxt->pasNodes[0].pasTags = psCtxt->pasTags;
 
-        psCtxt->pfnNotifyNodes(1, psCtxt->pasNodes, psCtxt, psCtxt->user_data);
+            psCtxt->pfnNotifyNodes(1, psCtxt->pasNodes, psCtxt, psCtxt->user_data);
 
-        psCtxt->bHasFoundFeature = TRUE;
-
+            psCtxt->bHasFoundFeature = TRUE;
+        }
         psCtxt->bInNode = FALSE;
     }
 
