@@ -29,8 +29,8 @@
 
 #include "ogr_gpx.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "cpl_string.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -378,19 +378,20 @@ OGRGPXLayer::~OGRGPXLayer()
 
 #ifdef HAVE_EXPAT
 
-static void XMLCALL startElementCbk(void *pUserData, const char *pszName, const char **ppszAttr)
+static void XMLCALL startElementCbk(
+    void *pUserData, const char *pszName, const char **ppszAttr)
 {
-    ((OGRGPXLayer*)pUserData)->startElementCbk(pszName, ppszAttr);
+    static_cast<OGRGPXLayer *>(pUserData)->startElementCbk(pszName, ppszAttr);
 }
 
 static void XMLCALL endElementCbk(void *pUserData, const char *pszName)
 {
-    ((OGRGPXLayer*)pUserData)->endElementCbk(pszName);
+    static_cast<OGRGPXLayer *>(pUserData)->endElementCbk(pszName);
 }
 
 static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
 {
-    ((OGRGPXLayer*)pUserData)->dataHandlerCbk(data, nLen);
+    static_cast<OGRGPXLayer *>(pUserData)->dataHandlerCbk(data, nLen);
 }
 
 #endif
@@ -732,7 +733,6 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         }
         else if (depthLevel == interestingDepthLevel + 2 && inLink)
         {
-            char szFieldName[32];
             CPLFree(pszSubElementName);
             pszSubElementName = NULL;
             iCurrentField = -1;
@@ -740,12 +740,14 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             {
                 if (strcmp(pszName, "type") == 0)
                 {
+                    char szFieldName[32];
                     snprintf(szFieldName, sizeof(szFieldName), "link%d_type", iCountLink);
                     iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
                     pszSubElementName = CPLStrdup(pszName);
                 }
                 else if (strcmp(pszName, "text") == 0)
                 {
+                    char szFieldName[32];
                     snprintf(szFieldName, sizeof(szFieldName), "link%d_text", iCountLink);
                     iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
                     pszSubElementName = CPLStrdup(pszName);
@@ -1359,9 +1361,9 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double*
         }
 
         if (*pdfLongitude > 180)
-            *pdfLongitude -= ((int) ((*pdfLongitude+180)/360)*360);
+            *pdfLongitude -= (static_cast<int> ((*pdfLongitude+180)/360)*360);
         else if (*pdfLongitude < -180)
-            *pdfLongitude += ((int) (180 - *pdfLongitude)/360)*360;
+            *pdfLongitude += (static_cast<int> (180 - *pdfLongitude)/360)*360;
 
         return OGRERR_NONE;
     }
@@ -1553,7 +1555,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                 poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeatureIn);
                 poDS->PrintLine("  <trkseg>");
-                for( int  i =0;i<n;i++)
+                for( int  i = 0; i < n; i++ )
                 {
                     double lat = line->getY(i);
                     double lon = line->getX(i);
@@ -1561,10 +1563,12 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                     poDS->AddCoord(lon, lat);
                     OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
                     OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
-                    poDS->PrintLine("    <trkpt lat=\"%s\" lon=\"%s\">", szLat, szLon);
+                    poDS->PrintLine( "    <trkpt lat=\"%s\" lon=\"%s\">",
+                                     szLat, szLon );
                     if (line->getGeometryType() == wkbLineString25D)
                     {
-                        OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
+                        OGRFormatDouble( szAlt, sizeof(szAlt),
+                                         line->getZ(i), '.');
                         poDS->PrintLine("        <ele>%s</ele>", szAlt);
                     }
                     poDS->PrintLine("    </trkpt>");
@@ -1577,16 +1581,17 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             case wkbMultiLineString:
             case wkbMultiLineString25D:
             {
-                int nGeometries = ((OGRGeometryCollection*)poGeom)->getNumGeometries ();
+                const int nGeometries
+                    = static_cast<OGRGeometryCollection*>(poGeom)->
+                        getNumGeometries();
                 poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeatureIn);
                 for( int j = 0; j < nGeometries; j++ )
                 {
                     OGRLineString* line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(j) );
-                    int n = (line) ? line->getNumPoints() : 0;
-                    int i;
+                    const int n = (line) ? line->getNumPoints() : 0;
                     poDS->PrintLine("  <trkseg>");
-                    for(i=0;i<n;i++)
+                    for( int i=0; i<n; i++ )
                     {
                         double lat = line->getY(i);
                         double lon = line->getX(i);
@@ -1594,10 +1599,12 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                         poDS->AddCoord(lon, lat);
                         OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
                         OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
-                        poDS->PrintLine("    <trkpt lat=\"%s\" lon=\"%s\">", szLat, szLon);
+                        poDS->PrintLine( "    <trkpt lat=\"%s\" lon=\"%s\">",
+                                         szLat, szLon);
                         if (line->getGeometryType() == wkbLineString25D)
                         {
-                            OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
+                            OGRFormatDouble(szAlt, sizeof(szAlt),
+                                            line->getZ(i), '.');
                             poDS->PrintLine("        <ele>%s</ele>", szAlt);
                         }
                         poDS->PrintLine("    </trkpt>");
@@ -1689,7 +1696,8 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
     }
     else
     {
-        if (poDS->GetLastGPXGeomTypeWritten() == GPX_ROUTE_POINT && poDS->nLastRteId != -1)
+        if( poDS->GetLastGPXGeomTypeWritten() == GPX_ROUTE_POINT &&
+            poDS->nLastRteId != -1 )
         {
             poDS->PrintLine("</rte>");
             poDS->nLastRteId = -1;
@@ -1838,19 +1846,24 @@ int OGRGPXLayer::TestCapability( const char * pszCap )
 
 #ifdef HAVE_EXPAT
 
-static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName, const char **ppszAttr)
+static void XMLCALL startElementLoadSchemaCbk(
+    void *pUserData, const char *pszName, const char **ppszAttr )
 {
-    ((OGRGPXLayer*)pUserData)->startElementLoadSchemaCbk(pszName, ppszAttr);
+    static_cast<OGRGPXLayer *>(pUserData)->
+        startElementLoadSchemaCbk(pszName, ppszAttr);
 }
 
-static void XMLCALL endElementLoadSchemaCbk(void *pUserData, const char *pszName)
+static void XMLCALL endElementLoadSchemaCbk(
+    void *pUserData, const char *pszName )
 {
-    ((OGRGPXLayer*)pUserData)->endElementLoadSchemaCbk(pszName);
+    static_cast<OGRGPXLayer *>(pUserData)->
+        endElementLoadSchemaCbk(pszName);
 }
 
-static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, int nLen)
+static void XMLCALL dataHandlerLoadSchemaCbk(
+    void *pUserData, const char *data, int nLen )
 {
-    ((OGRGPXLayer*)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
+    static_cast<OGRGPXLayer *>(pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
 }
 
 

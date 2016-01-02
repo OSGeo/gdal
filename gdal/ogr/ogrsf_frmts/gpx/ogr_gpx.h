@@ -186,7 +186,10 @@ class OGRGPXDataSource : public OGRDataSource
     int                 bIsBackSeekable;
     const char         *pszEOL;
     int                 nOffsetBounds;
-    double              dfMinLat, dfMinLon, dfMaxLat, dfMaxLon;
+    double              dfMinLat;
+    double              dfMinLon;
+    double              dfMaxLat;
+    double              dfMaxLon;
 
     GPXGeometryType     lastGPXGeomTypeWritten;
 
