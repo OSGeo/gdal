@@ -124,7 +124,7 @@ int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon)
     dfLat = 0;
     dfLon = 0;
 
-    int nCurInt = 0;
+    GUIntBig nCurInt = 0;
     double dfExp = 1.;
     int bHasExp = FALSE;
     int nCurPart = DEGREE;
@@ -135,7 +135,9 @@ int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon)
     {
         if (c >= '0' && c <= '9')
         {
-            nCurInt = nCurInt * 10 + c - '0';
+            nCurInt = nCurInt * 10U + (unsigned char)c - '0';
+            if( nCurInt >> 60 ) // to avoid uint64 overflow at next iteration
+                return FALSE;
             if (bHasExp)
                 dfExp *= 10;
         }
