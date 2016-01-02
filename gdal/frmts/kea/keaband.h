@@ -32,9 +32,6 @@
 #define KEABAND_H
 
 #include "gdal_pam.h"
-#if defined(USE_GCC_VISIBILITY_FLAG) && !defined(DllExport)
-#define DllExport CPL_DLL
-#endif
 #include "keadataset.h"
 
 class KEAOverview;

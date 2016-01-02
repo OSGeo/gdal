@@ -32,17 +32,6 @@
 #include "keaband.h"
 #include "keacopy.h"
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
-#endif
-
-#include "libkea/KEACommon.h"
-
-#ifdef _MSC_VER
-#pragma warning( pop ) 
-#endif
-
 // Function for converting a libkea type into a GDAL type
 GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType )
 {
