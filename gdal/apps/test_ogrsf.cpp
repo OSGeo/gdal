@@ -233,10 +233,16 @@ static void ThreadFunction( void* user_data )
 {
     ThreadContext* psContext = (ThreadContext* )user_data;
     psContext->bRet = TRUE;
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    while (__AFL_LOOP(1000)) {
+#endif
     for( int iLoop = 0; psContext->bRet && iLoop < nLoops; iLoop ++ )
     {
         ThreadFunctionInternal(psContext);
     }
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    }
+#endif
 }
 
 /************************************************************************/
