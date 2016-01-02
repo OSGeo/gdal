@@ -1580,7 +1580,7 @@ void VSIInstallCurlStreamingFileHandler(void)
 /*                       VSIS3StreamingFSHandler                        */
 /************************************************************************/
 
-class VSIS3StreamingFSHandler: public VSICurlStreamingFSHandler
+class VSIS3StreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
@@ -1631,7 +1631,7 @@ void VSIS3StreamingFSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3Handle
 /*                            VSIS3StreamingHandle                      */
 /************************************************************************/
 
-class VSIS3StreamingHandle: public VSICurlStreamingHandle
+class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
 {
     VSIS3HandleHelper* m_poS3HandleHelper;
 
