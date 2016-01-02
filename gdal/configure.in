@@ -65,7 +65,13 @@ AX_CHECK_COMPILE_FLAG([-Werror -Werror=declaration-after-statement], [C_WFLAGS="
 dnl -Wclobbered is not reliable on most gcc versions
 dnl AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
 
+dnl Forbid use of 'or', 'and', ... alias operators
+AX_CHECK_COMPILE_FLAG([-Werror -fno-operator-names], [C_WFLAGS="$C_WFLAGS -fno-operator-names"])
+
 AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
+
+dnl C++ specific stuff
+
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
@@ -74,6 +80,9 @@ AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wn
 
 dnl Clang enables -Woverloaded-virtual if -Wall is defined, but not GCC
 AX_CHECK_COMPILE_FLAG([-Werror -Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"])
+
+dnl Forbid use of 'or', 'and', ... alias operators
+AX_CHECK_COMPILE_FLAG([-Werror -fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"])
 
 AC_LANG_POP([C++])
 
