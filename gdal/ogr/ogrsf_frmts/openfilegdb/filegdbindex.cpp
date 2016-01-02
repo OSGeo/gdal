@@ -63,7 +63,7 @@ static int FileGDBOGRDateToDoubleDate( const OGRField* psField, double *pdfVal )
 /*                        FileGDBTrivialIterator                        */
 /************************************************************************/
 
-class FileGDBTrivialIterator : public FileGDBIterator
+class FileGDBTrivialIterator CPL_FINAL : public FileGDBIterator
 {
         FileGDBIterator            *poParentIter;
         FileGDBTable               *poTable;
@@ -95,7 +95,7 @@ class FileGDBTrivialIterator : public FileGDBIterator
 /*                        FileGDBNotIterator                            */
 /************************************************************************/
 
-class FileGDBNotIterator : public FileGDBIterator
+class FileGDBNotIterator CPL_FINAL : public FileGDBIterator
 {
         FileGDBIterator            *poIterBase;
         FileGDBTable               *poTable;
@@ -117,7 +117,7 @@ class FileGDBNotIterator : public FileGDBIterator
 /*                        FileGDBAndIterator                            */
 /************************************************************************/
 
-class FileGDBAndIterator : public FileGDBIterator
+class FileGDBAndIterator CPL_FINAL : public FileGDBIterator
 {
         FileGDBIterator             *poIter1;
         FileGDBIterator             *poIter2;
@@ -138,7 +138,7 @@ class FileGDBAndIterator : public FileGDBIterator
 /*                        FileGDBOrIterator                             */
 /************************************************************************/
 
-class FileGDBOrIterator : public FileGDBIterator
+class FileGDBOrIterator CPL_FINAL : public FileGDBIterator
 {
         FileGDBIterator             *poIter1;
         FileGDBIterator             *poIter2;
@@ -169,7 +169,7 @@ class FileGDBOrIterator : public FileGDBIterator
 #define MAX_UTF8_LEN_STR        (4 * MAX_CAR_COUNT_STR)
 #define FGDB_PAGE_SIZE          4096
 
-class FileGDBIndexIterator : public FileGDBIterator
+class FileGDBIndexIterator CPL_FINAL : public FileGDBIterator
 {
         FileGDBTable        *poParent;
         int                  bAscending;

@@ -253,7 +253,7 @@ static const int anUsgsEsriZones[] =
 
 class HFARasterBand;
 
-class CPL_DLL HFADataset : public GDALPamDataset
+class HFADataset CPL_FINAL : public GDALPamDataset
 {
     friend class HFARasterBand;
 
@@ -333,7 +333,7 @@ class CPL_DLL HFADataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HFARasterBand : public GDALPamRasterBand
+class HFARasterBand CPL_FINAL : public GDALPamRasterBand
 {
     friend class HFADataset;
     friend class HFARasterAttributeTable;
@@ -409,7 +409,7 @@ public:
     int               bConvertColors; // map 0-1 floats to 0-255 ints
 };
 
-class HFARasterAttributeTable : public GDALRasterAttributeTable
+class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
 {
 private:
 
