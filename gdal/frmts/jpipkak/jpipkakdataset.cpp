@@ -59,6 +59,8 @@ static int nPSTTargetOffset = -1;
 class jpipkak_kdu_cpl_error_message : public kdu_message 
 {
 public: // Member classes
+    using kdu_message::put_text;
+
     jpipkak_kdu_cpl_error_message( CPLErr eErrClass ) 
     {
         m_eErrClass = eErrClass;
