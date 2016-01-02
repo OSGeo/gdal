@@ -458,6 +458,22 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 }
 
 /**********************************************************************
+ *                       TABMAPObjSaturatedAdd()
+ ***********************************************************************/
+
+static void TABMAPObjSaturatedAdd(GInt32& nVal, GInt32 nAdd)
+{
+    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
+        nVal = INT_MAX;
+    else if( nAdd == INT_MIN && nVal < 0 )
+        nVal = INT_MIN;
+    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
+        nVal = INT_MIN;
+    else
+        nVal += nAdd;
+}
+
+/**********************************************************************
  *                   TABMAPObjectBlock::ReadCoord()
  *
  * Read the next pair of integer coordinates value from the block, and
@@ -475,8 +491,10 @@ int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
 {
     if (bCompressed)
     {   
-        nX = m_nCenterX + ReadInt16();
-        nY = m_nCenterY + ReadInt16();
+        nX = ReadInt16();
+        nY = ReadInt16();
+        TABMAPObjSaturatedAdd(nX, m_nCenterX);
+        TABMAPObjSaturatedAdd(nY, m_nCenterY);
     }
     else
     {
@@ -1017,18 +1035,6 @@ int TABMAPObjLine::WriteObj(TABMAPObjectBlock *poObjBlock)
  * Applies to PLINE, MULTIPLINE and REGION object types
  **********************************************************************/
 
-static void TABMAPObjAddComprOrg(GInt32& nVal, GInt32 nAdd)
-{
-    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
-        nVal = INT_MAX;
-    else if( nAdd == INT_MIN && nVal < 0 )
-        nVal = INT_MIN;
-    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
-        nVal = INT_MIN;
-    else
-        nVal += nAdd;
-}
-
 /**********************************************************************
  *                   TABMAPObjPLine::ReadObj()
  *
@@ -1113,17 +1119,17 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nComprOrgX = poObjBlock->ReadInt32();
         m_nComprOrgY = poObjBlock->ReadInt32();
 
-        TABMAPObjAddComprOrg(m_nLabelX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nLabelY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nLabelX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nLabelY, m_nComprOrgY);
 
         m_nMinX = poObjBlock->ReadInt16();  // Read MBR
         m_nMinY = poObjBlock->ReadInt16();
         m_nMaxX = poObjBlock->ReadInt16();
         m_nMaxY = poObjBlock->ReadInt16();
-        TABMAPObjAddComprOrg(m_nMinX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nMinY, m_nComprOrgY);
-        TABMAPObjAddComprOrg(m_nMaxX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nMaxY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nMinX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nMinY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nMaxX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nMaxY, m_nComprOrgY);
     }
     else
     {
@@ -1761,17 +1767,17 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nComprOrgX = poObjBlock->ReadInt32();
         m_nComprOrgY = poObjBlock->ReadInt32();
 
-        TABMAPObjAddComprOrg(m_nLabelX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nLabelY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nLabelX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nLabelY, m_nComprOrgY);
 
         m_nMinX = poObjBlock->ReadInt16();  // Read MBR
         m_nMinY = poObjBlock->ReadInt16();
         m_nMaxX = poObjBlock->ReadInt16();
         m_nMaxY = poObjBlock->ReadInt16();
-        TABMAPObjAddComprOrg(m_nMinX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nMinY, m_nComprOrgY);
-        TABMAPObjAddComprOrg(m_nMaxX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nMaxY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nMinX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nMinY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nMaxX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nMaxY, m_nComprOrgY);
     }
     else
     {
@@ -2066,10 +2072,10 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nMinY = poObjBlock->ReadInt16();
         m_nMaxX = poObjBlock->ReadInt16();
         m_nMaxY = poObjBlock->ReadInt16();
-        TABMAPObjAddComprOrg(m_nMinX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nMinY, m_nComprOrgY);
-        TABMAPObjAddComprOrg(m_nMaxX, m_nComprOrgX);
-        TABMAPObjAddComprOrg(m_nMaxY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nMinX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nMinY, m_nComprOrgY);
+        TABMAPObjSaturatedAdd(m_nMaxX, m_nComprOrgX);
+        TABMAPObjSaturatedAdd(m_nMaxY, m_nComprOrgY);
 #ifdef TABDUMP
     printf("COLLECTION: ComprOrgX,Y= (%d,%d)\n",
            m_nComprOrgX, m_nComprOrgY);
