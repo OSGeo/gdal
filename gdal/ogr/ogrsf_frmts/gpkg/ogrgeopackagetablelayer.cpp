@@ -528,8 +528,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                 "SELECT table_name, data_type, identifier, "
                 "description, min_x, min_y, max_x, max_y, srs_id "
                 "FROM gpkg_contents "
-                "WHERE table_name = '%q'",
-                m_pszTableName);
+                "WHERE table_name = '%q'"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                " OR 0"
+#endif
+                ,m_pszTableName);
 
     SQLResult oResultContents;
     err = SQLQuery(poDb, pszSQL, &oResultContents);
@@ -540,11 +543,9 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     if ( err != OGRERR_NONE || oResultContents.nRowCount != 1 )
     {
         if ( err != OGRERR_NONE )
-            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg );
-        else if ( oResultContents.nRowCount != 1 )
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg ? oResultContents.pszErrMsg : "" );
+        else /* if ( oResultContents.nRowCount != 1 ) */
             CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_contents", m_pszTableName );
-        else
-            CPLError( CE_Failure, CPLE_AppDefined, "error reading gpkg_contents" );
 
         SQLResultFree(&oResultContents);
         return OGRERR_FAILURE;
@@ -582,8 +583,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                     "SELECT table_name, column_name, "
                     "geometry_type_name, srs_id, z "
                     "FROM gpkg_geometry_columns "
-                    "WHERE table_name = '%q'",
-                    m_pszTableName);
+                    "WHERE table_name = '%q'"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                    " OR 0"
+#endif
+                    ,m_pszTableName);
 
         SQLResult oResultGeomCols;
         err = SQLQuery(poDb, pszSQL, &oResultGeomCols);
@@ -593,7 +597,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         /* gpkg_geometry_columns.table_name is supposed to be unique */
         if ( err != OGRERR_NONE || oResultGeomCols.nRowCount != 1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultGeomCols.pszErrMsg );
+            if ( err != OGRERR_NONE )
+                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultGeomCols.pszErrMsg ? oResultGeomCols.pszErrMsg : "" );
+            else /* if ( oResultContents.nRowCount != 1 ) */
+                CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_geometry_columns", m_pszTableName );
+
             SQLResultFree(&oResultGeomCols);
             return OGRERR_FAILURE;
         }
