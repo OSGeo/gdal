@@ -32,20 +32,6 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
-#endif
-
-#include "libkea/KEAImageIO.h"
-#include "libkea/KEAAttributeTable.h"
-#include "libkea/KEAAttributeTableInMem.h"
-
-#ifdef _MSC_VER
-#pragma warning( pop ) 
-#endif
-
-
 #include "keacopy.h"
 
 // Support functions for CreateCopy()

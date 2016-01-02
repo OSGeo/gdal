@@ -33,9 +33,7 @@
 
 #include "gdal_priv.h"
 #include "gdal_rat.h"
-#if defined(USE_GCC_VISIBILITY_FLAG) && !defined(DllExport)
-#define DllExport CPL_DLL
-#endif
+
 #include "keaband.h"
 
 class KEARasterAttributeTable : public GDALRasterAttributeTable
