@@ -178,7 +178,7 @@ class RMFRasterBand : public GDALRasterBand
 
     GUInt32     nBytesPerPixel;
     GUInt32     nBlockSize, nBlockBytes;
-    GUInt32     nLastTileXBytes, nLastTileHeight;
+    GUInt32     nLastTileWidth, nLastTileHeight;
     GUInt32     nDataSize;
 
     CPLErr   ReadBuffer( GByte *, GUInt32 ) const;
