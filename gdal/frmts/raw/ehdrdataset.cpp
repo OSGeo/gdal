@@ -1319,21 +1319,44 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     int nPixelOffset;
     int nLineOffset;
     vsi_l_offset    nBandOffset;
-
+    CPLAssert(nItemSize != 0);
+    CPLAssert(nBands != 0);
+    
     if( EQUAL(szLayout,"BIP") )
     {
+        if (nCols > INT_MAX / (nItemSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nPixelOffset = nItemSize * nBands;
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = (vsi_l_offset)nItemSize;
     }
     else if( EQUAL(szLayout,"BSQ") )
     {
+        if (nCols > INT_MAX / nItemSize)
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nPixelOffset = nItemSize;
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = (vsi_l_offset)nLineOffset * nRows;
     }
     else /* assume BIL */
     {
+        if (nCols > INT_MAX / (nItemSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nPixelOffset = nItemSize;
         nLineOffset = nItemSize * nBands * nCols;
         nBandOffset = (vsi_l_offset)nItemSize * nCols;
