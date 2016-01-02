@@ -429,6 +429,31 @@ static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr
     return 0;
 }
 
+static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* needle)
+        __attribute__((always_inline));
+
+static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* needle)
+{
+    const char* ptr_haystack = haystack;
+    while( 1 )
+    {
+        const char* ptr_haystack2 = ptr_haystack;
+        const char* ptr_needle = needle;
+        while( 1 )
+        {
+            char ch1 = *(ptr_haystack2++);
+            char ch2 = *(ptr_needle++);
+            if( ch2 == 0 )
+                return (char*)ptr_haystack;
+            if( ch1 != ch2 )
+                break;
+        }
+        if( *ptr_haystack == 0 )
+            return NULL;
+        ptr_haystack ++;
+    }
+}
+
 #undef strcmp
 #undef strncmp
 #define memcmp CPL_afl_friendly_memcmp
@@ -436,6 +461,7 @@ static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr
 #define strncmp CPL_afl_friendly_strncmp
 #define strcasecmp CPL_afl_friendly_strcasecmp
 #define strncasecmp CPL_afl_friendly_strncasecmp
+#define strstr CPL_afl_friendly_strstr
 
 #endif /* defined(AFL_FRIENDLY) && defined(__GNUC__) */
 
