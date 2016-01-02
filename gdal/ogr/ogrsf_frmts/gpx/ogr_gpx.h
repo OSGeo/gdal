@@ -63,17 +63,16 @@ class OGRGPXLayer : public OGRLayer
 
     int                nGPXFields;
 
-    int                bWriteMode;
-    int                eof;
+    bool               bWriteMode;
     int                nNextFID;
     VSILFILE*          fpGPX; /* Large file API */
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
     XML_Parser         oSchemaParser;
 #endif
-    int                inInterestingElement;
-    int                hasFoundLat;
-    int                hasFoundLon;
+    bool               inInterestingElement;
+    bool               hasFoundLat;
+    bool               hasFoundLon;
 #ifdef HAVE_EXPAT
     double             latVal;
     double             lonVal;
@@ -98,15 +97,15 @@ class OGRGPXLayer : public OGRLayer
 
 #ifdef HAVE_EXPAT
     OGRFieldDefn*      currentFieldDefn;
-    int                inExtensions;
+    bool               inExtensions;
     int                extensionsDepthLevel;
 
-    int                inLink;
+    bool               inLink;
     int                iCountLink;
 #endif
     int                nMaxLinks;
 
-    int                bEleAs25D;
+    bool               bEleAs25D;
 
     int                trkFID;
     int                trkSegId;
@@ -116,7 +115,7 @@ class OGRGPXLayer : public OGRLayer
     int                rtePtId;
 
 #ifdef HAVE_EXPAT
-    int                bStopParsing;
+    bool               bStopParsing;
     int                nWithoutEventCounter;
     int                nDataHandlerCounter;
 #endif
@@ -183,7 +182,7 @@ class OGRGPXDataSource : public OGRDataSource
 
     /*  Export related */
     VSILFILE           *fpOutput; /* Large file API */
-    int                 bIsBackSeekable;
+    bool                bIsBackSeekable;
     const char         *pszEOL;
     int                 nOffsetBounds;
     double              dfMinLat;
@@ -193,7 +192,7 @@ class OGRGPXDataSource : public OGRDataSource
 
     GPXGeometryType     lastGPXGeomTypeWritten;
 
-    int                 bUseExtensions;
+    bool                bUseExtensions;
     char*               pszExtensionsNS;
 
 #ifdef HAVE_EXPAT
