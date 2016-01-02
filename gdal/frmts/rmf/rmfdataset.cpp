@@ -62,6 +62,7 @@ static const char RMF_UnitsMM[] = "mm";
 RMFRasterBand::RMFRasterBand( RMFDataset *poDSIn, int nBandIn,
                               GDALDataType eType ) :
     nBytesPerPixel(poDSIn->sHeader.nBitDepth / 8),
+    nLastTileWidth(poDSIn->GetRasterXSize() % poDSIn->sHeader.nTileWidth),
     nLastTileHeight(poDSIn->GetRasterYSize() % poDSIn->sHeader.nTileHeight),
     nDataSize(GDALGetDataTypeSize( eType ) / 8)
 {
@@ -73,16 +74,14 @@ RMFRasterBand::RMFRasterBand( RMFDataset *poDSIn, int nBandIn,
     nBlockYSize = poDSIn->sHeader.nTileHeight;
     nBlockSize = nBlockXSize * nBlockYSize;
     nBlockBytes = nBlockSize * nDataSize;
-    nLastTileXBytes =
-        (poDS->GetRasterXSize() % poDSIn->sHeader.nTileWidth) * nDataSize;
 
 #ifdef DEBUG
     CPLDebug( "RMF",
               "Band %d: tile width is %d, tile height is %d, "
-              " last tile width %d, last tile height %d, "
+              " last tile width %u, last tile height %u, "
               "bytes per pixel is %d, data type size is %d",
               nBand, nBlockXSize, nBlockYSize,
-              poDSIn->sHeader.nLastTileWidth, poDSIn->sHeader.nLastTileHeight,
+              nLastTileWidth, nLastTileHeight,
               nBytesPerPixel, nDataSize );
 #endif
 }
@@ -175,9 +174,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GUInt32 nTileBytes = poGDS->paiTiles[2 * nTile + 1];
     GUInt32 nCurBlockYSize;
 
-    if ( poGDS->sHeader.nLastTileHeight
+    if ( nLastTileHeight
          && static_cast<GUInt32>( nBlockYOff ) == poGDS->nYTiles - 1 )
-        nCurBlockYSize = poGDS->sHeader.nLastTileHeight;
+        nCurBlockYSize = nLastTileHeight;
     else
         nCurBlockYSize = nBlockYSize;
 
@@ -211,8 +210,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             GUInt32 nRawBytes;
 
-            if ( nLastTileXBytes && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
-                nRawBytes = nLastTileXBytes;
+            if ( nLastTileWidth && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
+                nRawBytes = poGDS->nBands * nLastTileWidth * nDataSize;
             else
                 nRawBytes = poGDS->nBands * nBlockXSize * nDataSize;
 
@@ -303,8 +302,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             GUInt32 nRawBytes;
 
-            if ( nLastTileXBytes && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
-                nRawBytes = nLastTileXBytes;
+            if ( nLastTileWidth && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
+                nRawBytes = poGDS->nBands * nLastTileWidth * nDataSize;
             else
                 nRawBytes = poGDS->nBands * nBlockXSize * nDataSize;
 
@@ -447,7 +446,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLFree( pabyTile );
     }
 
-    if ( nLastTileXBytes
+    if ( nLastTileWidth
          && static_cast<GUInt32>( nBlockXOff ) == poGDS->nXTiles - 1 )
     {
         for ( GUInt32 iRow = nCurBlockYSize - 1; iRow > 0; iRow-- )
@@ -455,8 +454,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             memmove( reinterpret_cast<GByte *>( pImage )
                      + nBlockXSize * iRow * nDataSize,
                      reinterpret_cast<GByte *>( pImage ) +
-                     iRow * nLastTileXBytes,
-                     nLastTileXBytes );
+                     iRow * nLastTileWidth * nDataSize,
+                     nLastTileWidth * nDataSize );
         }
 
     }
@@ -508,15 +507,15 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         poGDS->bHeaderDirty = TRUE;
     }
 
-    if ( nLastTileXBytes
+    if ( nLastTileWidth
          && static_cast<GUInt32>( nBlockXOff ) == poGDS->nXTiles - 1 )
-        nTileBytes *= poGDS->sHeader.nLastTileWidth;
+        nTileBytes *= nLastTileWidth;
     else
         nTileBytes *= nBlockXSize;
 
-    if ( poGDS->sHeader.nLastTileHeight
+    if ( nLastTileHeight
          && static_cast<GUInt32>( nBlockYOff ) == poGDS->nYTiles - 1 )
-        nCurBlockYSize = poGDS->sHeader.nLastTileHeight;
+        nCurBlockYSize = nLastTileHeight;
     else
         nCurBlockYSize = nBlockYSize;
 
@@ -532,7 +531,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    if ( nLastTileXBytes
+    if ( nLastTileWidth
          && static_cast<GUInt32>( nBlockXOff ) == poGDS->nXTiles - 1 )
     {
         GUInt32 iRow;
@@ -541,9 +540,9 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         {
             for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
             {
-                memcpy( pabyTile + iRow * nLastTileXBytes,
+                memcpy( pabyTile + iRow * nLastTileWidth * nDataSize,
                         reinterpret_cast<GByte *>( pImage )
-                        + nBlockXSize * iRow * nDataSize, nLastTileXBytes );
+                        + nBlockXSize * iRow * nDataSize, nLastTileWidth * nDataSize );
             }
         }
         else
@@ -557,9 +556,9 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
             {
                 for ( iInPixel = 0, iOutPixel = nBytesPerPixel - nBand;
-                      iOutPixel < nLastTileXBytes * poGDS->nBands;
+                      iOutPixel < nLastTileWidth * nDataSize * poGDS->nBands;
                       iInPixel++, iOutPixel += poGDS->nBands )
-                    (pabyTile + iRow * nLastTileXBytes * poGDS->nBands)[iOutPixel] =
+                    (pabyTile + iRow * nLastTileWidth * nDataSize * poGDS->nBands)[iOutPixel] =
                         (reinterpret_cast<GByte *>( pImage ) + nBlockXSize
                          * iRow * nDataSize)[iInPixel];
             }
