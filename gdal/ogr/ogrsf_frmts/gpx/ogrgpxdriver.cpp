@@ -42,7 +42,7 @@ static GDALDataset *OGRGPXDriverOpen( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == NULL )
         return NULL;
 
-    if( strstr((const char*)poOpenInfo->pabyHeader, "<gpx") == NULL )
+    if( strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<gpx") == NULL )
         return NULL;
 
     OGRGPXDataSource   *poDS = new OGRGPXDataSource();
