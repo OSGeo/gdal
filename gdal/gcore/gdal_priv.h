@@ -701,8 +701,8 @@ class CPL_DLL GDALAbstractBandBlockCache
             GDALRasterBlock* CreateBlock(int nXBlockOff, int nYBlockOff);
             void             AddBlockToFreeList( GDALRasterBlock * );
 
-            virtual int              Init() = 0;
-            virtual int              IsInitOK() = 0;
+            virtual bool             Init() = 0;
+            virtual bool             IsInitOK() = 0;
             virtual CPLErr           FlushCache() = 0;
             virtual CPLErr           AdoptBlock( GDALRasterBlock* poBlock ) = 0;
             virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,

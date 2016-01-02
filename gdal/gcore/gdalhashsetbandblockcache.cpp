@@ -48,8 +48,8 @@ class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
             GDALHashSetBandBlockCache(GDALRasterBand* poBand);
            ~GDALHashSetBandBlockCache();
 
-           virtual int              Init();
-           virtual int              IsInitOK();
+           virtual bool             Init();
+           virtual bool             IsInitOK();
            virtual CPLErr           FlushCache();
            virtual CPLErr           AdoptBlock( GDALRasterBlock * );
            virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
@@ -121,18 +121,18 @@ GDALHashSetBandBlockCache::~GDALHashSetBandBlockCache()
 /*                                  Init()                              */
 /************************************************************************/
 
-int GDALHashSetBandBlockCache::Init()
+bool GDALHashSetBandBlockCache::Init()
 {
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                             IsInitOK()                               */
 /************************************************************************/
 
-int GDALHashSetBandBlockCache::IsInitOK()
+bool GDALHashSetBandBlockCache::IsInitOK()
 {
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
