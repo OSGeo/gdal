@@ -31,8 +31,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-#include "webp/decode.h"
-#include "webp/encode.h"
+#include "webp_headers.h"
 
 CPL_CVSID("$Id$");
 
