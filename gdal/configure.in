@@ -71,6 +71,10 @@ AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"])
+
+dnl Clang enables -Woverloaded-virtual if -Wall is defined, but not GCC
+AX_CHECK_COMPILE_FLAG([-Werror -Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"])
+
 AC_LANG_POP([C++])
 
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
