@@ -836,6 +836,11 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
     if( hVirtual.poDS )
     {
         hVirtual.poBand = (GDALRasterBand*) GDALGetRasterBand( hVirtual.poDS, nBand );
+        if( hVirtual.poBand == NULL )
+        {
+            INGR_ReleaseVirtual(&hVirtual);
+            hVirtual.poDS = NULL;
+        }
     }
 
     return hVirtual;

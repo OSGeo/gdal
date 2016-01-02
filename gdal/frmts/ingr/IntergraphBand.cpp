@@ -1003,7 +1003,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
                                               nBytesRead, 
                                               nRGBBand );
 
-    if( poGDS->hVirtual.poDS == NULL )
+    if( poGDS->hVirtual.poBand == NULL )
     {
         memset( pImage, 0, nBlockXSize * nBlockYSize * 
                     (GDALGetDataTypeSize( eDataType ) / 8) );
