@@ -227,7 +227,7 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nLineBytes, 1) );
+    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nLineBytes) );
     if( pabyBuffer == NULL )
         return CE_Failure;
 
