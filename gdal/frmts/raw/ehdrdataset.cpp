@@ -227,7 +227,9 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBuffer = reinterpret_cast<GByte *>( CPLCalloc(nLineBytes, 1) );
+    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nLineBytes, 1) );
+    if( pabyBuffer == NULL )
+        return CE_Failure;
 
     if( VSIFSeekL( GetFPL(), nLineStart, SEEK_SET ) != 0
         || VSIFReadL( pabyBuffer, 1, nLineBytes, GetFPL() ) != nLineBytes )
@@ -289,7 +291,9 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBuffer = reinterpret_cast<GByte *>( CPLCalloc(nLineBytes, 1) );
+    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_CALLOC_VERBOSE(nLineBytes, 1) );
+    if( pabyBuffer == NULL )
+        return CE_Failure;
 
     if( VSIFSeekL( GetFPL(), nLineStart, SEEK_SET ) != 0 )
     {
