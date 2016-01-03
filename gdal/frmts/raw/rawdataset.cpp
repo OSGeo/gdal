@@ -369,6 +369,8 @@ CPLErr RawRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         return CE_Failure;
 
     CPLErr eErr = AccessLine( nBlockYOff );
+    if( eErr == CE_Failure )
+        return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Copy data from disk buffer to user block buffer.                */
@@ -684,6 +686,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to read " CPL_FRMT_GUIB" bytes at " CPL_FRMT_GUIB ".",
                           static_cast<GUIntBig>(nBytesToRead), nOffset);
+                return CE_Failure;
             }
         }
 
@@ -714,6 +717,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Failed to read " CPL_FRMT_GUIB " bytes at " CPL_FRMT_GUIB ".",
                               static_cast<GUIntBig>(nBytesToRW), nOffset );
+                    CPLFree( pabyData );
+                    return CE_Failure;
                 }
 
 /* -------------------------------------------------------------------- */
