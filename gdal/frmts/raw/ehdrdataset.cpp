@@ -107,9 +107,9 @@ class EHdrRasterBand : public RawRasterBand
    friend class EHdrDataset;
 
     int            nBits;
-    long           nStartBit;
+    vsi_l_offset   nStartBit;
     int            nPixelOffsetBits;
-    int            nLineOffsetBits;
+    vsi_l_offset   nLineOffsetBits;
 
     int            bNoDataSet;
     double         dfNoData;
@@ -176,20 +176,44 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
 
     if (nBits < 8)
     {
-        nStartBit = atoi(poEDS->GetKeyValue("SKIPBYTES")) * 8;
+        int nSkipBytes = atoi(poEDS->GetKeyValue("SKIPBYTES"));
+        if( nSkipBytes < 0 || nSkipBytes > INT_MAX / 8 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid SKIPBYTES: %d", nSkipBytes);
+            nStartBit = 0;
+        }
+        else
+        {
+            nStartBit = nSkipBytes * 8;
+        }
         if (nBand >= 2)
         {
-            long nRowBytes = atoi(poEDS->GetKeyValue("BANDROWBYTES"));
-            if (nRowBytes == 0)
-                nRowBytes = (nBits * poDS->GetRasterXSize() + 7) / 8;
+            GIntBig nBandRowBytes = CPLAtoGIntBig(poEDS->GetKeyValue("BANDROWBYTES"));
+            if( nBandRowBytes < 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid BANDROWBYTES: " CPL_FRMT_GIB, nBandRowBytes);
+                nBandRowBytes = 0;
+            }
+            vsi_l_offset nRowBytes;
+            if (nBandRowBytes == 0)
+                nRowBytes = (static_cast<vsi_l_offset>(nBits) * poDS->GetRasterXSize() + 7) / 8;
+            else
+                nRowBytes = static_cast<vsi_l_offset>(nBandRowBytes);
 
             nStartBit += nRowBytes * (nBand-1) * 8;
         }
 
         nPixelOffsetBits = nBits;
-        nLineOffsetBits = atoi(poEDS->GetKeyValue("TOTALROWBYTES")) * 8;
-        if( nLineOffsetBits == 0 )
-            nLineOffsetBits = nPixelOffsetBits * poDS->GetRasterXSize();
+        GIntBig nTotalRowBytes = CPLAtoGIntBig(poEDS->GetKeyValue("TOTALROWBYTES"));
+        if( nTotalRowBytes < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid TOTALROWBYTES: " CPL_FRMT_GIB, nTotalRowBytes);
+            nTotalRowBytes = 0;
+        }
+        if( nTotalRowBytes > 0 )
+            nLineOffsetBits = static_cast<vsi_l_offset>(nTotalRowBytes * 8);
+        else
+            nLineOffsetBits = static_cast<vsi_l_offset>(nPixelOffsetBits) * poDS->GetRasterXSize();
 
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
@@ -219,10 +243,13 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
-    const unsigned int nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
-    const vsi_l_offset nLineStart = (nStartBit + static_cast<vsi_l_offset>(nLineOffsetBits) * nBlockYOff) / 8;
+    const vsi_l_offset nLineBytesBig = (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7)/8;
+    if( nLineBytesBig > INT_MAX )
+        return CE_Failure;
+    const unsigned int nLineBytes = (unsigned int)nLineBytesBig;
+    const vsi_l_offset nLineStart = (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset = static_cast<int>(
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8);
+        (nStartBit + nLineOffsetBits * nBlockYOff) % 8);
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
@@ -282,11 +309,14 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
-    const unsigned int nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
+    const vsi_l_offset nLineBytesBig = (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7)/8;
+    if( nLineBytesBig > INT_MAX )
+        return CE_Failure;
+    const unsigned int nLineBytes = (unsigned int)nLineBytesBig;
     const vsi_l_offset nLineStart =
-        (nStartBit + static_cast<vsi_l_offset>( nLineOffsetBits ) * nBlockYOff) / 8;
+        (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset = static_cast<int>(
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8 );
+        (nStartBit + nLineOffsetBits * nBlockYOff) % 8 );
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
