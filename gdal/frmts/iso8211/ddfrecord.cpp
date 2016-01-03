@@ -135,6 +135,7 @@ int DDFRecord::Read()
 /* -------------------------------------------------------------------- */
     size_t      nReadBytes;
 
+    CPLAssert( nFieldOffset <= nDataSize );
     nReadBytes = VSIFReadL( pachData + nFieldOffset, 1,
                             nDataSize - nFieldOffset,
                             poModule->GetFP() );
@@ -554,6 +555,12 @@ int DDFRecord::ReadHeader()
             CPLFree(tmpBuf);
             pachData = newBuf;
             nDataSize += nFieldLength;
+        }
+
+        if( nFieldOffset >= nDataSize )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            return FALSE;
         }
 
         /* ----------------------------------------------------------------- */
