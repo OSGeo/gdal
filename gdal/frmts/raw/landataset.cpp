@@ -469,6 +469,14 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
+    
+    if( nPixelOffset != -1 && poDS->nRasterXSize > INT_MAX / (nPixelOffset*nBandCount) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Int overflow occurred.");
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
