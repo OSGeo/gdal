@@ -174,6 +174,12 @@ g2int g2_addgrid(unsigned char *cgrib,g2int *igds,g2int *igdstmpl,g2int *ideflis
           mapgrid=extgridtemplate(igds[4],igdstmpl);
         }
       }
+
+      /* Added by GDAL to avoid 'potential null pointer dereference [-Wnull-dereference]' on below mapgrid->maplen */
+      if (mapgrid == 0) {       // undefined template
+        return(-5);
+      }
+
       //
       //   Pack up each input value in array igdstmpl into the
       //   the appropriate number of octets, which are specified in

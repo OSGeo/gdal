@@ -406,6 +406,11 @@ static char* fieldName(DOMElement* elem) {
     node = elem;
     for (int d = 0; d<depth-4; ++d) node = node->getParentNode();
   }
+  if( node == NULL )
+  {
+      CPLError(CE_Failure, CPLE_AssertionFailed, "node == NULL");
+      return CPLStrdup("***bug***");
+  }
   char* pszNodeName = tr_strdup(node->getNodeName());
   return pszNodeName;
 }

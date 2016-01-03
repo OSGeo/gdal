@@ -832,7 +832,8 @@ int OGRFeatureDefn::GetGeomFieldIndex( const char * pszGeomFieldName )
     GetGeomFieldCount();
     for( int i = 0; i < nGeomFieldCount; i++ )
     {
-        if( EQUAL(pszGeomFieldName, GetGeomFieldDefn(i)->GetNameRef() ) )
+        OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(i);
+        if( poGFldDefn != NULL && EQUAL(pszGeomFieldName, poGFldDefn->GetNameRef() ) )
             return i;
     }
 
@@ -895,7 +896,10 @@ OGRwkbGeometryType OGRFeatureDefn::GetGeomType()
 {
     if( GetGeomFieldCount() == 0 )
         return wkbNone;
-    OGRwkbGeometryType eType = GetGeomFieldDefn(0)->GetType();
+    OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(0);
+    if( poGFldDefn == NULL )
+        return wkbNone;
+    OGRwkbGeometryType eType = poGFldDefn->GetType();
     if( eType == (wkbUnknown | wkb25DBitInternalUse) && CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
         eType = wkbUnknown;
     return eType;
@@ -1126,7 +1130,8 @@ int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName )
     GetFieldCount();
     for( int i = 0; i < nFieldCount; i++ )
     {
-        if( EQUAL(pszFieldName, GetFieldDefn(i)->GetNameRef() ) )
+        OGRFieldDefn* poFDefn = GetFieldDefn(i);
+        if( poFDefn != NULL && EQUAL(pszFieldName, poFDefn->GetNameRef() ) )
             return i;
     }
 
@@ -1181,7 +1186,10 @@ int OGRFeatureDefn::IsGeometryIgnored()
 {
     if( GetGeomFieldCount() == 0 )
         return FALSE;
-    return GetGeomFieldDefn(0)->IsIgnored();
+    OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(0);
+    if( poGFldDefn == NULL )
+        return FALSE;
+    return poGFldDefn->IsIgnored();
 }
 
 /************************************************************************/
@@ -1225,7 +1233,11 @@ int OGR_FD_IsGeometryIgnored( OGRFeatureDefnH hDefn )
 void OGRFeatureDefn::SetGeometryIgnored( int bIgnore )
 {
     if( GetGeomFieldCount() > 0 )
-        GetGeomFieldDefn(0)->SetIgnored(bIgnore);
+    {
+        OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(0);
+        if( poGFldDefn != NULL )
+            poGFldDefn->SetIgnored(bIgnore);
+    }
 }
 
 /************************************************************************/

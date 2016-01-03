@@ -4453,7 +4453,7 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
         {
             poLayer = GetLayer(i);
 
-            if( EQUAL(poLayer->GetName(),papszTokens[3]) )
+            if( poLayer!= NULL && EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
             poLayer = NULL;
         }
@@ -4563,7 +4563,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
         {
             poLayer = GetLayer(i);
 
-            if( EQUAL(poLayer->GetName(),papszTokens[3]) )
+            if( poLayer!= NULL && EQUAL(poLayer->GetName(),papszTokens[3]) )
                 break;
             poLayer = NULL;
         }
@@ -4684,7 +4684,7 @@ OGRErr GDALDataset::ProcessSQLDropTable( const char *pszSQLCommand )
     {
         poLayer = GetLayer(i);
 
-        if( EQUAL(poLayer->GetName(),papszTokens[2]) )
+        if( poLayer!= NULL && EQUAL(poLayer->GetName(),papszTokens[2]) )
             break;
         poLayer = NULL;
     }

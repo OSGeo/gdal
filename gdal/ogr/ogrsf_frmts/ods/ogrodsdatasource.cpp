@@ -1627,11 +1627,11 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "<config:config-item-map-named config:name=\"Tables\">\n");
     for(int i=0;i<nLayers;i++)
     {
-        OGRLayer* poLayer = GetLayer(i);
+        OGRLayer* poLayer = papoLayers[i];
         if (HasHeaderLine(poLayer))
         {
             /* Add vertical splitter */
-            char* pszXML = OGRGetXML_UTF8_EscapedString(GetLayer(i)->GetName());
+            char* pszXML = OGRGetXML_UTF8_EscapedString(poLayer->GetName());
             VSIFPrintfL(fp, "<config:config-item-map-entry config:name=\"%s\">\n", pszXML);
             CPLFree(pszXML);
             VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitMode\" config:type=\"short\">2</config:config-item>\n");
@@ -1752,7 +1752,7 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "<office:spreadsheet>\n");
     for(int i=0;i<nLayers;i++)
     {
-        WriteLayer(fp, GetLayer(i));
+        WriteLayer(fp, papoLayers[i]);
     }
     VSIFPrintfL(fp, "</office:spreadsheet>\n");
     VSIFPrintfL(fp, "</office:body>\n");

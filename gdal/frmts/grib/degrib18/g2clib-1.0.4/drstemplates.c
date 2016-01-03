@@ -168,6 +168,7 @@ xxtemplate *extdrstemplate(g2int number,g2int *list)
            if (l_index == -1) return(0);
 
            new=getdrstemplate(number);
+           if (new == NULL) return NULL;
 
            if ( ! new->needext ) return(new);
 

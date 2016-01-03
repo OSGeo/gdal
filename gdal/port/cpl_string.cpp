@@ -823,7 +823,7 @@ char ** CSLTokenizeString2( const char * pszString,
     char *pszToken = reinterpret_cast<char *>( CPLCalloc(10,1) );
     int nTokenMax = 10;
 
-    while( pszString != NULL && *pszString != '\0' )
+    while( *pszString != '\0' )
     {
         bool bInString = false;
         bool bStartString = true;

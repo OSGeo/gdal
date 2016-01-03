@@ -1497,10 +1497,10 @@ int DDFRecord::ResetDirectory()
                 pachData + nFieldOffset, 
                 nNewDataSize - nDirSize );
 
-        for( iField = 0; iField < nFieldCount; iField++ )
+        for( iField = 0; paoFields != NULL && iField < nFieldCount; iField++ )
         {
             int nOffset;
-            DDFField *poField = GetField( iField );
+            DDFField *poField = /*GetField( iField )*/ paoFields + iField;
 
             nOffset = static_cast<int>(poField->GetData() - pachData - nFieldOffset + nDirSize);
             poField->Initialize( poField->GetFieldDefn(), 
@@ -1519,7 +1519,7 @@ int DDFRecord::ResetDirectory()
 /* -------------------------------------------------------------------- */
     for( iField = 0; iField < nFieldCount; iField++ )
     {
-        DDFField *poField = GetField( iField );
+        DDFField *poField = /*GetField( iField )*/ paoFields + iField;
         DDFFieldDefn *poDefn = poField->GetFieldDefn();
         char      szFormat[128];
 
