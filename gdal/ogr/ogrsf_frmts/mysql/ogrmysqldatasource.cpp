@@ -343,11 +343,10 @@ int OGRMySQLDataSource::OpenTable( const char *pszNewName, int bUpdate )
 int OGRMySQLDataSource::TestCapability( const char * pszCap )
 
 {
-	
     if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
-	if( EQUAL(pszCap, ODsCDeleteLayer))
-		return TRUE;
+    if( EQUAL(pszCap, ODsCDeleteLayer))
+        return TRUE;
     else
         return FALSE;
 }

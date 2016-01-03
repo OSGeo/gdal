@@ -148,30 +148,30 @@ void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageReque
 
     if (m_base_url.ifind( "/export?") == std::string::npos)
         URLAppend(url, "/export?");
-	
-	URLAppendF(url, "&f=image");
-	URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f", 
-		GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
-        GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
-	URLAppendF(url, "&size=%d,%d", iri.m_sx,iri.m_sy);
-	URLAppendF(url, "&dpi=");
-	URLAppendF(url, "&imageSR=%s", m_irs.c_str());
-	URLAppendF(url, "&bboxSR=%s", m_irs.c_str());
-	URLAppendF(url, "&format=%s", m_image_format.c_str());
 
-	URLAppendF(url, "&layerdefs=");
-	URLAppendF(url, "&layers=%s", m_layers.c_str());
+    URLAppendF(url, "&f=image");
+    URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f", 
+            GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
+    GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
+    URLAppendF(url, "&size=%d,%d", iri.m_sx,iri.m_sy);
+    URLAppendF(url, "&dpi=");
+    URLAppendF(url, "&imageSR=%s", m_irs.c_str());
+    URLAppendF(url, "&bboxSR=%s", m_irs.c_str());
+    URLAppendF(url, "&format=%s", m_image_format.c_str());
+
+    URLAppendF(url, "&layerdefs=");
+    URLAppendF(url, "&layers=%s", m_layers.c_str());
 
     if(m_transparent.size())
-	    URLAppendF(url, "&transparent=%s", m_transparent.c_str());
+        URLAppendF(url, "&transparent=%s", m_transparent.c_str());
     else
         URLAppendF(url, "&transparent=%s", "false");
 
-	URLAppendF(url, "&time=");
-	URLAppendF(url, "&layerTimeOptions=");
-	URLAppendF(url, "&dynamicLayers=");
+    URLAppendF(url, "&time=");
+    URLAppendF(url, "&layerTimeOptions=");
+    URLAppendF(url, "&dynamicLayers=");
 
-	CPLDebug("AGS", "URL = %s\n", url->c_str());
+    CPLDebug("AGS", "URL = %s\n", url->c_str());
 }
 
 void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url, 
@@ -193,53 +193,53 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
     if (m_base_url.ifind( "/identify?") == std::string::npos)
         URLAppend(url, "/identify?");
 
-	URLAppendF(url, "&f=json");
+    URLAppendF(url, "&f=json");
 
-	double fX = GetBBoxCoord(iri, 'x') + nXInBlock * (GetBBoxCoord(iri, 'X') - 
-	            GetBBoxCoord(iri, 'x')) / iri.m_sx;
-	double fY = GetBBoxCoord(iri, 'y') + (iri.m_sy - nYInBlock) * (GetBBoxCoord(iri, 'Y') - 
-	            GetBBoxCoord(iri, 'y')) / iri.m_sy;
-	            
+    double fX = GetBBoxCoord(iri, 'x') + nXInBlock * (GetBBoxCoord(iri, 'X') - 
+                GetBBoxCoord(iri, 'x')) / iri.m_sx;
+    double fY = GetBBoxCoord(iri, 'y') + (iri.m_sy - nYInBlock) * (GetBBoxCoord(iri, 'Y') - 
+                GetBBoxCoord(iri, 'y')) / iri.m_sy;
+                
     URLAppendF(url, "&geometry=%8f,%8f", fX, fY);
-	URLAppendF(url, "&geometryType=esriGeometryPoint");
+    URLAppendF(url, "&geometryType=esriGeometryPoint");
 
-	URLAppendF(url, "&sr=%s", m_irs.c_str());
-	URLAppendF(url, "&layerdefs=");
-	URLAppendF(url, "&time=");
-	URLAppendF(url, "&layerTimeOptions=");
+    URLAppendF(url, "&sr=%s", m_irs.c_str());
+    URLAppendF(url, "&layerdefs=");
+    URLAppendF(url, "&time=");
+    URLAppendF(url, "&layerTimeOptions=");
 
-	CPLString layers("visible");
-	if ( m_layers.find("show") != std::string::npos )
-	{
-		layers = m_layers;
-		layers.replace( layers.find("show"), 4, "all" );
-	}
-	
-	if ( m_layers.find("hide") != std::string::npos )
-	{
-		layers = "top";
-	}
-	
-	if ( m_layers.find("include") != std::string::npos )
-	{
-		layers = "top";
-	}
-	
-	if ( m_layers.find("exclude") != std::string::npos )
-	{
-		layers = "top";
-	}
+    CPLString layers("visible");
+    if ( m_layers.find("show") != std::string::npos )
+    {
+            layers = m_layers;
+            layers.replace( layers.find("show"), 4, "all" );
+    }
+    
+    if ( m_layers.find("hide") != std::string::npos )
+    {
+            layers = "top";
+    }
+    
+    if ( m_layers.find("include") != std::string::npos )
+    {
+            layers = "top";
+    }
+    
+    if ( m_layers.find("exclude") != std::string::npos )
+    {
+            layers = "top";
+    }
 
-	URLAppendF(url, "&layers=%s", layers.c_str());
+    URLAppendF(url, "&layers=%s", layers.c_str());
 
-	URLAppendF(url, "&tolerance=%s", m_identification_tolerance.c_str());
-	URLAppendF(url, "&mapExtent=%.8f,%.8f,%.8f,%.8f", 
-		GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
-        GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
-	URLAppendF(url, "&imageDisplay=%d,%d,96", iri.m_sx,iri.m_sy);
-	URLAppendF(url, "&returnGeometry=false");
+    URLAppendF(url, "&tolerance=%s", m_identification_tolerance.c_str());
+    URLAppendF(url, "&mapExtent=%.8f,%.8f,%.8f,%.8f", 
+            GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
+    GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
+    URLAppendF(url, "&imageDisplay=%d,%d,96", iri.m_sx,iri.m_sy);
+    URLAppendF(url, "&returnGeometry=false");
 
-	URLAppendF(url, "&maxAllowableOffset=");
+    URLAppendF(url, "&maxAllowableOffset=");
     CPLDebug("AGS", "URL = %s", url->c_str());
 }
 

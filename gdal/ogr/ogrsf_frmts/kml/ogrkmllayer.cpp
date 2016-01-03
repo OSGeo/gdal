@@ -607,7 +607,7 @@ OGRErr OGRKMLLayer::CreateField( OGRFieldDefn *poField,
     if( !bWriter_ || iNextKMLId_ != 0 )
         return OGRERR_FAILURE;
 
-	OGRFieldDefn oCleanCopy( poField );
+    OGRFieldDefn oCleanCopy( poField );
     poFeatureDefn_->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;

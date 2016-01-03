@@ -1004,7 +1004,9 @@ void VSICurlStreamingHandle::StartDownload()
         return;
 
     //if (ENABLE_DEBUG)
+    {
         CPLDebug("VSICURL", "Start download for %s", m_pszURL);
+    }
 
     if (hCurlHandle == NULL)
         hCurlHandle = curl_easy_init();
@@ -1023,7 +1025,9 @@ void VSICurlStreamingHandle::StopDownload()
     if (hThread)
     {
         //if (ENABLE_DEBUG)
+        {
             CPLDebug("VSICURL", "Stop download for %s", m_pszURL);
+        }
 
         AcquireMutex();
         /* Signal to the producer that we ask for download interruption */
@@ -1344,8 +1348,8 @@ void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
     if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
         return;
 
-        if (pCachedData == NULL)
-            pCachedData = (GByte*) CPLMalloc(BKGND_BUFFER_SIZE);
+    if (pCachedData == NULL)
+        pCachedData = (GByte*) CPLMalloc(BKGND_BUFFER_SIZE);
 
     if (nFileOffsetStart <= nCachedSize &&
         nFileOffsetStart + nSize > nCachedSize)
