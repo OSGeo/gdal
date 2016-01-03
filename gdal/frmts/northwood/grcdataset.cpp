@@ -110,7 +110,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
         eDataType = GDT_Byte;
     else if( poGDS->pGrd->nBitsPerPixel == 16 )
         eDataType = GDT_UInt16;
-    else if( poGDS->pGrd->nBitsPerPixel == 32 )
+    else /* if( poGDS->pGrd->nBitsPerPixel == 32 ) */
         eDataType = GDT_UInt32;        // this would be funny
 
     nBlockXSize = poDS->GetRasterXSize();
@@ -362,6 +362,14 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!nwt_ParseHeader( poDS->pGrd, reinterpret_cast<char *>( poDS->abyHeader ) ) ||
         !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) ||
         poDS->pGrd->stClassDict == NULL)
+    {
+        delete poDS;
+        return NULL;
+    }
+
+    if( poDS->pGrd->nBitsPerPixel != 8 &&
+        poDS->pGrd->nBitsPerPixel != 16 &&
+        poDS->pGrd->nBitsPerPixel != 32 )
     {
         delete poDS;
         return NULL;
