@@ -370,7 +370,7 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
         }
 
         VSIFPrintfL( fpOutput_, "</Folder>\n");
-        ((OGRKMLLayer*)GetLayer(GetLayerCount()-1))->SetClosedForWriting();
+        ((OGRKMLLayer*)papoLayers_[GetLayerCount()-1])->SetClosedForWriting();
     }
 
 /* -------------------------------------------------------------------- */

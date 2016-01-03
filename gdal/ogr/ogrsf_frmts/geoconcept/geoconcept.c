@@ -681,7 +681,7 @@ static int GCIOAPI_CALL _findSubTypeByName_GCIO (
 {
   GCSubType* theSubType;
 
-  if( GetTypeSubtypes_GCIO(theClass) )
+  if( theClass != NULL && GetTypeSubtypes_GCIO(theClass) )
   {
     CPLList* e;
     int n, i;
@@ -2236,6 +2236,11 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     return NULL;
   }
   theClass= _getType_GCIO(H,whereClass);
+  if( theClass == NULL )
+  {
+      CSLDestroy(pszFields);
+      return NULL;
+  }
   if( *theSubType )
   {
     /* reading ... */
@@ -2256,7 +2261,9 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   }
   if( *theSubType )
   {
-    if( !EQUAL(GetSubTypeName_GCIO(_getSubType_GCIO(theClass,whereSubType)),GetSubTypeName_GCIO(*theSubType)) )
+    GCSubType* psSubType = _getSubType_GCIO(theClass,whereSubType);
+    if( psSubType == NULL ||
+        !EQUAL(GetSubTypeName_GCIO(psSubType),GetSubTypeName_GCIO(*theSubType)) )
     {
       CSLDestroy(pszFields);
       return NULL;
@@ -2748,6 +2755,8 @@ GCSubType GCIOAPI_CALL1(*) AddSubType_GCIO (
   }
 
   theClass= _getType_GCIO(H,whereClass);
+  if( theClass == NULL )
+      return NULL;
   if( GetTypeSubtypes_GCIO(theClass) )
   {
     if( _findSubTypeByName_GCIO(theClass,subtypName)!=-1 )

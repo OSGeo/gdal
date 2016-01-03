@@ -926,7 +926,7 @@ static YYSIZE_T
 yystrlen (const char *yystr)
 {
   YYSIZE_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
+  for (yylen = 0; yystr != YY_NULL && yystr[yylen]; yylen++)
     continue;
   return yylen;
 }
@@ -1410,6 +1410,8 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
+      
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires

@@ -767,8 +767,6 @@ CPLXMLNode* CPLGetFirstChildNode( CPLXMLNode* psNode )
 static
 CPLXMLNode* CPLGetLastNode( CPLXMLNode* psNode )
 {
-    if( psNode == NULL )
-        return NULL;
     CPLXMLNode* psIter = psNode;
     while( psIter->psNext != NULL )
         psIter = psIter->psNext;

@@ -1943,7 +1943,7 @@ void OGRGMLDataSource::InsertHeader()
 
     for( iLayer = 0; !bHasListFields && iLayer < GetLayerCount(); iLayer++ )
     {
-        OGRFeatureDefn *poFDefn = GetLayer(iLayer)->GetLayerDefn();
+        OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
         for( int iField = 0; !bHasListFields && iField < poFDefn->GetFieldCount(); iField++ )
         {
             OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(iField);
@@ -2138,7 +2138,7 @@ void OGRGMLDataSource::InsertHeader()
 
     for( iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
     {
-        OGRFeatureDefn *poFDefn = GetLayer(iLayer)->GetLayerDefn();
+        OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
 
 /* -------------------------------------------------------------------- */
 /*      Emit initial stuff for a feature type.                          */

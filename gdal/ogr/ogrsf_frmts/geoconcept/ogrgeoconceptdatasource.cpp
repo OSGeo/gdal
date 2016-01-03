@@ -420,7 +420,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
       for( int iLayer= 0; iLayer<_nLayers; iLayer++)
       {
         poFile= reinterpret_cast<OGRGeoconceptLayer *>( GetLayer(iLayer) );
-        if( EQUAL(poFile->GetLayerDefn()->GetName(),pszFeatureType) )
+        if( poFile != NULL && EQUAL(poFile->GetLayerDefn()->GetName(),pszFeatureType) )
         {
           break;
         }

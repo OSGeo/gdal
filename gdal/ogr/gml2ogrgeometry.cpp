@@ -1897,11 +1897,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                 {
                     /* Cf #5421 where there are PolygonPatch with only inner rings */
                     const CPLXMLNode* psPolygonPatch = GetChildElement(GetChildElement(psSurfaceChild));
+                    const CPLXMLNode* psPolygonPatchChild;
                     if( psPolygonPatch != NULL &&
                         psPolygonPatch->eType == CXT_Element &&
                         EQUAL(BareGMLElement(psPolygonPatch->pszValue),"PolygonPatch") &&
-                        GetChildElement(psPolygonPatch) != NULL &&
-                        EQUAL(BareGMLElement(GetChildElement(psPolygonPatch)->pszValue),"interior") )
+                        (psPolygonPatchChild = GetChildElement(psPolygonPatch)) != NULL &&
+                        EQUAL(BareGMLElement(psPolygonPatchChild->pszValue),"interior") )
                     {
                         // Find all inner rings 
                         for( const CPLXMLNode* psChild2 = psPolygonPatch->psChild; 
