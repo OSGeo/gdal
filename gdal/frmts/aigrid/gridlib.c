@@ -934,8 +934,22 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
         return CE_Failure;
     }
 
-    // FIXME? : risk of overflow in multiplication
-    nLength = CPL_MSBWORD32(nValue) * 2;
+    nValue = CPL_MSBWORD32(nValue);
+    if( nValue > INT_MAX / 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "AIGReadBlockIndex: Bad length");
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
+    nLength = nValue * 2;
+    if( nLength <= 100 ) 
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "AIGReadBlockIndex: Bad length");
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read the file (from beyond the header)     */
@@ -979,8 +993,31 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < psTInfo->nBlocks; i++ )
     {
-        psTInfo->panBlockOffset[i] = CPL_MSBWORD32(panIndex[i*2]) * 2;
-        psTInfo->panBlockSize[i] = CPL_MSBWORD32(panIndex[i*2+1]) * 2;
+        GUInt32 nVal;
+
+        nVal = CPL_MSBWORD32(panIndex[i*2]);
+        if( nVal >= INT_MAX )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AIGReadBlockIndex: Bad offset for block %d", i);
+            CPLFree( psTInfo->panBlockOffset );
+            CPLFree( psTInfo->panBlockSize );
+            CPLFree( panIndex );
+            return CE_Failure;
+        }
+        psTInfo->panBlockOffset[i] = nVal * 2;
+
+        nVal = CPL_MSBWORD32(panIndex[i*2+1]);
+        if( nVal >= INT_MAX / 2 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AIGReadBlockIndex: Bad size for block %d", i);
+            CPLFree( psTInfo->panBlockOffset );
+            CPLFree( psTInfo->panBlockSize );
+            CPLFree( panIndex );
+            return CE_Failure;
+        }
+        psTInfo->panBlockSize[i] = nVal * 2;
     }
 
     CPLFree( panIndex );
