@@ -1517,7 +1517,7 @@ int DDFRecord::ResetDirectory()
 /* -------------------------------------------------------------------- */
 /*      Now set each directory entry.                                   */
 /* -------------------------------------------------------------------- */
-    for( iField = 0; iField < nFieldCount; iField++ )
+    for( iField = 0; paoFields != NULL && iField < nFieldCount; iField++ )
     {
         DDFField *poField = /*GetField( iField )*/ paoFields + iField;
         DDFFieldDefn *poDefn = poField->GetFieldDefn();
