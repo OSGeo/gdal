@@ -110,7 +110,7 @@ protected:
     int nNextFID;
     int nTotalFCount;
 
-    int bError;
+    bool bError;
 
     static OGRErr CheckAndFixCoordinatesValidity( double& pdfLatitude, double& pdfLongitude );
 
