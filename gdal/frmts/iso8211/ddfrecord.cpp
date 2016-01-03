@@ -305,9 +305,8 @@ int DDFRecord::ReadHeader()
 /* -------------------------------------------------------------------- */
 /*      Is there anything seemly screwy about this record?              */
 /* -------------------------------------------------------------------- */
-    if(( _recLength <= 24 || _recLength > 100000000
+    if( ((_recLength <= 24 || _recLength > 100000000) && (_recLength != 0))
          || _fieldAreaStart < 24 || _fieldAreaStart > 100000 )
-       && (_recLength != 0))
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Data record appears to be corrupt on DDF file.\n"
