@@ -732,10 +732,10 @@ CPLErr HDF5ImageDataset::CreateODIMH5Projection()
 /************************************************************************/
 CPLErr HDF5ImageDataset::CreateProjections()
 {
-    switch(iSubdatasetType)
-    {
-    case CSK_PRODUCT:
-    {
+ switch(iSubdatasetType)
+ {
+  case CSK_PRODUCT:
+  {
         const char *osMissionLevel = NULL;
         int productType = PROD_UNKNOWN;
 
@@ -765,9 +765,9 @@ CPLErr HDF5ImageDataset::CreateProjections()
         CaptureCSKGCPs(productType);
 
         break;
-    }
-    case UNKNOWN_PRODUCT:
-    {
+  }
+  case UNKNOWN_PRODUCT:
+  {
 #define NBGCPLAT 100
 #define NBGCPLON 30
 
@@ -879,10 +879,10 @@ CPLErr HDF5ImageDataset::CreateProjections()
     if( LongitudeDatasetID > 0 )
         H5Dclose(LongitudeDatasetID);
 
-        break;
-    }
-    }
-    return CE_None;
+    break;
+  }
+ }
+ return CE_None;
 
 }
 /************************************************************************/

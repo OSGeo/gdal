@@ -918,12 +918,12 @@ GDALDataset* LevellerDataset::Create
     if( pszValue != NULL )
         poDS->m_dLogSpan[1] = CPLAtof( pszValue );
 
-	if(poDS->m_dLogSpan[1] < poDS->m_dLogSpan[0])
-	{
-		double t = poDS->m_dLogSpan[0];
-		poDS->m_dLogSpan[0] = poDS->m_dLogSpan[1];
-		poDS->m_dLogSpan[1] = t;
-	}
+    if(poDS->m_dLogSpan[1] < poDS->m_dLogSpan[0])
+    {
+            double t = poDS->m_dLogSpan[0];
+            poDS->m_dLogSpan[0] = poDS->m_dLogSpan[1];
+            poDS->m_dLogSpan[1] = t;
+    }
 
 // --------------------------------------------------------------------
 //      Instance a band.
