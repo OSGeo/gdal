@@ -1397,6 +1397,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(psImage->szIC,"C2") || EQUAL(psImage->szIC,"M2") )
     {
+        GIntBig nSignedRawBytes;
         size_t nRawBytes;
         NITFSegmentInfo *psSegInfo;
         int success;
@@ -1410,17 +1411,26 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
 
-        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
-            nRawBytes = (size_t)( psImage->panBlockStart[iFullBlock+1] 
-                - psImage->panBlockStart[iFullBlock] );
+        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn * psImage->nBands -1 )
+        {
+            nSignedRawBytes = (GIntBig)psImage->panBlockStart[iFullBlock+1] 
+                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
         else
         {
             psSegInfo = psImage->psFile->pasSegmentInfo + psImage->iSegment;
-            nRawBytes = (size_t)(psSegInfo->nSegmentStart 
-                                + psSegInfo->nSegmentSize 
-                                - psImage->panBlockStart[iFullBlock]);
+            nSignedRawBytes = (GIntBig)psSegInfo->nSegmentStart 
+                                + (GIntBig)psSegInfo->nSegmentSize 
+                                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
+        if( nSignedRawBytes <= 0 || nSignedRawBytes > INT_MAX )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid block size : " CPL_FRMT_GIB,
+                      nSignedRawBytes );
+            return BLKREAD_FAIL;
         }
 
+        nRawBytes = (size_t)nSignedRawBytes;
         pabyRawData = (GByte *) VSI_MALLOC_VERBOSE( nRawBytes );
         if (pabyRawData == NULL)
         {
@@ -1455,6 +1465,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(psImage->szIC,"C1") || EQUAL(psImage->szIC,"M1") )
     {
+        GIntBig nSignedRawBytes;
         size_t nRawBytes;
         NITFSegmentInfo *psSegInfo;
         int success;
@@ -1468,17 +1479,26 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
 
-        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
-            nRawBytes = (size_t)( psImage->panBlockStart[iFullBlock+1]
-                                  - psImage->panBlockStart[iFullBlock] );
+        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn * psImage->nBands -1 )
+        {
+            nSignedRawBytes = (GIntBig)psImage->panBlockStart[iFullBlock+1] 
+                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
         else
         {
             psSegInfo = psImage->psFile->pasSegmentInfo + psImage->iSegment;
-            nRawBytes = (size_t)( psSegInfo->nSegmentStart 
-                            + psSegInfo->nSegmentSize
-                            - psImage->panBlockStart[iFullBlock] );
+            nSignedRawBytes = (GIntBig)psSegInfo->nSegmentStart 
+                                + (GIntBig)psSegInfo->nSegmentSize 
+                                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
+        if( nSignedRawBytes <= 0 || nSignedRawBytes > INT_MAX )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid block size : " CPL_FRMT_GIB,
+                      nSignedRawBytes );
+            return BLKREAD_FAIL;
         }
 
+        nRawBytes = (size_t)nSignedRawBytes;
         pabyRawData = (GByte *) VSI_MALLOC_VERBOSE( nRawBytes );
         if (pabyRawData == NULL)
         {
