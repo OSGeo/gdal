@@ -29,17 +29,16 @@
 
 #include "ogr_gtm.h"
 
-OGRGTMLayer::OGRGTMLayer()
-{
-    poDS = NULL;
-    poSRS = NULL;
-    poCT = NULL;
-    pszName = NULL;
-    poFeatureDefn = NULL;
-    nNextFID = 0;
-    nTotalFCount = 0;
-    bError = FALSE;
-}
+OGRGTMLayer::OGRGTMLayer() :
+    poDS(NULL),
+    poSRS(NULL),
+    poCT(NULL),
+    pszName(NULL),
+    poFeatureDefn(NULL),
+    nNextFID(0),
+    nTotalFCount(0),
+    bError(false)
+{}
 
 OGRGTMLayer::~OGRGTMLayer()
 {
@@ -77,17 +76,19 @@ OGRFeatureDefn* OGRGTMLayer::GetLayerDefn()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGTMLayer::TestCapability( const char * pszCap ) 
+int OGRGTMLayer::TestCapability( const char * pszCap )
 {
     if (EQUAL(pszCap,OLCFastFeatureCount) &&
         m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return TRUE;
-    else if( EQUAL(pszCap,OLCCreateField) )
+
+    if( EQUAL(pszCap,OLCCreateField) )
         return poDS != NULL && poDS->getOutputFP() != NULL;
-    else if( EQUAL(pszCap,OLCSequentialWrite) )
+
+    if( EQUAL(pszCap,OLCSequentialWrite) )
         return poDS != NULL && poDS->getOutputFP() != NULL;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 
@@ -137,7 +138,7 @@ OGRErr OGRGTMLayer::CheckAndFixCoordinatesValidity( double& pdfLatitude, double&
 /************************************************************************/
 
 OGRErr OGRGTMLayer::CreateField( OGRFieldDefn *poField,
-                                 CPL_UNUSED int bApproxOK )
+                                 int /* bApproxOK */ )
 {
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {

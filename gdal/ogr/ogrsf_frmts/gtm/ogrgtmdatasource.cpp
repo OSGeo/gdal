@@ -33,29 +33,25 @@
 /*                         OGRGTMDataSource()                           */
 /************************************************************************/
 
-OGRGTMDataSource::OGRGTMDataSource()
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    bIssuedCTError = FALSE;
-    poGTMFile = NULL;
-    fpOutput = NULL;
-    fpTmpTrackpoints = NULL;
-    pszTmpTrackpoints = NULL;
-    fpTmpTracks = NULL;
-    pszTmpTracks = NULL;
-
-    minlat = 0;
-    maxlat = 0;
-    minlon = 0;
-    maxlon = 0;
-
-    numWaypoints = 0;
-    numTracks = 0;
-    numTrackpoints = 0;
-
-}
+OGRGTMDataSource::OGRGTMDataSource() :
+    fpOutput(NULL),
+    fpTmpTrackpoints(NULL),
+    pszTmpTrackpoints(NULL),
+    fpTmpTracks(NULL),
+    pszTmpTracks(NULL),
+    poGTMFile(NULL),
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bIssuedCTError(false),
+    minlat(0),
+    maxlat(0),
+    minlon(0),
+    maxlon(0),
+    numWaypoints(0),
+    numTracks(0),
+    numTrackpoints(0)
+{}
 
 /************************************************************************/
 /*                       AppendTemporaryFiles()                         */
@@ -65,38 +61,37 @@ void OGRGTMDataSource::AppendTemporaryFiles()
     if( fpOutput == NULL )
         return;
 
-    if (numTrackpoints != 0 || numTracks != 0)
+    if (numTrackpoints == 0 && numTracks == 0)
+        return;
+
+    void* pBuffer = CPLMalloc(2048);
+
+    // Append Trackpoints to the output file
+    fpTmpTrackpoints = VSIFOpenL( pszTmpTrackpoints, "r" );
+    if (fpTmpTrackpoints != NULL)
     {
-        void* pBuffer = CPLMalloc(2048);
-        size_t bytes;
-
-        // Append Trackpoints to the output file
-        fpTmpTrackpoints = VSIFOpenL( pszTmpTrackpoints, "r" );
-        if (fpTmpTrackpoints != NULL)
-        { 
-            while ( !VSIFEofL(fpTmpTrackpoints) )
-            {
-                bytes = VSIFReadL(pBuffer, 1, 2048, fpTmpTrackpoints);
-                VSIFWriteL(pBuffer, bytes, 1, fpOutput);
-            }
-            VSIFCloseL( fpTmpTrackpoints );
-            fpTmpTrackpoints = NULL;
-        }
-
-        // Append Tracks to the output file
-        fpTmpTracks = VSIFOpenL( pszTmpTracks, "r" );
-        if (fpTmpTracks != NULL)
+        while ( !VSIFEofL(fpTmpTrackpoints) )
         {
-            while ( !VSIFEofL(fpTmpTracks) )
-            {
-                bytes = VSIFReadL(pBuffer, 1, 2048, fpTmpTracks);
-                VSIFWriteL(pBuffer, bytes, 1, fpOutput);
-            }
-            VSIFCloseL( fpTmpTracks );
-            fpTmpTracks = NULL;
+            const size_t bytes = VSIFReadL(pBuffer, 1, 2048, fpTmpTrackpoints);
+            VSIFWriteL(pBuffer, bytes, 1, fpOutput);
         }
-        CPLFree(pBuffer);
+        VSIFCloseL( fpTmpTrackpoints );
+        fpTmpTrackpoints = NULL;
     }
+
+    // Append Tracks to the output file
+    fpTmpTracks = VSIFOpenL( pszTmpTracks, "r" );
+    if (fpTmpTracks != NULL)
+    {
+        while ( !VSIFEofL(fpTmpTracks) )
+        {
+            const size_t bytes = VSIFReadL(pBuffer, 1, 2048, fpTmpTracks);
+            VSIFWriteL(pBuffer, bytes, 1, fpOutput);
+        }
+        VSIFCloseL( fpTmpTracks );
+        fpTmpTracks = NULL;
+    }
+    CPLFree(pBuffer);
 }
 
 /************************************************************************/
@@ -119,10 +114,10 @@ void OGRGTMDataSource::WriteWaypointStyles()
                 pBufferAux = ((char*)pBufferAux) + 4;
                 // facename size
                 appendUShort(pBufferAux, 5);
-                pBufferAux = ((char*)pBufferAux) + 2; 
+                pBufferAux = ((char*)pBufferAux) + 2;
                 // facename
                 strncpy((char*)pBufferAux, "Arial", 5);
-                pBufferAux = ((char*)pBufferAux) + 5; 
+                pBufferAux = ((char*)pBufferAux) + 5;
                 // dspl
                 appendUChar(pBufferAux, (unsigned char) i);
                 pBufferAux = ((char*)pBufferAux) + 1;
@@ -140,7 +135,7 @@ void OGRGTMDataSource::WriteWaypointStyles()
                 pBufferAux = ((char*)pBufferAux) + 1;
                 // background
                 appendUShort(pBufferAux, (i != 3) ? 0 : 0xFF);
-                pBufferAux = ((char*)pBufferAux) + 2; 
+                pBufferAux = ((char*)pBufferAux) + 2;
                 // backcolor
                 appendInt(pBufferAux, (i != 3) ? 0 : 0xFFFF);
                 pBufferAux = ((char*)pBufferAux) + 4;
@@ -171,7 +166,7 @@ OGRGTMDataSource::~OGRGTMDataSource()
         VSIFCloseL( fpTmpTracks );
 
     WriteWaypointStyles();
-    AppendTemporaryFiles();  
+    AppendTemporaryFiles();
 
     if( fpOutput != NULL )
     {
@@ -192,15 +187,11 @@ OGRGTMDataSource::~OGRGTMDataSource()
         VSIFCloseL( fpOutput );
     }
 
-    if (papoLayers != NULL)
-    {
-        for( int i = 0; i < nLayers; i++ )
-            delete papoLayers[i];
-        CPLFree( papoLayers );
-    }
+    for( int i = 0; i < nLayers; i++ )
+        delete papoLayers[i];
+    CPLFree( papoLayers );
 
-    if (pszName != NULL)
-        CPLFree( pszName );
+    CPLFree( pszName );
 
     if (pszTmpTracks != NULL)
     {
@@ -436,12 +427,13 @@ int OGRGTMDataSource::Create( const char* pszFilename,
 /************************************************************************/
 /*                            GetLayer()                                */
 /************************************************************************/
+
 OGRLayer* OGRGTMDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 
