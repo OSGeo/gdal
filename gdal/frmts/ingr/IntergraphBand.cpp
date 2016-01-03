@@ -1068,12 +1068,13 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
         nSeekOffset   = pahTiles[nBlockId].Start + nDataOffset;
         nReadSize     = pahTiles[nBlockId].Used;
 
-        if( (int) nReadSize > nBlobkBytes ) 
+        CPLAssert( nBlobkBytes >= 0 );
+        if( nReadSize > (uint32)nBlobkBytes ) 
         {
             CPLDebug( "INGR", 
-                      "LoadBlockBuf(%d,%d) - trimmed tile size from %d to %d.", 
+                      "LoadBlockBuf(%d,%d) - trimmed tile size from %u to %d.", 
                       nBlockXOff, nBlockYOff,
-                      (int) nReadSize, (int) nBlobkBytes );
+                      nReadSize, nBlobkBytes );
             nReadSize = nBlobkBytes;
         }
     }
