@@ -802,7 +802,7 @@ int HFARasterAttributeTable::GetRowCount() const
 const char *HFARasterAttributeTable::GetValueAsString( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    char *apszStrList[1];
+    char *apszStrList[1] = { NULL };
     if( ((HFARasterAttributeTable*)this)->
                 ValuesIO(GF_Read, iField, iRow, 1, apszStrList ) != CE_None )
     {
@@ -822,7 +822,7 @@ const char *HFARasterAttributeTable::GetValueAsString( int iRow, int iField ) co
 int HFARasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    int nValue;
+    int nValue = 0;
     if( ((HFARasterAttributeTable*)this)->
                 ValuesIO(GF_Read, iField, iRow, 1, &nValue ) != CE_None )
     {
@@ -839,7 +839,7 @@ int HFARasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
 double HFARasterAttributeTable::GetValueAsDouble( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    double dfValue;
+    double dfValue = 0.0;
     if( ((HFARasterAttributeTable*)this)->
                 ValuesIO(GF_Read, iField, iRow, 1, &dfValue ) != CE_None )
     {
