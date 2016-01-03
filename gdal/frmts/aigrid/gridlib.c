@@ -868,8 +868,8 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 {
     char	*pszHDRFilename;
     VSILFILE	*fp;
-    int		nLength, i;
-    GInt32	nValue;
+    int		i;
+    GUInt32	nValue, nLength;
     GUInt32	*panIndex;
     GByte       abyHeader[8];
     const size_t nHDRFilenameLen = strlen(psInfo->pszCoverName)+40;
@@ -935,7 +935,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     }
 
     nValue = CPL_MSBWORD32(nValue);
-    if( nValue > INT_MAX / 2 )
+    if( nValue > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AIGReadBlockIndex: Bad length");
