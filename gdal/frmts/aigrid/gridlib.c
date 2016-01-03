@@ -984,6 +984,8 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     {
         CPLFree( psTInfo->panBlockOffset );
         CPLFree( psTInfo->panBlockSize );
+        psTInfo->panBlockOffset = NULL;
+        psTInfo->panBlockSize = NULL;
         CPLFree( panIndex );
         return CE_Failure;
     }
@@ -1002,6 +1004,8 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
                      "AIGReadBlockIndex: Bad offset for block %d", i);
             CPLFree( psTInfo->panBlockOffset );
             CPLFree( psTInfo->panBlockSize );
+            psTInfo->panBlockOffset = NULL;
+            psTInfo->panBlockSize = NULL;
             CPLFree( panIndex );
             return CE_Failure;
         }
@@ -1014,6 +1018,8 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
                      "AIGReadBlockIndex: Bad size for block %d", i);
             CPLFree( psTInfo->panBlockOffset );
             CPLFree( psTInfo->panBlockSize );
+            psTInfo->panBlockOffset = NULL;
+            psTInfo->panBlockSize = NULL;
             CPLFree( panIndex );
             return CE_Failure;
         }
