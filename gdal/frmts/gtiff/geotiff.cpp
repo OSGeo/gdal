@@ -11020,6 +11020,18 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         }
     }
 
+    // libtiff has various issues with OJPEG compression and chunky-strip support
+    // with the "classic" scanline/strip/tile interfaces, and that wouldn't
+    // work either, so better bail out
+    if( nCompression == COMPRESSION_OJPEG &&
+        !bTreatAsRGBA )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Old-JPEG compression only supported through RGBA interface, "
+                 "which cannot be used probably because the file is corrupted");
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the split interface?                   */
 /* -------------------------------------------------------------------- */
