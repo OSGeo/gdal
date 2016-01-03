@@ -420,7 +420,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     GByte abyBuf[SIZEOF_TDIR];
 
     if( ( VSIFSeekL( fp, nOffset, SEEK_SET ) == -1 ) ||
-        ( VSIFReadL( abyBuf, 1, SIZEOF_TDIR, fp ) == 0 ) )
+        ( VSIFReadL( abyBuf, 1, SIZEOF_TDIR, fp ) != SIZEOF_TDIR ) )
     {
         CPLDebug("INGR", "Error reading tiles header");
         return 0;
@@ -438,9 +438,15 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     // ----------------------------------------------------------------
     // Calculate the number of tiles
     // ----------------------------------------------------------------
-
-    int nTilesPerCol = (int) ceil( (float) nBandXSize / pTileDir->TileSize );
-    int nTilesPerRow = (int) ceil( (float) nBandYSize / pTileDir->TileSize );
+#define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
+    int nTilesPerCol = DIV_ROUND_UP(nBandXSize, pTileDir->TileSize);
+    int nTilesPerRow = DIV_ROUND_UP(nBandYSize, pTileDir->TileSize);
+    if( nTilesPerCol > INT_MAX / nTilesPerRow )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Too many tiles : %u x %u", nTilesPerCol, nTilesPerRow);
+        return 0;
+    }
 
     uint32 nTiles = nTilesPerCol * nTilesPerRow;
 
@@ -464,7 +470,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     (*pahTiles)[0].Used       = pTileDir->First.Used;
 
     if( nTiles > 1 &&
-      ( VSIFReadL( pabyBuf, ( nTiles - 1 ), SIZEOF_TILE, fp ) == 0 ) )
+      ( VSIFReadL( pabyBuf, ( nTiles - 1 ), SIZEOF_TILE, fp ) != SIZEOF_TILE ) )
     {
         CPLDebug("INGR", "Error reading tiles table");
         CPLFree( *pahTiles );
