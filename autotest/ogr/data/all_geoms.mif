@@ -23,10 +23,13 @@ Pline 2
   0 1
   2 3
 
-PLINE MULTIPLE 1
+PLINE MULTIPLE 2
   2
   0 1
   2 3
+  2
+  3 4
+  5 6
   Pen(1,2,3)
   Smooth
 
