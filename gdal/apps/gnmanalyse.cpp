@@ -616,6 +616,7 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy(papszDSCO);
     CSLDestroy(papszLCO);
     CSLDestroy(papszALO);
+    CSLDestroy( papszArgv );
 
     if(poResultLayer != NULL)
         poDS->ReleaseResultSet(poResultLayer);

@@ -899,6 +899,7 @@ int main( int nArgc, char ** papszArgv )
     }
 
 exit:
+    CSLDestroy( papszArgv );
     CSLDestroy( papszDSCO );
     CSLDestroy( papszLayers );
 
