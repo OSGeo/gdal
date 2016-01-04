@@ -3563,10 +3563,10 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                 if (poClipSrc)
                 {
                     OGRGeometry* poClipped = poDstGeometry->Intersection(poClipSrc);
+                    delete poDstGeometry;
                     if (poClipped == NULL || poClipped->IsEmpty())
                     {
                         delete poClipped;
-                        delete poDstGeometry;
                         goto end_loop;
                     }
                     poDstGeometry = poClipped;
@@ -3623,14 +3623,13 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                         goto end_loop;
 
                     OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
+                    delete poDstGeometry;
                     if (poClipped == NULL || poClipped->IsEmpty())
                     {
                         delete poClipped;
-                        delete poDstGeometry;
                         goto end_loop;
                     }
 
-                    delete poDstGeometry;
                     poDstGeometry = poClipped;
                 }
 
