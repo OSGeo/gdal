@@ -199,7 +199,7 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
 /*                USGSDEMReadDoubleFromBuffer()                         */
 /************************************************************************/
 
-static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount )
+static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount, int *pbSuccess = NULL)
 
 {
     if (psBuffer->cur_index + nCharCount > psBuffer->buffer_size)
@@ -207,6 +207,7 @@ static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount )
         USGSDEMRefillBuffer(psBuffer);
         if (psBuffer->cur_index + nCharCount > psBuffer->buffer_size)
         {
+            if( pbSuccess ) *pbSuccess = FALSE;
             return 0;
         }
     }
@@ -224,6 +225,7 @@ static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount )
     szPtr[nCharCount] = backupC;
     psBuffer->cur_index += nCharCount;
 
+    if( pbSuccess ) *pbSuccess = TRUE;
     return dfVal;
 }
 
@@ -365,16 +367,26 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     for( int i = 0; i < GetXSize(); i++)
     {
-        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
-        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
-        const int nCPoints = USGSDEMReadIntFromBuffer(&sBuffer);
-        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
+        int bSuccess;
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
+        if( bSuccess )
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
+        const int nCPoints = (bSuccess) ? USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess) : 0;
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
 
-        /* dxStart = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        double dyStart = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        const double dfElevOffset = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
+        if( bSuccess )
+        /* dxStart = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess);
+        double dyStart = (bSuccess) ? USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess) : 0;
+        const double dfElevOffset = (bSuccess) ? USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess) : 0;
+        if( bSuccess )
+        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess);
+        if( bSuccess )
+        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess);
+        if( !bSuccess )
+        {
+            CPLFree(sBuffer.buffer);
+            return CE_Failure;
+        }
 
         if( STARTS_WITH_CI(poGDS->pszProjection, "GEOGCS") )
             dyStart = dyStart / 3600.0;
@@ -395,7 +407,6 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             const int iY = GetYSize() - j - 1;
 
-            int bSuccess;
             const int nElev = USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
             if( !bSuccess )
             {
