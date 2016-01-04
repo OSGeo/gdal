@@ -5517,7 +5517,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     if (nStringLen > 0)
     {
         TABMAPCoordBlock        *poCoordBlock;
-        CPLAssert(nCoordBlockPtr > 0);
+
         if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
             poCoordBlock = *ppoCoordBlock;
         else
