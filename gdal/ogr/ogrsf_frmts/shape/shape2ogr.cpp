@@ -68,16 +68,18 @@ static OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring, int bHas
     poRing = new OGRLinearRing();
 
     RingStartEnd ( psShape, ring, &nRingStart, &nRingEnd );
+    if( nRingEnd >= nRingStart )
+    {
+        nRingPoints = nRingEnd - nRingStart + 1;
 
-    nRingPoints = nRingEnd - nRingStart + 1;
-
-    if (bHasZ)
-        poRing->setPoints( nRingPoints, psShape->padfX + nRingStart, 
-                           psShape->padfY + nRingStart,
-                           psShape->padfZ + nRingStart );
-    else
-        poRing->setPoints( nRingPoints, psShape->padfX + nRingStart,
-                           psShape->padfY + nRingStart );
+        if (bHasZ)
+            poRing->setPoints( nRingPoints, psShape->padfX + nRingStart, 
+                            psShape->padfY + nRingStart,
+                            psShape->padfZ + nRingStart );
+        else
+            poRing->setPoints( nRingPoints, psShape->padfX + nRingStart,
+                            psShape->padfY + nRingStart );
+    }
 
     return ( poRing );
 }
