@@ -123,8 +123,11 @@ static long JPEG2000_VSIL_seek(jas_stream_obj_t *obj, long offset, int origin)
 static int JPEG2000_VSIL_close(jas_stream_obj_t *obj)
 {
 	jas_stream_VSIFL_t *fileobj = JAS_CAST(jas_stream_VSIFL_t *, obj);
-    VSIFCloseL(fileobj->fp);
-    fileobj->fp = NULL;
+        if( fileobj->fp != NULL )
+        {
+            VSIFCloseL(fileobj->fp);
+            fileobj->fp = NULL;
+        }
 	jas_free(fileobj);
 	return 0;
 }
@@ -277,7 +280,7 @@ jas_stream_t *JPEG2000_VSIL_fopen(const char *filename, const char *mode)
 
 	/* Open the underlying file. */
 	if ((obj->fp = VSIFOpenL(filename, mode)) == NULL) {
-		JPEG2000_VSIL_jas_stream_destroy(stream);
+		jas_stream_close(stream);
 		return 0;
 	}
 
