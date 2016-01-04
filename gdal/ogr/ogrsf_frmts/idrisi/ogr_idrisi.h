@@ -45,11 +45,11 @@ protected:
 
     VSILFILE*          fp;
     VSILFILE*          fpAVL;
-    int                bEOF;
+    bool               bEOF;
 
     int                nNextFID;
 
-    int                bExtentValid;
+    bool               bExtentValid;
     double             dfMinX;
     double             dfMinY;
     double             dfMaxX;
