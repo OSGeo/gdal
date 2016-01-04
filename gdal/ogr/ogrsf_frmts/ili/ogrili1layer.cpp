@@ -430,7 +430,7 @@ void OGRILI1Layer::JoinGeomLayers()
 
     for (GeomFieldInfos::const_iterator it = oGeomFieldInfos.begin(); it != oGeomFieldInfos.end(); ++it)
     {
-        OGRFeatureDefn* geomFeatureDefn = it->second.geomTable;
+        OGRFeatureDefn* geomFeatureDefn = it->second.GetGeomTableDefnRef();
         if (geomFeatureDefn)
         {
             CPLDebug( "OGR_ILI", "Join geometry table %s of field '%s'", geomFeatureDefn->GetName(), it->first.c_str() );
