@@ -1602,6 +1602,11 @@ int TABMAPObjText::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
     m_nCoordBlockPtr  = poObjBlock->ReadInt32();    // String position
     m_nCoordDataSize  = poObjBlock->ReadInt16();    // String length
+    if( m_nCoordDataSize < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed, "m_nCoordDataSize < 0");
+        return -1;
+    }
     m_nTextAlignment  = poObjBlock->ReadInt16();    // just./spacing/arrow
 
     m_nAngle     = poObjBlock->ReadInt16();         // Tenths of degree
@@ -1712,15 +1717,14 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     m_nCoordBlockPtr = poObjBlock->ReadInt32();
     m_nNumPoints = poObjBlock->ReadInt32();
 
-    if (IsCompressedType())
+    const int nPointSize = (IsCompressedType()) ? 2 * 2 : 2 * 4;
+    if( m_nNumPoints < 0 || m_nNumPoints > INT_MAX / nPointSize )
     {
-        m_nCoordDataSize = m_nNumPoints * 2 * 2;
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "Invalid m_nNumPoints = %d", m_nNumPoints);
+        return -1;
     }
-    else
-    {
-        m_nCoordDataSize = m_nNumPoints * 2 * 4;
-    }
-
+    m_nCoordDataSize = m_nNumPoints * nPointSize;
 
 #ifdef TABDUMP
     printf("MULTIPOINT: id=%d, type=%d, "
