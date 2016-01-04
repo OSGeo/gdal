@@ -2091,7 +2091,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             /* We check that the offset is inside the vertex array */
             if (psShape->panPartStart[i] < 0
                 || (psShape->panPartStart[i] >= psShape->nVertices
-                    && psShape->nVertices > 0) )
+                    && psShape->nVertices > 0)
+                || (psShape->panPartStart[i] > 0 && psShape->nVertices == 0) )
             {
                 snprintf(szErrorMsg, sizeof(szErrorMsg),
                          "Corrupted .shp file : shape %d : panPartStart[%d] = %d, nVertices = %d",
