@@ -3760,6 +3760,18 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
         return NULL;
     }
 
+    // Try now to create the file to avoid memory leaks if it is
+    // the SDK that fails to do it.
+    VSILFILE* fpVSIL = VSIFOpenL( pszFilename, "wb" );
+    if( fpVSIL == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                "Failed to create %s.", pszFilename );
+        return NULL;
+    }
+    VSIFCloseL(fpVSIL);
+    VSIUnlink(pszFilename);
+
     HDF4ImageDataset *poDS = new HDF4ImageDataset();
 
     CPLMutexHolderD(&hHDF4Mutex);

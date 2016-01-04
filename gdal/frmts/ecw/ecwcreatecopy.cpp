@@ -995,7 +995,25 @@ CPLErr GDALECWCompressor::Initialize(
 
         m_OStream.Access( fpVSIL, TRUE, (BOOLEAN) bSeekable, pszFilename, 
 			  0, -1 );
-    }    
+    }
+    else
+    {
+        if( !STARTS_WITH(pszFilename, "/vsi") )
+        {
+            // Try now to create the file to avoid memory leaks if it is
+            // the SDK that fails to do it.
+            fpVSIL = VSIFOpenL( pszFilename, "wb" );
+            if( fpVSIL == NULL )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed, 
+                        "Failed to open/create %s.", pszFilename );
+                return CE_Failure;
+            }
+            VSIFCloseL(fpVSIL);
+            VSIUnlink(pszFilename);
+            fpVSIL = NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check if we can enable large files.  This option should only    */
