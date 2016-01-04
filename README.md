@@ -14,6 +14,7 @@ GDAL - Geospatial Data Abstraction Library
 | MinGW                 | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_mingw)](https://travis-ci.org/rouault/gdal_coverage) |
 | MinGW_W64             | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_mingw_w64)](https://travis-ci.org/rouault/gdal_coverage) |
 | Android               | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_android)](https://travis-ci.org/rouault/gdal_coverage) |
+| GCC 5.2 -fsanitize    | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_gcc5.2_sanitize)](https://travis-ci.org/rouault/gdal_coverage) |
 | Clang Static Analyzer | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_clang_static_analyzer)](https://travis-ci.org/rouault/gdal_coverage) |
 | Coverity Scan         | [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal) |
 
