@@ -3735,10 +3735,18 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(int bCheckRasterTable)
     char* pszSQL;
     if( !bCheckRasterTable)
         pszSQL = sqlite3_mprintf(
-            "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name IS NULL AND extension_name != 'gdal_aspatial'");
+            "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE (table_name IS NULL AND extension_name != 'gdal_aspatial')"
+#ifdef WORKAROUND_SQLITE3_BUGS
+            " OR 0"
+#endif
+        );
     else
         pszSQL = sqlite3_mprintf(
-            "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name = '%q'",
+            "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name = '%q'"
+#ifdef WORKAROUND_SQLITE3_BUGS
+            " OR 0"
+#endif
+            ,
             m_osRasterTable.c_str());
 
     SQLResult oResultTable;
@@ -3814,9 +3822,13 @@ int GDALGeoPackageDataset::HasGDALAspatialExtension()
     SQLResult oResultTable;
     OGRErr err = SQLQuery(hDB,
         "SELECT * FROM gpkg_extensions "
-        "WHERE extension_name = 'gdal_aspatial' "
+        "WHERE (extension_name = 'gdal_aspatial' "
         "AND table_name IS NULL "
-        "AND column_name IS NULL", &oResultTable);
+        "AND column_name IS NULL)"
+#ifdef WORKAROUND_SQLITE3_BUGS
+        " OR 0"
+#endif
+        , &oResultTable);
     int bHasExtension = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
     SQLResultFree(&oResultTable);
     return bHasExtension;
