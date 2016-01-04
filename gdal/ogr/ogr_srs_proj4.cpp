@@ -925,6 +925,13 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         SetQSC( OSR_GDV( papszNV, "lat_0", 0.0 ),
                 OSR_GDV( papszNV, "lon_0", 0.0 ) );
     }
+    else if( EQUAL(pszProj,"sch") )
+    {
+        SetSCH( OSR_GDV( papszNV, "plat_0", 0.0 ),
+                OSR_GDV( papszNV, "plon_0", 0.0 ),
+                OSR_GDV( papszNV, "phdg_0", 0.0 ),
+                OSR_GDV( papszNV, "h_0", 0.0) );
+    }
 
     else if( EQUAL(pszProj,"tpeqd") )
     {
@@ -2189,6 +2196,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  "+proj=qsc +lat_0=%.16g +lon_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) );
+    }
+
+    else if ( EQUAL(pszProjection, SRS_PT_SCH) )
+    {
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
+                "+proj=sch +plat_0=%.16g +plon_0=%.16g +phdg_0=%.16g +h_0=%.16g ",
+                GetNormProjParm(SRS_PP_PEG_POINT_LATITUDE, 0.0),
+                GetNormProjParm(SRS_PP_PEG_POINT_LONGITUDE, 0.0),
+                GetNormProjParm(SRS_PP_PEG_POINT_HEADING, 0.0),
+                GetNormProjParm(SRS_PP_PEG_POINT_HEIGHT, 0.0) );
     }
 
     /* Note: This never really gets used currently.  See bug 423 */

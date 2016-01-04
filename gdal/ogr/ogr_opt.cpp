@@ -52,7 +52,11 @@ static const char * const papszParameterDefinitions[] = {
     SRS_PP_LONGITUDE_OF_POINT_3,"Longitude of Point 3", "Long",  "0.0",
     SRS_PP_LATITUDE_OF_POINT_3, "Latitude of Point 3",  "Lat",   "0.0",
     SRS_PP_RECTIFIED_GRID_ANGLE,"Rectified Grid Angle", "Angle", "0.0", 
-    SRS_PP_SATELLITE_HEIGHT,    "Satellite Height",     "m",   "35785831.0", 
+    SRS_PP_SATELLITE_HEIGHT,    "Satellite Height",     "m",   "35785831.0",
+    SRS_PP_PEG_POINT_LATITUDE,  "Peg Point Latitude",   "Lat",   "0.0",
+    SRS_PP_PEG_POINT_LONGITUDE, "Peg Point Longitude",  "Long",  "0.0",
+    SRS_PP_PEG_POINT_HEADING,   "Peg Point Heading",    "Angle", "0.0",
+    SRS_PP_PEG_POINT_HEIGHT,    "Peg Point Height",     "m",     "0.0",
     NULL
 };
 
@@ -473,6 +477,14 @@ static const char * const papszProjectionDefinitions[] = {
     "Quadrilateralized Spherical Cube",
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
+
+    "*",
+    SRS_PT_SCH,
+    "Spherical Crosstrack Height",
+    SRS_PP_PEG_POINT_LATITUDE,
+    SRS_PP_PEG_POINT_LONGITUDE,
+    SRS_PP_PEG_POINT_HEADING,
+    SRS_PP_PEG_POINT_HEIGHT,
 
     NULL
 };
