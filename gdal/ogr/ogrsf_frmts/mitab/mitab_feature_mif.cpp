@@ -893,6 +893,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 {
                     delete poLine;
                     delete poMultiLine;
+                    CSLDestroy(papszToken);
                     return -1;
                 }
                 for (i=0;i<nNumPoints;i++)
@@ -904,6 +905,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                         {
                             delete poLine;
                             delete poMultiLine;
+                            CSLDestroy(papszToken);
                             return -1;
                         }
                     }
@@ -940,6 +942,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 CPLError(CE_Failure, CPLE_FileIO,
                             "Invalid number of vertices (%d) in PLINE "
                             "segment.", nNumPoints);
+                CSLDestroy(papszToken);
                 return -1;
             }
             poLine = new OGRLineString();
@@ -950,6 +953,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             if( poLine->getNumPoints() != nInitialNumPoints )
             {
                 delete poLine;
+                CSLDestroy(papszToken);
                 return -1;
             }
             for (i=0;i<nNumPoints;i++)
@@ -960,6 +964,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     if( poLine->getNumPoints() != nNumPoints )
                     {
                         delete poLine;
+                        CSLDestroy(papszToken);
                         return -1;
                     }
                 }
