@@ -1307,6 +1307,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         }
 
         sqlite3_free_table(papszResult);
+        papszResult = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Detect VirtualShape, VirtualXL and VirtualOGR layers            */
@@ -1346,14 +1347,16 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         }
 
         sqlite3_free_table(papszResult);
+        papszResult = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Detect spatial views                                            */
 /* -------------------------------------------------------------------- */
+
         rc = sqlite3_get_table( hDB,
                                 "SELECT view_name, view_geometry, view_rowid, f_table_name, f_geometry_column FROM views_geometry_columns",
                                 &papszResult, &nRowCount,
-                                &nColCount, &pszErrMsg );
+                                &nColCount, NULL );
         if ( rc == SQLITE_OK )
         {
             for( iRow = 0; iRow < nRowCount; iRow++ )
