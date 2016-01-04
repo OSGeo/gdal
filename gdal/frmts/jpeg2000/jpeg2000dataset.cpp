@@ -890,6 +890,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, "Unable to create image %s.\n", 
                   pszFilename );
+        jas_stream_close( psStream );
         return NULL;
     }
 
@@ -911,6 +912,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "Unable to create matrix with size %dx%d.\n", 1, nYSize );
         CPLFree( sComps );
         jas_image_destroy( psImage );
+        jas_stream_close( psStream );
         return NULL;
     }
     paiScanline = (GUInt32 *) CPLMalloc( nXSize *
@@ -960,6 +962,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLFree( paiScanline );
                 CPLFree( sComps );
                 jas_image_destroy( psImage );
+                jas_stream_close( psStream );
                 return NULL;
             }
 
@@ -1150,6 +1153,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLFree( paiScanline );
                 CPLFree( sComps );
                 jas_image_destroy( psImage );
+                jas_stream_close( psStream );
                 return NULL;
             }
             jp2_box_destroy( box );
@@ -1165,6 +1169,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLFree( paiScanline );
                 CPLFree( sComps );
                 jas_image_destroy( psImage );
+                jas_stream_close( psStream );
                 return NULL;
             }
 #ifdef HAVE_JASPER_UUID
@@ -1181,6 +1186,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLFree( paiScanline );
             CPLFree( sComps );
             jas_image_destroy( psImage );
+            jas_stream_close( psStream );
             return NULL;
         }
     }
