@@ -27,12 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_htf.h"
 #include "cpl_conv.h"
+#include "ogr_htf.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
-
-extern "C" void RegisterOGRHTF();
 
 /************************************************************************/
 /*                                Open()                                */
@@ -45,10 +44,11 @@ static GDALDataset *OGRHTFDriverOpen( GDALOpenInfo* poOpenInfo )
         poOpenInfo->fpL == NULL )
         return NULL;
 
-    if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "HTF HEADER") )
+    if( !STARTS_WITH( reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                      "HTF HEADER") )
         return NULL;
 
-    OGRHTFDataSource   *poDS = new OGRHTFDataSource();
+    OGRHTFDataSource *poDS = new OGRHTFDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
