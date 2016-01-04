@@ -761,3 +761,20 @@ int TABUnitIdFromString(const char *pszName)
 
     return -1;
 }
+
+
+/**********************************************************************
+ *                       TABSaturatedAdd()
+ ***********************************************************************/
+
+void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd)
+{
+    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
+        nVal = INT_MAX;
+    else if( nAdd == INT_MIN && nVal < 0 )
+        nVal = INT_MIN;
+    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
+        nVal = INT_MIN;
+    else
+        nVal += nAdd;
+}

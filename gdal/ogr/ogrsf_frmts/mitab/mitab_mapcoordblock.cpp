@@ -94,6 +94,7 @@
  **********************************************************************/
 
 #include "mitab.h"
+#include "mitab_utils.h"
 
 /*=====================================================================
  *                      class TABMAPCoordBlock
@@ -340,18 +341,6 @@ void     TABMAPCoordBlock::SetComprCoordOrigin(GInt32 nX, GInt32 nY)
     m_nComprOrgY = nY;
 }
 
-static void TABMAPCoordBlockAddComprOrg(GInt32& nVal, GInt32 nAdd)
-{
-    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
-        nVal = INT_MAX;
-    else if( nAdd == INT_MIN && nVal < 0 )
-        nVal = INT_MIN;
-    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
-        nVal = INT_MIN;
-    else
-        nVal += nAdd;
-}
-
 /**********************************************************************
  *                   TABMAPObjectBlock::ReadIntCoord()
  *
@@ -372,8 +361,8 @@ int     TABMAPCoordBlock::ReadIntCoord(GBool bCompressed,
     {   
         nX = ReadInt16();
         nY = ReadInt16();
-        TABMAPCoordBlockAddComprOrg(nX, m_nComprOrgX);
-        TABMAPCoordBlockAddComprOrg(nY, m_nComprOrgY);
+        TABSaturatedAdd(nX, m_nComprOrgX);
+        TABSaturatedAdd(nY, m_nComprOrgY);
     }
     else
     {
@@ -415,8 +404,8 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
         {
             panXY[i]   = ReadInt16();
             panXY[i+1] = ReadInt16();
-            TABMAPCoordBlockAddComprOrg(panXY[i], m_nComprOrgX);
-            TABMAPCoordBlockAddComprOrg(panXY[i+1], m_nComprOrgY);
+            TABSaturatedAdd(panXY[i], m_nComprOrgX);
+            TABSaturatedAdd(panXY[i+1], m_nComprOrgY);
             if (CPLGetLastErrorType() != 0)
                 return -1;
         }
@@ -572,6 +561,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
          * inside the [0..numVerticesTotal] range.)
          *------------------------------------------------------------*/
         if ( pasHdrs[i].nVertexOffset < 0 || 
+             pasHdrs[i].nVertexOffset > INT_MAX - pasHdrs[i].numVertices ||
              (pasHdrs[i].nVertexOffset +
                            pasHdrs[i].numVertices ) > numVerticesTotal)
         {

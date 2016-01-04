@@ -7160,13 +7160,17 @@ int  TABCollection::ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
         pnLabelX = poCoordBlock->ReadInt16();
         pnLabelY = poCoordBlock->ReadInt16();
 
-        pnLabelX += nComprOrgX;
-        pnLabelY += nComprOrgY;
+        TABSaturatedAdd(pnLabelX, nComprOrgX);
+        TABSaturatedAdd(pnLabelY, nComprOrgY);
 
-        pnMinX = nComprOrgX + poCoordBlock->ReadInt16(); // Read MBR
-        pnMinY = nComprOrgY + poCoordBlock->ReadInt16();
-        pnMaxX = nComprOrgX + poCoordBlock->ReadInt16();
-        pnMaxY = nComprOrgY + poCoordBlock->ReadInt16();
+        pnMinX = poCoordBlock->ReadInt16(); // Read MBR
+        pnMinY = poCoordBlock->ReadInt16();
+        pnMaxX = poCoordBlock->ReadInt16();
+        pnMaxY = poCoordBlock->ReadInt16();
+        TABSaturatedAdd(pnMinX, nComprOrgX);
+        TABSaturatedAdd(pnMinY, nComprOrgY);
+        TABSaturatedAdd(pnMaxX, nComprOrgX);
+        TABSaturatedAdd(pnMaxY, nComprOrgY);
     }
     else
     {
