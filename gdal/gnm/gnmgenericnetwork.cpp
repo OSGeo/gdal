@@ -50,7 +50,8 @@ GNMGenericNetwork::GNMGenericNetwork() :
 
 GNMGenericNetwork::~GNMGenericNetwork()
 {
-
+    for(size_t i = 0; i < m_apoLayers.size(); i++)
+        delete m_apoLayers[i];
 }
 
 int GNMGenericNetwork::GetLayerCount()
