@@ -389,7 +389,7 @@ int ILI2Reader::ReadModel(ImdReader *poImdReader, const char *modelFilename) {
   poImdReader->ReadModel(modelFilename);
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
-    OGRLayer* layer = new OGRILI2Layer(it->poTableDefn, it->poGeomFieldInfos, NULL);
+    OGRLayer* layer = new OGRILI2Layer(it->GetTableDefnRef(), it->poGeomFieldInfos, NULL);
     m_listLayer.push_back(layer);
   }
   return 0;
@@ -473,6 +473,7 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
         OGRwkbGeometryType geomType = feature->GetGeomFieldDefnRef(fIndex)->GetType();
         if (geomType == wkbMultiLineString || geomType == wkbPolygon) {
           feature->SetGeomFieldDirectly(fIndex, geom->getLinearGeometry());
+          delete geom;
         } else {
           feature->SetGeomFieldDirectly(fIndex, geom);
         }

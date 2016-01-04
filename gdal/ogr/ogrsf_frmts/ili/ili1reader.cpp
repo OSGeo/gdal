@@ -103,14 +103,14 @@ int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename, 
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
     //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with table '%s'", it->poTableDefn->GetName() );
-    OGRILI1Layer* layer = new OGRILI1Layer(it->poTableDefn, it->poGeomFieldInfos, poDS);
+    OGRILI1Layer* layer = new OGRILI1Layer(it->GetTableDefnRef(), it->poGeomFieldInfos, poDS);
     AddLayer(layer);
     //Create additional layers for surface and area geometries
     for (GeomFieldInfos::const_iterator it2 = it->poGeomFieldInfos.begin(); it2 != it->poGeomFieldInfos.end(); ++it2)
     {
-      if (it2->second.geomTable)
+      if (it2->second.GetGeomTableDefnRef())
       {
-        OGRFeatureDefn* poGeomTableDefn = it2->second.geomTable;
+        OGRFeatureDefn* poGeomTableDefn = it2->second.GetGeomTableDefnRef();
         OGRGeomFieldDefn* poOGRGeomFieldDefn = poGeomTableDefn->GetGeomFieldDefn(0);
         GeomFieldInfos oGeomFieldInfos;
         // We add iliGeomType to recognize Ili1 geom tables
@@ -135,7 +135,7 @@ int ILI1Reader::ReadFeatures() {
     char **tokens = NULL;
     const char *firsttok = NULL;
     const char *pszLine;
-    char *topic = NULL;
+    char *topic = CPLStrdup("(null)");
     int ret = TRUE;
 
     while (ret && (tokens = ReadParseLine()) != NULL)
@@ -167,12 +167,12 @@ int ILI1Reader::ReadFeatures() {
       else if (EQUAL(firsttok, "MODL"))
       {
       }
-      else if (EQUAL(firsttok, "TOPI"))
+      else if (EQUAL(firsttok, "TOPI") && CSLCount(tokens) >= 2)
       {
         CPLFree(topic);
         topic = CPLStrdup(CSLGetField(tokens, 1));
       }
-      else if (EQUAL(firsttok, "TABL"))
+      else if (EQUAL(firsttok, "TABL") && CSLCount(tokens) >= 2)
       {
         const char *layername = GetLayerNameString(topic, CSLGetField(tokens, 1));
         CPLDebug( "OGR_ILI", "Reading table '%s'", layername );

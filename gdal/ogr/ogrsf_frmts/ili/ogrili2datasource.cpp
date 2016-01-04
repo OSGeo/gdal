@@ -274,7 +274,7 @@ OGRILI2DataSource::ICreateLayer( const char * pszLayerName,
         return NULL;
 
     FeatureDefnInfo featureDefnInfo = poImdReader->GetFeatureDefnInfo(pszLayerName);
-    OGRFeatureDefn* poFeatureDefn = featureDefnInfo.poTableDefn;
+    OGRFeatureDefn* poFeatureDefn = featureDefnInfo.GetTableDefnRef();
     if (poFeatureDefn == NULL)
     {
         CPLError(CE_Warning, CPLE_AppDefined,

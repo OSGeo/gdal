@@ -68,11 +68,12 @@ public:
     {
         char* layerName = LayerName();
         poTableDefn = new OGRFeatureDefn(layerName);
+        poTableDefn->Reference();
         CPLFree(layerName);
     };
     ~IliClass()
     {
-        delete poTableDefn;
+        poTableDefn->Release();
     };
     const char* GetName() {
         return poTableDefn->GetName();
@@ -138,7 +139,7 @@ public:
         OGRGeomFieldDefn fieldDefGeom(psFieldName, eType);
         poGeomTableDefn->AddGeomFieldDefn(&fieldDefGeom);
         CPLDebug( "OGR_ILI", "Adding geometry table %s for field %s", poGeomTableDefn->GetName(), psFieldName);
-        poGeomFieldInfos[psFieldName].geomTable = poGeomTableDefn;
+        poGeomFieldInfos[psFieldName].SetGeomTableDefn(poGeomTableDefn);
     }
     void AddField(const char* psName, OGRFieldType fieldType)
     {
@@ -306,10 +307,9 @@ public:
     FeatureDefnInfo tableDefs()
     {
         FeatureDefnInfo poLayerInfo;
-        poLayerInfo.poTableDefn = NULL;
         if (!hasDerivedClasses && !isEmbedded())
         {
-            poLayerInfo.poTableDefn = poTableDefn;
+            poLayerInfo.SetTableDefn(poTableDefn);
             poLayerInfo.poGeomFieldInfos = poGeomFieldInfos;
         }
         return poLayerInfo;
@@ -478,8 +478,13 @@ void ImdReader::ReadModel(const char *pszFilename) {
     {
         const char* className = it->second->GetIliName();
         FeatureDefnInfo oClassInfo = it->second->tableDefs();
-        if (!STARTS_WITH_CI(className, "INTERLIS.") && oClassInfo.poTableDefn)
+        if (!STARTS_WITH_CI(className, "INTERLIS.") && oClassInfo.GetTableDefnRef())
             featureDefnInfos.push_back(oClassInfo);
+    }
+
+    for (ClassesMap::iterator it = oClasses.begin(); it != oClasses.end(); ++it)
+    {
+        delete it->second;
     }
 
     CPLDestroyXMLNode(psRootNode);
@@ -489,7 +494,7 @@ FeatureDefnInfo ImdReader::GetFeatureDefnInfo(const char *pszLayerName) {
     FeatureDefnInfo featureDefnInfo;
     for (FeatureDefnInfos::const_iterator it = featureDefnInfos.begin(); it != featureDefnInfos.end(); ++it)
     {
-        OGRFeatureDefn* fdefn = it->poTableDefn;
+        OGRFeatureDefn* fdefn = it->GetTableDefnRef();
         if (EQUAL(fdefn->GetName(), pszLayerName)) featureDefnInfo = *it;
     }
     return featureDefnInfo;
