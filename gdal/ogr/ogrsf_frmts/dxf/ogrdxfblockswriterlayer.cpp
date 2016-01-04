@@ -43,9 +43,6 @@ OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(
     OGRDXFWriterDS * /* poDS */ ) :
     poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
-  // (void) poDS;
-
-    poFeatureDefn = new OGRFeatureDefn( "blocks" );
     poFeatureDefn->Reference();
 
     OGRFieldDefn  oLayerField( "Layer", OFTString );
