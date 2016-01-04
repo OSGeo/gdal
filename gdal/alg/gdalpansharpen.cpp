@@ -1129,6 +1129,16 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             // from several threads. In this case, this is safe. In case that would
             // no longer be the case we could create as many MEMDataset as threads
             // pointing to the same buffer.
+
+            // To avoid races in threads, we query now the mask flags
+            // so that implicit mask bands are created now
+            if( eResampleAlg != GRIORA_NearestNeighbour )
+            {
+                for(int i=0;i<poMEMDS->GetRasterCount();i++)
+                {
+                    poMEMDS->GetRasterBand(i+1)->GetMaskFlags();
+                }
+            }
             
             std::vector<GDALPansharpenResampleJob> asJobs;
             asJobs.resize( nTasks );
