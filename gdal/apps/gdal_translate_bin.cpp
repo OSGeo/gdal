@@ -278,6 +278,8 @@ int main( int argc, char ** argv )
 
         GDALClose(hDataset);
         GDALTranslateOptionsFree(psOptions);
+        GDALTranslateOptionsForBinaryFree(psOptionsForBinary);
+        CPLFree(pszSubDest);
 
         GDALDestroyDriverManager();
         return 0;
@@ -291,9 +293,10 @@ int main( int argc, char ** argv )
     if(bUsageError == TRUE)
         Usage();
     int nRetCode = (hOutDS) ? 0 : 1;
-    
-    GDALClose(hDataset);
+
+    /* Close hOutDS before hDataset for the -f VRT case */
     GDALClose(hOutDS);
+    GDALClose(hDataset);
     GDALTranslateOptionsFree(psOptions);
     GDALTranslateOptionsForBinaryFree(psOptionsForBinary);
     
