@@ -193,6 +193,7 @@ typedef enum {
 #define SRS_PT_CRASTER_PARABOLIC    "Craster_Parabolic" 
 #define SRS_PT_LOXIMUTHAL        "Loximuthal"
 #define SRS_PT_QUARTIC_AUTHALIC  "Quartic_Authalic"
+#define SRS_PT_SCH              "Spherical_Cross_Track_Height"
 
 #define SRS_PP_CENTRAL_MERIDIAN         "central_meridian"
 #define SRS_PP_SCALE_FACTOR             "scale_factor"
@@ -223,6 +224,10 @@ typedef enum {
 #define SRS_PP_LONGITUDE_OF_1ST_POINT   "Longitude_Of_1st_Point"
 #define SRS_PP_LATITUDE_OF_2ND_POINT    "Latitude_Of_2nd_Point"
 #define SRS_PP_LONGITUDE_OF_2ND_POINT   "Longitude_Of_2nd_Point"
+#define SRS_PP_PEG_POINT_LATITUDE       "peg_point_latitude"
+#define SRS_PP_PEG_POINT_LONGITUDE      "peg_point_longitude"
+#define SRS_PP_PEG_POINT_HEADING        "peg_point_heading"
+#define SRS_PP_PEG_POINT_HEIGHT         "peg_point_height"
 
 #define SRS_UL_METER            "Meter"
 #define SRS_UL_FOOT             "Foot (International)" /* or just "FOOT"? */
@@ -731,6 +736,12 @@ OGRErr CPL_DLL OSRSetWagner( OGRSpatialReferenceH hSRS, int nVariation,
 /** Quadrilateralized Spherical Cube */
 OGRErr CPL_DLL OSRSetQSC( OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong );
+
+/** Spherical, Cross-track, Height */
+OGRErr CPL_DLL OSRSetSCH( OGRSpatialReferenceH hSRS,
+                              double dfPegLat, double dfPegLong,
+                              double dfPegHeading, double dfPegHgt);
+
 
 double CPL_DLL OSRCalcInvFlattening( double dfSemiMajor, double dfSemiMinor );
 double CPL_DLL OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfInvFlattening );

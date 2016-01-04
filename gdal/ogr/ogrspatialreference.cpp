@@ -5726,6 +5726,38 @@ OGRErr OSRSetQSC( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                            SetSCH()                     */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetSCH( double dfPegLat, double dfPegLong,
+                                    double dfPegHeading, double dfPegHgt)
+
+{
+    SetProjection( SRS_PT_SCH );
+    SetNormProjParm( SRS_PP_PEG_POINT_LATITUDE, dfPegLat );
+    SetNormProjParm( SRS_PP_PEG_POINT_LONGITUDE, dfPegLong );
+    SetNormProjParm( SRS_PP_PEG_POINT_HEADING, dfPegHeading );
+    SetNormProjParm( SRS_PP_PEG_POINT_HEIGHT, dfPegHgt);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRSetSCH()                   */
+/************************************************************************/
+
+OGRErr OSRSetSCH( OGRSpatialReferenceH hSRS,
+                       double dfPegLat, double dfPegLong,
+                       double dfPegHeading, double dfPegHgt)
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetSCH", OGRERR_FAILURE );
+
+    return ((OGRSpatialReference *) hSRS)->SetSCH(
+        dfPegLat, dfPegLong, dfPegHeading, dfPegHgt );
+}
+
+/************************************************************************/
 /*                            SetAuthority()                            */
 /************************************************************************/
 
