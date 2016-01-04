@@ -113,6 +113,7 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
                 "WHERE Lower(f_table_name) = Lower('%q') AND Lower(f_geometry_column) = Lower('%q')",
                 pszTableName, poGeomFieldDefn->GetNameRef());
             CPL_IGNORE_RET_VAL(sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, NULL ));
+            sqlite3_free( pszSQL3 );
         }
     }
 
