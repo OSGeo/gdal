@@ -113,17 +113,14 @@ static CPLErr GNMFileDriverDelete( const char *pszDataSource )
 
 {
     GDALOpenInfo oOpenInfo(pszDataSource, GA_Update);
-    GNMFileNetwork* poFN = new GNMFileNetwork();
+    GNMFileNetwork oFN;
 
-    if( poFN->Open( &oOpenInfo ) != CE_None)
+    if( oFN.Open( &oOpenInfo ) != CE_None)
     {
-        delete poFN;
-        poFN = NULL;
-
         return CE_Failure;
     }
 
-    return poFN->Delete();
+    return oFN.Delete();
 }
 
 void RegisterGNMFile()
