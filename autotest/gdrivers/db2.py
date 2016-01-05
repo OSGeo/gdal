@@ -39,7 +39,7 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
 
 sys.path.append( '../pymod' )
 
-from osgeo import osr, gdal
+from osgeo import gdal
 import gdaltest
 
 ###############################################################################
@@ -47,11 +47,11 @@ import gdaltest
 
 def gpkg_init():
 
-    gdaltest.db2_dr = None
+    gdaltest.db2_drv = None
 
     try:
-        gdaltest.db2_dr = gdal.GetDriverByName( 'DB2ODBC' )
-        if gdaltest.db2_dr is None:
+        gdaltest.db2_drv = gdal.GetDriverByName( 'DB2ODBC' )
+        if gdaltest.db2_drv is None:
             return 'skip'
     except:
         return 'skip'
@@ -180,7 +180,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 
 def gpkg_1():
 
-    if gdaltest.db2_dr is None:
+    if gdaltest.db2_drv is None:
         return 'skip'
     if gdaltest.png_dr is None:
         return 'skip'
@@ -189,7 +189,7 @@ def gpkg_1():
     # With padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()
-    clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
+#   clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
     out_ds = gdaltest.db2_dr.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options = ['TILE_FORMAT=PNG'] )
