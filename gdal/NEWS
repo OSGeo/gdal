@@ -427,7 +427,7 @@ OGRSpatialReference:
  * EPSGGetPCSInfo(): use pcs.override.csv in priority over pcs.csv to read projection name, UOM, UOMAngle, GeogCS, etc... (#6026)
  * morphToESRI(): use GCS_WGS_1972 as GCS name for EPSG:4322 (#6027)
  * morphToESRI(): use Mercator_Auxiliary_Sphere projection for EPSG:3857. morphFromESRI(): map Mercator_Auxiliary_Sphere to EPSG:3857 (#5924)
- * Align hard-coded WKT of well known GCS definitions of WGS84, WGS72, NAD27 and NAD83 with thee WKT of their EPSG def (#6080)
+ * Align hard-coded WKT of well known GCS definitions of WGS84, WGS72, NAD27 and NAD83 with the WKT of their EPSG def (#6080)
  * morphFromESRI(): special case with PROJCS name 'WGS_84_Pseudo_Mercator' (#6134)
  * OSR C API: fix declarations of OSRSetAxes() and OSRSetWagner(), and add missing OSRSetHOMAC(), OSRSetMercator2SP() and OSRSetTPED() (#6183)
  * Recognize EPSG 9835 method (Lambert Cylindrical Equal Area (Ellipsoidal)), needed for EPSG:6933 PCS for example
