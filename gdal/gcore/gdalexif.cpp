@@ -224,12 +224,13 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL(fp, nOffset+nTIFFHEADER, SEEK_SET) != 0
+    if( nOffset > INT_MAX - nTIFFHEADER ||
+        VSIFSeekL(fp, nOffset+nTIFFHEADER, SEEK_SET) != 0
         || VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Error reading EXIF Directory count at %d.",
-                  nOffset + nTIFFHEADER );
+                  "Error reading EXIF Directory count at " CPL_FRMT_GUIB,
+                  static_cast<vsi_l_offset>(nOffset) + nTIFFHEADER );
         return CE_Failure;
     }
 
@@ -312,12 +313,16 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
 /*      Save important directory tag offset                             */
 /* -------------------------------------------------------------------- */
-        if( poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG )
-            nExifOffset=poTIFFDirEntry->tdir_offset;
-        if( poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET )
-            nInterOffset=poTIFFDirEntry->tdir_offset;
-        if( poTIFFDirEntry->tdir_tag == GPSOFFSETTAG ) {
-            nGPSOffset=poTIFFDirEntry->tdir_offset;
+
+        // Our current API uses int32 and not uint32
+        if( poTIFFDirEntry->tdir_offset < INT_MAX )
+        {
+            if( poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG )
+                nExifOffset=poTIFFDirEntry->tdir_offset;
+            else if( poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET )
+                nInterOffset=poTIFFDirEntry->tdir_offset;
+            else if( poTIFFDirEntry->tdir_tag == GPSOFFSETTAG )
+                nGPSOffset=poTIFFDirEntry->tdir_offset;
         }
 
 /* -------------------------------------------------------------------- */
