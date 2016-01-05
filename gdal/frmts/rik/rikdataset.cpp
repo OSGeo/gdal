@@ -1005,10 +1005,17 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
-        GUInt32 fileSize = static_cast<GUInt32>(VSIFTellL( poOpenInfo->fpL ));
+        vsi_l_offset nBigFileSize = VSIFTellL( poOpenInfo->fpL );
+        if( nBigFileSize > 0xFFFFFFFFU )
+            nBigFileSize = 0xFFFFFFFFU;
+        GUInt32 fileSize = static_cast<GUInt32>(nBigFileSize);
 
-        blocks = (fileSize - offsets[0]) / (header.iBlockWidth * header.iBlockHeight);
-        header.iVertBlocks = blocks / header.iHorBlocks;
+        GUInt32 nBlocksFromFileSize = (fileSize - offsets[0]) / (header.iBlockWidth * header.iBlockHeight);
+        if( nBlocksFromFileSize < blocks )
+        {
+            blocks = nBlocksFromFileSize;
+            header.iVertBlocks = blocks / header.iHorBlocks;
+        }
 
         if( header.iVertBlocks == 0 )
         {
