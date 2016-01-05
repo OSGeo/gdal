@@ -152,6 +152,8 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     if (psInfo->nTilesPerRow > INT_MAX / psInfo->nTilesPerColumn)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Too many tiles");
+        psInfo->nTilesPerRow = 0; /* to avoid int32 overflow in AIGClose() */
+        psInfo->nTilesPerColumn = 0;
         AIGClose( psInfo );
         return NULL;
     }
