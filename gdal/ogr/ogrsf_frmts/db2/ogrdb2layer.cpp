@@ -55,9 +55,13 @@ OGRDB2Layer::OGRDB2Layer()
 OGRDB2Layer::~OGRDB2Layer()
 
 {
+    CPLDebug("OGRDB2Layer::~OGRDB2Layer","entering");
+    CPLDebug("OGRDB2Layer::~OGRDB2Layer",
+             "m_nFeaturesRead: %d; poFeatureDefn: %p", m_nFeaturesRead,poFeatureDefn);
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
-        CPLDebug( "OGR_DB2Layer", "%d features read on layer '%s'.",
+        CPLDebug( "OGR_DB2Layer", 
+                  "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
@@ -80,6 +84,7 @@ OGRDB2Layer::~OGRDB2Layer()
 
     if( poSRS )
         poSRS->Release();
+    CPLDebug("OGRDB2Layer::~OGRDB2Layer","exiting") ;
 }
 
 /************************************************************************/
@@ -90,7 +95,7 @@ OGRDB2Layer::~OGRDB2Layer()
 /************************************************************************/
 
 CPLErr OGRDB2Layer::BuildFeatureDefn( const char *pszLayerName,
-                                      CPLODBCStatement *poStmt )
+                                      OGRDB2Statement *poStmt )
 
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
@@ -102,7 +107,34 @@ CPLErr OGRDB2Layer::BuildFeatureDefn( const char *pszLayerName,
 
     CPLFree(panFieldOrdinals);
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
+    
+    /* -------------------------------------------------------------------- */
+    /*      If we don't already have an FID, check if there is a special    */
+    /*      FID named column available.                                     */
+    /* -------------------------------------------------------------------- */
+    if( pszFIDColumn == NULL )
+    {
+        const char *pszOGR_FID = CPLGetConfigOption("DB2SPATIAL_OGR_FID",
+                                 "OBJECTID");
+        for( int iCol = 0; iCol < nRawColumns; iCol++ )
+        {
+            if( EQUAL(poStmt->GetColName(iCol),pszOGR_FID) ) 
+            {
+                pszFIDColumn = CPLStrdup(pszOGR_FID); 
+                break;
+            }        
+        }
+    }
 
+    if( pszFIDColumn != NULL )
+        CPLDebug( "OGR_DB2Layer::BuildFeatureDefn",
+                  "Using column %s as FID for table %s.",
+                  pszFIDColumn, poFeatureDefn->GetName() );
+    else
+        CPLDebug( "OGR_DB2Layer::BuildFeatureDefn",
+                  "Table %s has no identified FID column.",
+                  poFeatureDefn->GetName() );
+                  
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
         if ( pszGeomColumn == NULL )
@@ -182,27 +214,6 @@ CPLErr OGRDB2Layer::BuildFeatureDefn( const char *pszLayerName,
         panFieldOrdinals[poFeatureDefn->GetFieldCount() - 1] = iCol;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      If we don't already have an FID, check if there is a special    */
-    /*      FID named column available.                                     */
-    /* -------------------------------------------------------------------- */
-    if( pszFIDColumn == NULL )
-    {
-        const char *pszOGR_FID = CPLGetConfigOption("DB2SPATIAL_OGR_FID",
-                                 "OBJECTID");
-        if( poFeatureDefn->GetFieldIndex( pszOGR_FID ) != -1 )
-            pszFIDColumn = CPLStrdup(pszOGR_FID);
-    }
-
-    if( pszFIDColumn != NULL )
-        CPLDebug( "OGR_DB2Layer::BuildFeatureDefn",
-                  "Using column %s as FID for table %s.",
-                  pszFIDColumn, poFeatureDefn->GetName() );
-    else
-        CPLDebug( "OGR_DB2Layer::BuildFeatureDefn",
-                  "Table %s has no identified FID column.",
-                  poFeatureDefn->GetName() );
-
     return CE_None;
 }
 
@@ -215,7 +226,7 @@ void OGRDB2Layer::ResetReading()
 
 {
     iNextShapeId = 0;
-    CPLDebug("OGR_DB2Layer::ResetReading","");
+    CPLDebug("OGR_DB2Layer::ResetReading","Reset");
 }
 
 /************************************************************************/
@@ -259,12 +270,12 @@ OGRFeature *OGRDB2Layer::GetNextRawFeature()
     /* -------------------------------------------------------------------- */
     if( !m_poStmt->Fetch() )  // fail is normal for final fetch
     {
-//		CPLDebug("OGR_DB2Layer::GetNextRawFeature","Fetch failed");
+//      CPLDebug("OGR_DB2Layer::GetNextRawFeature","Fetch failed");
         delete m_poStmt;
         m_poStmt = NULL;
         return NULL;
     }
-//		CPLDebug("OGR_DB2Layer::GetNextRawFeature","Create feature");
+//      CPLDebug("OGR_DB2Layer::GetNextRawFeature","Create feature");
     /* -------------------------------------------------------------------- */
     /*      Create a feature from the current result.                       */
     /* -------------------------------------------------------------------- */

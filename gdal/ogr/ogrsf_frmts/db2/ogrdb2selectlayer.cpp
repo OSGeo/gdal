@@ -36,7 +36,7 @@
 /************************************************************************/
 
 OGRDB2SelectLayer::OGRDB2SelectLayer( OGRDB2DataSource *poDSIn,
-                                      CPLODBCStatement * poStmtIn )
+                                      OGRDB2Statement * poStmtIn )
 
 {
 
@@ -143,7 +143,7 @@ void OGRDB2SelectLayer::ClearStatement()
 /*                            GetStatement()                            */
 /************************************************************************/
 
-CPLODBCStatement *OGRDB2SelectLayer::GetStatement()
+OGRDB2Statement *OGRDB2SelectLayer::GetStatement()
 
 {
     if( m_poStmt == NULL )
@@ -164,7 +164,7 @@ OGRErr OGRDB2SelectLayer::ResetStatement()
     iNextShapeId = 0;
 
     CPLDebug( "OGR_DB2SelectLayer::ResetStatement", "Recreating statement." );
-    m_poStmt = new CPLODBCStatement( poDS->GetSession() );
+    m_poStmt = new OGRDB2Statement( poDS->GetSession() );
     m_poStmt->Append( pszBaseStatement );
 
     if( m_poStmt->ExecuteSQL() )
