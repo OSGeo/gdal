@@ -924,7 +924,7 @@ OGRErr OGRDB2TableLayer::ISetFeature( OGRFeature *poFeature )
     {
         if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE)
         {
-            int nLen = strlen(pszWKT);
+            int nLen = (int) strlen(pszWKT);
             if (m_poPrepStmt->DB2BindParameterIn(
                         "OGRDB2TableLayer::UpdateFeature",
                         (nBindNum + 1),
@@ -1079,7 +1079,7 @@ OGRErr OGRDB2TableLayer::PrepareFeature( OGRFeature *poFeature, char cType )
     {
         if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE)
         {
-            int nLen = strlen(pszWKT);
+            int nLen = (int) strlen(pszWKT);
             if (cType == 'I')
             {
                 m_poPrepStmt->Append( pszGeomColumn );
@@ -1179,7 +1179,7 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE)
         {
-            int nLen = strlen(pszWKT);
+            int nLen = (int) strlen(pszWKT);
             if (m_poPrepStmt->DB2BindParameterIn(
                         "OGRDB2TableLayer::ICreateFeature",
                         (nBindNum + 1),
@@ -1320,7 +1320,7 @@ OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement *poStatement,
         const char *stringValue = NULL;
         stringValue = poFeature->GetFieldAsString(i);
         papBindBuffer[nBindNum] = NULL; // Don't free
-        nLen = strlen(stringValue);
+        nLen = (int) strlen(stringValue);
         pValuePointer = (void *) stringValue;
         nValueType = SQL_C_CHAR;
         nParameterType = SQL_VARCHAR;
