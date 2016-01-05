@@ -211,10 +211,10 @@ CPLErr LAN4BitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Seek to profile.                                                */
 /* -------------------------------------------------------------------- */
-    const int nOffset =
+    const vsi_l_offset nOffset =
         ERD_HEADER_SIZE
-        + (nBlockYOff * nRasterXSize * poLAN_DS->GetRasterCount()) / 2
-        + ((nBand - 1) * nRasterXSize) / 2;
+        + (static_cast<vsi_l_offset>(nBlockYOff) * nRasterXSize * poLAN_DS->GetRasterCount()) / 2
+        + (static_cast<vsi_l_offset>(nBand - 1) * nRasterXSize) / 2;
 
     if( VSIFSeekL( poLAN_DS->fpImage, nOffset, SEEK_SET ) != 0 )
     {
