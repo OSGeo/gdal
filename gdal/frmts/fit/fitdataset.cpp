@@ -249,7 +249,7 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT - unrecognized image space %i",
                  poFIT_DS->info->space);
-        tilenum = 0;
+        return CE_Failure;
     } // switch
 
     uint64 offset = poFIT_DS->info->dataOffset + recordSize * tilenum;
@@ -271,14 +271,20 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if ((poFIT_DS->nBands == 1) && (poFIT_DS->info->space == 1)) // upper left
         fastpath = TRUE;
 
+    size_t nRead;
     if (! fastpath) {
-        CPL_IGNORE_RET_VAL(VSIFReadL( tmpImage, recordSize, 1, poFIT_DS->fp ));
+        nRead = VSIFReadL( tmpImage, recordSize, 1, poFIT_DS->fp );
         // offset to correct component to swap
         p = (char *) tmpImage + nBand-1;
     }
     else {
-        CPL_IGNORE_RET_VAL(VSIFReadL( pImage, recordSize, 1, poFIT_DS->fp ));
+        nRead = VSIFReadL( pImage, recordSize, 1, poFIT_DS->fp );
         p = (char *) pImage;
+    }
+    if( nRead != 1 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read record");
+        return CE_Failure;
     }
 
 
