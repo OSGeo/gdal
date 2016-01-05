@@ -904,10 +904,9 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Collect required information.                                   */
 /* -------------------------------------------------------------------- */
-        vsi_l_offset nImageOffset = 0;
-        if( CSLFetchNameValue(papszOptions, "ImageOffset") != NULL )
-            nImageOffset = CPLScanUIntBig(
-                CSLFetchNameValue(papszOptions, "ImageOffset"), 20);
+        const char* pszImageOffset = CSLFetchNameValueDef(papszOptions, "ImageOffset", "0");
+        vsi_l_offset nImageOffset = CPLScanUIntBig(
+                                    pszImageOffset, strlen(pszImageOffset));
 
         int nPixelOffset = nWordDataSize;
         if( CSLFetchNameValue(papszOptions, "PixelOffset") != NULL )
