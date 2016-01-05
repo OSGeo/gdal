@@ -653,12 +653,12 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                 break;
             }
             piwDatum++;
-        } //end of searchong for matching datum
+        } // End of searching for matching datum.
 
 
 /* -------------------------------------------------------------------- */
 /*      If no matching for datum definition, fetch info about an        */
-/*			ellipsoid.  semi major axis is always	returned in meters        */ 
+/*      ellipsoid.  semi major axis is always returned in meters        */
 /* -------------------------------------------------------------------- */
         const IlwisEllips *piwEllips =  iwEllips;
         if (pszEllips.length() == 0)
@@ -671,7 +671,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                 {
                     double dfSemiMajor = piwEllips->semiMajor;
                     if( STARTS_WITH_CI(pszEllips.c_str(), "Sphere") && padfPrjParams[0] != 0 )
-                    {	
+                    {
                         dfSemiMajor = padfPrjParams[0];
                     }
                     oSRS.SetGeogCS( CPLSPrintf(
@@ -1038,7 +1038,7 @@ CPLErr ILWISDataset::WriteProjection()
                 break;
             }
             piwDatum++;
-        } //end of searchong for matching datum
+        } // End of searching for matching datum.
         WriteElement("CoordSystem", "Width", csFileName, 28);
         pszEllips = poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
         double a = poGeogSRS->GetSemiMajor();

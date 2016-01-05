@@ -28,9 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 #include <cmath>
 
@@ -38,9 +39,6 @@
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void GDALRegister_LAN(void);
-CPL_C_END
 
 /**
 
@@ -468,6 +466,14 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBandCount, FALSE))
     {
+        delete poDS;
+        return NULL;
+    }
+    
+    if( nPixelOffset != -1 && poDS->nRasterXSize > INT_MAX / (nPixelOffset*nBandCount) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Int overflow occurred.");
         delete poDS;
         return NULL;
     }
@@ -1007,8 +1013,7 @@ void GDALRegister_LAN()
     if( GDALGetDriverByName( "LAN" ) != NULL )
         return;
 
-    GDALDriver	*poDriver;
-    poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "LAN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

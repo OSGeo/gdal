@@ -194,7 +194,7 @@ void CPCIDSKRPCModelSegment::Load()
 
         if (pimpl_->num_coeffs * 22 > 512) {
             // this segment is malformed. Throw an exception.
-            throw PCIDSKException("RFMODEL segment coefficient count requires more "
+            return ThrowPCIDSKException("RFMODEL segment coefficient count requires more "
                 "than one block to store. There is an error in this segment. The "
                 "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
         }
@@ -241,7 +241,7 @@ void CPCIDSKRPCModelSegment::Load()
 
         if (pimpl_->num_coeffs * 22 > 512) {
             // this segment is malformed. Throw an exception.
-            throw PCIDSKException("RFMODEL segment coefficient count requires more "
+            return ThrowPCIDSKException("RFMODEL segment coefficient count requires more "
                 "than one block to store. There is an error in this segment. The "
                 "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
         }
@@ -383,7 +383,7 @@ void CPCIDSKRPCModelSegment::Write(void)
 
     if (pimpl_->num_coeffs * 22 > 512) {
         // this segment is malformed. Throw an exception.
-        throw PCIDSKException("RFMODEL segment coefficient count requires more "
+        return ThrowPCIDSKException("RFMODEL segment coefficient count requires more "
             "than one block to store. There is an error in this segment. The "
             "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
     }
@@ -491,7 +491,7 @@ void CPCIDSKRPCModelSegment::SetCoefficients(
 {
     if (xnum.size() != xdenom.size() || ynum.size() != ydenom.size() ||
         xnum.size() != ynum.size() || xdenom.size() != ydenom.size()) {
-        throw PCIDSKException("All RPC coefficient vectors must be the "
+        return ThrowPCIDSKException("All RPC coefficient vectors must be the "
             "same size.");
     }
     
@@ -566,7 +566,7 @@ void CPCIDSKRPCModelSegment::SetAdjCoordValues(const std::vector<double>& xcoord
     const std::vector<double>& ycoord)
 {
     if (xcoord.size() != 6 || ycoord.size() != 6) {
-        throw PCIDSKException("X and Y adjusted coordinates must have "
+        return ThrowPCIDSKException("X and Y adjusted coordinates must have "
             "length 6.");
     }
     
@@ -626,7 +626,7 @@ std::string CPCIDSKRPCModelSegment::GetGeosysString(void) const
 void CPCIDSKRPCModelSegment::SetGeosysString(const std::string& geosys)
 {
     if (geosys.size() > 16) {
-        throw PCIDSKException("GeoSys/MapUnits string must be no more than "
+        return ThrowPCIDSKException("GeoSys/MapUnits string must be no more than "
             "16 characters to be valid.");
     }
     pimpl_->map_units = geosys;
@@ -647,9 +647,10 @@ unsigned int CPCIDSKRPCModelSegment::GetPixels(void) const
 void CPCIDSKRPCModelSegment::SetRasterSize(const unsigned int lines, const unsigned int pixels)
 {
     if (lines == 0 || pixels == 0) {
-        throw PCIDSKException("Non-sensical raster dimensions provided: %ux%u", lines, pixels);
+        return ThrowPCIDSKException("Nonsensical raster dimensions provided: %ux%u",
+                              lines, pixels);
     }
-    
+
     pimpl_->lines = lines;
     pimpl_->pixels = pixels;
     mbModified = true;
@@ -658,9 +659,9 @@ void CPCIDSKRPCModelSegment::SetRasterSize(const unsigned int lines, const unsig
 void CPCIDSKRPCModelSegment::SetDownsample(const unsigned int downsample)
 {
     if (downsample == 0) {
-        throw PCIDSKException("Invalid downsample factor provided: %u", downsample);
+        return ThrowPCIDSKException("Invalid downsample factor provided: %u", downsample);
     }
-    
+
     pimpl_->downsample = downsample;
     mbModified = true;
 }

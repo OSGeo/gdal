@@ -744,8 +744,12 @@ GBool GDALFloatEquals(float A, float B)
 
     if (bInt < 0)
         bInt = 0x80000000 - bInt;
+#ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
+    int intDiff = abs((int) (((GUIntBig)((GIntBig)aInt - (GIntBig)bInt)) & 0xFFFFFFFFU) );
+#else
     /* to make -ftrapv happy we compute the diff on larger type and cast down later */
     int intDiff = abs((int)((GIntBig)aInt - (GIntBig)bInt));
+#endif
     if (intDiff <= maxUlps)
         return true;
     return false;

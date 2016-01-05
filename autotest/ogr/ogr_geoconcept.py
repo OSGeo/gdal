@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR Geoconcept driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -72,7 +72,7 @@ def ogr_gxt_1():
                '000-2007-0595-6585-LAMB93',
                '000-2007-1145-6250-LAMB93',
                '000-2007-0050-6585-LAMB93' ]
-    
+
     tr = ogrtest.check_features_against_list( lyr, 'idSel', expect )
     if not tr:
         return 'fail'
@@ -85,10 +85,10 @@ def ogr_gxt_1():
           'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
                                       max_error = 0.000000001 ) != 0:
         return 'fail'
-    
+
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Lambert 93",GEOGCS["unnamed",DATUM["ITRS-89",SPHEROID["GRS 80",6378137,298.257222099657],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",44],PARAMETER["standard_parallel_2",49],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000]]')
-    
+
     if not lyr.GetSpatialRef().IsSame(srs):
         gdaltest.post_reason('SRS is not the one expected.')
         return 'fail'
@@ -123,7 +123,7 @@ def ogr_gxt_2():
                '000-2007-0595-6585-LAMB93',
                '000-2007-1145-6250-LAMB93',
                '000-2007-0050-6585-LAMB93' ]
-    
+
     tr = ogrtest.check_features_against_list( lyr, 'idSel', expect )
     if not tr:
         return 'fail'

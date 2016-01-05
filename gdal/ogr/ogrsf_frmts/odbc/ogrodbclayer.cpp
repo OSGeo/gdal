@@ -303,7 +303,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
                 OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
                                                   NULL, &poGeom, nLength);
         }
-        
+
         if ( eErr != OGRERR_NONE )
         {
             const char *pszMessage;

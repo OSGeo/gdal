@@ -686,7 +686,7 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle* fp, CryptoPP::BlockCipher*
 /*                          VSICryptFileHandle                          */
 /************************************************************************/
 
-class VSICryptFileHandle : public VSIVirtualHandle
+class VSICryptFileHandle CPL_FINAL : public VSIVirtualHandle
 {
   private:
         CPLString           osBaseFilename;
@@ -1296,7 +1296,7 @@ int VSICryptFileHandle::Close()
 /*                   VSICryptFilesystemHandler                          */
 /************************************************************************/
 
-class VSICryptFilesystemHandler : public VSIFilesystemHandler 
+class VSICryptFilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
 {
 public:
     VSICryptFilesystemHandler();
@@ -1307,7 +1307,7 @@ public:
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual char**   ReadDir( const char *pszDirname );
+    virtual char**   ReadDirEx( const char *pszDirname, int nMaxFiles );
 };
 
 /************************************************************************/
@@ -1652,15 +1652,16 @@ int VSICryptFilesystemHandler::Rename( const char *oldpath, const char* newpath 
 }
 
 /************************************************************************/
-/*                               ReadDir()                              */
+/*                               ReadDirEx()                            */
 /************************************************************************/
 
-char** VSICryptFilesystemHandler::ReadDir( const char *pszDirname )
+char** VSICryptFilesystemHandler::ReadDirEx( const char *pszDirname,
+                                             int nMaxFiles )
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "ReadDir(%s)", pszDirname);
 #endif
-    return VSIReadDir(GetFilename(pszDirname));
+    return VSIReadDirEx(GetFilename(pszDirname), nMaxFiles);
 }
 
 #ifdef VSICRYPT_DRIVER

@@ -287,7 +287,7 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
     OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
     if( poFeatureNew == NULL )
         return OGRERR_FAILURE;
-   
+
     eErr = m_poDecoratedLayer->CreateFeature(poFeatureNew);
 
     delete poFeatureNew;

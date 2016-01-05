@@ -236,25 +236,27 @@ bool HFACompress::compressBlock()
   GUInt32 nLastUnique = 0;
 
   /* Check we know about the datatype to be compressed.
-      If we can't compress it we should return false so that 
-      the block cannot be compressed (we can handle just about 
-      any type uncompressed) */
+     If we can't compress it we should return false so that
+     the block cannot be compressed (we can handle just about
+     any type uncompressed). */
   if( ! QueryDataTypeSupported( m_eDataType ) )
   {
-    CPLDebug( "HFA", "Cannot compress HFA datatype 0x%x (0x%x bits). Writing uncompressed instead.\n", 
+    CPLDebug( "HFA", "Cannot compress HFA datatype 0x%x (0x%x bits). "
+              "Writing uncompressed instead.\n",
               m_eDataType,
               m_nDataTypeNumBits );
-    return false; 
+    return false;
   }
 
   /* reset our pointers */
   m_pCurrCount  = m_pCounts;
   m_pCurrValues = m_pValues;
 
-  /* Get the minimum value - this can be subtracted from each value in the image */
+  /* Get the minimum value.  this can be subtracted from each value in
+     the image. */
   m_nMin = findMin( &m_nNumBits );
 
-  /* Go thru the block */
+  /* Go through the block. */
   GUInt32 u32Last = valueAsUInt32( 0 );
   for( GUInt32 count = 1; count < m_nBlockCount; count++ )
   {
@@ -266,7 +268,7 @@ bool HFACompress::compressBlock()
 
       if( ( m_pCurrValues - m_pValues ) > (int) m_nBlockSize )
       {
-      	return false;
+        return false;
       }
 
       m_nNumRuns++;
@@ -275,7 +277,8 @@ bool HFACompress::compressBlock()
     }
   }
 
-  /* OK we have done the block but haven't got the last run because we were only looking for a change in values */
+  /* OK we have done the block but have not got the last run because we
+     were only looking for a change in values */
   encodeValue( u32Last, m_nBlockCount - nLastUnique );
   m_nNumRuns++;
 

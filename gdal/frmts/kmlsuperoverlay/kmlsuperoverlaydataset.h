@@ -27,7 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #ifndef KMLSUPEROVERLAYDATASET_H_INCLUDED
 #define KMLSUPEROVERLAYDATASET_H_INCLUDED
 
@@ -37,7 +37,7 @@
 #include <map>
 
 CPL_C_START
-void CPL_DLL GDALRegister_KMLSUPEROVERLAY(void);
+void CPL_DLL GDALRegister_KMLSUPEROVERLAY();
 CPL_C_END
 
 /************************************************************************/
@@ -90,7 +90,7 @@ class KmlSuperOverlayReadDataset : public GDALDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef();
-    
+
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,

@@ -32,20 +32,6 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
-#endif
-
-#include "libkea/KEAImageIO.h"
-#include "libkea/KEAAttributeTable.h"
-#include "libkea/KEAAttributeTableInMem.h"
-
-#ifdef _MSC_VER
-#pragma warning( pop ) 
-#endif
-
-
 #include "keacopy.h"
 
 // Support functions for CreateCopy()
@@ -127,7 +113,7 @@ bool KEACopyRasterData( GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int
             }
         }
     }
-    
+
     CPLFree( pData );
     return true;
 }
@@ -153,7 +139,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
         int blueIdx = -1;
         bool alphaDef = false;
         int alphaIdx = -1;*/
-        
+
         int numCols = gdalAtt->GetColumnCount();
         std::vector<kealib::KEAATTField*> *fields = new std::vector<kealib::KEAATTField*>();
         kealib::KEAATTField *field;
@@ -161,7 +147,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
         {
             field = new kealib::KEAATTField();
             field->name = gdalAtt->GetNameOfCol(ni);
-            
+
             field->dataType = kealib::kea_att_string;
             switch(gdalAtt->GetTypeOfCol(ni))
             {
@@ -178,7 +164,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                     // leave as "kea_att_string"
                     break;
             }
-            
+
             if(bInputHFA && (field->name == "Histogram"))
             {
                 field->usage = "PixelCount";
@@ -279,10 +265,10 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                         keaAtt->setFloatFields(ni, nLength, field->idx, pfDoubleBuffer);
                         break;
                     case kealib::kea_att_string:
-                        {   
+                        {
                             char **papszColData = (char**)VSIMalloc2(nLength, sizeof(char*));
                             ((GDALRasterAttributeTable*)gdalAtt)->ValuesIO(GF_Read, nj, ni, nLength, papszColData);
-                     
+
                             std::vector<std::string> aStringBuffer;
                             for( int i = 0; i < nLength; i++ )
                             {

@@ -28,15 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_PAux(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -138,7 +135,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
 
 /* -------------------------------------------------------------------- */
 /*      See if we have colors.  Currently we must have color zero,      */
-/*      but this shouldn't really be a limitation.                      */
+/*      but this should not really be a limitation.                     */
 /* -------------------------------------------------------------------- */
     snprintf( szTarget, sizeof(szTarget), "METADATA_IMG_%d_Class_%d_Color", nBand, 0 );
     if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )

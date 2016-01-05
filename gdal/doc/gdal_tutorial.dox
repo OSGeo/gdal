@@ -481,7 +481,7 @@ In Python:
     src_ds = None
 \endcode
 
-Note that the CreateCopy() method returns a writeable dataset, and that it
+Note that the CreateCopy() method returns a writable dataset, and that it
 must be closed properly to complete writing and flushing the dataset to disk.
 In the Python case this occurs automatically when "dst_ds" goes out of scope. 
 The FALSE (or 0) value used for the bStrict option just after the destination

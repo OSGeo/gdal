@@ -79,7 +79,7 @@ class CPL_DLL GMLPropertyDefn
     bool              m_bNullable;
 
 public:
-    
+
         GMLPropertyDefn( const char *pszName, const char *pszSrcElement=NULL );
        ~GMLPropertyDefn();
 
@@ -97,7 +97,7 @@ public:
 
     void        SetCondition( const char *pszCondition );
     const char *GetCondition() const { return m_pszCondition; }
-    
+
     void        SetNullable( bool bNullable ) { m_bNullable = bNullable; }
     bool        IsNullable() const { return m_bNullable; }
 
@@ -119,7 +119,7 @@ class CPL_DLL GMLGeometryPropertyDefn
     int         m_nGeometryType;
     int         m_nAttributeIndex;
     bool        m_bNullable;
-    
+
 public:
         GMLGeometryPropertyDefn( const char *pszName, const char *pszSrcElement,
                                  int nType, int nAttributeIndex,
@@ -131,7 +131,7 @@ public:
         int GetType() const { return m_nGeometryType; }
         void SetType(int nType) { m_nGeometryType = nType; }
         const char *GetSrcElement() const { return m_pszSrcElement; }
-        
+
         int GetAttributeIndex() const { return m_nAttributeIndex; }
 
         bool IsNullable() const { return m_bNullable; }
@@ -148,7 +148,7 @@ class CPL_DLL GMLFeatureClass
     int          n_nElementNameLen;
     int         m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
-    
+
     int         m_nGeometryPropertyCount;
     GMLGeometryPropertyDefn **m_papoGeometryProperty;
 

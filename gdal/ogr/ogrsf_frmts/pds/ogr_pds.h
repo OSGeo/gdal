@@ -73,7 +73,7 @@ class OGRPDSLayer : public OGRLayer
     int                nLatitudeIndex;
 
     FieldDesc*         pasFieldDesc;
-    
+
     void               ReadStructure(CPLString osStructureFilename);
     OGRFeature        *GetNextRawFeature();
 

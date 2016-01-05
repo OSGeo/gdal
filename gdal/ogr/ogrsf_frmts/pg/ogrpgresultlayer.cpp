@@ -224,7 +224,7 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
 
 {
     GetLayerDefn();
-    
+
     if( EQUAL(pszCap,OLCFastFeatureCount) ||
         EQUAL(pszCap,OLCFastSetNextByIndex) )
     {

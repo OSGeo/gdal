@@ -32,21 +32,18 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-#include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
-#include "ogr_spatialref.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_alg.h"
+#include "gdal_priv.h"
 #include "gdal_rat.h"
+#include "ogr_spatialref.h"
 #include "idrisi.h"
 
 CPL_CVSID( "$Id$" );
-
-CPL_C_START
-void GDALRegister_IDRISI( void);
-CPL_C_END
 
 #ifdef WIN32
 #  define PATHDELIM       '\\'
@@ -1061,15 +1058,15 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     // ------------------------------------------------------------------------
     //      Check number of bands
     // ------------------------------------------------------------------------
-	if ( !( poSrcDS->GetRasterCount() == 1 ) && !( poSrcDS->GetRasterCount() == 3 ))
-	{
-		CPLError( CE_Failure, CPLE_AppDefined,
-                "Attempt to create IDRISI dataset with an illegal number of bands(%d)."
-                " Try again by selecting a specific band if possible.\n",
-				poSrcDS->GetRasterCount() );
-		return NULL; 
+    if ( !( poSrcDS->GetRasterCount() == 1 ) && !( poSrcDS->GetRasterCount() == 3 ))
+    {
+            CPLError( CE_Failure, CPLE_AppDefined,
+            "Attempt to create IDRISI dataset with an illegal number of bands(%d)."
+            " Try again by selecting a specific band if possible.\n",
+                            poSrcDS->GetRasterCount() );
+            return NULL; 
 
-	}
+    }
     if ( ( poSrcDS->GetRasterCount() == 3 ) &&
          ( ( poSrcDS->GetRasterBand( 1 )->GetRasterDataType() != GDT_Byte ) ||
          ( poSrcDS->GetRasterBand( 2 )->GetRasterDataType() != GDT_Byte ) ||
@@ -2278,7 +2275,7 @@ GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
     poDefaultRAT->CreateColumn( "Class_name", GFT_String,  GFU_Name );
 
     // ----------------------------------------------------------
-    // Loop throught the Category Names
+    // Loop through the Category Names.
     // ----------------------------------------------------------
 
     GDALColorEntry sEntry;
@@ -3291,7 +3288,7 @@ void GDALRegister_IDRISI()
     if( GDALGetDriverByName( "RST" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "RST" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

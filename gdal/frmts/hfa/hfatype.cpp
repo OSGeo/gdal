@@ -163,8 +163,10 @@ void HFAType::CompleteDefn( HFADictionary * poDict )
         papoFields[i]->CompleteDefn( poDict );
         if( papoFields[i]->nBytes < 0 || nBytes == -1 )
             nBytes = -1;
-        else
+        else if( nBytes < INT_MAX - papoFields[i]->nBytes )
             nBytes += papoFields[i]->nBytes;
+        else
+            nBytes = -1;
     }
 
     bInCompleteDefn = FALSE;
@@ -282,7 +284,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
 {
     /* int		nArrayIndex = 0; */
     int		nNameLen;
-    const char	*pszRemainder;
+    /*const char	*pszRemainder;*/
 
 /* -------------------------------------------------------------------- */
 /*      Parse end of field name, possible index value and               */
@@ -295,9 +297,9 @@ HFAType::GetInstCount( const char * pszFieldPath,
         /* nArrayIndex = atoi(pszEnd+1); */
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
-        pszRemainder = strchr(pszFieldPath,'.');
+        /*pszRemainder = strchr(pszFieldPath,'.');
         if( pszRemainder != NULL )
-            pszRemainder++;
+            pszRemainder++;*/
     }
 
     else if( strchr(pszFieldPath,'.') != NULL )
@@ -306,13 +308,13 @@ HFAType::GetInstCount( const char * pszFieldPath,
 
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
-        pszRemainder = pszEnd + 1;
+        /*pszRemainder = pszEnd + 1;*/
     }
 
     else
     {
         nNameLen = static_cast<int>(strlen(pszFieldPath));
-        pszRemainder = NULL;
+        /*pszRemainder = NULL;*/
     }
 
 /* -------------------------------------------------------------------- */

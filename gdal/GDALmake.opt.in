@@ -557,15 +557,19 @@ USE_ONLY_CRYPTODLL_ALG        =       @USE_ONLY_CRYPTODLL_ALG@
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
 #
-GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
-		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
-		nitf bmp pcidsk airsar rs2 ilwis rmf leveller sgi srtmhgt \
-		idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg \
-		coasp tsx terragen blx msgn til r northwood saga xyz hf2 \
-		kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals\
-		safe sentinel2 \
-		@OPT_GDAL_FORMATS@
+GDAL_FORMATS :=
+GDAL_FORMATS += gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm
+GDAL_FORMATS += sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b
+GDAL_FORMATS += nitf bmp airsar rs2 ilwis rmf leveller sgi srtmhgt
+GDAL_FORMATS += idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg
+GDAL_FORMATS += coasp tsx terragen blx msgn til r northwood saga xyz hf2
+GDAL_FORMATS += kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals
+GDAL_FORMATS += safe sentinel2
+GDAL_FORMATS += @OPT_GDAL_FORMATS@
 
+ifneq ($(PCIDSK_SETTING),no)
+GDAL_FORMATS += pcidsk
+endif
 
 ifneq ($(LIBZ_SETTING),no)
 GDAL_FORMATS := $(GDAL_FORMATS) rik ozi

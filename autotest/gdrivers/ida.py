@@ -84,7 +84,7 @@ def ida_3():
     prj = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]'
 
     return tst.testCreateCopy( check_gt=0, check_srs=prj, check_minmax=1 )
-    
+
 ###############################################################################
 # Test ACEA Projection.
 
@@ -181,7 +181,7 @@ gdaltest_list = [
     ida_6,
     ida_7
     ]
-  
+
 
 
 if __name__ == '__main__':

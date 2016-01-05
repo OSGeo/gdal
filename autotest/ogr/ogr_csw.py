@@ -49,7 +49,7 @@ def ogr_csw_init():
         gdaltest.csw_drv = ogr.GetDriverByName('CSW')
     except:
         pass
-        
+
     if gdaltest.csw_drv is None:
         return 'skip'
 
@@ -189,7 +189,7 @@ def ogr_csw_vsimem_fail_because_exception():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 def ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
 
@@ -212,7 +212,7 @@ def ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 def ogr_csw_vsimem_fail_because_missing_version():
 

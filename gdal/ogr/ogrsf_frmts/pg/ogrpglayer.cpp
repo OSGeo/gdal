@@ -696,7 +696,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 /* No geometry */
                 if (nLength == 0)
                     continue;
-                    
+
                 OGRGeometry * poGeom = NULL;
                 if( !poDS->bUseBinaryCursor && nLength >= 4 &&
                     /* escaped byea data */
@@ -709,7 +709,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 else
                     OGRGeometryFactory::createFromWkb( pabyVal, NULL, &poGeom, nLength,
                                                        (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
-                
+
                 if( poGeom != NULL )
                 {
                     poGeom->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
@@ -1515,7 +1515,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
                  "ResetReading() must be explicitly called to restart reading");
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to establish an initial query?                       */
 /* -------------------------------------------------------------------- */
@@ -1548,7 +1548,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         nResultOffset == PQntuples(hCursorResult) )
     {
         OGRPGClearResult( hCursorResult );
-        
+
         osCommand.Printf( "FETCH %d in %s", nCursorPage, pszCursorName );
         hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
@@ -1599,29 +1599,29 @@ OGRErr OGRPGLayer::SetNextByIndex( GIntBig nIndex )
     {
         return OGRERR_NONE;
     }
-    
+
     if( nIndex < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid index");
         return OGRERR_FAILURE;
     }
-    
+
     if( nIndex == 0 )
     {
         ResetReading();
         return OGRERR_NONE;
     }
-    
+
     PGconn      *hPGConn = poDS->GetPGConn();
     CPLString   osCommand;
-    
+
     if (hCursorResult == NULL )
     {
         SetInitialQueryCursor();
     }
-    
+
     OGRPGClearResult( hCursorResult );
-    
+
     osCommand.Printf( "FETCH ABSOLUTE " CPL_FRMT_GIB " in %s", nIndex+1, pszCursorName );
     hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
@@ -1640,7 +1640,7 @@ OGRErr OGRPGLayer::SetNextByIndex( GIntBig nIndex )
 
     nResultOffset = 0;
     iNextShapeId = nIndex;
-    
+
     return OGRERR_NONE;
 }
 
@@ -2120,7 +2120,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
             continue;
         }
-            
+
         //CPLDebug("PG", "Field %s, oid %d", oField.GetNameRef(), nTypeOID);
 
         if( nTypeOID == BYTEAOID )

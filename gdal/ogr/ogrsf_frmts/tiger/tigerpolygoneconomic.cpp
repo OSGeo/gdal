@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 
 /* I think this was the expected RTE format, but was never deployed, leaving
    it in the code in case I am missing something. 
-   
+
 static TigerFieldInfo rtE_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },

@@ -194,7 +194,7 @@ UnionColorMap(const ColorMapObject * ColorIn1,
     NewBitSize = BitSize(CrntSlot);
     RoundUpTo = (1 << NewBitSize);
 
-    if (RoundUpTo != ColorUnion->ColorCount) {
+    if (RoundUpTo > 0 && RoundUpTo != ColorUnion->ColorCount) {
         register GifColorType *Map = ColorUnion->Colors;
 
         /* 
@@ -381,7 +381,7 @@ MakeSavedImage(GifFileType * GifFile,
              */
 
             /* first, the local color map */
-            if (sp->ImageDesc.ColorMap) {
+            if (CopyFrom->ImageDesc.ColorMap) {
                 sp->ImageDesc.ColorMap = MakeMapObject(
                                          CopyFrom->ImageDesc.ColorMap->ColorCount,
                                          CopyFrom->ImageDesc.ColorMap->Colors);
@@ -404,7 +404,7 @@ MakeSavedImage(GifFileType * GifFile,
                    CopyFrom->ImageDesc.Width);
 
             /* finally, the extension blocks */
-            if (sp->ExtensionBlocks) {
+            if (CopyFrom->ExtensionBlocks) {
                 sp->ExtensionBlocks = (ExtensionBlock *)malloc(
                                       sizeof(ExtensionBlock) *
                                       CopyFrom->ExtensionBlockCount);

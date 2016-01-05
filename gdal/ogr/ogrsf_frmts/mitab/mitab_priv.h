@@ -78,7 +78,7 @@
  *
  * Revision 1.42  2006/11/20 20:05:58  dmorissette
  * First pass at improving generation of spatial index in .map file (bug 1585)
- * New methods for insertion and splittung in the spatial index are done.
+ * New methods for insertion and splitting in the spatial index are done.
  * Also implemented a method to dump the spatial index to .mif/.mid
  * Still need to implement splitting of TABMapObjectBlock to get optimal
  * results.
@@ -576,7 +576,7 @@ class TABMAPObjHdr
     virtual int ReadObj(TABMAPObjectBlock *) {return -1;};
 };
 
-class TABMAPObjHdrWithCoord: public TABMAPObjHdr
+class TABMAPObjHdrWithCoord : public TABMAPObjHdr
 {
   public:
     GInt32      m_nCoordBlockPtr;
@@ -588,7 +588,7 @@ class TABMAPObjHdrWithCoord: public TABMAPObjHdr
 };
 
 
-class TABMAPObjNone: public TABMAPObjHdr
+class TABMAPObjNone CPL_FINAL : public TABMAPObjHdr
 {
   public:
 
@@ -647,7 +647,7 @@ class TABMAPObjFontPoint: public TABMAPObjPoint
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
-class TABMAPObjCustomPoint: public TABMAPObjPoint
+class TABMAPObjCustomPoint CPL_FINAL : public TABMAPObjPoint
 {
   public:
     GByte m_nUnknown_;
@@ -668,7 +668,7 @@ class TABMAPObjCustomPoint: public TABMAPObjPoint
 };
 
 
-class TABMAPObjLine: public TABMAPObjHdr
+class TABMAPObjLine CPL_FINAL : public TABMAPObjHdr
 {
   public:
     GInt32      m_nX1;
@@ -692,7 +692,7 @@ class TABMAPObjLine: public TABMAPObjHdr
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
-class TABMAPObjPLine: public TABMAPObjHdrWithCoord
+class TABMAPObjPLine CPL_FINAL : public TABMAPObjHdrWithCoord
 {
   public:
     GInt32      m_numLineSections;  /* MULTIPLINE/REGION only. Not in PLINE */
@@ -722,7 +722,7 @@ class TABMAPObjPLine: public TABMAPObjHdrWithCoord
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
-class TABMAPObjRectEllipse: public TABMAPObjHdr
+class TABMAPObjRectEllipse CPL_FINAL : public TABMAPObjHdr
 {
   public:
     GInt32      m_nCornerWidth;   /* For rounded rect only */
@@ -744,7 +744,7 @@ class TABMAPObjRectEllipse: public TABMAPObjHdr
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
-class TABMAPObjArc: public TABMAPObjHdr
+class TABMAPObjArc CPL_FINAL : public TABMAPObjHdr
 {
   public:
     GInt32      m_nStartAngle;
@@ -773,7 +773,7 @@ class TABMAPObjArc: public TABMAPObjHdr
 };
 
 
-class TABMAPObjText: public TABMAPObjHdrWithCoord
+class TABMAPObjText CPL_FINAL : public TABMAPObjHdrWithCoord
 {
   public:
     /* String and its len stored in the nCoordPtr and nCoordSize */
@@ -822,7 +822,7 @@ class TABMAPObjText: public TABMAPObjHdrWithCoord
 };
 
 
-class TABMAPObjMultiPoint: public TABMAPObjHdrWithCoord
+class TABMAPObjMultiPoint CPL_FINAL : public TABMAPObjHdrWithCoord
 {
   public:
     GInt32      m_nNumPoints;
@@ -848,7 +848,7 @@ class TABMAPObjMultiPoint: public TABMAPObjHdrWithCoord
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
-class TABMAPObjCollection: public TABMAPObjHdrWithCoord
+class TABMAPObjCollection CPL_FINAL : public TABMAPObjHdrWithCoord
 {
   public:
     GInt32      m_nRegionDataSize;
@@ -931,7 +931,7 @@ class TABBinBlockManager
     void        PushGarbageBlockAsLast(GInt32 nBlockPtr);
     GInt32      GetFirstGarbageBlock();
     GInt32      PopGarbageBlock();
-    
+
     void        SetName(const char* pszName);
 };
 
@@ -1028,7 +1028,7 @@ class TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Header Blocks 
  *--------------------------------------------------------------------*/
 
-class TABMAPHeaderBlock: public TABRawBinBlock
+class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
 {
     void        InitMembersWithDefaultValues();
     void        UpdatePrecision();
@@ -1077,7 +1077,7 @@ class TABMAPHeaderBlock: public TABRawBinBlock
 
     GInt16      m_nMAPVersionNumber;
     GInt16      m_nBlockSize;
-    
+
     double      m_dCoordsys2DistUnits;
     GInt32      m_nXMin;
     GInt32      m_nYMin;
@@ -1121,7 +1121,7 @@ class TABMAPHeaderBlock: public TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Index Blocks (Type 01)
  *--------------------------------------------------------------------*/
 
-class TABMAPIndexBlock: public TABRawBinBlock
+class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
 {
   protected:
     int         m_numEntries;
@@ -1231,7 +1231,7 @@ class TABMAPIndexBlock: public TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Object data Blocks (Type 02)
  *--------------------------------------------------------------------*/
 
-class TABMAPObjectBlock: public TABRawBinBlock
+class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
 {
   protected:
     int         m_numDataBytes; /* Excluding first 4 bytes header */
@@ -1250,7 +1250,7 @@ class TABMAPObjectBlock: public TABRawBinBlock
     int         m_nCurObjectOffset; // -1 if there is no current object.
     int         m_nCurObjectId;     // -1 if there is no current object.
     TABGeomType m_nCurObjectType;   // TAB_GEOM_UNSET if there is no current object.
-    
+
     int         m_bLockCenter;
 
   public:
@@ -1307,7 +1307,7 @@ class TABMAPObjectBlock: public TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Coordinate Blocks (Type 03)
  *--------------------------------------------------------------------*/
 
-class TABMAPCoordBlock: public TABRawBinBlock
+class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
 {
   protected:
     int         m_numDataBytes; /* Excluding first 8 bytes header */
@@ -1327,7 +1327,7 @@ class TABMAPCoordBlock: public TABRawBinBlock
 
     int         m_nTotalDataSize;       // Num bytes in whole chain of blocks
     int         m_nFeatureDataSize;     // Num bytes for current feature coords
-    
+
     GInt32      m_nFeatureXMin;         // Used to keep track of current 
     GInt32      m_nFeatureYMin;         // feature MBR.
     GInt32      m_nFeatureXMax;
@@ -1391,7 +1391,7 @@ class TABMAPCoordBlock: public TABRawBinBlock
  * of Tool definitions in memory.
  *--------------------------------------------------------------------*/
 
-class TABMAPToolBlock: public TABRawBinBlock
+class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
 {
   protected:
     int         m_numDataBytes; /* Excluding first 8 bytes header */
@@ -1519,7 +1519,7 @@ class TABMAPFile
     GInt32      m_YMinFilter;
     GInt32      m_XMaxFilter;
     GInt32      m_YMaxFilter;
-    
+
     int         m_bUpdated;
     int         m_bLastOpWasRead;
     int         m_bLastOpWasWrite;
@@ -1546,9 +1546,9 @@ class TABMAPFile
 
     int         LoadNextMatchingObjectBlock(int bFirstObject);
     TABRawBinBlock *PushBlock( int nFileOffset );
-    
+
     int         ReOpenReadWrite();
-    
+
   public:
     TABMAPFile();
     ~TABMAPFile();
@@ -1794,7 +1794,7 @@ class TABDATFile
     GInt32      m_nFirstRecordPtr;
     GBool       m_bWriteHeaderInitialized;
     GBool       m_bWriteEOF;
-    
+
     int         m_bUpdated;
 
     int         InitWriteHeader();
@@ -1835,7 +1835,7 @@ class TABDATFile
     TABRawBinBlock *GetRecordBlock(int nRecordId);
     GBool       IsCurrentRecordDeleted() { return m_bCurRecordDeletedFlag;};
     int         CommitRecordToFile();
-    
+
     int         MarkAsDeleted();
     int         MarkRecordAsExisting();
 

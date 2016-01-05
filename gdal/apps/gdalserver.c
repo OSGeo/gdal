@@ -28,7 +28,9 @@
  ****************************************************************************/
 
 // So that __USE_XOPEN2K is defined to have getaddrinfo
+#ifndef __sun__
 #define _XOPEN_SOURCE 600
+#endif
 
 #include "cpl_port.h"
 
@@ -48,6 +50,7 @@
     #define HAVE_GETADDRINFO 1
   #endif
 #else
+  #include <sys/select.h>
   #include <sys/time.h>
   #include <sys/types.h>
   #include <sys/wait.h>
@@ -428,6 +431,8 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     int i;
     int nClients = 0;
     ClientInfo asClientInfos[MAX_CLIENTS];
+
+    memset( asClientInfos, 0, sizeof(asClientInfos) );
 
     if( !bFork )
         signal(SIGPIPE, SIG_IGN);

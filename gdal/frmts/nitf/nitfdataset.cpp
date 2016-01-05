@@ -31,8 +31,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include "cpl_csv.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "nitfdataset.h"
 
 CPL_CVSID("$Id$");
@@ -1183,8 +1184,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
              ( poDS->bGotGeoTransform == FALSE ) &&
              nGCPCount >= 4 )
     {
-        CPLDebug( "GDAL", 
-                  "NITFDataset::Open() wasn't able to derive a first order\n"
+        CPLDebug( "GDAL",
+                  "NITFDataset::Open() was not able to derive a first order\n"
                   "geotransform.  It will be returned as GCPs.");
 
         poDS->nGCPCount = nGCPCount;
@@ -3326,8 +3327,9 @@ int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart )
     *pnDataStart += nOffset;
 
     if( nOffset > 0 )
-        CPLDebug( "NITF", 
-                  "JPEG data stream at offset %d from start of data segement, NSIF?", 
+        CPLDebug( "NITF",
+                  "JPEG data stream at offset %d from start of data segment, "
+                  "NSIF?",
                   nOffset );
 
 /* -------------------------------------------------------------------- */
@@ -5043,7 +5045,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
     /* -------------------------------------------------------------------- */
     /*      Confirm that the NUMT in the file header already matches the    */
-    /*      number of text segements we want to write, and that the         */
+    /*      number of text segments we want to write, and that the          */
     /*      segment header/data size info is blank.                         */
     /* -------------------------------------------------------------------- */
     char achNUMT[4];
@@ -5629,9 +5631,7 @@ void GDALRegister_NITF()
     if( GDALGetDriverByName( "NITF" ) != NULL )
         return;
 
-    CPLString osCreationOptions;
-
-    osCreationOptions =
+    CPLString osCreationOptions =
 "<CreationOptionList>"
 "   <Option name='IC' type='string-select' default='NC' description='Compression mode. NC=no compression. "
 #ifdef JPEG_SUPPORTED
@@ -5680,7 +5680,9 @@ void GDALRegister_NITF()
 "   <Option name='TEXT' type='string' description='TEXT options as text-option-name=text-option-content'/>"
 "   <Option name='CGM' type='string' description='CGM options in cgm-option-name=cgm-option-content'/>";
 
-    for(unsigned int i=0;i<sizeof(asFieldDescription) / sizeof(asFieldDescription[0]); i++)
+    for( unsigned int i=0;
+         i < sizeof(asFieldDescription) / sizeof(asFieldDescription[0]);
+         i++)
     {
         osCreationOptions += CPLString().Printf(
             "   <Option name='%s' type='string' description='%s' maxsize='%d'/>",
@@ -5692,7 +5694,7 @@ void GDALRegister_NITF()
 "   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
 "   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>";
 
-    for(unsigned int i=0; apszFieldsBLOCKA[i] != NULL; i+=3)
+    for( unsigned int i=0; apszFieldsBLOCKA[i] != NULL; i+=3 )
     {
         char szFieldDescription[128];
         snprintf(szFieldDescription, sizeof(szFieldDescription),
@@ -5711,11 +5713,6 @@ void GDALRegister_NITF()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "National Imagery Transmission Format" );
 
-    poDriver->pfnIdentify = NITFDataset::Identify;
-    poDriver->pfnOpen = NITFDataset::Open;
-    poDriver->pfnCreate = NITFDataset::NITFDatasetCreate;
-    poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
-
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
@@ -5724,6 +5721,11 @@ void GDALRegister_NITF()
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->pfnIdentify = NITFDataset::Identify;
+    poDriver->pfnOpen = NITFDataset::Open;
+    poDriver->pfnCreate = NITFDataset::NITFDatasetCreate;
+    poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

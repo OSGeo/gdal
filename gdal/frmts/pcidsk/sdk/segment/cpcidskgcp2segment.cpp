@@ -108,7 +108,7 @@ void CPCIDSKGCP2Segment::Load()
     // Get the number of alternative projections (should be 0!)
     pimpl_->num_proj = pimpl_->seg_data.GetInt(40, 8);
     if (pimpl_->num_proj != 0) {
-        ThrowPCIDSKException("There are alternative projections contained in this "
+        return ThrowPCIDSKException("There are alternative projections contained in this "
             "GCP2 segment. This functionality is not supported in libpcidsk.");
     }
     

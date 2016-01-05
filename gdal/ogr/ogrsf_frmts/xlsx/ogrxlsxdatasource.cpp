@@ -1658,7 +1658,9 @@ static void BuildColString(char szCol[5], int nCol)
     while(nCol >= 26)
     {
         nCol /= 26;
-        nCol --; /* We wouldn't need that if this was a proper base 26 numeration scheme ! */
+        // We would not need a decrement if this was a proper base 26
+        // numeration scheme.
+        nCol --;
         szCol[k++] = (nCol % 26) + 'A';
     }
     szCol[k] = 0;

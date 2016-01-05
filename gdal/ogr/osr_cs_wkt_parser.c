@@ -926,7 +926,7 @@ static YYSIZE_T
 yystrlen (const char *yystr)
 {
   YYSIZE_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
+  for (yylen = 0; yystr != YY_NULL && yystr[yylen]; yylen++)
     continue;
   return yylen;
 }

@@ -90,7 +90,7 @@ def vsistdin_2():
         os.unlink("tmp/vsistdin_2_src.tif")
     except:
         pass
-    
+
     ds = gdal.Open("tmp/vsistdin_2_out.tif")
     if ds is None:
         return 'fail'
@@ -145,7 +145,7 @@ def vsistdin_4():
         os.unlink("tmp/vsistdin_4_src.vrt")
     except:
         pass
-    
+
     ds = gdal.Open("tmp/vsistdin_4_out.tif")
     if ds is None:
         return 'fail'

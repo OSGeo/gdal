@@ -1061,7 +1061,7 @@ def ogr_interlis_arc1():
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', None)
-    
+
     length_0_1_deg = 72.7181992353 # Line length with 0.1 degree segments
 
     #Read Area lines

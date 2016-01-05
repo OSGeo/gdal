@@ -59,7 +59,7 @@ const char *OGRSDEDriver::GetName()
 
 OGRDataSource *OGRSDEDriver::Open( const char * pszFilename,
                                    int bUpdate )
-    
+
 {
     OGRSDEDataSource     *poDS;
 
@@ -80,7 +80,7 @@ OGRDataSource *OGRSDEDriver::Open( const char * pszFilename,
 
 OGRDataSource *OGRSDEDriver::CreateDataSource( const char * pszName,
                                                char **papszOptions)
-    
+
 {
     OGRSDEDataSource     *poDS;
 
@@ -110,7 +110,7 @@ int OGRSDEDriver::TestCapability( const char * pszCap )
         return true;
     if( EQUAL(pszCap, ODrCCreateDataSource) )
         return TRUE;
-      
+
     return FALSE;
 }
 
@@ -121,8 +121,9 @@ int OGRSDEDriver::TestCapability( const char * pszCap )
 void RegisterOGRSDE()
 
 {
-    if (! GDAL_CHECK_VERSION("OGR SDE"))
+    if( !GDAL_CHECK_VERSION("OGR SDE") )
         return;
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSDEDriver );
 }
 

@@ -34,6 +34,8 @@
 
 #include <string>
 
+#include "gdal_frmts.h"
+
 using std::string;
 
 /* used by ilwsicoordinatesystem.cpp */
@@ -542,8 +544,8 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
 
 CPLErr ILWISDataset::WriteGeoReference()
 {
-    //check wheather we should write out a georeference file. 
-    //dataset must be north up 
+    // Check whether we should write out a georeference file.
+    // Dataset must be north up.
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
         || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0 )
@@ -1043,8 +1045,8 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     double adfGeoTransform[6];
     string georef = "none.grf";
 
-    //check wheather we should create georeference file. 
-    //source dataset must be north up 
+    // Check whether we should create georeference file.
+    // Source dataset must be north up.
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
         && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
@@ -1855,7 +1857,11 @@ ValueRange::ValueRange(string sRng) :
 
     char *p1 = strchr(sRange, ':');
     if (0 == p1)
+    {
+        delete[] sRange;
+        init();
         return;
+    }
 
     char *p3 = strstr(sRange, ",offset=");
     if (0 == p3)
@@ -2036,8 +2042,7 @@ void GDALRegister_ILWIS()
 
     poDriver->SetDescription( "ILWIS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "ILWIS Raster Map" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ILWIS Raster Map" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mpr/mpl" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 Int32 Float64" );

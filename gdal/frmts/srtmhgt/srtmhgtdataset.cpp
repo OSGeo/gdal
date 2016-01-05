@@ -31,8 +31,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include "cpl_port.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -41,10 +42,6 @@
 static const GInt16 SRTMHG_NODATA_VALUE = -32768;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_SRTMHGT(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -578,18 +575,19 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_SRTMHGT()                          */
+/*                         GDALRegister_SRTMHGT()                       */
 /************************************************************************/
 void GDALRegister_SRTMHGT()
 {
-    if(GDALGetDriverByName("SRTMHGT") != NULL)
+    if( GDALGetDriverByName( "SRTMHGT" ) != NULL )
         return;
 
-    GDALDriver* poDriver = new GDALDriver();
-    poDriver->SetDescription("SRTMHGT");
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "SRTMHGT" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "SRTMHGT File Format");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hgt");
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SRTMHGT File Format");
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hgt");
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_various.html#SRTMHGT" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,

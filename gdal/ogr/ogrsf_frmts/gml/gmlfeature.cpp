@@ -15,10 +15,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -41,7 +41,7 @@ GMLFeature::GMLFeature( GMLFeatureClass *poClass )
 {
     m_poClass = poClass;
     m_pszFID = NULL;
-    
+
     m_nPropertyCount = 0;
     m_pasProperties = NULL;
 
@@ -49,7 +49,7 @@ GMLFeature::GMLFeature( GMLFeatureClass *poClass )
     m_papsGeometry = m_apsGeometry;
     m_apsGeometry[0] = NULL;
     m_apsGeometry[1] = NULL;
-    
+
     m_papszOBProperties = NULL;
 }
 
@@ -62,8 +62,7 @@ GMLFeature::~GMLFeature()
 {
     CPLFree( m_pszFID );
 
-    int i;
-    for( i = 0; i < m_nPropertyCount; i++ )
+    for( int i = 0; i < m_nPropertyCount; i++ )
     {
         int nSubProperties = m_pasProperties[i].nSubProperties;
         if (nSubProperties == 1)
@@ -82,7 +81,7 @@ GMLFeature::~GMLFeature()
     }
     else if (m_nGeometryCount > 1)
     {
-        for(i=0;i<m_nGeometryCount;i++)
+        for( int i=0; i < m_nGeometryCount; i++ )
             CPLDestroyXMLNode(m_papsGeometry[i]);
         CPLFree(m_papsGeometry);
     }
@@ -119,15 +118,14 @@ void GMLFeature::SetPropertyDirectly( int iIndex, char *pszValue )
         m_pasProperties = (GMLProperty*)
             CPLRealloc( m_pasProperties,
                         sizeof(GMLProperty) * nClassPropertyCount );
-        int i;
-        for( i = 0; i < m_nPropertyCount; i ++ )
+        for( int i = 0; i < m_nPropertyCount; i++ )
         {
             /* Make sure papszSubProperties point to the right address in case */
             /* m_pasProperties has been relocated */
             if (m_pasProperties[i].nSubProperties <= 1)
                 m_pasProperties[i].papszSubProperties = m_pasProperties[i].aszSubProperties;
         }
-        for( i = m_nPropertyCount; i < nClassPropertyCount; i++ )
+        for( int i = m_nPropertyCount; i < nClassPropertyCount; i++ )
         {
             m_pasProperties[i].nSubProperties = 0;
             m_pasProperties[i].papszSubProperties = m_pasProperties[i].aszSubProperties;
@@ -172,8 +170,7 @@ void GMLFeature::Dump( CPL_UNUSED FILE * fp )
     if( m_pszFID != NULL )
         printf( "  FID = %s\n", m_pszFID );
 
-    int i;
-    for( i = 0; i < m_nPropertyCount; i++ )
+    for( int i = 0; i < m_nPropertyCount; i++ )
     {
         const GMLProperty * psGMLProperty = GetProperty( i );
         printf( "  %s = ", m_poClass->GetProperty( i )->GetName());
@@ -185,7 +182,7 @@ void GMLFeature::Dump( CPL_UNUSED FILE * fp )
         printf("\n");
     }
 
-    for(i=0;i<m_nGeometryCount;i++)
+    for( int i=0; i < m_nGeometryCount; i++ )
     {
         char* pszXML = CPLSerializeXMLTree(m_papsGeometry[i]);
         printf( "  %s\n", pszXML );

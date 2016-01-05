@@ -293,7 +293,7 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
     }
 
     // -------------------------------------------------------------
-    // Calculate Concatened Tranformation Matrix based on Orientation
+    // Calculate Concatenated Transformation Matrix based on Orientation
     // -------------------------------------------------------------
 
     double adfConcat[16];
@@ -329,6 +329,14 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
         case LowerRightHorizontal:
             INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LRH_Flip ); 
             break;
+        default:
+            padfGeoTransform[0] = 0.0;
+            padfGeoTransform[1] = 1.0;
+            padfGeoTransform[2] = 0.0; 
+            padfGeoTransform[3] = 0.0;
+            padfGeoTransform[4] = 0.0;
+            padfGeoTransform[5] = 1.0;
+            return;
     }
 
     // -------------------------------------------------------------
@@ -412,7 +420,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     GByte abyBuf[SIZEOF_TDIR];
 
     if( ( VSIFSeekL( fp, nOffset, SEEK_SET ) == -1 ) ||
-        ( VSIFReadL( abyBuf, 1, SIZEOF_TDIR, fp ) == 0 ) )
+        ( VSIFReadL( abyBuf, 1, SIZEOF_TDIR, fp ) != SIZEOF_TDIR ) )
     {
         CPLDebug("INGR", "Error reading tiles header");
         return 0;
@@ -430,9 +438,15 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     // ----------------------------------------------------------------
     // Calculate the number of tiles
     // ----------------------------------------------------------------
-
-    int nTilesPerCol = (int) ceil( (float) nBandXSize / pTileDir->TileSize );
-    int nTilesPerRow = (int) ceil( (float) nBandYSize / pTileDir->TileSize );
+#define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
+    int nTilesPerCol = DIV_ROUND_UP(nBandXSize, pTileDir->TileSize);
+    int nTilesPerRow = DIV_ROUND_UP(nBandYSize, pTileDir->TileSize);
+    if( nTilesPerCol > INT_MAX / nTilesPerRow )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Too many tiles : %u x %u", nTilesPerCol, nTilesPerRow);
+        return 0;
+    }
 
     uint32 nTiles = nTilesPerCol * nTilesPerRow;
 
@@ -456,7 +470,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     (*pahTiles)[0].Used       = pTileDir->First.Used;
 
     if( nTiles > 1 &&
-      ( VSIFReadL( pabyBuf, ( nTiles - 1 ), SIZEOF_TILE, fp ) == 0 ) )
+      ( VSIFReadL( pabyBuf, ( nTiles - 1 ), SIZEOF_TILE, fp ) != SIZEOF_TILE ) )
     {
         CPLDebug("INGR", "Error reading tiles table");
         CPLFree( *pahTiles );
@@ -741,7 +755,8 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
         // -------------------------------------------------------------
 
         VSIStatBufL  sStat;
-        if( VSIStatL( pszFilename, &sStat ) != 0 )
+        if( VSIStatL( pszFilename, &sStat ) != 0 ||
+            sStat.st_size < nDataOffset )
             return 0;
         return (uint32) (sStat.st_size - nDataOffset);
     }
@@ -750,6 +765,8 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
     // Until the end of the band
     // -------------------------------------------------------------
 
+    if( nBandOffset < nDataOffset )
+        return 0;
     return nBandOffset - nDataOffset;
 }
 
@@ -825,6 +842,11 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
     if( hVirtual.poDS )
     {
         hVirtual.poBand = (GDALRasterBand*) GDALGetRasterBand( hVirtual.poDS, nBand );
+        if( hVirtual.poBand == NULL )
+        {
+            INGR_ReleaseVirtual(&hVirtual);
+            hVirtual.poDS = NULL;
+        }
     }
 
     return hVirtual;
@@ -866,6 +888,13 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
         }
 
         INGR_JPEGAppDataDiskToMem(&hJpegData, abyBuf);
+        
+        if( hJpegData.RemainingLength == 0 ||
+            hJpegData.RemainingLength > INT_MAX ||
+            nNext > INT_MAX - hJpegData.RemainingLength )
+        {
+            return INGR_JPEGQDEFAULT;
+        }
 
         nNext += hJpegData.RemainingLength;
 
@@ -983,9 +1012,12 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
                               uint32 *pnBytesConsumed )
 {
     unsigned int nSrcShorts = nSrcBytes / 2;
-
-    if ( nSrcShorts == 0 )
+    if (nSrcShorts == 0)
+    {
+        if( pnBytesConsumed != NULL )
+            *pnBytesConsumed = 0;
         return 0;
+    }
 
     unsigned int iInput = 0;
     unsigned int iOutput = 0;
@@ -1042,7 +1074,11 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
 {
     const unsigned int nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
+    {
+        if( pnBytesConsumed != NULL )
+            *pnBytesConsumed = 0;
         return 0;
+    }
 
     unsigned int   iInput = 0;
     unsigned int   iOutput = 0;
@@ -1117,6 +1153,8 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             bHeader = false;
             break;
         }
+        if( nWordsInScanline < 4 )
+            return 0;
 
         // If we get here, we add all the span values and see if they add up to the nBlockSize.
 
@@ -1196,7 +1234,11 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
 {
     unsigned int   nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
+    {
+        if( pnBytesConsumed != NULL )
+            *pnBytesConsumed = 0;
         return 0;
+    }
 
     unsigned int   iInput = 0;
     unsigned int   iOutput = 0;
@@ -1210,7 +1252,6 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     {
         nRun     = 256;
         nValue   = 0;
-        previous = 0;
         do
         {
             previous = nRun;
@@ -1696,14 +1737,8 @@ void    INGR_DGN2IEEEDouble(void * dbl)
     src = (unsigned char *) &dt;
     dest = (unsigned char *) dbl;
 
-    dest[0] = src[4];
-    dest[1] = src[5];
-    dest[2] = src[6];
-    dest[3] = src[7];
-    dest[4] = src[0];
-    dest[5] = src[1];
-    dest[6] = src[2];
-    dest[7] = src[3];
+    memcpy(dest + 0, src + 4, 4);
+    memcpy(dest + 4, src + 0, 4);
 #else
     memcpy( dbl, &dt, 8 );
 #endif

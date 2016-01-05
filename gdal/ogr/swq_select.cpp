@@ -1043,9 +1043,11 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 
             if( def->field_index == -1 && def->col_func != SWQCF_COUNT )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Unrecognised field name %s.", 
-                          def->table_name[0] ? CPLSPrintf("%s.%s", def->table_name, def->field_name) : def->field_name );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unrecognized field name %s.",
+                          def->table_name[0] ?
+                          CPLSPrintf("%s.%s", def->table_name, def->field_name)
+                          : def->field_name );
                 return CE_Failure;
             }
         }
@@ -1174,9 +1176,11 @@ CPLErr swq_select::parse( swq_field_list *field_list,
                                                &field_type, &(def->table_index) );
         if( def->field_index == -1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unrecognised field name %s in ORDER BY.", 
-                      def->table_name[0] ? CPLSPrintf("%s.%s", def->table_name, def->field_name) : def->field_name );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unrecognized field name %s in ORDER BY.",
+                      def->table_name[0] ?
+                      CPLSPrintf("%s.%s", def->table_name, def->field_name)
+                      : def->field_name );
             return CE_Failure;
         }
 

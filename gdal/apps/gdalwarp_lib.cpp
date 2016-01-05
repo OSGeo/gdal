@@ -33,6 +33,7 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "cpl_error.h"
+#include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "commonutils.h"
@@ -859,12 +860,13 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Do we have a source alpha band?                                 */
 /* -------------------------------------------------------------------- */
+        int bEnableSrcAlpha = psOptions->bEnableSrcAlpha;
         if( GDALGetRasterColorInterpretation( 
                 GDALGetRasterBand(hSrcDS,GDALGetRasterCount(hSrcDS)) ) 
             == GCI_AlphaBand 
-            && !psOptions->bEnableSrcAlpha )
+            && !bEnableSrcAlpha )
         {
-            psOptions->bEnableSrcAlpha = TRUE;
+            bEnableSrcAlpha = TRUE;
             if( !psOptions->bQuiet )
                 printf( "Using band %d of source image as alpha.\n", 
                         GDALGetRasterCount(hSrcDS) );
@@ -1012,7 +1014,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Setup band mapping.                                             */
 /* -------------------------------------------------------------------- */
-        if( psOptions->bEnableSrcAlpha )
+        if( bEnableSrcAlpha )
             psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS) - 1;
         else
             psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS);
@@ -1029,10 +1031,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Setup alpha bands used if any.                                  */
 /* -------------------------------------------------------------------- */
-        if( psOptions->bEnableSrcAlpha )
+        if( bEnableSrcAlpha )
             psWO->nSrcAlphaBand = GDALGetRasterCount(hWrkSrcDS);
 
-        if( !psOptions->bEnableDstAlpha 
+        int bEnableDstAlpha = psOptions->bEnableDstAlpha;
+        if( !bEnableDstAlpha 
             && GDALGetRasterCount(hDstDS) == psWO->nBandCount+1 
             && GDALGetRasterColorInterpretation( 
                 GDALGetRasterBand(hDstDS,GDALGetRasterCount(hDstDS))) 
@@ -1042,10 +1045,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 printf( "Using band %d of destination image as alpha.\n", 
                         GDALGetRasterCount(hDstDS) );
                 
-            psOptions->bEnableDstAlpha = TRUE;
+            bEnableDstAlpha = TRUE;
         }
 
-        if( psOptions->bEnableDstAlpha )
+        if( bEnableDstAlpha )
             psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
 
 /* -------------------------------------------------------------------- */
@@ -1161,7 +1164,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                         bDstNoDataNone = TRUE;
                         continue;
                     }
-                    else if ( papszTokens[i] == NULL ) // this shouldn't happen, but just in case
+                    else if ( papszTokens[i] == NULL ) // this should not happen, but just in case
                     {
                         CPLError( CE_Failure, CPLE_AppDefined, "Error parsing dstnodata arg #%d", i );
                         bDstNoDataNone = TRUE;
@@ -1308,6 +1311,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                       psOptions->papszTO );
             if(eError == CE_Failure)
             {
+                if( hTransformArg != NULL )
+                    GDALDestroyTransformer( hTransformArg );
+                GDALDestroyWarpOptions( psWO );
                 GDALWarpAppOptionsFree(psOptions);
 #ifdef OGR_ENABLED
                 if( hCutline != NULL )
@@ -1315,6 +1321,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 #endif
                 if( bMustCloseDstDSInCaseOfError )
                     GDALClose(hDstDS);
+                if( poSrcOvrDS )
+                    delete poSrcOvrDS;
                 return NULL;
             }
         }
@@ -1329,6 +1337,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             GDALSetMetadataItem(hDstDS, "SrcOvrLevel", CPLSPrintf("%d", psOptions->nOvLevel), NULL);
             if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
             {
+                if( hTransformArg != NULL )
+                    GDALDestroyTransformer( hTransformArg );
+                GDALDestroyWarpOptions( psWO );
                 GDALWarpAppOptionsFree(psOptions);
 #ifdef OGR_ENABLED
                 if( hCutline != NULL )
@@ -1336,6 +1347,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 #endif
                 if( bMustCloseDstDSInCaseOfError )
                     GDALClose(hDstDS);
+                if( poSrcOvrDS )
+                    delete poSrcOvrDS;
                 return NULL;
             }
 
@@ -2142,7 +2155,8 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         if( GDALGetProjectionRef( hSrcDS ) != NULL 
             && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
             pszProjection = GDALGetProjectionRef( hSrcDS );
-        else if( GDALGetGCPProjection( hSrcDS ) != NULL )
+        else if( GDALGetGCPProjection( hSrcDS ) != NULL
+            && strlen(GDALGetGCPProjection( hSrcDS )) > 0 )
             pszProjection = GDALGetGCPProjection( hSrcDS );
         else if( GDALGetMetadata( hSrcDS, "RPC" ) != NULL )
             pszProjection = SRS_WKT_WGS84;
@@ -2217,10 +2231,33 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     if( oTransformer.hSrcImageTransformer == NULL )
         return CE_Failure;
 
-    OGR_G_Transform( hMultiPolygon, 
+    OGRErr eErr = OGR_G_Transform( hMultiPolygon, 
                      (OGRCoordinateTransformationH) &oTransformer );
 
     GDALDestroyGenImgProjTransformer( oTransformer.hSrcImageTransformer );
+
+    if( eErr == OGRERR_FAILURE )
+    {
+        if( CSLTestBoolean(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+            CPLError(CE_Warning, CPLE_AppDefined, "Cutline transformation failed");
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cutline transformation failed");
+            OGR_G_DestroyGeometry( hMultiPolygon );
+            return CE_Failure;
+        }
+    }
+    else if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) )
+    {
+        if( CSLTestBoolean(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+            CPLError(CE_Warning, CPLE_AppDefined, "Cutline is not valid after transformation");
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cutline is not valid after transformation");
+            OGR_G_DestroyGeometry( hMultiPolygon );
+            return CE_Failure;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Convert aggregate geometry into WKT.                            */

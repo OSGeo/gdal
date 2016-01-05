@@ -29,16 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_ENVI(void);
-CPL_C_END
 
 static const int anUsgsEsriZones[] =
 {
@@ -404,16 +401,16 @@ void ENVIDataset::FlushCache()
     switch (interleave)
     {
       case BIP:
-        pszInterleaving = "bip";		    // interleaved by pixel
+        pszInterleaving = "bip";  // interleaved by pixel
         break;
       case BIL:
-        pszInterleaving = "bil";		    // interleaved by line
+        pszInterleaving = "bil";  // interleaved by line
         break;
       case BSQ:
-        pszInterleaving = "bsq";		// band sequental by default
+        pszInterleaving = "bsq";  // band sequential by default
         break;
       default:
-    	pszInterleaving = "bsq";
+        pszInterleaving = "bsq";
         break;
     }
     bOK &= VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving) >= 0;
@@ -540,7 +537,7 @@ void ENVIDataset::FlushCache()
         bOK &= VSIFPrintfL( fp, "%s = %s\n", poKey.c_str(), papszTokens[1]) >= 0;
         CSLDestroy( papszTokens );
     }
-    
+
     if( !bOK )
         return;
 
@@ -949,7 +946,7 @@ void ENVIDataset::WriteProjectionInfo()
         CPLFree(pszProjESRI);
         pszProjESRI = NULL;
     }
-    
+
     if( !bOK )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Write error");
@@ -1314,10 +1311,11 @@ void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS,
         poSRS->SetWellKnownGeogCS( "EPSG:4004" );
     else if( EQUAL(pszENVIDatumName, "Clark 1866") )
         poSRS->SetWellKnownGeogCS( "EPSG:4008" );
-    else 
+    else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unrecognised datum '%s', defaulting to WGS84.", pszENVIDatumName);
+                  "Unrecognized datum '%s', defaulting to WGS84.",
+                  pszENVIDatumName);
         poSRS->SetWellKnownGeogCS( "WGS84" );
     }
 }
@@ -2249,13 +2247,20 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     int	nDataSize = GDALGetDataTypeSize(eType)/8;
     int nPixelOffset, nLineOffset;
     vsi_l_offset nBandOffset;
-    bool bIntOverflow = false;
+    CPLAssert(nDataSize != 0);
+    CPLAssert(nBands != 0);
 
     if( STARTS_WITH_CI(pszInterleave, "bil") )
     {
         poDS->interleave = BIL;
         poDS->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
-        if (nSamples > INT_MAX / (nDataSize * nBands)) bIntOverflow = true;
+        if (nSamples > INT_MAX / (nDataSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nDataSize * nSamples;
@@ -2264,7 +2269,13 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->interleave = BIP;
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
-        if (nSamples > INT_MAX / (nDataSize * nBands)) bIntOverflow = true;
+        if (nSamples > INT_MAX / (nDataSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize * nBands;
         nBandOffset = nDataSize;
@@ -2273,18 +2284,16 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->interleave = BSQ;
         poDS->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
-        if (nSamples > INT_MAX / nDataSize) bIntOverflow = true;
+        if (nSamples > INT_MAX / nDataSize)
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
         nBandOffset = (vsi_l_offset)nLineOffset * nLines;
-    }
-
-    if (bIntOverflow)
-    {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Int overflow occurred.");
-        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2400,7 +2409,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->GetRasterBand(1)->SetCategoryNames( papszClassNames );
         CSLDestroy( papszClassNames );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Apply colormap if we have one.					*/
 /* -------------------------------------------------------------------- */
@@ -2621,21 +2630,21 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 
     bRet = VSIFPrintfL( fp, "ENVI\n" ) > 0;
     bRet &= VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
-		nXSize, nYSize, nBands ) > 0;
+                         nXSize, nYSize, nBands ) > 0;
     bRet &= VSIFPrintfL( fp, "header offset = 0\nfile type = ENVI Standard\n" ) > 0;
     bRet &= VSIFPrintfL( fp, "data type = %d\n", iENVIType ) > 0;
-    const char	*pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
+    const char *pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
     if ( pszInterleaving )
     {
-	if ( STARTS_WITH_CI(pszInterleaving, "bip") )
-	    pszInterleaving = "bip";		    // interleaved by pixel
-	else if ( STARTS_WITH_CI(pszInterleaving, "bil") )
-	    pszInterleaving = "bil";		    // interleaved by line
-	else
-	    pszInterleaving = "bsq";		// band sequental by default
+        if ( STARTS_WITH_CI(pszInterleaving, "bip") )
+            pszInterleaving = "bip";  // interleaved by pixel
+        else if ( STARTS_WITH_CI(pszInterleaving, "bil") )
+            pszInterleaving = "bil";  // interleaved by line
+        else
+            pszInterleaving = "bsq";  // band sequential by default
     }
     else
-	pszInterleaving = "bsq";
+        pszInterleaving = "bsq";
     bRet &= VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving) > 0;
     bRet &= VSIFPrintfL( fp, "byte order = %d\n", iBigEndian ) > 0;
 
@@ -2691,14 +2700,12 @@ void GDALRegister_ENVI()
     if( GDALGetDriverByName( "ENVI" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ENVI" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "ENVI .hdr Labelled" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ENVI" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ENVI .hdr Labelled" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#ENVI" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 "

@@ -40,44 +40,37 @@ CPL_CVSID("$Id$");
 /*                       OGRCouchDBTableLayer()                         */
 /************************************************************************/
 
-OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDSIn,
-                                           const char* pszName) :
-                                                        OGRCouchDBLayer(poDSIn)
-
+OGRCouchDBTableLayer::OGRCouchDBTableLayer( OGRCouchDBDataSource* poDSIn,
+                                            const char* pszName) :
+    OGRCouchDBLayer(poDSIn),
+    nNextFIDForCreate(-1),
+    bInTransaction(FALSE),
+    bHasOGRSpatial(-1),
+    bHasGeocouchUtilsMinimalSpatialView(FALSE),
+    bServerSideAttributeFilteringWorks(TRUE),
+    bHasInstalledAttributeFilter(FALSE),
+    nUpdateSeq(-1),
+    bAlwaysValid(FALSE),
+    osName(pszName),
+    bMustWriteMetadata(FALSE),
+    bMustRunSpatialFilter(FALSE),
+    bServerSideSpatialFilteringWorks(TRUE),
+    bHasLoadedMetadata(FALSE),
+    bExtentValid(FALSE),
+    bExtentSet(FALSE),
+    dfMinX(0),
+    dfMinY(0),
+    dfMaxX(0),
+    dfMaxY(0),
+    eGeomType(wkbUnknown)
 {
-    osName = pszName;
     char* pszEscapedName = CPLEscapeString(pszName, -1, CPLES_URL);
     osEscapedName = pszEscapedName;
     CPLFree(pszEscapedName);
 
-    bInTransaction = FALSE;
+    nCoordPrecision = atoi(
+        CPLGetConfigOption( "OGR_COUCHDB_COORDINATE_PRECISION", "-1" ) );
 
-    eGeomType = wkbUnknown;
-
-    nNextFIDForCreate = -1;
-    bHasLoadedMetadata = FALSE;
-    bMustWriteMetadata = FALSE;
-
-    bMustRunSpatialFilter = FALSE;
-    bServerSideSpatialFilteringWorks = TRUE;
-    bHasOGRSpatial = -1;
-    bHasGeocouchUtilsMinimalSpatialView = FALSE;
-
-    bServerSideAttributeFilteringWorks = TRUE;
-    bHasInstalledAttributeFilter = FALSE;
-
-    nUpdateSeq = -1;
-    bAlwaysValid = FALSE;
-
-    bExtentValid = FALSE;
-    bExtentSet = FALSE;
-    dfMinX = 0;
-    dfMinY = 0;
-    dfMaxX = 0;
-    dfMaxY = 0;
-
-    nCoordPrecision = atoi(CPLGetConfigOption("OGR_COUCHDB_COORDINATE_PRECISION", "-1"));
-    
     SetDescription( osName );
 }
 
@@ -1215,7 +1208,7 @@ int OGRCouchDBTableLayer::GetMaximumId()
         json_object_put(poAnswerObj);
         return -1;
     }
-    
+
     json_object* poRow = json_object_array_get_idx(poRows, 0);
     if ( poRow == NULL ||
             !json_object_is_type(poRow, json_type_object) )

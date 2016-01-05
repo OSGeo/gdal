@@ -40,10 +40,10 @@
 using namespace PCIDSK;
 
 /* -------------------------------------------------------------------- */
-/*      Size of a block in the record/vertice block tables.  This is    */
+/*      Size of a block in the record/vertex block tables.  This is    */
 /*      determined by the PCIDSK format and may not be changed.         */
 /* -------------------------------------------------------------------- */
-static const int block_page_size = 8192;  
+static const int block_page_size = 8192;
 
 /************************************************************************/
 /*                            VecSegHeader()                            */
@@ -167,7 +167,7 @@ void VecSegHeader::InitializeExisting()
 
     if( memcmp( vs->GetData( sec_raw, 0, NULL, 24 ), magic, 24 ) != 0 )
     {
-        ThrowPCIDSKException( "Unexpected vector header values, possibly it is not a V6 vector segment?" );
+        return ThrowPCIDSKException( "Unexpected vector header values, possibly it is not a V6 vector segment?" );
     }
     
 /* -------------------------------------------------------------------- */

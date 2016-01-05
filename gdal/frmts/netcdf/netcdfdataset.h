@@ -117,8 +117,8 @@ CPLError( CE_Failure,CPLE_AppDefined, \
 "netcdf error #%d : %s .\nat (%s,%s,%d)\n",status, nc_strerror(status), \
 __FILE__, __FUNCTION__, __LINE__ ); }
 
-/* check for NC2 support in case it wasn't enabled at compile time */
-/* NC4 has to be detected at compile as it requires a special build of netcdf-4 */
+/* Check for NC2 support in case it was not enabled at compile time. */
+/* NC4 has to be detected at compile as it requires a special build of netcdf-4. */
 #ifndef NETCDF_HAS_NC2
 #ifdef NC_64BIT_OFFSET
 #define NETCDF_HAS_NC2 1

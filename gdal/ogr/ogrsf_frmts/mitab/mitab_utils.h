@@ -94,6 +94,8 @@ char *TABCleanFieldName(const char *pszSrcName);
 const char *TABUnitIdToString(int nId);
 int   TABUnitIdFromString(const char *pszName);
 
+void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd);
+
 #endif /* MITAB_UTILS_H_INCLUDED_ */
 
 

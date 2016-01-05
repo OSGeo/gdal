@@ -67,7 +67,7 @@ static void ProcessIdentifyTarget( const char *pszTarget,
     if( hDriver != NULL )
         printf( "%s: %s\n", pszTarget, GDALGetDriverShortName( hDriver ) );
     else if( bReportFailures )
-        printf( "%s: unrecognised\n", pszTarget );
+        printf( "%s: unrecognized\n", pszTarget );
 
     if( !bRecursive || hDriver != NULL )
         return;

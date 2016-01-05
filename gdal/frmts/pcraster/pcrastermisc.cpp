@@ -27,22 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "pcrasterdataset.h"
 
-CPL_C_START
-void GDALRegister_PCRaster(void);
-CPL_C_END
-
 void GDALRegister_PCRaster()
 {
-    if (! GDAL_CHECK_VERSION("PCRaster driver"))
+    if( !GDAL_CHECK_VERSION( "PCRaster driver" ) )
         return;
 
-    if(GDALGetDriverByName("PCRaster") != NULL)
+    if( GDALGetDriverByName( "PCRaster" ) != NULL )
         return;
 
-    GDALDriver* poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription("PCRaster");
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

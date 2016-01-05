@@ -230,7 +230,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
             // Find default library in custom directory
             const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], NULL );
             CPLAssert( 0 != pszDriverFile );
-        
+
             strLibPath = pszDriverFile;
         }
 
@@ -298,10 +298,10 @@ void RegisterOGRPGeo()
 
 {
     OGRSFDriver* poDriver = new OGRPGeoDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "ESRI Personal GeoDatabase" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Personal GeoDatabase" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_pgeo.html" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pgeo.html" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

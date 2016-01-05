@@ -49,7 +49,7 @@ public:
     virtual GIntBig   GetFirstMatch( OGRField *psKey ) = 0;
     virtual GIntBig  *GetAllMatches( OGRField *psKey ) = 0;
     virtual GIntBig  *GetAllMatches( OGRField *psKey, GIntBig* panFIDList, int* nFIDCount, int* nLength ) = 0;
-    
+
     virtual OGRErr AddEntry( OGRField *psKey, GIntBig nFID ) = 0;
     virtual OGRErr RemoveEntry( OGRField *psKey, GIntBig nFID ) = 0;
 

@@ -116,8 +116,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
 /* -------------------------------------------------------------------- */
     bool bIsReal = false;
 
-    int j;
-    for(j=0;j<psGMLProperty->nSubProperties;j++)
+    for( int j=0; j < psGMLProperty->nSubProperties; j++ )
     {
         if (j > 0)
         {
@@ -168,7 +167,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
         }
         else
             bIsReal = (valueType == CPL_VALUE_REAL);
-    
+
         if( m_eType == GMLPT_String )
         {
             if( bSetWidth )

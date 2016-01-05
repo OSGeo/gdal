@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.197 2015-11-18 20:35:09 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.199 2015-12-20 23:18:51 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3663,7 +3663,7 @@ TIFFReadDirectory(TIFF* tif)
 				 * DataType and SampleFormat tags are supposed to be
 				 * written as one value/sample, but some vendors
 				 * incorrectly write one value only -- so we accept
-				 * that as well (yech). Other vendors write correct
+				 * that as well (yuck). Other vendors write correct
 				 * value for NumberOfSamples, but incorrect one for
 				 * BitsPerSample and friends, and we will read this
 				 * too.
@@ -4281,8 +4281,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 	TIFFDirectory *td = &tif->tif_dir;
 	uint32 strip;
 
-    if( !_TIFFFillStriles( tif ) )
-        return -1;
+        if( !_TIFFFillStriles( tif ) )
+            return -1;
 
 	if (td->td_stripbytecount)
 		_TIFFfree(td->td_stripbytecount);
@@ -4394,7 +4394,7 @@ TIFFCheckDirOffset(TIFF* tif, uint64 diroff)
 
 	tif->tif_dirnumber++;
 
-	if (tif->tif_dirnumber > tif->tif_dirlistsize) {
+	if (tif->tif_dirlist == NULL || tif->tif_dirnumber > tif->tif_dirlistsize) {
 		uint64* new_dirlist;
 
 		/*

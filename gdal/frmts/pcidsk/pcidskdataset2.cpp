@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "pcidskdataset2.h"
 
 CPL_CVSID("$Id$");
@@ -162,7 +163,7 @@ void PCIDSK2Band::SetDescription( const char *pszDescription )
                     "Contents Not Specified") )
             GDALMajorObject::SetDescription( poChannel->GetDescription().c_str() );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -232,7 +233,7 @@ char **PCIDSK2Band::GetCategoryNames()
 
         return papszCategoryNames;
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -357,7 +358,7 @@ bool PCIDSK2Band::CheckForColorTable()
             poColorTable->SetColorEntry( iClass, &sEntry );
         }
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -459,7 +460,7 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions.                                                */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -538,7 +539,7 @@ CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData )
 
         return CE_None;
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -558,7 +559,7 @@ CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData )
         poChannel->WriteBlock( iBlockX + iBlockY * nBlocksPerRow,
                                pData );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -629,7 +630,7 @@ CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
             }
         }
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -666,7 +667,7 @@ CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
           pszValue = "";
         poChannel->SetMetadataValue( pszName, pszValue );
     }
-    catch( PCIDSKException ex )
+   catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -708,7 +709,7 @@ const char *PCIDSK2Band::GetMetadataItem( const char *pszName,
     {
         osLastMDValue = poChannel->GetMetadataValue( pszName );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -758,7 +759,7 @@ char **PCIDSK2Band::GetMetadata( const char *pszDomain )
                                  poChannel->GetMetadataValue(aosKeys[i]).c_str() );
         }
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -810,7 +811,7 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions.                                                */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -860,7 +861,7 @@ char **PCIDSK2Dataset::GetFileList()
 
         return papszFileList;
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -987,7 +988,7 @@ void PCIDSK2Dataset::ProcessRPC()
         }
         GDALPamDataset::SetMetadataItem( "SAMP_DEN_COEFF", osCoefList, "RPC" );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         GDALPamDataset::SetMetadata( NULL, "RPC" );
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1009,7 +1010,7 @@ void PCIDSK2Dataset::FlushCache()
         try {
             poFile->Synchronize();
         }
-        catch( PCIDSKException ex )
+        catch( const PCIDSKException& ex )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", ex.what() );
@@ -1051,7 +1052,7 @@ CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
             }
         }
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1086,7 +1087,7 @@ CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName,
     {
         poFile->SetMetadataValue( pszName, pszValue );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1128,7 +1129,7 @@ const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName,
     {
         osLastMDValue = poFile->GetMetadataValue( pszName );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1179,7 +1180,7 @@ char **PCIDSK2Dataset::GetMetadata( const char *pszDomain )
                                  poFile->GetMetadataValue(aosKeys[i]).c_str() );
         }
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1201,7 +1202,7 @@ CPLErr PCIDSK2Dataset::SetGeoTransform( double * padfTransform )
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
@@ -1218,8 +1219,8 @@ CPLErr PCIDSK2Dataset::SetGeoTransform( double * padfTransform )
                                padfTransform[3],
                                padfTransform[4],
                                padfTransform[5] );
-        }
-    catch( PCIDSKException ex )
+    }
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1241,7 +1242,7 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
@@ -1257,7 +1258,7 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
                                     padfTransform[4],
                                     padfTransform[5] );
         }
-        catch( PCIDSKException ex )
+        catch( const PCIDSKException& ex )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", ex.what() );
@@ -1300,7 +1301,7 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
@@ -1357,7 +1358,7 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
 
         poGeoref->WriteParameters( adfPCIParameters );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1387,7 +1388,7 @@ const char *PCIDSK2Dataset::GetProjectionRef()
         PCIDSKSegment *poGeoSeg = poFile->GetSegment(1);
         poGeoref = dynamic_cast<PCIDSKGeoref*>( poGeoSeg );
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& )
     {
         // I should really check whether this is an expected issue.
     }
@@ -1420,7 +1421,7 @@ const char *PCIDSK2Dataset::GetProjectionRef()
         else if( code == PCIDSK::UNIT_INTL_FOOT )
             pszUnits = "INTL FOOT";
     }
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1513,7 +1514,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
             poFile->CreateOverviews( nListBands, panBandList, 
                                      panNewOverviewList[i], pszResampling );
         }
-        catch( PCIDSKException ex )
+        catch( const PCIDSKException& ex )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", ex.what() );
@@ -1698,7 +1699,7 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions.                                                */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1827,7 +1828,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions.                                                */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -1933,7 +1934,7 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions.                                                */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSKException ex )
+    catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -2073,7 +2074,7 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 
             poVecSeg->SetProjection( pszGeosys, adfPCIParameters );
         }
-        catch( PCIDSK::PCIDSKException ex )
+        catch( const PCIDSKException& ex )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", ex.what() );
@@ -2108,13 +2109,12 @@ void GDALRegister_PCIDSK()
     poDriver->SetDescription( "PCIDSK" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "PCIDSK Database File" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_pcidsk.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PCIDSK Database File" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_pcidsk.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16 Int16 Float32 CInt16 CFloat32" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 Float32 CInt16 CFloat32" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='INTERLEAVING' type='string-select' default='BAND' description='raster data organization'>"
@@ -2130,7 +2130,8 @@ void GDALRegister_PCIDSK()
 "   </Option>"
 "   <Option name='TILESIZE' type='int' default='127' description='Tile Size (INTERLEAVING=TILED only)'/>"
 "</CreationOptionList>" );
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                               "<LayerCreationOptionList/>" );
 
     poDriver->pfnIdentify = PCIDSK2Dataset::Identify;
     poDriver->pfnOpen = PCIDSK2Dataset::Open;

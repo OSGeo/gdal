@@ -173,14 +173,14 @@ def xyz_5():
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
-    
+
     for i in range(6):
         if abs(got_gt[i]-expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
             return 'fail'
-    
+
     return 'success'
 
 
@@ -206,14 +206,14 @@ def xyz_6():
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
-    
+
     for i in range(6):
         if abs(got_gt[i]-expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
             return 'fail'
-    
+
     return 'success'
 
 ###############################################################################

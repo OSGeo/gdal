@@ -75,7 +75,7 @@ void DDFSubfieldDefn::SetName( const char * pszNewName )
 
 {
     int         i;
-    
+
     CPLFree( pszName );
 
     pszName = CPLStrdup( pszNewName );
@@ -111,7 +111,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
     }
     else
         bIsVariable = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Interpret the format string.                                    */
 /* -------------------------------------------------------------------- */
@@ -125,7 +125,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
       case 'R':
         eType = DDFFloat;
         break;
-        
+
       case 'I':
       case 'S':
         eType = DDFInt;
@@ -144,7 +144,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
                            pszFormatString+2 );
                 return FALSE;
             }
-            
+
             nFormatWidth = atoi(pszFormatString+2) / 8;
             eBinaryFormat = SInt; // good default, works for SDTS.
 
@@ -153,7 +153,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
             else
                 eType = DDFBinaryString;
         }
-        
+
         // or do we have a binary type indicator? (is it binary)
         else
         {
@@ -168,8 +168,8 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
         break;
 
       case 'X':
-        // 'X' is extra space, and shouldn't be directly assigned to a
-        // subfield ... I haven't encountered it in use yet though.
+        // 'X' is extra space, and should not be directly assigned to a
+        // subfield ... I have not encountered it in use yet though.
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Format type of `%c' not supported.\n",
                   pszFormatString[0] );
@@ -324,7 +324,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
                     break;
                 } 
             }
-            
+
             nLength++;
         }
 
@@ -496,7 +496,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0.0;
               }
-            
+
             case SInt:
               if( nFormatWidth == 1 )
                   return( *((signed char *) abyData) );
@@ -509,7 +509,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0.0;
               }
-            
+
             case FloatReal:
               if( nFormatWidth == 4 )
                   return( *((float *) pabyData) );
@@ -632,7 +632,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0;
               }
-            
+
             case SInt:
               if( nFormatWidth == 4 )
                   return( *((GInt32 *) pabyData) );
@@ -645,7 +645,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
                   //CPLAssert( FALSE );
                   return 0;
               }
-            
+
             case FloatReal:
               if( nFormatWidth == 4 )
                   return( (int) *((float *) pabyData) );

@@ -81,7 +81,7 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         *pnPrecision = atoi(pszPrecision);
         return true;
     }
-    
+
      else if( EQUAL(pszBase,"float") )
     {
         *pGMLType = GMLPT_Float;
@@ -767,8 +767,6 @@ CPLXMLNode* CPLGetFirstChildNode( CPLXMLNode* psNode )
 static
 CPLXMLNode* CPLGetLastNode( CPLXMLNode* psNode )
 {
-    if( psNode == NULL )
-        return NULL;
     CPLXMLNode* psIter = psNode;
     while( psIter->psNext != NULL )
         psIter = psIter->psNext;
@@ -879,7 +877,7 @@ bool GMLParseXSD( const char *pszFile,
 /*      Load the raw XML file.                                          */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psXSDTree = GMLParseXMLFile( pszFile );
-    
+
     if( psXSDTree == NULL )
         return false;
 
@@ -937,7 +935,7 @@ bool GMLParseXSD( const char *pszFile,
         {
             continue;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Get name                                                        */
 /* -------------------------------------------------------------------- */

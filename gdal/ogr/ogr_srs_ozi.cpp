@@ -119,7 +119,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     char    **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",", 
                                                          TRUE, TRUE );
     char    **papszDatum = NULL;
-                                                         
+
     if (CSLCount(papszProj) < 2)
     {
         goto not_enough_data;
@@ -377,7 +377,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                                                | CSLT_STRIPENDSPACES );
     if ( papszDatum == NULL)
         goto not_enough_data;
-        
+
     if ( !IsLocal() )
     {
 

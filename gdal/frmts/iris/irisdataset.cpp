@@ -38,16 +38,13 @@
 #  define RAD2DEG (180.0/M_PI)
 #endif
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+
 #include <sstream>
 
-
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_IRIS(void);
-CPL_C_END
 
 #define ARRAY_ELEMENT_COUNT(x) ((sizeof(x))/sizeof(x[0]))
 
@@ -226,7 +223,7 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( (int)VSIFReadL( pszRecord, nBlockXSize*nDataLength, 1, poGDS->fp ) != 1 )
         return CE_Failure;
-    
+
     //If datatype is dbZ or dBT:
     //See point 3.3.3 at page 3.33 of the manual
     if(poGDS->nDataTypeCode == 2 || poGDS->nDataTypeCode == 1){
@@ -412,8 +409,8 @@ void IRISDataset::LoadProjection()
     float fInvFlattening = float( (CPL_LSBUINT32PTR (abyHeader+224+320+12)))/1000000; //Point 3.2.27 pag 3-15
     float fFlattening;
     float fPolarRadius;
-    
-    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS verions)
+
+    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS versions)
         fEquatorialRadius = 6371000;
         fPolarRadius = fEquatorialRadius;
         fInvFlattening = 0;
@@ -427,52 +424,52 @@ void IRISDataset::LoadProjection()
             fPolarRadius = fEquatorialRadius * (1-fFlattening);
         }
     }
-    
+
     float fCenterLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+112+320+12))) / 4294967295LL;
     float fCenterLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+108+320+12))) / 4294967295LL;
 
     float fProjRefLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+244+320+12))) / 4294967295LL;
     float fProjRefLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+240+320+12))) / 4294967295LL; 
-    
+
     float fRadarLocX, fRadarLocY, fScaleX, fScaleY;
 
     fRadarLocX = float (CPL_LSBSINT32PTR (abyHeader + 112 + 12 )) / 1000;
     fRadarLocY = float (CPL_LSBSINT32PTR (abyHeader + 116 + 12 )) / 1000;
- 
+
     fScaleX = float (CPL_LSBSINT32PTR (abyHeader + 88 + 12 )) / 100;
     fScaleY = float (CPL_LSBSINT32PTR (abyHeader + 92 + 12 )) / 100;
-    
+
     OGRSpatialReference oSRSOut;
-    
+
     ////MERCATOR PROJECTION
     if(EQUAL(aszProjections[nProjectionCode],"Mercator")){
         OGRCoordinateTransformation *poTransform = NULL;
         OGRSpatialReference oSRSLatLon;
-        
+
         oSRSOut.SetGeogCS("unnamed ellipse",
                         "unknown", 
                         "unnamed", 
                         fEquatorialRadius, fInvFlattening, 
                         "Greenwich", 0.0, 
                         "degree", 0.0174532925199433);
-    
+
         oSRSOut.SetMercator(fProjRefLat,fProjRefLon,1,0,0);
 	oSRSOut.exportToWkt(&pszSRS_WKT);
-        
+
         //The center coordinates are given in LatLon on the defined ellipsoid. Necessary to calculate geotransform.
-        
+
         oSRSLatLon.SetGeogCS("unnamed ellipse",
                         "unknown", 
                         "unnamed", 
                         fEquatorialRadius, fInvFlattening, 
                         "Greenwich", 0.0, 
                         "degree", 0.0174532925199433);
-        
+
         poTransform = OGRCreateCoordinateTransformation( &oSRSLatLon,
                                                   &oSRSOut );
         std::pair <double,double> oPositionX2 = GeodesicCalculation(fCenterLat, fCenterLon, 90, fScaleX, fEquatorialRadius, fPolarRadius, fFlattening);
         std::pair <double,double> oPositionY2 = GeodesicCalculation(fCenterLat, fCenterLon, 0, fScaleY, fEquatorialRadius, fPolarRadius, fFlattening);
-        
+
         double dfLon2, dfLat2;
         dfLon2 = oPositionX2.first;
         dfLat2 = oPositionY2.second;
@@ -487,18 +484,18 @@ void IRISDataset::LoadProjection()
 
         if( poTransform == NULL || !poTransform->Transform( 1, &dfX2, &dfY2 ) )
              CPLError( CE_Failure, CPLE_None, "Transformation Failed\n" );
-        
+
         adfGeoTransform[0] = dfX - (fRadarLocX * (dfX2 - dfX));
         adfGeoTransform[1] = dfX2 - dfX;
         adfGeoTransform[2] = 0.0;
         adfGeoTransform[3] = dfY + (fRadarLocY * (dfY2 - dfY));
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = -1*(dfY2 - dfY);
-        
+
         delete poTransform;
-        
+
     }else if(EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant")){
-        
+
         oSRSOut.SetGeogCS("unnamed ellipse",
                         "unknown", 
                         "unnamed", 
@@ -522,7 +519,6 @@ void IRISDataset::LoadProjection()
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = -1*fScaleY;
     }
-    
 }
 
 /******************************************************************************/
@@ -967,14 +963,13 @@ void GDALRegister_IRIS()
     if( GDALGetDriverByName( "IRIS" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "IRIS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "IRIS data (.PPI, .CAPPi etc)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#IRIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#IRIS" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ppi" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

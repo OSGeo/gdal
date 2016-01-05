@@ -51,7 +51,7 @@ OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn )
     nSRSId = -1;
 
     poFeatureDefn = NULL;
-    
+
     pszTableName = NULL;
     pszSchemaName = NULL;
 }
@@ -82,7 +82,7 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszLayerName,
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
-    
+
     SetDescription( pszLayerName );
 
 /* -------------------------------------------------------------------- */
@@ -106,12 +106,12 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszLayerName,
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetKey( poSession );
-    
+
     if( oGetKey.GetPrimaryKeys( pszTableName, NULL, pszSchemaName ) 
         && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
+
         if( oGetKey.Fetch() ) // more than one field in key! 
         {
             CPLFree( pszFIDColumn );
@@ -164,7 +164,7 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszLayerName,
         CPLDebug( "OGR_ODBC", "Table %s has geometry extent fields.",
                   pszLayerName );
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      If we got a geometry column, does it exist?  Is it binary?      */
 /* -------------------------------------------------------------------- */
@@ -244,7 +244,7 @@ OGRErr OGRODBCTableLayer::ResetStatement()
             poStmt->Append( " WHERE" );
         else
             poStmt->Append( " AND" );
-        
+
         poStmt->Appendf( " XMAX > %.8f AND XMIN < %.8f"
                          " AND YMAX > %.8f AND YMIN < %.8f", 
                          m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxX, 
@@ -335,8 +335,8 @@ int OGRODBCTableLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
-        
-    else 
+
+    else
         return OGRODBCLayer::TestCapability( pszCap );
 }
 

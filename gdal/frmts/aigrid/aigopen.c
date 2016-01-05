@@ -136,6 +136,13 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
         return NULL;
     }
 
+    if (psInfo->nBlocksPerRow > INT_MAX / psInfo->nBlocksPerColumn)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many blocks");
+        AIGClose( psInfo );
+        return NULL;
+    }
+    
     psInfo->nTileXSize = psInfo->nBlockXSize * psInfo->nBlocksPerRow;
     psInfo->nTileYSize = psInfo->nBlockYSize * psInfo->nBlocksPerColumn;
 

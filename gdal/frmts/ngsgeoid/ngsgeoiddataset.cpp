@@ -29,14 +29,11 @@
 
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_NGSGEOID(void);
-CPL_C_END
 
 #define HEADER_SIZE (4 * 8 + 3 * 4)
 
@@ -122,7 +119,7 @@ CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     /* First values in the file corresponds to the south-most line of the imagery */
     VSIFSeekL(poGDS->fp,
-              HEADER_SIZE + (nRasterYSize - 1 - nBlockYOff) * nRasterXSize * 4,
+              HEADER_SIZE + static_cast<vsi_l_offset>(nRasterYSize - 1 - nBlockYOff) * nRasterXSize * 4,
               SEEK_SET);
 
     if (static_cast<int>(
@@ -278,7 +275,7 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
     {
         CPL_MSBPTR32(&nNLON);
     }
-    pBuffer += 4;
+    /*pBuffer += 4;*/
 
     /*CPLDebug("NGSGEOID", "SLAT=%f, WLON=%f, DLAT=%f, DLON=%f, NLAT=%d, NLON=%d, IKIND=%d",
              dfSLAT, dfWLON, dfDLAT, dfDLON, nNLAT, nNLON, nIKIND);*/
@@ -418,8 +415,7 @@ void GDALRegister_NGSGEOID()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NOAA NGS Geoid Height Grids" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_ngsgeoid.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ngsgeoid.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bin" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test ILWIS format driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -62,7 +62,7 @@ def ilwis_1():
     UNIT["Meter",1]]"""
 
     gt = (795480, 20, 0, 8090520, 0, -20)
-    
+
     return tst.testOpen( check_gt = gt, check_prj = srs )
 
 ###############################################################################
@@ -74,7 +74,7 @@ def ilwis_2():
 
     return tst.testCreateCopy( check_srs=1, check_gt=1,
                                new_filename = 'tmp/byte.mpr' )
-    
+
 ###############################################################################
 # copy floating point data and use Create interface.
 
@@ -104,7 +104,7 @@ def ilwis_5():
     return tst.testCreateCopy( check_srs=1, check_gt=1,
                                vsimem = 1, 
                                new_filename = '/vsimem/ilwis/byte.mpr' )
-    
+
 ###############################################################################
 # Cleanup.
 #

@@ -142,7 +142,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             *peErr = OGRERR_NONE;
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Check for the case of a geometrycollection that can be          */
 /*      promoted to MultiLineString.                                    */
@@ -198,7 +198,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     {
         int             iEdge;
         OGRLineString   *poLine;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
 /* -------------------------------------------------------------------- */
@@ -218,7 +218,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /*      Start a new ring, copying in the current line directly          */
 /* -------------------------------------------------------------------- */
         OGRLinearRing   *poRing = new OGRLinearRing();
-        
+
         AddEdgeToRing( poRing, poLine, FALSE );
 
 /* ==================================================================== */
@@ -360,6 +360,6 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         else
             *peErr = OGRERR_FAILURE;
     }
-    
+
     return (OGRGeometryH) poPolygon;
 }

@@ -160,7 +160,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     if (pGrd->iNumColorInflections > 32)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Corrupt header");
-        pGrd->iNumColorInflections = static_cast<unsigned short>( i );
+        pGrd->iNumColorInflections = 0;
         return FALSE;
     }
 
@@ -282,6 +282,9 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
     int nWarkerMark = 0;
 
     createIP( 0, 255, 255, 255, pMap, &nWarkerMark );
+    if( pGrd->iNumColorInflections == 0 )
+        return 0;
+
     // If Zmin is less than the 1st inflection use the 1st inflections color to
     // the start of the ramp
     if( pGrd->fZMin <= pGrd->stInflection[0].zVal )

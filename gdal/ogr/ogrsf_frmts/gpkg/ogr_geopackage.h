@@ -60,29 +60,29 @@ typedef enum
     GPKG_TF_WEBP
 } GPKGTileFormat;
 
-class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
+class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
 {
     friend class GDALGeoPackageRasterBand;
     friend class OGRGeoPackageTableLayer;
 
     OGRGeoPackageTableLayer** m_papoLayers;
     int                 m_nLayers;
-    int                 m_bUtf8;
+    bool                m_bUtf8;
     void                CheckUnknownExtensions(int bCheckRasterTable = FALSE);
-    
-    int                 m_bNew;
+
+    bool                m_bNew;
 
     CPLString           m_osRasterTable;
     CPLString           m_osIdentifier;
-    int                 m_bIdentifierAsCO;
+    bool                m_bIdentifierAsCO;
     CPLString           m_osDescription;
-    int                 m_bDescriptionAsCO;
-    int                 m_bHasReadMetadataFromStorage;
-    int                 m_bMetadataDirty;
+    bool                m_bDescriptionAsCO;
+    bool                m_bHasReadMetadataFromStorage;
+    bool                m_bMetadataDirty;
     char              **m_papszSubDatasets;
     char               *m_pszProjection;
-    int                 m_bRecordInsertedInGPKGContent;
-    int                 m_bGeoTransformValid;
+    bool                m_bRecordInsertedInGPKGContent;
+    bool                m_bGeoTransformValid;
     double              m_adfGeoTransform[6];
     int                 m_nSRID;
     double              m_dfTMSMinX;
@@ -100,24 +100,24 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     GPKGTileFormat      m_eTF;
     int                 m_nZLevel;
     int                 m_nQuality;
-    int                 m_bDither;
+    bool                m_bDither;
 
     GDALColorTable*     m_poCT;
-    int                 m_bTriedEstablishingCT;
+    bool                m_bTriedEstablishingCT;
     GByte*              m_pabyHugeColorArray;
 
     GDALGeoPackageDataset* m_poParentDS;
     int                 m_nOverviewCount;
     GDALGeoPackageDataset** m_papoOverviewDS;
-    int                 m_bZoomOther;
+    bool                m_bZoomOther;
 
     CPLString           m_osWHERE;
 
     sqlite3            *m_hTempDB;
     CPLString           m_osTempDBFilename;
-    
-    int                 m_bInFlushCache;
-    
+
+    bool                m_bInFlushCache;
+
     int                 m_nTileInsertionCount;
 
     CPLString           m_osTilingScheme;
@@ -175,7 +175,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         GByte*                  ReadTile(int nRow, int nCol, GByte* pabyData,
                                          int* pbIsLossyFormat = NULL);
 
-        int                     m_bInWriteTile;
+        bool                    m_bInWriteTile;
         CPLErr                  WriteTile();
 
         CPLErr                  WriteTileInternal(); /* should only be called by WriteTile() */
@@ -235,7 +235,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
                                          OGRwkbGeometryType eGType,
                                          char **papszOptions );
         int                 TestCapability( const char * );
-        
+
         virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName );
 
         virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
@@ -253,7 +253,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         OGRErr              CreateExtensionsTableIfNecessary();
         int                 HasExtensionsTable();
         OGRErr              CreateGDALAspatialExtension();
-        void                SetMetadataDirty() { m_bMetadataDirty = TRUE; }
+        void                SetMetadataDirty() { m_bMetadataDirty = true; }
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
@@ -264,7 +264,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
                                                    GDALProgressFunc pfnProgress, 
                                                    void * pProgressData );
     private:
-    
+
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
         OGRErr              SetApplicationId();
         int                 OpenOrCreateDB(int flags);
@@ -275,14 +275,13 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
 /*                        GDALGeoPackageRasterBand                      */
 /************************************************************************/
 
-class GDALGeoPackageRasterBand: public GDALPamRasterBand
+class GDALGeoPackageRasterBand CPL_FINAL: public GDALPamRasterBand
 {
     public:
-
                                 GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
                                                          int nBand,
                                                          int nTileWidth, int nTileHeight);
-        
+
         virtual CPLErr          IReadBlock(int nBlockXOff, int nBlockYOff,
                                            void* pData);
         virtual CPLErr          IWriteBlock(int nBlockXOff, int nBlockYOff,
@@ -322,7 +321,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     void                ClearStatement();
     virtual OGRErr      ResetStatement() = 0;
-    
+
     void                BuildFeatureDefn( const char *pszLayerName,
                                            sqlite3_stmt *hStmt );
 
@@ -351,7 +350,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 /*                        OGRGeoPackageTableLayer                       */
 /************************************************************************/
 
-class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
+class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 {
     char*                       m_pszTableName;
     int                         m_iSrs;
@@ -359,37 +358,37 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     CPLString                   m_soColumns;
     CPLString                   m_soFilter;
     CPLString                   osQuery;
-    OGRBoolean                  m_bExtentChanged;
+    bool                        m_bExtentChanged;
     sqlite3_stmt*               m_poUpdateStatement;
-    int                         m_bInsertStatementWithFID;
+    bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
-    int                         bDeferedSpatialIndexCreation;
+    bool                        bDeferedSpatialIndexCreation;
+    // m_bHasSpatialIndex cannot be bool.  -1 is unset.
     int                         m_bHasSpatialIndex;
     int                         bDropRTreeTable;
     int                         m_anHasGeometryExtension[wkbMultiSurface+1];
-    int                         m_bPreservePrecision;
-    int                         m_bTruncateFields;
-    int                         m_bDeferredCreation;
+    bool                        m_bPreservePrecision;
+    bool                        m_bTruncateFields;
+    bool                        m_bDeferredCreation;
     int                         m_iFIDAsRegularColumnIndex;
-    
+
     CPLString                   m_osIdentifierLCO;
     CPLString                   m_osDescriptionLCO;
-    int                         m_bHasReadMetadataFromStorage;
+    bool                        m_bHasReadMetadataFromStorage;
 
     virtual OGRErr      ResetStatement();
-    
+
     void                BuildWhere(void);
     OGRErr              RegisterGeometryColumn();
-    
+
     public:
-    
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
                                             const char * pszTableName );
                         ~OGRGeoPackageTableLayer();
 
     /************************************************************************/
     /* OGR API methods */
-                        
+
     int                 TestCapability( const char * );
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
     OGRErr              CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
@@ -422,7 +421,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
                                                const char* pszFIDColumnName,
                                                const char* pszIdentifier,
                                                const char* pszDescription );
-    void                SetDeferedSpatialIndexCreation( int bFlag )
+    void                SetDeferedSpatialIndexCreation( bool bFlag )
                                 { bDeferedSpatialIndexCreation = bFlag; }
 
     void                CreateSpatialIndexIfNecessary();
@@ -448,16 +447,15 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 
     int                 HasSpatialIndex();
     void                SetPrecisionFlag( int bFlag )
-                                { m_bPreservePrecision = bFlag; }
+                                { m_bPreservePrecision = CPL_TO_BOOL( bFlag ); }
     void                SetTruncateFieldsFlag( int bFlag )
-                                { m_bTruncateFields = bFlag; }
+                                { m_bTruncateFields = CPL_TO_BOOL( bFlag ); }
     OGRErr              RunDeferredCreationIfNecessary();
 
     /************************************************************************/
     /* GPKG methods */
-    
-    private:
-    
+
+  private:
     OGRErr              UpdateExtent( const OGREnvelope *poExtent );
     OGRErr              SaveExtent();
     OGRErr              BuildColumns();
@@ -476,7 +474,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 /*                         OGRGeoPackageSelectLayer                     */
 /************************************************************************/
 
-class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
+class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
 {
     OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 

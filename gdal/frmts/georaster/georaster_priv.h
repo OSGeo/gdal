@@ -200,7 +200,7 @@ public:
     virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) {return CE_None;};
     virtual OGRErr      CommitTransaction() {return CE_None;};
     virtual OGRErr      RollbackTransaction() {return CE_None;};
-    
+
     void                AssignGeoRaster( GeoRasterWrapper* poGRW );
 };
 
@@ -239,7 +239,7 @@ private:
     hNoDataItem*        pahNoDataArray;
     int                 nNoDataArraySz;
     bool                bHasNoDataArray;
-    
+
     void                ApplyNoDataArry( void* pBuffer );
 
 public:
@@ -466,7 +466,7 @@ public:
 
     bool                bHasBitmapMask;
     bool                bUniqueFound;
-    
+
     int                 eModelCoordLocation;
     unsigned int        anULTCoordinate[3];
 

@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_rasterize testing
 # Author:   Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -49,7 +49,7 @@ def test_gdal_rasterize_lib_1():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     sr_wkt = sr.ExportToWkt()
-    
+
     # Create a raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
@@ -68,9 +68,9 @@ def test_gdal_rasterize_lib_1():
     rast_lyr.CreateField(field_defn)
 
     # Add a polygon.
-    
+
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
-    
+
     feat = ogr.Feature( rast_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
 
@@ -81,9 +81,9 @@ def test_gdal_rasterize_lib_1():
     rast_lyr.CreateFeature( feat )
 
     # Add a linestring.
-    
+
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
-    
+
     feat = ogr.Feature( rast_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
 
@@ -102,7 +102,7 @@ def test_gdal_rasterize_lib_1():
         gdaltest.post_reason( 'Did not get expected image checksum' )
 
         return 'fail'
-    
+
     target_ds = None
 
     return 'success'
@@ -119,7 +119,7 @@ def test_gdal_rasterize_lib_3():
     gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
 
     ds = gdal.Rasterize('', 'tmp/n43dt0.shp', format = 'MEM', useZ = True, layers = ['n43dt0'], width = 121, height = 121, noData = 0)
-    
+
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/n43dt0.shp' )
 
     ds_ref = gdal.Open('../gdrivers/data/n43.dt0')

@@ -30,16 +30,13 @@
 
 #include "gh5_convenience.h"
 
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
-#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_BAG(void);
-CPL_C_END
 
 OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis, 
                                    const char *pszISOXML );
@@ -330,6 +327,8 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    H5S_SELECT_SET,
                                    offset, NULL,
                                    count, NULL );
+    if( status < 0 )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Create memory space to receive the data                         */
@@ -342,6 +341,8 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   H5S_SELECT_SET,
                                   mem_offset, NULL,
                                   count, NULL);
+    if( status < 0 )
+        return CE_Failure;
 
     status = H5Dread ( hDatasetID,
                        native,
@@ -472,7 +473,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The BAG driver does not support update access." );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the file as an HDF5 file.                                  */
 /* -------------------------------------------------------------------- */
@@ -573,7 +574,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
         delete poNBand;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Load the XML metadata.                                          */
 /* -------------------------------------------------------------------- */
@@ -723,7 +724,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         CPLDestroyXMLNode( psRoot );
         return eOGRErr;
     }
-    
+
     const char *pszSRCodeSpace = 
         CPLGetXMLValue( psRSI, "MD_ReferenceSystem.referenceSystemIdentifier.RS_Identifier.codeSpace.CharacterString", "" );
     if( !EQUAL( pszSRCodeSpace, "WKT" ) )
@@ -853,24 +854,21 @@ char **BAGDataset::GetMetadata( const char *pszDomain )
 void GDALRegister_BAG( )
 
 {
-    GDALDriver  *poDriver;
-    
-    if (! GDAL_CHECK_VERSION("BAG"))
+    if( !GDAL_CHECK_VERSION( "BAG" ) )
         return;
 
-    if(  GDALGetDriverByName( "BAG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "BAG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Bathymetry Attributed Grid" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_bag.html" );
-        poDriver->pfnOpen = BAGDataset::Open;
-        poDriver->pfnIdentify = BAGDataset::Identify;
+    if( GDALGetDriverByName( "BAG" ) != NULL )
+        return;
 
-        GetGDALDriverManager( )->RegisterDriver( poDriver );
-    }
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "BAG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Bathymetry Attributed Grid" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_bag.html" );
+    poDriver->pfnOpen = BAGDataset::Open;
+    poDriver->pfnIdentify = BAGDataset::Identify;
+
+    GetGDALDriverManager( )->RegisterDriver( poDriver );
 }

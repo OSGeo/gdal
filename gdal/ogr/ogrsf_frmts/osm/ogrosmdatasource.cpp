@@ -740,8 +740,8 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
         return FALSE;
     }
 
-    int nBucket = (int)(psNode->nID / NODE_PER_BUCKET);
-    int nOffInBucket = psNode->nID % NODE_PER_BUCKET;
+    int nBucket = static_cast<int>(psNode->nID / NODE_PER_BUCKET);
+    int nOffInBucket = static_cast<int>(psNode->nID % NODE_PER_BUCKET);
     int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
     int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
@@ -900,7 +900,7 @@ void OGROSMDataSource::LookupNodes( )
         int iNextFreeBucket = 0;
         for(unsigned int i = 0; i < nReqIds; i++)
         {
-            int nIndInHashArray = HASH_ID_FUNC(panReqIds[i]) % HASHED_INDEXES_ARRAY_SIZE;
+            int nIndInHashArray = static_cast<int>(HASH_ID_FUNC(panReqIds[i]) % HASHED_INDEXES_ARRAY_SIZE);
             int nIdx = panHashedIndexes[nIndInHashArray];
             if( nIdx == -1 )
             {
@@ -1109,8 +1109,8 @@ void OGROSMDataSource::LookupNodesCustom( )
         if( !VALID_ID_FOR_CUSTOM_INDEXING(id) )
             continue;
 
-        int nBucket = (int)(id / NODE_PER_BUCKET);
-        int nOffInBucket = id % NODE_PER_BUCKET;
+        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
 
         if( nBucket >= nBuckets )
@@ -1181,8 +1181,8 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
     {
         GIntBig id = panReqIds[i];
 
-        int nBucket = (int)(id / NODE_PER_BUCKET);
-        int nOffInBucket = id % NODE_PER_BUCKET;
+        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
@@ -1244,8 +1244,9 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
                 if( !DecompressSector(abyRawSector, nSectorSize, pabySector) )
                 {
-                    CPLError(CE_Failure,  CPLE_AppDefined,
-                            "Error while uncompressing sector for node " CPL_FRMT_GIB, id);
+                    CPLError( CE_Failure,  CPLE_AppDefined,
+                              "Error while uncompressing sector for node "
+                              CPL_FRMT_GIB, id );
                     continue;
                     // FIXME ?
                 }
@@ -1279,8 +1280,8 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
     {
         GIntBig id = panReqIds[i];
 
-        int nBucket = (int)(id / NODE_PER_BUCKET);
-        int nOffInBucket = id % NODE_PER_BUCKET;
+        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
@@ -1358,7 +1359,7 @@ static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
     GByte* pabyData = *ppabyData;
     while( true )
     {
-        if( (nVal & (~0x7fU)) == 0 )
+        if( (((GUInt32)nVal) & (~0x7fU)) == 0 )
         {
             *pabyData = (GByte)nVal;
             *ppabyData = pabyData + 1;
@@ -1642,9 +1643,9 @@ void OGROSMDataSource::ProcessWaysBatch()
         {
             for(i=0;i<psWayFeaturePairs->nRefs;i++)
             {
-                int nIndInHashArray =
+                int nIndInHashArray = static_cast<int>(
                     HASH_ID_FUNC(psWayFeaturePairs->panNodeRefs[i]) %
-                        HASHED_INDEXES_ARRAY_SIZE;
+                        HASHED_INDEXES_ARRAY_SIZE);
                 int nIdx = panHashedIndexes[nIndInHashArray];
                 if( nIdx < -1 )
                 {
@@ -2269,13 +2270,13 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
             OGRPolygon* poSuperPoly = (OGRPolygon* ) hPoly;
             for(i = 0; i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings(); i++)
             {
-                OGRPolygon* poPoly = new OGRPolygon();
                 OGRLinearRing* poRing =  (i == 0) ? poSuperPoly->getExteriorRing() :
                                                     poSuperPoly->getInteriorRing(i - 1);
                 if( poRing != NULL && poRing->getNumPoints() >= 4 &&
                     poRing->getX(0) == poRing->getX(poRing->getNumPoints() -1) &&
                     poRing->getY(0) == poRing->getY(poRing->getNumPoints() -1) )
                 {
+                    OGRPolygon* poPoly = new OGRPolygon();
                     poPoly->addRing( poRing );
                     papoPolygons[nPolys ++] = poPoly;
                 }
@@ -3069,7 +3070,6 @@ int OGROSMDataSource::SetCacheSize()
                       "Unrecognized value for PRAGMA cache_size : %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
-            rc = SQLITE_OK;
         }
     }
     return TRUE;

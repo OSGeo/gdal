@@ -89,7 +89,7 @@ When a summarization operator is applied to any field, then all fields must
 have summarization operators applied.   The summarization operators are
 COUNT (a count of instances), AVG (numerical average), SUM (numerical sum), 
 MIN (lexical or numerical minimum), and MAX (lexical or numerical maximum). 
-This example produces a variety of sumarization information on parcel
+This example produces a variety of summarization information on parcel
 property values:
 
 \code
@@ -232,7 +232,7 @@ WHERE a_field = 'a_value'
 
 Identifiers (column names and tables names) can be used unquoted if they don't
 contain special characters or are not a SQL reserved keyword. Otherwise they must
-be surroundered with double-quote characters. e.g. WHERE "from" = 5
+be surrounded with double-quote characters. e.g. WHERE "from" = 5.
 
 \subsection ogr_sql_where WHERE
 

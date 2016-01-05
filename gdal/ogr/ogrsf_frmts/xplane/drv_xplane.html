@@ -21,18 +21,21 @@ The driver is able to read the following files :<p>
 
 <p>
 
-Each file will be reported as a set of layers whose data schema is given below.
-The data schema is generally as close as possible to the original schema data described
-in the X-Plane specificiation. However, please note that meters (or kilometers) are always used
-to report heights, elevations, distances (widths, lengths), etc., even if the original data
-are sometimes expressed in feet or nautical miles.<p>
+Each file will be reported as a set of layers whose data schema is given
+below.  The data schema is generally as close as possible to the original
+schema data described in the X-Plane specification. However, please note that
+meters (or kilometers) are always used to report heights, elevations,
+distances (widths, lengths), etc., even if the original data are sometimes
+expressed in feet or nautical miles.<p>
 
-Data is reported as being expressed in WGS84 datum (latitude, longitude), altough the specificiation
-is not very clear on that subject.</p>
+Data is reported as being expressed in WGS84 datum (latitude, longitude),
+although the specification is not very clear on that subject.</p>
 
-The OGR_XPLANE_READ_WHOLE_FILE configuration option can be set to FALSE when reading a big file 
-in regards with the available RAM (especially true for apt.dat). This option forces the driver not to cache features in RAM,
-but just to fetch the features of the current layer. Of course, this will have a negative impact on performance.
+The OGR_XPLANE_READ_WHOLE_FILE configuration option can be set to FALSE when
+reading a big file in regards with the available RAM (especially true for
+apt.dat). This option forces the driver not to cache features in RAM, but just
+to fetch the features of the current layer. Of course, this will have a
+negative impact on performance.
 
 <h2>Examples</h2>
 

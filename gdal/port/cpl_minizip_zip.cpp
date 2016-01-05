@@ -149,7 +149,7 @@ typedef struct
 typedef struct
 {
     zlib_filefunc_def z_filefunc;
-    voidpf filestream;        /* io structore of the zipfile */
+    voidpf filestream;        /* IO structure of the zipfile */
     linkedlist_data central_dir;/* datablock with central dir in construction*/
     int  in_opened_file_inzip;  /* 1 if a file in the zip is currently writ.*/
     curfile_info ci;            /* info on the file currently writing */
@@ -345,7 +345,7 @@ static int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
 static int ziplocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
                               voidpf filestream, uLong *pX)
 {
-    int i;
+    int i = 0;
     int err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     uLong x = (uLong)i;
 
@@ -365,7 +365,7 @@ static int ziplocal_getLong (
     voidpf filestream,
     uLong *pX )
 {
-    int i;
+    int i = 0;
     int err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     uLong x = (uLong)i;
 

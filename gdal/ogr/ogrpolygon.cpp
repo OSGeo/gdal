@@ -314,7 +314,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 
         nDataOffset += poLR->_WkbSize( b3D );
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -342,14 +342,14 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 
     if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
-    
+
     if( eByteOrder == wkbNDR )
         nGType = CPL_LSBWORD32( nGType );
     else
         nGType = CPL_MSBWORD32( nGType );
 
     memcpy( pabyData + 1, &nGType, 4 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
@@ -444,7 +444,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHas
     int         nMaxRings = 0;
 
     nCoordDimension = 2;
-    
+
     do
     {
 

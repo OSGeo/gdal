@@ -107,7 +107,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
                                         FreeUserDataFunc pfnFreeUserData,
                                         void* pUserData);
     virtual            ~OGRProxiedLayer();
-    
+
     OGRLayer           *GetUnderlyingLayer();
 
     virtual OGRGeometry *GetSpatialFilter();

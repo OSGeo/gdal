@@ -166,7 +166,8 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 #define MY_INT64_MIN ((((GIntBig)0x80000000) << 32))
 
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
-                                         OGRFieldSubType& eSubType )
+                                         OGRFieldSubType& eSubType,
+                                         bool bArrayAsString )
 {
     eSubType = OFSTNone;
 
@@ -208,6 +209,8 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
         return OFTString;
     else if( json_type_array == type )
     {
+        if( bArrayAsString )
+            return OFTString;
         int nSize = json_object_array_length(poObject);
         if (nSize == 0)
             return OFTStringList; /* we don't know, so let's assume it's a string list */
@@ -260,15 +263,16 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
     CPLErrorReset();
     if( bSuccess )
     {
-        int bHasDate = strchr( pszStr, '/' ) != NULL ||
-                        strchr( pszStr, '-' ) != NULL;
-        int bHasTime = strchr( pszStr, ':' ) != NULL;
+        const bool bHasDate = strchr( pszStr, '/' ) != NULL ||
+            strchr( pszStr, '-' ) != NULL;
+        const bool  bHasTime = strchr( pszStr, ':' ) != NULL;
         if( bHasDate && bHasTime )
             return OFTDateTime;
         else if( bHasDate )
             return OFTDate;
         else
             return OFTTime;
+        // TODO: What if both are false?
     }
     return OFTString;
 }
@@ -297,6 +301,6 @@ const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
         return "MultiPolygon";
     else if( wkbGeometryCollection == eType || wkbGeometryCollection25D == eType )
         return "GeometryCollection";
-    else
-        return "Unknown";
+
+    return "Unknown";
 }

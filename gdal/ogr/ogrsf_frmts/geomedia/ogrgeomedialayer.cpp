@@ -132,7 +132,7 @@ CPLErr OGRGeomediaLayer::BuildFeatureDefn( const char *pszLayerName,
             pszGeomColumn = CPLStrdup(poStmtIn->GetColName(iCol));
             continue;
         }
-        
+
         switch( poStmtIn->GetColType(iCol) )
         {
           case SQL_INTEGER:

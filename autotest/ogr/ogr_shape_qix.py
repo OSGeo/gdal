@@ -262,7 +262,7 @@ def ogr_shape_qix_4():
     shape_drv.DeleteDataSource('/vsimem/ogr_shape_qix.shp')
 
     return ret
-    
+
 gdaltest_list = [
     ogr_shape_qix_1,
     ogr_shape_qix_2,

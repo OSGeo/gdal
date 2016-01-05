@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR Feature facilities, particularly SetFrom()
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2011, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -41,7 +41,7 @@ import gdaltest
 # feature, with the same names, but all the field types of a specific type.
 
 def mk_dst_feature( src_feature, field_type ):
-    
+
     dst_feat_defn = ogr.FeatureDefn( 'dst' )
 
     src_feat_defn = src_feature.GetDefnRef()
@@ -56,15 +56,15 @@ def mk_dst_feature( src_feature, field_type ):
 # Create a source feature 
 
 def mk_src_feature():
-    
+
     feat_def = ogr.FeatureDefn( 'src' )
-    
+
     field_def = ogr.FieldDefn( 'field_integer', ogr.OFTInteger )
     feat_def.AddFieldDefn( field_def )
-    
+
     field_def = ogr.FieldDefn( 'field_integer64', ogr.OFTInteger64 )
     feat_def.AddFieldDefn( field_def )
-    
+
     field_def = ogr.FieldDefn( 'field_real', ogr.OFTReal )
     feat_def.AddFieldDefn( field_def )
 
@@ -131,8 +131,7 @@ def check( feat, fieldname, value ):
         return 0
     else:
         return 1
-    
-    
+
 ###############################################################################
 # Copy to Integer
 
@@ -151,7 +150,7 @@ def ogr_feature_cp_integer():
 
     if not check( dst_feature, 'field_integer64', 2147483647 ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', 18 ):
         return 'failure'
 
@@ -175,15 +174,15 @@ def ogr_feature_cp_integer():
 
     if not check( dst_feature, 'field_integer64list', 2147483647 ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', 17 ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Copy to Integer64
 
@@ -200,14 +199,14 @@ def ogr_feature_cp_integer64():
 
     if not check( dst_feature, 'field_integer64', 9876543210 ):
         return 'failure'
-    
+
     gdal.PushErrorHandler()
     int32_ovflw = dst_feature.GetFieldAsInteger('field_integer64')
     gdal.PopErrorHandler()
     if int32_ovflw != 2147483647:
         gdaltest.post_reason('fail')
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', 18 ):
         return 'failure'
 
@@ -231,13 +230,13 @@ def ogr_feature_cp_integer64():
 
     if not check( dst_feature, 'field_integer64list', 9876543210 ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', 17 ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -278,10 +277,10 @@ def ogr_feature_cp_real():
 
     if not check( dst_feature, 'field_reallist', 17.5 ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -322,13 +321,13 @@ def ogr_feature_cp_string():
 
     if not check( dst_feature, 'field_integer64list', '(1:9876543210)' ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', '(2:123.5,567)' ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', '(2:abc,def)' ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -345,7 +344,7 @@ def ogr_feature_cp_binary():
 
     if not check( dst_feature, 'field_integer64', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', None ):
         return 'failure'
 
@@ -377,13 +376,13 @@ def ogr_feature_cp_binary():
 
     if not check( dst_feature, 'field_integer64list', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -400,7 +399,7 @@ def ogr_feature_cp_date():
 
     if not check( dst_feature, 'field_integer64', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', None ):
         return 'failure'
 
@@ -424,13 +423,13 @@ def ogr_feature_cp_date():
 
     if not check( dst_feature, 'field_integer64list', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -447,7 +446,7 @@ def ogr_feature_cp_time():
 
     if not check( dst_feature, 'field_integer64', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', None ):
         return 'failure'
 
@@ -471,13 +470,13 @@ def ogr_feature_cp_time():
 
     if not check( dst_feature, 'field_integer64list', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -494,7 +493,7 @@ def ogr_feature_cp_datetime():
 
     if not check( dst_feature, 'field_integer64', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', None ):
         return 'failure'
 
@@ -518,13 +517,13 @@ def ogr_feature_cp_datetime():
 
     if not check( dst_feature, 'field_integer64list', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', None ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -543,7 +542,7 @@ def ogr_feature_cp_integerlist():
 
     if not check( dst_feature, 'field_integer64', [2147483647] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', [18] ):
         return 'failure'
 
@@ -567,13 +566,13 @@ def ogr_feature_cp_integerlist():
 
     if not check( dst_feature, 'field_integer64list', [2147483647] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', [123,567] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -590,7 +589,7 @@ def ogr_feature_cp_integer64list():
 
     if not check( dst_feature, 'field_integer64', [9876543210] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', [18] ):
         return 'failure'
 
@@ -614,13 +613,13 @@ def ogr_feature_cp_integer64list():
 
     if not check( dst_feature, 'field_integer64list', [9876543210] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', [123,567] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -637,7 +636,7 @@ def ogr_feature_cp_reallist():
 
     if not check( dst_feature, 'field_integer64', [9876543210.0] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_real', [18.4] ):
         return 'failure'
 
@@ -661,13 +660,13 @@ def ogr_feature_cp_reallist():
 
     if not check( dst_feature, 'field_integer64list', [9876543210.0] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_reallist', [123.5, 567.0] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', None ):
         return 'failure'
-    
+
     return 'success'
 
 ###############################################################################
@@ -711,10 +710,10 @@ def ogr_feature_cp_stringlist():
 
     if not check( dst_feature, 'field_reallist', ['123.5', '567'] ):
         return 'failure'
-    
+
     if not check( dst_feature, 'field_stringlist', ['abc', 'def'] ):
         return 'failure'
-    
+
     return 'success'
 
 
@@ -741,7 +740,7 @@ def ogr_feature_unicode():
 # Test 64bit FID
 
 def ogr_feature_64bit_fid():
-    
+
     feat_def = ogr.FeatureDefn( 'test' )
     f = ogr.Feature(feat_def)
     f.SetFID(123456789012345)
@@ -753,7 +752,7 @@ def ogr_feature_64bit_fid():
 # Test 64bit integer
 
 def ogr_feature_overflow_64bit_integer():
-    
+
     feat_def = ogr.FeatureDefn( 'test' )
     feat_def.AddFieldDefn(ogr.FieldDefn('test', ogr.OFTInteger64))
     f = ogr.Feature(feat_def)

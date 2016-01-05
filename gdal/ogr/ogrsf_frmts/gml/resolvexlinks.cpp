@@ -403,7 +403,7 @@ static CPLErr Resolve( CPLXMLNode * psNode,
     CPLXMLNode *psResource = NULL;
     CPLXMLNode *psTarget = NULL;
     CPLErr eReturn = CE_None, eReturned;
-    
+
     for( psSibling = psNode; psSibling != NULL; psSibling = psSibling->psNext )
     {
         if( psSibling->eType != CXT_Element )

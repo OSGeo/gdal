@@ -31,16 +31,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_USGSDEM(void);
-CPL_C_END
 
 typedef struct {
     double	x;
@@ -61,7 +58,8 @@ static int ReadInt( VSILFILE *fp )
 {
     char c;
     int nRead = 0;
-    vsi_l_offset nOffset = VSIFTellL(fp);
+    char szBuffer[12];
+    bool bInProlog = true;
 
     while( true )
     {
@@ -69,39 +67,28 @@ static int ReadInt( VSILFILE *fp )
         {
             return 0;
         }
-        else
-            nRead ++;
-        if ( !isspace( static_cast<int>(c) ) )
-            break;
-    }
-
-    int nVal = 0;
-    int nSign = 1;
-    if (c == '-')
-        nSign = -1;
-    else if (c == '+')
-        nSign = 1;
-    else if (c >= '0' && c <= '9')
-        nVal = c - '0';
-    else
-    {
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nOffset + nRead, SEEK_SET));
-        return 0;
-    }
-
-    while( true )
-    {
-        if (VSIFReadL(&c, 1, 1, fp) != 1)
-            return nSign * nVal;
-        nRead ++;
-        if (c >= '0' && c <= '9')
-            nVal = nVal * 10 + (c - '0');
-        else
+        if( bInProlog )
         {
-            CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nOffset + (nRead - 1), SEEK_SET));
-            return nSign * nVal;
+            if ( !isspace( static_cast<int>(c) ) )
+            {
+                bInProlog = false;
+            }
         }
+        if( !bInProlog )
+        {
+            if( c != '-' && c != '+' && !(c >= '0' && c <= '9') )
+            {
+                CPL_IGNORE_RET_VAL(VSIFSeekL(fp, VSIFTellL(fp) - 1, SEEK_SET));
+                break;
+            }
+            if( nRead < 11 )
+                szBuffer[nRead] = c;
+            nRead ++;
+        }
+
     }
+    szBuffer[MIN(nRead, 11)] = 0;
+    return atoi(szBuffer);
 }
 
 typedef struct
@@ -155,7 +142,7 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
             break;
     }
 
-    int nVal = 0;
+    GIntBig nVal = 0;
     int nSign = 1;
     if (c == '-')
         nSign = -1;
@@ -177,7 +164,7 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
             if (psBuffer->cur_index >= psBuffer->buffer_size)
             {
                 if( pbSuccess ) *pbSuccess = TRUE;
-                return nSign * nVal;
+                return static_cast<int>(nSign * nVal);
             }
         }
 
@@ -185,12 +172,25 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
         if (c >= '0' && c <= '9')
         {
             psBuffer->cur_index ++;
-            nVal = nVal * 10 + (c - '0');
+            if( nVal * nSign < INT_MAX && nVal * nSign > INT_MIN )
+            {
+                nVal = nVal * 10 + (c - '0');
+                if( nVal * nSign > INT_MAX )
+                {
+                    nVal = INT_MAX;
+                    nSign = 1;
+                }
+                else if( nVal * nSign < INT_MIN )
+                {
+                    nVal = INT_MIN;
+                    nSign = 1;
+                }
+            }
         }
         else
         {
             if( pbSuccess ) *pbSuccess = TRUE;
-            return nSign * nVal;
+            return static_cast<int>(nSign * nVal);
         }
     }
 }
@@ -199,7 +199,7 @@ static int USGSDEMReadIntFromBuffer( Buffer* psBuffer, int* pbSuccess = NULL )
 /*                USGSDEMReadDoubleFromBuffer()                         */
 /************************************************************************/
 
-static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount )
+static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount, int *pbSuccess = NULL)
 
 {
     if (psBuffer->cur_index + nCharCount > psBuffer->buffer_size)
@@ -207,6 +207,7 @@ static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount )
         USGSDEMRefillBuffer(psBuffer);
         if (psBuffer->cur_index + nCharCount > psBuffer->buffer_size)
         {
+            if( pbSuccess ) *pbSuccess = FALSE;
             return 0;
         }
     }
@@ -224,6 +225,7 @@ static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount )
     szPtr[nCharCount] = backupC;
     psBuffer->cur_index += nCharCount;
 
+    if( pbSuccess ) *pbSuccess = TRUE;
     return dfVal;
 }
 
@@ -365,28 +367,46 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     for( int i = 0; i < GetXSize(); i++)
     {
-        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
-        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
-        const int nCPoints = USGSDEMReadIntFromBuffer(&sBuffer);
-        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
+        int bSuccess;
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
+        if( bSuccess )
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
+        const int nCPoints = (bSuccess) ? USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess) : 0;
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
 
-        /* dxStart = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        double dyStart = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        const double dfElevOffset = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
+        if( bSuccess )
+        /* dxStart = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess);
+        double dyStart = (bSuccess) ? USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess) : 0;
+        const double dfElevOffset = (bSuccess) ? USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess) : 0;
+        if( bSuccess )
+        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess);
+        if( bSuccess )
+        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24, &bSuccess);
+        if( !bSuccess )
+        {
+            CPLFree(sBuffer.buffer);
+            return CE_Failure;
+        }
 
         if( STARTS_WITH_CI(poGDS->pszProjection, "GEOGCS") )
             dyStart = dyStart / 3600.0;
 
-        int lygap = static_cast<int>(
-            (dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5);
+        double dygap = (dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5;
+        if( dygap <= INT_MIN || dygap >= INT_MAX || !CPLIsFinite(dygap) )
+        {
+            CPLFree(sBuffer.buffer);
+            return CE_Failure;
+        }
+        int lygap = static_cast<int>(dygap);
+        if( nCPoints <= 0 )
+            continue;
+        if( lygap > INT_MAX - nCPoints )
+            lygap = INT_MAX - nCPoints;
 
         for (int j=lygap; j < (nCPoints + lygap); j++)
         {
             const int iY = GetYSize() - j - 1;
 
-            int bSuccess;
             const int nElev = USGSDEMReadIntFromBuffer(&sBuffer, &bSuccess);
             if( !bSuccess )
             {
@@ -405,8 +425,11 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
                 if( GetRasterDataType() == GDT_Int16 )
                 {
+                    GUInt16 nVal = ( fComputedElev < -32768 ) ? -32768 :
+                                   ( fComputedElev > 32767 ) ? 32767 :
+                                   static_cast<GInt16>( fComputedElev );
                     reinterpret_cast<GInt16 *>( pImage )[i + iY*GetXSize()]
-                        = static_cast<GInt16>( fComputedElev );
+                        = nVal;
                 }
                 else
                 {

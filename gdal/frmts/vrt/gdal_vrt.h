@@ -45,7 +45,7 @@
 
 CPL_C_START
 
-void    GDALRegister_VRT(void);
+void GDALRegister_VRT();
 typedef CPLErr
 (*VRTImageReadFunc)( void *hCBData,
                      int nXOff, int nYOff, int nXSize, int nYSize,

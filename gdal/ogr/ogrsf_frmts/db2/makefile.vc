@@ -1,0 +1,13 @@
+
+OBJ	=	ogrdb2driver.obj ogrdb2datasource.obj ogrdb2layer.obj ogrdb2tablelayer.obj ogrdb2selectlayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\..
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb

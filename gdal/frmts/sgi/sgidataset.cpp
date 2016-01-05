@@ -32,17 +32,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include "cpl_port.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_SGI(void);
-CPL_C_END
 
 struct ImageRec
 {
@@ -262,18 +259,13 @@ SGIRasterBand::SGIRasterBand(SGIDataset* poDSIn, int nBandIn)
 {
   poDS = poDSIn;
   nBand = nBandIn;
-  if(poDS == NULL)
-  {
-    eDataType = GDT_Byte;
-  }
-  else
-  {
-    if(static_cast<int>( poDSIn->image.bpc ) == 1)
+
+  if(static_cast<int>( poDSIn->image.bpc ) == 1)
       eDataType = GDT_Byte;
-    else
+  else
       eDataType = GDT_Int16;
-  }
-  nBlockXSize = poDSIn->nRasterXSize;;
+
+  nBlockXSize = poDSIn->nRasterXSize;
   nBlockYSize = 1;
 }
 
@@ -361,8 +353,6 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
         }
         else
         { // copy over mixed data. 
-            nRepeatCount = 1;
-
             for( nRepeatCount = 1;
                  iX + nRepeatCount < image->xsize && nRepeatCount < 127;
                  nRepeatCount++ )
@@ -830,25 +820,27 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_SGI()                          */
+/*                         GDALRegister_SGI()                           */
 /************************************************************************/
 
 void GDALRegister_SGI()
 
 {
-    if(GDALGetDriverByName("SGI") != NULL)
+    if( GDALGetDriverByName( "SGI" ) != NULL )
         return;
 
-    GDALDriver*  poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription("SGI");
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "SGI Image File Format 1.0");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "rgb");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/rgb");
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SGI Image File Format 1.0" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rgb" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/rgb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SGI" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+
     poDriver->pfnOpen = SGIDataset::Open;
     poDriver->pfnCreate = SGIDataset::Create;
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

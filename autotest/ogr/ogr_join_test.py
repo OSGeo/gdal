@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR JOIN support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -102,7 +102,7 @@ def ogr_join_3():
 def ogr_join_4():
 
     expect = ['_179_', '_171_', None, None ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT poly.*, name FROM poly ' \
         + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
@@ -123,7 +123,7 @@ def ogr_join_4():
 def ogr_join_5():
 
     expect = [ 179, 171, 173, 172 ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT p.*, il.name FROM poly p ' \
         + 'LEFT JOIN idlink il ON p.eas_id = il.eas_id ' \
@@ -144,7 +144,7 @@ def ogr_join_5():
 def ogr_join_6():
 
     expect = [ 171, 172, 173, 179 ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT p.*, il.name FROM poly p ' \
         + 'LEFT JOIN idlink il ON p.eas_id = il.eas_id ' \
@@ -165,7 +165,7 @@ def ogr_join_6():
 def ogr_join_7():
 
     expect = [ 171, 172, 173, 179 ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT p.*, il.name FROM poly p ' \
         + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id ' \
@@ -186,7 +186,7 @@ def ogr_join_7():
 def ogr_join_8():
 
     expect = [ 171, None, None, 179 ]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT p.*, il.name, il2.eas_id FROM poly p ' \
         + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id ' \
@@ -223,13 +223,13 @@ def ogr_join_9():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 
 def ogr_join_10():
 
     expect = [None,None,None,None,None,None,None,None,None,None]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT * FROM poly ' \
         + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.name ' )
@@ -242,14 +242,14 @@ def ogr_join_10():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test join on string field
 
 def ogr_join_11():
 
     expect = ['_168_','_179_','_171_','_170_','_165_','_158_','_166_']
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT il.*, il2.* FROM idlink il LEFT JOIN idlink2 il2 ON il.NAME = il2.NAME' )
 
@@ -279,14 +279,14 @@ def ogr_join_12():
     ds.ReleaseResultSet( sql_lyr )
 
     return 'success'
-    
+
 ###############################################################################
 # Test joining a float column with a string column (#4321)
 
 def ogr_join_13():
 
     expect = ['_168_','_179_','_171_',None, None,None,'_166_','_158_','_165_','_170_']
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT * FROM poly ' \
         + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.eas_id' )
@@ -299,14 +299,14 @@ def ogr_join_13():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test joining a string column with a float column (#4321, actually addressed by #4259)
 
 def ogr_join_14():
 
     expect = [168,179,171,170,165,158,166]
-    
+
     sql_lyr = gdaltest.ds.ExecuteSQL( 	\
         'SELECT * FROM idlink2 ' \
         + 'LEFT JOIN poly ON idlink2.eas_id = poly.eas_id' )
@@ -421,7 +421,7 @@ def ogr_join_18():
         return 'fail'
 
     gdaltest.ds.ReleaseResultSet( sql_lyr )
-    
+
     return 'success'
 
 ###############################################################################

@@ -36,7 +36,7 @@
 #include <fstream>
 
 CPL_C_START
-void  GDALRegister_MSG(void);
+void GDALRegister_MSG();
 CPL_C_END
 
 /************************************************************************/
@@ -72,7 +72,7 @@ class MSGRasterBand : public GDALRasterBand
 class MSGDataset : public GDALDataset
 {
   friend class MSGRasterBand;
-  
+
   public:
     MSGDataset();
     ~MSGDataset();

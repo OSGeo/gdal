@@ -626,7 +626,7 @@ hLayer:  handle to the layer to get the capability from.
 pszCap:  the name of the capability to test.
 
 TRUE if the layer has the requested capability, or FALSE otherwise.
-OGRLayers will return FALSE for any unrecognised capabilities. ";
+OGRLayers will return FALSE for any unrecognized capabilities. ";
 
 %feature("docstring")  GetSpatialFilter "OGRGeometryH
 OGR_L_GetSpatialFilter(OGRLayerH hLayer)

@@ -29,19 +29,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
-try:
-    from osgeo import gdal
-    from osgeo import ogr
-    from osgeo import osr
-except:
-    import gdal
-    import ogr
-    import osr
-
-import sys
-import os
 import math
+import os
+import sys
+
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 try:
     progress = gdal.TermProgress_nocb
@@ -867,7 +861,7 @@ def main(args = None):
         elif arg == '-useDirForEachRow':
             UseDirForEachRow=True
         elif arg[:1] == '-':
-            print('Unrecognised command option: %s' % arg)
+            print('Unrecognized command option: %s' % arg)
             Usage()
             return 1
 

@@ -27,14 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 
 #include "tiff.h"
 
 CPL_CVSID("$Id$");
-
-extern "C" void GDALRegister_CALS();
 
 /************************************************************************/
 /* ==================================================================== */
@@ -488,7 +487,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
                                            papszOptions);
     if( poDS == NULL )
     {
-        // Shouldn't happen normally (except if CCITTFAX4 not available)
+        // Should not happen normally (except if CCITTFAX4 not available)
         CSLDestroy(papszOptions);
         return NULL;
     }

@@ -146,7 +146,7 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
                 pszInput++;
                 break;
             }
-            
+
             token[i_token++] = *(pszInput++);
         }
         token[i_token] = '\0';
@@ -265,7 +265,7 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
             *ppNode = new ods_formula_node( ODS_T );
             return ODST_FUNCTION_SINGLE_ARG;
         }*/
-        
+
         /* Tow-arg functions */
         else if( EQUAL(osToken,"MOD") )
         {

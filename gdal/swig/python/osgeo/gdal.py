@@ -1106,7 +1106,7 @@ def FindFile(*args):
   return _gdal.FindFile(*args)
 
 def ReadDir(*args):
-  """ReadDir(char const * utf8_path) -> char **"""
+  """ReadDir(char const * utf8_path, int nMaxFiles=0) -> char **"""
   return _gdal.ReadDir(*args)
 
 def ReadDirRecursive(*args):

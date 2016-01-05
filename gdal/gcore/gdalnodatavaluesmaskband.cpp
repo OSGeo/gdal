@@ -83,7 +83,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 {
     int iBand;
     GDALDataType eWrkDT;
-  
+
 /* -------------------------------------------------------------------- */
 /*      Decide on a working type.                                       */
 /* -------------------------------------------------------------------- */
@@ -109,12 +109,12 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
       case GDT_CFloat32:
         eWrkDT = GDT_Float32;
         break;
-    
+
       case GDT_Float64:
       case GDT_CFloat64:
         eWrkDT = GDT_Float64;
         break;
-    
+
       default:
         CPLAssert( FALSE );
         eWrkDT = GDT_Float64;

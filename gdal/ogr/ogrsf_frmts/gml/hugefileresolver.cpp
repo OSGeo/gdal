@@ -94,7 +94,7 @@ struct huge_href
     struct huge_href    *pNext;
 };
 
-/* an internal helper struct supporying GML rewriting */
+/* an internal helper struct supporting GML rewriting */
 struct huge_child
 {
     CPLXMLNode          *psChild;
@@ -1192,9 +1192,9 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                     pItem->gmlNodeTo = posNode;
                     pItem->bIsNodeToHref = bIsHref;
                 }
-                pszGmlId = NULL;
-                bIsHref = false;
-                cOrientation = '+';
+                /*pszGmlId = NULL;*/
+                /*bIsHref = false; */
+                /*cOrientation = '+';*/
             }
         }
         psChild = psChild->psNext;
@@ -1915,7 +1915,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
     }
-    
+
     /* setting the SQLite cache */
     if( iSqliteCacheMB > 0 )
     {
@@ -1934,7 +1934,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
             sqlite3_free( pszErrMsg );
         }
     }
-	
+
     if( !SetupParser() )
     {
         gmlHugeFileCleanUp ( &helper );

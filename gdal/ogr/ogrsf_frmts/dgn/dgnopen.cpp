@@ -260,7 +260,7 @@ void DGNSpatialFilterToUOR( DGNInfo *psDGN )
     sMin.x = psDGN->sf_min_x_geo;
     sMin.y = psDGN->sf_min_y_geo;
     sMin.z = 0;
-    
+
     sMax.x = psDGN->sf_max_x_geo;
     sMax.y = psDGN->sf_max_y_geo;
     sMax.z = 0;

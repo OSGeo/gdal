@@ -29,14 +29,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_BMP(void);
-CPL_C_END
 
 // Enable if you want to see lots of BMP debugging output.
 // #define BMP_DEBUG
@@ -115,7 +112,7 @@ typedef struct
 } BMPFileHeader;
 
 // File header size in bytes:
-const int       BFH_SIZE = 14;
+static const int       BFH_SIZE = 14;
 
 typedef struct
 {
@@ -218,7 +215,7 @@ class BMPDataset : public GDALPamDataset
 
     BMPFileHeader       sFileHeader;
     BMPInfoHeader       sInfoHeader;
-    int                 nColorTableSize, nColorElems;
+    int                 nColorElems;
     GByte               *pabyColorTable;
     GDALColorTable      *poColorTable;
     double              adfGeoTransform[6];
@@ -292,6 +289,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
     nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
 
     if (nBlockXSize < (INT_MAX - 31) / poDSIn->sInfoHeader.iBitCount)
         nScanSize =
@@ -301,7 +299,6 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
         pabyScan = NULL;
         return;
     }
-    nBlockYSize = 1;
 
 #ifdef BMP_DEBUG
     CPLDebug( "BMP",
@@ -692,15 +689,6 @@ class BMPComprRasterBand : public BMPRasterBand
 BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
     : BMPRasterBand( poDSIn, nBandIn )
 {
-    GUInt32 iComprSize = poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits;
-    GUInt32 iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
-
-#ifdef DEBUG
-    CPLDebug( "BMP", "RLE compression detected." );
-    CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
-               " size of uncompressed buffer %ld bytes.",
-               (long) iComprSize, (long) iUncomprSize );
-#endif
     /* TODO: it might be interesting to avoid uncompressing the whole data */
     /* in a single pass, especially if nXSize * nYSize is big */
     /* We could read incrementally one row at a time */
@@ -712,6 +700,26 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         pabyUncomprBuf = NULL;
         return;
     }
+
+    if( poDSIn->sFileHeader.iSize <= poDSIn->sFileHeader.iOffBits ||
+        poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid header");
+        pabyComprBuf = NULL;
+        pabyUncomprBuf = NULL;
+        return;
+    }
+
+    GUInt32 iComprSize = poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits;
+    GUInt32 iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
+
+#ifdef DEBUG
+    CPLDebug( "BMP", "RLE compression detected." );
+    CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
+               " size of uncompressed buffer %ld bytes.",
+               (long) iComprSize, (long) iUncomprSize );
+#endif
+
     pabyComprBuf = (GByte *) VSIMalloc( iComprSize );
     pabyUncomprBuf = (GByte *) VSIMalloc( iUncomprSize );
     if (pabyComprBuf == NULL ||
@@ -724,18 +732,30 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         return;
     }
 
-    VSIFSeekL( poDSIn->fp, poDSIn->sFileHeader.iOffBits, SEEK_SET );
-    VSIFReadL( pabyComprBuf, 1, iComprSize, poDSIn->fp );
+    if( VSIFSeekL( poDSIn->fp, poDSIn->sFileHeader.iOffBits, SEEK_SET ) != 0 ||
+        VSIFReadL( pabyComprBuf, 1, iComprSize, poDSIn->fp ) < iComprSize )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Can't read from offset %ld in input file.", 
+                  (long) poDSIn->sFileHeader.iOffBits );
+        CPLFree(pabyComprBuf);
+        pabyComprBuf = NULL;
+        CPLFree(pabyUncomprBuf);
+        pabyUncomprBuf = NULL;
+        return;   
+    }
     unsigned int k, iLength = 0;
     unsigned int i = 0;
     unsigned int j = 0;
     if ( poDSIn->sInfoHeader.iBitCount == 8 )         // RLE8
     {
-        while( j < iUncomprSize && i < iComprSize )
+        while( i < iComprSize )
         {
             if ( pabyComprBuf[i] )
             {
                 iLength = pabyComprBuf[i++];
+                if( j == iUncomprSize )
+                    break;
                 while( iLength > 0 && j < iUncomprSize && i < iComprSize )
                 {
                     pabyUncomprBuf[j++] = pabyComprBuf[i];
@@ -746,6 +766,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
             else
             {
                 i++;
+                if( i == iComprSize )
+                    break;
                 if ( pabyComprBuf[i] == 0 )         // Next scanline
                 {
                     i++;
@@ -756,9 +778,14 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 }
                 else if ( pabyComprBuf[i] == 2 )    // Move to...
                 {
+                    if( j == iUncomprSize )
+                        break;
                     i++;
                     if ( i < iComprSize - 1 )
                     {
+                        if( pabyComprBuf[i+1] > INT_MAX / poDS->GetRasterXSize() ||
+                            static_cast<int>(pabyComprBuf[i+1]) * poDS->GetRasterXSize() > INT_MAX - static_cast<int>(j + pabyComprBuf[i]) )
+                            break;
                         j += pabyComprBuf[i] +
                              pabyComprBuf[i+1] * poDS->GetRasterXSize();
                         i += 2;
@@ -770,6 +797,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 {
                     if (i < iComprSize)
                         iLength = pabyComprBuf[i++];
+                    if( j == iUncomprSize )
+                        break;
                     for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                         pabyUncomprBuf[j++] = pabyComprBuf[i++];
                     if ( i & 0x01 )
@@ -780,11 +809,13 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
     }
     else                                            // RLE4
     {
-        while( j < iUncomprSize && i < iComprSize )
+        while( i < iComprSize )
         {
             if ( pabyComprBuf[i] )
             {
                 iLength = pabyComprBuf[i++];
+                if( j == iUncomprSize )
+                    break;
                 while( iLength > 0 && j < iUncomprSize && i < iComprSize )
                 {
                     if ( iLength & 0x01 )
@@ -798,6 +829,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
             else
             {
                 i++;
+                if( i == iComprSize )
+                    break;
                 if ( pabyComprBuf[i] == 0 )         // Next scanline
                 {
                     i++;
@@ -808,9 +841,14 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 }
                 else if ( pabyComprBuf[i] == 2 )    // Move to...
                 {
+                    if( j == iUncomprSize )
+                        break;
                     i++;
                     if ( i < iComprSize - 1 )
                     {
+                        if( pabyComprBuf[i+1] > INT_MAX / poDS->GetRasterXSize() ||
+                            static_cast<int>(pabyComprBuf[i+1]) * poDS->GetRasterXSize() > INT_MAX - static_cast<int>(j + pabyComprBuf[i]) )
+                            break;
                         j += pabyComprBuf[i] +
                              pabyComprBuf[i+1] * poDS->GetRasterXSize();
                         i += 2;
@@ -822,6 +860,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 {
                     if (i < iComprSize)
                         iLength = pabyComprBuf[i++];
+                    if( j == iUncomprSize )
+                        break;
                     for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                     {
                         if ( k & 0x01 )
@@ -834,6 +874,13 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
                 }
             }
         }
+    }
+    /* Validate that we have read all compressed data (we tolerate missing */
+    /* end of image marker) and that we have filled all uncompressed data */
+    if( j < iUncomprSize || (i+1 != iComprSize && i+2 != iComprSize) )
+    {
+        CPLFree(pabyUncomprBuf);
+        pabyUncomprBuf = NULL;
     }
     // rcg, release compressed buffer here.
     CPLFree( pabyComprBuf );
@@ -871,7 +918,7 @@ CPLErr BMPComprRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 BMPDataset::BMPDataset() :
-    nColorTableSize(0), nColorElems(0), pabyColorTable(NULL),
+    nColorElems(0), pabyColorTable(NULL),
     poColorTable(NULL), bGeoTransformValid(FALSE), pszFilename(NULL), fp(NULL)
 {
     nBands = 0;
@@ -1158,6 +1205,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->sInfoHeader.iXPelsPerMeter, poDS->sInfoHeader.iYPelsPerMeter,
               poDS->sInfoHeader.iClrUsed, poDS->sInfoHeader.iClrImportant );
 #endif
+    
+    if( poDS->sInfoHeader.iHeight == INT_MIN )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     poDS->nRasterXSize = poDS->sInfoHeader.iWidth;
     poDS->nRasterYSize = (poDS->sInfoHeader.iHeight > 0)?
@@ -1179,26 +1232,43 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 8:
         {
             poDS->nBands = 1;
+            int nColorTableSize;
+            int nMaxColorTableSize = 1 << poDS->sInfoHeader.iBitCount;
             // Allocate memory for colour table and read it
             if ( poDS->sInfoHeader.iClrUsed )
-                poDS->nColorTableSize = poDS->sInfoHeader.iClrUsed;
+            {
+                if( poDS->sInfoHeader.iClrUsed > (GUInt32)nMaxColorTableSize )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Wrong value for iClrUsed: %u",
+                             poDS->sInfoHeader.iClrUsed );
+                    delete poDS;
+                    return NULL;
+                }
+                nColorTableSize = poDS->sInfoHeader.iClrUsed;
+            }
             else
-                poDS->nColorTableSize = 1 << poDS->sInfoHeader.iBitCount;
+                nColorTableSize = nMaxColorTableSize;
+
             poDS->pabyColorTable =
-                (GByte *)VSI_MALLOC2_VERBOSE( poDS->nColorElems, poDS->nColorTableSize );
+                (GByte *)VSI_MALLOC2_VERBOSE( poDS->nColorElems, nColorTableSize );
             if (poDS->pabyColorTable == NULL)
             {
-                poDS->nColorTableSize = 0;
                 break;
             }
 
-            VSIFSeekL( poDS->fp, BFH_SIZE + poDS->sInfoHeader.iSize, SEEK_SET );
-            VSIFReadL( poDS->pabyColorTable, poDS->nColorElems,
-                      poDS->nColorTableSize, poDS->fp );
+            if( VSIFSeekL( poDS->fp, BFH_SIZE + poDS->sInfoHeader.iSize, SEEK_SET ) != 0 ||
+                VSIFReadL( poDS->pabyColorTable, poDS->nColorElems,
+                           nColorTableSize, poDS->fp ) != (size_t)nColorTableSize )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot read color table");
+                delete poDS;
+                return NULL;
+            }
 
             GDALColorEntry oEntry;
             poDS->poColorTable = new GDALColorTable();
-            for( int i = 0; i < poDS->nColorTableSize; i++ )
+            for( int i = 0; i < nColorTableSize; i++ )
             {
                 oEntry.c1 = poDS->pabyColorTable[i * poDS->nColorElems + 2]; // Red
                 oEntry.c2 = poDS->pabyColorTable[i * poDS->nColorElems + 1]; // Green

@@ -64,7 +64,7 @@ static const MetadataItem asMetadata[] =
 CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
 {
     CPLXMLNode* psIter = psXML;
-    while(psIter)
+    do
     {
         if (psIter->eType == CXT_Element)
         {
@@ -78,7 +78,7 @@ CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
             }
         }
         psIter = psIter->psNext;
-    }
+    } while(psIter);
 
     psIter = psXML->psChild;
     while(psIter)
@@ -193,7 +193,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     apszGetCapabilities[0] = NULL;
     apszGetCapabilities[1] = NULL;
     bEmptyAsNull = TRUE;
-    
+
     bInvertAxisOrderIfLatLong = TRUE;
     bExposeGMLId = TRUE;
 }
@@ -540,7 +540,7 @@ int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
         bTransactionSupport = TRUE;
         return TRUE;
     }
-    
+
     CPLXMLNode* psOperationsMetadata =
         CPLGetXMLNode(psRoot, "OperationsMetadata");
     if (!psOperationsMetadata)
@@ -1078,7 +1078,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
             CPLAddXMLChild(psXML, CPLCloneXMLTree(psWFSCapabilities));
 
             int bOK = CPLSerializeXMLTreeToFile(psXML, pszFilename);
-            
+
             CPLDestroyXMLNode( psXML );
             CPLDestroyXMLNode( psXML2 );
 
@@ -1916,11 +1916,13 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
 
                     if (bFoundComplexType && bFoundElement)
                     {
-                        OGRFeatureDefn* poSrcFDefn = poLayer->ParseSchema(psSchemaForLayer);
+                        OGRFeatureDefn* poSrcFDefn
+                            = poLayer->ParseSchema(psSchemaForLayer);
                         if (poSrcFDefn)
                         {
                             poLayer->BuildLayerDefn(poSrcFDefn);
-                            SaveLayerSchema(poLayer->GetName(), psSchemaForLayer);
+                            SaveLayerSchema(poLayer->GetName(),
+                                            psSchemaForLayer);
                         }
                     }
 
@@ -1928,7 +1930,9 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
                 }
                 else
                 {
-                    CPLDebug("WFS", "Found several time schema for layer %s in server response. Shouldn't happen",
+                    CPLDebug( "WFS",
+                              "Found several time schema for layer %s in "
+                              "server response. Should not happen",
                              poClass->GetName());
                 }
             }
@@ -1938,7 +1942,9 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
 
     if (nLayersFound != nLayersToFetch)
     {
-        CPLDebug("WFS", "Turn off loading of multiple layer definitions at a single time");
+        CPLDebug( "WFS",
+                  "Turn off loading of multiple layer definitions at a "
+                  "single time");
         bLoadMultipleLayerDefn = FALSE;
     }
 
@@ -2288,13 +2294,13 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                 /* base ExecuteSQL(), so that the OGRGenSQLResultsLayer references */
                 /* that temporary layer */
                 papoLayers[iLayer] = poDupLayer;
-                
+
                 OGRLayer* poResLayer = GDALDataset::ExecuteSQL( pszSQLWithoutOrderBy,
                                                                 poSpatialFilter,
                                                                 pszDialect,
                                                                 &oParseOptions );
                 papoLayers[iLayer] = poSrcLayer;
-                
+
                 CPLFree(pszSQLWithoutOrderBy);
 
                 if (poResLayer != NULL)

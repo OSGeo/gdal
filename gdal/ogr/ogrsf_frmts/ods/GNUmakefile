@@ -17,7 +17,7 @@ clean:
 
 $(O_OBJ):	ogr_ods.h ods_formula.h ods_formula_parser.hpp ../mem/ogr_mem.h
 
-# The sed substition below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
+# The sed substitution below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
 # that produces buggy compiled code.
 # Seen on gcc 4.1.2-27ubuntu1 (Ubuntu 10.04) (not the default compiler) and gcc-4.1.2-48.el5 (CentOS 5.5)
 # (default compiler...)

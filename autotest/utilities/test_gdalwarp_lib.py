@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  test librarified gdalwarp
 # Author:   Faza Mahamood <fazamhd @ gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
 # Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 
 from osgeo import gdal, ogr
 import gdaltest
+import ogrtest
 
 ###############################################################################
 # Simple test
@@ -79,7 +80,7 @@ def test_gdalwarp_lib_3():
 
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('', ds1, format = 'MEM', outputType = gdal.GDT_Int16)
-    
+
     if dstDS.GetRasterBand(1).DataType != gdal.GDT_Int16:
         gdaltest.post_reason('Bad data type')
         return 'fail'
@@ -96,7 +97,7 @@ def test_gdalwarp_lib_3():
 # Test -t_srs option
 
 def test_gdalwarp_lib_4():
-    
+
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('', ds1, format = 'MEM', dstSRS = 'EPSG:32611')
 
@@ -135,7 +136,7 @@ def test_gdalwarp_lib_5():
 # Test warping from GCPs with -tps
 
 def test_gdalwarp_lib_6():
-    
+
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('',ds1, format = 'MEM', tps = True)
 
@@ -156,7 +157,7 @@ def test_gdalwarp_lib_6():
 # Test -tr
 
 def test_gdalwarp_lib_7():
-    
+
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('',[ds1], format = 'MEM',xRes = 120,yRes = 120)
     if dstDS is None:
@@ -175,7 +176,7 @@ def test_gdalwarp_lib_7():
 # Test -ts
 
 def test_gdalwarp_lib_8():
-    
+
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('',[ds1], format = 'MEM',width = 10,height = 10)
     if dstDS is None:
@@ -624,7 +625,7 @@ def test_gdalwarp_lib_108():
         print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -916,6 +917,30 @@ def test_gdalwarp_lib_125():
     return 'success'
 
 ###############################################################################
+# Test cutline with invalid geometry
+
+def test_gdalwarp_lib_126():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,0 1,1 0,0 0))')) # Self intersecting
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = '/vsimem/cutline.shp')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -923,7 +948,7 @@ def test_gdalwarp_lib_cleanup():
     # We don't clean up when run in debug mode.
     if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
         return 'success'
-    
+
     for i in range(2):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
@@ -933,8 +958,9 @@ def test_gdalwarp_lib_cleanup():
         os.remove('tmp/testgdalwarp_gcp.tif')
     except:
         pass
-    
+
     return 'success'
+
 
 gdaltest_list = [
     test_gdalwarp_lib_cleanup,
@@ -988,6 +1014,7 @@ gdaltest_list = [
     test_gdalwarp_lib_123,
     test_gdalwarp_lib_124,
     test_gdalwarp_lib_125,
+    test_gdalwarp_lib_126,
     test_gdalwarp_lib_cleanup,
     ]
 

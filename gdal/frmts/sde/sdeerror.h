@@ -10,6 +10,4 @@ void IssueSDEExtendedError ( int nErrorCode,
                            const char *pszFunction,
                            SE_CONNECTION* connection,
                            SE_STREAM* stream);
-                           
-
 #endif

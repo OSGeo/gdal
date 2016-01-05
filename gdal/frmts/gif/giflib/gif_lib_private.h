@@ -28,6 +28,7 @@
 #define FILE_STATE_READ     0x08
 
 #define IS_READABLE(Private)    (Private->FileState & FILE_STATE_READ)
+/* TODO: Spelling.  Fix upstream and deprecate. */
 #define IS_WRITEABLE(Private)   (Private->FileState & FILE_STATE_WRITE)
 
 typedef struct GifFilePrivateType {

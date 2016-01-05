@@ -393,7 +393,7 @@ int AVCBinWriteHeader(AVCBinFile *psFile)
 /**********************************************************************
  *                          AVCBinWriteClose()
  *
- * Close a coverage file opened for wirting, and release all memory 
+ * Close a coverage file opened for writing, and release all memory
  * (object strcut., buffers, etc.) associated with this file.
  **********************************************************************/
 
@@ -1582,7 +1582,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
         /* Not found... Use the next logical table index */
         nTableIndex++;
 
-        /* We're already at EOF so we shouldn't need to fseek here, but
+        /* We are already at EOF so we should not need to fseek here, but
          * ANSI-C requires that a file positioning function be called 
          * between read and writes... this had never been a problem before
          * on any system except with NT4 network drives.
@@ -2075,7 +2075,7 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
  * (This function is for internal library use... external calls should
  * go to AVCBinWriteClose() instead)
  *
- * Close an info table opened for wirting, and release all memory 
+ * Close an info table opened for writing, and release all memory
  * (object struct., buffers, etc.) associated with this file.
  **********************************************************************/
 static void    _AVCBinWriteCloseTable(AVCBinFile *psFile)

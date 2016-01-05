@@ -30,6 +30,7 @@
 // g++ -g -Wall -fPIC frmts/nitf/ecrgtocdataset.cpp -shared -o gdal_ECRGTOC.so -Iport -Igcore -Iogr -Ifrmts/vrt -L. -lgdal
 
 #include "cpl_minixml.h"
+#include "gdal_frmts.h"
 #include "gdal_proxy.h"
 #include "ogr_srs_api.h"
 #include "vrtdataset.h"
@@ -262,9 +263,9 @@ static GIntBig GetFromBase34(const char* pszVal, int nMaxSize)
             chVal = ch - '0';
         else if (ch >= 'a' && ch <= 'h')
             chVal = ch - 'a' + 10;
-        else if (ch >= 'j' && ch < 'n')
+        else if (ch >= 'j' && ch <= 'n')
             chVal = ch - 'a' + 10 - 1;
-        else if (ch > 'p' && ch <= 'z')
+        else if (ch >= 'p' && ch <= 'z')
             chVal = ch - 'a' + 10 - 2;
         else
         {
@@ -353,7 +354,7 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
     if (nZone < 0)
     {
         nUpperZoneFrames = -nBottomZoneFrames;
-        nBottomZoneFrames = nUpperZoneFrames - nRows;
+        /*nBottomZoneFrames = nUpperZoneFrames - nRows;*/
     }
 
     const double dfUpperZoneTopLat = dfFrameLatHeight * nUpperZoneFrames;
@@ -1076,7 +1077,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 osFilename = papszTokens[2];
                 osFilename += ":";
-                osFilename = papszTokens[3];
+                osFilename += papszTokens[3];
             }
             else
             {
@@ -1092,7 +1093,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
             osScale = papszTokens[2];
             osFilename = papszTokens[3];
             osFilename += ":";
-            osFilename = papszTokens[4];
+            osFilename += papszTokens[4];
         }
         else
         {
@@ -1143,8 +1144,7 @@ void GDALRegister_ECRGTOC()
 
     poDriver->SetDescription( "ECRGTOC" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "ECRG TOC format" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ECRG TOC format" );
 
     poDriver->pfnIdentify = ECRGTOCDataset::Identify;
     poDriver->pfnOpen = ECRGTOCDataset::Open;

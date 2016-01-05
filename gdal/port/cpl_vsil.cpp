@@ -64,10 +64,43 @@ CPL_CVSID("$Id$");
 
 char **VSIReadDir(const char *pszPath)
 {
+    return VSIReadDirEx(pszPath, 0);
+}
+
+/************************************************************************/
+/*                             VSIReadDir()                             */
+/************************************************************************/
+
+/**
+ * \brief Read names in a directory.
+ *
+ * This function abstracts access to directory contains.  It returns a
+ * list of strings containing the names of files, and directories in this
+ * directory.  The resulting string list becomes the responsibility of the
+ * application and should be freed with CSLDestroy() when no longer needed.
+ *
+ * Note that no error is issued via CPLError() if the directory path is
+ * invalid, though NULL is returned.
+ *
+ * If nMaxFiles is set to a positive number, directory listing will stop after
+ * that limit has been reached. Note that to indicate truncate, at least one
+ * element more than the nMaxFiles limit will be returned. If CSLCount() on the
+ * result is lesser or equal to nMaxFiles, then no truncation occured.
+ *
+ * @param pszPath the relative, or absolute path of a directory to read.  
+ * UTF-8 encoded.
+ * @param nMaxFiles maximum number of files after which to stop, or 0 for no limit.
+ * @return The list of entries in the directory, or NULL if the directory
+ * doesn't exist.  Filenames are returned in UTF-8 encoding.
+ * @since GDAL 2.1
+ */
+
+char **VSIReadDirEx(const char *pszPath, int nMaxFiles)
+{
     VSIFilesystemHandler *poFSHandler = 
         VSIFileManager::GetHandler( pszPath );
 
-    return poFSHandler->ReadDir( pszPath );
+    return poFSHandler->ReadDirEx( pszPath, nMaxFiles );
 }
 
 /************************************************************************/
@@ -544,11 +577,11 @@ int VSIFCloseL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     VSIDebug1( "VSICloseL(%p)", fp );
-    
+
     int nResult = poFileHandle->Close();
-    
+
     delete poFileHandle;
 
     return nResult;
@@ -579,7 +612,7 @@ int VSIFSeekL( VSILFILE * fp, vsi_l_offset nOffset, int nWhence )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     return poFileHandle->Seek( nOffset, nWhence );
 }
 
@@ -607,7 +640,7 @@ vsi_l_offset VSIFTellL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     return poFileHandle->Tell();
 }
 
@@ -655,7 +688,7 @@ int VSIFFlushL( VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     return poFileHandle->Flush();
 }
 
@@ -687,7 +720,7 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     return poFileHandle->Read( pBuffer, nSize, nCount );
 }
 
@@ -1083,10 +1116,31 @@ int VSIIngestFile( VSILFILE* fp,
 void *VSIFGetNativeFileDescriptorL( VSILFILE* fp )
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
-    
+
     return poFileHandle->GetNativeFileDescriptor();
 }
 
+/************************************************************************/
+/*                      VSIGetDiskFreeSpace()                           */
+/************************************************************************/
+
+/**
+ * \brief Return free disk space available on the filesystem.
+ *
+ * This function returns the free disk space available on the filesystem.
+ *
+ * @param pszDirname a directory of the filesystem to query.
+ * @return The free space in bytes. Or -1 in case of error.
+ * @since GDAL 2.1
+ */
+
+GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
+{
+    VSIFilesystemHandler *poFSHandler = 
+        VSIFileManager::GetHandler( pszDirname );
+
+    return poFSHandler->GetDiskFreeSpace( pszDirname );
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1190,7 +1244,7 @@ VSIFileManager *VSIFileManager::Get()
         //printf("Thread %d: VSIFileManager construction finished\n", nConstructerPID);
         nConstructerPID = 0;
     }
-    
+
     return poManager;
 }
 
@@ -1226,7 +1280,7 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
             && strncmp(pszPath,pszIterKey,nPathLen) == 0 )
             return iter->second;
     }
-    
+
     return poThis->poDefaultHandler;
 }
 

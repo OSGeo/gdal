@@ -285,7 +285,7 @@ typedef struct {
 
 typedef struct {
     GIntBig     count;
-    
+
     char        **distinct_list; /* items of the list can be NULL */
     double      sum;
     double      min;

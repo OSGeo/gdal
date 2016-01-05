@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test WCS client support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -204,12 +204,12 @@ def old_wcs_3():
        or gdaltest.wcs_ds.RasterCount != 1:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
-    
+
     wkt = gdaltest.wcs_ds.GetProjectionRef()
     if wkt[:12] != 'GEOGCS["NAD8':
         gdaltest.post_reason( 'Got wrong SRS: ' + wkt )
         return 'fail'
-        
+
     gt = gdaltest.wcs_ds.GetGeoTransform()
     if abs(gt[0]- -180.0041667) > 0.00001 \
        or abs(gt[3]- 90.004167) > 0.00001 \
@@ -220,7 +220,7 @@ def old_wcs_3():
         gdaltest.post_reason( 'wrong geotransform' )
         print(gt)
         return 'fail'
-    
+
     if gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() < 1:
         gdaltest.post_reason( 'no overviews!' )
         return 'fail'
@@ -282,8 +282,9 @@ def wcs_cleanup():
         os.remove( 'tmp/geoserver.wcs' )
     except:
         pass
-    
+
     return 'success'
+
 
 gdaltest_list = [
     wcs_1,
@@ -292,6 +293,7 @@ gdaltest_list = [
     wcs_4,
     #wcs_5, #FIXME: reenable after adapting test
     wcs_cleanup ]
+
 
 if __name__ == '__main__':
 

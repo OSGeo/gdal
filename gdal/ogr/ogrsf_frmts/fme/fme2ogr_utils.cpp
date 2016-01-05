@@ -60,7 +60,7 @@ void CPLFMEError( IFMESession * poSession, const char *pszFormat, ... )
     {
         pszFMEErrorString = "FME reports no error message.";
     }
-   
+
 /* -------------------------------------------------------------------- */
 /*      Send composite error through CPL, and cleanup.                  */
 /* -------------------------------------------------------------------- */
@@ -70,6 +70,3 @@ void CPLFMEError( IFMESession * poSession, const char *pszFormat, ... )
 
     CPLFree( pszErrorBuf );
 }
-
-
-                  

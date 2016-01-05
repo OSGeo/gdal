@@ -301,7 +301,7 @@ void OGRRegisterDriver( OGRSFDriverH hDriver )
 
 {
     VALIDATE_POINTER0( hDriver, "OGRRegisterDriver" );
-    
+
     GetGDALDriverManager()->RegisterDriver( (GDALDriver*)hDriver );
 }
 
@@ -313,7 +313,7 @@ void OGRDeregisterDriver( OGRSFDriverH hDriver )
 
 {
     VALIDATE_POINTER0( hDriver, "OGRDeregisterDriver" );
-    
+
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver*)hDriver );
 }
 

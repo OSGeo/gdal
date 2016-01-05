@@ -64,9 +64,8 @@
 
 /* GTM_EPOCH is defined as the unix time for the 31 dec 1989 00:00:00 */
 #define GTM_EPOCH 631065600
-    
-#endif
 
+#endif
 
 void appendDouble(void* pBuffer, double val);
 void appendFloat(void* pBuffer, float val);
@@ -90,16 +89,15 @@ public:
              const char* name,
              const char* comment,
              int icon,
-             GIntBig wptdate
-             );
+             GIntBig wptdate );
     ~Waypoint();
-    double getLatitude();
-    double getLongitude();
-    double getAltitude();
-    const char* getName();
-    const char* getComment();
-    int getIcon();
-    GIntBig getDate(); /* 0 if invalid */
+    double getLatitude() const;
+    double getLongitude() const;
+    double getAltitude() const;
+    const char* getName() const;
+    const char* getComment() const;
+    int getIcon() const;
+    GIntBig getDate() const; /* 0 if invalid */
 private:
     double latitude;
     double longitude;
@@ -125,14 +123,14 @@ public:
           unsigned char type,
           int color);
     ~Track();
-  
-    const char* getName();
-    unsigned char getType();
-    int getColor();
+
+    const char* getName() const;
+    unsigned char getType() const;
+    int getColor() const;
 
     void addPoint(double x, double y, GIntBig datetime, double altitude);  
-    int getNumPoints();
-    const TrackPoint* getPoint(int pointNum);
+    int getNumPoints() const;
+    const TrackPoint* getPoint(int pointNum) const;
 
 private: 
     char* pszName;
@@ -152,18 +150,18 @@ public:
     bool Open(const char* pszFilename);
 
 
-    // Check wheater it is a valid GTM file or not
+    // Check whether it is a valid GTM file or not.
     bool isValid();
     bool readHeaderNumbers();
 
     // Waypoint control functions
     Waypoint* fetchNextWaypoint();
-    int getNWpts();
-    bool hasNextWaypoint();
+    int getNWpts() const;
+    bool hasNextWaypoint() const;
     void rewindWaypoint();
 
-    int getNTracks();
-    bool hasNextTrack();
+    int getNTracks() const;
+    bool hasNextTrack() const;
     void rewindTrack();
     Track* fetchNextTrack();
 

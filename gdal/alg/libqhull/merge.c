@@ -3017,7 +3017,7 @@ vertexT *qh_redundant_vertex(vertexT *vertex) {
     for each vertex in facet
       if vertex not in a ridge (i.e., no longer used)
         delete vertex from facet
-        delete facet from vertice's neighbors
+        delete facet from vertex's neighbors
         unless vertex in another facet
           add vertex to qh.del_vertices for later deletion
 */

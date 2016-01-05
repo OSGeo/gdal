@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR TIGER driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -79,7 +79,7 @@ def ogr_tiger_1():
     if cc_layer.GetFeatureCount() != 19289:
         gdaltest.post_reason( 'wrong cc feature count' )
         return 'fail'
-    
+
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
@@ -95,7 +95,7 @@ def ogr_tiger_1():
     if feat.MODULE != 'TGR01001' or feat.TLMINID != 2822718:
         gdaltest.post_reason( 'got wrong TLIDRange attributes' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -171,7 +171,7 @@ def ogr_tiger_3():
 # Load into a /vsimem instance to test virtualization.
 
 def ogr_tiger_4():
-    
+
     if ogrtest.tiger_ds is None:
         return 'skip'
 
@@ -182,7 +182,7 @@ def ogr_tiger_4():
             continue
 
         data = open('tmp/cache/TGR01001/'+file,'r').read()
-        
+
         f = gdal.VSIFOpenL('/vsimem/tigertest/'+file, 'wb')
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
@@ -205,7 +205,7 @@ def ogr_tiger_4():
     if cc_layer.GetFeatureCount() != 19289:
         gdaltest.post_reason( 'wrong cc feature count' )
         return 'fail'
-    
+
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
@@ -221,7 +221,7 @@ def ogr_tiger_4():
     if feat.MODULE != 'TGR01001' or feat.TLMINID != 2822718:
         gdaltest.post_reason( 'got wrong TLIDRange attributes' )
         return 'fail'
-    
+
     # Try to recover memory from /vsimem.
     for file in gdal.ReadDir('tmp/cache/TGR01001'):
 

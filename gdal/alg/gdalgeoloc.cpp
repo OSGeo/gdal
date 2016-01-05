@@ -805,11 +805,14 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
     else
     {
         psTransform->hDS_X = hBaseDS;
-        GDALReferenceDataset( psTransform->hDS_X );
-        psTransform->papszGeolocationInfo = 
-            CSLSetNameValue( psTransform->papszGeolocationInfo, 
-                             "X_DATASET", 
-                             GDALGetDescription( hBaseDS ) );
+        if( hBaseDS )
+        {
+            GDALReferenceDataset( psTransform->hDS_X );
+            psTransform->papszGeolocationInfo = 
+                CSLSetNameValue( psTransform->papszGeolocationInfo, 
+                                 "X_DATASET", 
+                                 GDALGetDescription( hBaseDS ) );
+        }
     }
 
     pszDSName = CSLFetchNameValue( papszGeolocationInfo, "Y_DATASET" );
@@ -820,11 +823,14 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
     else
     {
         psTransform->hDS_Y = hBaseDS;
-        GDALReferenceDataset( psTransform->hDS_Y );
-        psTransform->papszGeolocationInfo = 
-            CSLSetNameValue( psTransform->papszGeolocationInfo, 
-                             "Y_DATASET", 
-                             GDALGetDescription( hBaseDS ) );
+        if( hBaseDS )
+        {
+            GDALReferenceDataset( psTransform->hDS_Y );
+            psTransform->papszGeolocationInfo = 
+                CSLSetNameValue( psTransform->papszGeolocationInfo, 
+                                 "Y_DATASET", 
+                                 GDALGetDescription( hBaseDS ) );
+        }
     }
 
     if (psTransform->hDS_X == NULL ||

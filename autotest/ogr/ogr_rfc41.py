@@ -848,7 +848,7 @@ def ogr_rfc41_6():
         return 'fail'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
-    
+
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly WHERE geomfield IS NULL')
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSet(0):
@@ -880,7 +880,7 @@ def ogr_rfc41_6():
         return 'fail'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
-    
+
     sql_lyr = ds.ExecuteSQL('SELECT count(*) FROM poly WHERE geomfield IS NOT NULL')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 1:

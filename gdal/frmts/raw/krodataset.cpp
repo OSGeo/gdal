@@ -28,8 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -170,6 +171,15 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     const int nDataTypeSize = nDepth / 8;
+    
+    if( nComp == 0 || nDataTypeSize == 0 ||
+        poDS->nRasterXSize > INT_MAX / (nComp * nDataTypeSize) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too large width / number of bands");
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create bands.                                                   */
@@ -284,7 +294,7 @@ void GDALRegister_KRO()
     if( GDALGetDriverByName( "KRO" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "KRO" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

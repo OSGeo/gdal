@@ -208,7 +208,7 @@ int OGRGFTTableLayer::FetchDescribe()
 
         CPLHTTPDestroyResult(psResult);
     }
-    
+
     if (osGeomColumnName.size() > 0)
     {
         iGeometryField = poFeatureDefn->GetFieldIndex(osGeomColumnName);
@@ -242,8 +242,8 @@ int OGRGFTTableLayer::FetchDescribe()
     {
         iLatitudeField = iLongitudeField = -1;
 
-        /* In the unauthentified case, we try to parse the first record to */
-        /* autodetect the geometry field */
+        /* In the unauthenticated case, we try to parse the first record to */
+        /* auto-detect the geometry field. */
         OGRwkbGeometryType eType = wkbUnknown;
         if (aosHeaderAndFirstDataLine.size() == 2)
         {
@@ -296,7 +296,7 @@ int OGRGFTTableLayer::FetchDescribe()
             }
             CSLDestroy(papszTokens);
         }
-        
+
         if (iGeometryField < 0)
             poFeatureDefn->SetGeomType( wkbNone );
         else
@@ -573,11 +573,9 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     osSQL += osTableName;
     osSQL += "' (";
 
-    int i;
-
     /* If there are longitude and latitude fields, use the latitude */
     /* field as the LOCATION field */
-    for(i=0;i<poFeatureDefn->GetFieldCount();i++)
+    for( int i=0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char* pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
         if (EQUAL(pszName, "latitude") || EQUAL(pszName, "lat") ||
@@ -607,7 +605,8 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
         poFeatureDefn->SetGeomType( eGTypeForCreation );
     }
 
-    for(i=0;i<poFeatureDefn->GetFieldCount();i++)
+    int i = 0;
+    for( ; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if (i > 0)
             osSQL += ", ";

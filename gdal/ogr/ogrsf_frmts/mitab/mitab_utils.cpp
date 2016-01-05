@@ -64,7 +64,7 @@
  * Don't filter chars in TABCleanFieldName() if we're on a DBCS system
  *
  * Revision 1.14  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.13  2000/09/20 18:35:51  daniel
  * Fixed TABAdjustFilenameExtension() to also handle basename and path
@@ -348,14 +348,14 @@ GBool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL  sStatBuf;
     int         i;
-    
+
     /*-----------------------------------------------------------------
      * First try using filename as provided
      *----------------------------------------------------------------*/
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
+    }
 
     /*-----------------------------------------------------------------
      * Try using uppercase extension (we assume that fname contains a '.')
@@ -368,8 +368,8 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
-    
+    }
+
     /*-----------------------------------------------------------------
      * Try using lowercase extension
      *----------------------------------------------------------------*/
@@ -541,7 +541,7 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
         }
     }
     pszWorkString[j++] = '\0';
-   
+
     return pszWorkString;
 }
 
@@ -747,7 +747,7 @@ int TABUnitIdFromString(const char *pszName)
     const MapInfoUnitsInfo *psList;
 
     psList = gasUnitsList;
-    
+
     if( pszName == NULL )
         return 13;
 
@@ -760,4 +760,21 @@ int TABUnitIdFromString(const char *pszName)
     }
 
     return -1;
+}
+
+
+/**********************************************************************
+ *                       TABSaturatedAdd()
+ ***********************************************************************/
+
+void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd)
+{
+    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
+        nVal = INT_MAX;
+    else if( nAdd == INT_MIN && nVal < 0 )
+        nVal = INT_MIN;
+    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
+        nVal = INT_MIN;
+    else
+        nVal += nAdd;
 }

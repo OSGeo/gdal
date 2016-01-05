@@ -37,15 +37,14 @@ CPL_CVSID("$Id$");
 /*                         OGRDODSDataSource()                          */
 /************************************************************************/
 
-OGRDODSDataSource::OGRDODSDataSource()
-
+OGRDODSDataSource::OGRDODSDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    poConnection(NULL),
+    poBTF(new BaseTypeFactory())
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    poConnection = NULL;
-
-    poBTF = new BaseTypeFactory();
+    // TODO: This implies that the order in the class declaration is wrong.
     poDDS = new DDS( poBTF );
 }
 
@@ -56,13 +55,11 @@ OGRDODSDataSource::OGRDODSDataSource()
 OGRDODSDataSource::~OGRDODSDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     if( poConnection != NULL )
@@ -96,7 +93,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         oConstraints = pszFound;
         *pszFound = '\0';
     }
-        
+
     pszFound = strstr(pszWrkURL,"?");
     if( pszFound )
     {
@@ -116,7 +113,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         pszWrkURL[nLen-5] = '\0';
     else if( strcmp(pszWrkURL+nLen-5,".html") == 0 )
         pszWrkURL[nLen-5] = '\0';
-        
+
     oBaseURL = pszWrkURL;
     CPLFree( pszWrkURL );
 
@@ -213,7 +210,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
             AttrTable *poAttr = poTable->get_attr_table( dv_i );
             string target_container = poAttr->get_attr( "target_container" );
             BaseType *poVar = poDDS->var( target_container.c_str() );
-            
+
             if( poVar == NULL )
             {
                 CPLError( CE_Warning, CPLE_AppDefined, 
@@ -234,9 +231,9 @@ int OGRDODSDataSource::Open( const char * pszNewName )
                                                poAttr) );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      Walk through the DODS variables looking for easily targetted    */
+/*      Walk through the DODS variables looking for easily targeted     */
 /*      ones.  Eventually this will need to be driven by the AIS info.  */
 /* -------------------------------------------------------------------- */
     if( nLayers == 0 )
@@ -246,7 +243,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         for( v_i = poDDS->var_begin(); v_i != poDDS->var_end(); v_i++ )
         {
             BaseType *poVar = *v_i;
-            
+
             if( poVar->type() == dods_sequence_c )
                 AddLayer( new OGRDODSSequenceLayer(this,poVar->name().c_str(),
                                                    NULL) );

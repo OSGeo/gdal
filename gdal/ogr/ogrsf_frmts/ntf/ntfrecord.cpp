@@ -56,12 +56,12 @@ NTFRecord::NTFRecord( FILE * fp )
         return;
 
 /* ==================================================================== */
-/*      Read lines untill we get to one without a continuation mark.    */
+/*      Read lines until we get to one without a continuation mark.     */
 /* ==================================================================== */
     char      szLine[MAX_RECORD_LEN+3];
     int       nNewLength;
 
-    do { 
+    do {
         nNewLength = ReadPhysicalLine( fp, szLine );
         if( nNewLength == -1 || nNewLength == -2 )
             break;
@@ -69,7 +69,7 @@ NTFRecord::NTFRecord( FILE * fp )
         while( nNewLength > 0 && szLine[nNewLength-1] == ' ' )
                szLine[--nNewLength] = '\0';
 
-        if( szLine[nNewLength-1] != '%' )
+        if( nNewLength < 2 || szLine[nNewLength-1] != '%' )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Corrupt NTF record, missing end '%%'." );
@@ -91,7 +91,7 @@ NTFRecord::NTFRecord( FILE * fp )
         }
         else
         {
-            if( !STARTS_WITH_CI(szLine, "00") )
+            if( !STARTS_WITH_CI(szLine, "00") || nNewLength < 4 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Invalid line");
                 VSIFree(pszData);
@@ -211,7 +211,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /* -------------------------------------------------------------------- */
     if( VSIFSeek( fp, nRecordEnd, SEEK_SET ) != 0 )
         return -1;
-    
+
     return l_nLength;
 }
 

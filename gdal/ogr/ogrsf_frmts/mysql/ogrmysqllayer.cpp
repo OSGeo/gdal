@@ -193,7 +193,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
         if( pszGeomColumn && EQUAL(psMSField->name,pszGeomColumn))
         {
             OGRGeometry *poGeometry = NULL;
-            
+
             // Geometry columns will have the first 4 bytes contain the SRID.
             OGRGeometryFactory::createFromWkb(
                 ((GByte *)papszRow[iField]) + 4, 
@@ -335,7 +335,7 @@ int OGRMySQLLayer::FetchSRSId()
 {
 	CPLString        osCommand;
     char           **papszRow;  
-    
+
     if( hResultSet != NULL )
         mysql_free_result( hResultSet );
 		hResultSet = NULL;
@@ -351,7 +351,6 @@ int OGRMySQLLayer::FetchSRSId()
     papszRow = NULL;
     if( hResultSet != NULL )
         papszRow = mysql_fetch_row( hResultSet );
-        
 
     if( papszRow != NULL && papszRow[0] != NULL )
     {
@@ -362,7 +361,7 @@ int OGRMySQLLayer::FetchSRSId()
     if( hResultSet != NULL )
         mysql_free_result( hResultSet );
 		hResultSet = NULL;
-        
+
 	return nSRSId;
 }
 

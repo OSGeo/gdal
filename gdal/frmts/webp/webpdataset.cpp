@@ -27,17 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
-#include "webp/decode.h"
-#include "webp/encode.h"
+#include "webp_headers.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_WEBP(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -873,13 +869,10 @@ void GDALRegister_WEBP()
     poDriver->SetDescription( "WEBP" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "WEBP" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_webp.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_webp.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "webp" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/webp" );
-
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"

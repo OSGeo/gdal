@@ -28,15 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id: ehdrdataset.cpp 12350 2007-10-08 17:41:32Z rouault $");
-
-CPL_C_START
-void	GDALRegister_GenBin(void);
-CPL_C_END
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
@@ -545,7 +542,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Now we need to tear apart tfhe filename to form a .HDR           */
+/*      Now we need to tear apart the filename to form a .HDR           */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
     const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
@@ -762,7 +759,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( pszInterleaving == NULL )
         pszInterleaving = "BIL";
-    
+
     if( EQUAL(pszInterleaving,"BSQ") || EQUAL(pszInterleaving,"NA") )
     {
         nPixelOffset = nItemSize;
@@ -862,7 +859,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                         GDALRegister_GenBin()                          */
+/*                         GDALRegister_GenBin()                        */
 /************************************************************************/
 
 void GDALRegister_GenBin()

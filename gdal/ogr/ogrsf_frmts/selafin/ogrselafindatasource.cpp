@@ -473,7 +473,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
             }
         }
     }
-    
+
     // Free allocated variables and exit
     return TRUE;
 }

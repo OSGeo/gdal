@@ -28,21 +28,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "timedelta.hpp"
 #include "adsrange.hpp"
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_srs_api.h"
+#include "timedelta.hpp"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
 #include "EnvisatFile.h"
 #include "records.h"
-CPL_C_END
-
-CPL_C_START
-void	GDALRegister_Envisat(void);
 CPL_C_END
 
 /************************************************************************/
@@ -400,7 +397,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 
 {
 /* -------------------------------------------------------------------- */
-/*      Do we have a meaningful geolocation grid?  Seach for a          */
+/*      Do we have a meaningful geolocation grid?  Search for a         */
 /*      DS_TYPE=A and a name containing "geolocation" or "tie           */
 /*      points".                                                        */
 /* -------------------------------------------------------------------- */
@@ -484,21 +481,21 @@ void EnvisatDataset::ScanForGCPs_MERIS()
         /* Not good but we can still extract some of the TPS, can we? */
     }
 
-    /* check TP records spacing */
-    if ((1+(arTP.getFirstOffset()+arTP.getLastOffset()+GetRasterYSize()-1) 
+    /* Check TP record spacing */
+    if ((1+(arTP.getFirstOffset()+arTP.getLastOffset()+GetRasterYSize()-1)
            / nLinesPerTiePoint ) != arTP.getDSRCount() )
     {
-        CPLDebug( "EnvisatDataset", "Not enough tieponts per column! "
-            "received=%d expected=%d", nTPPerColumn , 
-                1 + (arTP.getFirstOffset()+arTP.getLastOffset()+
-                      GetRasterYSize()-1) / nLinesPerTiePoint ) ; 
-        return;  // That is far more serious - we risk misplaces TPs.
+        CPLDebug( "EnvisatDataset", "Not enough tiepoints per column! "
+                  "received=%d expected=%d", nTPPerColumn ,
+                  1 + (arTP.getFirstOffset()+arTP.getLastOffset()+
+                       GetRasterYSize()-1) / nLinesPerTiePoint ) ;
+        return;  // That is far more serious - we risk misplacing TPs.
     }
 
     bool isBrowseProduct;
     if ( 50*nTPPerLine + 13 == nDSRSize ) /* regular product */
     {
-        isBrowseProduct = false ; 
+        isBrowseProduct = false ;
     }
     else if ( 8*nTPPerLine + 13 == nDSRSize ) /* browse product */
     {
@@ -1154,16 +1151,14 @@ void GDALRegister_Envisat()
     if( GDALGetDriverByName( "ESAT" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ESAT" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Envisat Image Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Envisat Image Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_various.html#Envisat" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "n1" );
-
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = EnvisatDataset::Open;

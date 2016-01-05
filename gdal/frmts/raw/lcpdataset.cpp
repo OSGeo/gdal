@@ -29,16 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_port.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_LCP(void);
-CPL_C_END
 
 static const size_t LCP_HEADER_SIZE = 7316;
 static const int LCP_MAX_BANDS = 10;
@@ -1234,7 +1231,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
     /*
-    ** Set the linear units if the metadata item wasn't already set, and we
+    ** Set the linear units if the metadata item was not already set, and we
     ** have an SRS.
     */
     if( bSetLinearUnits && !EQUAL( pszWkt, "" ) )
@@ -1675,7 +1672,7 @@ void GDALRegister_LCP()
     if( GDALGetDriverByName( "LCP" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "LCP" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
@@ -1747,6 +1744,7 @@ void GDALRegister_LCP()
 "   <Option name='LATITUDE' type='int' default='' description='Set the latitude for the dataset, this overrides the driver trying to set it programmatically in EPSG:4269'/>"
 "   <Option name='DESCRIPTION' type='string' default='LCP file created by GDAL' description='A short description of the lcp file'/>"
 "</CreationOptionList>" );
+
     poDriver->pfnOpen = LCPDataset::Open;
     poDriver->pfnCreateCopy = LCPDataset::CreateCopy;
     poDriver->pfnIdentify = LCPDataset::Identify;

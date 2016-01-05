@@ -101,4 +101,3 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
 };
 
 #endif /* ndef OGR_GPSBABEL_H_INCLUDED */
-

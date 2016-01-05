@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #include "ogrsqlitevirtualogr.h"
 #include "ogr_api.h"
 #include "swq.h"
@@ -752,7 +752,7 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
     if( nConstraints )
     {
         panConstraints = (int*)
-                    sqlite3_malloc( sizeof(int) * (1 + 2 * nConstraints) );
+                    sqlite3_malloc( (int)sizeof(int) * (1 + 2 * nConstraints) );
         panConstraints[0] = nConstraints;
 
         nConstraints = 0;

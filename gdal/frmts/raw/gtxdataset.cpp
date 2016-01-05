@@ -28,9 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_srs_api.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -381,12 +382,11 @@ void GDALRegister_GTX()
     if( GDALGetDriverByName( "GTX" ) != NULL )
       return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "GTX" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "NOAA Vertical Datum .GTX" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NOAA Vertical Datum .GTX" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gtx" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

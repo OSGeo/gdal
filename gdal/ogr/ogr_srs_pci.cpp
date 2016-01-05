@@ -182,10 +182,10 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
  * [16] Landsat path number
  *
  * Particular projection uses different parameters, unused ones may be set to
- * zero. If NULL suppliet instead of array pointer default values will be
+ * zero. If NULL is supplied instead of an array pointer, default values will be
  * used (i.e., zeroes).
  *
- * @return OGRERR_NONE on success or an error code in case of failure. 
+ * @return OGRERR_NONE on success or an error code in case of failure.
  */
 
 OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
@@ -251,14 +251,14 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         || EQUAL(pszEM,"D-13")
         || EQUAL(pszEM,"D-17") )
         bIsNAD27 = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszProj, "LONG/LAT") )
     {
     }
-    
+
     else if( STARTS_WITH_CI(pszProj, "METER") 
              || STARTS_WITH_CI(pszProj, "METRE") )
     {
@@ -497,7 +497,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 // an MGRS zone code so we ignore it.
             }
         }
-        
+
         SetUTM( iZone, bNorth );
     }
 
@@ -572,7 +572,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 VSIFClose( fp );
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      If not, look in the ellipsoid/EPSG matching list.               */
 /* -------------------------------------------------------------------- */
@@ -582,7 +582,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             double  dfSemiMajor = 0.0;
             double  dfInvFlattening = 0.0;
             int     nEPSGCode = 0;
-                    
+
             pasDatum = asEllips;
 
             while ( pasDatum->pszPCIDatum )
@@ -606,14 +606,14 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             {
                 const char *pszCSV = CSVFilename( "pci_ellips.txt" );
                 FILE *fp = NULL;
-                
+
                 if( pszCSV )
                     fp = VSIFOpen( pszCSV, "r" );
-                
+
                 if( fp != NULL )
                 {
                     char **papszLineItems = NULL;
-                    
+
                     while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
                     {
                         if( CSLCount(papszLineItems) > 3 
@@ -627,7 +627,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                         CSLDestroy( papszLineItems );
                     }
                     CSLDestroy( papszLineItems );
-                    
+
                     VSIFClose( fp );
                 }
             }
@@ -677,7 +677,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 SetAuthority( "SPHEROID", "EPSG", nEPSGCode );
 
             // Do we have 7 datum shift parameters?
-            if( CSLCount(papszDatumDefn) >= 15 
+            if( papszDatumDefn != NULL &&
+                CSLCount(papszDatumDefn) >= 15 
                 && CPLAtof(papszDatumDefn[14]) != 0.0 )
             {
                 double dfScale = CPLAtof(papszDatumDefn[14]);
@@ -697,7 +698,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             }
 
             // Do we have 7 datum shift parameters?
-            else if( CSLCount(papszDatumDefn) == 11 
+            else if( papszDatumDefn != NULL &&
+                     CSLCount(papszDatumDefn) == 11 
                      && (CPLAtof(papszDatumDefn[3]) != 0.0 
                          || CPLAtof(papszDatumDefn[4]) != 0.0 
                          || CPLAtof(papszDatumDefn[5]) != 0.0 ) )
@@ -1096,7 +1098,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                   "PIXEL value will be used.", pszProjection );
         CPLPrintStringFill( szProj, "PIXEL", 16 );
     }
-    
+
 /* ==================================================================== */
 /*      Translate the earth model.                                      */
 /* ==================================================================== */
@@ -1127,7 +1129,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     if( szEarthModel[0] == '\0' )
     {
         const char *pszAuthority = GetAuthorityName("GEOGCS");
-        
+
         if( pszAuthority && EQUAL(pszAuthority,"EPSG") )
         {
             int nGCS_EPSG = atoi(GetAuthorityCode("GEOGCS"));
@@ -1180,7 +1182,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
             if( pszCSV )
                 fp = VSIFOpen( pszCSV, "r" );
-        
+
             if( fp != NULL )
             {
                 char **papszLineItems = NULL;
@@ -1227,14 +1229,14 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         int    bHaveTOWGS84;
 
         bHaveTOWGS84 = (GetTOWGS84( adfTOWGS84, 7 ) == OGRERR_NONE);
-        
+
         if( pszDatumCSV )
             fp = VSIFOpen( pszDatumCSV, "r" );
-        
+
         if( fp != NULL )
         {
             char **papszLineItems = NULL;
-            
+
             while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
             {
                 // Compare based on datum name.  This is mostly for
@@ -1308,7 +1310,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /*      Translate the linear units.                                     */
 /* -------------------------------------------------------------------- */
     const char  *pszUnits;
-        
+
     if( STARTS_WITH_CI(szProj, "LONG/LAT") )
         pszUnits = "DEGREE";
     else

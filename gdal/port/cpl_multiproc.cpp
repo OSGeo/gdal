@@ -112,7 +112,7 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds,
 #ifndef MUTEX_NONE
     pszFile = pszFileIn;
     nLine = nLineIn;
-    
+
     if( phMutex == NULL )
     {
         fprintf( stderr, "CPLMutexHolder: phMutex )) NULL !\n" );
@@ -312,22 +312,22 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
 
 #endif /* CPL_MULTIPROC_PTHREAD */
 
-/************************************************************************/ 
-/*                      CPLCleanupMasterMutex()                         */ 
-/************************************************************************/ 
- 
+/************************************************************************/
+/*                      CPLCleanupMasterMutex()                         */
+/************************************************************************/
+
 void CPLCleanupMasterMutex() 
-{ 
+{
 #ifndef CPL_MULTIPROC_PTHREAD 
 #ifndef MUTEX_NONE 
     if( hCOAMutex != NULL ) 
-    { 
+    {
         CPLDestroyMutex( hCOAMutex ); 
         hCOAMutex = NULL; 
-    } 
-#endif 
-#endif 
-} 
+    }
+#endif
+#endif
+}
 
 /************************************************************************/
 /*                        CPLCleanupTLSList()                           */
@@ -342,7 +342,7 @@ static void CPLCleanupTLSList( void **papTLSList )
     int i;
 
 //    printf( "CPLCleanupTLSList(%p)\n", papTLSList );
-    
+
     if( papTLSList == NULL )
         return;
 
@@ -538,7 +538,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 {
     FILE      *fpLock;
     char      *pszLockFilename;
-    
+
 /* -------------------------------------------------------------------- */
 /*      We use a lock file with a name derived from the file we want    */
 /*      to lock to represent the file being locked.  Note that for      */
@@ -557,7 +557,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
         fpLock = fopen( pszLockFilename, "r" );
     }
-        
+
     if( fpLock != NULL )
     {
         fclose( fpLock );
@@ -590,9 +590,9 @@ void CPLUnlockFile( void *hLock )
 
     if( hLock == NULL )
         return;
-    
+
     VSIUnlink( pszLockFilename );
-    
+
     CPLFree( pszLockFilename );
 }
 
@@ -793,7 +793,7 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
     DWORD  hr;
 
     hr = WaitForSingleObject( hMutex, (int) (dfWaitInSeconds * 1000) );
-    
+
     return hr != WAIT_TIMEOUT;
 #else
     CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
@@ -1136,7 +1136,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThread
 
     if( hThread == NULL )
         return NULL;
-        
+
     psInfo->hThread = hThread;
     return (CPLJoinableThread*) psInfo;
 }
@@ -1148,7 +1148,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThread
 void CPLJoinThread(CPLJoinableThread* hJoinableThread)
 {
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) hJoinableThread;
-    
+
     WaitForSingleObject(psInfo->hThread, INFINITE);
     CloseHandle( psInfo->hThread );
     CPLFree( psInfo );
@@ -1382,7 +1382,7 @@ static void CPLInitMutex(MutexLinkedElt* psItem)
         psItem->sMutex = tmp_mutex;
         return;
     }
-    
+
     /* When an adaptive mutex is required, we can safely fallback to regular */
     /* mutex if we don't have HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
     if( psItem->nOptions == CPL_MUTEX_ADAPTIVE )
@@ -1472,7 +1472,7 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
     /* we need to add timeout support */
     MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
     err =  pthread_mutex_lock( &(psItem->sMutex) );
-    
+
     if( err != 0 )
     {
         if( err == EDEADLK )
@@ -1605,7 +1605,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 {
     FILE      *fpLock;
     char      *pszLockFilename;
-    
+
 /* -------------------------------------------------------------------- */
 /*      We use a lock file with a name derived from the file we want    */
 /*      to lock to represent the file being locked.  Note that for      */
@@ -1625,7 +1625,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
         fpLock = fopen( pszLockFilename, "r" );
     }
-        
+
     if( fpLock != NULL )
     {
         fclose( fpLock );
@@ -1658,9 +1658,9 @@ void CPLUnlockFile( void *hLock )
 
     if( hLock == NULL )
         return;
-    
+
     VSIUnlink( pszLockFilename );
-    
+
     CPLFree( pszLockFilename );
 }
 

@@ -276,7 +276,7 @@ namespace Selafin {
      * \return Number of elements in array read, -1 if an error occurred
      */
     int read_floatarray(VSILFILE *fp,double **papadfData,bool bDiscard=false);
-        
+
     /**
      * \brief Write an array of floats to a Selafin file
      *

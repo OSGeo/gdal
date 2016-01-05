@@ -27,9 +27,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #include "reader_digital_globe.h"
- 
+
 CPL_CVSID("$Id$");
 
 /**
@@ -58,11 +58,8 @@ GDALMDReaderDigitalGlobe::GDALMDReaderDigitalGlobe(const char *pszPath,
 
 /**
  * ~GDALMDReaderDigitalGlobe()
- */ 
-GDALMDReaderDigitalGlobe::~GDALMDReaderDigitalGlobe()
-{
-    
-}
+ */
+GDALMDReaderDigitalGlobe::~GDALMDReaderDigitalGlobe() {}
 
 /**
  * HasRequiredFiles()
@@ -89,7 +86,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
 {
     if(m_bIsMetadataLoad)
         return;
-        
+
     if (!m_osIMDSourceFilename.empty())
     {
         m_papszIMDMD = GDALLoadIMDFile( m_osIMDSourceFilename );
@@ -101,9 +98,9 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
     }
 
     if((NULL == m_papszIMDMD || NULL == m_papszRPCMD) && !m_osXMLSourceFilename.empty())
-    { 
+    {
         CPLXMLNode* psNode = CPLParseXMLFile(m_osXMLSourceFilename);
-       
+
         if(psNode != NULL)
         {
             CPLXMLNode* psisdNode = psNode->psNext;
@@ -121,13 +118,13 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
     }
 
     m_papszDEFAULTMD = CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "DG");
-           
+
     m_bIsMetadataLoad = true;      
-    
+
     if(NULL == m_papszIMDMD)
     {
         return;
-    }   
+    }
     //extract imagery metadata
     const char* pszSatId = CSLFetchNameValue(m_papszIMDMD, "IMAGE.SATID");
     if(NULL != pszSatId)
@@ -146,7 +143,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
                                                CPLStripQuotes(pszSatId));
         }
     }
-    
+
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD, 
                                                   "IMAGE.CLOUDCOVER");
     if(NULL != pszCloudCover)
@@ -181,7 +178,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
             }
         }
     }
-    
+
     const char* pszDateTime = CSLFetchNameValue(m_papszIMDMD,
                                        "IMAGE.FIRSTLINETIME");
     if(NULL != pszDateTime)
@@ -222,7 +219,7 @@ char** GDALMDReaderDigitalGlobe::GetMetadataFiles() const
         papszFileList = CSLAddString( papszFileList, m_osRPBSourceFilename );
     if(!m_osXMLSourceFilename.empty()) 
         papszFileList = CSLAddString( papszFileList, m_osXMLSourceFilename );
-    
+
     return papszFileList;
 }
 
@@ -266,7 +263,7 @@ char** GDALMDReaderDigitalGlobe::LoadRPBXmlNode(CPLXMLNode* psNode)
 
     if(NULL == papszList)
         return NULL;
-    
+
     char** papszRPB = NULL;
     for( int i = 0; apszRPBMap[i] != NULL; i += 2 )
     {
@@ -275,6 +272,6 @@ char** GDALMDReaderDigitalGlobe::LoadRPBXmlNode(CPLXMLNode* psNode)
     }
 
     CSLDestroy(papszList);
-      
+
     return papszRPB;
 }

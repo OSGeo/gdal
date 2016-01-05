@@ -94,7 +94,8 @@ void CsfRegisterMap(
   {
     size_t j;
     /* double size */
-    mapListLen *=2;
+    /* +1 to make clang static analyzer not warn about realloc(0) */
+    mapListLen = 2 * mapListLen + 1;
     mapList=realloc(mapList,sizeof(MAP *)*mapListLen);
     if (mapList == NULL) {
      (void)fprintf(stderr,"CSF_INTERNAL_ERROR: Not enough memory to use CSF-files\n");

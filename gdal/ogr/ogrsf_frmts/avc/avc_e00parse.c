@@ -405,7 +405,6 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
             eNewType = AVCFileTXT;
         else
         {
-            eNewType = AVCFileUnknown;
             return AVCFileUnknown;
         }
 
@@ -422,7 +421,6 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
             CPLError(CE_Failure, CPLE_AppDefined, 
                      "Parse Error: Invalid section header line (\"%s\")!", 
                      pszLine);
-            eNewType = AVCFileUnknown;
             return AVCFileUnknown;
         }
 
@@ -465,7 +463,6 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
         }
         else
         {
-            eNewType = AVCFileUnknown;
             return AVCFileUnknown;
         }
     }

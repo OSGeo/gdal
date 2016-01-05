@@ -92,7 +92,7 @@ def georaster_init():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def georaster_byte():
 
@@ -118,13 +118,13 @@ def georaster_byte():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_int16():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -146,13 +146,13 @@ def georaster_int16():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_int32():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -174,13 +174,13 @@ def georaster_int32():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_rgb_b1():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -201,13 +201,13 @@ def georaster_rgb_b1():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_rgb_b2():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -228,26 +228,26 @@ def georaster_rgb_b2():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_rgb_b3_bsq():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
-    
+
     ds_src = gdal.Open('data/rgbsmall.tif')
-    
+
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
         [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1006, sdo_geor.init('GDAL_TEST_RDT',1006))",
         "BLOCKBSIZE=3", "INTERLEAVE=BSQ" ] )
-    
+
     ds_name = ds.GetDescription()
-        
+
     ds = None
 
     tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
@@ -255,26 +255,26 @@ def georaster_rgb_b3_bsq():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_rgb_b3_bip():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
-    
+
     ds_src = gdal.Open('data/rgbsmall.tif')
-    
+
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
         [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1007, sdo_geor.init('GDAL_TEST_RDT',1007))",
         "BLOCKBSIZE=3", "INTERLEAVE=BIP" ] )
-    
+
     ds_name = ds.GetDescription()
-        
+
     ds = None
 
     tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
@@ -282,26 +282,26 @@ def georaster_rgb_b3_bip():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_rgb_b3_bil():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
-    
+
     ds_src = gdal.Open('data/rgbsmall.tif')
-    
+
     ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
         [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1008, sdo_geor.init('GDAL_TEST_RDT',1008))",
         "BLOCKBSIZE=3", "INTERLEAVE=BIL" ] )
-    
+
     ds_name = ds.GetDescription()
-        
+
     ds = None
 
     tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
@@ -309,13 +309,13 @@ def georaster_rgb_b3_bil():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_byte_deflate():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -336,13 +336,13 @@ def georaster_byte_deflate():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_rgb_deflate_b3():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -363,13 +363,13 @@ def georaster_rgb_deflate_b3():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_1bit():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -390,13 +390,13 @@ def georaster_1bit():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_2bit():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -417,13 +417,13 @@ def georaster_2bit():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_4bit():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
-        
+
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -444,7 +444,7 @@ def georaster_4bit():
     return tst.testOpen()
 
 ###############################################################################
-# 
+#
 
 def georaster_cleanup():
 

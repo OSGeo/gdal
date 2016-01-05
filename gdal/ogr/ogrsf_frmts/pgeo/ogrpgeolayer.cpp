@@ -135,7 +135,7 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
             pszGeomColumn = CPLStrdup(poStmtIn->GetColName(iCol));
             continue;
         }
-        
+
         switch( poStmtIn->GetColType(iCol) )
         {
           case SQL_INTEGER:
@@ -340,7 +340,7 @@ void OGRPGeoLayer::LookupSRID( int nSRID )
 /*      Fetch the corresponding WKT from the SpatialRef table.          */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oStmt( poDS->GetSession() );
-        
+
     oStmt.Appendf( "SELECT srtext FROM GDB_SpatialRefs WHERE srid = %d",
                   nSRID );
 
@@ -377,7 +377,7 @@ void OGRPGeoLayer::LookupSRID( int nSRID )
 /*      Turn it into an OGRSpatialReference.                            */
 /* -------------------------------------------------------------------- */
     poSRS = new OGRSpatialReference();
-    
+
     if( poSRS->importFromWkt( &pszSRText ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

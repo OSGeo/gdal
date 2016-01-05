@@ -38,10 +38,11 @@
 #include <algorithm>
 #include <fstream>
 
+#include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
-#include "cpl_conv.h"
 #include "cpl_vsi.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
 #include "../vrt/vrtdataset.h"
@@ -72,9 +73,9 @@ static void GenerateTiles(std::string filename,
 
     if (isJpegDriver && bands == 4)
         bands = 3;
-   
+
     poTmpDataset = poMemDriver->Create("", dxsize, dysize, bands, GDT_Byte, NULL);
-   
+
     if (!isJpegDriver)//Jpeg dataset only has one or three bands
     {
         if (bands < 4)//add transparency to files with one band or three bands
@@ -211,7 +212,7 @@ int  GenerateRootKml(const char* filename,
     if( pszOverlayName == NULL )
         pszOverlayName = tmpfilename;
 
-    // If we haven't writen any features yet, output the layer's schema
+    // If we have not written any features yet, output the layer's schema.
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");
@@ -478,7 +479,7 @@ int  GenerateChildKml(std::string filename,
     VSIFPrintfL(fp, "\t</Document>\n");
     VSIFPrintfL(fp, "</kml>\n");
     VSIFCloseL(fp);
-    
+
     return TRUE;
 }
 
@@ -508,7 +509,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     int bands = poSrcDS->GetRasterCount();
     if (bands != 1 && bands != 3 && bands != 4)
         return NULL;
-   
+
     //correct the file and get the directory
     char* output_dir = NULL;
     if (pszFilename == NULL)
@@ -529,7 +530,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
         {
             isKmz = true;
         }
-    
+
         output_dir = CPLStrdup(CPLGetPath(pszFilename));
         if (strcmp(output_dir, "") == 0)
         {
@@ -600,16 +601,16 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     if (poSrcDS->GetProjectionRef() != NULL)
     {
         OGRSpatialReference poDsUTM;
-     
+
         char* projStr = (char*)poSrcDS->GetProjectionRef();
-     
+
         if (poDsUTM.importFromWkt(&projStr) == OGRERR_NONE)
         {
             if (poDsUTM.IsProjected())
             {
                 OGRSpatialReference poLatLong;
                 poLatLong.SetWellKnownGeogCS( "WGS84" );
-           
+
                 poTransform = OGRCreateCoordinateTransformation( &poDsUTM, &poLatLong );
                 if( poTransform != NULL )
                 {
@@ -685,7 +686,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
                                north, south, east, west, (int)tilexsize,
                                pszOverlayName, pszOverlayDescription);
     }
-    
+
     if (nRet == FALSE)
     {
         OGRCoordinateTransformation::DestroyCT( poTransform );
@@ -754,7 +755,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
 
         xloop = xloop>0 ? xloop : 1;
         yloop = yloop>0 ? yloop : 1;
-        
+
         std::stringstream zoomStr;
         zoomStr << zoom;
 
@@ -1004,7 +1005,7 @@ CPLErr KmlSuperOverlayRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, vo
         nXSize = nRasterXSize - nXOff;
     if( nYOff + nYSize > nRasterYSize )
         nYSize = nRasterYSize - nYOff;
-    
+
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
@@ -1087,14 +1088,14 @@ int KmlSuperOverlayGetBoundingBox(CPLXMLNode* psNode, double* adfExtents)
         psBox = CPLGetXMLNode(psNode, "LatLonAltBox");
     if( psBox == NULL )
         return FALSE;
-    
+
     const char* pszNorth = CPLGetXMLValue(psBox, "north", NULL);
     const char* pszSouth = CPLGetXMLValue(psBox, "south", NULL);
     const char* pszEast = CPLGetXMLValue(psBox, "east", NULL);
     const char* pszWest = CPLGetXMLValue(psBox, "west", NULL);
     if( pszNorth == NULL || pszSouth == NULL || pszEast == NULL || pszWest == NULL )
         return FALSE;
-    
+
     adfExtents[0] = CPLAtof(pszWest);
     adfExtents[1] = CPLAtof(pszSouth);
     adfExtents[2] = CPLAtof(pszEast);
@@ -1124,7 +1125,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 {
     if( eRWFlag == GF_Write )
         return CE_Failure;
-    
+
     if( bIsOvr )
         return poParent->IRasterIO( eRWFlag,
                                     nXOff * (poParent->nFactor / nFactor),
@@ -1135,7 +1136,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     eBufType, 
                                     nBandCount, panBandMap,
                                     nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
-    
+
     double dfXOff = 1.0 * nXOff / nFactor;
     double dfYOff = 1.0 * nYOff / nFactor;
     double dfXSize = 1.0 * nXSize / nFactor;
@@ -1540,14 +1541,14 @@ int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo * poOpenInfo)
     if( !EQUAL(pszExt, "kml") ||
         strstr((const char*)poOpenInfo->pabyHeader, "<kml") == NULL )
         return FALSE;
-    
+
     for( int i=0;i<2;i++ )
     {
         if( strstr((const char*)poOpenInfo->pabyHeader, "<NetworkLink>") != NULL &&
             strstr((const char*)poOpenInfo->pabyHeader, "<Region>") != NULL &&
             strstr((const char*)poOpenInfo->pabyHeader, "<Link>") != NULL )
             return TRUE;
-        
+
         if( strstr((const char*)poOpenInfo->pabyHeader, "<Document>") != NULL &&
             strstr((const char*)poOpenInfo->pabyHeader, "<Region>") != NULL &&
             strstr((const char*)poOpenInfo->pabyHeader, "<GroundOverlay>") != NULL )
@@ -1556,7 +1557,7 @@ int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo * poOpenInfo)
         if( i == 0 && !poOpenInfo->TryToIngest(1024*10) )
             return FALSE;
     }
-    
+
     return -1;
 }
 
@@ -2464,23 +2465,22 @@ static CPLErr KmlSuperOverlayDatasetDelete(CPL_UNUSED const char* fileName)
 /*                    GDALRegister_KMLSUPEROVERLAY()                    */
 /************************************************************************/
 
-void GDALRegister_KMLSUPEROVERLAY()
-   
-{
-    GDALDriver	*poDriver;
-   
-    if( GDALGetDriverByName( "KMLSUPEROVERLAY" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-      
-        poDriver->SetDescription( "KMLSUPEROVERLAY" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Kml Super Overlay" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
+void CPL_DLL GDALRegister_KMLSUPEROVERLAY()
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+{
+    if( GDALGetDriverByName( "KMLSUPEROVERLAY" ) != NULL )
+        return;
+
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "KMLSUPEROVERLAY" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Kml Super Overlay" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
+                               "CInt16 CInt32 CFloat32 CFloat64" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='NAME' type='string' description='Overlay name'/>"
 "   <Option name='DESCRIPTION' type='string' description='Overlay description'/>"
@@ -2498,13 +2498,12 @@ void GDALRegister_KMLSUPEROVERLAY()
 "   <Option name='FIX_ANTIMERIDIAN' type='boolean' description='Fix for images crossing the antimeridian causing errors in Google Earth' />"
 "</CreationOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = KmlSuperOverlayReadDataset::Identify;
-        poDriver->pfnOpen = KmlSuperOverlayReadDataset::Open;
-        poDriver->pfnCreateCopy = KmlSuperOverlayCreateCopy;
-        poDriver->pfnDelete = KmlSuperOverlayDatasetDelete;
-      
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnIdentify = KmlSuperOverlayReadDataset::Identify;
+    poDriver->pfnOpen = KmlSuperOverlayReadDataset::Open;
+    poDriver->pfnCreateCopy = KmlSuperOverlayCreateCopy;
+    poDriver->pfnDelete = KmlSuperOverlayDatasetDelete;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

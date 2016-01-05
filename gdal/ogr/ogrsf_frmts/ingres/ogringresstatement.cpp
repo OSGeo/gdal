@@ -149,7 +149,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
         CPLDebug( "INGRES", "IIapi_query(%s)", pszStatement );
 
     IIapi_query( &queryParm );
-  
+
 /* -------------------------------------------------------------------- */
 /*      Capture handles for result.                                     */
 /* -------------------------------------------------------------------- */
@@ -192,7 +192,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     getDescrParm.gd_descriptor = NULL;
 
     IIapi_getDescriptor( &getDescrParm );
-    
+
     while( getDescrParm.gd_genParm.gp_completed == FALSE )
 	IIapi_wait( &waitParm );
 
@@ -234,7 +234,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
               queryInfo.gq_rowCount, 
               queryInfo.gq_rowStatus, 
               queryInfo.gq_rowPosition ); 
-              
+
     if( queryInfo.gq_genParm.gp_status != IIAPI_ST_SUCCESS )
     {
         ReportError( &(queryInfo.gq_genParm), "IIapi_getQueryInfo()" );
@@ -330,7 +330,7 @@ char **OGRIngresStatement::GetRow()
         if( !IsColumnLong( iBaseCol ) )
         {
             IIapi_getColumns( &getColParm );
-    
+
             while( getColParm.gc_genParm.gp_completed == FALSE )
                 IIapi_wait( &waitParm );
 
@@ -351,7 +351,7 @@ char **OGRIngresStatement::GetRow()
 
             do {
                 IIapi_getColumns( &getColParm );
-    
+
                 while( getColParm.gc_genParm.gp_completed == FALSE )
                     IIapi_wait( &waitParm );
 
@@ -488,14 +488,14 @@ void OGRIngresStatement::ReportError( IIAPI_GENPARM *genParm,
     }
 
     getErrParm.ge_errorHandle = genParm->gp_errorHandle;
-    
+
     CPLString osErrorMessage;
     CPLErr eType = CE_Failure;
-        
+
     osErrorMessage.Printf( "%s: %s", pszDescription, pszCode );
 
     do
-    { 
+    {
 	/*
 	** Invoke API function call.
  	*/
@@ -562,7 +562,7 @@ int OGRIngresStatement::SendParms()
     setDescrParm.sd_stmtHandle = hStmt;
     setDescrParm.sd_descriptorCount = 1;
     setDescrParm.sd_descriptor = ( IIAPI_DESCRIPTOR * )( &DescrBuffer );
- 
+
     setDescrParm.sd_descriptor[0].ds_dataType = eParmType;
     setDescrParm.sd_descriptor[0].ds_nullable = FALSE;
     setDescrParm.sd_descriptor[0].ds_length = (II_UINT2) (nParmLen+2);
@@ -572,7 +572,7 @@ int OGRIngresStatement::SendParms()
     setDescrParm.sd_descriptor[0].ds_columnName = NULL;
 
     IIapi_setDescriptor( &setDescrParm );
-	
+
     while( setDescrParm.sd_genParm.gp_completed == FALSE )
 	IIapi_wait( &waitParm );
 
@@ -618,7 +618,7 @@ int OGRIngresStatement::SendParms()
 	if ( putParmParm.pp_genParm.gp_status != IIAPI_ST_SUCCESS )
         {
             ReportError( &(putParmParm.pp_genParm), "SendParm()" );
-            
+
             return FALSE;
         }
     }

@@ -30,6 +30,7 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+#include "gdal_priv.h"
 
 /* include the compression code */
 
@@ -79,9 +80,16 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
     }
     eDataType = static_cast<EPTType>(nDataType);
 
-    /* FIXME? : risk of overflow in additions and multiplication */
-    nBlocksPerRow = (nWidth + nBlockXSize - 1) / nBlockXSize;
-    nBlocksPerColumn = (nHeight + nBlockYSize - 1) / nBlockYSize;
+    nBlocksPerRow = DIV_ROUND_UP(nWidth, nBlockXSize);
+    nBlocksPerColumn = DIV_ROUND_UP(nHeight, nBlockYSize);
+
+    if( nBlocksPerRow > INT_MAX / nBlocksPerColumn )
+    {
+        nWidth = nHeight = 0;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HFABand::HFABand : too big dimensions / block size");
+        return;
+    }
     nBlocks = nBlocksPerRow * nBlocksPerColumn;
 
 /* -------------------------------------------------------------------- */
@@ -161,7 +169,6 @@ CPLErr HFABand::LoadOverviews()
                 continue;
             }
 
-            pszName = pszEnd + 2;
             pszEnd[0] = '\0';
 
             char *pszJustFilename = CPLStrdup(CPLGetFilename(pszFilename));
@@ -1648,7 +1655,7 @@ CPLErr HFABand::SetNoDataValue( double dfValue )
 
     if ( poNDNode == NULL )
     {
-        poNDNode = new HFAEntry( psInfo,
+        poNDNode = HFAEntry::New( psInfo,
                                  "Eimg_NonInitializedValue",
                                  "Eimg_NonInitializedValue",
                                  poNode );
@@ -1696,7 +1703,9 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
     const char *pszDict = 
         poBinFunc->GetStringField( "binFunction.MIFDictionary.string" );
     if( pszDict == NULL )
-        poBinFunc->GetStringField( "binFunction.MIFDictionary" );
+        pszDict = poBinFunc->GetStringField( "binFunction.MIFDictionary" );
+    if( pszDict == NULL )
+        return NULL;
 
     HFADictionary oMiniDict( pszDict );
 
@@ -1889,7 +1898,7 @@ CPLErr HFABand::SetPCT( int nColors,
     poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
     if( poEdsc_Table == NULL 
         || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
-        poEdsc_Table = new HFAEntry( psInfo, "Descriptor_Table", 
+        poEdsc_Table = HFAEntry::New( psInfo, "Descriptor_Table", 
                                      "Edsc_Table", poNode );
 
     poEdsc_Table->SetIntField( "numrows", nColors );
@@ -1902,7 +1911,7 @@ CPLErr HFABand::SetPCT( int nColors,
         = poEdsc_Table->GetNamedChild( "#Bin_Function#" );
     if( poEdsc_BinFunction == NULL 
         || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
-        poEdsc_BinFunction = new HFAEntry( psInfo, "#Bin_Function#", 
+        poEdsc_BinFunction = HFAEntry::New( psInfo, "#Bin_Function#", 
                                            "Edsc_BinFunction", 
                                            poEdsc_Table );
 
@@ -1937,7 +1946,7 @@ CPLErr HFABand::SetPCT( int nColors,
         HFAEntry *poEdsc_Column = poEdsc_Table->GetNamedChild( pszName );
         if( poEdsc_Column == NULL 
             || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
-            poEdsc_Column = new HFAEntry( psInfo, pszName, "Edsc_Column", 
+            poEdsc_Column = HFAEntry::New( psInfo, pszName, "Edsc_Column", 
                                           poEdsc_Table );
 
         poEdsc_Column->SetIntField( "numRows", nColors );
@@ -1992,6 +2001,8 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     if( CSLTestBoolean( CPLGetConfigOption( "HFA_USE_RRD", "NO" ) ) )
     {
         psRRDInfo = HFACreateDependent( psInfo );
+        if( psRRDInfo == NULL )
+            return -1;
 
         poParent = psRRDInfo->poRoot->GetNamedChild( GetBandName() );
 
@@ -1999,7 +2010,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
         if( poParent == NULL )
         {
             poParent = 
-                new HFAEntry( psRRDInfo, GetBandName(),
+                HFAEntry::New( psRRDInfo, GetBandName(),
                               "Eimg_Layer", psRRDInfo->poRoot );
         }
     }
@@ -2078,7 +2089,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     HFAEntry *poRRDNamesList = poNode->GetNamedChild("RRDNamesList");
     if( poRRDNamesList == NULL )
     {
-        poRRDNamesList = new HFAEntry( psInfo, "RRDNamesList", 
+        poRRDNamesList = HFAEntry::New( psInfo, "RRDNamesList", 
                                        "Eimg_RRDNamesList", 
                                        poNode );
         poRRDNamesList->MakeData( 23+16+8+ 3000 /* hack for growth room*/ );
@@ -2103,7 +2114,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
                         psRRDInfo->pszFilename, GetBandName(),
                         nOverviewLevel );
 
-    // TODO: Need to add to end of array (thats pretty hard).
+    // TODO: Need to add to end of array (that is pretty hard).
     if( poRRDNamesList->SetStringField( szName, osLayerName ) != CE_None )
     {
         poRRDNamesList->MakeData( poRRDNamesList->GetDataSize() + 3000 );

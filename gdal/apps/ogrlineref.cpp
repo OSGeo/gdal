@@ -44,6 +44,7 @@
 #define FIELD_FINISH "end"
 #define FIELD_SCALE_FACTOR "scale"
 #define DELTA 0.00000001 //- delta
+// TODO: TOLLERANCE -> TOLERANCE
 #define TOLLERANCE 0.00008983153
 
 #if defined(HAVE_GEOS)
@@ -71,7 +72,9 @@ typedef struct _curve_data
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-static void Usage(const char* pszAdditionalMsg, int bShort = TRUE)
+static void Usage(const char* pszAdditionalMsg, int bShort = TRUE) CPL_NO_RETURN;
+
+static void Usage(const char* pszAdditionalMsg, int bShort)
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
@@ -192,7 +195,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
         }
 
         if (iLayer == nLayerCount)
-            /* shouldn't happen with an ideal driver */
+            /* should not happen with an ideal driver */
             poDstLayer = NULL;
     }
 
@@ -424,8 +427,10 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
     pFeature = poPkLayer->GetNextFeature();
     if (NULL != pFeature)
     {
-        dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
-        dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);
+        // FIXME: Clang Static Analyzer rightly found that the following
+        // code is dead
+        /*dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
+        dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);*/
         OGRFeature::DestroyFeature(pFeature);
     }
     else
@@ -507,6 +512,7 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
         OGRLineString *pSubLine = pLine->getSubLine(dfPosBegCorr, pLine->get_Length(), FALSE);
 
         pOutLine->addSubLineString(pSubLine);
+        delete pSubLine;
         OGRFeature::DestroyFeature(IT->second);
 
         ++IT;
@@ -531,14 +537,12 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
         pSubLine = pLine->getSubLine(0, dfPosEndCorr, FALSE);
 
         pOutLine->addSubLineString(pSubLine);
+        delete pSubLine;
 
         OGRFeature::DestroyFeature(IT->second);
         //store
         return AddFeature(poOutLayer, pOutLine, dfPosBeg, dfPosEnd, 1.0, bQuiet);
     }
-
-    //should never reach here
-    return OGRERR_NONE;
 }
 
 //------------------------------------------------------------------------
@@ -605,12 +609,15 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
                     CPLError(CE_Warning, CPLE_AppDefined,
                         "The distance %f is out of path!", dfReperPos);
                 }
+                delete pPt;
             }
             else
             {
                 double dfDist = pPathGeom->Distance(pPt);
                 if (dfDist < TOLLERANCE)
                     moRepers[dfReperPos] = pPt;
+                else
+                    delete pPt;
             }           
         }
         OGRFeature::DestroyFeature(pReperFeature);
@@ -847,6 +854,13 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
 
     dfFactor = dfStep / (dfEndPosition - dfRoundBeg);
     nCount = 0;
+    for( std::map<double, OGRPoint*>::iterator oIter = moRepers.begin();
+                                               oIter != moRepers.end();
+                                               ++oIter)
+    {
+        delete oIter->second;
+    }
+
     moRepers.clear();
 
     if (pPtBeg != NULL)
@@ -875,6 +889,12 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
             }
         }
     }
+
+    for (int i = 0; i < (int)astSubLines.size(); i++)
+    {
+        delete astSubLines[i].pPart;
+    }
+    astSubLines.clear();
 
     if (!bQuiet)
     {
@@ -910,6 +930,14 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
 
         ++IT;
     }
+    
+    for( std::map<double, OGRPoint*>::iterator oIter = moRepers.begin();
+                                               oIter != moRepers.end();
+                                               ++oIter)
+    {
+        delete oIter->second;
+    }
+
 
     if (!bQuiet)
     {
@@ -975,7 +1003,9 @@ static OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, 
         {
             if (NULL != pGeom)
             {
-                eRetCode = CreatePartsFromLineString((OGRLineString*)pGeom->clone(), poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue);
+                OGRLineString* pGeomClone = (OGRLineString*)pGeom->clone();
+                eRetCode = CreatePartsFromLineString(pGeomClone, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue);
+                delete pGeomClone;
             }
         }
 
@@ -1087,6 +1117,7 @@ static OGRErr GetPosition(OGRLayer* const poPkLayer,
     //now we have closest part
     //get real distance
     double dfRealDist = Project(pCloserPart, &pt);
+    delete pCloserPart;
     //compute reference distance
     double dfRefDist = dfBeg + dfRealDist / dfScale;
     if (bQuiet == TRUE)

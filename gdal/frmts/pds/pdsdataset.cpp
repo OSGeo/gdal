@@ -42,16 +42,13 @@ static const int NULL2 = -32768;
 static const double NULL3 = -3.4028226550889044521e+38;
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_proxy.h"
 #include "nasakeywordhandler.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_PDS(void);
-CPL_C_END
 
 enum PDSLayout
 {
@@ -1141,7 +1138,9 @@ int PDSDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
     return strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
-                  "PDS_VERSION_ID") != NULL;
+                  "PDS_VERSION_ID") != NULL ||
+           strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
+                  "ODL_VERSION_ID") != NULL;
 }
 
 /************************************************************************/
@@ -1153,7 +1152,9 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify( poOpenInfo ) )
         return NULL;
 
-    if( strstr((const char *)poOpenInfo->pabyHeader,"PDS3") == NULL )
+    if( strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
+                  "PDS_VERSION_ID") != NULL &&
+        strstr((const char *)poOpenInfo->pabyHeader,"PDS3") == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "It appears this is an older PDS image type.  Only PDS_VERSION_ID = PDS3 are currently supported by this gdal PDS reader.");
@@ -1379,7 +1380,7 @@ void PDSDataset::CleanString( CPLString &osInput )
     CPLFree( pszWrk );
 }
 /************************************************************************/
-/*                         GDALRegister_PDS()                         */
+/*                         GDALRegister_PDS()                           */
 /************************************************************************/
 
 void GDALRegister_PDS()

@@ -21,6 +21,7 @@ from glob import glob
 HAVE_NUMPY=False
 HAVE_SETUPTOOLS = False
 BUILD_FOR_CHEESESHOP = False
+GNM_ENABLED = False
 
 # ---------------------------------------------------------------------------
 # Default build options
@@ -238,15 +239,24 @@ gnm_module = Extension('osgeo._gnm',
 ext_modules = [gdal_module,
               gdalconst_module,
               osr_module,
-              ogr_module,
-              gnm_module]
+              ogr_module]
 
 py_modules = ['gdal',
               'ogr',
               'osr',
-              'gdalconst',
-              'gnm']
+              'gdalconst']
 
+if os.path.exists('setup_vars.ini'):
+    with open('setup_vars.ini') as f:
+        lines = f.readlines()
+        if 'GNM_ENABLED=yes' or 'GNM_ENABLED=yes\n' in lines:
+            GNM_ENABLED = True
+
+if GNM_ENABLED:
+    ext_modules.append(gnm_module)
+    py_modules.append('gnm')
+
+    
 if HAVE_NUMPY:
     ext_modules.append(array_module)
     py_modules.append('gdalnumeric')

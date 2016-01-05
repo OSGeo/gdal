@@ -318,7 +318,7 @@ int main( int argc, char ** argv )
                 continue;
 
             // process lut
-            if( iBand == 0 )
+            if( papanLUTs == NULL )
             {
                 nLUTBins = CSLCount(papszTokens) - 3;
                 papanLUTs = (int **) CPLCalloc(sizeof(int*),nBandCount);

@@ -77,7 +77,7 @@ class GDALPamRasterBand;
 /* ==================================================================== */
 /*      GDALDatasetPamInfo                                              */
 /*                                                                      */
-/*      We make these things a seperate structure of information        */
+/*      We make these things a separate structure of information        */
 /*      primarily so we can modify it without altering the size of      */
 /*      the GDALPamDataset.  It is an effort to reduce ABI churn for    */
 /*      driver plugins.                                                 */
@@ -122,7 +122,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     virtual CPLXMLNode *SerializeToXML( const char *);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
-    
+
     virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL);
     virtual CPLErr TrySaveXML();
 
@@ -189,7 +189,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 /* ==================================================================== */
 /*      GDALRasterBandPamInfo                                           */
 /*                                                                      */
-/*      We make these things a seperate structure of information        */
+/*      We make these things a separate structure of information        */
 /*      primarily so we can modify it without altering the size of      */
 /*      the GDALPamDataset.  It is an effort to reduce ABI churn for    */
 /*      driver plugins.                                                 */
@@ -206,7 +206,7 @@ typedef struct {
 
     char           *pszUnitType;
     char           **papszCategoryNames;
-    
+
     double         dfOffset;
     double         dfScale;
 
@@ -235,7 +235,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
-    
+
     void   PamInitialize();
     void   PamClear();
 

@@ -26,10 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_pam.h"
+#include "gdal_frmts.h"
 #include "iso8211.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -2234,7 +2235,7 @@ void GDALRegister_ADRG()
     if( GDALGetDriverByName( "ADRG" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ADRG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

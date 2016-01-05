@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR PGDump driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -72,7 +72,7 @@ def ogr_pgdump_1():
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -84,12 +84,11 @@ def ogr_pgdump_1():
 
     dst_feat.Destroy()
     ds.Destroy()
-    
+
     f = open('tmp/tpoly.sql')
     sql = f.read()
     f.close()
-    
-    
+
     if sql.find("""DROP TABLE IF EXISTS "public"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'public';""") == -1 or \
        sql.find("""BEGIN;""") == -1 or \
@@ -104,7 +103,7 @@ def ogr_pgdump_1():
        sql.find("""COMMIT;""") == -1 :
         print(sql)
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
@@ -142,7 +141,7 @@ def ogr_pgdump_2():
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -160,7 +159,7 @@ def ogr_pgdump_2():
     f = open('tmp/tpoly.sql')
     sql = f.read()
     f.close()
-    
+
     if sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'another_schema';""") == -1 or \
        sql.find("""BEGIN;""") == -1 or \
@@ -177,7 +176,7 @@ def ogr_pgdump_2():
        sql.find("""COMMIT;""") == -1 :
         print(sql)
         return 'fail'
-        
+
     return 'success'
 
 
@@ -219,7 +218,7 @@ def ogr_pgdump_3():
     gdaltest.poly_feat = []
 
     i = 0
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -245,7 +244,7 @@ def ogr_pgdump_3():
     f = open('tmp/tpoly.sql')
     sql = f.read()
     f.close()
-    
+
     if sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns""") != -1 or \
        sql.find("""BEGIN;""") == -1 or \
@@ -263,7 +262,7 @@ def ogr_pgdump_3():
        sql.find("""COMMIT;""") == -1 :
         print(sql)
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
@@ -275,7 +274,7 @@ def ogr_pgdump_4():
     if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     ######################################################
     # Create Layer
     lyr = ds.CreateLayer( 'test', geom_type = ogr.wkbNone, options = [ 'WRITE_EWKT_GEOM=YES' ] )
@@ -291,21 +290,21 @@ def ogr_pgdump_4():
     srs.ImportFromEPSG(4326)
     gfld_defn.SetSpatialRef(srs)
     lyr.CreateGeomField(gfld_defn)
-    
+
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
-    
+
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeomFieldDirectly("point_nosrs", ogr.CreateGeometryFromWkt('POINT (1 2)'))
     feat.SetGeomFieldDirectly("poly", ogr.CreateGeometryFromWkt('POLYGON Z ((0 0 0,0 1 0,1 1 0,1 0 0, 0 0 0))'))
     lyr.CreateFeature(feat)
-    
+
     ds = None
 
     f = open('tmp/ogr_pgdump_4.sql')
     sql = f.read()
     f.close()
-    
+
     if sql.find("""CREATE TABLE "public"."test" (    "ogc_fid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )""") == -1 or \
        sql.find("""SELECT AddGeometryColumn('public','test','point_nosrs',-1,'POINT',2)""") == -1 or \
        sql.find("""CREATE INDEX "test_point_nosrs_geom_idx" ON "public"."test" USING GIST ("point_nosrs")""") == -1 or \
@@ -315,14 +314,14 @@ def ogr_pgdump_4():
        sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=-1;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1 :
         print(sql)
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
 # Test non nullable field support
 
 def ogr_pgdump_5():
-    
+
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_5.sql', options = [ 'LINEFORMAT=LF' ] )
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
@@ -340,7 +339,7 @@ def ogr_pgdump_5():
     f.SetGeomFieldDirectly('geomfield_not_nullable', ogr.CreateGeometryFromWkt('POINT(0 0)'))
     lyr.CreateFeature(f)
     f = None
-    
+
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('field_not_nullable', 'not_null')
@@ -351,7 +350,7 @@ def ogr_pgdump_5():
         gdaltest.post_reason('fail')
         return 'fail'
     f = None
-    
+
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
@@ -364,7 +363,7 @@ def ogr_pgdump_5():
     f = None
 
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_5.sql', 'rb')
     sql = gdal.VSIFReadL(1, 1000, f).decode('ascii')
     gdal.VSIFCloseL(f)
@@ -383,10 +382,10 @@ def ogr_pgdump_5():
 # Test default values
 
 def ogr_pgdump_6():
-    
+
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_6.sql', options = [ 'LINEFORMAT=LF' ] )
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
-    
+
     field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
     field_defn.SetDefault("'a''b'")
     lyr.CreateField(field_defn)
@@ -430,7 +429,7 @@ def ogr_pgdump_6():
     f.SetField('field_time', '12:34:56')
     lyr.CreateFeature(f)
     f = None
-    
+
     # Transition from COPY to INSERT
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -451,7 +450,7 @@ def ogr_pgdump_6():
     gdal.SetConfigOption( 'PG_USE_COPY', None )
 
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_6.sql', 'rb')
     sql = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
@@ -565,7 +564,7 @@ def ogr_pgdump_7():
         return 'fail'
 
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_7.sql', 'rb')
     sql = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
@@ -683,7 +682,7 @@ def ogr_pgdump_8():
         return 'fail'
 
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_8.sql', 'rb')
     sql = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
@@ -719,11 +718,11 @@ def ogr_pgdump_9(pg_use_copy = 'YES'):
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str', '01234')
     lyr.CreateFeature(feat)
-    
+
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str', 'ABCDEF')
     lyr.CreateFeature(feat)
-    
+
     if sys.version_info >= (3,0,0):
         val4 = '\u00e9\u00e9\u00e9\u00e9'
         val5 = val4 + '\u00e9'
@@ -732,19 +731,19 @@ def ogr_pgdump_9(pg_use_copy = 'YES'):
         exec("val4 = u'\\u00e9\\u00e9\\u00e9\\u00e9'")
         exec("val5 = val4 + u'\\u00e9'")
         exec("val6 = val5 + u'\\u00e9'")
-    
+
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str', val6)
     lyr.CreateFeature(feat)
-    
+
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str', 'a' + val5)
     lyr.CreateFeature(feat)
-    
+
     gdal.SetConfigOption( 'PG_USE_COPY', None )
-    
+
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_9.sql', 'rb')
     sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
     gdal.VSIFCloseL(f)
@@ -785,13 +784,13 @@ def ogr_pgdump_11():
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_pgdump_11.sql')
-    
+
     # clang -m32 generates F8FF..., instead of F87F... for all other systems
     if sql.find('0101000000000000000000F87F000000000000F87F') < 0 and \
        sql.find('0101000000000000000000F8FF000000000000F8FF') < 0:
         print(sql)
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################

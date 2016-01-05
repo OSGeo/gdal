@@ -267,7 +267,7 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg)
-    
+
 {
     int iBandIndex; 
     CPLErr eErr = CE_None;
@@ -313,7 +313,7 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         GDALDestroyScaledProgress( psExtraArg->pProgressData );
     }
-    
+
     psExtraArg->pfnProgress = pfnProgressGlobal;
     psExtraArg->pProgressData = pProgressDataGlobal;
 
@@ -392,7 +392,7 @@ const GDAL_GCP *GDALOverviewDataset::GetGCPs()
 {
     if( pasGCPList != NULL )
         return pasGCPList;
-    
+
     const GDAL_GCP* pasGCPsMain = poMainDS->GetGCPs();
     if( pasGCPsMain == NULL )
         return NULL;

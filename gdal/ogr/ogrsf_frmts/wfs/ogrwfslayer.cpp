@@ -566,7 +566,7 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
 
         osURL = CPLURLAddKVP(osURL, "FILTER", WFS_EscapeURL(osFilter));
     }
-        
+
     if (bRequestHits)
     {
         osURL = CPLURLAddKVP(osURL, "RESULTTYPE", "hits");
@@ -1329,7 +1329,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
 
     delete m_poAttrQuery;
     m_poAttrQuery = NULL;
-    
+
     if( pszFilter != NULL )
     {
         m_poAttrQuery = new OGRFeatureQuery();
@@ -1343,7 +1343,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
             return eErr;
         }
     }
-    
+
     if (poDS->HasMinOperators() && m_poAttrQuery != NULL )
     {
         swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
@@ -1556,7 +1556,7 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         CPLDestroyXMLNode( psXML );
         CPLHTTPDestroyResult(psResult);
         CPLFree(pabyData);
-        
+
         poDS->DisableSupportHits();
         return -1;
     }
@@ -1869,7 +1869,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
         }
 
     }
-    
+
     osPost += "    </feature:"; osPost += pszShortName; osPost += ">\n";
 
     if (!bInTransaction)

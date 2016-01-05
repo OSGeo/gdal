@@ -112,7 +112,7 @@ uint16 SysVirtualFile::GetBlockSegment( int requested_block )
 
 {
     if( requested_block < 0 )
-        ThrowPCIDSKException( "SysVirtualFile::GetBlockSegment(%d) - illegal request.",
+        return (uint16)ThrowPCIDSKException(0, "SysVirtualFile::GetBlockSegment(%d) - illegal request.",
                               requested_block );
 
     if( requested_block >= blocks_loaded )
@@ -133,7 +133,7 @@ int SysVirtualFile::GetBlockIndexInSegment( int requested_block )
 
 {
     if( requested_block < 0 )
-        ThrowPCIDSKException( "SysVirtualFile::GetBlockIndexInSegment(%d) - illegal request.",
+        return ThrowPCIDSKException(0, "SysVirtualFile::GetBlockIndexInSegment(%d) - illegal request.",
                               requested_block );
 
     if( requested_block >= blocks_loaded )
@@ -157,7 +157,7 @@ void SysVirtualFile::SetBlockInfo( int requested_block,
 
 {
     if( requested_block < 0 )
-        ThrowPCIDSKException( "SysVirtualFile::SetBlockSegment(%d) - illegal request.",
+        return ThrowPCIDSKException( "SysVirtualFile::SetBlockSegment(%d) - illegal request.",
                               requested_block );
 
     // this should always be the case.
@@ -331,7 +331,7 @@ void SysVirtualFile::LoadBlock( int requested_block )
 /*      Does this block exist in the virtual file?                      */
 /* -------------------------------------------------------------------- */
     if( requested_block < 0 || requested_block >= blocks_loaded )
-        ThrowPCIDSKException( "SysVirtualFile::LoadBlock(%d) - block out of range.",
+        return ThrowPCIDSKException( "SysVirtualFile::LoadBlock(%d) - block out of range.",
                               requested_block );
 
 /* -------------------------------------------------------------------- */

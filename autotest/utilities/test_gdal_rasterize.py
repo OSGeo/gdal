@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_rasterize testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -56,7 +56,7 @@ def test_gdal_rasterize_1():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     sr_wkt = sr.ExportToWkt()
-    
+
     # Create a raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('GTiff').Create( 'tmp/rast1.tif', 100, 100, 3,
@@ -66,7 +66,7 @@ def test_gdal_rasterize_1():
 
     # Close TIF file
     target_ds = None
-    
+
     # Create a layer to rasterize from.
 
     rast_ogr_ds = \
@@ -78,9 +78,9 @@ def test_gdal_rasterize_1():
     rast_lyr.CreateField(field_defn)
 
     # Add a polygon.
-    
+
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
-    
+
     feat = ogr.Feature( rast_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
 
@@ -91,9 +91,9 @@ def test_gdal_rasterize_1():
     rast_lyr.CreateFeature( feat )
 
     # Add a linestring.
-    
+
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
-    
+
     feat = ogr.Feature( rast_lyr.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
 
@@ -101,7 +101,7 @@ def test_gdal_rasterize_1():
 
     # Close file
     rast_ogr_ds.Destroy()
-    
+
 
     # Run the algorithm.
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_rasterize_path() + ' -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 tmp/rast1.tab tmp/rast1.tif')
@@ -120,7 +120,7 @@ def test_gdal_rasterize_1():
         gdaltest.post_reason( 'Did not get expected image checksum' )
 
         return 'fail'
-    
+
     target_ds = None
 
     return 'success'
@@ -141,7 +141,7 @@ def test_gdal_rasterize_2():
 
     # Close TIF file
     target_ds = None
-    
+
     # Run the algorithm.
     gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -at -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l cutline ../alg/data/cutline.csv tmp/rast2.tif')
 
@@ -155,7 +155,7 @@ def test_gdal_rasterize_2():
         gdaltest.post_reason( 'Did not get expected image checksum' )
 
         return 'fail'
-    
+
     target_ds = None
 
     return 'success'
@@ -322,11 +322,11 @@ def test_gdal_rasterize_6():
 "POLYGON((2 49,2 50,3 50,3 49,2 49))",255
 """.encode('ascii'))
     f.close()
-    
+
     f = open('tmp/test_gdal_rasterize_6.prj', 'wb')
     f.write("""EPSG:4326""".encode('ascii'))
     f.close()
-    
+
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_rasterize_6.tif', 100, 100)
     ds.SetGeoTransform([200000,(400000-200000)/100,0,6500000,0,-(6500000-6200000)/100])
     sr = osr.SpatialReference()

@@ -39,12 +39,10 @@ CPL_CVSID("$Id: ogrdxfwriterlayer.cpp 20670 2010-09-22 00:21:17Z warmerdam $");
 /*                      OGRDXFBlocksWriterLayer()                       */
 /************************************************************************/
 
-OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer( OGRDXFWriterDS *poDS )
-
+OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(
+    OGRDXFWriterDS * /* poDS */ ) :
+    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
-    (void) poDS;
-
-    poFeatureDefn = new OGRFeatureDefn( "blocks" );
     poFeatureDefn->Reference();
 
     OGRFieldDefn  oLayerField( "Layer", OFTString );
@@ -146,6 +144,6 @@ OGRFeature *OGRDXFBlocksWriterLayer::FindBlock( const char *pszBlockName )
         if( pszThisName != NULL && strcmp(pszBlockName,pszThisName) == 0 )
             return apoBlocks[i];
     }
-    
+
     return NULL;
 }

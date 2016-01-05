@@ -94,7 +94,7 @@ void PostGISRasterTileDataset::GetExtent(double* pdfMinX, double* pdfMinY,
     double dfMaxX = adfGeoTransform[GEOTRSFRM_TOPLEFT_X] + 
             nRasterXSize * adfGeoTransform[GEOTRSFRM_WE_RES] + 
             nRasterYSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
-            
+
     double dfMinY = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] + 
             nRasterXSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +  
             nRasterYSize * adfGeoTransform[GEOTRSFRM_NS_RES];
@@ -106,7 +106,7 @@ void PostGISRasterTileDataset::GetExtent(double* pdfMinX, double* pdfMinY,
         dfMinY = dfMaxY;
         dfMaxY = dfTemp;
     }
-    
+
     *pdfMinX = dfMinX;
     *pdfMinY = dfMinY;
     *pdfMaxX = dfMaxX;

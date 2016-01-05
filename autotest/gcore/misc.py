@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Various test of GDAL core.
 # Author:   Even Rouault <even dot rouault at mines dash parid dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -164,7 +164,7 @@ def misc_5_internal(drv, datatype, nBands):
                     print('Did not get expected GT for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
                     print(got_gt)
                     return -1
-        
+
         #if ds.RasterCount > 0:
         #    ds.GetRasterBand(1).Fill(255)
     ds = None
@@ -196,7 +196,7 @@ def misc_5():
         shutil.rmtree('tmp/tmp')
     except:
         pass
-        
+
     try:
         os.mkdir('tmp/tmp')
     except:
@@ -464,6 +464,11 @@ def misc_9():
 
 def misc_10():
 
+    try:
+        os.remove('data/byte.tif.gz.properties')
+    except:
+        pass
+
     f = gdal.VSIFOpenL('/vsigzip/./data/byte.tif.gz', 'rb')
     gdal.VSIFReadL(1, 1, f)
     gdal.VSIFSeekL(f, 0, 2)
@@ -475,6 +480,11 @@ def misc_10():
     ar = struct.unpack('B' * 4, data)
     if ar != (73, 73, 42, 0):
         return 'fail'
+
+    try:
+        os.remove('data/byte.tif.gz.properties')
+    except:
+        pass
 
     return 'success'
 
@@ -630,7 +640,7 @@ def misc_cleanup():
         pass
 
     return 'success'
-    
+
 gdaltest_list = [ misc_1,
                   misc_2,
                   misc_3,

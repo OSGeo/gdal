@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "wmsdriver.h"
 #include "wmsmetadataset.h"
 
@@ -119,7 +120,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
     if (osSRSValue.size() == 0)
         osSRSValue = "EPSG:4326";
-    
+
     if (osBBOX.size() == 0)
     {
         if (osBBOXOrder.compare("yxYX") == 0)
@@ -422,7 +423,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     }
 
     char* pszEscapedURL = CPLEscapeString(osURL.c_str(), -1, CPLES_XML);
-    
+
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
@@ -589,7 +590,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         CPLDebug("WMS", "Did not get max y");
         return NULL;
     }
-    
+
     if (nWKID == 102100)
         nWKID = 3857;
 
@@ -980,33 +981,35 @@ static void GDALDeregister_WMS( GDALDriver * )
 /*                          GDALRegister_WMS()                          */
 /************************************************************************/
 
-void GDALRegister_WMS() {
-    GDALDriver *poDriver;
-    if (GDALGetDriverByName("WMS") == NULL) {
-        poDriver = new GDALDriver();
+void GDALRegister_WMS()
 
-        poDriver->SetDescription("WMS");
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGC Web Map Service");
-        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_wms.html");
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+{
+    if( GDALGetDriverByName( "WMS" ) != NULL )
+        return;
 
-        poDriver->pfnOpen = GDALWMSDataset::Open;
-        poDriver->pfnIdentify = GDALWMSDataset::Identify;
-        poDriver->pfnUnloadDriver = GDALDeregister_WMS;
-        poDriver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
+    GDALDriver *poDriver = new GDALDriver();
 
-        GetGDALDriverManager()->RegisterDriver(poDriver);
+    poDriver->SetDescription("WMS");
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OGC Web Map Service" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_wms.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
-        GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
-        mdm->Register(new GDALWMSMiniDriverFactory_WMS());
-        mdm->Register(new GDALWMSMiniDriverFactory_TileService());
-        mdm->Register(new GDALWMSMiniDriverFactory_WorldWind());
-        mdm->Register(new GDALWMSMiniDriverFactory_TMS());
-        mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
-        mdm->Register(new GDALWMSMiniDriverFactory_VirtualEarth());
-        mdm->Register(new GDALWMSMiniDriverFactory_AGS());
-        mdm->Register(new GDALWMSMiniDriverFactory_IIP());
-    }
+    poDriver->pfnOpen = GDALWMSDataset::Open;
+    poDriver->pfnIdentify = GDALWMSDataset::Identify;
+    poDriver->pfnUnloadDriver = GDALDeregister_WMS;
+    poDriver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
+
+    GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
+    mdm->Register(new GDALWMSMiniDriverFactory_WMS());
+    mdm->Register(new GDALWMSMiniDriverFactory_TileService());
+    mdm->Register(new GDALWMSMiniDriverFactory_WorldWind());
+    mdm->Register(new GDALWMSMiniDriverFactory_TMS());
+    mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
+    mdm->Register(new GDALWMSMiniDriverFactory_VirtualEarth());
+    mdm->Register(new GDALWMSMiniDriverFactory_AGS());
+    mdm->Register(new GDALWMSMiniDriverFactory_IIP());
 }

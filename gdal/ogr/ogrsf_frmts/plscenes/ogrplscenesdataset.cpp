@@ -244,7 +244,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
             CPLPopErrorHandler();
     }
     CSLDestroy(papszOptions);
-    
+
     if( psResult->pszErrBuf != NULL )
     {
         if( !(bQuiet404Error && strstr(psResult->pszErrBuf, "404")) )
@@ -256,7 +256,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
+
     if( psResult->pabyData == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Empty content returned by server");
@@ -288,7 +288,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
         json_object_put(poObj);
         poObj = NULL;
     }
-    
+
     return poObj;
 }
 
@@ -378,7 +378,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
                  osScene.c_str());
         return NULL;
     }
-    
+
     if( STARTS_WITH(osRasterURL, "http://") )
     {
         osRasterURL = "http://" + osAPIKey + ":@" + osRasterURL.substr(strlen("http://"));
@@ -522,7 +522,7 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
         CSLDestroy(papszOptions);
         return NULL;
     }
-    
+
     json_object_iter it;
     it.key = NULL;
     it.val = NULL;
@@ -545,7 +545,7 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
             poDS->papoLayers = (OGRPLScenesLayer**) CPLRealloc(poDS->papoLayers,
                                         sizeof(OGRPLScenesLayer*) * (poDS->nLayers + 1));
             poDS->papoLayers[poDS->nLayers ++] = poLayer;
-            
+
             const char* pszSpat = CSLFetchNameValue(papszOptions, "spat");
             if( pszSpat )
             {
@@ -582,23 +582,18 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
 void RegisterOGRPLSCENES()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "PLSCENES" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "PLSCENES" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "PLSCENES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Planet Labs Scenes API" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "drv_plscenes.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLSCENES:" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetDescription( "PLSCENES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Planet Labs Scenes API" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_plscenes.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLSCENES:" );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='API_KEY' type='string' description='Account API key' required='true'/>"
 "  <Option name='SCENE' type='string' description='Scene id (for raster fetching)'/>"
@@ -606,9 +601,8 @@ void RegisterOGRPLSCENES()
 "  <Option name='RANDOM_ACCESS' type='boolean' description='Whether raster should be accessed in random access mode (but with potentially not optimal throughput). If no, in-memory ingestion is done' default='YES'/>"
 "</OpenOptionList>");
 
-        poDriver->pfnOpen = OGRPLScenesDataset::Open;
-        poDriver->pfnIdentify = OGRPLScenesDataset::Identify;
+    poDriver->pfnOpen = OGRPLScenesDataset::Open;
+    poDriver->pfnIdentify = OGRPLScenesDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

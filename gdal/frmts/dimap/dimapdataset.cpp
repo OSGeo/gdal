@@ -30,16 +30,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_minixml.h"
-#include "ogr_spatialref.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "gdal_proxy.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_DIMAP(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -989,7 +986,7 @@ int DIMAPDataset::ReadImageInformation2()
                             /* BAND_ID is: B0, B1, .... P */
                             if (!EQUAL(psTag->psChild->pszValue, "P")) 
                             {
-                                if (strlen(psTag->psChild->pszValue) < 2) /* shouldn't happen */
+                                if (strlen(psTag->psChild->pszValue) < 2) /* should not happen */
                                 {
                                     CPLError(CE_Warning, CPLE_AppDefined,
                                         "Bad BAND_INDEX value : %s", psTag->psChild->pszValue);

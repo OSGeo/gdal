@@ -219,7 +219,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     int             bHasComputedFileSize;
     ExistStatus     eExists;
     int             bIsDirectory;
-    
+
     int             bCanTrustCandidateFileSize;
     int             bHasCandidateFileSize;
     vsi_l_offset    nCandidateFileSize;
@@ -1004,7 +1004,9 @@ void VSICurlStreamingHandle::StartDownload()
         return;
 
     //if (ENABLE_DEBUG)
+    {
         CPLDebug("VSICURL", "Start download for %s", m_pszURL);
+    }
 
     if (hCurlHandle == NULL)
         hCurlHandle = curl_easy_init();
@@ -1023,7 +1025,9 @@ void VSICurlStreamingHandle::StopDownload()
     if (hThread)
     {
         //if (ENABLE_DEBUG)
+        {
             CPLDebug("VSICURL", "Stop download for %s", m_pszURL);
+        }
 
         AcquireMutex();
         /* Signal to the producer that we ask for download interruption */
@@ -1344,8 +1348,8 @@ void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
     if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
         return;
 
-        if (pCachedData == NULL)
-            pCachedData = (GByte*) CPLMalloc(BKGND_BUFFER_SIZE);
+    if (pCachedData == NULL)
+        pCachedData = (GByte*) CPLMalloc(BKGND_BUFFER_SIZE);
 
     if (nFileOffsetStart <= nCachedSize &&
         nFileOffsetStart + nSize > nCachedSize)
@@ -1532,7 +1536,7 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 
     int nRet = (poHandle->Exists()) ? 0 : -1;
     pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
-    
+
     delete poHandle;
     return nRet;
 }
@@ -1580,7 +1584,7 @@ void VSIInstallCurlStreamingFileHandler(void)
 /*                       VSIS3StreamingFSHandler                        */
 /************************************************************************/
 
-class VSIS3StreamingFSHandler: public VSICurlStreamingFSHandler
+class VSIS3StreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
@@ -1616,7 +1620,7 @@ void VSIS3StreamingFSHandler::UpdateMapFromHandle(VSIS3HandleHelper * poS3Handle
 void VSIS3StreamingFSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper)
 {
     CPLMutexHolder oHolder( &hMutex );
-    
+
     std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
@@ -1631,7 +1635,7 @@ void VSIS3StreamingFSHandler::UpdateHandleFromMap(VSIS3HandleHelper * poS3Handle
 /*                            VSIS3StreamingHandle                      */
 /************************************************************************/
 
-class VSIS3StreamingHandle: public VSICurlStreamingHandle
+class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
 {
     VSIS3HandleHelper* m_poS3HandleHelper;
 

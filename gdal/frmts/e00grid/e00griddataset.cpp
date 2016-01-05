@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
-#include "ogr_spatialref.h"
+#include "cpl_vsi_virtual.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "ogr_spatialref.h"
 
 /* Private import of e00read.c */
 #define E00ReadOpen         GDALE00GRIDReadOpen
@@ -47,10 +48,6 @@ static const int E00_DOUBLE_SIZE = 21;
 static const int VALS_PER_LINE = 5;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_E00GRID(void);
-CPL_C_END
 
 /* g++ -fPIC -Wall -g frmts/e00grid/e00griddataset.cpp -shared -o gdal_E00GRID.so -Iport -Igcore -Iogr -L. -lgdal */
 
@@ -175,7 +172,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     float* pafImage = (float*)pImage;
     int* panImage = (int*)pImage;
-    const float fNoData = (const float)poGDS->dfNoData;
+    const float fNoData = static_cast<float>(poGDS->dfNoData);
 
     /* A new data line begins on a new text line. So if the xsize */
     /* is not a multiple of VALS_PER_LINE, there are padding values */

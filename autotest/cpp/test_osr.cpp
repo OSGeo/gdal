@@ -208,7 +208,7 @@ namespace tut
         ensure_equals("Invalid authority code",
             std::string(OSRGetAuthorityCode(srs_, "DATUM")), std::string("6269"));
 
-        ensure("Got a PROJCS Authority but we shouldn\'t",
+        ensure("Got a PROJCS Authority but we should not",
             NULL == OSRGetAuthorityName(srs_, "PROJCS"));
 
         ensure("Got METER authority code on linear units",

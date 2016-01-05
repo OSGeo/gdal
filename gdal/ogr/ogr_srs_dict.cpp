@@ -114,7 +114,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     VSIFClose( fp );
-    
+
     return eErr;
 }
 

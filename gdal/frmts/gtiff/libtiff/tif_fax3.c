@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.76 2015-11-22 15:31:03 erouault Exp $ */
+/* $Id: tif_fax3.c,v 1.77 2015-12-19 21:50:52 erouault Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -697,7 +697,6 @@ Fax3PutEOL(TIFF* tif)
 				align = sp->bit + (8 - align);
 			else
 				align = sp->bit - align;
-			code = 0;
 			tparm=align; 
 			_PutBits(tif, 0, tparm);
 		}

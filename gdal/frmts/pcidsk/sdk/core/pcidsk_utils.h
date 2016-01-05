@@ -78,7 +78,7 @@ namespace PCIDSK
         int xsize, int ysize, eChanType pixel_type, int quality );
 
     void                DefaultDebug( const char * );
-    void                Debug( void (*)(const char *), const char *fmt, ... );
+    void                Debug( void (*)(const char *), const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
 
 } // end namespace PCIDSK
 

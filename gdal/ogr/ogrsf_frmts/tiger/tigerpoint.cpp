@@ -98,7 +98,7 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     if( dfX != 0.0 || dfY != 0.0 ) {
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
     }
-        
+
     return poFeature;
 }
 

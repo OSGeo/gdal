@@ -324,7 +324,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 /*      Open the underlying file.                                       */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( osSubFilePath, pszAccess );
-    
+
     if( fp == NULL )
         return NULL;
 
@@ -353,7 +353,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 int VSISubFileFilesystemHandler::Stat( const char * pszFilename, 
                                        VSIStatBufL * psStatBuf,
                                        int nFlags )
-    
+
 {
     CPLString osSubFilePath;
     vsi_l_offset nOff, nSize;
@@ -367,7 +367,7 @@ int VSISubFileFilesystemHandler::Stat( const char * pszFilename,
     }
 
     int nResult = VSIStatExL( osSubFilePath, psStatBuf, nFlags );
-    
+
     if( nResult == 0 )
     {
         if( nSize != 0 )
@@ -459,4 +459,4 @@ void VSIInstallSubFileHandler()
     VSIFileManager::InstallHandler( "/vsisubfile/", 
                                     new VSISubFileFilesystemHandler );
 }
-                            
+

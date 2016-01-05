@@ -142,7 +142,8 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         else if( !EQUAL(pszOpt,"PIXEL") )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unrecognised DISTUNITS value '%s', should be GEO or PIXEL.",
+                      "Unrecognized DISTUNITS value '%s', "
+                      "should be GEO or PIXEL.",
                       pszOpt );
             return CE_Failure;
         }

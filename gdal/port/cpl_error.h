@@ -42,7 +42,7 @@
  *
  * CPL error handling services.
  */
-  
+
 CPL_C_START
 
 typedef enum

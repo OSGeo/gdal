@@ -429,6 +429,31 @@ static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr
     return 0;
 }
 
+static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* needle)
+        __attribute__((always_inline));
+
+static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* needle)
+{
+    const char* ptr_haystack = haystack;
+    while( 1 )
+    {
+        const char* ptr_haystack2 = ptr_haystack;
+        const char* ptr_needle = needle;
+        while( 1 )
+        {
+            char ch1 = *(ptr_haystack2++);
+            char ch2 = *(ptr_needle++);
+            if( ch2 == 0 )
+                return (char*)ptr_haystack;
+            if( ch1 != ch2 )
+                break;
+        }
+        if( *ptr_haystack == 0 )
+            return NULL;
+        ptr_haystack ++;
+    }
+}
+
 #undef strcmp
 #undef strncmp
 #define memcmp CPL_afl_friendly_memcmp
@@ -436,6 +461,7 @@ static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr
 #define strncmp CPL_afl_friendly_strncmp
 #define strcasecmp CPL_afl_friendly_strcasecmp
 #define strncasecmp CPL_afl_friendly_strncasecmp
+#define strstr CPL_afl_friendly_strstr
 
 #endif /* defined(AFL_FRIENDLY) && defined(__GNUC__) */
 
@@ -478,6 +504,10 @@ static inline int CPL_afl_friendly_strncasecmp(const char* ptr1, const char* ptr
 #  ifdef isinf 
 #    define CPLIsInf(x) isinf(x)
 #    define CPLIsFinite(x) (!isnan(x) && !isinf(x))
+#  elif defined(__sun__)
+#    include <ieeefp.h>
+#    define CPLIsInf(x)    (!finite(x) && !isnan(x))
+#    define CPLIsFinite(x) finite(x)
 #  else
 #    define CPLIsInf(x)    FALSE
 #    define CPLIsFinite(x) (!isnan(x))
@@ -544,7 +574,7 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[0] = _pabyDataT[1];                                \
     _pabyDataT[1] = byTemp;                                       \
 }                                                                    
-                                                            
+
 #define CPL_SWAP32(x) \
         ((GUInt32)( \
             (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
@@ -564,7 +594,7 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[1] = _pabyDataT[2];                                \
     _pabyDataT[2] = byTemp;                                       \
 }                                                                    
-                                                            
+
 #define CPL_SWAP64PTR(x) \
 {                                                                 \
     GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
@@ -583,7 +613,7 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[3] = _pabyDataT[4];                                \
     _pabyDataT[4] = byTemp;                                       \
 }                                                                    
-                                                            
+
 
 /* Until we have a safe 64 bits integer data type defined, we'll replace
  * this version of the CPL_SWAP64() macro with a less efficient one.
@@ -737,16 +767,19 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #if 1
 
 #if __cplusplus >= 201103L
+#define CPL_FINAL final
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
     ClassName &operator=( const ClassName & ) = delete;
 #else
+#define CPL_FINAL
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ); \
     ClassName &operator=( const ClassName & );
 #endif
 
 #else
+#define CPL_FINAL
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName)
 #endif
 #endif /* __cplusplus */

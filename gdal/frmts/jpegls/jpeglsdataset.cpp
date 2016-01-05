@@ -27,13 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 /* CharLS header */
 #include <interface.h>
-
-extern "C" void GDALRegister_JPEGLS();
 
 /* g++ -Wall -g fmrts/jpegls/jpeglsdataset.cpp -shared -fPIC -o gdal_JPEGLS.so -Iport -Igcore -L. -lgdal -I/home/even/charls-1.0 -L/home/even/charls-1.0/build -lCharLS */
 
@@ -178,7 +177,6 @@ CPLErr JPEGLSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
         }
     }
-    
 
     return CE_None;
 }
@@ -281,12 +279,13 @@ CPLErr JPEGLSDataset::Uncompress()
     }
 
 
-    JLS_ERROR eError = JpegLsDecode(pabyUncompressedData, nUncompressedSize, pabyCompressedData, nFileSize, NULL);
+    JLS_ERROR eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
+                                     pabyCompressedData, nFileSize, NULL);
     if (eError != OK)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "Uncompression of data failed : %s",
-                    JPEGLSGetErrorAsString(eError));
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Decompression of data failed : %s",
+                  JPEGLSGetErrorAsString(eError) );
         VSIFree(pabyCompressedData);
         VSIFree(pabyUncompressedData);
         pabyUncompressedData = NULL;
@@ -605,7 +604,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (nBits != 8 && nBits != 16)
             sParams.bitspersample = nBits;
     }
-    
+
     sParams.components = nBands;
     JLS_ERROR eError = JpegLsEncode(pabyDataCompressed, nCompressedSize,
                                     &nWritten,
@@ -654,26 +653,22 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_JPEGLS()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("JPEGLS driver"))
+    if( !GDAL_CHECK_VERSION( "JPEGLS driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JPEGLS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "JPEGLS" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "JPEGLS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "JPEGLS" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_jpegls.html" );
-        //poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jls" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jls" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Byte Int16" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "JPEGLS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "JPEGLS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpegls.html" );
+    // poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jls" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jls" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='INTERLEAVE' type='string-select' default='BAND' description='File interleaving'>"
 "       <Value>PIXEL</Value>"
@@ -682,14 +677,13 @@ void GDALRegister_JPEGLS()
 "   </Option>"
 "   <Option name='LOSS_FACTOR' type='int' default='0' description='0 = lossless, 1 = near lossless, > 1 lossless'/>"
 "</CreationOptionList>\n" );
-        
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = JPEGLSDataset::Identify;
-        poDriver->pfnOpen = JPEGLSDataset::Open;
-        poDriver->pfnCreateCopy = JPEGLSDataset::CreateCopy;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnIdentify = JPEGLSDataset::Identify;
+    poDriver->pfnOpen = JPEGLSDataset::Open;
+    poDriver->pfnCreateCopy = JPEGLSDataset::CreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

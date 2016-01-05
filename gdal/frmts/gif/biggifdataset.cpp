@@ -30,15 +30,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "gifabstractdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_BIGGIF(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -274,27 +271,7 @@ CPLErr BIGGIFDataset::ReOpen()
 /* -------------------------------------------------------------------- */
 /*      Find the first image record.                                    */
 /* -------------------------------------------------------------------- */
-    GifRecordType RecordType = TERMINATE_RECORD_TYPE;
-
-    while( DGifGetRecordType(hGifFile, &RecordType) != GIF_ERROR
-           && RecordType != TERMINATE_RECORD_TYPE
-           && RecordType != IMAGE_DESC_RECORD_TYPE )
-    {
-        /* Skip extension records found before IMAGE_DESC_RECORD_TYPE */
-        if (RecordType == EXTENSION_RECORD_TYPE)
-        {
-            int nFunction;
-            GifByteType *pExtData;
-            if (DGifGetExtension(hGifFile, &nFunction, &pExtData) == GIF_ERROR)
-                break;
-            while (pExtData != NULL)
-            {
-                if (DGifGetExtensionNext(hGifFile, &pExtData) == GIF_ERROR)
-                    break;
-            }
-        }
-    }
-
+    GifRecordType RecordType = FindFirstImage(hGifFile);
     if( RecordType != IMAGE_DESC_RECORD_TYPE )
     {
         GIFAbstractDataset::myDGifCloseFile( hGifFile );
@@ -402,7 +379,7 @@ void GDALRegister_BIGGIF()
     if( GDALGetDriverByName( "BIGGIF" ) != NULL )
         return;
 
-     GDALDriver	*poDriver = new GDALDriver();
+     GDALDriver *poDriver = new GDALDriver();
 
      poDriver->SetDescription( "BIGGIF" );
      poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

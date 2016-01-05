@@ -198,8 +198,6 @@ void AODriver::OpenWorkspace(std::string conn, IWorkspace** ppWorkspace)
 int AODriver::TestCapability( const char * pszCap )
 
 {
-
-  
   /*
   if (EQUAL(pszCap, ODsCCreateLayer) )
     return FALSE;

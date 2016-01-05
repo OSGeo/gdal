@@ -337,7 +337,7 @@ This example shows how to overwrite an existing table in an existing schema. Not
 ogr2ogr -overwrite -f PostgreSQL "PG:dbname=warmerda" mytable.shp mytable -nln myschema.mytable
 </pre>
 
-Note that using -lco SCHEMA=mytable instead of -nln wouldn't have worked in that case
+Note that using -lco SCHEMA=mytable instead of -nln would not have worked in that case
 (see <a href="http://trac.osgeo.org/gdal/ticket/2821">#2821</a> for more details).<p>
 
 If you need to overwrite many tables located in a schema at once, the -nln option is not

@@ -232,7 +232,7 @@ void SDTSIndexedReader::FillIndex()
   This method will have the side effect of rewinding unindexed readers
   because the scanning operation requires reading all records in the module
   from disk. 
-  
+
   @param pszFName the field name to search for.  By default "ATID" is
   used.
 

@@ -1405,7 +1405,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
         default:
             CPLDebug( "EnvisatDataset",
                       "Unabe to convert '%s' field to string: "
-                      "unsecpected data type '%d'.",
+                      "unexpected data type '%d'.",
                       pField->szName, pField->eType );
             return CE_Failure;
     }

@@ -233,10 +233,16 @@ static void ThreadFunction( void* user_data )
 {
     ThreadContext* psContext = (ThreadContext* )user_data;
     psContext->bRet = TRUE;
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    while (__AFL_LOOP(1000)) {
+#endif
     for( int iLoop = 0; psContext->bRet && iLoop < nLoops; iLoop ++ )
     {
         ThreadFunctionInternal(psContext);
     }
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    }
+#endif
 }
 
 /************************************************************************/
@@ -1171,6 +1177,9 @@ static const char* GetLayerNameForSQL( GDALDataset* poDS, const char* pszLayerNa
     if (EQUAL(poDS->GetDriverName(), "SQLAnywhere"))
         return pszLayerName;
 
+    if (EQUAL(poDS->GetDriverName(), "DB2ODBC"))
+        return pszLayerName;
+        
     return CPLSPrintf("\"%s\"", pszLayerName);
 }
 
@@ -2995,7 +3004,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
 
     CPLString osSQL;
 
-    /* Test consistency between result layer and traditionnal layer */
+    /* Test consistency between result layer and traditional layer */
     LOG_ACTION(poLayer->ResetReading());
     poLayerFeat = LOG_ACTION(poLayer->GetNextFeature());
 

@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  KML Driver testing.
 # Author:   Matuesz Loskot <mateusz@loskot.net>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Matuesz Loskot <mateusz@loskot.net>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -45,7 +45,7 @@ from osgeo import gdal
 # Test basic open operation for KML datastore.
 #
 def ogr_kml_datastore():
-    
+
     ogrtest.kml_ds = None
     ogrtest.have_read_kml = 0
     ogrtest.kml_drv = None
@@ -540,7 +540,7 @@ def ogr_kml_check_write_1():
 # Test reading attributes with XML content in them
 #
 def ogr_kml_xml_attributes():
-    
+
     if not ogrtest.have_read_kml:
         return 'skip'
 

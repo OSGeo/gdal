@@ -101,19 +101,19 @@ int main( int nArgc, char ** papszArgv )
                 case dsc_elementary:
                     pszDataStructCode = "elementary";
                     break;
-                    
+
                 case dsc_vector:
                     pszDataStructCode = "vector";
                     break;
-                    
+
                 case dsc_array:
                     pszDataStructCode = "array";
                     break;
-                    
+
                 case dsc_concatenated:
                     pszDataStructCode = "concatenated";
                     break;
-                    
+
                 default:
                     pszDataStructCode = "(unknown)";
                     break;
@@ -125,27 +125,27 @@ int main( int nArgc, char ** papszArgv )
                 case dtc_char_string:
                     pszDataTypeCode = "char_string";
                     break;
-                    
+
                 case dtc_implicit_point:
                     pszDataTypeCode = "implicit_point";
                     break;
-                    
+
                 case dtc_explicit_point:
                     pszDataTypeCode = "explicit_point";
                     break;
-                    
+
                 case dtc_explicit_point_scaled:
                     pszDataTypeCode = "explicit_point_scaled";
                     break;
-                    
+
                 case dtc_char_bit_string:
                     pszDataTypeCode = "char_bit_string";
                     break;
-                    
+
                 case dtc_bit_string:
                     pszDataTypeCode = "bit_string";
                     break;
-                    
+
                 case dtc_mixed_data_type:
                     pszDataTypeCode = "mixed_data_type";
                     break;
@@ -154,7 +154,7 @@ int main( int nArgc, char ** papszArgv )
                     pszDataTypeCode = "(unknown)";
                     break;
             }
-            
+
             printf("<DDFFieldDefn tag=\"%s\" fieldName=\"%s\" arrayDescr=\"%s\" "
                    "formatControls=\"%s\" dataStructCode=\"%s\" dataTypeCode=\"%s\">\n",
                    poFieldDefn->GetName(),
@@ -282,7 +282,7 @@ int main( int nArgc, char ** papszArgv )
     }
 
     oModule.Close();
-    
+
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif

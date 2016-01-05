@@ -41,7 +41,7 @@
 
 CPL_CVSID("$Id$");
 
-class VSIBufferedReaderHandle : public VSIVirtualHandle
+class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poBaseHandle;
     GByte*            pabyBuffer;
@@ -51,7 +51,7 @@ class VSIBufferedReaderHandle : public VSIVirtualHandle
     int               bNeedBaseHandleSeek;
     int               bEOF;
     vsi_l_offset      nSheatFileSize;
-    
+
     int               SeekBaseTo(vsi_l_offset nTargetOffset);
 
   public:

@@ -77,7 +77,7 @@ static intn EHget_numfiles(void);
 |  ======   ============  =================================================   |
 |  Jun 96   Joel Gales    Original Programmer                                 |
 |  Jul 96   Joel Gales    Add file id offset EHIDOFFSET                       |
-|  Aug 96   Joel Gales    Add "END" statment to structural metadata           |
+|  Aug 96   Joel Gales    Add "END" statement to structural metadata          |
 |  Sep 96   Joel Gales    Reverse order of Hopen ane SDstart statements       |
 |                         for RDWR and READ access                            |
 |  Oct 96   Joel Gales    Trap CREATE & RDWR (no write permission)            |
@@ -664,7 +664,7 @@ EHgetversion(int32 fid, char *version)
 
     uint8           access;	/* Access code */
     int32           dum;	/* Dummy variable */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
+    int32           sdInterfaceID = 0;	/* HDF SDS interface ID */
     int32           attrIndex;	/* HDFEOS version attribute index */
     int32           count;	/* Version string size */
 
@@ -965,7 +965,7 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 |                                                                             |
 |  FUNCTION: EHstrwithin                                                      |
 |                                                                             |
-|  DESCRIPTION: Searchs for string within target string                       |
+|  DESCRIPTION: Searches for string within target string                      |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |

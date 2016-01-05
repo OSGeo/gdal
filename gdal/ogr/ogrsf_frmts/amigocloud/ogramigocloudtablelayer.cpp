@@ -99,18 +99,20 @@ static std::string json_encode(const std::string &value) {
 /*                        OGRAmigoCloudTableLayer()                        */
 /************************************************************************/
 
-OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource* poDSIn,
-                                           const char* pszName) :
-                                           OGRAmigoCloudLayer(poDSIn)
-
+OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(
+    OGRAmigoCloudDataSource* poDSIn,
+    const char* pszName ) :
+    OGRAmigoCloudLayer(poDSIn),
+    osDatasetId(CPLString(pszName)),
+    nNextFID(-1),
+    bDeferedCreation(FALSE)
 {
-    osDatasetId = CPLString(pszName);
     osTableName = CPLString("dataset_") + osDatasetId;
     SetDescription( osDatasetId );
-    nNextFID = -1;
-    bDeferedCreation = FALSE;
 
-    nMaxChunkSize = atoi(CPLGetConfigOption("AMIGOCLOUD_MAX_CHUNK_SIZE", "15")) * 1024 * 1024;
+    nMaxChunkSize = atoi(
+        CPLGetConfigOption(
+            "AMIGOCLOUD_MAX_CHUNK_SIZE", "15" ) ) * 1024 * 1024;
 }
 
 /************************************************************************/
@@ -658,7 +660,7 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
                  "Operation not available in read-only mode");
         return OGRERR_FAILURE;
     }
-    
+
     if( osFIDColName.size() == 0 )
         return OGRERR_FAILURE;
 
@@ -771,7 +773,7 @@ OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
     FlushDeferedInsert();
 
     GetLayerDefn();
-    
+
     if( osFIDColName.size() == 0 )
         return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 

@@ -67,7 +67,7 @@ def ogr_fgdb_stress_test_init():
         ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
     except:
         pass
-    
+
     if ogrtest.fgdb_drv is None:
         return 'skip'
     if ogrtest.reference_drv is None:
@@ -178,10 +178,10 @@ def ogr_fgdb_stress_test_1():
                 gdaltest.post_reason('fail')
                 print(ret)
                 return 'fail'
-            
+
     if in_transaction:
         ds_test.CommitTransaction()
-    
+
     return 'success'
 
 ###############################################################################
@@ -190,13 +190,13 @@ def ogr_fgdb_stress_test_1():
 def ogr_fgdb_stress_test_2():
     if ogrtest.fgdb_drv is None:
         return 'skip'
-    
+
     ds_test = ogr.Open('tmp/test.gdb')
     ds_ref = ogr.Open('tmp/test.' + ogrtest.reference_ext)
-    
+
     lyr_test = ds_test.GetLayer(0)
     lyr_ref = ds_ref.GetLayer(0)
-    
+
     while True:
         f_test = lyr_test.GetNextFeature()
         f_ref = lyr_ref.GetNextFeature()
@@ -212,7 +212,7 @@ def ogr_fgdb_stress_test_2():
             f_test.DumpReadable()
             f_ref.DumpReadable()
             return 'fail'
-    
+
     for val in range(1000):
         lyr_test.SetAttributeFilter("str = '%d'" % val)
         lyr_ref.SetAttributeFilter("str = '%d'" % val)
@@ -224,9 +224,9 @@ def ogr_fgdb_stress_test_2():
             return 'fail'
 
     #sys.exit(0)
-    
+
     return 'success'
-            
+
 
 ###############################################################################
 # Cleanup

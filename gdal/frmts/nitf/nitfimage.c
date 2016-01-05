@@ -688,7 +688,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     nExtendedTREBytes - 3 );
 
             psImage->nTREBytes += (nExtendedTREBytes - 3);
-            nOffset += nExtendedTREBytes;
+            /*nOffset += nExtendedTREBytes;*/
         }
     }
 
@@ -1397,6 +1397,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(psImage->szIC,"C2") || EQUAL(psImage->szIC,"M2") )
     {
+        GIntBig nSignedRawBytes;
         size_t nRawBytes;
         NITFSegmentInfo *psSegInfo;
         int success;
@@ -1410,17 +1411,26 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
 
-        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
-            nRawBytes = (size_t)( psImage->panBlockStart[iFullBlock+1] 
-                - psImage->panBlockStart[iFullBlock] );
+        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn * psImage->nBands -1 )
+        {
+            nSignedRawBytes = (GIntBig)psImage->panBlockStart[iFullBlock+1] 
+                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
         else
         {
             psSegInfo = psImage->psFile->pasSegmentInfo + psImage->iSegment;
-            nRawBytes = (size_t)(psSegInfo->nSegmentStart 
-                                + psSegInfo->nSegmentSize 
-                                - psImage->panBlockStart[iFullBlock]);
+            nSignedRawBytes = (GIntBig)psSegInfo->nSegmentStart 
+                                + (GIntBig)psSegInfo->nSegmentSize 
+                                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
+        if( nSignedRawBytes <= 0 || nSignedRawBytes > INT_MAX )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid block size : " CPL_FRMT_GIB,
+                      nSignedRawBytes );
+            return BLKREAD_FAIL;
         }
 
+        nRawBytes = (size_t)nSignedRawBytes;
         pabyRawData = (GByte *) VSI_MALLOC_VERBOSE( nRawBytes );
         if (pabyRawData == NULL)
         {
@@ -1455,6 +1465,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(psImage->szIC,"C1") || EQUAL(psImage->szIC,"M1") )
     {
+        GIntBig nSignedRawBytes;
         size_t nRawBytes;
         NITFSegmentInfo *psSegInfo;
         int success;
@@ -1468,17 +1479,26 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
 
-        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
-            nRawBytes = (size_t)( psImage->panBlockStart[iFullBlock+1]
-                                  - psImage->panBlockStart[iFullBlock] );
+        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn * psImage->nBands -1 )
+        {
+            nSignedRawBytes = (GIntBig)psImage->panBlockStart[iFullBlock+1] 
+                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
         else
         {
             psSegInfo = psImage->psFile->pasSegmentInfo + psImage->iSegment;
-            nRawBytes = (size_t)( psSegInfo->nSegmentStart 
-                            + psSegInfo->nSegmentSize
-                            - psImage->panBlockStart[iFullBlock] );
+            nSignedRawBytes = (GIntBig)psSegInfo->nSegmentStart 
+                                + (GIntBig)psSegInfo->nSegmentSize 
+                                - (GIntBig)psImage->panBlockStart[iFullBlock];
+        }
+        if( nSignedRawBytes <= 0 || nSignedRawBytes > INT_MAX )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid block size : " CPL_FRMT_GIB,
+                      nSignedRawBytes );
+            return BLKREAD_FAIL;
         }
 
+        nRawBytes = (size_t)nSignedRawBytes;
         pabyRawData = (GByte *) VSI_MALLOC_VERBOSE( nRawBytes );
         if (pabyRawData == NULL)
         {
@@ -2383,7 +2403,7 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
     }
     else
     {
-        fprintf( stdout, "Chip is already de-warpped?\n" );
+        fprintf( stdout, "Chip is already de-warped?\n" );
     }
 
     return TRUE;
@@ -3254,7 +3274,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
             /* Image of http://trac.osgeo.org/gdal/ticket/3848 has incorrect */
             /* RPFHDR offset, but all other locations are correct... */
             /* So if we find LID_CoverageSectionSubheader and LID_CompressionLookupSubsection */
-            /* we check weither their content is valid */
+            /* we check whether their content is valid. */
             int bFoundValidLocation = FALSE;
             for( i = 0; i < psImage->nLocCount; i++ )
             {

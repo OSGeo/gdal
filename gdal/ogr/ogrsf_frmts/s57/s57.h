@@ -182,12 +182,12 @@ class S57ClassContentExplorer
     int         NextClass() { return SelectClassByIndex(iCurrentClass+1); }
 
     int         GetOBJL();
-    const char *GetDescription();
-    const char *GetAcronym();
+    const char *GetDescription() const;
+    const char *GetAcronym() const;
 
     char      **GetAttributeList( const char * = NULL );
 
-    char        GetClassCode();
+    char        GetClassCode() const;
     char      **GetPrimitives();
 };
 
@@ -206,13 +206,13 @@ typedef struct
 
 class CPL_DLL DDFRecordIndex
 {
-    int         bSorted;
+    bool        bSorted;
 
     int         nRecordCount;
     int         nRecordMax;
 
-    int         nLastObjlPos;            /* rjensen. added for FindRecordByObjl() */
-    int         nLastObjl;                  /* rjensen. added for FindRecordByObjl() */
+    int         nLastObjlPos;  // Added for FindRecordByObjl().
+    int         nLastObjl;     // Added for FindRecordByObjl().
 
     DDFIndexedRecord *pasRecords;
 
@@ -227,7 +227,7 @@ public:
 
     DDFRecord  *FindRecord( int nKey );
 
-    DDFRecord  *FindRecordByObjl( int nObjl );    /* rjensen. added for FindRecordByObjl() */
+    DDFRecord  *FindRecordByObjl( int nObjl );  // Added for FindRecordByObjl().
 
     void        Clear();
 
@@ -260,7 +260,7 @@ class CPL_DLL S57Reader
     int                 nCOMF;  /* Coordinate multiplier */
     int                 nSOMF;  /* Vertical (sounding) multiplier */
 
-    int                 bFileIngested;
+    bool                bFileIngested;
     DDFRecordIndex      oVI_Index;
     DDFRecordIndex      oVC_Index;
     DDFRecordIndex      oVE_Index;
@@ -285,7 +285,7 @@ class CPL_DLL S57Reader
 
     int                 iPointOffset;
     OGRFeature          *poMultiPoint;
-    
+
     int                 Aall;               // see RecodeByDSSI() function
     int                 Nall;               // see RecodeByDSSI() function
     bool                needAallNallSetup;  // see RecodeByDSSI() function
@@ -313,8 +313,8 @@ class CPL_DLL S57Reader
 
     int                 ApplyRecordUpdate( DDFRecord *, DDFRecord * );
 
-    int                 bMissingWarningIssued;
-    int                 bAttrWarningIssued;
+    bool                bMissingWarningIssued;
+    bool                bAttrWarningIssued;
 
   public:
                         S57Reader( const char * );

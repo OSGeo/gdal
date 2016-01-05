@@ -77,7 +77,7 @@ public:
     GIntBig     GetDataLength();
 
     const char *GetType() { return szBoxType; }
-    
+
     GByte      *ReadBoxData();
 
     int         IsSuperBox();
@@ -126,7 +126,7 @@ private:
 
     int    nMSIGSize;
     GByte  *pabyMSIGData;
-    
+
     int      GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
                                           double adfOrigin[2],
                                           double adfXVector[2],
@@ -140,7 +140,7 @@ private:
 
 public:
     char  **papszGMLMetadata;
-    
+
     int     bHaveGeoTransform;
     double  adfGeoTransform[6];
     int     bPixelIsPoint;
@@ -149,7 +149,7 @@ public:
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
-    
+
     char **papszRPCMD;
 
     char  **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
@@ -175,7 +175,7 @@ public:
     void    SetGeoTransform( double * );
     void    SetGCPs( int, const GDAL_GCP * );
     void    SetRPCMD( char** papszRPCMDIn );
-    
+
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
     GDALJP2Box *CreateGMLJP2V2( int nXSize, int nYSize,

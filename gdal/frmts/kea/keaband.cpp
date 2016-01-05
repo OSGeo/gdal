@@ -35,20 +35,6 @@
 
 #include "gdal_rat.h"
 
-
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
-#endif
-
-#include "libkea/KEAAttributeTable.h"
-
-#ifdef _MSC_VER
-#pragma warning( pop ) 
-#endif
-
-
-
 #include <map>
 #include <vector>
 
@@ -745,7 +731,7 @@ GDALColorInterp KEARasterBand::GetColorInterpretation()
     {
         return GCI_GrayIndex;
     }
-        
+
     GDALColorInterp egdalinterp;
     switch(ekeainterp)
     {
@@ -802,7 +788,7 @@ GDALColorInterp KEARasterBand::GetColorInterpretation()
             egdalinterp = GCI_GrayIndex;
             break;
     }
-        
+
     return egdalinterp;
 }
 
@@ -870,7 +856,7 @@ CPLErr KEARasterBand::SetColorInterpretation(GDALColorInterp egdalinterp)
     }
     catch(const kealib::KEAException &)
     {
-        // do nothing? The docs say CE_Failure only if unsupporte by format
+        // Do nothing? The docs say CE_Failure only if unsupported by format.
     }
     return CE_None;
 }

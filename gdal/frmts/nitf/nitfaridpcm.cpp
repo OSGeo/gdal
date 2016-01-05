@@ -389,6 +389,16 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
     const int busy_code_table_size = blocks_x * blocks_y * 2;
     unsigned char L00[1000];
 
+    /* to make clang static analyzer happy */
+    block_offset[0] = 0;
+    block_size[0] = 0;
+    busy_code[0] = 0;
+    L00[0] = 0;
+    CPL_IGNORE_RET_VAL(busy_code[0]);
+    CPL_IGNORE_RET_VAL(block_size[0]);
+    CPL_IGNORE_RET_VAL(busy_code[0]);
+    CPL_IGNORE_RET_VAL(L00[0]);
+
 /* -------------------------------------------------------------------- */
 /*      We allocate a working copy of the full image that may be a      */
 /*      bit larger than the output buffer if the width or height is     */

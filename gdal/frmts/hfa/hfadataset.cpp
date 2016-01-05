@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_rat.h"
 #include "hfa_p.h"
@@ -36,10 +37,6 @@
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_HFA(void);
-CPL_C_END
 
 #ifndef R2D
 #  define R2D	(180/M_PI)
@@ -256,7 +253,7 @@ static const int anUsgsEsriZones[] =
 
 class HFARasterBand;
 
-class CPL_DLL HFADataset : public GDALPamDataset
+class HFADataset CPL_FINAL : public GDALPamDataset
 {
     friend class HFARasterBand;
 
@@ -336,7 +333,7 @@ class CPL_DLL HFADataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HFARasterBand : public GDALPamRasterBand
+class HFARasterBand CPL_FINAL : public GDALPamRasterBand
 {
     friend class HFADataset;
     friend class HFARasterAttributeTable;
@@ -412,7 +409,7 @@ public:
     int               bConvertColors; // map 0-1 floats to 0-255 ints
 };
 
-class HFARasterAttributeTable : public GDALRasterAttributeTable
+class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
 {
 private:
 
@@ -450,10 +447,10 @@ private:
 
     void CreateDT()
     {
-        this->poDT = new HFAEntry( this->hHFA->papoBand[this->nBand-1]->psInfo, 
-                             this->osName, "Edsc_Table",
-                             this->hHFA->papoBand[this->nBand-1]->poNode );
-        this->poDT->SetIntField( "numrows", nRows );
+        poDT = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo, 
+                              osName, "Edsc_Table",
+                              hHFA->papoBand[nBand-1]->poNode );
+        poDT->SetIntField( "numrows", nRows );
     }
 
 public:
@@ -546,11 +543,14 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
                 }
             }
 
-            if( EQUAL(poDTChild->GetType(),"Edsc_BinFunction840") 
-                && EQUAL(poDTChild->GetStringField( "binFunction.type.string" ),
-                         "BFUnique") )
+            if( EQUAL(poDTChild->GetType(),"Edsc_BinFunction840") )
             {
-                AddColumn( "BinValues", GFT_Real, GFU_MinMax, 0, 0, poDTChild, TRUE);
+                const char* pszValue =
+                    poDTChild->GetStringField( "binFunction.type.string" );
+                if( pszValue && EQUAL(pszValue, "BFUnique") )
+                {
+                    AddColumn( "BinValues", GFT_Real, GFU_MinMax, 0, 0, poDTChild, TRUE);
+                }
             }
 
             if( !EQUAL(poDTChild->GetType(),"Edsc_Column") )
@@ -802,7 +802,7 @@ int HFARasterAttributeTable::GetRowCount() const
 const char *HFARasterAttributeTable::GetValueAsString( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    char *apszStrList[1];
+    char *apszStrList[1] = { NULL };
     if( ((HFARasterAttributeTable*)this)->
                 ValuesIO(GF_Read, iField, iRow, 1, apszStrList ) != CE_None )
     {
@@ -822,7 +822,7 @@ const char *HFARasterAttributeTable::GetValueAsString( int iRow, int iField ) co
 int HFARasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    int nValue;
+    int nValue = 0;
     if( ((HFARasterAttributeTable*)this)->
                 ValuesIO(GF_Read, iField, iRow, 1, &nValue ) != CE_None )
     {
@@ -839,7 +839,7 @@ int HFARasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
 double HFARasterAttributeTable::GetValueAsDouble( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    double dfValue;
+    double dfValue = 0.0;
     if( ((HFARasterAttributeTable*)this)->
                 ValuesIO(GF_Read, iField, iRow, 1, &dfValue ) != CE_None )
     {
@@ -900,7 +900,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iStartRow < 0 || (iStartRow+iLength) > this->nRows )
+    if( iStartRow < 0 ||
+        iLength >= INT_MAX - iStartRow ||
+        (iStartRow+iLength) > this->nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
@@ -980,12 +982,14 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // probably could change HFAReadBFUniqueBins to only read needed rows
                 double *padfBinValues = HFAReadBFUniqueBins( aoFields[iField].poColumn, iStartRow+iLength );
+                if( padfBinValues == NULL )
+                    return CE_Failure;
                 memcpy(pdfData, &padfBinValues[iStartRow], sizeof(double) * iLength);
                 CPLFree(padfBinValues);
             }
             else
             {
-                if(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+                if(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
                     return CE_Failure;
 
                 if( eRWFlag == GF_Read )
@@ -1093,7 +1097,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iStartRow < 0 || (iStartRow+iLength) > this->nRows )
+    if( iStartRow < 0 ||
+        iLength >= INT_MAX - iStartRow ||
+        (iStartRow+iLength) > this->nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
@@ -1111,7 +1117,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
     {
         case GFT_Integer:
         {
-            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
                 return CE_Failure;
             GInt32 *panColData = (GInt32*)VSI_MALLOC2_VERBOSE(iLength, sizeof(GInt32));
             if( panColData == NULL )
@@ -1264,7 +1270,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iStartRow < 0 || (iStartRow+iLength) > this->nRows )
+    if( iStartRow < 0 ||
+        iLength >= INT_MAX - iStartRow ||
+        (iStartRow+iLength) > this->nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
@@ -1381,7 +1389,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         break;
         case GFT_String:
         {
-            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+            if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
                 return CE_Failure;
             char *pachColData = (char*)VSI_MALLOC2_VERBOSE(iLength, aoFields[iField].nElementSize);
             if( pachColData == NULL )
@@ -1429,11 +1437,11 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     for( int i = 0; i < this->nRows; i++ )
                     {
                         // seek to the old place
-                        CPL_IGNORE_RET_VAL(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (i*aoFields[iField].nElementSize), SEEK_SET ));
+                        CPL_IGNORE_RET_VAL(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(i)*aoFields[iField].nElementSize), SEEK_SET ));
                         // read in old data
                         CPL_IGNORE_RET_VAL(VSIFReadL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp ));
                         // seek to new place
-                        bool bOK = VSIFSeekL( hHFA->fp, nNewOffset + (i*nNewMaxChars), SEEK_SET ) == 0;
+                        bool bOK = VSIFSeekL( hHFA->fp, nNewOffset + (static_cast<vsi_l_offset>(i)*nNewMaxChars), SEEK_SET ) == 0;
                         // write data to new place
                         bOK &= VSIFWriteL(pszBuffer, aoFields[iField].nElementSize, 1, hHFA->fp) == 1;
                         // make sure there is a terminating null byte just to be safe
@@ -1466,7 +1474,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     }
 
                     // lastly seek to the right place in the new space ready to write
-                    if( VSIFSeekL( hHFA->fp, nNewOffset + (iStartRow*nNewMaxChars), SEEK_SET ) != 0 )
+                    if( VSIFSeekL( hHFA->fp, nNewOffset + (static_cast<vsi_l_offset>(iStartRow)*nNewMaxChars), SEEK_SET ) != 0 )
                     {
                         VSIFree(pachColData);
                         return CE_Failure;
@@ -1518,7 +1526,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
             padfData[i] = pnData[i] / 255.0;
     }
 
-    if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+    if( VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
     {
         CPLFree(padfData);
         return CE_Failure;
@@ -1730,7 +1738,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
                                 GDALRATFieldType eFieldType, 
                                 GDALRATFieldUsage eFieldUsage )
 {
-    if( this->eAccess == GA_ReadOnly )
+    if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
             "Dataset not open in update mode");
@@ -1738,7 +1746,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     }
 
     // do we have a descriptor table already?
-    if( this->poDT == NULL || !EQUAL(this->poDT->GetType(),"Edsc_Table") )
+    if( poDT == NULL || !EQUAL(poDT->GetType(),"Edsc_Table") )
         CreateDT();
 
     int bConvertColors = FALSE;
@@ -1790,9 +1798,9 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     HFAEntry *poColumn = poDT->GetNamedChild(pszFieldName);
 
     if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
-        poColumn = new HFAEntry( this->hHFA->papoBand[this->nBand-1]->psInfo,
+        poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                      pszFieldName, "Edsc_Column",
-                                     this->poDT );
+                                     poDT );
 
     poColumn->SetIntField( "numRows", this->nRows );
     int nElementSize = 0;
@@ -1860,9 +1868,9 @@ CPLErr HFARasterAttributeTable::SetLinearBinning( double dfRow0MinIn, double dfB
     /* we should have an Edsc_BinFunction */
     HFAEntry *poBinFunction = this->poDT->GetNamedChild( "#Bin_Function#" );
     if( poBinFunction == NULL || !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
-        poBinFunction = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
-                                      "#Bin_Function#", "Edsc_BinFunction",
-                                      this->poDT );
+        poBinFunction = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
+                                       "#Bin_Function#", "Edsc_BinFunction",
+                                       poDT );
 
     // Because of the BaseData we have to hardcode the size. 
     poBinFunction->MakeData( 30 );
@@ -1896,7 +1904,8 @@ int HFARasterAttributeTable::GetLinearBinning( double *pdfRow0Min, double *pdfBi
 
 CPLXMLNode *HFARasterAttributeTable::Serialize() const
 {
-    if( ( GetRowCount() * GetColumnCount() ) > RAT_MAX_ELEM_FOR_CLONE )
+    if( GetRowCount() != 0 &&
+        GetColumnCount() > RAT_MAX_ELEM_FOR_CLONE / GetRowCount() )
         return NULL;
 
     return GDALRasterAttributeTable::Serialize();
@@ -2259,10 +2268,12 @@ void HFARasterBand::ReadHistogramMetadata()
     HFAEntry *poBinEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.#Bin_Function840#" );
 
     if( poBinEntry != NULL
-        && EQUAL(poBinEntry->GetType(),"Edsc_BinFunction840") 
-        && EQUAL(poBinEntry->GetStringField( "binFunction.type.string" ),
-                 "BFUnique") )
-        padfBinValues = HFAReadBFUniqueBins( poBinEntry, nNumBins );
+        && EQUAL(poBinEntry->GetType(),"Edsc_BinFunction840")  )
+    {
+        const char* pszValue = poBinEntry->GetStringField( "binFunction.type.string" );
+        if( pszValue && EQUAL(pszValue,"BFUnique") )
+            padfBinValues = HFAReadBFUniqueBins( poBinEntry, nNumBins );
+    }
 
     if( padfBinValues )
     {
@@ -3020,7 +3031,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 /* -------------------------------------------------------------------- */
     HFAEntry * poDT = hHFA->papoBand[nBand-1]->poNode->GetNamedChild( "Descriptor_Table" );
     if( poDT == NULL || !EQUAL(poDT->GetType(),"Edsc_Table") )
-        poDT = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+        poDT = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                              "Descriptor_Table", "Edsc_Table",
                              hHFA->papoBand[nBand-1]->poNode );
 
@@ -3034,7 +3045,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         /* then it should have an Edsc_BinFunction */
         HFAEntry *poBinFunction = poDT->GetNamedChild( "#Bin_Function#" );
         if( poBinFunction == NULL || !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
-            poBinFunction = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+            poBinFunction = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                           "#Bin_Function#", "Edsc_BinFunction",
                                           poDT );
 
@@ -3088,7 +3099,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         HFAEntry *poColumn = poDT->GetNamedChild(pszName);
 
         if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
-	    poColumn = new HFAEntry( hHFA->papoBand[nBand-1]->psInfo,
+	    poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                      pszName, "Edsc_Column",
                                      poDT );
 
@@ -3106,7 +3117,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         if( ( poRAT->GetTypeOfCol(col) == GFT_Real ) || bIsColorCol || (poRAT->GetUsageOfCol(col) == GFU_PixelCount) )
         {
             int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
-                                            nRowCount * sizeof(double) );
+                                            (GUInt32)nRowCount * (GUInt32)sizeof(double) );
             poColumn->SetIntField( "columnDataPtr", nOffset );
             poColumn->SetStringField( "dataType", "real" );
 
@@ -3168,7 +3179,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         else if (poRAT->GetTypeOfCol(col) == GFT_Integer)
         {
             int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
-                                            nRowCount * sizeof(GInt32) );
+                                            (GUInt32)nRowCount * (GUInt32)sizeof(GInt32) );
             poColumn->SetIntField( "columnDataPtr", nOffset );
             poColumn->SetStringField( "dataType", "integer" );
 
@@ -4213,7 +4224,8 @@ void ClearSR(HFAHandle hHFA)
 static int ESRIToUSGSZone( int nESRIZone )
 
 {
-
+    if( nESRIZone == INT_MIN )
+        return 0;
     if( nESRIZone < 0 )
         return ABS(nESRIZone);
 
@@ -6038,14 +6050,13 @@ void GDALRegister_HFA()
     if( GDALGetDriverByName( "HFA" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "HFA" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Erdas Imagine Images (.img)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_hfa.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hfa.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CFloat32 CFloat64" );

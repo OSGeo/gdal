@@ -205,20 +205,11 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         return NULL;
     }
 
-    OGRGeoJSONWriteLayer* poLayer
-        = new OGRGeoJSONWriteLayer( pszNameIn, eGType, papszOptions, this );
-
-/* -------------------------------------------------------------------- */
-/*      Add layer to data source layer list.                            */
-/* -------------------------------------------------------------------- */
-    CPLAssert(papoLayers_ == NULL);
-    papoLayersWriter_ = (OGRGeoJSONWriteLayer **)
-        CPLRealloc( papoLayers_,  sizeof(OGRGeoJSONWriteLayer*) * (nLayers_ + 1) );
-
-    papoLayersWriter_[nLayers_++] = poLayer;
-
     VSIFPrintfL( fpOut_, "{\n\"type\": \"FeatureCollection\",\n" );
-    
+
+    bool bWriteFC_BBOX =
+        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE")));
+
     const char* pszNativeData = CSLFetchNameValue(papszOptions, "NATIVE_DATA");
     const char* pszNativeMediaType = CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
     bool bWriteCRSIfWGS84 = true;
@@ -237,8 +228,14 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             json_object_object_foreachC(poObj, it)
             {
                 if( strcmp(it.key, "type") == 0 ||
-                    strcmp(it.key, "features") == 0 )
+                    strcmp(it.key, "features") == 0  )
                 {
+                    continue;
+                }
+                if( strcmp(it.key, "bbox") == 0 )
+                {
+                    if( CSLFetchNameValue(papszOptions, "WRITE_BBOX") == NULL )
+                        bWriteFC_BBOX = true;
                     continue;
                 }
                 if( strcmp(it.key, "crs") == 0 )
@@ -287,7 +284,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         }
     }
 
-    if (bFpOutputIsSeekable_)
+    if (bFpOutputIsSeekable_ && bWriteFC_BBOX)
     {
         nBBOXInsertLocation_ = (int) VSIFTellL( fpOut_ );
 
@@ -298,6 +295,18 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
     }
 
     VSIFPrintfL( fpOut_, "\"features\": [\n" );
+
+    OGRGeoJSONWriteLayer* poLayer
+        = new OGRGeoJSONWriteLayer( pszNameIn, eGType, papszOptions, bWriteFC_BBOX, this );
+
+/* -------------------------------------------------------------------- */
+/*      Add layer to data source layer list.                            */
+/* -------------------------------------------------------------------- */
+    CPLAssert(papoLayers_ == NULL);
+    papoLayersWriter_ = (OGRGeoJSONWriteLayer **)
+        CPLRealloc( papoLayers_,  sizeof(OGRGeoJSONWriteLayer*) * (nLayers_ + 1) );
+
+    papoLayersWriter_[nLayers_++] = poLayer;
 
     return poLayer;
 }
@@ -434,7 +443,7 @@ int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo )
     pszName_ = CPLStrdup( poOpenInfo->pszFilename );
 
     CPLAssert( NULL != pszGeoData_ );
-    
+
     if( poOpenInfo->eAccess == GA_Update )
     {
         VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb+");
@@ -584,7 +593,8 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
                 json_object* poExceededTransferLimit =
                     json_object_object_get(poObj, "exceededTransferLimit");
                 if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
-                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
+                    bOtherPages_ = CPL_TO_BOOL(
+                        json_object_get_boolean(poExceededTransferLimit) );
             }
             reader.ReadLayers( this );
         }
@@ -631,6 +641,10 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
     reader.SetStoreNativeData(
         CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptionsIn, "NATIVE_DATA", bDefaultNativeData)));
 
+    reader.SetArrayAsString(
+        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "ARRAY_AS_STRING",
+                CPLGetConfigOption("OGR_GEOJSON_ARRAY_AS_STRING", "NO")))));
+
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */
 /* -------------------------------------------------------------------- */
@@ -646,7 +660,8 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
                 json_object* poExceededTransferLimit =
                     json_object_object_get(poProperties, "exceededTransferLimit");
                 if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
-                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
+                  bOtherPages_ = CPL_TO_BOOL(
+                      json_object_get_boolean(poExceededTransferLimit) );
             }
         }
 

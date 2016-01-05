@@ -229,7 +229,7 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
         ret=papszTokens[j];  // The target string
         bool matches=true;
 
-        for (int k=0;k<keycount;k++)
+        for (int k=0;k<keycount && keys != NULL;k++)
         {
             const char *key=keys[k];
             int sub_number=CSLPartialFindString(substs,key);

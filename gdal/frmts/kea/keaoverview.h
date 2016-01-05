@@ -32,9 +32,6 @@
 #define KEAOVERVIEW_H
 
 #include "cpl_port.h"
-#if defined(USE_GCC_VISIBILITY_FLAG) && !defined(DllExport)
-#define DllExport CPL_DLL
-#endif
 #include "keaband.h"
 
 // overview class. Derives from our band class

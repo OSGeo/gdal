@@ -107,7 +107,7 @@ int SDTS_CATD::Read( const char * pszFilename )
     if( !oCATDFile.Open( pszFilename ) )
         return FALSE;
 
-    CPLErrorReset();  // clear any ADRG "unrecognised data_struct_code" errors
+    CPLErrorReset();  // Clear any ADRG "unrecognized data_struct_code" errors.
 
 /* -------------------------------------------------------------------- */
 /*      Does this file have a CATD field?  If not, it isn't an SDTS     */

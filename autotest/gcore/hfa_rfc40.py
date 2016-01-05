@@ -206,7 +206,7 @@ def ReadAndCheckValues(fname, numrows):
     if not (data.astype(numpy.double) == DOUBLE_DATA).all():
         raise HFATestError("string as int column does not match")
 
-    #print('suceeded reading')
+    # print('succeeded reading')
     ds = None
 
     return 'success'
@@ -371,7 +371,7 @@ def CheckClone(fname):
     rat = band.GetDefaultRAT()
 
     cloned = rat.Clone()
-    
+
     if cloned.GetValueAsInt(0, 0) != 197:
         raise HFATestError("Cloned info wrong int")
     if cloned.GetValueAsDouble(5, 1) != 0.92:

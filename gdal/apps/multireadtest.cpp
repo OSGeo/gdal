@@ -87,7 +87,7 @@ int main( int argc, char ** argv )
             pszFilename = argv[iArg];
         else
         {
-            printf( "Unrecognised argument: %s\n", argv[iArg] );
+            printf( "Unrecognized argument: %s\n", argv[iArg] );
             Usage();
         }
     }

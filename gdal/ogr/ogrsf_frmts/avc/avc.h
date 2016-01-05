@@ -483,7 +483,7 @@ typedef struct AVCE00GenInfo_t
 {
     char        *pszBuf;
     int         nBufSize;
-    
+
     int         nPrecision;     /* AVC_SINGLE/DOUBLE_PREC       */
     int         iCurItem;
     int         numItems;
@@ -563,7 +563,7 @@ typedef struct AVCE00ReadInfo_t
     AVCCoverType eCoverType;
 
     /* pasSections is built when the coverage is opened and describes
-     * the squeleton of the E00 file.
+     * the skeleton of the E00 file.
      */
     AVCE00Section *pasSections;
     int            numSections;

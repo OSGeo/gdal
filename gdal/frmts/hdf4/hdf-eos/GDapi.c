@@ -20,7 +20,7 @@ REVISIONS:
 
 Aug 31, 1999  Abe Taaheri    Changed memory allocation for utility strings to
                              the size of UTLSTR_MAX_SIZE.
-			     Added error check for memory unavailibilty in
+			     Added error check for memory unavailability in
 			     several functions.
 			     Added check for NULL metabuf returned from
 			     EHmeta... functions. NULL pointer returned from
@@ -567,7 +567,7 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 |                                                                             |
 |  INPUTS:                                                                    |
 |  fid            int32               HDF-EOS file id                         |
-|  gridname       char                grid sructure name                      |
+|  gridname       char                grid structure name                     |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -601,7 +601,7 @@ GDattach(int32 fid, char *gridname)
     int32           gridID = -1;/* HDF-EOS grid ID */
     int32          *tags;	/* Pnt to Vgroup object tags array */
     int32          *refs;	/* Pnt to Vgroup object refs array */
-    int32           dum;	/* dummy varible */
+    int32           dum;	/* dummy variable */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           nObjects;	/* # of objects in Vgroup */
     int32           nSDS;	/* SDS counter */
@@ -6489,7 +6489,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 		    function cproj.c of GCTP) */
 		else {
 		  /* if projection is BCEA normalize x and y by cell size and
-		     measure it from the uperleft corner of the grid */
+		     measure it from the upperleft corner of the grid */
 		  
 		  /* Compute scaled distance to point from origin */
 		  /* -------------------------------------------- */
@@ -9764,8 +9764,8 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     float64         upleftpt[2];/* Upper left pt coordinates */
     float64         lowrightpt[2];	/* Lower right pt coordinates */
     float64         projparm[16];	/* Projection parameters */
-    float64         xVal;	/* "Exact" x location of interpolated point */
-    float64         yVal;	/* "Exact" y location of interpolated point */
+    float64         xVal = 0.0;	/* "Exact" x location of interpolated point */
+    float64         yVal = 0.0;	/* "Exact" y location of interpolated point */
     float64         tNum = 0.0;	/* Interpolation numerator value 1 */
     float64         uNum = 0.0;	/* Interpolation numerator value 2 */
 

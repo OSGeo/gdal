@@ -7,20 +7,20 @@
 # Author:   Andrey Kiselev, dron@remotesensing.org
 #
 # See also: gdrivers/envi.py for a driver focused on coordinate system support.
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Andrey Kiselev <dron@remotesensing.org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -31,7 +31,26 @@ import sys
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal
 import gdaltest
+
+###############################################################################
+# Test GDAL_READDIR_LIMIT_ON_OPEN
+
+def envi_1():
+
+    gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', '1')
+
+    ds = gdal.Open( 'data/utmsmall.raw' )
+    filelist = ds.GetFileList()
+
+    gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', None)
+
+    if len(filelist) != 2:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -49,12 +68,15 @@ init_list = [ \
 #    ('cfloat32.raw', 1, 5028, None),
 #    ('cfloat64.raw', 1, 5028, None)]
 
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'ENVI', item[0], item[1], item[2] )
     if ut is None:
         print( 'ENVI tests skipped' )
         sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
+
+gdaltest_list.append( envi_1 )
 
 if __name__ == '__main__':
 

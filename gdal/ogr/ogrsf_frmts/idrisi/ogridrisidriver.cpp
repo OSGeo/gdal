@@ -27,23 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_idrisi.h"
 #include "cpl_conv.h"
+#include "ogr_idrisi.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
 // g++ ogr/ogrsf_frmts/idrisi/*.cpp -Wall -g -fPIC -shared -o ogr_Idrisi.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/idrisi -Iogr/ogrsf_frmts -Ifrmts/idrisi
 
-extern "C" void RegisterOGRIdrisi();
-
 /************************************************************************/
 /*                       ~OGRIdrisiDriver()                         */
 /************************************************************************/
 
-OGRIdrisiDriver::~OGRIdrisiDriver()
-
-{
-}
+OGRIdrisiDriver::~OGRIdrisiDriver() {}
 
 /************************************************************************/
 /*                              GetName()                               */
@@ -73,7 +69,7 @@ OGRDataSource *OGRIdrisiDriver::Open( const char * pszFilename, int bUpdate )
     if ( !EQUAL(CPLGetExtension(pszFilename), "vct") )
         return NULL;
 
-    OGRIdrisiDataSource   *poDS = new OGRIdrisiDataSource();
+    OGRIdrisiDataSource *poDS = new OGRIdrisiDataSource();
 
     if( !poDS->Open( pszFilename ) )
     {
@@ -88,7 +84,7 @@ OGRDataSource *OGRIdrisiDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIdrisiDriver::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRIdrisiDriver::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -101,8 +97,7 @@ void RegisterOGRIdrisi()
 
 {
     OGRSFDriver* poDriver = new OGRIdrisiDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Idrisi Vector (.vct)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Idrisi Vector (.vct)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vct" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);

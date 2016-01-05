@@ -39,18 +39,14 @@ CPL_CVSID("$Id: ogrdxf_diskio.cpp 20278 2010-08-14 15:11:01Z warmerdam $");
 /*                            OGRDXFReader()                            */
 /************************************************************************/
 
-OGRDXFReader::OGRDXFReader()
-
-{
-    fp = NULL;
-
-    iSrcBufferOffset = 0;
-    nSrcBufferBytes = 0;
-    iSrcBufferFileOffset = 0;
-
-    nLastValueSize = 0;
-    nLineNumber = 0;
-}
+OGRDXFReader::OGRDXFReader() :
+    fp(NULL),
+    iSrcBufferOffset(0),
+    nSrcBufferBytes(0),
+    iSrcBufferFileOffset(0),
+    nLastValueSize(0),
+    nLineNumber(0)
+{}
 
 /************************************************************************/
 /*                           ~OGRDXFReader()                            */
@@ -68,7 +64,7 @@ OGRDXFReader::~OGRDXFReader()
 void OGRDXFReader::Initialize( VSILFILE *fpIn )
 
 {
-    this->fp = fpIn;
+    fp = fpIn;
 }
 
 /************************************************************************/

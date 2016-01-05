@@ -60,16 +60,16 @@ def transformgeoloc_1():
                                      [-116.5, -115.5]])
     lat_array = gdalnumeric.asarray([[45.0, 45.5],
                                      [44.0, 44.5]])
-    
+
     geoloc_ds.GetRasterBand(1).WriteArray(lon_array)
     geoloc_ds.GetRasterBand(2).WriteArray(lat_array)
     # Z left as default zero.
 
     # Create a wgs84 to utm transformer.
-    
+
     wgs84_wkt = osr.GetUserInputAsWKT('WGS84')
     utm_wkt = osr.GetUserInputAsWKT('+proj=utm +zone=11 +datum=WGS84')
-    
+
     ll_utm_transformer = gdal.Transformer(None, None,
                                           ['SRC_SRS='+wgs84_wkt,
                                            'DST_SRS='+utm_wkt] )

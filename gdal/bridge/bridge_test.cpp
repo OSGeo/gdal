@@ -132,7 +132,7 @@ int main( int argc, char ** argv )
         for( i = 0; i < GDALGetGCPCount(hDataset); i++ )
         {
             const GDAL_GCP	*psGCP;
-            
+
             psGCP = GDALGetGCPs( hDataset ) + i;
 
             printf( "GCP[%3d]: Id=%s, Info=%s\n"
@@ -205,7 +205,7 @@ int main( int argc, char ** argv )
         dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
         dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
         printf( "  Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax, bGotMax);
-        
+
         if( bComputeMinMax )
         {
             GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
@@ -279,7 +279,7 @@ int main( int argc, char ** argv )
     }
 
     GDALClose( hDataset );
-    
+
     exit( 0 );
 }
 
@@ -297,9 +297,9 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     const char  *pszProjection;
     double	adfGeoTransform[6];
     OGRCoordinateTransformationH hTransform = NULL;
-        
+
     printf( "%-11s ", corner_name );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Transform the point into georeferenced coordinates.             */
 /* -------------------------------------------------------------------- */
@@ -359,14 +359,14 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     if( hTransform != NULL 
         && OCTTransform(hTransform,1,&dfGeoX,&dfGeoY,NULL) )
     {
-        
+
         printf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
         printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
     }
 
     if( hTransform != NULL )
         OCTDestroyCoordinateTransformation( hTransform );
-    
+
     printf( "\n" );
 
     return TRUE;

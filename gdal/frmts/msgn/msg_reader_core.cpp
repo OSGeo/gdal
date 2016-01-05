@@ -202,12 +202,12 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     for (i=0; i < 5; i++) {
         PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification[i];
         if (STARTS_WITH(hdi->name, "15Header")) {
-            sscanf(hdi->size, "%d", &_f_header_size);
-            sscanf(hdi->address, "%d", &_f_header_offset);
+            sscanf(hdi->size, "%u", &_f_header_size);
+            sscanf(hdi->address, "%u", &_f_header_offset);
         } else
             if (STARTS_WITH(hdi->name, "15Data")) {
-            sscanf(hdi->size, "%d", &_f_data_size);
-            sscanf(hdi->address, "%d", &_f_data_offset);
+            sscanf(hdi->size, "%u", &_f_data_size);
+            sscanf(hdi->address, "%u", &_f_data_offset);
         }
     }
 #ifdef DEBUG
@@ -216,14 +216,14 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 #endif // DEBUG
 
     unsigned int lines;
-    sscanf(_sec_header.northLineSelectedRectangle.value, "%d", &_lines);
-    sscanf(_sec_header.southLineSelectedRectangle.value, "%d", &lines);
+    sscanf(_sec_header.northLineSelectedRectangle.value, "%u", &_lines);
+    sscanf(_sec_header.southLineSelectedRectangle.value, "%u", &lines);
     _line_start = lines;
     _lines -= lines - 1;
 
     unsigned int cols;
-    sscanf(_sec_header.westColumnSelectedRectangle.value, "%d", &_columns);
-    sscanf(_sec_header.eastColumnSelectedRectangle.value, "%d", &cols);
+    sscanf(_sec_header.westColumnSelectedRectangle.value, "%u", &_columns);
+    sscanf(_sec_header.eastColumnSelectedRectangle.value, "%u", &cols);
     _col_start = cols;
     _columns -= cols - 1;
 
@@ -246,11 +246,11 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 #endif // DEBUG
 
     // extract time fields, assume that SNIT is the correct field:
-    sscanf(_main_header.snit.value +  0, "%04d", &_year);
-    sscanf(_main_header.snit.value +  4, "%02d", &_month);
-    sscanf(_main_header.snit.value +  6, "%02d", &_day);
-    sscanf(_main_header.snit.value +  8, "%02d", &_hour);
-    sscanf(_main_header.snit.value + 10, "%02d", &_minute);
+    sscanf(_main_header.snit.value +  0, "%04u", &_year);
+    sscanf(_main_header.snit.value +  4, "%02u", &_month);
+    sscanf(_main_header.snit.value +  6, "%02u", &_day);
+    sscanf(_main_header.snit.value +  8, "%02u", &_hour);
+    sscanf(_main_header.snit.value + 10, "%02u", &_minute);
 
     // read radiometric block
     RADIOMETRIC_PROCCESSING_RECORD rad;
@@ -324,12 +324,12 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
             band_count--;
 
             if (visir_line.channelId != 12) { // not the HRV channel
-                _visir_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
-                _visir_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
+                _visir_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
+                _visir_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing += _visir_packet_size;
             } else {
-                _hrv_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
-                _hrv_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
+                _hrv_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
+                _hrv_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing +=  3*_hrv_packet_size;
                 CPL_IGNORE_RET_VAL(VSIFSeek(fin, 2*gp_header.packetLength, SEEK_CUR ));
             }

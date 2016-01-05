@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  NAS Reading Driver testing.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -287,7 +287,7 @@ def ogr_nas_5():
         return 'fail'
 
     # Check the delete operation created for the replace
-    
+
     del_lyr = ds.GetLayerByName( 'Delete' )
 
     if del_lyr.GetFeatureCount() != 1:
@@ -320,7 +320,7 @@ def ogr_nas_5():
     del_lyr = None
 
     # Check also the feature created by the Replace
-    
+
     lyr = ds.GetLayerByName( 'AX_Flurstueck' )
 
     if lyr.GetFeatureCount() != 1:
@@ -339,7 +339,7 @@ def ogr_nas_5():
         return 'fail'
 
     lyr = None
-    
+
     ds = None
 
     try:

@@ -273,7 +273,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
         }
         pszStr ++;
         SkipSpaces(pszStr);
-        CPLString osValue;
+        CPLString l_osValue;
         int nParenthesisIndent = 0;
         char chLiteralQuote = '\0';
         while( *pszStr )
@@ -282,19 +282,19 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
             {
                 if( *pszStr == chLiteralQuote )
                     chLiteralQuote = '\0';
-                osValue += *pszStr;
+                l_osValue += *pszStr;
                 pszStr++;
             }
             else if( *pszStr == '\'' || *pszStr == '"' )
             {
                 chLiteralQuote = *pszStr;
-                osValue += *pszStr;
+                l_osValue += *pszStr;
                 pszStr++;
             }
             else if( *pszStr == '(' )
             {
                 nParenthesisIndent ++;
-                osValue += *pszStr;
+                l_osValue += *pszStr;
                 pszStr++;
             }
             else if( *pszStr == ')' )
@@ -305,16 +305,16 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
                     pszStr++;
                     GDALGMLJP2Expr* poExpr = new GDALGMLJP2Expr();
                     poExpr->eType = GDALGMLJP2Expr_XPATH;
-                    poExpr->osValue = osValue;
-                    //CPLDebug("GMLJP2", "XPath expression '%s'", osValue.c_str());
+                    poExpr->osValue = l_osValue;
+                    //CPLDebug("GMLJP2", "XPath expression '%s'", l_osValue.c_str());
                     return poExpr;
                 }
-                osValue += *pszStr;
+                l_osValue += *pszStr;
                 pszStr++;
             }
             else
             {
-                osValue += *pszStr;
+                l_osValue += *pszStr;
                 pszStr++;
             }
         }
@@ -325,15 +325,15 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
     else if( pszStr[0] == '\'' )
     {
         pszStr ++;
-        CPLString osValue;
+        CPLString l_osValue;
         while( *pszStr )
         {
             if( *pszStr == '\\' )
             {
                 if( pszStr[1] == '\\' )
-                    osValue += "\\";
+                    l_osValue += "\\";
                 else if( pszStr[1] == '\'' )
-                    osValue += "\'";
+                    l_osValue += "\'";
                 else
                 {
                     ReportError(pszOriStr, pszStr);
@@ -346,12 +346,12 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
                 pszStr ++;
                 GDALGMLJP2Expr* poExpr = new GDALGMLJP2Expr();
                 poExpr->eType = GDALGMLJP2Expr_STRING_LITERAL;
-                poExpr->osValue = osValue;
+                poExpr->osValue = l_osValue;
                 return poExpr;
             }
             else
             {
-                osValue += *pszStr;
+                l_osValue += *pszStr;
                 pszStr ++;
             }
         }
@@ -640,7 +640,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
             oExpr.eType = GDALGMLJP2Expr_STRING_LITERAL;
             return oExpr;
         }
-        
+
         case GDALGMLJP2Expr_UUID:
         {
             CPLString osRet;
@@ -663,7 +663,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
                 osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
             return GDALGMLJP2Expr(osRet);
         }
-        
+
         case GDALGMLJP2Expr_STRING_LENGTH:
         {
             GDALGMLJP2Expr oExpr(CPLSPrintf("%d",
@@ -912,7 +912,7 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
     xmlXPathRegisterFunc(pXPathCtx, (const xmlChar *)"uuid", GDALGMLJP2XPathUUID);
 
     pXPathCtx->error = GDALGMLJP2XPathErrorHandler;
-    
+
     GDALGMLJP2RegisterNamespaces(pXPathCtx, xmlDocGetRootElement(pDoc));
 
     CPLString osXMLRes = GDALGMLJP2EvalExpr(osTemplate, pXPathCtx, pDoc);

@@ -86,7 +86,7 @@ class OGRGMLLayer : public OGRLayer
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
@@ -105,9 +105,9 @@ class OGRGMLDataSource : public OGRDataSource
 {
     OGRGMLLayer     **papoLayers;
     int                 nLayers;
-    
+
     char                *pszName;
-    
+
     OGRGMLLayer         *TranslateGMLSchema( GMLFeatureClass * );
 
     char               **papszCreateOptions;
@@ -119,7 +119,7 @@ class OGRGMLDataSource : public OGRDataSource
     OGREnvelope3D       sBoundingRect;
     bool                bBBOX3D;
     int                 nBoundedByLocation;
-    
+
     int                 nSchemaInsertLocation;
     bool                bIsOutputGML3;
     bool                bIsOutputGML3Deegree; /* if TRUE, then bIsOutputGML3 is also TRUE */
@@ -152,15 +152,15 @@ class OGRGMLDataSource : public OGRDataSource
     ReadMode            eReadMode;
     GMLFeature         *poStoredGMLFeature;
     OGRGMLLayer        *poLastReadLayer;
-    
+
     bool                bEmptyAsNull;
 
     void                FindAndParseTopElements(VSILFILE* fp);
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
-    
+
     void                BuildJointClassFromXSD();
     void                BuildJointClassFromScannedSchema();
-    
+
     void                WriteTopElements();
 
   public:
@@ -217,7 +217,7 @@ class OGRGMLDataSource : public OGRDataSource
                                             OGRGeometry *poSpatialFilter,
                                             const char *pszDialect );
     virtual void                ReleaseResultSet( OGRLayer * poResultsSet );
-    
+
     static bool          CheckHeader(const char* pszStr);
 };
 

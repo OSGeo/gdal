@@ -27,18 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_XYZ(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -60,8 +57,8 @@ class XYZDataset : public GDALPamDataset
     int         nYIndex;
     int         nZIndex;
     int         nMinTokens;
-    int         nLineNum;     /* any line */
-    int         nDataLineNum; /* line with values (header line and empty lines ignored) */
+    GIntBig     nLineNum;     /* any line */
+    GIntBig     nDataLineNum; /* line with values (header line and empty lines ignored) */
     double      adfGeoTransform[6];
     int         bSameNumberOfValuesPerLine;
     double      dfMinZ;
@@ -146,7 +143,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     // Only valid if bSameNumberOfValuesPerLine.
-    const int nLineInFile = nBlockYOff * nBlockXSize;
+    const GIntBig nLineInFile = static_cast<GIntBig>(nBlockYOff) * nBlockXSize;
     if ( (poGDS->bSameNumberOfValuesPerLine && poGDS->nDataLineNum > nLineInFile) ||
          (!poGDS->bSameNumberOfValuesPerLine && (nLastYOff == -1 || nBlockYOff == 0)) )
     {
@@ -248,7 +245,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 if( poGDS->bSameNumberOfValuesPerLine )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot read line %d", poGDS->nLineNum + 1);
+                             "Cannot read line " CPL_FRMT_GIB, poGDS->nLineNum + 1);
                     return CE_Failure;
                 }
                 else
@@ -320,7 +317,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                         if( idx < 0 )
                         {
                             CPLError( CE_Failure, CPLE_AppDefined,
-                                      "At line %d, found %f instead of %f "
+                                      "At line " CPL_FRMT_GIB", found %f instead of %f "
                                       "for nBlockYOff = %d",
                                       poGDS->nLineNum, dfY, dfExpectedY,
                                       nBlockYOff);
@@ -376,7 +373,13 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     if( poGDS->bSameNumberOfValuesPerLine ) {
-        CPLAssert(poGDS->nDataLineNum == (nBlockYOff + 1) * nBlockXSize);
+        if( poGDS->nDataLineNum != static_cast<GIntBig>(nBlockYOff + 1) * nBlockXSize )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "The file has not the same number of values per "
+                     "line as initialy thought. It must be somehow corrupted");
+            return CE_Failure;
+        }
     }
 
     nLastYOff = nBlockYOff;
@@ -445,7 +448,7 @@ XYZDataset::XYZDataset() :
     nZIndex(-1),
     nMinTokens(0),
     nLineNum(0),
-    nDataLineNum(INT_MAX),
+    nDataLineNum(((GIntBig)0x7FFFFFFF) << 32 | 0xFFFFFFFF),
     bSameNumberOfValuesPerLine(TRUE),
     dfMinZ(0),
     dfMaxZ(0)
@@ -720,8 +723,8 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Parse data lines                                                */
 /* -------------------------------------------------------------------- */
 
-    int nLineNum = 0;
-    int nDataLineNum = 0;
+    GIntBig nLineNum = 0;
+    GIntBig nDataLineNum = 0;
     double dfX = 0, dfY = 0, dfZ = 0;
     double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
     double dfMinZ = 0, dfMaxZ = 0;
@@ -816,18 +819,25 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                             dfMinZ = dfZ;
                         else if( dfZ > dfMaxZ )
                             dfMaxZ = dfZ;
-                        int nZ = static_cast<int>( dfZ );
-                        if( static_cast<double>( nZ ) != dfZ )
+                        if( dfZ < INT_MIN || dfZ > INT_MAX )
                         {
                             eDT = GDT_Float32;
                         }
-                        else if ((eDT == GDT_Byte || eDT == GDT_Int16)
-                                 && (nZ < 0 || nZ > 255))
+                        else
                         {
-                            if (nZ < -32768 || nZ > 32767)
-                                eDT = GDT_Int32;
-                            else
-                                eDT = GDT_Int16;
+                            int nZ = static_cast<int>( dfZ );
+                            if( static_cast<double>( nZ ) != dfZ )
+                            {
+                                eDT = GDT_Float32;
+                            }
+                            else if ((eDT == GDT_Byte || eDT == GDT_Int16)
+                                     && (nZ < 0 || nZ > 255))
+                            {
+                                if (nZ < -32768 || nZ > 32767)
+                                    eDT = GDT_Int32;
+                                else
+                                    eDT = GDT_Int16;
+                            }
                         }
                     }
                 }
@@ -845,7 +855,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         if (nCol < nMinTokens)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "At line %d, found %d tokens. Expected %d at least",
+                     "At line " CPL_FRMT_GIB ", found %d tokens. Expected %d at least",
                       nLineNum, nCol, nMinTokens);
             VSIFCloseL(fp);
             return NULL;
@@ -865,7 +875,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( dfStepX <= 0 )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                         "Ungridded dataset: At line %d, X spacing was %f. Expected >0 value",
+                         "Ungridded dataset: At line " CPL_FRMT_GIB ", X spacing was %f. Expected >0 value",
                          nLineNum, dfStepX);
                     VSIFCloseL(fp);
                     return NULL;
@@ -912,7 +922,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 else if( bStepYSign != bNewStepYSign )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                         "Ungridded dataset: At line %d, change of Y direction",
+                         "Ungridded dataset: At line " CPL_FRMT_GIB ", change of Y direction",
                          nLineNum);
                     VSIFCloseL(fp);
                     return NULL;
@@ -923,7 +933,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 else if( adfStepY[0] != dfStepY )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                        "Ungridded dataset: At line %d, too many stepY values", nLineNum);
+                        "Ungridded dataset: At line " CPL_FRMT_GIB ", too many stepY values", nLineNum);
                     VSIFCloseL(fp);
                     return NULL;
                 }
@@ -955,16 +965,23 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const double dfStepX = adfStepX[0];
     const double dfStepY = adfStepY[0] * bStepYSign;
-    const int nXSize = 1 + static_cast<int>((dfMaxX - dfMinX) / dfStepX + 0.5);
-    const int nYSize
-        = 1 + static_cast<int>((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
+    const double dfXSize = 1 + ((dfMaxX - dfMinX) / dfStepX + 0.5);
+    const double dfYSize = 1 + ((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
+    if( dfXSize <= 0 || dfXSize > INT_MAX || dfYSize <= 0 || dfYSize > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions");
+        VSIFCloseL(fp);
+        return NULL;
+    }
+    const int nXSize = static_cast<int>(dfXSize);
+    const int nYSize = static_cast<int>(dfYSize);
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("XYZ", "minx=%f maxx=%f stepx=%f", dfMinX, dfMaxX, dfStepX);
     CPLDebug("XYZ", "miny=%f maxy=%f stepy=%f", dfMinY, dfMaxY, dfStepY);
 #endif
 
-    if (nDataLineNum != nXSize * nYSize)
+    if (nDataLineNum != static_cast<GIntBig>(nXSize) * nYSize)
     {
         bSameNumberOfValuesPerLine = false;
     }
@@ -1231,7 +1248,7 @@ void GDALRegister_XYZ()
     if( GDALGetDriverByName( "XYZ" ) != NULL )
       return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "XYZ" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

@@ -94,7 +94,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         ContainGeomSpecialField(swq_expr_node* expr);
 
     void        InvalidateOrderByIndex();
-    
+
     int         MustEvaluateSpatialFilterOnGenSQL();
 
   public:

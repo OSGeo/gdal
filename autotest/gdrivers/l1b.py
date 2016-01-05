@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for L1B driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -39,7 +39,7 @@ import gdaltest
 
 
 ###############################################################################
-# 
+#
 class TestL1B:
     def __init__( self, downloadURL, fileName, checksum, download_size, gcpNumber ):
         self.downloadURL = downloadURL
@@ -65,7 +65,7 @@ class TestL1B:
         return 'success'
 
 ###############################################################################
-# 
+#
 def l1b_geoloc():
     try:
         os.stat('tmp/cache/n12gac8bit.l1b')
@@ -104,7 +104,7 @@ def l1b_geoloc():
     return 'success'
 
 ###############################################################################
-# 
+#
 def l1b_solar_zenith_angles_before_noaa_15():
     try:
         os.stat('tmp/cache/n12gac10bit.l1b')
@@ -133,7 +133,7 @@ def l1b_solar_zenith_angles_before_noaa_15():
     return 'success'
 
 ###############################################################################
-# 
+#
 def l1b_metadata_before_noaa_15():
     try:
         os.stat('tmp/cache/n12gac10bit.l1b')
@@ -163,7 +163,7 @@ def l1b_metadata_before_noaa_15():
     return 'success'
 
 ###############################################################################
-# 
+#
 def l1b_angles_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
@@ -202,7 +202,7 @@ def l1b_angles_after_noaa_15():
     return 'success'
 
 ###############################################################################
-# 
+#
 def l1b_clouds_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
@@ -231,7 +231,7 @@ def l1b_clouds_after_noaa_15():
     return 'success'
 
 ###############################################################################
-# 
+#
 def l1b_metadata_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
@@ -261,7 +261,7 @@ def l1b_metadata_after_noaa_15():
     return 'success'
 
 ###############################################################################
-# 
+#
 def l1b_little_endian():
 
     ds = gdal.Open('/vsizip/data/hrpt_little_endian.l1b.zip')

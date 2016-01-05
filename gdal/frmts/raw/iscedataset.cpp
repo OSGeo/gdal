@@ -27,13 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_ISCE(void);
-CPL_C_END
 
 static const char * const apszISCE2GDALDatatypes[] = {
     "BYTE:Byte",
@@ -496,7 +493,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ISCE domain       */
 /* -------------------------------------------------------------------- */
-    for (int i = 0; i < CSLCount( papszXmlProps ); i++)
+    for (int i = 0; papszXmlProps != NULL && papszXmlProps[i] != NULL; i++)
     {
         char **papszTokens;
         papszTokens = CSLTokenizeString2( papszXmlProps[i],
@@ -641,25 +638,23 @@ ISCERasterBand::ISCERasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
 /*                         GDALRegister_ISCE()                          */
 /************************************************************************/
 
-void GDALRegister_ISCE( void )
+void GDALRegister_ISCE()
 {
-    if ( !GDAL_CHECK_VERSION( "ISCE" ) )
+    if( !GDAL_CHECK_VERSION( "ISCE" ) )
         return;
 
-    if ( GDALGetDriverByName( "ISCE" ) != NULL )
+    if( GDALGetDriverByName( "ISCE" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ISCE" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "ISCE raster" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ISCE" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ISCE raster" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#ISCE" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 Int32 Int64 Float32"
-                                   " Float64 CInt16 CInt64 CFloat32 "
-                                   " CFloat64" );
+                               " Float64 CInt16 CInt64 CFloat32 "
+                               " CFloat64" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='SCHEME' type='string-select'>"

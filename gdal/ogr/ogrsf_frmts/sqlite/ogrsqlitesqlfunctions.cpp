@@ -62,7 +62,7 @@ class OGRSQLiteExtensionData
 
     OGRGeocodingSessionH         GetGeocodingSession() { return hGeocodingSession; }
     void                         SetGeocodingSession(OGRGeocodingSessionH hGeocodingSessionIn) { hGeocodingSession = hGeocodingSessionIn; }
-    
+
     void                         SetRegExpCache(void* hRegExpCacheIn) { hRegExpCache = hRegExpCacheIn; }
 };
 
@@ -94,7 +94,7 @@ OGRSQLiteExtensionData::~OGRSQLiteExtensionData()
         delete oIter->second;
 
     OGRSQLiteFreeRegExpCache(hRegExpCache);
-    
+
     OGRGeocodeDestroySession(hGeocodingSession);
 }
 
@@ -254,7 +254,7 @@ void OGR2SQLITE_ogr_deflate(sqlite3_context* pContext,
     {
         sqlite3_result_null (pContext);
     }
- 
+
     return;
 }
 
@@ -654,7 +654,7 @@ void OGR2SQLITE_ogr_GetConfigOption(sqlite3_context* pContext,
         sqlite3_result_null (pContext);
         return;
     }
-    
+
     const char* pszKey = (const char*)sqlite3_value_text(argv[0]);
     const char* pszVal = CPLGetConfigOption(pszKey, NULL);
     if( pszVal == NULL )
@@ -1129,10 +1129,10 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
     /* Check if spatialite is available */
     int rc = sqlite3_exec(hDB, "SELECT spatialite_version()", NULL, NULL, NULL);
-    
+
     /* Reset error flag */
     sqlite3_exec(hDB, "SELECT 1", NULL, NULL, NULL);
-    
+
     if( rc != SQLITE_OK &&
         CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES")) )
     {

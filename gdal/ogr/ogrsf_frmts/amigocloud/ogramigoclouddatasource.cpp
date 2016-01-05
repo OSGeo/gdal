@@ -39,21 +39,16 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename, const char* pszOp
 /*                        OGRAmigoCloudDataSource()                        */
 /************************************************************************/
 
-OGRAmigoCloudDataSource::OGRAmigoCloudDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-    pszProjetctId = NULL;
-
-    bReadWrite = FALSE;
-    bUseHTTPS = FALSE;
-
-    bMustCleanPersistant = FALSE;
-    bHasOGRMetadataFunction = -1;
-}
+OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
+    pszName(NULL),
+    pszProjetctId(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bReadWrite(FALSE),
+    bUseHTTPS(FALSE),
+    bMustCleanPersistant(FALSE),
+    bHasOGRMetadataFunction(-1)
+{}
 
 /************************************************************************/
 /*                       ~OGRAmigoCloudDataSource()                        */
@@ -168,7 +163,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
                                     CPLGetConfigOption("AMIGOCLOUD_API_KEY", ""));
 
     CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
-    
+
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
 
     OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
@@ -728,9 +723,9 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
+
     CPLDebug( "AMIGOCLOUD", "RunSQL Response:%s", psResult->pabyData );
-    
+
     json_tokener* jstok = NULL;
     json_object* poObj = NULL;
 

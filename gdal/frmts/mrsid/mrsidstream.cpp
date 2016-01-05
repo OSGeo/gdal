@@ -203,7 +203,7 @@ LT_STATUS LTIVSIStream::seek( lt_int64 nOffset, LTIOSeekDir nOrigin )
         case (LTIO_SEEK_DIR_BEG):
             nWhence = SEEK_SET;
             break;
-      
+
         case (LTIO_SEEK_DIR_CUR):
         {
             nWhence =  SEEK_CUR;
@@ -214,11 +214,11 @@ LT_STATUS LTIVSIStream::seek( lt_int64 nOffset, LTIOSeekDir nOrigin )
             }
             break;
         }
-      
+
         case (LTIO_SEEK_DIR_END):
             nWhence = SEEK_END;
             break;
-      
+
         default:
             return LT_STS_Failure;
     }

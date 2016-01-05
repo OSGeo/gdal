@@ -176,7 +176,7 @@ void swq_expr_node::PushSubExpression( swq_expr_node *child )
     nSubExprCount++;
     papoSubExpr = (swq_expr_node **) 
         CPLRealloc( papoSubExpr, sizeof(void*) * nSubExprCount );
-    
+
     papoSubExpr[nSubExprCount-1] = child;
 }
 
@@ -224,7 +224,7 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
         field_index = 
             swq_identify_field( table_name, string_value, poFieldList,
                                 &field_type, &table_index );
-        
+
         if( field_index < 0 )
         {
             if( table_name )
@@ -247,10 +247,10 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
             return SWQ_ERROR;
         }
     }
-    
+
     if( eNodeType == SNT_COLUMN )
         return field_type;
-    
+
 /* -------------------------------------------------------------------- */
 /*      We are dealing with an operation - fetch the definition.        */
 /* -------------------------------------------------------------------- */
@@ -348,7 +348,7 @@ void swq_expr_node::Dump( FILE * fp, int depth )
         papoSubExpr[i]->Dump( fp, depth+1 );
 }
 
-        
+
 /************************************************************************/
 /*                       QuoteIfNecessary()                             */
 /*                                                                      */
@@ -376,7 +376,7 @@ CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote
     {
         return Quote(osExpr, chQuote);
     }
-    
+
     return osExpr;
 }
 
@@ -441,7 +441,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         {
             osExpr = Quote( string_value );
         }
-        
+
         return CPLStrdup(osExpr);
     }
 
@@ -588,12 +588,12 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
         CPLAssert( nSubExprCount == 1 );
         osExpr.Printf( "NOT (%s)", apszSubExpr[0] );
         break;
-        
+
       case SWQ_ISNULL:
         CPLAssert( nSubExprCount == 1 );
         osExpr.Printf( "%s IS NULL", apszSubExpr[0] );
         break;
-        
+
       case SWQ_IN:
         osExpr.Printf( "%s IN (", apszSubExpr[0] );
         for( int i = 1; i < nSubExprCount; i++ )
@@ -660,7 +660,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
         osExpr += ")";
         break;
     }
-    
+
     return osExpr;
 }
 
@@ -815,7 +815,7 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
     swq_expr_node* poExpr0 = papoSubExpr[0];
     swq_expr_node* poExpr1 = papoSubExpr[1];
     swq_expr_node* poExpr2 = papoSubExpr[2];
-    
+
     nSubExprCount = 2;
     nOperation = SWQ_AND;
     papoSubExpr[0] = new swq_expr_node(SWQ_GE);

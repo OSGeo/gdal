@@ -30,9 +30,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_srs_api.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -304,7 +305,7 @@ GDALDataset *NTv2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Are we targetting a particular grid?                            */
+/*      Are we targeting a particular grid?                             */
 /* -------------------------------------------------------------------- */
     CPLString osFilename;
     int iTargetGrid = -1;
@@ -845,7 +846,7 @@ void GDALRegister_NTv2()
     if( GDALGetDriverByName( "NTv2" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "NTv2" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

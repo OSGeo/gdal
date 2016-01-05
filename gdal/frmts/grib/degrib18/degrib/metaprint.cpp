@@ -440,7 +440,7 @@ static void PrintSect4_Category (grib_MetaData *meta)
  *
  * HISTORY
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.
- *   2/2003 AAT: Adjusted the interpretation of the scale vactor and value.
+ *   2/2003 AAT: Adjusted the interpretation of the scale vector and value.
  *          to be consistent with what Matt found from email conversations
  *          with WMO GRIB2 experts.
  *   2/2003 AAT: Switched from: value / pow (10, factor)
@@ -946,7 +946,7 @@ static int PrintPDS2 (grib_MetaData *meta, sChar f_unit)
  *   4/2003 Arthur Taylor (MDL/RSIS): Created.
  *  10/2005 AAT: Adjusted to take center, subcenter as we moved that out of
  *               the pdsG1 type.
- *  11/2005 AAT: Added f_utit variable.
+ *  11/2005 AAT: Added f_unit variable.
  *
  * NOTES
  *****************************************************************************

@@ -3735,15 +3735,16 @@ int FGdbLayer::CreateRealCopy()
     char* apszDrivers[2];
     apszDrivers[0] = (char*) "OpenFileGDB";
     apszDrivers[1] = NULL;
-    const char* pszSystemCatalog = CPLFormFilename(m_pDS->GetFSName(), "a00000001.gdbtable", NULL);
+    const char* pszSystemCatalog
+        = CPLFormFilename(m_pDS->GetFSName(), "a00000001.gdbtable", NULL);
     GDALDataset* poOpenFileGDBDS = (GDALDataset*)
         GDALOpenEx(pszSystemCatalog, GDAL_OF_VECTOR,
                     apszDrivers, NULL, NULL);
     if( poOpenFileGDBDS == NULL || poOpenFileGDBDS->GetLayer(0) == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot open %s with OpenFileGDB driver. Shouldn't happen.",
-                    pszSystemCatalog);
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot open %s with OpenFileGDB driver. Should not happen.",
+                  pszSystemCatalog);
         GDALClose(poOpenFileGDBDS);
         return FALSE;
     }
@@ -3757,8 +3758,9 @@ int FGdbLayer::CreateRealCopy()
     OGRFeature* poF = poLayer->GetNextFeature();
     if( poF == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find filename for layer %s",
-                    GetName());
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot find filename for layer %s",
+                  GetName());
         GDALClose(poOpenFileGDBDS);
         return FALSE;
     }

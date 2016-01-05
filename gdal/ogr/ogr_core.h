@@ -102,7 +102,7 @@ class CPL_DLL OGREnvelope
             MinY = MaxY = dfY;
         }
     }
-    
+
     void Intersect( OGREnvelope const& sOther ) {
         if(Intersects(sOther))
         {
@@ -129,7 +129,7 @@ class CPL_DLL OGREnvelope
             MaxY = 0;
         }
     }
- 
+
     int Intersects(OGREnvelope const& other) const
     {
         return MinX <= other.MaxX && MaxX >= other.MinX && 
@@ -600,12 +600,12 @@ typedef union {
     GIntBig     Integer64;
     double      Real;
     char       *String;
-    
+
     struct {
         int     nCount;
         int     *paList;
     } IntegerList;
-    
+
     struct {
         int     nCount;
         GIntBig *paList;
@@ -615,7 +615,7 @@ typedef union {
         int     nCount;
         double  *paList;
     } RealList;
-    
+
     struct {
         int     nCount;
         char    **paList;
@@ -625,7 +625,7 @@ typedef union {
         int     nCount;
         GByte   *paData;
     } Binary;
-    
+
     struct {
         int     nMarker1;
         int     nMarker2;
@@ -734,7 +734,7 @@ typedef enum ogr_style_tool_param_pen_id
     OGRSTPenJoin        = 6,
     OGRSTPenPriority    = 7,
     OGRSTPenLast        = 8
-              
+
 } OGRSTPenParam;
 
 /**
@@ -751,7 +751,7 @@ typedef enum ogr_style_tool_param_brush_id
     OGRSTBrushDy        = 6,
     OGRSTBrushPriority  = 7,
     OGRSTBrushLast      = 8
-              
+
 } OGRSTBrushParam;
 
 
@@ -773,7 +773,7 @@ typedef enum ogr_style_tool_param_symbol_id
     OGRSTSymbolFontName = 10,
     OGRSTSymbolOColor   = 11,
     OGRSTSymbolLast     = 12
-              
+
 } OGRSTSymbolParam;
 
 /**
@@ -803,7 +803,7 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelHColor    = 19,
     OGRSTLabelOColor    = 20,
     OGRSTLabelLast      = 21
-              
+
 } OGRSTLabelParam;
 
 /* ------------------------------------------------------------------- */

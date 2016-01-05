@@ -28,19 +28,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 #include <algorithm>
 
 using std::fill;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_DIPEx(void);
-CPL_C_END
 
 typedef struct {
     GInt32      NBIH;   /* bytes in header, normally 1024 */
@@ -265,7 +262,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognised image data type %d, with BytesPerSample=%d.\n",
+                  "Unrecognized image data type %d, with BytesPerSample=%d.\n",
                   nDIPExDataType, nBytesPerSample );
         return NULL;
     }
@@ -378,7 +375,7 @@ void GDALRegister_DIPEx()
     if( GDALGetDriverByName( "DIPEx" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "DIPEx" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

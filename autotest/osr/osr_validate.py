@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test (error cases of) OSRValidate
 # Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -48,7 +48,7 @@ def osr_validate_1():
     return 'success'
 
 ###############################################################################
-# Unrecognised root node
+# Unrecognized root node
 
 def osr_validate_2():
 
@@ -227,7 +227,7 @@ def osr_validate_6():
     if srs.Validate() == 0:
         return 'fail'
 
-    # Unrecognised PARAMETER `foo'
+    # Unrecognized PARAMETER `foo'
     srs = osr.SpatialReference()
     srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N",PARAMETER["foo",0]]')
     if srs.Validate() == 0:
@@ -239,7 +239,7 @@ def osr_validate_6():
     if srs.Validate() == 0:
         return 'fail'
 
-    # Unrecognised PROJECTION `foo'
+    # Unrecognized PROJECTION `foo'
     srs = osr.SpatialReference()
     srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N",PROJECTION["foo"]]')
     if srs.Validate() == 0:

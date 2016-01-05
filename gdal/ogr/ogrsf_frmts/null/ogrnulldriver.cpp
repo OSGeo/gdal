@@ -261,7 +261,7 @@ int OGRNULLDriver::TestCapability( const char * pszCap )
 
 void RegisterOGRNULL()
 {
-    if (! GDAL_CHECK_VERSION("OGR/NULL driver"))
+    if( !GDAL_CHECK_VERSION("OGR/NULL driver") )
         return;
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRNULLDriver );

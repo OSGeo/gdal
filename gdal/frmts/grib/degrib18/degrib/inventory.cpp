@@ -257,9 +257,20 @@ static int GRIB2SectToBuffer (DataSource &fp,
       }
       return -1;
    }
+   if( *secLen < sizeof(sInt4) )
+   {
+       errSprintf ("ERROR: Wrong secLen in GRIB2SectToBuffer\n");
+       return -1;
+   }
    if (*buffLen < *secLen) {
+      char* buffnew = (char *) realloc ((void *) *buff, *secLen * sizeof (char));
+      if( buffnew == NULL )
+      {
+           errSprintf ("ERROR: Ran out of memory in GRIB2SectToBuffer\n");
+           return -1;
+      }
       *buffLen = *secLen;
-      *buff = (char *) realloc ((void *) *buff, *buffLen * sizeof (char));
+      *buff = buffnew;
       buffer = *buff;
    }
 
@@ -628,26 +639,27 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    /* Try to convert lenTime to hourly. */
    if (timeRangeUnit == 0) {
       lenTime = (sInt4) (lenTime / 60.);
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 1) {
    } else if (timeRangeUnit == 2) {
       lenTime = lenTime * 24;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 10) {
       lenTime = lenTime * 3;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 11) {
       lenTime = lenTime * 6;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 12) {
       lenTime = lenTime * 12;
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else if (timeRangeUnit == 13) {
       lenTime = (sInt4) (lenTime / 3600.);
-      timeRangeUnit = 1;
+      /*timeRangeUnit = 1;*/
    } else {
       printf ("Can't handle this timeRangeUnit\n");
-      myAssert (timeRangeUnit == 1);
+      //myAssert (timeRangeUnit == 1);
+      return -8;
    }
    if (lenTime == GRIB2MISSING_s4) {
       lenTime = 0;
@@ -789,7 +801,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.
  *  11/2002 AAT: Revised.
  *  12/2002 (TK,AC,TB,&MS): Code Review.
- *   3/2003 AAT: Corrected some satelite type mistakes.
+ *   3/2003 AAT: Corrected some satellite type mistakes.
  *   3/2003 AAT: Implemented multiple grid inventories in the same GRIB2
  *          message.
  *   4/2003 AAT: Started adding GRIB1 support

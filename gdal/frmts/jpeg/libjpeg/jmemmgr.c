@@ -214,6 +214,9 @@ print_mem_stats (j_common_ptr cinfo, int pool_id)
 
 
 LOCAL(void)
+out_of_memory (j_common_ptr cinfo, int which) LIBJPEG_NO_RETURN;
+
+LOCAL(void)
 out_of_memory (j_common_ptr cinfo, int which)
 /* Report an out-of-memory error and stop execution */
 /* If we compiled MEM_STATS support, report alloc requests before dying */

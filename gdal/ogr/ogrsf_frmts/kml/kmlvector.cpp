@@ -135,7 +135,7 @@ void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
         {
             return;
         }
-        
+
         Nodetype nodeType = poNode->getType();
         if( bKeepEmptyContainers ||
             isFeature(Nodetype2String(nodeType)) ||

@@ -117,7 +117,6 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
         if( pszDSNStringTemplate == NULL )
         {
-            pszOptionName = "";
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
         }
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))
@@ -168,7 +167,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     CPLFree( pszDSN );
 
     pszName = CPLStrdup( pszNewName );
-    
+
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
@@ -177,7 +176,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     std::vector<char **> apapszGeomColumns;
     CPLODBCStatement oStmt( &oSession );
-        
+
     oStmt.Append( "SELECT TableName, FieldName, ShapeType, ExtentLeft, ExtentRight, ExtentBottom, ExtentTop, SRID, HasZ FROM GDB_GeomColumns" );
 
     if( !oStmt.ExecuteSQL() )
@@ -198,7 +197,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         apapszGeomColumns.resize(iNew+1);
         apapszGeomColumns[iNew] = papszRecord;
     }
-            
+
 /* -------------------------------------------------------------------- */
 /*      Create a layer for each spatial table.                          */
 /* -------------------------------------------------------------------- */
@@ -232,7 +231,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 
         CSLDestroy( papszRecord );
     }
-    
+
     return TRUE;
 }
 
@@ -304,12 +303,12 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
     OGRPGeoSelectLayer *poLayer = NULL;
-        
+
     poLayer = new OGRPGeoSelectLayer( this, poStmt );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
-    
+
     return poLayer;
 }
 

@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test ERS format driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -54,7 +54,7 @@ def ers_2():
     tst = gdaltest.GDALTest( 'ERS', 'float32.bil', 1, 27 )
     return tst.testCreateCopy( new_filename = 'tmp/float32.ers',
                                check_gt = 1, vsimem = 1 )
-    
+
 ###############################################################################
 # Test multi-band file.
 
@@ -62,7 +62,7 @@ def ers_3():
 
     tst = gdaltest.GDALTest( 'ERS', 'rgbsmall.tif', 2, 21053 )
     return tst.testCreate( new_filename = 'tmp/rgbsmall.ers' )
-    
+
 ###############################################################################
 # Test HeaderOffset case.
 
@@ -74,10 +74,10 @@ def ers_4():
         SPHEROID["GRS80",6378137,298.257222101]],
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]"""
- 
+
     tst = gdaltest.GDALTest( 'ERS', 'ers_dem.ers', 1, 56588 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
-    
+
 ###############################################################################
 # Confirm we can recognised signed 8bit data.
 
@@ -93,18 +93,18 @@ def ers_5():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Confirm a copy preserves the signed byte info.
 
 def ers_6():
 
     drv = gdal.GetDriverByName( 'ERS' )
-    
+
     src_ds = gdal.Open( 'data/8s.ers' )
 
     ds = drv.CreateCopy( 'tmp/8s.ers', src_ds )
-    
+
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
 
     if md['PIXELTYPE'] != 'SIGNEDBYTE':
@@ -114,9 +114,9 @@ def ers_6():
     ds = None
 
     drv.Delete( 'tmp/8s.ers' )
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Test opening a file with everything in lower case.
 
@@ -350,7 +350,7 @@ def ers_10():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Cleanup
 
@@ -371,7 +371,6 @@ gdaltest_list = [
     ers_10,
     ers_cleanup
     ]
-  
 
 
 if __name__ == '__main__':

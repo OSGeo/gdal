@@ -79,7 +79,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
         || memcmp(header_check,"PCIDSK",6) != 0 )
     {
         interfaces->io->Close( io_handle );
-        ThrowPCIDSKException( "File %s does not appear to be PCIDSK format.",
+        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr( "File %s does not appear to be PCIDSK format.",
                               filename.c_str() );
     }
 

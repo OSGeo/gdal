@@ -121,7 +121,7 @@ typedef struct
     uLong64 rest_read_compressed; /* number of byte to be decompressed */
     uLong64 rest_read_uncompressed;/*number of byte to be obtained after decomp */
     zlib_filefunc_def z_filefunc;
-    voidpf filestream;        /* io structore of the zipfile */
+    voidpf filestream;        /* IO structure of the zipfile */
     uLong compression_method;   /* compression method (0==store) */
     uLong64 byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)*/
     int   raw;
@@ -133,7 +133,7 @@ typedef struct
 typedef struct
 {
     zlib_filefunc_def z_filefunc;
-    voidpf filestream;        /* io structore of the zipfile */
+    voidpf filestream;        /* IO structure of the zipfile */
     unz_global_info gi;       /* public global information */
     uLong64 byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)*/
     uLong64 num_file;             /* number of the current file in the zipfile*/
@@ -167,7 +167,7 @@ typedef struct
 /* ===========================================================================
      Read a byte from a gz_stream; update next_in and avail_in. Return EOF
    for end of file.
-   IN assertion: the stream s has been sucessfully opened for reading.
+   IN assertion: the stream s has been successfully opened for reading.
 */
 
 
@@ -198,7 +198,7 @@ static int unzlocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
                              uLong *pX)
 {
     uLong x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -220,7 +220,7 @@ static int unzlocal_getLong (const zlib_filefunc_def* pzlib_filefunc_def,
                             uLong *pX)
 {
     uLong x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -250,7 +250,7 @@ static int unzlocal_getLong64 (const zlib_filefunc_def* pzlib_filefunc_def,
                             uLong64 *pX)
 {
     uLong64 x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -898,7 +898,10 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
         if (lSeek!=0)
         {
             if (ZSEEK(s->z_filefunc, s->filestream,lSeek,ZLIB_FILEFUNC_SEEK_CUR)==0)
+            {
                 lSeek=0;
+                CPL_IGNORE_RET_VAL(lSeek);
+            }
             else
                 err=UNZ_ERRNO;
         }
@@ -954,7 +957,7 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                      file_info.size_filename<=fileNameBufferSize &&
                      szFileName != NULL )
             {
-                int version;
+                int version = 0;
                 if (unzlocal_getByte(&s->z_filefunc, s->filestream,&version) != UNZ_OK)
                     err=UNZ_ERRNO;
                 if( version != 1 )
@@ -1010,7 +1013,7 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
             acc += 2 + 2 + dataSize;
         }
     }
-    
+
     if( !bHasUTF8Filename && szFileName != NULL &&
         (file_info.flag & (1 << 11)) == 0 &&
         file_info.size_filename<fileNameBufferSize )
@@ -1421,9 +1424,9 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3 (unzFile file, int* method,
         }
     }
 
-    if ((s->cur_file_info.compression_method!=0) &&
+    /*if ((s->cur_file_info.compression_method!=0) &&
         (s->cur_file_info.compression_method!=Z_DEFLATED))
-        err=UNZ_BADZIPFILE;
+        err=UNZ_BADZIPFILE;*/
 
     pfile_in_zip_read_info->crc32_wait=s->cur_file_info.crc;
     pfile_in_zip_read_info->crc32=0;

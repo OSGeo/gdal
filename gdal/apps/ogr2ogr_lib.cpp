@@ -312,7 +312,7 @@ struct GDALVectorTranslateOptions
     /*! pointer to the progress data variable */
     void *pProgressData;
 
-    /*! whether layer and feature native data must be transfered */
+    /*! Whether layer and feature native data must be transferred. */
     bool bNativeData;
 };
 
@@ -2342,7 +2342,7 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
         }
 
         if (iLayer == nLayerCount)
-            /* shouldn't happen with an ideal driver */
+            /* should not happen with an ideal driver */
             poDstLayer = NULL;
     }
 
@@ -3563,10 +3563,10 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                 if (poClipSrc)
                 {
                     OGRGeometry* poClipped = poDstGeometry->Intersection(poClipSrc);
+                    delete poDstGeometry;
                     if (poClipped == NULL || poClipped->IsEmpty())
                     {
                         delete poClipped;
-                        delete poDstGeometry;
                         goto end_loop;
                     }
                     poDstGeometry = poClipped;
@@ -3623,14 +3623,13 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                         goto end_loop;
 
                     OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
+                    delete poDstGeometry;
                     if (poClipped == NULL || poClipped->IsEmpty())
                     {
                         delete poClipped;
-                        delete poDstGeometry;
                         goto end_loop;
                     }
 
-                    delete poDstGeometry;
                     poDstGeometry = poClipped;
                 }
 

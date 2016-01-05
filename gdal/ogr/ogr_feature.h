@@ -68,14 +68,14 @@ class CPL_DLL OGRFieldDefn
     int                 nWidth;                 /* zero is variable */
     int                 nPrecision;
     char                *pszDefault;
-    
+
     int                 bIgnore;
     OGRFieldSubType     eSubType;
-    
+
     int                 bNullable;
 
     void                Initialize( const char *, OGRFieldType );
-    
+
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
                         OGRFieldDefn( OGRFieldDefn * );
@@ -288,13 +288,13 @@ class CPL_DLL OGRFeature
     char *              m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
     char *              m_pszTmpFieldValue;
-    
+
   public:
                         OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();                        
 
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
-    
+
     OGRErr              SetGeometryDirectly( OGRGeometry * );
     OGRErr              SetGeometry( OGRGeometry * );
     OGRGeometry        *GetGeometryRef();
@@ -323,9 +323,9 @@ class CPL_DLL OGRFeature
                                       { return poDefn->GetFieldIndex(pszName);}
 
     int                 IsFieldSet( int iField );
-    
+
     void                UnsetField( int iField );
-    
+
     OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
 
     int                 GetFieldAsInteger( int i );
@@ -442,7 +442,7 @@ class CPL_DLL OGRFeature
     const char         *GetNativeMediaType() const { return m_pszNativeMediaType; }
     void                SetNativeData( const char* pszNativeData );
     void                SetNativeMediaType( const char* pszNativeMediaType );
-    
+
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
     static void         DestroyFeature( OGRFeature * );
 
@@ -467,9 +467,9 @@ class CPL_DLL OGRFeatureQuery
     char          **FieldCollector( void *, char ** );
 
     GIntBig       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *, GIntBig& nFIDCount);
-    
+
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
-    
+
   public:
                 OGRFeatureQuery();
                 ~OGRFeatureQuery();
@@ -479,7 +479,7 @@ class CPL_DLL OGRFeatureQuery
     int         Evaluate( OGRFeature * );
 
     GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
-    
+
     int         CanUseIndex( OGRLayer * );
 
     char      **GetUsedFields();

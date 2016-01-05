@@ -52,7 +52,7 @@ private:
 
     FILE          *m_poFD;
     char          *ReadLine(bool = FALSE);
-    
+
     void          AddInfo(const char *);
 
 protected:
@@ -66,7 +66,7 @@ protected:
 
     /* metadata */
     std::map<CPLString, CPLString> poInfo;
-    
+
 public:
     VFKReader(const char *);
     virtual ~VFKReader();
@@ -77,7 +77,7 @@ public:
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock * = NULL);
     int            LoadGeometry();
-    
+
     int            GetDataBlockCount() const { return m_nDataBlockCount; }
     IVFKDataBlock *GetDataBlock(int) const;
     IVFKDataBlock *GetDataBlock(const char *) const;
@@ -104,7 +104,7 @@ private:
     void           StoreInfo2DB();
 
     void           CreateIndex(const char *, const char *, const char *, bool = TRUE);
-    
+
     friend class   VFKFeatureSQLite;
 public:
     VFKReaderSQLite(const char *);

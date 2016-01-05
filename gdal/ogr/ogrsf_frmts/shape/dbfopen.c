@@ -496,13 +496,13 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     DBFSetLastModifiedDate(psDBF, pabyBuf[1], pabyBuf[2], pabyBuf[3]);
 
     psDBF->nRecords = 
-     pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + pabyBuf[7]*256*256*256;
+     pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + (pabyBuf[7] & 0x7f) *256*256*256;
 
     psDBF->nHeaderLength = nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
     psDBF->nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
     psDBF->iLanguageDriver = pabyBuf[29];
 
-    if (nHeadLen < 32)
+    if (psDBF->nRecordLength == 0 || nHeadLen < 32)
     {
         psDBF->sHooks.FClose( psDBF->fp );
         if( pfCPG ) psDBF->sHooks.FClose( pfCPG );
@@ -1949,7 +1949,8 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
     if( !DBFFlushRecord( psDBF ) )
         return FALSE;
 
-    panFieldOffsetNew = (int *) malloc(sizeof(int) * psDBF->nFields);
+    /* a simple malloc() would be enough, but calloc() helps clang static analyzer */
+    panFieldOffsetNew = (int *) calloc(sizeof(int), psDBF->nFields);
     panFieldSizeNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
     panFieldDecimalsNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
     pachFieldTypeNew = (char *) malloc(sizeof(char) *  psDBF->nFields);

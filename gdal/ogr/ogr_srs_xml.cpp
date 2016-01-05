@@ -1011,7 +1011,7 @@ static double getNormalizedValue( CPLXMLNode *psNode, const char *pszPath,
         psTargetNode = psNode;
     else
         psTargetNode = CPLGetXMLNode( psNode, pszPath );
-    
+
     if( psTargetNode == NULL )
         return dfDefault;
 
@@ -1021,7 +1021,7 @@ static double getNormalizedValue( CPLXMLNode *psNode, const char *pszPath,
 
     if( psValueNode == NULL )
         return dfDefault;
-    
+
     // Add normalization later.
 
     return CPLAtof(psValueNode->pszValue);
@@ -1148,7 +1148,7 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
                         "GEOGCS|PRIMEM" );
 
     poSRS->Fixup();
-    
+
     return OGRERR_NONE;
 }
 
@@ -1187,7 +1187,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
 /*      Try to set the GEOGCS info.                                     */
 /* -------------------------------------------------------------------- */
-    
+
     psSubXML = CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" );
     if( psSubXML != NULL )
     {
@@ -1216,7 +1216,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
     int nMethod = getEPSGObjectCodeValue( CPLGetXMLNode( psConv, "usesMethod"),
                                           "method", 0 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator.                                            */
 /* -------------------------------------------------------------------- */
@@ -1256,7 +1256,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /*                           importFromXML()                            */
 /************************************************************************/
 
-/** 
+/**
  * \brief Import coordinate system from XML format (GML only currently).
  *
  * This method is the same as the C function OSRImportFromXML()
@@ -1270,12 +1270,12 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
     OGRErr  eErr = OGRERR_UNSUPPORTED_SRS;
 
     this->Clear();
-        
+
 /* -------------------------------------------------------------------- */
 /*      Parse the XML.                                                  */
 /* -------------------------------------------------------------------- */
     psTree = CPLParseXMLString( pszXML );
-    
+
     if( psTree == NULL )
         return OGRERR_CORRUPT_DATA;
 
@@ -1293,7 +1293,7 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
             eErr = importGeogCSFromXML( this, psNode );
             break;
         }
-        
+
         else if( EQUAL(psNode->pszValue,"ProjectedCRS") )
         {
             eErr = importProjCSFromXML( this, psNode );

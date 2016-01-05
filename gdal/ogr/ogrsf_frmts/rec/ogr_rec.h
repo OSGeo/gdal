@@ -95,7 +95,7 @@ class OGRRECDataSource : public OGRDataSource
                         ~OGRRECDataSource();
 
     int                 Open( const char * pszFilename );
-    
+
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return 1; }
     OGRLayer            *GetLayer( int );

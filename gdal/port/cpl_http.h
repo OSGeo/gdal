@@ -46,7 +46,7 @@ CPL_C_START
 /*! Describe a part of a multipart message */
 typedef struct {
     /*! NULL terminated array of headers */ char **papszHeaders;
-    
+
     /*! Buffer with data of the part     */ GByte *pabyData;
     /*! Buffer length                    */ int    nDataLen;
 } CPLMimePart;

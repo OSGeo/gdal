@@ -156,7 +156,7 @@ CPL_UNUSED
 #endif
     fpGML = NULL;
     m_bReadStarted = false;
-    
+
     m_poState = NULL;
     m_poRecycledState = NULL;
 
@@ -283,7 +283,8 @@ bool GMLReader::SetupParser()
 #endif
     if (bRet < 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SetupParser(): shouldn't happen");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SetupParser(): should not happen");
         return false;
     }
 
@@ -315,7 +316,7 @@ bool GMLReader::SetupParserXerces()
         {
             XMLPlatformUtils::Initialize();
         }
-        
+
         catch (const XMLException& toCatch)
         {
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -340,7 +341,7 @@ bool GMLReader::SetupParserXerces()
 
     try{
         m_poSAXReader = XMLReaderFactory::createXMLReader();
-    
+
         GMLXercesHandler* poXercesHandler = new GMLXercesHandler( this );
         m_poGMLHandler = poXercesHandler;
 
@@ -454,8 +455,7 @@ void GMLReader::CleanupParser()
         XML_ParserFree(oParser);
     oParser = NULL;
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i=nFeatureTabIndex; i < nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
@@ -548,7 +548,7 @@ GMLFeature *GMLReader::NextFeatureXerces()
 
             m_bReadStarted = true;
 
-            if (m_GMLInputSource == NULL)
+            if (m_poSAXReader == NULL || m_GMLInputSource == NULL)
                 return NULL;
 
             if( !m_poSAXReader->parseFirst( *m_GMLInputSource, m_oToFill ) )
@@ -972,7 +972,7 @@ void GMLReader::PopState()
         GMLReadState *poParent;
 
         poParent = m_poState->m_poParentState;
-        
+
         delete m_poRecycledState;
         m_poRecycledState = m_poState;
         m_poRecycledState->Reset();
@@ -1219,7 +1219,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
         VSIFCloseL( fp );
         return false;
     }
-    
+
     if( VSIFReadL( pszWholeText, nLength, 1, fp ) != 1 )
     {
         VSIFree( pszWholeText );
@@ -1295,7 +1295,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
     }
 
     CPLDestroyXMLNode( psRoot );
-    
+
     SetClassListLocked( true );
 
     return true;
@@ -1336,11 +1336,11 @@ bool GMLReader::SaveClasses( const char *pszFile )
     VSILFILE        *fp;
     bool         bSuccess = true;
     char        *pszWholeText = CPLSerializeXMLTree( psRoot );
-    
+
     CPLDestroyXMLNode( psRoot );
- 
+
     fp = VSIFOpenL( pszFile, "wb" );
-    
+
     if( fp == NULL )
         bSuccess = false;
     else if( VSIFWriteL( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
@@ -1472,7 +1472,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
             }
 #endif /* def SUPPORT_GEOMETRY */
         }
-        
+
         delete poFeature;
     }
 

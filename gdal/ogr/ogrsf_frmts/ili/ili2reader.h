@@ -49,7 +49,7 @@ public:
 
     virtual int  ReadModel( ImdReader *poImdReader, const char *modelFilename ) = 0;
     virtual int  SaveClasses( const char *pszFilename ) = 0;
-    
+
     virtual std::list<OGRLayer *> GetLayers() = 0;
     virtual int GetLayerCount() = 0;
 };

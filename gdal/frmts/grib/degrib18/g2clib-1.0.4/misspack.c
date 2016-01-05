@@ -128,7 +128,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //  Allocate work arrays:
 //  Note: -ifldmiss[j],j=0,ndpts-1 is a map of original field indicating 
 //         which of the original data values
-//         are primary missing (1), sencondary missing (2) or non-missing (0).
+//         are primary missing (1), secondary missing (2) or non-missing (0).
 //        -jfld[j],j=0,nonmiss-1 is a subarray of just the non-missing values 
 //         from the original field.
 //

@@ -118,16 +118,16 @@ GeoRasterWrapper::~GeoRasterWrapper()
     CPLFree( pabyBlockBuf );
     CPLFree( pabyCompressBuf );
     CPLFree( pahLevels );
-    
+
     if( CPLListCount( psNoDataList ) )
     {
         CPLList* psList = NULL;
-        
+
         for( psList = psNoDataList; psList ; psList = psList->psNext )
         {
             CPLFree( psList->pData );
         }
-        
+
         CPLListDestroy( psNoDataList );
     }
 
@@ -137,7 +137,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
     }
 
     CPLDestroyXMLNode( phMetadata );
-    
+
     if( sDInfo.global_state )
     {
         jpeg_destroy_decompress( &sDInfo );
@@ -229,7 +229,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     }
 
     poGRW->bUpdate = bUpdate;
-    
+
     //  ---------------------------------------------------------------
     //  Get a connection with Oracle server
     //  ---------------------------------------------------------------
@@ -273,7 +273,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
             poGRW->sSchema = "";
             poGRW->sOwner  = poGRW->poConnection->GetUser();
         }
-        
+
         CSLDestroy( papszSchema );
     }
     else
@@ -523,7 +523,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     else
     {
         poGRW->bUniqueFound = false;
-        
+
         delete poStmt;
         return poGRW;
     }
@@ -538,7 +538,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
         poGRW->sDataTable.c_str(),
         poGRW->sColumn.c_str(),
         poGRW->nRasterId );
-    
+
     //  -------------------------------------------------------------------
     //  Read Metadata XML in text
     //  -------------------------------------------------------------------
@@ -616,7 +616,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
     CPLFree( pszXML );
     delete poStmt;
-    
+
     //  -------------------------------------------------------------------
     //  Return a GeoRasterWrapper object
     //  -------------------------------------------------------------------
@@ -1059,7 +1059,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
 
-        
+
         delete poStmt;
 
         return true;
@@ -1176,7 +1176,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     poStmt->Bind( &nTotalBandBlocks );
     poStmt->Bind( &nTotalRowBlocks );
     poStmt->Bind( &nTotalColumnBlocks );
-    
+
     poStmt->BindName( ":rdt", szBindRDT );
     poStmt->BindName( ":rid", &nBindRID );
 
@@ -1260,7 +1260,7 @@ bool GeoRasterWrapper::Delete( void )
     {
         return false;
     }
-    
+
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
       "UPDATE %s%s T SET %s = NULL WHERE %s\n",
             sSchema.c_str(),
@@ -1747,7 +1747,7 @@ void GeoRasterWrapper::SetColorMap( int nBand, GDALColorTable* poCT )
 bool GeoRasterWrapper::InitializeIO( void )
 {
     bInitializeIO = true;
-    
+
     // --------------------------------------------------------------------
     // Initialize Pyramid level details
     // --------------------------------------------------------------------
@@ -1778,7 +1778,7 @@ bool GeoRasterWrapper::InitializeIO( void )
     // --------------------------------------------------------------------
 
     int iLevel = 1;
-    
+
     for( iLevel = 1; iLevel <= nPyramidMaxLevel; iLevel++ )
     {
         int nRBS = nRowBlockSize;
@@ -1832,13 +1832,13 @@ bool GeoRasterWrapper::InitializeIO( void )
         pahLevels[iLevel].nGDALBlockBytes    = (unsigned long ) ( nCBS * nRBS * nGDALCellBytes );
         pahLevels[iLevel].nOffset            = 0L;
     }
-    
+
     // --------------------------------------------------------------------
     // Calculate total row count and level's offsets
     // --------------------------------------------------------------------
 
     nBlockCount = 0L;
-    
+
     for( iLevel = 0; iLevel <= nPyramidMaxLevel; iLevel++ )
     {
         pahLevels[iLevel].nOffset = nBlockCount;
@@ -1956,7 +1956,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
     {
         InitializeLevel( nLevel );
     }
-    
+
     long nBlock = GetBlockNumber( nBand, nXOffset, nYOffset );
 
     CPLDebug( "Read  ", 
@@ -2162,7 +2162,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
             {
                 UncompressDeflate( nBytesRead );
             }
-            
+
             //  ------------------------------------------------------------
             //  Unpack NBits
             //  ------------------------------------------------------------
@@ -2421,7 +2421,7 @@ void GeoRasterWrapper::GetRPC()
     }
 
     phRPC = (GDALRPCInfo*) VSIMalloc( sizeof(GDALRPCInfo) );
-    
+
     phRPC->dfLINE_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "rowOff", "0" ) );
     phRPC->dfSAMP_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "columnOff", "0" ) );
     phRPC->dfLONG_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "xOff", "0" ) );
@@ -3233,7 +3233,7 @@ bool GeoRasterWrapper::FlushMetadata()
             sWhere.c_str() ) );
 
     poStmt->WriteCLob( &phLocator, pszMetadata );
-    
+
     poStmt->Bind( &nSRID );
     poStmt->Bind( &nExtentSRID );
     poStmt->Bind( &phLocator );
@@ -3437,7 +3437,7 @@ bool GeoRasterWrapper::DeletePyramid()
             sTable.c_str(),
             sColumn.c_str(),
             sWhere.c_str() ) );
-    
+
     poStmt->Execute();
 
     delete poStmt;
@@ -3494,7 +3494,7 @@ bool GeoRasterWrapper::InitializeMask( int nLevel,
         "END;" );
 
     char pszDataTable[OWNAME];
-    
+
     poStmt->Bind( &nBlockColumns );
     poStmt->Bind( &nBlockRows );
     poStmt->Bind( &nBandBlocks );
@@ -3771,7 +3771,7 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
                 jpeg_alloc_huff_table( (j_common_ptr) &sDInfo );
             sDInfo.dc_huff_tbl_ptrs[n] =
                 jpeg_alloc_huff_table( (j_common_ptr) &sDInfo );
-            
+
             JPEG_LoadTables( sDInfo.quant_tbl_ptrs[n],
                              sDInfo.ac_huff_tbl_ptrs[n],
                              sDInfo.dc_huff_tbl_ptrs[n],
@@ -3834,7 +3834,7 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
         jpeg_create_compress( &sCInfo );
 
         jpeg_vsiio_dest( &sCInfo, fpImage );
-        
+
         sCInfo.image_width = nColumnBlockSize;
         sCInfo.image_height = nRowBlockSize;
         sCInfo.input_components = nBandBlockSize;
@@ -3874,10 +3874,10 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
     {
         jpeg_vsiio_dest( &sCInfo, fpImage );
     }
-    
+
     jpeg_suppress_tables( &sCInfo, ! write_all_tables );
     jpeg_start_compress( &sCInfo, write_all_tables );
-    
+
     GByte* pabyScanline = pabyBlockBuf;
 
     for( int iLine = 0; iLine < nRowBlockSize; iLine++ )

@@ -81,11 +81,10 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
 OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
                                                         CPL_UNUSED char **papszOptions )
 {
-    OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
-
     if( !STARTS_WITH_CI(pszName, "MSSQL:") )
         return NULL;
 
+    OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
     if( !poDS->Open( pszName, TRUE, TRUE ) )
     {
         delete poDS;
@@ -121,12 +120,14 @@ void RegisterOGRMSSQLSpatial()
 {
     if (! GDAL_CHECK_VERSION("OGR/MSSQLSpatial driver"))
         return;
+
     OGRSFDriver* poDriver = new OGRMSSQLSpatialDriver;
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Microsoft SQL Server Spatial Database" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_mssqlspatial.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+                               "Microsoft SQL Server Spatial Database" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mssqlspatial.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
@@ -151,9 +152,12 @@ void RegisterOGRMSSQLSpatial()
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
 "</LayerCreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date Time DateTime Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date Time "
+                               "DateTime Binary" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
- 	poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
- 	poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

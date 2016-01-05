@@ -206,8 +206,14 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         return CE_Failure;
     }
 
-    pafOutputBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
-    pafThreeLineWin  = (float *) CPLMalloc(3*sizeof(float)*(nXSize+1));
+    pafOutputBuf = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nXSize);
+    pafThreeLineWin  = (float *) VSI_MALLOC2_VERBOSE(3*sizeof(float),(nXSize+1));
+    if( pafOutputBuf == NULL || pafThreeLineWin == NULL )
+    {
+        VSIFree(pafOutputBuf);
+        VSIFree(pafThreeLineWin);
+        return CE_Failure;
+    }
 
     fSrcNoDataValue = (float) GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
     fDstNoDataValue = (float) GDALGetRasterNoDataValue(hDstBand, &bDstHasNoData);
@@ -1192,7 +1198,7 @@ GByte* GDALColorReliefPrecompute(GDALRasterBandH hSrcBand,
         ((eDT == GDT_Int16 || eDT == GDT_UInt16) && nXSize * nYSize > 65536))
     {
         int iMax = (eDT == GDT_Byte) ? 256: 65536;
-        pabyPrecomputed = (GByte*) VSIMalloc(4 * iMax);
+        pabyPrecomputed = (GByte*) VSI_MALLOC2_VERBOSE(4, iMax);
         if (pabyPrecomputed)
         {
             int i;
@@ -1245,6 +1251,8 @@ class GDALColorReliefDataset : public GDALDataset
                                             ColorSelectionMode eColorSelectionMode,
                                             int bAlpha);
                        ~GDALColorReliefDataset();
+
+    bool                InitOK() const { return pafSourceBuf != NULL || panSourceBuf != NULL; }
 
     CPLErr      GetGeoTransform( double * padfGeoTransform );
     const char *GetProjectionRef();
@@ -1306,9 +1314,9 @@ GDALColorReliefDataset::GDALColorReliefDataset(
     pafSourceBuf = NULL;
     panSourceBuf = NULL;
     if (pabyPrecomputed)
-        panSourceBuf = (int *) CPLMalloc(sizeof(int)*nBlockXSize*nBlockYSize);
+        panSourceBuf = (int *) VSI_MALLOC3_VERBOSE(sizeof(int),nBlockXSize,nBlockYSize);
     else
-        pafSourceBuf = (float *) CPLMalloc(sizeof(float)*nBlockXSize*nBlockYSize);
+        pafSourceBuf = (float *) VSI_MALLOC3_VERBOSE(sizeof(float),nBlockXSize,nBlockYSize);
     nCurBlockXOff = -1;
     nCurBlockYOff = -1;
 }
@@ -1475,14 +1483,22 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
     float* pafSourceBuf = NULL;
     int* panSourceBuf = NULL;
     if (pabyPrecomputed)
-        panSourceBuf = (int *) CPLMalloc(sizeof(int)*nXSize);
+        panSourceBuf = (int *) VSI_MALLOC2_VERBOSE(sizeof(int),nXSize);
     else
-        pafSourceBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
-    GByte* pabyDestBuf1  = (GByte*) CPLMalloc( 4 * nXSize );
+        pafSourceBuf = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nXSize);
+    GByte* pabyDestBuf1  = (GByte*) VSI_MALLOC2_VERBOSE(4, nXSize );
     GByte* pabyDestBuf2  =  pabyDestBuf1 + nXSize;
     GByte* pabyDestBuf3  =  pabyDestBuf2 + nXSize;
     GByte* pabyDestBuf4  =  pabyDestBuf3 + nXSize;
     int i, j;
+
+    if( (pabyPrecomputed != NULL && panSourceBuf == NULL) ||
+        (pabyPrecomputed == NULL && pafSourceBuf == NULL) ||
+        pabyDestBuf1 == NULL )
+    {
+        eErr = CE_Failure;
+        goto end;
+    }
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
@@ -1505,7 +1521,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
         if (eErr != CE_None)
             goto end;
 
-        if (panSourceBuf)
+        if (pabyPrecomputed)
         {
             for ( j = 0; j < nXSize; j++)
             {
@@ -1842,6 +1858,10 @@ class GDALGeneric3x3Dataset : public GDALDataset
                                               int bComputeAtEdges);
                        ~GDALGeneric3x3Dataset();
 
+    bool                InitOK() const { return apafSourceBuf[0] != NULL &&
+                                                apafSourceBuf[1] != NULL &&
+                                                apafSourceBuf[2] != NULL; }
+
     CPLErr      GetGeoTransform( double * padfGeoTransform );
     const char *GetProjectionRef();
 };
@@ -1894,9 +1914,9 @@ GDALGeneric3x3Dataset::GDALGeneric3x3Dataset(
     
     SetBand(1, new GDALGeneric3x3RasterBand(this, eDstDataType));
     
-    apafSourceBuf[0] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
-    apafSourceBuf[1] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
-    apafSourceBuf[2] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
+    apafSourceBuf[0] = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nRasterXSize);
+    apafSourceBuf[1] = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nRasterXSize);
+    apafSourceBuf[2] = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nRasterXSize);
 
     nCurLine = -1;
 }
@@ -2573,14 +2593,25 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
         GDALDatasetH hIntermediateDataset;
         
         if (eUtilityMode == COLOR_RELIEF)
-            hIntermediateDataset = (GDALDatasetH)
+        {
+            GDALColorReliefDataset* poDS =
                 new GDALColorReliefDataset (hSrcDataset,
                                             hSrcBand,
                                             pszColorFilename,
                                             psOptions->eColorSelectionMode,
                                             psOptions->bAddAlpha);
+            if( !(poDS->InitOK()) )
+            {
+                delete poDS;
+                CPLFree(pData);
+                GDALDEMProcessingOptionsFree(psOptionsToFree);
+                return NULL;
+            }
+            hIntermediateDataset = (GDALDatasetH)poDS;
+        }
         else
-            hIntermediateDataset = (GDALDatasetH)
+        {
+            GDALGeneric3x3Dataset* poDS =
                 new GDALGeneric3x3Dataset(hSrcDataset, hSrcBand,
                                           eDstDataType,
                                           bDstHasNoData,
@@ -2588,6 +2619,15 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
                                           pfnAlg,
                                           pData,
                                           psOptions->bComputeAtEdges);
+            if( !(poDS->InitOK()) )
+            {
+                delete poDS;
+                CPLFree(pData);
+                GDALDEMProcessingOptionsFree(psOptionsToFree);
+                return NULL;
+            }
+            hIntermediateDataset = (GDALDatasetH)poDS;
+        }
 
         GDALDatasetH hOutDS = GDALCreateCopy(
                                  hDriver, pszDest, hIntermediateDataset, 

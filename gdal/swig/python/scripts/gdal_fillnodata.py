@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for filling nodata areas in a raster by interpolation
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,19 +29,16 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
 import sys
+
+from osgeo import gdal
 
 def CopyBand( srcband, dstband ):
     for line in range(srcband.YSize):
         line_data = srcband.ReadRaster( 0, line, srcband.XSize, 1 )
         dstband.WriteRaster( 0, line, srcband.XSize, 1, line_data,
                              buf_type = srcband.DataType )
-        
+
 def Usage():
     print("""
 gdal_fillnodata [-q] [-md max_distance] [-si smooth_iterations]
@@ -49,7 +46,7 @@ gdal_fillnodata [-q] [-md max_distance] [-si smooth_iterations]
                 srcfile [-nomask] [-mask filename] [-of format] [-co name=value]* [dstfile]
 """)
     sys.exit(1)
-    
+
 # =============================================================================
 # 	Mainline
 # =============================================================================
@@ -203,4 +200,3 @@ result = gdal.FillNodata( dstband, maskband,
 src_ds = None
 dst_ds = None
 mask_ds = None
-

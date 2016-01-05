@@ -71,6 +71,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         eFlushBlockErr = CE_None;
         return eErr;
     }
+    if( nBlockXSize <= 0 || nBlockYSize <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Invalid block size" );
+        return CE_Failure;
+    }
 
 /* ==================================================================== */
 /*      A common case is the data requested with the destination        */
@@ -101,9 +106,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
 
                 /* Is this a partial tile at right and/or bottom edges of */
-                /* the raster, and that is going to be completely written ? */
-                /* If so, don't load it from storage, but zeroized it so that */
-                /* the content outsize of the validity area is initialized */
+                /* the raster, and that is going to be completely written? */
+                /* If so, do not load it from storage, but zero it so that */
+                /* the content outsize of the validity area is initialized. */
                 bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff == 0 && nXSize == nBlockXSize &&
@@ -139,7 +144,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
             }
 
-            // To make Coverity happy. Shouldn't happen by design
+            // To make Coverity happy. Should not happen by design.
             if( pabySrcBlock == NULL )
             {
                 CPLAssert(FALSE);
@@ -280,9 +285,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
 
                 /* Is this a partial tile at right and/or bottom edges of */
-                /* the raster, and that is going to be completely written ? */
-                /* If so, don't load it from storage, but zeroized it so that */
-                /* the content outsize of the validity area is initialized */
+                /* the raster, and that is going to be completely written? */
+                /* If so, do not load it from storage, but zero it so that */
+                /* the content outsize of the validity area is initialized. */
                 bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
@@ -480,7 +485,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     }*/
                 }
 
-                // To make Coverity happy. Shouldn't happen by design
+                // To make Coverity happy. Should not happen by design.
                 if( pabyDstBlock == NULL )
                 {
                     CPLAssert(FALSE);
@@ -609,7 +614,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 }
 
-                // To make Coverity happy. Shouldn't happen by design
+                // To make Coverity happy.  Should not happen by design.
                 if( pabySrcBlock == NULL )
                 {
                     CPLAssert(FALSE);
@@ -1864,7 +1869,7 @@ inline void GDALCopyWordsComplexOutT(const Tin* const CPL_RESTRICT pSrcData, int
 
     for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
-        const Tin tValue = *reinterpret_cast<const Tin* const>(pSrcDataPtr + n * nSrcPixelStride);
+        const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + n * nSrcPixelStride);
         Tout* const pPixelOut = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
         GDALCopyWord(tValue, *pPixelOut);
 

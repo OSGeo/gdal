@@ -126,7 +126,7 @@ const double ReflectanceCalculator::rSunDistance() const
 int ReflectanceCalculator::iDaysInYear(int iYear) const
 {
   bool fLeapYear = iDaysInMonth(2, iYear) == 29;
-  
+
   if (fLeapYear)
       return 366;
   else

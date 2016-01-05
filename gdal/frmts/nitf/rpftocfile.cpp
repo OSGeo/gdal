@@ -289,17 +289,25 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         VSIFReadL( &toc->entries[i].nHorizFrames, 1, sizeof(int), fp);
         CPL_MSBPTR32( &toc->entries[i].nHorizFrames );
 
-        toc->entries[i].frameEntries = reinterpret_cast<RPFTocFrameEntry*>(
-            VSI_MALLOC3_VERBOSE( toc->entries[i].nVertFrames,
-                        toc->entries[i].nHorizFrames,
-                        sizeof(RPFTocFrameEntry) ) );
+        if( toc->entries[i].nHorizFrames == 0 ||
+            toc->entries[i].nVertFrames == 0 ||
+            toc->entries[i].nHorizFrames > INT_MAX / toc->entries[i].nVertFrames )
+        {
+            toc->entries[i].frameEntries = NULL;
+        }
+        else
+        {
+            toc->entries[i].frameEntries = reinterpret_cast<RPFTocFrameEntry*>(
+                VSI_CALLOC_VERBOSE( toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames,
+                                    sizeof(RPFTocFrameEntry) ) );
+        }
         if (toc->entries[i].frameEntries == NULL)
         {
+            toc->entries[i].nVertFrames = 0;
+            toc->entries[i].nHorizFrames = 0;
             RPFTOCFree(toc);
             return NULL;
         }
-        memset(toc->entries[i].frameEntries, 0,
-               toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
 
         CPLDebug("RPFTOC", "[%d] type=%s, compression=%s, scale=%s, zone=%s, producer=%s, nVertFrames=%d, nHorizFrames=%d",
                  i, toc->entries[i].type, toc->entries[i].compression, toc->entries[i].scale,
@@ -498,7 +506,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
             memmove(frameEntry->directory, frameEntry->directory+2, strlen(frameEntry->directory+2)+1);
 
             // Some A.TOC have subdirectory names like ".//X/" ... (#5979)
-            // Check if it wasn't intended to be "./X/" instead
+            // Check if it was not intended to be "./X/" instead.
             VSIStatBufL sStatBuf;
             if( frameEntry->directory[0] == '/' &&
                 VSIStatL(CPLFormFilename(CPLGetDirname(pszFilename), frameEntry->directory+1, NULL), &sStatBuf) == 0 &&
@@ -519,7 +527,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
             else
                 subdir = CPLStrdup(CPLFormFilename(baseDir, frameEntry->directory, NULL));
 #if !defined(_WIN32) && !defined(_WIN32_CE)
-            if( VSIStatL( subdir, &sStatBuf ) != 0 && subdir[strlen(baseDir)] != 0)
+            if( VSIStatL( subdir, &sStatBuf ) != 0 && strlen(subdir) > strlen(baseDir) && subdir[strlen(baseDir)] != 0)
             {
                 char* c = subdir + strlen(baseDir)+1;
                 while(*c)

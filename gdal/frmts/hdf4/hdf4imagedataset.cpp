@@ -37,16 +37,17 @@
 
 #include <string.h>
 #include <math.h>
+
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 #include "hdf.h"
 #include "mfhdf.h"
 
 #include "HdfEosDef.h"
-
-#include "gdal_priv.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
 
 #include "hdf4compat.h"
 #include "hdf4dataset.h"
@@ -55,12 +56,7 @@
 
 #include <algorithm>
 
-
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_HDF4(void);
-CPL_C_END
 
 static const int HDF4_SDS_MAXNAMELEN = 65;
 
@@ -851,6 +847,7 @@ HDF4ImageDataset::~HDF4ImageDataset()
                         break;
                     case H4ST_EOS_GRID:
                         GDclose( hHDF4 );
+                        break;
                     default:
                         break;
                 }
@@ -3763,6 +3760,18 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
         return NULL;
     }
 
+    // Try now to create the file to avoid memory leaks if it is
+    // the SDK that fails to do it.
+    VSILFILE* fpVSIL = VSIFOpenL( pszFilename, "wb" );
+    if( fpVSIL == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                "Failed to create %s.", pszFilename );
+        return NULL;
+    }
+    VSIFCloseL(fpVSIL);
+    VSIUnlink(pszFilename);
+
     HDF4ImageDataset *poDS = new HDF4ImageDataset();
 
     CPLMutexHolderD(&hHDF4Mutex);
@@ -3874,14 +3883,23 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
                 break;
         }
     }
-    else                                            // Should never happen
+    else
+    {
+        // Should never happen
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
+    }
 
     if ( iSDS < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't create SDS with rank %ld for file %s",
                   static_cast<long>( poDS->iRank ), pszFilename );
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
     }
 
@@ -3914,7 +3932,7 @@ void GDALRegister_HDF4Image()
     if( GDALGetDriverByName( "HDF4Image" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "HDF4Image" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

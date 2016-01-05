@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RFC 30 (UTF filename handling) support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010 Frank Warmerdam
 # Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -110,7 +110,7 @@ def rfc30_2():
     if fd is None:
         gdaltest.post_reason( 'reopen failed with utf8' )
         return 'failure'
-    
+
     data = gdal.VSIFReadL( 3, 1, fd )
     gdal.VSIFCloseL( fd )
 
@@ -128,7 +128,7 @@ def rfc30_2():
     if fd is not None:
         gdaltest.post_reason( 'did unlink fail on utf8 filename?' )
         return 'failure'
-    
+
     return 'success'
 
 

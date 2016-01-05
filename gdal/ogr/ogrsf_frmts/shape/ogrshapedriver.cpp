@@ -44,14 +44,17 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
         return -1; /* unsure */
-    if( poOpenInfo->fpL != NULL &&
-        (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "SHP") ||
-         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "SHX")) )
+    if( poOpenInfo->fpL == NULL )
+    {
+        return FALSE;
+    }
+    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    if (EQUAL(osExt, "SHP") ||  EQUAL(osExt, "SHX") )
     {
         return memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0A", 4) == 0 ||
                memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0D", 4) == 0;
     }
-    if( poOpenInfo->fpL != NULL && EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DBF") )
+    if( EQUAL(osExt, "DBF") )
     {
         if( poOpenInfo->nHeaderBytes < 32 )
             return FALSE;
@@ -71,6 +74,14 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
             return FALSE;
         return TRUE;
     }
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    if( !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
+        EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
+    {
+        return -1;
+    }
+#endif
     return FALSE;
 }
 
@@ -85,6 +96,19 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
 
     if( OGRShapeDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
+
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    if( poOpenInfo->fpL != NULL &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
+        EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
+    {
+        GDALOpenInfo oOpenInfo( (CPLString("/vsitar/") + poOpenInfo->pszFilename).c_str(),
+                                poOpenInfo->nOpenFlags );
+        oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+        return OGRShapeDriverOpen(&oOpenInfo);
+    }
+#endif
 
     poDS = new OGRShapeDataSource();
 
@@ -121,7 +145,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s is not a directory.\n",
                       pszName );
-            
+
             return NULL;
         }
     }
@@ -147,7 +171,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
                       "Failed to create directory %s\n"
                       "for shapefile datastore.\n",
                       pszName );
-            
+
             return NULL;
         }
     }
@@ -158,7 +182,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
     OGRShapeDataSource  *poDS = NULL;
 
     poDS = new OGRShapeDataSource();
-    
+
     GDALOpenInfo oOpenInfo( pszName, GA_Update );
     if( !poDS->Open( &oOpenInfo, FALSE, bSingleNewFile ) )
     {
@@ -237,30 +261,28 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 void RegisterOGRShape()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "ESRI Shapefile" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "ESRI Shapefile" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "ESRI Shapefile" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "ESRI Shapefile" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_shape.html" );
+    poDriver->SetDescription( "ESRI Shapefile" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Shapefile" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_shape.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DBF with any encoding supported by CPLRecode or to \"\" to avoid any recoding'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "  <Option name='ADJUST_TYPE' type='boolean' description='Whether to read whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer field types if possible' default='NO'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>" );
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='SHPT' type='string-select' description='type of shape' default='automatically detected'>"
 "    <Value>POINT</Value>"
@@ -280,16 +302,15 @@ void RegisterOGRShape()
 "  <Option name='SPATIAL_INDEX' type='boolean' description='To create a spatial index.' default='NO'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRShapeDriverOpen;
-        poDriver->pfnIdentify = OGRShapeDriverIdentify;
-        poDriver->pfnCreate = OGRShapeDriverCreate;
-        poDriver->pfnDelete = OGRShapeDriverDelete;
+    poDriver->pfnOpen = OGRShapeDriverOpen;
+    poDriver->pfnIdentify = OGRShapeDriverIdentify;
+    poDriver->pfnCreate = OGRShapeDriverCreate;
+    poDriver->pfnDelete = OGRShapeDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

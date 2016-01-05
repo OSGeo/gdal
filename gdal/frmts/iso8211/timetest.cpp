@@ -71,8 +71,7 @@ int main( int nArgc, char ** papszArgv )
         DDFRecord       *poRecord;
         int             nRecordCount = 0;
         int             nFieldCount = 0;
-            
-    
+
         while( (poRecord = oModule.ReadRecord()) != NULL )
         {
             /* ------------------------------------------------------------ */
@@ -108,13 +107,13 @@ static void ViewRecordField( DDFField * poField )
     int         nBytesRemaining;
     const char  *pachFieldData;
     DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
-    
+
     // Get pointer to this fields raw data.  We will move through
     // it consuming data as we report subfield values.
-            
+
     pachFieldData = poField->GetData();
     nBytesRemaining = poField->GetDataSize();
-                
+
     /* -------------------------------------------------------- */
     /*      Loop over the repeat count for this fields          */
     /*      subfields.  The repeat count will almost            */
@@ -123,7 +122,7 @@ static void ViewRecordField( DDFField * poField )
     int         iRepeat, nRepeatCount;
 
     nRepeatCount = poField->GetRepeatCount();
-            
+
     for( iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
 
@@ -132,7 +131,7 @@ static void ViewRecordField( DDFField * poField )
         /*   the data pointer as we consume data.                   */
         /* -------------------------------------------------------- */
         int     iSF;
-        
+
         for( iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield( iSF );
@@ -157,7 +156,7 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
 
 {
     int         nBytesConsumed = 0;
-    
+
     switch( poSFDefn->GetType() )
     {
       case DDFInt:

@@ -242,7 +242,7 @@ MIFFile::MIFFile()
     m_nFeatureCount = 0;
     m_nWriteFeatureId = -1;
     m_poCurFeature = NULL;
-   
+
     m_bPreParsed = FALSE;
     m_nAttribut = 0;
     m_bHeaderWrote = FALSE;
@@ -276,7 +276,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
 {
     char *pszTmpFname = NULL;
     int nFnameLen = 0;
-    
+
     CPLErrorReset();
 
     if (m_poMIFFile)
@@ -507,16 +507,15 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int MIFFile::ParseMIFHeader(int* pbIsEmpty)
-{  
+{
     GBool  bColumns = FALSE, bAllColumnsRead =  FALSE;
     int    nColumns = 0;
     GBool  bCoordSys = FALSE;
     char  *pszTmp;
-            
-    
+
     const char *pszLine;
     char **papszToken;
-    
+
     *pbIsEmpty = FALSE;
 
     char *pszFeatureClassName = TABGetBasename(m_pszFname);
@@ -525,14 +524,14 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
     // Ref count defaults to 0... set it to 1
     m_poDefn->Reference();
 
-    
+
     if (m_eAccessMode != TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ParseMIDFile() can be used only with Read access.");
         return -1;
     }
-    
+
 
     /*-----------------------------------------------------------------
      * Parse header until we find the "Data" line
@@ -564,44 +563,44 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
               m_nVersion = atoi(papszToken[1]);
 
             CSLDestroy(papszToken);
-        
+
         }
         else if (STARTS_WITH_CI(pszLine, "CHARSET"))
         {
             papszToken = CSLTokenizeStringComplex(pszLine," ()\t",TRUE,FALSE); 
             bColumns = FALSE; bCoordSys = FALSE;
-          
+
             if (CSLCount(papszToken)  == 2)
             {
                 CPLFree(m_pszCharset);
                 m_pszCharset = CPLStrdup(papszToken[1]);
             }
             CSLDestroy(papszToken);
-        
+
         }
         else if (STARTS_WITH_CI(pszLine, "DELIMITER"))
         {
             papszToken = CSLTokenizeStringComplex(pszLine," ()\t",TRUE,FALSE); 
              bColumns = FALSE; bCoordSys = FALSE;
-          
+
            if (CSLCount(papszToken)  == 2)
            {
                CPLFree(m_pszDelimiter);
                m_pszDelimiter = CPLStrdup(papszToken[1]);    
            }
           CSLDestroy(papszToken);
-        
+
         }
         else if (STARTS_WITH_CI(pszLine, "UNIQUE"))
         {
             bColumns = FALSE; bCoordSys = FALSE;
-          
+
             m_pszUnique = CPLStrdup(pszLine + 6);
         }
         else if (STARTS_WITH_CI(pszLine, "INDEX"))
         {
             bColumns = FALSE; bCoordSys = FALSE;
-          
+
             m_pszIndex = CPLStrdup(pszLine + 5);
         }
         else if (STARTS_WITH_CI(pszLine, "COORDSYS") )
@@ -628,14 +627,14 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
         {
             papszToken = CSLTokenizeStringComplex(pszLine," ,\t",TRUE,FALSE); 
             bColumns = FALSE; bCoordSys = FALSE;
-          
+
             if (CSLCount(papszToken) == 5)
             {
                 m_dfXMultiplier   = CPLAtof(papszToken[1]);
                 m_dfYMultiplier   = CPLAtof(papszToken[2]);
                 m_dfXDisplacement = CPLAtof(papszToken[3]);
                 m_dfYDisplacement = CPLAtof(papszToken[4]);
-                
+
                 if (m_dfXMultiplier == 0.0)
                   m_dfXMultiplier = 1.0;
                 if (m_dfYMultiplier == 0.0)
@@ -677,7 +676,7 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
         }
 
     }
-    
+
     if (!bAllColumnsRead) 
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -694,14 +693,14 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
                  m_pszFname);
         return -1;
     }
-    
+
     /*-----------------------------------------------------------------
      * Move pointer to first line of first object
      *----------------------------------------------------------------*/
     while (((pszLine = m_poMIFFile->GetLine()) != NULL) && 
            m_poMIFFile->IsValidFeature(pszLine) == FALSE)
         ;
-    
+
     *pbIsEmpty = (pszLine == NULL);
 
     /*-----------------------------------------------------------------
@@ -836,7 +835,7 @@ int  MIFFile::AddFields(const char *pszLine)
     }
     else 
       nStatus = -1; // Unrecognized field type or line corrupt
-    
+
     CSLDestroy(papszToken);
     papszToken = NULL;
 
@@ -846,7 +845,7 @@ int  MIFFile::AddFields(const char *pszLine)
                  "Failed to parse field definition in file %s", m_pszFname);
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -856,7 +855,7 @@ int  MIFFile::AddFields(const char *pszLine)
 
 GIntBig MIFFile::GetFeatureCount (int bForce)
 {
-    
+
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
@@ -897,7 +896,7 @@ void MIFFile::ResetReading()
         m_poMIDFile->Rewind();
         m_poMIDFile->GetLine();
     }
-    
+
     // We're positioned on first feature.  Feature Ids start at 1.
     if (m_poCurFeature)
     {
@@ -917,7 +916,7 @@ void MIFFile::PreParseFile()
 {
     char **papszToken = NULL;
     const char *pszLine;
-    
+
     GBool bPLine = FALSE;
     GBool bText = FALSE;
 
@@ -952,7 +951,7 @@ void MIFFile::PreParseFile()
                 UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[1])),
                              m_poMIFFile->GetYTrans(CPLAtof(papszToken[2])));
             }
-              
+
         }
         else if (STARTS_WITH_CI(pszLine, "LINE") ||
                  STARTS_WITH_CI(pszLine, "RECT") ||
@@ -1002,13 +1001,13 @@ void MIFFile::PreParseFile()
                              m_poMIFFile->GetYTrans(CPLAtof(papszToken[1])));
                 UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[2])),
                              m_poMIFFile->GetYTrans(CPLAtof(papszToken[3])));
-            } 
+            }
         }
-        
+
       }
 
     CSLDestroy(papszToken);
-    
+
     m_poMIFFile->Rewind();
 
     while ((pszLine = m_poMIFFile->GetLine()) != NULL)
@@ -1026,7 +1025,7 @@ void MIFFile::PreParseFile()
         m_poMIDFile->Rewind();
         m_poMIDFile->GetLine();
     }
- 
+
     m_bPreParsed = TRUE;
 
 }
@@ -1110,19 +1109,19 @@ int MIFFile::WriteMIFHeader()
     {
         m_poMIFFile->WriteLine("CoordSys %s\n",m_pszCoordSys);
     }
-    
+
     /*-----------------------------------------------------------------
      * Column definitions
      *----------------------------------------------------------------*/
     CPLAssert(m_paeFieldType);
 
     m_poMIFFile->WriteLine("Columns %d\n", m_poDefn->GetFieldCount());
-        
+
     for(iField=0; iField<m_poDefn->GetFieldCount(); iField++)
     {
         OGRFieldDefn *poFieldDefn;
         poFieldDefn = m_poDefn->GetFieldDefn(iField);
-        
+
         switch(m_paeFieldType[iField])
         {
           case TABFInteger:
@@ -1171,7 +1170,7 @@ int MIFFile::WriteMIFHeader()
      * Ready to write objects
      *----------------------------------------------------------------*/
     m_poMIFFile->WriteLine("Data\n\n");
-   
+
     return 0;
 }
 
@@ -1218,7 +1217,7 @@ int MIFFile::Close()
     if (m_poDefn && m_poDefn->Dereference() == 0)
         delete m_poDefn;
     m_poDefn = NULL;
-    
+
     if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
         delete m_poSpatialRef;
     m_poSpatialRef = NULL;
@@ -1251,7 +1250,7 @@ int MIFFile::Close()
     m_nCurFeatureId = 0;
     m_nPreloadedId = 0;
     m_nFeatureCount =0;
-   
+
     m_bBoundsSet = FALSE;
 
     return 0;
@@ -1401,7 +1400,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
             // Special case, we need to know two lines to decide the type
             char **papszToken;
             papszToken = CSLTokenizeString2(pszLine, " \t", CSLT_HONOURSTRINGS);
-            
+
             if (CSLCount(papszToken) !=3)
             {
                 CSLDestroy(papszToken);
@@ -1410,7 +1409,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
                          pszLine);
                 return NULL;
             }
-            
+
             m_poMIFFile->SaveLine(pszLine);
 
             if ((pszLine = m_poMIFFile->GetLine()) != NULL)
@@ -1490,7 +1489,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
                CPLError(CE_Failure, CPLE_NotSupported,
                    "Error during reading, unknown type %s.",
                      pszLine);
-        
+
             //m_poCurFeature = new TABDebugFeature(m_poDefn);
             return NULL;
         }
@@ -1508,12 +1507,12 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Error during reading Record.");
-        
+
         delete m_poCurFeature;
         m_poCurFeature = NULL;
         return NULL;
     }
-    
+
     /*-----------------------------------------------------------------
      * Read geometry from the .MAP file
      * MoveToObjId() has already been called above...
@@ -1522,7 +1521,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Error during reading Geometry.");
-        
+
         delete m_poCurFeature;
         m_poCurFeature = NULL;
         return NULL;
@@ -1554,7 +1553,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
         m_nPreloadedId++;
     else
         m_nPreloadedId = 0;
-   
+
     /* Update the Current Feature ID */
     m_poCurFeature->SetFID(m_nCurFeatureId);
 
@@ -2170,7 +2169,7 @@ int MIFFile::SetBounds(double dXMin, double dYMin,
     m_dYMin = dYMin;
     m_dYMax = dYMax;
     m_bBoundsSet = TRUE;
-    
+
     return 0; 
 }
 
@@ -2225,7 +2224,6 @@ int MIFFile::GetBounds(double &dXMin, double &dYMin,
                        double &dXMax, double &dYMax,
                        GBool bForce /*= TRUE*/ )
 {
-    
     if (m_bBoundsSet == FALSE && bForce == FALSE)
     {
         return -1;
@@ -2244,7 +2242,7 @@ int MIFFile::GetBounds(double &dXMin, double &dYMin,
     dXMax = m_dXMax;
     dYMin = m_dYMin;
     dYMax = m_dYMax;
-    
+
     return 0;
 }
 

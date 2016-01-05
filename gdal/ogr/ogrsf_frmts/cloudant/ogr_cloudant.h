@@ -59,7 +59,7 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
             virtual void              GetSpatialView();
             virtual void              WriteMetadata();
             virtual void              LoadMetadata();
-            
+
     public:
             OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
                                  const char* pszName);

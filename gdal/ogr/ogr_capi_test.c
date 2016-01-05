@@ -222,7 +222,7 @@ int OGRCCreate(const char *pszFname)
     OGR_G_AddPoint(geometry, 12.34,  45.67, 0);
 
     OGR_F_SetGeometryDirectly(feature, geometry);
- 
+
     OGR_L_CreateFeature( layer, feature );
 
     /* Create a new polygon (square) */
@@ -241,7 +241,7 @@ int OGRCCreate(const char *pszFname)
     OGR_G_AddGeometryDirectly(geometry, ring);
 
     OGR_F_SetGeometryDirectly(feature, geometry);
- 
+
     OGR_L_CreateFeature( layer, feature );
 
     /* Close data source */

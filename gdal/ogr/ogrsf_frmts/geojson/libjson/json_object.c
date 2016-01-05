@@ -10,7 +10,7 @@
  *
  */
 
-#include "cpl_conv.h"
+#include "cpl_string.h"
 
 #include "config.h"
 
@@ -27,6 +27,9 @@
 #include "json_object.h"
 #include "json_object_private.h"
 #include "json_util.h"
+
+#undef snprintf
+#define snprintf CPLsnprintf
 
 #if !defined(HAVE_STRDUP) && defined(_MSC_VER)
   /* MSC has the version as _strdup */
@@ -299,7 +302,8 @@ static int json_object_object_to_json_string(struct json_object* jso,
 	sprintbuf(pb, "{" /*}*/);
 	if (flags & JSON_C_TO_STRING_PRETTY)
 		sprintbuf(pb, "\n");
-	json_object_object_foreachC(jso, iter)
+        /* the if() is to make gcc 6 -Wnull-dereference happy */
+	if( jso->o_type == json_type_object) json_object_object_foreachC(jso, iter)
 	{
 		if (had_children)
 		{

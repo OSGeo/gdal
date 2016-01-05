@@ -1,12 +1,11 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  IDF Translator
- * Purpose:  Implements OGRIDFDriver.
- * Author:   Even Rouault, even.rouault at spatialys.com
+ * Project:  GDAL 
+ * Purpose:  Includes libkea headers
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
+ * Copyright (c) 2016, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,33 +24,34 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+ *****************************************************************************/
+
+#ifndef GDAL_LIBKEA_HEADERS_H
+#define GDAL_LIBKEA_HEADERS_H
+
+#include "cpl_port.h"
+
+#ifdef HAVE_GCC_SYSTEM_HEADER
+#pragma GCC system_header
+#endif
+
+#if defined(USE_GCC_VISIBILITY_FLAG) && !defined(DllExport)
+#define DllExport CPL_DLL
+#endif
+
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
+#endif
+
+#include "libkea/KEACommon.h"
+#include "libkea/KEAImageIO.h"
+#include "libkea/KEAAttributeTable.h"
+#include "libkea/KEAAttributeTableInMem.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop ) 
+#endif
 
 
-#ifndef OGR_IDF_H_INCLUDED
-#define OGR_IDF_H_INCLUDED
-
-#include "ogrsf_frmts.h"
-
-/************************************************************************/
-/*                        OGRIDFDataSource                              */
-/************************************************************************/
-
-class OGRIDFDataSource : public GDALDataset
-{
-    VSILFILE*           fpL;
-    int                 bHasParsed;
-    GDALDataset        *poMemDS;
-    
-    void                Parse();
-
-  public:
-                        OGRIDFDataSource(VSILFILE* fpL);
-                        ~OGRIDFDataSource();
-
-    virtual int                 GetLayerCount();
-    virtual OGRLayer*           GetLayer( int );
-};
-
-
-#endif /* ndef OGR_IDF_H_INCLUDED */
+#endif /* GDAL_LIBKEA_HEADERS_H */

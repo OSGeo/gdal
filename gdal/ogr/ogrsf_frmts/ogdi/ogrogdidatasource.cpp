@@ -188,7 +188,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                       "%s", psResult->message );
             return FALSE;
         }
-    
+
 /* -------------------------------------------------------------------- */
 /*      If an explicit layer was selected, just create that layer.      */
 /* -------------------------------------------------------------------- */
@@ -259,7 +259,7 @@ void OGROGDIDataSource::IAddLayer( const char *pszLayerName,
 {
     m_papoLayers = (OGROGDILayer**)
         CPLRealloc( m_papoLayers, (m_nLayers+1) * sizeof(OGROGDILayer*));
-    
+
     m_papoLayers[m_nLayers++] = new OGROGDILayer(this, pszLayerName, eFamily);
 }
 

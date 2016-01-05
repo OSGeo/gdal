@@ -395,7 +395,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
                              nBufXSize, nLineCount, eBufType,
                              nBandCount, panBandMap,
                              nPixelSpace, (spacing_type)nLineSpace, (spacing_type)nBandSpace ));
-        
+
         y += nLineCount;
         if( y == nBufYSize )
             return;
@@ -646,7 +646,7 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
                  "nXSize != nBufXSize || nYSize != nBufYSize");
         return NULL;
     }
-    
+
     int nRasterXSize = (hDS) ? GDALGetRasterXSize(hDS) : GDALGetRasterBandXSize(hBand);
     int nRasterYSize = (hDS) ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
 

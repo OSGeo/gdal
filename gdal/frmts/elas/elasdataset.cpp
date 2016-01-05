@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #include <algorithm>
@@ -35,10 +36,6 @@
 using std::fill;
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_ELAS(void);
-CPL_C_END
 
 typedef struct ELASHeader {
     ELASHeader();
@@ -413,7 +410,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognised image data type %d, with BytesPerSample=%d.\n",
+                  "Unrecognized image data type %d, with BytesPerSample=%d.\n",
                   nELASDataType, nBytesPerSample );
         return NULL;
     }
@@ -680,7 +677,7 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
 
 
 /************************************************************************/
-/*                          GDALRegister_ELAS()                        */
+/*                          GDALRegister_ELAS()                         */
 /************************************************************************/
 
 void GDALRegister_ELAS()

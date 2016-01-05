@@ -36,6 +36,7 @@
 #include "cpl_string.h"
 #include "cpl_atomic_ops.h"
 #include "cpl_multiproc.h"
+#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -171,6 +172,8 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
 /* -------------------------------------------------------------------- */
 /*      Attach all the points to the transformation.                    */
 /* -------------------------------------------------------------------- */
+    std::map< std::pair<double, double>, int > oMapPixelLineToIdx;
+    std::map< std::pair<double, double>, int > oMapXYToIdx;
     for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
         double    afPL[2], afXY[2];
@@ -179,6 +182,45 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
         afPL[1] = pasGCPList[iGCP].dfGCPLine;
         afXY[0] = pasGCPList[iGCP].dfGCPX;
         afXY[1] = pasGCPList[iGCP].dfGCPY;
+
+        std::map< std::pair<double, double>, int >::iterator oIter;
+        oIter = oMapPixelLineToIdx.find( std::pair<double,double>(afPL[0], afPL[1]) );
+        if( oIter != oMapPixelLineToIdx.end() )
+        {
+            if( afXY[0] == pasGCPList[oIter->second].dfGCPX &&
+                afXY[1] == pasGCPList[oIter->second].dfGCPY )
+            {
+                continue;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "GCP %d and %d have same (pixel,line)=(%f,%f) but different (X,Y): (%f,%f) vs (%f,%f)",
+                         iGCP + 1, oIter->second,
+                         afPL[0], afPL[1],
+                         afXY[0], afXY[1],
+                         pasGCPList[oIter->second].dfGCPX, pasGCPList[oIter->second].dfGCPY);
+            }
+        }
+        else
+        {
+            oMapPixelLineToIdx[ std::pair<double,double>(afPL[0], afPL[1]) ] = iGCP;
+        }
+
+        oIter = oMapXYToIdx.find( std::pair<double,double>(afXY[0], afXY[1]) );
+        if( oIter != oMapXYToIdx.end() )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "GCP %d and %d have same (x,y)=(%f,%f) but different (pixel,line): (%f,%f) vs (%f,%f)",
+                        iGCP + 1, oIter->second,
+                        afXY[0], afXY[1],
+                        afPL[0], afPL[1],
+                        pasGCPList[oIter->second].dfGCPPixel, pasGCPList[oIter->second].dfGCPLine);
+        }
+        else
+        {
+            oMapXYToIdx[ std::pair<double,double>(afXY[0], afXY[1]) ] = iGCP;
+        }
 
         bool bOK = true;
         if( bReversed )

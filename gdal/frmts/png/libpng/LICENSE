@@ -10,7 +10,7 @@ this sentence.
 
 This code is released under the libpng license.
 
-libpng versions 1.0.7, July 1, 2000, through 1.2.54, November 12, 2015, are
+libpng versions 1.0.7, July 1, 2000, through 1.2.56, December 17, 2015, are
 Copyright (c) 2000-2002, 2004, 2006-2015 Glenn Randers-Pehrson, are
 derived from libpng-1.0.6, and are distributed according to the same
 disclaimer and license as libpng-1.0.6 with the following individuals
@@ -107,4 +107,4 @@ the additional disclaimers inserted at version 1.0.7.
 
 Glenn Randers-Pehrson
 glennrp at users.sourceforge.net
-November 12, 2015
+December 17, 2015

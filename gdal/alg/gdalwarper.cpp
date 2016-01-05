@@ -815,7 +815,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         eErr = GDALRasterIO( hAlphaBand, GF_Write, 
                              nXOff, nYOff, nDstXSize, nDstYSize, 
                              pafMask, nDstXSize, nDstYSize, GDT_Float32,
-                             0, sizeof(float) * nXSize );
+                             0, (int)sizeof(float) * nXSize );
         return eErr;
     }
 }

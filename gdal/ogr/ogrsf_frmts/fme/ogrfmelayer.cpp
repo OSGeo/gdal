@@ -91,7 +91,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 
 {
     IFMEString  *poFMEString = NULL;
-    
+
     poFMEString = poDS->GetFMESession()->createString();
     poFMEFeature = poDS->GetFMESession()->createFeature();
 
@@ -124,7 +124,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
     OGRwkbGeometryType eGeomType = wkbNone;
     IFMEString  *poAttrValue;
     poAttrValue = poDS->GetFMESession()->createString();
-    
+
     for( int iAttr = 0; iAttr < (int)poAttrNames->entries(); iAttr++ )
     {
         const char       *pszAttrName = (*poAttrNames)(iAttr);
@@ -262,7 +262,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 /*      Add the field to the feature definition.                        */
 /* -------------------------------------------------------------------- */
         OGRFieldDefn  oFieldDefn( pszAttrName, eType );
-        
+
         oFieldDefn.SetWidth( nWidth );
         oFieldDefn.SetPrecision( nPrecision );
 

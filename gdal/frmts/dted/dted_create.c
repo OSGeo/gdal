@@ -3,7 +3,7 @@
  *
  * Project:  DTED Translator
  * Purpose:  Implementation of DTEDCreate() portion of DTED API.
- * Author:   Frank Warmerdam, warmerdamm@pobox.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
@@ -94,6 +94,8 @@ static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... )
 {
     va_list args;
     char    szWork[512];
+    // Quiet coverity by staring off nul terminated.
+    szWork[0] = '\0';
 
     va_start(args, pszFormat);
     CPLvsnprintf( szWork, sizeof(szWork), pszFormat, args );

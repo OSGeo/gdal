@@ -28,14 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "rawdataset.h"
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_PNM(void);
+void GDALRegister_PNM();
 CPL_C_END
 
 /************************************************************************/
@@ -399,7 +400,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_PNM()                          */
+/*                         GDALRegister_PNM()                           */
 /************************************************************************/
 
 void GDALRegister_PNM()
@@ -408,7 +409,7 @@ void GDALRegister_PNM()
     if( GDALGetDriverByName( "PNM" ) != NULL )
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "PNM" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

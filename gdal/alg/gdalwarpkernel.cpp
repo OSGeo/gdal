@@ -4123,6 +4123,9 @@ static void GWKGeneralCaseThread( void* pData)
                                         &dfValueReal, &dfValueImag );
                 }
                 else
+#ifdef DEBUG
+                if( psWrkStruct != NULL ) /* only usefull for clang static analyzer */
+#endif
                 {
                     psWrkStruct->pfnGWKResample( poWK, iBand, 
                                  padfX[iDstX]-poWK->nSrcXOff,
@@ -4326,7 +4329,8 @@ static void GWKResampleNoMasksOrDstDensityOnlyThread( void* pData )
     GWKResampleNoMasksOrDstDensityOnlyThreadInternal<T,eResample,FALSE>(pData);
 }
 
-template<class T,GDALResampleAlg eResample> void GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread( void* pData )
+template<class T,GDALResampleAlg eResample>
+static void GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread( void* pData )
 
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;

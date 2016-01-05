@@ -77,7 +77,7 @@ install:
 	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
 	done
 
-# The sed substition below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
+# The sed substitution below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
 # that produces buggy compiled code.
 # Seen on gcc 4.1.2-27ubuntu1 (Ubuntu 10.04) (not the default compiler) and gcc-4.1.2-48.el5 (CentOS 5.5)
 # (default compiler...)
@@ -91,7 +91,7 @@ parser:
 # The sed hack is to please MSVC
 osr_cs_wkt_parser:
 	bison --no-lines -p osr_cs_wkt_ -d -oosr_cs_wkt_parser.c osr_cs_wkt_grammar.y
-	sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" < osr_cs_wkt_parser.c | sed "s/yyerrorlab:/#if 0\nyyerrorlab:/" | sed "s/yyerrlab1:/#endif\nyyerrlab1:/" > osr_cs_wkt_parser.c.tmp
+	sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" < osr_cs_wkt_parser.c | sed "s/yyerrorlab:/#if 0\nyyerrorlab:/" | sed "s/yyerrlab1:/#endif\nyyerrlab1:/" | sed "s/for (yylen = 0; yystr\[yylen\]; yylen++)/for (yylen = 0; yystr != YY_NULL \&\& yystr\[yylen\]; yylen++)/"  > osr_cs_wkt_parser.c.tmp
 	mv osr_cs_wkt_parser.c.tmp osr_cs_wkt_parser.c
 
 osr_cs_wkt_parser.$(OBJ_EXT):   osr_cs_wkt_parser.c

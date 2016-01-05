@@ -28,17 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "fit.h"
-#include "gstEndian.h"
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "fit.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gstEndian.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-
-void	GDALRegister_FIT(void);
-CPL_C_END
 
 #define FIT_WRITE
 
@@ -96,7 +92,7 @@ class FITRasterBand : public GDALPamRasterBand
 
 public:
 
-    FITRasterBand( FITDataset *, int );
+    FITRasterBand( FITDataset *, int nBandIn, int nBandsIn );
     ~FITRasterBand();
 
     // should override RasterIO eventually.
@@ -113,7 +109,13 @@ public:
 /*                           FITRasterBand()                            */
 /************************************************************************/
 
-FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn ) : tmpImage( NULL )
+FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
+        recordSize(0),
+        numXBlocks(0),
+        numYBlocks(0),
+        bytesPerComponent(0),
+        bytesPerPixel(0),
+        tmpImage( NULL )
 
 {
     this->poDS = poDSIn;
@@ -134,18 +136,20 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn ) : tmpImage( NULL
 /*      Caculate the values for record offset calculations.             */
 /* -------------------------------------------------------------------- */
     bytesPerComponent = (GDALGetDataTypeSize(eDataType) / 8);
-    bytesPerPixel = poDSIn->nBands * bytesPerComponent;
+    if( bytesPerComponent == 0 )
+        return;
+    bytesPerPixel = nBandsIn * bytesPerComponent;
+    if( nBlockXSize <= 0 || nBlockYSize <= 0 ||
+        nBlockXSize > INT_MAX / (int)bytesPerPixel ||
+        nBlockYSize > INT_MAX / (nBlockXSize * (int)bytesPerPixel) )
+        return;
     recordSize = bytesPerPixel * nBlockXSize * nBlockYSize;
     numXBlocks =
         (unsigned long) ceil((double) poDSIn->info->xSize / nBlockXSize);
     numYBlocks =
         (unsigned long) ceil((double) poDSIn->info->ySize / nBlockYSize);
 
-    tmpImage = (char *) malloc(recordSize);
-    if (! tmpImage)
-        CPLError(CE_Fatal, CPLE_NotSupported, 
-                 "FITRasterBand couldn't allocate %lu bytes", recordSize);
-
+    tmpImage = (char *) VSI_MALLOC_VERBOSE(recordSize);
 /* -------------------------------------------------------------------- */
 /*      Set the access flag.  For now we set it the same as the         */
 /*      whole dataset, but eventually this should take account of       */
@@ -157,8 +161,7 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn ) : tmpImage( NULL
 
 FITRasterBand::~FITRasterBand()
 {
-    if ( tmpImage )
-        free ( tmpImage );
+    VSIFree ( tmpImage );
 }
 
 
@@ -983,8 +986,13 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nRasterXSize = head->xSize;
     poDS->nRasterYSize = head->ySize;
-    poDS->nBands = head->cSize;
 
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        !GDALCheckBandCount(head->cSize, FALSE))
+    {
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Check if 64 bit seek is needed.                                 */
 /* -------------------------------------------------------------------- */
@@ -1046,9 +1054,12 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < poDS->nBands; i++ )
+    for( int i = 0; i < (int)head->cSize; i++ )
     {
-        poDS->SetBand( i+1,  new FITRasterBand( poDS, i+1 ) ) ;
+        FITRasterBand* poBand = new FITRasterBand( poDS, i+1, (int)head->cSize );
+        poDS->SetBand( i+1,  poBand);
+        if( poBand->tmpImage == NULL )
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1345,10 +1356,8 @@ void GDALRegister_FIT()
 
     poDriver->SetDescription( "FIT" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "FIT Image" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "FIT Image" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
@@ -1356,7 +1365,8 @@ void GDALRegister_FIT()
 #ifdef FIT_WRITE
     poDriver->pfnCreateCopy = FITCreateCopy;
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
+                               "Byte UInt16 Int16 UInt32 Int32 "
+                               "Float32 Float64" );
 #endif // FIT_WRITE
 
     GetGDALDriverManager()->RegisterDriver( poDriver );

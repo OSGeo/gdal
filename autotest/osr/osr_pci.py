@@ -5,20 +5,20 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some PCI specific translation issues.
 # Author:   Andrey Kiselev, dron@ak4719.spb.edu
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -52,7 +52,7 @@ def osr_pci_1():
         return 'fail'
 
     expected = 'PROJCS["unnamed",GEOGCS["Unknown - PCI E015",DATUM["Unknown - PCI E015",SPHEROID["Krassowsky 1940",6378245,298.3,AUTHORITY["EPSG","7024"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equidistant_Conic"],PARAMETER["standard_parallel_1",47],PARAMETER["standard_parallel_2",62],PARAMETER["latitude_of_center",54.5],PARAMETER["longitude_of_center",45],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
-    
+
     if not gdaltest.equal_srs_from_wkt( expected, srs.ExportToWkt() ):
         return 'fail'
 
@@ -63,7 +63,7 @@ def osr_pci_1():
         print( pci_parms )
         gdaltest.post_reason( 'ExportToPCI result wrong.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -71,7 +71,7 @@ def osr_pci_1():
 #
 
 def osr_pci_2():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
     DATUM["North_American_Datum_1927",\
@@ -103,7 +103,7 @@ def osr_pci_2():
 #
 
 def osr_pci_3():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromPCI('UTM    13   D000', 'METRE', \
 		      (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
@@ -113,7 +113,6 @@ def osr_pci_3():
     if wkt.find('13, Northern Hemi') == -1:
         gdaltest.post_reason( 'did not default to northern hemisphere!' )
 
-        
     srs = osr.SpatialReference()
     srs.ImportFromPCI('UTM    13 G D000', 'METRE', \
 		      (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
@@ -131,7 +130,7 @@ def osr_pci_3():
     wkt = srs.ExportToWkt()
     if wkt.find('13, Northern Hemi') == -1:
         gdaltest.post_reason( 'did get southern  hemisphere!' )
-        
+
     return 'success'
 
 ###############################################################################
@@ -139,7 +138,7 @@ def osr_pci_3():
 #
 
 def osr_pci_4():
-    
+
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
     srs = osr.SpatialReference()
@@ -157,7 +156,7 @@ def osr_pci_4():
         print( pci_parms )
         gdaltest.post_reason( 'ExportToPCI result wrong.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -165,7 +164,7 @@ def osr_pci_4():
 #
 
 def osr_pci_5():
-    
+
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
     srs = osr.SpatialReference()
@@ -183,7 +182,7 @@ def osr_pci_5():
         print( pci_parms )
         gdaltest.post_reason( 'ExportToPCI result wrong.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -191,7 +190,7 @@ def osr_pci_5():
 #
 
 def osr_pci_6():
-    
+
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
     srs = osr.SpatialReference()
@@ -209,7 +208,7 @@ def osr_pci_6():
         print( pci_parms )
         gdaltest.post_reason( 'ExportToPCI result wrong.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -218,7 +217,7 @@ def osr_pci_6():
 #
 
 def osr_pci_7():
-    
+
     srs = osr.SpatialReference()
     srs.SetFromUserInput( 'GEOGCS["My GCS",DATUM["My Datum",SPHEROID["Bessel 1841",6377397.155,299.1528128,AUTHORITY["EPSG","7004"]],TOWGS84[565.04,49.91,465.84,0.4094,-0.3597,1.8685,4.077200000063286]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]' )
 
@@ -231,10 +230,10 @@ def osr_pci_7():
         print( pci_parms )
         gdaltest.post_reason( 'ExportToPCI result wrong.' )
         return 'fail'
-    
+
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_pci_1,
     osr_pci_2,
     osr_pci_3,

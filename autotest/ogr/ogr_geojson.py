@@ -6,22 +6,22 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  GeoJSON driver test suite.
 # Author:   Mateusz Loskot <mateusz@loskot.net>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Mateusz Loskot <mateusz@loskot.net>
 # Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -177,7 +177,7 @@ def copy_shape_to_geojson(gjname, compress = None):
     src_name = os.path.join('data', gjname + '.shp')
     shp_ds = ogr.Open(src_name)
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.gjpoint_feat = []
 
@@ -203,7 +203,7 @@ def copy_shape_to_geojson(gjname, compress = None):
 def ogr_geojson_1():
 
     gdaltest.geojson_drv = ogr.GetDriverByName('GeoJSON')
-    
+
     if gdaltest.geojson_drv is not None:
         return 'success'
     else:
@@ -437,7 +437,7 @@ def ogr_geojson_8():
 # Test translation of data/gjpoint.shp to GeoJSON file
 
 def ogr_geojson_9():
-    
+
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -469,7 +469,7 @@ def ogr_geojson_9():
 # Test translation of data/gjpoint.shp to GZip compressed GeoJSON file
 
 def ogr_geojson_10():
-    
+
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -850,7 +850,7 @@ def ogr_geojson_20():
 
     if gdaltest.geojson_drv is None: 
         return 'skip' 
-        
+
     from glob import glob 
 
     geojson_files = glob('data/*.json') 
@@ -995,7 +995,7 @@ def ogr_geojson_23():
 
     gdal.Unlink('/vsimem/ogr_geojson_23.json')
 
-    if data.find('"bbox": [ 1.0, 10.0, 2.0, 20.0 ]') == -1:
+    if data.find('"bbox": [ 1, 10, 2, 20 ]') == -1:
         gdaltest.post_reason('did not find global bbox')
         print(data)
         return 'fail'
@@ -1187,7 +1187,7 @@ def ogr_geojson_26():
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     feature = lyr.GetNextFeature()
     if feature.GetFID() != 1:
         gdaltest.post_reason('fail')
@@ -1218,7 +1218,7 @@ def ogr_geojson_26():
 
     lyr = None
     ds = None
-    
+
     ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_26.json')
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('int64', ogr.OFTInteger64))
@@ -1230,13 +1230,13 @@ def ogr_geojson_26():
     lyr.CreateFeature(f)
     f = None
     ds = None
-    
+
     fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_26.json', 'rb')
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
 
     gdal.Unlink('/vsimem/ogr_geojson_26.json')
-    
+
     if data.find('{ "type": "Feature", "id": 1234567890123, "properties": { "int64": 1234567890123, "int64list": [ 1234567890123 ] }, "geometry": null }') < 0:
         gdaltest.post_reason('failure')
         print(data)
@@ -1600,7 +1600,7 @@ def ogr_geojson_35():
     geom.AddPoint_2D(-1.79769313486231571e+308, -1.79769313486231571e+308)
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
-    
+
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -1658,7 +1658,7 @@ def ogr_geojson_35():
     geom.AddGeometry(geom2)
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
-    
+
     gdal.PopErrorHandler()
 
     ds = None
@@ -1765,7 +1765,7 @@ def ogr_geojson_37():
     gdal.VSIFCloseL(fp)
 
     gdal.Unlink('/vsimem/ogr_geojson_37.json')
-    
+
     if data.find('"bool": false, "not_bool": 0, "bool_list": [ false, true ], "notbool_list": [ 0, 3 ]') < 0:
         gdaltest.post_reason('failure')
         print(data)
@@ -1942,7 +1942,7 @@ def ogr_geojson_41():
         return 'fail'
     srs = g.GetSpatialReference()
     g = None
-    
+
     if srs.ExportToWkt().find('WGS 84') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2176,7 +2176,7 @@ def ogr_geojson_45():
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_45.json')
     lyr = ds.CreateLayer('test', options = [
-            'NATIVE_DATA={ "type": "ignored", "foo": "bar", "bar": "baz", "features": "ignored" }',
+            'NATIVE_DATA={ "type": "ignored", "bbox": [ 0, 0, 0, 0 ], "foo": "bar", "bar": "baz", "features": "ignored" }',
             'NATIVE_MEDIA_TYPE=application/vnd.geo+json'] )
     f = ogr.Feature(lyr.GetLayerDefn())
     json_geom = """{ "type": "GeometryCollection", "foo_gc": "bar_gc", "geometries" : [ 
@@ -2199,7 +2199,8 @@ def ogr_geojson_45():
 
     gdal.Unlink('/vsimem/ogr_geojson_45.json')
 
-    if data.find('"foo": "bar"') < 0 or data.find('"bar": "baz"') < 0 or \
+    if data.find('"bbox": [ 0, 1, 2, 0, 1, 2 ],') < 0 or \
+       data.find('"foo": "bar"') < 0 or data.find('"bar": "baz"') < 0 or \
        data.find('"foo_feature": "bar_feature"') < 0 or \
        data.find('"foo_gc": "bar_gc"') < 0 or \
        data.find('"foo_point": "bar_point"') < 0 or data.find('3') < 0 or \
@@ -2328,6 +2329,30 @@ def ogr_geojson_48():
     return 'success'
 
 ###############################################################################
+# Test ARRAY_AS_STRING
+
+def ogr_geojson_49():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_49.json',
+"""{ "type": "Feature", "properties": { "foo": ["bar"] }, "geometry": null }""")
+
+    # Test read support
+    ds = gdal.OpenEx('/vsimem/ogr_geojson_49.json', open_options = ['ARRAY_AS_STRING=YES'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['foo'] != '[ "bar" ]':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -2357,7 +2382,7 @@ def ogr_geojson_cleanup():
         os.remove('tmp/out_ogr_geojson_14.geojson')
     except:
         pass
-    
+
     for f in gdal.ReadDir('/vsimem/geojson'):
         gdal.Unlink('/vsimem/geojson/' + f)
 
@@ -2412,6 +2437,7 @@ gdaltest_list = [
     ogr_geojson_46,
     ogr_geojson_47,
     ogr_geojson_48,
+    ogr_geojson_49,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

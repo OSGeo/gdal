@@ -27,8 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili1.h"
 #include "cpl_conv.h"
+#include "ogr_ili1.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
@@ -39,8 +40,6 @@ CPL_CVSID("$Id$");
 static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRILI1DataSource    *poDS;
-
     if( poOpenInfo->eAccess == GA_Update ||
         (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == NULL) )
         return NULL;
@@ -55,16 +54,17 @@ static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
     else if( poOpenInfo->bIsDirectory )
         return NULL;
 
-    poDS = new OGRILI1DataSource();
+    OGRILI1DataSource *poDS = new OGRILI1DataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions, TRUE )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
+                     TRUE )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -72,21 +72,21 @@ static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRILI1DriverCreate( const char * pszName,
-                                         CPL_UNUSED int nBands,
-                                         CPL_UNUSED int nXSize,
-                                         CPL_UNUSED int nYSize,
-                                         CPL_UNUSED GDALDataType eDT,
+                                         int /* nBands */,
+                                         int /* nXSize */,
+                                         int /* nYSize */,
+                                         GDALDataType /* eDT */,
                                          char **papszOptions )
 {
-    OGRILI1DataSource    *poDS = new OGRILI1DataSource();
+    OGRILI1DataSource *poDS = new OGRILI1DataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -94,28 +94,23 @@ static GDALDataset *OGRILI1DriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRILI1() {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "Interlis 1" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "Interlis 1" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "Interlis 1" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Interlis 1" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_ili.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "itf ili" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetDescription( "Interlis 1" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Interlis 1" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ili.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "itf ili" );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='MODEL' type='string' description='Filename of the model in IlisMeta format (.imd)'/>"
 "</OpenOptionList>" );
 
-        poDriver->pfnOpen = OGRILI1DriverOpen;
-        poDriver->pfnCreate = OGRILI1DriverCreate;
+    poDriver->pfnOpen = OGRILI1DriverOpen;
+    poDriver->pfnCreate = OGRILI1DriverCreate;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

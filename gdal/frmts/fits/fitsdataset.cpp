@@ -30,16 +30,13 @@
 
 
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include <string.h>
+#include <fitsio.h>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-#include <fitsio.h>
-void	GDALRegister_FITS(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -52,7 +49,7 @@ class FITSRasterBand;
 class FITSDataset : public GDALPamDataset {
 
   friend class FITSRasterBand;
-  
+
   fitsfile* hFITS;
 
   GDALDataType gdalDataType;   // GDAL code for the image type
@@ -61,7 +58,7 @@ class FITSDataset : public GDALPamDataset {
   bool isExistingFile;
   long highestOffsetWritten;  // How much of image has been written
 
-  FITSDataset();     // Others shouldn't call this constructor explicitly
+  FITSDataset();     // Others should not call this constructor explicitly
 
   CPLErr Init(fitsfile* hFITS_, bool isExistingFile_);
 
@@ -73,7 +70,7 @@ public:
 			     int nXSize, int nYSize, int nBands,
 			     GDALDataType eType,
 			     char** papszParmList);
-  
+
 };
 
 /************************************************************************/
@@ -85,7 +82,7 @@ public:
 class FITSRasterBand : public GDALPamRasterBand {
 
   friend class	FITSDataset;
-  
+
 public:
 
   FITSRasterBand(FITSDataset*, int);
@@ -156,7 +153,7 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 	     "Couldn't read image data from FITS file (%d).", status);
     return CE_Failure;
   }
-  
+
   return CE_None;
 }
 
@@ -395,7 +392,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 	     GetDescription());
     return CE_Failure;
   }
-  
+
   // Create the bands
   for (int i = 0; i < nBands; ++i)
     SetBand(i+1, new FITSRasterBand(this, i+1));
@@ -420,10 +417,10 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
       return CE_Failure;
     }
     if (strcmp(key, "END") == 0) {
-        /* we shouldn't get here in principle since the END */
-        /* keyword shouldn't be counted in nKeys, but who knows... */
+        // We should not get here in principle since the END
+        // keyword shouldn't be counted in nKeys, but who knows.
         break;
-    } 
+    }
     else if (isIgnorableFITSHeader(key)) {
       // Ignore it!
     }
@@ -454,7 +451,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
       }
     }
   }
-  
+
   return CE_None;
 }
 
@@ -473,7 +470,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
     return NULL;
   if (memcmp(poOpenInfo->pabyHeader, fitsID, fitsIDLen))
     return NULL;
-  
+
   // Get access mode and attempt to open the file
   int status = 0;
   fitsfile* hFITS = 0;
@@ -598,29 +595,29 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
 
 
 /************************************************************************/
-/*                          GDALRegister_FITS()                        */
+/*                          GDALRegister_FITS()                         */
 /************************************************************************/
 
-void GDALRegister_FITS() {
+void GDALRegister_FITS()
 
-    GDALDriver* poDriver;
+{
+    if( GDALGetDriverByName( "FITS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "FITS" ) == NULL) {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "FITS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Flexible Image Transport System" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#FITS" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 Int32 Float32 Float64" );
-        
-        poDriver->pfnOpen = FITSDataset::Open;
-        poDriver->pfnCreate = FITSDataset::Create;
-        poDriver->pfnCreateCopy = NULL;
+    GDALDriver *poDriver = new GDALDriver();
 
-        GetGDALDriverManager()->RegisterDriver(poDriver);
-    }
+    poDriver->SetDescription( "FITS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Flexible Image Transport System" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#FITS" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 Int32 Float32 Float64" );
+
+    poDriver->pfnOpen = FITSDataset::Open;
+    poDriver->pfnCreate = FITSDataset::Create;
+    poDriver->pfnCreateCopy = NULL;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

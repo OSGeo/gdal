@@ -29,14 +29,11 @@
  ****************************************************************************/
 
 #include "cpl_minixml.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_RS2(void);
-CPL_C_END
 
 typedef enum eCalibration_t {
     Sigma0 = 0,
@@ -1478,8 +1475,7 @@ void GDALRegister_RS2()
 
     poDriver->SetDescription( "RS2" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                               "RadarSat 2 XML Product" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "RadarSat 2 XML Product" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rs2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 

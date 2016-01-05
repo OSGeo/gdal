@@ -120,7 +120,8 @@ No known bug
     for( part = 0; part < nPartCount; part++ )
         n += panPartSize[part];
 
-    polyInts = (int *) malloc(sizeof(int) * n);
+    // +1 to make clang static analyzer not warn about potential malloc(0)
+    polyInts = (int *) malloc(sizeof(int) * (n+1));
 
     dminy = padfY[0];
     dmaxy = padfY[0];
@@ -599,7 +600,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                     dfY += dfStepY;
                     dfVariant += dfDeltaVariant * dfStepX;
                 }
-            } // next step along sement.
+            } // next step along segment.
 
         } // next segment
     } // next part

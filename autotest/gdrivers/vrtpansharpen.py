@@ -1043,14 +1043,15 @@ def vrtpansharpen_2():
     if vrt_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    gdal.GetDriverByName('GTiff').CreateCopy('out1.tif', vrt_ds)
+    #gdal.GetDriverByName('GTiff').CreateCopy('out1.tif', vrt_ds)
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
     if cs != [50261, 4735, 10000, 9742]:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
-    # Same, but everything scambled, and with spectral bands not in the same dataset
+    # Same, but everything scrambled, and with spectral bands not in
+    # the same dataset
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
     <GeoTransform> -1.8000000000000000e+02,  4.5000000000000001e-01,  0.0000000000000000e+00,  9.0000000000000000e+01,  0.0000000000000000e+00, -4.5000000000000001e-01</GeoTransform>
@@ -1098,7 +1099,7 @@ def vrtpansharpen_2():
     if vrt_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    gdal.GetDriverByName('GTiff').CreateCopy('out2.tif', vrt_ds)
+    #gdal.GetDriverByName('GTiff').CreateCopy('out2.tif', vrt_ds)
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
     if cs != [50261, 4735, 10000, 9742]:
         gdaltest.post_reason('fail')

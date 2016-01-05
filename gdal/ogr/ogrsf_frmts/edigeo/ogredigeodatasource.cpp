@@ -184,7 +184,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
     CPLDebug("EDIGEO", "SCN = %s", osSCN.c_str());
     for(int i=0;i<(int)aosGDN.size();i++)
         CPLDebug("EDIGEO", "GDN[%d] = %s", i, aosGDN[i].c_str());
-    
+
     return TRUE;
 }
 
@@ -271,7 +271,7 @@ int OGREDIGEODataSource::ReadGEO()
             poSRS = NULL;
         }
     }
-    
+
     return TRUE;
 }
 

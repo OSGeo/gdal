@@ -63,14 +63,28 @@ AX_CHECK_COMPILE_FLAG([-Werror -Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" C
 AX_CHECK_COMPILE_FLAG([-Werror -Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"])
 
 dnl -Wclobbered is not reliable on most gcc versions
-AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
+dnl AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
+
+dnl GCC 6 warnings
+AX_CHECK_COMPILE_FLAG([-Werror -Wnull-dereference], [C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"])
+AX_CHECK_COMPILE_FLAG([-Werror -Wduplicated-cond], [C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"])
 
 AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
+
+dnl C++ specific stuff
+
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"])
 AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"])
+
+dnl Clang enables -Woverloaded-virtual if -Wall is defined, but not GCC
+AX_CHECK_COMPILE_FLAG([-Werror -Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"])
+
+dnl Forbid use of 'or', 'and', ... alias operators
+AX_CHECK_COMPILE_FLAG([-Werror -fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"])
+
 AC_LANG_POP([C++])
 
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
@@ -163,7 +177,7 @@ AC_CHECK_TYPES([int8, int16, int32],,,
 
 dnl We need the following lines for libtiff too.
 HAVE_IEEEFP=1
-AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format suported by the machine])
+AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format supported by the machine])
 
 dnl Check the native cpu bit order (also libtiff stuff).
 AC_MSG_CHECKING([native cpu bit order])
@@ -194,6 +208,7 @@ AC_CHECK_FUNCS(lstat)
 AC_CHECK_FUNCS(posix_spawnp)
 AC_CHECK_FUNCS(vfork)
 AC_CHECK_FUNCS(mmap)
+AC_CHECK_FUNCS(statvfs)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.
@@ -389,7 +404,12 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
     rm -f detectavx.cpp
     echo '#ifdef __AVX__' > detectavx.cpp
     echo '#include <immintrin.h>' >> detectavx.cpp
-    echo 'void foo() { unsigned int nXCRLow, nXCRHigh; __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0)); float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } int main() { return 0; }' >> detectavx.cpp
+    echo 'int foo() { unsigned int nXCRLow, nXCRHigh;' >> detectavx.cpp
+    echo '__asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));' >> detectavx.cpp
+    echo 'float fEpsilon = 0.0000000000001f;' >> detectavx.cpp
+    echo '__m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon);' >> detectavx.cpp
+    echo 'return (int)nXCRLow + _mm256_movemask_ps(ymm_small); }' >> detectavx.cpp
+    echo 'int main(int argc, char**) { if( argc == 0 ) return foo(); return 0; }' >> detectavx.cpp
     echo '#else' >> detectavx.cpp
     echo 'some_error' >> detectavx.cpp
     echo '#endif' >> detectavx.cpp
@@ -1201,18 +1221,18 @@ dnl ---------------------------------------------------------------------------
 dnl Select PCIDSK options.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH([pcidsk], [  --with-pcidsk[=ARG]     Path to external PCIDSK SDK, or internal (default), or old],,)
+AC_ARG_WITH([pcidsk], [  --with-pcidsk[=ARG]     Path to external PCIDSK SDK or internal (default)],,)
 
 AC_MSG_CHECKING([for PCIDSK])
 
 PCIDSK_LIB=
 PCIDSK_INCLUDE=
 
-if test "$with_pcidsk" = "old" -o "$with_pcidsk" = "no" ; then
+if test "$with_pcidsk" = "no" ; then
 
-  PCIDSK_SETTING=old
+  PCIDSK_SETTING=no
 
-  echo "pcidsk support using pre-PCIDSK SDK (old) implementation."
+  echo "pcidsk support disabled."
 
 elif test "$with_pcidsk" = "" -o "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
 
@@ -1230,9 +1250,13 @@ else
 
 fi
 
-AC_SUBST([PCIDSK_SETTING], [$PCIDSK_SETTING])
-AC_SUBST([PCIDSK_LIB], [$PCIDSK_LIB])
-AC_SUBST([PCIDSK_INCLUDE], [$PCIDSK_INCLUDE])
+if test "$with_pcidsk" != "no" ; then
+
+  AC_SUBST([PCIDSK_SETTING], [$PCIDSK_SETTING])
+  AC_SUBST([PCIDSK_LIB], [$PCIDSK_LIB])
+  AC_SUBST([PCIDSK_INCLUDE], [$PCIDSK_INCLUDE])
+
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.

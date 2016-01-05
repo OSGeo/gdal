@@ -181,6 +181,22 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
 }
 
 /************************************************************************/
+/*                              New()                                   */
+/*                                                                      */
+/*      Construct an HFAEntry in memory, with the intention that it     */
+/*      would be written to disk later.                                 */
+/************************************************************************/
+
+HFAEntry* HFAEntry::New( HFAInfo_t * psHFAIn,
+                         const char * pszNodeName,
+                         const char * pszTypeName,
+                         HFAEntry * poParentIn )
+{
+    CPLAssert( poParentIn != NULL );
+    return new HFAEntry(psHFAIn, pszNodeName, pszTypeName, poParentIn);
+}
+
+/************************************************************************/
 /*                      BuildEntryFromMIFObject()                       */
 /*                                                                      */
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
@@ -241,15 +257,14 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
         return NULL;
     }
 
-    GByte* pabyData = (GByte *) VSIMalloc(nMIFObjectSize);
-    if (pabyData == NULL)
+    GByte* l_pabyData = (GByte *) VSIMalloc(nMIFObjectSize);
+    if (l_pabyData == NULL)
         return NULL;
 
-    memcpy( pabyData, pszField, nMIFObjectSize );
+    memcpy( l_pabyData, pszField, nMIFObjectSize );
 
-    return new HFAEntry(poContainer, pszMIFObjectPath,
-                        osDictionary, osType,
-                        nMIFObjectSize, pabyData);
+    return new HFAEntry(osDictionary, osType,
+                        nMIFObjectSize, l_pabyData);
 
 }
 
@@ -259,9 +274,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
 /************************************************************************/
 
-HFAEntry::HFAEntry( CPL_UNUSED HFAEntry * poContainer,
-                    CPL_UNUSED const char *pszMIFObjectPath,
-                    const char * pszDictionary,
+HFAEntry::HFAEntry( const char * pszDictionary,
                     const char * pszTypeName,
                     int nDataSizeIn,
                     GByte* pabyDataIn ) :
@@ -460,6 +473,12 @@ void HFAEntry::LoadData()
 {
     if( pabyData != NULL || nDataSize == 0 )
         return;
+    if( nDataSize > INT_MAX - 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid value for nDataSize = %u", nDataSize);
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read data.                                 */

@@ -64,7 +64,7 @@ int DDFScanVariable( const char *pszRecord, int nMaxChars, int nDelimChar )
 
 {
     int         i;
-    
+
     for( i = 0; i < nMaxChars-1 && pszRecord[i] != nDelimChar; i++ ) {}
 
     return i;

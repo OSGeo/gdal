@@ -147,7 +147,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                 }
             }
             if (need_this_block) {
-                if (m_parent_dataset->m_offline_mode) {
+                if (/*m_parent_dataset->m_offline_mode */ download_blocks == NULL) {
                     if (!advise_read) {
                         void *p = 0;
                         if ((ix == x) && (iy == y)) p = buffer;
@@ -382,7 +382,7 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
 	x1 = MIN(x1, nRasterXSize);
 	y1 = MIN(y1, nRasterYSize);
     }
-    
+
     const double rx = (m_parent_dataset->m_data_window.m_x1 - m_parent_dataset->m_data_window.m_x0) / static_cast<double>(nRasterXSize);
     const double ry = (m_parent_dataset->m_data_window.m_y1 - m_parent_dataset->m_data_window.m_y0) / static_cast<double>(nRasterYSize);
     /* Use different method for x0,y0 and x1,y1 to make sure calculated values are exact for corner requests */

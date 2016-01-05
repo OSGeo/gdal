@@ -32,17 +32,6 @@
 #include "keaband.h"
 #include "keacopy.h"
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
-#endif
-
-#include "libkea/KEACommon.h"
-
-#ifdef _MSC_VER
-#pragma warning( pop ) 
-#endif
-
 // Function for converting a libkea type into a GDAL type
 GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType )
 {
@@ -152,7 +141,7 @@ GDALDataset *KEADataset::Open( GDALOpenInfo * poOpenInfo )
 
 // static function- pointer set in driver
 // this function is called in preference to Open
-// 
+//
 int KEADataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     bool bisKEA = false;
@@ -253,7 +242,7 @@ H5::H5File *KEADataset::CreateLL( const char * pszFilename,
                   GDALGetDataTypeName(eType) );
         return NULL;
     }
-    
+
     try
     {
         // now create it
@@ -337,7 +326,7 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
     {
         // create the imageio
         kealib::KEAImageIO *pImageIO = new kealib::KEAImageIO();
-        
+
         // open the file
         pImageIO->openKEAImageHeader( keaImgH5File );
 
@@ -381,7 +370,7 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
             pDataset->GetRasterBand(nCount+1)->SetColorInterpretation(
                 pSrcDs->GetRasterBand(nCount+1)->GetColorInterpretation());
         }
-        
+
         // KEA has no concept of per-dataset mask band for now.
         for( int nCount = 0; nCount < nBands; nCount++ )
         {
@@ -506,7 +495,7 @@ CPLErr KEADataset::GetGeoTransform( double * padfTransform )
         padfTransform[3] = pSpatialInfo->tlY;
         padfTransform[4] = pSpatialInfo->yRot;
         padfTransform[5] = pSpatialInfo->yRes;
-    
+
         return CE_None;
     }
     catch (const kealib::KEAIOException &e)
@@ -726,7 +715,7 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
             ndeflate = atoi(pszValue);
         }
     }
-    
+
     kealib::KEADataType keaDataType = GDAL_to_KEA_Type( eType );
     if( keaDataType == kealib::kea_undefined )
     {
@@ -735,7 +724,7 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
                   GDALGetDataTypeName(eType) );
         return CE_Failure;
     }
-    
+
     try {
         m_pImageIO->addImageBand(keaDataType, "", nimageBlockSize,
                 nattBlockSize, ndeflate);

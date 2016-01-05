@@ -154,7 +154,7 @@ enum OGRSpatialiteGeomType
 /*                        OGRSQLiteGeomFieldDefn                        */
 /************************************************************************/
 
-class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
+class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
 {
     public:
         OGRSQLiteGeomFieldDefn( const char* pszNameIn, int iGeomColIn ) :
@@ -181,7 +181,7 @@ class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
 /*                        OGRSQLiteFeatureDefn                          */
 /************************************************************************/
 
-class OGRSQLiteFeatureDefn : public OGRFeatureDefn
+class OGRSQLiteFeatureDefn CPL_FINAL : public OGRFeatureDefn
 {
     public:
         OGRSQLiteFeatureDefn( const char * pszName = NULL ) :
@@ -189,7 +189,7 @@ class OGRSQLiteFeatureDefn : public OGRFeatureDefn
         {
             SetGeomType(wkbNone);
         }
-            
+
         OGRSQLiteGeomFieldDefn* myGetGeomFieldDefn(int i)
         {
             return (OGRSQLiteGeomFieldDefn*) GetGeomFieldDefn(i);
@@ -291,7 +291,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
     virtual OGRSQLiteFeatureDefn *myGetLayerDefn() { return poFeatureDefn; }
 
@@ -380,7 +380,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     void                LoadStatisticsSpatialite4DB();
 
     CPLString           FieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
-    
+
     int                 bDeferredCreation;
     OGRErr              RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeomField,
                                               int bAddColumnsForNonSpatialite );
@@ -602,7 +602,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
     OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 
     virtual OGRErr      ResetStatement();
- 
+
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
                                               CPLString osSQL,
@@ -647,7 +647,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 /*                   OGRSQLiteSingleFeatureLayer                        */
 /************************************************************************/
 
-class OGRSQLiteSingleFeatureLayer : public OGRLayer
+class OGRSQLiteSingleFeatureLayer CPL_FINAL : public OGRLayer
 {
   private:
     int                 nVal;
@@ -704,7 +704,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 
     int                 bUserTransactionActive;
     int                 nSoftTransactionLevel;
-    
+
     OGRErr              DoTransactionCommand(const char* pszCommand);
 
   public:
@@ -725,7 +725,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
     virtual OGRErr      StartTransaction(int bForce = FALSE);
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
-    
+
     virtual int         TestCapability( const char * );
 
     OGRErr              SoftStartTransaction();
@@ -737,7 +737,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 /*                         OGRSQLiteDataSource                          */
 /************************************************************************/
 
-class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
+class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
 {
     OGRSQLiteLayer    **papoLayers;
     int                 nLayers;
@@ -807,7 +807,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     virtual void        FlushCache();
-    
+
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 

@@ -217,7 +217,7 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, CPL_UNUSED int bMerge 
 
         int iDomain = CSLFindString( papszDomainList, pszDomain );
         CPLAssert( iDomain != -1 );
-        
+
         CPLStringList *poMDList = papoMetadataLists[iDomain];
 
 /* -------------------------------------------------------------------- */
@@ -231,7 +231,7 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, CPL_UNUSED int bMerge 
             psSubDoc = psMetadata->psChild;
             while( psSubDoc != NULL && psSubDoc->eType == CXT_Attribute )
                 psSubDoc = psSubDoc->psNext;
-            
+
             char *pszDoc = CPLSerializeXMLTree( psSubDoc );
 
             poMDList->Clear();
@@ -325,9 +325,9 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
                 const char *pszRawValue;
                 char *pszKey = NULL;
                 CPLXMLNode *psMDI;
-                
+
                 pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
-                
+
                 psMDI = CPLCreateXMLNode( NULL, CXT_Element, "MDI" );
                 if( psLastChild == NULL )
                     psMD->psChild = psMDI;
@@ -337,11 +337,11 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
 
                 CPLSetXMLValue( psMDI, "#key", pszKey );
                 CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
-                
+
                 CPLFree( pszKey );
             }
         }
-            
+
         if( psFirst == NULL )
             psFirst = psMD;
         else

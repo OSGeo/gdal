@@ -41,15 +41,13 @@ CPL_CVSID("$Id$");
 /*                       OGRCloudantTableLayer()                         */
 /************************************************************************/
 
-OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDSIn,
-                                           const char* pszName) :
-                                                        OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDSIn, pszName)
-
-{
-    bHasStandardSpatial = -1;
-    pszSpatialView = NULL;
-    pszSpatialDDoc = NULL;
-}
+OGRCloudantTableLayer::OGRCloudantTableLayer( OGRCloudantDataSource* poDSIn,
+                                              const char* pszName) :
+    OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDSIn, pszName),
+    bHasStandardSpatial(-1),
+    pszSpatialView(NULL),
+    pszSpatialDDoc(NULL)
+{}
 
 /************************************************************************/
 /*                      ~OGRCouchDBTableLayer()                         */
@@ -57,7 +55,7 @@ OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDSIn,
 
 OGRCloudantTableLayer::~OGRCloudantTableLayer()
 
-{ 
+{
     if( bMustWriteMetadata )
     {
         WriteMetadata();

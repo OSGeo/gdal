@@ -75,7 +75,7 @@ class OGRVRTGeomFieldProps
         int                 bUseSpatialSubquery;
 
         OGREnvelope         sStaticEnvelope;
-        
+
         int                 bNullable;
 
                         OGRVRTGeomFieldProps();
@@ -154,7 +154,7 @@ class OGRVRTLayer : public OGRLayer
 /*      Caution : all the below methods should care of calling          */
 /*      FullInitialize() if not already done                            */
 /* -------------------------------------------------------------------- */
-    
+
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
 
@@ -214,7 +214,7 @@ class OGRVRTDataSource : public OGRDataSource
     OGRLayer          **papoLayers;
     OGRLayerType       *paeLayerType;
     int                 nLayers;
-    
+
     char               *pszName;
 
     CPLXMLNode         *psTree;

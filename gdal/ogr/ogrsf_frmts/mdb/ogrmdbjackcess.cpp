@@ -210,6 +210,8 @@ int OGRMDBJavaEnv::Init()
         jvm = jvm_static;
         env = env_static;
     }
+    if( env == NULL )
+        return FALSE;
 
     CHECK(byteArray_class, env->FindClass("[B"));
     CHECK(file_class, env->FindClass("java/io/File"));

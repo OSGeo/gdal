@@ -59,13 +59,13 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType,
     pszWidth = (char *) CPLMalloc(nLength+1);
     strncpy(pszWidth, poWidth, nLength);
     pszWidth[nLength] = '\0';
-    
+
     m_nWidth  = atoi(pszWidth);
     CPLFree(pszWidth);
-    
+
     /* precision */
     m_nPrecision = 0;
-    
+
     /* type */
     m_pszEncoding = NULL;
     if (*m_pszType == 'N') {

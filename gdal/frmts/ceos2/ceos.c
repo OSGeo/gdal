@@ -76,7 +76,8 @@ void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header, uchar *buffer
         if( record->Length != 0 )
             record->Length = DetermineCeosRecordBodyLength( header );
 
-	if((record->Buffer = HMalloc(record->Length)) == NULL)
+	if(record->Length < CEOS_HEADER_LENGTH ||
+            (record->Buffer = HMalloc(record->Length)) == NULL)
 	{
 	    record->Length = 0;
 	    return;
@@ -85,7 +86,8 @@ void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header, uchar *buffer
 	/* First copy the header then the buffer */
 	memcpy(record->Buffer,header,CEOS_HEADER_LENGTH);
 	/* Now we copy the rest */
-	memcpy(record->Buffer+CEOS_HEADER_LENGTH,buffer,record->Length-CEOS_HEADER_LENGTH);
+        if( record->Length > CEOS_HEADER_LENGTH )
+            memcpy(record->Buffer+CEOS_HEADER_LENGTH,buffer,record->Length-CEOS_HEADER_LENGTH);
 
 	/* Now we fill in the rest of the structure! */
 	memcpy(&(record->TypeCode.Int32Code),header+TYPE_OFF,sizeof(record->TypeCode.Int32Code));

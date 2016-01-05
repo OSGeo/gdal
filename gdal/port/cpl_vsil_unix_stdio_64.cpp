@@ -48,6 +48,9 @@
 
 #include <unistd.h>
 #include <sys/stat.h>
+#ifdef HAVE_STATVFS
+#include <sys/statvfs.h>
+#endif
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
@@ -105,7 +108,7 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIUnixStdioFilesystemHandler : public VSIFilesystemHandler 
+class VSIUnixStdioFilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
 {
 #ifdef VSI_COUNT_BYTES_READ
     vsi_l_offset  nTotalBytesRead;
@@ -125,7 +128,8 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
+    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
 
 #ifdef VSI_COUNT_BYTES_READ
     void             AddToTotal(vsi_l_offset nBytes);
@@ -138,7 +142,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIUnixStdioHandle : public VSIVirtualHandle
+class VSIUnixStdioHandle CPL_FINAL : public VSIVirtualHandle
 {
     FILE          *fp;
     vsi_l_offset  m_nOffset;
@@ -216,12 +220,12 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffsetIn, int nWhence )
     // if the next position to seek to is within the buffered page
     if( bReadOnly && nWhence == SEEK_SET )
     {
-        const GIntBig nDiff = (GIntBig)nOffsetIn - (GIntBig)m_nOffset;
-        if( nDiff > 0 && nDiff < 4096 )
+        if( nOffsetIn > m_nOffset && nOffsetIn < 4096 + m_nOffset )
         {
+            const int nDiff = static_cast<int>(nOffsetIn - m_nOffset);
             GByte abyTemp[4096];
-            int nRead = (int)fread(abyTemp, 1, (int)nDiff, fp);
-            if( nRead == (int)nDiff )
+            int nRead = (int)fread(abyTemp, 1, nDiff, fp);
+            if( nRead == nDiff )
             {
                 m_nOffset = nOffsetIn;
                 bLastOpWrite = FALSE;
@@ -578,10 +582,11 @@ int VSIUnixStdioFilesystemHandler::Rmdir( const char * pszPathname )
 }
 
 /************************************************************************/
-/*                              ReadDir()                               */
+/*                              ReadDirEx()                             */
 /************************************************************************/
 
-char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
+char **VSIUnixStdioFilesystemHandler::ReadDirEx( const char *pszPath,
+                                                 int nMaxFiles )
 
 {
     if (strlen(pszPath) == 0)
@@ -596,7 +601,11 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
 
         struct dirent *psDirEntry;
         while( (psDirEntry = readdir(hDir)) != NULL )
+        {
             oDir.AddString( psDirEntry->d_name );
+            if( nMaxFiles > 0 && oDir.Count() > nMaxFiles )
+                break;
+        }
 
         closedir( hDir );
     }
@@ -608,6 +617,27 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
     }
 
     return oDir.StealList();
+}
+
+/************************************************************************/
+/*                        GetDiskFreeSpace()                            */
+/************************************************************************/
+
+GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char* 
+#ifdef HAVE_STATVFS
+                                                         pszDirname
+#endif
+                                                       )
+{
+    GIntBig nRet = -1;
+#ifdef HAVE_STATVFS
+    struct statvfs buf;
+    if( statvfs(pszDirname, &buf) == 0 )
+    {
+        nRet = static_cast<GIntBig>(buf.f_frsize * buf.f_bavail);
+    }
+#endif
+    return nRet;
 }
 
 #ifdef VSI_COUNT_BYTES_READ

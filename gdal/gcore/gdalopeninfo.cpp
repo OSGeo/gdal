@@ -59,7 +59,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     if( strlen(pszFilenameIn) == 2 && pszFilenameIn[1] == ':' )
     {
         char    szAltPath[10];
-        
+
         strcpy( szAltPath, pszFilenameIn );
         strcat( szAltPath, "\\" );
         pszFilename = CPLStrdup( szAltPath );
@@ -94,15 +94,28 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
 #ifdef HAVE_READLINK
 retry:
 #endif
+
+#ifdef __FreeBSD__
+    /* FreeBSD 8 oddity: fopen(a_directory, "rb") returns non NULL */
+    bool bPotentialDirectory = (eAccess == GA_ReadOnly);
+#else
     bool bPotentialDirectory = false;
+#endif
 
     /* Check if the filename might be a directory of a special virtual file system */
     if( STARTS_WITH(pszFilename, "/vsizip/") ||
         STARTS_WITH(pszFilename, "/vsitar/") )
     {
         const char* pszExt = CPLGetExtension(pszFilename);
-        if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz") )
+        if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz")
+#ifdef DEBUG
+            /* For AFL, so that .cur_input is detected as the archive filename */
+            || EQUAL( CPLGetFilename(pszFilename), ".cur_input" )
+#endif
+          )
+        {
             bPotentialDirectory = true;
+        }
     }
     else if( STARTS_WITH(pszFilename, "/vsicurl/") )
     {
@@ -240,7 +253,15 @@ char** GDALOpenInfo::GetSiblingFiles()
     bHasGotSiblingFiles = TRUE;
 
     CPLString osDir = CPLGetDirname( pszFilename );
-    papszSiblingFiles = VSIReadDir( osDir );
+    const int nMaxFiles = atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
+    papszSiblingFiles = VSIReadDirEx( osDir, nMaxFiles );
+    if( nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles )
+    {
+        CPLDebug("GDAL", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
+                 osDir.c_str());
+        CSLDestroy(papszSiblingFiles);
+        papszSiblingFiles = NULL;
+    }
 
     /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
     /* drivers. The MBTiles driver needs no companion file. */
@@ -254,6 +275,29 @@ char** GDALOpenInfo::GetSiblingFiles()
     return papszSiblingFiles;
 }
 
+/************************************************************************/
+/*                         StealSiblingFiles()                          */
+/*                                                                      */
+/*      Same as GetSiblingFiles() except that the list is stealed       */
+/*      (ie ownership transferred to the caller) and the associated     */
+/*      member variable is set to NULL.                                 */
+/************************************************************************/
+
+char** GDALOpenInfo::StealSiblingFiles()
+{
+    char** papszRet = GetSiblingFiles();
+    papszSiblingFiles = NULL;
+    return papszRet;
+}
+
+/************************************************************************/
+/*                        AreSiblingFilesLoaded()                       */
+/************************************************************************/
+
+bool GDALOpenInfo::AreSiblingFilesLoaded() const
+{
+    return bHasGotSiblingFiles != FALSE;
+}
 
 /************************************************************************/
 /*                           TryToIngest()                              */

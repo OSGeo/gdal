@@ -37,18 +37,19 @@
 /*                           OGRGeoJSONReader                           */
 /************************************************************************/
 
-OGRGeoJSONReader::OGRGeoJSONReader()
-    : poGJObject_( NULL ),
-        bGeometryPreserve_( true ),
-        bAttributesSkip_( false ),
-        bFlattenNestedAttributes_ (false),
-        chNestedAttributeSeparator_ (0),
-        bStoreNativeData_(false),
-        bFlattenGeocouchSpatiallistFormat (-1),
-      bFoundId (false),
-      bFoundRev(false),
-      bFoundTypeFeature(false),
-      bIsGeocouchSpatiallistFormat(false)
+OGRGeoJSONReader::OGRGeoJSONReader() :
+    poGJObject_(NULL),
+    bGeometryPreserve_(true),
+    bAttributesSkip_(false),
+    bFlattenNestedAttributes_(false),
+    chNestedAttributeSeparator_(0),
+    bStoreNativeData_(false),
+    bArrayAsString_(false),
+    bFlattenGeocouchSpatiallistFormat(-1),
+    bFoundId(false),
+    bFoundRev(false),
+    bFoundTypeFeature(false),
+    bIsGeocouchSpatiallistFormat(false)
 { }
 
 /************************************************************************/
@@ -372,6 +373,15 @@ void OGRGeoJSONReader::SetStoreNativeData( bool bStoreNativeData )
 }
 
 /************************************************************************/
+/*                           SetArrayAsString                           */
+/************************************************************************/
+
+void OGRGeoJSONReader::SetArrayAsString( bool bArrayAsString )
+{
+    bArrayAsString_ = bArrayAsString;
+}
+
+/************************************************************************/
 /*                         GenerateLayerDefn()                          */
 /************************************************************************/
 
@@ -401,11 +411,11 @@ bool OGRGeoJSONReader::GenerateLayerDefn( OGRGeoJSONLayer* poLayer, json_object*
         if( NULL != poObjFeatures
             && json_type_array == json_object_get_type( poObjFeatures ) )
         {
-            json_object* poObjFeature = NULL;
             const int nFeatures = json_object_array_length( poObjFeatures );
             for( int i = 0; i < nFeatures; ++i )
             {
-                poObjFeature = json_object_array_get_idx( poObjFeatures, i );
+                json_object* poObjFeature
+                    = json_object_array_get_idx( poObjFeatures, i );
                 if( !GenerateFeatureDefn( poLayer, poObjFeature ) )
                 {
                     CPLDebug( "GeoJSON", "Create feature schema failure." );
@@ -465,7 +475,8 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
                                       const char* pszKey,
                                       json_object* poVal,
                                       bool bFlattenNestedAttributes,
-                                      char chNestedAttributeSeparator)
+                                      char chNestedAttributeSeparator,
+                                      bool bArrayAsString)
 {
     if( bFlattenNestedAttributes &&
         poVal != NULL && json_object_get_type(poVal) == json_type_object )
@@ -484,11 +495,13 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
             if( it.val != NULL && json_object_get_type(it.val) == json_type_object )
             {
                 OGRGeoJSONReaderAddOrUpdateField(poDefn, osAttrName, it.val,
-                                                 TRUE, chNestedAttributeSeparator);
+                                                 TRUE, chNestedAttributeSeparator,
+                                                 bArrayAsString);
             }
             else
             {
-                OGRGeoJSONReaderAddOrUpdateField(poDefn, osAttrName, it.val, FALSE, 0);
+                OGRGeoJSONReaderAddOrUpdateField(poDefn, osAttrName, it.val, FALSE, 0,
+                                                 bArrayAsString);
             }
         }
         return;
@@ -498,8 +511,8 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
     if( nIndex < 0 )
     {
         OGRFieldSubType eSubType;
-        OGRFieldDefn fldDefn( pszKey,
-                                GeoJSONPropertyToFieldType( poVal, eSubType ) );
+        OGRFieldType eType = GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
+        OGRFieldDefn fldDefn( pszKey, eType );
         fldDefn.SetSubType(eSubType);
         if( eSubType == OFSTBoolean )
             fldDefn.SetWidth(1);
@@ -516,7 +529,7 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
         if( eType == OFTInteger )
         {
             OGRFieldSubType eSubType;
-            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             if( eNewType == OFTInteger &&
                 poFDefn->GetSubType() == OFSTBoolean && eSubType != OFSTBoolean )
             {
@@ -531,7 +544,7 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
         else if( eType == OFTInteger64 )
         {
             OGRFieldSubType eSubType;
-            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             if( eNewType == OFTReal || eNewType == OFTString )
             {
                 poFDefn->SetType(eNewType);
@@ -541,21 +554,21 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
         else if( eType == OFTIntegerList || eType == OFTInteger64List )
         {
             OGRFieldSubType eSubType;
-            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             if( eNewType == OFTInteger64List || eNewType == OFTRealList || eNewType == OFTStringList )
                 poFDefn->SetType(eNewType);
         }
         else if( eType == OFTRealList )
         {
             OGRFieldSubType eSubType;
-            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             if( eNewType == OFTStringList )
                 poFDefn->SetType(eNewType);
         }
         else if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
         {
             OGRFieldSubType eSubType;
-            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+            OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             if( eNewType == OFTString )
                 eNewType = GeoJSONStringPropertyToFieldType( poVal );
             if( eType != eNewType )
@@ -656,9 +669,11 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                 }
 
             }
+
             OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
                                              bFlattenNestedAttributes_,
-                                             chNestedAttributeSeparator_);
+                                             chNestedAttributeSeparator_,
+                                             bArrayAsString_);
         }
 
         bSuccess = true; // SUCCESS
@@ -967,14 +982,14 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
             }
         }
 
-        int nField = -1;
         json_object_iter it;
         it.key = NULL;
         it.val = NULL;
         it.entry = NULL;
         json_object_object_foreachC( poObjProps, it )
         {
-            nField = poFeature->GetFieldIndex(it.key);
+            const int nField
+                = poFeature->GetFieldIndex(it.key);
             OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key, it.val,
                                      bFlattenNestedAttributes_,
                                      chNestedAttributeSeparator_);
@@ -1095,14 +1110,12 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer, json_object* 
     if( json_type_array == json_object_get_type( poObjFeatures ) )
     {
         /* bool bAdded = false; */
-        OGRFeature* poFeature = NULL;
-        json_object* poObjFeature = NULL;
-
         const int nFeatures = json_object_array_length( poObjFeatures );
         for( int i = 0; i < nFeatures; ++i )
         {
-            poObjFeature = json_object_array_get_idx( poObjFeatures, i );
-            poFeature = ReadFeature( poLayer, poObjFeature );
+            json_object* poObjFeature
+                = json_object_array_get_idx( poObjFeatures, i );
+            OGRFeature* poFeature = ReadFeature( poLayer, poObjFeature );
             /* bAdded = */ AddFeature( poLayer, poFeature );
             //CPLAssert( bAdded );
         }
@@ -1747,10 +1760,10 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
             poCollection = new OGRGeometryCollection();
         }
 
-        json_object* poObjGeom = NULL;
         for( int i = 0; i < nGeoms; ++i )
         {
-            poObjGeom = json_object_array_get_idx( poObjGeoms, i );
+            json_object* poObjGeom
+                = json_object_array_get_idx( poObjGeoms, i );
             if (poObjGeom == NULL)
             {
                 CPLDebug( "GeoJSON", "Skipping null sub-geometry");

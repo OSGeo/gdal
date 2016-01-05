@@ -90,7 +90,7 @@ OGRDataSource *OGRFMEDriver::Open( const char * pszFilename, int bUpdate )
                   "FMEObjects Driver doesn't support update." );
         return NULL;
     }
-    
+
     return poDS;
 }
 

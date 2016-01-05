@@ -68,7 +68,7 @@
 /************************************************************************/
 
 class OGRMySQLDataSource;
-    
+
 class OGRMySQLLayer : public OGRLayer
 {
   protected:
@@ -81,7 +81,7 @@ class OGRMySQLLayer : public OGRLayer
     GIntBig             iNextShapeId;
 
     OGRMySQLDataSource    *poDS;
- 
+
     char               *pszQueryStatement;
 
     int                 nResultOffset;
@@ -106,7 +106,7 @@ class OGRMySQLLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRSpatialReference *GetSpatialRef();
@@ -138,7 +138,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
-    
+
   public:
                         OGRMySQLTableLayer( OGRMySQLDataSource *,
                                          const char * pszName,
@@ -146,7 +146,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
                         ~OGRMySQLTableLayer();
 
     OGRErr              Initialize(const char* pszTableName);
-    
+
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -159,7 +159,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( GIntBig nFID );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
@@ -183,10 +183,10 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     void                BuildFullQueryStatement(void);
 
     char                *pszRawStatement;
-    
+
     // Layer srid.
     int                 nSRSId;
-    
+
   public:
                         OGRMySQLResultLayer( OGRMySQLDataSource *,
                                              const char * pszRawStatement,
@@ -210,7 +210,7 @@ class OGRMySQLDataSource : public OGRDataSource
 {
     OGRMySQLLayer       **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
 
     int                 bDSUpdate;
@@ -226,7 +226,7 @@ class OGRMySQLDataSource : public OGRDataSource
     OGRSpatialReference **papoSRS;
 
     OGRMySQLLayer      *poLongResultLayer;
-    
+
   public:
                         OGRMySQLDataSource();
                         ~OGRMySQLDataSource();
@@ -263,7 +263,7 @@ class OGRMySQLDataSource : public OGRDataSource
     // nonstandard
 
     void                ReportError( const char * = NULL );
-    
+
     char               *LaunderName( const char * );
 
     void                RequestLongResult( OGRMySQLLayer * );

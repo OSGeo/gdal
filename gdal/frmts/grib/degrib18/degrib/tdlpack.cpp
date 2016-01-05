@@ -48,9 +48,9 @@ static const TDLP_TableType TDLP_V_Table[4] = {
 };
 
 static const TDLP_TableType TDLP_T_Table[3] = {
-   /* 0 */ {0, "No nolinear tranform"},
+   /* 0 */ {0, "No nolinear transform"},  // TODO: "No no"?
    /* 1 */ {1, "Square transform"},
-   /* 2 */ {2, "Square root tranform"},
+   /* 2 */ {2, "Square root transform"},
 };
 
 static const TDLP_TableType TDLP_Oper_Table[9] = {
@@ -151,7 +151,10 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
       errSprintf ("Ran out of data in PDS (TDLP Section 1)\n");
       return -1;
    }
-   myAssert (sectLen <= 71);
+   if( sectLen > 71 ) {
+      errSprintf ("TDLP Section 1 is too big.\n");
+      return -1;
+   }
    if (sectLen < 39) {
       errSprintf ("TDLP Section 1 is too small.\n");
       return -1;
@@ -167,10 +170,10 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    min = *(pds++);
    MEMCPY_BIG (&li_temp, pds, sizeof (sInt4));
    pds += 4;
-   t_year = li_temp / 1000000L;
-   li_temp -= t_year * 1000000L;
-   t_month = li_temp / 10000L;
-   li_temp -= t_month * 10000L;
+   t_year = li_temp / 1000000;
+   li_temp -= t_year * 1000000;
+   t_month = li_temp / 10000;
+   li_temp -= t_month * 10000;
    t_day = li_temp / 100;
    t_hour = li_temp - t_day * 100;
    if ((t_year != year) || (t_month != month) || (t_day != day) ||
@@ -185,8 +188,8 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID1 = li_temp;
-   pdsMeta->CCC = li_temp / 1000000L;
-   li_temp -= pdsMeta->CCC * 1000000L;
+   pdsMeta->CCC = li_temp / 1000000;
+   li_temp -= pdsMeta->CCC * 1000000;
    pdsMeta->FFF = li_temp / 1000;
    li_temp -= pdsMeta->FFF * 1000;
    pdsMeta->B = li_temp / 100;
@@ -194,39 +197,39 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID2 = li_temp;
-   pdsMeta->V = li_temp / 100000000L;
-   li_temp -= pdsMeta->V * 100000000L;
+   pdsMeta->V = li_temp / 100000000;
+   li_temp -= pdsMeta->V * 100000000;
    pdsMeta->LLLL = li_temp / 10000;
    pdsMeta->UUUU = li_temp - pdsMeta->LLLL * 10000;
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID3 = li_temp;
-   pdsMeta->T = li_temp / 100000000L;
-   li_temp -= pdsMeta->T * 100000000L;
-   pdsMeta->RR = li_temp / 1000000L;
-   li_temp -= pdsMeta->RR * 1000000L;
-   pdsMeta->Oper = li_temp / 100000L;
-   li_temp -= pdsMeta->Oper * 100000L;
+   pdsMeta->T = li_temp / 100000000;
+   li_temp -= pdsMeta->T * 100000000;
+   pdsMeta->RR = li_temp / 1000000;
+   li_temp -= pdsMeta->RR * 1000000;
+   pdsMeta->Oper = li_temp / 100000;
+   li_temp -= pdsMeta->Oper * 100000;
    pdsMeta->HH = li_temp / 1000;
    pdsMeta->ttt = li_temp - pdsMeta->HH * 1000;
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID4 = li_temp;
-   W = li_temp / 1000000000L;
-   li_temp -= W * 1000000000L;
-   XXXX = li_temp / 100000L;
-   li_temp -= XXXX * 100000L;
+   W = li_temp / 1000000000;
+   li_temp -= W * 1000000000;
+   XXXX = li_temp / 100000;
+   li_temp -= XXXX * 100000;
    if (W) {
       XXXX = -1 * XXXX;
    }
-   YY = li_temp / 1000L;
-   li_temp -= YY * 1000L;
+   YY = li_temp / 1000;
+   li_temp -= YY * 1000;
    if (YY >= 50) {
       YY = -1 * (YY - 50);
    }
    pdsMeta->thresh = (XXXX / 10000.) * pow (10.0, YY);
    pdsMeta->I = li_temp / 100;
-   li_temp -= pdsMeta->I * 100L;
+   li_temp -= pdsMeta->I * 100;
    pdsMeta->S = li_temp / 10;
    pdsMeta->G = li_temp - pdsMeta->S * 10;
    project_hr = GRIB_UNSIGN_INT2 (*pds, pds[1]);
@@ -521,7 +524,16 @@ int TDLP_Inventory (DataSource &fp, sInt4 tdlpLen, inventoryType *inv)
       errSprintf ("Ran out of data in PDS (TDLP_Inventory)\n");
       return -1;
    }
+   if( sectLen < 1 ) {
+       errSprintf ("Wrong sectLen (TDLP_Inventory)\n");
+       return -1;
+   }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
+   if( pds == NULL ) 
+   {
+      errSprintf ("Ran out of memory in PDS (TDLP_Inventory)\n");
+      return -1;
+   }
    *pds = sectLen;
    if (fp.DataSourceFread (pds + 1, sizeof (char), sectLen - 1) + 1 != sectLen) {
       errSprintf ("Ran out of file.\n");
@@ -599,7 +611,10 @@ int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double *refTime)
       errSprintf ("Ran out of data in PDS (TDLP_RefTime)\n");
       return -1;
    }
-   myAssert (sectLen <= 71);
+   if( sectLen > 71 ) {
+      errSprintf ("TDLP Section 1 is too big.\n");
+      return -1;
+   }
    if (sectLen < 39) {
       errSprintf ("TDLP Section 1 is too small.\n");
       return -1;
@@ -625,10 +640,10 @@ int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double *refTime)
 
    if (FREAD_BIG (&li_temp, sizeof (sInt4), 1, fp) != 1)
       goto error;
-   t_year = li_temp / 1000000L;
-   li_temp -= t_year * 1000000L;
-   t_month = li_temp / 10000L;
-   li_temp -= t_month * 10000L;
+   t_year = li_temp / 1000000;
+   li_temp -= t_year * 1000000;
+   t_month = li_temp / 10000;
+   li_temp -= t_month * 10000;
    t_day = li_temp / 100;
    t_hour = li_temp - t_day * 100;
 
@@ -692,7 +707,10 @@ static int ReadTDLPSect2 (uChar *gds, sInt4 tdlpLen, sInt4 *curLoc,
       errSprintf ("Ran out of data in GDS (TDLP Section 2)\n");
       return -1;
    }
-   myAssert (sectLen == 28);
+   if( sectLen != 28 ) {
+      errSprintf ("Wrong sectLen (TDLP Section 2)\n");
+      return -1;
+   }
 
    gridType = *(gds++);
    gdsMeta->Nx = GRIB_UNSIGN_INT2 (*gds, gds[1]);
@@ -1670,7 +1688,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
  * NOTES
  *****************************************************************************
  */
-#define SCALE_MISSING 10000L
+#define SCALE_MISSING 10000
 static void TDL_ScaleData (double *Src, sInt4 *Dst, sInt4 numData,
                            int DSF, int BSF, char *f_primMiss,
                            double *primMiss, char *f_secMiss,
@@ -2141,7 +2159,7 @@ static int power (uInt4 val, int extra)
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *         min = The min value found (Output)
@@ -2196,7 +2214,7 @@ static char findMaxMin2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *         min = The min value found (Output)
  *         max = The max value found (Output)
@@ -2249,7 +2267,7 @@ static char findMaxMin1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *  Data = The data. (Input)
  * start = The starting index in data (Input)
- *  stop = The stoping index in data (Input)
+ *  stop = The stopping index in data (Input)
  *   min = The min value found (Output)
  *   max = The max value found (Output)
  *
@@ -2291,7 +2309,7 @@ static void findMaxMin0 (sInt4 *Data, int start, int stop, sInt4 *min,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2355,7 +2373,7 @@ static void findGroup2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
@@ -2418,7 +2436,7 @@ static void findGroup1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
  *         min = The min value for the group. (Output)
@@ -2471,7 +2489,7 @@ static void findGroup0 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2535,7 +2553,7 @@ static void findGroupRev2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)
@@ -2598,7 +2616,7 @@ static void findGroupRev1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)
@@ -4071,7 +4089,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    short int si_temp;   /* Temporary variable (short int). */
    double d_temp;       /* Temporary variable (double). */
    char buffer[6];      /* Used to write reserved values */
-   uChar pbuf;          /* A buffer of bits that weren't written to disk */
+   uChar pbuf;          /* A buffer of bits that were not written to disk */
    sChar pbufLoc;       /* Where in pbuf to add more bits. */
 
    commentLen = static_cast<int>(strlen (comment));
@@ -4227,7 +4245,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    fputc (day, fp);
    fputc (hour, fp);
    fputc (min, fp);
-   li_temp = (year * 1000000L + month * 10000L + day * 100 + hour);
+   li_temp = (year * 1000000 + month * 10000 + day * 100 + hour);
    FWRITE_BIG (&li_temp, sizeof (sInt4), 1, fp);
    FWRITE_BIG (&ID1, sizeof (sInt4), 1, fp);
    FWRITE_BIG (&ID2, sizeof (sInt4), 1, fp);

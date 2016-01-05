@@ -264,7 +264,7 @@ namespace Selafin {
         papadfData=(double**)VSI_MALLOC2_VERBOSE(sizeof(double*),nFieldsP);
         for (int i=0;i<nFieldsP;++i) papadfData[i]=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),nRecordsP);
     }
-    
+
     TimeStep::~TimeStep() {
         for (int i=0;i<nFields;++i) CPLFree(papadfData[i]);
         CPLFree(papadfData);
@@ -313,7 +313,7 @@ namespace Selafin {
         };
         return 1;
     }
-    
+
     int read_string(VSILFILE *fp,char *&pszData,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
@@ -648,7 +648,7 @@ namespace Selafin {
         return 1;
     }
 
-    
+
     int write_step(VSILFILE *fp,const Header *poHeader,const TimeStep *poStep) {
         if (write_integer(fp,1)==0) return 0;
         if (write_float(fp,poStep->dfDate)==0) return 0;
@@ -683,5 +683,4 @@ namespace Selafin {
         return 1;
     }
 #endif
-    
 }

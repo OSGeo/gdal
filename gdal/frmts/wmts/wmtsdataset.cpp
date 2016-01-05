@@ -28,10 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
 #include "cpl_http.h"
 #include "cpl_minixml.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
 #include <vector>
 #include <set>
@@ -137,7 +138,7 @@ class WMTSDataset : public GDALPamDataset
                                 WMTSTileMatrixSet& oTMS);
     static int          ReadTMLimits(CPLXMLNode* psTMSLimits,
                                      std::map<CPLString, WMTSTileMatrixLimits>& aoMapTileMatrixLimits);
-  
+
   public:
                  WMTSDataset();
     virtual     ~WMTSDataset();
@@ -179,7 +180,7 @@ class WMTSBand : public GDALPamRasterBand
 {
   public:
                   WMTSBand(WMTSDataset* poDS, int nBand);
-                 
+
     virtual GDALRasterBand* GetOverview(int nLevel);
     virtual int GetOverviewCount();
     virtual GDALColorInterp GetColorInterpretation();
@@ -230,7 +231,7 @@ CPLErr WMTSBand::IRasterIO( GDALRWFlag eRWFlag,
                             GDALRasterIOExtraArg* psExtraArg )
 {
     WMTSDataset* poGDS = (WMTSDataset*) poDS;
-    
+
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
         && poGDS->apoDatasets.size() > 1 && eRWFlag == GF_Read )
     {
@@ -921,7 +922,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     if (!Identify(poOpenInfo))
         return NULL;
-    
+
     CPLXMLNode* psXML = NULL;
     CPLString osTileFormat;
     CPLString osInfoFormat;
@@ -1552,14 +1553,14 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             sAOI.MaxY = oTM.dfTLY;
             sAOI.MaxX = oTM.dfTLX + oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth;
             sAOI.MinY = oTM.dfTLY - oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
-            bHasAOI = TRUE;
+            /*bHasAOI = TRUE;*/
         }
         else
         {
             // Clip with implied BoundingBox of the most precise TM
             // Useful for http://tileserver.maptiler.com/wmts
             const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
-            
+
             // For https://data.linz.govt.nz/services;key=XXXXXXXX/wmts/1.0.0/set/69/WMTSCapabilities.xml
             // only clip in Y since there's a warp over dateline
             //sAOI.MinX = MAX(sAOI.MinX, oTM.dfTLX);
@@ -1982,27 +1983,24 @@ GDALDataset *WMTSDataset::CreateCopy( const char * pszFilename,
 void GDALRegister_WMTS()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("WMTS driver"))
+    if( !GDAL_CHECK_VERSION( "WMTS driver" ) )
         return;
 
-    if( GDALGetDriverByName( "WMTS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "WMTS" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "WMTS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OGC Web Mab Tile Service" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_wmts.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WMTS:" );
+    poDriver->SetDescription( "WMTS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OGC Web Mab Tile Service" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_wmts.html" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WMTS:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='URL' type='string' description='URL that points to GetCapabilities response' required='YES'/>"
 "  <Option name='LAYER' type='string' description='Layer identifier'/>"
@@ -2011,10 +2009,9 @@ void GDALRegister_WMTS()
 "  <Option name='EXTENDBEYONDDATELINE' type='boolean' description='Whether to enable extend-beyond-dateline behaviour' default='NO'/>"
 "</OpenOptionList>");
 
-        poDriver->pfnOpen = WMTSDataset::Open;
-        poDriver->pfnIdentify = WMTSDataset::Identify;
-        poDriver->pfnCreateCopy = WMTSDataset::CreateCopy;
+    poDriver->pfnOpen = WMTSDataset::Open;
+    poDriver->pfnIdentify = WMTSDataset::Identify;
+    poDriver->pfnCreateCopy = WMTSDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

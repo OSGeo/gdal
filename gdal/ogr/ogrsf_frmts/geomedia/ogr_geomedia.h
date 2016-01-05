@@ -41,7 +41,7 @@
 /************************************************************************/
 
 class OGRGeomediaDataSource;
-    
+
 class OGRGeomediaLayer : public OGRLayer
 {
   protected:
@@ -78,9 +78,9 @@ class OGRGeomediaLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    
+
     virtual int         TestCapability( const char * );
 
     virtual const char *GetFIDColumn();
@@ -115,7 +115,7 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 };
 
@@ -141,7 +141,7 @@ class OGRGeomediaSelectLayer : public OGRGeomediaLayer
     virtual GIntBig     GetFeatureCount( int );
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 };
 
@@ -199,7 +199,7 @@ class OGRGeomediaDriver : public OGRODBCMDBDriver
 {
   public:
                 ~OGRGeomediaDriver();
-                
+
     const char  *GetName();
     OGRDataSource *Open( const char *, int );
 

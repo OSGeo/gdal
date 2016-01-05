@@ -438,9 +438,9 @@ int RuseAs(
   CSF_VS inFileVS = RgetValueScale(m);
   int hasInFileCellReprType2 =  HasInFileCellReprType2(inFileCR);
 
-  /* it is very unconvenient that both, VS and CR are taken as arguments
+  /* It is very inconvenient that both, VS and CR are taken as arguments
    * for this function, and previously were used in the switch statement
-   * now, at least 'special conversions' handled first
+   * now, at least 'special conversions' handled first.
    */
   if((int)useType == VS_BOOLEAN){
     switch(inFileVS) {

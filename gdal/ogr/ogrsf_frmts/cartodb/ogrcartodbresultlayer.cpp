@@ -37,11 +37,11 @@ CPL_CVSID("$Id");
 
 OGRCARTODBResultLayer::OGRCARTODBResultLayer( OGRCARTODBDataSource* poDSIn,
                                               const char * pszRawQueryIn ) :
-                                              OGRCARTODBLayer(poDSIn)
+    OGRCARTODBLayer(poDSIn),
+    poFirstFeature(NULL)
 {
     osBaseSQL = pszRawQueryIn;
     SetDescription( "result" );
-    poFirstFeature = NULL;
 }
 
 /************************************************************************/

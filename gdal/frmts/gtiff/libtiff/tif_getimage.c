@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.93 2015-11-22 15:31:03 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.94 2015-12-26 17:32:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -182,20 +182,22 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 				    "Planarconfiguration", td->td_planarconfig);
 				return (0);
 			}
-			if( td->td_samplesperpixel != 3 )
+			if( td->td_samplesperpixel != 3 || colorchannels != 3 )
             {
                 sprintf(emsg,
-                        "Sorry, can not handle image with %s=%d",
-                        "Samples/pixel", td->td_samplesperpixel);
+                        "Sorry, can not handle image with %s=%d, %s=%d",
+                        "Samples/pixel", td->td_samplesperpixel,
+                        "colorchannels", colorchannels);
                 return 0;
             }
 			break;
 		case PHOTOMETRIC_CIELAB:
-            if( td->td_samplesperpixel != 3 || td->td_bitspersample != 8 )
+            if( td->td_samplesperpixel != 3 || colorchannels != 3 || td->td_bitspersample != 8 )
             {
                 sprintf(emsg,
-                        "Sorry, can not handle image with %s=%d and %s=%d",
+                        "Sorry, can not handle image with %s=%d, %s=%d and %s=%d",
                         "Samples/pixel", td->td_samplesperpixel,
+                        "colorchannels", colorchannels,
                         "Bits/sample", td->td_bitspersample);
                 return 0;
             }
@@ -255,6 +257,9 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	int colorchannels;
 	uint16 *red_orig, *green_orig, *blue_orig;
 	int n_color;
+	
+	if( !TIFFRGBAImageOK(tif, emsg) )
+		return 0;
 
 	/* Initialize to normal values */
 	img->row_offset = 0;
@@ -2509,29 +2514,33 @@ PickContigCase(TIFFRGBAImage* img)
 		case PHOTOMETRIC_RGB:
 			switch (img->bitspersample) {
 				case 8:
-					if (img->alpha == EXTRASAMPLE_ASSOCALPHA)
+					if (img->alpha == EXTRASAMPLE_ASSOCALPHA &&
+						img->samplesperpixel >= 4)
 						img->put.contig = putRGBAAcontig8bittile;
-					else if (img->alpha == EXTRASAMPLE_UNASSALPHA)
+					else if (img->alpha == EXTRASAMPLE_UNASSALPHA &&
+							 img->samplesperpixel >= 4)
 					{
 						if (BuildMapUaToAa(img))
 							img->put.contig = putRGBUAcontig8bittile;
 					}
-					else
+					else if( img->samplesperpixel >= 3 )
 						img->put.contig = putRGBcontig8bittile;
 					break;
 				case 16:
-					if (img->alpha == EXTRASAMPLE_ASSOCALPHA)
+					if (img->alpha == EXTRASAMPLE_ASSOCALPHA &&
+						img->samplesperpixel >=4 )
 					{
 						if (BuildMapBitdepth16To8(img))
 							img->put.contig = putRGBAAcontig16bittile;
 					}
-					else if (img->alpha == EXTRASAMPLE_UNASSALPHA)
+					else if (img->alpha == EXTRASAMPLE_UNASSALPHA &&
+							 img->samplesperpixel >=4 )
 					{
 						if (BuildMapBitdepth16To8(img) &&
 						    BuildMapUaToAa(img))
 							img->put.contig = putRGBUAcontig16bittile;
 					}
-					else
+					else if( img->samplesperpixel >=3 )
 					{
 						if (BuildMapBitdepth16To8(img))
 							img->put.contig = putRGBcontig16bittile;
@@ -2540,7 +2549,7 @@ PickContigCase(TIFFRGBAImage* img)
 			}
 			break;
 		case PHOTOMETRIC_SEPARATED:
-			if (buildMap(img)) {
+			if (img->samplesperpixel >=4 && buildMap(img)) {
 				if (img->bitspersample == 8) {
 					if (!img->Map)
 						img->put.contig = putRGBcontig8bitCMYKtile;
@@ -2636,7 +2645,7 @@ PickContigCase(TIFFRGBAImage* img)
 			}
 			break;
 		case PHOTOMETRIC_CIELAB:
-			if (buildMap(img)) {
+			if (img->samplesperpixel == 3 && buildMap(img)) {
 				if (img->bitspersample == 8)
 					img->put.contig = initCIELabConversion(img);
 				break;

@@ -1033,7 +1033,7 @@ int BSBWriteScanline( BSBInfo *psInfo, unsigned char *pabyScanlineBuf )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If this is the first scanline writen out the EOF marker, and    */
+/*      If this is the first scanline written out the EOF marker, and   */
 /*      the introductory info in the image segment.                     */
 /* -------------------------------------------------------------------- */
     if( psInfo->nLastLineWritten == -1 )

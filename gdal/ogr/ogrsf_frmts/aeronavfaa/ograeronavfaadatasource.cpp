@@ -37,14 +37,11 @@ CPL_CVSID("$Id$");
 /*                      OGRAeronavFAADataSource()                       */
 /************************************************************************/
 
-OGRAeronavFAADataSource::OGRAeronavFAADataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGRAeronavFAADataSource::OGRAeronavFAADataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                     ~OGRAeronavFAADataSource()                       */

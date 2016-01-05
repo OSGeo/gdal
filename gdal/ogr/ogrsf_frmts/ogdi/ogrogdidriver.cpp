@@ -80,7 +80,7 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
         delete poDS;
         poDS = NULL;
     }
- 
+
     return poDS;
 }
 
@@ -102,13 +102,14 @@ int OGROGDIDriver::TestCapability( CPL_UNUSED const char * pszCap )
 void RegisterOGROGDI()
 
 {
-    if (! GDAL_CHECK_VERSION("OGR/OGDI driver"))
+    if( !GDAL_CHECK_VERSION("OGR/OGDI driver") )
         return;
+
     OGRSFDriver* poDriver = new OGROGDIDriver;
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "OGDI Vectors (VPF, VMAP, DCW)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_ogdi.html" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+                               "OGDI Vectors (VPF, VMAP, DCW)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ogdi.html" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
 

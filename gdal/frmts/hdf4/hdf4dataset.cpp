@@ -30,22 +30,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+
 #include "hdf.h"
 #include "mfhdf.h"
 
 #include "HdfEosDef.h"
 
-#include "gdal_priv.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-
 #include "hdf4dataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_HDF4(void);
-CPL_C_END
 
 extern const char * const pszGDALSignature;
 
@@ -841,8 +838,6 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poDS->bIsHDFEOS
          || CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
     {
-        bIsHDF  = false;
-
 /* -------------------------------------------------------------------- */
 /*  Process swath layers.                                               */
 /* -------------------------------------------------------------------- */
@@ -1274,7 +1269,7 @@ static void HDF4UnloadDriver(CPL_UNUSED GDALDriver* poDriver)
 void GDALRegister_HDF4()
 
 {
-    if (! GDAL_CHECK_VERSION("HDF4 driver"))
+    if( !GDAL_CHECK_VERSION( "HDF4 driver" ) )
         return;
 
     if( GDALGetDriverByName( "HDF4" ) != NULL )
@@ -1299,5 +1294,4 @@ void GDALRegister_HDF4()
 #ifdef HDF4_PLUGIN
     GDALRegister_HDF4Image();
 #endif
-
 }

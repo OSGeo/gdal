@@ -92,7 +92,7 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
     pszModule = NULL;
     CPLFree( pszShortModule );
     pszShortModule = NULL;
-    
+
     if( fpPrimary != NULL )
     {
         VSIFCloseL( fpPrimary );
@@ -153,7 +153,7 @@ int TigerFileBase::EstablishRecordLength( VSILFILE * fp )
 {
     char        chCurrent;
     int         nRecLen = 0;
-    
+
     if( fp == NULL || VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         return -1;
 
@@ -175,7 +175,7 @@ int TigerFileBase::EstablishRecordLength( VSILFILE * fp )
     {
         return -1;
     }
-    
+
     nRecLen++; /* for the 10 or 13 we encountered */
 
 /* -------------------------------------------------------------------- */
@@ -218,7 +218,7 @@ void TigerFileBase::EstablishFeatureCount()
 /*      divide by this length to get the presumed number of records.    */
 /* -------------------------------------------------------------------- */
     vsi_l_offset        nFileSize;
-    
+
     VSIFSeekL( fpPrimary, 0, SEEK_END );
     nFileSize = VSIFTellL( fpPrimary );
 
@@ -229,7 +229,7 @@ void TigerFileBase::EstablishFeatureCount()
                   "File length %d doesn't divide by record length %d.\n",
                   (int) nFileSize, (int) nRecordLength );
     }
-    
+
     if( nFileSize / (vsi_l_offset)nRecordLength > (vsi_l_offset)INT_MAX )
         nFeatures = INT_MAX;
     else
@@ -246,7 +246,7 @@ const char* TigerFileBase::GetField( const char * pachRawDataRecord,
 {
     char         aszField[128];
     int                 nLength = nEndChar - nStartChar + 1;
-    
+
     CPLAssert( nEndChar - nStartChar + 2 < (int) sizeof(aszField) );
 
     strncpy( aszField, pachRawDataRecord + nStartChar - 1, nLength );
@@ -444,7 +444,7 @@ int TigerFileBase::SetWriteModule( const char *pszExtension,
         poDS->DeleteModuleFiles( szFullModule );
         poDS->AddModule( szFullModule );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Does this file already exist?                                   */
 /* -------------------------------------------------------------------- */
@@ -473,7 +473,7 @@ void TigerFileBase::AddFieldDefns(const TigerRecordInfo *psRTInfoIn,
 
     bLFieldHack = 
         CSLTestBoolean( CPLGetConfigOption( "TIGER_LFIELD_AS_STRING", "NO" ) );
-    
+
     for (i=0; i<psRTInfoIn->nFieldCount; ++i) {
         if (psRTInfoIn->pasFields[i].bDefine) {
             OGRFieldType eFT = (OGRFieldType)psRTInfoIn->pasFields[i].OGRtype;

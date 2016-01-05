@@ -151,7 +151,7 @@ static int ParseXY( const char **ppszNext, double *padfXY )
         if( pszNext[iEnd] == '\0' )
             return FALSE;
     }
-    
+
     *ppszNext += iEnd;
 
     return TRUE;
@@ -220,7 +220,7 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
             CPLFree( padfXY );
             return NULL;
         }
-        
+
         CPLAssert( *pszNext == ')' );
         nVertCount++;
         pszNext++;
@@ -458,14 +458,14 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
                 poFeature->SetField( iOGRField, dfValue );
             }
             break;
-            
+
           case IIAPI_DEC_TYPE:
           {
               IIAPI_CONVERTPARM sCParm;
               char szFormatBuf[30];
 
               memset( &sCParm, 0, sizeof(sCParm) );
-              
+
               memcpy( &(sCParm.cv_srcDesc), psFDesc, 
                       sizeof(IIAPI_DESCRIPTOR) );
               memcpy( &(sCParm.cv_srcValue), psDV, 
@@ -478,7 +478,7 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
               sCParm.cv_dstValue.dv_value = szFormatBuf;
 
               IIapi_convertData( &sCParm );
-              
+
               poFeature->SetField( iOGRField, szFormatBuf );
               break;
           }
@@ -569,8 +569,6 @@ int OGRIngresLayer::TestCapability( const char * pszCap )
 }
 
 
-
-    
 /************************************************************************/
 /*                            GetFIDColumn()                            */
 /************************************************************************/
@@ -614,17 +612,17 @@ int OGRIngresLayer::FetchSRSId(OGRFeatureDefn *poDefn)
         char         szCommand[1024];
         char           **papszRow;
         OGRIngresStatement oStatement(poDS->GetConn());
-        
+
         sprintf( szCommand, 
                  "SELECT srid FROM geometry_columns "
                  "WHERE f_table_name = '%s' AND f_geometry_column = '%s'",
                  poDefn->GetName(),
                  GetGeometryColumn());
-        
+
         oStatement.ExecuteSQL(szCommand);
-        
+
         papszRow = oStatement.GetRow();
-        
+
         if( papszRow != NULL && papszRow[0] != NULL )
         {
             nSRSId = *((II_INT4 *) papszRow[0]);

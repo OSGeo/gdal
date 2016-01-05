@@ -44,7 +44,7 @@ class OGRILI1DataSource;
 class OGRILI1Layer : public OGRLayer
 {
 private:
-#ifdef notused
+#if 0
     OGRSpatialReference *poSRS;
 #endif
     OGRFeatureDefn      *poFeatureDefn;
@@ -54,7 +54,7 @@ private:
     OGRFeature          **papoFeatures;
     int                 nFeatureIdx;
 
-    int                 bGeomsJoined;
+    bool                bGeomsJoined;
 
     OGRILI1DataSource   *poDS;
 

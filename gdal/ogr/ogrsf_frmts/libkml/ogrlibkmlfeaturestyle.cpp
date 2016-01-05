@@ -252,7 +252,7 @@ void kml2featurestyle (
         }
 
         /***** is it a dataset style? *****/
-        
+
         else {
 
             int nPathLen = static_cast<int>(strlen ( poOgrDS->GetStylePath (  ) ));
@@ -279,9 +279,9 @@ void kml2featurestyle (
                     pszUrl[nPathLen] = '@';
                     poOgrFeat->SetStyleString ( pszUrl + nPathLen );
                 }
-       
+
             }
-            
+
             /**** its someplace else *****/
 
             else {
@@ -315,11 +315,11 @@ void kml2featurestyle (
                         /***** loop, read and copy to a string *****/
 
                         size_t nRead;
-                    
+
                         do {
-                            
+
                             nRead = VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
-                            
+
                             if (nRead == 0)
                                 break;
 

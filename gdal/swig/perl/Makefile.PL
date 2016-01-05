@@ -128,7 +128,7 @@ from the version these bindings were developed for (I have
 $my_gdal_version and $config has $gdal_version). 
 You can either
 
-- get GDAL development files from $uri or from whereever you get
+- get GDAL development files from $uri or from wherever you get
   development files for your system,
 
 - specify another gdal-config,

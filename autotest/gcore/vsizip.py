@@ -97,7 +97,7 @@ def vsizip_1():
     if f4 is not None:
         gdaltest.post_reason('should not have been successful 2')
         return 'fail'
-    
+
     gdal.VSIFCloseL(f3)
 
     # Now we can close the main handle
@@ -436,56 +436,81 @@ def vsizip_11():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test changing the content of a zip file (#6005)
 
 def vsizip_12():
-    
+
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src1.zip", "wb")
     f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src1.zip/foo.bar", "wb")
     data = '0123456'
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
     gdal.VSIFCloseL(fmain)
-    
+
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src2.zip", "wb")
     f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src2.zip/bar.baz", "wb")
     data = '01234567'
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
     gdal.VSIFCloseL(fmain)
-    
+
     # Copy vsizip_12_src1 into vsizip_12
     f = gdal.VSIFOpenL('/vsimem/vsizip_12_src1.zip', 'rb')
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
-    
+
     f = gdal.VSIFOpenL('/vsimem/vsizip_12.zip', 'wb')
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
     gdal.ReadDir('/vsizip/vsimem/vsizip_12.zip')
-    
+
     # Copy vsizip_12_src2 into vsizip_12
     f = gdal.VSIFOpenL('/vsimem/vsizip_12_src2.zip', 'rb')
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
-    
+
     f = gdal.VSIFOpenL('/vsimem/vsizip_12.zip', 'wb')
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
-    
+
     content = gdal.ReadDir('/vsizip/vsimem/vsizip_12.zip')
-    
+
     gdal.Unlink('/vsizip/vsimem/vsizip_12_src1.zip')
     gdal.Unlink('/vsizip/vsimem/vsizip_12_src2.zip')
     gdal.Unlink('/vsizip/vsimem/vsizip_12.zip')
-    
+
     if content != ['bar.baz']:
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test ReadDir() truncation
+
+def vsizip_13():
+
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_13.zip", "wb")
+    for i in range(10):
+        f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_13.zip/%d" % i, "wb")
+        gdal.VSIFCloseL(f)
+    gdal.VSIFCloseL(fmain)
+
+    lst = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip')
+    if len(lst) < 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # Test truncation
+    lst_truncated = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip', int(len(lst)/2))
+    if len(lst_truncated) <= int(len(lst)/2):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsizip/vsimem/vsizip_13.zip')
 
     return 'success'
 
@@ -502,6 +527,7 @@ gdaltest_list = [ vsizip_1,
                   vsizip_10,
                   vsizip_11,
                   vsizip_12,
+                  vsizip_13,
                   ]
 
 

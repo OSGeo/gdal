@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
-
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -173,7 +173,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read and process the header into a local name/value             */
 /*      stringlist.  We just take off the trailing semicolon.  The      */
-/*      keyword is already seperated from the value by an equal         */
+/*      keyword is already separated from the value by an equal         */
 /*      sign.                                                           */
 /* -------------------------------------------------------------------- */
 
@@ -354,7 +354,8 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unrecognised datum name in NLAPS/NDF file:%s, assuming WGS84.", 
+                  "Unrecognized datum name in NLAPS/NDF file:%s, "
+                  "assuming WGS84.",
                   osDatum.c_str() );
         oSRS.SetWellKnownGeogCS( "WGS84" );
     }

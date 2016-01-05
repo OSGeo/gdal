@@ -28,13 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_FujiBAS(void);
+void GDALRegister_FujiBAS();
 CPL_C_END
 
 /************************************************************************/
@@ -224,7 +225,7 @@ void GDALRegister_FujiBAS()
     if( GDALGetDriverByName( "FujiBAS" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "FujiBAS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

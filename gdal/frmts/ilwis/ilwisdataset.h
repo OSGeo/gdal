@@ -46,7 +46,7 @@
 #include <string>
 
 CPL_C_START
-void	GDALRegister_ILWIS(void);
+void GDALRegister_ILWIS();
 CPL_C_END
 
 #define shUNDEF	-32767

@@ -36,6 +36,7 @@
 #include <limits.h>
 #include <assert.h>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #ifndef DBL_MAX
@@ -51,10 +52,6 @@
 #endif /* INT_MAX */
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_GSAG(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -121,6 +118,7 @@ class GSAGRasterBand : public GDALPamRasterBand
 
     vsi_l_offset *panLineOffset;
     int nLastReadLine;
+    size_t nMaxLineSize;
 
     double *padfRowMinZ;
     double *padfRowMaxZ;
@@ -172,6 +170,7 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     dfMinZ(0.0),
     dfMaxZ(0.0),
     nLastReadLine(0),
+    nMaxLineSize(128),
     padfRowMinZ(NULL),
     padfRowMaxZ(NULL),
     nMinZRow(-1),
@@ -302,7 +301,6 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GSAGDataset *poGDS = (GSAGDataset *)poDS;
     assert( poGDS != NULL );
 
-    static size_t nMaxLineSize = 128;
     double *pdfImage = (double *)pImage;
 
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
@@ -363,12 +361,21 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	if( szStart == szEnd )
 	{
 	    /* No number found */
+            if( *szStart == '.' )
+            {
+                CPLError( CE_Warning, CPLE_FileIO,
+                          "Unexpected value in grid row %d (expected floating "
+                          "point value, found \"%s\").\n",
+                          nBlockYOff, szStart );
+                return CE_Failure;
+            }
 
 	    /* Check if this was an expected failure */
 	    while( isspace( (unsigned char)*szStart ) )
 		szStart++;
 
 	    /* Found sign at end of input, seek back to re-read it */
+            bool bOnlySign = false;
 	    if ( (*szStart == '-' || *szStart == '+') && *(szStart+1) == '\0' )
 	    {
 	    	if( VSIFSeekL( poGDS->fp, 
@@ -385,6 +392,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 		    return CE_Failure;
 		}
+		bOnlySign = true;
 	    }
 	    else if( *szStart != '\0' )
 	    {
@@ -425,7 +433,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 	    nCharsExamined += szStart - szLineBuf;
 	    nCharsRead = VSIFReadL( szLineBuf, 1, nLineBufSize - 1, poGDS->fp );
-	    if( nCharsRead == 0 )
+	    if( nCharsRead == 0 || (bOnlySign && nCharsRead == 1) )
 	    {
 		VSIFree( szLineBuf );
 		CPLError( CE_Failure, CPLE_FileIO,
@@ -434,7 +442,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		return CE_Failure;
 	    }
 	    szLineBuf[nCharsRead] = '\0';
-	    szStart = szEnd = szLineBuf;
+	    szEnd = szLineBuf;
 	    continue;
 	}
 	else if( *szEnd == '\0'
@@ -910,11 +918,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	szErrorMsg = "Unable to parse the number of Y axis grid rows.\n";
 	goto error;
     }
-    else if( nTemp > INT_MAX )
+    else if( nTemp > INT_MAX - 1 )
     {
 	CPLError( CE_Warning, CPLE_AppDefined,
 		  "Number of Y axis grid rows not representable.\n" );
-	poDS->nRasterYSize = INT_MAX;
+	poDS->nRasterYSize = INT_MAX - 1;
     }
     else if ( nTemp == 0)
     {
@@ -1721,7 +1729,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_GSAG()                          */
+/*                          GDALRegister_GSAG()                         */
 /************************************************************************/
 
 void GDALRegister_GSAG()
@@ -1729,18 +1737,18 @@ void GDALRegister_GSAG()
 {
     if( GDALGetDriverByName( "GSAG" ) != NULL )
         return;
+
     GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "GSAG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Golden Software ASCII Grid (.grd)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GSAG" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GSAG" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-    			   "Byte Int16 UInt16 Int32 UInt32 "
-    			   "Float32 Float64" );
+                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Float32 Float64" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = GSAGDataset::Identify;

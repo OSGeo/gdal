@@ -137,7 +137,6 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
         poReader = OGRXPlaneCreateAwyFileReader(this);
     }
 
-    int bRet;
     if (poReader && poReader->StartParsing(pszFilename) == FALSE)
     {
         delete poReader;
@@ -152,12 +151,10 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
             for( int i = 0; i < nLayers; i++ )
                 papoLayers[i]->SetReader(poReader->CloneForLayer(papoLayers[i]));
         }
-        bRet = TRUE;
+        return true;
     }
-    else
-        bRet = FALSE;
 
-    return bRet;
+    return false;
 }
 
 /************************************************************************/

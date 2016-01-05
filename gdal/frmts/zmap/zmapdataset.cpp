@@ -29,15 +29,12 @@
 
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #include <cmath>
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void GDALRegister_ZMap(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -666,7 +663,8 @@ GDALDataset* ZMapDataset::CreateCopy( const char * pszFilename,
         if (!bEOLPrinted)
             VSIFPrintfL(fp, "\n");
 
-        if (!pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData))
+        if (pfnProgress != NULL &&
+            !pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData))
         {
             eErr = CE_Failure;
             break;

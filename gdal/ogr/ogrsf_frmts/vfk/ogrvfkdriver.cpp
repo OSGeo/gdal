@@ -70,25 +70,23 @@ static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo* poOpenInfo)
 */
 void RegisterOGRVFK()
 {
-    if (!GDAL_CHECK_VERSION("OGR/VFK driver"))
+    if( !GDAL_CHECK_VERSION("OGR/VFK driver") )
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "VFK" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "VFK" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "VFK" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Czech Cadastral Exchange Data Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vfk" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_vfk.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = OGRVFKDriverOpen;
-        poDriver->pfnIdentify = OGRVFKDriverIdentify;
+    poDriver->SetDescription( "VFK" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Czech Cadastral Exchange Data Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vfk" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_vfk.html" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGRVFKDriverOpen;
+    poDriver->pfnIdentify = OGRVFKDriverIdentify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

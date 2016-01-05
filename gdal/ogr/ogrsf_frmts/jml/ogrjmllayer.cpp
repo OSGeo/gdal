@@ -66,7 +66,7 @@ OGRJMLLayer::OGRJMLLayer( const char* pszLayerName,
     currentDepth = 0;
     bStopParsing = FALSE;
     bHasReadSchema = FALSE;
-    
+
     bSchemaFinished = FALSE;
     nJCSGMLInputTemplateDepth = 0;
     nCollectionElementDepth = 0;
@@ -183,7 +183,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
-    
+
     if( nFeatureElementDepth > 0 && nAttributeElementDepth == 0 &&
         nGeometryElementDepth == 0 && osGeometryElement.compare(pszName) == 0 )
     {
@@ -293,9 +293,9 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
-    
+
     currentDepth--;
-    
+
     if( nAttributeElementDepth == currentDepth )
     {
         if( nElementValueLen )
@@ -428,7 +428,7 @@ void OGRJMLLayer::dataHandlerCbk(const char *data, int nLen)
     }
 
     nWithoutEventCounter = 0;
-    
+
     if (bAccumulateElementValue)
     {
         AddStringToElementValue(data, nLen);
@@ -451,15 +451,15 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
     {
         return ppoFeatureTab[nFeatureTabIndex++];
     }
-    
+
     if (VSIFEofL(fp))
         return NULL;
-    
+
     char aBuf[BUFSIZ];
-    
+
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
-    
+
     nWithoutEventCounter = 0;
 
     int nDone;
@@ -552,7 +552,7 @@ void OGRJMLLayer::LoadSchema()
                  "Too much data inside one element. File probably corrupted");
         bStopParsing = TRUE;
     }
-    
+
     if( osCollectionElement.size() == 0 || osFeatureElement.size() == 0 ||
         osGeometryElement.size() == 0 )
     {
@@ -720,7 +720,7 @@ void OGRJMLLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
             if( oCurColumn.osAttributeValue.size() != 0 )
                 bIsOK = FALSE;
         }
-        
+
         if( bIsOK )
         {
             OGRFieldType eType = OFTString;

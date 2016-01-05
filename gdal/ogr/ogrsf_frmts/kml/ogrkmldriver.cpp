@@ -115,21 +115,19 @@ static GDALDataset *OGRKMLDriverCreate( const char * pszName,
 
 void RegisterOGRKML()
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "KML" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "KML" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "KML" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Keyhole Markup Language (KML)" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "kml" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_kml.html" );
+    poDriver->SetDescription( "KML" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Keyhole Markup Language (KML)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "kml" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_kml.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='GPX_USE_EXTENSIONS' type='boolean' description='Whether to write non-GPX attributes in an <extensions> tag' default='NO'/>"
 "  <Option name='NameField' type='string' description='Field to use to fill the KML <name> element' default='Name'/>"
@@ -141,16 +139,15 @@ void RegisterOGRKML()
 "  </Option>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                               "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Real String" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String" );
+    poDriver->pfnOpen = OGRKMLDriverOpen;
+    poDriver->pfnIdentify = OGRKMLDriverIdentify;
+    poDriver->pfnCreate = OGRKMLDriverCreate;
 
-        poDriver->pfnOpen = OGRKMLDriverOpen;
-        poDriver->pfnIdentify = OGRKMLDriverIdentify;
-        poDriver->pfnCreate = OGRKMLDriverCreate;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

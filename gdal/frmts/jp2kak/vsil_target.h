@@ -58,7 +58,7 @@ public:
         {
             if( file == NULL )
                 return false;
-            
+
             if( (int) VSIFWriteL( buf, 1, num_bytes, file ) != num_bytes )
                 return false;
             else

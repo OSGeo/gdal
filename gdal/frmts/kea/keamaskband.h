@@ -32,20 +32,8 @@
 #define KEAMASKBAND_H
 
 #include "gdal_priv.h"
-#if defined(USE_GCC_VISIBILITY_FLAG) && !defined(DllExport)
-#define DllExport CPL_DLL
-#endif
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
-#endif
-
-#include "libkea/KEAImageIO.h"
-
-#ifdef _MSC_VER
-#pragma warning( pop ) 
-#endif
+#include "libkea_headers.h"
 
 class KEAMaskBand : public GDALRasterBand
 {

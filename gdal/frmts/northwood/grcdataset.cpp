@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "northwood.h"
 
@@ -39,9 +40,6 @@
 #endif
 #endif
 
-
-CPL_C_START void GDALRegister_NWT_GRC( void );
-CPL_C_END
 /************************************************************************/
 /* ==================================================================== */
 /*                             NWT_GRCDataset                           */
@@ -112,7 +110,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
         eDataType = GDT_Byte;
     else if( poGDS->pGrd->nBitsPerPixel == 16 )
         eDataType = GDT_UInt16;
-    else if( poGDS->pGrd->nBitsPerPixel == 32 )
+    else /* if( poGDS->pGrd->nBitsPerPixel == 32 ) */
         eDataType = GDT_UInt32;        // this would be funny
 
     nBlockXSize = poDS->GetRasterXSize();
@@ -160,7 +158,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
     for( int val = 1; val <= maxValue; val++ )
     {
         int i = 0;
-        // loop throught the GRC dictionary to see if the value is defined
+        // Loop through the GRC dictionary to see if the value is defined.
         for( ;
              i < static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems );
              i++ )
@@ -223,12 +221,16 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       void *pImage )
 {
     NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
-    const int nRecordSize = nBlockXSize *( poGDS->pGrd->nBitsPerPixel / 8 );
+    const int nBytesPerPixel = poGDS->pGrd->nBitsPerPixel / 8;
+    if( nBytesPerPixel <= 0 || nBlockXSize > INT_MAX / nBytesPerPixel )
+        return CE_Failure;
+    const int nRecordSize = nBlockXSize * nBytesPerPixel;
 
     if( nBand == 1 )
     {                            //grc's are just one band of indices
         VSIFSeekL( poGDS->fp, 1024 + nRecordSize * (vsi_l_offset)nBlockYOff, SEEK_SET );
-        VSIFReadL( pImage, 1, nRecordSize, poGDS->fp );
+        if( (int)VSIFReadL( pImage, 1, nRecordSize, poGDS->fp ) != nRecordSize )
+            return CE_Failure;
     }
     else
     {
@@ -314,7 +316,7 @@ int NWT_GRCDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Look for the header                                                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < 1024 )
         return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'H' ||
@@ -365,6 +367,14 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    if( poDS->pGrd->nBitsPerPixel != 8 &&
+        poDS->pGrd->nBitsPerPixel != 16 &&
+        poDS->pGrd->nBitsPerPixel != 32 )
+    {
+        delete poDS;
+        return NULL;
+    }
+
     poDS->nRasterXSize = poDS->pGrd->nXSide;
     poDS->nRasterYSize = poDS->pGrd->nYSide;
 
@@ -394,8 +404,8 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          GDALRegister_GRC()                          */
 /************************************************************************/
 
-void
-GDALRegister_NWT_GRC()
+void GDALRegister_NWT_GRC()
+
 {
     if( GDALGetDriverByName( "NWT_GRC" ) != NULL )
         return;
@@ -405,9 +415,9 @@ GDALRegister_NWT_GRC()
     poDriver->SetDescription( "NWT_GRC" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                             "Northwood Classified Grid Format .grc/.tab");
+                               "Northwood Classified Grid Format .grc/.tab");
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                             "frmt_various.html#northwood_grc" );
+                               "frmt_various.html#northwood_grc" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grc" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

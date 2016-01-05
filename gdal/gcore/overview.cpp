@@ -862,7 +862,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                 int     nNumPx = (nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
                 int     iMaxInd = 0, iMaxVal = -1, iY, iX;
 
-                if (nNumPx > nMaxNumPx)
+                if (pafVals == NULL || nNumPx > nMaxNumPx)
                 {
                     pafVals = (float*) CPLRealloc(pafVals, nNumPx * sizeof(float));
                     panSums = (int*) CPLRealloc(panSums, nNumPx * sizeof(int));

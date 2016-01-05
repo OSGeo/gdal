@@ -58,7 +58,7 @@ int main()
                         "(:field_1, :field_2, :field_3)" );
 //    oStatement.Prepare( "INSERT INTO fasttest VALUES "
 //                        "(:field_1, :field_2)" );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do a conventional bind.                                         */
 /* -------------------------------------------------------------------- */
@@ -82,7 +82,7 @@ int main()
     if( oStatement.BindScalar( ":field_1", anField1, 
                               sizeof(int), SQLT_INT ) != CE_None )
         exit( 1 );
-    
+
     if( oStatement.BindScalar( ":field_2", szField2, 4, SQLT_STR ) != CE_None )
         exit( 1 );
 
@@ -133,7 +133,7 @@ int main()
         int anElemInfo[3], nElemInfoCount;
         OCINumber oci_number; 
         int i;
-        
+
         nElemInfoCount = 3;
         anElemInfo[0] = 1;
         anElemInfo[1] = 1;

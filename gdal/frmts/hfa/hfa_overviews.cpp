@@ -86,10 +86,10 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
                       "HFA driver is unavailable." );
             return CE_Failure;
         }
-        
+
         const char *apszOptions[4] = { "COMPRESSED=YES", "AUX=YES", 
                                        NULL, NULL };
-        
+
         CPLString osDepFileOpt = "DEPENDENT_FILE=";
         osDepFileOpt += CPLGetFilename(poParentDS->GetDescription());
         apszOptions[2] = osDepFileOpt.c_str();

@@ -101,7 +101,8 @@ static int bHasLibXMLBug = -1;
 /*                  CPLHasLibXMLBugWarningCallback()                    */
 /************************************************************************/
 
-static void CPLHasLibXMLBugWarningCallback (void * ctx, const char * msg, ...)
+static void CPLHasLibXMLBugWarningCallback (void * /*ctx*/,
+                                            const char* /*msg*/, ...)
 {
 }
 

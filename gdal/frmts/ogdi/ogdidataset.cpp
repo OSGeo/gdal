@@ -31,15 +31,12 @@
 
 #include <math.h>
 #include "ecs.h"
+#include "gdal_frmts.h"
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_OGDI(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -52,7 +49,7 @@ class OGDIRasterBand;
 class CPL_DLL OGDIDataset : public GDALDataset
 {
     friend class OGDIRasterBand;
-    
+
     int		nClientID;
 
     ecs_Region	sGlobalBounds;
@@ -139,7 +136,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn,
 
 {
     ecs_Result	*psResult;
-    
+
     this->poDS = poDSIn;
     this->nBand = nBandIn;
     this->eFamily = eFamilyIn;
@@ -172,7 +169,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn,
         int     i;
 
         poCT = new GDALColorTable();
-        
+
         for( i = 0; i < (int) ECSRASTERINFO(psResult).cat.cat_len; i++ ) {
             GDALColorEntry   sEntry;
 
@@ -185,7 +182,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn,
                                  &sEntry );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.  Eventually we might use the            */
 /*      category info to establish what to do here.                     */
@@ -206,7 +203,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn,
         eDataType = GDT_UInt32;
 
     nOGDIImageType = ECSRASTERINFO(psResult).width;
-    
+
 /* -------------------------------------------------------------------- */
 /*	Currently only works for strips 				*/
 /* -------------------------------------------------------------------- */
@@ -311,7 +308,6 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                         ((GByte *) pLineData)[i] = 255;
                     else
                         ((GByte *) pLineData)[i] = 0;
-                    
                 }
             }
         }
@@ -372,10 +368,10 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
     if( poODS->nCurrentBand != nBand )
     {
         ecs_LayerSelection sSelection;
-        
+
         sSelection.Select = pszLayerName;
         sSelection.F = eFamily;
-        
+
         CPLDebug( "OGDIRasterBand", "<EstablishAccess: SelectLayer(%s)>",
                   pszLayerName );
         psResult = cln_SelectLayer( poODS->nClientID, &sSelection );
@@ -389,7 +385,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
         poODS->nCurrentBand = nBand;
         poODS->nCurrentIndex = -1;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      What region would represent this resolution and window?         */
 /* -------------------------------------------------------------------- */
@@ -450,7 +446,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
                       "%s", psResult->message );
             return CE_Failure;
         }
-        
+
         poODS->sCurrentBounds = sWin;
         poODS->nCurrentIndex = 0;
     }
@@ -506,7 +502,7 @@ CPLErr OGDIRasterBand::AdviseRead( int nXOff, int nYOff,
     return EstablishAccess( nXOff, nYOff, nXSize, nYSize, 
                             nBufXSize, nBufYSize );
 }
-    
+
 /************************************************************************/
 /* ==================================================================== */
 /*                            OGDIDataset                               */
@@ -768,9 +764,9 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( CSLCount(papszMatrices) + CSLCount(papszImages) == 1 )
     {
-        if( CSLCount(papszMatrices) == 1 )
+        if( papszMatrices != NULL && *papszMatrices != NULL )
             OverrideGlobalInfo( poDS, papszMatrices[0] );
-        else
+        else if( papszImages != NULL && *papszImages != NULL )
             OverrideGlobalInfo( poDS, papszImages[0] );
     }
 
@@ -787,14 +783,14 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
         for( i = 0; papszImages != NULL && papszImages[i] != NULL; i++ )
             poDS->AddSubDataset( "Image", papszImages[i] );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
 /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = (int) 
         (((poDS->sGlobalBounds.east - poDS->sGlobalBounds.west)
           / poDS->sGlobalBounds.ew_res) + 0.5);
-    
+
     poDS->nRasterYSize = (int) 
         (((poDS->sGlobalBounds.north - poDS->sGlobalBounds.south)
           / poDS->sGlobalBounds.ns_res) + 0.5);
@@ -951,31 +947,27 @@ CPLErr OGDIDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GDALRegister_OGDI()                        */
+/*                          GDALRegister_OGDI()                         */
 /************************************************************************/
 
 void GDALRegister_OGDI()
 
 {
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("GDAL/OGDI driver"))
+    if( !GDAL_CHECK_VERSION( "GDAL/OGDI driver" ) )
         return;
-    
-    if( GDALGetDriverByName( "OGDI" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "OGDI" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "OGDI Bridge" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_ogdi.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
-        poDriver->pfnOpen = OGDIDataset::Open;
+    if( GDALGetDriverByName( "OGDI" ) != NULL )
+        return;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "OGDI" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OGDI Bridge" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ogdi.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+
+    poDriver->pfnOpen = OGDIDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

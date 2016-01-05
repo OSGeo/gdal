@@ -29,6 +29,9 @@
  ****************************************************************************/
 
 // For uselocale
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
 #define _XOPEN_SOURCE 700
 
 // For atoll (at least for NetBSD)
@@ -643,6 +646,8 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
     size_t nChunkBytesRead = 0;
     int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
+    
+    szChunk[0] = 0;
 
     while( true )
     {
@@ -657,7 +662,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
             return NULL;
         }
 
-        pszRLBuffer = CPLReadLineBuffer( nBufLength + nChunkSize + 1 );
+        pszRLBuffer = CPLReadLineBuffer( static_cast<int>(nBufLength + nChunkSize + 1) );
         if( pszRLBuffer == NULL )
             return NULL;
 
@@ -981,7 +986,7 @@ GIntBig CPLAtoGIntBig( const char* pszString )
 #endif
 }
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(__sun__)
 
 // mingw atoll() doesn't return ERANGE in case of overflow
 static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
@@ -1033,7 +1038,7 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
     nVal = atol( pszString );
 #endif
     if( errno == ERANGE
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(__sun__)
         || CPLAtoGIntBigExHasOverflow(pszString, nVal)
 #endif
         )
@@ -1953,6 +1958,9 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
 {
     VALIDATE_POINTER1( pszAxis, "CPLDecToDMS", "" );
+    
+    if( CPLIsNan(dfAngle) )
+        return "Invalid angle";
 
     const double dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
     const double dfABSAngle = ABS(dfAngle) + dfEpsilon;
@@ -2572,8 +2580,8 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unrecognised filesystem object : '%s'.",
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unrecognized filesystem object : '%s'.",
                   pszOldPath );
         return -1;
     }

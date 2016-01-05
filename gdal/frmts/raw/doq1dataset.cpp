@@ -28,17 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
+#include "gdal_frmts.h"
 #include "cpl_string.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
 static double DOQGetField( unsigned char *, int );
 static void DOQGetDescription( GDALDataset *, unsigned char * );
-
-CPL_C_START
-void	GDALRegister_DOQ1(void);
-CPL_C_END
 
 #define UTM_FORMAT \
 "PROJCS[\"%s / UTM zone %dN\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%d],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],%s]"
@@ -150,21 +147,27 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Attempt to extract a few key values from the header.		*/
 /* -------------------------------------------------------------------- */
-    const int nWidth = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 150, 6 ) );
-    const int nHeight = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 144, 6 ) );
-    const int nBandStorage = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 162, 3 ) );
-    const int nBandTypes = static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 156, 3 ) );
+    const double dfWidth = DOQGetField(poOpenInfo->pabyHeader + 150, 6 );
+    const double dfHeight = DOQGetField(poOpenInfo->pabyHeader + 144, 6 );
+    const double dfBandStorage = DOQGetField(poOpenInfo->pabyHeader + 162, 3 );
+    const double dfBandTypes = DOQGetField(poOpenInfo->pabyHeader + 156, 3 );
 
 /* -------------------------------------------------------------------- */
 /*      Do these values look coherent for a DOQ file?  It would be      */
 /*      nice to do a more comprehensive test than this!                 */
 /* -------------------------------------------------------------------- */
-    if( nWidth < 500 || nWidth > 25000
-        || nHeight < 500 || nHeight > 25000
-        || nBandStorage < 0 || nBandStorage > 4
-        || nBandTypes < 1 || nBandTypes > 9 )
+    if( dfWidth < 500 || dfWidth > 25000 || CPLIsNan(dfWidth)
+        || dfHeight < 500 || dfHeight > 25000 || CPLIsNan(dfHeight)
+        || dfBandStorage < 0 || dfBandStorage > 4 || CPLIsNan(dfBandStorage)
+        || dfBandTypes < 1 || dfBandTypes > 9 || CPLIsNan(dfBandTypes) )
         return NULL;
 
+    const int nWidth = static_cast<int>(dfWidth);
+    const int nHeight = static_cast<int>(dfHeight);
+    /*const int nBandStorage = static_cast<int>(dfBandStorage);*/
+    const int nBandTypes = static_cast<int>(dfBandTypes);
+
+    
 /* -------------------------------------------------------------------- */
 /*      Check the configuration.  We don't currently handle all         */
 /*      variations, only the common ones.                               */
@@ -243,8 +246,10 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->pszProjection = VSIStrdup("");
     else
     {
-        const int nZone = static_cast<int>(
+        int nZone = static_cast<int>(
             DOQGetField(poOpenInfo->pabyHeader + 198, 6) );
+        if( nZone < 0 || nZone > 60 )
+            nZone = 0;
 
         const char *pszUnits;
         if( static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 204, 3)) == 1 )
@@ -341,7 +346,7 @@ void GDALRegister_DOQ1()
     if( GDALGetDriverByName( "DOQ1" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "DOQ1" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

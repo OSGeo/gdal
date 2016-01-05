@@ -208,7 +208,7 @@ static void ProcessTortureTarget( const char *pszTarget,
         TortureDS(pszTarget, bReadWriteOperations);
     }
     else if( bReportFailures )
-        printf( "%s: unrecognised\n", pszTarget );
+        printf( "%s: unrecognized\n", pszTarget );
 
     if( !bRecursive || hDriver != NULL )
         return;

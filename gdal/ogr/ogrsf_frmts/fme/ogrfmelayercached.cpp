@@ -82,10 +82,10 @@ OGRFMELayerCached::~OGRFMELayerCached()
 int OGRFMELayerCached::AssignIndex( const char *pszBase,
                                     const OGREnvelope *psExtents,
                                     OGRSpatialReference *poSRS )
-    
+
 {
     CPLAssert( poIndex == NULL );
-    
+
     pszIndexBase = CPLStrdup( pszBase );
     poIndex = 
         poDS->GetFMESession()->createSpatialIndex( pszBase, "READ", NULL );
@@ -205,7 +205,7 @@ OGRFeature *OGRFMELayerCached::GetNextFeature()
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
- 
+
 void OGRFMELayerCached::ResetReading()
 
 {
@@ -235,7 +235,7 @@ void OGRFMELayerCached::ResetReading()
         poFMEFeature->setGeometryType( FME_GEOM_LINE );
         poFMEFeature->addCoordinate( oEnvelope.MinX, oEnvelope.MinY );
         poFMEFeature->addCoordinate( oEnvelope.MaxX, oEnvelope.MaxY );
-            
+
         poIndex->queryEnvelope( *poFMEFeature );
     }
 
@@ -297,7 +297,7 @@ CPLXMLNode *OGRFMELayerCached::SerializeToXML()
     char            szGeomType[64];
 
     psLayer = CPLCreateXMLNode( NULL, CXT_Element, "OGRLayer" );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle various layer values.                                    */
 /* -------------------------------------------------------------------- */
@@ -307,7 +307,7 @@ CPLXMLNode *OGRFMELayerCached::SerializeToXML()
 
     CPLCreateXMLElementAndValue( psLayer, "SpatialCacheName", 
                                  pszIndexBase );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle spatial reference if available.                          */
 /* -------------------------------------------------------------------- */
@@ -315,7 +315,7 @@ CPLXMLNode *OGRFMELayerCached::SerializeToXML()
     {
         char *pszWKT = NULL;
         OGRSpatialReference *poSRS = GetSpatialRef();
-        
+
         poSRS->exportToWkt( &pszWKT );
 
         if( pszWKT != NULL )
@@ -343,7 +343,7 @@ CPLXMLNode *OGRFMELayerCached::SerializeToXML()
 /*      Emit the field schemas.                                         */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psSchema = CPLCreateXMLNode( psLayer, CXT_Element, "Schema" );
-    
+
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFieldDef = poFeatureDefn->GetFieldDefn( iField );
@@ -353,7 +353,7 @@ CPLXMLNode *OGRFMELayerCached::SerializeToXML()
 
         sprintf( szWidth, "%d", poFieldDef->GetWidth() );
         sprintf( szPrecision, "%d", poFieldDef->GetPrecision() );
-        
+
         if( poFieldDef->GetType() == OFTInteger )
             pszType = "Integer";
         else if( poFieldDef->GetType() == OFTIntegerList )
@@ -393,7 +393,7 @@ int OGRFMELayerCached::InitializeFromXML( CPLXMLNode *psLayer )
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( CPLGetXMLValue(psLayer,"Name","X") );
     poFeatureDefn->Reference();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set the geometry type, if available.                            */
 /* -------------------------------------------------------------------- */

@@ -291,7 +291,7 @@ def osr_ct_8():
 
     dst_srs = osr.SpatialReference()
     dst_srs.SetWellKnownGeogCS( 'WGS84' )
-    
+
     ct = osr.CoordinateTransformation( src_srs, dst_srs )
 
     pnts = [ (0, 6274861.39400658), (1, 6274861.39400658) ]

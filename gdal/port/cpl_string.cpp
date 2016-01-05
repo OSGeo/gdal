@@ -823,7 +823,7 @@ char ** CSLTokenizeString2( const char * pszString,
     char *pszToken = reinterpret_cast<char *>( CPLCalloc(10,1) );
     int nTokenMax = 10;
 
-    while( pszString != NULL && *pszString != '\0' )
+    while( *pszString != '\0' )
     {
         bool bInString = false;
         bool bStartString = true;
@@ -832,6 +832,15 @@ char ** CSLTokenizeString2( const char * pszString,
         /* Try to find the next delimiter, marking end of token */
         for( ; *pszString != '\0'; ++pszString )
         {
+            /*
+             * Extend token buffer if we are running close to its end.
+             */
+            if( nTokenLen >= nTokenMax-3 )
+            {
+                nTokenMax = nTokenMax * 2 + 10;
+                pszToken = static_cast<char *>(
+                    CPLRealloc( pszToken, nTokenMax ));
+            }
 
             /* End if this is a delimiter skip it and break. */
             if( !bInString && strchr(pszDelimiters, *pszString) != NULL )
@@ -883,16 +892,6 @@ char ** CSLTokenizeString2( const char * pszString,
                 continue;
 
             bStartString = false;
-
-            /*
-             * Extend token buffer if we are running close to its end.
-             */
-            if( nTokenLen >= nTokenMax-3 )
-            {
-                nTokenMax = nTokenMax * 2 + 10;
-                pszToken = static_cast<char *>(
-                    CPLRealloc( pszToken, nTokenMax ));
-            }
 
             pszToken[nTokenLen] = *pszString;
             ++nTokenLen;
@@ -977,7 +976,7 @@ const char *CPLSPrintf(const char *fmt, ...)
 /*      time.                                                           */
 /* -------------------------------------------------------------------- */
     int *pnBufIndex = reinterpret_cast<int *>( pachBufRingInfo );
-    const int nOffset = sizeof(int) + *pnBufIndex * CPLSPrintf_BUF_SIZE;
+    const size_t nOffset = sizeof(int) + *pnBufIndex * CPLSPrintf_BUF_SIZE;
     char *pachBuffer = pachBufRingInfo + nOffset;
 
     *pnBufIndex = (*pnBufIndex + 1) % CPLSPrintf_BUF_Count;
@@ -2507,10 +2506,11 @@ CPLValueType CPLGetValueType(const char* pszValue)
         }
     }
 
-    if( bIsReal && pszAfterExponent && strlen(pszAfterExponent) > 3 &&
-        CPLIsInf(CPLAtof(pszValueInit)) )
+    if( bIsReal && pszAfterExponent && strlen(pszAfterExponent) > 3 )
     {
-        return CPL_VALUE_STRING;
+        const double dfVal = CPLAtof(pszValueInit);
+        if( CPLIsInf(dfVal) )
+            return CPL_VALUE_STRING;
     }
 
     return (bIsReal) ? CPL_VALUE_REAL : CPL_VALUE_INTEGER;
@@ -2597,7 +2597,7 @@ if (CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest))
  * @param nDestSize size of destination buffer (including space for the
  *         NUL terminator character)
  *
- * @return the thoretical length of the destination string after concatenation
+ * @return the theoretical length of the destination string after concatenation
  *         (=strlen(pszDest_before) + strlen(pszSrc)).
  *         If strlen(pszDest_before) >= nDestSize, then it returns
  *         nDestSize + strlen(pszSrc)

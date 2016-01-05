@@ -5,12 +5,12 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test reprojection of points of many different projections.
-# Author:   Frank Warmerdam, warmedam@pobox.com
-# 
+# Author:   Frank Warmerdam, warmerdam@pobox.com
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -74,12 +74,12 @@ class ProjTest:
             except:
                 #print( 'Did not find GRID:%s' % self.requirements[5:] )
                 return 'skip'
-        
+
         src = osr.SpatialReference()
         if src.SetFromUserInput( self.src_srs ) != 0:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.src_srs)
             return 'fail'
-        
+
         dst = osr.SpatialReference()
         if dst.SetFromUserInput( self.dst_srs ) != 0:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.dst_srs)
@@ -111,8 +111,8 @@ class ProjTest:
             return 'fail'
 
         ######################################################################
-        # Tranform source point to destination SRS.
-        
+        # Transform source point to destination SRS.
+
         result = ct.TransformPoint( self.src_xyz[0], self.src_xyz[1], self.src_xyz[2] )
 
         error = abs(result[0] - self.dst_xyz[0]) \
@@ -128,7 +128,7 @@ class ProjTest:
         # Now transform back.
 
         ct = osr.CoordinateTransformation( dst, src )
-        
+
         result = ct.TransformPoint( result[0], result[1], result[2] )
 
         error = abs(result[0] - self.src_xyz[0]) \
@@ -140,7 +140,7 @@ class ProjTest:
             return 'fail'
 
         return 'success'
-        
+
 ###############################################################################
 # Table of transformations, inputs and expected results (with a threshold)
 #
@@ -224,7 +224,7 @@ transform_list = [ \
      'No-op Optimization (geodetic)', None, None)
 
     ]
-    
+
 ###############################################################################
 # When imported build a list of units based on the files available.
 

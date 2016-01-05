@@ -282,6 +282,9 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
   if (ls->getNumPoints() > 1) {
     ogrCurve->addCurveDirectly(ls);
   }
+  else {
+    delete ls;
+  }
   return ogrCurve;
 }
 
@@ -386,7 +389,7 @@ int ILI2Reader::ReadModel(ImdReader *poImdReader, const char *modelFilename) {
   poImdReader->ReadModel(modelFilename);
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
-    OGRLayer* layer = new OGRILI2Layer(it->poTableDefn, it->poGeomFieldInfos, NULL);
+    OGRLayer* layer = new OGRILI2Layer(it->GetTableDefnRef(), it->poGeomFieldInfos, NULL);
     m_listLayer.push_back(layer);
   }
   return 0;
@@ -402,6 +405,11 @@ static char* fieldName(DOMElement* elem) {
     //Field name is on level 4
     node = elem;
     for (int d = 0; d<depth-4; ++d) node = node->getParentNode();
+  }
+  if( node == NULL )
+  {
+      CPLError(CE_Failure, CPLE_AssertionFailed, "node == NULL");
+      return CPLStrdup("***bug***");
   }
   char* pszNodeName = tr_strdup(node->getNodeName());
   return pszNodeName;
@@ -465,6 +473,7 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
         OGRwkbGeometryType geomType = feature->GetGeomFieldDefnRef(fIndex)->GetType();
         if (geomType == wkbMultiLineString || geomType == wkbPolygon) {
           feature->SetGeomFieldDirectly(fIndex, geom->getLinearGeometry());
+          delete geom;
         } else {
           feature->SetGeomFieldDirectly(fIndex, geom);
         }
@@ -692,7 +701,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
 
   SetFieldValues(feature, elem);
   CPL_IGNORE_RET_VAL(curLayer->SetFeature(feature));
-  
+
   CPLFree(pszName);
 
   return 0;

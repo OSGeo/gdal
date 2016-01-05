@@ -42,15 +42,13 @@ class OGRGmtLayer : public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    
+
     int                 iNextFID;
 
-    OGRwkbGeometryType  eWkbType;
+    bool                bUpdate;
+    bool                bHeaderComplete;
 
-    int                 bUpdate;
-    int                 bHeaderComplete;
-
-    int                 bRegionComplete;
+    bool                bRegionComplete;
     OGREnvelope         sRegion;
     vsi_l_offset        nRegionOffset;
 
@@ -84,7 +82,7 @@ class OGRGmtLayer : public OGRLayer
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );
-    
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
@@ -99,10 +97,10 @@ class OGRGmtDataSource : public OGRDataSource
 {
     OGRGmtLayer       **papoLayers;
     int                 nLayers;
-    
+
     char                *pszName;
 
-    int                 bUpdate;
+    bool                bUpdate;
 
   public:
                         OGRGmtDataSource();
@@ -130,13 +128,13 @@ class OGRGmtDriver : public OGRSFDriver
 {
   public:
                 ~OGRGmtDriver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
-    
+
     int                 TestCapability( const char * );
 };
 

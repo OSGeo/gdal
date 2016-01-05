@@ -39,7 +39,7 @@ int size_SatelliteStatus()
   int iSizeAttitude = 4 + 4 + 8 + 100*iSizeAttitudeCoef;
   int iSizeSpinRateatRCStart = 8;
   int iSizeUTCCorrelation = 4 + 4 + 4*4*3 + 8 + 8 + 8 + 8 + 8;
-  
+
   int iTotalSize = iSizePrimary + iSizeOrbit + iSizeAttitude + iSizeSpinRateatRCStart + iSizeUTCCorrelation;
 
   return iTotalSize;
@@ -53,7 +53,7 @@ int size_ImageAcquisition()
   int iSize2 = 42*2 + 42 + 42*2 + 42*2 + 42*2 + 27*2 + 15*2 + 6*2 + 1 + 2 + 1;
   // to end
   int iSize3 = 2 + 1 + 2 + 4 + 2 + 2 + 2 + 1 + 4 + 1 + 4 + 4 + 1 + 1 + 2 + 2 + 2 + 2;
-    
+
   int iTotalSize = iSize1 + iSize2 + iSize3;
 
   return iTotalSize;
@@ -64,7 +64,7 @@ int size_CelestialEvents()
   int iSizeCelestialBodies = 2 + 2 + 4 + 4 + 3*100*(2 + 2 + 8*8 + 8*8) + 100*(20*(2 + 2 + 2 + 8*8 + 8*8));
 
   int iSizeRelationToImage = 1 + 2 + 2 + 1 + 1 + 1;
-    
+
   int iTotalSize = iSizeCelestialBodies + iSizeRelationToImage;
 
   return iTotalSize;
@@ -79,7 +79,7 @@ double iReadDouble(std::ifstream & ifile)
 {
   // will use 8 bytes from the file to read a DOUBLE (according to the MSG definition of DOUBLE)
     unsigned char buf [8];
-    
+
     ifile.read((char*)buf, 8);
     double rVal;
     ((char*)(&rVal))[0] = buf[7];
@@ -90,7 +90,7 @@ double iReadDouble(std::ifstream & ifile)
     ((char*)(&rVal))[5] = buf[2];
     ((char*)(&rVal))[6] = buf[1];
     ((char*)(&rVal))[7] = buf[0];
-    
+
     return rVal;
 }
 
@@ -98,14 +98,14 @@ double iReadReal(std::ifstream & ifile)
 {
   // will use 4 bytes from the file to read a REAL (according to the MSG definition of REAL)
     unsigned char buf [4];
-    
+
     ifile.read((char*)buf, 4);
     float rVal;
     ((char*)(&rVal))[0] = buf[3];
     ((char*)(&rVal))[1] = buf[2];
     ((char*)(&rVal))[2] = buf[1];
     ((char*)(&rVal))[3] = buf[0];
-    
+
     return rVal;
 }
 
@@ -113,7 +113,7 @@ int iReadInt(std::ifstream & ifile)
 {
   // will use 4 bytes from the file to read an int (according to the MSG definition of int)
     unsigned char buf [4];
-    
+
     ifile.read((char*)buf, 4);
     int iResult = (buf[0]<<24)+(buf[1]<<16)+(buf[2]<<8)+buf[3];
 
@@ -124,7 +124,7 @@ unsigned char iReadByte (std::ifstream & ifile)
 {
   // will read 1 byte from the file
     char b;
-    
+
     ifile.read(&b, 1);
 
     return b;

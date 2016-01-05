@@ -216,7 +216,8 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         return CE_Failure;
     }
     
-    for( iColor = 0; iColor < nColors; iColor++ )
+    iColor = 0;
+    do
     {
         GDALColorEntry	sEntry;
 
@@ -225,7 +226,10 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         CAST_PCT(anPCT)[4*iColor+1] = static_cast<GByte>(sEntry.c2);
         CAST_PCT(anPCT)[4*iColor+2] = static_cast<GByte>(sEntry.c3);
         CAST_PCT(anPCT)[4*iColor+3] = 0;
-    }
+
+        iColor ++;
+    } while( iColor < nColors );
+
 #ifdef USE_SSE2
     /* Pad to multiple of 8 colors */
     int nColorsMod8 = nColors % 8;

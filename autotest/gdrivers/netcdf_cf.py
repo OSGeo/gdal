@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test NetCDF driver support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -156,7 +156,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
             command = 'curl --form cfversion=' + version + ' --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"'
 
     return command
-        
+
 
 ###############################################################################
 # Check a file for CF compliance
@@ -183,7 +183,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     except :
         gdaltest.post_reason('ERROR with command - ' + command)
         return 'fail'
-        
+
     output_all = ret
     output_err = ''
     output_warn = ''
@@ -439,7 +439,6 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         del dst
         if not silent:
             print("Translated to %s" % (projNc))
-        
 
         transWorked, resDetails = netcdf_cfproj_test_cf(proj, projNc)
         resPerProj[proj[0]] = resDetails
@@ -628,7 +627,7 @@ def netcdf_cf_4():
 #                                    'data', 'tmp', 'translate_results.txt')
 
     return result
-     
+
 ###############################################################################
 #test support for PS variants (bug #2893)
 def netcdf_cf_5():
@@ -643,7 +642,7 @@ def netcdf_cf_5():
         sr = osr.SpatialReference( )
         sr.ImportFromWkt( prj )
         lat_origin = sr.GetProjParm( 'latitude_of_origin' )
-    
+
         if lat_origin != 60:
             gdaltest.post_reason( 'Latitude of origin in %s does not match expected: %f'
                                   % (ifile, lat_origin) )

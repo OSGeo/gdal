@@ -96,44 +96,43 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
 void RegisterOGRAmigoCloud()
 
 {
-    if( GDALGetDriverByName( "AmigoCloud" ) == NULL )
-    {
-        GDALDriver* poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "AmigoCloud" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "AmigoCloud" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                  "AmigoCloud" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                    "drv_amigocloud.html" );
+    GDALDriver* poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "AMIGOCLOUD:" );
+    poDriver->SetDescription( "AmigoCloud" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,  "AmigoCloud" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_amigocloud.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "AMIGOCLOUD:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
     "<OpenOptionList>"
     "  <Option name='API_KEY' type='string' description='Account API key'/>"
     "  <Option name='PROJECTID' type='string' description='Project id' required='true'/>"
     "  <Option name='BATCH_INSERT' type='boolean' description='Whether to group features to be inserted in a batch' default='YES'/>"
     "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
     "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
     "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "String Integer Integer64 Real" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->pfnOpen = OGRAmigoCloudDriverOpen;
-        poDriver->pfnIdentify = OGRAmigoCloudDriverIdentify;
-        poDriver->pfnCreate = OGRAmigoCloudDriverCreate;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "String Integer Integer64 Real" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGRAmigoCloudDriverOpen;
+    poDriver->pfnIdentify = OGRAmigoCloudDriverIdentify;
+    poDriver->pfnCreate = OGRAmigoCloudDriverCreate;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

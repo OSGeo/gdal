@@ -13,7 +13,7 @@ class SDEDataset;
 class SDERasterBand : public GDALRasterBand
 {
     friend class SDEDataset;
-    
+
     private:
         const SE_RASBANDINFO* poBand;
 
@@ -25,8 +25,7 @@ class SDERasterBand : public GDALRasterBand
         SE_RASCONSTRAINT&       InitializeConstraint (  long* nBlockXOff,
                                                         long* nBlockYOff);
         CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
-        
-        
+
         int                     nOverview;
         int                     nOverviews;
         long                    nBlockSize;
@@ -36,16 +35,14 @@ class SDERasterBand : public GDALRasterBand
         SE_RASCONSTRAINT        hConstraint;
         GDALRasterBand**        papoOverviews;
         GDALColorTable*         poColorTable;
-        
-    public:
 
+    public:
         SDERasterBand( SDEDataset* poDS, 
                        int nBand, 
                        int nOverview, 
                        const SE_RASBANDINFO* band);
-                       
+
         ~SDERasterBand( void );
-    
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,

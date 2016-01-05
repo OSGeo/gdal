@@ -73,7 +73,7 @@ static void RWriteString( VSILFILE *fp, int bASCII, const char *pszValue )
 {
     RWriteInteger( fp, bASCII, 4105 );
     RWriteInteger( fp, bASCII, (int) strlen(pszValue) );
-    
+
     if( bASCII )
     {
         VSIFWriteL( pszValue, 1, strlen(pszValue), fp );

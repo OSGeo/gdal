@@ -37,8 +37,6 @@
 
 #include <math.h>
 
-extern "C" void GDALRegister_MBTiles();
-
 CPL_CVSID("$Id$");
 
 static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", NULL};
@@ -77,7 +75,7 @@ class MBTilesDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform(double* padfGeoTransform);
     virtual const char* GetProjectionRef();
-    
+
     virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
 
@@ -416,8 +414,9 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   } else if (c == 0xe0) {
     if (((unsigned char*)p)[1] < 0xa0) goto FAIL;
     goto UTF8_3;
+  }
 #if STRICT_RFC3629
-  } else if (c == 0xed) {
+  else if (c == 0xed) {
     // RFC 3629 says surrogate chars are illegal.
     if (((unsigned char*)p)[1] >= 0xa0) goto FAIL;
     goto UTF8_3;
@@ -426,8 +425,9 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
     if (((unsigned char*)p)[1]==0xbf &&
     ((unsigned char*)p)[2]>=0xbe) goto FAIL;
     goto UTF8_3;
+  }
 #endif
-  } else if (c < 0xf0) {
+  else if (c < 0xf0) {
   UTF8_3:
     if (p+2 >= end || (p[2]&0xc0) != 0x80) goto FAIL;
     *len = 3;
@@ -1917,28 +1917,24 @@ end:
 void GDALRegister_MBTiles()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("MBTiles driver"))
+    if( !GDAL_CHECK_VERSION( "MBTiles driver" ) )
         return;
 
-    if( GDALGetDriverByName( "MBTiles" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "MBTiles" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "MBTiles" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "MBTiles" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_mbtiles.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mbtiles" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "MBTiles" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MBTiles" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mbtiles.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mbtiles" );
 
-        poDriver->pfnOpen = MBTilesDataset::Open;
-        poDriver->pfnIdentify = MBTilesDataset::Identify;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = MBTilesDataset::Open;
+    poDriver->pfnIdentify = MBTilesDataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -414,7 +414,7 @@ static long Make_MGRS_String (char* MGRS,
   if (Northing >= 99999.5)
     Northing = 99999.0;
   north = (long)(Northing/divisor);
-  i += sprintf (MGRS+i, "%*.*ld", (int) Precision, (int) Precision, north);
+  /*i += */sprintf (MGRS+i, "%*.*ld", (int) Precision, (int) Precision, north);
   return (error_code);
 } /* Make_MGRS_String */
 
@@ -1023,7 +1023,7 @@ long Convert_MGRS_To_UPS ( char   *MGRS,
   double false_northing;      /* False northing for 3rd letter              */
   double grid_easting;        /* easting for 100,000 meter grid square      */
   double grid_northing;       /* northing for 100,000 meter grid square     */
-  long zone;
+  long zone = 0;
   long letters[MGRS_LETTERS];
   long in_precision;
   int l_index = 0;

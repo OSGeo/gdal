@@ -235,7 +235,7 @@ public:
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
 
     static CPLMutex* hMutex;
-    
+
     static      OGRGeometry* ConvertGeometry(OGRGeometry*);
 };
 

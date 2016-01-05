@@ -32,14 +32,11 @@
  ****************************************************************************/
 
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_Leveller(void);
-CPL_C_END
 
 static bool str_equal(const char *_s1, const char *_s2) {
     return 0 == strcmp(_s1, _s2);
@@ -921,12 +918,12 @@ GDALDataset* LevellerDataset::Create
     if( pszValue != NULL )
         poDS->m_dLogSpan[1] = CPLAtof( pszValue );
 
-	if(poDS->m_dLogSpan[1] < poDS->m_dLogSpan[0])
-	{
-		double t = poDS->m_dLogSpan[0];
-		poDS->m_dLogSpan[0] = poDS->m_dLogSpan[1];
-		poDS->m_dLogSpan[1] = t;
-	}
+    if(poDS->m_dLogSpan[1] < poDS->m_dLogSpan[0])
+    {
+            double t = poDS->m_dLogSpan[0];
+            poDS->m_dLogSpan[0] = poDS->m_dLogSpan[1];
+            poDS->m_dLogSpan[1] = t;
+    }
 
 // --------------------------------------------------------------------
 //      Instance a band.
@@ -1578,12 +1575,9 @@ void GDALRegister_Leveller()
 
     poDriver->SetDescription( "Leveller" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION,
-                               "ter" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Leveller heightfield" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_leveller.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ter" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Leveller heightfield" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_leveller.html" );
 
     poDriver->pfnIdentify = LevellerDataset::Identify;
     poDriver->pfnOpen = LevellerDataset::Open;

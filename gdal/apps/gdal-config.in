@@ -10,6 +10,7 @@ Options:
 	[--datadir]
 	[--version]
 	[--ogr-enabled]
+	[--gnm-enabled]
 	[--formats]
 EOF
 	exit $1
@@ -48,6 +49,10 @@ case $1 in
     echo $CONFIG_OGR_ENABLED
     ;;
 
+  --gnm-enabled)
+    echo $CONFIG_GNM_ENABLED
+    ;;
+    
   --formats)
     echo $CONFIG_FORMATS
     ;;

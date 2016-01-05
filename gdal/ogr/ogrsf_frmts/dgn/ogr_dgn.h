@@ -56,7 +56,8 @@ class OGRDGNLayer : public OGRLayer
     DGNElemCore       **LineStringToElementGroup( OGRLineString *, int );
     DGNElemCore       **TranslateLabel( OGRFeature * );
 
-    int                 bHaveSimpleQuery;
+    // Unused:
+    // int                 bHaveSimpleQuery;
     OGRFeature         *poEvalFeature;
 
     OGRErr              CreateFeatureWithGeom( OGRFeature *, OGRGeometry * );
@@ -95,12 +96,12 @@ class OGRDGNDataSource : public OGRDataSource
 {
     OGRDGNLayer     **papoLayers;
     int                 nLayers;
-    
+
     char                *pszName;
     DGNHandle           hDGN;
 
     char                **papszOptions;
-    
+
   public:
                         OGRDGNDataSource();
                         ~OGRDGNDataSource();

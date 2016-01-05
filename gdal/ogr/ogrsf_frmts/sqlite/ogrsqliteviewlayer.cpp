@@ -219,7 +219,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to query table %s for column definitions : %s.",
                   pszViewName, sqlite3_errmsg(hDB) );
-        
+
         return CE_Failure;
     }
 

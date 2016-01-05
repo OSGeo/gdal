@@ -1,7 +1,7 @@
 
 /* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.2.54, November 12, 2015
+ * libpng version 1.2.56, December 17, 2015
  *
  * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -361,7 +361,7 @@
 
 #ifdef PNG_SETJMP_SUPPORTED
 /* This is an attempt to force a single setjmp behaviour on Linux.  If
- * the X config stuff didn't define _BSD_SOURCE we wouldn't need this.
+ * the X config stuff did not define _BSD_SOURCE we would not need this.
  *
  * You can bypass this test if you know that your application uses exactly
  * the same setjmp.h that was included when libpng was built.  Only define

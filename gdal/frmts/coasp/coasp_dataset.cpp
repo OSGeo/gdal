@@ -33,17 +33,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
-#include "cpl_port.h"
 #include "cpl_conv.h"
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_COASP(void);
-CPL_C_END
 
 static const int TYPE_GENERIC = 0;
 static const int TYPE_GEOREF = 1;
@@ -222,11 +219,11 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
 /* Goto a particular metadata item, listed by number */
 int COASPMetadataReader::GotoMetadataItem(int nItemNumber)
 {
-	if (nItemNumber > nMetadataCount || nItemNumber < 0) {
-		nItemNumber = 0;
-		return 0;
+	if (nItemNumber >= nMetadataCount || nItemNumber < 0) {
+            nCurrentItem = 0;
 	}
-	nCurrentItem = nItemNumber;
+	else
+            nCurrentItem = nItemNumber;
 	return nCurrentItem;
 }
 
@@ -401,6 +398,8 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	poDS->fpBinHV = NULL;
 	poDS->fpBinVH = NULL;
 	poDS->fpBinVV = NULL;
+        poDS->nGCPCount = 0;
+        poDS->pasGCP = NULL;
 
 	poDS->pszFileName = VSIStrdup(poOpenInfo->pszFilename);
 
@@ -512,7 +511,8 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 		free(pszBase);
 		free(pszDir);
 		delete poDS;
-
+                delete poItem;
+                delete poReader; 
 		return NULL;
 	}
 
@@ -522,9 +522,6 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	free(pszBase);
 	free(pszDir);
-
-	poDS->nGCPCount = 0;
-	poDS->pasGCP = NULL;
 
 	delete poItem;
 	delete poReader; 
@@ -536,9 +533,9 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 /*                         GDALRegister_COASP()                         */
 /************************************************************************/
 
-void GDALRegister_COASP(void)
+void GDALRegister_COASP()
 {
-    if ( GDALGetDriverByName( "COASP" ) != NULL )
+    if( GDALGetDriverByName( "COASP" ) != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

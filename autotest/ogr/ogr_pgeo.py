@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR PGEO driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -126,13 +126,13 @@ def ogr_pgeo_mdb_1():
 def ogr_pgeo_2():
     if ogrtest.pgeo_ds is None:
         return 'skip'
-        
+
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     bbox = geom.GetEnvelope()
-    
+
     lyr.SetSpatialFilterRect(bbox[0], bbox[1], bbox[2], bbox[3])
 
     feat_count = lyr.GetFeatureCount()
@@ -148,7 +148,7 @@ def ogr_pgeo_2():
         gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
         return 'fail'
-        
+
     # Check that geometry filter is well cleared
     lyr.SetSpatialFilter(None)
     feat_count = lyr.GetFeatureCount()
@@ -156,7 +156,7 @@ def ogr_pgeo_2():
         gdaltest.post_reason('did not get expected feature count')
         print(feat_count)
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
@@ -165,7 +165,7 @@ def ogr_pgeo_2():
 def ogr_pgeo_3():
     if ogrtest.pgeo_ds is None:
         return 'skip'
-        
+
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     lyr.SetAttributeFilter('OBJECTID=1')
 
@@ -182,7 +182,7 @@ def ogr_pgeo_3():
         gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
         return 'fail'
-        
+
     # Check that attribute filter is well cleared (#3706)
     lyr.SetAttributeFilter(None)
     feat_count = lyr.GetFeatureCount()
@@ -199,7 +199,7 @@ def ogr_pgeo_3():
 def ogr_pgeo_4():
     if ogrtest.pgeo_ds is None:
         return 'skip'
-        
+
     sql_lyr = ogrtest.pgeo_ds.ExecuteSQL('SELECT * FROM SDPipes WHERE OBJECTID = 1')
 
     feat_count = sql_lyr.GetFeatureCount()
@@ -215,7 +215,7 @@ def ogr_pgeo_4():
         gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
         return 'fail'
-        
+
     ogrtest.pgeo_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -226,7 +226,7 @@ def ogr_pgeo_4():
 def ogr_pgeo_5():
     if ogrtest.pgeo_ds is None:
         return 'skip'
-        
+
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     feat = lyr.GetFeature(9418)
     if feat.GetField('OBJECTID') != 9418:
@@ -273,7 +273,7 @@ def ogr_pgeo_7():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 
 def ogr_pgeo_cleanup():

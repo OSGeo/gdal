@@ -332,18 +332,18 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 // parameter, because usually it is not contained in the
                 // "Panorama" projection definition.
                 // FIXME: what to do with negative values?
-                long    nZone;
+                int    nZone;
                 double  dfCenterLong;
 
                 if ( padfPrjParams[7] == 0.0 )
                 {
-                    nZone = (long)TO_ZONE(padfPrjParams[3]);
+                    nZone = (int)TO_ZONE(padfPrjParams[3]);
                     dfCenterLong = TO_DEGREES * padfPrjParams[3];
                 }
                 else
                 {
-                    nZone = (long) padfPrjParams[7];
-                    dfCenterLong = 6 * nZone - 3;
+                    nZone = (int) padfPrjParams[7];
+                    dfCenterLong = 6 * (double)nZone - 3;
                 }
 
                 padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
@@ -768,7 +768,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                   "Geographic system will be used.", pszProjection );
         *piProjSys = PAN_PROJ_NONE;
     }
- 
+
 /* -------------------------------------------------------------------- */
 /*      Translate the datum.                                            */
 /* -------------------------------------------------------------------- */
@@ -801,7 +801,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                   "Datum \"%s\" unsupported by \"Panorama\" GIS. "
                   "Trying to translate an ellipsoid definition.", pszDatum );
 #endif
-       
+
         for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
         {
             if ( aoEllips[i] )

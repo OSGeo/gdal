@@ -55,7 +55,7 @@ OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    
+
     VSIFPrintfL(fp, "<?xml version='1.0' encoding='UTF-8'?>\n"
                     "<JCSDataFile xmlns:gml=\"http://www.opengis.net/gml\" "
                     "xmlns:xsi=\"http://www.w3.org/2000/10/XMLSchema-instance\" >\n"
@@ -234,7 +234,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
         else
             VSIFPrintfL(fp, "</property>\n");
     }
-    
+
     /* Derive R_G_B field from feature style string */
     if( bAddRGBField && poFeatureDefn->GetFieldIndex("R_G_B") < 0 )
     {
@@ -301,7 +301,7 @@ OGRErr OGRJMLWriterLayer::CreateField( OGRFieldDefn *poFieldDefn,
 {
     if( bFeaturesWritten )
         return OGRERR_FAILURE;
-    
+
     if( !bAddRGBField && strcmp( poFieldDefn->GetNameRef(), "R_G_B" ) == 0 )
         return OGRERR_FAILURE;
 

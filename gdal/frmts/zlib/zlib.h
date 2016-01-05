@@ -1286,8 +1286,8 @@ ZEXTERN uLong ZEXPORT crc32   OF((uLong crc, const Bytef *buf, uInt len));
 /*
      Update a running CRC-32 with the bytes buf[0..len-1] and return the
    updated CRC-32. If buf is NULL, this function returns the required initial
-   value for the for the crc. Pre- and post-conditioning (one's complement) is
-   performed within this function so it shouldn't be done by the application.
+   value for the for the CRC. Pre- and post-conditioning (one's complement) is
+   performed within this function so it should not be done by the application.
    Usage example:
 
      uLong crc = crc32(0L, Z_NULL, 0);

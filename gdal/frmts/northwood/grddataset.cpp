@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "northwood.h"
 
@@ -39,9 +40,6 @@
 #endif
 #endif
 
-
-CPL_C_START void GDALRegister_NWT_GRD( void );
-CPL_C_END
 /************************************************************************/
 /* ==================================================================== */
 /*                      NWT_GRDDataset                                  */
@@ -169,6 +167,8 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       void *pImage )
 {
     NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>( poDS );
+    if( nBlockXSize > INT_MAX / 2 )
+        return CE_Failure;
     const int nRecordSize = nBlockXSize * 2;
     unsigned short raw1;
 
@@ -178,7 +178,10 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                SEEK_SET );
 
     char *pszRecord = reinterpret_cast<char *>( CPLMalloc( nRecordSize ) );
-    VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
+    if( (int)VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp ) != nRecordSize )
+    {
+        return CE_Failure;
+    }
 
     if( nBand == 4 )                //Z values
     {
@@ -337,7 +340,7 @@ int NWT_GRDDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Look for the header                                                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < 1024 )
         return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'H' ||
@@ -424,7 +427,6 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 void GDALRegister_NWT_GRD()
 {
-
     if( GDALGetDriverByName( "NWT_GRD" ) != NULL )
       return;
 

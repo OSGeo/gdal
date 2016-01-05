@@ -5,18 +5,18 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic support for ICC profile in JPEG file.
-# 
+#
 ###############################################################################
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -81,7 +81,7 @@ def jpeg_copy_icc():
     if md['SOURCE_ICC_PROFILE'] != icc:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
 
@@ -131,7 +131,7 @@ def jpeg_copy_options_icc():
 
 ###############################################################################
 # Test writing and reading of 64K+ ICC profile in CreateCopy()
-    
+
 def jpeg_copy_icc_64K():
 
     # In JPEG, APP2 chunks can only be 64K, so they would be split up.
@@ -165,11 +165,11 @@ def jpeg_copy_icc_64K():
         return 'fail'
     except:
         pass
-    
+
     if comment != 'foo':
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     if md['SOURCE_ICC_PROFILE'] != icc:
         gdaltest.post_reason('fail')
         return 'fail'

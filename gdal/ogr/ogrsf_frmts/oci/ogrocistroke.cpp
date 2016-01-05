@@ -43,7 +43,7 @@ OGROCIArcCenterFromEdgePoints( double x_c0, double y_c0,
                                double x_c1, double y_c1, 
                                double x_c2, double y_c2, 
                                double *x_center, double *y_center )
-    
+
 {
 
 /* -------------------------------------------------------------------- */
@@ -100,10 +100,10 @@ OGROCIArcCenterFromEdgePoints( double x_c0, double y_c0,
 
     l_b1 = -1.0;
     l_b2 = -1.0;
-    
+
     c1 = (y1 - m1*x1);
     c2 = (y2 - m2*x2);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Compute the intersection of the two lines through the center    */
 /*      of the circle, using Kramers rule.                              */
@@ -187,7 +187,7 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                      double dfMaxAngleStepSizeDegrees,
                                      int bForceWholeCircle,
                                      OGRLineString *poLine )
-    
+
 {
     double      dfStartAngle, dfEndAngle, dfAlongAngle;
     double      dfCenterX, dfCenterY, dfRadius;
@@ -231,7 +231,7 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
         {
             while( dfAlongAngle > dfStartAngle )
                 dfAlongAngle -= 360.0;
-            
+
             while( dfEndAngle > dfAlongAngle )
                 dfEndAngle -= 360.0;
         }

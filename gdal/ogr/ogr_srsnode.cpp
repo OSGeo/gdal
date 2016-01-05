@@ -155,7 +155,7 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 
 {
     int  i;
-    
+
     if( nChildren > 0 && EQUAL(pszName,pszValue) )
         return this;
 
@@ -240,7 +240,7 @@ void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
 
     memmove( papoChildNodes + iChild + 1, papoChildNodes + iChild,
              sizeof(void*) * (nChildren - iChild - 1) );
-    
+
     papoChildNodes[iChild] = poNew;
     poNew->poParent = this;
 }
@@ -415,7 +415,7 @@ int OGR_SRSNode::NeedsQuoting() const
  * @return currently OGRERR_NONE is always returned, but the future it
  * is possible error conditions will develop. 
  */
- 
+
 
 OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 
@@ -428,7 +428,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 /*      Build a list of the WKT format for the children.                */
 /* -------------------------------------------------------------------- */
     papszChildrenWkt = (char **) CPLCalloc(sizeof(char*),(nChildren+1));
-    
+
     for( i = 0; i < nChildren; i++ )
     {
         papoChildNodes[i]->exportToWkt( papszChildrenWkt + i );
@@ -440,7 +440,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 /* -------------------------------------------------------------------- */
     *ppszResult = (char *) CPLMalloc(nLength);
     *ppszResult[0] = '\0';
-    
+
 /* -------------------------------------------------------------------- */
 /*      Capture this nodes value.  We put it in double quotes if        */
 /*      this is a leaf node, otherwise we assume it is a well formed    */
@@ -460,7 +460,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 /* -------------------------------------------------------------------- */
     if( nChildren > 0 )
         strcat( *ppszResult, "[" );
-    
+
     for( i = 0; i < nChildren; i++ )
     {
         strcat( *ppszResult, papszChildrenWkt[i] );
@@ -490,7 +490,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 /*      Build a list of the WKT format for the children.                */
 /* -------------------------------------------------------------------- */
     papszChildrenWkt = (char **) CPLCalloc(sizeof(char*),(nChildren+1));
-    
+
     for( i = 0; i < nChildren; i++ )
     {
         papoChildNodes[i]->exportToPrettyWkt( papszChildrenWkt + i,
@@ -503,7 +503,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 /* -------------------------------------------------------------------- */
     *ppszResult = (char *) CPLMalloc(nLength);
     *ppszResult[0] = '\0';
-    
+
 /* -------------------------------------------------------------------- */
 /*      Capture this nodes value.  We put it in double quotes if        */
 /*      this is a leaf node, otherwise we assume it is a well formed    */
@@ -523,7 +523,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 /* -------------------------------------------------------------------- */
     if( nChildren > 0 )
         strcat( *ppszResult, "[" );
-    
+
     for( i = 0; i < nChildren; i++ )
     {
         if( papoChildNodes[i]->GetChildCount() > 0 )
@@ -543,7 +543,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
     {
         if( (*ppszResult)[strlen(*ppszResult)-1] == ',' )
             (*ppszResult)[strlen(*ppszResult)-1] = '\0';
-        
+
         strcat( *ppszResult, "]" );
     }
 
@@ -594,18 +594,18 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
     {
         return OGRERR_CORRUPT_DATA;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing children of this node.                       */
 /* -------------------------------------------------------------------- */
     ClearChildren();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the ``value'' for this node.                               */
 /* -------------------------------------------------------------------- */
     char        szToken[512];
     int         nTokenLen = 0;
-    
+
     while( *pszInput != '\0' && nTokenLen < (int) sizeof(szToken)-1 )
     {
         if( *pszInput == '"' )
@@ -661,7 +661,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
             }
 
             AddChild( poNewChild );
-            
+
             // swallow whitespace
             while( isspace(*pszInput) ) 
                 pszInput++;
@@ -709,7 +709,7 @@ void OGR_SRSNode::MakeValueSafe()
 /* -------------------------------------------------------------------- */
     if( (pszValue[0] >= '0' && pszValue[0] <= '9') || pszValue[0] != '.' )
         return;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate non-alphanumeric values to underscores.               */
 /* -------------------------------------------------------------------- */
@@ -733,7 +733,7 @@ void OGR_SRSNode::MakeValueSafe()
 
         pszValue[++j] = pszValue[i];
     }
-    
+
     if( pszValue[j] == '_' )
         pszValue[j] = '\0';
     else

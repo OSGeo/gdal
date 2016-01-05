@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.42 2015-06-07 23:00:23 bfriesen Exp $ */
+/* $Id: tif_write.c,v 1.43 2015-12-12 18:04:26 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -266,7 +266,7 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
 	tif->tif_postdecode( tif, (uint8*) data, cc );
 
 	if (!(*tif->tif_encodestrip)(tif, (uint8*) data, cc, sample))
-		return (0);
+		return ((tmsize_t) -1);
 	if (!(*tif->tif_postencode)(tif))
 		return ((tmsize_t) -1);
 	if (!isFillOrder(tif, td->td_fillorder) &&
@@ -446,7 +446,7 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
 	tif->tif_postdecode( tif, (uint8*) data, cc );
 
 	if (!(*tif->tif_encodetile)(tif, (uint8*) data, cc, sample))
-		return (0);
+		return ((tmsize_t) -1);
 	if (!(*tif->tif_postencode)(tif))
 		return ((tmsize_t)(-1));
 	if (!isFillOrder(tif, td->td_fillorder) &&

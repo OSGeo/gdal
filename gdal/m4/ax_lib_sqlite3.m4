@@ -149,7 +149,7 @@ AC_DEFUN([AX_LIB_SQLITE3],
             [
             AC_MSG_RESULT([not found])
             HAVE_SQLITE3="no"
-            succees="no"
+            success="no"
             ]
         )
         AC_LANG_POP([C++])

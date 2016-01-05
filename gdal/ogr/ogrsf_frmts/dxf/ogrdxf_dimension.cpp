@@ -201,12 +201,12 @@ the approach is as above in all these cases.
         dfL1B = dfTargetY2 - dfL1M * dfTargetX2;
 
         // convert vec2 + Arrow1 into y = mx + b format, call this L2
-        
+
         dfL2M = dfVec2Y / dfVec2X;
         dfL2B = dfArrowY1 - dfL2M * dfArrowX1;
-        
+
         // Compute intersection x = (b2-b1) / (m1-m2)
-        
+
         dfArrowX2 = (dfL2B - dfL1B) / (dfL1M-dfL2M);
         dfArrowY2 = dfL2M * dfArrowX2 + dfL2B;
     }
@@ -237,7 +237,7 @@ the approach is as above in all these cases.
     dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec1X,dfVec1Y);
     dfVec1X *= dfScaleFactor;
     dfVec1Y *= dfScaleFactor;
-    
+
     // vector 2
     dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec2X,dfVec2Y);
     dfVec2X *= dfScaleFactor;
@@ -259,7 +259,7 @@ the approach is as above in all these cases.
     oLine.setPoint( 0, dfTargetX1, dfTargetY1 );
     oLine.setPoint( 1, dfArrowX1 + dfVec1X, dfArrowY1 + dfVec1Y );
     poMLS->addGeometry( &oLine );
-    
+
     // dimension line from Target2 to Arrow2 with a small extension.
     oLine.setPoint( 0, dfTargetX2, dfTargetY2 );
     oLine.setPoint( 1, dfArrowX2 + dfVec1X, dfArrowY2 + dfVec1Y );

@@ -2203,7 +2203,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
  * pasFields[] array.
  *
  * Note that it is assumed that the pasFields[] array has been properly
- * initialized, re the allocation of buffers for fields strored as
+ * initialized, re the allocation of buffers for fields stored as
  * strings.
  *
  * Returns 0 on success or -1 on error.

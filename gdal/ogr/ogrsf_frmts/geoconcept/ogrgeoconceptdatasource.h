@@ -48,15 +48,15 @@ class OGRGeoconceptDataSource : public OGRDataSource
     char                *_pszDirectory;
     char                *_pszExt;
     char               **_papszOptions;
-    int                  _bSingleNewFile;
-    int                  _bUpdate;
+    bool                 _bSingleNewFile;
+    bool                 _bUpdate;
     GCExportFileH       *_hGXT;
 
   public:
                    OGRGeoconceptDataSource();
                   ~OGRGeoconceptDataSource();
 
-    int            Open( const char* pszName, int bTestOpen, int bUpdate );
+    int            Open( const char* pszName, bool bTestOpen, bool bUpdate );
     int            Create( const char* pszName, char** papszOptions );
 
     const char*    GetName() { return _pszName; }

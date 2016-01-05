@@ -62,7 +62,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
 	size_t nAttrSize = H5Tget_size( hAttrTypeID );
         char *pachBuffer = (char *) CPLCalloc(nAttrSize+1,1);
 	H5Aread( hAttr, hAttrNativeType, pachBuffer );
-        
+
         osResult = pachBuffer;
         CPLFree( pachBuffer );
 
@@ -115,7 +115,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
     hid_t hAttrSpace       = H5Aget_space( hAttr );
     hsize_t anSize[64];
     int nAttrDims       = H5Sget_simple_extent_dims( hAttrSpace, anSize, NULL );
-    
+
     int i, nAttrElements = 1;
 
     for( i=0; i < nAttrDims; i++ ) {
@@ -135,7 +135,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
         H5Aclose( hAttr );
         return false;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the value.                                                 */
 /* -------------------------------------------------------------------- */

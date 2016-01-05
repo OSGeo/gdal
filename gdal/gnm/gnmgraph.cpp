@@ -355,7 +355,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
             // cost of the path correctly later, because the costs will be
             // gathered from the initial graph.
             // We must do it here, after each edge removing, because the later
-            // Dijkstra searchs must consider these edges.
+            // Dijkstra searches must consider these edges.
             for (itDel = mDeletedEdges.begin(); itDel != mDeletedEdges.end();
                  ++itDel)
             {

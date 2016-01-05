@@ -28,15 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id:  $");
-
-CPL_C_START
-void GDALRegister_EIR(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -248,9 +245,9 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( fp == NULL )
         return NULL;
-    
+
     /* header example and description
-    
+
     IMAGINE_RAW_FILE // must be on first line, by itself
     WIDTH 581        // number of columns in the image
     HEIGHT 695       // number of rows in the image
@@ -262,7 +259,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     BYTE_ORDER       // LSB MSB; required for U16 U32 S16 S32 F32 F64
     DATA_OFFSET      // start of image data in raster file; default 0 bytes
     END_RAW_FILE     // end RAW file - stop reading
-    
+
     For a true color image with three bands (R, G, B) stored using 8 bits
     for each pixel in each band, DATA_TYPE equals U8 and NUM_LAYERS equals
     3 for a total of 24 bits per pixel.
@@ -277,7 +274,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     binary data at the same time.
     */
 
-    bool         bDone = FALSE;
     int          nRows = -1, nCols = -1, nBands = 1;
     int          nSkipBytes = 0;
     int          nLineCount = 0;
@@ -294,7 +290,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // parse the header file
     const char *pszLine;
-    while( !bDone && (pszLine = CPLReadLineL( fp )) != NULL )
+    while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
         nLineCount++;
 
@@ -303,7 +299,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         if ( (nLineCount > 50) || EQUAL(pszLine,"END_RAW_FILE") ) {
-            bDone = TRUE;
             break;
         }
 
@@ -538,7 +533,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
 /************************************************************************/
-/*                         GDALRegister_EIR()                          */
+/*                         GDALRegister_EIR()                           */
 /************************************************************************/
 
 void GDALRegister_EIR()

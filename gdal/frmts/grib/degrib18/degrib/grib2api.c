@@ -871,7 +871,7 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
       g2_free (gfld);
       return;
    }
-   /* Check if data wasn't unpacked. */
+   /* Check if data was not unpacked. */
    if (!gfld->unpacked) {
       jer[0 + *ndjer] = 2;
       *kjer = 1;

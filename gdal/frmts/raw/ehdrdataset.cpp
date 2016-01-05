@@ -28,15 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_EHdr(void);
-CPL_C_END
 
 static const int HAS_MIN_FLAG = 0x1;
 static const int HAS_MAX_FLAG = 0x2;
@@ -110,9 +107,9 @@ class EHdrRasterBand : public RawRasterBand
    friend class EHdrDataset;
 
     int            nBits;
-    long           nStartBit;
+    vsi_l_offset   nStartBit;
     int            nPixelOffsetBits;
-    int            nLineOffsetBits;
+    vsi_l_offset   nLineOffsetBits;
 
     int            bNoDataSet;
     double         dfNoData;
@@ -179,20 +176,44 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
 
     if (nBits < 8)
     {
-        nStartBit = atoi(poEDS->GetKeyValue("SKIPBYTES")) * 8;
+        int nSkipBytes = atoi(poEDS->GetKeyValue("SKIPBYTES"));
+        if( nSkipBytes < 0 || nSkipBytes > INT_MAX / 8 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid SKIPBYTES: %d", nSkipBytes);
+            nStartBit = 0;
+        }
+        else
+        {
+            nStartBit = nSkipBytes * 8;
+        }
         if (nBand >= 2)
         {
-            long nRowBytes = atoi(poEDS->GetKeyValue("BANDROWBYTES"));
-            if (nRowBytes == 0)
-                nRowBytes = (nBits * poDS->GetRasterXSize() + 7) / 8;
+            GIntBig nBandRowBytes = CPLAtoGIntBig(poEDS->GetKeyValue("BANDROWBYTES"));
+            if( nBandRowBytes < 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid BANDROWBYTES: " CPL_FRMT_GIB, nBandRowBytes);
+                nBandRowBytes = 0;
+            }
+            vsi_l_offset nRowBytes;
+            if (nBandRowBytes == 0)
+                nRowBytes = (static_cast<vsi_l_offset>(nBits) * poDS->GetRasterXSize() + 7) / 8;
+            else
+                nRowBytes = static_cast<vsi_l_offset>(nBandRowBytes);
 
             nStartBit += nRowBytes * (nBand-1) * 8;
         }
 
         nPixelOffsetBits = nBits;
-        nLineOffsetBits = atoi(poEDS->GetKeyValue("TOTALROWBYTES")) * 8;
-        if( nLineOffsetBits == 0 )
-            nLineOffsetBits = nPixelOffsetBits * poDS->GetRasterXSize();
+        GIntBig nTotalRowBytes = CPLAtoGIntBig(poEDS->GetKeyValue("TOTALROWBYTES"));
+        if( nTotalRowBytes < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid TOTALROWBYTES: " CPL_FRMT_GIB, nTotalRowBytes);
+            nTotalRowBytes = 0;
+        }
+        if( nTotalRowBytes > 0 )
+            nLineOffsetBits = static_cast<vsi_l_offset>(nTotalRowBytes * 8);
+        else
+            nLineOffsetBits = static_cast<vsi_l_offset>(nPixelOffsetBits) * poDS->GetRasterXSize();
 
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
@@ -222,15 +243,20 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
-    const unsigned int nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
-    const vsi_l_offset nLineStart = (nStartBit + static_cast<vsi_l_offset>(nLineOffsetBits) * nBlockYOff) / 8;
+    const vsi_l_offset nLineBytesBig = (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7)/8;
+    if( nLineBytesBig > INT_MAX )
+        return CE_Failure;
+    const unsigned int nLineBytes = (unsigned int)nLineBytesBig;
+    const vsi_l_offset nLineStart = (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset = static_cast<int>(
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8);
+        (nStartBit + nLineOffsetBits * nBlockYOff) % 8);
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBuffer = reinterpret_cast<GByte *>( CPLCalloc(nLineBytes, 1) );
+    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nLineBytes) );
+    if( pabyBuffer == NULL )
+        return CE_Failure;
 
     if( VSIFSeekL( GetFPL(), nLineStart, SEEK_SET ) != 0
         || VSIFReadL( pabyBuffer, 1, nLineBytes, GetFPL() ) != nLineBytes )
@@ -283,16 +309,21 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Establish desired position.                                     */
 /* -------------------------------------------------------------------- */
-    const unsigned int nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
+    const vsi_l_offset nLineBytesBig = (static_cast<vsi_l_offset>(nPixelOffsetBits)*nBlockXSize + 7)/8;
+    if( nLineBytesBig > INT_MAX )
+        return CE_Failure;
+    const unsigned int nLineBytes = (unsigned int)nLineBytesBig;
     const vsi_l_offset nLineStart =
-        (nStartBit + static_cast<vsi_l_offset>( nLineOffsetBits ) * nBlockYOff) / 8;
+        (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset = static_cast<int>(
-        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8 );
+        (nStartBit + nLineOffsetBits * nBlockYOff) % 8 );
 
 /* -------------------------------------------------------------------- */
 /*      Read data into buffer.                                          */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBuffer = reinterpret_cast<GByte *>( CPLCalloc(nLineBytes, 1) );
+    GByte *pabyBuffer = reinterpret_cast<GByte *>( VSI_CALLOC_VERBOSE(nLineBytes, 1) );
+    if( pabyBuffer == NULL )
+        return CE_Failure;
 
     if( VSIFSeekL( GetFPL(), nLineStart, SEEK_SET ) != 0 )
     {
@@ -832,9 +863,9 @@ CPLErr EHdrDataset::ReadSTX()
               if (bNoDataSet && dfNoData == poBand->dfMin)
               {
                   /* Triggered by /vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil */
-                  CPLDebug("EHDr", "Ignoring .stx file where min == nodata. "
-                           "The nodata value shouldn't be taken into account "
-                           "in minimum value computation.");
+                  CPLDebug( "EHDr", "Ignoring .stx file where min == nodata. "
+                            "The nodata value should not be taken into account "
+                            "in minimum value computation.");
                   CSLDestroy( papszTokens );
                   papszTokens = NULL;
                   break;
@@ -1322,21 +1353,44 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     int nPixelOffset;
     int nLineOffset;
     vsi_l_offset    nBandOffset;
-
+    CPLAssert(nItemSize != 0);
+    CPLAssert(nBands != 0);
+    
     if( EQUAL(szLayout,"BIP") )
     {
+        if (nCols > INT_MAX / (nItemSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nPixelOffset = nItemSize * nBands;
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = (vsi_l_offset)nItemSize;
     }
     else if( EQUAL(szLayout,"BSQ") )
     {
+        if (nCols > INT_MAX / nItemSize)
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nPixelOffset = nItemSize;
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = (vsi_l_offset)nLineOffset * nRows;
     }
     else /* assume BIL */
     {
+        if (nCols > INT_MAX / (nItemSize * nBands))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
+            return NULL;
+        }
         nPixelOffset = nItemSize;
         nLineOffset = nItemSize * nBands * nCols;
         nBandOffset = (vsi_l_offset)nItemSize * nCols;
@@ -2013,13 +2067,12 @@ void GDALRegister_EHdr()
     if( GDALGetDriverByName( "EHdr" ) != NULL )
         return;
 
-    GDALDriver	*poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "EHdr" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI .hdr Labelled" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#EHdr" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#EHdr" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 Float32" );
 

@@ -1220,7 +1220,7 @@ def osr_esri_26():
 ###############################################################################
 # Test Mercator_2SP (#4861)
 def osr_esri_27():
-    
+
     esri_wkt = """PROJCS["Batavia_NEIEZ",
     GEOGCS["GCS_Batavia",
         DATUM["D_Batavia",
@@ -1237,7 +1237,7 @@ def osr_esri_27():
     srs = osr.SpatialReference()
     srs.SetFromUserInput(esri_wkt)
     srs.MorphFromESRI()
-    
+
     got_wkt = srs.ExportToPrettyWkt()
     if got_wkt != """PROJCS["Batavia_NEIEZ",
     GEOGCS["GCS_Batavia",
@@ -1254,7 +1254,7 @@ def osr_esri_27():
         gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
-        
+
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
     if got_wkt != """PROJCS["Batavia_NEIEZ",
@@ -1280,7 +1280,7 @@ def osr_esri_27():
 # Test Mercator_1SP (#4861)
 
 def osr_esri_28():
-    
+
     ogc_wkt = """PROJCS["Segara (Jakarta) / NEIEZ (deprecated)",
     GEOGCS["Segara (Jakarta)",
         DATUM["Gunung_Segara_Jakarta",
@@ -1303,7 +1303,7 @@ def osr_esri_28():
     AXIS["X",EAST],
     AXIS["Y",NORTH],
     AUTHORITY["EPSG","2934"]]"""
-    
+
     srs = osr.SpatialReference()
     srs.SetFromUserInput(ogc_wkt)
 
@@ -1350,7 +1350,7 @@ def osr_esri_28():
 # Test Web Mercator
 
 def osr_esri_29():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
 

@@ -166,7 +166,7 @@ class GMLHandler
 
     OGRErr     startElementFeatureProperty(const char *pszName, int nLenName, void* attr);
     OGRErr     endElementFeatureProperty();
-    
+
     void       DealWithAttributes(const char *pszName, int nLenName, void* attr );
     bool       IsConditionMatched(const char* pszCondition, void* attr);
     int        FindRealPropertyByCheckingConditions(int nIdx, void* attr);
@@ -277,7 +277,7 @@ class GMLXercesHandler : public DefaultHandler, public GMLHandler
 
 public:
     GMLXercesHandler( GMLReader *poReader );
-    
+
     void startElement(
         const   XMLCh* const    uri,
         const   XMLCh* const    localname,
@@ -459,19 +459,18 @@ private:
     std::string   osElemPath;
 
     bool          m_bFaceHoleNegative;
-    
+
     bool          m_bSetWidthFlag;
-    
+
     bool          m_bReportAllAttributes;
-    
+
     bool          m_bIsWFSJointLayer;
-    
+
     bool          m_bEmptyAsNull;
 
     bool          ParseXMLHugeFile( const char *pszOutputFilename, 
                                     const bool bSqliteIsTempFile,
                                     const int iSqliteCacheMB );
-                               
 
 public:
                 GMLReader(bool bExpatReader, bool bInvertAxisOrderIfLatLong,
@@ -502,7 +501,7 @@ public:
                                     bool* pbOutIsTempFile,
                                     char **papszSkip = NULL,
                                     const bool bStrict = false );
- 
+
     bool             HugeFileResolver( const char *pszFile,
                                        bool bSqliteIsTempFile,
                                        int iSqliteCacheMB );
@@ -551,13 +550,13 @@ public:
     int         GetFilteredClassIndex() { return m_nFilteredClassIndex; }
 
     bool        IsSequentialLayers() const { return m_nHasSequentialLayers == TRUE; }
-    
+
     void        SetReportAllAttributes(bool bFlag) { m_bReportAllAttributes = bFlag; }
     bool        ReportAllAttributes() const { return m_bReportAllAttributes; }
-    
+
     void             SetIsWFSJointLayer( bool bFlag ) { m_bIsWFSJointLayer = bFlag; }
     bool             IsWFSJointLayer() const { return m_bIsWFSJointLayer; }
-    
+
     void             SetEmptyAsNull( bool bFlag ) { m_bEmptyAsNull = bFlag; }
     bool             IsEmptyAsNull() const { return m_bEmptyAsNull; }
 

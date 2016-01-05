@@ -139,7 +139,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     m_nFileOffset = nOffset;
     m_nCurPos = 0;
     m_bModified = FALSE;
-    
+
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
@@ -231,7 +231,7 @@ int     TABRawBinBlock::CommitToFile()
                 nCurPos++;
             }
         }
-            
+
         if (nCurPos != m_nFileOffset)
             nStatus = -1; // Error message will follow below
 
@@ -244,7 +244,7 @@ int     TABRawBinBlock::CommitToFile()
      * we write only the part of the block that was used.
      *---------------------------------------------------------------*/
     int numBytesToWrite = m_bHardBlockSize?m_nBlockSize:m_nSizeUsed;
-    
+
     /*CPLDebug("MITAB", "Commiting to offset %d", m_nFileOffset);*/
 
     if (nStatus != 0 ||
@@ -404,7 +404,7 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
         m_nFileOffset = nFileOffset;
     else
         m_nFileOffset = 0;
-    
+
     if( m_fp != NULL && m_nFileSize < 0 && m_eAccess == TABReadWrite )
     {
         int nCurPos = (int)VSIFTellL(m_fp);
@@ -478,7 +478,7 @@ int     TABRawBinBlock::GotoByteInBlock(int nOffset)
     }
 
     m_nCurPos = nOffset;
-    
+
     m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
 
     return 0;
@@ -503,7 +503,7 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
  *
  * Move the block pointer to the specified position relative to the 
  * beginning of the file.  
- * 
+ *
  * In read access, the current block may be reloaded to contain a right
  * block of binary data if necessary.
  *
@@ -745,16 +745,16 @@ int     TABRawBinBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
  **********************************************************************/
 GByte  TABRawBinBlock::ReadByte()
 {
-    GByte byValue;
+    GByte byValue = 0;
 
-    ReadBytes(1, (GByte*)(&byValue));
+    ReadBytes(1, &byValue);
 
     return byValue;
 }
 
 GInt16  TABRawBinBlock::ReadInt16()
 {
-    GInt16 n16Value;
+    GInt16 n16Value = 0;
 
     ReadBytes(2, (GByte*)(&n16Value));
 
@@ -767,7 +767,7 @@ GInt16  TABRawBinBlock::ReadInt16()
 
 GInt32  TABRawBinBlock::ReadInt32()
 {
-    GInt32 n32Value;
+    GInt32 n32Value = 0;
 
     ReadBytes(4, (GByte*)(&n32Value));
 
@@ -780,7 +780,7 @@ GInt32  TABRawBinBlock::ReadInt32()
 
 float   TABRawBinBlock::ReadFloat()
 {
-    float fValue;
+    float fValue = 0.0f;
 
     ReadBytes(4, (GByte*)(&fValue));
 
@@ -792,7 +792,7 @@ float   TABRawBinBlock::ReadFloat()
 
 double  TABRawBinBlock::ReadDouble()
 {
-    double dValue;
+    double dValue = 0.0;
 
     ReadBytes(8, (GByte*)(&dValue));
 
@@ -921,11 +921,11 @@ int  TABRawBinBlock::WriteDouble(double dValue)
 /**********************************************************************
  *                    TABRawBinBlock::WriteZeros()
  *
- * Write a number of zeros (sepcified in bytes) at the current position 
+ * Write a number of zeros (specified in bytes) at the current position
  * in the file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
 int  TABRawBinBlock::WriteZeros(int nBytesToWrite)

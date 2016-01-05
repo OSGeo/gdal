@@ -214,7 +214,7 @@ def test_gdalinfo_py_9():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/fake_nsif.ntf')
     if ret.find('BLOCKA=010000001000000000') != -1:
-        gdaltest.post_reason( 'unexpectingly got extra MD.' )
+        gdaltest.post_reason( 'Got unexpected extra MD.' )
         print(ret)
         return 'fail'
 

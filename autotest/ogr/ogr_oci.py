@@ -5,21 +5,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Oracle OCI driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -43,12 +43,12 @@ from osgeo import gdal
 def ogr_oci_1():
 
     gdaltest.oci_ds = None
-    
+
     try:
         ogr.GetDriverByName( 'OCI' )
     except:
         return 'skip'
-    
+
     if 'OCI_DSNAME' not in os.environ:
         return 'skip'
 
@@ -81,7 +81,7 @@ def ogr_oci_2():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString) ] )
-    
+
     ######################################################
     # Copy in poly.shp
 
@@ -90,10 +90,10 @@ def ogr_oci_2():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -143,7 +143,7 @@ def ogr_oci_3():
         return 'skip'
 
     expect = [168, 169, 166, 158, 165]
-    
+
     gdaltest.oci_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.oci_lyr,
                                               'eas_id', expect )
@@ -196,15 +196,15 @@ def ogr_oci_4():
 
         wkt = open( 'data/wkb_wkt/'+item+'.wkt' ).read()
         geom = ogr.CreateGeometryFromWkt( wkt )
-        
+
         ######################################################################
         # Write geometry as a new Oracle feature.
-    
+
         dst_feat = ogr.Feature( feature_def = gdaltest.oci_lyr.GetLayerDefn() )
         dst_feat.SetGeometryDirectly( geom )
         dst_feat.SetField( 'PRFEDEA', item )
         gdaltest.oci_lyr.CreateFeature( dst_feat )
-        
+
         ######################################################################
         # Read back the feature and get the geometry.
 
@@ -216,9 +216,9 @@ def ogr_oci_4():
         feat_read.Destroy()
 
     dst_feat.Destroy()
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -228,7 +228,7 @@ def ogr_oci_5():
         return 'skip'
 
     expect = [ None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158 ]
-    
+
     sql_lyr = gdaltest.oci_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
     if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 0:
         gdaltest.post_reason('fail')
@@ -242,7 +242,7 @@ def ogr_oci_5():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
 
@@ -263,14 +263,14 @@ def ogr_oci_6():
         if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
             tr = 0
         feat_read.Destroy()
-        
+
     gdaltest.oci_ds.ReleaseResultSet( sql_lyr )
 
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test spatial filtering. 
 
@@ -280,22 +280,22 @@ def ogr_oci_7():
         return 'skip'
 
     gdaltest.oci_lyr.SetAttributeFilter( None )
-    
+
     geom = ogr.CreateGeometryFromWkt( \
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.oci_lyr.SetSpatialFilter( geom )
     geom.Destroy()
-    
+
     tr = ogrtest.check_features_against_list( gdaltest.oci_lyr, 'eas_id',
                                               [ 158 ] )
 
     gdaltest.oci_lyr.SetSpatialFilter( None )
-    
+
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test that we can create a layer with a coordinate system that is mapped
 # to an oracle coordinate system using the ORACLE authority code.
@@ -342,7 +342,7 @@ def ogr_oci_8():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # This time we create a layer with a EPSG marked GEOGCS, and verify that
 # the coordinate system gets properly remapped to the Oracle WGS84. 
@@ -387,7 +387,7 @@ def ogr_oci_9():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test handling of specialized Oracle Rectangle Geometries.
 
@@ -424,7 +424,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
     feat_read = sql_lyr.GetNextFeature()
 
     expected_wkt = 'POLYGON ((1 1 0,5 1 0,5 7 0,1 7 0,1 1 0))'
-    
+
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
@@ -437,7 +437,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test handling of specialized Oracle circle Geometries.
 
@@ -465,7 +465,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
     feat_read = sql_lyr.GetNextFeature()
 
     expected_wkt = 'POLYGON ((10 9,9.989043790736547 9.209056926535308,9.956295201467611 9.415823381635519,9.902113032590307 9.618033988749895,9.827090915285202 9.8134732861516,9.732050807568877 10.0,9.618033988749895 10.175570504584947,9.486289650954788 10.338261212717716,9.338261212717717 10.486289650954788,9.175570504584947 10.618033988749895,9.0 10.732050807568877,8.8134732861516 10.827090915285202,8.618033988749895 10.902113032590307,8.415823381635519 10.956295201467611,8.209056926535308 10.989043790736547,8 11,7.790943073464693 10.989043790736547,7.584176618364482 10.956295201467611,7.381966011250105 10.902113032590307,7.1865267138484 10.827090915285202,7.0 10.732050807568877,6.824429495415054 10.618033988749895,6.661738787282284 10.486289650954788,6.513710349045212 10.338261212717716,6.381966011250105 10.175570504584947,6.267949192431122 10.0,6.172909084714799 9.8134732861516,6.097886967409693 9.618033988749895,6.043704798532389 9.415823381635519,6.010956209263453 9.209056926535308,6 9,6.010956209263453 8.790943073464694,6.043704798532389 8.584176618364483,6.097886967409693 8.381966011250105,6.172909084714798 8.1865267138484,6.267949192431123 8.0,6.381966011250105 7.824429495415054,6.513710349045212 7.661738787282284,6.661738787282284 7.513710349045212,6.824429495415053 7.381966011250105,7 7.267949192431123,7.1865267138484 7.172909084714798,7.381966011250105 7.097886967409693,7.584176618364481 7.043704798532389,7.790943073464693 7.010956209263453,8 7,8.209056926535306 7.010956209263453,8.415823381635518 7.043704798532389,8.618033988749895 7.097886967409693,8.8134732861516 7.172909084714799,9.0 7.267949192431123,9.175570504584947 7.381966011250105,9.338261212717715 7.513710349045211,9.486289650954788 7.661738787282284,9.618033988749895 7.824429495415053,9.732050807568877 8,9.827090915285202 8.1865267138484,9.902113032590307 8.381966011250105,9.956295201467611 8.584176618364481,9.989043790736547 8.790943073464693,10 9))'
-    
+
     tr = 1
     if ogrtest.check_feature_geometry( feat_read, expected_wkt ) != 0:
         tr = 0
@@ -478,7 +478,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test handling of specialized Oracle circular arc linestring Geometries.
 
@@ -558,7 +558,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
         return 'success'
     else:
         return 'fail'
-        
+
 ###############################################################################
 # Test handling of compount linestring.
 
@@ -599,7 +599,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
         return 'success'
     else:
         return 'fail'
-        
+
 ###############################################################################
 # Test handling of compount polygon.
 
@@ -640,7 +640,7 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
         return 'success'
     else:
         return 'fail'
-        
+
 ###############################################################################
 # Test deleting an existing layer.
 
@@ -651,7 +651,7 @@ def ogr_oci_16():
 
     target_index = -1
     lc = gdaltest.oci_ds.GetLayerCount()
-    
+
     for i in range(lc):
         lyr = gdaltest.oci_ds.GetLayer( i )
         if lyr.GetName() == 'TESTSRS2':
@@ -663,19 +663,19 @@ def ogr_oci_16():
     if target_index == -1:
         gdaltest.post_reason( 'did not find testsrs2 layer' )
         return 'fail'
-    
+
     result = gdaltest.oci_ds.DeleteLayer( target_index )
     if result != 0:
         gdaltest.post_reason( 'DeleteLayer() failed.' )
         return 'fail'
-    
+
     lyr = gdaltest.oci_ds.GetLayerByName( 'testsrs2' )
     if lyr is not None:
         gdaltest.post_reason( 'apparently failed to remove testsrs2 layer' )
         return 'fail'
-        
+
     return 'success'
-        
+
 ###############################################################################
 # Test that synctodisk actually sets the layer bounds metadata. 
 
@@ -683,9 +683,9 @@ def ogr_oci_17():
 
     if gdaltest.oci_ds is None:
         return 'skip'
-    
+
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:xpoly' )
-    
+
     ######################################################
     # Create Oracle Layer
     gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer( 'xpoly' )
@@ -696,7 +696,7 @@ def ogr_oci_17():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString) ] )
-    
+
     ######################################################
     # Copy in poly.shp
 
@@ -705,10 +705,10 @@ def ogr_oci_17():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -725,7 +725,7 @@ def ogr_oci_17():
     # metadata table.
 
     oci_ds2 = ogr.Open( os.environ['OCI_DSNAME'] )
-    
+
     sql_lyr = oci_ds2.ExecuteSQL( "select column_name from user_sdo_geom_metadata where table_name = 'XPOLY'" )
     if sql_lyr.GetFeatureCount() > 0:
         gdaltest.post_reason( 'user_sdo_geom_metadata already populated!' )
@@ -746,7 +746,7 @@ def ogr_oci_17():
     oci_ds2.ReleaseResultSet( sql_lyr )
 
     oci_ds2 = None
-    
+
     return 'success'
 
 ###############################################################################
@@ -756,7 +756,7 @@ def ogr_oci_18():
 
     if gdaltest.oci_ds is None:
         return 'skip'
-    
+
     wkts = [ 'POINT (0 1)', 'LINESTRING (0 1,2 3)', 'POLYGON ((0 0,1 0,1 1,0 1,0 0))',
              'MULTIPOINT (0 1)', 'MULTILINESTRING ((0 1,2 3))', 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))',
              'GEOMETRYCOLLECTION (POINT (0 1))',
@@ -779,7 +779,7 @@ def ogr_oci_18():
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
     lyr.SyncToDisk()
-        
+
     oci_ds2 = ogr.Open( os.environ['OCI_DSNAME'] )
     for wkt in wkts:
         g = ogr.CreateGeometryFromWkt(wkt)
@@ -803,19 +803,19 @@ def ogr_oci_18():
             print(wkt)
             print(feat.GetGeometryRef().ExportToWkt())
             return 'fail'
-        
+
     dsname = os.environ['OCI_DSNAME']
     if dsname.find('@') < 0:
         dsname = dsname + '@:test_NONE'
     else:
         dsname = dsname + ':test_NONE'
-       
+
     oci_ds2 = ogr.Open( dsname )
     lyr = oci_ds2.GetLayerByName('test_NONE')
     if lyr.GetGeomType() != ogr.wkbNone:
         gdaltest.post_reason('fail')
         return 'fail'    
-    
+
     return 'success'
 
 ###############################################################################
@@ -834,7 +834,7 @@ def ogr_oci_19():
     feat.SetField('MYDATETIME', '2015/02/03 11:33:44')
     lyr.CreateFeature(feat)
     lyr.SyncToDisk()
-    
+
     sql_lyr = gdaltest.oci_ds.ExecuteSQL('SELECT MYDATE, MYDATETIME FROM testdate')
     if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTDate:
         gdaltest.post_reason('fail')
@@ -848,7 +848,7 @@ def ogr_oci_19():
         f.DumpReadable()
         return 'fail'
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
-    
+
     return 'success'
 
 ###############################################################################
@@ -887,7 +887,7 @@ def ogr_oci_20():
         gdaltest.post_reason('fail')
         return 'fail'
     f = None
-    
+
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
@@ -999,7 +999,7 @@ def ogr_oci_21():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 1)'))
     lyr.CreateFeature(f)
     f = None
-    
+
     # Transition from BoundCopy to UnboundCopy
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 1)'))
@@ -1058,7 +1058,7 @@ def ogr_oci_21():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_oci_cleanup():
 

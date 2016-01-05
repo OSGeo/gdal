@@ -103,7 +103,7 @@ TABSeamless::TABSeamless()
     m_poFeatureDefnRef = NULL;
     m_poCurFeature = NULL;
     m_nCurFeatureId = -1;
-    
+
     m_poIndexTable = NULL;
     m_nTableNameField = -1;
     m_nCurBaseTableId = -1;
@@ -153,7 +153,7 @@ int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
                       GBool bTestOpenNoError /*= FALSE*/ )
 {
     char nStatus = 0;
-   
+
     if (m_poIndexTable)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -191,7 +191,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
                              GBool bTestOpenNoError /*= FALSE*/ )
 {
     int nFnameLen = 0;
-   
+
     m_eAccessMode = TABRead;
 
     /*-----------------------------------------------------------------
@@ -220,7 +220,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed opening %s.", m_pszFname);
         }
-        
+
         CPLFree(m_pszFname);
         CSLDestroy(papszTABFile);
         return -1;
@@ -467,7 +467,7 @@ int TABSeamless::OpenBaseTable(int nTableId, GBool bTestOpenNoError /*=FALSE*/)
     else
     {
         TABFeature *poIndexFeature = m_poIndexTable->GetFeatureRef(nTableId);
-    
+
         if (poIndexFeature)
         {
             if (OpenBaseTable(poIndexFeature, bTestOpenNoError) != 0)
@@ -498,7 +498,7 @@ int TABSeamless::OpenNextBaseTable(GBool bTestOpenNoError /*=FALSE*/)
     CPLAssert(m_poIndexTable);
 
     TABFeature *poIndexFeature = (TABFeature*)m_poIndexTable->GetNextFeature();
-    
+
     if (poIndexFeature)
     {
         if (OpenBaseTable(poIndexFeature, bTestOpenNoError) != 0)

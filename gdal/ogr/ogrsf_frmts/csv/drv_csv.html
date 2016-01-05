@@ -265,8 +265,10 @@ Whether to consider empty strings as null fields on reading'.</li>
 
 <p>The driver supports creating new databases (as a directory
 of .csv files), adding new .csv files to an existing directory or .csv
-files or appending features to an existing .csv table. Deleting or
-replacing existing features is not supported.</p>
+files or appending features to an existing .csv table. Starting with GDAL 2.1,
+deleting or replacing existing features, or adding/modifying/deleting fields is
+supported, provided the modifications done are small enough to be stored in RAM
+temporarily before flushing to disk.</p>
 
 <p>Layer Creation options:
 

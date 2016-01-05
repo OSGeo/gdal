@@ -414,7 +414,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
                     "Wrong structure for GDB_ObjectClasses table");
         return FALSE;
     }
-    
+
     std::vector< std::string > aosName;
     int nCandidateLayers = 0, nLayersSDCOrCDF = 0;
     for(i=0;i<oTable.GetTotalRecordCount();i++)

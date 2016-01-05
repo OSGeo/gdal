@@ -75,10 +75,9 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                                       int nSRID,
                                       int bHasZ )
 
-
 {
     CPLODBCSession *poSession = poDS->GetSession();
-    
+
     SetDescription( pszTableName );
 
     CPLFree( pszGeomColumn );
@@ -133,16 +132,17 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     if( eOGRType != wkbUnknown && eOGRType != wkbNone && bHasZ )
         eOGRType = wkbSetZ(eOGRType);
+    CPL_IGNORE_RET_VAL(eOGRType);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetKey( poSession );
-    
+
     if( oGetKey.GetPrimaryKeys( pszTableName ) && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
+
         if( oGetKey.Fetch() ) // more than one field in key! 
         {
             CPLFree( pszFIDColumn );

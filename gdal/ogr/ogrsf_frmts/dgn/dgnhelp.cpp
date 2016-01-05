@@ -625,7 +625,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             fprintf( fp, ",LINEAR PATTERNED ELEMENT" );
         else if( nClass == DGNC_CONSTRUCTION_RULE_ELEMENT )
             fprintf( fp, ",CONSTRUCTION_RULE_ELEMENT" );
-            
+
         fprintf( fp, "\n" );
     }
 
@@ -635,7 +635,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       {
           DGNElemMultiPoint     *psLine = (DGNElemMultiPoint *) psElement;
           int                   i;
-          
+
           for( i=0; i < psLine->num_vertices; i++ )
               fprintf( fp, "  (%.6f,%.6f,%.6f)\n", 
                        psLine->vertices[i].x, 
@@ -823,7 +823,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           for( iView = 0; iView < 8; iView++ )
           {
               DGNViewInfo *psView = psTCB->views + iView;
-              
+
               fprintf(fp, 
                       "  View%d: flags=%04X, levels=%02X%02X%02X%02X%02X%02X%02X%02X\n",
                       iView,
@@ -1061,7 +1061,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             for( i = 0; i < nLinkSize; i++ )
                 fprintf( fp, "%02x", pabyData[i] );
             fprintf( fp, "\n" );
-            
+
         }
     }
 }
@@ -1091,13 +1091,13 @@ const char *DGNTypeToName( int nType )
     {
       case DGNT_CELL_LIBRARY:
         return "Cell Library";
-        
+
       case DGNT_CELL_HEADER:
         return "Cell Header";
-        
+
       case DGNT_LINE:
         return "Line";
-        
+
       case DGNT_LINE_STRING:
         return "Line String";
 
@@ -1109,34 +1109,34 @@ const char *DGNTypeToName( int nType )
 
       case DGNT_SHAPE:
         return "Shape";
-        
+
       case DGNT_TEXT_NODE:
         return "Text Node";
 
       case DGNT_DIGITIZER_SETUP:
         return "Digitizer Setup";
-        
+
       case DGNT_TCB:
         return "TCB";
-        
+
       case DGNT_LEVEL_SYMBOLOGY:
         return "Level Symbology";
-        
+
       case DGNT_CURVE:
         return "Curve";
-        
+
       case DGNT_COMPLEX_CHAIN_HEADER:
         return "Complex Chain Header";
-        
+
       case DGNT_COMPLEX_SHAPE_HEADER:
         return "Complex Shape Header";
-        
+
       case DGNT_ELLIPSE:
         return "Ellipse";
-        
+
       case DGNT_ARC:
         return "Arc";
-        
+
       case DGNT_TEXT:
         return "Text";
 
@@ -1163,13 +1163,13 @@ const char *DGNTypeToName( int nType )
 
       case DGNT_SHARED_CELL_DEFN:
         return "Shared Cell Definition";
-        
+
       case DGNT_SHARED_CELL_ELEM:
         return "Shared Cell Element";
-        
+
       case DGNT_TAG_VALUE:
         return "Tag Value";
-        
+
       case DGNT_CONE:
         return "Cone";
 
@@ -1254,7 +1254,7 @@ int DGNGetAttrLinkSize( CPL_UNUSED DGNHandle hDGN,
  * @param pnMSLink variable to return the MSLINK value in, or NULL if not 
  * required.
  * @param pnLength variable to returned the linkage size in bytes or NULL.
- * 
+ *
  * @return pointer to raw internal linkage data.  This data should not be
  * altered or freed.  NULL returned on failure. 
  */
@@ -1262,7 +1262,7 @@ int DGNGetAttrLinkSize( CPL_UNUSED DGNHandle hDGN,
 unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
                               int iIndex, int *pnLinkageType,
                               int *pnEntityNum, int *pnMSLink, int *pnLength )
-    
+
 {
     int nAttrOffset;
     int iLinkage, nLinkSize;
@@ -1300,7 +1300,7 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                     + psElement->attr_data[nAttrOffset+9] * 256
                     + psElement->attr_data[nAttrOffset+10] * 65536
                     + psElement->attr_data[nAttrOffset+11] * 65536 * 256;
-                
+
             }
 
             if( pnLinkageType != NULL )
@@ -1315,7 +1315,7 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
             return psElement->attr_data + nAttrOffset;
         }
     }
-             
+
     return NULL;
 }
 
@@ -1415,36 +1415,36 @@ Author: Peggy Jung
 
     n = sqrt((double)PDP2PC_long(quat[0])*(double)PDP2PC_long(quat[0])+(double)PDP2PC_long(quat[1])*(double)PDP2PC_long(quat[1])+
              (double)PDP2PC_long(quat[2])*(double)PDP2PC_long(quat[2])+(double)PDP2PC_long(quat[3])*(double)PDP2PC_long(quat[3]));
- 
+
     a = (double)PDP2PC_long(quat[0])/n; //w
     b = (double)PDP2PC_long(quat[1])/n; //x
     c = (double)PDP2PC_long(quat[2])/n; //y
     d = (double)PDP2PC_long(quat[3])/n; //z
- 
+
     xx      = b*b;
     xy      = b*c;
     xz      = b*d;
     xw      = b*a;
- 
+
     yy      = c*c;
     yz      = c*d;
     yw      = c*a;
- 
+
     zz      = d*d;
     zw      = d+a;
- 
+
     ROT[0] = 1 - 2 * yy - 2 * zz ;
     ROT[1] =     2 * xy - 2 * zw ;
     ROT[2] =     2 * xz + 2 * yw ;
- 
+
     ROT[4] =     2 * xy + 2 * zw ;
     ROT[5] = 1 - 2 * xx - 2 * zz ;
     ROT[6] =     2 * yz - 2 * xw ;
- 
+
     ROT[8] =     2 * xz - 2 * yw ;
     ROT[9] =     2 * yz + 2 * xw ;
     ROT[10] = 1 - 2 * xx - 2 * yy ;
- 
+
     v2->x = ROT[0]*x + ROT[1]*y + ROT[2]*z;
     v2->y = ROT[4]*x + ROT[5]*y + ROT[6]*z;
     v2->z = ROT[8]*x + ROT[9]*y + ROT[10]*z;

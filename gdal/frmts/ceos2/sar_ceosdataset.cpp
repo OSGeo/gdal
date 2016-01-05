@@ -29,18 +29,13 @@
  ****************************************************************************/
 
 #include "ceos.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_priv.h"
 #include "rawdataset.h"
-#include "cpl_string.h"
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_SAR_CEOS(void);
-CPL_C_END
-
-static GInt16 CastToGInt16(float val);
 
 static GInt16 CastToGInt16(float val)
 {
@@ -1642,7 +1637,7 @@ void SAR_CEOSDataset::ScanForGCPs()
             }
         }
     }
-    /* If general GCP's weren't found, look for Map Projection (e.g. JERS) */
+    /* If general GCP's were not found, look for Map Projection (e.g. JERS) */
     if( nGCPCount == 0 )
     {
         ScanForMapProjection();
@@ -2087,12 +2082,20 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
     while(max_records != 0 && max_bytes != 0)
     {
+        iThisRecord++;
+
+        if( VSIFSeekL( fp, start, SEEK_SET ) != 0 ||
+            VSIFReadL( temp_buffer, 1, CEOS_HEADER_LENGTH, fp ) != CEOS_HEADER_LENGTH )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - cannot read record %d.",
+                      iThisRecord );
+            CPLFree(temp_body);
+            return CE_Failure;
+        }
         record = (CeosRecord_t *) CPLMalloc( sizeof( CeosRecord_t ) );
-        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, start, SEEK_SET ));
-        CPL_IGNORE_RET_VAL(VSIFReadL( temp_buffer, 1, CEOS_HEADER_LENGTH, fp ));
         record->Length = DetermineCeosRecordBodyLength( temp_buffer );
 
-        iThisRecord++;
         CeosToNative( &(record->Sequence), temp_buffer, 4, 4 );
 
         if( iThisRecord != record->Sequence )
@@ -2115,24 +2118,51 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             }
         }
 
-        if( record->Length > CurrentBodyLength )
+        if( record->Length <= CEOS_HEADER_LENGTH )
         {
-            if(CurrentBodyLength == 0 )
-            {
-                temp_body = (unsigned char *) CPLMalloc( record->Length );
-                CurrentBodyLength = record->Length;
-            }
-            else
-            {
-                temp_body = (unsigned char *) 
-                    CPLRealloc( temp_body, record->Length );
-                CurrentBodyLength = record->Length;
-            }
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - cannot read record %d.",
+                      iThisRecord );
+            CPLFree(record);
+            CPLFree(temp_body);
+            return CE_Failure;
         }
 
-        CPL_IGNORE_RET_VAL(VSIFReadL( temp_body, 1, MAX(0,record->Length-CEOS_HEADER_LENGTH),fp));
+        if( record->Length > CurrentBodyLength )
+        {
+            unsigned char* temp_body_new = (unsigned char *) 
+                    VSI_REALLOC_VERBOSE( temp_body, record->Length );
+            if( temp_body_new == NULL )
+            {
+                CPLFree(record);
+                CPLFree(temp_body);
+                return CE_Failure;
+            }
+            temp_body = temp_body_new;
+            CurrentBodyLength = record->Length;
+        }
+
+        int nToRead = record->Length-CEOS_HEADER_LENGTH;
+        if( (int)VSIFReadL( temp_body, 1, nToRead,fp) != nToRead )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - cannot read record %d.",
+                      iThisRecord );
+            CPLFree(record);
+            CPLFree(temp_body);
+            return CE_Failure;
+        }
 
         InitCeosRecordWithHeader( record, temp_buffer, temp_body );
+        if( record->Length == 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt CEOS File - invalid record %d.",
+                      iThisRecord );
+            CPLFree(record);
+            CPLFree(temp_body);
+            return CE_Failure;
+        }
 
         if( CurrentType == record->TypeCode.Int32Code )
             record->Subsequence = ++CurrentSequence;

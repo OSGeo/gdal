@@ -47,7 +47,7 @@
 #  define ODBC_FILENAME_MAX (255 + 1) /* Max path length */
 #endif
 
- 
+
 /**
  * \file cpl_odbc.h
  *
@@ -65,7 +65,7 @@ class CPL_DLL CPLODBCDriverInstaller
     DWORD m_nUsageCount;
 
   public:
-    
+
     // Default constructor.
     CPLODBCDriverInstaller();
 
@@ -123,7 +123,6 @@ class CPL_DLL CPLODBCDriverInstaller
     // error message can be obtained by calling this function.
     // Internally, it calls ODBC's SQLInstallerError function.
     const char* GetLastError() const { return m_szError; }
-   
 
     // If InstallDriver returns FALSE, then GetLastErrorCode then
     // error code can be obtained by calling this function.
@@ -216,7 +215,7 @@ class CPL_DLL CPLODBCStatement {
 
     char         **m_papszColValues;
     CPL_SQLLEN       *m_panColValueLengths;
-    
+
     int            Failed( int );
 
     char          *m_pszStatement;

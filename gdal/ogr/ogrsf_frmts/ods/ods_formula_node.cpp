@@ -609,9 +609,11 @@ int ods_formula_node::EvaluateEQ(IODSCellEvaluator* poEvaluator)
             bVal = (papoSubExpr[0]->float_value == papoSubExpr[1]->float_value);
         }
     }
-    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING)
+    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
+             papoSubExpr[0]->string_value != NULL)
     {
-        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING)
+        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
+            papoSubExpr[1]->string_value != NULL)
         {
             bVal = (strcmp(papoSubExpr[0]->string_value,
                            papoSubExpr[1]->string_value) == 0);
@@ -733,9 +735,11 @@ int ods_formula_node::EvaluateLE(IODSCellEvaluator* poEvaluator)
         else
             bVal = TRUE;
     }
-    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING)
+    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
+             papoSubExpr[0]->string_value != NULL)
     {
-        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING)
+        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
+            papoSubExpr[1]->string_value != NULL)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -803,9 +807,11 @@ int ods_formula_node::EvaluateGE(IODSCellEvaluator* poEvaluator)
             bVal = (papoSubExpr[0]->float_value >= papoSubExpr[1]->float_value);
         }
     }
-    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING)
+    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
+             papoSubExpr[0]->string_value != NULL)
     {
-        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING)
+        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
+            papoSubExpr[1]->string_value != NULL)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -879,9 +885,11 @@ int ods_formula_node::EvaluateLT(IODSCellEvaluator* poEvaluator)
         else
             bVal = TRUE;
     }
-    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING)
+    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
+             papoSubExpr[0]->string_value != NULL)
     {
-        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING)
+        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
+            papoSubExpr[1]->string_value != NULL)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -949,9 +957,11 @@ int ods_formula_node::EvaluateGT(IODSCellEvaluator* poEvaluator)
             bVal = (papoSubExpr[0]->float_value > papoSubExpr[1]->float_value);
         }
     }
-    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING)
+    else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
+             papoSubExpr[0]->string_value != NULL)
     {
-        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING)
+        if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
+            papoSubExpr[1]->string_value != NULL)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -1044,7 +1054,8 @@ int ods_formula_node::EvaluateBinaryArithmetic(IODSCellEvaluator* poEvaluator)
     {
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_INTEGER)
         {
-            int nVal;
+            int nVal = 0;
+            CPL_IGNORE_RET_VAL(nVal);
             switch (eOp)
             {
                 case ODS_ADD      : nVal = (papoSubExpr[0]->int_value + papoSubExpr[1]->int_value); break;
@@ -1062,7 +1073,7 @@ int ods_formula_node::EvaluateBinaryArithmetic(IODSCellEvaluator* poEvaluator)
                     else
                         return FALSE;
                     break;
-                default: nVal = 0; CPLAssert(0);
+                default: CPLAssert(0);
             }
 
             eNodeType = SNT_CONSTANT;
@@ -1096,7 +1107,8 @@ int ods_formula_node::EvaluateBinaryArithmetic(IODSCellEvaluator* poEvaluator)
 
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_FLOAT)
         {
-            double dfVal;
+            double dfVal = 0.0;
+            CPL_IGNORE_RET_VAL(dfVal);
             switch (eOp)
             {
                 case ODS_ADD      : dfVal = (papoSubExpr[0]->float_value + papoSubExpr[1]->float_value); break;
@@ -1114,7 +1126,7 @@ int ods_formula_node::EvaluateBinaryArithmetic(IODSCellEvaluator* poEvaluator)
                     else
                         return FALSE;
                     break;
-                default: dfVal = 0.0; CPLAssert(0);
+                default: CPLAssert(0);
             }
 
             eNodeType = SNT_CONSTANT;

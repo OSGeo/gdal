@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for INGR.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -160,7 +160,7 @@ def ingr_14():
     ds = gdal.Open('data/frmt31.cot')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     if cs != 11466 and cs != 11095:
         print(cs)
         return 'fail'
@@ -200,17 +200,47 @@ def ingr_17():
     del out_ds
     ref_cs = src_ds.GetRasterBand(1).Checksum()
     src_ds = None
-    
+
     ds = gdal.Open('/vsimem/ingr_17.rle')
     got_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     gdal.GetDriverByName('INGR').Delete('/vsimem/ingr_17.rle')
-    
+
     if got_cs != ref_cs:
         gdaltest.post_reason('fail')
         print(got_cs)
         print(ref_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test 'random access' in simple RLE
+
+def ingr_18():
+
+    ds = gdal.Open('data/frmt09.cot')
+    for y in range(ds.RasterYSize):
+        expected_data = ds.ReadRaster(0, y, ds.RasterXSize, 1)
+    ds = None
+    
+    ds = gdal.Open('data/frmt09.cot')
+    
+    ds.ReadRaster(0, 5, ds.RasterXSize, 1)
+    
+    got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
+    
+    if got_data != expected_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    ds.FlushCache()
+    
+    got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
+    
+    if got_data != expected_data:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -232,7 +262,8 @@ gdaltest_list = [
     ingr_14,
     ingr_15,
     ingr_16,
-    ingr_17 ]
+    ingr_17,
+    ingr_18 ]
 
 if __name__ == '__main__':
 

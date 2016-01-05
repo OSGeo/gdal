@@ -51,7 +51,9 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_SENTINEL2(void);
+// TODO: Leave this declaration while Sentinel2 folks use this as a
+// plugin with GDAL 1.x.
+void GDALRegister_SENTINEL2();
 CPL_C_END
 
 typedef enum
@@ -148,7 +150,7 @@ class SENTINEL2DatasetContainer: public GDALPamDataset
 class SENTINEL2Dataset : public VRTDataset
 {
         std::vector<CPLString>   aosNonJP2Files;
-        
+
         void   AddL1CL2ABandMetadata(SENTINEL2Level eLevel,
                                      CPLXMLNode* psRoot,
                                      const std::vector<CPLString>& aosBands);
@@ -164,7 +166,7 @@ class SENTINEL2Dataset : public VRTDataset
                 const std::vector<CPLString>& aosBands,
                 int nSaturatedVal,
                 int nNodataVal);
-        
+
     public:
                     SENTINEL2Dataset(int nXSize, int nYSize);
                     ~SENTINEL2Dataset();
@@ -627,7 +629,7 @@ static bool SENTINEL2GetGranuleInfo(SENTINEL2Level eLevel,
     int nEPSGCode = atoi(pszCSCode + strlen("EPSG:"));
     if( pnEPSGCode != NULL )
         *pnEPSGCode = nEPSGCode;
-    
+
     for(CPLXMLNode* psIter = psTileGeocoding->psChild; psIter != NULL;
                                                        psIter = psIter->psNext)
     {
@@ -1015,7 +1017,7 @@ char** SENTINEL2GetUserProductMetadata( CPLXMLNode* psMainMTD,
             }
         }
     }
-    
+
     CPLXMLNode* psL2A_QII = CPLGetXMLNode(psRoot, "L2A_Quality_Indicators_Info");
     if( psL2A_QII != NULL )
     {
@@ -1692,7 +1694,10 @@ static void SENTINEL2SetBandMetadata(GDALRasterBand* poBand,
         const SENTINEL2_L2A_BandDescription* psL2ABandDesc =
                                         SENTINEL2GetL2ABandDesc(osBandName);
         if(psL2ABandDesc != NULL )
+        {
+            osBandDesc += ", ";
             osBandDesc += psL2ABandDesc->pszBandDescription;
+        }
 
         poBand->SetMetadataItem("BANDNAME", osBandName);
     }

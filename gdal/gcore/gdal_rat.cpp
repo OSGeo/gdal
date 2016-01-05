@@ -691,7 +691,7 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
 
 {
     CPLAssert( GetRowCount() == 0 && GetColumnCount() == 0 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Linear binning.                                                 */
 /* -------------------------------------------------------------------- */
@@ -718,7 +718,7 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
               (GDALRATFieldUsage) atoi(CPLGetXMLValue( psChild, "Usage","0")));
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Row data.                                                       */
 /* -------------------------------------------------------------------- */
@@ -821,7 +821,6 @@ CPLErr GDALRasterAttributeTable::InitializeFromColorTable(
 CPLErr CPL_STDCALL 
 GDALRATInitializeFromColorTable( GDALRasterAttributeTableH hRAT,
                                  GDALColorTableH hCT )
-                                 
 
 {
     VALIDATE_POINTER1( hRAT, "GDALRATInitializeFromColorTable", CE_Failure );

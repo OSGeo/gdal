@@ -265,7 +265,7 @@ int ERSHdrNode::WriteSelf( VSILFILE * fp, int nIndent )
 /*                                Find()                                */
 /*                                                                      */
 /*      Find the desired entry value.  The input is a path with         */
-/*      components seperated by dots, relative to the current node.     */
+/*      components separated by dots, relative to the current node.     */
 /************************************************************************/
 
 const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )

@@ -189,7 +189,7 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
         else
         {
             // leave as string:
-            // *char, character, character varing, *varchar
+            // *char, character, character varying, *varchar
             // interval. int8, serial8
         }
 

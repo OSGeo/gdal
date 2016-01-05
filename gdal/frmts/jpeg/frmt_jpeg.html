@@ -16,8 +16,9 @@ YCbCrK to RGB, unless GDAL_JPEG_TO_RGB is set to NO (YES is the default). When
 color space translation to RGB is done, the source color space is indicated in the
 SOURCE_COLOR_SPACE metadata of the IMAGE_STRUCTURE domain.<p>
 
-There is currently no support for georeferencing information or metadata for
-JPEG files. But if an ESRI world file exists with the .jgw, .jpgw/.jpegw or 
+EXIF metadata can be read from JPEG files (but this will not result in a
+georeferenced image even if the EXIF_GPSLatitude and EXIF_GPSLongitude tags are
+set). But if an ESRI world file exists with the .jgw, .jpgw/.jpegw or 
 .wld suffixes, it will be read and used to establish the geotransform for 
 the image. If available a MapInfo .tab file will also be used for 
 georeferencing.  Overviews can be built for JPEG files as an external 

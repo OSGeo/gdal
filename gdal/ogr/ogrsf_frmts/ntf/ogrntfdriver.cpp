@@ -80,7 +80,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         poDS = NULL;
     }
-    
+
     return poDS;
 }
 
@@ -91,22 +91,18 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRNTF()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "UK .NTF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "UK .NTF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "UK .NTF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "UK .NTF" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_ntf.html" );
+    poDriver->SetDescription( "UK .NTF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "UK .NTF" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ntf.html" );
 
-        poDriver->pfnOpen = OGRNTFDriverOpen;
+    poDriver->pfnOpen = OGRNTFDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

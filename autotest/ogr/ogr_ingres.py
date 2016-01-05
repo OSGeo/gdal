@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR Ingres driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -79,7 +79,7 @@ def ogr_ingres_2():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString) ] )
-    
+
     #######################################################
     # Copy in poly.shp
 
@@ -88,10 +88,10 @@ def ogr_ingres_2():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -111,7 +111,7 @@ def ogr_ingres_3():
         return 'skip'
 
     expect = [168, 169, 166, 158, 165]
-    
+
     gdaltest.ingres_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.ingres_lyr,
                                               'eas_id', expect )
@@ -136,7 +136,7 @@ def ogr_ingres_3():
     # This is to force cleanup of the transaction.  We need a way of
     # automating this in the driver.
     read_feat = gdaltest.ingres_lyr.GetNextFeature()
-        
+
     if tr:
         return 'success'
     else:
@@ -151,7 +151,7 @@ def ogr_ingres_4():
         return 'skip'
 
     expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158 ]
-    
+
     sql_lyr = gdaltest.ingres_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
@@ -162,7 +162,7 @@ def ogr_ingres_4():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
 #
@@ -188,14 +188,14 @@ def ogr_ingres_5():
         if ogrtest.check_feature_geometry( feat_read, 'POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))' ) != 0:
             tr = 0
         feat_read.Destroy()
-        
+
     gdaltest.ingres_ds.ReleaseResultSet( sql_lyr )
 
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test spatial filtering. 
 
@@ -205,22 +205,22 @@ def ogr_ingres_6():
         return 'skip'
 
     gdaltest.ingres_lyr.SetAttributeFilter( None )
-    
+
     geom = ogr.CreateGeometryFromWkt( \
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.ingres_lyr.SetSpatialFilter( geom )
     geom.Destroy()
-    
+
     tr = ogrtest.check_features_against_list( gdaltest.ingres_lyr, 'eas_id',
                                               [ 158 ] )
 
     gdaltest.ingres_lyr.SetSpatialFilter( None )
-    
+
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test adding a new field.
 
@@ -228,7 +228,7 @@ def ogr_ingres_7():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
-    
+
     ####################################################################
     # Add new string field.
     field_defn = ogr.FieldDefn( 'new_string', ogr.OFTString )
@@ -238,10 +238,10 @@ def ogr_ingres_7():
     if result is not 0:
         gdaltest.post_reason( 'CreateField failed!' )
         return 'fail'
-    
+
     ####################################################################
     # Apply a value to this field in one feature.
-    
+
     gdaltest.ingres_lyr.SetAttributeFilter( "prfedea = '35043423'" )
     feat_read = gdaltest.ingres_lyr.GetNextFeature()
     if feat_read is None:
@@ -249,11 +249,11 @@ def ogr_ingres_7():
         return 'fail'
 
     gdaltest.ingres_fid = feat_read.GetFID()
-    
+
     feat_read.SetField( 'new_string', 'test1' )
     gdaltest.ingres_lyr.SetFeature( feat_read )
     feat_read.Destroy()
-    
+
     ####################################################################
     # Now fetch two features and verify the new column works OK.
 
@@ -264,12 +264,12 @@ def ogr_ingres_7():
                                               [ None, 'test1' ] )
 
     gdaltest.ingres_lyr.SetAttributeFilter( None )
-    
+
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Test deleting a feature.
 
@@ -283,7 +283,7 @@ def ogr_ingres_8():
         return 'fail'
 
     old_count = gdaltest.ingres_lyr.GetFeatureCount()
-    
+
     ####################################################################
     # Delete target feature.
 
@@ -291,7 +291,7 @@ def ogr_ingres_8():
     if gdaltest.ingres_lyr.DeleteFeature( target_fid ) != 0:
         gdaltest.post_reason( 'DeleteFeature returned error code.' )
         return 'fail'
-    
+
     ####################################################################
     # Verify that count has dropped by one, and that the feature in question
     # can't be fetched.
@@ -305,9 +305,9 @@ def ogr_ingres_8():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
-# 
+#
 
 def ogr_ingres_cleanup():
 

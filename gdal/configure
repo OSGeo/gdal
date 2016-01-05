@@ -1707,7 +1707,7 @@ Optional Packages:
   --with-png=ARG        Include PNG support (ARG=internal, no or path)
   --with-dds=ARG        Include DDS support (ARG=no, or path)
   --with-gta=ARG        Include GTA support (ARG=no or libgta tree prefix)
-  --with-pcidsk=ARG     Path to external PCIDSK SDK, or internal (default), or old
+  --with-pcidsk=ARG     Path to external PCIDSK SDK or internal (default)
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
   --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
@@ -4690,14 +4690,15 @@ else
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wno-clobbered" >&5
-$as_echo_n "checking whether C compiler accepts -Werror -Wno-clobbered... " >&6; }
-if ${ax_cv_check_cflags___Werror__Wno_clobbered+:} false; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wnull-dereference" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wnull-dereference... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wnull_dereference+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS  -Werror -Wno-clobbered"
+  CFLAGS="$CFLAGS  -Werror -Wnull-dereference"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -4710,17 +4711,52 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags___Werror__Wno_clobbered=yes
+  ax_cv_check_cflags___Werror__Wnull_dereference=yes
 else
-  ax_cv_check_cflags___Werror__Wno_clobbered=no
+  ax_cv_check_cflags___Werror__Wnull_dereference=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   CFLAGS=$ax_check_save_flags
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wno_clobbered" >&5
-$as_echo "$ax_cv_check_cflags___Werror__Wno_clobbered" >&6; }
-if test "x$ax_cv_check_cflags___Werror__Wno_clobbered" = xyes; then :
-  C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wnull_dereference" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wnull_dereference" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wnull_dereference" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wduplicated-cond" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wduplicated-cond... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wduplicated_cond+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wduplicated-cond"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wduplicated_cond=yes
+else
+  ax_cv_check_cflags___Werror__Wduplicated_cond=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wduplicated_cond" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wduplicated_cond" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wduplicated_cond" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"
 else
   :
 fi
@@ -4760,6 +4796,8 @@ if test "x$ax_cv_check_cflags___Werror__Wno_sign_compare" = xyes; then :
 else
   :
 fi
+
+
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -4906,6 +4944,79 @@ if test "x$ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor" = xyes; then :
 else
   :
 fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Woverloaded-virtual" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -Woverloaded-virtual... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__Woverloaded_virtual+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -Woverloaded-virtual"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__Woverloaded_virtual=yes
+else
+  ax_cv_check_cxxflags___Werror__Woverloaded_virtual=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Woverloaded_virtual" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__Woverloaded_virtual" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__Woverloaded_virtual" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"
+else
+  :
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -fno-operator-names" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -fno-operator-names... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__fno_operator_names+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -fno-operator-names"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__fno_operator_names=yes
+else
+  ax_cv_check_cxxflags___Werror__fno_operator_names=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__fno_operator_names" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__fno_operator_names" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__fno_operator_names" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"
+else
+  :
+fi
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -18007,6 +18118,17 @@ _ACEOF
 fi
 done
 
+for ac_func in statvfs
+do :
+  ac_fn_c_check_func "$LINENO" "statvfs" "ac_cv_func_statvfs"
+if test "x$ac_cv_func_statvfs" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STATVFS 1
+_ACEOF
+
+fi
+done
+
 
 
 ac_ext=cpp
@@ -18322,7 +18444,12 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
     rm -f detectavx.cpp
     echo '#ifdef __AVX__' > detectavx.cpp
     echo '#include <immintrin.h>' >> detectavx.cpp
-    echo 'void foo() { unsigned int nXCRLow, nXCRHigh; __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0)); float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } int main() { return 0; }' >> detectavx.cpp
+    echo 'int foo() { unsigned int nXCRLow, nXCRHigh;' >> detectavx.cpp
+    echo '__asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));' >> detectavx.cpp
+    echo 'float fEpsilon = 0.0000000000001f;' >> detectavx.cpp
+    echo '__m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon);' >> detectavx.cpp
+    echo 'return (int)nXCRLow + _mm256_movemask_ps(ymm_small); }' >> detectavx.cpp
+    echo 'int main(int argc, char**) { if( argc == 0 ) return foo(); return 0; }' >> detectavx.cpp
     echo '#else' >> detectavx.cpp
     echo 'some_error' >> detectavx.cpp
     echo '#endif' >> detectavx.cpp
@@ -21040,11 +21167,11 @@ $as_echo_n "checking for PCIDSK... " >&6; }
 PCIDSK_LIB=
 PCIDSK_INCLUDE=
 
-if test "$with_pcidsk" = "old" -o "$with_pcidsk" = "no" ; then
+if test "$with_pcidsk" = "no" ; then
 
-  PCIDSK_SETTING=old
+  PCIDSK_SETTING=no
 
-  echo "pcidsk support using pre-PCIDSK SDK (old) implementation."
+  echo "pcidsk support disabled."
 
 elif test "$with_pcidsk" = "" -o "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
 
@@ -21062,12 +21189,16 @@ else
 
 fi
 
-PCIDSK_SETTING=$PCIDSK_SETTING
+if test "$with_pcidsk" != "no" ; then
 
-PCIDSK_LIB=$PCIDSK_LIB
+  PCIDSK_SETTING=$PCIDSK_SETTING
 
-PCIDSK_INCLUDE=$PCIDSK_INCLUDE
+  PCIDSK_LIB=$PCIDSK_LIB
 
+  PCIDSK_INCLUDE=$PCIDSK_INCLUDE
+
+
+fi
 
 
 
@@ -27312,7 +27443,7 @@ else
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
             HAVE_SQLITE3="no"
-            succees="no"
+            success="no"
 
 
 fi

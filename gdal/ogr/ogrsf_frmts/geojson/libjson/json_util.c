@@ -46,13 +46,6 @@
 # define open _open
 #endif
 
-#if !defined(HAVE_SNPRINTF) && defined(_MSC_VER)
-  /* MSC has the version as _snprintf */
-# define snprintf _snprintf
-#elif !defined(HAVE_SNPRINTF)
-# error You do not have snprintf on your system.
-#endif /* HAVE_SNPRINTF */
-
 #include "bits.h"
 #include "debug.h"
 #include "printbuf.h"
@@ -61,7 +54,10 @@
 #include "json_tokener.h"
 #include "json_util.h"
 
-#include "cpl_conv.h"
+#include "cpl_string.h"
+#undef snprintf
+#define snprintf CPLsnprintf
+
 static int sscanf_is_broken = 0;
 static int sscanf_is_broken_testdone = 0;
 static void sscanf_is_broken_test(void);

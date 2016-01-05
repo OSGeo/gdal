@@ -84,7 +84,7 @@
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
  * Revision 1.7  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.6  2000/02/28 17:12:22  daniel
  * Write support for joined tables and indexed fields
@@ -188,7 +188,7 @@ int TABView::Open(const char *pszFname, TABAccess eAccess,
                   GBool bTestOpenNoError /*= FALSE*/ )
 {
     char nStatus = 0;
-   
+
     if (m_numTABFiles > 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -232,7 +232,7 @@ int TABView::OpenForRead(const char *pszFname,
 {
     char *pszPath = NULL;
     int nFnameLen = 0;
-   
+
     m_eAccessMode = TABRead;
 
     /*-----------------------------------------------------------------
@@ -261,7 +261,7 @@ int TABView::OpenForRead(const char *pszFname,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed opening %s.", m_pszFname);
         }
-        
+
         CPLFree(m_pszFname);
         return -1;
     }
@@ -354,9 +354,9 @@ int TABView::OpenForRead(const char *pszFname,
 #ifndef _WIN32
         TABAdjustFilenameExtension(m_papszTABFnames[iFile]);
 #endif
-        
+
         m_papoTABFiles[iFile] = new TABFile;
-   
+
         if ( m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile],
                                          m_eAccessMode, bTestOpenNoError) != 0)
         {
@@ -373,7 +373,7 @@ int TABView::OpenForRead(const char *pszFname,
      * __TODO__ For now this assumes only 2 tables in the view...
      *----------------------------------------------------------------*/
     m_poRelation = new TABRelation;
-    
+
     CPLAssert(m_nMainTableIndex == 0);
     CPLAssert(CSLCount(m_papszWhereClause) == 5);
     char *pszTableName = TABGetBasename(m_pszFname);
@@ -403,7 +403,7 @@ int TABView::OpenForRead(const char *pszFname,
 int TABView::OpenForWrite(const char *pszFname)
 {
     int nFnameLen = 0;
-   
+
     m_eAccessMode = TABWrite;
 
     /*-----------------------------------------------------------------
@@ -459,9 +459,9 @@ int TABView::OpenForWrite(const char *pszFname)
         /* coverity[var_deref_op] */
         TABAdjustFilenameExtension(m_papszTABFnames[iFile]);
 #endif
-        
+
         m_papoTABFiles[iFile] = new TABFile;
-   
+
         if ( m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile], m_eAccessMode) != 0)
         {
             // Open Failed... an error has already been reported, just return.
@@ -476,7 +476,7 @@ int TABView::OpenForWrite(const char *pszFname)
      * Create TABRelation... 
      *----------------------------------------------------------------*/
     m_poRelation = new TABRelation;
-    
+
     if ( m_poRelation->Init(pszBasename,
                             m_papoTABFiles[0], m_papoTABFiles[1],
                             NULL, NULL, NULL)  != 0 )
@@ -712,7 +712,7 @@ int TABView::WriteTABFile()
         CPLFree(pszTable);
         CPLFree(pszTable1);
         CPLFree(pszTable2);
-        
+
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed to create file `%s'", m_pszFname);
         return -1;
@@ -748,7 +748,7 @@ int TABView::Close()
     m_papoTABFiles = NULL;
     m_numTABFiles = 0;
 
-    
+
     /*-----------------------------------------------------------------
      * __TODO__ OK, MapInfo does not like to see a .map and .id file
      * attached to the second table, even if they're empty.
@@ -1463,14 +1463,14 @@ int  TABRelation::Init(const char *pszViewName,
      * Create new FeatureDefn and copy selected fields definitions
      * while updating the appropriate field maps.
      *----------------------------------------------------------------*/
-    int nIndex, numSelFields = CSLCount(papszSelectedFields);
+    int nIndex;
     OGRFieldDefn *poFieldDefn;
 
     m_poDefn = new OGRFeatureDefn(pszViewName);
     // Ref count defaults to 0... set it to 1
     m_poDefn->Reference();
 
-    for(i=0; i<numSelFields ; i++)
+    for(i=0; papszSelectedFields != NULL && papszSelectedFields[i] != NULL ; i++)
     {
         if (poMainDefn &&
             (nIndex=poMainDefn->GetFieldIndex(papszSelectedFields[i])) >=0)
@@ -1497,7 +1497,8 @@ int  TABRelation::Init(const char *pszViewName,
             CPLError(CE_Warning, CPLE_IllegalArg,
                      "Selected Field %s not found in source tables %s and %s",
                      papszSelectedFields[i], 
-                     poMainDefn->GetName(), poRelDefn->GetName());
+                     poMainDefn?poMainDefn->GetName():"(null)",
+                     poRelDefn?poRelDefn->GetName():"(null)");
         }
     }
     CSLDestroy(papszSelectedFields);
@@ -1651,7 +1652,7 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
                                 m_nRelFieldIndexNo);
     int i;
     int nRelFeatureId = m_poRelINDFileRef->FindFirst(m_nRelFieldIndexNo, pKey);
-    
+
     if (nRelFeatureId > 0)
         poRelFeature = m_poRelTable->GetFeatureRef(nRelFeatureId);
 

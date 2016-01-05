@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some functions of HFA driver.  Most testing in ../gcore/hfa_*
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -50,7 +50,7 @@ def hfa_histread():
     if md['STATISTICS_MINIMUM'] != '8':
         gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
         return 'fail'
-    
+
     if md['STATISTICS_MEDIAN'] != '148':
         gdaltest.post_reason( 'STATISTICS_MEDIAN is wrong.' )
         return 'fail'
@@ -77,7 +77,7 @@ def hfa_histread():
 
 
     return 'success'
-    
+
 ###############################################################################
 # Verify that if we copy this test image to a new Imagine file the histogram
 # info is preserved.
@@ -89,7 +89,7 @@ def hfa_histwrite():
     out_ds = drv.CreateCopy( 'tmp/work.img', ds_src )
     del out_ds
     ds_src = None
-    
+
     # Remove .aux.xml file as histogram can be written in it
     tmpAuxXml = 'tmp/work.img.aux.xml'
     if os.path.exists(tmpAuxXml): os.remove(tmpAuxXml)
@@ -97,13 +97,13 @@ def hfa_histwrite():
     ds = gdal.Open('tmp/work.img')
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
-    
+
     drv.Delete( 'tmp/work.img' )
 
     if md['STATISTICS_MINIMUM'] != '8':
         gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
         return 'fail'
-    
+
     if md['STATISTICS_MEDIAN'] != '148':
         gdaltest.post_reason( 'STATISTICS_MEDIAN is wrong.' )
         return 'fail'
@@ -118,7 +118,7 @@ def hfa_histwrite():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Verify that if we copy this test image to a new Imagine file and then re-write the
 # histogram information, the new histogram can then be read back in.
@@ -129,12 +129,12 @@ def hfa_histrewrite():
     out_ds = drv.CreateCopy( 'tmp/work.img', ds_src )
     del out_ds
     ds_src = None
-    
+
     # Remove .aux.xml file as histogram can be written in it
     tmpAuxXml = 'tmp/work.img.aux.xml'
     if os.path.exists(tmpAuxXml):
         os.remove(tmpAuxXml)
-    
+
     # A new histogram which is different to what is in the file. It won't match the data,
     # but we are just testing the re-writing of the histogram, so we don't mind. 
     newHist = '8|23|29|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|'
@@ -143,14 +143,14 @@ def hfa_histrewrite():
     band = ds.GetRasterBand(1)
     band.SetMetadataItem('STATISTICS_HISTOBINVALUES', newHist)
     ds = None
-    
+
     if os.path.exists(tmpAuxXml):
         os.remove(tmpAuxXml)
-    
+
     ds = gdal.Open('tmp/work.img')
     histStr = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_HISTOBINVALUES')
     ds = None
-    
+
     drv.Delete( 'tmp/work.img' )
 
     if histStr != newHist:
@@ -158,7 +158,7 @@ def hfa_histrewrite():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Verify we can read metadata of int.img.
 
@@ -282,7 +282,7 @@ def hfa_float_stats_2():
     ds = gdal.Open('data/float.img')
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     ds = None
-    
+
     tolerance = 0.0001
 
     if abs(stats[0] - 40.91858291626) > tolerance:
@@ -344,7 +344,7 @@ def hfa_float_read():
         return 'fail'
 
     return 'success'
- 
+
 ###############################################################################
 # verify we can read PE_STRING coordinate system.
 
@@ -360,7 +360,7 @@ def hfa_pe_read():
         return 'fail'
 
     return 'success'
- 
+
 ###############################################################################
 # Verify we can write PE_STRING nodes.
 
@@ -373,7 +373,7 @@ def hfa_pe_write():
     ds_src = None
 
     expected = 'PROJCS["World_Cube",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Cube"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Option",1.0],UNIT["Meter",1.0]]'
-    
+
     ds = gdal.Open('tmp/87test.img')
     wkt = ds.GetProjectionRef()
 
@@ -387,7 +387,7 @@ def hfa_pe_write():
     ds = None
     drv.Delete( 'tmp/87test.img' )
     return 'success'
- 
+
 ###############################################################################
 # Verify we can write and read large metadata items.
 
@@ -395,7 +395,7 @@ def hfa_metadata_1():
 
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create( 'tmp/md_1.img', 100, 150, 1, gdal.GDT_Byte )
-    
+
     md_val = '0123456789' * 60
     md = { 'test' : md_val }
     ds.GetRasterBand(1).SetMetadata( md )
@@ -409,9 +409,9 @@ def hfa_metadata_1():
         gdaltest.post_reason( 'got wrong metadata back' )
         return 'fail'
     ds = None
-    
+
     return 'success'
- 
+
 ###############################################################################
 # Verify that writing metadata multiple times does not result in duplicate
 # nodes.
@@ -438,9 +438,9 @@ def hfa_metadata_2():
 
     ds = None
     gdal.GetDriverByName('HFA').Delete( 'tmp/md_1.img' )
-    
+
     return 'success'
- 
+
 ###############################################################################
 # Verify we can grow the RRD list in cases where this requires
 # moving the HFAEntry to the end of the file.  (bug #1109)
@@ -470,9 +470,9 @@ def hfa_grow_rrdlist():
 
     ds = None
     gdal.GetDriverByName('HFA').Delete( 'tmp/bug_1109.img' )
-    
+
     return 'success'
- 
+
 ###############################################################################
 # Make sure an old .ige file is deleted when creating a new dataset. (#1784)
 
@@ -502,14 +502,14 @@ def hfa_clean_ige():
     for item in filelist:
         if item[-11:] == 'igetest.ige':
             found = 1
-            
+
     if not found:
         print(filelist)
         gdaltest.post_reason( 'no igetest.ige in file list!' )
         return 'fail'
 
     # Create a file without a spill file, and verify old ige cleaned up.
-    
+
     out_ds = drv.CreateCopy( 'tmp/igetest.img', src_ds )
     del out_ds
 
@@ -523,7 +523,7 @@ def hfa_clean_ige():
     drv.Delete( 'tmp/igetest.img' )
 
     return 'success'
- 
+
 ###############################################################################
 # Verify that we can read this corrupt .aux file without hanging (#1907)
 
@@ -539,7 +539,7 @@ def hfa_corrupt_aux():
     if ds.RasterXSize != 1104:
         gdaltest.post_reason( 'did not get expected dataset characteristics' )
         return 'fail'
-    
+
     if gdal.GetLastErrorType() != 2 \
        or gdal.GetLastErrorMsg().find('Corrupt (looping)') == -1:
         gdaltest.post_reason( 'Did not get expected warning.' )
@@ -548,7 +548,7 @@ def hfa_corrupt_aux():
     ds = None
 
     return 'success'
- 
+
 ###############################################################################
 # support MapInformation for units (#1967)
 
@@ -568,7 +568,7 @@ def hfa_mapinformation_units():
         return 'success'
     else:
         return 'fail'
- 
+
 ###############################################################################
 # Write nodata value.
 
@@ -625,7 +625,7 @@ def hfa_nodata_read():
 
     b = None
     ds = None
-    
+
     gdal.GetDriverByName( 'HFA' ).Delete( 'tmp/nodata.img' )
 
     return 'success'
@@ -641,7 +641,7 @@ def hfa_rotated_read():
                  7041861.472946444, 0.01962103617166367, -0.9007880319529181)
 
     gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
-                
+
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
@@ -664,10 +664,10 @@ def hfa_rotated_write():
         os.remove( 'tmp/rot.img.aux.xml' )
     except:
         pass
-    
+
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create( 'tmp/rot.img', 100, 150, 1, gdal.GDT_Byte )
-    
+
     check_gt = ( 11856857.07898215, 0.895867662235625, 0.02684252936279331,
                  7041861.472946444, 0.01962103617166367, -0.9007880319529181)
 
@@ -696,15 +696,15 @@ def hfa_rotated_write():
     # (see #2755 for followup).
 
     expected_wkt = """PROJCS["NAD83_Virginia_North",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",39.2],PARAMETER["standard_parallel_2",38.03333333333333],PARAMETER["latitude_of_origin",37.66666666666666],PARAMETER["central_meridian",-78.5],PARAMETER["false_easting",11482916.66666667],PARAMETER["false_northing",6561666.666666667],PARAMETER["scale_factor",1.0],UNIT["Foot_US",0.30480060960121924]]"""
-    
+
     ds.SetGeoTransform( check_gt )
     ds.SetProjection( expected_wkt )
 
     ds = None
-    
+
     ds = gdal.Open( 'tmp/rot.img' )
     gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
-                
+
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
@@ -812,7 +812,7 @@ def hfa_unique_values_color_table():
         print(ct.GetColorEntry(253))
         print(ct.GetColorEntry(254))
         print(ct.GetColorEntry(255))
-    
+
         gdaltest.post_reason( 'Got wrong colors' )
         return 'fail'
 
@@ -866,7 +866,7 @@ def hfa_unique_values_hist():
         return 'fail'
 
     rat = None
-    
+
     ds = None
 
     return 'success'
@@ -904,7 +904,7 @@ def hfa_xforms_3rd():
 
     # Check that the GCPs are as expected implying that the evaluation
     # function for XFORMs if working ok.
-    
+
     gcps = ds.GetGCPs()
 
     if gcps[0].GCPPixel != 0.5 \
@@ -914,7 +914,7 @@ def hfa_xforms_3rd():
         print(gcps[0].GCPPixel, gcps[0].GCPLine, gcps[0].GCPX, gcps[0].GCPY)
         gdaltest.post_reason( 'GCP 0 value wrong.' )
         return 'fail'
-    
+
     if abs(gcps[14].GCPPixel - 1769.7) > 0.1 \
        or abs(gcps[14].GCPLine  - 2124.9) > 0.1 \
        or abs(gcps[14].GCPX - 1665221.064) > 0.001 \
@@ -922,7 +922,7 @@ def hfa_xforms_3rd():
         print(gcps[14].GCPPixel, gcps[14].GCPLine, gcps[14].GCPX, gcps[14].GCPY)
         gdaltest.post_reason( 'GCP 14 value wrong.' )
         return 'fail'
-    
+
     ds = None
 
     return 'success'
@@ -1048,16 +1048,16 @@ def hfa_ov_nodata():
     except:
         wrk3_ds = None
     gdal.PopErrorHandler()
-    
+
     if wrk3_ds is not None:
         gdaltest.post_reason( 'this test result is invalid since .ovr file was created, why?' )
         return 'fail'
 
     wrk2_ds = None
     drv.Delete( '/vsimem/ov_nodata.img' )
-    
+
     return 'success'
- 
+
 ###############################################################################
 # Confirm that we can read 8bit grayscale overviews for 1bit images.
 
@@ -1077,7 +1077,7 @@ def hfa_read_bit2grayscale():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Confirm that we can create overviews in rrd format for an .img file with
 # the bit2grayscale algorithm (#2914)
@@ -1085,13 +1085,13 @@ def hfa_read_bit2grayscale():
 def hfa_write_bit2grayscale():
 
     import shutil
-    
+
     shutil.copyfile('data/small1bit.img' , 'tmp/small1bit.img')
     shutil.copyfile('data/small1bit.rrd' , 'tmp/small1bit.rrd')
 
     gdal.SetConfigOption( 'USE_RRD', 'YES' )
     gdal.SetConfigOption( 'HFA_USE_RRD', 'YES' )
-    
+
     ds = gdal.Open( 'tmp/small1bit.img', gdal.GA_Update )
     ds.BuildOverviews( resampling = 'average_bit2grayscale',
                        overviewlist = [2] )
@@ -1105,7 +1105,7 @@ def hfa_write_bit2grayscale():
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('tmp/small1bit.img')
-    
+
     gdal.SetConfigOption( 'USE_RRD', 'NO' )
     gdal.SetConfigOption( 'HFA_USE_RRD', 'NO' )
 
@@ -1116,9 +1116,9 @@ def hfa_write_bit2grayscale():
         return 'fail'
     except:
         pass
-    
+
     return 'success'
-    
+
 ###############################################################################
 # Verify handling of camera model metadata (#2675)
 
@@ -1156,7 +1156,7 @@ def hfa_camera_md():
 
     ds = None
     return 'success'
-   
+
 ###############################################################################
 # Check that overviews with an .rde file are properly supported in file list,
 # and fetching actual overviews.
@@ -1177,7 +1177,7 @@ def hfa_rde_overviews():
 
     exp_cs = 340
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    
+
     if exp_cs != cs:
         print( cs )
         gdaltest.post_reason( 'did not get expected overview checksum' )
@@ -1192,9 +1192,9 @@ def hfa_rde_overviews():
         return 'fail'
 
     ds = None
-    
+
     return 'success'
- 
+
 ###############################################################################
 # Check that we can copy and rename a complex file set, and that the internal filenames
 # in the .img and .rrd seem to be updated properly.
@@ -1207,10 +1207,10 @@ def hfa_copyfiles():
     drv.Rename( 'tmp/newnamexxx.img', 'tmp/newnamexxx_after_copy.img' )
 
     ds = gdal.Open( 'tmp/newnamexxx.img' )
-    
+
     exp_cs = 340
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    
+
     if exp_cs != cs:
         print( cs )
         gdaltest.post_reason( 'did not get expected overview checksum' )
@@ -1252,7 +1252,6 @@ def hfa_copyfiles():
     return 'success'
 
 
- 
 ###############################################################################
 # Test the ability to write a RAT (#999)
 
@@ -1299,7 +1298,7 @@ def hfa_write_rat():
     ds = None
 
     drv.Delete( 'tmp/write_rat.img' )
-    
+
     return 'success'
 
 ###############################################################################

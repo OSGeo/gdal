@@ -95,7 +95,7 @@ void NTFFileReader::EstablishRasterAccess()
         adfGeoTransform[3] = atoi(poRecord->GetField(35,44));
         adfGeoTransform[4] = 0;
         adfGeoTransform[5] = 50;
-        
+
         nRasterDataType = 3; /* GDT_Int16 */
     }
 
@@ -117,7 +117,7 @@ void NTFFileReader::EstablishRasterAccess()
                            + GetYOrigin();
         adfGeoTransform[4] = 0;
         adfGeoTransform[5] = atoi(poRecord->GetField(43,46));
-        
+
         nRasterDataType = 3; /* GDT_Int16 */
     }
 
@@ -154,13 +154,13 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
     if( panColumnOffset[iColumn] == 0 )
     {
         int     iPrev;
-        
+
         for( iPrev = 0; iPrev < iColumn-1; iPrev++ )
         {
             if( panColumnOffset[iPrev+1] == 0 )
             {
                 CPLErr  eErr;
-                
+
                 eErr = ReadRasterColumn( iPrev, NULL );
                 if( eErr != CE_None )
                     return eErr;
@@ -173,12 +173,12 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
     if( GetFP() == NULL )
         Open();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read requested record.                                          */
 /* -------------------------------------------------------------------- */
     NTFRecord   *poRecord;
-    
+
     SetFPPos( panColumnOffset[iColumn], iColumn );
     poRecord = ReadRecord();
 
@@ -186,7 +186,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
     {
         GetFPPos( panColumnOffset+iColumn+1, NULL );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle LANDRANGER DTM columns.                                  */
 /* -------------------------------------------------------------------- */
@@ -203,7 +203,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
                 atoi(poRecord->GetField(84+iPixel*4,87+iPixel*4)));
         }
     }
-            
+
 /* -------------------------------------------------------------------- */
 /*      Handle PROFILE                                                  */
 /* -------------------------------------------------------------------- */
@@ -215,7 +215,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
            (atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5)) * GetZMult());
         }
     }
-    
+
     delete poRecord;
 
     return CE_None;
@@ -263,7 +263,7 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
         nDEMSample = 1;
     else
         nDEMSample = MAX(1,atoi(poDS->GetOption("DEM_SAMPLE")));
-    
+
     nFeatureCount = (poReader->GetRasterXSize() / nDEMSample)
                   * (poReader->GetRasterYSize() / nDEMSample);
 }
@@ -322,7 +322,7 @@ OGRFeature *OGRNTFRasterLayer::GetNextFeature()
     else
     {
         int     iReqColumn, iReqRow;
-        
+
         iReqColumn = (iCurrentFC - 1) / poReader->GetRasterYSize();
         iReqRow = iCurrentFC - iReqColumn * poReader->GetRasterXSize() - 1;
 
@@ -351,7 +351,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( GIntBig nFeatureId )
 
 {
     int         iReqColumn, iReqRow;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is this in the range of legal feature ids (pixels)?             */
 /* -------------------------------------------------------------------- */
@@ -366,14 +366,14 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
     iReqColumn = ((int)nFeatureId - 1) / poReader->GetRasterYSize();
     iReqRow = (int)nFeatureId - iReqColumn * poReader->GetRasterXSize() - 1;
-    
+
     if( iReqColumn != iColumnOffset )
     {
         iColumnOffset = iReqColumn;
         if( poReader->ReadRasterColumn( iReqColumn, pafColumn ) != CE_None )
             return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding feature.                                 */
 /* -------------------------------------------------------------------- */
@@ -389,7 +389,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( GIntBig nFeatureId )
                       padfGeoTransform[3] + padfGeoTransform[5] * iReqRow,
                       pafColumn[iReqRow] ) );
     poFeature->SetField( 0, pafColumn[iReqRow] );
-    
+
     return poFeature;
 }
 

@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "s57.h"
 #include "cpl_conv.h"
+#include "s57.h"
 
 CPL_CVSID("$Id$");
 
@@ -38,18 +38,14 @@ CPL_CVSID("$Id$");
 /*                           DDFRecordIndex()                           */
 /************************************************************************/
 
-DDFRecordIndex::DDFRecordIndex()
-
-{
-    bSorted = FALSE;
-
-    nRecordCount = 0;
-    nRecordMax = 0;
-    pasRecords = NULL;
-
-    nLastObjlPos = 0;             /* rjensen. added for FindRecordByObjl() */
-    nLastObjl    = 0;             /* rjensen. added for FindRecordByObjl() */
-}
+DDFRecordIndex::DDFRecordIndex() :
+    bSorted(FALSE),
+    nRecordCount(0),
+    nRecordMax(0),
+    nLastObjlPos(0),
+    nLastObjl(0),
+    pasRecords(NULL)
+{}
 
 /************************************************************************/
 /*                          ~DDFRecordIndex()                           */
@@ -71,24 +67,24 @@ DDFRecordIndex::~DDFRecordIndex()
 void DDFRecordIndex::Clear()
 
 {
-    // It turns out that deleting these records here is very expensive
-    // due to the linear search in DDFModule::RemoveClone().  For now we
+    // Deleting these records is very expensive
+    // due to the linear search in DDFModule::RemoveClone().  For now,
     // just leave the clones depending on DDFModule::~DDFModule() to clean
     // them up eventually.
 
-    //for( int i = 0; i < nRecordCount; i++ )
-    //  delete pasRecords[i].poRecord;
+    // for( int i = 0; i < nRecordCount; i++ )
+    //   delete pasRecords[i].poRecord;
 
-    CPLFree( pasRecords );
-    pasRecords = NULL;
+    bSorted = FALSE;
 
     nRecordCount = 0;
     nRecordMax = 0;
 
-    nLastObjlPos = 0;             /* rjensen. added for FindRecordByObjl() */
-    nLastObjl      = 0;             /* rjensen. added for FindRecordByObjl() */
+    nLastObjlPos = 0;
+    nLastObjl = 0;
 
-    bSorted = FALSE;
+    CPLFree( pasRecords );
+    pasRecords = NULL;
 }
 
 /************************************************************************/
@@ -105,9 +101,9 @@ void DDFRecordIndex::AddRecord( int nKey, DDFRecord * poRecord )
 {
     if( nRecordCount == nRecordMax )
     {
-        nRecordMax = (int) (nRecordCount * 1.3 + 100);
-        pasRecords = (DDFIndexedRecord *)
-            CPLRealloc( pasRecords, sizeof(DDFIndexedRecord)*nRecordMax );
+        nRecordMax = static_cast<int>(nRecordCount * 1.3 + 100);
+        pasRecords = static_cast<DDFIndexedRecord *>(
+            CPLRealloc( pasRecords, sizeof(DDFIndexedRecord)*nRecordMax ) );
     }
 
     bSorted = FALSE;
@@ -136,11 +132,12 @@ DDFRecord * DDFRecordIndex::FindRecord( int nKey )
 /* -------------------------------------------------------------------- */
 /*      Do a binary search based on the key to find the desired record. */
 /* -------------------------------------------------------------------- */
-    int         nMinIndex = 0, nMaxIndex = nRecordCount-1;
+    int nMinIndex = 0;
+    int nMaxIndex = nRecordCount-1;
 
     while( nMinIndex <= nMaxIndex )
     {
-        int     nTestIndex = (nMaxIndex + nMinIndex) / 2;
+        const int nTestIndex = (nMaxIndex + nMinIndex) / 2;
 
         if( pasRecords[nTestIndex].nKey < nKey )
             nMinIndex = nTestIndex + 1;
@@ -174,9 +171,11 @@ DDFRecord * DDFRecordIndex::FindRecordByObjl( int nObjl )
 
     for (nMinIndex = nLastObjlPos; nMinIndex < nRecordCount; nMinIndex++)
     {
-        if (nObjl == pasRecords[nMinIndex].poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 ) )
+        if (nObjl == pasRecords[nMinIndex].poRecord->GetIntSubfield(
+            "FRID", 0, "OBJL", 0 ) )
         {
-            nLastObjlPos=nMinIndex+1;  /* add 1, don't want to look at same again */
+            // Add 1.  Do not want to look at same again.
+            nLastObjlPos=nMinIndex+1;
             nLastObjl=nObjl;
             return pasRecords[nMinIndex].poRecord;
         }
@@ -201,8 +200,9 @@ int DDFRecordIndex::RemoveRecord( int nKey )
 /* -------------------------------------------------------------------- */
 /*      Do a binary search based on the key to find the desired record. */
 /* -------------------------------------------------------------------- */
-    int         nMinIndex = 0, nMaxIndex = nRecordCount-1;
-    int         nTestIndex = 0;
+    int nMinIndex = 0;
+    int nMaxIndex = nRecordCount-1;
+    int nTestIndex = 0;
 
     while( nMinIndex <= nMaxIndex )
     {
@@ -249,11 +249,11 @@ static int DDFCompare( const void *pRec1, const void *pRec2 )
     if( ((const DDFIndexedRecord *) pRec1)->nKey
         == ((const DDFIndexedRecord *) pRec2)->nKey )
         return 0;
-    else if( ((const DDFIndexedRecord *) pRec1)->nKey
-             < ((const DDFIndexedRecord *) pRec2)->nKey )
+    if( ((const DDFIndexedRecord *) pRec1)->nKey
+        < ((const DDFIndexedRecord *) pRec2)->nKey )
         return -1;
-    else
-        return 1;
+
+    return 1;
 }
 
 /************************************************************************/
@@ -270,7 +270,7 @@ void DDFRecordIndex::Sort()
 
     qsort( pasRecords, nRecordCount, sizeof(DDFIndexedRecord), DDFCompare );
 
-    bSorted = TRUE;
+    bSorted = true;
 }
 
 /************************************************************************/
@@ -285,8 +285,8 @@ DDFRecord * DDFRecordIndex::GetByIndex( int nIndex )
 
     if( nIndex < 0 || nIndex >= nRecordCount )
         return NULL;
-    else
-        return pasRecords[nIndex].poRecord;
+
+    return pasRecords[nIndex].poRecord;
 }
 
 /************************************************************************/
@@ -301,8 +301,8 @@ void * DDFRecordIndex::GetClientInfoByIndex( int nIndex )
 
     if( nIndex < 0 || nIndex >= nRecordCount )
         return NULL;
-    else
-        return pasRecords[nIndex].pClientData;
+
+    return pasRecords[nIndex].pClientData;
 }
 
 /************************************************************************/
@@ -317,7 +317,7 @@ void DDFRecordIndex::SetClientInfoByIndex( int nIndex, void *pClientData )
 
     if( nIndex < 0 || nIndex >= nRecordCount )
         return;
-    else
-        pasRecords[nIndex].pClientData = pClientData;
+
+    pasRecords[nIndex].pClientData = pClientData;
 }
 

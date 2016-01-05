@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for Erdas Imagine (.img) HFA driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -250,7 +250,7 @@ def hfa_use_rrd():
         print(ds.GetRasterBand(1).GetOverview(0).Checksum())
         gdaltest.post_reason( 'Unexpected checksum.' )
         return 'fail'
-        
+
     ds = None
 
     gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
@@ -331,9 +331,9 @@ def hfa_update_existing_aux_overviews():
         gdal.SetConfigOption('USE_RRD', None)
         return 'fail'
     ds = None
-    
+
     gdal.GetDriverByName('BMP').Delete('tmp/hfa_update_existing_aux_overviews.bmp')
-    
+
     gdal.SetConfigOption('USE_RRD', None)
 
     return 'success'

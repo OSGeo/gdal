@@ -451,10 +451,10 @@ namespace tut
 
     /**
      * The flag is set to true by default (dummy) test.
-     * Used to detect usused test numbers and avoid unnecessary
+     * Used to detect unused test numbers and avoid unnecessary
      * test object creation which may be time-consuming depending
      * on operations described in Data::Data() and Data::~Data().
-     * TODO: replace with throwing special exception from default test.
+     * TODO: Replace with throwing special exception from default test.
      */
     bool called_method_was_a_dummy_test_;
     

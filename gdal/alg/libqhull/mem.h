@@ -95,7 +95,7 @@ typedef long ptr_intT;
    qhmem is allocated in mem.c
 
    qhmem could be swapable like qh and qhstat, but then
-   multiple qh's and qhmem's would need to keep in synch.
+   multiple qh's and qhmem's would need to keep in sync.
    A swapable qhmem would also waste memory buffers.  As long
    as memory operations are atomic, there is no problem with
    multiple qh structures being active at the same time.

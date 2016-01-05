@@ -126,10 +126,15 @@ class OGRCSWDataSource : public OGRDataSource
 /*                           OGRCSWLayer()                              */
 /************************************************************************/
 
-OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn)
+OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn("records")),
+    poBaseDS(NULL),
+    poBaseLayer(NULL),
+    nPagingStartIndex(0),
+    nFeatureRead(0),
+    nFeaturesInCurrentPage(0)
 {
-    this->poDS = poDSIn;
-    poFeatureDefn = new OGRFeatureDefn("records");
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbPolygon);
@@ -209,13 +214,6 @@ OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn)
         OGRFieldDefn oField("raw_xml", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
     }
-
-    poBaseDS = NULL;
-    poBaseLayer = NULL;
-
-    nPagingStartIndex = 0;
-    nFeatureRead = 0;
-    nFeaturesInCurrentPage = 0;
 
     poSRS->Release();
 }
@@ -736,7 +734,7 @@ OGRErr OGRCSWLayer::SetAttributeFilter( const char * pszFilter )
 
     delete m_poAttrQuery;
     m_poAttrQuery = NULL;
-    
+
     if( pszFilter != NULL )
     {
         m_poAttrQuery = new OGRFeatureQuery();
@@ -837,13 +835,12 @@ void OGRCSWLayer::BuildQuery()
 /*                          OGRCSWDataSource()                          */
 /************************************************************************/
 
-OGRCSWDataSource::OGRCSWDataSource()
-{
-    pszName = NULL;
-    poLayer = NULL;
-    bFullExtentRecordsAsNonSpatial = FALSE;
-    nMaxRecords = 500;
-}
+OGRCSWDataSource::OGRCSWDataSource() :
+    pszName(NULL),
+    nMaxRecords(500),
+    poLayer(NULL),
+    bFullExtentRecordsAsNonSpatial(FALSE)
+{}
 
 /************************************************************************/
 /*                         ~OGRCSWDataSource()                          */
@@ -932,7 +929,7 @@ int OGRCSWDataSource::Open( const char * pszFilename,
     CPLHTTPResult* psResult = SendGetCapabilities();
     if( psResult == NULL )
         return FALSE;
-    
+
     CPLXMLNode* psXML = CPLParseXMLString( (const char*) psResult->pabyData );
     if (psXML == NULL)
     {
@@ -1050,22 +1047,20 @@ static GDALDataset *OGRCSWDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRCSW()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "CSW" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "CSW" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "CSW" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OGC CSW (Catalog  Service for the Web)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_csw.html" );
+    poDriver->SetDescription( "CSW" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "OGC CSW (Catalog  Service for the Web)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_csw.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "CSW:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "CSW:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='URL' type='string' description='URL to the CSW server endpoint' required='true'/>"
 "  <Option name='ELEMENTSETNAME' type='string-select' description='Level of details of properties' default='full'>"
@@ -1078,10 +1073,9 @@ void RegisterOGRCSW()
 "  <Option name='MAX_RECORDS' type='int' description='Maximum number of records to retrieve in a single time' default='500'/>"
 "</OpenOptionList>" );
 
-        poDriver->pfnIdentify = OGRCSWDriverIdentify;
-        poDriver->pfnOpen = OGRCSWDriverOpen;
+    poDriver->pfnIdentify = OGRCSWDriverIdentify;
+    poDriver->pfnOpen = OGRCSWDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

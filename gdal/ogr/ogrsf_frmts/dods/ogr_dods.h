@@ -84,7 +84,7 @@ class OGRDODSFieldDefn {
 public:
     OGRDODSFieldDefn();
     ~OGRDODSFieldDefn();
-    
+
     int Initialize( AttrTable *, 
                     BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
     int Initialize( const char *, const char * = "das",
@@ -106,7 +106,7 @@ public:
 /************************************************************************/
 
 class OGRDODSDataSource;
-    
+
 class OGRDODSLayer : public OGRLayer
 {
   protected:
@@ -133,7 +133,7 @@ class OGRDODSLayer : public OGRLayer
     DataDDS            *poDataDDS;
 
     BaseType           *poTargetVar;
-    
+
     AttrTable          *poOGRLayerInfo;
 
     int                 bKnowExtent;
@@ -186,7 +186,7 @@ private:
                                        Sequence * );
 
     double              BaseTypeToDouble( BaseType * );
-    
+
     int                 BuildFields( BaseType *, const char *, 
                                      const char * );
 
@@ -202,7 +202,7 @@ public:
     virtual             ~OGRDODSSequenceLayer();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual GIntBig     GetFeatureCount( int );
 };
 
@@ -290,7 +290,7 @@ public:
     virtual             ~OGRDODSGridLayer();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual GIntBig     GetFeatureCount( int );
 
 };
@@ -303,7 +303,7 @@ class OGRDODSDataSource : public OGRDataSource
 {
     OGRDODSLayer        **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
 
     void                AddLayer( OGRDODSLayer * );

@@ -58,7 +58,7 @@ class OGROGDILayer : public OGRLayer
     int                 m_iNextShapeId;
     int                 m_nTotalShapeCount;
     int                 m_nFilteredOutShapes;
-    
+
     OGRFeature *        GetNextRawFeature();
 
   public:
@@ -94,7 +94,7 @@ class OGROGDIDataSource : public OGRDataSource
 {
     OGROGDILayer      **m_papoLayers;
     int                 m_nLayers;
-    
+
     int                 m_nClientID;
 
     ecs_Region          m_sGlobalBounds;
@@ -139,7 +139,7 @@ class OGROGDIDriver : public OGRSFDriver
 {
   public:
                 ~OGROGDIDriver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
 

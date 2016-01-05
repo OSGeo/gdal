@@ -604,7 +604,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
     int nParenthesisLevel = 0;
     int nArrayLevel = 0;
     int nBTLevel = 0;
-    
+
     int bCollectAllObjects = poResources != NULL && !bInitBDCStack && !bMatchQ;
 
     GraphicState oGS;
@@ -614,7 +614,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
     std::vector<double> oCoords;
     int bHasFoundFill = FALSE;
     int bHasMultiPart = FALSE;
-    
+
     szToken[0] = '\0';
 
     if (bInitBDCStack)
@@ -1211,11 +1211,17 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
         {
             if (oCoords[i] == NEW_SUBPATH && oCoords[i+1] == NEW_SUBPATH)
             {
-                poLS = new OGRLineString();
                 if (poMLS)
+                {
+                    poLS = new OGRLineString();
                     poMLS->addGeometryDirectly(poLS);
+                }
                 else
+                {
+                    delete poLS;
+                    poLS = new OGRLineString();
                     poGeom = poLS;
+                }
             }
             else if (oCoords[i] == CLOSE_SUBPATH && oCoords[i+1] == CLOSE_SUBPATH)
             {

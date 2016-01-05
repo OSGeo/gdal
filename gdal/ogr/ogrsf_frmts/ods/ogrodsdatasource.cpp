@@ -376,7 +376,9 @@ void OGRODSDataSource::dataHandlerCbk(const char *data, int nLen)
         case STATE_TABLE:   break;
         case STATE_ROW:     break;
         case STATE_CELL:    break;
-        case STATE_TEXTP:   dataHandlerTextP(data, nLen);
+        case STATE_TEXTP:
+            dataHandlerTextP(data, nLen);
+            break;
         default:            break;
     }
 }
@@ -1382,7 +1384,7 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
     char* pszXML = OGRGetXML_UTF8_EscapedString(pszLayerName);
     VSIFPrintfL(fp, "<table:table table:name=\"%s\">\n", pszXML);
     CPLFree(pszXML);
-    
+
     poLayer->ResetReading();
 
     OGRFeature* poFeature = poLayer->GetNextFeature();
@@ -1558,7 +1560,7 @@ void OGRODSDataSource::FlushCache()
         return;
     }
 
-    /* Write uncopressed mimetype */
+    /* Write uncompressed mimetype */
     char** papszOptions = CSLAddString(NULL, "COMPRESSED=NO");
     if( CPLCreateFileInZip(hZIP, "mimetype", papszOptions ) != CE_None )
     {
@@ -1625,11 +1627,11 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "<config:config-item-map-named config:name=\"Tables\">\n");
     for(int i=0;i<nLayers;i++)
     {
-        OGRLayer* poLayer = GetLayer(i);
+        OGRLayer* poLayer = papoLayers[i];
         if (HasHeaderLine(poLayer))
         {
             /* Add vertical splitter */
-            char* pszXML = OGRGetXML_UTF8_EscapedString(GetLayer(i)->GetName());
+            char* pszXML = OGRGetXML_UTF8_EscapedString(poLayer->GetName());
             VSIFPrintfL(fp, "<config:config-item-map-entry config:name=\"%s\">\n", pszXML);
             CPLFree(pszXML);
             VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitMode\" config:type=\"short\">2</config:config-item>\n");
@@ -1750,7 +1752,7 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "<office:spreadsheet>\n");
     for(int i=0;i<nLayers;i++)
     {
-        WriteLayer(fp, GetLayer(i));
+        WriteLayer(fp, papoLayers[i]);
     }
     VSIFPrintfL(fp, "</office:spreadsheet>\n");
     VSIFPrintfL(fp, "</office:body>\n");

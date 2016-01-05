@@ -39,7 +39,7 @@
 /************************************************************************/
 
 class OGRODBCDataSource;
-    
+
 class OGRODBCLayer : public OGRLayer
 {
   protected:
@@ -75,7 +75,7 @@ class OGRODBCLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRSpatialReference *GetSpatialRef();
@@ -117,12 +117,12 @@ class OGRODBCTableLayer : public OGRODBCLayer
 #ifdef notdef
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 #endif    
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
@@ -158,7 +158,7 @@ class OGRODBCSelectLayer : public OGRODBCLayer
     virtual GIntBig     GetFeatureCount( int );
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
@@ -174,7 +174,7 @@ class OGRODBCDataSource : public OGRDataSource
 {
     OGRODBCLayer        **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
 
     int                 bDSUpdate;
@@ -185,9 +185,9 @@ class OGRODBCDataSource : public OGRDataSource
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
-    
+
     int                 OpenMDB( const char *, int bUpdate );
-    
+
   public:
                         OGRODBCDataSource();
                         ~OGRODBCDataSource();
@@ -221,13 +221,13 @@ class OGRODBCDriver : public OGRSFDriver
 {
   public:
                 ~OGRODBCDriver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
-    
+
     int                 TestCapability( const char * );
 };
 

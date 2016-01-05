@@ -208,7 +208,10 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
             return -1;
         }
 
-        m_nMaxId = (int)(sStatBuf.st_size/4);
+        if( static_cast<vsi_l_offset>(sStatBuf.st_size) > static_cast<vsi_l_offset>(INT_MAX / 4) )
+            m_nMaxId = INT_MAX / 4;
+        else
+            m_nMaxId = (int)(sStatBuf.st_size/4);
         m_nBlockSize = MIN(1024, m_nMaxId*4);
 
         /*-------------------------------------------------------------

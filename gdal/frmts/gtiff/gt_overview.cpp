@@ -68,12 +68,16 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
 
     nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
 
+    /* This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be called */
+    /* See https://trac.osgeo.org/gdal/ticket/2055 */
+    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE );
+
 #if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20051201 /* 3.8.0 */
     TIFFFreeDirectory( hTIFF );
 #endif
 
     TIFFCreateDirectory( hTIFF );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup TIFF fields.                                              */
 /* -------------------------------------------------------------------- */
@@ -336,7 +340,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         if (nCompression < 0)
             return CE_Failure;
     }
-    
+
     if( nCompression == COMPRESSION_JPEG && nBitsPerPixel > 8 )
     {  
         if( nBitsPerPixel > 16 )
@@ -692,7 +696,7 @@ GTIFFBuildOverviews( const char * pszFilename,
     hODS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
     if( hODS == NULL )
         return CE_Failure;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to set the jpeg quality?                             */
 /* -------------------------------------------------------------------- */
@@ -831,4 +835,3 @@ GTIFFBuildOverviews( const char * pszFilename,
 
     return eErr;
 }
-    

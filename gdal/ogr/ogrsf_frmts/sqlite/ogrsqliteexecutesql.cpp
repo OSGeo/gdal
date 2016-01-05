@@ -164,7 +164,7 @@ LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
     {
         oLayerDesc.osLayerName = osStr;
     }
-    
+
     oLayerDesc.osOriginalStr.resize(pszSQLCommand - pszOriginalStrStart);
 
     *ppszSQLCommand = pszSQLCommand;
@@ -557,7 +557,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         /* We detect the need for creating a spatial index by 2 means : */
 
         /* 1) if there's an explicit reference to a 'idx_layername_geometrycolumn' */
-        /*   table in the SQL --> old/traditionnal way of requesting spatial indices */
+        /*   table in the SQL --> old/traditional way of requesting spatial indices */
         /*   with spatialite. */
 
         std::set<LayerDesc>::const_iterator oIter2 = oSetLayers.begin();
@@ -905,7 +905,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                 CPLFree(pszTmpDBName);
                 return NULL;
             }
-            
+
             poLayer = poOtherDS->GetLayerByName(oLayerDesc.osLayerName);
             if( poLayer == NULL )
             {
@@ -1041,7 +1041,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( 0, poSpatialFilter );
-    
+
     if( poSingleSrcLayer != NULL )
         poLayer->SetMetadata( poSingleSrcLayer->GetMetadata( "NATIVE_DATA" ),
                               "NATIVE_DATA" );

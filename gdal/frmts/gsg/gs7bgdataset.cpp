@@ -35,6 +35,7 @@
 #include <climits>
 #include <cmath>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 #ifndef DBL_MAX
@@ -62,10 +63,6 @@
 #endif /* SHRT_MAX */
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_GS7BG(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -299,7 +296,7 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( VSIFSeekL( poGDS->fp,
         ( poGDS->nData_Position +
-            sizeof(double) * nRasterXSize * (nRasterYSize - nBlockYOff - 1) ),
+            sizeof(double) * static_cast<vsi_l_offset>(nRasterXSize) * (nRasterYSize - nBlockYOff - 1) ),
         SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -604,8 +601,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    GInt32 nSize;
-    if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
+    GUInt32 nSize;
+    if( VSIFReadL( (void *)&nSize, sizeof(GUInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
@@ -646,7 +643,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPL_LSBPTR32( &nTag );
 
-        if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
+        if( VSIFReadL( (void *)&nSize, sizeof(GUInt32), 1, poDS->fp ) != 1 )
         {
             delete poDS;
             CPLError( CE_Failure, CPLE_FileIO,
@@ -658,7 +655,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if(nTag != nGRID_TAG)
         {
-            if( VSIFSeekL( poDS->fp, nSize, SEEK_SET ) != 0 )
+            if( VSIFSeekL( poDS->fp, nSize, SEEK_CUR ) != 0 )
             {
                 delete poDS;
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -1086,7 +1083,7 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
         return CE_Failure;
     }
 
-    int nSize = nXSize * nYSize * sizeof(double);
+    int nSize = nXSize * nYSize * (int)sizeof(double);
     nTemp = CPL_LSBWORD32(nSize); // Mark size of data
     if( VSIFWriteL( (void *)&nTemp, sizeof(GInt32), 1, fp ) != 1 )
     {
@@ -1355,11 +1352,10 @@ void GDALRegister_GS7BG()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Golden Software 7 Binary Grid (.grd)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GS7BG" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GS7BG" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-        "Byte Int16 UInt16 Float32 Float64" );
+                               "Byte Int16 UInt16 Float32 Float64" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = GS7BGDataset::Identify;

@@ -191,7 +191,7 @@ OGRSOSIDataSource::~OGRSOSIDataSource() {
         }
         CPLFree(papoLayers);
     }
-    
+
     if (poSRS != NULL) poSRS->Release();
     if (pszName != NULL) CPLFree(pszName);
 }
@@ -200,7 +200,7 @@ static
 OGRFeatureDefn *defineLayer(const char *szName, OGRwkbGeometryType szType, S2I *poHeaders) {
     OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( szName );
     poFeatureDefn->SetGeomType( szType );
-    
+
     for (unsigned int n=0; n<poHeaders->size(); n++) { /* adding headers in the correct order again */
         for (S2I::iterator i=poHeaders->begin(); i!=poHeaders->end(); i++) {
             if (n==i->second) {
@@ -311,7 +311,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             char *pszLine = LC_GetGi(i);      /* Get one header line */
             if ((pszLine[0] == ':')||(pszLine[0] == '(')) continue;  /* If we have a continued REF line, skip it. */
             if (pszLine[0] == '!') continue;  /* If we have a comment line, skip it. */
-            
+
             char *pszUTFLine = CPLRecode(pszLine, pszEncoding, CPL_ENC_UTF8); /* switch to UTF encoding here, if it is known. */
             char *pszUTFLineIter = pszUTFLine;
 			
@@ -320,7 +320,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             if (pszPos2 != NULL) {
                 CPLString osKey = CPLString(std::string(pszUTFLineIter,pszPos2)); /* FIXME: clean instantiation of CPLString? */
                 CPLString osValue = CPLString(pszPos2+1);
-                
+
                 oHeaders[osKey]=osValue;          /* Add to header map */
                 switch (nName) {             /* Add to header list for the corresponding layer, if it is not */
                 case L_FLATE: {            /* in there already */
@@ -494,11 +494,11 @@ int  OGRSOSIDataSource::Create( const char *pszFilename ) {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Could not open SOSI file for writing (Status %i).", nDetStatus );
         return FALSE;
-	}
+    }
 
     LC_NyttHode(); /* Create new file header, will be written to file when all 
                       header information elements are set. */
-                      
+
     return TRUE;
 }
 
@@ -515,7 +515,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
         if (poSpatialRef!=NULL) {
             poSRS = poSpatialRef;
             poSRS->Reference();
-        
+
             const char *pszKoosys = poSRS->GetAuthorityCode("PROJCS");
             if (pszKoosys == NULL) {
                 OGRErr err = poSRS->AutoIdentifyEPSG();
@@ -526,7 +526,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
                 }
                 pszKoosys = poSRS->GetAuthorityCode("PROJCS");
             }
-            
+
             if (pszKoosys != NULL) {
                 int nKoosys = epsg2sosi(atoi(pszKoosys));
                 CPLDebug( "[CreateLayer]","Projection set to SOSI %i", nKoosys);
@@ -544,14 +544,14 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
             }
         } 
         LC_WsGr(poFileadm); /* Writing the header here! */
-    
+
     } else {
         if (!poSRS->IsSame(poSpatialRef)) {
           CPLError( CE_Failure, CPLE_AppDefined,
                     "SOSI driver does not support different spatial reference systems in one file.");
         }
     }
-    
+
     OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( pszNameIn );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eGType );

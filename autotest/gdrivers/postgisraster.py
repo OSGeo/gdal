@@ -6,12 +6,12 @@
 # Purpose:  PostGISRaster Testing.
 # Author:   Jorge Arevalo <jorge.arevalo@libregis.org>
 #           David Zwarg <dzwarg@azavea.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009, Jorge Arevalo <jorge.arevalo@libregis.org>
 #               2012, David Zwarg <dzwarg@azavea.com>
 # Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -43,7 +43,7 @@ import gdaltest
 #
 
 ###############################################################################
-# 
+#
 def postgisraster_init():
     try:
         gdaltest.postgisrasterDriver = gdal.GetDriverByName('PostGISRaster')
@@ -52,7 +52,7 @@ def postgisraster_init():
 
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
-        
+
     gdaltest.postgisraster_connection_string="PG:host='localhost' dbname='gisdb' user='gis' password='gis' schema='gis_schema' "
 
     try:
@@ -67,23 +67,22 @@ def postgisraster_init():
         return 'skip'
 
     return 'success'
-    
 
 ###############################################################################
-# 
+#
 def postgisraster_test_open_error1():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='unexistent'")
+    ds = gdal.Open(gdaltest.postgisraster_connection_string
+                   + "table='nonexistent'")
     if ds is None:
         return 'success'
     else:
         return 'fail'
-        
-        
+
 ###############################################################################
-# 
+#
 def postgisraster_test_open_error2():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -93,57 +92,55 @@ def postgisraster_test_open_error2():
     if ds is None:
         return 'fail'
     else:
-        return 'success'        
+        return 'success'
 
-    
 ###############################################################################
-# 
+#
 def postgisraster_compare_utm():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
-        
+
     src_ds = gdal.Open( 'data/utm.tif' )
     dst_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='utm'" )
 
     # dataset actually contains many sub-datasets. test the first one
     dst_ds = gdal.Open( dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'] )
-    
+
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose = 1)
     if diff == 0:
         return 'success'
     else:
         return 'fail'
-        
+
 ###############################################################################
-# 
+#
 def postgisraster_compare_small_world():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
-        
+
     src_ds = gdal.Open( 'data/small_world.tif' )
     dst_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
- 
+
     # dataset actually contains many sub-datasets. test the first one
     dst_ds = gdal.Open( dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'] )
-    
+
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose = 1)
     if diff == 0:
         return 'success'
     else:
         return 'fail'        
-        
-        
+
 ###############################################################################
-# 
+#
 def postgisraster_test_utm_open():    
     if gdaltest.postgisrasterDriver is None:
         return 'skip'    
-        
+
     # First open tif file
     src_ds = gdal.Open( 'data/utm.tif' )
     prj = src_ds.GetProjectionRef()   
     gt = src_ds.GetGeoTransform() 
-    
+
     # Get band data
     rb = src_ds.GetRasterBand(1)
     rb.GetStatistics(0, 1)
@@ -154,66 +151,63 @@ def postgisraster_test_utm_open():
     # Try to open PostGISRaster with the same data than original tif file
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)
     return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
-    
-    
-    
+
 ###############################################################################
-# 
+#
 def postgisraster_test_small_world_open_b1():    
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'    
-        
+        return 'skip'
+
     # First open tif file
     src_ds = gdal.Open( 'data/small_world.tif' )    
     prj = src_ds.GetProjectionRef()   
     gt = src_ds.GetGeoTransform() 
-    
+
     # Get band data
     rb = src_ds.GetRasterBand(1)
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
-    
-    
+
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
 
     # Try to open PostGISRaster with the same data than original tif file
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)    
     return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)    
-    
+
 ###############################################################################
-# 
+#
 def postgisraster_test_small_world_open_b2():    
     if gdaltest.postgisrasterDriver is None:
         return 'skip'    
-        
+
     # First open tif file
     src_ds = gdal.Open( 'data/small_world.tif' )    
     prj = src_ds.GetProjectionRef()   
     gt = src_ds.GetGeoTransform() 
-    
+
     # Get band data
     rb = src_ds.GetRasterBand(2)
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
-    
-    
+
+
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
 
     # Try to open PostGISRaster with the same data than original tif file
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 2, cs, filename_absolute = 1)    
     return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
-    
+
 ###############################################################################
-# 
+#
 def postgisraster_test_small_world_open_b3():    
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'    
-        
+        return 'skip'
+
     # First open tif file
     src_ds = gdal.Open( 'data/small_world.tif' )
     prj = src_ds.GetProjectionRef()   
     gt = src_ds.GetGeoTransform() 
-    
+
     # Get band data
     rb = src_ds.GetRasterBand(3)
     rb.GetStatistics(0, 1)
@@ -221,7 +215,6 @@ def postgisraster_test_small_world_open_b3():
 
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
 
-    
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
 
     # Checksum for each band can be obtained by gdalinfo -checksum <file>
@@ -338,9 +331,10 @@ def postgisraster_test_create_copy_and_delete_phases():
         gdaltest.post_reason( 'Could not open reduced dataset (1).' )
         return 'fail'
     elif len(src_md) != 100:
-        # The length of the metadata contains two pcs of 
+        # The length of the metadata contains two pcs of
         # information per raster, so 50 rasters remaining = 100 keys
-        gdaltest.post_reason( 'Expected 100 keys of metadata for 50 subadataset rasters.' )
+        gdaltest.post_reason(
+            'Expected 100 keys of metadata for 50 subdataset rasters.' )
         print(len(src_md))
         return 'fail'
 

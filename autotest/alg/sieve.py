@@ -45,22 +45,22 @@ def sieve_1():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_src.grd')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.SieveFilter( src_band, None, dst_band, 2, 4 )
 
     cs_expected = 364
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/sieve_1.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
@@ -76,22 +76,22 @@ def sieve_2():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_src.grd')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/sieve_2.tif', 5, 7, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.SieveFilter( src_band, None, dst_band, 2, 8 )
 
     cs_expected = 370
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/sieve_2.tif' )
-    
+
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
@@ -107,15 +107,15 @@ def sieve_3():
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/unmergable.grd')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('tmp/sieve_3.tif', 5, 7, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.SieveFilter( src_band, None, dst_band, 2, 8 )
 
     cs_expected = 472
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
@@ -257,10 +257,10 @@ NODATA_value 0
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('/vsimem/sieve_7.asc')
     src_band = src_ds.GetRasterBand(1)
-    
+
     dst_ds = drv.Create('/vsimem/sieve_7.tif', 7, 7, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     gdal.SieveFilter( src_band, src_band.GetMaskBand(), dst_band, 4, 4 )
 
     cs_expected = 42
@@ -268,13 +268,13 @@ NODATA_value 0
 
     dst_band = None
     dst_ds = None
-    
+
     gdal.Unlink('/vsimem/sieve_7.asc')
 
     if cs == cs_expected \
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( '/vsimem/sieve_7.tif' )
-    
+
     # Expeced:
     #[[0 0 0 0 0 0 0]
     # [0 1 1 1 1 1 1]

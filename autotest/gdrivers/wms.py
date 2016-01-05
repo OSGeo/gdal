@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test WMS client support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -61,18 +61,18 @@ def wms_2():
 
     if gdaltest.wms_drv is None:
         return 'skip'
-        
+
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WMS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
-    
+
     srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
     gdaltest.wms_srv1_ok = gdaltest.gdalurlopen(srv) is not None
     gdaltest.wms_ds = None
-    
+
     if not gdaltest.wms_srv1_ok:
         return 'skip'
-    
+
     gdaltest.wms_ds = gdal.Open( 'data/pop_wms.xml' )
 
     if gdaltest.wms_ds is not None:
@@ -97,12 +97,12 @@ def wms_3():
        or gdaltest.wms_ds.RasterCount != 3:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
-    
+
     wkt = gdaltest.wms_ds.GetProjectionRef()
     if wkt[:14] != 'GEOGCS["WGS 84':
         gdaltest.post_reason( 'Got wrong SRS: ' + wkt )
         return 'fail'
-        
+
     gt = gdaltest.wms_ds.GetGeoTransform()
     if abs(gt[0]- -180) > 0.00001 \
        or abs(gt[3]- 85) > 0.00001 \
@@ -113,7 +113,7 @@ def wms_3():
         gdaltest.post_reason( 'wrong geotransform' )
         print(gt)
         return 'fail'
-    
+
     if gdaltest.wms_ds.GetRasterBand(1).GetOverviewCount() < 1:
         gdaltest.post_reason( 'no overviews!' )
         return 'fail'
@@ -134,7 +134,7 @@ def wms_4():
 
     if not gdaltest.wms_srv1_ok:
         return 'skip'
-        
+
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -165,7 +165,7 @@ def wms_5():
 
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test
-    
+
     fn = '<GDAL_WMS><Service name="WMS"><Version>1.1.1</Version><ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl><SRS>EPSG:4326</SRS><ImageFormat>image/jpeg</ImageFormat><Layers>modis,global_mosaic</Layers><Styles></Styles></Service><DataWindow><UpperLeftX>-180.0</UpperLeftX><UpperLeftY>90.0</UpperLeftY><LowerRightX>180.0</LowerRightX><LowerRightY>-90.0</LowerRightY><SizeX>2666666</SizeX><SizeY>1333333</SizeY></DataWindow><Projection>EPSG:4326</Projection><BandsCount>3</BandsCount></GDAL_WMS>'
 
     ds = gdal.Open( fn )
@@ -191,10 +191,10 @@ def wms_6():
 
     if gdaltest.wms_drv is None:
         return 'skip'
-    
+
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test
-    
+
     fn = '<GDAL_WMS><Service name="TileService"><Version>1</Version><ServerUrl>http://s0.tileservice.worldwindcentral.com/getTile?</ServerUrl><Dataset>za.johannesburg_2006_20cm</Dataset></Service><DataWindow><UpperLeftX>-180.0</UpperLeftX><UpperLeftY>90.0</UpperLeftY><LowerRightX>180.0</LowerRightX><LowerRightY>-90.0</LowerRightY><SizeX>268435456</SizeX><SizeY>134217728</SizeY><TileLevel>19</TileLevel></DataWindow><Projection>EPSG:4326</Projection><OverviewCount>16</OverviewCount><BlockSizeX>512</BlockSizeX><BlockSizeY>512</BlockSizeY><BandsCount>3</BandsCount></GDAL_WMS>'
 
     ds = gdal.Open( fn )
@@ -692,7 +692,7 @@ def wms_16():
             return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
- 
+
     subdatasets = ds.GetMetadata("SUBDATASETS")
     if len(subdatasets) == 0:
         gdaltest.post_reason( 'did not get expected subdataset count' )
@@ -724,7 +724,7 @@ def wms_16():
 
     pixel = "GeoPixel_601228_4917635"
     val = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
-    
+
     # Some bug in GeoServer ?
     if val is not None and val.find('java.lang.NoSuchMethodError: org.geoserver.wms.WMS.pixelToWorld') >= 0:
         print(val)
@@ -821,22 +821,22 @@ def wms_18():
        or ds.RasterCount != 3:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
-  
+
     # todo: add locationinfo test
-    
+
     # add getting image test
     if gdaltest.gdalurlopen('http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer') is None:
         return 'skip'
-        
+
     expected_cs = 12824
     cs = ds.GetRasterBand(1).Checksum()
     if cs != expected_cs:
         gdaltest.post_reason( 'Did not get expected SRTM checksum.' )
         print(cs)
         return 'fail'
-        
+
     ds = None
-        
+
     return 'success'
 
 ###############################################################################
@@ -867,17 +867,18 @@ def wms_19():
         gdaltest.post_reason( 'Did not get expected checksum.' )
         print(cs)
         return 'fail'
-        
+
     ds = None
-        
+
     return 'success'
 ###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
     gdaltest.clean_tmp()
-    
+
     return 'success'
+
 
 gdaltest_list = [
     wms_1,
@@ -900,6 +901,7 @@ gdaltest_list = [
     wms_18,
     wms_19,
     wms_cleanup ]
+
 
 if __name__ == '__main__':
 

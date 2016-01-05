@@ -116,7 +116,7 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
         }
 
         if (iLayer == nLayerCount)
-            /* shouldn't happen with an ideal driver */
+            /* should not happen with an ideal driver */
             poDstLayer = NULL;
     }
 
@@ -616,6 +616,7 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy(papszDSCO);
     CSLDestroy(papszLCO);
     CSLDestroy(papszALO);
+    CSLDestroy( papszArgv );
 
     if(poResultLayer != NULL)
         poDS->ReleaseResultSet(poResultLayer);

@@ -29,6 +29,7 @@
 
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_proxy.h"
 #include "ogr_spatialref.h"
@@ -193,7 +194,7 @@ class RPFTOCSubDataset : public VRTDataset
     void SetCachedTile(const char* tileFileName, int nBlockXOff, int nBlockYOff,
                        const void* pData, int dataSize)
     {
-        if (dataSize > cachedTileDataSize)
+        if (cachedTileData == NULL || dataSize > cachedTileDataSize)
         {
             cachedTileData = CPLRealloc(cachedTileData, dataSize);
             cachedTileDataSize = dataSize;
@@ -1274,7 +1275,8 @@ void GDALRegister_RPFTOC()
 {
     if( GDALGetDriverByName( "RPFTOC" ) != NULL )
         return;
-    GDALDriver	*poDriver = new GDALDriver();
+
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "RPFTOC" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

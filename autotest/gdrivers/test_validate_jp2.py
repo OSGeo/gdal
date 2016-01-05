@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test validate_jp2 script
 # Author:   Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, European Union (European Environment Agency)
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -126,7 +126,7 @@ def test_validate_jp2_2():
      'ERROR[GMLJP2]: RectifiedGrid.limits.GridEnvelope.high[y] != Ysiz - 1',
      'ERROR[INSPIRE_TG, Conformance class A.8.6]: count(OrthoImageryCoverage.rangeType.field)(=1) != Csiz(=2) ',
      'ERROR[PROFILE_1, Conformance class A.8.14]: SPcod_xcb_minus_2 = 5, whereas max allowed for Profile 1 is 4']
-     
+
     if error_report.error_array != expected_errors:
         gdaltest.post_reason('did not get expected errors')
         import pprint
@@ -187,7 +187,7 @@ def test_validate_jp2_3():
  'ERROR[INSPIRE_TG]: Cannot find RectifiedGrid in OrthoImageryCoverage',
  'ERROR[INSPIRE_TG, Conformance class A.8.6]: count(OrthoImageryCoverage.rangeType.field)(=4) != Csiz(=5) ',
  'ERROR[PROFILE_1, Conformance class A.8.14]: Not enough decomposition levels = 0 (max_dim=162, 128 * 2**SPcod_NumDecompositions=128)']
-     
+
     if error_report.error_array != expected_errors:
         gdaltest.post_reason('did not get expected errors')
         import pprint
@@ -232,7 +232,7 @@ def test_validate_jp2_4():
  'ERROR[GENERAL]: No QCD marker found',
  'ERROR[GENERAL]: No SOT marker found',
  'ERROR[GENERAL]: No EOC marker found']
-     
+
     if error_report.error_array != expected_errors:
         gdaltest.post_reason('did not get expected errors')
         import pprint

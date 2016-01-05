@@ -175,7 +175,7 @@ class PDFDataset : public GDALPamDataset
 {
     friend class PDFRasterBand;
     friend class PDFImageRasterBand;
-    
+
     PDFDataset*  poParentDS;
 
     CPLString    osFilename;
@@ -307,7 +307,7 @@ private:
 
     std::map<CPLString, int> oMapOperators;
     void                InitMapOperators();
-    
+
     int                 bSetStyle;
 
     void                ExploreTree(GDALPDFObject* poObj, int nRecLevel);
@@ -392,7 +392,7 @@ private:
 #ifdef HAVE_PDFIUM
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
-    
+
     static int bPdfiumInit;
 #endif
 };

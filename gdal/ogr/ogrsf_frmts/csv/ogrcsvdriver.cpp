@@ -30,8 +30,13 @@
 
 #include "ogr_csv.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
+#include <map>
 
 CPL_CVSID("$Id$");
+
+static CPLMutex* hMutex = NULL;
+static std::map<CPLString, GDALDataset*> *poMap = NULL;
 
 /************************************************************************/
 /*                         OGRCSVDriverIdentify()                       */
@@ -42,8 +47,10 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
     if( poOpenInfo->fpL != NULL )
     {
-        CPLString osBaseFilename = CPLGetFilename(poOpenInfo->pszFilename);
-        CPLString osExt = OGRCSVDataSource::GetRealExtension(poOpenInfo->pszFilename);
+        const CPLString osBaseFilename
+            = CPLGetFilename(poOpenInfo->pszFilename);
+        const CPLString osExt
+            = OGRCSVDataSource::GetRealExtension(poOpenInfo->pszFilename);
 
         if (EQUAL(osBaseFilename, "NfdcFacilities.xls") ||
             EQUAL(osBaseFilename, "NfdcRunways.xls") ||
@@ -63,8 +70,10 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
               STARTS_WITH_CI(osBaseFilename, "NationalFedCodes_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStates_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStatesFedCodes_") ||
-              (strlen(osBaseFilename) > 2 && STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
-              (strlen(osBaseFilename) > 2 && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
+              (strlen(osBaseFilename) > 2
+               && STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
+              (strlen(osBaseFilename) > 2
+               && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
              (EQUAL(osExt, "txt") || EQUAL(osExt, "zip")) )
         {
             return TRUE;
@@ -101,6 +110,24 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
+/*                        OGRCSVDriverRemoveFromMap()                   */
+/************************************************************************/
+
+void OGRCSVDriverRemoveFromMap(const char* pszName, GDALDataset* poDS)
+{
+    if( poMap == NULL )
+        return;
+    CPLMutexHolderD(&hMutex);
+    std::map<CPLString, GDALDataset*>::iterator oIter = poMap->find(pszName);
+    if( oIter != poMap->end() )
+    {
+        GDALDataset* poOtherDS = oIter->second;
+        if( poDS == poOtherDS )
+            poMap->erase(oIter);
+    }
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -110,13 +137,36 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
     if( OGRCSVDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
 
-    OGRCSVDataSource   *poDS = new OGRCSVDataSource();
+    if( poMap != NULL )
+    {
+        CPLMutexHolderD(&hMutex);
+        std::map<CPLString, GDALDataset*>::iterator oIter =
+            poMap->find(poOpenInfo->pszFilename);
+        if( oIter != poMap->end() )
+        {
+            GDALDataset* poOtherDS = oIter->second;
+            poOtherDS->FlushCache();
+        }
+    }
+
+    OGRCSVDataSource *poDS = new OGRCSVDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE,
                      poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         poDS = NULL;
+    }
+
+    if( poOpenInfo->eAccess == GA_Update && poDS != NULL )
+    {
+        CPLMutexHolderD(&hMutex);
+        if( poMap == NULL )
+            poMap = new std::map<CPLString, GDALDataset*>();
+        if( poMap->find(poOpenInfo->pszFilename) == poMap->end() )
+        {
+            (*poMap)[poOpenInfo->pszFilename] = poDS;
+        }
     }
 
     return poDS;
@@ -213,8 +263,22 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
 {
     if( CPLUnlinkTree( pszFilename ) == 0 )
         return CE_None;
-    else
-        return CE_Failure;
+
+    return CE_Failure;
+}
+
+
+/************************************************************************/
+/*                           OGRCSVDriverUnload()                       */
+/************************************************************************/
+
+static void OGRCSVDriverUnload( GDALDriver* )
+{
+    if( hMutex != NULL )
+        CPLDestroyMutex(hMutex);
+    hMutex = NULL;
+    delete poMap;
+    poMap = NULL;
 }
 
 /************************************************************************/
@@ -224,28 +288,26 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
 void RegisterOGRCSV()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "CSV" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "CSV" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "CSV" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Comma Separated Value (.csv)" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "csv" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_csv.html" );
+    poDriver->SetDescription( "CSV" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Comma Separated Value (.csv)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "csv" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_csv.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='GEOMETRY' type='string-select' description='how to encode geometry fields'>"
 "    <Value>AS_WKT</Value>"
 "  </Option>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='SEPARATOR' type='string-select' description='field separator' default='COMMA'>"
 "    <Value>COMMA</Value>"
@@ -272,7 +334,7 @@ void RegisterOGRCSV()
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column. Only used if GEOMETRY=AS_WKT' default='WKT'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 #if 0
 "  <Option name='SEPARATOR' type='string-select' description='field separator' default='AUTO'>"
@@ -306,15 +368,16 @@ void RegisterOGRCSV()
 "  <Option name='EMPTY_STRING_AS_NULL' type='boolean' description='Whether to consider empty strings as null fields on reading' default='NO'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time" );
 
-        poDriver->pfnOpen = OGRCSVDriverOpen;
-        poDriver->pfnIdentify = OGRCSVDriverIdentify;
-        poDriver->pfnCreate = OGRCSVDriverCreate;
-        poDriver->pfnDelete = OGRCSVDriverDelete;
+    poDriver->pfnOpen = OGRCSVDriverOpen;
+    poDriver->pfnIdentify = OGRCSVDriverIdentify;
+    poDriver->pfnCreate = OGRCSVDriverCreate;
+    poDriver->pfnDelete = OGRCSVDriverDelete;
+    poDriver->pfnUnloadDriver = OGRCSVDriverUnload;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

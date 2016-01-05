@@ -336,7 +336,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
             }
         }
     }
-    
+
     // Setup thread pool
     int nThreads = psOptions->nThreads;
     if( nThreads == -1 )
@@ -354,7 +354,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
     }
     if( nThreads > 1 )
     {
-        CPLDebug("PANSHARPEN", "Using %d theads", nThreads);
+        CPLDebug("PANSHARPEN", "Using %d threads", nThreads);
         poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
         if( poThreadPool == NULL ||
             !poThreadPool->Setup( nThreads, NULL, NULL ) )
@@ -363,7 +363,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
             poThreadPool = NULL;
         }
     }
-    
+
     GDALRIOResampleAlg eResampleAlg = psOptions->eResampleAlg;
     if( eResampleAlg != GRIORA_NearestNeighbour )
     {
@@ -378,7 +378,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
 
         GDALGetResampleFunction(pszResampling, &nKernelRadius);
     }
-    
+
     return CE_None;
 }
 
@@ -969,7 +969,13 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         poPanchroBand->RasterIO(GF_Read,
                 nXOff, nYOff, nXSize, nYSize, pPanBuffer, nXSize, nYSize,
                 eWorkDataType, 0, 0, NULL);
-    
+    if( eErr != CE_None )
+    {
+        VSIFree(pUpsampledSpectralBuffer);
+        VSIFree(pPanBuffer);
+        return CE_Failure;
+    }
+
     int nTasks = 0;
     if( poThreadPool )
     {
@@ -1001,8 +1007,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         nSpectralXSize = 1;
     if( nSpectralYSize == 0 )
         nSpectralYSize = 1;
-    
-    // When upstampling, extract the multispectral data at
+
+    // When upsampling, extract the multispectral data at
     // full resolution in a temp buffer, and then do the upsampling.
     if( nSpectralXSize < nXSize && nSpectralYSize < nYSize &&
         eResampleAlg != GRIORA_NearestNeighbour && nYSize > 1 )
@@ -1026,7 +1032,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             nXSizeExtract = aMSBands[0]->GetXSize() - nXOffExtract;
         if( nYOffExtract + nYSizeExtract > aMSBands[0]->GetYSize() )
             nYSizeExtract = aMSBands[0]->GetYSize() - nYOffExtract;
-        
+
         GByte* pSpectralBuffer = (GByte*)VSI_MALLOC3_VERBOSE(nXSizeExtract, nYSizeExtract,
                             psOptions->nInputSpectralBands * nDataTypeSize);
         if( pSpectralBuffer == NULL )
@@ -1035,7 +1041,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             VSIFree(pPanBuffer);
             return CE_Failure;
         }
-        
+
         if( anInputBands.size() )
         {
             // Use dataset RasterIO when possible
@@ -1059,6 +1065,13 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                         nXSizeExtract, nYSizeExtract,
                         eWorkDataType, 0, 0, NULL);
             }
+        }
+        if( eErr != CE_None )
+        {
+            VSIFree(pSpectralBuffer);
+            VSIFree(pUpsampledSpectralBuffer);
+            VSIFree(pPanBuffer);
+            return CE_Failure;
         }
     
         /* Create a MEM dataset that wraps the input buffer */
@@ -1116,6 +1129,16 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             // from several threads. In this case, this is safe. In case that would
             // no longer be the case we could create as many MEMDataset as threads
             // pointing to the same buffer.
+
+            // To avoid races in threads, we query now the mask flags
+            // so that implicit mask bands are created now
+            if( eResampleAlg != GRIORA_NearestNeighbour )
+            {
+                for(int i=0;i<poMEMDS->GetRasterCount();i++)
+                {
+                    poMEMDS->GetRasterBand(i+1)->GetMaskFlags();
+                }
+            }
             
             std::vector<GDALPansharpenResampleJob> asJobs;
             asJobs.resize( nTasks );
@@ -1198,9 +1221,15 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                         eWorkDataType, 0, 0, &sExtraArg);
             }
         }
+        if( eErr != CE_None )
+        {
+            VSIFree(pUpsampledSpectralBuffer);
+            VSIFree(pPanBuffer);
+            return CE_Failure;
+        }
     }
 
-    // In case NBITS wasn't set on the spectral bands, clamp the values
+    // In case NBITS was not set on the spectral bands, clamp the values
     // if overshoot might have occurred.
     int nBitDepth = psOptions->nBitDepth;
     if( nBitDepth && (eResampleAlg == GRIORA_Cubic ||

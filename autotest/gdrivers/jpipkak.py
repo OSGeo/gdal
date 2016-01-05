@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test reading with JPIPKAK driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -63,7 +63,7 @@ def jpipkak_1():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def jpipkak_2():
 
@@ -72,7 +72,6 @@ def jpipkak_2():
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
-    
     ds = gdal.Open( 'jpip://216.150.195.220/JP2Server/qb_boulder_pan_byte' )
     if ds is None:
         gdaltest.post_reason( 'failed to open jpip stream.' )
@@ -80,10 +79,10 @@ def jpipkak_2():
 
     wkt = ds.GetProjectionRef()
     exp_wkt = 'PROJCS["WGS 84 / UTM zone 13N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-105],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","32613"]]'
-    
+
     if not gdaltest.equal_srs_from_wkt( exp_wkt, wkt ):
         return 'fail'
-    
+
     target = ds.GetRasterBand(1).GetOverview(3)
 
     stats = target.GetStatistics(0,1)
@@ -105,7 +104,7 @@ def jpipkak_3():
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
-    
+
     ds = gdal.Open( 'jpip://216.150.195.220/JP2Server/qb_boulder_pan_11bit' )
     if ds is None:
         gdaltest.post_reason( 'failed to open jpip stream.' )
@@ -114,7 +113,7 @@ def jpipkak_3():
     target = ds.GetRasterBand(1)
 
     stats = target.GetStatistics(0,1)
-    
+
     if abs(stats[2] - 483.501) > 1.0 or abs(stats[3]-117.972) > 1.0:
         print( stats )
         gdaltest.post_reason( 'did not get expected mean/stddev' )
@@ -132,7 +131,7 @@ def jpipkak_4():
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
-    
+
     ds = gdal.Open( 'jpip://216.150.195.220/JP2Server/qb_boulder_pan_20bit' )
     if ds is None:
         gdaltest.post_reason( 'failed to open jpip stream.' )
@@ -141,7 +140,7 @@ def jpipkak_4():
     target = ds.GetRasterBand(1)
 
     stats = target.GetStatistics(0,1)
-    
+
     if abs(stats[2] - 5333.148) > 1.0 or abs(stats[3]-2522.023) > 1.0:
         print( stats )
         gdaltest.post_reason( 'did not get expected mean/stddev' )
@@ -159,7 +158,6 @@ def jpipkak_5():
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
-    
     ds = gdal.Open( 'jpip://216.150.195.220/JP2Server/qb_boulder_pan_byte' )
     if ds is None:
         gdaltest.post_reason( 'failed to open jpip stream.' )

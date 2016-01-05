@@ -65,7 +65,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /*                         OGRShapeGeomFieldDefn                        */
 /************************************************************************/
 
-class OGRShapeGeomFieldDefn: public OGRGeomFieldDefn
+class OGRShapeGeomFieldDefn CPL_FINAL: public OGRGeomFieldDefn
 {
     char* pszFullName;
     int   bSRSSet;
@@ -94,7 +94,7 @@ class OGRShapeGeomFieldDefn: public OGRGeomFieldDefn
 
 class OGRShapeDataSource;
 
-class OGRShapeLayer : public OGRAbstractProxiedLayer
+class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
 {
     OGRShapeDataSource  *poDS;
 
@@ -150,7 +150,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     int                 bResizeAtClose;
 
     void                TruncateDBF();
-    
+
     int                 bCreateSpatialIndexAtClose;
     int                 bRewindOnWrite;
 
@@ -195,7 +195,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     OGRErr              DeleteFeature( GIntBig nFID );
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     OGRErr              SyncToDisk();
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     GIntBig             GetFeatureCount( int );
@@ -215,7 +215,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * );
-    
+
     void                AddToFileList( CPLStringList& oFileList );
     void                CreateSpatialIndexAtClose( int bFlag ) { bCreateSpatialIndexAtClose = bFlag; }
     void                SetModificationDate(const char* pszStr);
@@ -225,11 +225,11 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
 /*                          OGRShapeDataSource                          */
 /************************************************************************/
 
-class OGRShapeDataSource : public OGRDataSource
+class OGRShapeDataSource CPL_FINAL: public OGRDataSource
 {
     OGRShapeLayer     **papoLayers;
     int                 nLayers;
-    
+
     char                *pszName;
 
     int                 bDSUpdate;
@@ -241,9 +241,9 @@ class OGRShapeDataSource : public OGRDataSource
     void                AddLayer(OGRShapeLayer* poLayer);
 
     std::vector<CPLString> oVectorLayerName;
-    
+
     int                 b2GBLimit;
-    
+
     char              **papszOpenOptions;
 
   public:

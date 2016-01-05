@@ -199,6 +199,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
     CPLXMLNode* psTree = CPLParseXMLString(m_osDefinition.c_str());
     if( psTree == NULL )
     {
+        m_osDefinition = "";
         return FALSE;
     }
 
@@ -209,6 +210,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         psInfo = CPLSearchXMLNode( psTree, "=DETableInfo" );
     if( psInfo == NULL )
     {
+        m_osDefinition = "";
         CPLDestroyXMLNode(psTree);
         return FALSE;
     }
@@ -358,7 +360,9 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         }
     }
 
-    if( m_osDefinition.size() == 0 && m_iGeomFieldIdx >= 0 )
+    if( m_iGeomFieldIdx >= 0 &&
+        (m_osDefinition.size() == 0 ||
+         m_poFeatureDefn->OGRFeatureDefn::GetGeomFieldCount() == 0) )
     {
         /* FileGDB v9 case */
         FileGDBGeomField* poGDBGeomField =
@@ -1040,7 +1044,8 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
 
                 if( FillTargetValueFromSrcExpr(poFieldDefn, &sValue, poValue) )
                 {
-                    FileGDBSQLOp eOp;
+                    FileGDBSQLOp eOp = FGSO_EQ; 
+                    CPL_IGNORE_RET_VAL(eOp);
                     if( poColumn == poNode->papoSubExpr[0] )
                     {
                         switch( poNode->nOperation )
@@ -1051,7 +1056,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                             case SWQ_EQ: eOp = FGSO_EQ; break;
                             case SWQ_GE: eOp = FGSO_GE; break;
                             case SWQ_GT: eOp = FGSO_GT; break;
-                            default: eOp = FGSO_EQ; CPLAssert(FALSE); break;
+                            default: CPLAssert(FALSE); break;
                         }
                     }
                     else
@@ -1066,7 +1071,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                             case SWQ_EQ: eOp = FGSO_EQ; break;
                             case SWQ_GE: eOp = FGSO_LE; break;
                             case SWQ_GT: eOp = FGSO_LT; break;
-                            default: eOp = FGSO_EQ; CPLAssert(FALSE); break;
+                            default: CPLAssert(FALSE); break;
                         }
                     }
 
@@ -1329,7 +1334,7 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
 
     if( poFeature == NULL )
         poFeature = new OGRFeature(m_poFeatureDefn);
-    
+
     if( m_poLyrTable->HasDeletedFeaturesListed() )
     {
         poFeature->SetField(poFeature->GetFieldCount() - 1,
@@ -1553,7 +1558,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
         int nCount = 0;
         if( m_eSpatialIndexState == SPI_IN_BUILDING && m_iCurFeat != 0 )
             m_eSpatialIndexState = SPI_INVALID;
-        
+
         int nFilteredFeatureCountAlloc = 0;
         if( m_eSpatialIndexState == SPI_IN_BUILDING )
         {
@@ -1679,7 +1684,7 @@ int OGROpenFileGDBLayer::HasIndexForField(const char* pszFieldName)
 {
     if( !BuildLayerDefinition() )
         return FALSE;
-    
+
     int nTableColIdx = m_poLyrTable->GetFieldIdx(pszFieldName);
     return ( nTableColIdx >= 0 &&
              m_poLyrTable->GetField(nTableColIdx)->HasIndex() );

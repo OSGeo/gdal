@@ -75,19 +75,19 @@ class ILI2Handler : public DefaultHandler
     ILI2Reader  *m_poReader;
 
     int level;
-    
+
     DOMDocument *dom_doc;
     DOMElement *dom_elem;
-    
+
     int m_nEntityCounter;
 
 public:
     ILI2Handler( ILI2Reader *poReader );
     ~ILI2Handler();
-    
+
     void startDocument();
     void endDocument();
-    
+
     void startElement(
         const   XMLCh* const    uri,
         const   XMLCh* const    localname,
@@ -122,16 +122,16 @@ class ILI2Reader : public IILI2Reader
 private:
     int      SetupParser();
     void     CleanupParser();
-    
+
     char    *m_pszFilename;
-    
+
     std::list<std::string> m_missAttrs;
 
     ILI2Handler *m_poILI2Handler;
     SAX2XMLReader *m_poSAXReader;
     int      m_bReadStarted;
     double   arcIncr;
-    
+
     std::list<OGRLayer *> m_listLayer;
 
 public:
@@ -141,11 +141,11 @@ public:
     void     SetSourceFile( const char *pszFilename );
     int      ReadModel( ImdReader *poImdReader, const char *modelFilename );
     int      SaveClasses( const char *pszFile );
-    
+
     std::list<OGRLayer *> GetLayers();
     int      GetLayerCount();
     OGRLayer* GetLayer(const char* pszName);
-    
+
     int      AddFeature(DOMElement *elem);
     void     SetFieldValues(OGRFeature *feature, DOMElement* elem);
     const char* GetLayerName(/*IOM_BASKET model, IOM_OBJECT table*/);

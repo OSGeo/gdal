@@ -27,11 +27,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- * 
+ *
  */
 
-#include "gdal_pam.h"
 #include "cpl_multiproc.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "ogr_spatialref.h"
 
 #include "degrib18/degrib/degrib2.h"
 #include "degrib18/degrib/inventory.h"
@@ -39,13 +41,7 @@
 #include "degrib18/degrib/filedatasource.h"
 #include "degrib18/degrib/memorydatasource.h"
 
-#include "ogr_spatialref.h"
-
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_GRIB(void);
-CPL_C_END
 
 static CPLMutex *hGRIBMutex = NULL;
 
@@ -933,10 +929,8 @@ void GDALRegister_GRIB()
 
     poDriver->SetDescription( "GRIB" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "GRIdded Binary (.grb)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_grib.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRIdded Binary (.grb)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_grib.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grb" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

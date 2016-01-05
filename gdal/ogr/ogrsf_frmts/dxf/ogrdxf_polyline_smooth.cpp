@@ -72,6 +72,7 @@ static double GetOGRangle(double angle)
 }
 
 
+// TODO: Spelling Tesselate -> Tessellate
 /************************************************************************/
 /*                DXFSmoothPolyline::Tesselate()                        */
 /************************************************************************/
@@ -274,7 +275,7 @@ void DXFSmoothPolyline::EmitArc
 
 
 /* -------------------------------------------------------------------- */
-/*      Tesselate the arc segment and append to the linestring.         */
+/*      Tessellate the arc segment and append to the linestring.        */
 /* -------------------------------------------------------------------- */
 
     OGRLineString* poArcpoLS = 

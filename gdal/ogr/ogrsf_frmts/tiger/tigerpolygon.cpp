@@ -448,7 +448,7 @@ int TigerPolygon::SetModule( const char * pszModuleIn )
         return FALSE;
 
     EstablishFeatureCount();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the RTS file                                               */
 /* -------------------------------------------------------------------- */
@@ -463,7 +463,7 @@ int TigerPolygon::SetModule( const char * pszModuleIn )
         if( pszModuleIn )
         {
             char        *pszFilename;
-        
+
             pszFilename = poDS->BuildFilename( pszModuleIn, "S" );
 
             fpRTS = VSIFOpenL( pszFilename, "rb" );
@@ -473,7 +473,7 @@ int TigerPolygon::SetModule( const char * pszModuleIn )
             nRTSRecLen = EstablishRecordLength( fpRTS );
         }
     }
-    
+
     return TRUE;
 }
 
@@ -551,7 +551,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         SetFields( psRTSInfo, poFeature, achRTSRec );
 
     }
-    
+
     return poFeature;
 }
 
@@ -583,7 +583,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
         if( pszModule )
         {
             char        *pszFilename;
-        
+
             pszFilename = poDS->BuildFilename( pszModule, "S" );
 
             fpRTS = VSIFOpenL( pszFilename, "ab" );
@@ -591,7 +591,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
             CPLFree( pszFilename );
         }
     }
-    
+
     return TRUE;
 }
 

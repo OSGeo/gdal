@@ -72,7 +72,7 @@ struct GeoJSONObject
         eFeature,
         eFeatureCollection
     };
-    
+
     enum CoordinateDimension
     {
         eMinCoordinateDimension = 2,
@@ -97,6 +97,7 @@ public:
     void SetSkipAttributes( bool bSkip );
     void SetFlattenNestedAttributes( bool bFlatten, char chSeparator );
     void SetStoreNativeData( bool bStoreNativeData );
+    void SetArrayAsString( bool bArrayAsString );
 
     OGRErr Parse( const char* pszText );
     void ReadLayers( OGRGeoJSONDataSource* poDS );
@@ -115,9 +116,15 @@ private:
     bool bFlattenNestedAttributes_;
     char chNestedAttributeSeparator_;
     bool bStoreNativeData_;
+    bool bArrayAsString_;
 
+    // bFlatten... is a tri-state boolean with -1 being unset.
     int bFlattenGeocouchSpatiallistFormat;
-    bool bFoundId, bFoundRev, bFoundTypeFeature, bIsGeocouchSpatiallistFormat;
+
+    bool bFoundId;
+    bool bFoundRev;
+    bool bFoundTypeFeature;
+    bool bIsGeocouchSpatiallistFormat;
 
     //
     // Copy operations not supported.
@@ -149,7 +156,8 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
                                       const char* pszKey,
                                       json_object* poVal,
                                       bool bFlattenNestedAttributes,
-                                      char chNestedAttributeSeparator);
+                                      char chNestedAttributeSeparator,
+                                      bool bArrayAsString = false);
 
 /************************************************************************/
 /*                 GeoJSON Parsing Utilities                            */

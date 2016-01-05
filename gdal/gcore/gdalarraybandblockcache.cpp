@@ -42,9 +42,9 @@ CPL_CVSID("$Id$");
 /*                        GDALArrayBandBlockCache                       */
 /* ******************************************************************** */
 
-class GDALArrayBandBlockCache: public GDALAbstractBandBlockCache
+class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
 {
-    int               bSubBlockingActive;
+    bool              bSubBlockingActive;
     int               nSubBlocksPerRow;
     int               nSubBlocksPerColumn;
     union
@@ -57,8 +57,8 @@ class GDALArrayBandBlockCache: public GDALAbstractBandBlockCache
             explicit GDALArrayBandBlockCache(GDALRasterBand* poBand);
            ~GDALArrayBandBlockCache();
 
-           virtual int              Init();
-           virtual int              IsInitOK();
+           virtual bool             Init();
+           virtual bool             IsInitOK();
            virtual CPLErr           FlushCache();
            virtual CPLErr           AdoptBlock( GDALRasterBlock * );
            virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
@@ -81,7 +81,7 @@ GDALAbstractBandBlockCache* GDALArrayBandBlockCacheCreate(GDALRasterBand* poBand
 
 GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand* poBandIn) :
     GDALAbstractBandBlockCache(poBandIn),
-    bSubBlockingActive(FALSE),
+    bSubBlockingActive(false),
     nSubBlocksPerRow(0),
     nSubBlocksPerColumn(0)
 {
@@ -106,11 +106,11 @@ GDALArrayBandBlockCache::~GDALArrayBandBlockCache()
 /*                                  Init()                              */
 /************************************************************************/
 
-int GDALArrayBandBlockCache::Init()
+bool GDALArrayBandBlockCache::Init()
 {
     if( poBand->nBlocksPerRow < SUBBLOCK_SIZE/2 )
     {
-        bSubBlockingActive = FALSE;
+        bSubBlockingActive = false;
 
         if (poBand->nBlocksPerRow < INT_MAX / poBand->nBlocksPerColumn)
         {
@@ -121,7 +121,7 @@ int GDALArrayBandBlockCache::Init()
             {
                 poBand->ReportError( CE_Failure, CPLE_OutOfMemory,
                                     "Out of memory in InitBlockInfo()." );
-                return FALSE;
+                return false;
             }
         }
         else
@@ -129,12 +129,12 @@ int GDALArrayBandBlockCache::Init()
             poBand->ReportError( CE_Failure, CPLE_NotSupported,
                                  "Too many blocks : %d x %d",
                                  poBand->nBlocksPerRow, poBand->nBlocksPerColumn );
-            return FALSE;
+            return false;
         }
     }
     else
     {
-        bSubBlockingActive = TRUE;
+        bSubBlockingActive = true;
 
         nSubBlocksPerRow = DIV_ROUND_UP(poBand->nBlocksPerRow, SUBBLOCK_SIZE);
         nSubBlocksPerColumn = DIV_ROUND_UP(poBand->nBlocksPerColumn, SUBBLOCK_SIZE);
@@ -148,7 +148,7 @@ int GDALArrayBandBlockCache::Init()
             {
                 poBand->ReportError( CE_Failure, CPLE_OutOfMemory,
                                     "Out of memory in InitBlockInfo()." );
-                return FALSE;
+                return false;
             }
 
         }
@@ -157,18 +157,18 @@ int GDALArrayBandBlockCache::Init()
             poBand->ReportError( CE_Failure, CPLE_NotSupported,
                                  "Too many subblocks : %d x %d",
                                  nSubBlocksPerRow, nSubBlocksPerColumn );
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                             IsInitOK()                               */
 /************************************************************************/
 
-int GDALArrayBandBlockCache::IsInitOK()
+bool GDALArrayBandBlockCache::IsInitOK()
 {
     return (!bSubBlockingActive) ?
         u.papoBlocks != NULL : u.papapoBlocks != NULL;
@@ -251,11 +251,13 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 /* -------------------------------------------------------------------- */
     if( !bSubBlockingActive && u.papoBlocks != NULL )
     {
-        for( int iY = 0; iY < poBand->nBlocksPerColumn; iY++ )
+        const int nBlocksPerColumn = poBand->nBlocksPerColumn;
+        const int nBlocksPerRow = poBand->nBlocksPerRow;
+        for( int iY = 0; iY < nBlocksPerColumn; iY++ )
         {
-            for( int iX = 0; iX < poBand->nBlocksPerRow; iX++ )
+            for( int iX = 0; iX < nBlocksPerRow; iX++ )
             {
-                if( u.papoBlocks[iX + iY*poBand->nBlocksPerRow] != NULL )
+                if( u.papoBlocks[iX + iY*nBlocksPerRow] != NULL )
                 {
                     CPLErr eErr = FlushBlock( iX, iY, eGlobalErr == CE_None );
 

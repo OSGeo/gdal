@@ -72,7 +72,7 @@ def pcraster_2():
 
     return 'success'
 
-    
+
 gdaltest_list = [
     pcraster_1,
     pcraster_2 ]

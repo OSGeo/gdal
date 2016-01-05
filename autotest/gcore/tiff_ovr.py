@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Overview Support (mostly a GeoTIFF issue).
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -94,7 +94,7 @@ def tiff_ovr_1():
     src_ds = None
 
     ds = gdal.Open( 'tmp/mfloat32.tif' )
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -168,7 +168,7 @@ def tiff_ovr_4():
     shutil.copyfile( 'data/oddsize_1bit2b.tif', 'tmp/ovr4.tif' )
 
     wrk_ds = gdal.Open('tmp/ovr4.tif',gdal.GA_Update)
-    
+
     if wrk_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -247,7 +247,7 @@ def tiff_ovr_5():
     shutil.copyfile( 'data/nodata_byte.tif', 'tmp/ovr5.tif' )
 
     wrk_ds = gdal.Open('tmp/ovr5.tif',gdal.GA_ReadOnly)
-    
+
     if wrk_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -263,33 +263,33 @@ def tiff_ovr_5():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Same as tiff_ovr_5 but with USE_RDD=YES to force external overview
 
 def tiff_ovr_6():
 
     shutil.copyfile( 'data/nodata_byte.tif', 'tmp/ovr6.tif' )
-    
+
     oldOption = gdal.GetConfigOption('USE_RRD', 'NO')
     gdal.SetConfigOption('USE_RRD', 'YES')
-    
+
     wrk_ds = gdal.Open('tmp/ovr6.tif',gdal.GA_Update)
-    
+
     if wrk_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
 
     wrk_ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
-    
+
     gdal.SetConfigOption('USE_RRD', oldOption)
-    
+
     try:
         os.stat('tmp/ovr6.aux')
     except:
         gdaltest.post_reason( 'no external overview.' )
         return 'fail'
-    
+
     cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1130
 
@@ -311,7 +311,7 @@ def tiff_ovr_7():
     # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
     # In nearest resampling, we are expecting a uniform black image.
     ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -341,7 +341,7 @@ def tiff_ovr_8():
     # So the result of averaging (0,0,0) and (255,255,255) is (127,127,127), which is
     # index 2. So the result of the averaging is a uniform grey image.
     ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
-    
+
     if ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -418,7 +418,7 @@ def tiff_ovr_9():
 def tiff_ovr_10():
 
     src_ds = gdal.Open('data/rgbsmall.tif', gdal.GA_ReadOnly)
-    
+
     if src_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -457,7 +457,7 @@ def tiff_ovr_10():
 def tiff_ovr_11():
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
-    
+
     if src_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -503,7 +503,7 @@ def tiff_ovr_11():
 def tiff_ovr_12():
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
-    
+
     if src_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -614,7 +614,7 @@ def tiff_ovr_14():
 def tiff_ovr_15():
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
-    
+
     if src_ds is None:
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
@@ -1077,7 +1077,7 @@ def tiff_ovr_28():
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason( 'Overview(s) appear to still exist after reopen.')
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -1101,7 +1101,7 @@ def tiff_ovr_29():
     if png_ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason( 'did not find overview' )
         return 'fail'
-        
+
     png_ds.BuildOverviews( overviewlist = [] )
     if png_ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason( 'delete overview failed.' )
@@ -1113,7 +1113,7 @@ def tiff_ovr_29():
     if png_ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason( 'delete overview failed.' )
         return 'fail'
-        
+
     png_ds = None
 
     try:
@@ -1124,7 +1124,7 @@ def tiff_ovr_29():
         pass
 
     gdal.GetDriverByName('PNG').Delete('tmp/ovr29.png')
-    
+
     return 'success'
 
 ###############################################################################
@@ -1209,7 +1209,7 @@ def tiff_ovr_32():
     ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/ovr32.tif' )
-    
+
     # Same, but with non-byte data type (help testing the non-SSE2 code path)
     src_ds = gdal.Open( 'data/stefan_full_rgba_photometric_rgb.tif' )
 
@@ -1236,7 +1236,7 @@ def tiff_ovr_32():
     tmp2_ds = None
     gdaltest.tiff_drv.Delete( '/vsimem/ovr32_float.tif' )
     gdaltest.tiff_drv.Delete( '/vsimem/ovr32_byte.tif' )
-    
+
     # Test GDALRegenerateOverviewsMultiBand
     shutil.copyfile( 'data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif' )
 
@@ -1262,7 +1262,7 @@ def tiff_ovr_32():
     ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/ovr32.tif' )
-    
+
 
     # 3 bands + alpha
     shutil.copyfile( 'data/stefan_full_rgba.tif', 'tmp/ovr32.tif' )
@@ -1285,7 +1285,7 @@ def tiff_ovr_32():
     ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/ovr32.tif' )
-    
+
     # Same, but with non-byte data type (help testing the non-SSE2 code path)
     src_ds = gdal.Open( 'data/stefan_full_rgba.tif' )
 
@@ -1313,7 +1313,7 @@ def tiff_ovr_32():
     tmp2_ds = None
     gdaltest.tiff_drv.Delete( '/vsimem/ovr32_float.tif' )
     gdaltest.tiff_drv.Delete( '/vsimem/ovr32_byte.tif' )
-    
+
     # Same test with a compressed dataset
     src_ds = gdal.Open('data/stefan_full_rgba.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/ovr32.tif', src_ds, options = ['COMPRESS=DEFLATE'])
@@ -1370,7 +1370,7 @@ def tiff_ovr_34():
     ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
     ds = None
     ds_in = None
-    
+
     ds = gdal.Open('tmp/ovr34.tif')
     data = ds.GetRasterBand(1).ReadRaster( 0,0,20,20,buf_xsize=5,buf_ysize=5)
     ds = None
@@ -1395,7 +1395,7 @@ def tiff_ovr_35():
     ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
     ds = None
     ds_in = None
-    
+
     ds = gdal.Open('tmp/ovr35.tif')
     data = ds.ReadRaster( 0,0,20,20,buf_xsize=5,buf_ysize=5,band_list=[1])
     ds = None
@@ -1416,11 +1416,11 @@ def tiff_ovr_36():
 
     oldval = gdal.GetConfigOption('GDAL_FORCE_CACHING', 'NO')
     gdal.SetConfigOption('GDAL_FORCE_CACHING', 'YES')
-    
+
     ret = tiff_ovr_35()
-    
+
     gdal.SetConfigOption('GDAL_FORCE_CACHING', oldval)
-    
+
     return ret
 
 ###############################################################################
@@ -1923,7 +1923,7 @@ def tiff_ovr_47():
     ds = None
 
     gdal.Unlink("/vsimem/tiff_ovr_47.tif")
-    
+
     if cs != 35721:
         gdaltest.post_reason('did not get expected checksum')
         print(cs)
@@ -1935,12 +1935,12 @@ def tiff_ovr_47():
 # Test that we don't average 0's in alpha band
 
 def tiff_ovr_48():
-    
+
     shutil.copy('data/rgba_with_alpha_0_and_255.tif', 'tmp')
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif')
     ds.BuildOverviews('AVERAGE', [2])
     ds = None
-    
+
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
     for i in range(4):
         cs = ds.GetRasterBand(i+1).Checksum()
@@ -1980,7 +1980,7 @@ def tiff_ovr_49():
 # Test overviews when X dimension is smaller than Y (#5794)
 
 def tiff_ovr_50():
-    
+
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_ovr_50.tif', 6, 8192, 3,
                                               options=['COMPRESS=DEFLATE'])
     ds.GetRasterBand(1).Fill(255)
@@ -1989,7 +1989,7 @@ def tiff_ovr_50():
     ds.BuildOverviews( 'AVERAGE', overviewlist = [2,4,8,16,32] )
     ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_50.tif')
-    
+
     return 'success'
 
 ###############################################################################

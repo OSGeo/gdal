@@ -118,12 +118,12 @@ const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
 {
     static char szWorkField[128];
     int         i;
-    
+
     strncpy( szWorkField, pszSrc+nStart-1, nWidth );
     szWorkField[nWidth] = '\0';
 
     i = (int)strlen(szWorkField)-1;
-    
+
     while( i >= 0 && szWorkField[i] == ' ' )
         szWorkField[i--] = '\0';
 

@@ -85,11 +85,11 @@ def ogr_s57_2():
     if gdaltest.s57_ds.GetLayerCount() != len(layer_list):
         gdaltest.post_reason( 'Did not get expected number of layers, likely cant find support files.' )
         return 'fail'
-    
+
     for i in range(len(layer_list)):
         lyr = gdaltest.s57_ds.GetLayer( i )
         lyr_info = layer_list[i]
-        
+
         if lyr.GetName() != lyr_info[0]:
             gdaltest.post_reason( 'Expected layer %d to be %s but it was %s.'\
                                   % (i+1, lyr_info[0], lyr.GetName()) )
@@ -103,7 +103,7 @@ def ogr_s57_2():
         if lyr.GetLayerDefn().GetGeomType() != lyr_info[1]:
             gdaltest.post_reason( 'Expected %d layer type in layer %s, but got %d.' % (lyr_info[1], lyr_info[0], lyr.GetLayerDefn().GetGeomType()) )
             return 'fail'
-            
+
     return 'success'
 
 ###############################################################################
@@ -118,7 +118,7 @@ def ogr_s57_3():
     if feat is None:
         gdaltest.post_reason( 'Did not get expected COALNE feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'RCID' ) != 1 \
            or feat.GetField( 'LNAM' ) != 'FFFF7F4F0FB002D3' \
            or feat.GetField( 'OBJL' ) != 30 \
@@ -145,7 +145,7 @@ def ogr_s57_4():
     if feat is None:
         gdaltest.post_reason( 'Did not get expected M_QUAL feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'RCID' ) != 15 \
            or feat.GetField( 'OBJL' ) != 308 \
            or feat.GetField( 'AGEN' ) != 65535:
@@ -171,7 +171,7 @@ def ogr_s57_5():
     if feat is None:
         gdaltest.post_reason( 'Did not get expected SOUNDG feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'RCID' ) != 20 \
            or feat.GetField( 'OBJL' ) != 129 \
            or feat.GetField( 'AGEN' ) != 65535:

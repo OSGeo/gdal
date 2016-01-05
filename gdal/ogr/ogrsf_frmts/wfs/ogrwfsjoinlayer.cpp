@@ -66,7 +66,7 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource* poDSIn,
         apoLayers.push_back((OGRWFSLayer*)poDS->GetLayerByName(osLayerName));
         osName += osLayerName;
     }
-    
+
     osFeatureTypes = "(";
     for(int i=0;i<(int)apoLayers.size();i++)
     {
@@ -245,7 +245,7 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
                                         const swq_select* psSelectInfo)
 {
     CPLString osGlobalFilter;
-    
+
     for( int i = 0; i < psSelectInfo->result_columns; i++ )
     {
         swq_col_def *def = psSelectInfo->column_defs + i;
@@ -374,7 +374,7 @@ CPLString OGRWFSJoinLayer::MakeGetFeatureURL(int bRequestHits)
 
     CPLString osFilter;
     osFilter = "<Filter xmlns=\"http://www.opengis.net/fes/2.0\"";
-    
+
     std::map<CPLString, CPLString> oMapNS;
     for(int i=0;i<(int)apoLayers.size();i++)
     {

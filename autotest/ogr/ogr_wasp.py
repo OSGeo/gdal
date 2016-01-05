@@ -229,7 +229,7 @@ def ogr_wasp_elevation_from_linestring_field():
         i+=1
 
     return 'success'
-    
+
 ###############################################################################
 # Create roughness .map from linestrings fields
 

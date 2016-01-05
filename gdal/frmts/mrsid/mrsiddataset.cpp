@@ -30,10 +30,11 @@
 
 #define NO_DELETE
 
-#include "gdaljp2abstractdataset.h"
-#include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
+#include "ogr_spatialref.h"
 #include <string>
 
 #include <geo_normalize.h>
@@ -521,7 +522,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLDebug( "MrSID", 
                   "IReadBlock - read() %dx%d block at %d,%d.", 
                   nBlockXSize, nBlockYSize, nCol, nLine );
-                  
+
         if(!LT_SUCCESS( poGDS->poLTINav->setSceneAsULWH(
                             nCol, nLine,
                             (nCol+nBlockXSize>poGDS->GetRasterXSize())?
@@ -529,7 +530,6 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                             (nLine+nBlockYSize>poGDS->GetRasterYSize())?
                             (poGDS->GetRasterYSize()-nLine):nBlockYSize,
                             poGDS->dfCurrentMag) ))
-            
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MrSIDRasterBand::IReadBlock(): Failed to set scene position." );
@@ -624,7 +624,7 @@ CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                    GDALDataType eBufType,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GDALRasterIOExtraArg* psExtraArg)
-    
+
 {
 /* -------------------------------------------------------------------- */
 /*      Fallback to default implementation if the whole scanline        */
@@ -758,20 +758,20 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     eSampleType = LTI_DATATYPE_UINT8;
     nBands = 0;
     eDataType = GDT_Byte;
-    
+
     poBuffer = NULL;
     bPrevBlockRead = FALSE;
     nPrevBlockXOff = 0;
     nPrevBlockYOff = 0;
-    
+
     psDefn = NULL;
-    
+
     dfCurrentMag = 1.0;
     bIsOverview = FALSE;
     poParentDS = this;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
-    
+
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2MrSID" : "MrSID" );
 }
 
@@ -864,7 +864,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
             pData, nBufXSize, nBufYSize, eBufType, 
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     CPLDebug( "MrSID", "RasterIO() - using optimized dataset level IO." );
-    
+
 /* -------------------------------------------------------------------- */
 /*      What is our requested window relative to the base dataset.      */
 /*      We want to operate from here on as if we were operating on      */
@@ -899,7 +899,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     int  nTmpPixelSize;
     LTIPixel       oPixel( eColorSpace, static_cast<lt_uint16>(nBands), eSampleType );
-    
+
     LT_STATUS eLTStatus;
     unsigned int maxWidth;
     unsigned int maxHeight;
@@ -935,7 +935,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      Create navigator, and move to the requested scene area.         */
 /* -------------------------------------------------------------------- */
     LTINavigator oNav( *poImageReader );
-    
+
     if( !LT_SUCCESS(oNav.setSceneAsULWH( sceneUlXOff, sceneUlYOff, 
                                          sceneWidth, sceneHeight, 
                                          1.0 / nZoomMag )) )
@@ -1270,7 +1270,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         oGeo.get( adfGeoTransform[0], adfGeoTransform[3],
                   adfGeoTransform[1], adfGeoTransform[5],
                   adfGeoTransform[2], adfGeoTransform[4] );
-        
+
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
         bGeoTransformValid = TRUE;
@@ -1283,7 +1283,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
             || GDALReadWorldFile( GetDescription(), ".wld",
                                   adfGeoTransform );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read wkt.                                                       */
 /* -------------------------------------------------------------------- */
@@ -1291,7 +1291,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     if( !poImageReader->isGeoCoordImplicit() )
     {
         const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
-        
+
         if( oGeo.getWKT() )
         {
             /* Workaround probable issue with GeoDSK 7 on 64bit Linux */
@@ -1342,7 +1342,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
             if (nUTMZone >= 1 && nUTMZone <= 60 && bWGS84 && bUnitsMeter)
             {
                 osMETFilename = pszMETFilename;
-                
+
                 OGRSpatialReference oSRS;
                 oSRS.importFromEPSG(32600 + nUTMZone);
                 CPLFree(pszProjection);
@@ -1404,7 +1404,7 @@ static GDALDataset* MrSIDOpen( GDALOpenInfo *poOpenInfo )
 {
     if (!MrSIDIdentify(poOpenInfo))
         return NULL;
-        
+
     return MrSIDDataset::Open( poOpenInfo, FALSE );
 }
 
@@ -1430,7 +1430,7 @@ static int JP2Identify( GDALOpenInfo *poOpenInfo )
         const char *pszExtension;
 
         pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-        
+
         if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
             && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
             && !EQUAL(pszExtension,"j2c") && !EQUAL(pszExtension,"ntf"))
@@ -1452,7 +1452,7 @@ static GDALDataset* JP2Open( GDALOpenInfo *poOpenInfo )
 {
     if (!JP2Identify(poOpenInfo))
         return NULL;
-        
+
     return MrSIDDataset::Open( poOpenInfo, TRUE );
 }
 
@@ -1623,7 +1623,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
     }
 
     poDS->GetGTIFDefn();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get number of resolution levels (we will use them as overviews).*/
 /* -------------------------------------------------------------------- */
@@ -1696,7 +1696,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 
 {
     /* see trf_method.csv for list of EPSG codes */
-    
+
     switch( nEPSG )
     {
       case 9801:
@@ -1804,7 +1804,7 @@ static int SetGTParmIds( int nCTProjection,
     memset( panEPSGCodes, 0, sizeof(int) * 7 );
 
     /* psDefn->nParms = 7; */
-    
+
     switch( nCTProjection )
     {
       case CT_CassiniSoldner:
@@ -1853,7 +1853,7 @@ static int SetGTParmIds( int nCTProjection,
         panEPSGCodes[5] = EPSGProjCenterEasting;
         panEPSGCodes[6] = EPSGProjCenterNorthing;
         return TRUE;
-        
+
       case CT_LambertConfConic_1SP:
       case CT_Mercator:
       case CT_ObliqueStereographic:
@@ -2001,7 +2001,7 @@ void MrSIDDataset::FetchProjParms()
         && !GetMetadataElement( "GEOTIFF_NUM::3090:ProjCenterEastingGeoKey",
                                 &dfFalseEasting ) )
         dfFalseEasting = 0.0;
-        
+
     if( !GetMetadataElement( "GEOTIFF_NUM::3083::ProjFalseNorthingGeoKey",
                              &dfFalseNorthing )
         && !GetMetadataElement( "GEOTIFF_NUM::3091::ProjCenterNorthingGeoKey",
@@ -2032,7 +2032,7 @@ void MrSIDDataset::FetchProjParms()
         if( GetMetadataElement( "GEOTIFF_NUM::3092::ProjScaleAtNatOriginGeoKey",
                                 &dfNatOriginScale ) == 0 )
             dfNatOriginScale = 1.0;
-            
+
         /* notdef: should transform to decimal degrees at this point */
 
         psDefn->ProjParm[0] = dfNatOriginLat;
@@ -2124,7 +2124,7 @@ void MrSIDDataset::FetchProjParms()
             && GetMetadataElement( "GEOTIFF_NUM::3093::ProjScaleAtCenterGeoKey",
                                    &dfNatOriginScale ) == 0 )
             dfNatOriginScale = 1.0;
-            
+
         /* notdef: should transform to decimal degrees at this point */
 
         psDefn->ProjParm[0] = dfNatOriginLat;
@@ -2171,7 +2171,7 @@ void MrSIDDataset::FetchProjParms()
             && GetMetadataElement( "GEOTIFF_NUM::3093::ProjScaleAtCenterGeoKey",
                                    &dfNatOriginScale ) == 0 )
             dfNatOriginScale = 1.0;
-            
+
         /* notdef: should transform to decimal degrees at this point */
 
         psDefn->ProjParm[0] = dfNatOriginLat;
@@ -2277,7 +2277,7 @@ void MrSIDDataset::FetchProjParms()
             && GetMetadataElement( "GEOTIFF_NUM::3093::ProjScaleAtCenterGeoKey",
                                    &dfNatOriginScale ) == 0 )
             dfNatOriginScale = 1.0;
-            
+
         /* notdef: should transform to decimal degrees at this point */
 
         psDefn->ProjParm[0] = dfNatOriginLat;
@@ -2471,14 +2471,14 @@ void MrSIDDataset::GetGTIFDefn()
             psDefn->GCS = (short) nGCS;
         }
     }
-   
+
 /* -------------------------------------------------------------------- */
 /*      If the Proj_ code is specified directly, use that.              */
 /* -------------------------------------------------------------------- */
     if( psDefn->ProjCode == KvUserDefined )
         GetMetadataElement( "GEOTIFF_NUM::3074::ProjectionGeoKey",
                             &(psDefn->ProjCode) );
-    
+
     if( psDefn->ProjCode != KvUserDefined )
     {
         /*
@@ -2490,7 +2490,7 @@ void MrSIDDataset::GetGTIFDefn()
          */
         GTIFGetProjTRFInfo( psDefn->ProjCode, NULL, &(psDefn->Projection),
                             psDefn->ProjParm );
-        
+
         /*
          * Set the GeoTIFF identity of the parameters.
          */
@@ -2516,7 +2516,7 @@ void MrSIDDataset::GetGTIFDefn()
         GTIFGetGCSInfo( psDefn->GCS, NULL, &(psDefn->Datum), &(psDefn->PM),
                         &(psDefn->UOMAngle) );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle the GCS angular units.  GeogAngularUnitsGeoKey           */
 /*      overrides the GCS or PCS setting.                               */
@@ -2563,7 +2563,7 @@ void MrSIDDataset::GetGTIFDefn()
                         &(psDefn->SemiMajor) );
     GetMetadataElement( "GEOTIFF_NUM::2058::GeogSemiMinorAxisGeoKey",
                         &(psDefn->SemiMinor) );
-    
+
     if( GetMetadataElement( "GEOTIFF_NUM::2059::GeogInvFlatteningGeoKey",
                             &dfInvFlattening ) == 1 )
     {
@@ -2633,16 +2633,16 @@ void MrSIDDataset::GetGTIFDefn()
         psDefn->nParms = 7;
         psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
         psDefn->ProjParm[0] = 0.0;
-            
+
         psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
         psDefn->ProjParm[1] = psDefn->Zone*6 - 183.0;
-        
+
         psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
         psDefn->ProjParm[4] = 0.9996;
-        
+
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParm[5] = 500000.0;
-        
+
         psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
 
         if( psDefn->MapSys == MapSys_UTM_North )
@@ -2687,7 +2687,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
     if( psDefnIn->Model != ModelTypeProjected 
         && psDefnIn->Model != ModelTypeGeographic )
         return CPLStrdup("");
-    
+
 /* -------------------------------------------------------------------- */
 /*      If this is a projected SRS we set the PROJCS keyword first      */
 /*      to ensure that the GEOGCS will be a child.                      */
@@ -2702,7 +2702,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 
             if( GTIFGetPCSInfo( psDefnIn->PCS, &pszPCSName, NULL, NULL, NULL ) )
                 bPCSNameSet = TRUE;
-            
+
             oSRS.SetNode( "PROJCS", bPCSNameSet ? pszPCSName : "unnamed" );
             if( bPCSNameSet )
                 GTIFFreeMemory( pszPCSName );
@@ -2718,7 +2718,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
                 oSRS.SetNode( "PROJCS", szPCSName );
         }
     }
-    
+
 /* ==================================================================== */
 /*      Setup the GeogCS                                                */
 /* ==================================================================== */
@@ -2729,7 +2729,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
     char        *pszAngularUnits = NULL;
     double      dfInvFlattening, dfSemiMajor;
     char        szGCSName[200];
-    
+
     if( GetMetadataElement( "GEOTIFF_NUM::2049::GeogCitationGeoKey",
                             szGCSName, sizeof(szGCSName) ) )
         pszGeogName = CPLStrdup(szGCSName);
@@ -2744,7 +2744,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
     GTIFToCPLRecycleString(&pszPMName);
     GTIFGetEllipsoidInfo( psDefnIn->Ellipsoid, &pszSpheroidName, NULL, NULL );
     GTIFToCPLRecycleString(&pszSpheroidName);
-    
+
     GTIFGetUOMAngleInfo( psDefnIn->UOMAngle, &pszAngularUnits, NULL );
     GTIFToCPLRecycleString(&pszAngularUnits);
     if( pszAngularUnits == NULL )
@@ -2784,7 +2784,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
     CPLFree( pszPMName );
     CPLFree( pszSpheroidName );
     CPLFree( pszAngularUnits );
-        
+
 /* ==================================================================== */
 /*      Handle projection parameters.                                   */
 /* ==================================================================== */
@@ -2800,15 +2800,17 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 
         for( i = 0; i < MIN(10,psDefnIn->nParms); i++ )
             adfParm[i] = psDefnIn->ProjParm[i];
+        for( ; i < 10; i++)
+            adfParm[i] = 0;
 
         adfParm[0] /= psDefnIn->UOMAngleInDegrees;
         adfParm[1] /= psDefnIn->UOMAngleInDegrees;
         adfParm[2] /= psDefnIn->UOMAngleInDegrees;
         adfParm[3] /= psDefnIn->UOMAngleInDegrees;
-        
+
         adfParm[5] /= psDefnIn->UOMLengthInMeters;
         adfParm[6] /= psDefnIn->UOMLengthInMeters;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Translation the fundamental projection.                         */
 /* -------------------------------------------------------------------- */
@@ -2850,18 +2852,18 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
                          adfParm[4],
                          adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_EquidistantConic: 
             oSRS.SetEC( adfParm[0], adfParm[1],
                         adfParm[2], adfParm[3],
                         adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_CassiniSoldner:
             oSRS.SetCS( adfParm[0], adfParm[1],
                         adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_Polyconic:
             oSRS.SetPolyconic( adfParm[0], adfParm[1],
                                adfParm[5], adfParm[6] );
@@ -2871,42 +2873,42 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
             oSRS.SetAE( adfParm[0], adfParm[1],
                         adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_MillerCylindrical:
             oSRS.SetMC( adfParm[0], adfParm[1],
                         adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_Equirectangular:
             oSRS.SetEquirectangular( adfParm[0], adfParm[1],
                                      adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_Gnomonic:
             oSRS.SetGnomonic( adfParm[0], adfParm[1],
                               adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_LambertAzimEqualArea:
             oSRS.SetLAEA( adfParm[0], adfParm[1],
                           adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_Orthographic:
             oSRS.SetOrthographic( adfParm[0], adfParm[1],
                                   adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_Robinson:
             oSRS.SetRobinson( adfParm[1],
                               adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_Sinusoidal:
             oSRS.SetSinusoidal( adfParm[1],
                                 adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_VanDerGrinten:
             oSRS.SetVDG( adfParm[1],
                          adfParm[5], adfParm[6] );
@@ -2917,7 +2919,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
                         adfParm[4],
                         adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_LambertConfConic_2SP:
             oSRS.SetLCC( adfParm[2], adfParm[3],
                          adfParm[0], adfParm[1],
@@ -2929,7 +2931,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
                             adfParm[4],
                             adfParm[5], adfParm[6] );
             break;
-        
+
           case CT_AlbersEqualArea:
             oSRS.SetACEA( adfParm[0], adfParm[1],
                           adfParm[2], adfParm[3],
@@ -2946,7 +2948,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /*      Set projection units.                                           */
 /* -------------------------------------------------------------------- */
         char    *pszUnitsName = NULL;
-        
+
         GTIFGetUOMLengthInfo( psDefnIn->UOMLength, &pszUnitsName, NULL );
 
         if( pszUnitsName != NULL && psDefnIn->UOMLength != KvUserDefined )
@@ -2959,7 +2961,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 
         GTIFFreeMemory( pszUnitsName );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Return the WKT serialization of the object.                     */
 /* -------------------------------------------------------------------- */
@@ -2997,7 +2999,7 @@ class MrSIDDummyImageReader : public LTIImageReader
     GDALDataType        eDataType;
     LTIDataType         eSampleType;
     const LTIPixel      *poPixel;
-    
+
     double              adfGeoTransform[6];
 
     virtual LT_STATUS   decodeStrip( LTISceneBuffer& stripBuffer,
@@ -3041,7 +3043,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
     if ( !LT_SUCCESS(eStat = LTIImageReader::initialize()) )
         return eStat;
 #endif
-    
+
     lt_uint16 nBands = (lt_uint16)poDS->GetRasterCount();
     LTIColorSpace eColorSpace = LTI_COLORSPACE_RGB;
     switch ( nBands )
@@ -3056,7 +3058,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
             eColorSpace = LTI_COLORSPACE_MULTISPECTRAL;
             break;
     }
-    
+
     eDataType = poDS->GetRasterBand(1)->GetRasterDataType();
     switch ( eDataType )
     {
@@ -3199,7 +3201,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #else
     bool bMeter = true;
 #endif    
-    
+
     if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
@@ -3438,7 +3440,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nXSize = poSrcDS->GetRasterXSize();
     int nYSize = poSrcDS->GetRasterYSize();
     LT_STATUS  eStat;
-    
+
     if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
@@ -3468,7 +3470,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   getLastStatusString( eStat ) );
         return NULL;
     }
-      
+
 #if !defined(MRSID_POST5)
     J2KImageWriter oImageWriter(&oImageReader);
     eStat = oImageWriter.initialize();
@@ -3493,7 +3495,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #endif
 
     oImageWriter.setUsageMeterEnabled(bMeter);
-      
+
     // set output filename
     oImageWriter.setOutputFileSpec( pszFilename );
 
@@ -3506,12 +3508,12 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // set MrSID world file
     if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
         oImageWriter.setWorldFileSupport( true );
-      
+
     // check for compression option
     const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
     if( pszValue != NULL )
         oImageWriter.params().setCompressionRatio( (float)CPLAtof(pszValue) );
-        
+
     pszValue = CSLFetchNameValue(papszOptions, "XMLPROFILE");
     if( pszValue != NULL )
     {
@@ -3558,29 +3560,30 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_MrSID()
 
 {
-    GDALDriver  *poDriver;
-    
-    if (! GDAL_CHECK_VERSION("MrSID driver"))
+    if( !GDAL_CHECK_VERSION( "MrSID driver" ) )
         return;
 
 /* -------------------------------------------------------------------- */
 /*      MrSID driver.                                                   */
 /* -------------------------------------------------------------------- */
-    if( GDALGetDriverByName( "MrSID" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "MrSID" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "MrSID" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                        "Multi-resolution Seamless Image Database (MrSID)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mrsid.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sid" );
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "MrSID" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Multi-resolution Seamless Image Database "
+                               "(MrSID)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mrsid.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sid" );
 
 #ifdef MRSID_ESDK
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 // Version 2 Options
 "   <Option name='COMPRESSION' type='double' description='Set compression ratio (0.0 default is meant to be lossless)'/>"
@@ -3593,55 +3596,50 @@ void GDALRegister_MrSID()
 "   <Option name='VERSION' type='int' description='Valid versions are 2 and 3, default = 3'/>"
 "</CreationOptionList>" );
 
-        poDriver->pfnCreateCopy = MrSIDCreateCopy;
+    poDriver->pfnCreateCopy = MrSIDCreateCopy;
 
 #else
-        /* In read-only mode, we support VirtualIO. I don't think this is the case */
-        /* for MrSIDCreateCopy() */
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    // In read-only mode, we support VirtualIO. I don't think this is the case
+    // for MrSIDCreateCopy().
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
-        poDriver->pfnIdentify = MrSIDIdentify;
-        poDriver->pfnOpen = MrSIDOpen;
+    poDriver->pfnIdentify = MrSIDIdentify;
+    poDriver->pfnOpen = MrSIDOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 
 /* -------------------------------------------------------------------- */
 /*      JP2MRSID driver.                                                */
 /* -------------------------------------------------------------------- */
 #ifdef MRSID_J2K
-    if( GDALGetDriverByName( "JP2MrSID" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "JP2MrSID" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                        "MrSID JPEG2000" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2mrsid.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+    poDriver->SetDescription( "JP2MrSID" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MrSID JPEG2000" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2mrsid.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
 #ifdef MRSID_ESDK
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='COMPRESSION' type='double' description='Set compression ratio (0.0 default is meant to be lossless)'/>"
 "   <Option name='WORLDFILE' type='boolean' description='Write out world file'/>"
 "   <Option name='XMLPROFILE' type='string' description='Use named xml profile file'/>"
 "</CreationOptionList>" );
 
-        poDriver->pfnCreateCopy = JP2CreateCopy;
+    poDriver->pfnCreateCopy = JP2CreateCopy;
 #else
         /* In read-only mode, we support VirtualIO. I don't think this is the case */
         /* for JP2CreateCopy() */
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
-        poDriver->pfnIdentify = JP2Identify;
-        poDriver->pfnOpen = JP2Open;
+    poDriver->pfnIdentify = JP2Identify;
+    poDriver->pfnOpen = JP2Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 #endif /* def MRSID_J2K */
 }
 
