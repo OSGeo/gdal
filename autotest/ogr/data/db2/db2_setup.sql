@@ -40,6 +40,25 @@ call db2gse.ST_Create_srs(
      ?,
      ?) ;
 
+-- create an EPSG standard srs for NAD27 UTM zone 11N
+-- used by autotest\gdrivers\db2.py for byte.tiff
+-- change the schema from db2gse to SYSPROC for DB2 on z/O
+
+call db2gse.ST_Create_srs(
+ 'NAD27_SRS_26711' ,
+ 26711,
+ 0,
+ 1000,
+ 0,
+ 1000,
+ 0,
+ 1000,
+ 0,
+ 1000,
+ 'NAD_1927_UTM_ZONE_11N',
+ 'EPSG26711',
+     ?,
+     ?) ;
 -- create a table of polygons that has a FID column
 DROP TABLE TEST.ZIPPOLY;
 CREATE TABLE TEST.ZIPPOLY(
@@ -65,6 +84,7 @@ INSERT INTO TEST.ZIPPOLY(objectid, wkt, zip, population) VALUES (
 INSERT INTO TEST.ZIPPOLY(objectid, wkt, zip, population) VALUES (
 5,'POLYGON ((-121.990950 37.255880, -121.922490 37.255880, -121.922490 37.301450, -121.990950 37.301450, -121.990950 37.255880))','95008',43296
 );
+
 
 -- Use WGS84 standard srid
 UPDATE TEST.ZIPPOLY SET shape = db2gse.st_polygon(wkt, 1003);
