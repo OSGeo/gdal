@@ -833,7 +833,6 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
     if( pszSubClass != NULL && EQUAL(pszSubClass,"VRTRawRasterBand") )
     {
         int nWordDataSize = GDALGetDataTypeSize( eType ) / 8;
-        vsi_l_offset nImageOffset = 0;
         int nPixelOffset = nWordDataSize;
         int nLineOffset = nWordDataSize * GetRasterXSize();
         const char *pszFilename;
@@ -843,9 +842,9 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Collect required information.                                   */
 /* -------------------------------------------------------------------- */
-        if( CSLFetchNameValue(papszOptions, "ImageOffset") != NULL )
-            nImageOffset = CPLScanUIntBig(
-                CSLFetchNameValue(papszOptions, "ImageOffset"), 20);
+        const char* pszImageOffset = CSLFetchNameValueDef(papszOptions, "ImageOffset", "0");
+        vsi_l_offset nImageOffset = CPLScanUIntBig(
+                                    pszImageOffset, strlen(pszImageOffset));
 
         if( CSLFetchNameValue(papszOptions, "PixelOffset") != NULL )
             nPixelOffset = atoi(CSLFetchNameValue(papszOptions,"PixelOffset"));
