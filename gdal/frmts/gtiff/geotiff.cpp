@@ -13441,7 +13441,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     (uint16*)CPLMalloc( count * sizeof(uint16) );
                 memcpy( pasNewExtraSamples, v, count * sizeof(uint16) );
                 pasNewExtraSamples[nBands - nBaseSamples - 1] =
-                    GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
+                    GTiffGetAlphaValue(CSLFetchNameValue(papszOptions,"ALPHA"),
                                             DEFAULT_ALPHA_TYPE);
 
                 TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, count, pasNewExtraSamples);
@@ -13886,7 +13886,18 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->fpToWrite = fpL;
     }
     poDS->osProfile = pszProfile;
-    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT & ~GCIF_MASK );
+    
+    int nCloneInfoFlags = GCIF_PAM_DEFAULT & ~GCIF_MASK;
+
+    // If we explicitly asked not to tag the alpha band as such, don't
+    // reintroduce this alpha color interpretation in PAM.
+    if( poSrcDS->GetRasterBand(nBands)->GetColorInterpretation()==GCI_AlphaBand &&
+        GTiffGetAlphaValue(CSLFetchNameValue(papszOptions,"ALPHA"), DEFAULT_ALPHA_TYPE) == EXTRASAMPLE_UNSPECIFIED )
+    {
+        nCloneInfoFlags = nCloneInfoFlags & ~GCIF_COLORINTERP;
+    }
+
+    poDS->CloneInfo( poSrcDS, nCloneInfoFlags );
     poDS->papszCreationOptions = CSLDuplicate( papszOptions );
     poDS->bDontReloadFirstBlock = bDontReloadFirstBlock;
 
