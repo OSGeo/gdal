@@ -481,6 +481,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     for( int iBand = 1; iBand <= nBandCount; iBand++ )
     {
         if( nPixelOffset == -1 ) /* 4 bit case */
@@ -495,6 +496,11 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
                                    nPixelOffset, 
                                    poDS->nRasterXSize*nPixelOffset*nBandCount,
                                    eDataType, !bNeedSwap, TRUE ));
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            delete poDS;
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
