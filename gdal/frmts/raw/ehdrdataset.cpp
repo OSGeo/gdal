@@ -1403,6 +1403,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = nBands;
+    CPLErrorReset();
     for( int i = 0; i < poDS->nBands; i++ )
     {
         EHdrRasterBand	*poBand =
@@ -1427,6 +1428,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         poDS->SetBand( i+1, poBand );
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            poDS->nBands = i+1;
+            delete poDS;
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
