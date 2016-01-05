@@ -779,7 +779,7 @@ vsi_l_offset GTM::findFirstTrackOffset()
     }
     /* First track offset is the first trackpoint offset plus number of
        trackpoints time size of a trackpoint*/
-    return static_cast<vsi_l_offset>(firstTrackpointOffset + ntcks * 25);
+    return firstTrackpointOffset + static_cast<vsi_l_offset>(ntcks) * 25;
 }
 
 bool GTM::readTrackPoints( double& latitude, double& longitude,
