@@ -27,10 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili2.h"
 #include "cpl_conv.h"
+#include "ogr_ili2.h"
+#include "ogrsf_frmts.h"
+
+#include <util/PlatformUtils.hpp>  // xercesc
 
 CPL_CVSID("$Id$");
+
+#ifdef XERCES_CPP_NAMESPACE_USE
+XERCES_CPP_NAMESPACE_USE
+#endif
 
 /************************************************************************/
 /*                                Open()                                */
@@ -39,15 +46,13 @@ CPL_CVSID("$Id$");
 static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRILI2DataSource    *poDS;
-
     if( poOpenInfo->eAccess == GA_Update ||
         (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == NULL) )
         return NULL;
 
     if( poOpenInfo->fpL != NULL )
     {
-        if( poOpenInfo->pabyHeader[0] != '<' 
+        if( poOpenInfo->pabyHeader[0] != '<'
             || strstr((const char*)poOpenInfo->pabyHeader,"interlis.ch/INTERLIS2") == NULL )
         {
             return NULL;
@@ -56,16 +61,17 @@ static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
     else if( poOpenInfo->bIsDirectory )
         return NULL;
 
-    poDS = new OGRILI2DataSource();
+    OGRILI2DataSource *poDS = new OGRILI2DataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions, TRUE )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
+                     TRUE )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -73,32 +79,26 @@ static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRILI2DriverCreate( const char * pszName,
-                                         CPL_UNUSED int nBands,
-                                         CPL_UNUSED int nXSize,
-                                         CPL_UNUSED int nYSize,
-                                         CPL_UNUSED GDALDataType eDT,
+                                         int /* nBands */,
+                                         int /* nXSize */,
+                                         int /* nYSize */,
+                                         GDALDataType /* eDT */,
                                          char **papszOptions )
 {
-    OGRILI2DataSource    *poDS = new OGRILI2DataSource();
+    OGRILI2DataSource *poDS = new OGRILI2DataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
 /*                         OGRILI2DriverUnload()                        */
 /************************************************************************/
-
-#include <util/PlatformUtils.hpp>
-
-#ifdef XERCES_CPP_NAMESPACE_USE
-XERCES_CPP_NAMESPACE_USE
-#endif
 
 static void OGRILI2DriverUnload ( GDALDriver* )
 {
