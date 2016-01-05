@@ -65,7 +65,8 @@ int OGRDB2GeometryValidator::ValidatePoint(CPL_UNUSED OGRPoint* poGeom)
 /*                     ValidateMultiPoint()                             */
 /************************************************************************/
 
-int OGRDB2GeometryValidator::ValidateMultiPoint(CPL_UNUSED OGRMultiPoint* poGeom)
+int OGRDB2GeometryValidator::ValidateMultiPoint(
+                                        CPL_UNUSED OGRMultiPoint* poGeom)
 {
     return TRUE;
 }
@@ -89,7 +90,8 @@ int OGRDB2GeometryValidator::ValidateLineString(OGRLineString * poGeom)
             continue;
         }
 
-        if (poPoint0->getX() == poGeom->getX(i) && poPoint0->getY() == poGeom->getY(i))
+        if (poPoint0->getX() == poGeom->getX(i) 
+            && poPoint0->getY() == poGeom->getY(i))
             continue;
 
         bResult = TRUE;
@@ -107,7 +109,8 @@ int OGRDB2GeometryValidator::ValidateLineString(OGRLineString * poGeom)
         if (poPoint0 != NULL)
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "Linestring has no distinct points constructing point geometry instead." );
+                      "Linestring has no distinct points "
+                      "constructing point geometry instead." );
 
             // create a point
             poValidGeometry = poPoint0;
@@ -116,7 +119,8 @@ int OGRDB2GeometryValidator::ValidateLineString(OGRLineString * poGeom)
         else
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "Linestring has no points. Removing the geometry from the output." );
+                      "Linestring has no points. Removing the geometry "
+                      "from the output." );
         }
     }
 
@@ -148,7 +152,8 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
             continue;
         }
 
-        if (poPoint0->getX() == poGeom->getX(i) && poPoint0->getY() == poGeom->getY(i))
+        if (poPoint0->getX() == poGeom->getX(i) 
+            && poPoint0->getY() == poGeom->getY(i))
             continue;
 
         if (poPoint1 == NULL)
@@ -158,7 +163,8 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
             continue;
         }
 
-        if (poPoint1->getX() == poGeom->getX(i) && poPoint1->getY() == poGeom->getY(i))
+        if (poPoint1->getX() == poGeom->getX(i) 
+            && poPoint1->getY() == poGeom->getY(i))
             continue;
 
         bResult = TRUE;
@@ -176,7 +182,8 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
         if (poPoint1 != NULL)
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "Linear ring has only 2 distinct points constructing linestring geometry instead." );
+                      "Linear ring has only 2 distinct points constructing "
+                      "linestring geometry instead." );
 
             // create a linestring
             poValidGeometry = new OGRLineString();
@@ -187,7 +194,8 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
         else if (poPoint0 != NULL)
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "Linear ring has no distinct points constructing point geometry instead." );
+                      "Linear ring has no distinct points constructing point "
+                      "geometry instead." );
 
             // create a point
             poValidGeometry = poPoint0;
@@ -196,7 +204,8 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
         else
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "Linear ring has no points. Removing the geometry from the output." );
+                      "Linear ring has no points. Removing the geometry "
+                      "from the output." );
         }
     }
 
@@ -213,7 +222,8 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
 /*                     ValidateMultiLineString()                        */
 /************************************************************************/
 
-int OGRDB2GeometryValidator::ValidateMultiLineString(OGRMultiLineString * poGeom)
+int OGRDB2GeometryValidator::ValidateMultiLineString(
+                                            OGRMultiLineString * poGeom)
 {
     int i, j;
     OGRGeometry* poLineString;
@@ -222,7 +232,8 @@ int OGRDB2GeometryValidator::ValidateMultiLineString(OGRMultiLineString * poGeom
     for (i = 0; i < poGeom->getNumGeometries(); i++)
     {
         poLineString = poGeom->getGeometryRef(i);
-        if (poLineString->getGeometryType() != wkbLineString && poLineString->getGeometryType() != wkbLineString25D)
+        if (poLineString->getGeometryType() != wkbLineString 
+            && poLineString->getGeometryType() != wkbLineString25D)
         {
             // non linestring geometry
             if (!poGeometries)
@@ -337,7 +348,8 @@ int OGRDB2GeometryValidator::ValidateMultiPolygon(OGRMultiPolygon* poGeom)
     for (i = 0; i < poGeom->getNumGeometries(); i++)
     {
         poPolygon = poGeom->getGeometryRef(i);
-        if (poPolygon->getGeometryType() != wkbPolygon && poPolygon->getGeometryType() != wkbPolygon25D)
+        if (poPolygon->getGeometryType() != wkbPolygon 
+            && poPolygon->getGeometryType() != wkbPolygon25D)
         {
             // non polygon geometry
             if (!poGeometries)
@@ -387,7 +399,8 @@ int OGRDB2GeometryValidator::ValidateMultiPolygon(OGRMultiPolygon* poGeom)
 /*                     ValidateGeometryCollection()                     */
 /************************************************************************/
 
-int OGRDB2GeometryValidator::ValidateGeometryCollection(OGRGeometryCollection* poGeom)
+int OGRDB2GeometryValidator::ValidateGeometryCollection(
+                                            OGRGeometryCollection* poGeom)
 {
     int i, j;
     OGRGeometry* poGeometry;
