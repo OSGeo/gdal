@@ -1049,7 +1049,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
                                         int nBlobkBytes,
                                         GByte *pabyBlock )
 {
-    uint32 nSeekOffset  = 0;
+    vsi_l_offset nSeekOffset  = 0;
     uint32 nReadSize    = 0;
 
     // --------------------------------------------------------------------
@@ -1065,7 +1065,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
             return 0;
         }
 
-        nSeekOffset   = pahTiles[nBlockId].Start + nDataOffset;
+        nSeekOffset   = static_cast<vsi_l_offset>(pahTiles[nBlockId].Start) + nDataOffset;
         nReadSize     = pahTiles[nBlockId].Used;
 
         CPLAssert( nBlobkBytes >= 0 );
@@ -1080,7 +1080,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
     }
     else
     {
-        nSeekOffset   = nDataOffset + ( nBlockBufSize * nBlockYOff );
+        nSeekOffset   = nDataOffset + ( static_cast<vsi_l_offset>(nBlockBufSize) * nBlockYOff );
         nReadSize     = nBlobkBytes;
     }
 
