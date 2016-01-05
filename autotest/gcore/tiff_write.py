@@ -1213,25 +1213,60 @@ def tiff_write_29():
 
     # When creating a 4 channel image with PHOTOMETRIC=RGB,
     # TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNSPECIFIED
-    ds = gdaltest.tiff_drv.Create( 'tmp/rgba.tif', 1, 1, 4, options = ['PHOTOMETRIC=RGB'])
+    ds = gdaltest.tiff_drv.Create( '/vsimem/rgba.tif', 1, 1, 4, options = ['PHOTOMETRIC=RGB'])
 
     if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.GetRasterBand(4).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
 
     if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
 
-    ds = gdal.Open( 'tmp/rgba.tif' )
+    if gdal.VSIStatL('/vsimem/rgba.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open( '/vsimem/rgba.tif' )
 
     if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test cancelling alpha
+    gdaltest.tiff_drv.CreateCopy( '/vsimem/rgb_no_alpha.tif', ds, options = ['ALPHA=NO'])
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/rgb_no_alpha.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open( '/vsimem/rgb_no_alpha.tif' )
+    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test re-adding alpha
+    gdaltest.tiff_drv.CreateCopy( '/vsimem/rgb_added_alpha.tif', ds, options = ['ALPHA=YES'])
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/rgb_added_alpha.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open( '/vsimem/rgb_added_alpha.tif' )
+    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
-    gdaltest.tiff_drv.Delete( 'tmp/rgba.tif' )
+    gdaltest.tiff_drv.Delete( '/vsimem/rgba.tif' )
+    gdaltest.tiff_drv.Delete( '/vsimem/rgb_no_alpha.tif' )
+    gdaltest.tiff_drv.Delete( '/vsimem/rgb_added_alpha.tif' )
 
     return 'success'
 
