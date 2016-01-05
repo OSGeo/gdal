@@ -86,7 +86,7 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
                 poGDS->m_poCT = poGDS->m_poCT->Clone();
             return poGDS->m_poCT;
         }
-        SQLINTEGER nBlobLen = 0;
+        CPL_SQLLEN nBlobLen = 0;
         SQLINTEGER nDataLen;
         OGRDB2Session *oSession =  poGDS->GetSession();
         OGRDB2Statement oStatement( poGDS->GetSession() );
@@ -544,7 +544,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
     int nBlockXSize, nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     SQLINTEGER nBlockSize = nBlockXSize * nBlockYSize;
-    SQLINTEGER nBlobLen = 0;
+    CPL_SQLLEN nBlobLen = 0;
     SQLINTEGER nDataLen;
     if( pbIsLossyFormat ) *pbIsLossyFormat = FALSE;
 
@@ -1384,7 +1384,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
 
             CPLDebug("OGRDB2DataSource::WriteTileInternal",
                      "stmt: '%s'", oStatement.GetCommand());
-            SQLINTEGER  nBlobLen = (SQLINTEGER) nBlobSize;
+            CPL_SQLLEN  nBlobLen = (CPL_SQLLEN) nBlobSize;
             int nRetCode = SQLBindParameter(oStatement.GetStatement(),
                                             (SQLUSMALLINT)1,
                                             SQL_PARAM_INPUT,
