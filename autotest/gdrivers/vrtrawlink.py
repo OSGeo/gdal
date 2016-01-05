@@ -117,7 +117,7 @@ def vrtrawlink_4():
         'subClass=VRTRawRasterBand',
         'SourceFilename=tmp/rawlink.dat',
         'relativeToVRT=0',
-        'ImageOffset=100',
+        'ImageOffset=                      100',
         'PixelOffset=3',
         'LineOffset=93',
         'ByteOrder=MSB'
