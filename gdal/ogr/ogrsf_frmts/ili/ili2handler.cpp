@@ -28,11 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili2.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
 #include "ili2readerp.h"
+#include "ogr_ili2.h"
+
 #include <xercesc/sax2/Attributes.hpp>
 
 CPL_CVSID("$Id$");
@@ -88,24 +89,26 @@ void ILI2Handler::endDocument() {
 }
 
 void ILI2Handler::startElement(
-    CPL_UNUSED const XMLCh* const uri,
-    CPL_UNUSED const XMLCh* const localname,
+    const XMLCh* const /* uri */,
+    const XMLCh* const /* localname */,
     const XMLCh* const qname,
     const Attributes& attrs
     ) {
   // start to add the layers, features with the DATASECTION
   char *tmpC = NULL;
   m_nEntityCounter = 0;
-  if ((level >= 0) || (cmpStr(ILI2_DATASECTION, tmpC = XMLString::transcode(qname)) == 0)) {
+  if ((level >= 0) || (cmpStr(ILI2_DATASECTION,
+                              tmpC = XMLString::transcode(qname)) == 0)) {
     level++;
 
     if (level >= 2) {
 
       // create the dom tree
-      DOMElement *elem = (DOMElement*)dom_doc->createElement(qname);
+      DOMElement *elem = reinterpret_cast<DOMElement *>(
+          dom_doc->createElement(qname) );
 
       // add all attributes
-      unsigned int len = (unsigned int)(attrs.getLength());
+      unsigned int len = static_cast<unsigned int>(attrs.getLength());
       for (unsigned int index = 0; index < len; index++)
         elem->setAttribute(attrs.getQName(index), attrs.getValue(index));
       dom_elem->appendChild(elem);
@@ -135,7 +138,7 @@ void ILI2Handler::endElement(
     } else if (level >= 3) {
 
       // go to the parent element
-      dom_elem = (DOMElement*)dom_elem->getParentNode();
+      dom_elem = reinterpret_cast<DOMElement *>( dom_elem->getParentNode() );
     }
     level--;
   }
@@ -186,7 +189,8 @@ void ILI2Handler::startEntity (CPL_UNUSED const XMLCh *const name)
     m_nEntityCounter++;
     if (m_nEntityCounter > 1000)
     {
-        throw SAXNotSupportedException ("File probably corrupted (million laugh pattern)");
+        throw SAXNotSupportedException (
+            "File probably corrupted (million laugh pattern)" );
     }
 }
 

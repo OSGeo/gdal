@@ -45,7 +45,7 @@ class OGRILI2DataSource;
 
 class OGRILI2Layer : public OGRLayer
 {
-private:
+  private:
     OGRFeatureDefn     *poFeatureDefn;
     GeomFieldInfos      oGeomFieldInfos;
     std::list<OGRFeature *>    listFeature;
