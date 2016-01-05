@@ -182,7 +182,7 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x002);
     m_numDataBytes = ReadInt16();       /* Excluding 8 bytes header */
-    if( m_numDataBytes + MAP_COORD_HEADER_SIZE > nBlockSize )
+    if( m_numDataBytes < 0 || m_numDataBytes + MAP_COORD_HEADER_SIZE > nBlockSize )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "TABMAPCoordBlock::InitBlockFromData(): m_numDataBytes=%d incompatible with block size %d",
