@@ -1979,16 +1979,22 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
     if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
     {
         pszSQL = sqlite3_mprintf(
-                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q'",
-                    pszT );
+                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q'"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                    " OR 0"
+#endif
+                    ,pszT );
     }
     else
     {
         pszSQL = sqlite3_mprintf(
-                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q' "
+                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE (table_name='%q' "
                     "AND column_name='%q' AND extension_name NOT LIKE 'gpkg_geom_%s' AND extension_name NOT IN "
-                    "('gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger')",
-                    pszT,
+                    "('gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger'))"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                    " OR 0"
+#endif
+                    ,pszT,
                     m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef(),
                     m_poDS->GetGeometryTypeString(m_poFeatureDefn->GetGeomFieldDefn(0)->GetType()) );
     }
