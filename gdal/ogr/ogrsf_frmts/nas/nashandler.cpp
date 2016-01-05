@@ -246,7 +246,29 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
             m_nDepth ++;
             return;
         }
-
+        
+        if( EQUAL( pszLast, "Replace" )  &&
+            ( m_osLastReplacingFID == "" || m_osLastSafeToIgnore == "" ) )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "m_osLastReplacingFID == \"\" || m_osLastSafeToIgnore == \"\"");
+                    
+            m_bIgnoreFeature = true;
+            m_nDepthFeature = m_nDepth;
+            m_nDepth ++;
+            return;
+        }
+                
+        if( EQUAL( pszLast, "Update" )  &&
+            ( m_osLastEnded == "" || m_osLastOccasion == "" ) )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "m_osLastEnded == \"\" || m_osLastOccasion == \"\"");
+                    
+            m_bIgnoreFeature = true;
+            m_nDepthFeature = m_nDepth;
+            m_nDepth ++;
+            return;
+        }
+        
         m_bIgnoreFeature = false;
 
         m_poReader->PushFeature( "Delete", attrs );
@@ -259,15 +281,15 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 
         if( EQUAL( pszLast, "Replace" ) )
         {
-            CPLAssert( m_osLastReplacingFID != "" );
-            CPLAssert( m_osLastSafeToIgnore != "" );
+            //CPLAssert( m_osLastReplacingFID != "" );
+            //CPLAssert( m_osLastSafeToIgnore != "" );
             m_poReader->SetFeaturePropertyDirectly( "replacedBy", CPLStrdup(m_osLastReplacingFID) );
             m_poReader->SetFeaturePropertyDirectly( "safeToIgnore", CPLStrdup(m_osLastSafeToIgnore) );
         }
         else if( EQUAL( pszLast, "Update" ) )
         {
-            CPLAssert( m_osLastEnded != "" );
-            CPLAssert( m_osLastOccasion != "" );
+            //CPLAssert( m_osLastEnded != "" );
+            //CPLAssert( m_osLastOccasion != "" );
             m_poReader->SetFeaturePropertyDirectly( "endet", CPLStrdup(m_osLastEnded) );
             m_poReader->SetFeaturePropertyDirectly( "anlass", CPLStrdup(m_osLastOccasion) );
             m_osLastEnded = "";
@@ -294,9 +316,17 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 
             tr_strcpy( Name, "gml:id" );
             nIndex = attrs.getIndex( Name );
+            
+            if( nIndex == -1 || m_osLastReplacingFID !="" )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed, "nIndex == -1 || m_osLastReplacingFID !=\"\"");
+                
+                m_bIgnoreFeature = true;
+                m_nDepthFeature = m_nDepth;
+                m_nDepth ++;
 
-            CPLAssert( nIndex!=-1 );
-            CPLAssert( m_osLastReplacingFID=="" );
+                return;
+            }
 
             // Capture "gml:id" attribute as part of the property value -
             // primarily this is for the wfsext:Replace operation's attribute.
