@@ -3260,7 +3260,7 @@ void GDALGeoPackageDataset::ParseCompressionOptions(char** papszOptions)
 
     const char* pszDither = CSLFetchNameValue(papszOptions, "DITHER");
     if( pszDither )
-        m_bDither = CSLTestBoolean(pszDither);
+        m_bDither = CPL_TO_BOOL(CSLTestBoolean(pszDither));
 }
 
 /************************************************************************/

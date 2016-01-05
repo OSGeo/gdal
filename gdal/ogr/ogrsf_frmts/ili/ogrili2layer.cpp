@@ -137,7 +137,7 @@ static const char* d2str(double val)
 
 static void AppendCoordinateList( OGRLineString *poLine, VSILFILE* fp )
 {
-    const bool b3D = wkbHasZ(poLine->getGeometryType());
+    const bool b3D = CPL_TO_BOOL(wkbHasZ(poLine->getGeometryType()));
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
