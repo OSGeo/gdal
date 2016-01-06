@@ -205,7 +205,7 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
       default:
         /* We should never get here anyways, but just in case return pszLine 
          */
-        CPLAssert( !(int)"SHOULD NEVER GET HERE" );
+        CPLAssert( FALSE ); /* Should never get here. */
         pszOutBuf = pszLine;
     }
     
