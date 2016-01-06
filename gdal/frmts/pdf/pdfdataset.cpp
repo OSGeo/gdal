@@ -5902,16 +5902,31 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
 /* -------------------------------------------------------------------- */
     CPLString osUnits;
     GDALPDFObject* poUnits;
-    if ((poUnits = poProjDict->Get("Units")) != NULL &&
-        poUnits->GetType() == PDFObjectType_String)
+    if( (poUnits = poProjDict->Get("Units")) != NULL &&
+        poUnits->GetType() == PDFObjectType_String &&
+        !EQUAL(osProjectionType, "GEOGRAPHIC") )
     {
         osUnits = poUnits->GetString();
         CPLDebug("PDF", "Projection.Units = %s", osUnits.c_str());
 
+        // This is super weird. The false easting/northing of the SRS
+        // are expressed in the unit, but the geotransform is expressed in
+        // meters. Hence this hack to have an equivalent SRS definition, but
+        // with linear units converted in meters.
         if (EQUAL(osUnits, "M"))
             oSRS.SetLinearUnits( "Meter", 1.0 );
         else if (EQUAL(osUnits, "FT"))
+        {
             oSRS.SetLinearUnits( "foot", 0.3048 );
+            oSRS.SetLinearUnitsAndUpdateParameters( "Meter", 1.0 );
+        }
+        else if (EQUAL(osUnits, "USSF"))
+        {
+            oSRS.SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
+            oSRS.SetLinearUnitsAndUpdateParameters( "Meter", 1.0 );
+        }
+        else
+            CPLError(CE_Warning, CPLE_AppDefined, "Unhandled unit: %s", osUnits.c_str());
     }
 
 /* -------------------------------------------------------------------- */
