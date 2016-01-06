@@ -751,7 +751,8 @@ int GDALRasterBand::InitBlockInfo()
         return FALSE;
     }
     
-    if( GDALGetDataTypeSize(eDataType) == 0 )
+    const int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    if( nDataTypeSize == 0 )
     {
         ReportError( CE_Failure, CPLE_AppDefined, "Invalid data type" );
         return FALSE;
@@ -763,8 +764,8 @@ int GDALRasterBand::InitBlockInfo()
         /* (reasonably) assumed in many places (GDALRasterBlock::Internalize(), */
         /* GDALRasterBand::Fill(), many drivers...) */
         /* As 10000 * 10000 * 16 < INT_MAX, we don't need to do the multiplication in other cases */
-        GIntBig nBigSizeInBytes = (GIntBig)nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
-        if( nBigSizeInBytes > INT_MAX )
+        if( nBlockXSize > INT_MAX / nDataTypeSize ||
+            nBlockYSize > INT_MAX / (nDataTypeSize * nBlockXSize) )
         {
             ReportError( CE_Failure, CPLE_NotSupported, "Too big block : %d * %d",
                         nBlockXSize, nBlockYSize );
