@@ -1902,7 +1902,9 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         int nSHPContentLength;
         memcpy( &nSHPContentLength, psSHP->pabyRec + 4, 4 );
         if( !bBigEndian ) SwapWord( 4, &(nSHPContentLength) );
-        if( 2 * nSHPContentLength + 8 != nBytesRead )
+        if( nSHPContentLength < 0 ||
+            nSHPContentLength > INT_MAX / 2 - 4 ||
+            2 * nSHPContentLength + 8 != nBytesRead )
         {
             char str[128];
             snprintf( str, sizeof(str),
