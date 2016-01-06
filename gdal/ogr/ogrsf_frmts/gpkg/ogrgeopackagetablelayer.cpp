@@ -2092,9 +2092,12 @@ int OGRGeoPackageTableLayer::HasSpatialIndex()
 
     /* Check into gpkg_extensions */
     char* pszSQL = sqlite3_mprintf(
-                 "SELECT * FROM gpkg_extensions WHERE table_name='%q' "
-                 "AND column_name='%q' AND extension_name='gpkg_rtree_index'",
-                 pszT, pszC );
+                 "SELECT * FROM gpkg_extensions WHERE (table_name='%q' "
+                 "AND column_name='%q' AND extension_name='gpkg_rtree_index')"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                " OR 0"
+#endif
+                 ,pszT, pszC );
     SQLResult oResultTable;
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
     sqlite3_free(pszSQL);
