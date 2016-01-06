@@ -534,6 +534,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           DGNPoint      asPoints[90];
           // TODO: std::abs abd std::max
           int nPoints = static_cast<int>(MAX(1,ABS(psArc->sweepang) / 5) + 1);
+          if( nPoints > 90 )
+              nPoints = 90;
           DGNStrokeArc( hDGN, psArc, nPoints, asPoints );
 
           poLine->setNumPoints( nPoints );
