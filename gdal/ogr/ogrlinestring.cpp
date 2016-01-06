@@ -200,9 +200,16 @@ void OGRSimpleCurve::Make3D()
     if( padfZ == NULL )
     {
         if( nPointCount == 0 )
-            padfZ = (double *) OGRCalloc(sizeof(double),1);
+            padfZ = (double *) VSI_CALLOC_VERBOSE(sizeof(double),1);
         else
-            padfZ = (double *) OGRCalloc(sizeof(double),nPointCount);
+            padfZ = (double *) VSI_CALLOC_VERBOSE(sizeof(double),nPointCount);
+        if( padfZ == NULL )
+        {
+            nCoordDimension = 2;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "OGRSimpleCurve::Make3D() failed");
+            return;
+        }
     }
     nCoordDimension = 3;
 }
@@ -317,6 +324,8 @@ double OGRSimpleCurve::getZ( int iVertex ) const
 void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
 
 {
+    CPLAssert( nNewPointCount >= 0 );
+
     if( nNewPointCount == 0 )
     {
         OGRFree( paoPoints );
