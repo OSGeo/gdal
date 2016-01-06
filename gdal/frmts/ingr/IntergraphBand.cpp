@@ -421,7 +421,8 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     if( nBlockXOff == nFullBlocksX || 
         nBlockYOff == nFullBlocksY )
     {
-        ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
+        if( !ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf ) )
+            return CE_Failure;
     }
 
     // --------------------------------------------------------------------
@@ -807,7 +808,8 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     if( nBlockXOff == nFullBlocksX || 
         nBlockYOff == nFullBlocksY )
     {
-        ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
+        if( !ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf ) )
+            return CE_Failure;
     }
 
     // --------------------------------------------------------------------
@@ -1029,15 +1031,17 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     // Reshape blocks if needed
     // --------------------------------------------------------------------
 
+    CPLErr eErr = CE_None;
     if( nBlockXOff == nFullBlocksX || 
         nBlockYOff == nFullBlocksY )
     {
-        ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, (GByte*) pImage );
+        if( !ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, (GByte*) pImage ) )
+            eErr = CE_Failure;
     }
 
     INGR_ReleaseVirtual( &poGDS->hVirtual );
 
-    return CE_None;
+    return eErr;
 }
 
 //  ----------------------------------------------------------------------------
@@ -1109,12 +1113,14 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
  *                ##000   000000    00000
  ***/
 
-void IntergraphRasterBand::ReshapeBlock( int nBlockXOff, 
+bool IntergraphRasterBand::ReshapeBlock( int nBlockXOff, 
                                          int nBlockYOff,
                                          int nBlockBytes,
                                          GByte *pabyBlock )
 {
-    GByte *pabyTile = (GByte*) CPLCalloc( 1, nBlockBufSize );
+    GByte *pabyTile = (GByte*) VSI_MALLOC_VERBOSE( nBlockBufSize );
+    if( pabyTile == NULL )
+        return false;
 
     memcpy( pabyTile, pabyBlock, nBlockBytes );
     memset( pabyBlock, 0, nBlockBytes );
@@ -1145,7 +1151,8 @@ void IntergraphRasterBand::ReshapeBlock( int nBlockXOff,
                 nCellBytes * nColSize);
     }
 
-    CPLFree( pabyTile );
+    VSIFree( pabyTile );
+    return true;
 }
 
 //  ----------------------------------------------------------------------------
