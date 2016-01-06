@@ -1461,6 +1461,29 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
 }
 
 /************************************************************************/
+/*                         CPLTestBool()                                */
+/************************************************************************/
+
+/**
+ * Test what boolean value contained in the string.
+ *
+ * If pszValue is "NO", "FALSE", "OFF" or "0" will be returned false.
+ * Otherwise, true will be returned.
+ *
+ * @param pszValue the string should be tested.
+ *
+ * @return TRUE or FALSE.
+ */
+
+bool CPLTestBool( const char *pszValue )
+{
+  return !( EQUAL(pszValue,"NO")
+            || EQUAL(pszValue,"FALSE")
+            || EQUAL(pszValue,"OFF")
+            || EQUAL(pszValue,"0") );
+}
+
+/************************************************************************/
 /*                         CSLTestBoolean()                             */
 /************************************************************************/
 
@@ -1470,6 +1493,8 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
  * If pszValue is "NO", "FALSE", "OFF" or "0" will be returned FALSE.
  * Otherwise, TRUE will be returned.
  *
+ * Use this only in C code.  In C++, prefer CPLTestBool().
+ *
  * @param pszValue the string should be tested.
  *
  * @return TRUE or FALSE.
@@ -1477,13 +1502,7 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
 
 int CSLTestBoolean( const char *pszValue )
 {
-    if( EQUAL(pszValue,"NO")
-        || EQUAL(pszValue,"FALSE")
-        || EQUAL(pszValue,"OFF")
-        || EQUAL(pszValue,"0") )
-        return FALSE;
-
-    return TRUE;
+    return CPLTestBool( pszValue ) ? TRUE : FALSE;
 }
 
 /**********************************************************************
