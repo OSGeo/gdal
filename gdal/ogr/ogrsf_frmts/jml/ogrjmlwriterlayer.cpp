@@ -39,15 +39,15 @@ CPL_CVSID("$Id$");
 OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
                                       OGRJMLDataset * /* poDSIn */,
                                       VSILFILE* fpIn,
-                                      int bAddRGBFieldIn,
-                                      int bAddOGRStyleFieldIn,
-                                      int bClassicGMLIn ) :
+                                      bool bAddRGBFieldIn,
+                                      bool bAddOGRStyleFieldIn,
+                                      bool bClassicGMLIn ) :
     poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
     fp(fpIn),
     bFeaturesWritten(false),
-    bAddRGBField(CPL_TO_BOOL(bAddRGBFieldIn)),
-    bAddOGRStyleField(CPL_TO_BOOL(bAddOGRStyleFieldIn)),
-    bClassicGML(CPL_TO_BOOL(bClassicGMLIn)),
+    bAddRGBField(bAddRGBFieldIn),
+    bAddOGRStyleField(bAddOGRStyleFieldIn),
+    bClassicGML(bClassicGMLIn),
     nNextFID(0)
 {
     SetDescription( poFeatureDefn->GetName() );
