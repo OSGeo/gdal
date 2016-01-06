@@ -55,7 +55,8 @@ class OGRJMLColumn
         CPLString osElementName;
         CPLString osAttributeName;
         CPLString osAttributeValue;
-        int       bIsBody; /* if false: attribute */
+        bool      bIsBody; /* if false: attribute */
+        OGRJMLColumn() : bIsBody(false) {}
 };
 
 /************************************************************************/
@@ -156,9 +157,9 @@ class OGRJMLWriterLayer : public OGRLayer
                         OGRJMLWriterLayer( const char* pszLayerName,
                                            OGRJMLDataset* poDS,
                                            VSILFILE* fp,
-                                           int bAddRGBField,
-                                           int bAddOGRStyleField,
-                                           int bClassicGML );
+                                           bool bAddRGBField,
+                                           bool bAddOGRStyleField,
+                                           bool bClassicGML );
                         ~OGRJMLWriterLayer();
 
     void                ResetReading() {}

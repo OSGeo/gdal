@@ -194,8 +194,8 @@ OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
     int bClassicGML = CSLTestBoolean(
         CSLFetchNameValueDef(papszOptions, "CLASSIC_GML", "NO"));
     poLayer = new OGRJMLWriterLayer( pszLayerName, this, fp,
-                                          bAddRGBField, bAddOGRStyleField,
-                                          bClassicGML);
+                                     bAddRGBField, bAddOGRStyleField,
+                                     bClassicGML);
 
     return poLayer;
 }
