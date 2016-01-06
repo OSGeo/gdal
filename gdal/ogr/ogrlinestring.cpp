@@ -435,14 +435,17 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn )
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
 
-    if( zIn != 0.0 )
+    if( padfZ != NULL )
     {
-        Make3D();
-        padfZ[iPoint] = zIn;
-    }
-    else if( getCoordinateDimension() == 3 )
-    {
-        padfZ[iPoint] = 0.0;
+        if( zIn != 0.0 )
+        {
+            Make3D();
+            padfZ[iPoint] = zIn;
+        }
+        else if( getCoordinateDimension() == 3 )
+        {
+            padfZ[iPoint] = 0.0;
+        }
     }
 }
 
@@ -476,7 +479,7 @@ void OGRSimpleCurve::setZ( int iPoint, double zIn )
             return;
     }
 
-    if( padfZ )
+    if( padfZ != NULL )
         padfZ[iPoint] = zIn;
 }
 
@@ -576,7 +579,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
     else if( padfZIn )
     {
         Make3D();
-        if( nPointsIn )
+        if( padfZ && nPointsIn )
             memcpy( padfZ, padfZIn, sizeof(double) * nPointsIn );
     }
 }
@@ -625,7 +628,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
         paoPoints[i].y = padfY[i];
     }
 
-    if( !padfZIn || !nPointsIn )
+    if( padfZ == NULL || !padfZIn || !nPointsIn )
     {
         return;
     }
@@ -826,8 +829,11 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
         if( poOtherLine->padfZ != NULL )
         {
             Make3D();
-            memcpy( padfZ + nOldPoints, poOtherLine->padfZ + nStartVertex,
-                    sizeof(double) * nPointsToAdd );
+            if( padfZ != NULL )
+            {
+                memcpy( padfZ + nOldPoints, poOtherLine->padfZ + nStartVertex,
+                        sizeof(double) * nPointsToAdd );
+            }
         }
     }
 
@@ -849,10 +855,12 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
         if( poOtherLine->padfZ != NULL )
         {
             Make3D();
-
-            for( i = 0; i < nPointsToAdd; i++ )
+            if( padfZ != NULL )
             {
-                padfZ[i+nOldPoints] = poOtherLine->padfZ[nStartVertex-i];
+                for( i = 0; i < nPointsToAdd; i++ )
+                {
+                    padfZ[i+nOldPoints] = poOtherLine->padfZ[nStartVertex-i];
+                }
             }
         }
     }
