@@ -45,9 +45,9 @@ OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
     poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
     fp(fpIn),
     bFeaturesWritten(false),
-    bAddRGBField(bAddRGBFieldIn),
-    bAddOGRStyleField(bAddOGRStyleFieldIn),
-    bClassicGML(bClassicGMLIn),
+    bAddRGBField(CPL_TO_BOOL(bAddRGBFieldIn)),
+    bAddOGRStyleField(CPL_TO_BOOL(bAddOGRStyleFieldIn)),
+    bClassicGML(CPL_TO_BOOL(bClassicGMLIn)),
     nNextFID(0)
 {
     SetDescription( poFeatureDefn->GetName() );
