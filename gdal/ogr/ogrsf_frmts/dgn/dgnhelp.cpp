@@ -1274,7 +1274,11 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
         if( iLinkage == iIndex )
         {
             int  nLinkageType=0, nEntityNum=0, nMSLink = 0;
-            CPLAssert( nLinkSize > 4 );
+            if( nLinkSize <= 4 )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed, "nLinkSize <= 4");
+                return NULL;
+            }
 
             if( psElement->attr_data[nAttrOffset+0] == 0x00
                 && (psElement->attr_data[nAttrOffset+1] == 0x00
