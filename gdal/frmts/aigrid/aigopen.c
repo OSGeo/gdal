@@ -434,17 +434,20 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 void AIGClose( AIGInfo_t * psInfo )
 
 {
-    int nTileCount = psInfo->nTilesPerRow * psInfo->nTilesPerColumn;
-    int iTile;
-
-    for( iTile = 0; iTile < nTileCount; iTile++ )
+    if( psInfo->pasTileInfo != NULL )
     {
-        if( psInfo->pasTileInfo[iTile].fpGrid )
-        {
-            VSIFCloseL( psInfo->pasTileInfo[iTile].fpGrid );
+        int nTileCount = psInfo->nTilesPerRow * psInfo->nTilesPerColumn;
+        int iTile;
 
-            CPLFree( psInfo->pasTileInfo[iTile].panBlockOffset );
-            CPLFree( psInfo->pasTileInfo[iTile].panBlockSize );
+        for( iTile = 0; iTile < nTileCount; iTile++ )
+        {
+            if( psInfo->pasTileInfo[iTile].fpGrid )
+            {
+                VSIFCloseL( psInfo->pasTileInfo[iTile].fpGrid );
+
+                CPLFree( psInfo->pasTileInfo[iTile].panBlockOffset );
+                CPLFree( psInfo->pasTileInfo[iTile].panBlockSize );
+            }
         }
     }
 
