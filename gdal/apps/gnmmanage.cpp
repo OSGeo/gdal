@@ -55,7 +55,10 @@ enum operation
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-static void Usage(const char* pszAdditionalMsg, int bShort = TRUE)
+
+static void Usage(const char* pszAdditionalMsg, int bShort = TRUE) CPL_NO_RETURN;
+
+static void Usage(const char* pszAdditionalMsg, int bShort)
 {
     printf("Usage: gnmmanage [--help][-q][-quiet][--long-usage]\n"
            "                 [info]\n"
@@ -473,6 +476,9 @@ int main( int nArgc, char ** papszArgv )
         const char* pszPath;
         const char* pszNetworkName = CSLFetchNameValue(papszDSCO, GNM_MD_NAME);
 
+        if(pszDataSource == NULL)
+            Usage("No network dataset provided");
+
         //the DSCO have priority on input keys
         if(NULL == pszNetworkName)
         {
@@ -497,6 +503,8 @@ int main( int nArgc, char ** papszArgv )
 
         if(NULL == pszFinalSRS)
             Usage("No spatial reference provided");
+        if( pszFormat == NULL )
+            Usage("No output format provided");
 
         GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
         if( poDriver == NULL )
