@@ -817,6 +817,8 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
             REVERSEBITSBUFFER( pabyBuffer, nBufferSize );
             VSILFILE *fpL = VSIFOpenL( hVirtual.pszFileName, "w+" );
             TIFF *hTIFF = VSI_TIFFOpen( hVirtual.pszFileName, "w+", fpL );
+            if( hTIFF == NULL ) /* shouldn't happen */
+                return hVirtual;
             TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH,      nXSize );
             TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH,     nYSize );
             TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,   1 );
