@@ -2417,6 +2417,26 @@ def tiff_read_scanline_more_than_2GB():
     return 'success'
 
 ###############################################################################
+# Test that we are at least robust to wrong number of ExtraSamples and warn
+# about it
+
+def tiff_read_wrong_number_extrasamples():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/6band_wrong_number_extrasamples.tif')
+    if gdal.GetLastErrorMsg().find('Wrong number of ExtraSamples') < 0:
+        gdaltest.post_reason( 'fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    if ds.GetRasterBand(6).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason( 'fail')
+        print(ds.GetRasterBand(6).GetRasterColorInterpretation())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2476,6 +2496,7 @@ gdaltest_list.append( (tiff_read_minisblack_as_rgba) )
 gdaltest_list.append( (tiff_read_colortable_as_rgba) )
 gdaltest_list.append( (tiff_read_logl_as_rgba) )
 gdaltest_list.append( (tiff_read_scanline_more_than_2GB) )
+gdaltest_list.append( (tiff_read_wrong_number_extrasamples) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )

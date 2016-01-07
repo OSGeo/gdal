@@ -1137,6 +1137,21 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn) :
         if( TIFFGetField( poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) )
         {
             const int nBaseSamples = poGDS->nSamplesPerPixel - count;
+            const int nExpectedBaseSamples =
+                (poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK) ? 1 :
+                (poGDS->nPhotometric == PHOTOMETRIC_MINISWHITE) ? 1 :
+                (poGDS->nPhotometric == PHOTOMETRIC_RGB) ? 3 :
+                (poGDS->nPhotometric == PHOTOMETRIC_YCBCR) ? 3 :
+                (poGDS->nPhotometric == PHOTOMETRIC_SEPARATED) ? 4 : 0;
+
+            if( nExpectedBaseSamples > 0 &&
+                nBand == nExpectedBaseSamples + 1 &&
+                nBaseSamples != nExpectedBaseSamples )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Wrong number of ExtraSamples : %d. %d were expected",
+                         count, poGDS->nSamplesPerPixel - nExpectedBaseSamples);
+            }
 
             if( nBand > nBaseSamples
                 && nBand-nBaseSamples-1 < count
@@ -4290,6 +4305,24 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         {
             poGDS->nPhotometric = PHOTOMETRIC_RGB;
             TIFFSetField(poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, poGDS->nPhotometric);
+
+            /* We need to update the number of extra samples */
+            uint16 *v;
+            uint16 count = 0;
+            uint16 nNewExtraSamplesCount = poGDS->nBands - 3;
+            if( poGDS->nBands >= 4 &&
+                TIFFGetField( poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) &&
+                count > nNewExtraSamplesCount )
+            {
+                uint16* pasNewExtraSamples =
+                    (uint16*)CPLMalloc( nNewExtraSamplesCount * sizeof(uint16) );
+                memcpy( pasNewExtraSamples, v + count - nNewExtraSamplesCount,
+                        nNewExtraSamplesCount * sizeof(uint16) );
+
+                TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, nNewExtraSamplesCount, pasNewExtraSamples);
+
+                CPLFree(pasNewExtraSamples);
+            }
         }
         return CE_None;
     }
@@ -4304,6 +4337,31 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
     {
         poGDS->nPhotometric = PHOTOMETRIC_MINISBLACK;
         TIFFSetField(poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, poGDS->nPhotometric);
+
+        /* We need to update the number of extra samples */
+        uint16 *v;
+        uint16 count = 0;
+        uint16 nNewExtraSamplesCount = poGDS->nBands - 1;
+        if( poGDS->nBands >= 2 )
+        {
+            TIFFGetField( poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v );
+            if( nNewExtraSamplesCount > count )
+            {
+                uint16* pasNewExtraSamples =
+                    (uint16*)CPLMalloc( nNewExtraSamplesCount * sizeof(uint16) );
+                for(int i=0; i < (int)(nNewExtraSamplesCount - count); i++)
+                    pasNewExtraSamples[i] = EXTRASAMPLE_UNSPECIFIED;
+                if (count > 0 )
+                {
+                    memcpy( pasNewExtraSamples + nNewExtraSamplesCount - count, v,
+                            count * sizeof(uint16) );
+                }
+
+                TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, nNewExtraSamplesCount, pasNewExtraSamples);
+
+                CPLFree(pasNewExtraSamples);
+            }
+        }
 
         for(int i=1;i<=poGDS->nBands;i++)
         {
@@ -13419,6 +13477,24 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
     {
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+
+        /* We need to update the number of extra samples */
+        uint16 *v;
+        uint16 count = 0;
+        uint16 nNewExtraSamplesCount = nBands - 3;
+        if( nBands >= 4 &&
+            TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) &&
+            count > nNewExtraSamplesCount )
+        {
+            uint16* pasNewExtraSamples =
+                (uint16*)CPLMalloc( nNewExtraSamplesCount * sizeof(uint16) );
+            memcpy( pasNewExtraSamples, v + count - nNewExtraSamplesCount,
+                    nNewExtraSamplesCount * sizeof(uint16) );
+
+            TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nNewExtraSamplesCount, pasNewExtraSamples);
+
+            CPLFree(pasNewExtraSamples);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -13441,7 +13517,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     (uint16*)CPLMalloc( count * sizeof(uint16) );
                 memcpy( pasNewExtraSamples, v, count * sizeof(uint16) );
                 pasNewExtraSamples[nBands - nBaseSamples - 1] =
-                    GTiffGetAlphaValue(CSLFetchNameValue(papszOptions,"ALPHA"),
+                    GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", CSLFetchNameValue(papszOptions,"ALPHA")),
                                             DEFAULT_ALPHA_TYPE);
 
                 TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, count, pasNewExtraSamples);
@@ -13892,7 +13968,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // If we explicitly asked not to tag the alpha band as such, don't
     // reintroduce this alpha color interpretation in PAM.
     if( poSrcDS->GetRasterBand(nBands)->GetColorInterpretation()==GCI_AlphaBand &&
-        GTiffGetAlphaValue(CSLFetchNameValue(papszOptions,"ALPHA"), DEFAULT_ALPHA_TYPE) == EXTRASAMPLE_UNSPECIFIED )
+        GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", CSLFetchNameValue(papszOptions,"ALPHA")), DEFAULT_ALPHA_TYPE) == EXTRASAMPLE_UNSPECIFIED )
     {
         nCloneInfoFlags = nCloneInfoFlags & ~GCIF_COLORINTERP;
     }
@@ -14634,6 +14710,28 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
         return (osMissing.size()) ? CPLSPrintf("%s", osMissing.c_str()) : NULL;
     }
 #endif
+    else if( pszDomain != NULL && EQUAL(pszDomain, "_DEBUG_") &&
+             pszName != NULL && EQUAL(pszName, "TIFFTAG_EXTRASAMPLES") )
+    {
+        CPLString osRet;
+        uint16 *v;
+        uint16 count = 0;
+
+        if( TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) )
+        {
+            for(int i=0; i < (int)count; i++)
+            {
+                if( i > 0 ) osRet += ",";
+                osRet += CPLSPrintf("%d", v[i]);
+            }
+        }
+        return (osRet.size()) ? CPLSPrintf("%s", osRet.c_str()) : NULL;
+    }
+    else if( pszDomain != NULL && EQUAL(pszDomain, "_DEBUG_") &&
+             pszName != NULL && EQUAL(pszName, "TIFFTAG_PHOTOMETRIC") )
+    {
+        return CPLSPrintf("%d", nPhotometric);
+    }
 
     return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
 }
