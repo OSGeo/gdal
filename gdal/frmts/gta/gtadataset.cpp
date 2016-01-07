@@ -774,6 +774,7 @@ GTADataset::GTADataset()
     nLastBlockXOff = -1;
     nLastBlockYOff = -1;
     pBlock = NULL;
+    DataOffset = 0;
 }
 
 /************************************************************************/
@@ -1144,8 +1145,8 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->pasGCPs[i].pszId = VSIStrdup( CPLSPrintf( "%d", i ) );
                 char pszGCPTagName[64];
                 char pszGCPInfoTagName[64];
-                strcpy( pszGCPTagName, CPLSPrintf( "GDAL/GCP%d", i ) );
-                strcpy( pszGCPInfoTagName, CPLSPrintf( "GDAL/GCP%d_INFO", i ) );
+                snprintf( pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i );
+                snprintf( pszGCPInfoTagName, sizeof(pszGCPTagName), "GDAL/GCP%d_INFO", i );
                 if( poDS->oHeader.global_taglist().get(pszGCPInfoTagName) )
                 {
                     poDS->pasGCPs[i].pszInfo = VSIStrdup( poDS->oHeader.global_taglist().get(pszGCPInfoTagName) );
