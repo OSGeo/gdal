@@ -1253,12 +1253,13 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL(fpImage, nTiffDirStart+nTIFFHEADER, SEEK_SET) != 0
+    if( nTiffDirStart > INT_MAX - nTIFFHEADER ||
+        VSIFSeekL(fpImage, nTiffDirStart+nTIFFHEADER, SEEK_SET) != 0
         || VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fpImage) != sizeof(GUInt16) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Error reading EXIF Directory count at %d.",
-                nTiffDirStart + nTIFFHEADER );
+                "Error reading EXIF Directory count at " CPL_FRMT_GUIB,
+                 static_cast<vsi_l_offset>(nTiffDirStart) + nTIFFHEADER );
         return NULL;
     }
 

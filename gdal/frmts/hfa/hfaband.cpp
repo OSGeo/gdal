@@ -359,6 +359,11 @@ CPLErr	HFABand::LoadBlockInfo()
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot read %s", szVarName);
             return eErr;
         }
+        if( panBlockSize[iBlock] < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid block size");
+            return CE_Failure;
+        }
 
         snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].logvalid", iBlock );
         nLogvalid = poDMS->GetIntField( szVarName, &eErr );

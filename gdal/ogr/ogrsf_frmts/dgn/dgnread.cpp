@@ -463,6 +463,11 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           int                pntsize = psDGN->dimension * 4;
 
           count = psDGN->abyElem[36] + psDGN->abyElem[37]*256;
+          if( count < 2 )
+          {
+              CPLError(CE_Failure, CPLE_AssertionFailed, "count < 2");
+              return NULL;
+          }
           psLine = (DGNElemMultiPoint *) 
               CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),1);
           psElement = (DGNElemCore *) psLine;
@@ -471,12 +476,19 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
           if( psDGN->nElemBytes < 38 + count * pntsize )
           {
+              int new_count = (psDGN->nElemBytes - 38) / pntsize;
+              if( new_count < 0 )
+              {
+                  CPLError(CE_Failure, CPLE_AssertionFailed, "new_count < 2");
+                  DGNFreeElement(psDGN, psElement);
+                  return NULL;
+              }
               CPLError( CE_Warning, CPLE_AppDefined, 
                         "Trimming multipoint vertices to %d from %d because\n"
                         "element is short.\n", 
-                        (psDGN->nElemBytes - 38) / pntsize,
+                        new_count,
                         count );
-              count = (psDGN->nElemBytes - 38) / pntsize;
+              count = new_count;
           }
           psLine->num_vertices = count;
           for( i = 0; i < psLine->num_vertices; i++ )
@@ -816,13 +828,18 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_CONE:
         {
           DGNElemCone *psCone;
+          
+          if( psDGN->dimension != 3 )
+          {
+              CPLError(CE_Failure, CPLE_AssertionFailed, "psDGN->dimension != 3");
+              return NULL;
+          }
 
           psCone = (DGNElemCone *) CPLCalloc(sizeof(DGNElemCone),1);
           psElement = (DGNElemCore *) psCone;
           psElement->stype = DGNST_CONE;
           DGNParseCore( psDGN, psElement );
 
-          CPLAssert( psDGN->dimension == 3 );
           psCone->unknown = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
           psCone->quat[0] = DGN_INT32( psDGN->abyElem + 38 );
           psCone->quat[1] = DGN_INT32( psDGN->abyElem + 42 );
@@ -929,6 +946,11 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
         {
           DGNElemBSplineSurfaceBoundary *psBounds;
           short numverts = psDGN->abyElem[38] + psDGN->abyElem[39]*256;
+          if( numverts <= 0 )
+          {
+              CPLError(CE_Failure, CPLE_AssertionFailed, "numverts <= 0");
+              return NULL;
+          }
 
           psBounds = (DGNElemBSplineSurfaceBoundary *)
             CPLCalloc(sizeof(DGNElemBSplineSurfaceBoundary)+
@@ -1286,7 +1308,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 /*      Parse each of the tag definitions.                              */
 /* -------------------------------------------------------------------- */
     psTagSet->tagList = (DGNTagDef *) 
-        CPLMalloc(sizeof(DGNTagDef) * psTagSet->tagCount);
+        CPLCalloc(sizeof(DGNTagDef), psTagSet->tagCount);
 
     nDataOffset = 48 + strlen(psTagSet->tagSetName) + 1 + 1; 
 
@@ -1294,7 +1316,13 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
     {
         DGNTagDef *tagDef = psTagSet->tagList + iTag;
 
-        CPLAssert( nDataOffset < static_cast<size_t>(psDGN->nElemBytes) );
+        if( nDataOffset >= static_cast<size_t>(psDGN->nElemBytes) )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "nDataOffset >= static_cast<size_t>(psDGN->nElemBytes)");
+            DGNFreeElement(psDGN, psElement);
+            return NULL;
+        }
 
         /* collect tag name. */
         tagDef->name = CPLStrdup( (char *) psDGN->abyElem + nDataOffset );

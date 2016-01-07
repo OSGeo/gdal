@@ -2300,6 +2300,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = nBands;
+    CPLErrorReset();
     for( int i = 0; i < poDS->nBands; i++ )
     {
         poDS->SetBand( i + 1,
@@ -2307,6 +2308,12 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                                          nHeaderSize + nBandOffset * i,
                                          nPixelOffset, nLineOffset, eType,
                                          bNativeOrder, TRUE) );
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            poDS->nBands = i + 1;
+            delete poDS;
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */

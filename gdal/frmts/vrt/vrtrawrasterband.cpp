@@ -324,8 +324,9 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
     int nPixelOffset;
     int nWordDataSize = GDALGetDataTypeSize( GetRasterDataType() ) / 8;
 
+    const char* pszImageOffset = CPLGetXMLValue( psTree, "ImageOffset", "0");
     const vsi_l_offset nImageOffset = CPLScanUIntBig(
-        CPLGetXMLValue( psTree, "ImageOffset", "0"), 20);
+                        pszImageOffset, static_cast<int>(strlen(pszImageOffset)));
 
     if( CPLGetXMLValue( psTree, "PixelOffset", NULL ) == NULL )
         nPixelOffset = nWordDataSize;

@@ -152,6 +152,8 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     if (psInfo->nTilesPerRow > INT_MAX / psInfo->nTilesPerColumn)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Too many tiles");
+        psInfo->nTilesPerRow = 0; /* to avoid int32 overflow in AIGClose() */
+        psInfo->nTilesPerColumn = 0;
         AIGClose( psInfo );
         return NULL;
     }
@@ -432,17 +434,20 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 void AIGClose( AIGInfo_t * psInfo )
 
 {
-    int nTileCount = psInfo->nTilesPerRow * psInfo->nTilesPerColumn;
-    int iTile;
-
-    for( iTile = 0; iTile < nTileCount; iTile++ )
+    if( psInfo->pasTileInfo != NULL )
     {
-        if( psInfo->pasTileInfo[iTile].fpGrid )
-        {
-            VSIFCloseL( psInfo->pasTileInfo[iTile].fpGrid );
+        int nTileCount = psInfo->nTilesPerRow * psInfo->nTilesPerColumn;
+        int iTile;
 
-            CPLFree( psInfo->pasTileInfo[iTile].panBlockOffset );
-            CPLFree( psInfo->pasTileInfo[iTile].panBlockSize );
+        for( iTile = 0; iTile < nTileCount; iTile++ )
+        {
+            if( psInfo->pasTileInfo[iTile].fpGrid )
+            {
+                VSIFCloseL( psInfo->pasTileInfo[iTile].fpGrid );
+
+                CPLFree( psInfo->pasTileInfo[iTile].panBlockOffset );
+                CPLFree( psInfo->pasTileInfo[iTile].panBlockSize );
+            }
         }
     }
 

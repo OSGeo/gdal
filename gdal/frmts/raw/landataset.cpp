@@ -211,10 +211,10 @@ CPLErr LAN4BitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Seek to profile.                                                */
 /* -------------------------------------------------------------------- */
-    const int nOffset =
+    const vsi_l_offset nOffset =
         ERD_HEADER_SIZE
-        + (nBlockYOff * nRasterXSize * poLAN_DS->GetRasterCount()) / 2
-        + ((nBand - 1) * nRasterXSize) / 2;
+        + (static_cast<vsi_l_offset>(nBlockYOff) * nRasterXSize * poLAN_DS->GetRasterCount()) / 2
+        + (static_cast<vsi_l_offset>(nBand - 1) * nRasterXSize) / 2;
 
     if( VSIFSeekL( poLAN_DS->fpImage, nOffset, SEEK_SET ) != 0 )
     {
@@ -481,6 +481,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     for( int iBand = 1; iBand <= nBandCount; iBand++ )
     {
         if( nPixelOffset == -1 ) /* 4 bit case */
@@ -495,6 +496,11 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
                                    nPixelOffset, 
                                    poDS->nRasterXSize*nPixelOffset*nBandCount,
                                    eDataType, !bNeedSwap, TRUE ));
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            delete poDS;
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */

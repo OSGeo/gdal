@@ -55,7 +55,8 @@ class OGRJMLColumn
         CPLString osElementName;
         CPLString osAttributeName;
         CPLString osAttributeValue;
-        int       bIsBody; /* if false: attribute */
+        bool      bIsBody; /* if false: attribute */
+        OGRJMLColumn() : bIsBody(false) {}
 };
 
 /************************************************************************/
@@ -65,20 +66,19 @@ class OGRJMLColumn
 class OGRJMLLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    OGRJMLDataset *poDS;
 
     int                nNextFID;
     VSILFILE*          fp;
-    int                bHasReadSchema;
+    bool               bHasReadSchema;
 
     XML_Parser         oParser;
 
     int                currentDepth;
-    int                bStopParsing;
+    bool               bStopParsing;
     int                nWithoutEventCounter;
     int                nDataHandlerCounter;
 
-    int                bAccumulateElementValue;
+    bool               bAccumulateElementValue;
     char              *pszElementValue;
     int                nElementValueLen;
     int                nElementValueAlloc;
@@ -88,7 +88,7 @@ class OGRJMLLayer : public OGRLayer
     int                nFeatureTabLength;
     int                nFeatureTabIndex;
 
-    int                bSchemaFinished;
+    bool               bSchemaFinished;
     int                nJCSGMLInputTemplateDepth;
     int                nCollectionElementDepth;
     CPLString          osCollectionElement;
@@ -143,24 +143,23 @@ class OGRJMLLayer : public OGRLayer
 class OGRJMLWriterLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    OGRJMLDataset *poDS;
     VSILFILE           *fp;
-    int                 bFeaturesWritten;
-    int                 bAddRGBField;
-    int                 bAddOGRStyleField;
-    int                 bClassicGML;
+    bool                bFeaturesWritten;
+    bool                bAddRGBField;
+    bool                bAddOGRStyleField;
+    bool                bClassicGML;
     int                 nNextFID;
 
     void                WriteColumnDeclaration( const char* pszName,
                                                 const char* pszType );
 
   public:
-                        OGRJMLWriterLayer(const char* pszLayerName,
-                                               OGRJMLDataset* poDS,
-                                               VSILFILE* fp,
-                                               int bAddRGBField,
-                                               int bAddOGRStyleField,
-                                               int bClassicGML );
+                        OGRJMLWriterLayer( const char* pszLayerName,
+                                           OGRJMLDataset* poDS,
+                                           VSILFILE* fp,
+                                           bool bAddRGBField,
+                                           bool bAddOGRStyleField,
+                                           bool bClassicGML );
                         ~OGRJMLWriterLayer();
 
     void                ResetReading() {}
@@ -183,7 +182,7 @@ class OGRJMLDataset : public GDALDataset
     OGRLayer           *poLayer;
 
     VSILFILE           *fp; /* Virtual file API */
-    int                 bWriteMode;
+    bool                bWriteMode;
 
   public:
                         OGRJMLDataset();

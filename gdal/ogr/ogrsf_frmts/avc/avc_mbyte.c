@@ -26,22 +26,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: avc_mbyte.c,v $
- * Revision 1.4  2008/07/23 20:51:38  dmorissette
- * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
- * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
- *
- * Revision 1.3  2005/06/03 03:49:59  daniel
- * Update email address, website url, and copyright dates
- *
- * Revision 1.2  2000/09/22 19:45:21  daniel
- * Switch to MIT-style license
- *
- * Revision 1.1  2000/05/29 15:31:03  daniel
- * Initial revision - Japanese support
- *
  **********************************************************************/
 
 #include "avc.h"
@@ -221,7 +205,7 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
       default:
         /* We should never get here anyways, but just in case return pszLine 
          */
-        CPLAssert( !"SHOULD NEVER GET HERE" );
+        CPLAssert( FALSE ); /* Should never get here. */
         pszOutBuf = pszLine;
     }
     
@@ -536,4 +520,3 @@ static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
 
     return psDBCSInfo->pszDBCSBuf;
 }
-
