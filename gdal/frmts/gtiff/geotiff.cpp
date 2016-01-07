@@ -6810,6 +6810,7 @@ void GTiffDataset::ThreadCompressionFunc(void* pData)
     VSILFILE* fpTmp = VSIFOpenL(psJob->pszTmpFilename, "wb+");
     TIFF* hTIFFTmp = VSI_TIFFOpen(psJob->pszTmpFilename,
         (psJob->bTIFFIsBigEndian) ? "wb+" : "wl+", fpTmp);
+    CPLAssert( hTIFFTmp != NULL );
     int nBlockXSize, nBlockYSize;
     poDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     TIFFSetField(hTIFFTmp, TIFFTAG_IMAGEWIDTH, nBlockXSize);
