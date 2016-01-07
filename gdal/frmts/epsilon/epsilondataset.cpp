@@ -546,8 +546,13 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             break;
         }
 
+        BlockDesc* pasNewBlocks = (BlockDesc*)VSI_REALLOC_VERBOSE(pasBlocks, sizeof(BlockDesc) * (nBlocks+1));
+        if( pasNewBlocks == NULL )
+        {
+            bRet = FALSE;
+            break;
+        }
         nBlocks++;
-        pasBlocks = (BlockDesc*)VSIRealloc(pasBlocks, sizeof(BlockDesc) * nBlocks);
         pasBlocks[nBlocks-1].x = x;
         pasBlocks[nBlocks-1].y = y;
         pasBlocks[nBlocks-1].w = w;
