@@ -247,6 +247,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     {
       int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
+      CPLAssert(pszSchemaName != NULL); /* to make Coverity happy and not believe a REVERSE_INULL is possible */
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
 
