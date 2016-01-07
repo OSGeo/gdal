@@ -7600,7 +7600,12 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
                 }
             }
             if( VSIFSeekL(fp, nCurOffset, SEEK_SET) != 0 )
+            {
+                /* For some reason Coverity tells: */
+                /* Value of non-local "this->hTIFF->tif_dir.td_stripoffset" that was verified to be "NULL" is not restored as it was along other paths. */
+                /* coverity[missing_restore] */
                 return FALSE;
+            }
         }
         return hTIFF->tif_dir.td_stripbytecount[nBlockId] != 0;
     }
