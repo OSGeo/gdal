@@ -4309,7 +4309,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
             /* We need to update the number of extra samples */
             uint16 *v;
             uint16 count = 0;
-            uint16 nNewExtraSamplesCount = poGDS->nBands - 3;
+            uint16 nNewExtraSamplesCount = static_cast<uint16>(poGDS->nBands - 3);
             if( poGDS->nBands >= 4 &&
                 TIFFGetField( poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) &&
                 count > nNewExtraSamplesCount )
@@ -4341,7 +4341,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         /* We need to update the number of extra samples */
         uint16 *v;
         uint16 count = 0;
-        uint16 nNewExtraSamplesCount = poGDS->nBands - 1;
+        uint16 nNewExtraSamplesCount = static_cast<uint16>(poGDS->nBands - 1);
         if( poGDS->nBands >= 2 )
         {
             TIFFGetField( poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v );
@@ -13481,7 +13481,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         /* We need to update the number of extra samples */
         uint16 *v;
         uint16 count = 0;
-        uint16 nNewExtraSamplesCount = nBands - 3;
+        uint16 nNewExtraSamplesCount = static_cast<uint16>(nBands - 3);
         if( nBands >= 4 &&
             TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) &&
             count > nNewExtraSamplesCount )
