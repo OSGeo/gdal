@@ -113,7 +113,8 @@ def sieve_3():
 
     gdal.SieveFilter( src_band, None, dst_band, 2, 8 )
 
-    cs_expected = 472
+    #cs_expected = 472
+    cs_expected = 451
     cs = dst_band.Checksum()
 
     dst_band = None
@@ -291,6 +292,56 @@ NODATA_value 0
     else:
         return 'success' 
 
+###############################################################################
+# Test propagation in our search of biggest neighbour
+
+def sieve_8():
+
+    gdal.FileFromMemBuffer('/vsimem/sieve_8.asc', 
+"""ncols        7
+nrows        7
+xllcorner    440720.000000000000
+yllcorner    3750120.000000000000
+cellsize     60.000000000000
+ 0 0 0 0 0 0 0
+ 0 5 5 0 0 0 0
+ 0 5 2 3 4 0 0
+ 0 0 8 1 5 0 0
+ 0 0 7 6 5 9 0
+ 0 0 0 0 9 9 0
+ 0 0 0 0 0 0 0
+ """)
+
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    src_ds = gdal.Open('/vsimem/sieve_8.asc')
+    src_band = src_ds.GetRasterBand(1)
+
+    dst_ds = drv.Create('/vsimem/sieve_8.tif', 7, 7, 1, gdal.GDT_Byte )
+    dst_band = dst_ds.GetRasterBand(1)
+
+    gdal.SieveFilter( src_band, src_band.GetMaskBand(), dst_band, 4, 4 )
+
+    # All non 0 should be mapped to 0
+    cs_expected = 0
+    cs = dst_band.Checksum()
+
+    dst_band = None
+    dst_ds = None
+
+    gdal.Unlink('/vsimem/sieve_8.asc')
+
+    if cs == cs_expected \
+       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+        drv.Delete( '/vsimem/sieve_8.tif' )
+
+    if cs != cs_expected:
+        print('Got: ', cs)
+        gdaltest.post_reason( 'got wrong checksum' )
+        return 'fail'
+    else:
+        return 'success' 
+
 
 gdaltest_list = [
     sieve_1,
@@ -299,7 +350,8 @@ gdaltest_list = [
     sieve_4,
     sieve_5,
     sieve_6,
-    sieve_7
+    sieve_7,
+    sieve_8
     ]
 
 if __name__ == '__main__':

@@ -31,6 +31,7 @@
 #include "gdal_alg_priv.h"
 #include "cpl_conv.h"
 #include <vector>
+#include <set>
 
 CPL_CVSID("$Id$");
 
@@ -459,26 +460,48 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
             continue;
         }
 
-        // If our biggest neighbour is larger than the threshold
-        // then we are golden. 
-        if( anPolySizes[anBigNeighbour[iPoly]] >= nSizeThreshold )
-            continue;
+        std::set<int> oSetVisitedPoly;
+        oSetVisitedPoly.insert(iPoly);
 
-#ifdef notdef
-        // Will our neighbours biggest neighbour do?  
-        // Eventually we need something sort of recursive here with
-        // loop detection.
-        if( anPolySizes[anBigNeighbour[anBigNeighbour[iPoly]]] 
-            >= nSizeThreshold )
+        // Walk through our neighbours until we find a polygon large enough
+        int iFinalId = iPoly;
+        bool bFoundBigEnoughPoly = false;
+        while(true)
         {
-            anBigNeighbour[iPoly] = anBigNeighbour[anBigNeighbour[iPoly]];
+            iFinalId = anBigNeighbour[iFinalId];
+            if( iFinalId < 0 )
+            {
+                break;
+            }
+            // If the biggest neighbour is larger than the threshold
+            // then we are golden. 
+            if( anPolySizes[iFinalId] >= nSizeThreshold )
+            {
+                bFoundBigEnoughPoly = true;
+                break;
+            }
+            // Check that we don't cycle on an already visited polygon
+            if( oSetVisitedPoly.find(iFinalId) != oSetVisitedPoly.end() )
+                break;
+            oSetVisitedPoly.insert(iFinalId);
+        }
+
+        if( !bFoundBigEnoughPoly )
+        {
+            nFailedMerges++;
+            anBigNeighbour[iPoly] = -1;
             continue;
         }
-#endif
 
-        nFailedMerges++;
-        anBigNeighbour[iPoly] = -1;
-    }									
+        // Map the whole intermediate chain to it
+        int iPolyCur = iPoly;
+        while( anBigNeighbour[iPolyCur] != iFinalId )
+        {
+            int iNextPoly = anBigNeighbour[iPolyCur];
+            anBigNeighbour[iPolyCur] = iFinalId;
+            iPolyCur = iNextPoly;
+        }
+    }
 
     CPLDebug( "GDALSieveFilter", 
               "Small Polygons: %d, Isolated: %d, Unmergable: %d",
