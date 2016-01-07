@@ -369,8 +369,7 @@ template<class T> static inline void ClampAndRound(double& dfValue, int& bClampe
         bClamped = TRUE;
         dfValue = static_cast<double>(std::numeric_limits<T>::max());
     }
-    else if (std::numeric_limits<T>::is_integer &&
-             dfValue != static_cast<double>(static_cast<T>(dfValue)))
+    else if (dfValue != static_cast<double>(static_cast<T>(dfValue)))
     {
         bRounded = TRUE;
         dfValue = static_cast<double>(static_cast<T>(floor(dfValue + 0.5)));
@@ -413,8 +412,23 @@ double GDALAdjustValueToDataType( GDALDataType eDT, double dfValue, int* pbClamp
             ClampAndRound<GUInt32>(dfValue, bClamped, bRounded);
             break;
         case GDT_Float32:
-            ClampAndRound<float>(dfValue, bClamped, bRounded);
+        {
+            if ( dfValue < -std::numeric_limits<float>::max())
+            {
+                bClamped = TRUE;
+                dfValue = static_cast<double>(-std::numeric_limits<float>::max());
+            }
+            else if (dfValue > std::numeric_limits<float>::max())
+            {
+                bClamped = TRUE;
+                dfValue = static_cast<double>(std::numeric_limits<float>::max());
+            }
+            else
+            {
+                dfValue = static_cast<double>(static_cast<float>(dfValue));
+            }
             break;
+        }
         default:
             break;
     }
