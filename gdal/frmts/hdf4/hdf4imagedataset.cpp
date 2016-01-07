@@ -2255,16 +2255,18 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         char **papszGeoDimList = CSLTokenizeString2( szGeoDimList,
                                                      ",", CSLT_HONOURSTRINGS );
 
+        int iXGeo = CSLFindString( papszGeoDimList, szXGeo );
+        int iYGeo = CSLFindString( papszGeoDimList, szYGeo );
         if( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS 
-            || CSLFindString( papszGeoDimList, szXGeo ) == -1
-            || CSLFindString( papszGeoDimList, szYGeo ) == -1 )
+            || iXGeo < 0
+            || iYGeo < 0 )
         {
             CSLDestroy( papszGeoDimList );
             return FALSE;
         }
 
-        nXPoints = l_aiDimSizes[CSLFindString( papszGeoDimList, szXGeo )];
-        nYPoints = l_aiDimSizes[CSLFindString( papszGeoDimList, szYGeo )];
+        nXPoints = l_aiDimSizes[iXGeo];
+        nYPoints = l_aiDimSizes[iYGeo];
 
         if ( EQUAL(szPixel, papszDimList[iXDim]) )
         {
