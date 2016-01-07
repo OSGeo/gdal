@@ -107,6 +107,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
 
+    memset(&sCInfo, 0, sizeof(sCInfo));
     sCInfo.err = jpeg_std_error( &sJErr );
     jpeg_create_compress( &sCInfo );
 
