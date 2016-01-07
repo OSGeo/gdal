@@ -7286,6 +7286,8 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
                                  edge[l_index]++;
                               if(long_status == -1 || incr == 1)
                               {
+                                 if( detect_cnt == 0 )
+                                     return -1;
                                  scan_shift = nXtrk % detect_cnt;
                                  if(scan_shift != 0)
                                     edge[l_index] = nXtrk - scan_shift;
@@ -8431,6 +8433,8 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
                             dims[l_index] += nXtrk/incr;
                             if(long_status == -1 || incr == 1)
                             {
+                               if( detect_cnt == 0 )
+                                   return -1;
                                scan_shift = nXtrk % detect_cnt;
                                if(scan_shift != 0)
                                   dims[l_index] = nXtrk - scan_shift;
