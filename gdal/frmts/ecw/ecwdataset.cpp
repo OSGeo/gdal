@@ -974,6 +974,18 @@ ECWDataset::ECWDataset(int bIsJPEG2000In)
     nBandIndexToPromoteTo8Bit = -1;
 
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2ECW" : "ECW" );
+
+    psFileInfo =  NULL;
+    eNCSRequestDataType = NCSCT_UINT8;
+    nWinXOff = 0;
+    nWinYOff = 0;
+    nWinXSize = 0;
+    nWinYSize = 0;
+    nWinBufXSize = 0;
+    nWinBufYSize = 0;
+    nWinBandCount = 0;
+    nWinBufLoaded = FALSE;
+    papCurLineBuf = NULL;
 }
 
 /************************************************************************/
@@ -1820,7 +1832,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         nLineSpace = nPixelSpace*nBufXSize;
     }
     if ( nBandSpace == 0 ){
-        nBandSpace = nDataTypeSize*nBufXSize*nBufYSize;
+        nBandSpace = static_cast<GSpacing>(nDataTypeSize)*nBufXSize*nBufYSize;
     }
 
     // Use GDAL upsampling if non nearest
@@ -2221,7 +2233,7 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
 /* -------------------------------------------------------------------- */
     int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
     bool bDirect = (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace && 
-        nLineSpace == (nPixelSpace*nBufXSize) && nBandSpace == (nDataTypeSize*nBufXSize*nBufYSize) ;
+        nLineSpace == (nPixelSpace*nBufXSize) && nBandSpace == (static_cast<GSpacing>(nDataTypeSize)*nBufXSize*nBufYSize) ;
     if (bDirect)
     {
         return ReadBandsDirectly(pData, nBufXSize, nBufYSize,eBufType, 
@@ -2479,8 +2491,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 
         if( oErr.GetErrorNumber() != NCS_SUCCESS )
         {
-            if (poFileView)
-                delete poFileView;
+            delete poFileView;
             ECWReportError(oErr);
 
             return NULL;
