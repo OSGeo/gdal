@@ -214,8 +214,9 @@ int OGRILI2DataSource::Create( const char *pszFilename,
     {
         if (EQUAL(CPLGetExtension(pszName), "zip"))
         {
+            char* pszNewName = CPLStrdup(CPLFormFilename(pszName, "out.xtf", NULL));
             CPLFree(pszName);
-            pszName = CPLStrdup(CPLFormFilename(pszName, "out.xtf", NULL));
+            pszName = pszNewName;
         }
 
         fpOutput = VSIFOpenL(pszName, "wb");
