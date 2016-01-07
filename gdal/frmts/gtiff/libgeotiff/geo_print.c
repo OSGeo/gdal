@@ -356,6 +356,8 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
     char *vptr;
     int num;
     char message[2048];
+    int keycode;
+    int typecode;
 
     scan(message,aux); 
     if (!strncmp(message,FMT_KEYEND,8)) return 0;
@@ -368,15 +370,17 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
     if (!*vptr) return StringError(message);
     vptr+=2;
 
-    if( GTIFKeyCode(name) < 0 )
+    keycode = GTIFKeyCode(name);
+    if( keycode < 0 )
         return StringError(name);
     else
-        key = (geokey_t) GTIFKeyCode(name);
+        key = (geokey_t) keycode;
 
-    if( GTIFTypeCode(type) < 0 )
+    typecode = GTIFTypeCode(type);
+    if( typecode < 0 )
         return StringError(type);
     else
-        ktype = (tagtype_t) GTIFTypeCode(type);
+        ktype = (tagtype_t) typecode;
 
     /* skip white space */
     SKIPWHITE(vptr);
