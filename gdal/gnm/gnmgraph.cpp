@@ -58,12 +58,15 @@ void GNMGraph::DeleteVertex(GNMGFID nFID)
     m_mstVertices.erase(nFID);
 
     // remove all edges with this vertex
+    std::vector<GNMGFID> aoIdsToErase;
     for(std::map<GNMGFID,GNMStdEdge>::iterator it = m_mstEdges.begin();
         it != m_mstEdges.end(); ++it)
     {
         if(it->second.nSrcVertexFID == nFID || it->second.nTgtVertexFID == nFID)
-            m_mstEdges.erase(it);
+            aoIdsToErase.push_back(it->first);
     }
+    for(size_t i=0;i<aoIdsToErase.size();i++)
+        m_mstEdges.erase(aoIdsToErase[i]);
 }
 
 void GNMGraph::AddEdge(GNMGFID nConFID, GNMGFID nSrcFID, GNMGFID nTgtFID,
