@@ -253,6 +253,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
 
     OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
     OGRFeature *feature = NULL;
+    bool bFeatureAdded = false;
 
     while (ret && (tokens = ReadParseLine()) != NULL)
     {
@@ -274,7 +275,10 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
           }
         }
         //start new feature
+        if( !bFeatureAdded )
+            delete feature;
         feature = new OGRFeature(featureDef);
+        bFeatureAdded = false;
 
         for( int fIndex=1, fieldno = 0;
              fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount();
@@ -359,9 +363,10 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
           feature->SetFID(feature->GetFieldAsInteger64(0));
         }
         curLayer->AddFeature(feature);
+        bFeatureAdded = true;
         geomIdx = -1; //Reset
       }
-      else if (EQUAL(firsttok, "STPT"))
+      else if (EQUAL(firsttok, "STPT") && feature != NULL)
       {
         //Find next non-Point geometry
         if (geomIdx < 0) geomIdx = 0;
@@ -378,8 +383,9 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
       {
         // Empty geom.
       }
-      else if (EQUAL(firsttok, "EDGE"))
+      else if (EQUAL(firsttok, "EDGE") && feature != NULL)
       {
+        CSLDestroy(tokens);
         tokens = ReadParseLine(); //STPT
         //Find next non-Point geometry
         do {
@@ -396,6 +402,8 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
         CPLDebug( "OGR_ILI", "Total features: " CPL_FRMT_GIB,
                   curLayer->GetFeatureCount() );
         CSLDestroy(tokens);
+        if( !bFeatureAdded )
+            delete feature;
         return TRUE;
       }
       else
@@ -406,6 +414,9 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
 
       CSLDestroy(tokens);
     }
+
+    if( !bFeatureAdded )
+        delete feature;
 
     return ret;
 }

@@ -496,13 +496,13 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
             if (feature->GetGeomFieldRef(nSurfaceFieldIndex)) {
                 CPLDebug( "OGR_ILI", "Adding ring to FID " CPL_FRMT_GIB,
                           reftid );
-                poly = reinterpret_cast<OGRCurvePolygon *>(
-                    feature->GetGeomFieldRef(nSurfaceFieldIndex) );
             } else {
                 poly = (geomType == wkbPolygon) ?
                     new OGRPolygon() : new OGRCurvePolygon();
                 feature->SetGeomFieldDirectly(nSurfaceFieldIndex, poly);
             }
+            poly = reinterpret_cast<OGRCurvePolygon *>(
+                    feature->GetGeomFieldRef(nSurfaceFieldIndex) );
             OGRMultiCurve *lines = reinterpret_cast<OGRMultiCurve *>(
                 linefeature->GetGeomFieldRef(0) );
             for( int i = 0; i < lines->getNumGeometries(); i++ ) {

@@ -106,7 +106,7 @@ static int getGeometryTypeOfElem(DOMElement* elem) {
   int type = ILI2_STRING_TYPE;
   char* pszTagName = XMLString::transcode(elem->getTagName());
 
-  if (elem && elem->getNodeType() == DOMNode::ELEMENT_NODE) {
+  if (elem->getNodeType() == DOMNode::ELEMENT_NODE) {
     if (cmpStr(ILI2_COORD, pszTagName) == 0) {
       type = ILI2_COORD_TYPE;
     } else if (cmpStr(ILI2_ARC, pszTagName) == 0) {

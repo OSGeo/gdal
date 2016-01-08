@@ -130,7 +130,6 @@ private:
     ILI2Handler *m_poILI2Handler;
     SAX2XMLReader *m_poSAXReader;
     int      m_bReadStarted;
-    double   arcIncr;
 
     std::list<OGRLayer *> m_listLayer;
 
