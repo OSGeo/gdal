@@ -214,7 +214,8 @@ int main( int argc, char ** argv )
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     if( iIter == 1 )
 #endif
-    printf( "%s", pszGDALInfoOutput );
+    if( pszGDALInfoOutput )
+        printf( "%s", pszGDALInfoOutput );
 
     CPLFree( pszGDALInfoOutput );
 
