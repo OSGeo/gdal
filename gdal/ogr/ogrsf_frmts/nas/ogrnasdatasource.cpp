@@ -55,6 +55,7 @@ OGRNASDataSource::OGRNASDataSource()
     nLayers = 0;
 
     poReader = NULL;
+    poRelationLayer = NULL;
 }
 
 /************************************************************************/
