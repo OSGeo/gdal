@@ -122,7 +122,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
     paiOut = (GInt32*)pabyOut;
     nSizeOut /= sizeof(GInt32);
 
-    while ( nSizeIn >= 2 )
+    while ( nSizeIn > 0 )
     {
         // Read number of codes in the record and encoding type
         nCount = *pabyTempIn & 0x1F;
@@ -155,11 +155,11 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 break;
 
             case TYPE_INT4:
-                if ( nSizeIn < nCount / 2 )
+                if ( nSizeIn < (nCount + 1) / 2 )
                     break;
                 if ( nSizeOut < nCount )
                     break;
-                nSizeIn -= nCount / 2;
+                nSizeIn -= (nCount + 1) / 2;
                 nSizeOut -= nCount;
                 while ( nCount-- > 0 )
                 {
@@ -171,8 +171,11 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
 
                     if ( nCount-- == 0 )
                     {
-                        pabyTempIn++;
-                        nSizeIn--;
+                        if( nSizeIn )
+                        {
+                            pabyTempIn++;
+                            nSizeIn--;
+                        }
                         break;
                     }
 
@@ -199,11 +202,11 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 break;
 
             case TYPE_INT12:
-                if ( nSizeIn < 3 * nCount / 2 )
+                if ( nSizeIn < (3 * nCount + 1) / 2 )
                     break;
                 if ( nSizeOut < nCount )
                     break;
-                nSizeIn -= 3 * nCount / 2;
+                nSizeIn -= (3 * nCount + 1) / 2;
                 nSizeOut -= nCount;
 
                 while ( nCount-- > 0 )
@@ -216,8 +219,11 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
 
                     if ( nCount-- == 0 )
                     {
-                        pabyTempIn++;
-                        nSizeIn--;
+                        if( nSizeIn )
+                        {
+                            pabyTempIn++;
+                            nSizeIn--;
+                        }
                         break;
                     }
 
