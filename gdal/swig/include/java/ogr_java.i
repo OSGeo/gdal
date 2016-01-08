@@ -6,15 +6,6 @@
  * Purpose:  Typemaps for Java bindings
  * Author:   Benjamin Collins, The MITRE Corporation
  *
- *
- * $Log$
- * Revision 1.2  2006/02/16 17:21:12  collinsb
- * Updates to Java bindings to keep the code from halting execution if the native libraries cannot be found.
- *
- * Revision 1.1  2006/02/02 20:56:07  collinsb
- * Added Java specific typemap code
- *
- *
 */
 
 #ifndef FROM_GDAL_I
@@ -28,19 +19,19 @@
     try {
       System.loadLibrary("ogrjni");
       available = true;
-      
+
       if (org.gdal.gdal.gdal.HasThreadSupport() == 0)
       {
         System.err.println("WARNING : GDAL should be compiled with thread support for safe execution in Java.");
       }
-      
+
     } catch (UnsatisfiedLinkError e) {
       available = false;
       System.err.println("Native library load failed.");
       System.err.println(e);
     }
   }
-  
+
   public static boolean isAvailable() {
     return available;
   }
@@ -55,14 +46,14 @@
 
 /*
  *
- */ 
- 
+ */
+
 %pragma(java) jniclassimports=%{
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.gdal.MajorObject;
 %}
- 
+
 %pragma(java) moduleimports=%{
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdal.MajorObject;
@@ -471,7 +462,7 @@ class%}
     if (cMemoryOwn)
         nativeObject = new type ## Native(this, cPtr);
   }
-  
+
   public static long getCPtr($javaclassname obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }

@@ -6,15 +6,6 @@
  * Purpose:  Typemaps for Java bindings
  * Author:   Benjamin Collins, The MITRE Corporation
  *
- *
- * $Log$
- * Revision 1.2  2006/02/16 17:21:12  collinsb
- * Updates to Java bindings to keep the code from halting execution if the native libraries cannot be found.
- *
- * Revision 1.1  2006/02/02 20:56:07  collinsb
- * Added Java specific typemap code
- *
- *
 */
 
 %include "arrays_java.i";
@@ -32,7 +23,7 @@
     swigCMemOwn = cMemoryOwn;
     swigCPtr = cPtr;
   }
-  
+
   protected static long getCPtr($javaclassname obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
@@ -69,7 +60,7 @@
 
 %}
 
-%typemap(javain) SWIGTYPE *DISOWN "$javaclassname.getCPtrAndDisown($javainput)" 
+%typemap(javain) SWIGTYPE *DISOWN "$javaclassname.getCPtrAndDisown($javainput)"
 
 
 /* JAVA TYPEMAPS */
@@ -158,7 +149,7 @@
     "([F)[F");
 
   jfloatArray colorArr = jenv->NewFloatArray(4);
-  colorArr = (jfloatArray)jenv->CallObjectMethod($input, colors, colorArr); 
+  colorArr = (jfloatArray)jenv->CallObjectMethod($input, colors, colorArr);
 
   colorptr = (float *)jenv->GetFloatArrayElements(colorArr, 0);
   tmp.c1 = (short)(colorptr[0] * 255);
@@ -263,7 +254,7 @@
   for( int i = 0; i < *$1; i++ ) {
     jstring stringInfo = jenv->NewStringUTF((*$2)[i].pszInfo);
     jstring stringId = jenv->NewStringUTF((*$2)[i].pszId);
-    jobject GCPobj = jenv->NewObject(GCPClass, GCPcon, 
+    jobject GCPobj = jenv->NewObject(GCPClass, GCPcon,
                                 (*$2)[i].dfGCPX,
                                 (*$2)[i].dfGCPY,
                                 (*$2)[i].dfGCPZ,
@@ -338,7 +329,7 @@
     }
     else
     {
-        SWIG_JavaException(jenv, SWIG_ValueError, "Received a NULL pointer."); return $null; 
+        SWIG_JavaException(jenv, SWIG_ValueError, "Received a NULL pointer."); return $null;
     }
     $2 = &nBytes;
 }
@@ -561,7 +552,7 @@
  *
  *  Java typemaps for (int nList, int* pList)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int nList, int* pList)
 {
   /* %typemap(in) (int nList, int* pList) */
@@ -607,7 +598,7 @@
  *
  *  Java typemaps for (int nList, int* pListOut)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int nList, int* pListOut)
 {
   /* %typemap(in) (int nList, int* pListOut) */
@@ -651,7 +642,7 @@
  *
  *  Java typemaps for (int* pnList, int** ppListOut)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int* pnList, int** ppListOut) (int nLen, int* pBuf)
 {
   /* %typemap(in) (int* pnList, int** ppListOut) */
@@ -689,7 +680,7 @@
  *
  *  Java typemaps for (int id, int *nLen, const int **pList)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int id, int *nLen, const int **pList) (int nLen, int* pList)
 {
   /* %typemap(in) (int id, int *nLen, const int **pList) */
@@ -735,7 +726,7 @@
  *
  *  Java typemaps for (int id, int *nLen, const double **pList)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int id, int *nLen, const double **pList) (int nLen, double* pList)
 {
   /* %typemap(in) (int id, int *nLen, const double **pList) */
@@ -780,7 +771,7 @@
  *
  *  Java typemaps for (int nList, double* pList)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int nList, double* pList)
 {
   /* %typemap(in) (int nList, double* pList) */
@@ -825,7 +816,7 @@
  *
  *  Java typemaps for (int object_list_count, GDALRasterBandShadow **poObjects)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int object_list_count, GDALRasterBandShadow **poObjects)
 {
   /* %typemap(in)(int object_list_count, GDALRasterBandShadow **poObjects) */
@@ -885,7 +876,7 @@
  *
  *  Java typemaps for (int object_list_count, GDALDatasetShadow **poObjects)
  *
- ***************************************************/ 
+ ***************************************************/
 %typemap(in) (int object_list_count, GDALDatasetShadow **poObjects)
 {
   /* %typemap(in)(int object_list_count, GDALDatasetShadow **poObjects) */
@@ -958,7 +949,7 @@
       "(Ljava/lang/Object;)Ljava/lang/Object;");
     const jmethodID keys = jenv->GetMethodID(hashtable, "keys",
       "()Ljava/util/Enumeration;");
-    const jmethodID hasMoreElements = jenv->GetMethodID(enumeration, 
+    const jmethodID hasMoreElements = jenv->GetMethodID(enumeration,
       "hasMoreElements", "()Z");
     const jmethodID nextElement = jenv->GetMethodID(enumeration,
       "nextElement", "()Ljava/lang/Object;");
@@ -1048,7 +1039,7 @@
     const jclass stringClass = jenv->FindClass("java/lang/String");
     const jmethodID elements = jenv->GetMethodID(vector, "elements",
       "()Ljava/util/Enumeration;");
-    const jmethodID hasMoreElements = jenv->GetMethodID(enumeration, 
+    const jmethodID hasMoreElements = jenv->GetMethodID(enumeration,
       "hasMoreElements", "()Z");
     const jmethodID getNextElement = jenv->GetMethodID(enumeration,
       "nextElement", "()Ljava/lang/Object;");
@@ -1171,7 +1162,7 @@
 
 
 /***************************************************
- * Typemaps for char **OUTPUT 
+ * Typemaps for char **OUTPUT
  ***************************************************/
 
 %typemap(in) char **OUTPUT (char* ret)
@@ -1241,7 +1232,7 @@
   }
 
 /***************************************************
- * Typemaps for char **argout. 
+ * Typemaps for char **argout.
  ***************************************************/
 
 %typemap(in) (char **argout) ( char *argout=0 )
@@ -1391,7 +1382,7 @@
 
 
 /***************************************************
- * Typemaps for char ** 
+ * Typemaps for char **
  ***************************************************/
 
 /* This tells SWIG to treat char ** as a special case when used as a parameter
@@ -1430,7 +1421,7 @@
     jstring temp_string;
     const jclass clazz = jenv->FindClass("java/lang/String");
 
-    while ($1[len]) len++;    
+    while ($1[len]) len++;
     jresult = jenv->NewObjectArray(len, clazz, NULL);
     /* exception checking omitted */
 
@@ -1454,7 +1445,7 @@
  * Typemaps for (void * nioBuffer, long nioBufferSize)
  ***************************************************/
 
-%typemap(in, numinputs=1) (void * nioBuffer, long nioBufferSize) 
+%typemap(in, numinputs=1) (void * nioBuffer, long nioBufferSize)
 {
     /* %typemap(in, numinputs=1) (void * nioBuffer, long nioBufferSize)  */
     if ($input == 0)
@@ -1465,7 +1456,7 @@
     $1 = jenv->GetDirectBufferAddress($input);
     if ($1 == NULL)
     {
-        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, 
+        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
                                 "Unable to get address of direct buffer. Buffer must be allocated direct.");
         return $null;
     }
@@ -1492,7 +1483,7 @@
  ***************************************************/
 
 %define DEFINE_REGULAR_ARRAY_OUT(ctype, jtype, function)
-%typemap(in, numinputs=1) (ctype *regularArrayOut, long nRegularArraySizeOut) 
+%typemap(in, numinputs=1) (ctype *regularArrayOut, long nRegularArraySizeOut)
 {
     /* %typemap(in, numinputs=1) (ctype *regularArrayOut, long nRegularArraySizeOut)  */
     if ($input == 0)
@@ -1506,7 +1497,7 @@
     //$1 = (ctype*) jenv->GetPrimitiveArrayCritical($input, 0);
     if ($1 == NULL)
     {
-        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, 
+        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
                                 "Unable to allocate temporary buffer.");
         return $null;
     }
@@ -1561,7 +1552,7 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
  ***************************************************/
 
 %define DEFINE_REGULAR_ARRAY_IN(ctype, jtype, get_fct, release_fct)
-%typemap(in, numinputs=1) (ctype *regularArrayIn, long nRegularArraySizeIn) 
+%typemap(in, numinputs=1) (ctype *regularArrayIn, long nRegularArraySizeIn)
 {
     /* %typemap(in, numinputs=1) (ctype *regularArrayIn, long nRegularArraySizeIn)  */
     if ($input == 0)
@@ -1574,7 +1565,7 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
     $1 = (ctype*) jenv->get_fct($input, 0);
     if ($1 == NULL)
     {
-        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, 
+        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
                                 "Unable to get buffer.");
         return $null;
     }
@@ -1638,7 +1629,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 
 /***************************************************
- * Typemaps for ( int nCount, double *x, double *y, double *z ) 
+ * Typemaps for ( int nCount, double *x, double *y, double *z )
  ***************************************************/
 
 %typemap(in) ( int nCount, double *x, double *y, double *z ) (int xyzLen)

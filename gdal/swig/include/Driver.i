@@ -57,19 +57,19 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Create;
 #endif
-  GDALDatasetShadow *Create(    const char *utf8_path, 
-                                int xsize, 
-                                int ysize, 
+  GDALDatasetShadow *Create(    const char *utf8_path,
+                                int xsize,
+                                int ysize,
                                 int bands = 1,
-                                GDALDataType eType=GDT_Byte, 
+                                GDALDataType eType=GDT_Byte,
                                 char **options = 0 ) {
 
-    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self, 
-                                                                utf8_path, 
-                                                                xsize, 
-                                                                ysize, 
-                                                                bands, 
-                                                                eType, 
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self,
+                                                                utf8_path,
+                                                                xsize,
+                                                                ysize,
+                                                                bands,
+                                                                eType,
                                                                 options );
     return ds;
   }
@@ -80,19 +80,19 @@ public:
 %feature( "kwargs" ) CreateCopy;
 #endif
 #endif
-  GDALDatasetShadow *CreateCopy(    const char *utf8_path, 
-                                    GDALDatasetShadow* src, 
-                                    int strict = 1, 
-                                    char **options = 0, 
+  GDALDatasetShadow *CreateCopy(    const char *utf8_path,
+                                    GDALDatasetShadow* src,
+                                    int strict = 1,
+                                    char **options = 0,
                                     GDALProgressFunc callback = NULL,
                                     void* callback_data=NULL) {
 
-    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self, 
-                                                                    utf8_path, 
-                                                                    src, 
-                                                                    strict, 
-                                                                    options, 
-                                                                    callback, 
+    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self,
+                                                                    utf8_path,
+                                                                    src,
+                                                                    strict,
+                                                                    options,
+                                                                    callback,
                                                                     callback_data );
     return ds;
   }

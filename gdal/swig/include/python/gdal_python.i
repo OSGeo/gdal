@@ -16,7 +16,7 @@
 
 %pythoncode %{
 
-  
+
   have_warned = 0
   def deprecation_warn( module ):
     global have_warned
@@ -29,8 +29,8 @@
     from warnings import warn
     warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
          DeprecationWarning)
-         
-         
+
+
   from gdalconst import *
   import gdalconst
 
@@ -82,7 +82,6 @@
 %}
 
 
-
 %include "python_exceptions.i"
 %include "python_strings.i"
 
@@ -105,8 +104,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         *buf = NULL;
         return 0;
     }
-#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -115,7 +114,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         return 0;
     }
     PyObject* o = (PyObject*) *buf;
-    char *data = PyBytes_AsString(o); 
+    char *data = PyBytes_AsString(o);
     GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
     if (nRet * nMembSize < buf_size)
     {
@@ -123,8 +122,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         *buf = o;
     }
     return nRet;
-#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -132,7 +131,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         return 0;
     }
     PyObject* o = (PyObject*) *buf;
-    char *data = PyString_AsString(o); 
+    char *data = PyString_AsString(o);
     GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
     if (nRet * nMembSize < buf_size)
     {
@@ -160,7 +159,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
   def serialize(self,with_Z=0):
     base = [CXT_Element,'GCP']
     base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
-    pixval = '%0.15E' % self.GCPPixel       
+    pixval = '%0.15E' % self.GCPPixel
     lineval = '%0.15E' % self.GCPLine
     xval = '%0.15E' % self.GCPX
     yval = '%0.15E' % self.GCPY
@@ -170,7 +169,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     base.append([CXT_Attribute,'X',[CXT_Text,xval]])
     base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
     if with_Z:
-        base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
+        base.append([CXT_Attribute,'Z',[CXT_Text,zval]])
     return base
 %} /* pythoncode */
 }
@@ -198,14 +197,14 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
     GIntBig buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
-                                            pixel_space, line_space, FALSE ); 
+                                            pixel_space, line_space, FALSE );
     if (buf_size == 0)
     {
         *buf = NULL;
         return CE_Failure;
     }
-%#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+%#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -213,16 +212,16 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf ); 
-%#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    char *data = PyBytes_AsString( (PyObject *)*buf );
+%#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyString_AsString( (PyObject *)*buf ); 
+    char *data = PyString_AsString( (PyObject *)*buf );
 %#endif
 
     /* Should we clear the buffer in case there are hole in it ? */
@@ -250,9 +249,9 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         sExtraArg.dfYSize = ysize;
     }
 
-    CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize, 
-                         (void *) data, nxsize, nysize, ntype, 
-                         pixel_space, line_space, &sExtraArg ); 
+    CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                         (void *) data, nxsize, nysize, ntype,
+                         pixel_space, line_space, &sExtraArg );
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
@@ -273,8 +272,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
     GIntBig buf_size = (GIntBig)nBlockXSize * nBlockYSize * nDataTypeSize;
 
-%#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+%#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -282,18 +281,18 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf ); 
-%#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    char *data = PyBytes_AsString( (PyObject *)*buf );
+%#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyString_AsString( (PyObject *)*buf ); 
+    char *data = PyString_AsString( (PyObject *)*buf );
 %#endif
-    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data); 
+    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data);
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
@@ -339,7 +338,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
                                           resample_alg = resample_alg,
                                           callback = callback,
                                           callback_data = callback_data)
-    
+
   def WriteArray(self, array, xoff=0, yoff=0,
                  resample_alg = GRIORA_NearestNeighbour,
                  callback = None,
@@ -416,7 +415,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 
   def __get_array_interface__(self):
       shape = [1, self.XSize, self.YSize]
-      
+
 %}
 }
 
@@ -466,24 +465,24 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
         return CE_Failure;
     }
 
-%#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+%#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf ); 
-%#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    char *data = PyBytes_AsString( (PyObject *)*buf );
+%#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyString_AsString( (PyObject *)*buf ); 
+    char *data = PyString_AsString( (PyObject *)*buf );
 %#endif
 
     /* Should we clear the buffer in case there are hole in it ? */
@@ -653,7 +652,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 
     def GetSubDatasets(self):
         sd_list = []
-        
+
         sd = self.GetMetadata('SUBDATASETS')
         if sd is None:
             return sd_list
@@ -960,13 +959,13 @@ def Translate(destName, srcDS, **kwargs):
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
-def WarpOptions(options = [], format = 'GTiff', 
+def WarpOptions(options = [], format = 'GTiff',
          outputBounds = None,
          outputBoundsSRS = None,
          xRes = None, yRes = None, targetAlignedPixels = False,
          width = 0, height = 0,
          srcSRS = None, dstSRS = None,
-         srcAlpha = False, dstAlpha = False, 
+         srcAlpha = False, dstAlpha = False,
          warpOptions = None, errorThreshold = None,
          warpMemoryLimit = None, creationOptions = None, outputType = GDT_Unknown,
          workingType = GDT_Unknown, resampleAlg = None,
@@ -1146,7 +1145,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
-def VectorTranslateOptions(options = [], format = 'ESRI Shapefile', 
+def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
          SQLStatement = None, SQLDialect = None, where = None, selectFields = None, spatFilter = None,
@@ -1340,7 +1339,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
 
-def NearblackOptions(options = [], format = 'GTiff', 
+def NearblackOptions(options = [], format = 'GTiff',
          creationOptions = None, white = False, colors = None,
          maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
          callback = None, callback_data = None):
@@ -1351,7 +1350,7 @@ def NearblackOptions(options = [], format = 'GTiff',
           creationOptions --- list of creation options
           white --- whether to search for nearly white (255) pixels instead of nearly black pixels.
           colors --- list of colors  to search for, e.g. ((0,0,0),(255,255,255)). The pixels that are considered as the collar are set to 0
-          maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2. 
+          maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2.
           nearDist --- select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15.
           setAlpha --- adds an alpha band if the output file.
           setMask --- adds a mask band to the output file.
@@ -1510,7 +1509,7 @@ def Grid(destName, srcDS, **kwargs):
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
-def RasterizeOptions(options = [], format = None, 
+def RasterizeOptions(options = [], format = None,
          creationOptions = None, noData = None, initValues = None,
          outputBounds = None, outputSRS = None,
          width = None, height = None,
