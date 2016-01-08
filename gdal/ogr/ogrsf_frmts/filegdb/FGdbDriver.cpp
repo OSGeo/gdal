@@ -290,7 +290,7 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     osEditedName += ".ogredited";
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLUnlinkTree(osEditedName);
+    CPL_IGNORE_RET_VAL(CPLUnlinkTree(osEditedName));
     CPLPopErrorHandler();
 
     OGRErr eErr = OGRERR_NONE;
