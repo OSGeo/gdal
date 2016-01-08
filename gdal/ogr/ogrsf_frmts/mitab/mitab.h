@@ -319,9 +319,16 @@ class TABFile: public IMapInfoFile
     virtual TABFileClass GetFileClass() {return TABFC_TABFile;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE )
+            { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE );
+                     GBool bTestOpenNoError = FALSE )
+            { return Open(pszFname, eAccess, bTestOpenNoError, 512); }
+
+    virtual int Open(const char *pszFname, TABAccess eAccess,
+                     GBool bTestOpenNoError,
+                     int nBlockSizeForCreate );
+
     virtual int Close();
 
     virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE);

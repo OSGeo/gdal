@@ -150,7 +150,6 @@ inline double round(double r) {
  *--------------------------------------------------------------------*/
 #define HDR_MAGIC_COOKIE        42424242
 #define HDR_VERSION_NUMBER      500
-#define HDR_DATA_BLOCK_SIZE     512
 
 #define HDR_DEF_ORG_QUADRANT    1       // N-E Quadrant
 #define HDR_DEF_REFLECTXAXIS    0
@@ -213,7 +212,7 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
      * Set acceptable default values for member vars.
      *----------------------------------------------------------------*/
     m_nMAPVersionNumber = HDR_VERSION_NUMBER;
-    m_nBlockSize = HDR_DATA_BLOCK_SIZE;
+    m_nRegularBlockSize = TAB_MIN_BLOCK_SIZE;
 
     m_dCoordsys2DistUnits = 1.0;
     m_nXMin = -1000000000;
@@ -327,7 +326,15 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x104);
     m_nMAPVersionNumber = ReadInt16();
-    m_nBlockSize = ReadInt16();
+    m_nRegularBlockSize = ReadInt16();
+    if( m_nRegularBlockSize < TAB_MIN_BLOCK_SIZE )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+              "ReadFromFile(): Invalid block size %d", m_nRegularBlockSize);
+        CPLFree(m_pabyBuf);
+        m_pabyBuf = NULL;
+        return -1;
+    }
 
     m_dCoordsys2DistUnits = ReadDouble();
     m_nXMin = ReadInt32();
@@ -412,10 +419,10 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     }
 
     m_sProj.nAffineFlag = 0;
-    if (m_nMAPVersionNumber >= 500 && m_nSizeUsed > 512)
+    if (m_nMAPVersionNumber >= 500 && m_nSizeUsed > TAB_MIN_BLOCK_SIZE)
     {
         // Read Affine parameters A,B,C,D,E,F 
-        // only if version 500+ and block is larger than 512 bytes
+        // only if version 500+ and block is larger than TAB_MIN_BLOCK_SIZE bytes
         int nInUse = ReadByte();
         if (nInUse)
         {
@@ -821,7 +828,7 @@ int     TABMAPHeaderBlock::CommitToFile()
 {
     int i, nStatus = 0;
 
-    if ( m_pabyBuf == NULL || m_nBlockSize != HDR_DATA_BLOCK_SIZE )
+    if ( m_pabyBuf == NULL || m_nRegularBlockSize == 0 )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed, 
         "TABRawBinBlock::CommitToFile(): Block has not been initialized yet!");
@@ -852,7 +859,7 @@ int     TABMAPHeaderBlock::CommitToFile()
 
     WriteInt16(m_nMAPVersionNumber);
 
-    WriteInt16(HDR_DATA_BLOCK_SIZE);
+    WriteInt16(m_nRegularBlockSize);
 
     WriteDouble(m_dCoordsys2DistUnits);
     WriteInt32(m_nXMin);
@@ -960,13 +967,18 @@ int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     /*-----------------------------------------------------------------
      * Start with the default initialisation
      *----------------------------------------------------------------*/
-    if ( TABRawBinBlock::InitNewBlock(fpSrc, nBlockSize, nFileOffset) != 0)
+
+    /* .MAP files of Version 500 and up appear to have a 1024 bytes
+     * header.  The last 512 bytes are usually all zeros. */
+    if ( TABRawBinBlock::InitNewBlock(fpSrc, 1024, nFileOffset) != 0)
         return -1;
 
     /*-----------------------------------------------------------------
      * Set acceptable default values for member vars.
      *----------------------------------------------------------------*/
     InitMembersWithDefaultValues();
+
+    m_nRegularBlockSize = nBlockSize;
 
     /*-----------------------------------------------------------------
      * And Set the map object length array in the buffer...
@@ -1018,7 +1030,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
     else
     {
         fprintf(fpOut,"Version %d header block.\n", m_nMAPVersionNumber);
-        fprintf(fpOut,"  m_nBlockSize          = %d\n", m_nBlockSize);
+        fprintf(fpOut,"  m_nRegularBlockSize       = %d\n", m_nRegularBlockSize);
         fprintf(fpOut,"  m_nFirstIndexBlock    = %d\n", m_nFirstIndexBlock);
         fprintf(fpOut,"  m_nFirstGarbageBlock  = %d\n", m_nFirstGarbageBlock);
         fprintf(fpOut,"  m_nFirstToolBlock     = %d\n", m_nFirstToolBlock);

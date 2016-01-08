@@ -104,6 +104,7 @@ class OGRTABDataSource : public OGRDataSource
     int                 m_bSingleLayerAlreadyCreated;
     GBool               m_bQuickSpatialIndexMode;
     int                 m_bUpdate;
+    int                 m_nBlockSize;
 
   public:
                 OGRTABDataSource();

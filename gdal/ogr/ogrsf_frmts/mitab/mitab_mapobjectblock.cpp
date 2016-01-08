@@ -209,7 +209,7 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
 
     /*-----------------------------------------------------------------
      * Set real value for m_nSizeUsed to allow random update
-     * (By default TABRawBinBlock thinks all 512 bytes are used)
+     * (By default TABRawBinBlock thinks all bytes are used)
      *----------------------------------------------------------------*/
     m_nSizeUsed = m_numDataBytes + MAP_OBJECT_HEADER_SIZE;
 
@@ -356,6 +356,7 @@ int     TABMAPObjectBlock::CommitToFile()
 
     WriteInt16(TABMAP_OBJECT_BLOCK);    // Block type code
     m_numDataBytes = m_nSizeUsed - MAP_OBJECT_HEADER_SIZE;
+    CPLAssert(m_numDataBytes >= 0 && m_numDataBytes < 32768);
     WriteInt16((GInt16)m_numDataBytes);         // num. bytes used
     
     WriteInt32(m_nCenterX);
@@ -740,7 +741,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         TABMAPHeaderBlock *poHeader;
         TABMAPObjHdr *poObjHdr;
 
-        poBlock = TABCreateMAPBlockFromFile(m_fp, 0, 512);
+        poBlock = TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
         if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
         {
             CPLError(CE_Failure, CPLE_AssertionFailed, 

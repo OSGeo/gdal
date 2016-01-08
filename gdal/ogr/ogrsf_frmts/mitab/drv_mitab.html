@@ -120,6 +120,11 @@ truncated</li>
 "quick spatial index mode". In this mode writing files can be about 5 times faster, but
 spatial queries can be up to 30 times slower. This can be set to OPTIMIZED in
 GDAL 2.0 to generate optimized spatial index.</li>
+<li><b>BLOCKSIZE=[512,1024,...,32256]</b> (multiples of 512): (GDAL &gt;= 2.0.2)
+Block size for .map files. Defaults to 512.
+GDAL 2.0.1 and earlier versions only supported BLOCKSIZE=512 in reading and writing.
+MapInfo 15.2 and above creates .tab files with a blocksize of 16384 bytes. Any
+MapInfo version should be able to handle block sizes from 512 to 32256.
 </ul>
 
 <h3>Layer Creation Options</h3>
@@ -130,7 +135,7 @@ to increase the accuracy of the coordinates. Note: the geometry of written featu
 must be within the defined box.</li>
 </ul>
 
-<h3>Compatability</h3>
+<h3>Compatibility</h3>
 
 <p>
 Before v1.8.0 , the driver was incorrectly using a "." as the delimiter for id:

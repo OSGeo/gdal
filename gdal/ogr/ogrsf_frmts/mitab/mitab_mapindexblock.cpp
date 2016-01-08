@@ -355,7 +355,7 @@ int     TABMAPIndexBlock::ReadNextEntry(TABMAPIndexEntry *psEntry)
  **********************************************************************/
 int     TABMAPIndexBlock::ReadAllEntries()
 {
-    CPLAssert(m_numEntries <= TAB_MAX_ENTRIES_INDEX_BLOCK);
+    CPLAssert(m_numEntries <= GetMaxEntries());
     if (m_numEntries == 0)
         return 0;
     
@@ -405,9 +405,7 @@ int     TABMAPIndexBlock::WriteNextEntry(TABMAPIndexEntry *psEntry)
  **********************************************************************/
 int     TABMAPIndexBlock::GetNumFreeEntries()
 {
-    /* nMaxEntries = (m_nBlockSize-4)/20;*/
-
-    return (TAB_MAX_ENTRIES_INDEX_BLOCK - m_numEntries);
+    return ((m_nBlockSize-4)/20 - m_numEntries);
 }
 
 /**********************************************************************
@@ -499,7 +497,7 @@ int     TABMAPIndexBlock::InsertEntry(GInt32 nXMin, GInt32 nYMin,
      * Update count of entries and store new entry.
      *----------------------------------------------------------------*/
     m_numEntries++;
-    CPLAssert(m_numEntries <= TAB_MAX_ENTRIES_INDEX_BLOCK);
+    CPLAssert(m_numEntries <= GetMaxEntries());
 
     m_asEntries[m_numEntries-1].XMin = nXMin;
     m_asEntries[m_numEntries-1].YMin = nYMin;
@@ -648,7 +646,7 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
 
     poBlock = TABCreateMAPBlockFromFile(m_fp, 
                                     m_asEntries[nBestCandidate].nBlockPtr,
-                                    512, TRUE, TABReadWrite);
+                                    m_nBlockSize, TRUE, TABReadWrite);
     if (poBlock != NULL && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
     {
         m_poCurChild = (TABMAPIndexBlock*)poBlock;
@@ -855,7 +853,7 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
 
             poBlock = TABCreateMAPBlockFromFile(m_fp, 
                                        m_asEntries[nBestCandidate].nBlockPtr,
-                                       512, TRUE, TABReadWrite);
+                                       m_nBlockSize, TRUE, TABReadWrite);
             if (poBlock != NULL && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
             {
                 m_poCurChild = (TABMAPIndexBlock*)poBlock;
@@ -1167,7 +1165,7 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
      * Create a 2nd node
      *----------------------------------------------------------------*/
     TABMAPIndexBlock *poNewNode = new TABMAPIndexBlock(m_eAccess);
-    if (poNewNode->InitNewBlock(m_fp, 512, 
+    if (poNewNode->InitNewBlock(m_fp, m_nBlockSize, 
                                 m_poBlockManagerRef->AllocNewBlock("INDEX")) != 0)
     {
         return -1;
@@ -1246,7 +1244,7 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
             continue;
 
         }
-        else if (m_numEntries >= TAB_MAX_ENTRIES_INDEX_BLOCK-1)
+        else if (m_numEntries >= GetMaxEntries()-1)
         {
             poNewNode->InsertEntry(pasSrcEntries[iEntry].XMin, 
                                    pasSrcEntries[iEntry].YMin,
@@ -1255,7 +1253,7 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
                                    pasSrcEntries[iEntry].nBlockPtr);
             continue;
         }
-        else if (poNewNode->GetNumEntries() >= TAB_MAX_ENTRIES_INDEX_BLOCK-1)
+        else if (poNewNode->GetNumEntries() >= GetMaxEntries()-1)
         {
             InsertEntry(pasSrcEntries[iEntry].XMin, 
                         pasSrcEntries[iEntry].YMin,
@@ -1350,7 +1348,7 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
      *----------------------------------------------------------------*/
     TABMAPIndexBlock *poNewNode = new TABMAPIndexBlock(m_eAccess);
 
-    if (poNewNode->InitNewBlock(m_fp, 512, 
+    if (poNewNode->InitNewBlock(m_fp, m_nBlockSize, 
                                 m_poBlockManagerRef->AllocNewBlock("INDEX")) != 0)
     {
         return -1;

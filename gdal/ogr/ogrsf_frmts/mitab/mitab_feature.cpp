@@ -8082,7 +8082,7 @@ int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     if (m_nSize > 0)
     {
         poObjBlock->GotoByteRel(-5);    // Go back to beginning of header
-        poObjBlock->ReadBytes(m_nSize, m_abyBuf);
+        poObjBlock->ReadBytes(MIN(m_nSize, (int)sizeof(m_abyBuf)), m_abyBuf);
     }
 
     return 0;

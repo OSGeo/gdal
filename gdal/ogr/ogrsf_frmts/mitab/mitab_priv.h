@@ -315,7 +315,10 @@ typedef struct TABMAPIndexEntry_t
     GInt32      nBlockPtr;
 }TABMAPIndexEntry;
 
-#define TAB_MAX_ENTRIES_INDEX_BLOCK     ((512-4)/20)
+#define TAB_MIN_BLOCK_SIZE              512
+#define TAB_MAX_BLOCK_SIZE              (32768-512)
+
+#define TAB_MAX_ENTRIES_INDEX_BLOCK     ((TAB_MAX_BLOCK_SIZE-4)/20)
 
 
 /*---------------------------------------------------------------------
@@ -837,8 +840,11 @@ class TABBinBlockManager
     char        m_szName[32]; /* for debug purposes */
 
   public:
-    TABBinBlockManager(int nBlockSize=512);
+    TABBinBlockManager();
     ~TABBinBlockManager();
+
+    void        SetBlockSize(int nBlockSize);
+    int         GetBlockSize() const { return m_nBlockSize; }
 
     GInt32      AllocNewBlock(const char* pszReason = "");
     void        Reset();
@@ -885,7 +891,7 @@ class TABRawBinBlock
                    GBool bHardBlockSize = TRUE);
     virtual ~TABRawBinBlock();
 
-    virtual int ReadFromFile(VSILFILE *fpSrc, int nOffset, int nSize = 512);
+    virtual int ReadFromFile(VSILFILE *fpSrc, int nOffset, int nSize);
     virtual int CommitToFile();
     int         CommitAsDeleted(GInt32 nNextBlockPtr);
 
@@ -993,7 +999,7 @@ class TABMAPHeaderBlock: public TABRawBinBlock
     // LoadFromFile().  For this reason, this class should be used with care.
 
     GInt16      m_nMAPVersionNumber;
-    GInt16      m_nBlockSize;
+    GInt16      m_nRegularBlockSize;
     
     double      m_dCoordsys2DistUnits;
     GInt32      m_nXMin;
@@ -1062,6 +1068,8 @@ class TABMAPIndexBlock: public TABRawBinBlock
     TABMAPIndexBlock *m_poParentRef;
 
     int         ReadAllEntries();
+    
+    int         GetMaxEntries() const { return ((m_nBlockSize-4)/20); }
 
   public:
     TABMAPIndexBlock(TABAccess eAccessMode = TABRead);
@@ -1471,9 +1479,11 @@ class TABMAPFile
     ~TABMAPFile();
 
     int         Open(const char *pszFname, const char* pszAccess,
-                     GBool bNoErrorMsg = FALSE );
+                     GBool bNoErrorMsg = FALSE,
+                     int nBlockSizeForCreate = 512 );
     int         Open(const char *pszFname, TABAccess eAccess,
-                     GBool bNoErrorMsg = FALSE );
+                     GBool bNoErrorMsg = FALSE,
+                     int nBlockSizeForCreate = 512 );
     int         Close();
 
     int         SyncToDisk();
@@ -1942,7 +1952,7 @@ class MIDDATAFile
  =====================================================================*/
 
 TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset, 
-                                          int nSize = 512, 
+                                          int nSize, 
                                           GBool bHardBlockSize = TRUE,
                                           TABAccess eAccessMode = TABRead);
 
