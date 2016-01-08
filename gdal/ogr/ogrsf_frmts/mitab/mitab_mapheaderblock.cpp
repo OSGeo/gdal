@@ -978,7 +978,8 @@ int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
      *----------------------------------------------------------------*/
     InitMembersWithDefaultValues();
 
-    m_nRegularBlockSize = nBlockSize;
+    CPLAssert( nBlockSize >= 0 && nBlockSize <= 32767 );
+    m_nRegularBlockSize = static_cast<GInt16>(nBlockSize);
 
     /*-----------------------------------------------------------------
      * And Set the map object length array in the buffer...
