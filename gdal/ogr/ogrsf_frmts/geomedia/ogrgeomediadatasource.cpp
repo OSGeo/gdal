@@ -48,6 +48,7 @@ OGRGeomediaDataSource::OGRGeomediaDataSource()
     papoLayersInvisible = NULL;
     nLayers = 0;
     nLayersWithInvisible = 0;
+    bDSUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -129,6 +130,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
             return FALSE;
         }
         pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
+        /* coverity[tainted_string] */
         snprintf( pszDSN,
                   strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
                   pszDSNStringTemplate,  pszNewName );
@@ -408,6 +410,7 @@ OGRLayer * OGRGeomediaDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", oSession.GetLastError() );
+        delete poStmt;
         return NULL;
     }
 
