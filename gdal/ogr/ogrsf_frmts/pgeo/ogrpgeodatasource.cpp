@@ -126,6 +126,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
             return FALSE;
         }
         pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
+        /* coverity[tainted_string] */
         snprintf( pszDSN,
                   strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
                   pszDSNStringTemplate,  pszNewName );
@@ -285,6 +286,7 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", oSession.GetLastError() );
+        delete poStmt;
         return NULL;
     }
 
