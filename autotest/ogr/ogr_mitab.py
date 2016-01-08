@@ -2230,6 +2230,7 @@ def ogr_mitab_43():
 
     gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_512.tab' )
     gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_32256.tab' )
+    gdal.Unlink('/vsimem/all_geoms_block_32768.dat')
 
     return 'success'
 
