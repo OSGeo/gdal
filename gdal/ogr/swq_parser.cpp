@@ -101,6 +101,7 @@
 
 
 #include "cpl_conv.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_geometry.h"
 #include "swq.h"
@@ -1001,6 +1002,7 @@ yytnamerr (char *yyres, const char *yystr)
             if (*++yyp != '\\')
               goto do_not_strip_quotes;
             /* Fall through.  */
+            CPL_FALLTHROUGH;
           default:
             if (yyres)
               yyres[yyn] = *yyp;
