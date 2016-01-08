@@ -5,7 +5,7 @@
  * DontUseExceptions()
  *
  * It uses CPLSetErrorHandler to provide a custom function
- * which notifies the bindings of errors. 
+ * which notifies the bindings of errors.
  *
  * This is not thread safe.
  *
@@ -74,7 +74,7 @@ void DontUseExceptions() {
     }
 
 #if defined(SWIGPERL)
-    /* 
+    /*
     Make warnings regular Perl warnings. This duplicates the warning
     message if DontUseExceptions() is in effect (it is not by default).
     */

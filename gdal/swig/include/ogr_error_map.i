@@ -28,9 +28,9 @@
  *****************************************************************************/
 
 #ifdef SWIGRUBY
-%header 
+%header
 #else
-%fragment("OGRErrMessages","header") 
+%fragment("OGRErrMessages","header")
 #endif
 %{
 

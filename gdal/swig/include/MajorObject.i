@@ -92,7 +92,7 @@ public:
 /*
  * SetMetadata methods
  */
- 
+
 #ifdef SWIGJAVA
 %apply (char **options) { char ** papszMetadata };
   CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {

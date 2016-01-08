@@ -4,7 +4,6 @@
  * python specific code for ogr bindings.
  */
 
-
 %feature("autodoc");
 
 #ifndef FROM_GDAL_I
@@ -13,14 +12,14 @@
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
-  
+
 %}
 #endif
 
 /*%{
-    
-#if PY_MINOR_VERSION >= 4 
-#include "datetime.h" 
+
+#if PY_MINOR_VERSION >= 4
+#include "datetime.h"
 #define USE_PYTHONDATETIME 1
 #endif
 %}
@@ -60,7 +59,7 @@
     def Reference(self):
       "For backwards compatibility only."
       return self.Reference()
-  
+
     def Dereference(self):
       "For backwards compatibility only."
       self.Dereference()
@@ -123,7 +122,7 @@
     def Reference(self):
       "For backwards compatibility only."
       pass
-  
+
     def Dereference(self):
       "For backwards compatibility only."
       pass
@@ -202,7 +201,7 @@
     OGR_F_SetFieldString(self, id, value);
   }
   %clear (const char* value );
-  
+
   %pythoncode %{
     def Reference(self):
       pass
@@ -222,7 +221,7 @@
     def __copy__(self):
         return self.Clone()
 
-    # This makes it possible to fetch fields in the form "feature.area". 
+    # This makes it possible to fetch fields in the form "feature.area".
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
@@ -239,7 +238,7 @@
         else:
             return self.GetField(idx)
 
-    # This makes it possible to set fields in the form "feature.area". 
+    # This makes it possible to set fields in the form "feature.area".
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
@@ -256,7 +255,7 @@
                 else:
                     self.__dict__[key] = value
 
-    # This makes it possible to fetch fields in the form "feature['area']". 
+    # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, str):
@@ -271,7 +270,7 @@
         else:
             return self.GetField(fld_index)
 
-    # This makes it possible to set fields in the form "feature['area'] = 123". 
+    # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
         if isinstance(key, str):
@@ -327,9 +326,9 @@
         SetField(self, char name, int value)
         SetField(self, int id, double value)
         SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute, 
+        SetField(self, int id, int year, int month, int day, int hour, int minute,
             int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour, 
+        SetField(self, char name, int year, int month, int day, int hour,
             int minute, int second, int tzflag)
         """
 
@@ -386,7 +385,7 @@
             fieldname = self.GetFieldDefnRef(i).GetName()
             names.append(fieldname)
         return names
-    
+
     def items(self):
         keys = self.keys()
         output = {}
@@ -398,7 +397,7 @@
 
     def ExportToJson(self, as_object = False, options = None):
         """Exports a GeoJSON object which represents the Feature. The
-           as_object parameter determines whether the returned value 
+           as_object parameter determines whether the returned value
            should be a Python object instead of a string. Defaults to False.
            The options parameter is passed to Geometry.ExportToJson()"""
 
@@ -422,12 +421,12 @@
         output = {'type':'Feature',
                    'geometry': geom_json_object,
                    'properties': {}
-                  } 
-        
+                  }
+
         fid = self.GetFID()
         if fid != NullFID:
             output['id'] = fid
-            
+
         for key in self.keys():
             fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
             if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
@@ -437,7 +436,7 @@
                     output['properties'][key] = False
             else:
                 output['properties'][key] = self.GetField(key)
-        
+
         if not as_object:
             output = simplejson.dumps(output)
 
@@ -451,25 +450,25 @@
 %extend OGRGeometryShadow {
 %pythoncode %{
   def Destroy(self):
-    self.__swig_destroy__(self) 
+    self.__swig_destroy__(self)
     self.__del__()
     self.thisown = 0
 
   def __str__(self):
     return self.ExportToWkt()
-    
+
 
   def __reduce__(self):
     return (self.__class__, (), self.ExportToWkb())
- 	
+
   def __setstate__(self, state):
       result = CreateGeometryFromWkb(state)
       self.this = result.this
-        
+
   def __iter__(self):
       self.iter_subgeom = 0
       return self
-      
+
   def next(self):
       if self.iter_subgeom < self.GetGeometryCount():
           subgeom = self.GetGeometryRef(self.iter_subgeom)

@@ -81,7 +81,7 @@
   $2 = &isvalid;
 }
 
-%typemap(argout) (double argout[6], int* isvalid) 
+%typemap(argout) (double argout[6], int* isvalid)
 {
    /* %typemap(argout) (double argout[6], int* isvalid)  */
   PyObject *r;
@@ -720,8 +720,8 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
                                 (*$2)[i].dfGCPLine,
                                 (*$2)[i].pszInfo,
                                 (*$2)[i].pszId );
-	
-    PyTuple_SetItem(dict, i, 
+
+    PyTuple_SetItem(dict, i,
        SWIG_NewPointerObj((void*)o,SWIGTYPE_p_GDAL_GCP,1) );
   }
   Py_DECREF($result);
@@ -1104,8 +1104,8 @@ OPTIONAL_POD(GIntBig,L);
     PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
     SWIG_fail;
   }
- 
-  $1 = GDALPythonObjectToCStr(str, &bToFree); 
+
+  $1 = GDALPythonObjectToCStr(str, &bToFree);
 }
 %typemap(freearg)(tostring argin)
 {
@@ -1221,8 +1221,8 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     if( psTree == NULL )
         return Py_None;
 
-    for( psChild = psTree->psChild; 
-         psChild != NULL; 
+    for( psChild = psTree->psChild;
+         psChild != NULL;
          psChild = psChild->psNext )
         nChildCount++;
 
@@ -1231,14 +1231,14 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     PyList_SetItem( pyList, 0, Py_BuildValue( "i", (int) psTree->eType ) );
     PyList_SetItem( pyList, 1, Py_BuildValue( "s", psTree->pszValue ) );
 
-    for( psChild = psTree->psChild, iChild = 2; 
-         psChild != NULL; 
+    for( psChild = psTree->psChild, iChild = 2;
+         psChild != NULL;
          psChild = psChild->psNext, iChild++ )
     {
         PyList_SetItem( pyList, iChild, XMLTreeToPyList( psChild ) );
     }
 
-    return pyList; 
+    return pyList;
 }
 %}
 
@@ -1308,7 +1308,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 
 /*  This typemap takes the $input'ed  PyObject* and hangs it on the     */
 /*  struct's callback data .                                            */
-%typemap(in) (void* callback_data=NULL) 
+%typemap(in) (void* callback_data=NULL)
 {
     /* %typemap(in) ( void* callback_data=NULL)  */
         psProgressInfo->psPyCallbackData = $input ;
@@ -1321,13 +1321,13 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 /*  otherwise, setup the psProgressInfo's callback to be our PyObject*  */
 /*  and set our callback function to be PyProgressProxy, which is       */
 /*  defined in gdal_python.i                                            */
-%typemap(in) ( GDALProgressFunc callback = NULL) 
+%typemap(in) ( GDALProgressFunc callback = NULL)
 {
     /* %typemap(in) (GDALProgressFunc callback = NULL) */
     /* callback_func typemap */
     if ($input && $input != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( $input, 
+        SWIG_ConvertPtr( $input,
                          (void**)&cbfunction,
                          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
                          SWIG_POINTER_EXCEPTION | 0 );
@@ -1336,30 +1336,30 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
             $1 = GDALTermProgress;
         } else {
             if (!PyCallable_Check($input)) {
-                PyErr_SetString( PyExc_RuntimeError, 
+                PyErr_SetString( PyExc_RuntimeError,
                                  "Object given is not a Python function" );
                 SWIG_fail;
             }
             psProgressInfo->psPyCallback = $input;
             $1 = PyProgressProxy;
         }
-        
+
     }
 
 }
 
 /*  clean up our global (to the wrapper function) psProgressInfo        */
 /*  struct now that we're done with it.                                 */
-%typemap(freearg) (void* callback_data=NULL) 
+%typemap(freearg) (void* callback_data=NULL)
 {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
-  
+
         CPLFree(psProgressInfo);
 
 }
 
 
-%typemap(in) ( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL ) 
+%typemap(in) ( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
 {
     /* %typemap(in) (CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL) */
     int alloc = 0;
@@ -1384,7 +1384,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     }
     else if (!PyCallable_Check($input))
     {
-        PyErr_SetString( PyExc_RuntimeError, 
+        PyErr_SetString( PyExc_RuntimeError,
                          "Object given is not a String or a Python function" );
         SWIG_fail;
     }
@@ -1397,7 +1397,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 }
 
 
-%typemap(arginit) ( GUInt32 ) 
+%typemap(arginit) ( GUInt32 )
 {
     /* %typemap(out) ( GUInt32 )  */
 
@@ -1405,7 +1405,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 
 }
 
-%typemap(out) ( GUInt32 ) 
+%typemap(out) ( GUInt32 )
 {
     /* %typemap(out) ( GUInt32 )  */
 
@@ -1413,7 +1413,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 
 }
 
-%typemap(in) ( GUInt32 ) 
+%typemap(in) ( GUInt32 )
 {
     /* %typemap(in) ( GUInt32 )  */
 
@@ -1439,7 +1439,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
   }
   $1 = (int)size;
   $2 = (type**) CPLMalloc($1*sizeof(type*));
-  
+
   for( int i = 0; i<$1; i++ ) {
 
       PyObject *o = PySequence_GetItem($input,i);
@@ -1474,8 +1474,8 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
  *                       GetHistogram()
  * Python is somewhat special in that we don't want the caller
  * to pass in the histogram array to populate.  Instead we allocate
- * it internally, call the C level, and then turn the result into 
- * a list object. 
+ * it internally, call the C level, and then turn the result into
+ * a list object.
  */
 
 %typemap(arginit) (int buckets, GUIntBig* panHistogram)
@@ -1559,7 +1559,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
   PyObject *psList = NULL;
 
   Py_XDECREF($result);
-  
+
   if (panHistogram)
   {
       psList = PyList_New(buckets_val);
@@ -1873,7 +1873,7 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
 }
 %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)
 {
-%#if PY_VERSION_HEX >= 0x02070000 
+%#if PY_VERSION_HEX >= 0x02070000
   /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
   Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
   if (PyBuffer_FillInfo(buf,  obj0,  *($1), *($2), *($4), PyBUF_ND)) {
