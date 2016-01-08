@@ -659,7 +659,7 @@ CPLErr MG4LidarDataset::OpenZoomLevel( int iZoom )
    const ChannelInfo *ci = NULL;
    for (int i=0; i<nBands; i++)
    {
-      ci = reader->getChannel(dynamic_cast<MG4LidarRasterBand*>(papoBands[i])->ChannelName);
+      ci = reader->getChannel(static_cast<MG4LidarRasterBand*>(papoBands[i])->ChannelName);
       requiredChannels.getChannel(i).init(*ci);
    }
    int iSDKChannels = nBands;
