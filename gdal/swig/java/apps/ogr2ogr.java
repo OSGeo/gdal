@@ -142,18 +142,18 @@ public class ogr2ogr
     /* -------------------------------------------------------------------- */
         if( ogr.GetDriverCount() == 0 )
             ogr.RegisterAll();
-    
+
     /* -------------------------------------------------------------------- */
     /*      Processing command line arguments.                              */
     /* -------------------------------------------------------------------- */
         args = ogr.GeneralCmdLineProcessor( args );
-        
+
         if( args.length < 2 )
         {
             Usage();
             System.exit( -1 );
         }
-    
+
         for( int iArg = 0; iArg < args.length; iArg++ )
         {
             if( args[iArg].equalsIgnoreCase("-f") && iArg < args.length-1 )
@@ -276,7 +276,7 @@ public class ogr2ogr
                 oRing.AddPoint(xmax, ymax);
                 oRing.AddPoint(xmax, ymin);
                 oRing.AddPoint(xmin, ymin);
-                
+
                 poSpatialFilter = new Geometry(ogrConstants.wkbPolygon);
                 poSpatialFilter.AddGeometry(oRing);
             }
@@ -358,7 +358,7 @@ public class ogr2ogr
                     oRing.AddPoint(xmax, ymax);
                     oRing.AddPoint(xmax, ymin);
                     oRing.AddPoint(xmin, ymin);
-                    
+
                     poClipSrc = new Geometry(ogrConstants.wkbPolygon);
                     poClipSrc.AddGeometry(oRing);
                 }
@@ -412,7 +412,7 @@ public class ogr2ogr
                     oRing.AddPoint(xmax, ymax);
                     oRing.AddPoint(xmax, ymin);
                     oRing.AddPoint(xmin, ymin);
-                    
+
                     poClipDst = new Geometry(ogrConstants.wkbPolygon);
                     poClipDst.AddGeometry(oRing);
                 }
@@ -472,7 +472,7 @@ public class ogr2ogr
             else
                 papszLayers.addElement (args[iArg] );
         }
-    
+
         if( pszDataSource == null )
             Usage();
 
@@ -502,7 +502,7 @@ public class ogr2ogr
                 Usage();
             }
         }
-        
+
         if( pszClipDstDS != null)
         {
             poClipDst = LoadGeometry(pszClipDstDS, pszClipDstSQL, pszClipDstLayer, pszClipDstWhere);
@@ -516,9 +516,9 @@ public class ogr2ogr
     /*      Open data source.                                               */
     /* -------------------------------------------------------------------- */
         DataSource poDS;
-            
+
         poDS = ogr.Open( pszDataSource, false );
-    
+
     /* -------------------------------------------------------------------- */
     /*      Report failure                                                  */
     /* -------------------------------------------------------------------- */
@@ -526,21 +526,21 @@ public class ogr2ogr
         {
             System.err.println("FAILURE:\n" + 
                     "Unable to open datasource ` " + pszDataSource + "' with the following drivers.");
-    
+
             for( int iDriver = 0; iDriver < ogr.GetDriverCount(); iDriver++ )
             {
                 System.err.println("  . " + ogr.GetDriver(iDriver).GetName() );
             }
-    
+
             System.exit( 1 );
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Try opening the output datasource as an existing, writable      */
     /* -------------------------------------------------------------------- */
         DataSource       poODS = null;
         Driver poDriver = null;
-        
+
         if( bUpdate )
         {
             poODS = ogr.Open( pszDestDataSource, true );
@@ -568,7 +568,7 @@ public class ogr2ogr
                     System.exit( 1 );
                 }
             }
-    
+
             else if( papszDSCO.size() > 0 )
             {
                 System.err.println("WARNING: Datasource creation options ignored since an existing datasource\n" +
@@ -578,27 +578,27 @@ public class ogr2ogr
             if (poODS != null)
                 poDriver = poODS.GetDriver();
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Find the output driver.                                         */
     /* -------------------------------------------------------------------- */
         if( !bUpdate )
         {
             int                  iDriver;
-    
+
             poDriver = ogr.GetDriverByName(pszFormat);
             if( poDriver == null )
             {
                 System.err.println("Unable to find driver `" + pszFormat +"'." );
                 System.err.println( "The following drivers are available:" );
-            
+
                 for( iDriver = 0; iDriver < ogr.GetDriverCount(); iDriver++ )
                 {
                     System.err.println("  . " + ogr.GetDriver(iDriver).GetName() );
                 }
                 System.exit( 1 );
             }
-    
+
             if( poDriver.TestCapability( ogr.ODrCCreateDataSource ) == false )
             {
                 System.err.println( pszFormat + " driver does not support data source creation.");
@@ -643,7 +643,7 @@ public class ogr2ogr
                 System.exit( 1 );
             }
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Parse the output SRS definition if possible.                    */
     /* -------------------------------------------------------------------- */
@@ -656,7 +656,7 @@ public class ogr2ogr
                 System.exit( 1 );
             }
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Parse the source SRS definition if possible.                    */
     /* -------------------------------------------------------------------- */
@@ -669,22 +669,22 @@ public class ogr2ogr
                 System.exit( 1 );
             }
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Special case for -sql clause.  No source layers required.       */
     /* -------------------------------------------------------------------- */
         if( pszSQLStatement != null )
         {
             Layer poResultSet;
-    
+
             if( pszWHERE != null )
                 System.err.println( "-where clause ignored in combination with -sql." );
             if( papszLayers.size() > 0 )
                 System.err.println( "layer names ignored in combination with -sql." );
-            
+
             poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter, 
                                             null );
-    
+
             if( poResultSet != null )
             {
                 long nCountLayerFeatures = 0;
@@ -730,7 +730,7 @@ public class ogr2ogr
                     System.err.println(
                             "Terminating translation prematurely after failed\n" +
                             "translation from sql statement." );
-    
+
                     System.exit( 1 );
                 }
                 poDS.ReleaseResultSet( poResultSet );
@@ -887,13 +887,13 @@ public class ogr2ogr
         poODS.delete();
         poDS.delete();
     }
-    
+
     /************************************************************************/
     /*                               Usage()                                */
     /************************************************************************/
-    
+
     static void Usage()
-    
+
     {
         System.out.print( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n" +
                 "               [-select field_list] [-where restricted_where] \n" +
@@ -908,15 +908,15 @@ public class ogr2ogr
                 "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n" +
                 "\n" +
                 " -f format_name: output file format name, possible values are:\n");
-        
+
         for( int iDriver = 0; iDriver < ogr.GetDriverCount(); iDriver++ )
         {
             Driver poDriver = ogr.GetDriver(iDriver);
-    
+
             if( poDriver.TestCapability( ogr.ODrCCreateDataSource ) )
                 System.out.print( "     -f \"" + poDriver.GetName() + "\"\n" );
         }
-    
+
         System.out.print( " -append: Append to existing layer instead of creating new if it exists\n" +
                 " -overwrite: delete the output layer and recreate it empty\n" +
                 " -update: Open existing output datasource in update mode\n" +
@@ -942,7 +942,7 @@ public class ogr2ogr
                 "      fields of type string in the new layer. Valid types are : \n" +
                 "      Integer, Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n" +
                 "      StringList. Special value All can be used to convert all fields to strings.\n");
-    
+
         System.out.print(" -a_srs srs_def: Assign an output SRS\n" +
             " -t_srs srs_def: Reproject/transform to this SRS on output\n" +
             " -s_srs srs_def: Override source SRS\n" +
@@ -950,7 +950,7 @@ public class ogr2ogr
             " Srs_def can be a full WKT definition (hard to escape properly),\n" +
             " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n" +
             " definition.\n" );
-    
+
         System.exit( 1 );
     }
 
@@ -968,7 +968,6 @@ public class ogr2ogr
         return -1;
     }
 
-    
     static boolean IsNumber(String pszStr)
     {
         try
@@ -981,7 +980,7 @@ public class ogr2ogr
             return false;
         }
     }
-    
+
     static Geometry LoadGeometry( String pszDS,
                                   String pszSQL,
                                   String pszLyr,
@@ -991,45 +990,45 @@ public class ogr2ogr
         Layer            poLyr;
         Feature          poFeat;
         Geometry         poGeom = null;
-            
+
         poDS = ogr.Open( pszDS, false );
         if (poDS == null)
             return null;
-    
+
         if (pszSQL != null)
             poLyr = poDS.ExecuteSQL( pszSQL, null, null ); 
         else if (pszLyr != null)
             poLyr = poDS.GetLayerByName(pszLyr);
         else
             poLyr = poDS.GetLayer(0);
-            
+
         if (poLyr == null)
         {
             System.err.print("Failed to identify source layer from datasource.\n");
             poDS.delete();
             return null;
         }
-        
+
         if (pszWhere != null)
             poLyr.SetAttributeFilter(pszWhere);
-            
+
         while ((poFeat = poLyr.GetNextFeature()) != null)
         {
             Geometry poSrcGeom = poFeat.GetGeometryRef();
             if (poSrcGeom != null)
             {
                 int eType = wkbFlatten(poSrcGeom.GetGeometryType());
-                
+
                 if (poGeom == null)
                     poGeom = new Geometry( ogr.wkbMultiPolygon );
-    
+
                 if( eType == ogr.wkbPolygon )
                     poGeom.AddGeometry( poSrcGeom );
                 else if( eType == ogr.wkbMultiPolygon )
                 {
                     int iGeom;
                     int nGeomCount = poSrcGeom.GetGeometryCount();
-    
+
                     for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
                     {
                         poGeom.AddGeometry(poSrcGeom.GetGeometryRef(iGeom) );
@@ -1102,7 +1101,7 @@ public class ogr2ogr
     /************************************************************************/
     /*                           TranslateLayer()                           */
     /************************************************************************/
-    
+
     static boolean TranslateLayer( DataSource poSrcDS, 
                             Layer poSrcLayer,
                             DataSource poDstDS,
@@ -1123,7 +1122,7 @@ public class ogr2ogr
                             String pszZField,
                             String pszWHERE,
                             ProgressCallback pfnProgress)
-    
+
     {
         Layer    poDstLayer;
         FeatureDefn poSrcFDefn;
@@ -1131,65 +1130,65 @@ public class ogr2ogr
         boolean         bForceToPolygon = false;
         boolean         bForceToMultiPolygon = false;
         boolean         bForceToMultiLineString = false;
-    
+
         if( pszNewLayerName == null )
             pszNewLayerName = poSrcLayer.GetLayerDefn().GetName();
-    
+
         if( wkbFlatten(eGType) == ogr.wkbPolygon )
             bForceToPolygon = true;
         else if( wkbFlatten(eGType) == ogr.wkbMultiPolygon )
             bForceToMultiPolygon = true;
         else if( wkbFlatten(eGType) == ogr.wkbMultiLineString )
             bForceToMultiLineString = true;
-    
+
     /* -------------------------------------------------------------------- */
     /*      Setup coordinate transformation if we need it.                  */
     /* -------------------------------------------------------------------- */
         CoordinateTransformation poCT = null;
-    
+
         if( bTransform )
         {
             if( poSourceSRS == null )
                 poSourceSRS = poSrcLayer.GetSpatialRef();
-    
+
             if( poSourceSRS == null )
             {
                 System.err.println("Can't transform coordinates, source layer has no\n" +
                         "coordinate system.  Use -s_srs to set one." );
                 System.exit( 1 );
             }
-    
+
             /*CPLAssert( null != poSourceSRS );
             CPLAssert( null != poOutputSRS );*/
-    
+
             /* New in GDAL 1.10. Before was "new CoordinateTransformation(srs,dst)". */
             poCT = CoordinateTransformation.CreateCoordinateTransformation( poSourceSRS, poOutputSRS );
             if( poCT == null )
             {
                 String pszWKT = null;
-    
+
                 System.err.println("Failed to create coordinate transformation between the\n" +
                     "following coordinate systems.  This may be because they\n" +
                     "are not transformable, or because projection services\n" +
                     "(PROJ.4 DLL/.so) could not be loaded." );
-                
+
                 pszWKT = poSourceSRS.ExportToPrettyWkt( 0 );
                 System.err.println( "Source:\n" + pszWKT );
-                
+
                 pszWKT = poOutputSRS.ExportToPrettyWkt( 0 );
                 System.err.println( "Target:\n" + pszWKT );
                 System.exit( 1 );
             }
         }
-        
+
     /* -------------------------------------------------------------------- */
     /*      Get other info.                                                 */
     /* -------------------------------------------------------------------- */
         poSrcFDefn = poSrcLayer.GetLayerDefn();
-        
+
         if( poOutputSRS == null )
             poOutputSRS = poSrcLayer.GetSpatialRef();
-    
+
     /* -------------------------------------------------------------------- */
     /*      Find the layer.                                                 */
     /* -------------------------------------------------------------------- */
@@ -1238,7 +1237,7 @@ public class ogr2ogr
             }
             poDstLayer = null;
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      If the layer does not exist, then create it.                    */
     /* -------------------------------------------------------------------- */
@@ -1272,25 +1271,25 @@ public class ogr2ogr
                 if ( pszZField != null )
                     eGType |= ogr.wkb25DBit;
             }
-    
+
             if( poDstDS.TestCapability( ogr.ODsCCreateLayer ) == false)
             {
                 System.err.println(
                 "Layer " + pszNewLayerName + "not found, and CreateLayer not supported by driver.");
                 return false;
             }
-    
+
             gdal.ErrorReset();
-    
+
             poDstLayer = poDstDS.CreateLayer( pszNewLayerName, poOutputSRS,
                                               eGType, papszLCO );
-    
+
             if( poDstLayer == null )
                 return false;
-    
+
             bAppend = false;
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Otherwise we will append to it, if append was requested.        */
     /* -------------------------------------------------------------------- */
@@ -1308,7 +1307,7 @@ public class ogr2ogr
                         "         being appended to." );
             }
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Add fields.  Default to copy all field.                         */
     /*      If only a subset of all fields requested, then output only      */
@@ -1486,7 +1485,7 @@ public class ogr2ogr
                     panMap[iField] = iDstField;
             }
         }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Transfer features.                                              */
     /* -------------------------------------------------------------------- */
@@ -1501,14 +1500,14 @@ public class ogr2ogr
         }
 
         poSrcLayer.ResetReading();
-    
+
         if( nGroupTransactions > 0)
             poDstLayer.StartTransaction();
-    
+
         while( true )
         {
             Feature      poDstFeature = null;
-    
+
             if( nFIDToFetch != OGRNullFID )
             {
                 // Only fetch feature on first pass.
@@ -1519,7 +1518,7 @@ public class ogr2ogr
             }
             else
                 poFeature = poSrcLayer.GetNextFeature();
-            
+
             if( poFeature == null )
                 break;
 
@@ -1548,7 +1547,7 @@ public class ogr2ogr
 
             for(int iPart = 0; iPart < nIters; iPart++)
             {
-    
+
                 if( ++nFeaturesInTransaction == nGroupTransactions )
                 {
                     poDstLayer.CommitTransaction();
@@ -1710,10 +1709,10 @@ public class ogr2ogr
                 pfnProgress.run(nCount * 1.0 / nCountLayerFeatures, "");
 
         }
-    
+
         if( nGroupTransactions > 0 )
             poDstLayer.CommitTransaction();
-    
+
         return true;
     }
 }

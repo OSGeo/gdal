@@ -53,7 +53,7 @@ import org.gdal.gdal.TermProgressCallback;
 /// </summary> 
 
 class GDALOverviews {
-	
+
 	public static void usage() 
 
 	{ 
@@ -61,7 +61,7 @@ class GDALOverviews {
 		System.out.println("example: gdaloverviews sample.tif \"NEAREST\" 2 4");
 		System.exit(-1);
 	}
- 
+
     public static void main(String[] args) 
     {
         /* -------------------------------------------------------------------- */
@@ -71,14 +71,14 @@ class GDALOverviews {
 
         args = gdal.GeneralCmdLineProcessor(args);
         if (args.length <= 2) usage();
-        
+
         try 
         {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             Dataset ds = gdal.Open( args[0], gdalconst.GA_Update );
-		
+
             if (ds == null) 
             {
                 System.out.println("Can't open " + args[0]);
@@ -89,22 +89,22 @@ class GDALOverviews {
             System.out.println("  Projection: " + ds.GetProjectionRef());
             System.out.println("  RasterCount: " + ds.getRasterCount());
             System.out.println("  RasterSize (" + ds.getRasterXSize() + "," + ds.getRasterYSize() + ")");
-            
+
             int[] levels = new int[args.length -2];
 
             System.out.println(levels.length);
-           
+
             for (int i = 2; i < args.length; i++)
             {
                 levels[i-2] = Integer.parseInt(args[i]);
             }
-			
+
             if (ds.BuildOverviews(args[1], levels, new TermProgressCallback()) != gdalconst.CE_None)
             {
                 System.out.println("The BuildOverviews operation doesn't work");
                 System.exit(-1);
             }
- 
+
             /* -------------------------------------------------------------------- */
             /*      Displaying the raster parameters                                */
             /* -------------------------------------------------------------------- */
