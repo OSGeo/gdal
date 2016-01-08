@@ -107,6 +107,7 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
             snprintf( pszEnvIni, nLen, "ODBCSYSINI=%s", pszEnvHome );
             /* a 'man putenv' shows that we cannot free pszEnvIni */
             /* because the pointer is used directly by putenv in old glibc */
+            /* coverity[tainted_string] */
             putenv( pszEnvIni );
 
             CPLDebug( "ODBC", "%s", pszEnvIni );
@@ -452,13 +453,6 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
 {
     m_poSession = poSession;
 
-    if( Failed( 
-            SQLAllocStmt( poSession->GetConnection(), &m_hStmt ) ) )
-    {
-        m_hStmt = NULL;
-        return;
-    }
-
     m_nColCount = 0;
     m_papszColNames = NULL;
     m_panColType = NULL;
@@ -474,6 +468,13 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
     m_pszStatement = NULL;
     m_nStatementMax = 0;
     m_nStatementLen = 0;
+
+    if( Failed( 
+            SQLAllocStmt( poSession->GetConnection(), &m_hStmt ) ) )
+    {
+        m_hStmt = NULL;
+        return;
+    }
 }
 
 /************************************************************************/
@@ -533,6 +534,8 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
 
 #endif
 
+    /* SQL_NTS=-3 is a valid value for SQLExecDirect */
+    /* coverity[negative_returns] */
     if( Failed( 
             SQLExecDirect( m_hStmt, (SQLCHAR *) m_pszStatement, SQL_NTS ) ) )
         return FALSE;
