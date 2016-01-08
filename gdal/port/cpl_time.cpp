@@ -23,6 +23,7 @@
  */
 
 #include "cpl_time.h"
+#include "cpl_error.h"
 
 static const int SECSPERMIN = 60;
 static const int MINSPERHOUR = 60;
@@ -73,6 +74,16 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
 {
     GIntBig days = unixTime / SECSPERDAY;
     GIntBig rem = unixTime % SECSPERDAY;
+    
+    if( unixTime < -(GIntBig)10000 * SECSPERDAY * DAYSPERLYEAR ||
+        unixTime > (GIntBig)10000 * SECSPERDAY * DAYSPERLYEAR )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Invalid unixTime = " CPL_FRMT_GIB,
+                 unixTime);
+        memset(pRet, 0, sizeof(*pRet));
+        return pRet;
+    }
 
     while (rem < 0) {
         rem += SECSPERDAY;
