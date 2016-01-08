@@ -1663,7 +1663,8 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
     if (pszBytea[0] == '\\' && pszBytea[1] == 'x')
         return CPLHexToBinary(pszBytea + 2, pnLength);
 
-    pabyData = (GByte *) CPLMalloc(strlen(pszBytea));
+    /* +1 just to please Coverity that thinks we allocate for a null-terminate string */
+    pabyData = (GByte *) CPLMalloc(strlen(pszBytea)+1);
 
     while( pszBytea[iSrc] != '\0' )
     {
