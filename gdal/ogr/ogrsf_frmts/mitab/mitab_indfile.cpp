@@ -103,6 +103,7 @@ TABINDFile::TABINDFile()
     m_papoIndexRootNodes = NULL;
     m_papbyKeyBuffers = NULL;
     m_oBlockManager.SetName("IND");
+    m_oBlockManager.SetBlockSize(512);
 }
 
 /**********************************************************************
