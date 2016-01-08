@@ -86,6 +86,18 @@
 #define INV_INT24   0xFF000000L
 
 
+// Not sure which behaviour we wish for int32 overflow, so just do the
+// addition as uint32 to workaround -ftrapv
+static GInt32 AddInt32(GInt32& nTarget, GInt32 nVal)
+{
+    GUInt32 nTargetU, nValU;
+    memcpy(&nTargetU, &nTarget, 4);
+    memcpy(&nValU, &nVal, 4);
+    nTargetU += nValU;
+    memcpy(&nTarget, &nTargetU, 4);
+    return nTarget;
+}
+
 /************************************************************************/
 /*                           DEMDecompress()                            */
 /************************************************************************/
@@ -110,7 +122,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
     paiOut = (GInt32*)pabyOut;
     nSizeOut /= sizeof(GInt32);
 
-    while ( nSizeIn > 0 )
+    while ( nSizeIn >= 2 )
     {
         // Read number of codes in the record and encoding type
         nCount = *pabyTempIn & 0x1F;
@@ -155,7 +167,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT4 )
                         nCode |= INV_INT4;
                     *paiOut++ = ( nCode == OUT_INT4 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
 
                     if ( nCount-- == 0 )
                     {
@@ -168,7 +180,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT4 )
                         nCode |= INV_INT4;
                     *paiOut++ = ( nCode == OUT_INT4 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -182,7 +194,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 while ( nCount-- > 0 )
                 {
                     *paiOut++ = ( (nCode = *pabyTempIn++) == OUT_INT8 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -200,7 +212,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT12 )
                         nCode |= INV_INT12;
                     *paiOut++ = ( nCode == OUT_INT12 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
 
                     if ( nCount-- == 0 )
                     {
@@ -214,7 +226,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT12 )
                         nCode |= INV_INT12;
                     *paiOut++ = ( nCode == OUT_INT12 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -231,7 +243,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     nCode = *((GInt16*)pabyTempIn);
                     pabyTempIn += 2;
                     *paiOut++ = ( nCode == OUT_INT16 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -250,7 +262,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT24 )
                         nCode |= INV_INT24;
                     *paiOut++ = ( nCode == OUT_INT24 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -267,7 +279,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     nCode = *(GInt32 *)pabyTempIn;
                     pabyTempIn += 4;
                     *paiOut++ = ( nCode == OUT_INT32 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
     }
