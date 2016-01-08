@@ -266,8 +266,8 @@ CPLErr GNMFileNetwork::StoreNetworkSrs()
             VSIFCloseL(fpSrsPrj);
             return CE_Failure;
         }
+        VSIFCloseL(fpSrsPrj);
     }
-    VSIFCloseL(fpSrsPrj);
     return CE_None;
 }
 
