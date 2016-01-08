@@ -692,11 +692,11 @@ bool NASReader::LoadClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Load the raw XML file.                                          */
 /* -------------------------------------------------------------------- */
-    FILE       *fp;
+    VSILFILE   *fp;
     int         nLength;
     char        *pszWholeText;
 
-    fp = VSIFOpen( pszFile, "rb" );
+    fp = VSIFOpenL( pszFile, "rb" );
 
     if( fp == NULL )
     {
@@ -705,9 +705,9 @@ bool NASReader::LoadClasses( const char *pszFile )
         return false;
     }
 
-    VSIFSeek( fp, 0, SEEK_END );
-    nLength = static_cast<int>(VSIFTell( fp ));
-    VSIFSeek( fp, 0, SEEK_SET );
+    VSIFSeekL( fp, 0, SEEK_END );
+    nLength = static_cast<int>(VSIFTellL( fp ));
+    VSIFSeekL( fp, 0, SEEK_SET );
 
     pszWholeText = (char *) VSIMalloc(nLength+1);
     if( pszWholeText == NULL )
@@ -716,21 +716,21 @@ bool NASReader::LoadClasses( const char *pszFile )
                   "Failed to allocate %d byte buffer for %s,\n"
                   "is this really a GMLFeatureClassList file?",
                   nLength, pszFile );
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return false;
     }
 
-    if( VSIFRead( pszWholeText, nLength, 1, fp ) != 1 )
+    if( VSIFReadL( pszWholeText, nLength, 1, fp ) != 1 )
     {
         VSIFree( pszWholeText );
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Read failed on %s.", pszFile );
         return false;
     }
     pszWholeText[nLength] = '\0';
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     if( strstr( pszWholeText, "<GMLFeatureClassList>" ) == NULL )
     {
