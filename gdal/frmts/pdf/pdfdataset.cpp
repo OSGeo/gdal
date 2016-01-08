@@ -124,9 +124,13 @@ static CPLMutex* hGlobalParamsMutex = NULL;
 
 class ObjectAutoFree : public Object
 {
+    Object obj;
+
 public:
     ObjectAutoFree() {}
-    ~ObjectAutoFree() { free(); }
+    ~ObjectAutoFree() { obj.free(); }
+
+    Object* getObj() { return &obj; }
 };
 
 
@@ -702,14 +706,9 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 
     int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     int iTile = poGDS->aiTiles[nBlockYOff * nXBlocks + nBlockXOff];
+
     GDALPDFTileDesc& sTile = poGDS->asTiles[iTile];
     GDALPDFObject* poImage = sTile.poImage;
-
-    if( iTile < 0 )
-    {
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
-        return CE_None;
-    }
 
     if( nBand == 4 )
     {
@@ -930,7 +929,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         const int nReqYOff = (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize;
         const GSpacing nPixelSpace = 1;
         const GSpacing nLineSpace = nBlockXSize;
-        const GSpacing nBandSpace = nBlockXSize * ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize);
+        const GSpacing nBandSpace = static_cast<GSpacing>(nBlockXSize) * ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize);
 
         CPLErr eErr = poGDS->ReadPixels( nReqXOff,
                                          nReqYOff,
@@ -2284,9 +2283,9 @@ GDALPDFObject* PDFDataset::GetCatalog()
     if (bUseLib.test(PDFLIB_POPPLER))
     {
         poCatalogObjectPoppler = new ObjectAutoFree;
-        poDocPoppler->getXRef()->getCatalog(poCatalogObjectPoppler);
-        if (!poCatalogObjectPoppler->isNull())
-            poCatalogObject = new GDALPDFObjectPoppler(poCatalogObjectPoppler, FALSE);
+        poDocPoppler->getXRef()->getCatalog(poCatalogObjectPoppler->getObj());
+        if (!poCatalogObjectPoppler->getObj()->isNull())
+            poCatalogObject = new GDALPDFObjectPoppler(poCatalogObjectPoppler->getObj(), FALSE);
     }
 #endif
 
@@ -3385,6 +3384,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
             if (poName != NULL && poName->GetType() == PDFObjectType_String)
             {
                 CPLString osName = PDFSanitizeLayerName(poName->GetString().c_str());
+                /* coverity[copy_paste_error] */
                 if (osTopLayer.size())
                     osCurLayer = osTopLayer + "." + osName;
                 else
@@ -4074,8 +4074,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if (pszUserPwd)
             poUserPwd = new GooString(pszUserPwd);
 
-        oObj.initNull();
-        poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, &oObj), NULL, poUserPwd);
+        oObj.getObj()->initNull();
+        poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, oObj.getObj()), NULL, poUserPwd);
         delete poUserPwd;
 
         if ( !poDocPoppler->isOk() || poDocPoppler->getNumPages() == 0 )
@@ -4086,6 +4086,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     pszUserPwd = PDFEnterPasswordFromConsoleIfNeeded(pszUserPwd);
                     PDFFreeDoc(poDocPoppler);
+
+                    /* Reset errors that could have been issued during opening and that */
+                    /* did not result in an invalid document */
+                    CPLErrorReset();
+
                     continue;
                 }
                 else if (pszUserPwd == NULL)
@@ -4110,10 +4115,6 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
             break;
-
-        /* Reset errors that could have been issued during opening and that */
-        /* did not result in an invalid document */
-        CPLErrorReset();
     }
 
     poCatalogPoppler = poDocPoppler->getCatalog();
