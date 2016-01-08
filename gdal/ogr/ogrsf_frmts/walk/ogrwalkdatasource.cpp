@@ -209,6 +209,7 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", oSession.GetLastError() );
+        delete poStmt;
         return NULL;
     }
 
