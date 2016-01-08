@@ -142,7 +142,8 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
         GByte abySignature[24];
         m_bIsFuzzerFriendly =
             (VSIFReadL(abySignature, 1, 24, fp) == 24) &&
-            (memcmp(abySignature, "FUZZER_FRIENDLY_ARCHIVE\n", 24) == 0);
+            (memcmp(abySignature, "FUZZER_FRIENDLY_ARCHIVE\n", 24) == 0 ||
+             memcmp(abySignature, "***NEWFILE***:", strlen("***NEWFILE***:")) == 0);
         CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 0, SEEK_SET));
     }
 #endif
