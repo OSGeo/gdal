@@ -39,6 +39,7 @@ OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
 {
     poDS = NULL;
 
+    poFeatureDefn = NULL;
     nGeomColumnType = -1;
     pszGeomColumn = NULL;
     pszFIDColumn = NULL;

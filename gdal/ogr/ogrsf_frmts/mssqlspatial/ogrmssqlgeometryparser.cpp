@@ -131,6 +131,16 @@ ShapeType (1 byte)
 OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
 {
     nColType = nGeomColumnType;
+    pszData = NULL;
+    chProps = 0;
+    nPointSize = 0;
+    nPointPos = 0;
+    nNumPoints = 0;
+    nFigurePos = 0;
+    nNumFigures = 0;
+    nShapePos = 0;
+    nNumShapes = 0;
+    nSRSId = 0;
 }
 
 /************************************************************************/
