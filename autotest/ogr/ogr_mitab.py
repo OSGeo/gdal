@@ -2134,7 +2134,6 @@ def ogr_mitab_43():
     if gdal.VSIStatL('tmp/all_geoms_block_32768.tab') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    src_ds = None
 
     size = gdal.VSIStatL('tmp/all_geoms_block_512.map').size
     if size != 6144:
