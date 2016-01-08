@@ -709,12 +709,16 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         {
             delete poDS;
             CPLDebug( "JPEG2000", "Unable to read JP2 header boxes.\n" );
+            CPLFree( paiDepth );
+            CPLFree( pabSignedness );
             return NULL;
         }
         if ( jas_stream_rewind( poDS->psStream ) < 0 )
         {
             delete poDS;
             CPLDebug( "JPEG2000", "Unable to rewind input stream.\n" );
+            CPLFree( paiDepth );
+            CPLFree( pabSignedness );
             return NULL;
         }
     }
@@ -772,10 +776,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     }
 
-    if ( paiDepth )
-        CPLFree( paiDepth );
-    if ( pabSignedness )
-        CPLFree( pabSignedness );
+    CPLFree( paiDepth );
+    CPLFree( pabSignedness );
 
     poDS->LoadJP2Metadata(poOpenInfo);
 
