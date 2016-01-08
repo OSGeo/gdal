@@ -203,7 +203,10 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
         nBlockYSizeToRead = nYSize - nBlockYSize * nBlockYOff;
     }
 
+#if defined(JPEG_LIB_MK1_OR_12BIT)
     bool bClipWarn = false;
+#endif
+
     CPLErr eErr = CE_None;
     for( int iLine = 0; iLine < nBlockYSize && eErr == CE_None; iLine++ )
     {
@@ -231,6 +234,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
 #endif
         }
 
+#if defined(JPEG_LIB_MK1_OR_12BIT)
         // clamp 16bit values to 12bit.
         if( eDT == GDT_UInt16 )
         {
@@ -250,6 +254,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
                 }
             }
         }
+#endif
 
         JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>( pabyScanline );
 
