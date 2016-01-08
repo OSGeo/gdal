@@ -552,6 +552,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             bRet = FALSE;
             break;
         }
+        pasBlocks = pasNewBlocks;
         nBlocks++;
         pasBlocks[nBlocks-1].x = x;
         pasBlocks[nBlocks-1].y = y;
