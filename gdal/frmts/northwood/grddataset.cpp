@@ -180,6 +180,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     char *pszRecord = reinterpret_cast<char *>( CPLMalloc( nRecordSize ) );
     if( (int)VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp ) != nRecordSize )
     {
+        CPLFree( pszRecord );
         return CE_Failure;
     }
 
@@ -240,14 +241,12 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "No band number %d",
                   nBand );
-        if( pszRecord != NULL )
-            CPLFree( pszRecord );
+        CPLFree( pszRecord );
         return CE_Failure;
     }
-    if( pszRecord != NULL )
-    {
-        CPLFree( pszRecord );
-    }
+
+    CPLFree( pszRecord );
+
     return CE_None;
 }
 
