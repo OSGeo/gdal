@@ -886,7 +886,10 @@ bool FGdbLayer::UpdateRowWithGeometry(Row& row, OGRGeometry* poGeom)
     GByte *pabyShape = NULL;
     int nShapeSize = 0;
     if ( OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize ) != OGRERR_NONE )
+    {
+        CPLFree(pabyShape);
         return false;
+    }
 
     /* Copy it into a ShapeBuffer */
     if ( nShapeSize > 0 )
@@ -1391,7 +1394,10 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
                 err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
             }
             if ( err != OGRERR_NONE )
+            {
+                CPLFree(pabyShape);
                 return err;
+            }
 
             /* Copy it into a ShapeBuffer */
             if ( nShapeSize > 0 )
