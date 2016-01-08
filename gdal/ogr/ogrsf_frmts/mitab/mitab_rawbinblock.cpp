@@ -120,7 +120,7 @@ TABRawBinBlock::~TABRawBinBlock()
  * CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset, 
-                                     int nSize /*= 512*/)
+                                     int nSize)
 {
     GByte *pabyBuf;
 
@@ -516,7 +516,7 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
  * bOffsetIsEndOfData is set to TRUE to indicate that the nOffset
  * to which we are attempting to go is the end of the used data in this
  * block (we are positioninig ourselves to append data), so if the nOffset 
- * corresponds to the beginning of a 512 bytes block then we should really 
+ * corresponds to the beginning of a block then we should really 
  * be positioning ourselves at the end of the block that ends at this 
  * address instead of at the beginning of the blocks that starts at this 
  * address. This case can happen when going back and forth to write collection
@@ -571,8 +571,8 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
         //
         if (bOffsetIsEndOfData &&  nOffset%m_nBlockSize == 0)
         {
-            /* We're trying to go byte 512 of a block that's full of data.
-             * In this case it's okay to place the m_nCurPos at byte 512
+            /* We're trying to go byte m_nBlockSize of a block that's full of data.
+             * In this case it's okay to place the m_nCurPos at byte m_nBlockSize
              * which is past the end of the block.
              */
 
@@ -1077,7 +1077,7 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
  * which case CPLError() will have been called.
  **********************************************************************/
 TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset, 
-                                          int nSize /*= 512*/, 
+                                          int nSize, 
                                           GBool bHardBlockSize /*= TRUE */,
                                           TABAccess eAccessMode /*= TABRead*/)
 {
@@ -1165,10 +1165,10 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
  *
  * Constructor.
  **********************************************************************/
-TABBinBlockManager::TABBinBlockManager(int nBlockSize /*=512*/)
+TABBinBlockManager::TABBinBlockManager()
 {
 
-    m_nBlockSize=nBlockSize;
+    m_nBlockSize=0;
     m_nLastAllocatedBlock = -1;
     m_psGarbageBlocksFirst = NULL;
     m_psGarbageBlocksLast = NULL;
@@ -1183,6 +1183,14 @@ TABBinBlockManager::TABBinBlockManager(int nBlockSize /*=512*/)
 TABBinBlockManager::~TABBinBlockManager()
 {
     Reset();
+}
+
+/**********************************************************************
+ *                   TABBinBlockManager::SetBlockSize()
+ **********************************************************************/
+void TABBinBlockManager::SetBlockSize(int nBlockSize)
+{
+    m_nBlockSize = nBlockSize;
 }
 
 /**********************************************************************
@@ -1217,7 +1225,10 @@ GInt32  TABBinBlockManager::AllocNewBlock(CPL_UNUSED const char* pszReason)
     if (m_nLastAllocatedBlock==-1)
         m_nLastAllocatedBlock = 0;
     else
+    {
+        CPLAssert(m_nBlockSize);
         m_nLastAllocatedBlock+=m_nBlockSize;
+    }
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("MITAB", "AllocNewBlock(%s, %s) = %d", m_szName, pszReason, m_nLastAllocatedBlock);

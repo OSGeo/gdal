@@ -255,6 +255,7 @@ void RegisterOGRTAB()
 "    <Value>QUICK</Value>"
 "    <Value>OPTIMIZED</Value>"
 "  </Option>"
+"  <Option name='BLOCKSIZE' type='int' description='.map block size' min='512' max='32256' default='512'/>"
 "</CreationOptionList>");
         
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date DateTime Time" );

@@ -233,6 +233,7 @@ int     TABMAPCoordBlock::CommitToFile()
     GotoByteInBlock(0x000);
 
     WriteInt16(TABMAP_COORD_BLOCK);    // Block type code
+    CPLAssert(m_nSizeUsed >= MAP_COORD_HEADER_SIZE && m_nSizeUsed < MAP_COORD_HEADER_SIZE + 32768);
     WriteInt16((GInt16)(m_nSizeUsed - MAP_COORD_HEADER_SIZE)); // num. bytes used
     WriteInt32(m_nNextCoordBlock);
 

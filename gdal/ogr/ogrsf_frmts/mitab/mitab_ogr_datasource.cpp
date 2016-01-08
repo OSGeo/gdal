@@ -101,6 +101,7 @@ OGRTABDataSource::OGRTABDataSource()
     m_bSingleFile = FALSE;
     m_bSingleLayerAlreadyCreated = FALSE;
     m_bQuickSpatialIndexMode = -1;
+    m_nBlockSize = 512;
     m_bUpdate = FALSE;
 }
 
@@ -154,6 +155,8 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
             m_bQuickSpatialIndexMode = FALSE;
     }
 
+    m_nBlockSize = atoi(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "512"));
+
 /* -------------------------------------------------------------------- */
 /*      Create a new empty directory.                                   */
 /* -------------------------------------------------------------------- */
@@ -192,14 +195,23 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         IMapInfoFile    *poFile;
 
         if( m_bCreateMIF )
-            poFile = new MIFFile;
-        else
-            poFile = new TABFile;
-
-        if( poFile->Open( m_pszName, TABWrite, FALSE ) != 0 )
         {
-            delete poFile;
-            return FALSE;
+            poFile = new MIFFile;
+            if( poFile->Open( m_pszName, TABWrite, FALSE ) != 0 )
+            {
+                delete poFile;
+                return FALSE;
+            }
+        }
+        else
+        {
+            TABFile* poTabFile = new TABFile;
+            if( poTabFile->Open( m_pszName, TABWrite, FALSE, m_nBlockSize ) != 0 )
+            {
+                delete poTabFile;
+                return FALSE;
+            }
+            poFile = poTabFile;
         }
         
         m_nLayerCount = 1;
