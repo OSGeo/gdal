@@ -245,6 +245,8 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
                 return 0;
             break;
         case GTIFF_ASCIIPARAMS:
+            if( tempData->tk_asciiParams == NULL )
+                return 0;
             if( offset + count == tempData->tk_asciiParamsLength + 1 
                 && count > 0 )
             {
