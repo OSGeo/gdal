@@ -278,7 +278,6 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
         if( !bFeatureAdded )
             delete feature;
         feature = new OGRFeature(featureDef);
-        bFeatureAdded = false;
 
         for( int fIndex=1, fieldno = 0;
              fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount();
