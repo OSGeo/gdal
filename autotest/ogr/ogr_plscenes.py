@@ -194,13 +194,13 @@ def ogr_plscenes_2():
     }
 }"""
 
-    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1&intersects=POINT%282.5%2049.5%29',
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1&intersects=POINT(2.5%2049.5)',
                            my_id_only)
 
-    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1&intersects=POLYGON%20%28%282%2049%2C2%2050%2C3%2050%2C3%2049%2C2%2049%29%29',
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1&intersects=POLYGON%20((2%2049,2%2050,3%2050,3%2049,2%2049))',
                            my_id_only)
 
-    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1000&intersects=POINT%282.5%2049.5%29',
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1000&intersects=POINT(2.5%2049.5)',
                            my_id_only)
 
     gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1000&camera.color_mode.eq=RGB&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57&cloud_cover.estimated.gt=0.20000000&camera.bit_depth.lte=12&camera.bit_depth.gte=12&camera.bit_depth.lt=13',
@@ -495,9 +495,9 @@ def ogr_plscenes_2():
     gdal.Unlink('/vsimem/root/ortho/?count=1')
     gdal.Unlink('/vsimem/root/ortho/?count=1000')
     gdal.Unlink('/vsimem/root/ortho/?count=1000&page=2')
-    gdal.Unlink('/vsimem/root/ortho/?count=1&intersects=POINT%282.5%2049.5%29')
-    gdal.Unlink('/vsimem/root/ortho/?count=1&intersects=POLYGON%20%28%282%2049%2C2%2050%2C3%2050%2C3%2049%2C2%2049%29%29')
-    gdal.Unlink('/vsimem/root/ortho/?count=1000&intersects=POINT%282.5%2049.5%29')
+    gdal.Unlink('/vsimem/root/ortho/?count=1&intersects=POINT(2.5%2049.5)')
+    gdal.Unlink('/vsimem/root/ortho/?count=1&intersects=POLYGON%20((2%2049,2%2050,3%2050,3%2049,2%2049))')
+    gdal.Unlink('/vsimem/root/ortho/?count=1000&intersects=POINT(2.5%2049.5)')
     gdal.Unlink('/vsimem/root/ortho/?count=1&camera.color_mode.eq=RGB&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57&cloud_cover.estimated.gt=0.20000000&camera.bit_depth.lte=12&camera.bit_depth.gte=12&camera.bit_depth.lt=13')
     gdal.Unlink('/vsimem/root/ortho/?count=1000&camera.color_mode.eq=RGB&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57&cloud_cover.estimated.gt=0.20000000&camera.bit_depth.lte=12&camera.bit_depth.gte=12&camera.bit_depth.lt=13')
     gdal.Unlink('/vsimem/root/ortho/?count=1000&order_by=acquired%20asc')
