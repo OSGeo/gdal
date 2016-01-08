@@ -2155,6 +2155,85 @@ def ogr_mitab_41():
     return 'success'
 
 ###############################################################################
+# Read various geometry types from .tab with block size = 32256
+
+def ogr_mitab_42():
+
+    ds = ogr.Open('/vsizip/data/all_geoms_block_32256.zip')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/all_geoms.mif.golden.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+
+    while True:
+        f = lyr.GetNextFeature()
+        f_ref = lyr_ref.GetNextFeature()
+        if f is None:
+            if f_ref is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
+           f.GetStyleString() != f_ref.GetStyleString() :
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test creating tab with block size = 32256
+
+def ogr_mitab_43():
+
+    src_ds = gdal.OpenEx('/vsizip/data/all_geoms_block_32256.zip')
+    gdal.VectorTranslate('/vsimem/all_geoms_block_512.tab', src_ds, format = 'MapInfo File')
+    gdal.VectorTranslate('/vsimem/all_geoms_block_32256.tab', src_ds, format = 'MapInfo File', datasetCreationOptions = ['BLOCKSIZE=32256'])
+    with gdaltest.error_handler():
+        out_ds = gdal.VectorTranslate('/vsimem/all_geoms_block_invalid.tab', src_ds, format = 'MapInfo File', datasetCreationOptions = ['BLOCKSIZE=32768'])
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    src_ds = None
+
+    size = gdal.VSIStatL('/vsimem/all_geoms_block_512.map').size
+    if size != 6144:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    size = gdal.VSIStatL('/vsimem/all_geoms_block_32256.map').size
+    if size != 161280:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/all_geoms_block_32256.tab')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('/vsimem/all_geoms_block_512.tab')
+    lyr_ref = ds_ref.GetLayer(0)
+
+    while True:
+        f = lyr.GetNextFeature()
+        f_ref = lyr_ref.GetNextFeature()
+        if f is None:
+            if f_ref is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
+           f.GetStyleString() != f_ref.GetStyleString() :
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+
+    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_512.tab' )
+    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_32256.tab' )
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2209,6 +2288,8 @@ gdaltest_list = [
     ogr_mitab_39,
     ogr_mitab_40,
     ogr_mitab_41,
+    ogr_mitab_42,
+    ogr_mitab_43,
     ogr_mitab_cleanup
     ]
 
