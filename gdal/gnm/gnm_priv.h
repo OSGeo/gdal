@@ -95,7 +95,7 @@
 //       GUIntBig -> OFTInteger64 -> GetFieldAsInteger64)
 #define GNMGFIDInt OFTInteger64
 #define GetFieldAsGNMGFID GetFieldAsInteger64
-#define GNMGFIDFormat "%lld"
+#define GNMGFIDFormat CPL_FRMT_GIB
 
 #endif // GNM_PRIV
 

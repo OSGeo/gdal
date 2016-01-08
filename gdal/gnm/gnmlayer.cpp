@@ -149,7 +149,7 @@ OGRErr GNMGenericLayer::ISetFeature(OGRFeature *poFeature)
     std::map<GNMGFID, GIntBig>::iterator it = m_mnFIDMap.find(poFeature->GetFID());
     if (it == m_mnFIDMap.end())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "The FID %lld is invalid",
+        CPLError( CE_Failure, CPLE_IllegalArg, "The FID " CPL_FRMT_GIB " is invalid",
                   poFeature->GetFID() );
         return OGRERR_NON_EXISTING_FEATURE;
     }
