@@ -75,6 +75,20 @@
 
 #define CT_Ext_Mercator_2SP     -CT_Mercator
 
+#ifndef CPL_INLINE
+#if (defined(__GNUC__) && !defined(__NO_INLINE__)) || defined(_MSC_VER)
+#define HAS_CPL_INLINE  1
+#define CPL_INLINE __inline
+#elif defined(__SUNPRO_CC)
+#define HAS_CPL_INLINE  1
+#define CPL_INLINE inline
+#else
+#define CPL_INLINE
+#endif
+#endif
+
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                           GTIFGetPCSInfo()                           */
 /************************************************************************/
@@ -948,10 +962,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
     {
         if( ppszUOMName != NULL )
         {
-            if( pszUOMName != NULL )
-                *ppszUOMName = CPLStrdup( pszUOMName );
-            else
-                *ppszUOMName = NULL;
+            *ppszUOMName = CPLStrdup( pszUOMName );
         }
 
         if( pdfInDegrees != NULL )
@@ -2439,8 +2450,8 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      to warn if they conflict with provided information, but for     */
 /*      now we just override.                                           */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetDOUBLE(psGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 );
-    GTIFKeyGetDOUBLE(psGTIF, GeogSemiMinorAxisGeoKey, &(psDefn->SemiMinor), 0, 1 );
+    CPL_IGNORE_RET_VAL_INT(GTIFKeyGetDOUBLE(psGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 ));
+    CPL_IGNORE_RET_VAL_INT(GTIFKeyGetDOUBLE(psGTIF, GeogSemiMinorAxisGeoKey, &(psDefn->SemiMinor), 0, 1 ));
     
     if( GTIFKeyGetDOUBLE(psGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening, 
                    0, 1 ) == 1 )
@@ -2463,8 +2474,8 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GTIFKeyGetDOUBLE(psGTIF, GeogPrimeMeridianLongGeoKey,
-                   &(psDefn->PMLongToGreenwich), 0, 1 );
+        CPL_IGNORE_RET_VAL_INT(GTIFKeyGetDOUBLE(psGTIF, GeogPrimeMeridianLongGeoKey,
+                   &(psDefn->PMLongToGreenwich), 0, 1 ));
 
         psDefn->PMLongToGreenwich =
             GTIFAngleToDD( psDefn->PMLongToGreenwich,
@@ -2494,7 +2505,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GTIFKeyGetDOUBLE(psGTIF,ProjLinearUnitSizeGeoKey,&(psDefn->UOMLengthInMeters),0,1);
+        CPL_IGNORE_RET_VAL_INT(GTIFKeyGetDOUBLE(psGTIF,ProjLinearUnitSizeGeoKey,&(psDefn->UOMLengthInMeters),0,1));
     }
 
 /* -------------------------------------------------------------------- */

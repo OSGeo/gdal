@@ -328,7 +328,10 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
         for (j=0;j<ncols;j++)
         {
             if (!sscanf(vptr,"%lg",dptr++))
+            {
+                _GTIFFree( data );
                 return StringError(vptr);
+            }
             FINDCHAR(vptr,' ');
             SKIPWHITE(vptr);
         }
