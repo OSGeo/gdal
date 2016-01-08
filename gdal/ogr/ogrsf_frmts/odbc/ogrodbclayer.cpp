@@ -54,6 +54,7 @@ OGRODBCLayer::OGRODBCLayer()
 
     poSRS = NULL;
     nSRSId = -2; // we haven't even queried the database for it yet. 
+    poFeatureDefn = NULL;
 }
 
 /************************************************************************/
