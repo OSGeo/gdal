@@ -1109,7 +1109,7 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
             pszMetadata = (char *)CPLRealloc( pszMetadata, iLength );
             if ( !EQUAL( pszMetadata, "" ) )
                 strncat( pszMetadata, ",", 1 );
-            strncat( pszMetadata, osTemp, iLength );
+            CPLStrlcat( pszMetadata, osTemp, iLength );
         }
     }
 
