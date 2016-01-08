@@ -217,6 +217,7 @@ int     TABMAPToolBlock::CommitToFile()
     GotoByteInBlock(0x000);
 
     WriteInt16(TABMAP_TOOL_BLOCK);    // Block type code
+    CPLAssert(m_nSizeUsed >= MAP_TOOL_HEADER_SIZE && m_nSizeUsed < MAP_TOOL_HEADER_SIZE + 32768);
     WriteInt16((GInt16)(m_nSizeUsed - MAP_TOOL_HEADER_SIZE)); // num. bytes used
     WriteInt32(m_nNextToolBlock);
 
@@ -378,7 +379,7 @@ int  TABMAPToolBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
         SetNextToolBlock(nNewBlockOffset);
 
         if (CommitToFile() != 0 ||
-            InitNewBlock(m_fp, 512, nNewBlockOffset) != 0)
+            InitNewBlock(m_fp, m_nBlockSize, nNewBlockOffset) != 0)
         {
             // An error message should have already been reported.
             return -1;
@@ -428,7 +429,7 @@ int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
         SetNextToolBlock(nNewBlockOffset);
 
         if (CommitToFile() != 0 ||
-            InitNewBlock(m_fp, 512, nNewBlockOffset) != 0)
+            InitNewBlock(m_fp, m_nBlockSize, nNewBlockOffset) != 0)
         {
             // An error message should have already been reported.
             return -1;
