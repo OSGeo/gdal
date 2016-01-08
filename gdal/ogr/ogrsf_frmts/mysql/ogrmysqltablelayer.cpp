@@ -57,6 +57,7 @@ OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
 
     poFeatureDefn = NULL;
     bLaunderColumnNames = TRUE;
+    bPreservePrecision = FALSE;
 
     SetDescription( pszTableName );
 }

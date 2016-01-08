@@ -182,6 +182,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptionsIn
             nPort = atoi(papszItems[i] + 5);
         else if( STARTS_WITH_CI(papszItems[i], "tables=") )
         {
+            CSLDestroy(papszTableNames);
             papszTableNames = CSLTokenizeStringComplex( 
                 papszItems[i] + 7, ";", FALSE, FALSE );
         }
