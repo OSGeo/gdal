@@ -358,6 +358,12 @@ int DDFRecord::ReadHeader()
                       "Didn't find field terminator, read one more byte." );
         }
 
+        if( nFieldOffset >= nDataSize )
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            return FALSE;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Loop over the directory entries, making a pass counting them.   */
 /* -------------------------------------------------------------------- */
