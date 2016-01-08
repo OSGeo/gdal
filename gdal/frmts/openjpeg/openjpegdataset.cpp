@@ -835,16 +835,23 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
         if (bIs420)
         {
-            CPLAssert((int)psImage->comps[0].w >= nWidthToRead);
-            CPLAssert((int)psImage->comps[0].h >= nHeightToRead);
-            CPLAssert(psImage->comps[1].w == (psImage->comps[0].w + 1) / 2);
-            CPLAssert(psImage->comps[1].h == (psImage->comps[0].h + 1) / 2);
-            CPLAssert(psImage->comps[2].w == (psImage->comps[0].w + 1) / 2);
-            CPLAssert(psImage->comps[2].h == (psImage->comps[0].h + 1) / 2);
-            if( nBands == 4 )
+            if( (int)psImage->comps[0].w < nWidthToRead ||
+                (int)psImage->comps[0].h < nHeightToRead ||
+                psImage->comps[1].w != (psImage->comps[0].w + 1) / 2 ||
+                psImage->comps[1].h != (psImage->comps[0].h + 1) / 2 ||
+                psImage->comps[2].w != (psImage->comps[0].w + 1) / 2 ||
+                psImage->comps[2].h != (psImage->comps[0].h + 1) / 2 ||
+                (nBands == 4 && (
+                    (int)psImage->comps[3].w < nWidthToRead ||
+                    (int)psImage->comps[3].h < nHeightToRead)) )
             {
-                CPLAssert((int)psImage->comps[3].w >= nWidthToRead);
-                CPLAssert((int)psImage->comps[3].h >= nHeightToRead);
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Assertion at line %d of %s failed",
+                         __LINE__, __FILE__);
+                if (poBlock != NULL)
+                    poBlock->DropLock();
+                eErr = CE_Failure;
+                goto end;
             }
 
             GByte* pDst = (GByte*)pDstBuffer;
@@ -893,8 +900,17 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         }
         else
         {
-            CPLAssert((int)psImage->comps[iBand-1].w >= nWidthToRead);
-            CPLAssert((int)psImage->comps[iBand-1].h >= nHeightToRead);
+            if( (int)psImage->comps[iBand-1].w < nWidthToRead ||
+                (int)psImage->comps[iBand-1].h < nHeightToRead )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Assertion at line %d of %s failed",
+                         __LINE__, __FILE__);
+                if (poBlock != NULL)
+                    poBlock->DropLock();
+                eErr = CE_Failure;
+                goto end;
+            }
 
             if( bPromoteTo8Bit )
             {
