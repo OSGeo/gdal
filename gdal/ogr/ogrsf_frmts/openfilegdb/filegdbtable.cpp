@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "filegdbtable_priv.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "ogrpgeogeometry.h" /* SHPT_ constants and OGRCreateFromMultiPatchPart() */
@@ -2339,6 +2340,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_POINTZ:
         case SHPT_POINTZM:
             bHasZ = TRUE; /* go on */
+            CPL_FALLTHROUGH;
         case SHPT_POINT:
         case SHPT_POINTM:
         {
@@ -2364,6 +2366,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_MULTIPOINTZM:
         case SHPT_MULTIPOINTZ:
             bHasZ = TRUE; /* go on */
+            CPL_FALLTHROUGH;
         case SHPT_MULTIPOINT:
         case SHPT_MULTIPOINTM:
         {
@@ -2408,6 +2411,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_ARCZ:
         case SHPT_ARCZM:
             bHasZ = TRUE; /* go on */
+            CPL_FALLTHROUGH;
         case SHPT_ARC:
         case SHPT_ARCM:
         case SHPT_GENERALPOLYLINE:
@@ -2483,6 +2487,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_POLYGONZ:
         case SHPT_POLYGONZM:
             bHasZ = TRUE; /* go on */
+            CPL_FALLTHROUGH;
         case SHPT_POLYGON:
         case SHPT_POLYGONM:
         case SHPT_GENERALPOLYGON:
@@ -2619,6 +2624,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_MULTIPATCHM:
         case SHPT_MULTIPATCH:
             bHasZ = TRUE; /* go on */
+            CPL_FALLTHROUGH;
         case SHPT_GENERALMULTIPATCH:
         {
             returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, FALSE, TRUE ) );

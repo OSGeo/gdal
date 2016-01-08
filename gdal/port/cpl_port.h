@@ -573,7 +573,7 @@ template<> struct CPLStaticAssert<true>
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[1];                                \
     _pabyDataT[1] = byTemp;                                       \
-}                                                                    
+}
 
 #define CPL_SWAP32(x) \
         ((GUInt32)( \
@@ -593,7 +593,7 @@ template<> struct CPLStaticAssert<true>
     byTemp = _pabyDataT[1];                                       \
     _pabyDataT[1] = _pabyDataT[2];                                \
     _pabyDataT[2] = byTemp;                                       \
-}                                                                    
+}
 
 #define CPL_SWAP64PTR(x) \
 {                                                                 \
@@ -612,7 +612,7 @@ template<> struct CPLStaticAssert<true>
     byTemp = _pabyDataT[3];                                       \
     _pabyDataT[3] = _pabyDataT[4];                                \
     _pabyDataT[4] = byTemp;                                       \
-}                                                                    
+}
 
 
 /* Until we have a safe 64 bits integer data type defined, we'll replace
@@ -842,8 +842,14 @@ inline static bool CPL_TO_BOOL(int x) { return x != FALSE; }
 #define HAVE_GCC_DIAGNOSTIC_PUSH
 #endif
 
-#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER)) 
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER))
 #define HAVE_GCC_SYSTEM_HEADER
+#endif
+
+#if defined(__clang__)
+#  define CPL_FALLTHROUGH [[clang::fallthrough]];
+#else
+#  define CPL_FALLTHROUGH
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
