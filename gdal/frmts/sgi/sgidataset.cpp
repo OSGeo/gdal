@@ -58,6 +58,7 @@ struct ImageRec
 
     VSILFILE* file;
     std::string fileName;
+    int tmpSize;
     unsigned char* tmp;
     GUInt32 rleEnd;
     int     rleTableDirty;
@@ -77,6 +78,7 @@ struct ImageRec
               colorMap(0),
               file(NULL),
               fileName(""),
+              tmpSize(0),
               tmp(NULL),
               rleEnd(0),
               rleTableDirty(FALSE),
@@ -138,6 +140,11 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
     // Image type 1.
 
     // reads row
+    if( image->rowSize[y+z*image->ysize] < 0 ||
+        image->rowSize[y+z*image->ysize] > image->tmpSize )
+    {
+        return CE_Failure;
+    }
     VSIFSeekL( image->file,
                static_cast<long>( image->rowStart[y+z*image->ysize] ),
                SEEK_SET);
@@ -617,6 +624,12 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 
     const int numItems
         = (static_cast<int>( poDS->image.bpc ) == 1) ? 256 : 65536;
+    if( poDS->image.xsize > INT_MAX / numItems )
+    {
+        delete poDS;
+        return NULL;
+    }
+    poDS->image.tmpSize = poDS->image.xsize * numItems;
     poDS->image.tmp = (unsigned char*)VSI_CALLOC_VERBOSE(poDS->image.xsize,numItems);
     if (poDS->image.tmp == NULL)
     {
