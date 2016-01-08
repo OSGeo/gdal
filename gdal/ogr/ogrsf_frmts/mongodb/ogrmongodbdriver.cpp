@@ -1983,6 +1983,7 @@ OGRMongoDBDataSource::OGRMongoDBDataSource()
     m_bJSonField = FALSE;
     m_bUseOGRMetadata = TRUE;
     m_bBulkInsert = TRUE;
+    m_bFlattenNestedAttributes = TRUE;
 }
 
 /************************************************************************/
