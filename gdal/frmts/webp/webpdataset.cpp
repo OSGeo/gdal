@@ -351,7 +351,6 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
        (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
        (eBufType == GDT_Byte) &&
        (pData != NULL) &&
-       (panBandMap != NULL) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) &&
        (nBands == 3 || panBandMap[3] == 4))
     {
@@ -657,7 +656,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     } \
 }
 
-    FETCH_AND_SET_OPTION_INT("TARGETSIZE", target_size, 0, INT_MAX);
+    FETCH_AND_SET_OPTION_INT("TARGETSIZE", target_size, 0, INT_MAX-1);
 
     const char* pszPSNR = CSLFetchNameValue(papszOptions, "PSNR");
     if (pszPSNR)
@@ -775,8 +774,8 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if (eErr == CE_None && !WebPEncode(&sConfig, &sPicture))
     {
-        const char* pszErrorMsg = NULL;
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
+        const char* pszErrorMsg = NULL;
         switch(sPicture.error_code)
         {
             case VP8_ENC_ERROR_OUT_OF_MEMORY:
@@ -810,12 +809,11 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 pszErrorMsg = "Unknown WebP error type.";
                 break;
         }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "WebPEncode() failed : %s", pszErrorMsg);
+#else
+        CPLError(CE_Failure, CPLE_AppDefined, "WebPEncode() failed");
 #endif
-        if (pszErrorMsg)
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "WebPEncode() failed : %s", pszErrorMsg);
-        else
-            CPLError(CE_Failure, CPLE_AppDefined, "WebPEncode() failed");
         eErr = CE_Failure;
     }
 
