@@ -1101,11 +1101,11 @@ void HDF4ImageDataset::ToGeoref( double *pdfGeoX, double *pdfGeoY )
 /************************************************************************/
 
 void HDF4ImageDataset::ReadCoordinates( const char *pszString,
-                                        double *pdfX, double *pdfY )
+                                        double *pdfCenterY, double *pdfCenterX )
 {
     char **papszStrList = CSLTokenizeString2( pszString, ", ", 0 );
-    *pdfX = CPLAtof( papszStrList[0] );
-    *pdfY = CPLAtof( papszStrList[1] );
+    *pdfCenterY = CPLAtof( papszStrList[0] ); /* lat */
+    *pdfCenterX = CPLAtof( papszStrList[1] ); /* lon */
     CSLDestroy( papszStrList );
 }
 
@@ -1351,7 +1351,10 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         char **papszTokens = CSLTokenizeStringComplex( pszCornerLoc, ",",
                                                        FALSE, FALSE );
         if( CSLCount( papszTokens ) != 2 )
+        {
+            CSLDestroy( papszTokens );
             return;
+        }
 
         adfXY[iCorner*2+0] = CPLAtof( papszTokens[1] );
         adfXY[iCorner*2+1] = CPLAtof( papszTokens[0] );
@@ -1566,7 +1569,10 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
         CSLFetchNameValue( papszGlobalMetadata, "gctp_parm" ), ",",
         FALSE, FALSE );
     if( CSLCount(papszTokens) < 15 )
+    {
+        CSLDestroy(papszTokens);
         return;
+    }
 
     double adfParms[15];
     for( int iParm = 0; iParm < 15; iParm++ )
@@ -1591,12 +1597,18 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
         CSLFetchNameValue( papszGlobalMetadata, "et_affine" ), ",",
         FALSE, FALSE );
     if( CSLCount(papszTokens) != 6 )
+    {
+        CSLDestroy(papszTokens);
         return;
+    }
 
     // We don't seem to have proper ef_affine docs so I don't
     // know which of these two coefficients goes where.
     if( CPLAtof(papszTokens[0]) != 0.0 || CPLAtof(papszTokens[3]) != 0.0 )
+    {
+        CSLDestroy(papszTokens);
         return;
+    }
 
     bHasGeoTransform = TRUE;
     adfGeoTransform[0] = CPLAtof( papszTokens[4] );
@@ -1609,6 +1621,8 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
     // Middle of pixel adjustment.
     adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
     adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+    
+    CSLDestroy(papszTokens);
 }
 
 /************************************************************************/
@@ -1717,7 +1731,8 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
             int32 l_iNumType;
             int32 nValues;
 
-            SWattrinfo( hSW, papszAttributes[i], &l_iNumType, &nValues );
+            if( SWattrinfo( hSW, papszAttributes[i], &l_iNumType, &nValues ) < 0 )
+                continue;
 
             void *pData = NULL;
             if ( l_iNumType == DFNT_CHAR8 || l_iNumType == DFNT_UCHAR8 )
@@ -2055,6 +2070,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 /* -------------------------------------------------------------------- */
     int32 nStrBufSize;
     const int32 nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
+    if( nDataFields < 0 || nDataFields > 1024 * 1024 )
+        return FALSE;
     char *pszGeoList = reinterpret_cast<char *>( CPLMalloc( nStrBufSize + 1 ) );
     int32 *paiRank
         = reinterpret_cast<int32 *>( CPLMalloc( nDataFields * sizeof(int32) ) );
@@ -2204,7 +2221,12 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     }
 
     if ( *szXGeo == 0 || *szYGeo == 0 )
+    {
+        CPLFree( paiOffset );
+        CPLFree( paiIncrement );
+        CPLFree( pszGeoList );
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read geolocation fields.                                        */
@@ -2245,6 +2267,10 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             CPLDebug( "HDF4Image",
                       "Can't read attributes of geolocation field \"%s\"",
                       papszGeolocations[i] );
+            CSLDestroy(papszGeolocations);
+            CPLFree( paiOffset );
+            CPLFree( paiIncrement );
+            CPLFree( pszGeoList );
             return FALSE;
         }
 
@@ -2262,6 +2288,10 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             || iYGeo < 0 )
         {
             CSLDestroy( papszGeoDimList );
+            CSLDestroy(papszGeolocations);
+            CPLFree( paiOffset );
+            CPLFree( paiIncrement );
+            CPLFree( pszGeoList );
             return FALSE;
         }
 
