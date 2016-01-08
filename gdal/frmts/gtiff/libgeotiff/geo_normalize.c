@@ -87,6 +87,15 @@
 #endif
 #endif
 
+#ifndef CPL_UNUSED
+#if defined(__GNUC__) && __GNUC__ >= 4
+#  define CPL_UNUSED __attribute((__unused__))
+#else
+/* TODO: add cases for other compilers */
+#  define CPL_UNUSED
+#endif
+#endif
+
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
 /************************************************************************/
