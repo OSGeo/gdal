@@ -178,27 +178,29 @@ int OGRMDBJavaEnv::Init()
         }
         else
         {
-            JavaVMInitArgs args;
-            JavaVMOption options[1];
-            args.version = JNI_VERSION_1_2;
-            const char* pszClassPath = CPLGetConfigOption("CLASSPATH", NULL);
             CPLString osClassPathOption;
-            if (pszClassPath)
             {
-                args.nOptions = 1;
-                osClassPathOption.Printf("-Djava.class.path=%s", pszClassPath);
-                options[0].optionString = (char*) osClassPathOption.c_str();
-                args.options = options;
-            }
-            else
-                args.nOptions = 0;
-            args.ignoreUnrecognized = JNI_FALSE;
+                JavaVMInitArgs args;
+                JavaVMOption options[1];
+                args.version = JNI_VERSION_1_2;
+                const char* pszClassPath = CPLGetConfigOption("CLASSPATH", NULL);
+                if (pszClassPath)
+                {
+                    args.nOptions = 1;
+                    osClassPathOption.Printf("-Djava.class.path=%s", pszClassPath);
+                    options[0].optionString = (char*) osClassPathOption.c_str();
+                    args.options = options;
+                }
+                else
+                    args.nOptions = 0;
+                args.ignoreUnrecognized = JNI_FALSE;
 
-            int ret = JNI_CreateJavaVM(&jvm, (void **)&env, &args);
-            if (ret != 0 || jvm == NULL || env == NULL)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "JNI_CreateJavaVM failed (%d)", ret);
-                return FALSE;
+                int ret = JNI_CreateJavaVM(&jvm, (void **)&env, &args);
+                if (ret != 0 || jvm == NULL || env == NULL)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "JNI_CreateJavaVM failed (%d)", ret);
+                    return FALSE;
+                }
             }
 
             jvm_static = jvm;
