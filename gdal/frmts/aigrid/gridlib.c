@@ -104,6 +104,23 @@ CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
     return( CE_None );
 }
 
+/**********************************************************************
+ *                       AIGSaturatedAdd()
+ ***********************************************************************/
+
+static GInt32 AIGSaturatedAdd(GInt32 nVal, GInt32 nAdd)
+{
+    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
+        nVal = INT_MAX;
+    else if( nAdd == INT_MIN && nVal < 0 )
+        nVal = INT_MIN;
+    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
+        nVal = INT_MIN;
+    else
+        nVal += nAdd;
+    return nVal;
+}
+
 /************************************************************************/
 /*                         AIGProcess32bitRawBlock()                    */
 /*                                                                      */
@@ -129,10 +146,9 @@ CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
-        panData[i] = pabyCur[0] * 256 * 256 * 256
-            + pabyCur[1] * 256 * 256
-            + pabyCur[2] * 256 
-            + pabyCur[3] + nMin;
+        memcpy(panData + i, pabyCur, 4);
+        panData[i] = CPL_MSBWORD32(panData[i]);
+        panData[i] = AIGSaturatedAdd(panData[i], nMin);
         pabyCur += 4;
     }
 
