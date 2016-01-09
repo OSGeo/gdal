@@ -177,10 +177,12 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                * static_cast<vsi_l_offset>( nBlockYOff ),
                SEEK_SET );
 
-    char *pszRecord = reinterpret_cast<char *>( CPLMalloc( nRecordSize ) );
-    if( (int)VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp ) != nRecordSize )
+    GByte *pabyRecord = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE( nRecordSize ) );
+	if( pabyRecord == NULL )
+		return CE_Failure;
+    if( (int)VSIFReadL( pabyRecord, 1, nRecordSize, poGDS->fp ) != nRecordSize )
     {
-        CPLFree( pszRecord );
+        CPLFree( pabyRecord );
         return CE_Failure;
     }
 
@@ -189,7 +191,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( reinterpret_cast<void *>( &raw1 ),
-                    reinterpret_cast<void *>(pszRecord + 2 * i), 2 );
+                    reinterpret_cast<void *>(pabyRecord + 2 * i), 2 );
             CPL_LSBPTR16(&raw1);
             if( raw1 == 0 )
             {
@@ -207,7 +209,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( reinterpret_cast<void *>( &raw1 ),
-                    reinterpret_cast<void *>(pszRecord + 2 * i),
+                    reinterpret_cast<void *>(pabyRecord + 2 * i),
                     2 );
             CPL_LSBPTR16(&raw1);
             reinterpret_cast<char *>( pImage )[i]
@@ -219,7 +221,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( reinterpret_cast<void *> ( &raw1 ),
-                    reinterpret_cast<void *> ( pszRecord + 2 * i ),
+                    reinterpret_cast<void *> ( pabyRecord + 2 * i ),
                     2 );
             CPL_LSBPTR16(&raw1);
             reinterpret_cast<char *>( pImage )[i] = poGDS->ColorMap[raw1 / 16].g;
@@ -230,7 +232,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( reinterpret_cast<void *>( &raw1 ),
-                    reinterpret_cast<void *>( pszRecord + 2 * i ),
+                    reinterpret_cast<void *>( pabyRecord + 2 * i ),
                     2 );
             CPL_LSBPTR16(&raw1);
             reinterpret_cast<char *>( pImage )[i] = poGDS->ColorMap[raw1 / 16].b;
@@ -241,11 +243,11 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "No band number %d",
                   nBand );
-        CPLFree( pszRecord );
+        CPLFree( pabyRecord );
         return CE_Failure;
     }
 
-    CPLFree( pszRecord );
+    CPLFree( pabyRecord );
 
     return CE_None;
 }
