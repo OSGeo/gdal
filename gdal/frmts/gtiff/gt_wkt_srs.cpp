@@ -2543,7 +2543,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "TIFF/GeoTIFF structure is corrupt." );
         VSIUnlink( szFilename );
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
@@ -2674,7 +2674,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     XTIFFClose( hTIFF );
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
     VSIUnlink( szFilename );
 
@@ -2729,7 +2729,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "TIFF/GeoTIFF structure is corrupt." );
-        VSIFCloseL(fpL);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return CE_Failure;
     }
 
@@ -2872,7 +2872,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
     TIFFWriteDirectory( hTIFF );
 
     XTIFFClose( hTIFF );
-    VSIFCloseL(fpL);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
 
 /* -------------------------------------------------------------------- */
 /*      Read back from the memory buffer.  It would be preferable       */

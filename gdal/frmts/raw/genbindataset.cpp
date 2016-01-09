@@ -363,7 +363,7 @@ GenBinDataset::~GenBinDataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
     CPLFree( pszProjection );
     CSLDestroy( papszHDR );
@@ -589,7 +589,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         || strstr( achHeader, "ROWS:" ) == NULL 
         || strstr( achHeader, "COLS:" ) == NULL )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         return NULL;
     }
 
@@ -604,7 +604,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                   "instead of the .hdr file.  Please try again selecting\n"
                   "the raw data file corresponding to the header file: %s\n", 
                   poOpenInfo->pszFilename );
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         return NULL;
     }
 
@@ -642,7 +642,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
     if( CSLFetchNameValue( papszHdr, "COLS" ) == NULL
         || CSLFetchNameValue( papszHdr, "ROWS" ) == NULL

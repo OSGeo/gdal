@@ -110,7 +110,7 @@ void GDALPamProxyDB::LoadDB()
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Problem reading %s header - short or corrupt?", 
                   osDBName.c_str() );
-        VSIFCloseL(fpDB);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
         return;
     }
 
@@ -124,24 +124,24 @@ void GDALPamProxyDB::LoadDB()
 
     if( VSIFSeekL( fpDB, 0, SEEK_END ) != 0 )
     {
-        VSIFCloseL(fpDB);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
         return;
     }
     nBufLength = (int) (VSIFTellL(fpDB) - 100);
     if( VSIFSeekL( fpDB, 100, SEEK_SET ) != 0 )
     {
-        VSIFCloseL(fpDB);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
         return;
     }
     pszDBData = (char *) CPLCalloc(1,nBufLength+1);
     if( VSIFReadL( pszDBData, 1, nBufLength, fpDB ) != (size_t)nBufLength )
     {
         CPLFree(pszDBData);
-        VSIFCloseL(fpDB);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
         return;
     }
 
-    VSIFCloseL( fpDB );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpDB ));
 
 /* -------------------------------------------------------------------- */
 /*      Parse the list of in/out names.                                 */
@@ -226,7 +226,7 @@ void GDALPamProxyDB::SaveDB()
                     "Failed to write complete %s Pam Proxy DB.\n%s",
                     osDBName.c_str(), 
                     VSIStrerror( errno ) );
-        VSIFCloseL( fpDB );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpDB ));
         VSIUnlink( osDBName );
         if( hLock )
             CPLUnlockFile( hLock );
@@ -253,7 +253,7 @@ void GDALPamProxyDB::SaveDB()
                       "Failed to write complete %s Pam Proxy DB.\n%s",
                       osDBName.c_str(), 
                       VSIStrerror( errno ) );
-            VSIFCloseL( fpDB );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fpDB ));
             VSIUnlink( osDBName );
             if( hLock )
                 CPLUnlockFile( hLock );
@@ -261,7 +261,10 @@ void GDALPamProxyDB::SaveDB()
         }
     }
 
-    VSIFCloseL( fpDB );
+    if( VSIFCloseL( fpDB ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+    }
 
     if( hLock )
         CPLUnlockFile( hLock );

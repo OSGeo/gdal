@@ -90,7 +90,12 @@ static void USGSDEMWriteCleanup( USGSDEMWriteInfo *psWInfo )
     CPLFree( psWInfo->pszDstSRS );
     CPLFree( psWInfo->pszFilename );
     if( psWInfo->fp != NULL )
-        VSIFCloseL( psWInfo->fp );
+    {
+        if( VSIFCloseL( psWInfo->fp ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     if( psWInfo->panData != NULL )
         VSIFree( psWInfo->panData );
 }
@@ -308,7 +313,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
                       pszTemplate, VSIStrerror( errno ) );
             return FALSE;
         }
-        VSIFCloseL( fpTemplate );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpTemplate ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -899,7 +904,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
         CSLDestroy( papszTokens );
     }
 
-    VSIFClose( fpNTS );
+    CPL_IGNORE_RET_VAL(VSIFClose( fpNTS ));
 
     return bGotHit;
 }
@@ -959,7 +964,7 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
         CSLDestroy( papszTokens );
     }
 
-    VSIFClose( fpNTS );
+    CPL_IGNORE_RET_VAL(VSIFClose( fpNTS ));
 
     return bGotHit;
 }

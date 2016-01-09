@@ -307,7 +307,12 @@ IDADataset::~IDADataset()
     FlushCache();
 
     if( fpRaw != NULL )
-        VSIFCloseL( fpRaw );
+    {
+        if( VSIFCloseL( fpRaw ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     CPLFree( pszProjection );
 }
 
@@ -651,7 +656,7 @@ void IDADataset::ReadColorTable()
         pszLine = CPLReadLine( fp );
     }
 
-    VSIFClose( fp );
+    CPL_IGNORE_RET_VAL(VSIFClose( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Attach RAT to band.                                             */
@@ -1054,7 +1059,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "IO error writing %s.\n%s", 
                   pszFilename, VSIStrerror( errno ) );
-        VSIFClose( fp );
+        CPL_IGNORE_RET_VAL(VSIFClose( fp ));
         return NULL;
     }
 
@@ -1073,7 +1078,13 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    VSIFClose( fp );
+    if( VSIFClose( fp ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "IO error writing %s.\n%s", 
+                  pszFilename, VSIStrerror( errno ) );
+        return NULL;
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }

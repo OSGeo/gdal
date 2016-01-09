@@ -166,7 +166,7 @@ int GTIFF_CanDirectCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions
         papszCreateOptions = CSLSetNameValue(papszCreateOptions, "JPEG_QUALITY", NULL);
     }
     if (fpJPEG)
-        VSIFCloseL(fpJPEG);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
 
     return bJPEGDirectCopy;
 }
@@ -198,7 +198,7 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     void* pabyJPEGData = VSIMalloc(nSize);
     if (pabyJPEGData == NULL)
     {
-        VSIFCloseL(fpJPEG);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
         return CE_Failure;
     }
 
@@ -220,7 +220,8 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     }
 
     VSIFree(pabyJPEGData);
-    VSIFCloseL(fpJPEG);
+    if VSIFCloseL(fpJPEG) != 0 )
+        eErr = CE_Failure;
 
     return eErr;
 }
@@ -374,7 +375,7 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
     }
     jpeg_write_tables( &sCInfo );
 
-    VSIFCloseL(fpTABLES);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpTABLES));
 
     vsi_l_offset nSizeTables = 0;
     GByte* pabyJPEGTablesData = VSIGetMemFileBuffer(szTmpFilename, &nSizeTables, FALSE);
@@ -407,7 +408,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
     jmp_buf setjmp_buffer;
     if (setjmp(setjmp_buffer))
     {
-        VSIFCloseL(fpJPEG);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
         return CE_Failure;
     }
 
@@ -498,7 +499,8 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
     jpeg_abort_decompress( &sDInfo );
     jpeg_destroy_decompress( &sDInfo );
 
-    VSIFCloseL(fpJPEG);
+    if( VSIFCloseL(fpJPEG) != 0 )
+        return CE_Failure;
 
     return CE_None;
 }
@@ -534,7 +536,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
     jmp_buf setjmp_buffer;
     if (setjmp(setjmp_buffer))
     {
-        VSIFCloseL(fpMEM);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpMEM));
         VSIUnlink(osTmpFilename);
         return CE_Failure;
     }
@@ -716,7 +718,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs* psArgs)
     jpeg_finish_compress(&sCInfo);
     jpeg_destroy_compress(&sCInfo);
 
-    VSIFCloseL(fpMEM);
+    CPL_IGNORE_RET_VAL( VSIFCloseL(fpMEM) );
 
 /* -------------------------------------------------------------------- */
 /*      Write the JPEG content with libtiff raw API                     */
@@ -773,7 +775,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     jmp_buf setjmp_buffer;
     if (setjmp(setjmp_buffer))
     {
-        VSIFCloseL(fpJPEG);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
         jpeg_destroy_decompress(&sDInfo);
         return CE_Failure;
     }
@@ -897,7 +899,8 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     jpeg_finish_decompress( &sDInfo );
     jpeg_destroy_decompress( &sDInfo );
 
-    VSIFCloseL(fpJPEG);
+    if( VSIFCloseL(fpJPEG) != 0 )
+        eErr = CE_Failure;
 
     return eErr;
 }

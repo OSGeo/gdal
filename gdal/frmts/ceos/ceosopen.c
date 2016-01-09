@@ -32,6 +32,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                            CEOSScanInt()                             */
 /*                                                                      */
@@ -378,6 +380,6 @@ void CEOSClose( CEOSImage * psCEOS )
 
 {
     CPLFree( psCEOS->panDataStart );
-    VSIFCloseL( psCEOS->fpImage );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( psCEOS->fpImage ));
     CPLFree( psCEOS );
 }

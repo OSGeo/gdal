@@ -139,7 +139,7 @@ int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
     FillFileFromPipe(err_child, ferr);
     CPLSpawnAsyncCloseErrorFileHandle(sp);
 
-    VSIFCloseL(ferr);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(ferr));
     vsi_l_offset nDataLength = 0;
     GByte* pData = VSIGetMemFileBuffer(osName.c_str(), &nDataLength, TRUE);
     if( nDataLength > 0 )

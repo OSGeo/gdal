@@ -156,7 +156,7 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
 VSITarReader::~VSITarReader()
 {
     if (fp)
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 }
 
 /************************************************************************/

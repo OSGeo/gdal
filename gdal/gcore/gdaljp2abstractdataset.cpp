@@ -374,10 +374,10 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                                 if( papszBoxData != NULL )
                                 {
                                     osXSDTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/my.xsd", this);
-                                    VSIFCloseL(VSIFileFromMemBuffer(osXSDTmpFile,
+                                    CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(osXSDTmpFile,
                                                                     (GByte*)papszBoxData[0],
                                                                     strlen(papszBoxData[0]),
-                                                                    FALSE));
+                                                                    FALSE)));
                                 }
                                 else
                                 {

@@ -129,7 +129,7 @@ HFABand::~HFABand()
     CPLFree( padfPCTBins );
 
     if( fpExternal != NULL )
-        VSIFCloseL( fpExternal );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpExternal ));
 }
 
 /************************************************************************/

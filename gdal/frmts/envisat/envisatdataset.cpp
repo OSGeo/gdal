@@ -220,7 +220,7 @@ EnvisatDataset::~EnvisatDataset()
         EnvisatFile_Close( hEnvisatFile );
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
     if( nGCPCount > 0 )
     {

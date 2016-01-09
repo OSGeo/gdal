@@ -151,7 +151,7 @@ typedef enum
 CPL_C_START
 
 HFAHandle CPL_DLL HFAOpen( const char * pszFilename, const char * pszMode );
-void	CPL_DLL HFAClose( HFAHandle );
+int	CPL_DLL HFAClose( HFAHandle ); /* 0 = success */
 CPLErr HFADelete( const char *pszFilename );
 CPLErr HFARenameReferences( HFAHandle, const char *, const char * );
 

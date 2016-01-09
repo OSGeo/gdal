@@ -427,7 +427,7 @@ bool GDALCheckFileHeader(const CPLString& soFilePath,
     char *pBuffer = new char[nBufferSize + 1];
     pBuffer[nBufferSize] = 0;
     int nReadBytes = (int) VSIFReadL( pBuffer, 1, nBufferSize, fpL );
-    VSIFCloseL(fpL);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
     if(nReadBytes == 0)
     {
         delete [] pBuffer;
@@ -515,11 +515,11 @@ char **GDALLoadRPBFile( const CPLString& soFilePath )
 
     if( !oParser.Ingest( fp ) )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         return NULL;
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Extract RPC information, in a GDAL "standard" metadata format.  */
@@ -686,7 +686,7 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
                       apszRPCTXTSingleValItems[i], osRPCFilename.c_str() );
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             VSIUnlink( osRPCFilename );
             return CE_Failure;
         }
@@ -703,7 +703,7 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
                       apszRPCTXTSingleValItems[i], osRPCFilename.c_str() );
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             VSIUnlink( osRPCFilename );
             return CE_Failure;
         }
@@ -717,7 +717,7 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
                       "%s field is corrupt (not 20 values), %s file not written.\n%s = %s",
                       apszRPCTXT20ValItems[i], osRPCFilename.c_str(),
                       apszRPCTXT20ValItems[i], pszRPCVal );
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             VSIUnlink( osRPCFilename );
             CSLDestroy( papszItems );
             return CE_Failure;
@@ -734,7 +734,8 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
     }
 
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = CE_Failure;
 
     return (bOK) ? CE_None : CE_Failure;
 }
@@ -787,7 +788,7 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
                       apszRPBMap[i], osRPBFilename.c_str() );
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             VSIUnlink( osRPBFilename );
             return CE_Failure;
         }
@@ -815,7 +816,7 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
                           "%s field is corrupt (not 20 values), %s file not written.\n%s = %s",
                           apszRPBMap[i], osRPBFilename.c_str(),
                           apszRPBMap[i], pszRPBVal );
-                VSIFCloseL( fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                 VSIUnlink( osRPBFilename );
                 CSLDestroy( papszItems );
                 return CE_Failure;
@@ -839,7 +840,8 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
     bOK &= VSIFPrintfL( fp, "%s", "END_GROUP = IMAGE\n" ) > 0;
     bOK &= VSIFPrintfL( fp, "END;\n" ) > 0;
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
 
     return (bOK) ? CE_None : CE_Failure;
 }
@@ -971,11 +973,11 @@ char ** GDALLoadIMDFile( const CPLString& osFilePath )
 
     if( !oParser.Ingest( fp ) )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         return NULL;
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Consider version changing.                                      */
@@ -1107,7 +1109,8 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 
     bOK &= VSIFPrintfL( fp, "END;\n" ) > 0;
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
 
     return (bOK) ? CE_None : CE_Failure;
 }

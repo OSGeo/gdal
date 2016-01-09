@@ -101,7 +101,7 @@ DOQ1Dataset::~DOQ1Dataset()
 
     CPLFree( pszProjection );
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
 
 /************************************************************************/

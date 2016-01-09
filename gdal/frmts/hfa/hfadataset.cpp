@@ -2815,7 +2815,7 @@ CPLErr HFARasterBand::CleanOverviews()
             CPLFormFilename( hHFA->psDependent->pszPath, 
                              hHFA->psDependent->pszFilename, NULL );
 
-        HFAClose( hHFA->psDependent );
+        CPL_IGNORE_RET_VAL(HFAClose( hHFA->psDependent ));
         hHFA->psDependent = NULL;
 
         CPLDebug( "HFA", "Unlink(%s)", osFilename.c_str() );
@@ -3264,7 +3264,10 @@ HFADataset::~HFADataset()
 /* -------------------------------------------------------------------- */
     if( hHFA != NULL )
     {
-        HFAClose( hHFA );
+        if( HFAClose( hHFA ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
         hHFA = NULL;
     }
 
@@ -5668,7 +5671,11 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     if( hHFA == NULL )
         return NULL;
 
-    HFAClose( hHFA );
+    if( HFAClose( hHFA ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open the dataset normally.                                      */
@@ -5741,7 +5748,8 @@ CPLErr HFADataset::Rename( const char *pszNewName, const char *pszOldName )
                 HFARenameReferences( hHFA->psDependent, 
                                      osNewBasename, osOldBasename );
 
-            HFAClose( hHFA );
+            if( HFAClose( hHFA ) != 0 )
+                eErr = CE_Failure;
         }
     }
 
@@ -5789,7 +5797,8 @@ CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
                 HFARenameReferences( hHFA->psDependent, 
                                      osNewBasename, osOldBasename );
 
-            HFAClose( hHFA );
+            if( HFAClose( hHFA ) != 0 )
+                eErr = CE_Failure;
         }
     }
 

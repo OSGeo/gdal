@@ -176,7 +176,7 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
     virtual int       Close();
 
     VSIGZipHandle*    Duplicate();
-    void              CloseBaseHandle();
+    bool              CloseBaseHandle();
 
     vsi_l_offset      GetLastReadOffset() { return m_nLastReadOffset; }
     const char*       GetBaseFileName() { return m_pszBaseFileName; }
@@ -267,11 +267,13 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
 /*                     CloseBaseHandle()                                */
 /************************************************************************/
 
-void  VSIGZipHandle::CloseBaseHandle()
+bool  VSIGZipHandle::CloseBaseHandle()
 {
+    bool bRet = true;
     if (m_poBaseHandle)
-        VSIFCloseL((VSILFILE*)m_poBaseHandle);
+        bRet = VSIFCloseL((VSILFILE*)m_poBaseHandle) == 0;
     m_poBaseHandle = NULL;
+    return bRet;
 }
 
 /************************************************************************/
@@ -401,7 +403,7 @@ VSIGZipHandle::~VSIGZipHandle()
     CPLFree(m_pszBaseFileName);
 
     if (m_poBaseHandle)
-        VSIFCloseL((VSILFILE*)m_poBaseHandle);
+        CPL_IGNORE_RET_VAL(VSIFCloseL((VSILFILE*)m_poBaseHandle));
 }
 
 /************************************************************************/
@@ -744,7 +746,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
                 while (*pszFirstNonSpace == ' ') pszFirstNonSpace ++;
                 CPL_IGNORE_RET_VAL(VSIFPrintfL(fpCacheLength, "uncompressed_size=%s\n", pszFirstNonSpace));
 
-                VSIFCloseL(fpCacheLength);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpCacheLength));
             }
         }
     }
@@ -1112,6 +1114,7 @@ VSIGZipWriteHandle::~VSIGZipWriteHandle()
 int VSIGZipWriteHandle::Close()
 
 {
+    int nRet = 0;
     if( bCompressActive )
     {
         sStream.next_out = pabyOutBuf;
@@ -1138,7 +1141,7 @@ int VSIGZipWriteHandle::Close()
 
         if( bAutoCloseBaseHandle )
         {
-            m_poBaseHandle->Close();
+            nRet = m_poBaseHandle->Close();
 
             delete m_poBaseHandle;
         }
@@ -1146,7 +1149,7 @@ int VSIGZipWriteHandle::Close()
         bCompressActive = false;
     }
 
-    return 0;
+    return nRet;
 }
 
 /************************************************************************/
@@ -1493,7 +1496,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
                 }
             }
 
-            VSIFCloseL(fpCacheLength);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpCacheLength));
 
             if (nCompressedSize == (GUIntBig) pStatBuf->st_size)
             {

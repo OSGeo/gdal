@@ -152,7 +152,7 @@ retry:
                         VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 &&
             VSI_ISDIR( sStat.st_mode ) )
         {
-            VSIFCloseL(fpL);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
             fpL = NULL;
             CPLFree(pabyHeader);
             pabyHeader = NULL;
@@ -238,7 +238,7 @@ GDALOpenInfo::~GDALOpenInfo()
     CPLFree( pszFilename );
 
     if( fpL != NULL )
-        VSIFCloseL( fpL );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpL ));
     CSLDestroy( papszSiblingFiles );
 }
 

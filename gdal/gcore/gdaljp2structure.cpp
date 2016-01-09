@@ -122,8 +122,8 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
     if( pabyBoxData && poVRTDriver)
     {
         CPLString osTmpFilename(CPLSPrintf("/vsimem/tmp_%p.tif", oBox.GetFILE()));
-        VSIFCloseL(VSIFileFromMemBuffer(
-            osTmpFilename, pabyBoxData, nBoxDataLength, TRUE) );
+        CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(
+            osTmpFilename, pabyBoxData, nBoxDataLength, TRUE) ));
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALDataset* poDS = (GDALDataset*) GDALOpen(osTmpFilename, GA_ReadOnly);
         CPLPopErrorHandler();
@@ -1405,7 +1405,7 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
          memcmp(abyHeader + 4, jp2_box_jp, sizeof(jp2_box_jp)) != 0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s is not a JPEG2000 file", pszFilename);
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -1430,6 +1430,6 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
         GDALGetJPEG2000StructureInternal(psParent, fp, NULL, papszOptions );
     }
 
-    VSIFCloseL(fp);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     return psParent;
 }

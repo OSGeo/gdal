@@ -2055,7 +2055,7 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write whole XML document (%.500s).",
                   pszFilename );
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         CPLFree( pszDoc );
         return FALSE;
     }
@@ -2063,10 +2063,16 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
+    int bRet = VSIFCloseL( fp ) == 0;
+    if( !bRet )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to write whole XML document (%.500s).",
+                  pszFilename );
+    }
     CPLFree( pszDoc );
 
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/

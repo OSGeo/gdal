@@ -151,7 +151,7 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
     }
 
     int bRet = ReadAndParse( fpLL );
-    VSIFCloseL( fpLL );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpLL ));
 
 /* -------------------------------------------------------------------- */
 /*      If we still don't have a geotransform, look for a world         */
@@ -1423,7 +1423,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         pszGML = (char *) CPLCalloc(1,nLength+1);
         CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
         CPL_IGNORE_RET_VAL(VSIFReadL( pszGML, 1, nLength, fp ));
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
         GDALJP2Box *apoGMLBoxes[2];
 

@@ -280,7 +280,7 @@ ELASDataset::~ELASDataset()
 
     if( fp != NULL )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     }
 }
 

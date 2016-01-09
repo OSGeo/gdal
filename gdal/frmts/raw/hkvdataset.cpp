@@ -318,7 +318,12 @@ HKVDataset::~HKVDataset()
     }
 
     if( fpBlob != NULL )
-        VSIFCloseL( fpBlob );
+    {
+        if( VSIFCloseL( fpBlob ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 
     if( nGCPCount > 0 )
     {
@@ -437,8 +442,8 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
     /* version information- only create the new style */
     fprintf( fp, "version = 1.1");
 
-
-    VSIFClose( fp );
+    if( VSIFClose( fp ) != 0 )
+        return CE_Failure;
     return CE_None;
 }
 
@@ -1566,7 +1571,8 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     }
 
     bool bOK = VSIFWrite( reinterpret_cast<void *>( const_cast<char *>( "" ) ), 1, 1, fp ) == 1;
-    VSIFClose( fp );
+    if( VSIFClose( fp ) != 0 )
+        bOK = false;
 
     if( !bOK )
         return NULL;

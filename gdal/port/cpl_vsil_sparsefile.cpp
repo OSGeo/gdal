@@ -126,7 +126,7 @@ int VSISparseFileHandle::Close()
     for( unsigned int i = 0; i < aoRegions.size(); i++ )
     {
         if( aoRegions[i].fp != NULL )
-            VSIFCloseL( aoRegions[i].fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( aoRegions[i].fp ));
     }
 
     return 0;
@@ -356,7 +356,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
     VSILFILE *fp = VSIFOpenL( osSparseFilePath, "r" );
     if( fp == NULL )
         return NULL;
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Read the XML file.                                              */

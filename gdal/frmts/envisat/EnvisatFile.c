@@ -493,7 +493,7 @@ int EnvisatFile_Create( EnvisatFile **self_ptr,
     
     CPL_IGNORE_RET_VAL_INT(VSIFSeekL( fp, 0, SEEK_SET ));
     CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( template_data, template_size, 1, fp ));
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
 
     /*
      * Try to write the template out to the new filename. 
@@ -513,7 +513,7 @@ int EnvisatFile_Create( EnvisatFile **self_ptr,
     }
 
     CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( template_data, template_size, 1, fp ));
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
 
     CPLFree( template_data );
 
@@ -715,7 +715,7 @@ void EnvisatFile_Close( EnvisatFile *self )
      * Close file. 
      */
     if( self->fp != NULL )
-        VSIFCloseL( self->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( self->fp ));
 
     /*
      * Clean up data structures. 
