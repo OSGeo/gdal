@@ -735,7 +735,7 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
 
 
     if( VSIFCloseL( fp ) != 0 )
-        bOK = CE_Failure;
+        bOK = false;
 
     return (bOK) ? CE_None : CE_Failure;
 }
