@@ -51,7 +51,7 @@ public:
 
     OGRKMLLayer( const char* pszName_, 
                  OGRSpatialReference* poSRS, 
-                 int bWriter,
+                 bool bWriter,
                  OGRwkbGeometryType eType,
                  OGRKMLDataSource* poDS );
     ~OGRKMLLayer();

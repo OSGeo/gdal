@@ -244,7 +244,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
             sName.Printf( "Layer #%d", nCount );
         }
 
-        poLayer = new OGRKMLLayer( sName.c_str(), poSRS, FALSE, poGeotype, this );
+        poLayer = new OGRKMLLayer( sName.c_str(), poSRS, false, poGeotype, this );
 
         poLayer->SetLayerNumber( nCount );
 
@@ -395,7 +395,7 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRKMLLayer *poLayer;
-    poLayer = new OGRKMLLayer( pszCleanLayerName, poSRS, TRUE, eType, this );
+    poLayer = new OGRKMLLayer( pszCleanLayerName, poSRS, true, eType, this );
 
     CPLFree( pszCleanLayerName );
 
