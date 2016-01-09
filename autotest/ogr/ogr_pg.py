@@ -4822,19 +4822,17 @@ def ogr_pg_78():
                 # But apparently not :
                 # Last good: https://travis-ci.org/OSGeo/gdal/builds/60211881 
                 # First bad: https://travis-ci.org/OSGeo/gdal/builds/60290209
-                #val = gdal.GetConfigOption('TRAVIS', None)
-                #if val is not None:
-                #    print('Fails on Travis. geom_type = %d' % lyr.GetGeomType())
-                #else:
-                if True:
+                val = gdal.GetConfigOption('TRAVIS', None)
+                if val is not None:
+                    print('Fails on Travis. geom_type = %d' % lyr.GetGeomType())
+                else:
                     gdaltest.post_reason('fail')
                     return 'fail'
             if lyr.GetSpatialRef() is None or lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
-                #val = gdal.GetConfigOption('TRAVIS', None)
-                #if val is not None:
-                #    print('Fails on Travis. GetSpatialRef() = %s' % str(lyr.GetSpatialRef()))
-                #else:
-                if True:
+                val = gdal.GetConfigOption('TRAVIS', None)
+                if val is not None:
+                    print('Fails on Travis. GetSpatialRef() = %s' % str(lyr.GetSpatialRef()))
+                else:
                     gdaltest.post_reason('fail')
                     return 'fail'
         if lyr.GetName() == 'ogr_pg_78_2':
