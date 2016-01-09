@@ -28,9 +28,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#include "ogr_kml.h"
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "ogr_kml.h"
 
 /************************************************************************/
 /*                         OGRKMLDriverIdentify()                       */
@@ -58,10 +59,8 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRKMLDriverIdentify(poOpenInfo) )
         return NULL;
 
-    OGRKMLDataSource* poDS = NULL;
-
 #ifdef HAVE_EXPAT
-    poDS = new OGRKMLDataSource();
+    OGRKMLDataSource* poDS = new OGRKMLDataSource();
 
     if( poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
@@ -79,9 +78,11 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         poDS = NULL;
     }
-#endif
 
     return poDS;
+#endif
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -89,10 +90,10 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRKMLDriverCreate( const char * pszName,
-                                        CPL_UNUSED int nBands,
-                                        CPL_UNUSED int nXSize,
-                                        CPL_UNUSED int nYSize,
-                                        CPL_UNUSED GDALDataType eDT,
+                                        int /* nBands */,
+                                        int /* nXSize */ ,
+                                        int /* nYSize */,
+                                        GDALDataType /* eDT */,
                                         char **papszOptions )
 {
     CPLAssert( NULL != pszName );

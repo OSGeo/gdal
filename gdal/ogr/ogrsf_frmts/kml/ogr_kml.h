@@ -72,7 +72,7 @@ public:
     //
     void SetLayerNumber( int nLayer );
 
-    void SetClosedForWriting() { bClosedForWriting = TRUE; }
+    void SetClosedForWriting() { bClosedForWriting = true; }
 
     CPLString WriteSchema();
 
@@ -87,11 +87,11 @@ private:
 
     int iNextKMLId_;
     int nTotalKMLCount_;
-    int bWriter_;
+    bool bWriter_;
     int nLayerNumber_;
     int nWroteFeatureCount_;
-    int bSchemaWritten_;
-    int bClosedForWriting;
+    bool bSchemaWritten_;
+    bool bClosedForWriting;
     char* pszName_;
 
     int nLastAsked;
@@ -134,7 +134,7 @@ public:
     KML* GetKMLFile() { return poKMLFile_; };
 #endif
 
-	bool IsFirstCTError() { return !bIssuedCTError_; }
+	bool IsFirstCTError() const { return !bIssuedCTError_; }
 	void IssuedFirstCTError() { bIssuedCTError_ = true; }
 
 private:

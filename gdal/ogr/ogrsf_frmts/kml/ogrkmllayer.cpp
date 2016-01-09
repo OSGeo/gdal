@@ -29,10 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_kml.h"
-#include "ogr_api.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
+#include "ogr_kml.h"
 #include "ogr_p.h"
 
 /* Function utility to dump OGRGeometry to KML text. */
