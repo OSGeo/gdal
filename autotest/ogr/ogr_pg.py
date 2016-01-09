@@ -4764,12 +4764,14 @@ def ogr_pg_78():
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis_2:
         return 'skip'
 
-    gdaltest.pg_ds.CreateLayer('ogr_pg_78', options = ['GEOMETRY_NAME=my_geom'])
+    gdaltest.pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_78 (ID INTEGER PRIMARY KEY)")
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD COLUMN my_geom GEOMETRY")
     gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD CONSTRAINT ogr_pg_78_my_geom_type CHECK (geometrytype(my_geom)='POINT')")
     gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD CONSTRAINT ogr_pg_78_my_geom_dim CHECK (st_ndims(my_geom)=3)")
     gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD CONSTRAINT ogr_pg_78_my_geom_srid CHECK (st_srid(my_geom)=4326)")
 
-    gdaltest.pg_ds.CreateLayer('ogr_pg_78_2', options = ['GEOMETRY_NAME=my_geog', 'GEOM_TYPE=geography'])
+    gdaltest.pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_78_2 (ID INTEGER PRIMARY KEY)")
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78_2 ADD COLUMN my_geog GEOGRAPHY")
     gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78_2 ADD CONSTRAINT ogr_pg_78_2_my_geog_type CHECK (geometrytype(my_geog::geometry)='POINT')")
     gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78_2 ADD CONSTRAINT ogr_pg_78_2_my_geog_dim CHECK (st_ndims(my_geog::geometry)=3)")
     gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78_2 ADD CONSTRAINT ogr_pg_78_2_my_geog_srid CHECK (st_srid(my_geog::geometry)=4326)")
@@ -4820,17 +4822,19 @@ def ogr_pg_78():
                 # But apparently not :
                 # Last good: https://travis-ci.org/OSGeo/gdal/builds/60211881 
                 # First bad: https://travis-ci.org/OSGeo/gdal/builds/60290209
-                val = gdal.GetConfigOption('TRAVIS', None)
-                if val is not None:
-                    print('Fails on Travis. geom_type = %d' % lyr.GetGeomType())
-                else:
+                #val = gdal.GetConfigOption('TRAVIS', None)
+                #if val is not None:
+                #    print('Fails on Travis. geom_type = %d' % lyr.GetGeomType())
+                #else:
+                if True:
                     gdaltest.post_reason('fail')
                     return 'fail'
             if lyr.GetSpatialRef() is None or lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
-                val = gdal.GetConfigOption('TRAVIS', None)
-                if val is not None:
-                    print('Fails on Travis. GetSpatialRef() = %s' % str(lyr.GetSpatialRef()))
-                else:
+                #val = gdal.GetConfigOption('TRAVIS', None)
+                #if val is not None:
+                #    print('Fails on Travis. GetSpatialRef() = %s' % str(lyr.GetSpatialRef()))
+                #else:
+                if True:
                     gdaltest.post_reason('fail')
                     return 'fail'
         if lyr.GetName() == 'ogr_pg_78_2':

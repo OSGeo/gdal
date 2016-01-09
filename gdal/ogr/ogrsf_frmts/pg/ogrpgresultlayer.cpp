@@ -407,6 +407,8 @@ void OGRPGResultLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
             osGetSRID += psGetSRIDFct;
             osGetSRID += "(";
             osGetSRID += OGRPGEscapeColumnName(poGFldDefn->GetNameRef());
+            if (poDS->sPostGISVersion.nMajor > 2 || (poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 2))
+                osGetSRID += "::geometry";
             osGetSRID += ") FROM(";
             osGetSRID += pszRawStatement;
             osGetSRID += ") AS ogrpggetsrid LIMIT 1";
