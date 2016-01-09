@@ -1002,7 +1002,7 @@ yytnamerr (char *yyres, const char *yystr)
             if (*++yyp != '\\')
               goto do_not_strip_quotes;
             /* Fall through.  */
-            CPL_FALLTHROUGH
+            // CPL_FALLTHROUGH
           default:
             if (yyres)
               yyres[yyn] = *yyp;
