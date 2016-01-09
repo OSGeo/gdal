@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#ifndef DONT_DEPRECATE_SPRINTF
 #define DONT_DEPRECATE_SPRINTF
+#endif
 #include "cpl_port.h"
 #include "meta.h"
 #include "metaname.h"
