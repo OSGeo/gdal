@@ -429,14 +429,13 @@ int   NITFDESGetTRE( NITFDES* psDES,
     if ((size_t)nOffset >= psSegInfo->nSegmentSize)
         return FALSE;
 
-    VSIFSeekL(fp, psSegInfo->nSegmentStart + nOffset, SEEK_SET);
-
-    if (VSIFReadL(szTREHeader, 1, 11, fp) != 11)
+    if( VSIFSeekL(fp, psSegInfo->nSegmentStart + nOffset, SEEK_SET) != 0 ||
+        VSIFReadL(szTREHeader, 1, 11, fp) != 11)
     {
         /* Some files have a nSegmentSize larger than what it is in reality */
         /* So exit silently if we're at end of file */
-        VSIFSeekL(fp, 0, SEEK_END);
-        if (VSIFTellL(fp) == psSegInfo->nSegmentStart + nOffset)
+        if( VSIFSeekL(fp, 0, SEEK_END) != 0 ||
+            VSIFTellL(fp) == psSegInfo->nSegmentStart + nOffset)
             return FALSE;
 
         CPLError(CE_Failure, CPLE_FileIO,
@@ -560,8 +559,8 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             return FALSE;
         }
 
-        VSIFSeekL(psDES->psFile->fp, psSegInfo->nSegmentStart + anOffset[iShpFile], SEEK_SET);
-        if (VSIFReadL(pabyBuffer, 1, nSize, psDES->psFile->fp) != (size_t)nSize)
+        if( VSIFSeekL(psDES->psFile->fp, psSegInfo->nSegmentStart + anOffset[iShpFile], SEEK_SET) != 0 ||
+            VSIFReadL(pabyBuffer, 1, nSize, psDES->psFile->fp) != (size_t)nSize)
         {
             VSIFree(pabyBuffer);
             VSIFree(pszFilename);
@@ -577,7 +576,13 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             return FALSE;
         }
 
-        VSIFWriteL(pabyBuffer, 1, nSize, fp);
+        if( (int) VSIFWriteL(pabyBuffer, 1, nSize, fp) != nSize )
+        {
+            VSIFCloseL(fp);
+            VSIFree(pabyBuffer);
+            VSIFree(pszFilename);
+            return FALSE;
+        }
         VSIFCloseL(fp);
         VSIFree(pabyBuffer);
     }

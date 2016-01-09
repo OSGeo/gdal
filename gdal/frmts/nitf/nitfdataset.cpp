@@ -38,14 +38,14 @@
 
 CPL_CVSID("$Id$");
 
-static void NITFPatchImageLength( const char *pszFilename,
+static bool NITFPatchImageLength( const char *pszFilename,
                                   GUIntBig nImageOffset, 
                                   GIntBig nPixelCount, const char *pszIC );
-static int NITFWriteCGMSegments( const char *pszFilename, char **papszList );
-static void NITFWriteTextSegments( const char *pszFilename, char **papszList );
+static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList );
+static bool NITFWriteTextSegments( const char *pszFilename, char **papszList );
 
 #ifdef JPEG_SUPPORTED
-static int NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **,
+static bool NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **,
                                GDALProgressFunc pfnProgress, 
                                void * pProgressData );
 #endif
@@ -166,8 +166,9 @@ int NITFDataset::CloseDependentDatasets()
         GIntBig nPixelCount = nRasterXSize * ((GIntBig) nRasterYSize) * 
             nBands;
 
-        NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount, 
-                              "C8" );
+        CPL_IGNORE_RET_VAL(
+            NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount, 
+                              "C8" ));
     }
 
     bJP2Writing = FALSE;
@@ -187,8 +188,8 @@ int NITFDataset::CloseDependentDatasets()
 /*      If the dataset was opened by Create(), we may need to write     */
 /*      the CGM and TEXT segments                                       */
 /* -------------------------------------------------------------------- */
-    NITFWriteCGMSegments( GetDescription(), papszCgmMDToWrite );
-    NITFWriteTextSegments( GetDescription(), papszTextMDToWrite );
+    CPL_IGNORE_RET_VAL(NITFWriteCGMSegments( GetDescription(), papszCgmMDToWrite ));
+    CPL_IGNORE_RET_VAL(NITFWriteTextSegments( GetDescription(), papszTextMDToWrite ));
 
     CSLDestroy(papszTextMDToWrite);
     papszTextMDToWrite = NULL;
@@ -4459,9 +4460,15 @@ NITFDataset::NITFCreateCopy(
         GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) * 
             poSrcDS->GetRasterCount();
 
-        NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount, "C8" );
-        NITFWriteCGMSegments( pszFilename, papszCgmMD );
-        NITFWriteTextSegments( pszFilename, papszTextMD );
+        bool bOK = NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount, "C8" );
+        bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
+        bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
+        if( !bOK )
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
+            return NULL;
+        }
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
         poDstDS = reinterpret_cast<NITFDataset *>( Open( &oOpenInfo ) );
@@ -4488,9 +4495,8 @@ NITFDataset::NITFCreateCopy(
             return NULL;
         }
         GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
-        int bSuccess;
 
-        bSuccess = 
+        const bool bSuccess = 
             NITFWriteJPEGImage( poSrcDS, psFile->fp, nImageOffset,
                                 papszOptions,
                                 pfnProgress, pProgressData );
@@ -4510,11 +4516,17 @@ NITFDataset::NITFCreateCopy(
 
         NITFClose( psFile );
 
-        NITFPatchImageLength( pszFilename, nImageOffset,
+        bool bOK = NITFPatchImageLength( pszFilename, nImageOffset,
                               nPixelCount, pszIC );
 
-        NITFWriteCGMSegments( pszFilename, papszCgmMD );
-        NITFWriteTextSegments( pszFilename, papszTextMD );
+        bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
+        bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
+        if( !bOK )
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
+            return NULL;
+        }
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
         poDstDS = reinterpret_cast<NITFDataset *>( Open( &oOpenInfo ) );
@@ -4533,8 +4545,14 @@ NITFDataset::NITFCreateCopy(
 /* ==================================================================== */
     else
     {
-        NITFWriteCGMSegments( pszFilename, papszCgmMD );
-        NITFWriteTextSegments( pszFilename, papszTextMD );
+        bool bOK = NITFWriteCGMSegments( pszFilename, papszCgmMD );
+        bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
+        if( !bOK )
+        {
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
+            return NULL;
+        }
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
         poDstDS = reinterpret_cast<NITFDataset *>( Open( &oOpenInfo ) );
@@ -4641,7 +4659,7 @@ NITFDataset::NITFCreateCopy(
 /*      and the compression ratio achieved.                             */
 /************************************************************************/
 
-static void NITFPatchImageLength( const char *pszFilename,
+static bool NITFPatchImageLength( const char *pszFilename,
                                   GUIntBig nImageOffset,
                                   GIntBig nPixelCount,
                                   const char *pszIC )
@@ -4649,9 +4667,9 @@ static void NITFPatchImageLength( const char *pszFilename,
 {
     VSILFILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
     if( fpVSIL == NULL )
-        return;
+        return false;
 
-    VSIFSeekL( fpVSIL, 0, SEEK_END );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpVSIL, 0, SEEK_END ));
     GUIntBig nFileLen = VSIFTellL( fpVSIL );
 
 /* -------------------------------------------------------------------- */
@@ -4664,10 +4682,15 @@ static void NITFPatchImageLength( const char *pszFilename,
                  nFileLen);
         nFileLen = (GUIntBig)(1e12 - 2);
     }
-    VSIFSeekL( fpVSIL, 342, SEEK_SET );
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
-    VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
-                1, 12, fpVSIL );
+    if( VSIFSeekL( fpVSIL, 342, SEEK_SET ) != 0 ||
+        VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
+                12, 1, fpVSIL ) != 1 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Write error");
+        VSIFCloseL(fpVSIL);
+        return false;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Update the image data length.                                   */
@@ -4680,10 +4703,15 @@ static void NITFPatchImageLength( const char *pszFilename,
                  nImageSize);
         nImageSize = (GUIntBig)(1e10 - 2);
     }
-    VSIFSeekL( fpVSIL, 369, SEEK_SET );
     osLen = CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",nImageSize);
-    VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
-                1, 10, fpVSIL );
+    if( VSIFSeekL( fpVSIL, 369, SEEK_SET ) != 0 ||
+        VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
+                10, 1, fpVSIL ) != 1 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Write error");
+        VSIFCloseL(fpVSIL);
+        return false;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Update COMRAT, the compression rate variable.  We have to       */
@@ -4693,47 +4721,47 @@ static void NITFPatchImageLength( const char *pszFilename,
     // get number of graphic and text segment so we can calculate offset for
     // image IC.
     const int nNumIOffset = 360;
-    VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET );
+    bool bOK = VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET ) == 0;
     char achNUM[4]; // buffer for segment size.  3 digits plus null character
     achNUM[3] = '\0';
-    VSIFReadL( achNUM, 1, 3, fpVSIL );
+    bOK &= VSIFReadL( achNUM, 3, 1, fpVSIL ) == 1;
     const int nIM = atoi(achNUM); // number of image segment
 
     const int nNumSOffset = nNumIOffset + 3 + nIM * 16;
-    VSIFSeekL( fpVSIL,  nNumSOffset, SEEK_SET );
-    VSIFReadL( achNUM, 1, 3, fpVSIL );
+    bOK &= VSIFSeekL( fpVSIL,  nNumSOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUM, 3, 1, fpVSIL ) == 1;
     const int nGS = atoi(achNUM); // number of graphic segment
 
     const int nNumTOffset = nNumSOffset + 3 + 10 * nGS + 3;
-    VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET );
-    VSIFReadL( achNUM, 1, 3, fpVSIL );
+    bOK &= VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUM, 3, 1, fpVSIL ) == 1;
     const int nTS = atoi(achNUM); // number of text segment
 
     const int nAdditionalOffset = nGS * 10 + nTS * 9;
 
     /* Read ICORDS */
-    VSIFSeekL( fpVSIL, 775 + nAdditionalOffset , SEEK_SET );
+    bOK &= VSIFSeekL( fpVSIL, 775 + nAdditionalOffset , SEEK_SET ) == 0;
     char chICORDS;
-    VSIFReadL( &chICORDS, 1, 1, fpVSIL );
+    bOK &= VSIFReadL( &chICORDS, 1, 1, fpVSIL ) == 1;
     if (chICORDS != ' ')
-        VSIFSeekL( fpVSIL, 60, SEEK_CUR); /* skip IGEOLO */
+        bOK &= VSIFSeekL( fpVSIL, 60, SEEK_CUR) == 0; /* skip IGEOLO */
 
     /* Read NICOM */
     char achNICOM[2];
-    VSIFReadL( achNICOM, 1, 1, fpVSIL );
+    bOK &= VSIFReadL( achNICOM, 1, 1, fpVSIL ) == 1;
     achNICOM[1] = 0;
     const int nNICOM = atoi(achNICOM);
-    VSIFSeekL( fpVSIL, nNICOM * 80, SEEK_CUR); /* skip comments */
+    bOK &= VSIFSeekL( fpVSIL, nNICOM * 80, SEEK_CUR) == 0; /* skip comments */
 
     /* Read IC */
     char szICBuf[2];
-    VSIFReadL( szICBuf, 2, 1, fpVSIL );
+    bOK &= VSIFReadL( szICBuf, 2, 1, fpVSIL ) == 1;
 
     /* The following line works around a "feature" of *BSD libc (at least PC-BSD 7.1) */
     /* that makes the position of the file offset unreliable when executing a */
     /* "seek, read and write" sequence. After the read(), the file offset seen by */
     /* the write() is approximately the size of a block further... */
-    VSIFSeekL( fpVSIL, VSIFTellL( fpVSIL ), SEEK_SET );
+    bOK &= VSIFSeekL( fpVSIL, VSIFTellL( fpVSIL ), SEEK_SET ) == 0;
 
     if( !EQUALN(szICBuf,pszIC,2) )
     {
@@ -4760,16 +4788,23 @@ static void NITFPatchImageLength( const char *pszFilename,
             strcpy( szCOMRAT, "00.0" );
         }
 
-        VSIFWriteL( szCOMRAT, 4, 1, fpVSIL );
+        bOK &= VSIFWriteL( szCOMRAT, 4, 1, fpVSIL ) == 1;
+    }
+    
+    if( !bOK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
     }
 
     VSIFCloseL( fpVSIL );
+
+    return bOK;
 }
 
 /************************************************************************/
 /*                       NITFWriteCGMSegments()                        */
 /************************************************************************/
-static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
+static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
 {
     char errorMessage[255] = "";
 
@@ -4777,7 +4812,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     const int nCgmHdrEntrySz = 10;
 
     if (papszList == NULL)
-        return TRUE;
+        return true;
 
     int nNUMS = 0;
     const char *pszNUMS = CSLFetchNameValue(papszList, "SEGMENT_COUNT");
@@ -4792,7 +4827,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     VSILFILE *fpVSIL = VSIFOpenL(pszFilename, "r+b");
 
     if (fpVSIL == NULL)
-        return FALSE;
+        return false;
 
     // Calculates the offset for NUMS so we can update header data
     char achNUMI[4]; // 3 digits plus null character
@@ -4800,8 +4835,8 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
 
     // NUMI offset is at a fixed offset 363
     const int nNumIOffset = 360;
-    VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET );
-    VSIFReadL(achNUMI, 1, 3, fpVSIL);
+    bool bOK = VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL(achNUMI, 3, 1, fpVSIL) == 1;
     const int nIM = atoi(achNUMI);
 
     // 6 for size of LISH and 10 for size of LI
@@ -4816,11 +4851,11 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     /* -------------------------------------------------------------------- */
     char achNUMS[4];
 
-    VSIFSeekL( fpVSIL, nNumSOffset, SEEK_SET );
-    VSIFReadL( achNUMS, 1, 3, fpVSIL );
+    bOK &= VSIFSeekL( fpVSIL, nNumSOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMS, 3, 1, fpVSIL ) == 1;
     achNUMS[3] = '\0';
 
-    if( atoi(achNUMS) != nNUMS )
+    if( !bOK || atoi(achNUMS) != nNUMS )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "It appears an attempt was made to add or update graphic\n"
@@ -4828,7 +4863,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
                   "is not currently supported by the GDAL NITF driver." );
 
         VSIFCloseL( fpVSIL );
-        return FALSE;
+        return false;
     }
 
 
@@ -4847,7 +4882,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
 
     #define PLACE(location,name,text)  memcpy(location,text,strlen(text))
 
-    for (int i = 0; i < nNUMS; i++)
+    for (int i = 0; bOK && i < nNUMS; i++)
     {
 
         // Get all the fields for current CGM segment
@@ -4918,8 +4953,8 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         PLACE( achGSH+253, SXSHDL, "00000" );
 
         // Move to the end of the file
-        VSIFSeekL(fpVSIL, 0, SEEK_END );
-        VSIFWriteL(achGSH, 1, sizeof(achGSH), fpVSIL);
+        bOK &= VSIFSeekL(fpVSIL, 0, SEEK_END ) == 0;
+        bOK &= VSIFWriteL(achGSH, sizeof(achGSH), 1, fpVSIL) == 1;
 
         /* ------------------------------------------------------------------ */
         /*      Prepare and write CGM segment data.                           */
@@ -4936,7 +4971,7 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
             nCGMSize = 999998;
         }
 
-        VSIFWriteL(pszCgmToWrite, 1, nCGMSize, fpVSIL);
+        bOK &= static_cast<int>(VSIFWriteL(pszCgmToWrite, 1, nCGMSize, fpVSIL)) == nCGMSize;
 
         /* -------------------------------------------------------------------- */
         /*      Update the subheader and data size info in the file header.     */
@@ -4953,16 +4988,17 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     /*      Write out the graphic segment info.                             */
     /* -------------------------------------------------------------------- */
 
-    VSIFSeekL(fpVSIL, nNumSOffset + 3, SEEK_SET );
-    VSIFWriteL(pachLS, 1, nNUMS * nCgmHdrEntrySz, fpVSIL);
+    bOK &= VSIFSeekL(fpVSIL, nNumSOffset + 3, SEEK_SET ) == 0;
+    bOK &= static_cast<int>(VSIFWriteL(pachLS, 1, nNUMS * nCgmHdrEntrySz, fpVSIL))
+                == nNUMS * nCgmHdrEntrySz;
 
     /* -------------------------------------------------------------------- */
     /*      Update total file length.                                       */
     /* -------------------------------------------------------------------- */
-    VSIFSeekL(fpVSIL, 0, SEEK_END );
+    bOK &= VSIFSeekL(fpVSIL, 0, SEEK_END ) == 0;
     GUIntBig nFileLen = VSIFTellL(fpVSIL);
     // Offset to file length entry
-    VSIFSeekL(fpVSIL, 342, SEEK_SET );
+    bOK &= VSIFSeekL(fpVSIL, 342, SEEK_SET ) == 0;
     if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12 - 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -4972,26 +5008,32 @@ static int NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     }
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",
                     nFileLen);
-    VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ), 1, 12, fpVSIL);
+    bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ), 12, 1, fpVSIL) == 1;
 
     VSIFCloseL(fpVSIL);
 
     CPLFree(pachLS);
 
+    if( !bOK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return false;
+    }
+
     if (strlen(errorMessage) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", errorMessage);
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                       NITFWriteTextSegments()                        */
 /************************************************************************/
 
-static void NITFWriteTextSegments( const char *pszFilename,
+static bool NITFWriteTextSegments( const char *pszFilename,
                                    char **papszList )
 
 {
@@ -5008,7 +5050,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
     }
 
     if( nNUMT == 0 )
-        return;
+        return true;
 
 /* -------------------------------------------------------------------- */
 /*      Open the target file.                                           */
@@ -5016,7 +5058,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
     VSILFILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
 
     if( fpVSIL == NULL )
-        return;
+        return false;
 
     // Get number of text field.  Since there there could be multiple images
     // or graphic segment, the  offset need to be calculated dynamically.
@@ -5025,8 +5067,8 @@ static void NITFWriteTextSegments( const char *pszFilename,
     achNUMI[3] = '\0';
     // NUMI offset is at a fixed offset 363
     int nNumIOffset = 360;
-    VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET );
-    VSIFReadL( achNUMI, 1, 3, fpVSIL );
+    bool bOK = VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMI, 3, 1, fpVSIL ) == 1;
     int nIM = atoi(achNUMI);
 
     char achNUMG[4]; // 3 digits plus null character
@@ -5034,8 +5076,8 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
     // 3 for size of NUMI.  6 and 10 are the field size for LISH and LI
     const int nNumGOffset = nNumIOffset + 3 + nIM * (6 + 10);
-    VSIFSeekL( fpVSIL, nNumGOffset, SEEK_SET );
-    VSIFReadL( achNUMG, 1, 3, fpVSIL );
+    bOK &= VSIFSeekL( fpVSIL, nNumGOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMG, 3, 1, fpVSIL ) == 1;
     const int nGS = atoi(achNUMG);
 
     // NUMT offset
@@ -5051,13 +5093,13 @@ static void NITFWriteTextSegments( const char *pszFilename,
     char achNUMT[4];
     char *pachLT = reinterpret_cast<char *>( CPLCalloc(nNUMT * 9 + 1, 1) );
 
-    VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET );
-    VSIFReadL( achNUMT, 1, 3, fpVSIL );
+    bOK &= VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMT, 3, 1, fpVSIL ) == 1;
     achNUMT[3] = '\0';
 
-    VSIFReadL( pachLT, 1, nNUMT * 9, fpVSIL );
+    bOK &= VSIFReadL( pachLT, nNUMT * 9, 1, fpVSIL ) == 1;
 
-    if( atoi(achNUMT) != nNUMT )
+    if( !bOK || atoi(achNUMT) != nNUMT )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "It appears an attempt was made to add or update text\n"
@@ -5066,7 +5108,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
         VSIFCloseL( fpVSIL );
         CPLFree( pachLT );
-        return;
+        return false;
     }
 
     if( !STARTS_WITH_CI(pachLT, "         ") )
@@ -5074,7 +5116,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
         CPLFree( pachLT );
         // presumably the text segments are already written, do nothing.
         VSIFCloseL( fpVSIL );
-        return;
+        return true;
     }
 
 /* -------------------------------------------------------------------- */
@@ -5088,7 +5130,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 #define PLACE(location,name,text)  memcpy(location,text,strlen(text))
     int iTextSeg = 0;
 
-    for( int iOpt = 0; papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
+    for( int iOpt = 0; bOK && papszList != NULL && papszList[iOpt] != NULL; iOpt++ )
     {
         if( !STARTS_WITH_CI(papszList[iOpt], "DATA_") )
             continue;
@@ -5137,7 +5179,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
         char achTSH[282];
         memset( achTSH, ' ', sizeof(achTSH) );
-        VSIFSeekL( fpVSIL, 0, SEEK_END );
+        bOK &= VSIFSeekL( fpVSIL, 0, SEEK_END ) == 0;
 
         if (pszHeaderBuffer!= NULL) {
             memcpy( achTSH, pszHeaderBuffer, MIN(strlen(pszHeaderBuffer), sizeof(achTSH)) );
@@ -5199,7 +5241,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
         }
 
 
-        VSIFWriteL( achTSH, 1, sizeof(achTSH), fpVSIL );
+        bOK &= VSIFWriteL( achTSH, sizeof(achTSH), 1, fpVSIL ) == 1;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare and write text segment data.                            */
@@ -5214,7 +5256,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
             nTextLength = 99998;
         }
 
-        VSIFWriteL( pszTextToWrite, 1, nTextLength, fpVSIL );
+        bOK &= static_cast<int>(VSIFWriteL( pszTextToWrite, 1, nTextLength, fpVSIL )) == nTextLength;
 
 /* -------------------------------------------------------------------- */
 /*      Update the subheader and data size info in the file header.     */
@@ -5229,16 +5271,16 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /*      Write out the text segment info.                                */
 /* -------------------------------------------------------------------- */
 
-    VSIFSeekL( fpVSIL, nNumTOffset + 3, SEEK_SET );
-    VSIFWriteL( pachLT, 1, nNUMT * 9, fpVSIL );
+    bOK &= VSIFSeekL( fpVSIL, nNumTOffset + 3, SEEK_SET ) == 0;
+    bOK &= static_cast<int>(VSIFWriteL( pachLT, 1, nNUMT * 9, fpVSIL )) == nNUMT * 9;
 
 /* -------------------------------------------------------------------- */
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( fpVSIL, 0, SEEK_END );
+    bOK &= VSIFSeekL( fpVSIL, 0, SEEK_END ) == 0;
     GUIntBig nFileLen = VSIFTellL( fpVSIL );
 
-    VSIFSeekL( fpVSIL, 342, SEEK_SET );
+    bOK &= VSIFSeekL( fpVSIL, 342, SEEK_SET ) == 0;
     if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12 - 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5247,11 +5289,19 @@ static void NITFWriteTextSegments( const char *pszFilename,
         nFileLen = (GUIntBig)(1e12 - 2);
     }
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
-    VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
-                1, 12, fpVSIL );
+    bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
+                12, 1, fpVSIL ) == 1;
 
     VSIFCloseL( fpVSIL );
     CPLFree( pachLT );
+
+    if( !bOK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "I/O error");
+    }
+
+    return bOK;
 }
 
 /************************************************************************/
@@ -5268,13 +5318,13 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
                     const GByte* pabyAPP6, int nRestartInterval,
                     GDALProgressFunc pfnProgress, void * pProgressData );
 
-static int 
+static bool 
 NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffset,
                     char **papszOptions,
                     GDALProgressFunc pfnProgress, void * pProgressData )
 {
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -5286,7 +5336,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                   "JPEG driver doesn't support %d bands.  Must be 1 (grey) "
                   "or 3 (RGB) bands.\n", nBands );
 
-        return FALSE;
+        return false;
     }
 
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -5300,7 +5350,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                   GDALGetDataTypeName( 
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
-        return FALSE;
+        return false;
     }
 
     if( eDT == GDT_UInt16 || eDT == GDT_Int16 )
@@ -5317,7 +5367,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                   GDALGetDataTypeName( 
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
-        return FALSE;
+        return false;
     }
 
     eDT = GDT_Byte; // force to 8bit. 
@@ -5335,7 +5385,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "QUALITY=%s is not a legal value in the range 10-100.",
                       CSLFetchNameValue(papszOptions,"QUALITY") );
-            return FALSE;
+            return false;
         }
     }
 
@@ -5459,7 +5509,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
 /*      Prepare block map if necessary                                  */
 /* -------------------------------------------------------------------- */
 
-    VSIFSeekL( fp, nStartOffset, SEEK_SET );
+    bool bOK = VSIFSeekL( fp, nStartOffset, SEEK_SET ) == 0;
 
     const char* pszIC = CSLFetchNameValue( papszOptions, "IC" );
     GUInt32 nIMDATOFF = 0;
@@ -5478,21 +5528,21 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
         CPL_MSBPTR16( &nTMRLNTH );
         CPL_MSBPTR16( &nTPXCDLNTH );
 
-        VSIFWriteL( &nIMDATOFF_MSB, 1, 4, fp );
-        VSIFWriteL( &nBMRLNTH, 1, 2, fp );
-        VSIFWriteL( &nTMRLNTH, 1, 2, fp );
-        VSIFWriteL( &nTPXCDLNTH, 1, 2, fp );
+        bOK &= VSIFWriteL( &nIMDATOFF_MSB, 4, 1, fp ) == 1;
+        bOK &= VSIFWriteL( &nBMRLNTH, 2, 1, fp ) == 1;
+        bOK &= VSIFWriteL( &nTMRLNTH, 2, 1, fp ) == 1;
+        bOK &= VSIFWriteL( &nTPXCDLNTH, 2, 1, fp ) == 1;
 
         /* Reserve space for the table itself */
-        VSIFSeekL( fp, nNBPC * nNBPR * 4, SEEK_CUR );
+        bOK &= VSIFSeekL( fp, nNBPC * nNBPR * 4, SEEK_CUR ) == 0;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Copy each block                                                 */
 /* -------------------------------------------------------------------- */
-    for( int nBlockYOff=0;nBlockYOff<nNBPC;nBlockYOff++ )
+    for( int nBlockYOff=0; bOK && nBlockYOff<nNBPC;nBlockYOff++ )
     {
-        for( int nBlockXOff=0;nBlockXOff<nNBPR;nBlockXOff++ )
+        for( int nBlockXOff=0; bOK && nBlockXOff<nNBPR;nBlockXOff++ )
         {
 #ifdef DEBUG_VERBOSE
             CPLDebug("NITF", "nBlockXOff=%d/%d, nBlockYOff=%d/%d",
@@ -5503,13 +5553,13 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                 /* Write block offset for current block */
 
                 const GUIntBig nCurPos = VSIFTellL(fp);
-                VSIFSeekL( fp, nStartOffset + BLOCKMAP_HEADER_SIZE + 4 * (nBlockYOff * nNBPR + nBlockXOff), SEEK_SET );
+                bOK &= VSIFSeekL( fp, nStartOffset + BLOCKMAP_HEADER_SIZE + 4 * (nBlockYOff * nNBPR + nBlockXOff), SEEK_SET ) == 0;
                 const GUIntBig nBlockOffset = nCurPos - nStartOffset - nIMDATOFF;
                 GUInt32 nBlockOffset32 = (GUInt32)nBlockOffset;
                 if (nBlockOffset == (GUIntBig)nBlockOffset32)
                 {
                     CPL_MSBPTR32( &nBlockOffset32 );
-                    VSIFWriteL( &nBlockOffset32, 1, 4, fp );
+                    bOK &= VSIFWriteL( &nBlockOffset32, 4, 1, fp ) == 1;
                 }
                 else
                 {
@@ -5519,17 +5569,22 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
 
                     nBlockOffset32 = 0xffffffff;
                     for( int i = nBlockYOff * nNBPR + nBlockXOff;
-                         i < nNBPC * nNBPR;
+                         bOK && i < nNBPC * nNBPR;
                          i++ )
                     {
-                        VSIFWriteL( &nBlockOffset32, 1, 4, fp );
+                        bOK &= VSIFWriteL( &nBlockOffset32, 4, 1, fp );
                     }
-                    return FALSE;
+                    if( !bOK )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                 "I/O error");
+                    }
+                    return bOK;
                 }
-                VSIFSeekL( fp, nCurPos, SEEK_SET );
+                bOK &= VSIFSeekL( fp, nCurPos, SEEK_SET ) == 0;
             }
 
-            if (!NITFWriteJPEGBlock(poSrcDS, fp,
+            if (bOK && !NITFWriteJPEGBlock(poSrcDS, fp,
                                     nBlockXOff, nBlockYOff,
                                     nNPPBH, nNPPBV,
                                     bProgressive, nQuality,
@@ -5537,11 +5592,16 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                                     nRestartInterval,
                                     pfnProgress, pProgressData))
             {
-                return FALSE;
+                return false;
             }
         }
     }
-    return TRUE;
+    if( !bOK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                    "I/O error");
+    }
+    return true;
 }
 
 #endif /* def JPEG_SUPPORTED */
