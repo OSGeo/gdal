@@ -798,7 +798,12 @@ FITDataset::~FITDataset()
     if (info)
         delete(info);
     if(fp)
-        VSIFCloseL(fp);
+    {
+        if( VSIFCloseL(fp) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 }
 
 // simple guard object to delete memory 
@@ -1147,13 +1152,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     GDALRasterBand *firstBand = poSrcDS->GetRasterBand(1);
     if (! firstBand) {
-        VSIFCloseL(fpImage);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
         return NULL;
     }
 
     head->dtype = fitGetDataType(firstBand->GetRasterDataType());
     if (! head->dtype) {
-        VSIFCloseL(fpImage);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
         return NULL;
     }
     gst_swapb(head->dtype);
@@ -1312,7 +1317,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 //free(output);
-                VSIFCloseL( fpImage );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
                 VSIUnlink( pszFilename );
                 return NULL;
             }
@@ -1320,7 +1325,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     //free(output);
 
-    VSIFCloseL( fpImage );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
     pfnProgress( 1.0, NULL, pProgressData );
 

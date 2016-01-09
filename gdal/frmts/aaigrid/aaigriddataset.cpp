@@ -348,7 +348,12 @@ AAIGDataset::~AAIGDataset()
     FlushCache();
 
     if( fp != NULL )
-        VSIFCloseL( fp );
+    {
+        if( VSIFCloseL( fp ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 
     CPLFree( pszProjection );
     CSLDestroy( papszPrj );
@@ -1099,7 +1104,7 @@ GDALDataset * AAIGDataset::CreateCopy(
 
     if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1)
     {
-        VSIFCloseL(fpImage);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
         return NULL;
     }
 
@@ -1193,7 +1198,8 @@ GDALDataset * AAIGDataset::CreateCopy(
 
     CPLFree( panScanline );
     CPLFree( padfScanline );
-    VSIFCloseL( fpImage );
+    if( VSIFCloseL( fpImage ) != 0 )
+        eErr = CE_Failure;
 
     if( eErr != CE_None )
         return NULL;
@@ -1224,7 +1230,7 @@ GDALDataset * AAIGDataset::CreateCopy(
             oSRS.exportToWkt( &pszESRIProjection );
             CPL_IGNORE_RET_VAL(VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp ));
 
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             CPLFree( pszESRIProjection );
         }
         else

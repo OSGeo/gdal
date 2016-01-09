@@ -352,7 +352,12 @@ BTDataset::~BTDataset()
 {
     FlushCache();
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     CPLFree( pszProjection );
 }
 
@@ -517,7 +522,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
     if( fp != NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s\n", pszProjection ));
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         abyHeader[60] = 1;
     }
     else
@@ -631,7 +636,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 
             pszBuffer = (char *) CPLMalloc(nBufMax);
             nBytes = static_cast<int>(VSIFReadL( pszBuffer, 1, nBufMax-1, fp ));
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
             pszBuffer[nBytes] = '\0';
 
@@ -910,12 +915,19 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
                   "Failed to extent file to its full size, out of disk space?"
                   );
 
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         VSIUnlink( pszFilename );
         return NULL;
     }
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to extent file to its full size, out of disk space?"
+                  );
+        VSIUnlink( pszFilename );
+        return NULL;
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }

@@ -93,8 +93,8 @@ NDFDataset::~NDFDataset()
 
     for( int i = 0; i < GetRasterCount(); i++ )
     {
-       VSIFCloseL( reinterpret_cast<RawRasterBand *>(
-           GetRasterBand(i+1) )->GetFPL() );
+       CPL_IGNORE_RET_VAL(VSIFCloseL( reinterpret_cast<RawRasterBand *>(
+           GetRasterBand(i+1) )->GetFPL() ));
     }
 }
 
@@ -201,7 +201,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         papszHeader[nHeaderLines++] = pszFixed;
         papszHeader[nHeaderLines] = NULL;
     }
-    VSIFCloseL(fp);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     fp = NULL;
 
     if( CSLFetchNameValue( papszHeader, "PIXELS_PER_LINE" ) == NULL 

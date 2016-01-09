@@ -209,9 +209,9 @@ FASTDataset::~FASTDataset()
 	CPLFree( pszProjection );
     for ( int i = 0; i < nBands; i++ )
 	if ( fpChannels[i] )
-	    VSIFCloseL( fpChannels[i] );
+	    CPL_IGNORE_RET_VAL(VSIFCloseL( fpChannels[i] ));
     if( fpHeader != NULL )
-        VSIFCloseL( fpHeader );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpHeader ));
 }
 
 /************************************************************************/

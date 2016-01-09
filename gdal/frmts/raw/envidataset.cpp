@@ -340,9 +340,19 @@ ENVIDataset::~ENVIDataset()
 {
     FlushCache();
     if( fpImage )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     if( fp )
-        VSIFCloseL( fp );
+    {
+        if( VSIFCloseL( fp ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     CPLFree( pszProjection );
     CSLDestroy( papszHeader );
     CPLFree(pszHDRFilename);
@@ -1732,7 +1742,7 @@ void ENVIDataset::ProcessStatsFile()
     int lTestHeader[10];
     if( VSIFReadL( lTestHeader, sizeof(int), 10, fpStaFile ) != 10 )
     {
-        VSIFCloseL( fpStaFile );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpStaFile ));
         osStaFilename = "";
         return;
     }
@@ -1790,7 +1800,7 @@ void ENVIDataset::ProcessStatsFile()
             CPLFree(dStats);
         }
     }
-    VSIFCloseL( fpStaFile );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpStaFile ));
 }
 
 int ENVIDataset::byteSwapInt(int swapMe)
@@ -1981,12 +1991,12 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( VSIFReadL( szTestHdr, 4, 1, fpHeader ) != 1 )
     {
-        VSIFCloseL( fpHeader );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpHeader ));
         return NULL;
     }
     if( !STARTS_WITH(szTestHdr, "ENVI") )
     {
-        VSIFCloseL( fpHeader );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpHeader ));
         return NULL;
     }
 
@@ -2598,7 +2608,8 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     bool bRet = VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
                 2, 1, fp ) == 1;
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bRet = false;
     if( !bRet )
         return NULL;
 
@@ -2655,7 +2666,8 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     bRet &= VSIFPrintfL( fp, "interleave = %s\n", pszInterleaving) > 0;
     bRet &= VSIFPrintfL( fp, "byte order = %d\n", iBigEndian ) > 0;
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bRet = false;
 
     if( !bRet )
         return FALSE;

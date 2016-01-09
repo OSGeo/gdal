@@ -32,6 +32,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                              AIGOpen()                               */
 /************************************************************************/
@@ -443,7 +445,7 @@ void AIGClose( AIGInfo_t * psInfo )
         {
             if( psInfo->pasTileInfo[iTile].fpGrid )
             {
-                VSIFCloseL( psInfo->pasTileInfo[iTile].fpGrid );
+                CPL_IGNORE_RET_VAL_INT(VSIFCloseL( psInfo->pasTileInfo[iTile].fpGrid ));
 
                 CPLFree( psInfo->pasTileInfo[iTile].panBlockOffset );
                 CPLFree( psInfo->pasTileInfo[iTile].panBlockSize );

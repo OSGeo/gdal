@@ -214,7 +214,8 @@ VRTCreateCopy( const char * pszFilename,
             }
 
             bool bRet = VSIFWriteL( pszXML, strlen(pszXML), 1, fpVRT ) > 0;
-            VSIFCloseL( fpVRT );
+            if( VSIFCloseL( fpVRT ) != 0 )
+                bRet = false;
 
             if( bRet )
                 pCopyDS = reinterpret_cast<GDALDataset *>(

@@ -2260,7 +2260,13 @@ void CPLCloseShared( FILE * fp )
 /*      Close the file, and remove the information.                     */
 /* -------------------------------------------------------------------- */
     if( pasSharedFileList[i].bLarge )
-        VSIFCloseL( reinterpret_cast<VSILFILE *>( pasSharedFileList[i].fp ) );
+    {
+        if( VSIFCloseL( reinterpret_cast<VSILFILE *>( pasSharedFileList[i].fp ) ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Error while closing %s",
+                     pasSharedFileList[i].pszFilename );
+        }
+    }
     else
         VSIFClose( pasSharedFileList[i].fp );
 
@@ -2467,7 +2473,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
     VSILFILE *fpNew = VSIFOpenL( pszNewPath, "wb" );
     if( fpNew == NULL )
     {
-        VSIFCloseL( fpOld );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpOld ));
         return -1;
     }
 
@@ -2479,8 +2485,8 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
         = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nBufferSize) );
     if( pabyBuffer == NULL )
     {
-        VSIFCloseL( fpNew );
-        VSIFCloseL( fpOld );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpNew ));
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpOld ));
         return -1;
     }
 
@@ -2502,8 +2508,9 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( fpNew );
-    VSIFCloseL( fpOld );
+    if( VSIFCloseL( fpNew ) != 0 )
+        nRet = -1;
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpOld ));
 
     CPLFree( pabyBuffer );
 

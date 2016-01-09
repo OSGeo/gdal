@@ -864,35 +864,35 @@ char* CPLLoadContentFromFile(const char* pszFilename)
     vsi_l_offset nSize;
     if( VSIFSeekL(fp, 0, SEEK_END) != 0 )
     {
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
     nSize = VSIFTellL(fp);
     if( VSIFSeekL(fp, 0, SEEK_SET) != 0 )
     {
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
     if ((vsi_l_offset)(int)nSize != nSize ||
         nSize > INT_MAX - 1 )
     {
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
     char* pszBuffer = (char*)VSIMalloc((size_t)nSize + 1);
     if (pszBuffer == NULL)
     {
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
     if( (size_t)VSIFReadL(pszBuffer, 1, (size_t)nSize, fp) != (size_t)nSize )
     {
         VSIFree(pszBuffer);
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
     pszBuffer[nSize] = '\0';
-    VSIFCloseL(fp);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     return pszBuffer;
 }
 
@@ -1000,7 +1000,7 @@ int CPLValidateXML(const char* pszXMLFilename,
         }
         int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXML);
         szHeader[nRead] = '\0';
-        VSIFCloseL(fpXML);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpXML));
     }
 
     /* Workaround following bug : "element FeatureCollection: Schemas validity error : Element '{http://www.opengis.net/wfs}FeatureCollection': No matching global declaration available for the validation root" */
@@ -1035,7 +1035,7 @@ int CPLValidateXML(const char* pszXMLFilename,
         }
         int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXSD);
         szHeader[nRead] = '\0';
-        VSIFCloseL(fpXSD);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpXSD));
 
         if (strstr(szHeader, "gml/3.1.1") != NULL &&
             strstr(szHeader, "gml/3.1.1/base/gml.xsd") == NULL)
@@ -1054,7 +1054,7 @@ int CPLValidateXML(const char* pszXMLFilename,
             if (pszGMLSchemaLocation)
                 CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "   <xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"%s\"/>\n", pszGMLSchemaLocation));
             CPL_IGNORE_RET_VAL(VSIFPrintfL(fpMEM, "</xs:schema>\n"));
-            VSIFCloseL(fpMEM);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpMEM));
             CPLFree(pszEscapedXSDFilename);
         }
     }

@@ -98,10 +98,10 @@ public:
 int VSISubFileHandle::Close()
 
 {
-    VSIFCloseL( fp );
+    int nRet = VSIFCloseL( fp );
     fp = NULL;
 
-    return 0;
+    return nRet;
 }
 
 /************************************************************************/

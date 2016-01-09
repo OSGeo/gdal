@@ -151,7 +151,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to read 16 byte header failed for\n%s.",
                   pszFilename );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -160,7 +160,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s is not an Imagine HFA file ... header wrong.",
                   pszFilename );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -209,7 +209,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     bRet &= VSIFSeekL( fp, 0, SEEK_END ) >= 0;
     if( !bRet )
     {
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         CPLFree(psInfo);
         return NULL;
     }
@@ -221,7 +221,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     psInfo->poRoot = HFAEntry::New( psInfo, psInfo->nRootPos, NULL, NULL );
     if( psInfo->poRoot == NULL )
     {
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         CPLFree(psInfo);
         return NULL;
     }
@@ -266,7 +266,7 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
     VSILFILE *fp = VSIFOpenL( oRRDFilename, "rb" );
     if( fp != NULL )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         psBase->psDependent = HFAOpen( oRRDFilename, "rb" );
         // FIXME? this is not going to be reused but recreated...
     }
@@ -332,7 +332,7 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
     fp = VSIFOpenL( pszDependent, pszMode );
     if( fp != NULL )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         psBase->psDependent = HFAOpen( pszDependent, pszMode );
     }
 
@@ -398,9 +398,10 @@ CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
 /*                              HFAClose()                              */
 /************************************************************************/
 
-void HFAClose( HFAHandle hHFA )
+int HFAClose( HFAHandle hHFA )
 
 {
+    int nRet = 0;
     int		i;
 
     if( hHFA->eAccess == HFA_Update && (hHFA->bTreeDirty ||
@@ -408,11 +409,15 @@ void HFAClose( HFAHandle hHFA )
         HFAFlush( hHFA );
 
     if( hHFA->psDependent != NULL )
-        HFAClose( hHFA->psDependent );
+    {
+        if( HFAClose( hHFA->psDependent ) != 0 )
+            nRet = -1;
+    }
 
     delete hHFA->poRoot;
 
-    VSIFCloseL( hHFA->fp );
+    if( VSIFCloseL( hHFA->fp ) != 0 )
+        nRet = -1;
 
     if( hHFA->poDictionary != NULL )
         delete hHFA->poDictionary;
@@ -456,6 +461,7 @@ void HFAClose( HFAHandle hHFA )
     }
 
     CPLFree( hHFA );
+    return nRet;
 }
 
 /************************************************************************/
@@ -525,7 +531,7 @@ CPLErr HFADelete( const char *pszFilename )
                                             pszRawFilename, NULL ) );
         }
 
-        HFAClose( psInfo );
+        CPL_IGNORE_RET_VAL(HFAClose( psInfo ));
     }
     return HFARemove( pszFilename );
 }
@@ -1933,7 +1939,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
                 strlen(psInfo->pszDictionary)+1, 1, fp ) > 0;
     if( !bRet )
     {
-        HFAClose( psInfo );
+        CPL_IGNORE_RET_VAL(HFAClose( psInfo ));
         return NULL;
     }
 
@@ -2473,7 +2479,7 @@ HFAHandle HFACreate( const char * pszFilename,
                              nValidFlagsOffset, nDataOffset,
                              nBands, iBand ) )
         {
-            HFAClose( psInfo );
+            CPL_IGNORE_RET_VAL(HFAClose( psInfo ));
             return NULL;
         }
     }
@@ -3177,7 +3183,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     pabyBlockMap = (unsigned char *) VSI_MALLOC_VERBOSE( nBlockMapSize );
     if (pabyBlockMap == NULL)
     {
-        VSIFCloseL( fpVSIL );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         return FALSE;
     }
 
@@ -3235,11 +3241,12 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
                   (double) nTileDataSize - 1 + *pnDataOffset,
                   VSIStrerror( errno ) );
 
-        VSIFCloseL( fpVSIL );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         return FALSE;
     }
 
-    VSIFCloseL( fpVSIL );
+    if( VSIFCloseL( fpVSIL ) != 0 )
+        return FALSE;
 
     return TRUE;
 }

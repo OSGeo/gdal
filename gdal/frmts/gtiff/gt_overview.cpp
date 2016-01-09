@@ -580,7 +580,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                           "failed in VSI_TIFFOpen().\n",
                           pszFilename );
             if( fpL != NULL )
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
             return CE_Failure;
         }
     }
@@ -602,7 +602,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                           "failed in VSI_TIFFOpen().\n",
                           pszFilename );
             if( fpL != NULL )
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
             return CE_Failure;
         }
     }
@@ -683,7 +683,8 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
 
     XTIFFClose( hOTIFF );
-    VSIFCloseL(fpL);
+    if (VSIFCloseL(fpL) != 0 )
+        return CE_Failure;
     fpL = NULL;
 
 /* -------------------------------------------------------------------- */

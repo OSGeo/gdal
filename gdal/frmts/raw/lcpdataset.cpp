@@ -101,7 +101,12 @@ LCPDataset::~LCPDataset()
 {
     FlushCache();
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     CPLFree(pszProjection);
 }
 
@@ -1571,7 +1576,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         VSIFree( reinterpret_cast<void *>( panScanline ) );
         return NULL;
     }
@@ -1602,12 +1607,12 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         if( !pfnProgress( iLine / (double)nYSize, NULL, pProgressData ) )
         {
             VSIFree( reinterpret_cast<void *>( panScanline ) );
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return NULL;
         }
     }
     VSIFree( panScanline );
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
         return NULL;
@@ -1637,7 +1642,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             oSRS.exportToWkt( &pszESRIProjection );
             CPL_IGNORE_RET_VAL(VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp ));
 
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             CPLFree( pszESRIProjection );
         }
         else

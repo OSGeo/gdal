@@ -161,7 +161,7 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
                           "Unable to read header, %s is not DTED.",
                           pszFilename );
             }
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
             return NULL;
         }
 
@@ -179,7 +179,7 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
                       "No UHL record.  %s is not a DTED file.",
                       pszFilename );
         }
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return NULL;
     }
     
@@ -1067,7 +1067,7 @@ void DTEDClose( DTEDInfo * psDInfo )
         CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp ));
     }
 
-    VSIFCloseL( psDInfo->fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( psDInfo->fp ));
 
     CPLFree( psDInfo->pachUHLRecord );
     CPLFree( psDInfo->pachDSIRecord );

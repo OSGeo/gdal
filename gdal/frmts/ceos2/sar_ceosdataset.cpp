@@ -681,7 +681,7 @@ SAR_CEOSDataset::~SAR_CEOSDataset()
     CSLDestroy( papszTempMD );
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
     if( nGCPCount > 0 )
     {
@@ -1705,7 +1705,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( ProcessData( fp, CEOS_IMAGRY_OPT_FILE, psVolume, 4, VSI_L_OFFSET_MAX) != CE_None )
     {
         delete poDS;
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -1813,12 +1813,12 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                         break;
                     }
 
-                    VSIFCloseL( process_fp );
+                    CPL_IGNORE_RET_VAL(VSIFCloseL( process_fp ));
                     CPLFree( pszFilename );
                     break; /* Exit the while loop, we have this data type*/
                 }
 
-                VSIFCloseL( process_fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( process_fp ));
             }
 
             CPLFree( pszFilename );
@@ -1845,7 +1845,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                   "from %s.", 
                   poOpenInfo->pszFilename );
 
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
         return NULL;
     }

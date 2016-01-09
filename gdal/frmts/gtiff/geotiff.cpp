@@ -580,7 +580,7 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS(GTiffDataset* poParentDSIn, int nOvervi
         memcpy(pabyJPEGTable + nJPEGTableSize, abyAdobeAPP14RGB, sizeof(abyAdobeAPP14RGB));
         nJPEGTableSize += sizeof(abyAdobeAPP14RGB);
     }
-    VSIFCloseL(VSIFileFromMemBuffer( osTmpFilenameJPEGTable, pabyJPEGTable, nJPEGTableSize, TRUE ));
+    CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer( osTmpFilenameJPEGTable, pabyJPEGTable, nJPEGTableSize, TRUE )));
 
     int nScaleFactor = 1 << nOverviewLevel;
     nRasterXSize = (poParentDS->nRasterXSize + nScaleFactor - 1) / nScaleFactor; 
@@ -772,7 +772,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
                 bError = true;
             if( bError )
             {
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 return CE_Failure;
             }
         }
@@ -808,11 +808,11 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
                         nOffset,
                         nByteCount) < 0 )
             {
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 return CE_Failure;
             }
         }
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
         if( poGDS->poJPEGDS == NULL )
         {
@@ -6285,14 +6285,20 @@ int GTiffDataset::Finalize()
         hTIFF = NULL;
         if( fpL != NULL )
         {
-            VSIFCloseL( fpL );
+            if( VSIFCloseL( fpL ) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            }
             fpL = NULL;
         }
     }
 
     if( fpToWrite != NULL )
     {
-        VSIFCloseL( fpToWrite );
+        if( VSIFCloseL( fpToWrite ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
         fpToWrite = NULL;
     }
 
@@ -6829,7 +6835,7 @@ void GTiffDataset::ThreadCompressionFunc(void* pData)
     TIFFSetField(hTIFFTmp, TIFFTAG_ROWSPERSTRIP, poDS->nBlockYSize);
     TIFFSetField(hTIFFTmp, TIFFTAG_PLANARCONFIG, poDS->nPlanarConfig);
 
-    const bool bOK
+    bool bOK
         = (TIFFWriteEncodedStrip(hTIFFTmp, 0, psJob->pabyBuffer,
                                  psJob->nBufferSize) == psJob->nBufferSize);
 
@@ -6851,7 +6857,15 @@ void GTiffDataset::ThreadCompressionFunc(void* pData)
     }
 
     XTIFFClose(hTIFFTmp);
-    VSIFCloseL(fpTmp);
+    if( VSIFCloseL(fpTmp) != 0 )
+    {
+        if( bOK )
+        {
+            bOK = false;
+            CPLError(CE_Failure, CPLE_AppDefined, "Error when compressing strip/tile %d",
+                    psJob->nStripOrTile);
+        }
+    }
 
     if( bOK )
     {
@@ -9651,13 +9665,13 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
     /* The seek is needed for /vsistdin/ that has some rewind capabilities */
     if( VSIFSeekL(poOpenInfo->fpL, poOpenInfo->nHeaderBytes, SEEK_SET) != 0 )
     {
-        VSIFCloseL(fpTemp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
         return FALSE;
     }
     CPLAssert( (int)VSIFTellL(poOpenInfo->fpL) == poOpenInfo->nHeaderBytes );
     if( VSIFWriteL(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes, 1, fpTemp) != 1 )
     {
-        VSIFCloseL(fpTemp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
         return FALSE;
     }
     vsi_l_offset nDataLength;
@@ -9675,7 +9689,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "IFD start should be at offset 16 for a streamed BigTIFF");
-            VSIFCloseL(fpTemp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
             VSIUnlink(osTmpFilename);
             return FALSE;
         }
@@ -9685,7 +9699,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too many tags : " CPL_FRMT_GIB, nTmp);
-            VSIFCloseL(fpTemp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
             VSIUnlink(osTmpFilename);
             return FALSE;
         }
@@ -9695,7 +9709,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                                     24 + nSpaceForTags,
                                     pabyBuffer, nDataLength) )
         {
-            VSIFCloseL(fpTemp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
             VSIUnlink(osTmpFilename);
             return FALSE;
         }
@@ -9715,7 +9729,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Too many elements for tag %d : " CPL_FRMT_GUIB, nTag, nTmp);
-                VSIFCloseL(fpTemp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
                 VSIUnlink(osTmpFilename);
                 return FALSE;
             }
@@ -9729,7 +9743,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Overflow with tag %d", nTag);
-                    VSIFCloseL(fpTemp);
+                    CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
                     VSIUnlink(osTmpFilename);
                     return FALSE;
                 }
@@ -9747,7 +9761,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "IFD start should be at offset 8 for a streamed TIFF");
-            VSIFCloseL(fpTemp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
             VSIUnlink(osTmpFilename);
             return FALSE;
         }
@@ -9758,7 +9772,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too many tags : %d", nTmp16);
-            VSIFCloseL(fpTemp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
             VSIUnlink(osTmpFilename);
             return FALSE;
         }
@@ -9768,7 +9782,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                                     10 + nSpaceForTags,
                                     pabyBuffer, nDataLength) )
         {
-            VSIFCloseL(fpTemp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
             VSIUnlink(osTmpFilename);
             return FALSE;
         }
@@ -9787,7 +9801,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Too many elements for tag %d : %u", nTag, nTmp);
-                VSIFCloseL(fpTemp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
                 VSIUnlink(osTmpFilename);
                 return FALSE;
             }
@@ -9801,7 +9815,7 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Overflow with tag %d", nTag);
-                    VSIFCloseL(fpTemp);
+                    CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
                     VSIUnlink(osTmpFilename);
                     return FALSE;
                 }
@@ -9812,21 +9826,22 @@ static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
     }
     if( nMaxOffset > 10 * 1024 * 1024 )
     {
-        VSIFCloseL(fpTemp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
         VSIUnlink(osTmpFilename);
         return FALSE;
     }
     if( !GTIFFExtendMemoryFile(osTmpFilename, fpTemp, poOpenInfo->fpL,
                                static_cast<int>(nMaxOffset), pabyBuffer, nDataLength) )
     {
-        VSIFCloseL(fpTemp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
         VSIUnlink(osTmpFilename);
         return FALSE;
     }
     CPLAssert(nDataLength == VSIFTellL(poOpenInfo->fpL));
     poOpenInfo->fpL = (VSILFILE*)VSICreateBufferedReaderHandle(
         (VSIVirtualHandle*)poOpenInfo->fpL, pabyBuffer, ((vsi_l_offset)INT_MAX) << 32 );
-    VSIFCloseL(fpTemp);
+    if( VSIFCloseL(fpTemp) != 0 )
+        return FALSE;
     VSIUnlink(osTmpFilename);
 
     return TRUE;
@@ -10470,7 +10485,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     hTIFF = VSI_TIFFOpen( pszFilename, "r", fpL );
     if( hTIFF == NULL )
     {
-        VSIFCloseL(fpL);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return( NULL );
     }
 
@@ -10487,7 +10502,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
                 XTIFFClose( hTIFF );
                 CPLError( CE_Failure, CPLE_OpenFailed, 
                           "Requested directory %lu not found.", (long unsigned int)nOffsetRequested );
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
                 return NULL;
             }
             nOffset--;
@@ -12420,7 +12435,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                       "Attempt to create new tiff file `%s'\n"
                       "failed in XTIFFOpen().\n",
                       pszFilename );
-        VSIFCloseL(fpL);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return NULL;
     }
 
@@ -12554,7 +12569,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Currently, PHOTOMETRIC=YCBCR requires COMPRESS=JPEG");
                 XTIFFClose(hTIFF);
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
                 return NULL;
             }
 
@@ -12563,7 +12578,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "PHOTOMETRIC=YCBCR requires INTERLEAVE=PIXEL");
                 XTIFFClose(hTIFF);
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
                 return NULL;
             }
 
@@ -12575,7 +12590,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "PHOTOMETRIC=YCBCR requires a source raster with only 3 bands (RGB)");
                 XTIFFClose(hTIFF);
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
                 return NULL;
             }
 
@@ -12692,7 +12707,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             !TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize ))
         {
             XTIFFClose(hTIFF);
-            VSIFCloseL(fpL);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
             return NULL;
         }
     }
@@ -12837,7 +12852,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                 TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
 
             XTIFFClose(hTIFFTmp);
-            VSIFCloseL(fpTmp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
         }
         VSIUnlink(osTmpFilenameIn);
     }
@@ -13002,7 +13017,7 @@ int GTiffDataset::GuessJPEGQuality(int& bOutHasQuantizationTable,
         }
 
         XTIFFClose(hTIFFTmp);
-        VSIFCloseL(fpTmp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
     }
 
     CSLDestroy(papszLocalParameters);
@@ -13914,7 +13929,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     TIFFFlush( hTIFF );
     XTIFFClose( hTIFF );
     hTIFF = NULL;
-    VSIFCloseL(fpL);
+    if( VSIFCloseL(fpL) != 0 )
+        eErr = CE_Failure;
     fpL = NULL;
 
     if( eErr != CE_None )
@@ -13937,7 +13953,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             CPLError(CE_Failure, CPLE_FileIO, "Could not write %d bytes",
                      (int)nDataLength);
-            VSIFCloseL( fpL );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fpL ));
             VSIUnlink(osTmpFilename);
             return NULL;
         }

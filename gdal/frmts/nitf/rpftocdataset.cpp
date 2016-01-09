@@ -969,7 +969,7 @@ int RPFTOCDataset::IsNonNITFFileTOC(GDALOpenInfo * poOpenInfo, const char* pszFi
         char buffer[48];
         int ret = (VSIFReadL(buffer, 1, 48, fp) == 48) &&
                    memcmp(pattern, buffer, 15) == 0;
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return ret;
     }
 }
@@ -1021,14 +1021,15 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         if( VSIFReadL(buffer, 1, 48, fp) != 48 )
         {
             CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
-            VSIFCloseL(fp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
             return NULL;
         }
     }
     const int isRGBA = CSLTestBoolean(CPLGetConfigOption("RPFTOC_FORCE_RGBA", "NO"));
     RPFToc* toc = (psFile) ? RPFTOCRead( pszFilename, psFile ) :
                               RPFTOCReadFromBuffer( pszFilename, fp, buffer);
-    if (fp) VSIFCloseL(fp);
+    if (fp)
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     fp = NULL;
 
     if (entryName != NULL)

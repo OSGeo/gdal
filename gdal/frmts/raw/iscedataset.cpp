@@ -174,7 +174,10 @@ ISCEDataset::~ISCEDataset( void )
     FlushCache();
     if ( fpImage != NULL )
     {
-        VSIFCloseL( fpImage );
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
     }
     CPLFree( pszXMLFilename );
 }
@@ -563,7 +566,7 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
 /*      file, and then close it.                                        */
 /* -------------------------------------------------------------------- */
     CPL_IGNORE_RET_VAL(VSIFWriteL( (void *) "\0\0", 2, 1, fp ));
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Create a minimal XML document.                                  */

@@ -38,6 +38,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 static int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC );
 static char *NITFTrimWhite( char * );
 #ifdef CPL_LSB
@@ -3271,7 +3273,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
     snprintf(szTempFileName, sizeof(szTempFileName), "/vsimem/%p", pszTRE);
     fpTemp = VSIFileFromMemBuffer( szTempFileName, (GByte*) pszTRE, nTRESize, FALSE);
     psImage->pasLocations = NITFReadRPFLocationTable(fpTemp, &psImage->nLocCount);
-    VSIFCloseL(fpTemp);
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fpTemp));
     VSIUnlink(szTempFileName);
 
     if (psImage->nLocCount == 0)

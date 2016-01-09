@@ -1698,7 +1698,7 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                 {
                     AddRegion(pszURL, nFileOffsetStart, 0, NULL);
                 }
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 return GetRegion(pszURL, nFileOffsetStart);
             }
             else
@@ -1707,7 +1707,7 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                     break;
             }
         }
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
     return NULL;
 }
@@ -1737,7 +1737,7 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
                 psRegion->nFileOffsetStart == nFileOffsetStartCached)
             {
                 CPLAssert(psRegion->nSize == nSizeCached);
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 return;
             }
             else
@@ -1761,7 +1761,7 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
         if (psRegion->nSize)
             CPL_IGNORE_RET_VAL(VSIFWriteL(psRegion->pData, 1, psRegion->nSize, fp));
 
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
     return;
 }

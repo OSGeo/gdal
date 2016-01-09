@@ -74,7 +74,12 @@ KRODataset::~KRODataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 }
 
 /************************************************************************/
@@ -282,7 +287,11 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
               SEEK_CUR));
     GByte byNul = 0;
     nRet += VSIFWriteL(&byNul, 1, 1, fp);
-    VSIFCloseL(fp);
+    if( VSIFCloseL(fp) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return NULL;
+    }
 
     if( nRet != 6 )
         return NULL;

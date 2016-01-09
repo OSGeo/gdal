@@ -36,6 +36,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
                             int *pnOffset,
                             char **papszOptions );
@@ -105,7 +107,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file %s is not an NITF file.", 
                   pszFilename );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -118,7 +120,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unable to read FSDWNG field from NITF file.  File is either corrupt\n"
                   "or empty." );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -136,7 +138,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unable to read header length from NITF file.  File is either corrupt\n"
                   "or empty." );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -152,7 +154,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "NITF Header Length (%d) seems to be corrupt.",
                   nHeaderLen );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -162,7 +164,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
     pachHeader = (char *) VSI_MALLOC_VERBOSE(nHeaderLen);
     if (pachHeader == NULL)
     {
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         return NULL;
     }
     if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 ||
@@ -170,7 +172,7 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Cannot read %d bytes for NITF header", (nHeaderLen));
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         CPLFree(pachHeader);
         return NULL;
     }
@@ -305,7 +307,7 @@ retry_read_header:
 
                         if ( (int)VSIFReadL( pachHeader, 1, SFHL2, fp ) != SFHL2 )
                         {
-                            VSIFCloseL(fp);
+                            CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
                             CPLFree(pachHeader);
                             CPLFree(psFile);
                             return NULL;
@@ -477,7 +479,7 @@ void NITFClose( NITFFile *psFile )
 
     CPLFree( psFile->pasSegmentInfo );
     if( psFile->fp != NULL )
-        VSIFCloseL( psFile->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( psFile->fp ));
     CPLFree( psFile->pachHeader );
     CSLDestroy( psFile->papszMetadata );
     CPLFree( psFile->pachTRE );
@@ -879,7 +881,7 @@ int NITFCreate( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file header length : %d", nHL);
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return FALSE;
     }
 
@@ -1159,7 +1161,7 @@ int NITFCreate( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big image header length : %d", nIHSize);
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return FALSE;
     }
 
@@ -1201,7 +1203,7 @@ int NITFCreate( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file : " CPL_FRMT_GUIB, nCur);
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return FALSE;
     }
 
@@ -1218,7 +1220,8 @@ int NITFCreate( const char *pszFilename,
         bOK &= VSIFWriteL( &cNul, 1, 1, fp ) == 1;
     }
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = FALSE;
 
     return bOK;
 }

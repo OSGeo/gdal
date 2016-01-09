@@ -66,7 +66,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     TIFF *hTIFF = VSI_TIFFOpen( osFilename, "w+", fpL );
     if (hTIFF == NULL)
     {
-        VSIFCloseL(fpL);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;
     }
 
@@ -98,7 +98,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     hTIFF = VSI_TIFFOpen( osFilename, "r", fpL );
     if (hTIFF == NULL)
     {
-        VSIFCloseL(fpL);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;
     }
 
@@ -109,7 +109,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     }
 
     TIFFClose( hTIFF );
-    VSIFCloseL(fpL);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
 
     VSIUnlink( osFilename );
 

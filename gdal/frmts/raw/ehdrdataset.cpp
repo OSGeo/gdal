@@ -497,7 +497,12 @@ EHdrDataset::~EHdrDataset()
     }
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 
     CPLFree( pszProjection );
     CSLDestroy( papszHDR );
@@ -591,11 +596,14 @@ void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
                     strlen(oLine), 1, fp ) != 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO, "Error while write color table");
-                    VSIFCloseL( fp );
+                    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                     return;
                 }
             }
-            VSIFCloseL( fp );
+            if( VSIFCloseL( fp ) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Error while write color table");
+            }
         }
         else
         {
@@ -656,8 +664,8 @@ CPLErr EHdrDataset::SetProjection( const char *pszSRS )
         size_t nCount = VSIFWriteL( pszESRI_SRS, strlen(pszESRI_SRS), 1, fp );
         nCount += VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\n" ) ),
                     1, 1, fp );
-        VSIFCloseL( fp );
-        if( nCount != 2 )
+        if( VSIFCloseL( fp ) != 0 ||
+            nCount != 2 )
         {
             CPLFree( pszESRI_SRS );
             return CE_Failure;
@@ -771,14 +779,15 @@ CPLErr EHdrDataset::RewriteHDR()
                     1, 1, fp );
         if( nCount != 2 )
         {
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return CE_Failure;
         }
     }
 
-    VSIFCloseL( fp );
-
     bHDRDirty = FALSE;
+
+    if( VSIFCloseL( fp ) != 0 )
+        return CE_Failure;
 
     return CE_None;
 }
@@ -821,7 +830,8 @@ CPLErr EHdrDataset::RewriteSTX()
             bOK &= VSIFPrintfL( fp, "#\n") >= 0;
     }
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
 
     return (bOK) ? CE_None : CE_Failure;
 }
@@ -893,9 +903,9 @@ CPLErr EHdrDataset::ReadSTX()
           }
 
           CSLDestroy( papszTokens );
-      }
+    }
 
-      VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
     return CE_None;
 }
@@ -1190,7 +1200,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszTokens );
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
@@ -1498,7 +1508,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fp != NULL )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
         char **papszLines = CSLLoad( pszPrjFilename );
 
@@ -1632,7 +1642,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
             }
 
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
             if (utmZone != 0 && bUTM && bWGS84 && (bNorth || bSouth))
             {
@@ -1714,7 +1724,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             CSLDestroy( papszValues );
         }
 
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
         for( int i = 1; i <= poDS->nBands; i++ )
         {
@@ -1794,7 +1804,8 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     bool bOK = VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "\0\0" ) ),
                 2, 1, fp ) == 1;
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
     if( !bOK )
         return NULL;
 
@@ -1858,7 +1869,8 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
 
     CPLFree( pszHdrFilename );
 

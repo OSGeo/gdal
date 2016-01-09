@@ -88,7 +88,12 @@ CTable2Dataset::~CTable2Dataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 }
 
 /************************************************************************/
@@ -420,7 +425,11 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     CPLFree( pafLine );
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return NULL;
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }

@@ -980,7 +980,7 @@ int VSIIngestFile( VSILFILE* fp,
         if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         {
             if( bFreeFP )
-                VSIFCloseL( fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
         while(true)
@@ -995,7 +995,7 @@ int VSIIngestFile( VSILFILE* fp,
                     VSIFree( *ppabyRet );
                     *ppabyRet = NULL;
                     if( bFreeFP )
-                        VSIFCloseL( fp );
+                        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                     return FALSE;
                 }
                 GByte* pabyNew = (GByte*)VSIRealloc(*ppabyRet, (size_t)nDataAlloc);
@@ -1007,7 +1007,7 @@ int VSIIngestFile( VSILFILE* fp,
                     VSIFree( *ppabyRet );
                     *ppabyRet = NULL;
                     if( bFreeFP )
-                        VSIFCloseL( fp );
+                        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                     return FALSE;
                 }
                 *ppabyRet = pabyNew;
@@ -1024,7 +1024,7 @@ int VSIIngestFile( VSILFILE* fp,
                 if( pnSize != NULL )
                     *pnSize = 0;
                 if( bFreeFP )
-                    VSIFCloseL( fp );
+                    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                 return FALSE;
             }
 
@@ -1040,7 +1040,7 @@ int VSIIngestFile( VSILFILE* fp,
         if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
         {
             if( bFreeFP )
-                VSIFCloseL( fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
         nDataLen = VSIFTellL( fp );
@@ -1053,14 +1053,14 @@ int VSIIngestFile( VSILFILE* fp,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Input file too large to be opened" );
             if( bFreeFP )
-                VSIFCloseL( fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
 
         if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         {
             if( bFreeFP )
-                VSIFCloseL( fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
 
@@ -1071,7 +1071,7 @@ int VSIIngestFile( VSILFILE* fp,
                       "Cannot allocated " CPL_FRMT_GIB " bytes",
                       nDataLen + 1 );
             if( bFreeFP )
-                VSIFCloseL( fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
 
@@ -1084,14 +1084,14 @@ int VSIIngestFile( VSILFILE* fp,
             VSIFree( *ppabyRet );
             *ppabyRet = NULL;
             if( bFreeFP )
-                VSIFCloseL( fp );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
         if( pnSize != NULL )
             *pnSize = nDataLen;
     }
     if( bFreeFP )
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     return TRUE;
 }
 

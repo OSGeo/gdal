@@ -102,7 +102,7 @@ void DDFModule::Close()
 /* -------------------------------------------------------------------- */
     if( fpDDF != NULL )
     {
-        VSIFCloseL( fpDDF );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
         fpDDF = NULL;
     }
 
@@ -191,7 +191,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 
     if( (int)VSIFReadL( achLeader, 1, nLeaderSize, fpDDF ) != nLeaderSize )
     {
-        VSIFCloseL( fpDDF );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
         fpDDF = NULL;
 
         if( !bFailQuietly )
@@ -257,7 +257,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
     if( !bValid )
     {
-        VSIFCloseL( fpDDF );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
         fpDDF = NULL;
 
         if( !bFailQuietly )

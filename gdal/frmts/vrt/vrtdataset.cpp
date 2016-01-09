@@ -144,14 +144,22 @@ void VRTDataset::FlushCache()
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
     char** papszContent = GetMetadata("xml:VRT");
+    bool bOK = true;
     if( papszContent && papszContent[0] )
     {
         /* ------------------------------------------------------------------ */
         /*      Write to disk.                                                */
         /* ------------------------------------------------------------------ */
-        CPL_IGNORE_RET_VAL(VSIFWriteL( papszContent[0], 1, strlen(papszContent[0]), fpVRT ));
+        bOK &= VSIFWriteL( papszContent[0], 1, strlen(papszContent[0]), fpVRT ) == strlen(papszContent[0]);
     }
-    VSIFCloseL( fpVRT );
+    if( VSIFCloseL( fpVRT ) != 0 )
+        bOK = false;
+    if( !bOK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to write .vrt file in FlushCache()." );
+        return;
+    }
 }
 
 /************************************************************************/
@@ -690,13 +698,13 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
             if( pszXML == NULL )
             {
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 return NULL;
             }
 
             if( VSIFReadL( pszXML, 1, nLength, fp ) != nLength )
             {
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 CPLFree( pszXML );
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to read %d bytes from VRT xml file.",
@@ -723,7 +731,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
                     // The file could be a virtual file, let later checks handle it.
                     break;
                 } else {
-                    VSIFCloseL(fp);
+                    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                     CPLFree( pszXML );
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Failed to lstat %s: %s",
@@ -748,7 +756,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
                 currentVrtFilename = CPLProjectRelativeFilename(
                     CPLGetDirname( currentVrtFilename ), filenameBuffer);
             } else {
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 CPLFree( pszXML );
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to read filename from symlink %s: %s",
@@ -761,7 +769,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
         pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
 
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
 /* -------------------------------------------------------------------- */
 /*      Or use the filename as the XML input.                           */

@@ -923,7 +923,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 
         if( fpHDR != NULL )
         {
-            VSIFCloseL( fpHDR );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fpHDR ));
             papszLines=CSLLoad2(pszHDR, 16, 200, NULL);
             if (CSLCount(papszLines) == 16)
             {
@@ -4688,7 +4688,7 @@ static bool NITFPatchImageLength( const char *pszFilename,
                 12, 1, fpVSIL ) != 1 )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Write error");
-        VSIFCloseL(fpVSIL);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpVSIL));
         return false;
     }
 
@@ -4709,7 +4709,7 @@ static bool NITFPatchImageLength( const char *pszFilename,
                 10, 1, fpVSIL ) != 1 )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Write error");
-        VSIFCloseL(fpVSIL);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpVSIL));
         return false;
     }
 
@@ -4790,13 +4790,14 @@ static bool NITFPatchImageLength( const char *pszFilename,
 
         bOK &= VSIFWriteL( szCOMRAT, 4, 1, fpVSIL ) == 1;
     }
-    
+
+    if( VSIFCloseL( fpVSIL ) != 0 )
+        bOK = false;
+
     if( !bOK )
     {
         CPLError(CE_Failure, CPLE_FileIO, "I/O error");
     }
-
-    VSIFCloseL( fpVSIL );
 
     return bOK;
 }
@@ -4862,7 +4863,7 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
                   "segments on an NITF file with existing segments.  This\n"
                   "is not currently supported by the GDAL NITF driver." );
 
-        VSIFCloseL( fpVSIL );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         return false;
     }
 
@@ -5010,7 +5011,8 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
                     nFileLen);
     bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ), 12, 1, fpVSIL) == 1;
 
-    VSIFCloseL(fpVSIL);
+    if( VSIFCloseL(fpVSIL) != 0 )
+        bOK = false;
 
     CPLFree(pachLS);
 
@@ -5106,7 +5108,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                   "segments on an NITF file with existing segments.  This\n"
                   "is not currently supported by the GDAL NITF driver." );
 
-        VSIFCloseL( fpVSIL );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         CPLFree( pachLT );
         return false;
     }
@@ -5115,7 +5117,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
     {
         CPLFree( pachLT );
         // presumably the text segments are already written, do nothing.
-        VSIFCloseL( fpVSIL );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         return true;
     }
 
@@ -5292,7 +5294,8 @@ static bool NITFWriteTextSegments( const char *pszFilename,
     bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
                 12, 1, fpVSIL ) == 1;
 
-    VSIFCloseL( fpVSIL );
+    if( VSIFCloseL( fpVSIL ) != 0 )
+        bOK = false;
     CPLFree( pachLT );
 
     if( !bOK )

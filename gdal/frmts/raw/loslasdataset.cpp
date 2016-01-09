@@ -114,7 +114,7 @@ LOSLASDataset::~LOSLASDataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
 
 /************************************************************************/

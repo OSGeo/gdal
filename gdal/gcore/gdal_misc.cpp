@@ -1183,7 +1183,7 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
     if ( fpOzi == NULL )
         return FALSE;
 
-    VSIFClose( fpOzi );
+    CPL_IGNORE_RET_VAL(VSIFClose( fpOzi ));
 
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
@@ -1411,7 +1411,7 @@ int GDALReadTabFile2( const char * pszBaseFilename,
     if( fpTAB == NULL )
         return FALSE;
 
-    VSIFCloseL( fpTAB );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpTAB ));
 
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
@@ -1747,7 +1747,8 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
         return FALSE;
 
     int bRet = ( VSIFWriteL( (void *) osTFWText.c_str(), osTFWText.size(), 1, fpTFW ) == 1 );
-    VSIFCloseL( fpTFW );
+    if( VSIFCloseL( fpTFW ) != 0 )
+        bRet = FALSE;
 
     return bRet;
 }
@@ -1837,7 +1838,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
                 }
             }
 
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         }
 
         if (!pszResultLicence)
@@ -2527,7 +2528,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 CSLDestroy( papszTokens );
             }
 
-            VSIFClose( fpOptFile );
+            CPL_IGNORE_RET_VAL(VSIFClose( fpOptFile ));
 
             iArg += 1;
         }
@@ -2932,7 +2933,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                 poODS = (GDALDataset *) GDALOpen( osAuxFilename, eAccess );
             CPLTurnFailureIntoWarning(FALSE);
         }
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -3029,7 +3030,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                     poODS = (GDALDataset *) GDALOpen( osAuxFilename, eAccess );
                 CPLTurnFailureIntoWarning(FALSE);
             }
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         }
 
         if( poODS != NULL )

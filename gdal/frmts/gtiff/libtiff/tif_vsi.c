@@ -147,7 +147,7 @@ TIFFOpen(const char* name, const char* mode)
         if( tif != NULL )
             tif->tif_fd = 0;
         else
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         
 	return tif;
 }

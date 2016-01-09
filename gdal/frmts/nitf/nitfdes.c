@@ -35,6 +35,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                          NITFDESAccess()                             */
 /************************************************************************/
@@ -578,12 +580,12 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
 
         if( (int) VSIFWriteL(pabyBuffer, 1, nSize, fp) != nSize )
         {
-            VSIFCloseL(fp);
+            CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
             VSIFree(pabyBuffer);
             VSIFree(pszFilename);
             return FALSE;
         }
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         VSIFree(pabyBuffer);
     }
 

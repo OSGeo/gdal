@@ -142,7 +142,10 @@ MFFTiledBand::MFFTiledBand( MFFDataset *poDSIn, int nBandIn, VSILFILE *fp,
 MFFTiledBand::~MFFTiledBand()
 
 {
-    VSIFCloseL( fpRaw );
+    if( VSIFCloseL( fpRaw ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+    }
 }
 
 
@@ -264,7 +267,12 @@ MFFDataset::~MFFDataset()
         for( int i = 0; i < GetRasterCount(); i++ )
         {
             if( pafpBandFiles[i] != NULL )
-                VSIFCloseL( pafpBandFiles[i] );
+            {
+                if( VSIFCloseL( pafpBandFiles[i] ) != 0 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                }
+            }
         }
         CPLFree( pafpBandFiles );
     }
@@ -855,7 +863,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                         "Unable to open band %d because type J*1 is not handled ... skipping.\n", 
                          nRawBand + 1 );
                 nSkipped++;
-                VSIFCloseL(fpRaw);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
                 continue; /* we don't support 1 byte complex */
             }
             else if( EQUAL(pszRefinedType,"J*2") )
@@ -868,7 +876,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                         "Unable to open band %d because type %s is not handled ... skipping.\n", 
                          nRawBand + 1, pszRefinedType );
                 nSkipped++;
-                VSIFCloseL(fpRaw);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
                 continue;
             }
         }
@@ -899,7 +907,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "handled ... skipping.\n",
                       nRawBand + 1, pszExtension );
             nSkipped++;
-            VSIFCloseL(fpRaw);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
             continue;
         }
 
@@ -921,7 +929,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Int overflow occurred... skipping");
                 nSkipped++;
-                VSIFCloseL(fpRaw);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
                 continue;
             }
 
@@ -1121,7 +1129,8 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
     if (CSLFetchNameValue(papszParmList,"NO_END") == NULL)
         bOK &= VSIFPrintfL( fp, "END\n" ) >= 0;
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
 
 /* -------------------------------------------------------------------- */
 /*      Create the data files, but don't bother writing any data to them.*/
@@ -1153,7 +1162,8 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 
         bOK &= VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "" ) ),
                     1, 1, fp ) == 1;
-        VSIFCloseL( fp );
+        if( VSIFCloseL( fp ) != 0 )
+            bOK = false;
     }
 
     if( !bOK )
@@ -1510,7 +1520,8 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
     CPLFree( padfTiepoints );
     bOK &= VSIFPrintfL( fp, "END\n" ) >= 0;
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
 
     if( !bOK )
     {

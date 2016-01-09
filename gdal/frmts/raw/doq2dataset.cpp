@@ -102,7 +102,7 @@ DOQ2Dataset::~DOQ2Dataset()
 
     CPLFree( pszProjection );
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
 
 /************************************************************************/
@@ -319,7 +319,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         || nBandTypes < 1 || nBandTypes > 9 )
     {
         CSLDestroy( papszMetadata );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -333,7 +333,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "DOQ Data Type (%d) is not a supported configuration.\n",
                   nBandTypes );
         CSLDestroy( papszMetadata );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -346,7 +346,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The DOQ2 driver does not support update access to existing"
                   " datasets.\n" );
-        VSIFCloseL(fp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 /* -------------------------------------------------------------------- */

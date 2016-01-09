@@ -212,7 +212,12 @@ RawRasterBand::~RawRasterBand()
     if (bOwnsFP)
     {
         if ( bIsVSIL )
-            VSIFCloseL( fpRawL );
+        {
+            if( VSIFCloseL( fpRawL ) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            }
+        }
         else
             VSIFClose( fpRaw );
     }

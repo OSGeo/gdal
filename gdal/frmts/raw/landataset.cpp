@@ -326,7 +326,12 @@ LANDataset::~LANDataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 
     CPLFree( pszProjection );
 }
@@ -590,7 +595,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         char szTRLData[896];
 
         CPL_IGNORE_RET_VAL(VSIFReadL( szTRLData, 1, 896, fpTRL ));
-        VSIFCloseL( fpTRL );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpTRL ));
 
         GDALColorTable *poCT = new GDALColorTable();
         for( int iColor = 0; iColor < 256; iColor++ )
@@ -870,7 +875,7 @@ void LANDataset::CheckForStatistics()
         poBand->SetStatistics( nMin, nMax, fMean, fStdDev );
     }
 
-    VSIFCloseL( fpSTA );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fpSTA ));
 }
 
 /************************************************************************/
@@ -996,7 +1001,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
         if( VSIFWriteL( abyHeader, 1, (size_t)nWriteThisTime, fp ) 
             != nWriteThisTime )
         {
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to write whole Istar file." );
             return NULL;
@@ -1004,7 +1009,12 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
         nImageBytes -= nWriteThisTime;
     }
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to write whole Istar file." );
+        return NULL;
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }

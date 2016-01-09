@@ -278,7 +278,8 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
             return "Data record write failed.";
     }
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        return "I/O error";
 
     return NULL;
 }

@@ -32,6 +32,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                    AIGProcessRaw32bitFloatBlock()                    */
 /*                                                                      */
@@ -837,11 +839,11 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
 
     if( VSIFReadL( abyData, 1, 308, fp ) != 308 )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return( CE_Failure );
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
     
 /* -------------------------------------------------------------------- */
 /*      Read the block size information.                                */
@@ -916,14 +918,14 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /* -------------------------------------------------------------------- */
     if( VSIFReadL( abyHeader, 1, 8, fp ) != 8 )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
     if( abyHeader[3] == 0x0D && abyHeader[4] == 0x0A )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "w001001x.adf file header has been corrupted by unix to dos text conversion." );
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
@@ -936,7 +938,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "w001001x.adf file header magic number is corrupt." );
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
@@ -946,7 +948,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     if( VSIFSeekL( fp, 24, SEEK_SET ) != 0 ||
         VSIFReadL( &nValue, 1, 4, fp ) != 4 )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
@@ -955,7 +957,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AIGReadBlockIndex: Bad length");
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
     nLength = nValue * 2;
@@ -963,7 +965,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AIGReadBlockIndex: Bad length");
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
@@ -975,7 +977,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     panIndex = (GUInt32 *) VSI_MALLOC2_VERBOSE(psTInfo->nBlocks, 8);
     if (panIndex == NULL)
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
     if( VSIFSeekL( fp, 100, SEEK_SET ) != 0 ||
@@ -983,12 +985,12 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AIGReadBlockIndex: Cannot read block info");
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         CPLFree( panIndex );
         return CE_Failure;
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*	Allocate AIGInfo block info arrays.				*/
@@ -1086,11 +1088,11 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
     if( VSIFReadL( adfBound, 1, 32, fp ) != 32 )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
 
 #ifdef CPL_LSB
     CPL_SWAPDOUBLE(adfBound+0);
@@ -1151,11 +1153,11 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
     if( VSIFReadL( adfStats, 1, 32, fp ) != 32 )
     {
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
 
 #ifdef CPL_LSB
     CPL_SWAPDOUBLE(adfStats+0);

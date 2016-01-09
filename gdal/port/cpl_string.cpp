@@ -334,7 +334,7 @@ char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
                                 nAllocatedLines * sizeof(char*) ) );
             if (papszStrListNew == NULL)
             {
-                VSIFCloseL(fp);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 CPLReadLineL( NULL );
                 CPLError( CE_Failure, CPLE_OutOfMemory,  "CSLLoad2(\"%s\") "
                           "failed: not enough memory to allocate lines.",
@@ -348,7 +348,7 @@ char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
         ++nLines;
     }
 
-    VSIFCloseL(fp);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
     // Free the internal thread local line buffer.
     CPLReadLineL( NULL );
@@ -419,7 +419,12 @@ int CSLSave(char **papszStrList, const char *pszFname)
         ++papszStrList;
     }
 
-    VSIFCloseL(fp);
+    if(VSIFCloseL(fp) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                      "CSLSave(\"%s\") failed: unable to write to output file.",
+                      pszFname );
+    }
 
     return nLines;
 }

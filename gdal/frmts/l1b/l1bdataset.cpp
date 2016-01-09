@@ -605,7 +605,7 @@ L1BDataset::~L1BDataset()
     if ( pszGCPProjection )
         CPLFree( pszGCPProjection );
     if( fp != NULL )
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     delete poMaskBand;
 }
 
@@ -1092,7 +1092,7 @@ void L1BDataset::FetchMetadata()
     }
 
     CPLFree(pabyRecordHeader);
-    VSIFCloseL(fpCSV);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpCSV));
 }
 
 /************************************************************************/
@@ -1312,7 +1312,7 @@ void L1BDataset::FetchMetadataNOAA15()
     }
 
     CPLFree(pabyRecordHeader);
-    VSIFCloseL(fpCSV);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpCSV));
 }
 
 /************************************************************************/
@@ -3170,7 +3170,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( eL1BFormat == L1B_NONE )
     {
         if( fp != NULL )
-            VSIFCloseL(fp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
@@ -3183,7 +3183,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The L1B driver does not support update access to existing"
                   " datasets.\n" );
         if( fp != NULL )
-            VSIFCloseL(fp);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return NULL;
     }
 
