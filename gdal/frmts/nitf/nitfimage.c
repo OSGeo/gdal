@@ -826,17 +826,18 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         GUInt32  nIMDATOFF;
         GUInt16  nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
         int nBlockCount;
+        int bOK = TRUE;
 
         nBlockCount = psImage->nBlocksPerRow * psImage->nBlocksPerColumn
             * psImage->nBands;
 
         CPLAssert( psImage->szIC[0] == 'M' || psImage->szIC[1] == 'M' );
 
-        VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart, SEEK_SET );
-        VSIFReadL( &nIMDATOFF, 1, 4, psFile->fp );
-        VSIFReadL( &nBMRLNTH, 1, 2, psFile->fp );
-        VSIFReadL( &nTMRLNTH, 1, 2, psFile->fp );
-        VSIFReadL( &nTPXCDLNTH, 1, 2, psFile->fp );
+        bOK &= VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart, SEEK_SET ) == 0;
+        bOK &= VSIFReadL( &nIMDATOFF, 1, 4, psFile->fp ) == 4;
+        bOK &= VSIFReadL( &nBMRLNTH, 1, 2, psFile->fp ) == 2;
+        bOK &= VSIFReadL( &nTMRLNTH, 1, 2, psFile->fp ) == 2;
+        bOK &= VSIFReadL( &nTPXCDLNTH, 1, 2, psFile->fp ) == 2;
 
         CPL_MSBPTR32( &nIMDATOFF );
         CPL_MSBPTR16( &nBMRLNTH );
@@ -848,21 +849,21 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             GByte byNodata;
 
             psImage->bNoDataSet = TRUE;
-            VSIFReadL( &byNodata, 1, 1, psFile->fp );
+            bOK &= VSIFReadL( &byNodata, 1, 1, psFile->fp ) == 1;
             psImage->nNoDataValue = byNodata;
         }
         else
-            VSIFSeekL( psFile->fp, (nTPXCDLNTH+7)/8, SEEK_CUR );
+            bOK &= VSIFSeekL( psFile->fp, (nTPXCDLNTH+7)/8, SEEK_CUR ) == 0;
 
         if( nBMRLNTH == 4 && psImage->chIMODE == 'P' )
         {
             int nStoredBlocks = psImage->nBlocksPerRow 
                 * psImage->nBlocksPerColumn; 
 
-            for( i = 0; i < nStoredBlocks; i++ )
+            for( i = 0; bOK && i < nStoredBlocks; i++ )
             {
                 GUInt32 l_nOffset;
-                VSIFReadL( &l_nOffset, 4, 1, psFile->fp );
+                bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                 CPL_MSBPTR32( &l_nOffset );
                 psImage->panBlockStart[i] = l_nOffset;
                 if( psImage->panBlockStart[i] != 0xffffffff )
@@ -888,10 +889,10 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         else if( nBMRLNTH == 4 )
         {
             int isM4 = EQUAL(psImage->szIC,"M4");
-            for( i=0; i < nBlockCount; i++ )
+            for( i=0; bOK && i < nBlockCount; i++ )
             {
                 GUInt32 l_nOffset;
-                VSIFReadL( &l_nOffset, 4, 1, psFile->fp );
+                bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                 CPL_MSBPTR32( &l_nOffset );
                 psImage->panBlockStart[i] = l_nOffset;
                 if( psImage->panBlockStart[i] != 0xffffffff )
@@ -916,19 +917,19 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 bGotWrongOffset = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Block start for block %d is wrong. Retrying with one extra byte shift...", i);
-                VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart +
+                bOK &= VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart +
                                        4 + /* nIMDATOFF */
                                        2 + /* nBMRLNTH */
                                        2 + /* nTMRLNTH */
                                        2 + /* nTPXCDLNTH */
                                        (nTPXCDLNTH+7)/8 +
                                        1, /* MAGIC here ! One byte shift... */
-                            SEEK_SET );
+                            SEEK_SET ) == 0;
 
-                for( i=0; i < nBlockCount; i++ )
+                for( i=0; bOK && i < nBlockCount; i++ )
                 {
                     GUInt32 l_nOffset;
-                    VSIFReadL( &l_nOffset, 4, 1, psFile->fp );
+                    bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                     CPL_MSBPTR32( &l_nOffset );
                     psImage->panBlockStart[i] = l_nOffset;
                     if( psImage->panBlockStart[i] != 0xffffffff )
@@ -984,6 +985,12 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                           "Unsupported IC value '%s', image access will likely fail.",
                           psImage->szIC );
             }
+        }
+        if( !bOK )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            NITFImageDeaccess(psImage);
+            return NULL;
         }
     }
 
@@ -1051,9 +1058,15 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         {
             double adfTarget[8];
 
-            VSIFSeekL( psFile->fp, psImage->pasLocations[i].nLocOffset,
-                      SEEK_SET );
-            VSIFReadL( adfTarget, 8, 8, psFile->fp );
+            if( VSIFSeekL( psFile->fp, psImage->pasLocations[i].nLocOffset,
+                      SEEK_SET ) != 0 ||
+                VSIFReadL( adfTarget, 8, 8, psFile->fp ) != 8 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                NITFImageDeaccess(psImage);
+                return NULL;
+            }
+
             for( i = 0; i < 8; i++ )
                 CPL_MSBPTR64( (adfTarget + i) );
 
@@ -1226,12 +1239,16 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                       "assert nBlockX == 0 && nBlockY == 0 failed\n");
             return BLKREAD_FAIL;
         }
-        VSIFSeekL( psImage->psFile->fp,
+        if( VSIFSeekL( psImage->psFile->fp,
                    psImage->panBlockStart[0] + 
                     (psImage->nBlockWidth * psImage->nBlockHeight + 7) / 8 * (nBand-1),
-                   SEEK_SET );
-        VSIFReadL( pData, 1, (psImage->nBlockWidth * psImage->nBlockHeight + 7) / 8, psImage->psFile->fp );
-        return BLKREAD_OK;
+                   SEEK_SET ) == 0 &&
+            VSIFReadL( pData, (psImage->nBlockWidth * psImage->nBlockHeight + 7) / 8, 1, psImage->psFile->fp ) == 1 )
+        {
+            return BLKREAD_OK;
+        }
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return BLKREAD_FAIL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1659,7 +1676,8 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     if (nLineSize == 0 || psImage->nWordSize * 8 != psImage->nBitsPerSample)
       nLineSize = (psImage->nBlockWidth*psImage->nBitsPerSample+7)/8;
 
-    VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
+    if( VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET ) != 0 )
+        return BLKREAD_FAIL;
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer.                        */
@@ -1774,7 +1792,11 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     nLineSize = (size_t)psImage->nPixelOffset * (psImage->nBlockWidth - 1) 
         + psImage->nWordSize;
 
-    VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
+    if( VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return BLKREAD_FAIL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct write into our buffer.                       */
@@ -1786,7 +1808,11 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         NITFSwapWords( psImage, pData, psImage->nBlockWidth );
 #endif
 
-        VSIFWriteL( pData, 1, nLineSize, psImage->psFile->fp );
+        if( VSIFWriteL( pData, 1, nLineSize, psImage->psFile->fp ) != nLineSize )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            return BLKREAD_FAIL;
+        }
 
 #ifdef CPL_LSB
         NITFSwapWords( psImage, pData, psImage->nBlockWidth );
@@ -1805,7 +1831,10 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
         return BLKREAD_FAIL;
     }
 
-    VSIFReadL( pabyLineBuf, 1, nLineSize, psImage->psFile->fp );
+    if( VSIFReadL( pabyLineBuf, 1, nLineSize, psImage->psFile->fp ) != nLineSize )
+    {
+        memset(pabyLineBuf, 0, nLineSize);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy the desired data into the interleaved buffer.              */
@@ -1836,8 +1865,13 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /* -------------------------------------------------------------------- */
 /*      Write the results back out.                                     */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
-    VSIFWriteL( pabyLineBuf, 1, nLineSize, psImage->psFile->fp );
+    if( VSIFSeekL( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET ) != 0 ||
+        VSIFWriteL( pabyLineBuf, 1, nLineSize, psImage->psFile->fp ) != nLineSize )
+    {
+        CPLFree( pabyLineBuf );
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return BLKREAD_FAIL;
+    }
     CPLFree( pabyLineBuf );
 
     return BLKREAD_OK;
@@ -2062,16 +2096,16 @@ int NITFWriteLUT( NITFImage *psImage, int nBand, int nColors,
         bSuccess = FALSE;
     }
 
-    VSIFSeekL( psImage->psFile->fp, psBandInfo->nLUTLocation, SEEK_SET );
-    VSIFWriteL( pabyLUT, 1, nColors, psImage->psFile->fp );
-    VSIFSeekL( psImage->psFile->fp, 
+    bSuccess &= VSIFSeekL( psImage->psFile->fp, psBandInfo->nLUTLocation, SEEK_SET ) == 0;
+    bSuccess &= (int)VSIFWriteL( pabyLUT, 1, nColors, psImage->psFile->fp ) == nColors;
+    bSuccess &= VSIFSeekL( psImage->psFile->fp, 
               psBandInfo->nLUTLocation + psBandInfo->nSignificantLUTEntries, 
-              SEEK_SET );
-    VSIFWriteL( pabyLUT+256, 1, nColors, psImage->psFile->fp );
-    VSIFSeekL( psImage->psFile->fp, 
+              SEEK_SET ) == 0;
+    bSuccess &= (int)VSIFWriteL( pabyLUT+256, 1, nColors, psImage->psFile->fp ) == nColors;
+    bSuccess &= VSIFSeekL( psImage->psFile->fp, 
               psBandInfo->nLUTLocation + 2*psBandInfo->nSignificantLUTEntries, 
-              SEEK_SET );
-    VSIFWriteL( pabyLUT+512, 1, nColors, psImage->psFile->fp );
+              SEEK_SET ) == 0;
+    bSuccess &= (int)VSIFWriteL( pabyLUT+512, 1, nColors, psImage->psFile->fp ) == nColors;
 
     return bSuccess;
 }
@@ -2784,8 +2818,9 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 /* -------------------------------------------------------------------- */
 /*      How many attribute records do we have?                          */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( psImage->psFile->fp, nASHOffset, SEEK_SET );
-    VSIFReadL( &nAttrCount, 2, 1, psImage->psFile->fp );
+    if( VSIFSeekL( psImage->psFile->fp, nASHOffset, SEEK_SET ) != 0 ||
+        VSIFReadL( &nAttrCount, 2, 1, psImage->psFile->fp ) != 1 )
+        return;
 
     CPL_MSBPTR16( &nAttrCount );
 
@@ -2846,8 +2881,9 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
         return;
     }
     
-    VSIFSeekL( psImage->psFile->fp, nASSOffset, SEEK_SET );
-    VSIFReadL( pabyAttributeSubsection, nASSSize, 1, psImage->psFile->fp );
+    if( VSIFSeekL( psImage->psFile->fp, nASSOffset, SEEK_SET ) != 0 ||
+        VSIFReadL( pabyAttributeSubsection, 1, nASSSize, psImage->psFile->fp ) != nASSSize )
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Scan for some particular attributes we would like.              */
@@ -2903,6 +2939,7 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
     NITFColormapRecord* colormapRecords;
     unsigned int colormapOffsetTableOffset;
     unsigned short offsetRecLen;
+    int bOK = TRUE;
 
     NITFBandInfo *psBandInfo = psImage->pasBandInfo;
 
@@ -2929,17 +2966,15 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
     }
 
     if( VSIFSeekL( psFile->fp, nLocBaseColorGrayscaleSection,
-                  SEEK_SET ) != 0 )
+                  SEEK_SET ) != 0 ||
+        VSIFReadL( &nOffsetRecs, 1, 1, psFile->fp ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d.",
                   nLocBaseColorGrayscaleSection );
         return;
     }
-    
-    
-    VSIFReadL( &nOffsetRecs, 1, 1, psFile->fp );
-    
+
     if( VSIFSeekL( psFile->fp, nLocBaseColormapSubSection, 
                   SEEK_SET ) != 0  )
     {
@@ -2952,34 +2987,34 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
     colormapRecords = (NITFColormapRecord*)CPLMalloc(nOffsetRecs * sizeof(NITFColormapRecord));
 
      /* colormap offset table offset length */
-    VSIFReadL( &colormapOffsetTableOffset, 1, sizeof(colormapOffsetTableOffset),  psFile->fp );
+    bOK &= VSIFReadL( &colormapOffsetTableOffset, sizeof(colormapOffsetTableOffset), 1,  psFile->fp ) == 1;
     CPL_MSBPTR32( &colormapOffsetTableOffset );
 
      /* offset record length */
-    VSIFReadL( &offsetRecLen, 1, sizeof(offsetRecLen),  psFile->fp );
+    bOK &= VSIFReadL( &offsetRecLen, sizeof(offsetRecLen), 1,  psFile->fp ) == 1;
     CPL_MSBPTR16( &offsetRecLen );
     
-    for (i = 0; i < nOffsetRecs; i++)
+    for (i = 0; bOK && i < nOffsetRecs; i++)
     {
-        VSIFReadL( &colormapRecords[i].tableId, 1, sizeof(colormapRecords[i].tableId),  psFile->fp );
+        bOK &= VSIFReadL( &colormapRecords[i].tableId, sizeof(colormapRecords[i].tableId), 1,  psFile->fp ) == 1;
         CPL_MSBPTR16( &colormapRecords[i].tableId );
         
-        VSIFReadL( &colormapRecords[i].nRecords, 1, sizeof(colormapRecords[i].nRecords),  psFile->fp );
+        bOK &= VSIFReadL( &colormapRecords[i].nRecords, sizeof(colormapRecords[i].nRecords), 1,  psFile->fp ) == 1;
         CPL_MSBPTR32( &colormapRecords[i].nRecords );
         
-        VSIFReadL( &colormapRecords[i].elementLength, 1, sizeof(colormapRecords[i].elementLength),  psFile->fp );
+        bOK &= VSIFReadL( &colormapRecords[i].elementLength,sizeof(colormapRecords[i].elementLength), 1,  psFile->fp ) == 1;
     
-        VSIFReadL( &colormapRecords[i].histogramRecordLength, 1, sizeof(colormapRecords[i].histogramRecordLength),  psFile->fp );
+        bOK &= VSIFReadL( &colormapRecords[i].histogramRecordLength,sizeof(colormapRecords[i].histogramRecordLength), 1,  psFile->fp ) == 1;
         CPL_MSBPTR16( &colormapRecords[i].histogramRecordLength );
     
-        VSIFReadL( &colormapRecords[i].colorTableOffset, 1, sizeof(colormapRecords[i].colorTableOffset),  psFile->fp );
+        bOK &= VSIFReadL( &colormapRecords[i].colorTableOffset, sizeof(colormapRecords[i].colorTableOffset), 1,  psFile->fp ) == 1;
         CPL_MSBPTR32( &colormapRecords[i].colorTableOffset );
     
-        VSIFReadL( &colormapRecords[i].histogramTableOffset, 1, sizeof(colormapRecords[i].histogramTableOffset),  psFile->fp );
+        bOK &= VSIFReadL( &colormapRecords[i].histogramTableOffset, sizeof(colormapRecords[i].histogramTableOffset), 1,  psFile->fp ) == 1;
         CPL_MSBPTR32( &colormapRecords[i].histogramTableOffset );
     }
     
-    for (i=0; i<nOffsetRecs; i++)
+    for (i=0; bOK && i<nOffsetRecs; i++)
     {
         if( VSIFSeekL( psFile->fp, nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset, 
                     SEEK_SET ) != 0  )
@@ -3035,6 +3070,7 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
     GUIntBig  nLocBaseSpatialDataSubsection = psSegInfo->nSegmentStart;
     GUInt32  nLocBaseMaskSubsection = 0;
     GUInt16 subframeSequenceRecordLength, transparencySequenceRecordLength, transparencyOutputPixelCodeLength;
+    int bOK = TRUE;
 
     for( i = 0; i < psImage->nLocCount; i++ )
     {
@@ -3063,14 +3099,14 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
         return;
     }
     
-    VSIFReadL( &subframeSequenceRecordLength, 1, sizeof(subframeSequenceRecordLength),  psFile->fp );
+    bOK &= VSIFReadL( &subframeSequenceRecordLength, sizeof(subframeSequenceRecordLength), 1,  psFile->fp ) == 1;
     CPL_MSBPTR16( &subframeSequenceRecordLength );
     
-    VSIFReadL( &transparencySequenceRecordLength, 1, sizeof(transparencySequenceRecordLength),  psFile->fp );
+    bOK &= VSIFReadL( &transparencySequenceRecordLength, sizeof(transparencySequenceRecordLength), 1,  psFile->fp ) == 1;
     CPL_MSBPTR16( &transparencySequenceRecordLength );
     
     /* in bits */
-    VSIFReadL( &transparencyOutputPixelCodeLength, 1, sizeof(transparencyOutputPixelCodeLength),  psFile->fp );
+    bOK &= VSIFReadL( &transparencyOutputPixelCodeLength, sizeof(transparencyOutputPixelCodeLength), 1,  psFile->fp ) == 1;
     CPL_MSBPTR16( &transparencyOutputPixelCodeLength );
 
     //fprintf(stderr, "transparencyOutputPixelCodeLength=%d\n", transparencyOutputPixelCodeLength);
@@ -3079,17 +3115,19 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
     {
       GByte byNodata;
 
-      psImage->bNoDataSet = TRUE;
-      VSIFReadL( &byNodata, 1, 1, psFile->fp );
-      psImage->nNoDataValue = byNodata;
+      if( bOK && VSIFReadL( &byNodata, 1, 1, psFile->fp ) == 1 )
+      {
+        psImage->bNoDataSet = TRUE;
+        psImage->nNoDataValue = byNodata;
+      }
     }
     else
     {
-      VSIFSeekL( psFile->fp, (transparencyOutputPixelCodeLength+7)/8, SEEK_CUR );
+      bOK &= VSIFSeekL( psFile->fp, (transparencyOutputPixelCodeLength+7)/8, SEEK_CUR ) == 0;
     }
 
     /* Fix for rpf/cjnc/cjncz01/0001f023.jn1 */
-    if (subframeSequenceRecordLength != 4)
+    if (!bOK || subframeSequenceRecordLength != 4)
     {
       //fprintf(stderr, "subframeSequenceRecordLength=%d\n", subframeSequenceRecordLength);
       return;
@@ -3098,10 +3136,10 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
     for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
     {
         unsigned int offset;
-        VSIFReadL( &offset, 1, sizeof(offset),  psFile->fp );
+        bOK &= VSIFReadL( &offset, sizeof(offset), 1,  psFile->fp ) == 1;
         CPL_MSBPTR32( &offset );
         //fprintf(stderr, "%d : %d\n", i, offset);
-        if (offset == 0xffffffff)
+        if (!bOK || offset == 0xffffffff)
             psImage->panBlockStart[i] = 0xffffffff;
         else
             psImage->panBlockStart[i] = nLocBaseSpatialDataSubsection + offset;
@@ -3181,7 +3219,7 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
 
     /* nLocComponentAggregateLength = */ NITFReadMSBGUInt32(fp, &bSuccess);
 
-    VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET);
+    bSuccess = VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET) == 0;
 
     pasLocations = (NITFLocation *)  VSI_CALLOC_VERBOSE(sizeof(NITFLocation), nLocCount);
     if (pasLocations == NULL)
@@ -3192,7 +3230,7 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
 /* -------------------------------------------------------------------- */
 /*      Process the locations.                                          */
 /* -------------------------------------------------------------------- */
-    for( iLoc = 0; iLoc < nLocCount; iLoc++ )
+    for( iLoc = 0; bSuccess && iLoc < nLocCount; iLoc++ )
     {
         pasLocations[iLoc].nLocId = NITFReadMSBGUInt16(fp, &bSuccess);
         pasLocations[iLoc].nLocSize = NITFReadMSBGUInt32(fp, &bSuccess);
@@ -3261,9 +3299,15 @@ static void NITFLoadLocationTable( NITFImage *psImage )
     {
         char achHeaderChunk[1000];
 
-        VSIFSeekL( psImage->psFile->fp, nHeaderOffset - 11, SEEK_SET );
-        VSIFReadL( achHeaderChunk, 1, sizeof(achHeaderChunk), 
-                   psImage->psFile->fp );
+        if( VSIFSeekL( psImage->psFile->fp, nHeaderOffset - 11, SEEK_SET ) != 0 ||
+            VSIFReadL( achHeaderChunk, sizeof(achHeaderChunk), 1,
+                   psImage->psFile->fp ) != 1 )
+        {
+            CPLFree( psImage->pasLocations );
+            psImage->pasLocations = NULL;
+            psImage->nLocCount = 0;
+            return;
+        }
 
         /* You can define NITF_DISABLE_RPF_LOCATION_TABLE_SANITY_TESTS to TRUE */
         /* to blindly trust the RPF location table even if it doesn't look */
@@ -3285,9 +3329,15 @@ static void NITFLoadLocationTable( NITFImage *psImage )
                     /* We test that they are close enough from the values of the IGEOLO record */
                     double adfTarget[8];
 
-                    VSIFSeekL( psImage->psFile->fp, psImage->pasLocations[i].nLocOffset,
-                               SEEK_SET );
-                    VSIFReadL( adfTarget, 8, 8, psImage->psFile->fp );
+                    if( VSIFSeekL( psImage->psFile->fp, psImage->pasLocations[i].nLocOffset,
+                               SEEK_SET ) != 0 ||
+                        VSIFReadL( adfTarget, 8, 8, psImage->psFile->fp ) != 8 )
+                    {
+                        CPLFree( psImage->pasLocations );
+                        psImage->pasLocations = NULL;
+                        psImage->nLocCount = 0;
+                        return;
+                    }
                     for( i = 0; i < 8; i++ )
                         CPL_MSBPTR64( (adfTarget + i) );
                         
@@ -3382,8 +3432,11 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
     abySignature[4] = 0x00;
     abySignature[5] = 0x0E;
 
-    VSIFSeekL( psImage->psFile->fp, nVQOffset, SEEK_SET );
-    VSIFReadL( abyTestChunk, 1, sizeof(abyTestChunk), psImage->psFile->fp );
+    if( VSIFSeekL( psImage->psFile->fp, nVQOffset, SEEK_SET ) != 0 ||
+        VSIFReadL( abyTestChunk, sizeof(abyTestChunk), 1, psImage->psFile->fp ) != 1 )
+    {
+        return FALSE;
+    }
 
     if( memcmp(abyTestChunk,abySignature,sizeof(abySignature)) != 0 )
     {
@@ -3413,15 +3466,18 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
     for( i = 0; i < 4; i++ )
     {
         GUInt32 nVQVector;
+        int bOK;
 
         psImage->apanVQLUT[i] = (GUInt32 *) CPLCalloc(4096,sizeof(GUInt32));
 
-        VSIFSeekL( psImage->psFile->fp, nVQOffset + 6 + i*14 + 10, SEEK_SET );
-        VSIFReadL( &nVQVector, 1, 4, psImage->psFile->fp );
+        bOK = VSIFSeekL( psImage->psFile->fp, nVQOffset + 6 + i*14 + 10, SEEK_SET ) == 0;
+        bOK &= VSIFReadL( &nVQVector, 1, 4, psImage->psFile->fp ) == 4;
         nVQVector = CPL_MSBWORD32( nVQVector );
         
-        VSIFSeekL( psImage->psFile->fp, nVQOffset + nVQVector, SEEK_SET );
-        VSIFReadL( psImage->apanVQLUT[i], 4, 4096, psImage->psFile->fp );
+        bOK &= VSIFSeekL( psImage->psFile->fp, nVQOffset + nVQVector, SEEK_SET ) == 0;
+        bOK &= VSIFReadL( psImage->apanVQLUT[i], 4, 4096, psImage->psFile->fp ) == 4096;
+        if( !bOK )
+            return FALSE;
     }
 
     return TRUE;

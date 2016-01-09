@@ -1018,7 +1018,12 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
                     pszFilename );
             return NULL;
         }
-        VSIFReadL(buffer, 1, 48, fp);
+        if( VSIFReadL(buffer, 1, 48, fp) != 48 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
+            VSIFCloseL(fp);
+            return NULL;
+        }
     }
     const int isRGBA = CSLTestBoolean(CPLGetConfigOption("RPFTOC_FORCE_RGBA", "NO"));
     RPFToc* toc = (psFile) ? RPFTOCRead( pszFilename, psFile ) :
