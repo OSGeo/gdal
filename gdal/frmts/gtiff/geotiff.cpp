@@ -9168,11 +9168,23 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
             if( strlen(pszXML_MD) > 32000 )
             {
                 if( bSrcIsGeoTIFF )
-                    ((GTiffDataset *) poSrcDS)->PushMetadataToPam();
+                {
+                    if( ((GTiffDataset *) poSrcDS)->GetPamFlags() & GPF_DISABLED )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined, 
+                            "Metadata exceeding 32000 bytes cannot be written into GeoTIFF." );
+                    }
+                    else
+                    {
+                        ((GTiffDataset *) poSrcDS)->PushMetadataToPam();
+                        CPLError( CE_Warning, CPLE_AppDefined, 
+                            "Metadata exceeding 32000 bytes cannot be written into GeoTIFF. Transfered to PAM instead." );
+                    }
+                }
                 else
+                {
                     bRet = FALSE;
-                CPLError( CE_Warning, CPLE_AppDefined, 
-                          "Lost metadata writing to GeoTIFF ... too large to fit in tag." );
+                }
             }
             else
             {
