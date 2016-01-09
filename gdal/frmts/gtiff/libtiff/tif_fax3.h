@@ -84,7 +84,7 @@ extern void _TIFFFax3fillruns(unsigned char*, uint32*, uint32*, uint32);
 typedef struct {                /* state table entry */
 	unsigned char State;    /* see above */
 	unsigned char Width;    /* width of code in bits */
-	uint32 Param;           /* unsigned 32-bit run length in bits */
+	uint16 Param;           /* unsigned 16-bit run length in bits */
 } TIFFFaxTabEnt;
 
 extern const TIFFFaxTabEnt TIFFFaxMainTable[];

@@ -85,7 +85,7 @@ typedef	void (*TIFFFaxFillFunc)(unsigned char*, GUInt32*, GUInt32*, GUInt32);
 typedef struct {		/* state table entry */
 	unsigned char State;	/* see above */
 	unsigned char Width;	/* width of code in bits */
-	GUInt32	Param;		/* unsigned 32-bit run length in bits */
+	GUInt16	Param;		/* unsigned 16-bit run length in bits */
 } TIFFFaxTabEnt;
 
 #if 0  /* Unused */
