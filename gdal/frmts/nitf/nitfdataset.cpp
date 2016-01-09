@@ -5572,7 +5572,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                          bOK && i < nNBPC * nNBPR;
                          i++ )
                     {
-                        bOK &= VSIFWriteL( &nBlockOffset32, 4, 1, fp );
+                        bOK &= VSIFWriteL( &nBlockOffset32, 4, 1, fp ) == 1;
                     }
                     if( !bOK )
                     {
