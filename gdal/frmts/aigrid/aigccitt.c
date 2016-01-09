@@ -1728,6 +1728,11 @@ Fax3DecodeRLE(Fax3BaseState* tif, unsigned char *buf, int occ,
 {
     DECLARE_STATE(tif, sp);
     int mode = sp->b.mode;
+    if( occ % sp->b.rowbytes)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Fractional scanlines cannot be read");
+        return (-1);
+    }
 
     CACHE_STATE(sp);
     thisrun = sp->curruns;

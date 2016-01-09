@@ -726,7 +726,7 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
 /* -------------------------------------------------------------------- */
 /*	Call an appropriate handler depending on magic code.		*/
 /* -------------------------------------------------------------------- */
-
+    eErr = CE_None;
     if( nMagic == 0x08 )
     {
         AIGProcessRawBlock( pabyCur, nDataSize, nMin,
@@ -764,7 +764,7 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
     }
     else if( nMagic == 0xFF )
     {
-        AIGProcessFFBlock( pabyCur, nDataSize, nMin,
+        eErr = AIGProcessFFBlock( pabyCur, nDataSize, nMin,
                            nBlockXSize, nBlockYSize,
                            panData );
     }
@@ -795,7 +795,7 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
 
     CPLFree( pabyRaw );
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
