@@ -1889,6 +1889,11 @@ CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes,
      * Calculate the scanline/tile widths.
      */
     rowbytes = nBlockXSize / 8;
+	if( rowbytes == 0 )
+	{
+        CPLError(CE_Failure, CPLE_AppDefined, "rowbytes == 0");
+        return CE_Failure;
+	}
     rowpixels = nBlockXSize;
 
     sp->rowbytes = (GUInt32) rowbytes;
