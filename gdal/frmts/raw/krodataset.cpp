@@ -145,7 +145,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     memcpy(&nComp, achHeader + 16, 4);
     CPL_MSBPTR32( &nComp );
 
-    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+    if (!GDALCheckDatasetDimensions(nXSize, nYSize) ||
         !GDALCheckBandCount(nComp, FALSE))
     {
         delete poDS;
