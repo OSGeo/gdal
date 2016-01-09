@@ -1962,8 +1962,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
             GDALMajorObject::SetMetadataItem( "RESAMPLING", 
                                               "AVERAGE_BIT2GRAYSCALE" );
             GDALMajorObject::SetMetadataItem( "NBITS", "8" );
-            eHFADataType = eHFADataTypeO;
         }
+        eHFADataType = eHFADataTypeO;
     }
 
 /* -------------------------------------------------------------------- */
