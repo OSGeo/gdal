@@ -66,7 +66,7 @@ public:
     KMLNode* getParent() const;
 
     void addChildren(KMLNode* poNode);
-    std::size_t countChildren();
+    std::size_t countChildren() const;
 
     KMLNode* getChild(std::size_t index) const;
 
@@ -74,7 +74,7 @@ public:
     void appendContent(std::string const& text);
     std::string getContent(std::size_t index) const;
     void deleteContent(std::size_t index);
-    std::size_t numContent();
+    std::size_t numContent() const;
 
     void setLayerNumber(int nNum);
     int getLayerNumber() const;
@@ -87,7 +87,7 @@ public:
 
     OGRGeometry* getGeometry(Nodetype eType = Unknown);
 
-    int is25D() { return b25D_; }
+    bool is25D() const { return b25D_; }
 
 private:
 
@@ -105,11 +105,10 @@ private:
     std::string sName_;
 
     Nodetype eType_;
-    int b25D_;
+    bool b25D_;
 
     int nLayerNumber_;
     int nNumFeatures_;
 };
 
 #endif /* KMLNODE_H_INCLUDED */
-
