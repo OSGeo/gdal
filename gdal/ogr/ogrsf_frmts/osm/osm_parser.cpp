@@ -696,7 +696,10 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
             pasNodes[nNodes].sInfo.nChangeset = nChangeset;
             pasNodes[nNodes].sInfo.nVersion = nVersion;
             pasNodes[nNodes].sInfo.nUID = nUID;
-            pasNodes[nNodes].sInfo.pszUserSID = pszStrBuf + panStrOff[nUserSID];
+            if( panStrOff == NULL )
+                pasNodes[nNodes].sInfo.pszUserSID = "";
+            else
+                pasNodes[nNodes].sInfo.pszUserSID = pszStrBuf + panStrOff[nUserSID];
             /* pasNodes[nNodes].sInfo.nVisible = nVisible; */
             nNodes ++;
             /* printf("nLat = " CPL_FRMT_GIB "\n", nLat); printf("nLon = " CPL_FRMT_GIB "\n", nLon); */
