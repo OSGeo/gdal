@@ -653,7 +653,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 
         if (poCurLayer)
         {
-            ((OGRMemLayer*)poCurLayer)->SetUpdatable(bUpdatable);
+            ((OGRMemLayer*)poCurLayer)->SetUpdatable(CPL_TO_BOOL(bUpdatable));
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(TRUE);
             ((OGRXLSXLayer*)poCurLayer)->SetUpdated(FALSE);
         }
