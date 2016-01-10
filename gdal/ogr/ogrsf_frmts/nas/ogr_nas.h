@@ -48,7 +48,6 @@ class OGRNASLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     int                 iNextNASId;
-    int                 nTotalNASCount;
 
     OGRNASDataSource    *poDS;
 
@@ -84,7 +83,7 @@ class OGRNASRelationLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
     OGRNASDataSource    *poDS;
 
-    int                  bPopulated;
+    bool                 bPopulated;
     int                  iNextFeature;
     std::vector<CPLString> aoRelationCollection;
 
@@ -103,7 +102,7 @@ class OGRNASRelationLayer : public OGRLayer
     void                AddRelation( const char *pszFromID,
                                      const char *pszType,
                                      const char *pszToID );
-    void                MarkRelationsPopulated() { bPopulated = TRUE; }
+    void                MarkRelationsPopulated() { bPopulated = true; }
 };
 
 /************************************************************************/

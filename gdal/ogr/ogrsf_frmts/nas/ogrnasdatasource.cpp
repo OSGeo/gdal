@@ -28,9 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_nas.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_nas.h"
 
 CPL_CVSID("$Id$");
 
@@ -47,16 +47,13 @@ static const char * const apszURNNames[] =
 /*                         OGRNASDataSource()                           */
 /************************************************************************/
 
-OGRNASDataSource::OGRNASDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-
-    poReader = NULL;
-    poRelationLayer = NULL;
-}
+OGRNASDataSource::OGRNASDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    poRelationLayer(NULL),
+    pszName(NULL),
+    poReader(NULL)
+{}
 
 /************************************************************************/
 /*                        ~OGRNASDataSource()                         */
@@ -101,13 +98,13 @@ int OGRNASDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
 /*      Can we find a NAS Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
-    const char *pszGFSFilename;
-    VSIStatBuf sGFSStatBuf, sNASStatBuf;
-    int        bHaveSchema = FALSE;
+    bool bHaveSchema = false;
 
-    pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+    const char *pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+    VSIStatBuf sGFSStatBuf;
     if( CPLStat( pszGFSFilename, &sGFSStatBuf ) == 0 )
     {
+        VSIStatBuf sNASStatBuf;
         if( CPLStat( pszNewName, &sNASStatBuf ) == 0 &&
             sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
         {
@@ -132,17 +129,17 @@ int OGRNASDataSource::Open( const char * pszNewName )
         && !poReader->PrescanForSchema( TRUE )
         && CPLGetLastErrorType() == CE_Failure )
     {
-        // we assume an errors have been reported.
+        // Assume an error has been reported.
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Save the schema file if possible.  Don't make a fuss if we      */
-/*      can't ... could be read-only directory or something.            */
+/*      Save the schema file if possible.  Do not make a fuss if we     */
+/*      cannot.  It could be read-only directory or something.          */
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && poReader->GetClassCount() > 0 )
     {
-        FILE    *fp = NULL;
+        FILE *fp = NULL;
 
         pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
         if( CPLStat( pszGFSFilename, &sGFSStatBuf ) != 0
@@ -153,9 +150,9 @@ int OGRNASDataSource::Open( const char * pszNewName )
         }
         else
         {
-            CPLDebug("NAS",
-                     "Not saving %s files already exists or can't be created.",
-                     pszGFSFilename );
+            CPLDebug( "NAS",
+                      "Not saving %s files already exists or can't be created.",
+                      pszGFSFilename );
         }
     }
 
@@ -197,12 +194,12 @@ int OGRNASDataSource::Open( const char * pszNewName )
 OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
 
 {
-    OGRNASLayer *poLayer;
     OGRwkbGeometryType eGType = wkbNone;
 
     if( poClass->GetGeometryPropertyCount() != 0 )
     {
-        eGType = (OGRwkbGeometryType) poClass->GetGeometryProperty(0)->GetType();
+        eGType = static_cast<OGRwkbGeometryType>(
+            poClass->GetGeometryProperty(0)->GetType() );
 
         if( poClass->GetFeatureCount() == 0 )
             eGType = wkbUnknown;
@@ -225,7 +222,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
             for( int i = 0; apszURNNames[i*2+0] != NULL; i++ )
             {
                 const char *pszTarget = apszURNNames[i*2+0];
-                int nTLen = static_cast<int>(strlen(pszTarget));
+                const int nTLen = static_cast<int>(strlen(pszTarget));
 
                 // Are we just looking for a prefix match?
                 if( pszTarget[nTLen-1] == '*' )
@@ -253,7 +250,8 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
 /* -------------------------------------------------------------------- */
 /*      Create an empty layer.                                          */
 /* -------------------------------------------------------------------- */
-    poLayer = new OGRNASLayer( poClass->GetName(), poSRS, eGType, this );
+    OGRNASLayer *poLayer =
+        new OGRNASLayer( poClass->GetName(), poSRS, eGType, this );
     delete poSRS;
 
 /* -------------------------------------------------------------------- */
@@ -302,15 +300,15 @@ OGRLayer *OGRNASDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNASDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRNASDataSource::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -328,13 +326,15 @@ void OGRNASDataSource::PopulateRelations()
     while( (poFeature = poReader->NextFeature()) != NULL )
     {
         char **papszOBProperties = poFeature->GetOBProperties();
-        int i;
 
-        for( i = 0; papszOBProperties != NULL && papszOBProperties[i] != NULL;
+        for( int i = 0;
+             papszOBProperties != NULL && papszOBProperties[i] != NULL;
              i++ )
         {
-            int nGMLIdIndex = poFeature->GetClass()->GetPropertyIndex( "gml_id" );
-            const GMLProperty *psGMLId = (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex ) : NULL;
+            const int nGMLIdIndex =
+                poFeature->GetClass()->GetPropertyIndex( "gml_id" );
+            const GMLProperty *psGMLId =
+              (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex ) : NULL;
             char *l_pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
                                                       &l_pszName );
