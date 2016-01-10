@@ -38,12 +38,11 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRMemDataSource::OGRMemDataSource( const char *pszFilename,
-                                    CPL_UNUSED char **papszOptions) :
+                                    char ** /* papszOptions */) :
     papoLayers(NULL),
-    nLayers(0)
-{
-    pszName = CPLStrdup(pszFilename);
-}
+    nLayers(0),
+    pszName(CPLStrdup(pszFilename))
+{}
 
 /************************************************************************/
 /*                         ~OGRMemDataSource()                          */
@@ -139,6 +138,6 @@ OGRLayer *OGRMemDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
