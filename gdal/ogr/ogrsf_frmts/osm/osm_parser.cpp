@@ -1547,8 +1547,13 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
                 if (nUncompressedSize > psCtxt->nUncompressedAllocated)
                 {
                     GByte* pabyUncompressedNew;
-                    psCtxt->nUncompressedAllocated =
-                        MAX(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
+                    if( psCtxt->nUncompressedAllocated <= INT_MAX )
+                        psCtxt->nUncompressedAllocated =
+                            MAX(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
+                    else
+                        psCtxt->nUncompressedAllocated = nUncompressedSize;
+                    if( psCtxt->nUncompressedAllocated > 0xFFFFFFFFU - EXTRA_BYTES )
+                        GOTO_END_ERROR;
                     pabyUncompressedNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
                                         psCtxt->nUncompressedAllocated + EXTRA_BYTES);
                     if( pabyUncompressedNew == NULL )
