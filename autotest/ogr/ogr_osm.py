@@ -683,6 +683,18 @@ def ogr_osm_12():
 
     return 'success'
 
+###############################################################################
+# Test test_uncompressed_dense_true_nometadata.pbf
+
+def ogr_osm_test_uncompressed_dense_true_nometadata_pbf():
+    return ogr_osm_1('data/test_uncompressed_dense_true_nometadata.pbf')
+
+###############################################################################
+# Test test_uncompressed_dense_false.pbf
+
+def ogr_osm_test_uncompressed_dense_false_pbf():
+    return ogr_osm_1('data/test_uncompressed_dense_false.pbf')
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -698,6 +710,8 @@ gdaltest_list = [
     ogr_osm_10,
     ogr_osm_11,
     ogr_osm_12,
+    ogr_osm_test_uncompressed_dense_true_nometadata_pbf,
+    ogr_osm_test_uncompressed_dense_false_pbf
     ]
 
 if __name__ == '__main__':
