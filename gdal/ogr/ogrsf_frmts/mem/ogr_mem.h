@@ -54,15 +54,15 @@ class OGRMemLayer : public OGRLayer
     GIntBig             m_iNextReadFID;
     GIntBig             m_nMaxFeatureCount; // max size of papoFeatures
     OGRFeature        **m_papoFeatures;
-    int                 m_bHasHoles;
+    bool                m_bHasHoles;
 
     FeatureMap          m_oMapFeatures;
     FeatureIterator     m_oMapFeaturesIter;
 
     GIntBig             m_iNextCreateFID;
 
-    int                 m_bUpdatable;
-    int                 m_bAdvertizeUTF8;
+    bool                m_bUpdatable;
+    bool                m_bAdvertizeUTF8;
 
     bool                m_bUpdated;
 
@@ -98,8 +98,8 @@ class OGRMemLayer : public OGRLayer
 
     int                 TestCapability( const char * );
 
-    void                SetUpdatable(int bUpdatableIn) { m_bUpdatable = bUpdatableIn; }
-    void                SetAdvertizeUTF8(int bAdvertizeUTF8In) { m_bAdvertizeUTF8 = bAdvertizeUTF8In; }
+    void                SetUpdatable( bool bUpdatableIn ) { m_bUpdatable = bUpdatableIn; }
+    void                SetAdvertizeUTF8( bool bAdvertizeUTF8In ) { m_bAdvertizeUTF8 = bAdvertizeUTF8In; }
 
     bool                HasBeenUpdated() const { return m_bUpdated; }
     void                SetUpdated(bool bUpdated) { m_bUpdated = bUpdated; }
