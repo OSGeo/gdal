@@ -739,6 +739,11 @@ struct json_object* json_object_new_array(void)
   jso->_delete = &json_object_array_delete;
   jso->_to_json_string = &json_object_array_to_json_string;
   jso->o.c_array = array_list_new(&json_object_array_entry_free);
+  if( jso->o.c_array == NULL )
+  {
+      free(jso);
+      jso = NULL;
+  }
   return jso;
 }
 
