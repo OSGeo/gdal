@@ -194,7 +194,7 @@ public:
     bool             PrescanForTemplate( void );
     void             ResetReading();
 
-    bool             ParseXSD( CPL_UNUSED const char *pszFile ) { return false; }
+    bool             ParseXSD( const char * /* pszFile */ ) { return false; }
 
     bool             ResolveXlinks( const char *pszFile,
                                     bool* pbOutIsTempFile,

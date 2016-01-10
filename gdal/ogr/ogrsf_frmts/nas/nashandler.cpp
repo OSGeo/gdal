@@ -33,7 +33,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-#define MAX_TOKEN_SIZE  1000
+static const int MAX_TOKEN_SIZE = 1000;
 
 /*
   Update modes:
@@ -108,12 +108,11 @@ NASHandler::~NASHandler()
 CPLString NASHandler::GetAttributes(const Attributes* attrs)
 {
     CPLString osRes;
-    char *pszString;
 
     for(unsigned int i=0; i < attrs->getLength(); i++)
     {
         osRes += " ";
-        pszString = tr_strdup(attrs->getQName(i));
+        char *pszString = tr_strdup(attrs->getQName(i));
         osRes += pszString;
         CPLFree( pszString );
         osRes += "=\"";
@@ -130,15 +129,14 @@ CPLString NASHandler::GetAttributes(const Attributes* attrs)
 /*                            startElement()                            */
 /************************************************************************/
 
-void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
-                              const XMLCh* const localname,
-                              CPL_UNUSED const XMLCh* const qname,
-                              const Attributes& attrs )
+void NASHandler::startElement( const XMLCh* const /* uri */,
+                               const XMLCh* const localname,
+                               const XMLCh* const /* qname */,
+                               const Attributes& attrs )
 
 {
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
-    const char *pszLast = NULL;
 
     tr_strcpy( szElementName, localname );
 
@@ -162,11 +160,13 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
     }
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("NAS",
-              "%*sstartElement %s m_bIgnoreFeature:%d depth:%d depthFeature:%d featureClass:%s",
+    CPLDebug( "NAS",
+              "%*sstartElement %s m_bIgnoreFeature:%d depth:%d "
+              "depthFeature:%d featureClass:%s",
               m_nDepth, "", szElementName,
               m_bIgnoreFeature, m_nDepth, m_nDepthFeature,
-              poState->m_poFeature ? poState->m_poFeature->GetClass()->GetElementName() : "(no feature)"
+              poState->m_poFeature ? poState->m_poFeature->
+                  GetClass()->GetElementName() : "(no feature)"
             );
 #endif
 
@@ -186,10 +186,12 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 /*      If we are collecting geometry, or if we determine this is a     */
 /*      geometry element then append to the geometry info.              */
 /* -------------------------------------------------------------------- */
+    const char *pszLast = NULL;
+
     if( m_pszGeometry != NULL
         || IsGeometryElement( szElementName ) )
     {
-        int nLNLen = tr_strlen( localname );
+        const int nLNLen = tr_strlen( localname );
         CPLString osAttributes = GetAttributes( &attrs );
 
         /* should save attributes too! */
@@ -225,7 +227,8 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(szElementName,"Filter")
              && (pszLast = m_poReader->GetState()->GetLastComponent()) != NULL
-             && (EQUAL(pszLast,"Delete") || EQUAL(pszLast,"Replace") || EQUAL(pszLast,"Update")) )
+             && (EQUAL(pszLast,"Delete") || EQUAL(pszLast,"Replace") ||
+                 EQUAL(pszLast,"Update")) )
     {
         const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
         if ( pszFilteredClassName != NULL &&
@@ -237,39 +240,43 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 
             return;
         }
-        
+
         if( m_osLastTypeName == "" )
         {
-            CPLError(CE_Failure, CPLE_AssertionFailed, "m_osLastTypeName == \"\"");
-                    
+            CPLError( CE_Failure, CPLE_AssertionFailed,
+                      "m_osLastTypeName == \"\"");
+
             m_bIgnoreFeature = true;
             m_nDepthFeature = m_nDepth;
             m_nDepth ++;
             return;
         }
-        
+
         if( EQUAL( pszLast, "Replace" )  &&
             ( m_osLastReplacingFID == "" || m_osLastSafeToIgnore == "" ) )
         {
-            CPLError(CE_Failure, CPLE_AssertionFailed, "m_osLastReplacingFID == \"\" || m_osLastSafeToIgnore == \"\"");
-                    
+            CPLError( CE_Failure, CPLE_AssertionFailed,
+                      "m_osLastReplacingFID == \"\" || "
+                      "m_osLastSafeToIgnore == \"\"" );
+
             m_bIgnoreFeature = true;
             m_nDepthFeature = m_nDepth;
             m_nDepth ++;
             return;
         }
-                
+
         if( EQUAL( pszLast, "Update" )  &&
             ( m_osLastEnded == "" || m_osLastOccasion == "" ) )
         {
-            CPLError(CE_Failure, CPLE_AssertionFailed, "m_osLastEnded == \"\" || m_osLastOccasion == \"\"");
-                    
+            CPLError( CE_Failure, CPLE_AssertionFailed,
+                      "m_osLastEnded == \"\" || m_osLastOccasion == \"\"" );
+
             m_bIgnoreFeature = true;
             m_nDepthFeature = m_nDepth;
             m_nDepth ++;
             return;
         }
-        
+
         m_bIgnoreFeature = false;
 
         m_poReader->PushFeature( "Delete", attrs );
@@ -277,22 +284,27 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         m_nDepthFeature = m_nDepth;
         m_nDepth ++;
 
-        m_poReader->SetFeaturePropertyDirectly( "typeName", CPLStrdup(m_osLastTypeName) );
+        m_poReader->SetFeaturePropertyDirectly(
+            "typeName", CPLStrdup(m_osLastTypeName) );
         m_poReader->SetFeaturePropertyDirectly( "context", CPLStrdup(pszLast) );
 
         if( EQUAL( pszLast, "Replace" ) )
         {
             //CPLAssert( m_osLastReplacingFID != "" );
             //CPLAssert( m_osLastSafeToIgnore != "" );
-            m_poReader->SetFeaturePropertyDirectly( "replacedBy", CPLStrdup(m_osLastReplacingFID) );
-            m_poReader->SetFeaturePropertyDirectly( "safeToIgnore", CPLStrdup(m_osLastSafeToIgnore) );
+            m_poReader->SetFeaturePropertyDirectly(
+                "replacedBy", CPLStrdup(m_osLastReplacingFID) );
+            m_poReader->SetFeaturePropertyDirectly(
+                "safeToIgnore", CPLStrdup(m_osLastSafeToIgnore) );
         }
         else if( EQUAL( pszLast, "Update" ) )
         {
             //CPLAssert( m_osLastEnded != "" );
             //CPLAssert( m_osLastOccasion != "" );
-            m_poReader->SetFeaturePropertyDirectly( "endet", CPLStrdup(m_osLastEnded) );
-            m_poReader->SetFeaturePropertyDirectly( "anlass", CPLStrdup(m_osLastOccasion) );
+            m_poReader->SetFeaturePropertyDirectly(
+                "endet", CPLStrdup(m_osLastEnded) );
+            m_poReader->SetFeaturePropertyDirectly(
+                "anlass", CPLStrdup(m_osLastOccasion) );
             m_osLastEnded = "";
             m_osLastOccasion = "";
         }
@@ -312,16 +324,16 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         pszLast = m_poReader->GetState()->GetLastComponent();
         if( pszLast != NULL && EQUAL(pszLast,"Replace") )
         {
-            int nIndex;
             XMLCh  Name[100];
 
             tr_strcpy( Name, "gml:id" );
-            nIndex = attrs.getIndex( Name );
-            
+            int nIndex = attrs.getIndex( Name );
+
             if( nIndex == -1 || m_osLastReplacingFID !="" )
             {
-                CPLError(CE_Failure, CPLE_AssertionFailed, "nIndex == -1 || m_osLastReplacingFID !=\"\"");
-                
+                CPLError( CE_Failure, CPLE_AssertionFailed,
+                          "nIndex == -1 || m_osLastReplacingFID !=\"\"" );
+
                 m_bIgnoreFeature = true;
                 m_nDepthFeature = m_nDepth;
                 m_nDepth ++;
@@ -336,7 +348,9 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
             CPLFree( pszReplacingFID );
 
 #ifdef DEBUG_VERBOSE
-            CPLDebug("NAS", "%*s### Replace typeName=%s replacedBy=%s", m_nDepth, "", m_osLastTypeName.c_str(), m_osLastReplacingFID.c_str() );
+            CPLDebug( "NAS", "%*s### Replace typeName=%s replacedBy=%s",
+                      m_nDepth, "", m_osLastTypeName.c_str(),
+                      m_osLastReplacingFID.c_str() );
 #endif
         }
 
@@ -367,11 +381,10 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(szElementName,"Delete") || EQUAL(szElementName,"Update") )
     {
-        int nIndex;
         XMLCh  Name[100];
 
         tr_strcpy( Name, "typeName" );
-        nIndex = attrs.getIndex( Name );
+        int nIndex = attrs.getIndex( Name );
 
         if( nIndex != -1 )
         {
@@ -394,7 +407,8 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         m_bInUpdateProperty = true;
     }
 
-    else if ( m_bInUpdateProperty && ( EQUAL(szElementName, "Name" ) || EQUAL(szElementName, "Value" ) ) )
+    else if ( m_bInUpdateProperty && ( EQUAL(szElementName, "Name" ) ||
+                                       EQUAL(szElementName, "Value" ) ) )
     {
         // collect attribute name or value
         CPLFree( m_pszCurField );
@@ -408,11 +422,10 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(szElementName,"Replace") )
     {
-        int nIndex;
         XMLCh  Name[100];
 
         tr_strcpy( Name, "safeToIgnore" );
-        nIndex = attrs.getIndex( Name );
+        int nIndex = attrs.getIndex( Name );
 
         if( nIndex != -1 )
         {
@@ -422,7 +435,8 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         }
         else
         {
-            CPLError( CE_Warning, CPLE_AppDefined, "NAS: safeToIgnore attribute missing" );
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "NAS: safeToIgnore attribute missing" );
             m_osLastSafeToIgnore = "false";
         }
 
@@ -458,17 +472,15 @@ void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
 /************************************************************************/
 /*                             endElement()                             */
 /************************************************************************/
-void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
-                            const XMLCh* const localname,
-                            CPL_UNUSED const XMLCh* const qname )
+void NASHandler::endElement( const XMLCh* const /* uri */ ,
+                             const XMLCh* const localname,
+                             const XMLCh* const /* qname */)
 
 {
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
-    const char  *pszLast;
 
     tr_strcpy( szElementName, localname );
-
 
     m_nDepth --;
 
@@ -647,6 +659,8 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
 /*      element name for the class, then we have finished the           */
 /*      feature, and we pop the feature read state.                     */
 /* -------------------------------------------------------------------- */
+    const char *pszLast = NULL;
+
     if( m_nDepth == m_nDepthFeature && poState->m_poFeature != NULL
         && EQUAL(szElementName,
                  poState->m_poFeature->GetClass()->GetElementName()) )
@@ -662,7 +676,8 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
     else if( m_nDepth == m_nDepthFeature
              && poState->m_poFeature != NULL
              && EQUAL(szElementName,"Filter")
-             && (pszLast=poState->m_poFeature->GetClass()->GetElementName()) != NULL
+             && (pszLast=poState->m_poFeature->GetClass()->GetElementName())
+                != NULL
              && ( EQUAL(pszLast, "Delete") || EQUAL(pszLast, "Update") ) )
     {
         m_nDepthFeature = 0;
@@ -690,22 +705,23 @@ void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
 
 #if XERCES_VERSION_MAJOR >= 3
 void NASHandler::characters( const XMLCh *const chars_in,
-                             CPL_UNUSED const XMLSize_t length )
+                             const XMLSize_t /* length */ )
 #else
 void NASHandler::characters( const XMLCh* const chars_in,
-                             CPL_UNUSED const unsigned int length )
+                             const unsigned int /* length */ )
 #endif
 {
     const XMLCh *chars = chars_in;
 
     if( m_pszCurField != NULL )
     {
-        int     nCurFieldLength = static_cast<int>(strlen(m_pszCurField));
+        const int nCurFieldLength = static_cast<int>(strlen(m_pszCurField));
 
         if (nCurFieldLength == 0)
         {
             // Ignore white space
-            while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
+            while( *chars == ' ' || *chars == 10 || *chars == 13 ||
+                   *chars == '\t')
                 chars++;
         }
 
@@ -717,9 +733,9 @@ void NASHandler::characters( const XMLCh* const chars_in,
         }
         else
         {
-            m_pszCurField = (char *)
+            m_pszCurField = static_cast<char *>(
                 CPLRealloc( m_pszCurField,
-                            nCurFieldLength+strlen(pszTranslated)+1 );
+                            nCurFieldLength+strlen(pszTranslated)+1 ) );
             strcpy( m_pszCurField + nCurFieldLength, pszTranslated );
             CPLFree( pszTranslated );
         }
@@ -729,11 +745,12 @@ void NASHandler::characters( const XMLCh* const chars_in,
         if (m_nGeomLen == 0)
         {
             // Ignore white space
-            while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
+            while( *chars == ' ' || *chars == 10 || *chars == 13 ||
+                   *chars == '\t')
                 chars++;
         }
 
-        int nCharsLen = tr_strlen(chars);
+        const int nCharsLen = tr_strlen(chars);
 
         if( m_nGeomLen + nCharsLen*4 + 4 > m_nGeomAlloc )
         {
@@ -754,12 +771,12 @@ void NASHandler::characters( const XMLCh* const chars_in,
 void NASHandler::fatalError( const SAXParseException &exception)
 
 {
-    char *pszErrorMessage;
-
-    pszErrorMessage = tr_strdup( exception.getMessage() );
+    char *pszErrorMessage = tr_strdup( exception.getMessage() );
     CPLError( CE_Failure, CPLE_AppDefined,
               "XML Parsing Error: %s at line %d, column %d\n",
-              pszErrorMessage, (int)exception.getLineNumber(), (int)exception.getColumnNumber() );
+              pszErrorMessage,
+              static_cast<int>(exception.getLineNumber()),
+              static_cast<int>(exception.getColumnNumber()) );
 
     CPLFree( pszErrorMessage );
 }
