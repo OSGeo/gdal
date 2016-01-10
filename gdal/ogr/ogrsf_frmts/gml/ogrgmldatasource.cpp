@@ -1338,7 +1338,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
             if( osPrefix == aapoGeomProps[iSubClass].first )
                 break;
         }
-        if( iSubClass == (int)aapoProps.size() )
+        if( iSubClass == (int)aapoGeomProps.size() )
             aapoGeomProps.push_back( std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> >
                     (osPrefix, std::vector<GMLGeometryPropertyDefn*>()) );
         aapoGeomProps[iSubClass].second.push_back(poProp);
