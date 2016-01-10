@@ -988,7 +988,15 @@ void CPCIDSKVectorSegment::GetVertices( ShapeId shape_id,
     if( needs_swap )
         SwapData( &vertex_count, 4, 1 );
 
-    vertices.resize( vertex_count );
+    try
+    {
+        vertices.resize( vertex_count );
+    }
+    catch( const std::bad_alloc& ex )
+    {
+        return ThrowPCIDSKException("Out of memory allocating vertices(%u): %s",
+                                    vertex_count, ex.what());
+    }
     
     // We ought to change this to process the available data and
     // then request more. 
