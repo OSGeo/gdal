@@ -80,9 +80,9 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
     }
 
     return poDS;
-#endif
-
+#else
     return NULL;
+#endif
 }
 
 /************************************************************************/

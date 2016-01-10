@@ -687,7 +687,7 @@ void OGRODSDataSource::endElementTable(CPL_UNUSED const char * pszNameIn)
 
             poCurLayer->ResetReading();
 
-            ((OGRMemLayer*)poCurLayer)->SetUpdatable(bUpdatable);
+            ((OGRMemLayer*)poCurLayer)->SetUpdatable(CPL_TO_BOOL(bUpdatable));
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(TRUE);
             ((OGRODSLayer*)poCurLayer)->SetUpdated(FALSE);
         }
