@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
+#include <limits>
 
 using namespace PCIDSK;
 
@@ -220,7 +221,10 @@ void VecSegHeader::InitializeExisting()
         field_descriptions.push_back( work_value.GetValueString() );
         
         next_off = vs->ReadField( next_off, work_value, FieldTypeInteger, sec_raw );
-        field_types.push_back( (ShapeFieldType) work_value.GetValueInteger() );
+        int field_type = work_value.GetValueInteger();
+        if( field_type < 0 || field_type > FieldTypeCountedInt )
+            return ThrowPCIDSKException( "Invalid field type: %d", field_type );
+        field_types.push_back( static_cast<ShapeFieldType> (field_type) );
         
         next_off = vs->ReadField( next_off, work_value, FieldTypeString, sec_raw );
         field_formats.push_back( work_value.GetValueString() );
@@ -251,12 +255,18 @@ void VecSegHeader::InitializeExisting()
     memcpy( &(vs->shape_count), vs->GetData(sec_raw,next_off,NULL,4), 4);
     if( needs_swap )
         SwapData( &(vs->shape_count), 4, 1 );
+    if( vs->shape_count < 0 )
+        return ThrowPCIDSKException( "Invalid shape_count: %d", vs->shape_count );
 
     next_off += 4;
     vs->shape_index_start = 0;
 
-    section_sizes[hsec_shape] = next_off - section_offsets[hsec_shape] 
-        + vs->shape_count * 12;
+    uint64 section_size = next_off - section_offsets[hsec_shape] 
+        + static_cast<uint64>(vs->shape_count) * 12;
+    if( section_size > std::numeric_limits<uint32>::max() )
+        return ThrowPCIDSKException( "Invalid section_size" );
+        
+    section_sizes[hsec_shape] = static_cast<uint32>(section_size);
 }
 
 /************************************************************************/
