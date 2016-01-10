@@ -276,8 +276,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
       }
 
       default:
-        assert( 0 );
-        return offset;
+        return ThrowPCIDSKException(0, "Unhandled field type %d", field_type);
     }
 }
 
@@ -513,7 +512,7 @@ void CPCIDSKVectorSegment::ReadSecFromFile( int section, char *buffer,
 /* -------------------------------------------------------------------- */
     if( section == sec_raw )
     {
-        ReadFromFile( buffer, block_offset*block_page_size,
+        ReadFromFile( buffer, static_cast<uint64>(block_offset)*static_cast<uint32>(block_page_size),
                       block_count*block_page_size );
         return;
     }
@@ -525,7 +524,11 @@ void CPCIDSKVectorSegment::ReadSecFromFile( int section, char *buffer,
     int i;
     const std::vector<uint32> *block_map = di[section].GetIndex();
 
-    assert( block_count + block_offset <= (int) block_map->size() );
+    if(  block_count + block_offset > (int) block_map->size() )
+    {
+        return ThrowPCIDSKException("Assertion failed: block_count(=%d) + block_offset(=%d) <= block_map->size()(=%d)",
+                                    block_count, block_offset, (int) block_map->size() );
+    }
 
     for( i = 0; i < block_count; i++ )
     {

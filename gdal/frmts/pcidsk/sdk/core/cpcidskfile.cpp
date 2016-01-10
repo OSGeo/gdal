@@ -595,8 +595,8 @@ void CPCIDSKFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
     interfaces.io->Seek( io_handle, offset, SEEK_SET );
     if( interfaces.io->Read( buffer, 1, size, io_handle ) != size )
-        return ThrowPCIDSKException( "PCIDSKFile:Failed to read %d bytes at %d.", 
-                                   (int) size, (int) offset );
+        return ThrowPCIDSKException( "PCIDSKFile:Failed to read %u bytes at %u.", 
+                                   (unsigned int) size, (unsigned int) offset );
 }
 
 /************************************************************************/
@@ -613,8 +613,8 @@ void CPCIDSKFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 
     interfaces.io->Seek( io_handle, offset, SEEK_SET );
     if( interfaces.io->Write( buffer, 1, size, io_handle ) != size )
-        return ThrowPCIDSKException( "PCIDSKFile:Failed to write %d bytes at %d.",
-                                   (int) size, (int) offset );
+        return ThrowPCIDSKException( "PCIDSKFile:Failed to write %u bytes at %u.",
+                                   (unsigned int) size, (unsigned int) offset );
 }
 
 /************************************************************************/
