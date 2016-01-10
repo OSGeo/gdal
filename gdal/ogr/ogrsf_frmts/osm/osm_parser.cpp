@@ -792,12 +792,16 @@ end_error:
 /*                             ReadNode()                               */
 /************************************************************************/
 
+/* From https://github.com/openstreetmap/osmosis/blob/master/osmosis-osm-binary/src/main/protobuf/osmformat.proto */
+/* The one advertized in http://wiki.openstreetmap.org/wiki/PBF_Format and */
+/* used previously seem wrong/old-dated */
+
 #define NODE_IDX_ID      1
-#define NODE_IDX_LAT     7
-#define NODE_IDX_LON     8
-#define NODE_IDX_KEYS    9
-#define NODE_IDX_VALS    10
-#define NODE_IDX_INFO    11
+#define NODE_IDX_LAT     8
+#define NODE_IDX_LON     9
+#define NODE_IDX_KEYS    2
+#define NODE_IDX_VALS    3
+#define NODE_IDX_INFO    4
 
 static
 int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
