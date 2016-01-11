@@ -3055,7 +3055,7 @@ typedef void GNMNetworkShadow;
 typedef void GNMGenericNetworkShadow;
 
 
-#ifdef DEBUG 
+#ifdef DEBUG
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
@@ -3069,13 +3069,13 @@ typedef void OSRSpatialReferenceShadow;
 int bUseExceptions=0;
 CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
-void CPL_STDCALL 
-PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
+void CPL_STDCALL
+PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 {
-  /* 
+  /*
   ** Generally we want to suppress error reporting if we have exceptions
-  ** enabled as the error message will be in the exception thrown in 
-  ** Python.  
+  ** enabled as the error message will be in the exception thrown in
+  ** Python.
   */
 
   /* If the error class is CE_Fatal, we want to have a message issued
@@ -3104,7 +3104,7 @@ void UseExceptions() {
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
-    pfnPreviousHandler = 
+    pfnPreviousHandler =
         CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
   }
 }
@@ -3146,7 +3146,7 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
     pszIter ++;
   }
 #if PY_VERSION_HEX >= 0x03000000
-  return PyUnicode_FromString(pszStr); 
+  return PyUnicode_FromString(pszStr);
 #else
   return PyString_FromString(pszStr);
 #endif
@@ -3174,7 +3174,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       *pbToFree = 1;
       return pszNewStr;
   }
-  else 
+  else
   {
 #if PY_VERSION_HEX >= 0x03000000
       return PyBytes_AsString(pyObject);
@@ -3585,12 +3585,12 @@ SWIGINTERN int GNMNetworkShadow_GetLayerCount(GNMNetworkShadow *self){
         }
 SWIGINTERN OGRLayerShadow *GNMNetworkShadow_GetLayerByIndex(GNMNetworkShadow *self,int index=0){
         
-        OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self, 
+        OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self,
                                                                       index);
             return layer;
         }
 SWIGINTERN OGRLayerShadow *GNMNetworkShadow_GetLayerByName(GNMNetworkShadow *self,char const *layer_name){
-            OGRLayerShadow* layer = 
+            OGRLayerShadow* layer =
                   (OGRLayerShadow*) GDALDatasetGetLayerByName(self, layer_name);
             return layer;
         }
@@ -3620,11 +3620,11 @@ SWIGINTERN void delete_GNMGenericNetworkShadow(GNMGenericNetworkShadow *self){
         }
 SWIGINTERN CPLErr GNMGenericNetworkShadow_ConnectFeatures(GNMGenericNetworkShadow *self,GIntBig nSrcFID,GIntBig nTgtFID,GIntBig nConFID,double dfCost,double dfInvCost,GNMDirection eDir){
             return GNMConnectFeatures(self, nSrcFID, nTgtFID,
-                                              nConFID, dfCost, dfInvCost, eDir);                        
+                                              nConFID, dfCost, dfInvCost, eDir);
         }
 SWIGINTERN CPLErr GNMGenericNetworkShadow_DisconnectFeatures(GNMGenericNetworkShadow *self,GIntBig nSrcFID,GIntBig nTgtFID,GIntBig nConFID){
             return GNMDisconnectFeatures(self, nSrcFID, nTgtFID,
-                                                           nConFID);                           
+                                                           nConFID);
         }
 SWIGINTERN CPLErr GNMGenericNetworkShadow_DisconnectFeaturesWithId(GNMGenericNetworkShadow *self,GIntBig nFID){
             return GNMDisconnectFeaturesWithId(self, nFID);
@@ -3661,7 +3661,7 @@ SWIG_AsVal_bool (PyObject *obj, bool *val)
 SWIGINTERN CPLErr GNMGenericNetworkShadow_ChangeBlockState(GNMGenericNetworkShadow *self,GIntBig nFID,bool bIsBlock){
             return GNMChangeBlockState(self, nFID, bIsBlock);
         }
-SWIGINTERN CPLErr GNMGenericNetworkShadow_ChangeAllBlockState(GNMGenericNetworkShadow *self,bool bIsBlock=false){            
+SWIGINTERN CPLErr GNMGenericNetworkShadow_ChangeAllBlockState(GNMGenericNetworkShadow *self,bool bIsBlock=false){
             return GNMChangeAllBlockState(self, bIsBlock);
         }
 #ifdef __cplusplus

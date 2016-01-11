@@ -3228,7 +3228,7 @@ class Feature(_object):
     def __copy__(self):
         return self.Clone()
 
-    # This makes it possible to fetch fields in the form "feature.area". 
+    # This makes it possible to fetch fields in the form "feature.area".
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
@@ -3245,7 +3245,7 @@ class Feature(_object):
         else:
             return self.GetField(idx)
 
-    # This makes it possible to set fields in the form "feature.area". 
+    # This makes it possible to set fields in the form "feature.area".
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
@@ -3262,7 +3262,7 @@ class Feature(_object):
                 else:
                     self.__dict__[key] = value
 
-    # This makes it possible to fetch fields in the form "feature['area']". 
+    # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, str):
@@ -3277,7 +3277,7 @@ class Feature(_object):
         else:
             return self.GetField(fld_index)
 
-    # This makes it possible to set fields in the form "feature['area'] = 123". 
+    # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
         if isinstance(key, str):
@@ -3333,9 +3333,9 @@ class Feature(_object):
         SetField(self, char name, int value)
         SetField(self, int id, double value)
         SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute, 
+        SetField(self, int id, int year, int month, int day, int hour, int minute,
             int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour, 
+        SetField(self, char name, int year, int month, int day, int hour,
             int minute, int second, int tzflag)
         """
 
@@ -3404,7 +3404,7 @@ class Feature(_object):
 
     def ExportToJson(self, as_object = False, options = None):
         """Exports a GeoJSON object which represents the Feature. The
-           as_object parameter determines whether the returned value 
+           as_object parameter determines whether the returned value
            should be a Python object instead of a string. Defaults to False.
            The options parameter is passed to Geometry.ExportToJson()"""
 
@@ -3428,12 +3428,12 @@ class Feature(_object):
         output = {'type':'Feature',
                    'geometry': geom_json_object,
                    'properties': {}
-                  } 
-        
+                  }
+
         fid = self.GetFID()
         if fid != NullFID:
             output['id'] = fid
-            
+
         for key in self.keys():
             fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
             if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
@@ -3443,7 +3443,7 @@ class Feature(_object):
                     output['properties'][key] = False
             else:
                 output['properties'][key] = self.GetField(key)
-        
+
         if not as_object:
             output = simplejson.dumps(output)
 
@@ -5573,13 +5573,13 @@ class Geometry(_object):
         return _ogr.Geometry_Value(self, *args)
 
     def Destroy(self):
-      self.__swig_destroy__(self) 
+      self.__swig_destroy__(self)
       self.__del__()
       self.thisown = 0
 
     def __str__(self):
       return self.ExportToWkt()
-      
+
 
     def __reduce__(self):
       return (self.__class__, (), self.ExportToWkb())
@@ -5587,11 +5587,11 @@ class Geometry(_object):
     def __setstate__(self, state):
         result = CreateGeometryFromWkb(state)
         self.this = result.this
-          
+
     def __iter__(self):
         self.iter_subgeom = 0
         return self
-        
+
     def next(self):
         if self.iter_subgeom < self.GetGeometryCount():
             subgeom = self.GetGeometryRef(self.iter_subgeom)
