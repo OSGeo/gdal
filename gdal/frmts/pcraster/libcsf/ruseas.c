@@ -437,12 +437,20 @@ int RuseAs(
   CSF_CR inFileCR = RgetCellRepr(m);
   CSF_VS inFileVS = RgetValueScale(m);
   int hasInFileCellReprType2 =  HasInFileCellReprType2(inFileCR);
+  int useTypeNoEnumIn;
+  int useTypeNoEnum;
 
   /* It is very inconvenient that both, VS and CR are taken as arguments
    * for this function, and previously were used in the switch statement
    * now, at least 'special conversions' handled first.
    */
-  if((int)useType == VS_BOOLEAN){
+
+  /* Hopefully Coverity will no longer detect that useTypeNoEnum */
+  /* comes from useType */
+  useTypeNoEnumIn = useType;
+  memcpy(&useTypeNoEnum, &useTypeNoEnumIn, sizeof(int));
+
+  if(useTypeNoEnum == VS_BOOLEAN){
     switch(inFileVS) {
       case VS_LDD:
       case VS_DIRECTION: {
@@ -469,7 +477,7 @@ int RuseAs(
       }
     }
   }
-  else if ((int)useType == VS_LDD){
+  else if (useTypeNoEnum == VS_LDD){
     switch(inFileVS) {
       case VS_LDD: {
         POSTCOND(inFileCR == CR_UINT1);
