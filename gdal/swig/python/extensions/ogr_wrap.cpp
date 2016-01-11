@@ -5583,8 +5583,8 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *arg
   PyObject *argv[4];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 3) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -8033,8 +8033,8 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilter(PyObject *self, PyObject *args
   PyObject *argv[4];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 3) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -8164,8 +8164,8 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilterRect(PyObject *self, PyObject *
   PyObject *argv[7];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 6) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -11691,8 +11691,8 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomField(PyObject *self, PyObject *args) 
   PyObject *argv[4];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 3) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -11885,8 +11885,8 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomFieldDirectly(PyObject *self, PyObject
   PyObject *argv[4];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 3) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -12035,8 +12035,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldRef(PyObject *self, PyObject *arg
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -12288,8 +12288,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldDefnRef(PyObject *self, PyObject *arg
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -12461,8 +12461,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldDefnRef(PyObject *self, PyObject 
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -12601,8 +12601,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsString(PyObject *self, PyObject *ar
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -12741,8 +12741,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger(PyObject *self, PyObject *a
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -12897,8 +12897,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64(PyObject *self, PyObject 
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -13037,8 +13037,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDouble(PyObject *self, PyObject *ar
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -13622,8 +13622,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary(PyObject *self, PyObject *ar
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -13762,8 +13762,8 @@ SWIGINTERN PyObject *_wrap_Feature_IsFieldSet(PyObject *self, PyObject *args) {
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -14131,8 +14131,8 @@ SWIGINTERN PyObject *_wrap_Feature_UnsetField(PyObject *self, PyObject *args) {
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -14704,8 +14704,8 @@ SWIGINTERN PyObject *_wrap_Feature_SetField(PyObject *self, PyObject *args) {
   PyObject *argv[10];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 9) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -15371,8 +15371,8 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldBinaryFromHexString(PyObject *self, P
   PyObject *argv[4];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 3) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
@@ -15782,8 +15782,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldType(PyObject *self, PyObject *args) 
   PyObject *argv[3];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 2) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }

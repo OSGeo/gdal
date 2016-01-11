@@ -4476,8 +4476,8 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin(PyObject *self, PyObject *args) {
   PyObject *argv[5];
   int ii;
   
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
   for (ii = 0; (ii < 4) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
