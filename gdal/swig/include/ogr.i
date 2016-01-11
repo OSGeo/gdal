@@ -3034,6 +3034,9 @@ OGRDriverShadow* GetDriver(int driver_number) {
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
 
+    if( papszArgv == NULL )
+        return NULL;
+
     nResArgCount =
       OGRGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions );
 
