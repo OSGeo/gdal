@@ -4630,7 +4630,15 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                 if (i == poDS->GetRasterCount())
                 {
                     nMaskFlags = GMF_NODATA | GMF_PER_DATASET;
-                    poMask = new GDALNoDataValuesMaskBand ( poDS );
+                    try
+                    {
+                        poMask = new GDALNoDataValuesMaskBand ( poDS );
+                    }
+                    catch( const std::bad_alloc& )
+                    {
+                        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+                        poMask = NULL;
+                    }
                     bOwnMask = true;
                     CSLDestroy(papszNoDataValues);
                     return poMask;
@@ -4664,7 +4672,15 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
     if( bHaveNoData )
     {
         nMaskFlags = GMF_NODATA;
-        poMask = new GDALNoDataMaskBand( this );
+        try
+        {
+            poMask = new GDALNoDataMaskBand( this );
+        }
+        catch( const std::bad_alloc& )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            poMask = NULL;
+        }
         bOwnMask = true;
         return poMask;
     }
@@ -4699,7 +4715,15 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         else if( poDS->GetRasterBand(4)->GetRasterDataType() == GDT_UInt16 )
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-            poMask = new GDALRescaledAlphaBand( poDS->GetRasterBand(4) );
+            try
+            {
+                poMask = new GDALRescaledAlphaBand( poDS->GetRasterBand(4) );
+            }
+            catch( const std::bad_alloc& )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+                poMask = NULL;
+            }
             bOwnMask = true;
             return poMask;
         }
@@ -4709,7 +4733,15 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /*      Fallback to all valid case.                                     */
 /* -------------------------------------------------------------------- */
     nMaskFlags = GMF_ALL_VALID;
-    poMask = new GDALAllValidMaskBand( this );
+    try
+    {
+        poMask = new GDALAllValidMaskBand( this );
+    }
+    catch( const std::bad_alloc& )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+        poMask = NULL;
+    }
     bOwnMask = true;
 
     return poMask;
