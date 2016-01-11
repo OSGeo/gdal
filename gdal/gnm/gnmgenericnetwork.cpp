@@ -1316,7 +1316,7 @@ CPLErr GNMGenericNetwork::LoadGraph()
 
         int nBlockState = poFeature->GetFieldAsInteger(GNM_SYSFIELD_BLOCKED);
 
-        bool bIsBlock = GNM_BLOCK_NONE == nBlockState;
+        bool bIsBlock = GNM_BLOCK_NONE != nBlockState;
 
         m_oGraph.AddEdge(nConFID, nSrcFID, nTgtFID, eDir == GNM_EDGE_DIR_BOTH,
                          dfCost, dfInvCost);
