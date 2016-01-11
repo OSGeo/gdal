@@ -96,7 +96,7 @@ void PCIDSKBuffer::SetSize( int size )
         free( buffer );
         buffer = NULL;
         buffer_size = 0;
-        return ThrowPCIDSKException( "Out of memory allocating %d byte PCIDSKBuffer.",
+        throw PCIDSKException( "Out of memory allocating %d byte PCIDSKBuffer.",
                                size );
     }
 
