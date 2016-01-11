@@ -1520,9 +1520,9 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
 
 %typemap(arginit, noblock=1) (double *min_ret, double *max_ret, int *buckets_ret, GUIntBig **ppanHistogram)
 {
-   double min_val, max_val;
-   int buckets_val;
-   GUIntBig *panHistogram;
+   double min_val = 0.0, max_val = 0.0;
+   int buckets_val = 0;
+   GUIntBig *panHistogram = NULL;
 
    $1 = &min_val;
    $2 = &max_val;
