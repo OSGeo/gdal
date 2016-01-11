@@ -11235,6 +11235,7 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
       buf->format = (char*) "B";
       buf->itemsize = 1;
     }
+    Py_DECREF(resultobj);
     resultobj = PyMemoryView_FromBuffer(buf);
 #else
     PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
