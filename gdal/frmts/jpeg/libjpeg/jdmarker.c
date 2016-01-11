@@ -469,13 +469,14 @@ get_dht (j_decompress_ptr cinfo)
 
     if (l_index & 0x10) {		/* AC table definition */
       l_index -= 0x10;
+      if (l_index < 0 || l_index >= NUM_HUFF_TBLS)
+        ERREXIT1(cinfo, JERR_DHT_INDEX, l_index);
       htblptr = &cinfo->ac_huff_tbl_ptrs[l_index];
     } else {			/* DC table definition */
+      if (l_index < 0 || l_index >= NUM_HUFF_TBLS)
+        ERREXIT1(cinfo, JERR_DHT_INDEX, l_index);
       htblptr = &cinfo->dc_huff_tbl_ptrs[l_index];
     }
-
-    if (l_index < 0 || l_index >= NUM_HUFF_TBLS)
-      ERREXIT1(cinfo, JERR_DHT_INDEX, l_index);
 
     if (*htblptr == NULL)
       *htblptr = jpeg_alloc_huff_table((j_common_ptr) cinfo);
