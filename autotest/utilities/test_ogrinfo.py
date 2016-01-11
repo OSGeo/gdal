@@ -182,6 +182,8 @@ def test_ogrinfo_9():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -where "EAS_ID=171"')
     if ret.find('Feature Count: 1') == -1:
+        gdaltest.post_reason('fail')
+        print(ret)
         return 'fail'
 
     return 'success'
