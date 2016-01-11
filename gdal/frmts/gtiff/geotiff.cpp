@@ -7618,7 +7618,7 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
             {
                 /* For some reason Coverity tells: */
                 /* Value of non-local "this->hTIFF->tif_dir.td_stripoffset" that was verified to be "NULL" is not restored as it was along other paths. */
-                /* coverity[missing_restore] */
+                /* coverity[end_of_path] */
                 return FALSE;
             }
         }
