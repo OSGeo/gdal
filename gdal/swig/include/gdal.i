@@ -350,6 +350,10 @@ $1;
 //************************************************************************
 #if !defined(SWIGPERL) && !defined(SWIGJAVA)
 %rename (ColorEntry) GDALColorEntry;
+#ifdef SWIGPYTHON
+%nodefaultctor GDALColorEntry;
+%nodefaultdtor GDALColorEntry;
+#endif
 typedef struct
 {
     /*! gray, red, cyan or hue */
