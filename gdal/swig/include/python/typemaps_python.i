@@ -1488,7 +1488,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
 {
   /* %typemap(in) int buckets, GUIntBig* panHistogram -> list */
   int requested_buckets = 0;
-  SWIG_AsVal_int($input, &requested_buckets);
+  CPL_IGNORE_RET_VAL(SWIG_AsVal_int($input, &requested_buckets));
   if( requested_buckets != $1 )
   {
     $1 = requested_buckets;

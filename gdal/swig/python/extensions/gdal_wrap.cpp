@@ -17742,7 +17742,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
     {
       /* %typemap(in) int buckets, GUIntBig* panHistogram -> list */
       int requested_buckets = 0;
-      SWIG_AsVal_int(obj3, &requested_buckets);
+      CPL_IGNORE_RET_VAL(SWIG_AsVal_int(obj3, &requested_buckets));
       if( requested_buckets != arg4 )
       {
         arg4 = requested_buckets;
