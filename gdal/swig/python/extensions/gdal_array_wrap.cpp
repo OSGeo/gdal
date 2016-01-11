@@ -3458,6 +3458,7 @@ static void GDALRegister_NUMPY(void)
 NUMPYDataset::NUMPYDataset()
 
 {
+    psArray = NULL;
     pszProjection = CPLStrdup("");
     bValidGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
