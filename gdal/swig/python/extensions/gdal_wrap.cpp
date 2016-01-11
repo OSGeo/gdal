@@ -9506,10 +9506,10 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
@@ -12594,10 +12594,10 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -15249,10 +15249,10 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj13 && obj13 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj13,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj13,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg16 = GDALTermProgress;
@@ -16601,10 +16601,10 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
       /* callback_func typemap */
       if (obj2 && obj2 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj2,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj2,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
@@ -17773,10 +17773,10 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
       /* callback_func typemap */
       if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj6,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj6,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg8 = GDALTermProgress;
@@ -17961,10 +17961,10 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
       /* callback_func typemap */
       if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj6,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj6,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
@@ -18951,10 +18951,10 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
       /* callback_func typemap */
       if (obj11 && obj11 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj11,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj11,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg13 = GDALTermProgress;
@@ -20684,10 +20684,10 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
@@ -20832,10 +20832,10 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
@@ -21017,10 +21017,10 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
       /* callback_func typemap */
       if (obj7 && obj7 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj7,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj7,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg8 = GDALTermProgress;
@@ -21242,10 +21242,10 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -21487,10 +21487,10 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
       /* callback_func typemap */
       if (obj7 && obj7 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj7,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj7,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg10 = GDALTermProgress;
@@ -21700,10 +21700,10 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
@@ -21889,10 +21889,10 @@ SWIGINTERN PyObject *_wrap_FPolygonize(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
@@ -22078,10 +22078,10 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
@@ -22273,10 +22273,10 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj6,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj6,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
@@ -22430,10 +22430,10 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -22558,10 +22558,10 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -22752,10 +22752,10 @@ SWIGINTERN PyObject *_wrap_ContourGenerate(PyObject *SWIGUNUSEDPARM(self), PyObj
       /* callback_func typemap */
       if (obj9 && obj9 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj9,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj9,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg11 = GDALTermProgress;
@@ -23547,10 +23547,10 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSE
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -25718,10 +25718,10 @@ SWIGINTERN PyObject *_wrap_TranslateInternal(PyObject *SWIGUNUSEDPARM(self), PyO
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -25990,10 +25990,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestDS(PyObject *SWIGUNUSEDPARM(self)
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -26134,10 +26134,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestName(PyObject *SWIGUNUSEDPARM(sel
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -26383,10 +26383,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALVectorTranslateDestDS(PyObject *SWIGUNUSE
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -26493,10 +26493,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALVectorTranslateDestName(PyObject *SWIGUNU
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -26757,10 +26757,10 @@ SWIGINTERN PyObject *_wrap_DEMProcessingInternal(PyObject *SWIGUNUSEDPARM(self),
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg6 = GDALTermProgress;
@@ -27012,10 +27012,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestDS(PyObject *SWIGUNUSEDPARM(
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -27122,10 +27122,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestName(PyObject *SWIGUNUSEDPAR
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -27366,10 +27366,10 @@ SWIGINTERN PyObject *_wrap_GridInternal(PyObject *SWIGUNUSEDPARM(self), PyObject
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -27612,10 +27612,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALRasterizeDestDS(PyObject *SWIGUNUSEDPARM(
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;
@@ -27722,10 +27722,10 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALRasterizeDestName(PyObject *SWIGUNUSEDPAR
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg4 = GDALTermProgress;

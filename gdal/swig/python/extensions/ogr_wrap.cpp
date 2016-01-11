@@ -10023,10 +10023,10 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -10208,10 +10208,10 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -10393,10 +10393,10 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -10578,10 +10578,10 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -10763,10 +10763,10 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -10948,10 +10948,10 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
@@ -11133,10 +11133,10 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;

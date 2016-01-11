@@ -4765,10 +4765,10 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
       /* callback_func typemap */
       if (obj9 && obj9 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj9,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj9,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg10 = GDALTermProgress;
@@ -4923,10 +4923,10 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
       /* callback_func typemap */
       if (obj9 && obj9 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj9,
-          (void**)&cbfunction,
-          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-          SWIG_POINTER_EXCEPTION | 0 );
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj9,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
         
         if ( cbfunction == GDALTermProgress ) {
           arg10 = GDALTermProgress;
