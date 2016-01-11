@@ -3263,7 +3263,13 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
 
 int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 {
-    GIntBig buf_size = nMembSize * nMembCount;
+    GUIntBig buf_size = (GUIntBig)nMembSize * nMembCount;
+    if( nMembSize < 0 || nMembCount < 0 || buf_size > 0xFFFFFFFFU )
+   {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big request");
+        *buf = NULL;
+        return 0;
+    }
 
     if (buf_size == 0)
     {
@@ -3281,8 +3287,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     }
     PyObject* o = (PyObject*) *buf;
     char *data = PyBytes_AsString(o);
-    GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
-    if (nRet * nMembSize < buf_size)
+    size_t nRet = (size_t)VSIFReadL( data, nMembSize, nMembCount, fp );
+    if (nRet * (size_t)nMembSize < buf_size)
     {
         _PyBytes_Resize(&o, nRet * nMembSize);
         *buf = o;
@@ -3298,8 +3304,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     }
     PyObject* o = (PyObject*) *buf;
     char *data = PyString_AsString(o);
-    GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
-    if (nRet * nMembSize < buf_size)
+    size_t nRet = (size_t)VSIFReadL( data, nMembSize, nMembCount, fp );
+    if (nRet * (size_t)nMembSize < buf_size)
     {
         _PyString_Resize(&o, nRet * nMembSize);
         *buf = o;
