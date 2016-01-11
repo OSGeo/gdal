@@ -1327,10 +1327,10 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     /* callback_func typemap */
     if ($input && $input != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( $input,
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( $input,
                          (void**)&cbfunction,
                          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-                         SWIG_POINTER_EXCEPTION | 0 );
+                         SWIG_POINTER_EXCEPTION | 0 ));
 
         if ( cbfunction == GDALTermProgress ) {
             $1 = GDALTermProgress;
