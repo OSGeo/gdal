@@ -655,6 +655,11 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     GDALAsyncReaderH hAsyncReader =
             GDALBeginAsyncReader(self, xOff, yOff, xSize, ySize, (void*) buf_string, nxsize, nysize, ntype, nBCount, pBandList, nPixelSpace, nLineSpace,
     nBandSpace, options);
+
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+
     if (hAsyncReader)
     {
         return (GDALAsyncReader*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
@@ -662,10 +667,6 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     else
     {
         return NULL;
-    }
-
-    if ( myBandList ) {
-       CPLFree( pBandList );
     }
 
   }
