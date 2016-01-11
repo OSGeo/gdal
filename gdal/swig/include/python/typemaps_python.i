@@ -190,6 +190,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 %typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
   /* %typemap(in,numinputs=0) (double argout[ANY]) */
+  memset(argout, 0, sizeof(argout));
   $1 = argout;
 }
 %typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
@@ -202,6 +203,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 %typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
 {
   /* %typemap(in,numinputs=0) (double *argout[ANY]) */
+  argout = NULL;
   $1 = &argout;
 }
 %typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
@@ -1495,6 +1497,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
 {
   /* %typemap(out) int buckets, GUIntBig* panHistogram -> list */
   GUIntBig *integerarray = $2;
+  Py_DECREF( $result );
   if ( integerarray == NULL ) {
     $result = Py_None;
     Py_INCREF( $result );
@@ -1900,6 +1903,5 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   $result = PyMemoryView_FromBuffer(buf);
 %#else
   PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
-  SWIG_fail;
 %#endif
 }

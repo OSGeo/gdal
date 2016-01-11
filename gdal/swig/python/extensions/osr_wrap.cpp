@@ -9605,6 +9605,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetTOWGS84(PyObject *SWIGUNUSEDPARM(
   
   {
     /* %typemap(in,numinputs=0) (double argout2[ANY]) */
+    memset(argout2, 0, sizeof(argout2));
     arg2 = argout2;
   }
   if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_GetTOWGS84",&obj0)) SWIG_fail;
@@ -11205,6 +11206,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(in,numinputs=0) (double *argout4[ANY]) */
+    argout4 = NULL;
     arg4 = &argout4;
   }
   if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_ExportToPCI",&obj0)) SWIG_fail;
@@ -11319,6 +11321,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToUSGS(PyObject *SWIGUNUSEDPAR
   arg3 = &temp3;
   {
     /* %typemap(in,numinputs=0) (double *argout4[ANY]) */
+    argout4 = NULL;
     arg4 = &argout4;
   }
   arg5 = &temp5;
@@ -11984,6 +11987,7 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoint__SWIG_1(PyObj
   
   {
     /* %typemap(in,numinputs=0) (double argout2[ANY]) */
+    memset(argout2, 0, sizeof(argout2));
     arg2 = argout2;
   }
   if (!PyArg_ParseTuple(args,(char *)"OOO|O:CoordinateTransformation_TransformPoint",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
@@ -12525,7 +12529,7 @@ SWIG_InitializeModule(void *clientdata) {
     /* This is the first module loaded for this interpreter */
     /* so set the swig module into the interpreter */
     SWIG_SetModule(clientdata, &swig_module);
-    module_head = &swig_module;
+    /*module_head = &swig_module;*/
   } else {
     /* the interpreter has loaded a SWIG module, but has it loaded this one? */
     found=0;
