@@ -773,6 +773,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     /* Keep a reference to the VirtualMem object */
     ar->base = obj0;
     Py_INCREF(obj0);
+    Py_DECREF($result);
     $result = (PyObject*) ar;
 }
 

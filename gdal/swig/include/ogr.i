@@ -2331,14 +2331,14 @@ public:
 %apply (GByte* outBytes) {GByte*};
   GByte* ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
+    *pBuf = (unsignedchar *) malloc( *nLen );
     OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
     return (GByte*)*pBuf;
   }
 
   GByte* ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
+    *pBuf = (char *) malloc( *nLen );
     OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
     return (GByte*)*pBuf;
   }
@@ -2347,14 +2347,14 @@ public:
   %feature("kwargs") ExportToWkb;
   OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
+    *pBuf = (char *) malloc( *nLen );
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 
   %feature("kwargs") ExportToIsoWkb;
   OGRErr ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
+    *pBuf = (char *) malloc( *nLen );
     return OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 #endif
