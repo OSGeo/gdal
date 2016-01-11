@@ -18524,7 +18524,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -18532,7 +18532,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -19241,7 +19241,7 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc3 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
       delete[] arg4;
     }
   }
@@ -19251,7 +19251,7 @@ fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc3 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
       delete[] arg4;
     }
   }

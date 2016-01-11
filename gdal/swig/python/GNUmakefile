@@ -57,6 +57,7 @@ generate: ${WRAPPERS} gdal_array_wrap.cpp
 	# Following is to prevent Coverity Scan to warn about Dereference before null check (REVERSE_INULL)
 	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp; do sed "s/if (!PyTuple_Check(args)) SWIG_fail;/if (args == NULL || !PyTuple_Check(args)) SWIG_fail;/" ${SWIGOUTPUTDIR}/$$i | sed "s/argc = args ? (int)PyObject_Length(args) : 0/argc = (int)PyObject_Length(args)/" > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
 	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp; do sed "s/if (SWIG_IsTmpObj(res\([1-9]\)))/if (ReturnSame(SWIG_IsTmpObj(res\1)))/" ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
+	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp; do sed "s/if( alloc\([1-9]\) == SWIG_NEWOBJ )/if (ReturnSame(alloc\1) == SWIG_NEWOBJ )/" ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
 	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && patch -p0 < python3.2.patch
 	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/ogr_wrap/" | patch -p0
 	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/osr_wrap/" | patch -p0
