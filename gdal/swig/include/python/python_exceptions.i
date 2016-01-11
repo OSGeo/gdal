@@ -87,4 +87,12 @@ template<class T> static T ReturnSame(T x)
         CPLErrorReset();
     }
     $action
+%#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+%#endif
 }
