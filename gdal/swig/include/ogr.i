@@ -2331,7 +2331,7 @@ public:
 %apply (GByte* outBytes) {GByte*};
   GByte* ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
-    *pBuf = (unsignedchar *) malloc( *nLen );
+    *pBuf = (char *) malloc( *nLen );
     OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
     return (GByte*)*pBuf;
   }
