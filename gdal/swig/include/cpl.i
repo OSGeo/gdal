@@ -256,7 +256,9 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 %exception CPLGetLastErrorNo
 {
 #ifdef SWIGPYTHON
+%#ifdef SED_HACKS
     if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
 #endif
     result = CPLGetLastErrorNo();
 }
@@ -269,7 +271,9 @@ int CPLGetLastErrorNo();
 %exception CPLGetLastErrorType
 {
 #ifdef SWIGPYTHON
+%#ifdef SED_HACKS
     if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
 #endif
     result = CPLGetLastErrorType();
 }
@@ -284,7 +288,9 @@ CPLErr CPLGetLastErrorType();
 %exception CPLGetLastErrorMsg
 {
 #ifdef SWIGPYTHON
+%#ifdef SED_HACKS
     if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
 #endif
     result = (char*)CPLGetLastErrorMsg();
 }
