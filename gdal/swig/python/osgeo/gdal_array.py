@@ -168,10 +168,10 @@ def OpenArray( array, prototype_ds = None ):
             prototype_ds = gdal.Open( prototype_ds )
         if prototype_ds is not None:
             CopyDatasetInfo( prototype_ds, ds )
-            
+
     return ds
-    
-    
+
+
 def flip_code(code):
     if isinstance(code, (numpy.dtype,type)):
         # since several things map to complex64 we must carefully select
@@ -180,7 +180,7 @@ def flip_code(code):
             return gdalconst.GDT_Byte
         if code == numpy.complex64:
             return gdalconst.GDT_CFloat32
-        
+
         for key, value in codes.items():
             if value == code:
                 return key
@@ -198,7 +198,7 @@ def NumericTypeCodeToGDALTypeCode(numeric_type):
 
 def GDALTypeCodeToNumericTypeCode(gdal_code):
     return flip_code(gdal_code)
-    
+
 def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None,
               buf_xsize=None, buf_ysize=None, buf_type=None,
               resample_alg = gdal.GRIORA_NearestNeighbour,
@@ -367,7 +367,7 @@ def BandWriteArray( band, array, xoff=0, yoff=0,
         gdal.Debug( 'gdal_array', 'force array to float64' )
         array = array.astype( numpy.float64 )
         datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
-        
+
     if not datatype:
         raise ValueError("array does not have corresponding GDAL data type")
 
@@ -418,28 +418,28 @@ def RATReadArray(rat, field, start=0, length=None):
         length = rat.GetRowCount() - start
 
     return RATValuesIONumPyRead(rat, field, start, length)
-    
+
 def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
     """
     Copy georeferencing information and metadata from one dataset to another.
     src: input dataset
-    dst: output dataset - It can be a ROI - 
-    xoff, yoff:  dst's offset with respect to src in pixel/line.  
-    
+    dst: output dataset - It can be a ROI -
+    xoff, yoff:  dst's offset with respect to src in pixel/line.
+
     Notes: Destination dataset must have update access.  Certain formats
            do not support creation of geotransforms and/or gcps.
 
     """
 
     dst.SetMetadata( src.GetMetadata() )
-                    
+
 
 
     #Check for geo transform
     gt = src.GetGeoTransform()
     if gt != (0,1,0,0,0,1):
         dst.SetProjection( src.GetProjectionRef() )
-        
+
         if (xoff == 0) and (yoff == 0):
             dst.SetGeoTransform( gt  )
         else:
@@ -447,10 +447,10 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
             ngt[0] = gt[0] + xoff*gt[1] + yoff*gt[2];
             ngt[3] = gt[3] + xoff*gt[4] + yoff*gt[5];
             dst.SetGeoTransform( ( ngt[0], ngt[1], ngt[2], ngt[3], ngt[4], ngt[5] ) )
-            
+
     #Check for GCPs
     elif src.GetGCPCount() > 0:
-        
+
         if (xoff == 0) and (yoff == 0):
             dst.SetGCPs( src.GetGCPs(), src.GetGCPProjection() )
         else:
@@ -459,7 +459,7 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
             new_gcps = []
             for gcp in gcps:
                 ngcp = gdal.GCP()
-                ngcp.GCPX = gcp.GCPX 
+                ngcp.GCPX = gcp.GCPX
                 ngcp.GCPY = gcp.GCPY
                 ngcp.GCPZ = gcp.GCPZ
                 ngcp.GCPPixel = gcp.GCPPixel - xoff

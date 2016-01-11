@@ -3100,7 +3100,7 @@ typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 
 
-#ifdef DEBUG 
+#ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
@@ -3121,13 +3121,13 @@ typedef int VSI_RETVAL;
 int bUseExceptions=0;
 CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
-void CPL_STDCALL 
-PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
+void CPL_STDCALL
+PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 {
-  /* 
+  /*
   ** Generally we want to suppress error reporting if we have exceptions
-  ** enabled as the error message will be in the exception thrown in 
-  ** Python.  
+  ** enabled as the error message will be in the exception thrown in
+  ** Python.
   */
 
   /* If the error class is CE_Fatal, we want to have a message issued
@@ -3156,7 +3156,7 @@ void UseExceptions() {
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
-    pfnPreviousHandler = 
+    pfnPreviousHandler =
         CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
   }
 }
@@ -3198,7 +3198,7 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
     pszIter ++;
   }
 #if PY_VERSION_HEX >= 0x03000000
-  return PyUnicode_FromString(pszStr); 
+  return PyUnicode_FromString(pszStr);
 #else
   return PyString_FromString(pszStr);
 #endif
@@ -3226,7 +3226,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       *pbToFree = 1;
       return pszNewStr;
   }
-  else 
+  else
   {
 #if PY_VERSION_HEX >= 0x03000000
       return PyBytes_AsString(pyObject);
@@ -3253,8 +3253,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         *buf = NULL;
         return 0;
     }
-#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -3263,7 +3263,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         return 0;
     }
     PyObject* o = (PyObject*) *buf;
-    char *data = PyBytes_AsString(o); 
+    char *data = PyBytes_AsString(o);
     GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
     if (nRet * nMembSize < buf_size)
     {
@@ -3271,8 +3271,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         *buf = o;
     }
     return nRet;
-#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -3280,7 +3280,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         return 0;
     }
     PyObject* o = (PyObject*) *buf;
-    char *data = PyString_AsString(o); 
+    char *data = PyString_AsString(o);
     GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
     if (nRet * nMembSize < buf_size)
     {
@@ -3463,14 +3463,14 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         return TRUE;
 
     psInfo->nLastReported = (int) (100.0 * dfComplete);
-    
+
     if( pszMessage == NULL )
         pszMessage = "";
 
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
-        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, 
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
 	                       psInfo->psPyCallbackData );
 
     psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
@@ -3502,7 +3502,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
     Py_XDECREF(psResult);
 
-    return bContinue;    
+    return bContinue;
 }
 
 
@@ -3805,23 +3805,23 @@ SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadataItem(GDALMajorObjectShadow *s
   }
 SWIGINTERN GDALDatasetShadow *GDALDriverShadow_Create(GDALDriverShadow *self,char const *utf8_path,int xsize,int ysize,int bands=1,GDALDataType eType=GDT_Byte,char **options=0){
 
-    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self, 
-                                                                utf8_path, 
-                                                                xsize, 
-                                                                ysize, 
-                                                                bands, 
-                                                                eType, 
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self,
+                                                                utf8_path,
+                                                                xsize,
+                                                                ysize,
+                                                                bands,
+                                                                eType,
                                                                 options );
     return ds;
   }
 SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self,char const *utf8_path,GDALDatasetShadow *src,int strict=1,char **options=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
 
-    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self, 
-                                                                    utf8_path, 
-                                                                    src, 
-                                                                    strict, 
-                                                                    options, 
-                                                                    callback, 
+    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self,
+                                                                    utf8_path,
+                                                                    src,
+                                                                    strict,
+                                                                    options,
+                                                                    callback,
                                                                     callback_data );
     return ds;
   }
@@ -3935,7 +3935,7 @@ const char * GDAL_GCP_Info_get( GDAL_GCP *gcp ) {
   return gcp->pszInfo;
 }
 void GDAL_GCP_Info_set( GDAL_GCP *gcp, const char * pszInfo ) {
-  if ( gcp->pszInfo ) 
+  if ( gcp->pszInfo )
     CPLFree( gcp->pszInfo );
   gcp->pszInfo = CPLStrdup(pszInfo);
 }
@@ -3943,7 +3943,7 @@ const char * GDAL_GCP_Id_get( GDAL_GCP *gcp ) {
   return gcp->pszId;
 }
 void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
-  if ( gcp->pszId ) 
+  if ( gcp->pszId )
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
@@ -4291,13 +4291,13 @@ SWIGINTERN CPLErr GDALDatasetShadow_SetGeoTransform(GDALDatasetShadow *self,doub
   }
 SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
 
-    return GDALBuildOverviews(  self, 
-                                resampling ? resampling : "NEAREST", 
-                                overviewlist, 
-                                pOverviews, 
-                                0, 
-                                0, 
-                                callback, 
+    return GDALBuildOverviews(  self,
+                                resampling ? resampling : "NEAREST",
+                                overviewlist,
+                                pOverviews,
+                                0,
+                                0,
+                                callback,
                                 callback_data);
   }
 SWIGINTERN int GDALDatasetShadow_GetGCPCount(GDALDatasetShadow *self){
@@ -4379,18 +4379,18 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
             buf_ysize = ceil(ySize / (1.0 * nRes));
         }
     }
-    
+
     int nxsize = (buf_xsize == 0) ? xSize : buf_xsize;
     int nysize = (buf_ysize == 0) ? ySize : buf_ysize;
-    
+
     GDALDataType ntype;
     if (bufType != 0) {
         ntype = (GDALDataType) bufType;
-    } 
+    }
     else {
         ntype = GDT_Byte;
     }
-    
+
     int nBCount = (band_list) != 0 ? band_list : GDALGetRasterCount(self);
     int nMinSize = nxsize * nysize * nBCount * (GDALGetDataTypeSize(ntype) / 8);
     if (buf_string == NULL || buf_len < nMinSize)
@@ -4398,14 +4398,14 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
         CPLError(CE_Failure, CPLE_AppDefined, "Buffer is too small");
         return NULL;
     }
-    
+
     bool myBandList = false;
     int* pBandList;
-    
+
     if (band_list != 0){
         myBandList = false;
         pBandList = pband_list;
-    }        
+    }
     else
     {
         myBandList = true;
@@ -4426,7 +4426,7 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
     {
         return NULL;
     }
-    
+
     if ( myBandList ) {
        CPLFree( pBandList );
     }
@@ -4641,24 +4641,24 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
         return CE_Failure;
     }
 
-#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf ); 
-#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    char *data = PyBytes_AsString( (PyObject *)*buf );
+#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyString_AsString( (PyObject *)*buf ); 
+    char *data = PyString_AsString( (PyObject *)*buf );
 #endif
 
     /* Should we clear the buffer in case there are hole in it ? */
@@ -4775,13 +4775,13 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                                                    pixel_space, line_space, FALSE );
     if ( min_buffer_size == 0 )
       return CE_Failure;
-      
+
     if ( buf_size < min_buffer_size ) {
       CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
       return CE_Failure;
     }
 
-    return GDALRasterIOEx( obj, GF_Write, xoff, yoff, xsize, ysize, 
+    return GDALRasterIOEx( obj, GF_Write, xoff, yoff, xsize, ysize,
                            (void *) buffer, buf_xsize, buf_ysize, buf_type, pixel_space, line_space, psExtraArg );
 }
 
@@ -4850,7 +4850,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_GetStatistics(GDALRasterBandShadow *self,
     if (max) *max = 0;
     if (mean) *mean = 0;
     if (stddev) *stddev = -1; /* This is the only way to recognize from Python if GetRasterStatistics() has updated the values */
-    return GDALGetRasterStatistics( self, approx_ok, force, 
+    return GDALGetRasterStatistics( self, approx_ok, force,
 				    min, max, mean, stddev );
   }
 
@@ -4885,7 +4885,7 @@ SWIGINTERN void GDALRasterBandShadow_ComputeRasterMinMax(GDALRasterBandShadow *s
     GDALComputeRasterMinMax( self, approx_ok, argout );
   }
 SWIGINTERN void GDALRasterBandShadow_ComputeBandStats(GDALRasterBandShadow *self,double argout[2],int samplestep=1){
-    GDALComputeBandStats( self, samplestep, argout+0, argout+1, 
+    GDALComputeBandStats( self, samplestep, argout+0, argout+1,
                           NULL, NULL );
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_Fill(GDALRasterBandShadow *self,double real_fill,double imag_fill=0.0){
@@ -4917,7 +4917,7 @@ SWIGINTERN int GDALRasterBandShadow_SetRasterColorTable(GDALRasterBandShadow *se
 SWIGINTERN int GDALRasterBandShadow_SetColorTable(GDALRasterBandShadow *self,GDALColorTableShadow *arg){
     return GDALSetRasterColorTable( self, arg );
   }
-SWIGINTERN GDALRasterAttributeTableShadow *GDALRasterBandShadow_GetDefaultRAT(GDALRasterBandShadow *self){ 
+SWIGINTERN GDALRasterAttributeTableShadow *GDALRasterBandShadow_GetDefaultRAT(GDALRasterBandShadow *self){
       return (GDALRasterAttributeTableShadow*) GDALGetDefaultRAT(self);
   }
 SWIGINTERN int GDALRasterBandShadow_SetDefaultRAT(GDALRasterBandShadow *self,GDALRasterAttributeTableShadow *table){
@@ -4933,7 +4933,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_CreateMaskBand(GDALRasterBandShadow *self
       return GDALCreateMaskBand( self, nFlags );
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_GetHistogram(GDALRasterBandShadow *self,double min=-0.5,double max=255.5,int buckets=256,GUIntBig *panHistogram=NULL,int include_out_of_range=0,int approx_ok=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
-    CPLErrorReset(); 
+    CPLErrorReset();
     CPLErr err = GDALGetRasterHistogramEx( self, min, max, buckets, panHistogram,
                                          include_out_of_range, approx_ok,
                                          callback, callback_data );
@@ -4941,11 +4941,11 @@ SWIGINTERN CPLErr GDALRasterBandShadow_GetHistogram(GDALRasterBandShadow *self,d
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_GetDefaultHistogram(GDALRasterBandShadow *self,double *min_ret=NULL,double *max_ret=NULL,int *buckets_ret=NULL,GUIntBig **ppanHistogram=NULL,int force=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
     return GDALGetDefaultHistogramEx( self, min_ret, max_ret, buckets_ret,
-                                    ppanHistogram, force, 
+                                    ppanHistogram, force,
                                     callback, callback_data );
 }
 SWIGINTERN CPLErr GDALRasterBandShadow_SetDefaultHistogram(GDALRasterBandShadow *self,double min,double max,int buckets_in,GUIntBig *panHistogram_in){
-    return GDALSetDefaultHistogramEx( self, min, max, 
+    return GDALSetDefaultHistogramEx( self, min, max,
                                     buckets_in, panHistogram_in );
 }
 SWIGINTERN bool GDALRasterBandShadow_HasArbitraryOverviews(GDALRasterBandShadow *self){
@@ -5038,14 +5038,14 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
     GIntBig buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
-                                            pixel_space, line_space, FALSE ); 
+                                            pixel_space, line_space, FALSE );
     if (buf_size == 0)
     {
         *buf = NULL;
         return CE_Failure;
     }
-#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -5053,16 +5053,16 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf ); 
-#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    char *data = PyBytes_AsString( (PyObject *)*buf );
+#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyString_AsString( (PyObject *)*buf ); 
+    char *data = PyString_AsString( (PyObject *)*buf );
 #endif
 
     /* Should we clear the buffer in case there are hole in it ? */
@@ -5090,9 +5090,9 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
         sExtraArg.dfYSize = ysize;
     }
 
-    CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize, 
-                         (void *) data, nxsize, nysize, ntype, 
-                         pixel_space, line_space, &sExtraArg ); 
+    CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                         (void *) data, nxsize, nysize, ntype,
+                         pixel_space, line_space, &sExtraArg );
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
@@ -5107,8 +5107,8 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
     int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
     GIntBig buf_size = (GIntBig)nBlockXSize * nBlockYSize * nDataTypeSize;
 
-#if PY_VERSION_HEX >= 0x03000000 
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+#if PY_VERSION_HEX >= 0x03000000
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -5116,18 +5116,18 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf ); 
-#else 
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    char *data = PyBytes_AsString( (PyObject *)*buf );
+#else
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyString_AsString( (PyObject *)*buf ); 
+    char *data = PyString_AsString( (PyObject *)*buf );
 #endif
-    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data); 
+    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data);
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
@@ -5174,7 +5174,7 @@ SWIGINTERN void GDALColorTableShadow_CreateColorRamp(GDALColorTableShadow *self,
         GDALCreateColorRamp(self, nStartIndex, startcolor, nEndIndex, endcolor);
     }
 SWIGINTERN GDALRasterAttributeTableShadow *new_GDALRasterAttributeTableShadow(){
-        return (GDALRasterAttributeTableShadow*) 
+        return (GDALRasterAttributeTableShadow*)
 		GDALCreateRasterAttributeTable();
     }
 SWIGINTERN void delete_GDALRasterAttributeTableShadow(GDALRasterAttributeTableShadow *self){
@@ -5183,10 +5183,10 @@ SWIGINTERN void delete_GDALRasterAttributeTableShadow(GDALRasterAttributeTableSh
 SWIGINTERN GDALRasterAttributeTableShadow *GDALRasterAttributeTableShadow_Clone(GDALRasterAttributeTableShadow *self){
         return (GDALRasterAttributeTableShadow*) GDALRATClone(self);
     }
-SWIGINTERN int GDALRasterAttributeTableShadow_GetColumnCount(GDALRasterAttributeTableShadow *self){ 
+SWIGINTERN int GDALRasterAttributeTableShadow_GetColumnCount(GDALRasterAttributeTableShadow *self){
         return GDALRATGetColumnCount( self );
     }
-SWIGINTERN char const *GDALRasterAttributeTableShadow_GetNameOfCol(GDALRasterAttributeTableShadow *self,int iCol){ 
+SWIGINTERN char const *GDALRasterAttributeTableShadow_GetNameOfCol(GDALRasterAttributeTableShadow *self,int iCol){
         return GDALRATGetNameOfCol( self, iCol );
     }
 SWIGINTERN GDALRATFieldUsage GDALRasterAttributeTableShadow_GetUsageOfCol(GDALRasterAttributeTableShadow *self,int iCol){
@@ -5198,25 +5198,25 @@ SWIGINTERN GDALRATFieldType GDALRasterAttributeTableShadow_GetTypeOfCol(GDALRast
 SWIGINTERN int GDALRasterAttributeTableShadow_GetColOfUsage(GDALRasterAttributeTableShadow *self,GDALRATFieldUsage eUsage){
         return GDALRATGetColOfUsage( self, eUsage );
     }
-SWIGINTERN int GDALRasterAttributeTableShadow_GetRowCount(GDALRasterAttributeTableShadow *self){ 
+SWIGINTERN int GDALRasterAttributeTableShadow_GetRowCount(GDALRasterAttributeTableShadow *self){
         return GDALRATGetRowCount( self );
     }
-SWIGINTERN char const *GDALRasterAttributeTableShadow_GetValueAsString(GDALRasterAttributeTableShadow *self,int iRow,int iCol){ 
+SWIGINTERN char const *GDALRasterAttributeTableShadow_GetValueAsString(GDALRasterAttributeTableShadow *self,int iRow,int iCol){
         return GDALRATGetValueAsString( self, iRow, iCol );
     }
-SWIGINTERN int GDALRasterAttributeTableShadow_GetValueAsInt(GDALRasterAttributeTableShadow *self,int iRow,int iCol){ 
+SWIGINTERN int GDALRasterAttributeTableShadow_GetValueAsInt(GDALRasterAttributeTableShadow *self,int iRow,int iCol){
         return GDALRATGetValueAsInt( self, iRow, iCol );
     }
-SWIGINTERN double GDALRasterAttributeTableShadow_GetValueAsDouble(GDALRasterAttributeTableShadow *self,int iRow,int iCol){ 
+SWIGINTERN double GDALRasterAttributeTableShadow_GetValueAsDouble(GDALRasterAttributeTableShadow *self,int iRow,int iCol){
         return GDALRATGetValueAsDouble( self, iRow, iCol );
     }
-SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsString(GDALRasterAttributeTableShadow *self,int iRow,int iCol,char const *pszValue){ 
+SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsString(GDALRasterAttributeTableShadow *self,int iRow,int iCol,char const *pszValue){
         GDALRATSetValueAsString( self, iRow, iCol, pszValue );
     }
-SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsInt(GDALRasterAttributeTableShadow *self,int iRow,int iCol,int nValue){ 
+SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsInt(GDALRasterAttributeTableShadow *self,int iRow,int iCol,int nValue){
         GDALRATSetValueAsInt( self, iRow, iCol, nValue );
     }
-SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsDouble(GDALRasterAttributeTableShadow *self,int iRow,int iCol,double dfValue){ 
+SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsDouble(GDALRasterAttributeTableShadow *self,int iRow,int iCol,double dfValue){
         GDALRATSetValueAsDouble( self, iRow, iCol, dfValue );
     }
 SWIGINTERN void GDALRasterAttributeTableShadow_SetRowCount(GDALRasterAttributeTableShadow *self,int nCount){
@@ -5243,7 +5243,7 @@ SWIGINTERN void GDALRasterAttributeTableShadow_DumpReadable(GDALRasterAttributeT
 
 #include "gdalgrid.h"
 
-#ifdef DEBUG 
+#ifdef DEBUG
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
 #else
@@ -5275,7 +5275,7 @@ int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
                                           colors,
                                           callback,
                                           callback_data);
-    
+
     return err;
 }
 
@@ -5297,7 +5297,7 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
                                   colors,
                                   callback,
                                   callback_data);
-    
+
     return err;
 }
 
@@ -5357,8 +5357,8 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
                  int bands, int *band_list,
                  OGRLayerShadow *layer,
                  void *pfnTransformer = NULL,
-                 void *pTransformArg = NULL, 
-		 int burn_values = 0, double *burn_values_list = NULL, 
+                 void *pTransformArg = NULL,
+		 int burn_values = 0, double *burn_values_list = NULL,
                  char **options = NULL,
                  GDALProgressFunc callback=NULL,
                  void* callback_data=NULL) {
@@ -5375,16 +5375,16 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
     }
     else if( burn_values != bands )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Did not get the expected number of burn values in RasterizeLayer()" );
         return CE_Failure;
     }
 
     eErr = GDALRasterizeLayers( dataset, bands, band_list,
-                                1, &layer, 
-                                (GDALTransformerFunc) pfnTransformer, 
+                                1, &layer,
+                                (GDALTransformerFunc) pfnTransformer,
                                 pTransformArg,
-                                burn_values_list, options, 
+                                burn_values_list, options,
                                 callback, callback_data );
 
     if( burn_values == 0 )
@@ -5396,7 +5396,7 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
 
 int  Polygonize( GDALRasterBandShadow *srcBand,
      		 GDALRasterBandShadow *maskBand,
-  	         OGRLayerShadow *outLayer, 
+  	         OGRLayerShadow *outLayer,
                  int iPixValField,
                  char **options = NULL,
                  GDALProgressFunc callback=NULL,
@@ -5411,7 +5411,7 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
 
 int  FPolygonize( GDALRasterBandShadow *srcBand,
                  GDALRasterBandShadow *maskBand,
-                 OGRLayerShadow *outLayer, 
+                 OGRLayerShadow *outLayer,
                  int iPixValField,
                  char **options = NULL,
                  GDALProgressFunc callback=NULL,
@@ -5434,8 +5434,8 @@ int  FillNodata( GDALRasterBandShadow *targetBand,
 
     CPLErrorReset();
 
-    return GDALFillNodata( targetBand, maskBand, maxSearchDist, 
-    	   		   0, smoothingIterations, options, 
+    return GDALFillNodata( targetBand, maskBand, maxSearchDist,
+    	   		   0, smoothingIterations, options,
 			   callback, callback_data );
 }
 
@@ -5450,7 +5450,7 @@ int  SieveFilter( GDALRasterBandShadow *srcBand,
 
     CPLErrorReset();
 
-    return GDALSieveFilter( srcBand, maskBand, dstBand, 
+    return GDALSieveFilter( srcBand, maskBand, dstBand,
                             threshold, connectedness,
                             options, callback, callback_data );
 }
@@ -5490,7 +5490,7 @@ int ContourGenerate( GDALRasterBandShadow *srcBand,
                      double *fixedLevels,
                      int useNoData,
                      double noDataValue,
-                     OGRLayerShadow* dstLayer, 
+                     OGRLayerShadow* dstLayer,
                      int idField,
                      int elevField,
                      GDALProgressFunc callback = NULL,
@@ -5531,7 +5531,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
     /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/
   }
   return ds;
-  
+
 }
 
 
@@ -5547,8 +5547,8 @@ GDALDatasetShadow*  CreatePansharpenedVRT( const char* pszXML,
 }
 
 SWIGINTERN GDALTransformerInfoShadow *new_GDALTransformerInfoShadow(GDALDatasetShadow *src,GDALDatasetShadow *dst,char **options){
-    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*) 
-       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst, 
+    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*)
+       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst,
                                          options );
     return obj;
   }
@@ -5558,20 +5558,20 @@ SWIGINTERN void delete_GDALTransformerInfoShadow(GDALTransformerInfoShadow *self
 SWIGINTERN int GDALTransformerInfoShadow_TransformPoint__SWIG_0(GDALTransformerInfoShadow *self,int bDstToSrc,double inout[3]){
     int nRet, nSuccess = TRUE;
 
-    nRet = GDALUseTransformer( self, bDstToSrc, 
-                               1, &inout[0], &inout[1], &inout[2], 
+    nRet = GDALUseTransformer( self, bDstToSrc,
+                               1, &inout[0], &inout[1], &inout[2],
                                &nSuccess );
 
     return nRet && nSuccess;
   }
 SWIGINTERN int GDALTransformerInfoShadow_TransformPoint__SWIG_1(GDALTransformerInfoShadow *self,double argout[3],int bDstToSrc,double x,double y,double z=0.0){
     int nRet, nSuccess = TRUE;
-    
+
     argout[0] = x;
     argout[1] = y;
     argout[2] = z;
-    nRet = GDALUseTransformer( self, bDstToSrc, 
-                               1, &argout[0], &argout[1], &argout[2], 
+    nRet = GDALUseTransformer( self, bDstToSrc,
+                               1, &argout[0], &argout[1], &argout[2],
                                &nSuccess );
 
     return nRet && nSuccess;
@@ -5662,7 +5662,7 @@ SWIGINTERN int GDALTransformerInfoShadow_TransformGeolocations(GDALTransformerIn
 
     CPLErrorReset();
 
-    return GDALTransformGeolocations( xBand, yBand, zBand, 
+    return GDALTransformGeolocations( xBand, yBand, zBand,
                                       GDALUseTransformer, self,
                             	      callback, callback_data, options );
   }
@@ -5697,8 +5697,8 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     if( psTree == NULL )
         return Py_None;
 
-    for( psChild = psTree->psChild; 
-         psChild != NULL; 
+    for( psChild = psTree->psChild;
+         psChild != NULL;
          psChild = psChild->psNext )
         nChildCount++;
 
@@ -5707,14 +5707,14 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     PyList_SetItem( pyList, 0, Py_BuildValue( "i", (int) psTree->eType ) );
     PyList_SetItem( pyList, 1, Py_BuildValue( "s", psTree->pszValue ) );
 
-    for( psChild = psTree->psChild, iChild = 2; 
-         psChild != NULL; 
+    for( psChild = psTree->psChild, iChild = 2;
+         psChild != NULL;
          psChild = psChild->psNext, iChild++ )
     {
         PyList_SetItem( pyList, iChild, XMLTreeToPyList( psChild ) );
     }
 
-    return pyList; 
+    return pyList;
 }
 
 
@@ -5860,9 +5860,9 @@ GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_Re
 }
 
 
-GDALDriverShadow *IdentifyDriver( const char *utf8_path, 
+GDALDriverShadow *IdentifyDriver( const char *utf8_path,
                                   char **papszSiblings = NULL ) {
-    return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path, 
+    return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path,
 	                                            papszSiblings );
 }
 
@@ -5870,8 +5870,8 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
 
-    nResArgCount = 
-      GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
+    nResArgCount =
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions );
 
     if( nResArgCount <= 0 )
         return NULL;
@@ -5880,7 +5880,7 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
   }
 
 
-#include "gdal_utils.h"   
+#include "gdal_utils.h"
 
 SWIGINTERN GDALInfoOptions *new_GDALInfoOptions(char **options){
         return GDALInfoOptionsNew(options, NULL);
@@ -5912,7 +5912,7 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
         }
         GDALTranslateOptionsSetProgress(translateOptions, callback, callback_data);
     }
-    GDALDatasetH hDSRet = GDALTranslate(dest, dataset, translateOptions, &usageError);    
+    GDALDatasetH hDSRet = GDALTranslate(dest, dataset, translateOptions, &usageError);
     if( bFreeOptions )
         GDALTranslateOptionsFree(translateOptions);
     return hDSRet;
@@ -6052,7 +6052,7 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
         }
         GDALDEMProcessingOptionsSetProgress(options, callback, callback_data);
     }
-    GDALDatasetH hDSRet = GDALDEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, &usageError);    
+    GDALDatasetH hDSRet = GDALDEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, &usageError);
     if( bFreeOptions )
         GDALDEMProcessingOptionsFree(options);
     return hDSRet;
@@ -6136,7 +6136,7 @@ GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
         }
         GDALGridOptionsSetProgress(options, callback, callback_data);
     }
-    GDALDatasetH hDSRet = GDALGrid(dest, dataset, options, &usageError);    
+    GDALDatasetH hDSRet = GDALGrid(dest, dataset, options, &usageError);
     if( bFreeOptions )
         GDALGridOptionsFree(options);
     return hDSRet;
@@ -6432,7 +6432,7 @@ SWIGINTERN PyObject *_wrap_PushErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyOb
       }
       else if (!PyCallable_Check(obj0))
       {
-        PyErr_SetString( PyExc_RuntimeError, 
+        PyErr_SetString( PyExc_RuntimeError,
           "Object given is not a String or a Python function" );
         SWIG_fail;
       }
@@ -9506,7 +9506,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5, 
+        SWIG_ConvertPtr( obj5,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -9515,7 +9515,7 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
           arg6 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj5)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -11745,7 +11745,7 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
   }
   resultobj = SWIG_Py_Void();
   {
-#if PY_VERSION_HEX >= 0x02070000 
+#if PY_VERSION_HEX >= 0x02070000
     /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
     Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
     if (PyBuffer_FillInfo(buf,  obj0,  *(arg2), *(arg3), *(arg5), PyBUF_ND)) {
@@ -12672,7 +12672,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -12681,7 +12681,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -12857,7 +12857,7 @@ SWIGINTERN PyObject *_wrap_Dataset_GetGCPs(PyObject *SWIGUNUSEDPARM(self), PyObj
         (*arg3)[i].pszInfo,
         (*arg3)[i].pszId );
       
-      PyTuple_SetItem(dict, i, 
+      PyTuple_SetItem(dict, i,
         SWIG_NewPointerObj((void*)o,SWIGTYPE_p_GDAL_GCP,1) );
     }
     Py_DECREF(resultobj);
@@ -15327,7 +15327,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj13 && obj13 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj13, 
+        SWIG_ConvertPtr( obj13,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -15336,7 +15336,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
           arg16 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj13)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -16679,7 +16679,7 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
       /* callback_func typemap */
       if (obj2 && obj2 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj2, 
+        SWIG_ConvertPtr( obj2,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -16688,7 +16688,7 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
           arg7 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj2)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -17851,7 +17851,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
       /* callback_func typemap */
       if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj6, 
+        SWIG_ConvertPtr( obj6,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -17860,7 +17860,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
           arg8 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj6)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -18039,7 +18039,7 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
       /* callback_func typemap */
       if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj6, 
+        SWIG_ConvertPtr( obj6,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -18048,7 +18048,7 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
           arg7 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj6)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -19029,7 +19029,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
       /* callback_func typemap */
       if (obj11 && obj11 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj11, 
+        SWIG_ConvertPtr( obj11,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -19038,7 +19038,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
           arg13 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj11)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -20156,7 +20156,7 @@ SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetValueAsString(PyObject *SWIGU
       SWIG_fail;
     }
     
-    arg4 = GDALPythonObjectToCStr(str4, &bToFree4); 
+    arg4 = GDALPythonObjectToCStr(str4, &bToFree4);
   }
   {
     if ( bUseExceptions ) {
@@ -20762,7 +20762,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5, 
+        SWIG_ConvertPtr( obj5,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -20771,7 +20771,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
           arg6 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj5)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -20910,7 +20910,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5, 
+        SWIG_ConvertPtr( obj5,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -20919,7 +20919,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
           arg6 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj5)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -21095,7 +21095,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
       /* callback_func typemap */
       if (obj7 && obj7 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj7, 
+        SWIG_ConvertPtr( obj7,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -21104,7 +21104,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
           arg8 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj7)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -21320,7 +21320,7 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -21329,7 +21329,7 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -21565,7 +21565,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
       /* callback_func typemap */
       if (obj7 && obj7 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj7, 
+        SWIG_ConvertPtr( obj7,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -21574,7 +21574,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
           arg10 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj7)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -21778,7 +21778,7 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5, 
+        SWIG_ConvertPtr( obj5,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -21787,7 +21787,7 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
           arg6 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj5)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -21967,7 +21967,7 @@ SWIGINTERN PyObject *_wrap_FPolygonize(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5, 
+        SWIG_ConvertPtr( obj5,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -21976,7 +21976,7 @@ SWIGINTERN PyObject *_wrap_FPolygonize(PyObject *SWIGUNUSEDPARM(self), PyObject 
           arg6 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj5)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -22156,7 +22156,7 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5, 
+        SWIG_ConvertPtr( obj5,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -22165,7 +22165,7 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
           arg6 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj5)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -22351,7 +22351,7 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj6 && obj6 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj6, 
+        SWIG_ConvertPtr( obj6,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -22360,7 +22360,7 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
           arg7 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj6)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -22508,7 +22508,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -22517,7 +22517,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -22636,7 +22636,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -22645,7 +22645,7 @@ SWIGINTERN PyObject *_wrap_RegenerateOverview(PyObject *SWIGUNUSEDPARM(self), Py
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -22830,7 +22830,7 @@ SWIGINTERN PyObject *_wrap_ContourGenerate(PyObject *SWIGUNUSEDPARM(self), PyObj
       /* callback_func typemap */
       if (obj9 && obj9 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj9, 
+        SWIG_ConvertPtr( obj9,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -22839,7 +22839,7 @@ SWIGINTERN PyObject *_wrap_ContourGenerate(PyObject *SWIGUNUSEDPARM(self), PyObj
           arg11 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj9)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -23625,7 +23625,7 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSE
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -23634,7 +23634,7 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSE
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -25796,7 +25796,7 @@ SWIGINTERN PyObject *_wrap_TranslateInternal(PyObject *SWIGUNUSEDPARM(self), PyO
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -25805,7 +25805,7 @@ SWIGINTERN PyObject *_wrap_TranslateInternal(PyObject *SWIGUNUSEDPARM(self), PyO
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -26068,7 +26068,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestDS(PyObject *SWIGUNUSEDPARM(self)
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -26077,7 +26077,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestDS(PyObject *SWIGUNUSEDPARM(self)
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -26212,7 +26212,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestName(PyObject *SWIGUNUSEDPARM(sel
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -26221,7 +26221,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALWarpDestName(PyObject *SWIGUNUSEDPARM(sel
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -26461,7 +26461,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALVectorTranslateDestDS(PyObject *SWIGUNUSE
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -26470,7 +26470,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALVectorTranslateDestDS(PyObject *SWIGUNUSE
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -26571,7 +26571,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALVectorTranslateDestName(PyObject *SWIGUNU
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -26580,7 +26580,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALVectorTranslateDestName(PyObject *SWIGUNU
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -26835,7 +26835,7 @@ SWIGINTERN PyObject *_wrap_DEMProcessingInternal(PyObject *SWIGUNUSEDPARM(self),
       /* callback_func typemap */
       if (obj5 && obj5 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj5, 
+        SWIG_ConvertPtr( obj5,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -26844,7 +26844,7 @@ SWIGINTERN PyObject *_wrap_DEMProcessingInternal(PyObject *SWIGUNUSEDPARM(self),
           arg6 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj5)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -27090,7 +27090,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestDS(PyObject *SWIGUNUSEDPARM(
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -27099,7 +27099,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestDS(PyObject *SWIGUNUSEDPARM(
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -27200,7 +27200,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestName(PyObject *SWIGUNUSEDPAR
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -27209,7 +27209,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALNearblackDestName(PyObject *SWIGUNUSEDPAR
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -27444,7 +27444,7 @@ SWIGINTERN PyObject *_wrap_GridInternal(PyObject *SWIGUNUSEDPARM(self), PyObject
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -27453,7 +27453,7 @@ SWIGINTERN PyObject *_wrap_GridInternal(PyObject *SWIGUNUSEDPARM(self), PyObject
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -27690,7 +27690,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALRasterizeDestDS(PyObject *SWIGUNUSEDPARM(
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -27699,7 +27699,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALRasterizeDestDS(PyObject *SWIGUNUSEDPARM(
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -27800,7 +27800,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALRasterizeDestName(PyObject *SWIGUNUSEDPAR
       /* callback_func typemap */
       if (obj3 && obj3 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj3, 
+        SWIG_ConvertPtr( obj3,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -27809,7 +27809,7 @@ SWIGINTERN PyObject *_wrap_wrapper_GDALRasterizeDestName(PyObject *SWIGUNUSEDPAR
           arg4 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj3)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }

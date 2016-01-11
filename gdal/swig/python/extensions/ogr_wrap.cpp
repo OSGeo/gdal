@@ -3074,7 +3074,7 @@ using namespace std;
 
 typedef void GDALMajorObjectShadow;
 
-#ifdef DEBUG 
+#ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
 #ifndef SWIGPERL
 typedef struct OGRDriverHS OGRDriverShadow;
@@ -3155,13 +3155,13 @@ SWIG_FromCharPtr(const char *cptr)
 int bUseExceptions=0;
 CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
-void CPL_STDCALL 
-PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
+void CPL_STDCALL
+PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 {
-  /* 
+  /*
   ** Generally we want to suppress error reporting if we have exceptions
-  ** enabled as the error message will be in the exception thrown in 
-  ** Python.  
+  ** enabled as the error message will be in the exception thrown in
+  ** Python.
   */
 
   /* If the error class is CE_Fatal, we want to have a message issued
@@ -3190,7 +3190,7 @@ void UseExceptions() {
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
-    pfnPreviousHandler = 
+    pfnPreviousHandler =
         CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
   }
 }
@@ -3225,7 +3225,7 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
     pszIter ++;
   }
 #if PY_VERSION_HEX >= 0x03000000
-  return PyUnicode_FromString(pszStr); 
+  return PyUnicode_FromString(pszStr);
 #else
   return PyString_FromString(pszStr);
 #endif
@@ -3253,7 +3253,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       *pbToFree = 1;
       return pszNewStr;
   }
-  else 
+  else
   {
 #if PY_VERSION_HEX >= 0x03000000
       return PyBytes_AsString(pyObject);
@@ -3297,14 +3297,14 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         return TRUE;
 
     psInfo->nLastReported = (int) (100.0 * dfComplete);
-    
+
     if( pszMessage == NULL )
         pszMessage = "";
 
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
-        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, 
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
 	                       psInfo->psPyCallbackData );
 
     psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
@@ -3336,7 +3336,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
     Py_XDECREF(psResult);
 
-    return bContinue;    
+    return bContinue;
 }
 
 
@@ -4212,7 +4212,7 @@ SWIG_AsVal_float (PyObject * obj, float *val)
 
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_4(OGRFeatureShadow *self,int id,int year,int month,int day,int hour,int minute,float second,int tzflag){
     OGR_F_SetFieldDateTimeEx(self, id, year, month, day,
-                             hour, minute, second, 
+                             hour, minute, second,
                              tzflag);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_5(OGRFeatureShadow *self,char const *name,int year,int month,int day,int hour,int minute,float second,int tzflag){
@@ -4221,7 +4221,7 @@ SWIGINTERN void OGRFeatureShadow_SetField__SWIG_5(OGRFeatureShadow *self,char co
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
 	  OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
-				 hour, minute, second, 
+				 hour, minute, second,
 				 tzflag);
   }
 SWIGINTERN void OGRFeatureShadow_SetFieldIntegerList(OGRFeatureShadow *self,int id,int nList,int *pList){
@@ -4575,7 +4575,7 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
     return OGR_GFld_SetNullable( self, bNullable );
   }
 
-  OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
+  OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string,
                                             OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
@@ -4588,10 +4588,10 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
     }
     return (OGRGeometryShadow*) geom;
   }
- 
 
 
-  OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
+
+  OGRGeometryShadow* CreateGeometryFromWkt( char **val,
                                       OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkt(val,
@@ -4603,33 +4603,33 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
     }
     return (OGRGeometryShadow*) geom;
   }
- 
+
 
 
   OGRGeometryShadow *CreateGeometryFromGML( const char * input_string ) {
     OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateFromGML(input_string);
     return geom;
   }
- 
+
 
 
   OGRGeometryShadow *CreateGeometryFromJson( const char * input_string ) {
     OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateGeometryFromJson(input_string);
     return geom;
   }
- 
 
 
-  OGRGeometryShadow* BuildPolygonFromEdges( OGRGeometryShadow*  hLineCollection,  
-                                            int bBestEffort = 0, 
-                                            int bAutoClose = 0, 
+
+  OGRGeometryShadow* BuildPolygonFromEdges( OGRGeometryShadow*  hLineCollection,
+                                            int bBestEffort = 0,
+                                            int bAutoClose = 0,
                                             double dfTolerance=0) {
-  
+
   OGRGeometryH hPolygon = NULL;
-  
+
   OGRErr eErr;
 
-  hPolygon = OGRBuildPolygonFromEdges( hLineCollection, bBestEffort, 
+  hPolygon = OGRBuildPolygonFromEdges( hLineCollection, bBestEffort,
                                        bAutoClose, dfTolerance, &eErr );
 
   if (eErr != OGRERR_NONE ) {
@@ -4641,14 +4641,14 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
   }
 
 
-  OGRGeometryShadow* ApproximateArcAngles( 
+  OGRGeometryShadow* ApproximateArcAngles(
         double dfCenterX, double dfCenterY, double dfZ,
-  	double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, 
+  	double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation,
         double dfStartAngle, double dfEndAngle,
         double dfMaxAngleStepSizeDegrees ) {
-  
-  return (OGRGeometryShadow* )OGR_G_ApproximateArcAngles( 
-             dfCenterX, dfCenterY, dfZ, 
+
+  return (OGRGeometryShadow* )OGR_G_ApproximateArcAngles(
+             dfCenterX, dfCenterY, dfZ,
              dfPrimaryRadius, dfSecondaryAxis, dfRotation,
              dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
   }
@@ -5026,13 +5026,13 @@ OGRwkbGeometryType GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSet
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(utf8_path,update,NULL);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
-        CPLDebug( "SWIG", 
+        CPLDebug( "SWIG",
 		  "OGROpen() succeeded, but an error is posted, so we destroy"
 		  " the datasource and fail at swig level." );
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
-	
+
     return ds;
   }
 
@@ -5045,7 +5045,7 @@ OGRwkbGeometryType GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSet
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
-	
+
     return ds;
   }
 
@@ -5062,8 +5062,8 @@ OGRDriverShadow* GetDriver(int driver_number) {
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
 
-    nResArgCount = 
-      OGRGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
+    nResArgCount =
+      OGRGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions );
 
     if( nResArgCount <= 0 )
         return NULL;
@@ -10023,7 +10023,7 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -10032,7 +10032,7 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -10208,7 +10208,7 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -10217,7 +10217,7 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -10393,7 +10393,7 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -10402,7 +10402,7 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -10578,7 +10578,7 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -10587,7 +10587,7 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -10763,7 +10763,7 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -10772,7 +10772,7 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -10948,7 +10948,7 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -10957,7 +10957,7 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -11133,7 +11133,7 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
       /* callback_func typemap */
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj4,
           (void**)&cbfunction,
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
           SWIG_POINTER_EXCEPTION | 0 );
@@ -11142,7 +11142,7 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
           arg5 = GDALTermProgress;
         } else {
           if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError, 
+            PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
@@ -14208,7 +14208,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_0(PyObject *SWIGUNUSEDPARM(sel
       SWIG_fail;
     }
     
-    arg3 = GDALPythonObjectToCStr(str3, &bToFree3); 
+    arg3 = GDALPythonObjectToCStr(str3, &bToFree3);
   }
   {
     if ( bUseExceptions ) {
@@ -14280,7 +14280,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_1(PyObject *SWIGUNUSEDPARM(sel
       SWIG_fail;
     }
     
-    arg3 = GDALPythonObjectToCStr(str3, &bToFree3); 
+    arg3 = GDALPythonObjectToCStr(str3, &bToFree3);
   }
   {
     if (!arg2) {
