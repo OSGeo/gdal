@@ -1326,6 +1326,7 @@ class ColorEntry(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, ColorEntry, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, ColorEntry, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
     __swig_setmethods__["c1"] = _gdal.ColorEntry_c1_set
     __swig_getmethods__["c1"] = _gdal.ColorEntry_c1_get
@@ -1339,13 +1340,6 @@ class ColorEntry(_object):
     __swig_setmethods__["c4"] = _gdal.ColorEntry_c4_set
     __swig_getmethods__["c4"] = _gdal.ColorEntry_c4_get
     if _newclass:c4 = _swig_property(_gdal.ColorEntry_c4_get, _gdal.ColorEntry_c4_set)
-    def __init__(self, *args): 
-        """__init__(GDALColorEntry self) -> ColorEntry"""
-        this = _gdal.new_ColorEntry(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _gdal.delete_ColorEntry
-    __del__ = lambda self : None;
 ColorEntry_swigregister = _gdal.ColorEntry_swigregister
 ColorEntry_swigregister(ColorEntry)
 

@@ -10220,84 +10220,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_new_ColorEntry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALColorEntry *result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)":new_ColorEntry")) SWIG_fail;
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (GDALColorEntry *)new GDALColorEntry();
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  {
-    /* %typemap(out) GDALColorEntry* */
-    if ( result != NULL )
-    resultobj = Py_BuildValue( "(hhhh)", (*result).c1,(*result).c2,(*result).c3,(*result).c4);
-    else
-    resultobj = NULL;
-  }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_delete_ColorEntry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
-  GDALColorEntry ce1 ;
-  PyObject * obj0 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:delete_ColorEntry",&obj0)) SWIG_fail;
-  {
-    /* %typemap(in) GDALColorEntry* */
-    ce1.c4 = 255;
-    if (! PySequence_Check(obj0) ) {
-      PyErr_SetString(PyExc_TypeError, "not a sequence");
-      SWIG_fail;
-    }
-    Py_ssize_t size = PySequence_Size(obj0);
-    if ( size > 4 ) {
-      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
-      SWIG_fail;
-    }
-    if ( size < 3 ) {
-      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
-      SWIG_fail;
-    }
-    if ( !PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 ) ) {
-      PyErr_SetString(PyExc_TypeError, "Invalid values in ColorEntry sequence ");
-      SWIG_fail;
-    }
-    arg1 = &ce1;
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    delete arg1;
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
 SWIGINTERN PyObject *ColorEntry_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -27958,8 +27880,6 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"ColorEntry_c3_get", _wrap_ColorEntry_c3_get, METH_VARARGS, (char *)"ColorEntry_c3_get(ColorEntry self) -> short"},
 	 { (char *)"ColorEntry_c4_set", _wrap_ColorEntry_c4_set, METH_VARARGS, (char *)"ColorEntry_c4_set(ColorEntry self, short c4)"},
 	 { (char *)"ColorEntry_c4_get", _wrap_ColorEntry_c4_get, METH_VARARGS, (char *)"ColorEntry_c4_get(ColorEntry self) -> short"},
-	 { (char *)"new_ColorEntry", _wrap_new_ColorEntry, METH_VARARGS, (char *)"new_ColorEntry() -> ColorEntry"},
-	 { (char *)"delete_ColorEntry", _wrap_delete_ColorEntry, METH_VARARGS, (char *)"delete_ColorEntry(ColorEntry self)"},
 	 { (char *)"ColorEntry_swigregister", ColorEntry_swigregister, METH_VARARGS, NULL},
 	 { (char *)"GCP_GCPX_set", _wrap_GCP_GCPX_set, METH_VARARGS, (char *)"GCP_GCPX_set(GCP self, double GCPX)"},
 	 { (char *)"GCP_GCPX_get", _wrap_GCP_GCPX_get, METH_VARARGS, (char *)"GCP_GCPX_get(GCP self) -> double"},
