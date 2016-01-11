@@ -3213,12 +3213,13 @@ void NeverCallMePlease() {
 }
 
 /* Some SWIG code generates dead code, which Coverity warns about */
-static int ReturnSame(int x)
+template<class T> static T ReturnSame(T x)
 {
     if( bReturnSame )
         return x;
     return 0;
 }
+
 
 
 
@@ -19155,7 +19156,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkt(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
+    if ( ReturnSame(arg2) != NULL && *arg2 != NULL ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -19228,7 +19229,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkt(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
+    if ( ReturnSame(arg2) != NULL && *arg2 != NULL ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
