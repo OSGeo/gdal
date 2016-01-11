@@ -644,7 +644,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                 /* ISO/IEC 15444-1:2004 I.5.3.1 specifies that 255 means that all */
                 /* components have not the same bit depth and/or sign and that a */
                 /* BPCC box must then follow to specify them for each component */
-                if ( box->data.ihdr.bpc != 255 )
+                if ( box->data.ihdr.bpc != 255 && paiDepth == NULL && pabSignedness == NULL )
                 {
                     paiDepth = (int *)CPLMalloc(poDS->nBands * sizeof(int));
                     pabSignedness = (int *)CPLMalloc(poDS->nBands * sizeof(int));
