@@ -1896,6 +1896,7 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     buf->format = (char*) "B";
     buf->itemsize = 1;
   }
+  Py_DECREF($result);
   $result = PyMemoryView_FromBuffer(buf);
 %#else
   PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
