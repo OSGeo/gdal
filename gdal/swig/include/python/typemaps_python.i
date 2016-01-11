@@ -169,10 +169,7 @@
 %typemap(ret) OGRErr
 {
   /* %typemap(ret) OGRErr */
-  if (resultobj == Py_None ) {
-    resultobj = 0;
-  }
-  if (resultobj == 0) {
+  if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
     resultobj = PyInt_FromLong( $1 );
   }
 }
