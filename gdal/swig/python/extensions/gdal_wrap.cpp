@@ -17674,9 +17674,9 @@ SWIGINTERN PyObject *_wrap_Band_GetDefaultHistogram(PyObject *SWIGUNUSEDPARM(sel
   };
   CPLErr result;
   
-  double min_val, max_val;
-  int buckets_val;
-  GUIntBig *panHistogram;
+  double min_val = 0.0, max_val = 0.0;
+  int buckets_val = 0;
+  GUIntBig *panHistogram = NULL;
   
   arg2 = &min_val;
   arg3 = &max_val;
