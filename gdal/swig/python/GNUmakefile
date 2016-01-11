@@ -54,6 +54,8 @@ gdal_array_wrap.cpp:  ../include/gdal_array.i ../include/python/typemaps_python.
 # and is no longer necessary with swig 2.0.4
 generate: ${WRAPPERS} gdal_array_wrap.cpp
 	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp; do sed "s/PyErr_Format(PyExc_RuntimeError, mesg)/PyErr_SetString(PyExc_RuntimeError, mesg)/" ${SWIGOUTPUTDIR}/$$i | sed "s/int len;/Py_ssize_t len;/" > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
+	# Following is to prevent Coverity Scan to warn about Dereference before null check (REVERSE_INULL)
+	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp; do sed "s/if (!PyTuple_Check(args)) SWIG_fail;/if (args == NULL || !PyTuple_Check(args)) SWIG_fail;/" ${SWIGOUTPUTDIR}/$$i | sed "s/argc = args ? (int)PyObject_Length(args) : 0/argc = (int)PyObject_Length(args)/" > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
 	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && patch -p0 < python3.2.patch
 	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/ogr_wrap/" | patch -p0
 	-grep "1\.3\.40" extensions/gdal_wrap.cpp >/dev/null && cat python3.2.patch | sed "s/gdal_wrap/osr_wrap/" | patch -p0
