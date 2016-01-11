@@ -57,6 +57,24 @@ void DontUseExceptions() {
 }
 %}
 
+%{
+/* Completely unrelated: just to avoid Coverity warnings */
+
+static int bReturnSame = 1;
+
+void NeverCallMePlease() {
+    bReturnSame = 0;
+}
+
+/* Some SWIG code generates dead code, which Coverity warns about */
+static int ReturnSame(int x)
+{
+    if( bReturnSame )
+        return x;
+    return 0;
+}
+%}
+
 %include exception.i
 
 %exception {
