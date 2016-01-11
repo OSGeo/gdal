@@ -696,7 +696,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
             pasNodes[nNodes].sInfo.nChangeset = nChangeset;
             pasNodes[nNodes].sInfo.nVersion = nVersion;
             pasNodes[nNodes].sInfo.nUID = nUID;
-            if( panStrOff == NULL )
+            if( nUserSID >= nStrCount )
                 pasNodes[nNodes].sInfo.pszUserSID = "";
             else
                 pasNodes[nNodes].sInfo.pszUserSID = pszStrBuf + panStrOff[nUserSID];
