@@ -41,12 +41,6 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                  GIntBig nPixelSpace, GIntBig nLineSpace,
                                  int bSpacingShouldBeMultipleOfPixelSize )
 {
-#if SIZEOF_VOIDP == 8
-    const GIntBig MAX_INT = (((GIntBig)0x7fffffff) << 32) | 0xffffffff;
-#else
-    const GIntBig MAX_INT = 0x7fffffff;
-#endif
-
     if (buf_xsize <= 0 || buf_ysize <= 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
@@ -84,11 +78,13 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
     }
 
     GIntBig nRet = (GIntBig)(buf_ysize - 1) * nLineSpace + (GIntBig)(buf_xsize - 1) * nPixelSpace + nPixelSize;
-    if (nRet > MAX_INT)
+#if SIZEOF_VOIDP == 4
+    if (nRet > INT_MAX)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
         return 0;
     }
+#endif
 
     return nRet;
 }
