@@ -746,7 +746,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
     GDAL_GCP *item = 0;
-    SWIG_ConvertPtr( o, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 );
+    CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( o, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 ));
     if ( ! item ) {
       Py_DECREF(o);
       SWIG_fail;
