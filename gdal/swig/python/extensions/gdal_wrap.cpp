@@ -4374,9 +4374,16 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
         {
             // round up
             int nLevel = atoi(pszLevel);
-            int nRes = 2 << (nLevel - 1);
-            buf_xsize = ceil(xSize / (1.0 * nRes));
-            buf_ysize = ceil(ySize / (1.0 * nRes));
+            if( nLevel < 0 || nLevel > 30 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid LEVEL: %d", nLevel);
+            }
+            else
+            {
+                int nRes = 1 << nLevel;
+                buf_xsize = ceil(xSize / (1.0 * nRes));
+                buf_ysize = ceil(ySize / (1.0 * nRes));
+            }
         }
     }
 
