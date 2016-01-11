@@ -1118,26 +1118,6 @@ OPTIONAL_POD(GIntBig,L);
 }
 
 /*
- * Typemap for CPLErr.
- * This typemap will use the wrapper C-variable
- * int UseExceptions to determine proper behavour for
- * CPLErr return codes.
- * If UseExceptions ==0, then return the rc.
- * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
- */
-%typemap(ret) CPLErr
-{
-  /* %typemap(ret) CPLErr */
-  if ( bUseExceptions == 0 ) {
-    /* We're not using exceptions.  And no error has occurred */
-    if ( $result == 0 ) {
-      /* No other return values set so return ErrorCode */
-      $result = PyInt_FromLong($1);
-    }
-  }
-}
-
-/*
  * Typemaps for minixml:  CPLXMLNode* input, CPLXMLNode *ret
  */
 
