@@ -1148,7 +1148,7 @@ OPTIONAL_POD(GIntBig,L);
 static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
 
 {
-    int      nChildCount = 0, iChild, nType;
+    int      nChildCount = 0, iChild, nType = 0;
     CPLXMLNode *psThisNode;
     CPLXMLNode *psChild;
     char       *pszText = NULL;
@@ -1160,8 +1160,8 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
         return NULL;
     }
 
-    PyArg_Parse( PyList_GET_ITEM(pyList,0), "i", &nType );
-    PyArg_Parse( PyList_GET_ITEM(pyList,1), "s", &pszText );
+    CPL_IGNORE_RET_VAL(PyArg_Parse( PyList_GET_ITEM(pyList,0), "i", &nType ));
+    CPL_IGNORE_RET_VAL(PyArg_Parse( PyList_GET_ITEM(pyList,1), "s", &pszText ));
 
     /* Detect "pseudo" root */
     if (nType == CXT_Element && pszText != NULL && strlen(pszText) == 0 && nChildCount == 2)
@@ -1174,8 +1174,8 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
         }
         int nTypeFirst = 0;
         char* pszTextFirst = NULL;
-        PyArg_Parse( PyList_GET_ITEM(pyFirst,0), "i", &nTypeFirst );
-        PyArg_Parse( PyList_GET_ITEM(pyFirst,1), "s", &pszTextFirst );
+        CPL_IGNORE_RET_VAL(PyArg_Parse( PyList_GET_ITEM(pyFirst,0), "i", &nTypeFirst ));
+        CPL_IGNORE_RET_VAL(PyArg_Parse( PyList_GET_ITEM(pyFirst,1), "s", &pszTextFirst ));
         if (nTypeFirst == CXT_Element && pszTextFirst != NULL && pszTextFirst[0] == '?')
         {
             psThisNode = PyListToXMLTree( PyList_GET_ITEM(pyList,2) );
