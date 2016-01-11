@@ -1039,7 +1039,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (char **argout) */
   PyObject *o;
-  if ( $1 != NULL && *$1 != NULL) {
+  if ( ReturnSame($1 != NULL && *$1 != NULL) ) {
     o = GDALPythonObjectFromCStr( *$1 );
   }
   else {

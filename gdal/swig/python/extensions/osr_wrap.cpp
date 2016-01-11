@@ -4211,7 +4211,7 @@ SWIGINTERN PyObject *_wrap_GetWellKnownGeogCSAsWKT(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -4292,7 +4292,7 @@ SWIGINTERN PyObject *_wrap_GetUserInputAsWKT(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -11516,7 +11516,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToWkt(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -11600,7 +11600,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPrettyWkt(PyObject *SWIGUNUS
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -11673,7 +11673,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToProj4(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -11758,7 +11758,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -11770,7 +11770,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg3 != NULL && *arg3 != NULL) {
+    if ( ReturnSame(arg3 != NULL && *arg3 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg3 );
     }
     else {
@@ -11972,7 +11972,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToXML(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -12047,7 +12047,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToMICoordSys(PyObject *SWIGUNU
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {

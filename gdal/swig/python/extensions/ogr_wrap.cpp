@@ -19155,7 +19155,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkt(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
@@ -19228,7 +19228,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkt(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (char **argout) */
     PyObject *o;
-    if ( arg2 != NULL && *arg2 != NULL) {
+    if ( ReturnSame(arg2 != NULL && *arg2 != NULL) ) {
       o = GDALPythonObjectFromCStr( *arg2 );
     }
     else {
