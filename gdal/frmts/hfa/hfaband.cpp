@@ -682,7 +682,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
             else
             {
-                CPLAssert( FALSE );
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Attempt to uncompress an unsupported pixel data type.");
+                return CE_Failure;
             }
         }
 
