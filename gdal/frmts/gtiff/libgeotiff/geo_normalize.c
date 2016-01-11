@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2685 2015-11-18 18:46:20Z rouault $
+ * $Id: geo_normalize.c 2712 2016-01-11 11:36:59Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1011,6 +1011,9 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
             dfInRadians = (dfFactorB / dfFactorC);
             dfInDegrees = dfInRadians * 180.0 / M_PI;
         }
+
+        if( ppszUOMName != NULL )
+            *ppszUOMName = CPLStrdup( pszUOMName );
     }
     else
     {
@@ -1020,13 +1023,6 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
 /* -------------------------------------------------------------------- */
 /*      Return to caller.                                               */
 /* -------------------------------------------------------------------- */
-    if( ppszUOMName != NULL )
-    {
-        if( pszUOMName != NULL )
-            *ppszUOMName = CPLStrdup( pszUOMName );
-        else
-            *ppszUOMName = NULL;
-    }
 
     if( pdfInDegrees != NULL )
         *pdfInDegrees = dfInDegrees;
