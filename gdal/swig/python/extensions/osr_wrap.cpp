@@ -3274,7 +3274,10 @@ py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
 	papszParameters = OPTGetParameterList( papszMethods[iMethod],
 					       &pszUserMethodName );
         if( papszParameters == NULL )
+        {
+            CSLDestroy( papszMethods );
             return NULL;
+        }
 
 	py_PList = PyList_New(CSLCount(papszParameters));
 	for( iParam = 0; papszParameters[iParam] != NULL; iParam++ )
