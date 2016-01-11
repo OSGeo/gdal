@@ -4444,6 +4444,11 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
     GDALAsyncReaderH hAsyncReader =
             GDALBeginAsyncReader(self, xOff, yOff, xSize, ySize, (void*) buf_string, nxsize, nysize, ntype, nBCount, pBandList, nPixelSpace, nLineSpace,
     nBandSpace, options);
+
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+
     if (hAsyncReader)
     {
         return (GDALAsyncReader*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
@@ -4451,10 +4456,6 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
     else
     {
         return NULL;
-    }
-
-    if ( myBandList ) {
-       CPLFree( pBandList );
     }
 
   }
