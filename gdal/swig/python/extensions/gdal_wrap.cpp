@@ -6831,7 +6831,7 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -6839,7 +6839,7 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -7365,7 +7365,7 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -7373,7 +7373,7 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -7509,7 +7509,7 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc2 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -7521,7 +7521,7 @@ fail:
   }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc2 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -8379,7 +8379,7 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -8387,7 +8387,7 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if( alloc1 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -13404,7 +13404,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if( alloc6 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }
@@ -13428,7 +13428,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
 fail:
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if( alloc6 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }
@@ -17301,7 +17301,7 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if( alloc6 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }
@@ -17309,7 +17309,7 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
 fail:
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if( alloc6 == SWIG_NEWOBJ ) {
+    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }
