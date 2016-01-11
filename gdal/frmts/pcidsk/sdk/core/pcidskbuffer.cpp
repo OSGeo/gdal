@@ -89,18 +89,18 @@ void PCIDSKBuffer::SetSize( int size )
 
 {
     buffer_size = size;
-    if( buffer == NULL )
-        buffer = (char *) malloc(size+1);
-    else
-        buffer = (char *) realloc(buffer,size+1);
+    char* new_buffer = (char *) realloc(buffer,size+1);
 
-    if( buffer == NULL )
+    if( new_buffer == NULL )
     {
+        free( buffer );
+        buffer = NULL;
         buffer_size = 0;
         return ThrowPCIDSKException( "Out of memory allocating %d byte PCIDSKBuffer.",
                                size );
     }
 
+    buffer = new_buffer;
     buffer[size] = '\0';
 }
 

@@ -523,7 +523,9 @@ void CPCIDSKFile::InitializeFromHeader()
         
         if (STARTS_WITH(pixel_type_string,"        ")) 
         {
-            assert( count_c32r == 0 && count_c16u == 0 && count_c16s == 0 );
+            if( !( count_c32r == 0 && count_c16u == 0 && count_c16s == 0 ) )
+                return ThrowPCIDSKException("Assertion 'count_c32r == 0 && count_c16u == 0 && count_c16s == 0' failed");
+
             if( channelnum <= count_8u )
                 pixel_type = CHN_8U;
             else if( channelnum <= count_8u + count_16s )
