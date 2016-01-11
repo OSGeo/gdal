@@ -36,10 +36,12 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 %inline %{
 
 int GetUseExceptions() {
+  CPLErrorReset();
   return bUseExceptions;
 }
 
 void UseExceptions() {
+  CPLErrorReset();
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
@@ -49,6 +51,7 @@ void UseExceptions() {
 }
 
 void DontUseExceptions() {
+  CPLErrorReset();
   if( bUseExceptions )
   {
     bUseExceptions = 0;
@@ -84,11 +87,4 @@ template<class T> static T ReturnSame(T x)
         CPLErrorReset();
     }
     $action
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
 }
-
