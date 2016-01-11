@@ -2878,14 +2878,18 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
     if( pabyAttributeSubsection == NULL )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Out of memory failure reading %d bytes of attribute subsection. ",
+                  "Out of memory failure reading %d bytes of attribute subsection.",
                   nASSSize );
         return;
     }
     
     if( VSIFSeekL( psImage->psFile->fp, nASSOffset, SEEK_SET ) != 0 ||
         VSIFReadL( pabyAttributeSubsection, 1, nASSSize, psImage->psFile->fp ) != nASSSize )
+    {
+        CPLError( CE_Warning, CPLE_FileIO, "I/O error when reading attribute subsection." );
+        CPLFree(pabyAttributeSubsection);
         return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Scan for some particular attributes we would like.              */
