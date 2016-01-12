@@ -478,7 +478,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*       Read the line offset list                                      */
 /* -------------------------------------------------------------------- */
-    if ( ! CSLTestBoolean(CPLGetConfigOption("BSB_DISABLE_INDEX", "NO")) )
+    if ( !CPLTestBoolean(CPLGetConfigOption("BSB_DISABLE_INDEX", "NO")) )
     {
         /* build the list from file's index table */
         /* To overcome endian compatibility issues individual
@@ -702,7 +702,7 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
         && nLineMarker != nScanline + 1 )
     {
         int bIgnoreLineNumbers = 
-            CSLTestBoolean(CPLGetConfigOption("BSB_IGNORE_LINENUMBERS", "NO"));
+            CPLTestBoolean(CPLGetConfigOption("BSB_IGNORE_LINENUMBERS", "NO"));
 
         if (bVerboseIfError && !bIgnoreLineNumbers )
         {

@@ -1498,7 +1498,9 @@ bool CPLTestBool( const char *pszValue )
  * If pszValue is "NO", "FALSE", "OFF" or "0" will be returned FALSE.
  * Otherwise, TRUE will be returned.
  *
- * Use this only in C code.  In C++, prefer CPLTestBool().
+ * Deprecated.  Removed in GDAL 3.x.
+ *
+ * Use CPLTestBoolean() for C and CPLTestBool() for C++.
  *
  * @param pszValue the string should be tested.
  *
@@ -1509,6 +1511,29 @@ int CSLTestBoolean( const char *pszValue )
 {
     return CPLTestBool( pszValue ) ? TRUE : FALSE;
 }
+
+/************************************************************************/
+/*                         CPLTestBoolean()                             */
+/************************************************************************/
+
+/**
+ * Test what boolean value contained in the string.
+ *
+ * If pszValue is "NO", "FALSE", "OFF" or "0" will be returned FALSE.
+ * Otherwise, TRUE will be returned.
+ *
+ * Use this only in C code.  In C++, prefer CPLTestBool().
+ *
+ * @param pszValue the string should be tested.
+ *
+ * @return TRUE or FALSE.
+ */
+
+int CPLTestBoolean( const char *pszValue )
+{
+    return CPLTestBool( pszValue ) ? TRUE : FALSE;
+}
+
 
 /**********************************************************************
  *                       CSLFetchBoolean()
