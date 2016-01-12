@@ -322,6 +322,20 @@ def test_ogr2ogr_lib_14():
 
     return 'success'
 
+###############################################################################
+# Test non existing zfield
+
+def test_ogr2ogr_lib_15():
+
+    srcDS = gdal.OpenEx('../ogr/data/poly.shp')
+    with gdaltest.error_handler():
+        ds = gdal.VectorTranslate('',srcDS, format = 'Memory', zField = 'foo')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbPolygon:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -337,6 +351,7 @@ gdaltest_list = [
     test_ogr2ogr_lib_12,
     test_ogr2ogr_lib_13,
     test_ogr2ogr_lib_14,
+    test_ogr2ogr_lib_15
     ]
 
 if __name__ == '__main__':
