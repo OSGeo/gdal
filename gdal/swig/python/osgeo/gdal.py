@@ -561,6 +561,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          layerName = None,
          geometryType = None,
          segmentizeMaxDist= None,
+         zField = None,
          callback = None, callback_data = None):
     """ Create a VectorTranslateOptions() object that can be passed to gdal.VectorTranslate()
         Keyword arguments are :
@@ -581,6 +582,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           layerName --- output layer name
           geometryType --- output layer geometry type ('POINT', ....)
           segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
+          zField --- name of field to use to set the Z component of geometries
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -637,6 +639,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             new_options += ['-nln', layerName]
         if geometryType is not None:
             new_options += ['-nlt', geometryType]
+        if zField is not None:
+            new_options += ['-zfield', zField]
 
     if callback is not None:
         new_options += [ '-progress' ]

@@ -2582,6 +2582,18 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         }
     }
 
+    int iSrcZField = -1;
+    if (pszZField != NULL)
+    {
+        iSrcZField = poSrcFDefn->GetFieldIndex(pszZField);
+        if( iSrcZField < 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "zfield '%s' does not exist in layer %s",
+                     pszZField, poSrcLayer->GetName());
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find the layer.                                                 */
 /* -------------------------------------------------------------------- */
@@ -2648,7 +2660,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 }
             }
 
-            if ( bHasZ || (pszZField && eGType != wkbNone) )
+            if ( bHasZ || (iSrcZField >= 0 && eGType != wkbNone) )
                 eGType = wkbSetZ((OGRwkbGeometryType)eGType);
         }
 
@@ -3100,12 +3112,6 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 CPLDebug("GDALVectorTranslate", "Skipping field '%s' not found in destination layer '%s'.",
                          poSrcFieldDefn->GetNameRef(), poDstLayer->GetName() );
         }
-    }
-
-    int iSrcZField = -1;
-    if (pszZField != NULL)
-    {
-        iSrcZField = poSrcFDefn->GetFieldIndex(pszZField);
     }
 
     TargetLayerInfo* psInfo = (TargetLayerInfo*)
