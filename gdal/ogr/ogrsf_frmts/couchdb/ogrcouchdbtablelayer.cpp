@@ -1108,7 +1108,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
 
-    poObjProps = OGRGeoJSONWriteAttributes( poFeature );
+    poObjProps = OGRGeoJSONWriteAttributes( poFeature, -1 );
     if (poObjProps)
     {
         json_object_object_del(poObjProps, "_id");
@@ -1143,7 +1143,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
         OGRGeometry* poGeometry = poFeature->GetGeometryRef();
         if ( NULL != poGeometry )
         {
-            poObjGeom = OGRGeoJSONWriteGeometry( poGeometry, nCoordPrecision );
+            poObjGeom = OGRGeoJSONWriteGeometry( poGeometry, nCoordPrecision, -1 );
             if ( poObjGeom != NULL &&
                  wkbFlatten(poGeometry->getGeometryType()) != wkbPoint &&
                  !poGeometry->IsEmpty() )

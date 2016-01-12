@@ -737,7 +737,8 @@ void OGRGeoJSONDataSource::FlushCache()
                         bAlreadyDone = true;
                         json_object* poObj = OGRGeoJSONWriteFeature( poFeature,
                                                                      FALSE/* bWriteBBOX */,
-                                                                     -1 /*nCoordPrecision*/ );
+                                                                     -1 /*nCoordPrecision*/,
+                                                                     -1 /* nSignificatnFigures*/);
                         VSILFILE* fp = VSIFOpenL(pszName_, "wb");
                         if( fp != NULL )
                         {
