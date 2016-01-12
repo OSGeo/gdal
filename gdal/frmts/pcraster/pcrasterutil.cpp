@@ -395,7 +395,8 @@ double missingValue(
       break;
     }
     default: {
-      CPLAssert(false);
+      CPLError(CE_Failure, CPLE_NotSupported,
+               "Unexpected value for cellRepresentation = %d", cellRepresentation);
       break;
     }
   }

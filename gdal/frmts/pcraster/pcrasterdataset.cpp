@@ -69,7 +69,13 @@ GDALDataset* PCRasterDataset::open(
     MAP* map = mapOpen(info->pszFilename, mode);
 
     if(map) {
+      CPLErrorReset();
       dataset = new PCRasterDataset(map);
+      if( CPLGetLastErrorType() != CE_None )
+      {
+          delete dataset;
+          return NULL;
+      }
     }
   }
 
@@ -304,9 +310,15 @@ PCRasterDataset::PCRasterDataset( MAP* mapIn) :
   d_north = static_cast<double>(RgetYUL(d_map));
   d_cellSize = static_cast<double>(RgetCellSize(d_map));
   d_cellRepresentation = RgetUseCellRepr(d_map);
-  CPLAssert(d_cellRepresentation != CR_UNDEFINED);
+  if( d_cellRepresentation == CR_UNDEFINED )
+  {
+      CPLError(CE_Failure, CPLE_AssertionFailed, "d_cellRepresentation != CR_UNDEFINED");
+  }
   d_valueScale = RgetValueScale(d_map);
-  CPLAssert(d_valueScale != VS_UNDEFINED);
+  if( d_valueScale == VS_UNDEFINED )
+  {
+      CPLError(CE_Failure, CPLE_AssertionFailed, "d_valueScale != VS_UNDEFINED");
+  }
   d_defaultNoDataValue = ::missingValue(d_cellRepresentation);
 
   // Create band information objects.
