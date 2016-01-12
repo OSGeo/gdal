@@ -35,6 +35,7 @@
 
 CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
                                         const CPLString& osAccessKeyId,
+                                        const CPLString& osAccessToken,
                                         const CPLString& osAWSRegion,
                                         const CPLString& osService,
                                         const CPLString& osVerb,
@@ -61,6 +62,7 @@ class VSIS3HandleHelper
         CPLString m_osURL;
         CPLString m_osSecretAccessKey;
         CPLString m_osAccessKeyId;
+        CPLString m_osSessionToken;
         CPLString m_osAWSS3Endpoint;
         CPLString m_osAWSRegion;
         CPLString m_osBucket;
@@ -79,6 +81,7 @@ class VSIS3HandleHelper
     public:
         VSIS3HandleHelper(const CPLString& osSecretAccessKey,
                     const CPLString& osAccessKeyId,
+                    const CPLString& osSessionToken,
                     const CPLString& osAWSS3Endpoint,
                     const CPLString& osAWSRegion,
                     const CPLString& osBucket,
