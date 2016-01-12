@@ -1728,6 +1728,8 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg)
  *
  * The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must* be
  * set.
+ * The AWS_SESSION_TOKEN configuration option must be set when temporary credentials
+ * are used.
  * The AWS_REGION configuration option may be set to one of the supported
  * <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">S3 regions</a>
  * and defaults to 'us-east-1'

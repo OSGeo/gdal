@@ -167,6 +167,15 @@ def vsis3_2():
         print(data)
         return 'fail'
 
+    # Test with temporary credentials
+    gdal.SetConfigOption('AWS_SESSION_TOKEN', 'AWS_SESSION_TOKEN')
+    f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket_with_session_token/resource', 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+    gdal.SetConfigOption('AWS_SESSION_TOKEN', None)
+
     #old_val = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
     #gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
     stat_res = gdal.VSIStatL('/vsis3/s3_fake_bucket/resource2.bin')

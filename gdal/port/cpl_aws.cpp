@@ -119,6 +119,7 @@ CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash)
 /* See http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html */
 CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
                                            const CPLString& osAccessKeyId,
+                                           const CPLString& osAccessToken,
                                            const CPLString& osAWSRegion,
                                            const CPLString& osService,
                                            const CPLString& osVerb,
@@ -148,10 +149,18 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
     osCanonicalHeaders += "x-amz-date:";
     osCanonicalHeaders += osTimestamp;
     osCanonicalHeaders += "\n";
+    if( osAccessToken.size() )
+    {
+        osCanonicalHeaders += "x-amz-security-token:";
+        osCanonicalHeaders += osAccessToken;
+        osCanonicalHeaders += "\n";
+    }
 
     osCanonicalRequest += osCanonicalHeaders + "\n";
 
     CPLString osSignedHeaders = "host;x-amz-content-sha256;x-amz-date";
+    if( osAccessToken.size() )
+        osSignedHeaders += ";x-amz-security-token";
     osCanonicalRequest += osSignedHeaders + "\n";
 
     osCanonicalRequest += osXAMZContentSHA256;
@@ -282,6 +291,7 @@ CPLString CPLGetAWS_SIGN4_Timestamp()
 
 VSIS3HandleHelper::VSIS3HandleHelper(   const CPLString& osSecretAccessKey,
                                         const CPLString& osAccessKeyId,
+                                        const CPLString& osSessionToken,
                                         const CPLString& osAWSS3Endpoint,
                                         const CPLString& osAWSRegion,
                                         const CPLString& osBucket,
@@ -290,6 +300,7 @@ VSIS3HandleHelper::VSIS3HandleHelper(   const CPLString& osSecretAccessKey,
         m_osURL(BuildURL(osAWSS3Endpoint, osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting)),
         m_osSecretAccessKey(osSecretAccessKey),
         m_osAccessKeyId(osAccessKeyId),
+        m_osSessionToken(osSessionToken),
         m_osAWSS3Endpoint(osAWSS3Endpoint),
         m_osAWSRegion(osAWSRegion),
         m_osBucket(osBucket),
@@ -405,6 +416,7 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
                  "AWS_ACCESS_KEY_ID configuration option not defined");
         return NULL;
     }
+    CPLString osSessionToken = CPLGetConfigOption("AWS_SESSION_TOKEN", "");
     CPLString osAWSS3Endpoint = CPLGetConfigOption("AWS_S3_ENDPOINT", "s3.amazonaws.com");
     CPLString osAWSRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
     CPLString osBucket, osObjectKey;
@@ -417,7 +429,7 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
     bool bUseVirtualHosting = CPL_TO_BOOL(CSLTestBoolean(
             CPLGetConfigOption("AWS_VIRTUAL_HOSTING",
                                bIsValidNameForVirtualHosting ? "TRUE" : "FALSE")));
-    return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
+    return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId, osSessionToken,
                                     osAWSS3Endpoint, osAWSRegion,
                                     osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
 }
@@ -470,6 +482,7 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb,
     CPLString osAuthorization = CPLGetAWS_SIGN4_Authorization(
             m_osSecretAccessKey,
             m_osAccessKeyId,
+            m_osSessionToken,
             m_osAWSRegion,
             "s3",
             osVerb,
@@ -484,6 +497,9 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb,
                                 CPLSPrintf("x-amz-date: %s", osXAMZDate.c_str()));
     headers = curl_slist_append(headers,
                                 CPLSPrintf("x-amz-content-sha256: %s", osXAMZContentSHA256.c_str()));
+    if( m_osSessionToken.size() )
+        headers = curl_slist_append(headers,
+                                CPLSPrintf("X-Amz-Security-Token: %s", m_osSessionToken.c_str()));
     headers = curl_slist_append(headers,
                                 CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
     return headers;
