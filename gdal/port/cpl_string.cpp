@@ -334,7 +334,7 @@ char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
                                 nAllocatedLines * sizeof(char*) ) );
             if (papszStrListNew == NULL)
             {
-                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+                CPL_IGNORE_RET_VAL( VSIFCloseL(fp) );
                 CPLReadLineL( NULL );
                 CPLError( CE_Failure, CPLE_OutOfMemory,  "CSLLoad2(\"%s\") "
                           "failed: not enough memory to allocate lines.",
@@ -348,7 +348,7 @@ char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
         ++nLines;
     }
 
-    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+    CPL_IGNORE_RET_VAL( VSIFCloseL(fp) );
 
     // Free the internal thread local line buffer.
     CPLReadLineL( NULL );
@@ -366,7 +366,7 @@ char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
  * The VSI*L API is used, so VSIFOpenL() supported objects that aren't
  * physical files can also be accessed.  Files are returned as a string list,
  * with one item in the string list per line.  End of line markers are
- * stripped (by CPLReadLineL()). 
+ * stripped (by CPLReadLineL()).
  *
  * If reading the file fails a CPLError() will be issued and NULL returned.
  *
@@ -419,11 +419,11 @@ int CSLSave(char **papszStrList, const char *pszFname)
         ++papszStrList;
     }
 
-    if(VSIFCloseL(fp) != 0 )
+    if( VSIFCloseL(fp) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                      "CSLSave(\"%s\") failed: unable to write to output file.",
-                      pszFname );
+                  "CSLSave(\"%s\") failed: unable to write to output file.",
+                  pszFname );
     }
 
     return nLines;
@@ -763,7 +763,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 /************************************************************************/
 
 /**
- * Tokenize a string. 
+ * Tokenize a string.
  *
  * This function will split a string into tokens based on specified'
  * delimiter(s) with a variety of options.  The returned result is a
@@ -1477,7 +1477,7 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
  *
  * @param pszValue the string should be tested.
  *
- * @return TRUE or FALSE.
+ * @return true or false.
  */
 
 bool CPLTestBool( const char *pszValue )
