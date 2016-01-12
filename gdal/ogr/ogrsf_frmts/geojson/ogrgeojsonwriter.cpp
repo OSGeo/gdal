@@ -1001,14 +1001,14 @@ static int OGR_json_double_with_significant_figures_to_string(struct json_object
         const int nInitialSignificantFigures = nSignificantFigures >= 0 ? nSignificantFigures : 17;
         CPLsnprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nInitialSignificantFigures);
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), szFormatting, jso->o.c_double);
-        const char* pszDot;
+        const char* pszDot = NULL;
         if( nSize+2 < (int)sizeof(szBuffer) && (pszDot = strchr(szBuffer, '.')) == NULL )
         {
             nSize += CPLsnprintf(szBuffer + nSize, sizeof(szBuffer) - nSize, ".0");
         }
 
         // Try to avoid .xxxx999999y or .xxxx000000y rounding issues by decreasing a bit precision
-        if( nInitialSignificantFigures > 10 && pszDot &&
+        if( nInitialSignificantFigures > 10 && pszDot != NULL &&
             (strstr(pszDot, "999999") != NULL || strstr(pszDot, "000000") != NULL) )
         {
             bool bOK = false;
