@@ -105,7 +105,7 @@ int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey,
 
 #ifdef __cplusplus
 /* Prefer these for C++ code. */
-bool CPLTestBool( const char *pszValue );
+bool CPL_DLL CPLTestBool( const char *pszValue );
 #endif  /* __cplusplus */
 
 const char CPL_DLL *
