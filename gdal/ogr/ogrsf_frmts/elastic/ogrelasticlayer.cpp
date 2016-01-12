@@ -1894,7 +1894,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 case OFTReal:
                     json_object_object_add(poContainer,
                             pszLastComponent,
-                            json_object_new_double(poFeature->GetFieldAsDouble(i)));
+                            json_object_new_double_with_significant_figures(poFeature->GetFieldAsDouble(i), -1));
                     break;
                 case OFTIntegerList:
                 {
@@ -1924,7 +1924,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                     const double* padfValues = poFeature->GetFieldAsDoubleList(i, &nCount);
                     json_object* poArray = json_object_new_array();
                     for(int j=0;j<nCount;j++)
-                        json_object_array_add(poArray, json_object_new_double(padfValues[j]));
+                        json_object_array_add(poArray, json_object_new_double_with_significant_figures(padfValues[j], -1));
                     json_object_object_add(poContainer,
                             pszLastComponent, poArray);
                     break;

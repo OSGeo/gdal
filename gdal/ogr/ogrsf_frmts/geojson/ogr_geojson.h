@@ -119,7 +119,8 @@ private:
     bool bWriteFC_BBOX;
     OGREnvelope3D sEnvelopeLayer;
 
-    int nCoordPrecision;
+    int nCoordPrecision_;
+    int nSignificantFigures_;
 };
 
 /************************************************************************/

@@ -55,7 +55,8 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
     poFeatureDefn_->SetGeomType( eGType );
     SetDescription( poFeatureDefn_->GetName() );
 
-    nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
+    nCoordPrecision_ = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
+    nSignificantFigures_ = atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
 }
 
 /************************************************************************/
@@ -115,7 +116,8 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         return OGRERR_INVALID_HANDLE;
     }
 
-    json_object* poObj = OGRGeoJSONWriteFeature( poFeature, bWriteBBOX, nCoordPrecision );
+    json_object* poObj = OGRGeoJSONWriteFeature( poFeature, bWriteBBOX,
+                                                 nCoordPrecision_, nSignificantFigures_ );
     CPLAssert( NULL != poObj );
 
     if( nOutCounter_ > 0 )

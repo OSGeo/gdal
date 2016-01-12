@@ -2353,6 +2353,63 @@ def ogr_geojson_49():
     return 'success'
 
 ###############################################################################
+# Test that we serialize floating point values with enough signficant figures
+
+def ogr_geojson_50():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
+    lyr = ds.CreateLayer('test' )
+    lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['val'] = 1.23456789012456
+    lyr.CreateFeature(f)
+    # To test smart rounding
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['val'] = 5268.813
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_50.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_50.json')
+
+    if data.find('1.23456789012456') < 0 and data.find('5268.813 ') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    # If SIGNIFICANT_FIGURES is explicitly specified, and COORDINATE_PRECISION not,
+    # then it alos applies to coordinates
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
+    lyr = ds.CreateLayer('test', options = ['SIGNIFICANT_FIGURES=17'] )
+    lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0.0000123456789012456 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_50.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_50.json')
+
+    if data.find('1.23456789012456') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -2438,6 +2495,7 @@ gdaltest_list = [
     ogr_geojson_47,
     ogr_geojson_48,
     ogr_geojson_49,
+    ogr_geojson_50,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

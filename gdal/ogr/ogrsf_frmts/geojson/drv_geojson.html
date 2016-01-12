@@ -170,13 +170,15 @@ OGRFeature(OGRGeoJSON):0
   POINT (2 49)
 </pre>
 
-<h2>Layer creation option</h2>
+<h2>Layer creation options</h2>
 
 <ul>
 <li><b>WRITE_BBOX</b> = YES/NO: (OGR &gt;= 1.9.0) Set to YES to write a bbox property with the bounding box of the geometries at the feature and feature
 collection level. Defaults to NO.</li>
 <li><b>COORDINATE_PRECISION</b> = int_number: (OGR &gt;= 1.9.0) Maximum number of figures after decimal separator to write in coordinates.
 Default to 15. "Smart" truncation will occur to remove trailing zeros.</li>
+<li><b>SIGNIFICANT_FIGURES</b> = int_number: (OGR &gt;= 2.1) Maximum number of significant figures when writing floating-point numbers.
+Default to 17. If explicitly specified, and COORDINATE_PRECISION is not, this will also apply to coordinates.</li>
 <li><b>NATIVE_DATA</b>=string. (OGR &gt;= 2.1) Serialized JSon object that contains extra properties to store at FeatureCollection level.</li>
 <li><b>NATIVE_MEDIA_TYPE</b>=string. (OGR &gt;= 2.1) Format of NATIVE_DATA. Must be "application/vnd.geo+json", otherwise NATIVE_DATA will be ignored.</li>
 </ul>
