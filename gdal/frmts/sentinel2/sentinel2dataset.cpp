@@ -396,7 +396,7 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
         return TRUE;
 
     if( strstr(pszHeader,  "<n1:Level-2A_User_Product" ) != NULL &&
-        strstr(pszHeader, "User_Product_Level-2A_Metadata" ) != NULL )
+        strstr(pszHeader, "User_Product_Level-2A" ) != NULL )
         return TRUE;
 
     return FALSE;
@@ -489,7 +489,7 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return OpenL1CTile(poOpenInfo->pszFilename);
 
     if( strstr(pszHeader,  "<n1:Level-2A_User_Product" ) != NULL &&
-        strstr(pszHeader, "User_Product_Level-2A_Metadata" ) != NULL )
+        strstr(pszHeader, "User_Product_Level-2A" ) != NULL )
         return OpenL1C_L2A(poOpenInfo->pszFilename, SENTINEL2_L2A);
 
     return NULL;
