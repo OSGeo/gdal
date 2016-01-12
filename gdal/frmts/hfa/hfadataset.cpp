@@ -612,6 +612,13 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
             else if( eType == GFT_String )
             {
                 int nMaxNumChars = poDTChild->GetIntField( "maxNumChars" );
+                if( nMaxNumChars <= 0 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid nMaxNumChars = %d for column %s",
+                             nMaxNumChars, poDTChild->GetName());
+                    nMaxNumChars = 1;
+                }
                 AddColumn(poDTChild->GetName(), GFT_String, eUsage, nOffset, nMaxNumChars, poDTChild);
             }
             else if( eType == GFT_Integer )
