@@ -131,6 +131,12 @@ public:
 
 private:
     NCSFileViewFileInfoEx sFileInfo;
+
+    /* To fix 'warning: ‘virtual NCS::CView& NCS::CView::operator=(const NCS::CView&)’ was hidden ' with SDK 5 */
+#if ECWSDK_VERSION>=50
+    using CNCSFile::operator=;
+#endif
+    CPL_DISALLOW_COPY_ASSIGN(GDALECWCompressor)
 };
 
 /************************************************************************/

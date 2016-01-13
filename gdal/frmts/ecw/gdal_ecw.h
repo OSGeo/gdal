@@ -133,6 +133,9 @@ class VSIIOStream : public CNCSJPCIOStream
     int      nCOMLength;
     GByte    abyCOMType[2];
 
+    /* To fix ‘virtual bool NCS::CIOStream::Read(INT64, void*, UINT32)’ was hidden' with SDK 5 */
+    using CNCSJPCIOStream::Read;
+
     VSIIOStream() : m_Filename(NULL){
         nFileViewCount = 0;
         startOfJPData = 0;
