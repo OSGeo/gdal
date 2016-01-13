@@ -2384,7 +2384,7 @@ def ogr_geojson_50():
         return 'fail'
 
     # If SIGNIFICANT_FIGURES is explicitly specified, and COORDINATE_PRECISION not,
-    # then it alos applies to coordinates
+    # then it also applies to coordinates
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
     lyr = ds.CreateLayer('test', options = ['SIGNIFICANT_FIGURES=17'] )
     lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
@@ -2400,11 +2400,34 @@ def ogr_geojson_50():
 
     gdal.Unlink('/vsimem/ogr_geojson_50.json')
 
-    if data.find('1.23456789012456') < 0:
+    if data.find('1.23456789012456') < 0 and data.find('-5') < 0:
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
+
+    # If SIGNIFICANT_FIGURES is explicitly specified, and COORDINATE_PRECISION too,
+    # then SIGNIFICANT_FIGURES only applies to non-coordinates floating point values.
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
+    lyr = ds.CreateLayer('test', options = ['COORDINATE_PRECISION=15', 'SIGNIFICANT_FIGURES=17'] )
+    lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['val'] = 1.23456789012456
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0.0000123456789012456 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_50.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_50.json')
+
+    if data.find('0.00001234') < 0 or data.find('1.23456789012456') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
 
 
     return 'success'

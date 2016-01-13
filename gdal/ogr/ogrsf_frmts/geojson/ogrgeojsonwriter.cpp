@@ -40,9 +40,11 @@
 
 static json_object* json_object_new_coord(double dfVal, int nCoordPrecision, int nSignificantFigures)
 {
-    if( nSignificantFigures >= 0 )
-        return json_object_new_double_with_significant_figures(dfVal, nSignificantFigures);
-    return json_object_new_double_with_precision(dfVal, nCoordPrecision);
+    // If coordinate precision is specified, or significant figures is not
+    // then use the '%f' formatting
+    if( nCoordPrecision >= 0 || nSignificantFigures < 0 )
+        return json_object_new_double_with_precision(dfVal, nCoordPrecision);
+    return json_object_new_double_with_significant_figures(dfVal, nSignificantFigures);
 }
 
 /************************************************************************/
@@ -900,7 +902,8 @@ char* OGR_G_ExportToJson( OGRGeometryH hGeometry )
  * <li>SIGNIFICANT_FIGURES=number: maximum number of significant figures (GDAL &gt;= 2.1).</li>
  * </ul>
  *
- * If SIGNIFICANT_FIGURES is defined, it will override COORDINATE_PRECISION.
+ * If COORDINATE_PRECISION is defined, SIGNIFICANT_FIGURES will be ignored if
+ * specified.
  * When none are defined, the default is COORDINATE_PRECISION=15.
  *
  * This method is the same as the C++ method OGRGeometry::exportToJson().
