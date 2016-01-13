@@ -116,6 +116,7 @@ private:
     void           FreeSubExpr();
     std::string    TransformToString() const;
 
+    // TODO: It appears that all the Evaluate methods should return bool.
     int            EvaluateOR(IODSCellEvaluator* poEvaluator);
     int            EvaluateAND(IODSCellEvaluator* poEvaluator);
     int            EvaluateNOT(IODSCellEvaluator* poEvaluator);
