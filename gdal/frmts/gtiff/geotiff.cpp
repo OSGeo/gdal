@@ -4292,7 +4292,8 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
     }
 
     /* Try to autoset TIFFTAG_PHOTOMETRIC = PHOTOMETRIC_RGB if possible */
-    if( poGDS->nCompression != COMPRESSION_JPEG &&
+    if( poGDS->nBands >= 3 &&
+        poGDS->nCompression != COMPRESSION_JPEG &&
         poGDS->nPhotometric != PHOTOMETRIC_RGB &&
         CSLFetchNameValue( poGDS->papszCreationOptions, "PHOTOMETRIC") == NULL &&
         ((nBand == 1 && eInterp == GCI_RedBand) ||
