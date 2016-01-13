@@ -621,10 +621,11 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
 /*                           endElementTable()                          */
 /************************************************************************/
 
-void OGRODSDataSource::endElementTable( const char * /* pszNameIn */ )
+void OGRODSDataSource::endElementTable( CPL_UNUSED const char * pszNameIn )
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
+        // Only use of pszNameIn.
         CPLAssert(strcmp(pszNameIn, "table:table") == 0);
 
         if (nCurLine == 0 ||
