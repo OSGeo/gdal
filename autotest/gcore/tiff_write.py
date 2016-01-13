@@ -4986,6 +4986,13 @@ def tiff_write_123():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgba.tif')
 
+    # Test fix for #6306
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_oneband.tif', 1,1)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_oneband.tif')
+
     return 'success'
 
 ###############################################################################
