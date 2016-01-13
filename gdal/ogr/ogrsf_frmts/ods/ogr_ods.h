@@ -50,18 +50,18 @@ class OGRODSDataSource;
 class OGRODSLayer : public OGRMemLayer
 {
     OGRODSDataSource* poDS;
-    int               bUpdated;
-    int               bHasHeaderLine;
+    bool              bUpdated;
+    bool              bHasHeaderLine;
 
     public:
         OGRODSLayer( OGRODSDataSource* poDSIn,
                       const char * pszName,
-                      int bUpdateIn = FALSE);
+                      bool bUpdateIn = FALSE);
 
-    void                SetUpdated(int bUpdatedIn = TRUE);
+    void                SetUpdated(bool bUpdatedIn = true);
 
-    int                 GetHasHeaderLine() { return bHasHeaderLine; }
-    void                SetHasHeaderLine(int bIn) { bHasHeaderLine = bIn; }
+    bool                GetHasHeaderLine() { return bHasHeaderLine; }
+    void                SetHasHeaderLine(bool bIn) { bHasHeaderLine = bIn; }
 
     const char         *GetName() { return OGRMemLayer::GetLayerDefn()->GetName(); };
     OGRwkbGeometryType  GetGeomType() { return wkbNone; }
@@ -119,9 +119,9 @@ typedef struct
 class OGRODSDataSource : public OGRDataSource
 {
     char*               pszName;
-    int                 bUpdatable;
-    int                 bUpdated;
-    int                 bAnalysedFile;
+    bool                bUpdatable;
+    bool                bUpdated;
+    bool                bAnalysedFile;
 
     int                 nLayers;
     OGRLayer          **papoLayers;
@@ -140,7 +140,7 @@ class OGRODSDataSource : public OGRDataSource
     int                 bAutodetectTypes;
 
     XML_Parser          oParser;
-    int                 bStopParsing;
+    bool                bStopParsing;
     int                 nWithoutEventCounter;
     int                 nDataHandlerCounter;
     int                 nCurLine;
@@ -215,8 +215,8 @@ class OGRODSDataSource : public OGRDataSource
     void endElementStylesCbk(const char *pszName);
     void dataHandlerStylesCbk(const char *data, int nLen);
 
-    int                 GetUpdatable() { return bUpdatable; }
-    void                SetUpdated() { bUpdated = TRUE; }
+    bool                GetUpdatable() { return bUpdatable; }
+    void                SetUpdated() { bUpdated = true; }
 };
 
 } /* end of OGRODS namespace */

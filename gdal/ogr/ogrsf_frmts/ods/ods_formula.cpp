@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <ctype.h>
-#include <math.h>
+#include <cctype>
+#include <cmath>
 
 #include "cpl_conv.h"
 #include "ods_formula.h"
@@ -37,7 +37,8 @@
 namespace {
 #include "ods_formula_parser.hpp"
 
-int ods_formulalex( ods_formula_node **ppNode, ods_formula_parse_context *context );
+int ods_formulalex( ods_formula_node **ppNode,
+                    ods_formula_parse_context *context );
 
 #include "ods_formula_parser.cpp"
 } /* end of anonymous namespace */
@@ -112,7 +113,7 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
     if( *pszInput == '\0' )
     {
         context->pszNext = pszInput;
-        return EOF; 
+        return EOF;
     }
 
 /* -------------------------------------------------------------------- */
@@ -120,13 +121,10 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
 /* -------------------------------------------------------------------- */
     if( *pszInput == '"' )
     {
-        char *token;
-        int i_token;
-
         pszInput++;
 
-        token = (char *) CPLMalloc(strlen(pszInput)+1);
-        i_token = 0;
+        char *token = static_cast<char *>( CPLMalloc(strlen(pszInput)+1) );
+        int i_token = 0;
 
         while( *pszInput != '\0' )
         {
@@ -164,9 +162,9 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
 /* -------------------------------------------------------------------- */
     else if( *pszInput >= '0' && *pszInput <= '9' )
     {
-        CPLString osToken;
         const char *pszNext = pszInput + 1;
 
+        CPLString osToken;
         osToken += *pszInput;
 
         // collect non-decimal part of number
@@ -193,8 +191,8 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
 
         context->pszNext = pszNext;
 
-        if( strstr(osToken,".") 
-            || strstr(osToken,"e") 
+        if( strstr(osToken,".")
+            || strstr(osToken,"e")
             || strstr(osToken,"E") )
         {
             *ppNode = new ods_formula_node( CPLAtof(osToken) );
@@ -213,13 +211,13 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
     else if( *pszInput == '.' || isalnum( *pszInput ) )
     {
         int nReturn = ODST_IDENTIFIER;
-        CPLString osToken;
         const char *pszNext = pszInput + 1;
 
+        CPLString osToken;
         osToken += *pszInput;
 
         // collect text characters
-        while( isalnum( *pszNext ) || *pszNext == '_' 
+        while( isalnum( *pszNext ) || *pszNext == '_'
                || ((unsigned char) *pszNext) > 127 )
             osToken += *(pszNext++);
 
@@ -368,9 +366,7 @@ ods_formula_node* ods_formula_compile( const char *expr )
     {
         return context.poRoot;
     }
-    else
-    {
-        delete context.poRoot;
-        return NULL;
-    }
+
+    delete context.poRoot;
+    return NULL;
 }
