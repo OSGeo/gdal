@@ -137,11 +137,12 @@ namespace tut
             { "25.e3", CPL_VALUE_REAL },
             { "25e3", CPL_VALUE_REAL },
             { " 25e3 ", CPL_VALUE_REAL },
-    
+            { ".1e3", CPL_VALUE_REAL },
+
             { "25", CPL_VALUE_INTEGER },
             { "-25", CPL_VALUE_INTEGER },
             { "+25", CPL_VALUE_INTEGER },
-    
+
             { "25e 3", CPL_VALUE_STRING },
             { "25e.3", CPL_VALUE_STRING },
             { "-2-5e3", CPL_VALUE_STRING },
@@ -149,6 +150,8 @@ namespace tut
             { "25.25.3", CPL_VALUE_STRING },
             { "25e25e3", CPL_VALUE_STRING },
             { "25e2500", CPL_VALUE_STRING }, /* #6128 */
+
+            { "d1", CPL_VALUE_STRING } /* #6305 */
         };
     
         size_t i;

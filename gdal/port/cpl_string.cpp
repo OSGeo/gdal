@@ -2478,7 +2478,7 @@ CPLValueType CPLGetValueType(const char* pszValue)
 {
     /*
     doubles : "+25.e+3", "-25.e-3", "25.e3", "25e3", " 25e3 "
-    not doubles: "25e 3", "25e.3", "-2-5e3", "2-5e3", "25.25.3", "-3d"
+    not doubles: "25e 3", "25e.3", "-2-5e3", "2-5e3", "25.25.3", "-3d", "d1"
                  "XXeYYYYYYYYYYYYYYYYYYY" that evaluates to infinity
     */
 
@@ -2503,13 +2503,14 @@ CPLValueType CPLGetValueType(const char* pszValue)
     bool bIsLastCharExponent = false;
     bool bIsReal = false;
     const char* pszAfterExponent = NULL;
+    bool bFoundMantissa = false;
 
     for(; *pszValue != '\0'; ++pszValue )
     {
         if( isdigit( *pszValue))
         {
             bIsLastCharExponent = false;
-            /* do nothing */
+            bFoundMantissa = true;
         }
         else if ( isspace( *pszValue ) )
         {
@@ -2543,6 +2544,8 @@ CPLValueType CPLGetValueType(const char* pszValue)
         else if (*pszValue == 'D' || *pszValue == 'd'
                  || *pszValue == 'E' || *pszValue == 'e' )
         {
+            if( !bFoundMantissa )
+                return CPL_VALUE_STRING;
             if (!(pszValue[1] == '+' || pszValue[1] == '-' ||
                   isdigit(pszValue[1])))
                 return CPL_VALUE_STRING;
