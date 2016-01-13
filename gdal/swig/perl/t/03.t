@@ -87,7 +87,7 @@ ok((defined($rat) and blessed($rat) and $rat->isa('Geo::GDAL::RasterAttributeTab
 my $c = $band->ColorInterpretation;
 my %c = map {$_=>1} Geo::GDAL::Band::ColorInterpretations;
 ok($c{$c}, "Get ColorInterpretation");
-$c = (keys %c)[0];
+$c = 'BlueBand'; # (keys %c)[0]; setting RedBand leads to core dump in geotiff.cpp:4288 #6306
 $band->ColorInterpretation($c);
 ok($band->ColorInterpretation eq $c, "Set ColorInterpretation");
 
