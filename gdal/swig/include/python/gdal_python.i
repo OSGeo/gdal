@@ -1639,4 +1639,127 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
     else:
         return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
+
+def BuildVRTOptions(options = [],
+                    resolution = None,
+                    outputBounds = None,
+                    xRes = None, yRes = None,
+                    targetAlignedPixels = None,
+                    separate = None,
+                    bandList = None,
+                    addAlpha = None,
+                    resampleAlg = None,
+                    outputSRS = None,
+                    allowProjectionDifference = None,
+                    srcNodata = None,
+                    VRTNodata = None,
+                    hideNodata = None,
+                    callback = None, callback_data = None):
+    """ Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords..
+          resolution --- 'highest', 'lowest', 'average', 'user'.
+          outputBounds --- output bounds as (minX, minY, maxX, maxY) in target SRS.
+          xRes, yRes --- output resolution in target SRS.
+          targetAlignedPixels --- whether to force output bounds to be multiple of output resolution.
+          separate --- whether each source file goes into a separate stacked band in the VRT band.
+          bandList --- array of band numbers (index start at 1).
+          addAlpha --- whether to add an alpha mask band to the VRT when the source raster have none.
+          resampleAlg --- resampling mode.
+          outputSRS --- assigned output SRS.
+          allowProjectionDifference --- whether to accept input datasets have not the same projection. Note: they will *not* be reprojected.
+          srcNodata --- source nodata value(s).
+          VRTNodata --- nodata values at the VRT band level.
+          hideNodata --- whether to make the VRT band not report the NoData value.
+          callback --- callback method.
+          callback_data --- user data for callback.
+    """
+    import copy
+
+    if _is_str_or_unicode(options):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = copy.copy(options)
+        if resolution is not None:
+            new_options += ['-resolution', str(resolution) ]
+        if outputBounds is not None:
+            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+        if xRes is not None and yRes is not None:
+            new_options += ['-tr', str(xRes), str(yRes)]
+        if targetAlignedPixels:
+            new_options += ['-tap']
+        if separate:
+            new_options += ['-separate']
+        if bandList != None:
+            for b in bandList:
+                new_options += ['-b', str(b) ]
+        if addAlpha:
+            new_options += ['-addalpha']
+        if resampleAlg is not None:
+            if resampleAlg == GRIORA_NearestNeighbour:
+                new_options += ['-r', 'near']
+            elif resampleAlg == GRIORA_Bilinear:
+                new_options += ['-rb']
+            elif resampleAlg == GRIORA_Cubic:
+                new_options += ['-rc']
+            elif resampleAlg == GRIORA_CubicSpline:
+                new_options += ['-rcs']
+            elif resampleAlg == GRIORA_Lanczos:
+                new_options += ['-r', 'lanczos']
+            elif resampleAlg == GRIORA_Average:
+                new_options += ['-r', 'average']
+            elif resampleAlg == GRIORA_Mode:
+                new_options += ['-r', 'mode']
+            elif resampleAlg == GRIORA_Gauss:
+                new_options += ['-r', 'gauss']
+            else:
+                new_options += ['-r', str(resampleAlg) ]
+        if outputSRS is not None:
+            new_options += ['-a_srs', str(outputSRS) ]
+        if allowProjectionDifference:
+            new_options += ['-allow_projection_difference']
+        if srcNodata is not None:
+            new_options += ['-srcnodata', str(srcNodata) ]
+        if VRTNodata is not None:
+            new_options += ['-vrtnodata', str(VRTNodata) ]
+        if hideNodata:
+            new_options += ['-hidenodata']
+
+    return (GDALBuildVRTOptions(new_options), callback, callback_data)
+
+def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
+    """ Build a VRT from a list of datasets.
+        Arguments are :
+          destName --- Output dataset name
+          srcDSOrSrcDSTab --- an array of Dataset objects or filenames, or a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.InfoOptions(), string or array of strings
+          other keywords arguments of gdal.BuildVRTOptions()
+        If options is provided as a gdal.BuildVRTOptions() object, other keywords are ignored. """
+
+    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+        (opts, callback, callback_data) = BuildVRTOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+
+    srcDSTab = []
+    srcDSNamesTab = []
+    if _is_str_or_unicode(srcDSOrSrcDSTab):
+        srcDSNamesTab = [ srcDSOrSrcDSTab ]
+    elif type(srcDSOrSrcDSTab) == type([]):
+        for elt in srcDSOrSrcDSTab:
+            if _is_str_or_unicode(elt):
+                srcDSNamesTab.append(elt)
+            else:
+                srcDSTab.append(elt)
+        if len(srcDSTab) != 0 and len(srcDSNamesTab) != 0:
+            raise Exception('Mix of names and dataset objects not supported')
+    else:
+        srcDSTab = [ srcDSOrSrcDSTab ]
+
+    if len(srcDSTab) > 0:
+        return BuildVRTInternalObjects(destName, srcDSTab, opts, callback, callback_data)
+    else:
+        return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
+
 %}

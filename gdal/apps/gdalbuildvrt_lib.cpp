@@ -3,10 +3,10 @@
  *
  * Project:  GDAL Utilities
  * Purpose:  Commandline application to build VRT datasets from raster products or content of SHP tile index
- * Author:   Even Rouault, even.rouault at mines-paris.org
+ * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2016, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_utils.h"
+#include "gdal_utils_priv.h"
 #include "gdal_proxy.h"
 #include "cpl_string.h"
 #include "gdal_vrt.h"
@@ -87,54 +89,6 @@ static int ArgIsNumeric( const char *pszArg )
 
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
-}
-
-/************************************************************************/
-/*                               Usage()                                */
-/************************************************************************/
-
-static void Usage(const char* pszErrorMsg = NULL)
-
-{
-    fprintf(stdout, "%s", 
-            "Usage: gdalbuildvrt [-tileindex field_name]\n"
-            "                    [-resolution {highest|lowest|average|user}]\n"
-            "                    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]\n"
-            "                    [-separate] [-b band] [-sd subdataset]\n"
-            "                    [-allow_projection_difference] [-q]\n"
-            "                    [-addalpha] [-hidenodata]\n"
-            "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
-            "                    [-a_srs srs_def]\n"
-            "                    [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
-            "                    [-input_file_list my_list.txt] [-overwrite] output.vrt [gdalfile]*\n"
-            "\n"
-            "e.g.\n"
-            "  % gdalbuildvrt doq_index.vrt doq/*.tif\n"
-            "  % gdalbuildvrt -input_file_list my_list.txt doq_index.vrt\n"
-            "\n"
-            "NOTES:\n"
-            "  o With -separate, each files goes into a separate band in the VRT band.\n"
-            "    Otherwise, the files are considered as tiles of a larger mosaic.\n"
-            "  o -b option selects a band to add into vrt.  Multiple bands can be listed.\n"
-            "    By default all bands are queried.\n"
-            "  o The default tile index field is 'location' unless otherwise specified by\n"
-            "    -tileindex.\n"
-            "  o In case the resolution of all input files is not the same, the -resolution\n"
-            "    flag enable the user to control the way the output resolution is computed.\n"
-            "    Average is the default.\n"
-            "  o Input files may be any valid GDAL dataset or a GDAL raster tile index.\n"
-            "  o For a GDAL raster tile index, all entries will be added to the VRT.\n"
-            "  o If one GDAL dataset is made of several subdatasets and has 0 raster bands,\n"
-            "    its datasets will be added to the VRT rather than the dataset itself.\n"
-            "    Single subdataset could be selected by its number using the -sd option.\n"
-            "  o By default, only datasets of same projection and band characteristics\n"
-            "    may be added to the VRT.\n"
-            );
-
-    if( pszErrorMsg != NULL )
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    exit( 1 );
 }
 
 
@@ -206,6 +160,7 @@ class VRTBuilder
     char               *pszOutputFilename;
     int                 nInputFiles;
     char              **ppszInputFilenames;
+    GDALDatasetH       *pahSrcDS;
     int                 nBands;
     int                *panBandList;   
     int                 nMaxBandNo;
@@ -245,7 +200,7 @@ class VRTBuilder
     int                 bHasRunBuild;
     int                 bHasDatasetMask;
 
-    int         AnalyseRaster(GDALDatasetH hDS, const char* dsFileName,
+    int         AnalyseRaster(GDALDatasetH hDS,
                               DatasetProperty* psDatasetProperties);
 
     void        CreateVRTSeparate(VRTDatasetH hVRTDS);
@@ -253,7 +208,9 @@ class VRTBuilder
 
     public:
                 VRTBuilder(const char* pszOutputFilename,
-                           int nInputFiles, const char* const * ppszInputFilenames,
+                           int nInputFiles,
+                           const char* const * ppszInputFilenames,
+                           GDALDatasetH *pahSrcDSIn,
                            const int *panBandListIn, int nBandCount, int nMaxBandNo,
                            ResolutionStrategy resolutionStrategy,
                            double we_res, double ns_res,
@@ -267,7 +224,7 @@ class VRTBuilder
 
                ~VRTBuilder();
 
-        int     Build(GDALProgressFunc pfnProgress, void * pProgressData);
+        GDALDataset*     Build(GDALProgressFunc pfnProgress, void * pProgressData);
 };
 
 
@@ -276,7 +233,9 @@ class VRTBuilder
 /************************************************************************/
 
 VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
-                       int nInputFilesIn, const char* const * ppszInputFilenamesIn,
+                       int nInputFilesIn,
+                       const char* const * ppszInputFilenamesIn,
+                       GDALDatasetH *pahSrcDSIn,
                        const int *panBandListIn, int nBandCount, int nMaxBandNoIn,
                        ResolutionStrategy resolutionStrategyIn,
                        double we_resIn, double ns_resIn,
@@ -291,10 +250,24 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
 
-    ppszInputFilenames = (char**) CPLMalloc(nInputFiles * sizeof(char*));
-    for(int i=0;i<nInputFiles;i++)
+    if( ppszInputFilenamesIn )
     {
-        ppszInputFilenames[i] = CPLStrdup(ppszInputFilenamesIn[i]);
+        ppszInputFilenames = (char**) CPLMalloc(nInputFiles * sizeof(char*));
+        for(int i=0;i<nInputFiles;i++)
+        {
+            ppszInputFilenames[i] = CPLStrdup(ppszInputFilenamesIn[i]);
+        }
+        pahSrcDS = NULL;
+    }
+    else if( pahSrcDSIn )
+    {
+        pahSrcDS = (GDALDatasetH*) CPLMalloc(nInputFiles * sizeof(GDALDatasetH));
+        memcpy(pahSrcDS, pahSrcDSIn, nInputFiles * sizeof(GDALDatasetH));
+        ppszInputFilenames = (char**) CPLMalloc(nInputFiles * sizeof(char*));
+        for(int i=0;i<nInputFiles;i++)
+        {
+            ppszInputFilenames[i] = CPLStrdup(GDALGetDescription(pahSrcDSIn[i]));
+        }
     }
 
     nBands = nBandCount;
@@ -358,6 +331,7 @@ VRTBuilder::~VRTBuilder()
         CPLFree(ppszInputFilenames[i]);
     }
     CPLFree(ppszInputFilenames);
+    CPLFree(pahSrcDS);
 
     if (pasDatasetProperties != NULL)
     {
@@ -408,9 +382,9 @@ static int ProjAreEqual(const char* pszWKT1, const char* pszWKT2)
 /*                           AnalyseRaster()                            */
 /************************************************************************/
 
-int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
-                                  DatasetProperty* psDatasetProperties)
+int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetProperties)
 {
+    const char* dsFileName = GDALGetDescription(hDS);
     char** papszMetadata = GDALGetMetadata( hDS, "SUBDATASETS" );
     if( CSLCount(papszMetadata) > 0 && GDALGetRasterCount(hDS) == 0 )
     {
@@ -1012,10 +986,10 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
 /*                             Build()                                  */
 /************************************************************************/
 
-int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
+GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
 {
     if (bHasRunBuild)
-        return CE_Failure;
+        return NULL;
     bHasRunBuild = TRUE;
 
     if( pfnProgress == NULL )
@@ -1027,7 +1001,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
         if (minX >= maxX || minY >= maxY )
         {
             CPLError(CE_Failure, CPLE_IllegalArg, "Invalid user extent");
-            return CE_Failure;
+            return NULL;
         }
     }
 
@@ -1036,7 +1010,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
         if (we_res <= 0 || ns_res <= 0)
         {
             CPLError(CE_Failure, CPLE_IllegalArg, "Invalid user resolution");
-            return CE_Failure;
+            return NULL;
         }
 
         /* We work with negative north-south resolution in all the following code */
@@ -1067,7 +1041,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -srcnodata value");
                     CSLDestroy(papszTokens);
-                    return CE_Failure;
+                    return NULL;
                 }
                 padfSrcNoData[i] = CPLAtofM(papszTokens[i]);
             }
@@ -1092,7 +1066,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -vrtnodata value");
                     CSLDestroy(papszTokens);
-                    return CE_Failure;
+                    return NULL;
                 }
                 padfVRTNoData[i] = CPLAtofM(papszTokens[i]);
             }
@@ -1107,21 +1081,24 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
 
         if (!pfnProgress( 1.0 * (i+1) / nInputFiles, NULL, pProgressData))
         {
-            return CE_Failure;
+            return NULL;
         }
 
-        GDALDatasetH hDS = GDALOpen(ppszInputFilenames[i], GA_ReadOnly );
+        GDALDatasetH hDS = 
+            (pahSrcDS) ? pahSrcDS[i] :
+                         GDALOpen(ppszInputFilenames[i], GA_ReadOnly );
         pasDatasetProperties[i].isFileOK = FALSE;
 
         if (hDS)
         {
-            if (AnalyseRaster( hDS, dsFileName, &pasDatasetProperties[i] ))
+            if (AnalyseRaster( hDS, &pasDatasetProperties[i] ))
             {
                 pasDatasetProperties[i].isFileOK = TRUE;
                 nCountValid ++;
                 bFirst = FALSE;
             }
-            GDALClose(hDS);
+            if( pahSrcDS == NULL )
+                GDALClose(hDS);
         }
         else
         {
@@ -1131,7 +1108,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
     }
 
     if (nCountValid == 0)
-        return CE_None;
+        return NULL;
 
     if (bHasGeoTransform)
     {
@@ -1158,7 +1135,7 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Computed VRT dimension is invalid. You've probably "
                   "specified inappropriate resolution.");
-        return CE_Failure;
+        return NULL;
     }
 
     VRTDatasetH hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
@@ -1194,16 +1171,14 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
         CreateVRTNonSeparate(hVRTDS);
     }
 
-    GDALClose(hVRTDS);
-
-    return CE_None;
+    return (GDALDataset*)hVRTDS;
 }
 
 /************************************************************************/
 /*                        add_file_to_list()                            */
 /************************************************************************/
 
-static void add_file_to_list(const char* filename, const char* tile_index,
+static bool add_file_to_list(const char* filename, const char* tile_index,
                              int* pnInputFiles, char*** pppszInputFilenames)
 {
 
@@ -1223,9 +1198,10 @@ static void add_file_to_list(const char* filename, const char* tile_index,
         OGRDataSourceH hDS = OGROpen( filename, FALSE, NULL );
         if( hDS  == NULL )
         {
-            fprintf( stderr, "Unable to open shapefile `%s'.\n", 
-                    filename );
-            exit(2);
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to open shapefile `%s'.", 
+                      filename );
+            return false;
         }
 
         OGRLayerH hLayer = OGR_DS_GetLayer(hDS, 0);
@@ -1240,8 +1216,8 @@ static void add_file_to_list(const char* filename, const char* tile_index,
 
             if (strcmp(pszName, "LOCATION") == 0 && strcmp("LOCATION", tile_index) != 0 )
             {
-                fprintf( stderr, "This shapefile seems to be a tile index of "
-                                "OGR features and not GDAL products.\n");
+                CPLError(CE_Failure, CPLE_AppDefined, "This shapefile seems to be a tile index of "
+                        "OGR features and not GDAL products.");
             }
             if( strcmp(pszName, tile_index) == 0 )
                 break;
@@ -1249,21 +1225,23 @@ static void add_file_to_list(const char* filename, const char* tile_index,
 
         if( ti_field == OGR_FD_GetFieldCount(hFDefn) )
         {
-            fprintf( stderr, "Unable to find field `%s' in DBF file `%s'.\n", 
-                    tile_index, filename );
-            return;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to find field `%s' in DBF file `%s'.", 
+                     tile_index, filename );
+            return false;
         }
 
         /* Load in memory existing file names in SHP */
         int nTileIndexFiles = (int)OGR_L_GetFeatureCount(hLayer, TRUE);
         if (nTileIndexFiles == 0)
         {
-            fprintf( stderr, "Tile index %s is empty. Skipping it.\n", filename);
-            return;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Tile index %s is empty. Skipping it.\n", filename);
+            return true;
         }
 
         ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames,
-                              sizeof(char*) * (nInputFiles+nTileIndexFiles));
+                              sizeof(char*) * (nInputFiles+nTileIndexFiles+1));
         for(int j=0;j<nTileIndexFiles;j++)
         {
             OGRFeatureH hFeat = OGR_L_GetNextFeature(hLayer);
@@ -1271,6 +1249,7 @@ static void add_file_to_list(const char* filename, const char* tile_index,
                     CPLStrdup(OGR_F_GetFieldAsString(hFeat, ti_field ));
             OGR_F_Destroy(hFeat);
         }
+        ppszInputFilenames[nInputFiles] = NULL;
 
         OGR_DS_Destroy( hDS );
 #endif
@@ -1278,323 +1257,498 @@ static void add_file_to_list(const char* filename, const char* tile_index,
     else
     {
         ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames,
-                                                 sizeof(char*) * (nInputFiles+1));
+                                                 sizeof(char*) * (nInputFiles+1+1));
         ppszInputFilenames[nInputFiles++] = CPLStrdup(filename);
+        ppszInputFilenames[nInputFiles] = NULL;
     }
 
     *pnInputFiles = nInputFiles;
     *pppszInputFilenames = ppszInputFilenames;
+    return true;
 }
 
 /************************************************************************/
-/*                                main()                                */
+/*                        GDALBuildVRTOptions                           */
 /************************************************************************/
 
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
-    do { if (iArg + nExtraArg >= nArgc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+/** Options for use with GDALBuildVRT(). GDALBuildVRTOptions* must be allocated and
+ * freed with GDALBuildVRTOptionsNew() and GDALBuildVRTOptionsFree() respectively.
+ */
+struct GDALBuildVRTOptions
+{
+    char *pszResolution;
+    int bSeparate;
+    int bAllowProjectionDifference;
+    double we_res;
+    double ns_res;
+    int bTargetAlignedPixels;
+    double xmin;
+    double ymin;
+    double xmax;
+    double ymax;
+    int bAddAlpha;
+    int bHideNoData;
+    int nSubdataset;
+    char* pszSrcNoData;
+    char* pszVRTNoData;
+    char* pszOutputSRS;
+    int *panBandList;
+    int nBandCount;
+    int nMaxBandNo;
+    char* pszResampling;
 
-int main( int nArgc, char ** papszArgv )
+    /*! allow or suppress progress monitor and other non-error output */
+    int bQuiet;
+
+    /*! the progress function to use */
+    GDALProgressFunc pfnProgress;
+    
+    /*! pointer to the progress data variable */
+    void *pProgressData;
+};
+
+/************************************************************************/
+/*                        GDALBuildVRTOptionsClone()                   */
+/************************************************************************/
+
+static
+GDALBuildVRTOptions* GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
+{
+    GDALBuildVRTOptions* psOptions = (GDALBuildVRTOptions*) CPLMalloc(sizeof(GDALBuildVRTOptions));
+    memcpy(psOptions, psOptionsIn, sizeof(GDALBuildVRTOptions));
+    if( psOptionsIn->pszResolution ) psOptions->pszResolution = CPLStrdup(psOptionsIn->pszResolution);
+    if( psOptionsIn->pszSrcNoData ) psOptions->pszSrcNoData = CPLStrdup(psOptionsIn->pszSrcNoData);
+    if( psOptionsIn->pszVRTNoData ) psOptions->pszVRTNoData = CPLStrdup(psOptionsIn->pszVRTNoData);
+    if( psOptionsIn->pszOutputSRS ) psOptions->pszOutputSRS = CPLStrdup(psOptionsIn->pszOutputSRS);
+    if( psOptionsIn->pszResampling ) psOptions->pszResampling = CPLStrdup(psOptionsIn->pszResampling);
+    if( psOptionsIn->panBandList )
+    {
+        psOptions->panBandList = static_cast<int*>(CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
+        memcpy(psOptions->panBandList, psOptionsIn->panBandList, sizeof(int) * psOptionsIn->nBandCount);
+    }
+    return psOptions;
+}
+
+/************************************************************************/
+/*                           GDALBuildVRT()                             */
+/************************************************************************/
+
+/**
+ * Build a VRT from a list of datasets.
+ *
+ * This is the equivalent of the <a href="gdalbuildvrt.html">gdalbuildvrt</a> utility.
+ *
+ * GDALBuildVRTOptions* must be allocated and freed with GDALBuildVRTOptionsNew()
+ * and GDALBuildVRTOptionsFree() respectively.
+ * pahSrcDS and papszSrcDSNames cannot be used at the same time.
+ *
+ * @param pszDest the destination dataset path.
+ * @param nSrcCount the number of input datasets.
+ * @param pahSrcDS the list of input datasets (or NULL, exclusive with papszSrcDSNames)
+ * @param papszSrcDSNames the list of input dataset names (or NULL, exclusive with pahSrcDS)
+ * @param psOptionsIn the options struct returned by GDALBuildVRTOptionsNew() or NULL.
+ * @param pbUsageError the pointer to int variable to determine any usage error has occurred.
+ * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
+ *
+ * @since GDAL 2.1
+ */
+
+GDALDatasetH GDALBuildVRT( const char *pszDest,
+                           int nSrcCount, GDALDatasetH *pahSrcDS, const char* const* papszSrcDSNames,
+                           const GDALBuildVRTOptions *psOptionsIn, int *pbUsageError )
+{
+    if( pszDest == NULL )
+        pszDest = "";
+
+    if( nSrcCount == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "No input dataset specifieds.");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+
+    GDALBuildVRTOptions* psOptions =
+        (psOptionsIn) ? GDALBuildVRTOptionsClone(psOptionsIn) :
+                        GDALBuildVRTOptionsNew(NULL, NULL);
+
+    if (psOptions->we_res != 0 && psOptions->ns_res != 0 &&
+        psOptions->pszResolution != NULL && !EQUAL(psOptions->pszResolution, "user"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "-tr option is not compatible with -resolution %s", psOptions->pszResolution);
+        if( pbUsageError )
+            *pbUsageError = TRUE;
+        GDALBuildVRTOptionsFree(psOptions);
+        return NULL;
+    }
+
+    if (psOptions->bTargetAlignedPixels && psOptions->we_res == 0 && psOptions->ns_res == 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "-tap option cannot be used without using -tr");
+        if( pbUsageError )
+            *pbUsageError = TRUE;
+        GDALBuildVRTOptionsFree(psOptions);
+        return NULL;
+    }
+
+    if (psOptions->bAddAlpha && psOptions->bSeparate)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "-addalpha option is not compatible with -separate.");
+        if( pbUsageError )
+            *pbUsageError = TRUE;
+        GDALBuildVRTOptionsFree(psOptions);
+        return NULL;
+    }
+
+    ResolutionStrategy eStrategy = AVERAGE_RESOLUTION;
+    if ( psOptions->pszResolution == NULL || EQUAL(psOptions->pszResolution, "user") )
+    {
+        if ( psOptions->we_res != 0 || psOptions->ns_res != 0)
+            eStrategy = USER_RESOLUTION;
+        else if ( psOptions->pszResolution != NULL && EQUAL(psOptions->pszResolution, "user") )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                      "-tr option must be used with -resolution user.");
+            if( pbUsageError )
+                *pbUsageError = TRUE;
+            GDALBuildVRTOptionsFree(psOptions);
+            return NULL;
+        }
+    }
+    else if ( EQUAL(psOptions->pszResolution, "average") )
+        eStrategy = AVERAGE_RESOLUTION;
+    else if ( EQUAL(psOptions->pszResolution, "highest") )
+        eStrategy = HIGHEST_RESOLUTION;
+    else if ( EQUAL(psOptions->pszResolution, "lowest") )
+        eStrategy = LOWEST_RESOLUTION;
+
+    /* If -srcnodata is specified, use it as the -vrtnodata if the latter is not */
+    /* specified */
+    if (psOptions->pszSrcNoData != NULL && psOptions->pszVRTNoData == NULL)
+        psOptions->pszVRTNoData = CPLStrdup(psOptions->pszSrcNoData);
+
+    VRTBuilder oBuilder(pszDest, nSrcCount, papszSrcDSNames, pahSrcDS,
+                        psOptions->panBandList, psOptions->nBandCount, psOptions->nMaxBandNo,
+                        eStrategy, psOptions->we_res, psOptions->ns_res, psOptions->bTargetAlignedPixels,
+                        psOptions->xmin, psOptions->ymin, psOptions->xmax, psOptions->ymax,
+                        psOptions->bSeparate, psOptions->bAllowProjectionDifference,
+                        psOptions->bAddAlpha, psOptions->bHideNoData, psOptions->nSubdataset,
+                        psOptions->pszSrcNoData, psOptions->pszVRTNoData,
+                        psOptions->pszOutputSRS, psOptions->pszResampling);
+
+    GDALDatasetH hDstDS =
+        (GDALDatasetH)oBuilder.Build(psOptions->pfnProgress, psOptions->pProgressData);
+
+    GDALBuildVRTOptionsFree(psOptions);
+    
+    return hDstDS;
+}
+
+/************************************************************************/
+/*                             SanitizeSRS                              */
+/************************************************************************/
+
+static char *SanitizeSRS( const char *pszUserInput )
 
 {
-    const char *tile_index = "location";
-    const char *resolution = NULL;
-    int nInputFiles = 0;
-    char ** ppszInputFilenames = NULL;
-    const char * pszOutputFilename = NULL;
-    int bSeparate = FALSE;
-    int bAllowProjectionDifference = FALSE;
-    int bQuiet = FALSE;
-    GDALProgressFunc pfnProgress = NULL;
-    double we_res = 0, ns_res = 0;
-    int bTargetAlignedPixels = FALSE;
-    double xmin = 0, ymin = 0, xmax = 0, ymax = 0;
-    int bAddAlpha = FALSE;
-    int bForceOverwrite = FALSE;
-    int bHideNoData = FALSE;
-    int nSubdataset = -1;
-    const char* pszSrcNoData = NULL;
-    const char* pszVRTNoData = NULL;
-    char* pszOutputSRS = NULL;
-    int *panBandList = NULL;
-    int nBandCount = 0;
-    int nMaxBandNo = 0;
-    int nRet;
-    const char* pszResampling = NULL;
+    OGRSpatialReferenceH hSRS;
+    char *pszResult = NULL;
 
-    /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(papszArgv[0]))
-        exit(1);
-
-    GDALAllRegister();
-
-    nArgc = GDALGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
-    if( nArgc < 1 )
-        exit( -nArgc );
-
-/* -------------------------------------------------------------------- */
-/*      Parse commandline.                                              */
-/* -------------------------------------------------------------------- */
-    for( int iArg = 1; iArg < nArgc; iArg++ )
+    CPLErrorReset();
+    
+    hSRS = OSRNewSpatialReference( NULL );
+    if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
+        OSRExportToWkt( hSRS, &pszResult );
+    else
     {
-        if( EQUAL(papszArgv[iArg], "--utility_version") )
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Translating SRS failed:\n%s",
+                  pszUserInput );
+    }
+    
+    OSRDestroySpatialReference( hSRS );
+
+    return pszResult;
+}
+
+/************************************************************************/
+/*                             GDALBuildVRTOptionsNew()                  */
+/************************************************************************/
+
+/**
+ * Allocates a GDALBuildVRTOptions struct.
+ *
+ * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
+ *                  The accepted options are the ones of the <a href="gdalbuildvrt.html">gdalbuildvrt</a> utility.
+ * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
+ *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
+ *                           GDALBuildVRTOptionsForBinaryNew() prior to this function. Will be
+ *                           filled with potentially present filename, open options,...
+ * @return pointer to the allocated GDALBuildVRTOptions struct. Must be freed with GDALBuildVRTOptionsFree().
+ *
+ * @since GDAL 2.1
+ */
+
+GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
+                                          GDALBuildVRTOptionsForBinary* psOptionsForBinary)
+{
+    GDALBuildVRTOptions *psOptions = (GDALBuildVRTOptions *)CPLCalloc(1, sizeof(GDALBuildVRTOptions));
+
+    const char *tile_index = "location";
+
+    psOptions->nSubdataset = -1;
+    psOptions->bQuiet = TRUE;
+    psOptions->pfnProgress = GDALDummyProgress;
+    psOptions->pProgressData = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Parse arguments.                                                */
+/* -------------------------------------------------------------------- */
+    int argc = CSLCount(papszArgv);
+    for( int iArg = 0; iArg < argc; iArg++ )
+    {
+        if( EQUAL(papszArgv[iArg],"-tileindex") && iArg + 1 < argc )
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
-                   papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( papszArgv );
-            return 0;
-        }
-        else if( EQUAL(papszArgv[iArg],"--help") )
-            Usage();
-        else if( EQUAL(papszArgv[iArg],"-tileindex") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             tile_index = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-resolution") )
+        else if( EQUAL(papszArgv[iArg],"-resolution") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            resolution = papszArgv[++iArg];
-        }
-        else if( EQUAL(papszArgv[iArg],"-input_file_list") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char* input_file_list = papszArgv[++iArg];
-            FILE* f = VSIFOpen(input_file_list, "r");
-            if (f)
+            CPLFree(psOptions->pszResolution);
+            psOptions->pszResolution = CPLStrdup(papszArgv[++iArg]);
+            if( !EQUAL(psOptions->pszResolution, "user") &&
+                !EQUAL(psOptions->pszResolution, "average") &&
+                !EQUAL(psOptions->pszResolution, "highest") &&
+                !EQUAL(psOptions->pszResolution, "lowest") )
             {
-                while(1)
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Illegal resolution value (%s).", psOptions->pszResolution );
+                GDALBuildVRTOptionsFree(psOptions);
+                return NULL;
+            }
+        }
+        else if( EQUAL(papszArgv[iArg],"-input_file_list") && iArg + 1 < argc )
+        {
+            ++iArg;
+            if( psOptionsForBinary )
+            {
+                const char* input_file_list = papszArgv[iArg];
+                FILE* f = VSIFOpen(input_file_list, "r");
+                if (f)
                 {
-                    const char* filename = CPLReadLine(f);
-                    if (filename == NULL)
-                        break;
-                    add_file_to_list(filename, tile_index,
-                                     &nInputFiles, &ppszInputFilenames);
+                    while(1)
+                    {
+                        const char* filename = CPLReadLine(f);
+                        if (filename == NULL)
+                            break;
+                        if( !add_file_to_list(filename, tile_index,
+                                         &psOptionsForBinary->nSrcFiles,
+                                         &psOptionsForBinary->papszSrcFiles) )
+                        {
+                            VSIFClose(f);
+                            GDALBuildVRTOptionsFree(psOptions);
+                            return NULL;
+                        }
+                    }
+                    VSIFClose(f);
                 }
-                VSIFClose(f);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "-input_file_list not supported in non binary mode");
             }
         }
         else if ( EQUAL(papszArgv[iArg],"-separate") )
         {
-            bSeparate = TRUE;
+            psOptions->bSeparate = TRUE;
         }
         else if ( EQUAL(papszArgv[iArg],"-allow_projection_difference") )
         {
-            bAllowProjectionDifference = TRUE;
+            psOptions->bAllowProjectionDifference = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg], "-sd") )
+        else if( EQUAL(papszArgv[iArg], "-sd") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nSubdataset = atoi(papszArgv[++iArg]);
+            psOptions->nSubdataset = atoi(papszArgv[++iArg]);
         }
         /* Alternate syntax for output file */
-        else if( EQUAL(papszArgv[iArg],"-o") )
+        else if( EQUAL(papszArgv[iArg],"-o") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszOutputFilename = papszArgv[++iArg];
+            ++iArg;
+            if( psOptionsForBinary )
+            {
+                CPLFree(psOptionsForBinary->pszDstFilename);
+                psOptionsForBinary->pszDstFilename = CPLStrdup(papszArgv[iArg]);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "-o not supported in non binary mode");
+            }
         }
         else if ( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") )
         {
-            bQuiet = TRUE;
+            if( psOptionsForBinary )
+            {
+                psOptionsForBinary->bQuiet = TRUE;
+            }
         }
-        else if ( EQUAL(papszArgv[iArg],"-tr") )
+        else if ( EQUAL(papszArgv[iArg],"-tr") && iArg + 2 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
-            we_res = CPLAtofM(papszArgv[++iArg]);
-            ns_res = CPLAtofM(papszArgv[++iArg]);
+            psOptions->we_res = CPLAtofM(papszArgv[++iArg]);
+            psOptions->ns_res = CPLAtofM(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-tap") )
         {
-            bTargetAlignedPixels = TRUE;
+            psOptions->bTargetAlignedPixels = TRUE;
         }
-        else if ( EQUAL(papszArgv[iArg],"-te") )
+        else if ( EQUAL(papszArgv[iArg],"-te") && iArg + 4 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
-            xmin = CPLAtofM(papszArgv[++iArg]);
-            ymin = CPLAtofM(papszArgv[++iArg]);
-            xmax = CPLAtofM(papszArgv[++iArg]);
-            ymax = CPLAtofM(papszArgv[++iArg]);
+            psOptions->xmin = CPLAtofM(papszArgv[++iArg]);
+            psOptions->ymin = CPLAtofM(papszArgv[++iArg]);
+            psOptions->xmax = CPLAtofM(papszArgv[++iArg]);
+            psOptions->ymax = CPLAtofM(papszArgv[++iArg]);
         }
         else if ( EQUAL(papszArgv[iArg],"-addalpha") )
         {
-            bAddAlpha = TRUE;
+            psOptions->bAddAlpha = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-b"))
+        else if( EQUAL(papszArgv[iArg],"-b") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char* pszBand = papszArgv[++iArg];
             int nBand = atoi(pszBand);
             if( nBand < 1 )
             {
-                printf( "Unrecognizable band number (%s).\n", papszArgv[iArg+1] );
-                Usage();
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Illegal band number (%s).", papszArgv[iArg] );
+                GDALBuildVRTOptionsFree(psOptions);
+                return NULL;
             }
 
-            if(nBand > nMaxBandNo)
+            if(nBand > psOptions->nMaxBandNo)
             {
-                nMaxBandNo = nBand;
+                psOptions->nMaxBandNo = nBand;
             }
 
-            nBandCount++;
-            panBandList = (int *) 
-                CPLRealloc(panBandList, sizeof(int) * nBandCount);
-            panBandList[nBandCount-1] = nBand;
+            psOptions->nBandCount++;
+            psOptions->panBandList = (int *) 
+                CPLRealloc(psOptions->panBandList, sizeof(int) * psOptions->nBandCount);
+            psOptions->panBandList[psOptions->nBandCount-1] = nBand;
         }
         else if ( EQUAL(papszArgv[iArg],"-hidenodata") )
         {
-            bHideNoData = TRUE;
+            psOptions->bHideNoData = TRUE;
         }
         else if ( EQUAL(papszArgv[iArg],"-overwrite") )
         {
-            bForceOverwrite = TRUE;
+            if( psOptionsForBinary )
+                psOptionsForBinary->bOverwrite = TRUE;
         }
-        else if ( EQUAL(papszArgv[iArg],"-srcnodata") )
+        else if ( EQUAL(papszArgv[iArg],"-srcnodata") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszSrcNoData = papszArgv[++iArg];
+            CPLFree(psOptions->pszSrcNoData);
+            psOptions->pszSrcNoData = CPLStrdup(papszArgv[++iArg]);
         }
-        else if ( EQUAL(papszArgv[iArg],"-vrtnodata") )
+        else if ( EQUAL(papszArgv[iArg],"-vrtnodata") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszVRTNoData = papszArgv[++iArg];
+            CPLFree(psOptions->pszSrcNoData);
+            psOptions->pszVRTNoData = CPLStrdup(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg],"-a_srs") )
+        else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            OGRSpatialReferenceH hOutputSRS = OSRNewSpatialReference(NULL);
-            if (iArg + 1 == nArgc) {
-                fprintf( stderr, "Missing SRS definition.\n");
-                GDALDestroyDriverManager();
-                exit( 1 );
-            }
-
-            /* coverity[tainted_data] */
-            if( OSRSetFromUserInput( hOutputSRS, papszArgv[iArg+1] ) != OGRERR_NONE )
+            char *pszSRS = SanitizeSRS(papszArgv[++iArg]);
+            if(pszSRS == NULL)
             {
-                fprintf( stderr, "Failed to process SRS definition: %s\n", 
-                         papszArgv[iArg+1] );
-                GDALDestroyDriverManager();
-                exit( 1 );
+                GDALBuildVRTOptionsFree(psOptions);
+                return NULL;
             }
-
-            OSRExportToWkt( hOutputSRS, &pszOutputSRS );
-            OSRDestroySpatialReference( hOutputSRS );
-            iArg++;
+            CPLFree(psOptions->pszOutputSRS);
+            psOptions->pszOutputSRS = pszSRS;
         }
-        else if( EQUAL(papszArgv[iArg],"-r") )
+        else if( EQUAL(papszArgv[iArg],"-r") && iArg + 1 < argc )
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszResampling = papszArgv[++iArg];
-        }  
-        else if ( papszArgv[iArg][0] == '-' )
-        {
-            Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
+            CPLFree(psOptions->pszResampling);
+            psOptions->pszResampling = CPLStrdup(papszArgv[++iArg]);
         }
-        else if( pszOutputFilename == NULL )
+        else if( papszArgv[iArg][0] == '-' )
         {
-            pszOutputFilename = papszArgv[iArg];
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unknown option name '%s'", papszArgv[iArg]);
+            GDALBuildVRTOptionsFree(psOptions);
+            return NULL;
         }
-        else
+        else 
         {
-            add_file_to_list(papszArgv[iArg], tile_index,
-                             &nInputFiles, &ppszInputFilenames);
-        }
-    }
-
-    if( pszOutputFilename == NULL )
-        Usage("No output filename specified.");
-    if( nInputFiles == 0 )
-        Usage("No input filenames specified.");
-
-    if (!bQuiet)
-        pfnProgress = GDALTermProgress;
-
-    /* Avoid overwriting a non VRT dataset if the user did not put the */
-    /* filenames in the right order */
-    VSIStatBuf sBuf;
-    if (!bForceOverwrite)
-    {
-        int bExists = (VSIStat(pszOutputFilename, &sBuf) == 0);
-        if (bExists)
-        {
-            GDALDriverH hDriver = GDALIdentifyDriver( pszOutputFilename, NULL );
-            if (hDriver && !(EQUAL(GDALGetDriverShortName(hDriver), "VRT") ||
-                   (EQUAL(GDALGetDriverShortName(hDriver), "API_PROXY") &&
-                    EQUAL(CPLGetExtension(pszOutputFilename), "VRT"))) )
+            if( psOptionsForBinary )
             {
-                fprintf(stderr,
-                        "'%s' is an existing GDAL dataset managed by %s driver.\n"
-                        "There is an high chance you did not put filenames in the right order.\n"
-                        "If you want to overwrite %s, add -overwrite option to the command line.\n\n",
-                        pszOutputFilename, GDALGetDriverShortName(hDriver), pszOutputFilename);
-                Usage();
+                if( psOptionsForBinary->pszDstFilename == NULL )
+                    psOptionsForBinary->pszDstFilename = CPLStrdup(papszArgv[iArg]);
+                else
+                {
+                    if( !add_file_to_list(papszArgv[iArg], tile_index,
+                                          &psOptionsForBinary->nSrcFiles,
+                                          &psOptionsForBinary->papszSrcFiles) )
+                    {
+                        GDALBuildVRTOptionsFree(psOptions);
+                        return NULL;
+                    }
+                }
             }
         }
     }
 
-    if (we_res != 0 && ns_res != 0 &&
-        resolution != NULL && !EQUAL(resolution, "user"))
+    return psOptions;
+}
+
+/************************************************************************/
+/*                        GDALBuildVRTOptionsFree()                     */
+/************************************************************************/
+
+/**
+ * Frees the GDALBuildVRTOptions struct.
+ *
+ * @param psOptions the options struct for GDALBuildVRT().
+ *
+ * @since GDAL 2.1
+ */
+
+void GDALBuildVRTOptionsFree( GDALBuildVRTOptions *psOptions )
+{
+    if( psOptions )
     {
-        Usage(CPLSPrintf("-tr option is not compatible with -resolution %s", resolution));
+        CPLFree( psOptions->pszResolution );
+        CPLFree( psOptions->pszSrcNoData );
+        CPLFree( psOptions->pszVRTNoData );
+        CPLFree( psOptions->pszOutputSRS );
+        CPLFree( psOptions->panBandList );
+        CPLFree( psOptions->pszResampling );
     }
 
-    if (bTargetAlignedPixels && we_res == 0 && ns_res == 0)
-    {
-        Usage("-tap option cannot be used without using -tr");
-    }
+    CPLFree(psOptions);
+}
 
-    if (bAddAlpha && bSeparate)
-    {
-        Usage("-addalpha option is not compatible with -separate.");
-    }
+/************************************************************************/
+/*                 GDALBuildVRTOptionsSetProgress()                    */
+/************************************************************************/
 
-    ResolutionStrategy eStrategy = AVERAGE_RESOLUTION;
-    if ( resolution == NULL || EQUAL(resolution, "user") )
-    {
-        if ( we_res != 0 || ns_res != 0)
-            eStrategy = USER_RESOLUTION;
-        else if ( resolution != NULL && EQUAL(resolution, "user") )
-        {
-            Usage("-tr option must be used with -resolution user.");
-        }
-    }
-    else if ( EQUAL(resolution, "average") )
-        eStrategy = AVERAGE_RESOLUTION;
-    else if ( EQUAL(resolution, "highest") )
-        eStrategy = HIGHEST_RESOLUTION;
-    else if ( EQUAL(resolution, "lowest") )
-        eStrategy = LOWEST_RESOLUTION;
-    else
-    {
-        Usage(CPLSPrintf("invalid value (%s) for -resolution", resolution));
-    }
+/**
+ * Set a progress function.
+ *
+ * @param psOptions the options struct for GDALBuildVRT().
+ * @param pfnProgress the progress callback.
+ * @param pProgressData the user data for the progress callback.
+ *
+ * @since GDAL 2.1
+ */
 
-    /* If -srcnodata is specified, use it as the -vrtnodata if the latter is not */
-    /* specified */
-    if (pszSrcNoData != NULL && pszVRTNoData == NULL)
-        pszVRTNoData = pszSrcNoData;
-
-    VRTBuilder oBuilder(pszOutputFilename, nInputFiles, ppszInputFilenames,
-                        panBandList, nBandCount, nMaxBandNo,
-                        eStrategy, we_res, ns_res, bTargetAlignedPixels, xmin, ymin, xmax, ymax,
-                        bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData, nSubdataset,
-                        pszSrcNoData, pszVRTNoData, pszOutputSRS, pszResampling);
-
-    nRet = (oBuilder.Build(pfnProgress, NULL) == CE_None) ? 0 : 1;
-
-    for(int i=0;i<nInputFiles;i++)
-    {
-        CPLFree(ppszInputFilenames[i]);
-    }
-    CPLFree(ppszInputFilenames);
-    CPLFree(pszOutputSRS);
-    CPLFree( panBandList );
-    CSLDestroy( papszArgv );
-    GDALDumpOpenDatasets( stderr );
-    GDALDestroyDriverManager();
-#ifdef OGR_ENABLED
-    OGRCleanupAll();
-#endif
-
-    return nRet;
+void GDALBuildVRTOptionsSetProgress( GDALBuildVRTOptions *psOptions,
+                                      GDALProgressFunc pfnProgress, void *pProgressData )
+{
+    psOptions->pfnProgress = pfnProgress ? pfnProgress : GDALDummyProgress;
+    psOptions->pProgressData = pProgressData;
+    if( pfnProgress == GDALTermProgress )
+        psOptions->bQuiet = FALSE;
 }

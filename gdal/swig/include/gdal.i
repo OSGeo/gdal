@@ -1444,4 +1444,92 @@ GDALDatasetShadow* wrapper_GDALRasterizeDestName( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.BuildVRT()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (BuildVRTOptions) GDALBuildVRTOptions;
+#endif
+struct GDALBuildVRTOptions {
+%extend {
+    GDALBuildVRTOptions(char** options) {
+        return GDALBuildVRTOptionsNew(options, NULL);
+    }
+
+    ~GDALBuildVRTOptions() {
+        GDALBuildVRTOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGPYTHON
+%rename (BuildVRTInternalObjects) wrapper_GDALBuildVRT_objects;
+#elif defined(SWIGJAVA)
+%rename (BuildVRT) wrapper_GDALBuildVRT_objects;
+#endif
+
+%newobject wrapper_GDALBuildVRT_objects;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALBuildVRT_objects( const char* dest,
+                                             int object_list_count, GDALDatasetShadow** poObjects,
+                                             GDALBuildVRTOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALBuildVRTOptionsNew(NULL, NULL);
+        }
+        GDALBuildVRTOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALBuildVRT(dest, object_list_count, poObjects, NULL, options, &usageError);
+    if( bFreeOptions )
+        GDALBuildVRTOptionsFree(options);
+    return hDSRet;
+}
+%}
+
+
+#ifdef SWIGPYTHON
+%rename (BuildVRTInternalNames) wrapper_GDALBuildVRT_names;
+#elif defined(SWIGJAVA)
+%rename (BuildVRT) wrapper_GDALBuildVRT_names;
+#endif
+
+%newobject wrapper_GDALBuildVRT_names;
+%apply (char **options) {char** source_filenames};
+%inline %{
+GDALDatasetShadow* wrapper_GDALBuildVRT_names( const char* dest,
+                                         char ** source_filenames,
+                                         GDALBuildVRTOptions* options,
+                                         GDALProgressFunc callback=NULL,
+                                         void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALBuildVRTOptionsNew(NULL, NULL);
+        }
+        GDALBuildVRTOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALBuildVRT(dest, CSLCount(source_filenames), NULL, source_filenames, options, &usageError);
+    if( bFreeOptions )
+        GDALBuildVRTOptionsFree(options);
+    return hDSRet;
+}
+%}
+%clear char** source_filenames;
+
+
 %clear (const char* dest);
