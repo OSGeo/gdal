@@ -93,8 +93,8 @@ void CPL_DLL GDALWarpAppOptionsSetWarpOption( GDALWarpAppOptions *psOptions,
                                               const char* pszKey,
                                               const char* pszValue );
 
-GDALDatasetH CPL_DLL GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
-                               GDALDatasetH *pahSrcDS,
+GDALDatasetH CPL_DLL GDALWarp( const char *pszDest, GDALDatasetH hDstDS,
+                               int nSrcCount, GDALDatasetH *pahSrcDS,
                                const GDALWarpAppOptions *psOptions, int *pbUsageError );
 
 /*! Options for GDALVectorTranslate(). Opaque type */
@@ -190,6 +190,24 @@ void CPL_DLL GDALRasterizeOptionsSetProgress( GDALRasterizeOptions *psOptions,
 GDALDatasetH CPL_DLL GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                                     GDALDatasetH hSrcDS,
                                     const GDALRasterizeOptions *psOptions, int *pbUsageError );
+
+/*! Options for GDALBuildVRT(). Opaque type */
+typedef struct GDALBuildVRTOptions GDALBuildVRTOptions;
+
+typedef struct GDALBuildVRTOptionsForBinary GDALBuildVRTOptionsForBinary;
+
+GDALBuildVRTOptions CPL_DLL *GDALBuildVRTOptionsNew(char** papszArgv,
+                                                      GDALBuildVRTOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALBuildVRTOptionsFree( GDALBuildVRTOptions *psOptions );
+
+void CPL_DLL GDALBuildVRTOptionsSetProgress( GDALBuildVRTOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALBuildVRT( const char *pszDest,
+                                   int nSrcCount, GDALDatasetH *pahSrcDS, const char* const* papszSrcDSNames,
+                                   const GDALBuildVRTOptions *psOptions, int *pbUsageError );
 
 CPL_C_END
 

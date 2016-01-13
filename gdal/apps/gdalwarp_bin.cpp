@@ -339,24 +339,11 @@ static void GDALWarpAppOptionsForBinaryFree( GDALWarpAppOptionsForBinary* psOpti
 /*                                main()                                */
 /************************************************************************/
 
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
-    do { if (i + nExtraArg >= argc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
-
 int main( int argc, char ** argv )
 
 {
     GDALDatasetH *pahSrcDS = NULL;
     int nSrcCount = 0;
-
-    /* Check that we are running against at least GDAL 1.6 */
-    /* Note to developers : if we use newer API, please change the requirement */
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1600)
-    {
-        fprintf(stderr, "At least, GDAL >= 1.6.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
-        GDALExit(1);
-    }
 
     EarlySetConfigOptions(argc, argv);
 

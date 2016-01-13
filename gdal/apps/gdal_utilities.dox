@@ -305,7 +305,7 @@ converts raster data between different formats
 gdal_translate [--help-general]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
+       [-of format] [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
        [-outsize xsize[%]|0 ysize[%]|0] [-tr xres yres]
        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
        [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
@@ -475,7 +475,7 @@ builds or rebuilds overview images
 
 \verbatim
 gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]
-         [-b band]
+         [-b band]*
          [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename levels
 \endverbatim
 
@@ -708,7 +708,7 @@ Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
 gdalbuildvrt [-tileindex field_name]
              [-resolution {highest|lowest|average|user}]
              [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]
-             [-separate] [-b band] [-sd subdataset]
+             [-separate] [-b band]* [-sd subdataset]
              [-allow_projection_difference] [-q]
              [-addalpha] [-hidenodata]
              [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"] 
@@ -797,7 +797,8 @@ is written in the NODATA element of each ComplexSource element. Use a value of
 
 <dt> <b>-b</b> <i>band</i>:</dt><dd>(GDAL >= 1.10.0) 
 Select an input <i>band</i> to be processed. Bands are numbered from 1.
-If input bands not set all bands will be added to vrt</dd>
+If input bands not set all bands will be added to vrt.
+Multiple <b>-b</b> switches may be used to select a set of input bands.</dd>
 
 <dt> <b>-sd</b> <i>subdataset</i></dt><dd> (GDAL >= 1.10.0) If the input
 dataset contains several subdatasets use a subdataset with the specified

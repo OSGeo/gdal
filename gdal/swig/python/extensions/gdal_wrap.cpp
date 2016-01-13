@@ -2943,45 +2943,46 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_CPLXMLNode swig_types[2]
 #define SWIGTYPE_p_GByte swig_types[3]
 #define SWIGTYPE_p_GDALAsyncReaderShadow swig_types[4]
-#define SWIGTYPE_p_GDALColorEntry swig_types[5]
-#define SWIGTYPE_p_GDALColorTableShadow swig_types[6]
-#define SWIGTYPE_p_GDALDEMProcessingOptions swig_types[7]
-#define SWIGTYPE_p_GDALDatasetShadow swig_types[8]
-#define SWIGTYPE_p_GDALDriverShadow swig_types[9]
-#define SWIGTYPE_p_GDALGridOptions swig_types[10]
-#define SWIGTYPE_p_GDALInfoOptions swig_types[11]
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[12]
-#define SWIGTYPE_p_GDALNearblackOptions swig_types[13]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[14]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[15]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[16]
-#define SWIGTYPE_p_GDALRasterizeOptions swig_types[17]
-#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[18]
-#define SWIGTYPE_p_GDALTranslateOptions swig_types[19]
-#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[20]
-#define SWIGTYPE_p_GDALWarpAppOptions swig_types[21]
-#define SWIGTYPE_p_GDAL_GCP swig_types[22]
-#define SWIGTYPE_p_GIntBig swig_types[23]
-#define SWIGTYPE_p_GUIntBig swig_types[24]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[25]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[26]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[27]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[28]
-#define SWIGTYPE_p_StatBuf swig_types[29]
-#define SWIGTYPE_p_char swig_types[30]
-#define SWIGTYPE_p_double swig_types[31]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[32]
-#define SWIGTYPE_p_int swig_types[33]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[34]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[35]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[36]
-#define SWIGTYPE_p_p_GUIntBig swig_types[37]
-#define SWIGTYPE_p_p_char swig_types[38]
-#define SWIGTYPE_p_p_void swig_types[39]
-#define SWIGTYPE_p_size_t swig_types[40]
-#define SWIGTYPE_p_void swig_types[41]
-static swig_type_info *swig_types[43];
-static swig_module_info swig_module = {swig_types, 42, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALBuildVRTOptions swig_types[5]
+#define SWIGTYPE_p_GDALColorEntry swig_types[6]
+#define SWIGTYPE_p_GDALColorTableShadow swig_types[7]
+#define SWIGTYPE_p_GDALDEMProcessingOptions swig_types[8]
+#define SWIGTYPE_p_GDALDatasetShadow swig_types[9]
+#define SWIGTYPE_p_GDALDriverShadow swig_types[10]
+#define SWIGTYPE_p_GDALGridOptions swig_types[11]
+#define SWIGTYPE_p_GDALInfoOptions swig_types[12]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[13]
+#define SWIGTYPE_p_GDALNearblackOptions swig_types[14]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[15]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[16]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[17]
+#define SWIGTYPE_p_GDALRasterizeOptions swig_types[18]
+#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[19]
+#define SWIGTYPE_p_GDALTranslateOptions swig_types[20]
+#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[21]
+#define SWIGTYPE_p_GDALWarpAppOptions swig_types[22]
+#define SWIGTYPE_p_GDAL_GCP swig_types[23]
+#define SWIGTYPE_p_GIntBig swig_types[24]
+#define SWIGTYPE_p_GUIntBig swig_types[25]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[26]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[27]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[28]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[29]
+#define SWIGTYPE_p_StatBuf swig_types[30]
+#define SWIGTYPE_p_char swig_types[31]
+#define SWIGTYPE_p_double swig_types[32]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[33]
+#define SWIGTYPE_p_int swig_types[34]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[35]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[36]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[37]
+#define SWIGTYPE_p_p_GUIntBig swig_types[38]
+#define SWIGTYPE_p_p_char swig_types[39]
+#define SWIGTYPE_p_p_void swig_types[40]
+#define SWIGTYPE_p_size_t swig_types[41]
+#define SWIGTYPE_p_void swig_types[42]
+static swig_type_info *swig_types[44];
+static swig_module_info swig_module = {swig_types, 43, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -6224,6 +6225,60 @@ GDALDatasetShadow* wrapper_GDALRasterizeDestName( const char* dest,
     GDALDatasetH hDSRet = GDALRasterize(dest, NULL, srcDS, options, &usageError);
     if( bFreeOptions )
         GDALRasterizeOptionsFree(options);
+    return hDSRet;
+}
+
+SWIGINTERN GDALBuildVRTOptions *new_GDALBuildVRTOptions(char **options){
+        return GDALBuildVRTOptionsNew(options, NULL);
+    }
+SWIGINTERN void delete_GDALBuildVRTOptions(GDALBuildVRTOptions *self){
+        GDALBuildVRTOptionsFree( self );
+    }
+
+GDALDatasetShadow* wrapper_GDALBuildVRT_objects( const char* dest,
+                                             int object_list_count, GDALDatasetShadow** poObjects,
+                                             GDALBuildVRTOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALBuildVRTOptionsNew(NULL, NULL);
+        }
+        GDALBuildVRTOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALBuildVRT(dest, object_list_count, poObjects, NULL, options, &usageError);
+    if( bFreeOptions )
+        GDALBuildVRTOptionsFree(options);
+    return hDSRet;
+}
+
+
+GDALDatasetShadow* wrapper_GDALBuildVRT_names( const char* dest,
+                                         char ** source_filenames,
+                                         GDALBuildVRTOptions* options,
+                                         GDALProgressFunc callback=NULL,
+                                         void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALBuildVRTOptionsNew(NULL, NULL);
+        }
+        GDALBuildVRTOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALBuildVRT(dest, CSLCount(source_filenames), NULL, source_filenames, options, &usageError);
+    if( bFreeOptions )
+        GDALBuildVRTOptionsFree(options);
     return hDSRet;
 }
 
@@ -28504,6 +28559,468 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_new_GDALBuildVRTOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char **arg1 = (char **) 0 ;
+  PyObject * obj0 = 0 ;
+  GDALBuildVRTOptions *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:new_GDALBuildVRTOptions",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj0)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj0,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg1 = CSLAddString( arg1, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALBuildVRTOptions *)new_GDALBuildVRTOptions(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALBuildVRTOptions, SWIG_POINTER_NEW |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_GDALBuildVRTOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALBuildVRTOptions *arg1 = (GDALBuildVRTOptions *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_GDALBuildVRTOptions",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALBuildVRTOptions, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_GDALBuildVRTOptions" "', argument " "1"" of type '" "GDALBuildVRTOptions *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALBuildVRTOptions * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    delete_GDALBuildVRTOptions(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *GDALBuildVRTOptions_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_GDALBuildVRTOptions, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_BuildVRTInternalObjects(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  int arg2 ;
+  GDALDatasetShadow **arg3 = (GDALDatasetShadow **) 0 ;
+  GDALBuildVRTOptions *arg4 = (GDALBuildVRTOptions *) 0 ;
+  GDALProgressFunc arg5 = (GDALProgressFunc) NULL ;
+  void *arg6 = (void *) NULL ;
+  int bToFree1 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  GDALDatasetShadow *result = 0 ;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg6 = psProgressInfo;
+  if (!PyArg_ParseTuple(args,(char *)"OOO|OO:BuildVRTInternalObjects",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, GDALDatasetShadow *optional_##GDALDatasetShadow)*/
+    if ( !PySequence_Check(obj1) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
+    arg3 = (GDALDatasetShadow**) CPLMalloc(arg2*sizeof(GDALDatasetShadow*));
+    
+    for( int i = 0; i<arg2; i++ ) {
+      PyObject *o = PySequence_GetItem(obj1,i);
+#if 0x020012 <= 0x010337
+      PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
+#else
+      SwigPyObject *sobj = SWIG_Python_GetSwigThis(o);
+#endif
+      GDALDatasetShadow* rawobjectpointer = NULL;
+      if (!sobj) {
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      rawobjectpointer = (GDALDatasetShadow*) sobj->ptr;
+      arg3[i] = rawobjectpointer;
+      Py_DECREF(o);
+      
+    }
+  }
+  res4 = SWIG_ConvertPtr(obj2, &argp4,SWIGTYPE_p_GDALBuildVRTOptions, 0 |  0 );
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "BuildVRTInternalObjects" "', argument " "4"" of type '" "GDALBuildVRTOptions *""'"); 
+  }
+  arg4 = reinterpret_cast< GDALBuildVRTOptions * >(argp4);
+  if (obj3) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj3 && obj3 != Py_None ) {
+        void* cbfunction = NULL;
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg5 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj3)) {
+            PyErr_SetString( PyExc_RuntimeError,
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj3;
+          arg5 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj4 ;
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALDatasetShadow *)wrapper_GDALBuildVRT_objects((char const *)arg1,arg2,arg3,arg4,arg5,arg6);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALDatasetShadow **poObjects)*/
+    CPLFree( arg3 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALDatasetShadow **poObjects)*/
+    CPLFree( arg3 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_BuildVRTInternalNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char **arg2 = (char **) 0 ;
+  GDALBuildVRTOptions *arg3 = (GDALBuildVRTOptions *) 0 ;
+  GDALProgressFunc arg4 = (GDALProgressFunc) NULL ;
+  void *arg5 = (void *) NULL ;
+  int bToFree1 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  GDALDatasetShadow *result = 0 ;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg5 = psProgressInfo;
+  if (!PyArg_ParseTuple(args,(char *)"OOO|OO:BuildVRTInternalNames",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj1)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj1,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg2 = CSLAddString( arg2, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
+  }
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALBuildVRTOptions, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "BuildVRTInternalNames" "', argument " "3"" of type '" "GDALBuildVRTOptions *""'"); 
+  }
+  arg3 = reinterpret_cast< GDALBuildVRTOptions * >(argp3);
+  if (obj3) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj3 && obj3 != Py_None ) {
+        void* cbfunction = NULL;
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg4 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj3)) {
+            PyErr_SetString( PyExc_RuntimeError,
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj3;
+          arg4 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj4 ;
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALDatasetShadow *)wrapper_GDALBuildVRT_names((char const *)arg1,arg2,arg3,arg4,arg5);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
@@ -28988,6 +29505,17 @@ static PyMethodDef SwigMethods[] = {
 		"wrapper_GDALRasterizeDestName(char const * dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0, \n"
 		"    void * callback_data=None) -> Dataset\n"
 		""},
+	 { (char *)"new_GDALBuildVRTOptions", _wrap_new_GDALBuildVRTOptions, METH_VARARGS, (char *)"new_GDALBuildVRTOptions(char ** options) -> GDALBuildVRTOptions"},
+	 { (char *)"delete_GDALBuildVRTOptions", _wrap_delete_GDALBuildVRTOptions, METH_VARARGS, (char *)"delete_GDALBuildVRTOptions(GDALBuildVRTOptions self)"},
+	 { (char *)"GDALBuildVRTOptions_swigregister", GDALBuildVRTOptions_swigregister, METH_VARARGS, NULL},
+	 { (char *)"BuildVRTInternalObjects", _wrap_BuildVRTInternalObjects, METH_VARARGS, (char *)"\n"
+		"BuildVRTInternalObjects(char const * dest, int object_list_count, GDALBuildVRTOptions options, GDALProgressFunc callback=0, \n"
+		"    void * callback_data=None) -> Dataset\n"
+		""},
+	 { (char *)"BuildVRTInternalNames", _wrap_BuildVRTInternalNames, METH_VARARGS, (char *)"\n"
+		"BuildVRTInternalNames(char const * dest, char ** source_filenames, GDALBuildVRTOptions options, GDALProgressFunc callback=0, \n"
+		"    void * callback_data=None) -> Dataset\n"
+		""},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -29011,6 +29539,7 @@ static swig_type_info _swigt__p_CPLVirtualMemShadow = {"_p_CPLVirtualMemShadow",
 static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GByte = {"_p_GByte", "GByte *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALAsyncReaderShadow = {"_p_GDALAsyncReaderShadow", "GDALAsyncReaderShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALBuildVRTOptions = {"_p_GDALBuildVRTOptions", "GDALBuildVRTOptions *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALColorEntry = {"_p_GDALColorEntry", "GDALColorEntry *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALColorTableShadow = {"_p_GDALColorTableShadow", "GDALColorTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDEMProcessingOptions = {"_p_GDALDEMProcessingOptions", "GDALDEMProcessingOptions *", 0, 0, (void*)0, 0};
@@ -29055,6 +29584,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLXMLNode,
   &_swigt__p_GByte,
   &_swigt__p_GDALAsyncReaderShadow,
+  &_swigt__p_GDALBuildVRTOptions,
   &_swigt__p_GDALColorEntry,
   &_swigt__p_GDALColorTableShadow,
   &_swigt__p_GDALDEMProcessingOptions,
@@ -29099,6 +29629,7 @@ static swig_cast_info _swigc__p_CPLVirtualMemShadow[] = {  {&_swigt__p_CPLVirtua
 static swig_cast_info _swigc__p_CPLXMLNode[] = {  {&_swigt__p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GByte[] = {  {&_swigt__p_GByte, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALAsyncReaderShadow[] = {  {&_swigt__p_GDALAsyncReaderShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALBuildVRTOptions[] = {  {&_swigt__p_GDALBuildVRTOptions, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorEntry[] = {  {&_swigt__p_GDALColorEntry, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorTableShadow[] = {  {&_swigt__p_GDALColorTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDEMProcessingOptions[] = {  {&_swigt__p_GDALDEMProcessingOptions, 0, 0, 0},{0, 0, 0, 0}};
@@ -29143,6 +29674,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLXMLNode,
   _swigc__p_GByte,
   _swigc__p_GDALAsyncReaderShadow,
+  _swigc__p_GDALBuildVRTOptions,
   _swigc__p_GDALColorEntry,
   _swigc__p_GDALColorTableShadow,
   _swigc__p_GDALDEMProcessingOptions,

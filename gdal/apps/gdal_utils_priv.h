@@ -135,6 +135,15 @@ struct GDALRasterizeOptionsForBinary
     int bCreateOutput;
 };
 
+struct GDALBuildVRTOptionsForBinary
+{
+    int nSrcFiles;
+    char** papszSrcFiles;
+    char* pszDstFilename;
+    int bQuiet;
+    int bOverwrite;
+};
+
 CPL_C_END
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */

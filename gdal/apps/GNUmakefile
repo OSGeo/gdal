@@ -14,7 +14,7 @@ BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
 
 OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o \
-	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o
+	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o gdalbuildvrt_lib.o
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
@@ -77,6 +77,9 @@ gdal_grid_lib.$(OBJ_EXT): gdal_grid_lib.cpp
 gdal_rasterize_lib.$(OBJ_EXT): gdal_rasterize_lib.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
+gdalbuildvrt_lib.$(OBJ_EXT): gdalbuildvrt_lib.cpp
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
 gdalinfo$(EXE):	gdalinfo_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) $(CONFIG_LIB_UTILS) -o $@
 
@@ -107,7 +110,7 @@ gdal_rasterize$(EXE):	gdal_rasterize_bin.$(OBJ_EXT) $(DEP_LIBS)
 gdaltindex$(EXE):	gdaltindex.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdalbuildvrt$(EXE):	gdalbuildvrt.$(OBJ_EXT) $(DEP_LIBS)
+gdalbuildvrt$(EXE):	gdalbuildvrt_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 multireadtest$(EXE):	multireadtest.$(OBJ_EXT) $(DEP_LIBS)
