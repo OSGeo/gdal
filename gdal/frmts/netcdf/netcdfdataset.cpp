@@ -423,7 +423,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
     /* should we check for longitude values > 360 ? */
     bCheckLongitude =
-        CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES")))
+        CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))
         && NCDFIsVarLongitude( cdfid, nZId, NULL );
 
 /* -------------------------------------------------------------------- */
@@ -2581,7 +2581,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 /* -------------------------------------------------------------------- */
 
         if ( NCDFIsVarLongitude( cdfid, nVarDimXID, NULL ) &&
-             CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))) ) {
+             CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))) {
             // If minimum longitude is > 180, subtract 360 from all.
             if ( MIN( pdfXCoord[0], pdfXCoord[xdim-1] ) > 180.0 ) {
                 for ( size_t i=0; i<xdim ; i++ )
@@ -3341,7 +3341,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             if ( EQUAL( pszValue, "IF_NEEDED" ) ) {
                 bWriteLonLat = ( bHasGeoloc || ! bIsCfProjection );
             }
-            else bWriteLonLat = CPL_TO_BOOL(CSLTestBoolean( pszValue ));
+            else bWriteLonLat = CPLTestBool( pszValue );
         }
         else
             bWriteLonLat = bHasGeoloc;
@@ -3369,7 +3369,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         if ( EQUAL( pszValue, "IF_NEEDED" ) )  
             bWriteLonLat = true;
         else
-            bWriteLonLat = CPL_TO_BOOL(CSLTestBoolean( pszValue ));
+            bWriteLonLat = CPLTestBool( pszValue );
         /*  Don't write lon/lat if no source geotransform */
         if ( ! bSetGeoTransform )
             bWriteLonLat = false;
@@ -4703,9 +4703,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      attributes (not varnames) set GDAL_NETCDF_VERIFY_DIMS=STRICT    */
 /* -------------------------------------------------------------------- */
 
-    bool bCheckDims = 
-        CPL_TO_BOOL(CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ) ))
-          && STARTS_WITH_CI(szConventions, "CF");
+    bool bCheckDims =
+        CPLTestBool( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ) )
+        && STARTS_WITH_CI(szConventions, "CF");
 
     char szDimName[NC_MAX_NAME+1];
 
@@ -4845,7 +4845,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     /* override bottom-up with GDAL_NETCDF_BOTTOMUP config option */
     const char *pszValue = CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", NULL );
     if ( pszValue ) {
-        poDS->bBottomUp = CPL_TO_BOOL(CSLTestBoolean( pszValue )); 
+        poDS->bBottomUp = CPLTestBool( pszValue );
         CPLDebug( "GDAL_netCDF", 
                   "set bBottomUp=%d because GDAL_NETCDF_BOTTOMUP=%s",
                   poDS->bBottomUp, pszValue );
