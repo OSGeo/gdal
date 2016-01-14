@@ -166,7 +166,7 @@ OGRLayer * OGRGPXDataSource::ICreateLayer( const char * pszLayerName,
     {
         const char *pszForceGPXTrack
             = CSLFetchNameValue( papszOptions, "FORCE_GPX_TRACK");
-        if (pszForceGPXTrack && CSLTestBoolean(pszForceGPXTrack))
+        if (pszForceGPXTrack && CPLTestBool(pszForceGPXTrack))
             gpxGeomType = GPX_TRACK;
         else
             gpxGeomType = GPX_ROUTE;
@@ -175,7 +175,7 @@ OGRLayer * OGRGPXDataSource::ICreateLayer( const char * pszLayerName,
     {
         const char *pszForceGPXRoute
             = CSLFetchNameValue( papszOptions, "FORCE_GPX_ROUTE");
-        if (pszForceGPXRoute && CSLTestBoolean(pszForceGPXRoute))
+        if (pszForceGPXRoute && CPLTestBool(pszForceGPXRoute))
             gpxGeomType = GPX_ROUTE;
         else
             gpxGeomType = GPX_TRACK;
@@ -509,7 +509,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
     const char* pszUseExtensions =
         CSLFetchNameValue( papszOptions, "GPX_USE_EXTENSIONS");
     const char* pszExtensionsNSURL = NULL;
-    if (pszUseExtensions && CSLTestBoolean(pszUseExtensions))
+    if (pszUseExtensions && CPLTestBool(pszUseExtensions))
     {
         bUseExtensions = true;
 

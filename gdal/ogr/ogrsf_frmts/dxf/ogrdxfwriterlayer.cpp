@@ -47,7 +47,7 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn )
     this->poDS = poDSIn;
 
     nNextAutoID = 1;
-    bWriteHatch = CSLTestBoolean(CPLGetConfigOption("DXF_WRITE_HATCH", "YES"));
+    bWriteHatch = CPLTestBool(CPLGetConfigOption("DXF_WRITE_HATCH", "YES"));
 
     poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();

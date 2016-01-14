@@ -460,7 +460,7 @@ int FileGDBTable::GuessFeatureLocations()
     nFileSize = VSIFTellL(fpTable);
 
     int bReportDeletedFeatures =
-        CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_REPORT_DELETED_FEATURES", "NO"));
+        CPLTestBool(CPLGetConfigOption("OPENFILEGDB_REPORT_DELETED_FEATURES", "NO"));
 
     vsi_l_offset nOffset = 40 + nFieldDescLength;
 
@@ -634,7 +634,7 @@ int FileGDBTable::Open(const char* pszFilename,
 
     CPLString osTableXName;
     if( nValidRecordCount > 0 &&
-        !CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_IGNORE_GDBTABLX", "FALSE")) )
+        !CPLTestBool(CPLGetConfigOption("OPENFILEGDB_IGNORE_GDBTABLX", "FALSE")) )
     {
         osTableXName = CPLFormFilename(CPLGetPath(pszFilename),
                                         CPLGetBasename(pszFilename), "gdbtablx");
@@ -649,7 +649,7 @@ int FileGDBTable::Open(const char* pszFilename,
                         "Trying to guess feature locations, but this might fail or "
                         "return incorrect results", osTableXName.c_str());
             }
-            else if( !CSLTestBoolean(pszIgnoreGDBTablXAbsence) )
+            else if( !CPLTestBool(pszIgnoreGDBTablXAbsence) )
             {
                 returnErrorIf(fpTableX == NULL );
             }
@@ -662,7 +662,7 @@ int FileGDBTable::Open(const char* pszFilename,
     {
         if(nValidRecordCount > nTotalRecordCount )
         {
-            if( CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_USE_GDBTABLE_RECORD_COUNT", "FALSE")) )
+            if( CPLTestBool(CPLGetConfigOption("OPENFILEGDB_USE_GDBTABLE_RECORD_COUNT", "FALSE")) )
             {
                 /* Potentially unsafe. See #5842 */
                 CPLDebug("OpenFileGDB", "%s: nTotalRecordCount (was %d) forced to nValidRecordCount=%d",

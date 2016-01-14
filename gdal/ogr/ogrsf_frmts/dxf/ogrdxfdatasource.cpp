@@ -104,10 +104,10 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
     osName = pszFilename;
 
-    bInlineBlocks = CSLTestBoolean(
+    bInlineBlocks = CPLTestBool(
         CPLGetConfigOption( "DXF_INLINE_BLOCKS", "TRUE" ) );
 
-    if( CSLTestBoolean(
+    if( CPLTestBool(
             CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
         bHeaderOnly = TRUE;
 

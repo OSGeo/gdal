@@ -930,7 +930,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") &&
         (pszDialect == NULL || EQUAL(pszDialect, "") || EQUAL(pszDialect, "OGRSQL")) &&
-        CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_USE_INDEX", "YES")) )
+        CPLTestBool(CPLGetConfigOption("OPENFILEGDB_USE_INDEX", "YES")) )
     {
         swq_select oSelect;
         if( oSelect.preparse(pszSQLCommand) != CE_None )

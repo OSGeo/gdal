@@ -132,7 +132,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     }
 
     /* read data records if required */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES")))
         poReader->ReadDataRecords();
 
     return TRUE;

@@ -71,7 +71,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     bStatisticsNeedsToBeFlushed = FALSE;
     nFeatureCount = -1;
 
-    int bDisableInsertTriggers = CSLTestBoolean(CPLGetConfigOption(
+    int bDisableInsertTriggers = CPLTestBool(CPLGetConfigOption(
                             "OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES"));
     bHasCheckedTriggers = !bDisableInsertTriggers;
     bDeferredCreation = FALSE;
@@ -1164,7 +1164,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
     }
 
     if (CheckSpatialIndexTable(iGeomField) &&
-        !CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO")))
+        !CPLTestBool(CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO")))
     {
         const char* pszSQL;
 
@@ -1359,7 +1359,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( (oField.GetType() == OFTTime || oField.GetType() == OFTDate ||
          oField.GetType() == OFTDateTime) &&
-        !(CSLTestBoolean(
+        !(CPLTestBool(
             CPLGetConfigOption("OGR_SQLITE_ENABLE_DATETIME", "YES"))) )
     {
         oField.SetType(OFTString);
@@ -1368,7 +1368,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     if( !bDeferredCreation )
     {
         /* ADD COLUMN only available since SQLite 3.1.3 */
-        if (CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
+        if (CPLTestBool(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
             sqlite3_libversion_number() > 3 * 1000000 + 1 * 1000 + 3)
         {
             int rc;

@@ -176,7 +176,7 @@ void* OGRSQLiteRegisterRegExpFunction(sqlite3*
 #ifdef HAVE_PCRE
 
     /* For debugging purposes mostly */
-    if( !CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_REGEXP", "YES")) )
+    if( !CPLTestBool(CPLGetConfigOption("OGR_SQLITE_REGEXP", "YES")) )
         return NULL;
 
     /* Check if we really need to define our own REGEXP function */

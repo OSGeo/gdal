@@ -64,10 +64,10 @@ static int OGRSQLiteInitOldSpatialite()
 /*      Try loading SpatiaLite.                                         */
 /* -------------------------------------------------------------------- */
 #ifdef HAVE_SPATIALITE
-    if (!bSpatialiteGlobalLoaded && CSLTestBoolean(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")))
+    if (!bSpatialiteGlobalLoaded && CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")))
     {
         bSpatialiteGlobalLoaded = TRUE;
-        spatialite_init(CSLTestBoolean(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
+        spatialite_init(CPLTestBool(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
     }
 #endif
     return bSpatialiteGlobalLoaded;
@@ -81,14 +81,14 @@ static int OGRSQLiteInitOldSpatialite()
 
 int OGRSQLiteBaseDataSource::InitNewSpatialite()
 {
-    if( CSLTestBoolean(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
+    if( CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
     {
         CPLAssert(hSpatialiteCtxt == NULL);
         hSpatialiteCtxt = spatialite_alloc_connection();
         if( hSpatialiteCtxt != NULL )
         {
             spatialite_init_ex(hDB, hSpatialiteCtxt,
-                CSLTestBoolean(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
+                CPLTestBool(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
         }
     }
     return hSpatialiteCtxt != NULL;
@@ -559,7 +559,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     int rc;
 
 #ifdef USE_SQLITE_DEBUG_MEMALLOC
-    if( CSLTestBoolean(CPLGetConfigOption("USE_SQLITE_DEBUG_MEMALLOC", "NO")) )
+    if( CPLTestBool(CPLGetConfigOption("USE_SQLITE_DEBUG_MEMALLOC", "NO")) )
         sqlite3_config(SQLITE_CONFIG_MALLOC, &sDebugMemAlloc);
 #endif
 
@@ -573,13 +573,13 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     // SQLITE_USE_URI is checked only to enable backward compatibility, in
     // case we accidentally hijacked some other format.
     if( STARTS_WITH(m_pszFilename, "file:") &&
-        CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
+        CPLTestBool(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
     {
         flags |= SQLITE_OPEN_URI;
     }
 #endif
 
-    int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
+    int bUseOGRVFS = CPLTestBool(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
     if (bUseOGRVFS || STARTS_WITH(m_pszFilename, "/vsi"))
     {
         pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
@@ -616,7 +616,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
 
     if( nRowCount > 0 )
     {
-        if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", "NO")) )
+        if( !CPLTestBool(CPLGetConfigOption("ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", "NO")) )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, "%s", 
                 "A trigger and/or view calls a OGR extension SQL function that could be used to "
@@ -754,7 +754,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
         */
 
         const char* pszVal = CSLFetchNameValue( papszOptions, "INIT_WITH_EPSG" );
-        if( pszVal != NULL && !CSLTestBoolean(pszVal) &&
+        if( pszVal != NULL && !CPLTestBool(pszVal) &&
             GetSpatialiteVersionNumber() >= 40 )
             osCommand =  "SELECT InitSpatialMetadata('NONE')";
         else
@@ -1088,14 +1088,14 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         papszOpenOptions = CSLDuplicate(papszOpenOptionsIn);
     }
 
-    int bListAllTables = CSLTestBoolean(CSLFetchNameValueDef(
+    int bListAllTables = CPLTestBool(CSLFetchNameValueDef(
         papszOpenOptions, "LIST_ALL_TABLES",
         CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO")));
 
     // Don't list by default: there might be some security implications
     // if a user is provided with a file and doesn't know that there are
     // virtual OGR tables in it.
-    int bListVirtualOGRLayers = CSLTestBoolean(CSLFetchNameValueDef(
+    int bListVirtualOGRLayers = CPLTestBool(CSLFetchNameValueDef(
         papszOpenOptions, "LIST_VIRTUAL_OGR",
         CPLGetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", "NO")));
 
@@ -2084,7 +2084,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     const char* pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
     if( bHaveGeometryColumns && eType != wkbNone )
     {
-        if ( pszSI != NULL && CSLTestBoolean(pszSI) &&
+        if ( pszSI != NULL && CPLTestBool(pszSI) &&
              (bIsSpatiaLiteDB || EQUAL(pszGeomFormat, "SpatiaLite")) && !IsSpatialiteLoaded() )
         {
             CPLError( CE_Warning, CPLE_OpenFailed,
@@ -2102,7 +2102,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
             {
                 bImmediateSpatialIndexCreation = TRUE;
             }
-            else if( pszSI == NULL || CSLTestBoolean(pszSI) )
+            else if( pszSI == NULL || CPLTestBool(pszSI) )
             {
                 bDeferredSpatialIndexCreation = TRUE;
             }
@@ -2111,7 +2111,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     else if( bHaveGeometryColumns )
     {
 #ifdef HAVE_SPATIALITE
-        if( bIsSpatiaLiteDB && IsSpatialiteLoaded() && (pszSI == NULL || CSLTestBoolean(pszSI)) )
+        if( bIsSpatiaLiteDB && IsSpatialiteLoaded() && (pszSI == NULL || CPLTestBool(pszSI)) )
             bDeferredSpatialIndexCreation = TRUE;
 #endif
     }

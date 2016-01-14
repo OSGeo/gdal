@@ -142,7 +142,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      XML Validation.                                                 */
 /* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )
+    if( CPLTestBool(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )
     {
         const char* pszXSD = CPLFindFile( "gdal", "ogrvrt.xsd" );
         if( pszXSD != NULL )

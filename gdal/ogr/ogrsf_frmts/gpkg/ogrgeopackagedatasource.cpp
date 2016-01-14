@@ -559,7 +559,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
     /* Disable integrity check by default, since it is expensive on big files */
-    if( CSLTestBoolean(CPLGetConfigOption("OGR_GPKG_INTEGRITY_CHECK", "NO")) &&
+    if( CPLTestBool(CPLGetConfigOption("OGR_GPKG_INTEGRITY_CHECK", "NO")) &&
         OGRERR_NONE != PragmaCheck("integrity_check", "ok", 1) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "pragma integrity_check on '%s' failed",
@@ -1049,7 +1049,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     // If USE_TILE_EXTENT=YES, then query the tile table to find which tiles
     // actually exist.
     CPLString osContentsMinX, osContentsMinY, osContentsMaxX, osContentsMaxY;
-    if( CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "USE_TILE_EXTENT", "NO")) )
+    if( CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "USE_TILE_EXTENT", "NO")) )
     {
         pszSQL = sqlite3_mprintf(
             "SELECT MIN(tile_column), MIN(tile_row), MAX(tile_column), MAX(tile_row) FROM '%q' WHERE zoom_level = %d",
@@ -1600,7 +1600,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
         if( !bFound )
         {
             /* Mostly for debug */
-            if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "YES")) )
+            if( !CPLTestBool(CPLGetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "YES")) )
             {
                 CPLString osOvrList;
                 for(int j=0;j<m_nOverviewCount;j++)
@@ -2083,7 +2083,7 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
 
 int GDALGeoPackageDataset::CreateMetadataTables()
 {
-    int bCreateTriggers = CSLTestBoolean(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+    int bCreateTriggers = CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
 
     /* From C.10. gpkg_metadata Table 35. gpkg_metadata Table Definition SQL  */
     const char* pszMetadata =
@@ -2269,7 +2269,7 @@ int GDALGeoPackageDataset::CreateMetadataTables()
 CPLErr GDALGeoPackageDataset::FlushMetadata()
 {
     if( !m_bMetadataDirty || m_poParentDS != NULL ||
-        !CSLTestBoolean(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) )
+        !CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) )
         return CE_None;
     if( !HasMetadataTables() && !CreateMetadataTables() )
         return CE_Failure;
@@ -2487,7 +2487,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     {
         bFileExists = TRUE;
         if( nBandsIn == 0 ||
-            !CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
+            !CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "A file system object called '%s' already exists.",
@@ -2516,8 +2516,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
     SoftStartTransaction();
 
-    int bCreateTriggers = CSLTestBoolean(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
-    int bCreateGeometryColumns = CSLTestBoolean(CPLGetConfigOption("CREATE_GEOMETRY_COLUMNS", "YES"));
+    int bCreateTriggers = CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+    int bCreateGeometryColumns = CPLTestBool(CPLGetConfigOption("CREATE_GEOMETRY_COLUMNS", "YES"));
     if( !bFileExists )
     {
         /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
@@ -2724,7 +2724,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszTileMatrixTrigger) )
             return FALSE;
 
-        if( CSLTestBoolean(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) &&
+        if( CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) &&
             !CreateMetadataTables() )
             return FALSE;
     }
@@ -2843,7 +2843,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         int nTileWidth = atoi(pszTileWidth);
         int nTileHeight = atoi(pszTileHeight);
         if( (nTileWidth < 8 || nTileWidth > 4096 || nTileHeight < 8 || nTileHeight > 4096) &&
-            !CSLTestBoolean(CPLGetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", "NO")) )
+            !CPLTestBool(CPLGetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", "NO")) )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid block dimensions: %dx%d",
                      nTileWidth, nTileHeight);
@@ -2965,7 +2965,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
             CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
 
     char** papszUpdatedOptions = CSLDuplicate(papszOptions);
-    if( CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) &&
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) &&
         CSLFetchNameValue(papszOptions, "RASTER_TABLE") == NULL )
     {
         papszUpdatedOptions = CSLSetNameValue(papszUpdatedOptions,
@@ -3260,7 +3260,7 @@ void GDALGeoPackageDataset::ParseCompressionOptions(char** papszOptions)
 
     const char* pszDither = CSLFetchNameValue(papszOptions, "DITHER");
     if( pszDither )
-        m_bDither = CPL_TO_BOOL(CSLTestBoolean(pszDither));
+        m_bDither = CPLTestBool(pszDither);
 }
 
 /************************************************************************/
@@ -3390,7 +3390,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         if( EQUAL(pszLayerName, m_papoLayers[iLayer]->GetName()) )
         {
             const char *pszOverwrite = CSLFetchNameValue(papszOptions,"OVERWRITE");
-            if( pszOverwrite != NULL && CSLTestBoolean(pszOverwrite) )
+            if( pszOverwrite != NULL && CPLTestBool(pszOverwrite) )
             {
                 DeleteLayer( iLayer );
             }
@@ -3418,7 +3418,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
 
     /* Should we create a spatial index ? */
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
     if( eGType != wkbNone && bCreateSpatialIndex )
     {
         poLayer->SetDeferedSpatialIndexCreation(true);
@@ -4322,7 +4322,7 @@ int GDALGeoPackageDataset::OpenOrCreateDB(int flags)
                             GPKG_hstore_get_value, NULL, NULL);
 
     // Debug functions
-    if( CSLTestBoolean(CPLGetConfigOption("GPKG_DEBUG", "FALSE")) )
+    if( CPLTestBool(CPLGetConfigOption("GPKG_DEBUG", "FALSE")) )
     {
         sqlite3_create_function(hDB, "GDAL_GetMimeType", 1, SQLITE_ANY, NULL,
                                 GPKG_GDAL_GetMimeType, NULL, NULL);
@@ -4394,7 +4394,7 @@ const char* GDALGeoPackageDataset::GetGeometryTypeString(OGRwkbGeometryType eTyp
 {
     const char* pszGPKGGeomType = OGRToOGCGeomType(eType);
     if( EQUAL(pszGPKGGeomType, "GEOMETRYCOLLECTION") &&
-        CSLTestBoolean(CPLGetConfigOption("OGR_GPKG_GEOMCOLLECTION", "YES")) )
+        CPLTestBool(CPLGetConfigOption("OGR_GPKG_GEOMCOLLECTION", "YES")) )
     {
         pszGPKGGeomType = "GEOMCOLLECTION";
     }

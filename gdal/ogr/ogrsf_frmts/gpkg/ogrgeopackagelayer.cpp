@@ -434,7 +434,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         switch( nColType )
         {
           case SQLITE_INTEGER:
-            if( CSLTestBoolean(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
+            if( CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
                 oField.SetType( OFTInteger64 );
             else
             {

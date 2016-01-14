@@ -137,7 +137,7 @@ OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
     }
 
     bUseEastingNorthingAsGeometry =
-        CSLTestBoolean(CPLGetConfigOption("UKOOAP190_USE_EASTING_NORTHING", "NO"));
+        CPLTestBool(CPLGetConfigOption("UKOOAP190_USE_EASTING_NORTHING", "NO"));
 
     ParseHeaders();
 
@@ -495,7 +495,7 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
     }
 
     bUseEastingNorthingAsGeometry =
-        CSLTestBoolean(CPLGetConfigOption("SEGP1_USE_EASTING_NORTHING", "NO"));
+        CPLTestBool(CPLGetConfigOption("SEGP1_USE_EASTING_NORTHING", "NO"));
 
     ResetReading();
 }

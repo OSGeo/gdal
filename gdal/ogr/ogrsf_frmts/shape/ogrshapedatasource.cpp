@@ -77,7 +77,7 @@ OGRShapeDataSource::OGRShapeDataSource() :
     papszOpenOptions(NULL)
 {
     poPool = new OGRLayerPool();
-    b2GBLimit = CSLTestBoolean(CPLGetConfigOption("SHAPE_2GB_LIMIT", "FALSE"));
+    b2GBLimit = CPLTestBool(CPLGetConfigOption("SHAPE_2GB_LIMIT", "FALSE"));
 }
 
 
@@ -604,7 +604,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     char        *pszFilename;
 
-    int l_b2GBLimit = CSLTestBoolean(CSLFetchNameValueDef( papszOptions, "2GB_LIMIT", "FALSE" ));
+    int l_b2GBLimit = CPLTestBool(CSLFetchNameValueDef( papszOptions, "2GB_LIMIT", "FALSE" ));
 
     if( nShapeType != SHPT_NULL )
     {

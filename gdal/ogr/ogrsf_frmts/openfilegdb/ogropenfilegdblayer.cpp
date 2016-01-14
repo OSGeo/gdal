@@ -218,7 +218,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
     /* We cannot trust the XML definition to build the field definitions. */
     /* It sometimes misses a few fields ! */
 
-    int bHasZ = CSLTestBoolean(CPLGetXMLValue( psInfo, "HasZ", "NO" ));
+    int bHasZ = CPLTestBool(CPLGetXMLValue( psInfo, "HasZ", "NO" ));
     const char* pszShapeType = CPLGetXMLValue(psInfo, "ShapeType", NULL);
     const char* pszShapeFieldName = CPLGetXMLValue(psInfo, "ShapeFieldName", NULL);
     if( pszShapeType != NULL && pszShapeFieldName != NULL )
@@ -248,7 +248,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
                 if( EQUAL(psChild->pszValue, "GPFieldInfoEx") &&
                     EQUAL(CPLGetXMLValue(psChild, "Name", ""), pszShapeFieldName) )
                 {
-                    poGeomFieldDefn->SetNullable( CSLTestBoolean(CPLGetXMLValue( psChild, "IsNullable", "TRUE" )) );
+                    poGeomFieldDefn->SetNullable( CPLTestBool(CPLGetXMLValue( psChild, "IsNullable", "TRUE" )) );
                     break;
                 }
             }
@@ -342,7 +342,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             (FileGDBGeomField* )m_poLyrTable->GetField(m_iGeomFieldIdx);
         m_poGeomConverter = FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField);
 
-        if( CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_IN_MEMORY_SPI", "YES")) )
+        if( CPLTestBool(CPLGetConfigOption("OPENFILEGDB_IN_MEMORY_SPI", "YES")) )
         {
             CPLRectObj sGlobalBounds;
             sGlobalBounds.minx = poGDBGeomField->GetXMin();
@@ -1230,7 +1230,7 @@ OGRErr OGROpenFileGDBLayer::SetAttributeFilter( const char* pszFilter )
 
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
     if( eErr != OGRERR_NONE ||
-        !CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_USE_INDEX", "YES")) )
+        !CPLTestBool(CPLGetConfigOption("OPENFILEGDB_USE_INDEX", "YES")) )
         return eErr;
 
     if( m_poAttrQuery != NULL && m_nFilteredFeatureCount < 0 )
