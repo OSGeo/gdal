@@ -27,12 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_openair.h"
 #include "cpl_conv.h"
+#include "ogr_openair.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
-
-extern "C" void RegisterOGROpenAir();
 
 /************************************************************************/
 /*                                Open()                                */
@@ -46,21 +45,25 @@ static GDALDataset *OGROpenAirDriverOpen( GDALOpenInfo* poOpenInfo )
         !poOpenInfo->TryToIngest(10000) )
         return NULL;
 
-    int bIsOpenAir = (strstr((const char*)poOpenInfo->pabyHeader, "\nAC ") != NULL &&
-                  strstr((const char*)poOpenInfo->pabyHeader, "\nAN ") != NULL &&
-                  strstr((const char*)poOpenInfo->pabyHeader, "\nAL ") != NULL &&
-                  strstr((const char*)poOpenInfo->pabyHeader, "\nAH") != NULL);
+    const char *pabyHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    bool bIsOpenAir =
+        strstr(pabyHeader, "\nAC ") != NULL &&
+        strstr(pabyHeader, "\nAN ") != NULL &&
+        strstr(pabyHeader, "\nAL ") != NULL &&
+        strstr(pabyHeader, "\nAH") != NULL;
     if( !bIsOpenAir )
     {
-        /* Some files such http://soaringweb.org/Airspace/CZ/CZ_combined_2014_05_01.txt */
-        /* have very long comments in the header, so we will have to check */
-        /* further, but only do this is we have a hint that the file might be */
-        /* a candidate */
+        // Some files, such as
+        // http://soaringweb.org/Airspace/CZ/CZ_combined_2014_05_01.txt ,
+        // have very long comments in the header, so we will have to
+        // check further, but only do this is we have a hint that the
+        // file might be a candidate.
         int nLen = poOpenInfo->nHeaderBytes;
         if( nLen < 10000 )
             return NULL;
         /* Check the 'Airspace' word in the header */
-        if( strstr((const char*)poOpenInfo->pabyHeader, "Airspace") == NULL )
+        if( strstr(pabyHeader, "Airspace")
+            == NULL )
             return NULL;
         // Check that the header is at least UTF-8
         // but do not take into account partial UTF-8 characters at the end
@@ -76,19 +79,20 @@ static GDALDataset *OGROpenAirDriverOpen( GDALOpenInfo* poOpenInfo )
             if( nTruncated == 7 )
                 return NULL;
         }
-        if( !CPLIsUTF8((const char*)poOpenInfo->pabyHeader, nLen) )
+        if( !CPLIsUTF8(pabyHeader, nLen) )
             return NULL;
         if( !poOpenInfo->TryToIngest(30000) )
             return NULL;
-        bIsOpenAir = (strstr((const char*)poOpenInfo->pabyHeader, "\nAC ") != NULL &&
-                  strstr((const char*)poOpenInfo->pabyHeader, "\nAN ") != NULL &&
-                  strstr((const char*)poOpenInfo->pabyHeader, "\nAL ") != NULL &&
-                  strstr((const char*)poOpenInfo->pabyHeader, "\nAH") != NULL);
+        bIsOpenAir =
+            strstr(pabyHeader, "\nAC ") != NULL &&
+            strstr(pabyHeader, "\nAN ") != NULL &&
+            strstr(pabyHeader, "\nAL ") != NULL &&
+            strstr(pabyHeader, "\nAH") != NULL;
         if( !bIsOpenAir )
             return NULL;
     }
 
-    OGROpenAirDataSource   *poDS = new OGROpenAirDataSource();
+    OGROpenAirDataSource *poDS = new OGROpenAirDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
