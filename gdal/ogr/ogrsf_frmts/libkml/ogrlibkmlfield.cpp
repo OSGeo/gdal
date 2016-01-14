@@ -238,7 +238,7 @@ static void ogr2tessellate_rec (
 static char* OGRLIBKMLSanitizeUTF8String(const char* pszString)
 {
     if (!CPLIsUTF8(pszString, -1) &&
-         CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
+         CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
     {
         static int bFirstTime = TRUE;
         if (bFirstTime)
@@ -665,7 +665,7 @@ void field2kml (
                         int iExtrude = poOgrFeat->GetFieldAsInteger ( i );
                         if( iExtrude &&
                             isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
-                            CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                            CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                         {
                             CPLError(CE_Warning, CPLE_NotSupported,
                                 "altitudeMode=clampToGround unsupported with extrude=1");
@@ -695,7 +695,7 @@ void field2kml (
                         if( iTesselate &&
                             !(isGX == FALSE && static_cast<kmldom::AltitudeModeEnum>(iAltitudeMode) == kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
                             !(isGX == TRUE && static_cast<kmldom::GxAltitudeModeEnum>(iAltitudeMode) == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
-                            CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                            CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                         {
                             CPLError( CE_Warning, CPLE_NotSupported,
                                       "altitudeMode!=clampToGround && "
@@ -1504,7 +1504,7 @@ void kml2field (
         if (nSchemaData == 0 &&  poKmlExtendedData->get_data_array_size() > 0 )
         {
             int bLaunderFieldNames =
-                        CSLTestBoolean(CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
+                CPLTestBool(CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
             size_t nDataArraySize = poKmlExtendedData->get_data_array_size();
             for(size_t i=0; i < nDataArraySize; i++)
             {

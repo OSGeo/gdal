@@ -185,7 +185,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
     const char *pszLayerType = CPLGetConfigOption( "OGR_SDE_GETLAYERTYPE", 
                                                    "FALSE" );
 
-    if( CSLTestBoolean(pszLayerType) != FALSE )
+    if( CPLTestBool(pszLayerType) )
     {
         poFeatureDefn->SetGeomType(DiscoverLayerType());
     }
@@ -2319,7 +2319,7 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         const char *pszUseNSTRING = 
             CPLGetConfigOption( "OGR_SDE_USE_NSTRING", "FALSE" );
 
-        if( bUseNSTRING || CSLTestBoolean( pszUseNSTRING ) )
+        if( bUseNSTRING || CPLTestBool( pszUseNSTRING ) )
             sColumnDef.sde_type = SE_NSTRING_TYPE;
         else
             sColumnDef.sde_type = SE_STRING_TYPE;

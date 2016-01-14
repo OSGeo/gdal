@@ -52,7 +52,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
     fpTHF = NULL;
     bHasReadEDIGEO = FALSE;
 
-    bIncludeFontFamily = CSLTestBoolean(CPLGetConfigOption(
+    bIncludeFontFamily = CPLTestBool(CPLGetConfigOption(
                                  "OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"));
 
     iATR = iDI3 = iDI4 = iHEI = iFON = -1;
@@ -61,7 +61,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
     if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
         dfSizeFactor = 2;
 
-    bRecodeToUTF8 = CSLTestBoolean(CPLGetConfigOption(
+    bRecodeToUTF8 = CPLTestBool(CPLGetConfigOption(
                                         "OGR_EDIGEO_RECODE_TO_UTF8", "YES"));
     bHasUTF8ContentOnly = TRUE;
 }
@@ -1486,13 +1486,13 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /*      When added from QGIS, the layers must be ordered from           */
 /*      bottom (Polygon) to top (Point) to get nice visual effect       */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_EDIGEO_SORT_FOR_QGIS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_SORT_FOR_QGIS", "YES")))
         qsort(papoLayers, nLayers, sizeof(OGREDIGEOLayer*), OGREDIGEOSortForQGIS);
 
 /* -------------------------------------------------------------------- */
 /*      Create a label layer for each feature layer                     */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_EDIGEO_CREATE_LABEL_LAYERS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_CREATE_LABEL_LAYERS", "YES")))
         CreateLabelLayers();
 
     return;

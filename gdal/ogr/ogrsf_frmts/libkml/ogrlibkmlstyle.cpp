@@ -874,7 +874,7 @@ static StyleSelectorPtr StyleFromStyleURL(
     else if ( strchr(pszUrl, '#') ) {
 
         const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );
-        if ( CSLTestBoolean(pszFetch) ) {
+        if ( CPLTestBool(pszFetch) ) {
 
             /***** Lets go out and fetch the style from the external URL *****/
 

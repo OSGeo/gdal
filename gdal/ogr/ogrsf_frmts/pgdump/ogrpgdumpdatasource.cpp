@@ -207,14 +207,14 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 
     /* Should we turn layers with None geometry type as Unknown/GEOMETRY */
     /* so they are still recorded in geometry_columns table ? (#4012) */
-    int bNoneAsUnknown = CSLTestBoolean(CSLFetchNameValueDef(
+    int bNoneAsUnknown = CPLTestBool(CSLFetchNameValueDef(
                                     papszOptions, "NONE_AS_UNKNOWN", "NO"));
     if (bNoneAsUnknown && eType == wkbNone)
         eType = wkbUnknown;
     else if (eType == wkbNone)
         bHavePostGIS = FALSE;
 
-    int bExtractSchemaFromLayerName = CSLTestBoolean(CSLFetchNameValueDef(
+    int bExtractSchemaFromLayerName = CPLTestBool(CSLFetchNameValueDef(
                                     papszOptions, "EXTRACT_SCHEMA_FROM_LAYER_NAME", "YES"));
 
     /* Postgres Schema handling:
@@ -468,7 +468,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     }
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
     if( bCreateTable && bHavePostGIS && bCreateSpatialIndex )
     {
 /* -------------------------------------------------------------------- */

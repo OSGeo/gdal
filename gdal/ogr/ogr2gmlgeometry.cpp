@@ -1144,12 +1144,12 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
     pszText[0] = '\0';
 
     const char* pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
-    bool bNamespaceDecl = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "NAMESPACE_DECL", "NO")) != FALSE;
+    bool bNamespaceDecl = CPLTestBool(CSLFetchNameValueDef(papszOptions, "NAMESPACE_DECL", "NO")) != FALSE;
     if (pszFormat && (EQUAL(pszFormat, "GML3") || EQUAL(pszFormat, "GML32")) )
     {
         const char* pszLineStringElement = CSLFetchNameValue(papszOptions, "GML3_LINESTRING_ELEMENT");
         bool bLineStringAsCurve = (pszLineStringElement && EQUAL(pszLineStringElement, "curve"));
-        bool bLongSRS = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GML3_LONGSRS", "YES")) != FALSE;
+        bool bLongSRS = CPLTestBool(CSLFetchNameValueDef(papszOptions, "GML3_LONGSRS", "YES")) != FALSE;
         const char* pszGMLId = CSLFetchNameValue(papszOptions, "GMLID");
         if( pszGMLId == NULL && EQUAL(pszFormat, "GML32") )
             CPLError(CE_Warning, CPLE_AppDefined, "FORMAT=GML32 specified but not GMLID set");

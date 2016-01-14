@@ -829,7 +829,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 
     const char *pszBaseGeometry = BareGMLElement( psNode->pszValue );
     if (nPseudoBoolGetSecondaryGeometryOption < 0)
-        nPseudoBoolGetSecondaryGeometryOption = CSLTestBoolean(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
+        nPseudoBoolGetSecondaryGeometryOption = CPLTestBool(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
     bool bGetSecondaryGeometry = bIgnoreGSG ? false : CPL_TO_BOOL(nPseudoBoolGetSecondaryGeometryOption);
 
     /* Arbitrary value, but certainly large enough for reasonable usages ! */
@@ -3383,7 +3383,7 @@ OGRGeometryH OGR_G_CreateFromGML( const char *pszGML )
     OGRGeometry *poGeometry;
 
     /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
-    bool bFaceHoleNegative = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")));
+    bool bFaceHoleNegative = CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
     poGeometry = GML2OGRGeometry_XMLNode( psGML, -1, 0, 0, false, true, bFaceHoleNegative );
 
     CPLDestroyXMLNode( psGML );

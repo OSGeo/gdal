@@ -524,7 +524,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
         m_osURL = "localhost:9200";
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
-    this->m_bOverwrite = CSLTestBoolean(CPLGetConfigOption("ES_OVERWRITE", "0"));
+    this->m_bOverwrite = CPLTestBool(CPLGetConfigOption("ES_OVERWRITE", "0"));
     this->m_nBulkUpload = (int) CPLAtof(CPLGetConfigOption("ES_BULK", "0"));
 
     // Read in the meta file from disk

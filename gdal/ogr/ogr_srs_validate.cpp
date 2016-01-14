@@ -593,7 +593,7 @@ OGRErr OGRSpatialReference::Validate()
     /* using the CT spec grammar */
     static int bUseCTGrammar = -1;
     if( bUseCTGrammar < 0 )
-        bUseCTGrammar = CSLTestBoolean(CPLGetConfigOption("OSR_USE_CT_GRAMMAR", "TRUE"));
+        bUseCTGrammar = CPLTestBool(CPLGetConfigOption("OSR_USE_CT_GRAMMAR", "TRUE"));
 
     if( eErr == OGRERR_NONE && bUseCTGrammar )
     {

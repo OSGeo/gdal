@@ -304,7 +304,7 @@ int OGRMDBDataSource::Open( const char * pszNewName )
 
     /* Is it a ESRI Personal Geodatabase ? */
     OGRMDBTable* poGDB_GeomColumns = poDB->GetTable("GDB_GeomColumns");
-    if (poGDB_GeomColumns && !CSLTestBoolean(CPLGetConfigOption("MDB_RAW", "OFF")))
+    if (poGDB_GeomColumns && !CPLTestBool(CPLGetConfigOption("MDB_RAW", "OFF")))
     {
         int nRet = OpenGDB(poGDB_GeomColumns);
         delete poGDB_GeomColumns;
@@ -314,7 +314,7 @@ int OGRMDBDataSource::Open( const char * pszNewName )
 
     /* Is it a Geomedia warehouse ? */
     OGRMDBTable* poGAliasTable = poDB->GetTable("GAliasTable");
-    if (poGAliasTable && !CSLTestBoolean(CPLGetConfigOption("MDB_RAW", "OFF")))
+    if (poGAliasTable && !CPLTestBool(CPLGetConfigOption("MDB_RAW", "OFF")))
     {
         int nRet = OpenGeomediaWarehouse(poGAliasTable);
         delete poGAliasTable;

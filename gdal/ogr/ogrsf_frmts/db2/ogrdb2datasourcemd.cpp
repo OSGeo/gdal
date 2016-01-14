@@ -39,7 +39,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
     CPLDebug("OGRDB2DataSource::FlushMetadata","Entering");
 // LATER - where is m_bMetadataDirty set?
     if( !m_bMetadataDirty || m_poParentDS != NULL ||
-            !CSLTestBoolean(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) )
+            !CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) )
         return CE_None;
     if( !HasMetadataTables() && !CreateMetadataTables() )
         return CE_Failure;
@@ -401,7 +401,7 @@ int OGRDB2DataSource::CreateMetadataTables()
 {
     CPLDebug("OGRDB2DataSource::CreateMetadataTables","Enter");
 
-//    int bCreateTriggers = CSLTestBoolean(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+//    int bCreateTriggers = CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
     OGRDB2Statement oStatement( GetSession() );
     m_oSession.BeginTransaction();
     /* Requirement 13: A GeoPackage file SHALL include a gpkg_contents table */

@@ -160,7 +160,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bHasWarnedAlreadySetFID = FALSE;
 
     /* Just in provision for people yelling about broken backward compatibility ... */
-    bRetrieveFID = CSLTestBoolean(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE"));
+    bRetrieveFID = CPLTestBool(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE"));
 
 /* -------------------------------------------------------------------- */
 /*      Build the layer defn name.                                      */
@@ -843,7 +843,7 @@ CPLString OGRPGTableLayer::BuildFields()
             {
                 osFieldList += osEscapedGeom;
             }
-            else if (CSLTestBoolean(CPLGetConfigOption("PG_USE_BASE64", "NO")) &&
+            else if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")) &&
                      poGeomFieldDefn->nCoordDimension != 4 /* we don't know how to decode 4-dim EWKB for now */)
             {
                 if (poDS->sPostGISVersion.nMajor >= 2)
@@ -855,7 +855,7 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += OGRPGEscapeColumnName(
                     CPLSPrintf("EWKBBase64_%s", poGeomFieldDefn->GetNameRef()));
             }
-            else if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) &&
+            else if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) &&
                      poGeomFieldDefn->nCoordDimension != 4 && /* we don't know how to decode 4-dim EWKB for now */
                       /* perhaps works also for older version, but I didn't check */
                       (poDS->sPostGISVersion.nMajor > 1 ||
@@ -895,7 +895,7 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += OGRPGEscapeColumnName(
                     CPLSPrintf("AsBinary_%s", poGeomFieldDefn->GetNameRef()));
             }
-            else if (CSLTestBoolean(CPLGetConfigOption("PG_USE_BASE64", "NO")))
+            else if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")))
             {
                 osFieldList += "encode(ST_AsBinary(";
                 osFieldList += osEscapedGeom;
@@ -903,7 +903,7 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += OGRPGEscapeColumnName(
                     CPLSPrintf("BinaryBase64_%s", poGeomFieldDefn->GetNameRef()));
             }
-            else if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
+            else if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
                 osFieldList += osEscapedGeom;
             }
@@ -1177,7 +1177,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                 poGeom->setCoordinateDimension( poGeomFieldDefn->nCoordDimension );
             }
 
-            if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
+            if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
                 if ( poGeom != NULL )
                 {
@@ -1359,7 +1359,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
     if( bFirstInsertion )
     {
         bFirstInsertion = FALSE;
-        if( CSLTestBoolean(CPLGetConfigOption("OGR_TRUNCATE", "NO")) )
+        if( CPLTestBool(CPLGetConfigOption("OGR_TRUNCATE", "NO")) )
         {
             PGconn              *hPGConn = poDS->GetPGConn();
             PGresult            *hResult;
@@ -1373,7 +1373,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     // We avoid testing the config option too often. 
     if( bUseCopy == USE_COPY_UNSET )
-        bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
+        bUseCopy = CPLTestBool( CPLGetConfigOption( "PG_USE_COPY", "NO") );
 
     OGRErr eErr;
     if( !bUseCopy )
@@ -1627,7 +1627,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
             int nSRSId = poGeomFieldDefn->nSRSId;
 
-            if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
+            if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
                 char    *pszHexEWKB = OGRGeometryToHexEWKB( poGeom, nSRSId,
                                                             poDS->sPostGISVersion.nMajor,

@@ -2160,7 +2160,7 @@ void OGROCITableLayer::CreateSpatialIndex()
                            poFeatureDefn->GetName(),
                            pszGeomName );
 
-        int bAddLayerGType = CSLTestBoolean(
+        int bAddLayerGType = CPLTestBool(
             CSLFetchNameValueDef( papszOptions, "ADD_LAYER_GTYPE", "YES") ) &&
             GetGeomType() != wkbUnknown;
 

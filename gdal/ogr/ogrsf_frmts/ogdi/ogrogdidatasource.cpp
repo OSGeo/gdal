@@ -48,7 +48,7 @@ OGROGDIDataSource::OGROGDIDataSource()
     m_poSpatialRef = NULL;
     m_poCurrentLayer = NULL;
     m_bLaunderLayerNames =
-            CSLTestBoolean(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO"));
+            CPLTestBool(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO"));
 }
 
 /************************************************************************/

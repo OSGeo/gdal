@@ -159,7 +159,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     bUseHttp10 = FALSE;
     papszHttpOptions = NULL;
 
-    bPagingAllowed = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", "OFF"));
+    bPagingAllowed = CPLTestBool(CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", "OFF"));
     nPageSize = DEFAULT_PAGE_SIZE;
     nBaseStartIndex = DEFAULT_BASE_START_INDEX;
     if (bPagingAllowed)
@@ -181,7 +181,7 @@ OGRWFSDataSource::OGRWFSDataSource()
 
     bStandardJoinsWFS2 = FALSE;
 
-    bLoadMultipleLayerDefn = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"));
+    bLoadMultipleLayerDefn = CPLTestBool(CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"));
 
     poLayerMetadataDS = NULL;
     poLayerMetadataLayer = NULL;
@@ -624,7 +624,7 @@ int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
 int OGRWFSDataSource::DetectSupportPagingWFS2(CPLXMLNode* psRoot)
 {
     const char* pszPagingAllowed = CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", NULL);
-    if( pszPagingAllowed != NULL && !CSLTestBoolean(pszPagingAllowed) )
+    if( pszPagingAllowed != NULL && !CPLTestBool(pszPagingAllowed) )
         return FALSE;
 
     CPLXMLNode* psOperationsMetadata =
@@ -1022,7 +1022,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
 
         pszParm = CPLGetXMLValue( psRoot, "PagingAllowed", NULL );
         if( pszParm )
-            bPagingAllowed = CSLTestBoolean(pszParm);
+            bPagingAllowed = CPLTestBool(pszParm);
 
         pszParm = CPLGetXMLValue( psRoot, "PageSize", NULL );
         if( pszParm )
@@ -1102,7 +1102,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
     }
 
     bInvertAxisOrderIfLatLong =
-        CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn,
+        CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn,
             "INVERT_AXIS_ORDER_IF_LAT_LONG",
             CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")));
     osConsiderEPSGAsURN =
@@ -1110,7 +1110,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
             "CONSIDER_EPSG_AS_URN",
             CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "AUTO"));
     bExposeGMLId =
-        CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn,
+        CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn,
             "EXPOSE_GML_ID",
             CPLGetConfigOption("GML_EXPOSE_GML_ID", "YES")));
 
@@ -1181,7 +1181,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
         {
             osMaxFeatures = CPLURLGetValue(osBaseURL, "MAXFEATURES");
             if( osMaxFeatures.size() != 0 &&
-                CSLTestBoolean(CPLGetConfigOption("OGR_WFS_FIX_MAXFEATURES", "YES")) )
+                CPLTestBool(CPLGetConfigOption("OGR_WFS_FIX_MAXFEATURES", "YES")) )
             {
                 CPLDebug("WFS", "MAXFEATURES wrongly used for WFS 2.0. Using COUNT instead");
                 osBaseURL = CPLURLAddKVP(osBaseURL, "MAXFEATURES", NULL);
@@ -1506,7 +1506,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                         /* See http://trac.osgeo.org/gdal/ticket/4041 */
                         int bTrustBounds =
                             CSLFetchBoolean(papszOpenOptionsIn, "TRUST_CAPABILITIES_BOUNDS",
-                                CSLTestBoolean(CPLGetConfigOption("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", "FALSE")));
+                                CPLTestBool(CPLGetConfigOption("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", "FALSE")));
 
                         if (((bTrustBounds || (dfMinX == -180 && dfMinY == -90 && dfMaxX == 180 && dfMaxY == 90)) &&
                             (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0 ||

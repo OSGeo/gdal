@@ -2681,17 +2681,17 @@ int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptionsIn 
         bInterleavedReading = TRUE;
 
     /* The following 4 config options are only useful for debugging */
-    bIndexPoints = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_POINTS", "YES"));
-    bUsePointsIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_POINTS_INDEX", "YES"));
-    bIndexWays = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_WAYS", "YES"));
-    bUseWaysIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_WAYS_INDEX", "YES"));
+    bIndexPoints = CPLTestBool(CPLGetConfigOption("OSM_INDEX_POINTS", "YES"));
+    bUsePointsIndex = CPLTestBool(CPLGetConfigOption("OSM_USE_POINTS_INDEX", "YES"));
+    bIndexWays = CPLTestBool(CPLGetConfigOption("OSM_INDEX_WAYS", "YES"));
+    bUseWaysIndex = CPLTestBool(CPLGetConfigOption("OSM_USE_WAYS_INDEX", "YES"));
 
-    bCustomIndexing = CSLTestBoolean(CSLFetchNameValueDef(
+    bCustomIndexing = CPLTestBool(CSLFetchNameValueDef(
             papszOpenOptionsIn, "USE_CUSTOM_INDEXING",
                         CPLGetConfigOption("OSM_USE_CUSTOM_INDEXING", "YES")));
     if( !bCustomIndexing )
         CPLDebug("OSM", "Using SQLite indexing for points");
-    bCompressNodes = CSLTestBoolean(CSLFetchNameValueDef(
+    bCompressNodes = CPLTestBool(CSLFetchNameValueDef(
             papszOpenOptionsIn, "COMPRESS_NODES",
                         CPLGetConfigOption("OSM_COMPRESS_NODES", "NO")));
     if( bCompressNodes )
@@ -4289,7 +4289,7 @@ int OGROSMDataSource::IsInterleavedReading()
 {
     if( bInterleavedReading < 0 )
     {
-        bInterleavedReading = CSLTestBoolean(
+        bInterleavedReading = CPLTestBool(
                         CPLGetConfigOption("OGR_INTERLEAVED_READING", "NO"));
         CPLDebug("OSM", "OGR_INTERLEAVED_READING = %d", bInterleavedReading);
     }

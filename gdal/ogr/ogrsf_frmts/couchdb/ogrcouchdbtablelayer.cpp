@@ -1296,7 +1296,7 @@ OGRErr OGRCouchDBTableLayer::ICreateFeature( OGRFeature *poFeature )
     int nFID = nNextFIDForCreate ++;
     CPLString osFID;
     if (!poFeature->IsFieldSet(COUCHDB_ID_FIELD) ||
-        !CSLTestBoolean(CPLGetConfigOption("COUCHDB_PRESERVE_ID_ON_INSERT", "FALSE")))
+        !CPLTestBool(CPLGetConfigOption("COUCHDB_PRESERVE_ID_ON_INSERT", "FALSE")))
     {
         if (poFeature->GetFID() != OGRNullFID)
         {

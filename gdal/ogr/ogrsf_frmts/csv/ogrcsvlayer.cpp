@@ -518,13 +518,13 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 /*      Optionally auto-detect types                                    */
 /* -------------------------------------------------------------------- */
     if( !bNew && papszFieldTypes == NULL &&
-        CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions,
+        CPLTestBool(CSLFetchNameValueDef(papszOpenOptions,
                                                      "AUTODETECT_TYPE", "NO")) )
     {
         papszFieldTypes = AutodetectFieldTypes(papszOpenOptions, nFieldCount);
         if( papszFieldTypes != NULL )
         {
-            bKeepSourceColumns = CSLTestBoolean(
+            bKeepSourceColumns = CPLTestBool(
                 CSLFetchNameValueDef( papszOpenOptions,
                                       "KEEP_SOURCE_COLUMNS", "NO" ) );
         }
@@ -544,7 +544,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
     char** papszZPossibleNames =
          CSLTokenizeString2(
               CSLFetchNameValue(papszOpenOptions, "Z_POSSIBLE_NAMES"), ",", 0);
-    bKeepGeomColumns = CSLTestBoolean(
+    bKeepGeomColumns = CPLTestBool(
         CSLFetchNameValueDef(papszOpenOptions, "KEEP_GEOM_COLUMNS", "YES" ) );
 
 /* -------------------------------------------------------------------- */
@@ -977,7 +977,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     else if( EQUAL(pszAutodetectWidth, "STRING_ONLY") )
         bAutodetectWidth = TRUE;
 
-    int bQuotedFieldAsString = CSLTestBoolean(
+    int bQuotedFieldAsString = CPLTestBool(
         CSLFetchNameValueDef( papszOpenOptions, "QUOTED_FIELDS_AS_STRING",
                               "NO" ) );
 

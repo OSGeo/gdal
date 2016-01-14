@@ -881,7 +881,7 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         if( localErr == OGRERR_NONE )
         {
-            if( CSLTestBoolean( 
+            if( CPLTestBool(
                      CPLGetConfigOption( "INGRES_INSERT_SUB", "NO") ) )
             {
                 osCommand += " ~V";

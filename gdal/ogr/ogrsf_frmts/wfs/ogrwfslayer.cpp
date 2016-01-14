@@ -730,14 +730,14 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     /* that we are able to understand */
     CPLString osXSDFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
     VSIStatBufL sBuf;
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
+    if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
         (osOutputFormat.size() == 0 || osOutputFormat.ifind("GML") != std::string::npos) &&
         VSIStatL(osXSDFileName, &sBuf) == 0 && GDALGetDriverByName("GML") != NULL)
     {
         const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
                                                     osURL.c_str());
         if( STARTS_WITH(osURL, "/vsimem/") &&
-            CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+            CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
         {
             pszStreamingName = osURL.c_str();
         }

@@ -107,7 +107,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
 #ifdef _WIN32
-    if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
         pszName = CPLRecode( pszFilename, CPL_ENC_UTF8, CPLString().Printf( "CP%d", GetACP() ) );
     else
         pszName = CPLStrdup( pszFilename );

@@ -1043,7 +1043,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
 
-    if( eType != wkbNone && (pszSI == NULL || CSLTestBoolean(pszSI)) )
+    if( eType != wkbNone && (pszSI == NULL || CPLTestBool(pszSI)) )
     {
         osCommand.Printf(
                  "ALTER TABLE `%s` ADD SPATIAL INDEX(`%s`) ",
