@@ -280,7 +280,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             pszLine += 3;
 
             // TODO: Explain why writing a zero over the star.
-            char* pszStar = strchr(pszLine, '*');
+            char* pszStar = strchr(const_cast<char *>(pszLine), '*');
             if (pszStar) *pszStar = 0;
             char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
             if (bHasCenter && CSLCount(papszTokens) == 3)
@@ -326,7 +326,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         {
             pszLine += 3;
 
-            char* pszStar = strchr(pszLine, '*');
+            char* pszStar = strchr(const_cast<char *>(pszLine), '*');
             if (pszStar) *pszStar = 0;
             char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
             double dfFirstLat;
