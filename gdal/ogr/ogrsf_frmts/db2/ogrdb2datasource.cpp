@@ -128,10 +128,10 @@ OGRDB2DataSource::OGRDB2DataSource()
     m_panSRID = NULL;
     m_papoSRS = NULL;
 
-    bUseGeometryColumns = CSLTestBoolean(CPLGetConfigOption(
+    bUseGeometryColumns = CPLTestBool(CPLGetConfigOption(
             "DB2SPATIAL_USE_GEOMETRY_COLUMNS",
             "YES"));
-    bListAllTables = CSLTestBoolean(CPLGetConfigOption(
+    bListAllTables = CPLTestBool(CPLGetConfigOption(
                                         "DB2SPATIAL_LIST_ALL_TABLES", "NO"));
 
 // from GPKG
@@ -749,7 +749,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
     {
         bFileExists = TRUE;
         if( nBandsIn == 0 ||
-                !CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
+                !CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "A file system object called '%s' already exists.",
@@ -836,7 +836,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
         int nTileWidth = atoi(pszTileWidth);
         int nTileHeight = atoi(pszTileHeight);
         if( (nTileWidth < 8 || nTileWidth > 4096 || nTileHeight < 8 || nTileHeight > 4096) &&
-                !CSLTestBoolean(CPLGetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", "NO")) )
+                !CPLTestBool(CPLGetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", "NO")) )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid block dimensions: %dx%d",
                      nTileWidth, nTileHeight);
@@ -1969,7 +1969,7 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
     // If USE_TILE_EXTENT=YES, then query the tile table to find which tiles
     // actually exist.
     CPLString osContentsMinX, osContentsMinY, osContentsMaxX, osContentsMaxY;
-    if( CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "USE_TILE_EXTENT", "NO")) )
+    if( CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "USE_TILE_EXTENT", "NO")) )
     {
         oStatement2.Appendf(
             "SELECT MIN(tile_column), MIN(tile_row), MAX(tile_column), MAX(tile_row) FROM %s WHERE zoom_level = %d",
@@ -2363,7 +2363,7 @@ void OGRDB2DataSource::ParseCompressionOptions(char** papszOptions)
 
     const char* pszDither = CSLFetchNameValue(papszOptions, "DITHER");
     if( pszDither )
-        m_bDither = CSLTestBoolean(pszDither);
+        m_bDither = CPLTestBool(pszDither);
 }
 
 
@@ -3339,7 +3339,7 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
         if( !bFound )
         {
             /* Mostly for debug */
-            if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "YES")) )
+            if( !CPLTestBool(CPLGetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "YES")) )
             {
                 CPLString osOvrList;
                 for(int j=0; j<m_nOverviewCount; j++)

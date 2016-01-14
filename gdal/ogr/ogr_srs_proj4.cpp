@@ -1602,7 +1602,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         int bNorth;
         const int nZone = GetUTMZone( &bNorth );
 
-        if( CSLTestBoolean(CPLGetConfigOption("OSR_USE_ETMERC", "FALSE")) )
+        if( CPLTestBool(CPLGetConfigOption("OSR_USE_ETMERC", "FALSE")) )
         {
             CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=etmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
@@ -2475,7 +2475,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
 
     if( pszPROJ4Datum == NULL 
-        || CSLTestBoolean(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
+        || CPLTestBool(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
     {
         if( poTOWGS84 != NULL )
         {

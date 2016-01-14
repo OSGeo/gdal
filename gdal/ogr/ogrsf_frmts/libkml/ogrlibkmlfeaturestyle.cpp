@@ -236,7 +236,7 @@ void kml2featurestyle (
 
             const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
 
-            if (CSLTestBoolean(pszResolve)) {
+            if (CPLTestBool(pszResolve)) {
 
                 poOgrFeat->SetStyleString ( pszTest );
             }
@@ -265,7 +265,7 @@ void kml2featurestyle (
 
                 const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
 
-                if (    CSLTestBoolean(pszResolve)
+                if ( CPLTestBool(pszResolve)
                      && ( poOgrSTBLLayer = poOgrDS->GetStyleTable (  ) ) != NULL
                      && ( pszTest = poOgrSTBLLayer->Find ( pszUrl + nPathLen + 1) ) != NULL
                    )
@@ -288,7 +288,7 @@ void kml2featurestyle (
 
                 const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );
 
-                if ( CSLTestBoolean(pszFetch) ) {
+                if ( CPLTestBool(pszFetch) ) {
 
                     /***** load up the style table *****/
 
@@ -381,7 +381,7 @@ void kml2featurestyle (
             /***** might already have styling to add too *****/
 
             const char *pszResolve = CPLGetConfigOption ( "LIBKML_RESOLVE_STYLE", "no" );
-            if (CSLTestBoolean(pszResolve)) {
+            if (CPLTestBool(pszResolve)) {
                  poOgrSM->InitFromFeature ( poOgrFeat );
             }
             else {

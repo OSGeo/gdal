@@ -171,9 +171,9 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     m_dfRegionMaxY = -200;
 
 
-    m_bReadGroundOverlay = CSLTestBoolean(
+    m_bReadGroundOverlay = CPLTestBool(
         CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
-    m_bUseSimpleField = CSLTestBoolean(
+    m_bUseSimpleField = CPLTestBool(
         CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"));
 
     m_bUpdateIsFolder = FALSE;
@@ -345,7 +345,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                     /* Use the <Data> of the first placemark to build the feature definition */
                     /* If others have different fields, too bad... */
                     int bLaunderFieldNames =
-                        CSLTestBoolean(CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
+                        CPLTestBool(CPLGetConfigOption("LIBKML_LAUNDER_FIELD_NAMES", "YES"));
                     size_t nDataArraySize = poKmlExtendedData->get_data_array_size();
                     for(size_t i=0; i < nDataArraySize; i++)
                     {

@@ -170,7 +170,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
 
     // We avoid testing the config option too often. 
     if( bUseCopy == USE_COPY_UNSET )
-        bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
+        bUseCopy = CPLTestBool( CPLGetConfigOption( "PG_USE_COPY", "NO") );
 
     OGRErr eErr;
     if( !bUseCopy )
@@ -1469,7 +1469,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
     
     // Can be set to NO to test ogr2ogr default behaviour
     int bAllowCreationOfFieldWithFIDName =
-        CSLTestBoolean(CPLGetConfigOption("PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME", "YES"));
+        CPLTestBool(CPLGetConfigOption("PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME", "YES"));
 
     if( bAllowCreationOfFieldWithFIDName && pszFIDColumn != NULL &&
         EQUAL( oField.GetNameRef(), pszFIDColumn ) &&

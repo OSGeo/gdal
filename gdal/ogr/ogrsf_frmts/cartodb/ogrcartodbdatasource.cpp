@@ -141,7 +141,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename,
 
 {
     bReadWrite = bUpdateIn;
-    bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_INSERT", "YES"));
+    bBatchInsert = CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_INSERT", "YES"));
 
     pszName = CPLStrdup( pszFilename );
     if( CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT") )
@@ -171,7 +171,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename,
         return FALSE;
     }*/
 
-    bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("CARTODB_HTTPS", "YES"));
+    bUseHTTPS = CPLTestBool(CPLGetConfigOption("CARTODB_HTTPS", "YES"));
 
     OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
     if( poSchemaLayer )

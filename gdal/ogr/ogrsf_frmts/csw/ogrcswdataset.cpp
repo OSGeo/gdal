@@ -597,7 +597,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                     bool bLatLongOrder = true;
                     if( osSRS.size() )
                         bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
-                    if( bLatLongOrder && CSLTestBoolean(
+                    if( bLatLongOrder && CPLTestBool(
                             CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")) )
                         poGeom->swapXY();
                     poFeature->SetGeometryDirectly(poGeom);
@@ -807,7 +807,7 @@ void OGRCSWLayer::BuildQuery()
             osQuery += "<gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::4326\">";
             OGREnvelope sEnvelope;
             m_poFilterGeom->getEnvelope(&sEnvelope);
-            if( CSLTestBoolean(
+            if( CPLTestBool(
                     CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")) )
             {
                 osQuery += CPLSPrintf("<gml:lowerCorner>%.16g %.16g</gml:lowerCorner>", sEnvelope.MinY, sEnvelope.MinX);

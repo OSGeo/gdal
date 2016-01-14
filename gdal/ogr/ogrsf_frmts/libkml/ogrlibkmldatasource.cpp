@@ -321,7 +321,7 @@ void OGRLIBKMLDataSource::WriteKmz (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( CSLTestBoolean ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
+    if ( CPLTestBool ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
         // If we do not have the doc.kmlroot
         // make it and add the container.
@@ -384,11 +384,11 @@ void OGRLIBKMLDataSource::WriteKmz (
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
-        if( iLayer == 0 && CSLTestBoolean ( pszUseDocKml ) )
+        if( iLayer == 0 && CPLTestBool ( pszUseDocKml ) )
             CPLCreateFileInZip( hZIP, "layers/", NULL );
 
         const char* pszLayerFileName;
-        if( CSLTestBoolean ( pszUseDocKml ) )
+        if( CPLTestBool ( pszUseDocKml ) )
             pszLayerFileName = CPLSPrintf("layers/%s", papoLayers[iLayer]->GetFileName (  ));
         else
             pszLayerFileName = papoLayers[iLayer]->GetFileName (  );
@@ -442,7 +442,7 @@ void OGRLIBKMLDataSource::WriteDir (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( CSLTestBoolean ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
+    if ( CPLTestBool ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
         // If we dont have the doc.kml root
         // make it and add the container.
@@ -881,7 +881,7 @@ static ContainerPtr GetContainerFromRoot (
 {
     ContainerPtr poKmlContainer = NULL;
 
-    int bReadGroundOverlay = CSLTestBoolean(CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
+    int bReadGroundOverlay = CPLTestBool(CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
 
     if ( poKmlRoot ) {
 
@@ -1536,11 +1536,11 @@ void OGRLIBKMLDataSource::SetCommonOptions(ContainerPtr poKmlContainer,
 
     const char* pszVisibilility = CSLFetchNameValue(papszOptions, "VISIBILITY");
     if( pszVisibilility != NULL )
-        poKmlContainer->set_visibility(CPL_TO_BOOL(CSLTestBoolean(pszVisibilility)));
+        poKmlContainer->set_visibility(CPLTestBool(pszVisibilility));
 
     const char* pszOpen = CSLFetchNameValue(papszOptions, "OPEN");
     if( pszOpen != NULL )
-        poKmlContainer->set_open(CPL_TO_BOOL(CSLTestBoolean(pszOpen)));
+        poKmlContainer->set_open(CPLTestBool(pszOpen));
 
     const char* pszSnippet = CSLFetchNameValue(papszOptions, "SNIPPET");
     if( pszSnippet != NULL )
@@ -1768,7 +1768,7 @@ int OGRLIBKMLDataSource::CreateKmz (
         const char *pszUseDocKml =
             CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-        if ( CSLTestBoolean( pszUseDocKml ) ) {
+        if ( CPLTestBool( pszUseDocKml ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
         }
     }
@@ -1809,7 +1809,7 @@ int OGRLIBKMLDataSource::CreateDir (
         const char *pszUseDocKml =
             CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-        if ( CSLTestBoolean( pszUseDocKml ) ) {
+        if ( CPLTestBool( pszUseDocKml ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
         }
     }
@@ -1968,7 +1968,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKmz (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( CSLTestBoolean ( pszUseDocKml ) && m_poKmlDocKml ) {
+    if ( CPLTestBool ( pszUseDocKml ) && m_poKmlDocKml ) {
 
         /***** loop over the features *****/
 
@@ -2148,7 +2148,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
         const char *pszUseDocKml =
             CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-        if ( CSLTestBoolean ( pszUseDocKml ) && m_poKmlDocKml ) {
+        if ( CPLTestBool ( pszUseDocKml ) && m_poKmlDocKml ) {
 
             poKmlDocument = AsDocument ( m_poKmlDocKml );
 
@@ -2285,7 +2285,7 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
         CSLFetchNameValueDef(papszOptions, "REGION_MIN_FADE_EXTENT", "0");
     const char* pszRegionMaxFadeExtent =
         CSLFetchNameValueDef(papszOptions, "REGION_MAX_FADE_EXTENT", "0");
-    if( poOgrLayer != NULL && CSLTestBoolean(pszRegionAdd) )
+    if( poOgrLayer != NULL && CPLTestBool(pszRegionAdd) )
     {
         poOgrLayer->SetWriteRegion(CPLAtof(pszRegionMinLodPixels),
                                    CPLAtof(pszRegionMaxLodPixels),

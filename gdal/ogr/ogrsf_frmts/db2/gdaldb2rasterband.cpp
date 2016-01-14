@@ -890,7 +890,7 @@ static int WEBPSupports4Bands()
     if( bRes < 0 )
     {
         GDALDriver* poDrv = (GDALDriver*) GDALGetDriverByName("WEBP");
-        if( poDrv == NULL || CSLTestBoolean(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
+        if( poDrv == NULL || CPLTestBool(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
             bRes = FALSE;
         else
         {

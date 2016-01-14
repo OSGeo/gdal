@@ -50,8 +50,8 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
 
     nGeometryFormat = MSSQLGEOMETRY_NATIVE;
 
-    bUseGeometryColumns = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "YES"));
-    bListAllTables = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_LIST_ALL_TABLES", "NO"));
+    bUseGeometryColumns = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "YES"));
+    bListAllTables = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_LIST_ALL_TABLES", "NO"));
 }
 
 /************************************************************************/
@@ -447,7 +447,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
     poLayer->SetSpatialIndexFlag( bCreateSpatialIndex );
 
     const char *pszUploadGeometryFormat = CSLFetchNameValue( papszOptions, "UPLOAD_GEOM_FORMAT" );

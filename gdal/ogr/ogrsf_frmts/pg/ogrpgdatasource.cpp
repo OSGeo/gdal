@@ -726,7 +726,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                         "SELECT oid, typname FROM pg_type WHERE typname IN ('geometry', 'geography')" );
 
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
-        && PQntuples(hResult) > 0  && CSLTestBoolean(CPLGetConfigOption("PG_USE_POSTGIS", "YES")))
+        && PQntuples(hResult) > 0  && CPLTestBool(CPLGetConfigOption("PG_USE_POSTGIS", "YES")))
     {
         for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
         {
@@ -737,7 +737,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 bHavePostGIS = TRUE;
                 nGeometryOID = atoi(pszOid);
             }
-            else if( CSLTestBoolean(CPLGetConfigOption("PG_USE_GEOGRAPHY", "YES")) )
+            else if( CPLTestBool(CPLGetConfigOption("PG_USE_GEOGRAPHY", "YES")) )
             {
                 bHaveGeography = TRUE;
                 nGeographyOID = atoi(pszOid);
@@ -809,7 +809,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     GetCurrentSchema();
 
-    bListAllTables = CSLTestBoolean(CSLFetchNameValueDef(
+    bListAllTables = CPLTestBool(CSLFetchNameValueDef(
         papszOpenOptions, "LIST_ALL_TABLES",
         CPLGetConfigOption("PG_LIST_ALL_TABLES", "NO")));
 
@@ -895,7 +895,7 @@ void OGRPGDataSource::LoadTables()
 /*      specified through the TABLES connection string param           */
 /* -------------------------------------------------------------------- */
     const char* pszAllowedRelations;
-    if( CSLTestBoolean(CPLGetConfigOption("PG_SKIP_VIEWS", "NO")) )
+    if( CPLTestBool(CPLGetConfigOption("PG_SKIP_VIEWS", "NO")) )
         pszAllowedRelations = "'r'";
     else
         pszAllowedRelations = "'r','v','m','f'";
@@ -905,7 +905,7 @@ void OGRPGDataSource::LoadTables()
     if( nTableCount == 0 && bHavePostGIS && sPostGISVersion.nMajor >= 2 &&
         !bListAllTables &&
         /* Config option mostly for comparison/debugging/etc... */
-        CSLTestBoolean(CPLGetConfigOption("PG_USE_POSTGIS2_OPTIM", "YES")) )
+        CPLTestBool(CPLGetConfigOption("PG_USE_POSTGIS2_OPTIM", "YES")) )
     {
 /* -------------------------------------------------------------------- */
 /*      With PostGIS 2.0, the geometry_columns and geography_columns    */
@@ -1455,13 +1455,13 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     /* Should we turn layers with None geometry type as Unknown/GEOMETRY */
     /* so they are still recorded in geometry_columns table ? (#4012) */
-    int bNoneAsUnknown = CSLTestBoolean(CSLFetchNameValueDef(
+    int bNoneAsUnknown = CPLTestBool(CSLFetchNameValueDef(
                                     papszOptions, "NONE_AS_UNKNOWN", "NO"));
     if (bNoneAsUnknown && eType == wkbNone)
         eType = wkbUnknown;
 
 
-    int bExtractSchemaFromLayerName = CSLTestBoolean(CSLFetchNameValueDef(
+    int bExtractSchemaFromLayerName = CPLTestBool(CSLFetchNameValueDef(
                                     papszOptions, "EXTRACT_SCHEMA_FROM_LAYER_NAME", "YES"));
 
     /* Postgres Schema handling:
@@ -1626,7 +1626,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     const char *pszGeometryType = OGRToOGCGeomType(eType);
 
-    int bDifferedCreation = CSLTestBoolean(CPLGetConfigOption( "OGR_PG_DIFFERED_CREATION", "YES" ));
+    int bDifferedCreation = CPLTestBool(CPLGetConfigOption( "OGR_PG_DIFFERED_CREATION", "YES" ));
     if( !bHavePostGIS )
         bDifferedCreation = FALSE;  /* to avoid unnecessary implementation and testing burden */
 
@@ -1704,7 +1704,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     osCreateTable = osCommand;
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
     if( eType != wkbNone &&
         pszSI == NULL &&
         CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) &&
@@ -1864,7 +1864,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
 
     poLayer->AllowAutoFIDOnCreateViaCopy();
-    if( CSLTestBoolean(CPLGetConfigOption("PG_USE_COPY", "YES")) )
+    if( CPLTestBool(CPLGetConfigOption("PG_USE_COPY", "YES")) )
         poLayer->SetUseCopy();
 
     if( bFID64 )

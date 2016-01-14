@@ -740,7 +740,7 @@ int FGdbDataSource::HasPerLayerCopyingForTransaction()
 #else
     bPerLayerCopyingForTransaction =
         m_poOpenFileGDBDrv != NULL &&
-        CSLTestBoolean(CPLGetConfigOption("FGDB_PER_LAYER_COPYING_TRANSACTION", "TRUE"));
+        CPLTestBool(CPLGetConfigOption("FGDB_PER_LAYER_COPYING_TRANSACTION", "TRUE"));
 #endif
     return bPerLayerCopyingForTransaction;
 }

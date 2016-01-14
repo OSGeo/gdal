@@ -88,11 +88,11 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                 poOgrFeat->GetFieldAsString(iCameraAltitudeModeField), isGX);
             camera->set_altitudemode(nAltitudeMode);
         }
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should define altitudeMode != 'clampToGround'");
         if( iCameraAltitudeField >= 0 && poOgrFeat->IsFieldSet(iCameraAltitudeField))
             camera->set_altitude(poOgrFeat->GetFieldAsDouble(iCameraAltitudeField));
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
             camera->set_altitude(0.0);
@@ -524,7 +524,7 @@ FeaturePtr feat2kml (
             if( nAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
                 poOgrPoint->getCoordinateDimension() != 3 )
             {
-                if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                     CPLError(CE_Warning, CPLE_AppDefined, "Altitude should be defined");
             }
         }
@@ -574,7 +574,7 @@ FeaturePtr feat2kml (
 
         /* Collada 3D file ? */
         if( EQUAL(CPLGetExtension(pszURL), "dae") &&
-            CSLTestBoolean(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
+            CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
         {
             VSILFILE* fp;
             int bIsURL = FALSE;
@@ -664,11 +664,11 @@ FeaturePtr feat2kml (
                 poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
             camera->set_altitudemode(nAltitudeMode);
         }
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should define altitudeMode != 'clampToGround'");
         if( poOgrPoint->getCoordinateDimension() == 3 )
             camera->set_altitude(poOgrPoint->getZ());
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
             camera->set_altitude(0.0);

@@ -128,7 +128,7 @@ public:
                  ++it )
             {
                 if (*it == NULL) continue;
-                if( CSLTestBoolean(
+                if( CPLTestBool(
                         CPLGetXMLValue( *it, "EmbeddedTransfer", "FALSE" ) ) )
                     return true;
             }
@@ -212,7 +212,7 @@ public:
             OGRFieldDefn ofieldDefn(psTidColName, OFTString);
             poTableDefn->AddFieldDefn(&ofieldDefn);
         }
-        if (CSLTestBoolean(CPLGetXMLValue( node, "Abstract", "FALSE" )))
+        if (CPLTestBool(CPLGetXMLValue( node, "Abstract", "FALSE" )))
             hasDerivedClasses = true;
     }
     void AddFieldDefinitions(NodeVector oArcLineTypes)
@@ -279,7 +279,7 @@ public:
                     const char* psKind = CPLGetXMLValue( psElementNode, "Kind", NULL );
                     poGeomFieldInfos[psName].iliGeomType = psKind;
                     bool isLinearType = (std::find(oArcLineTypes.begin(), oArcLineTypes.end(), psElementNode) == oArcLineTypes.end());
-                    bool linearGeom = isLinearType || CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE"));
+                    bool linearGeom = isLinearType || CPLTestBool(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE"));
                     OGRwkbGeometryType multiLineType = linearGeom ? wkbMultiLineString : wkbMultiCurve;
                     OGRwkbGeometryType polyType = linearGeom ? wkbPolygon : wkbCurvePolygon;
                     if (iliVersion == 1)

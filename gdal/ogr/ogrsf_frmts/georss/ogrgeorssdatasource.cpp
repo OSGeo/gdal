@@ -403,7 +403,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     }
 
     const char* pszWriteHeaderAndFooter = CSLFetchNameValue(papszOptions, "WRITE_HEADER_AND_FOOTER");
-    if (pszWriteHeaderAndFooter && CSLTestBoolean(pszWriteHeaderAndFooter) == FALSE)
+    if (pszWriteHeaderAndFooter && CPLTestBool(pszWriteHeaderAndFooter) == FALSE)
     {
         bWriteHeaderAndFooter = FALSE;
         return TRUE;
@@ -454,7 +454,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     }
 
     const char* pszUseExtensions = CSLFetchNameValue( papszOptions, "USE_EXTENSIONS");
-    bUseExtensions =  (pszUseExtensions && CSLTestBoolean(pszUseExtensions));
+    bUseExtensions = pszUseExtensions && CPLTestBool(pszUseExtensions);
 
 /* -------------------------------------------------------------------- */
 /*     Output header of GeoRSS file.                                       */

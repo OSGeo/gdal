@@ -366,7 +366,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
         json_object_put(poAnswerObj);
     }
 
-    int bGeoJSONDocument = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
+    int bGeoJSONDocument = CPLTestBool(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
     int nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 
     OGRCloudantTableLayer* poLayer = new OGRCloudantTableLayer(this, osLayerName);

@@ -123,7 +123,7 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     m_bIgnoreSourceID = FALSE;
 
     // Undocumented. Only usefull for developers
-    m_bAddPretty = CSLTestBoolean(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"));
+    m_bAddPretty = CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"));
 
     ResetReading();
     return;

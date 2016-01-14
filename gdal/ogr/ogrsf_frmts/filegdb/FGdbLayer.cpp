@@ -682,7 +682,7 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     memset(abyEmptyOffset, 0, 6);
     int nNonEmptyPages = 0;
     int nOffsetInPage = 0, nLastWrittenOffset = 0;
-    int bDisableSparsePages = CSLTestBoolean(CPLGetConfigOption("FILEGDB_DISABLE_SPARSE_PAGES", "NO"));
+    int bDisableSparsePages = CPLTestBool(CPLGetConfigOption("FILEGDB_DISABLE_SPARSE_PAGES", "NO"));
     
     oIterO2F = m_oMapOGRFIDToFGDBFID.begin();
     int nNextOGRFID = oIterO2F->first;
@@ -1117,7 +1117,7 @@ OGRErr FGdbLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
 
     if (m_bBulkLoadAllowed < 0)
-        m_bBulkLoadAllowed = CSLTestBoolean(CPLGetConfigOption("FGDB_BULK_LOAD", "NO"));
+        m_bBulkLoadAllowed = CPLTestBool(CPLGetConfigOption("FGDB_BULK_LOAD", "NO"));
 
     if (m_bBulkLoadAllowed && !m_bBulkLoadInProgress)
         StartBulkLoad();
@@ -2323,7 +2323,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
             return GDBErr(-1, "Unable to map OGR type to ESRI type");
 
         if( wkbFlatten(eType) == wkbMultiPolygon &&
-            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "CREATE_MULTIPATCH", "NO")) )
+            CPLTestBool(CSLFetchNameValueDef(papszOptions, "CREATE_MULTIPATCH", "NO")) )
         {
             esri_type = "esriGeometryMultiPatch";
             has_z = true;
@@ -2497,10 +2497,10 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     }
 
     m_papszOptions = CSLDuplicate(papszOptions);
-    m_bCreateMultipatch = CSLTestBoolean(CSLFetchNameValueDef(m_papszOptions, "CREATE_MULTIPATCH", "NO"));
+    m_bCreateMultipatch = CPLTestBool(CSLFetchNameValueDef(m_papszOptions, "CREATE_MULTIPATCH", "NO"));
     
     // Default to YES here assuming ogr2ogr scenario
-    m_bBulkLoadAllowed = CSLTestBoolean(CPLGetConfigOption("FGDB_BULK_LOAD", "YES"));
+    m_bBulkLoadAllowed = CPLTestBool(CPLGetConfigOption("FGDB_BULK_LOAD", "YES"));
 
     /* Store the new FGDB Table pointer and set up the OGRFeatureDefn */
     return FGdbLayer::Initialize(pParentDataSource, table, wtable_path, L"Table");

@@ -253,9 +253,9 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
     }
     hSession->pszCacheFilename = CPLStrdup(pszCacheFilename);
 
-    hSession->bReadCache = CSLTestBoolean(
+    hSession->bReadCache = CPLTestBool(
         OGRGeocodeGetParameter(papszOptions, "READ_CACHE", "TRUE"));
-    hSession->bWriteCache = CSLTestBoolean(
+    hSession->bWriteCache = CPLTestBool(
         OGRGeocodeGetParameter(papszOptions, "WRITE_CACHE", "TRUE"));
 
     const char* pszGeocodingService = OGRGeocodeGetParameter(papszOptions,
@@ -1253,7 +1253,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
     }
 
     int bAddRawFeature =
-        CSLTestBoolean(OGRGeocodeGetParameter(papszOptions, "RAW_FEATURE", "NO"));
+        CPLTestBool(OGRGeocodeGetParameter(papszOptions, "RAW_FEATURE", "NO"));
 
     OGRLayerH hLayer = NULL;
 

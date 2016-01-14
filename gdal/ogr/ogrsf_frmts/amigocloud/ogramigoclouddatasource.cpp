@@ -164,7 +164,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
 
     CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
 
-    bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
+    bUseHTTPS = CPLTestBool(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
 
     OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
     if( poSchemaLayer )

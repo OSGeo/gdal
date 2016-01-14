@@ -437,7 +437,7 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszNameIn,
         json_object_put(poAnswerObj);
     }
 
-    int bGeoJSONDocument = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
+    int bGeoJSONDocument = CPLTestBool(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
     int nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 
     OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszNameIn);
@@ -1241,7 +1241,7 @@ int OGRCouchDBDataSource::IsOK(json_object* poAnswerObj,
     }
 
     const char* pszOK = json_object_get_string(poOK);
-    if ( !pszOK || !CSLTestBoolean(pszOK) )
+    if ( !pszOK || !CPLTestBool(pszOK) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
 

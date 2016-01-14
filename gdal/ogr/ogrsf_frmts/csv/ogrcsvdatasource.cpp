@@ -992,7 +992,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 
     const char *pszCreateCSVT = CSLFetchNameValue( papszOptions, "CREATE_CSVT");
-    if (pszCreateCSVT && CSLTestBoolean(pszCreateCSVT))
+    if (pszCreateCSVT && CPLTestBool(pszCreateCSVT))
     {
         poCSVLayer->SetCreateCSVT(TRUE);
 
@@ -1024,7 +1024,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 
     const char *pszWriteBOM = CSLFetchNameValue( papszOptions, "WRITE_BOM");
     if (pszWriteBOM)
-        poCSVLayer->SetWriteBOM(CSLTestBoolean(pszWriteBOM));
+        poCSVLayer->SetWriteBOM(CPLTestBool(pszWriteBOM));
 
     nLayers++;
     papoLayers = static_cast<OGRLayer **>(
