@@ -208,7 +208,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
     VSIFPrintfL( fpOut_, "{\n\"type\": \"FeatureCollection\",\n" );
 
     bool bWriteFC_BBOX =
-        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE")));
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
 
     const char* pszNativeData = CSLFetchNameValue(papszOptions, "NATIVE_DATA");
     const char* pszNativeMediaType = CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
@@ -642,8 +642,8 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
         CPL_TO_BOOL(CSLFetchBoolean(papszOpenOptionsIn, "NATIVE_DATA", bDefaultNativeData)));
 
     reader.SetArrayAsString(
-        CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptionsIn, "ARRAY_AS_STRING",
-                CPLGetConfigOption("OGR_GEOJSON_ARRAY_AS_STRING", "NO")))));
+        CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "ARRAY_AS_STRING",
+                CPLGetConfigOption("OGR_GEOJSON_ARRAY_AS_STRING", "NO"))));
 
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */

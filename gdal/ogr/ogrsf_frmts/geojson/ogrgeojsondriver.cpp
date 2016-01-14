@@ -444,8 +444,8 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
                                                "FEATURE_SERVER_PAGING");
         bool bHasResultOffset = CPLURLGetValue( poOpenInfo->pszFilename,
                                                 "resultOffset").size() > 0;
-        if( (!bHasResultOffset && (pszFSP == NULL || CSLTestBoolean(pszFSP))) ||
-            (bHasResultOffset && pszFSP != NULL && CSLTestBoolean(pszFSP)) )
+        if( (!bHasResultOffset && (pszFSP == NULL || CPLTestBool(pszFSP))) ||
+            (bHasResultOffset && pszFSP != NULL && CPLTestBool(pszFSP)) )
         {
             return new OGRESRIFeatureServiceDataset(poOpenInfo->pszFilename,
                                                     poDS);

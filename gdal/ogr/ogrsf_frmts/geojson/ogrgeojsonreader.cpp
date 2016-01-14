@@ -658,7 +658,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                          it.val != NULL && json_object_get_type(it.val) == json_type_object)
                 {
                     if (bFlattenGeocouchSpatiallistFormat < 0)
-                        bFlattenGeocouchSpatiallistFormat = CSLTestBoolean(
+                        bFlattenGeocouchSpatiallistFormat = CPLTestBool(
                             CPLGetConfigOption("GEOJSON_FLATTEN_GEOCOUCH", "TRUE"));
                     if (bFlattenGeocouchSpatiallistFormat)
                     {
