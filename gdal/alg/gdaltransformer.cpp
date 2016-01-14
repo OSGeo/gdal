@@ -1190,7 +1190,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
     pszValue = CSLFetchNameValue( papszOptions, "GCPS_OK" );
     if( pszValue )
-        bGCPUseOK = CSLTestBoolean(pszValue);
+        bGCPUseOK = CPLTestBool(pszValue);
 
     pszValue = CSLFetchNameValue( papszOptions, "REFINE_MINIMUM_GCPS" );
     if( pszValue )
