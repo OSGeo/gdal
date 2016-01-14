@@ -543,7 +543,8 @@ const char *CPLFormFilename( const char * pszPath,
     {
         /* FIXME? would be better to ask the filesystems what they */
         /* prefer as directory separator */
-        if (STARTS_WITH(pszPath, "/vsicurl/"))
+        if (STARTS_WITH(pszPath, "/vsicurl/") ||
+            STARTS_WITH(pszPath, "/vsicurl_streaming/"))
             pszAddedPathSep = "/";
         else if (STARTS_WITH(pszPath, "/vsizip/"))
             pszAddedPathSep = "/";
