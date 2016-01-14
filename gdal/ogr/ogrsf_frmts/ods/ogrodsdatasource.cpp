@@ -167,7 +167,7 @@ OGRODSDataSource::OGRODSDataSource() :
     nLayers = 0;
     papoLayers = NULL;
 
-    bFirstLineIsHeaders = FALSE;
+    bFirstLineIsHeaders = false;
 
     oParser = NULL;
     bStopParsing = false;
@@ -543,15 +543,15 @@ void OGRODSDataSource::DetectHeaderLine()
     }
 
     const char* pszODSHeaders = CPLGetConfigOption("OGR_ODS_HEADERS", "");
-    bFirstLineIsHeaders = FALSE;
+    bFirstLineIsHeaders = false;
     if (EQUAL(pszODSHeaders, "FORCE"))
-        bFirstLineIsHeaders = TRUE;
+        bFirstLineIsHeaders = true;
     else if (EQUAL(pszODSHeaders, "DISABLE"))
-        bFirstLineIsHeaders = FALSE;
+        bFirstLineIsHeaders = false;
     else if (osSetLayerHasSplitter.find(poCurLayer->GetName()) !=
              osSetLayerHasSplitter.end())
     {
-        bFirstLineIsHeaders = TRUE;
+        bFirstLineIsHeaders = true;
     }
     else if (bHeaderLineCandidate &&
              apoFirstLineTypes.size() != 0 &&
@@ -559,7 +559,7 @@ void OGRODSDataSource::DetectHeaderLine()
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0)
     {
-        bFirstLineIsHeaders = TRUE;
+        bFirstLineIsHeaders = true;
     }
     CPLDebug("ODS", "%s %s",
              poCurLayer->GetName(),
@@ -1386,7 +1386,7 @@ OGRErr OGRODSDataSource::DeleteLayer(int iLayer)
 /*                           HasHeaderLine()                            */
 /************************************************************************/
 
-static int HasHeaderLine(OGRLayer* poLayer)
+static bool HasHeaderLine(OGRLayer* poLayer)
 {
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
     bool bHasHeaders = false;

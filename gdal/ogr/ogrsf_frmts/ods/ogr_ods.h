@@ -136,7 +136,7 @@ class OGRODSDataSource : public OGRDataSource
     VSILFILE*           fpContent;
     void                AnalyseFile();
 
-    int                 bFirstLineIsHeaders;
+    bool                bFirstLineIsHeaders;
     int                 bAutodetectTypes;
 
     XML_Parser          oParser;
