@@ -91,7 +91,7 @@ NASReader::~NASReader()
 
     CleanupParser();
 
-    if (CSLTestBoolean(CPLGetConfigOption("NAS_XERCES_TERMINATE", "FALSE")))
+    if (CPLTestBool(CPLGetConfigOption("NAS_XERCES_TERMINATE", "FALSE")))
         XMLPlatformUtils::Terminate();
 
     CPLFree( m_pszFilteredClassName );

@@ -552,7 +552,7 @@ OGRFeature* OGRPLScenesLayer::GetNextRawFeature()
     }
 
 #ifdef notdef
-    if( CSLTestBoolean(CPLGetConfigOption("OGR_LIMIT_TOO_MANY_FEATURES", "FALSE")) &&
+    if( CPLTestBool(CPLGetConfigOption("OGR_LIMIT_TOO_MANY_FEATURES", "FALSE")) &&
         nFeatureCount > nPageSize )
     {
         bEOF = TRUE;

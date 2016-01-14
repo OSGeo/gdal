@@ -76,14 +76,14 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     CPLDebug("OGR-VFK", "Using internal DB: %s",
              m_pszDBname);
 
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_SPATIAL", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_SPATIAL", "YES")))
 	m_bSpatial = TRUE;    /* build geometry from DB */
     else
 	m_bSpatial = FALSE;   /* store also geometry in DB */
 
     m_bNewDb = TRUE;
     if (VSIStatL(osDbName, &sStatBufDb) == 0) {
-	if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
+	if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
 	    m_bNewDb = TRUE;     /* overwrite existing DB */
             CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
                      m_pszDBname);
@@ -153,7 +153,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
              m_pszDBname);
 
     /* delete tmp SQLite DB if requested */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO"))) {
+    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO"))) {
         CPLDebug("OGR-VFK", "Internal DB (%s) deleted",
                  m_pszDBname);
         VSIUnlink(m_pszDBname);
@@ -411,7 +411,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
 
     sqlite3_stmt *hStmt;
 
-    bUnique = !CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_IGNORE_DUPLICATES", "NO"));
+    bUnique = !CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_IGNORE_DUPLICATES", "NO"));
 
     pszBlockName = poDataBlock->GetName();
 

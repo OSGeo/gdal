@@ -68,7 +68,7 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 
     bIsVirtualShape = FALSE;
 
-    bUseComprGeom = CSLTestBoolean(CPLGetConfigOption("COMPRESS_GEOM", "FALSE"));
+    bUseComprGeom = CPLTestBool(CPLGetConfigOption("COMPRESS_GEOM", "FALSE"));
 
     papszCompressedColumns = NULL;
 
@@ -240,7 +240,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         switch( nColType )
         {
           case SQLITE_INTEGER:
-            if( CSLTestBoolean(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
+            if( CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
                 oField.SetType( OFTInteger64 );
             else
             {
@@ -502,7 +502,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         /* Config option just in case we would not want that in some cases */
         if( (eFieldType == OFTTime || eFieldType == OFTDate ||
              eFieldType == OFTDateTime) &&
-            CSLTestBoolean(
+            CPLTestBool(
                 CPLGetConfigOption("OGR_SQLITE_ENABLE_DATETIME", "YES")) )
         {
             oField.SetType( eFieldType );

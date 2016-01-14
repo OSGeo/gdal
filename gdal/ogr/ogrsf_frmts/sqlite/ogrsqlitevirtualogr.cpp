@@ -403,7 +403,7 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
 
         if( nRowCount > 0 )
         {
-            if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW", "NO")) )
+            if( !CPLTestBool(CPLGetConfigOption("ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW", "NO")) )
             {
                 *pzErr = sqlite3_mprintf(
                     "A trigger and/or view might reference VirtualOGR table '%s'.\n"
@@ -2490,7 +2490,7 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg, void * _pApi)
 
     /* The config option is turned off by ogrsqliteexecutesql.cpp that needs */
     /* to create a custom module */
-    if( CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "YES")) )
+    if( CPLTestBool(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "YES")) )
     {
         /* Can happen if SQLite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with SQLite 3.6.10 for example) */
         /* We return here OK since it is not vital for regular SQLite databases */

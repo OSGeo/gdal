@@ -180,7 +180,7 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszNameIn,
         = CSLFetchNameValue(papszOptions, "USE_TEMPFILE");
     if (pszOptionUseTempFile == NULL)
         pszOptionUseTempFile = CPLGetConfigOption("USE_TEMPFILE", NULL);
-    if (pszOptionUseTempFile && CSLTestBoolean(pszOptionUseTempFile))
+    if (pszOptionUseTempFile && CPLTestBool(pszOptionUseTempFile))
         osTmpFileName = CPLGenerateTempFilename(NULL);
     else
         osTmpFileName.Printf("/vsimem/ogrgpsbabeldatasource_%p", this);

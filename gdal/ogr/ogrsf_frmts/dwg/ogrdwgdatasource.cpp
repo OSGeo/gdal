@@ -108,7 +108,7 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServices,
 
     osName = pszFilename;
 
-    bInlineBlocks = CSLTestBoolean(
+    bInlineBlocks = CPLTestBool(
         CPLGetConfigOption( "DWG_INLINE_BLOCKS", "TRUE" ) );
 
 /* -------------------------------------------------------------------- */

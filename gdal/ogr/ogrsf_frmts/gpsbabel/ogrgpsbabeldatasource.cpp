@@ -259,7 +259,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
     }
 
     const char* pszOptionUseTempFile = CPLGetConfigOption("USE_TEMPFILE", NULL);
-    if (pszOptionUseTempFile && CSLTestBoolean(pszOptionUseTempFile))
+    if (pszOptionUseTempFile && CPLTestBool(pszOptionUseTempFile))
         osTmpFileName = CPLGenerateTempFilename(NULL);
     else
         osTmpFileName.Printf("/vsimem/ogrgpsbabeldatasource_%p", this);

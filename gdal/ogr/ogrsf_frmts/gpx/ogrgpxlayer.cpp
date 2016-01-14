@@ -109,11 +109,10 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     if (nMaxLinks > 100)
         nMaxLinks = 100;
 
-    bEleAs25D = CPL_TO_BOOL(
-        CSLTestBoolean( CPLGetConfigOption( "GPX_ELE_AS_25D", "NO" ) ) );
+    bEleAs25D = CPLTestBool( CPLGetConfigOption( "GPX_ELE_AS_25D", "NO" ) );
 
-    const bool bShortNames = CPL_TO_BOOL(
-        CSLTestBoolean( CPLGetConfigOption( "GPX_SHORT_NAMES", "NO" ) ) );
+    const bool bShortNames =
+        CPLTestBool( CPLGetConfigOption( "GPX_SHORT_NAMES", "NO" ) );
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
@@ -343,7 +342,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         }
 
         if (poDS->GetUseExtensions() ||
-            CSLTestBoolean(CPLGetConfigOption("GPX_USE_EXTENSIONS", "FALSE")))
+            CPLTestBool(CPLGetConfigOption("GPX_USE_EXTENSIONS", "FALSE")))
         {
             LoadExtensionsSchema();
         }
@@ -1148,7 +1147,7 @@ static char* OGRGPX_GetUTF8String(const char* pszString)
 {
     char *pszEscaped;
     if (!CPLIsUTF8(pszString, -1) &&
-         CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
+         CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
     {
         static bool bFirstTime = true;
         if (bFirstTime)

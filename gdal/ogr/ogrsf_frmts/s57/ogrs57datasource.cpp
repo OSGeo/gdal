@@ -233,8 +233,8 @@ int OGRS57DataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Add the header layers if they are called for.                   */
 /* -------------------------------------------------------------------- */
-    if( GetOption( S57O_RETURN_DSID ) == NULL 
-        || CSLTestBoolean(GetOption( S57O_RETURN_DSID )) )
+    if( GetOption( S57O_RETURN_DSID ) == NULL
+        || CPLTestBool(GetOption( S57O_RETURN_DSID )) )
     {
         OGRFeatureDefn  *poDefn = S57GenerateDSIDFeatureDefn();
         AddLayer( new OGRS57Layer( this, poDefn ) );

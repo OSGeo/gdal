@@ -1134,7 +1134,7 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
     sqlite3_exec(hDB, "SELECT 1", NULL, NULL, NULL);
 
     if( rc != SQLITE_OK &&
-        CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES")) )
+        CPLTestBool(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES")) )
     {
         CPLDebug("SQLITE",
                  "Spatialite not available. Implementing a few functions");

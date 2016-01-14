@@ -638,7 +638,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
     int bPreserveSrcFID = FALSE;
     const char* pszPreserveFID = CPLGetXMLValue( psLTree, "PreserveSrcFID", NULL );
     if( pszPreserveFID != NULL )
-        bPreserveSrcFID = CSLTestBoolean(pszPreserveFID);
+        bPreserveSrcFID = CPLTestBool(pszPreserveFID);
     poLayer->SetPreserveSrcFID(bPreserveSrcFID);
 
 /* -------------------------------------------------------------------- */

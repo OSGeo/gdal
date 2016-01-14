@@ -471,8 +471,8 @@ void TigerFileBase::AddFieldDefns(const TigerRecordInfo *psRTInfoIn,
     OGRFieldDefn        oField("",OFTInteger);
     int i, bLFieldHack;
 
-    bLFieldHack = 
-        CSLTestBoolean( CPLGetConfigOption( "TIGER_LFIELD_AS_STRING", "NO" ) );
+    bLFieldHack =
+        CPLTestBool( CPLGetConfigOption( "TIGER_LFIELD_AS_STRING", "NO" ) );
 
     for (i=0; i<psRTInfoIn->nFieldCount; ++i) {
         if (psRTInfoIn->pasFields[i].bDefine) {

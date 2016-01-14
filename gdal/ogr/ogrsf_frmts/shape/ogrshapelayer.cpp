@@ -159,7 +159,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     else if( bSRSSetIn && poSRSIn != NULL )
         poSRSIn->Release();
     SetDescription( poFeatureDefn->GetName() );
-    bRewindOnWrite = CSLTestBoolean(CPLGetConfigOption( "SHAPE_REWIND_ON_WRITE", "YES" ));
+    bRewindOnWrite = CPLTestBool(CPLGetConfigOption( "SHAPE_REWIND_ON_WRITE", "YES" ));
 }
 
 /************************************************************************/

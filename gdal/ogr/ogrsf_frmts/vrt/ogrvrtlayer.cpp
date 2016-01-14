@@ -317,7 +317,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
     {
         poProps->eGeometryStyle = VGS_PointFromColumns;
         poProps->bUseSpatialSubquery = 
-            CSLTestBoolean(
+            CPLTestBool(
                 CPLGetXMLValue(psNode, 
                             "GeometryField.useSpatialSubquery",
                             "TRUE"));
@@ -400,7 +400,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
     }
 
     poProps->bReportSrcColumn =
-        CSLTestBoolean(CPLGetXMLValue( psNode, "reportSrcColumn", "YES" ));
+        CPLTestBool(CPLGetXMLValue( psNode, "reportSrcColumn", "YES" ));
 
 /* -------------------------------------------------------------------- */
 /*      Guess geometry type if not explicitly provided (or computed)   */
@@ -472,7 +472,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
             poProps->poSrcRegion = NULL;
         }
 
-        poProps->bSrcClip = CSLTestBoolean(CPLGetXMLValue( psNode, "SrcRegion.clip", "FALSE" ));
+        poProps->bSrcClip = CPLTestBool(CPLGetXMLValue( psNode, "SrcRegion.clip", "FALSE" ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -491,7 +491,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
          poProps->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
      }
 
-    poProps->bNullable = CSLTestBoolean(CPLGetXMLValue( psNode, "nullable", "TRUE" ));
+    poProps->bNullable = CPLTestBool(CPLGetXMLValue( psNode, "nullable", "TRUE" ));
 
     return TRUE;
 }
@@ -534,7 +534,7 @@ int OGRVRTLayer::FullInitialize()
         goto error;
     }
 
-    if( CSLTestBoolean(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT", 
+    if( CPLTestBool(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT", 
                                        "0")) )
     {
         static const char* const apszPrefixes[] = { "CSV:", "GPSBABEL:" };
@@ -585,7 +585,7 @@ int OGRVRTLayer::FullInitialize()
             pszSharedSetting = "ON";
     }
 
-    bSrcDSShared = CSLTestBoolean( pszSharedSetting );
+    bSrcDSShared = CPLTestBool( pszSharedSetting );
 
     // update mode doesn't make sense if we have a SrcSQL element
     if (CPLGetXMLValue( psLTree, "SrcSQL", NULL ) != NULL)
@@ -970,7 +970,7 @@ try_again:
 /* -------------------------------------------------------------------- */
 /*      Nullable attribute.                                             */
 /* -------------------------------------------------------------------- */
-             int bNullable = CSLTestBoolean(CPLGetXMLValue( psChild, "nullable", "true" ));
+             int bNullable = CPLTestBool(CPLGetXMLValue( psChild, "nullable", "true" ));
              oFieldDefn.SetNullable(bNullable);
 
 /* -------------------------------------------------------------------- */
@@ -1098,7 +1098,7 @@ try_again:
 /* -------------------------------------------------------------------- */
      if( CPLGetXMLValue( psLTree, "attrFilterPassThrough", NULL ) != NULL )
          bAttrFilterPassThrough =
-             CSLTestBoolean(
+             CPLTestBool(
                  CPLGetXMLValue(psLTree, "attrFilterPassThrough",
                                 "TRUE") );
 

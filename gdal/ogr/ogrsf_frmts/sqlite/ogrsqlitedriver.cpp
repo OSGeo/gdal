@@ -79,7 +79,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     // SQLITE_USE_URI is checked only to enable backward compatibility, in case
     // we accidentally hijacked some other format.
     if( STARTS_WITH(poOpenInfo->pszFilename, "file:") &&
-        CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
+        CPLTestBool(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
     {
         char * queryparams = strchr(poOpenInfo->pszFilename, '?');
         if( queryparams )

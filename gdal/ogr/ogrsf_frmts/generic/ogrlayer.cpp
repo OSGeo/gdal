@@ -1874,7 +1874,7 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
     OGRFeatureDefn *poDefnResult = pLayerResult->GetLayerDefn();
     const char* pszInputPrefix = CSLFetchNameValue(papszOptions, "INPUT_PREFIX");
     const char* pszMethodPrefix = CSLFetchNameValue(papszOptions, "METHOD_PREFIX");
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     if (poDefnResult->GetFieldCount() > 0) {
         // the user has defined the schema of the output layer
         for( int iField = 0; iField < poDefnInput->GetFieldCount(); iField++ ) {
@@ -2031,8 +2031,8 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2296,8 +2296,8 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2640,8 +2640,8 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
     double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2950,8 +2950,8 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -3224,8 +3224,8 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
     double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -3497,8 +3497,8 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -3733,8 +3733,8 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
     double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {

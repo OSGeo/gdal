@@ -755,7 +755,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         CPLMutexHolder oMutexHolder(&hMutex);
         static int bTried = FALSE;
         if( !bTried &&
-            CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")) )
+            CPLTestBool(CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")) )
         {
             bTried = TRUE;
             char* pszCachedFilename = (char*) CPLMalloc(256);
@@ -780,7 +780,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     }
 
     /* The following configuration option is useful mostly for debugging/testing */
-    if( pabyEmptyDB != NULL && CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")) )
+    if( pabyEmptyDB != NULL && CPLTestBool(CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")) )
     {
         GByte* pabyEmptyDBClone = (GByte*)VSI_MALLOC_VERBOSE(nEmptyDBSize);
         if( pabyEmptyDBClone == NULL )

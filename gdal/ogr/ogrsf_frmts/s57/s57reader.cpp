@@ -348,13 +348,13 @@ int S57Reader::SetOptions( char ** papszOptionsIn )
 
     const char *pszOptionValue
         = CSLFetchNameValue( papszOptions, S57O_SPLIT_MULTIPOINT );
-    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_SPLIT_MULTIPOINT;
     else
         nOptionFlags &= ~S57M_SPLIT_MULTIPOINT;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_ADD_SOUNDG_DEPTH );
-    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_ADD_SOUNDG_DEPTH;
     else
         nOptionFlags &= ~S57M_ADD_SOUNDG_DEPTH;
@@ -369,7 +369,7 @@ int S57Reader::SetOptions( char ** papszOptionsIn )
     }
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_LNAM_REFS );
-    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_LNAM_REFS;
     else
         nOptionFlags &= ~S57M_LNAM_REFS;
@@ -384,31 +384,31 @@ int S57Reader::SetOptions( char ** papszOptionsIn )
 
     pszOptionValue = CSLFetchNameValue(papszOptions,
                                        S57O_PRESERVE_EMPTY_NUMBERS);
-    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_PRESERVE_EMPTY_NUMBERS;
     else
         nOptionFlags &= ~S57M_PRESERVE_EMPTY_NUMBERS;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_PRIMITIVES );
-    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_PRIMITIVES;
     else
         nOptionFlags &= ~S57M_RETURN_PRIMITIVES;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_LINKAGES );
-    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_LINKAGES;
     else
         nOptionFlags &= ~S57M_RETURN_LINKAGES;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_DSID );
-    if( pszOptionValue == NULL || CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue == NULL || CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_DSID;
     else
         nOptionFlags &= ~S57M_RETURN_DSID;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RECODE_BY_DSSI );
-    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
+    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RECODE_BY_DSSI;
     else
         nOptionFlags &= ~S57M_RECODE_BY_DSSI;
