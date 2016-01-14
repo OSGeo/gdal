@@ -781,13 +781,10 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
             /* If the JPEG strip/tile is too big (e.g. a single-strip JPEG-in-TIFF) */
             /* we will use /vsisparse mechanism to make a fake JPEG file */
 
-            /* If the previous file was NOT opened as a /vsisparse/, we have to re-open */
-            if( poGDS->poJPEGDS != NULL &&
-                !STARTS_WITH(GDALGetDescription(poGDS->poJPEGDS), "/vsisparse/")  )
-            {
-                GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
-                poGDS->poJPEGDS = NULL;
-            }
+            /* Always re-open */
+            GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
+            poGDS->poJPEGDS = NULL;
+
             osFileToOpen = CPLSPrintf("/vsisparse/%s", poGDS->osTmpFilename.c_str());
 
             if( VSIFPrintfL(fp, "<VSISparseFile><SubfileRegion><Filename relative='0'>%s</Filename>"
