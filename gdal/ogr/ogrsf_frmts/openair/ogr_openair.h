@@ -42,7 +42,9 @@ typedef struct
     int penStyle;
     int penWidth;
     int penR, penG, penB;
-    int fillR, fillG, fillB;
+    int fillR;
+    int fillG;
+    int fillB;
 } OpenAirStyle;
 
 class OGROpenAirLayer : public OGRLayer
@@ -51,8 +53,8 @@ class OGROpenAirLayer : public OGRLayer
     OGRSpatialReference *poSRS;
 
     VSILFILE*          fpOpenAir;
-    int                bEOF;
-    int                bHasLastLine;
+    bool               bEOF;
+    bool               bHasLastLine;
     CPLString          osLastLine;
 
     int                nNextFID;
@@ -90,12 +92,14 @@ class OGROpenAirLabelLayer : public OGRLayer
 
     OGRFeature *       GetNextRawFeature();
 
-    CPLString          osCLASS, osNAME, osFLOOR, osCEILING;
+    CPLString          osCLASS;
+    CPLString          osNAME;
+    CPLString          osFLOOR;
+    CPLString          osCEILING;
 
   public:
                         OGROpenAirLabelLayer(VSILFILE* fp);
                         ~OGROpenAirLabelLayer();
-
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -130,6 +134,6 @@ class OGROpenAirDataSource : public OGRDataSource
     virtual int                 TestCapability( const char * );
 };
 
-int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon);
+bool OGROpenAirGetLatLon( const char* pszStr, double& dfLat, double& dfLon );
 
 #endif /* ndef OGR_OPENAIR_H_INCLUDED */
