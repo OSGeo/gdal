@@ -1813,7 +1813,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
 #define ALIGN32(x)  (((char*)(x)) + ((32 - (((size_t)(x)) % 32)) % 32))
 
-                    if( CSLTestBoolean(CPLGetConfigOption("GDAL_USE_AVX", "YES")) &&
+                    if( CPLTestBool(CPLGetConfigOption("GDAL_USE_AVX", "YES")) &&
                         CPLHaveRuntimeAVX() )
                     {
                         pabyX = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 31);
@@ -1849,7 +1849,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 #define ALIGN16(x)  (((char*)(x)) + ((16 - (((size_t)(x)) % 16)) % 16))
 
                     if( pafXAligned == NULL &&
-                        CSLTestBoolean(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
+                        CPLTestBool(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
                         CPLHaveRuntimeSSE() )
                     {
                         pabyX = (float*)VSI_MALLOC_VERBOSE(sizeof(float) * nPoints + 15);

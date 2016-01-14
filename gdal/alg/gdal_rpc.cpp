@@ -1367,7 +1367,7 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             psTransform->adfDEMReverseGeoTransform[1] > 0.0 &&
             psTransform->adfDEMReverseGeoTransform[2] == 0.0 && 
             psTransform->adfDEMReverseGeoTransform[4] == 0.0 &&
-            CSLTestBoolean(CPLGetConfigOption("GDAL_RPC_DEM_OPTIM", "YES")) )
+            CPLTestBool(CPLGetConfigOption("GDAL_RPC_DEM_OPTIM", "YES")) )
         {
             int bUseOptimized = TRUE;
             double dfMinX = padfX[0], dfMaxX = padfX[0];
