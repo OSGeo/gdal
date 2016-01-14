@@ -571,7 +571,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 
     /* Can be set to NO to avoid opening the underlying JPEG2000/JPEG */
     /* stream. Might speed up operations when just metadata is needed */
-    int bOpenUnderlyingDS = CSLTestBoolean(
+    int bOpenUnderlyingDS = CPLTestBool(
             CPLGetConfigOption("NITF_OPEN_UNDERLYING_DS", "YES"));
 
 /* -------------------------------------------------------------------- */
@@ -4208,7 +4208,7 @@ NITFDataset::NITFCreateCopy(
 /*      Should we write DIGEST Spatial Data Extension TRE ?             */
 /* -------------------------------------------------------------------- */
         const char* pszSDE_TRE = CSLFetchNameValue(papszFullOptions, "SDE_TRE");
-        const bool bSDE_TRE = pszSDE_TRE && CSLTestBoolean(pszSDE_TRE);
+        const bool bSDE_TRE = pszSDE_TRE && CPLTestBool(pszSDE_TRE);
         if (bSDE_TRE)
         {
             if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0

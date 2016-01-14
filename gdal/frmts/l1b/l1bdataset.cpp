@@ -557,7 +557,7 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn )
     eProcCenter = UNKNOWN_CENTER;
     // sStartTime
     // sStopTime
-    bHighGCPDensityStrategy = CSLTestBoolean(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"));
+    bHighGCPDensityStrategy = CPLTestBool(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"));
     pasGCPList = NULL;
     nGCPCount = 0;
     iGCPOffset = 0;
@@ -3348,7 +3348,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     {
         CPLString  osTMP;
-        int bInterpol = CSLTestBoolean(CPLGetConfigOption("L1B_INTERPOL_GCPS", "TRUE"));
+        int bInterpol = CPLTestBool(CPLGetConfigOption("L1B_INTERPOL_GCPS", "TRUE"));
 
         poOutDS->SetMetadataItem( "SRS", poDS->pszGCPProjection, "GEOLOCATION" ); /* unused by gdalgeoloc.cpp */
 
@@ -3487,7 +3487,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Fetch metadata in CSV file                                      */
 /* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption("L1B_FETCH_METADATA", "NO")) )
+    if( CPLTestBool(CPLGetConfigOption("L1B_FETCH_METADATA", "NO")) )
     {
         poDS->FetchMetadata();
     }

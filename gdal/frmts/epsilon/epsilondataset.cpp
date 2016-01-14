@@ -770,7 +770,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     int bRasterliteOutput =
-        CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+        CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                             "RASTERLITE_OUTPUT", "NO"));
 
     int nYRatio = EPS_Y_RT;
@@ -778,7 +778,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nCrRatio = EPS_Cr_RT;
 
     int eResample;
-    if (CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                             "RGB_RESAMPLE", "YES")))
         eResample = EPS_RESAMPLE_420;
     else

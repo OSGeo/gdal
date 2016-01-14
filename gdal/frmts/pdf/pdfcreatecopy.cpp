@@ -1356,7 +1356,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     oLGIDict.Add("Projection", poProjectionDict);
 
     /* GDAL extension */
-    if( CSLTestBoolean( CPLGetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "TRUE") ) )
+    if( CPLTestBool( CPLGetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "TRUE") ) )
         poProjectionDict->Add("WKT", pszWKT);
 
     VSIFPrintfL(fp, "%s\n", oLGIDict.Serialize().c_str());
@@ -3696,7 +3696,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     int nImageLengthId = AllocNewObject();
 
     int nMeasureId = 0;
-    if( CSLTestBoolean(CPLGetConfigOption("GDAL_PDF_WRITE_GEOREF_ON_IMAGE", "FALSE")) &&
+    if( CPLTestBool(CPLGetConfigOption("GDAL_PDF_WRITE_GEOREF_ON_IMAGE", "FALSE")) &&
         nReqXSize == poSrcDS->GetRasterXSize() &&
         nReqYSize == poSrcDS->GetRasterYSize() )
     {

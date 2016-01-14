@@ -1025,7 +1025,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
             return NULL;
         }
     }
-    const int isRGBA = CSLTestBoolean(CPLGetConfigOption("RPFTOC_FORCE_RGBA", "NO"));
+    const int isRGBA = CPLTestBool(CPLGetConfigOption("RPFTOC_FORCE_RGBA", "NO"));
     RPFToc* toc = (psFile) ? RPFTOCRead( pszFilename, psFile ) :
                               RPFTOCReadFromBuffer( pszFilename, fp, buffer);
     if (fp)

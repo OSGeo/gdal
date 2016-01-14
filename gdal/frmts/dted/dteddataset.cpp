@@ -113,7 +113,7 @@ DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDSIn, int nBandIn ) :
     /* with some scanline oriented algorithms */
     /* Of course you need to have a big enough case size, particularly for DTED 2 */
     /* datasets */
-    nBlockXSize = CSLTestBoolean(CPLGetConfigOption("GDAL_DTED_SINGLE_BLOCK", "NO")) ?
+    nBlockXSize = CPLTestBool(CPLGetConfigOption("GDAL_DTED_SINGLE_BLOCK", "NO")) ?
                             poDS->GetRasterXSize() : 1;
     nBlockYSize = poDS->GetRasterYSize();
 }
@@ -248,7 +248,7 @@ DTEDDataset::DTEDDataset() : psDTED(NULL)
 {
     pszFilename = CPLStrdup("unknown");
     pszProjection = CPLStrdup("");
-    bVerifyChecksum = CSLTestBoolean(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"));
+    bVerifyChecksum = CPLTestBool(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"));
 }
 
 /************************************************************************/

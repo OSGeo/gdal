@@ -165,7 +165,7 @@ CPLErr VRTRasterBand::SetMetadataItem( const char *pszName,
 
     if( EQUAL(pszName,"HideNoDataValue") )
     {
-        m_bHideNoDataValue = CSLTestBoolean( pszValue );
+        m_bHideNoDataValue = CPLTestBool( pszValue );
         return CE_None;
     }
 
@@ -332,7 +332,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         SetNoDataValue( CPLAtofM(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
 
     if( CPLGetXMLValue( psTree, "HideNoDataValue", NULL ) != NULL )
-        m_bHideNoDataValue = CSLTestBoolean( CPLGetXMLValue( psTree, "HideNoDataValue", "0" ) );
+        m_bHideNoDataValue = CPLTestBool( CPLGetXMLValue( psTree, "HideNoDataValue", "0" ) );
 
     SetUnitType( CPLGetXMLValue( psTree, "UnitType", NULL ) );
 
@@ -433,7 +433,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         }
 
         if (STARTS_WITH_CI(pszFilename, "MEM:::") && pszVRTPath != NULL &&
-            !CSLTestBoolean(CPLGetConfigOption("VRT_ALLOW_MEM_DRIVER", "NO")))
+            !CPLTestBool(CPLGetConfigOption("VRT_ALLOW_MEM_DRIVER", "NO")))
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "<SourceFilename> points to a MEM dataset, which is rather suspect! "

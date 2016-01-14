@@ -1138,7 +1138,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
 
     const char* pszAddHeaderLine =
             CSLFetchNameValue(papszOptions, "ADD_HEADER_LINE");
-    if (pszAddHeaderLine != NULL && CSLTestBoolean(pszAddHeaderLine))
+    if (pszAddHeaderLine != NULL && CPLTestBool(pszAddHeaderLine))
     {
         VSIFPrintfL(fp, "X%sY%sZ\n", pszColSep, pszColSep);
     }

@@ -50,7 +50,7 @@ CPLString GetCompressionSoftwareName(){
     char szProcessName[2048];
 
     /* For privacy reason, allow the user to not write the software name in the ECW */
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", "YES")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", "YES")) )
         return osRet;
 
     if( CPLGetExecPath( szProcessName, sizeof(szProcessName) - 1 ) )
@@ -779,7 +779,7 @@ CPLErr GDALECWCompressor::Initialize(
         if( pszOption != NULL ) 
             SetParameter(
                 CNCSJP2FileView::JP2_COMPRESS_CODESTREAM_ONLY, 
-                (bool) CSLTestBoolean( pszOption ) );
+                CPLTestBool( pszOption ) );
 
         pszOption = CSLFetchNameValue(papszOptions, "LEVELS");
         if( pszOption != NULL )
@@ -814,12 +814,12 @@ CPLErr GDALECWCompressor::Initialize(
         pszOption = CSLFetchNameValue(papszOptions, "INCLUDE_SOP");
         if( pszOption != NULL )
             SetParameter( CNCSJP2FileView::JP2_COMPRESS_INCLUDE_SOP, 
-                                      (bool) CSLTestBoolean( pszOption ) );
+                                      CPLTestBool( pszOption ) );
 
         pszOption = CSLFetchNameValue(papszOptions, "INCLUDE_EPH");
         if( pszOption != NULL )
             SetParameter( CNCSJP2FileView::JP2_COMPRESS_INCLUDE_EPH, 
-                                      (bool) CSLTestBoolean( pszOption ) );
+                                      CPLTestBool( pszOption ) );
 
         pszOption = CSLFetchNameValue(papszOptions, "PROGRESSION");
         if( pszOption != NULL && EQUAL(pszOption,"LRCP") )
@@ -1035,7 +1035,7 @@ CPLErr GDALECWCompressor::Initialize(
 
     pszLargeOK = CPLGetConfigOption( "ECW_LARGE_OK", pszLargeOK );
 
-    if( CSLTestBoolean(pszLargeOK) )
+    if( CPLTestBool(pszLargeOK) )
     {
         CNCSFile::SetKeySize();
         CPLDebug( "ECW", "Large file generation enabled." );
@@ -1065,7 +1065,7 @@ CPLErr GDALECWCompressor::Initialize(
         if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")!=NULL){
             psClient->pFileMetaData->sClassification =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")).c_str());
         }
-        if ( pszECWCompany != NULL && CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_WRITE_COMPANY", "YES"))  ){
+        if ( pszECWCompany != NULL && CPLTestBool(CPLGetConfigOption("GDAL_ECW_WRITE_COMPANY", "YES"))  ){
             psClient->pFileMetaData->sCompany = NCSStrDupT(NCS::CString(pszECWCompany).c_str());
         }
         CPLString osCompressionSoftware = GetCompressionSoftwareName();
@@ -1093,7 +1093,7 @@ CPLErr GDALECWCompressor::Initialize(
         if( fpVSIL == NULL )
         {
 #if ECWSDK_VERSION>=40 && defined(WIN32)
-            if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+            if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
             {
                 wchar_t *pwszFilename = CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
                 oError = GetCNCSError(Open( pwszFilename, false, true ));

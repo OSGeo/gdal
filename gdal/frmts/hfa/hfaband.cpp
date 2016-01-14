@@ -2005,7 +2005,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     HFAInfo_t *psRRDInfo = psInfo;
     HFAEntry *poParent = poNode;
 
-    if( CSLTestBoolean( CPLGetConfigOption( "HFA_USE_RRD", "NO" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "HFA_USE_RRD", "NO" ) ) )
     {
         psRRDInfo = HFACreateDependent( psInfo );
         if( psRRDInfo == NULL )
@@ -2038,7 +2038,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /*      will drive our .img file size near 4GB.  For now, just base     */
 /*      it on the config options.                                       */
 /* -------------------------------------------------------------------- */
-    int bCreateLargeRaster = CSLTestBoolean(
+    int bCreateLargeRaster = CPLTestBool(
         CPLGetConfigOption("USE_SPILL","NO") );
     GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
 
@@ -2065,7 +2065,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     int bCompressionType = FALSE;
     const char* pszCompressOvr = CPLGetConfigOption("HFA_COMPRESS_OVR", NULL);
     if( pszCompressOvr != NULL )
-        bCompressionType = CSLTestBoolean(pszCompressOvr);
+        bCompressionType = CPLTestBool(pszCompressOvr);
     else
     {
         HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );

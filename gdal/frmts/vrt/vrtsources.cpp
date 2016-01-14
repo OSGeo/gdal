@@ -358,7 +358,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                           CXT_Attribute, "relativeToVRT" ), 
         CXT_Text, bRelativeToVRT ? "1" : "0" );
 
-    if( !CSLTestBoolean(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE")) )
+    if( !CPLTestBool(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE")) )
     {
         CPLCreateXMLNode( 
             CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ), 
@@ -451,9 +451,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     const char* pszShared = CPLGetXMLValue( psSourceFileNameNode, "shared", NULL);
     int bShared = FALSE;
     if( pszShared != NULL )
-        bShared = CSLTestBoolean(pszShared);
+        bShared = CPLTestBool(pszShared);
     else
-        bShared = CSLTestBoolean(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE"));
+        bShared = CPLTestBool(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE"));
 
     if( pszVRTPath != NULL
         && m_bRelativeToVRTOri )

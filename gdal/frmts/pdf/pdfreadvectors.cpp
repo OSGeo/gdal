@@ -70,7 +70,7 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary* poPageDict)
         return FALSE;
 
     GDALPDFObject* poStructTreeRoot = poCatalogObject->GetDictionary()->Get("StructTreeRoot");
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) ||
+    if (CPLTestBool(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) ||
         poStructTreeRoot == NULL ||
         poStructTreeRoot->GetType() != PDFObjectType_Dictionary)
     {
