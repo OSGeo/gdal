@@ -1085,7 +1085,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn) :
     else if( poGDS->nPhotometric == PHOTOMETRIC_RGB 
              || (poGDS->nPhotometric == PHOTOMETRIC_YCBCR 
                  && poGDS->nCompression == COMPRESSION_JPEG 
-                 && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                 && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
                                                        "YES") )) )
     {
         if( nBand == 1 )
@@ -1495,7 +1495,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                   GIntBig *pnLineSpace,
                                                   char **papszOptions )
 {
-    if( !CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO")) )
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO")) )
     {
         CPLVirtualMem *psRet
             = GetVirtualMemAutoInternal(eRWFlag, pnPixelSpace, pnLineSpace,
@@ -6091,21 +6091,21 @@ GTiffDataset::GTiffDataset() :
 
     bPromoteTo8Bits = FALSE;
 
-    bDebugDontWriteBlocks = CSLTestBoolean(CPLGetConfigOption("GTIFF_DONT_WRITE_BLOCKS", "NO"));
+    bDebugDontWriteBlocks = CPLTestBool(CPLGetConfigOption("GTIFF_DONT_WRITE_BLOCKS", "NO"));
 
     bIsFinalized = FALSE;
-    bIgnoreReadErrors = CSLTestBoolean(CPLGetConfigOption("GTIFF_IGNORE_READ_ERRORS", "NO"));
+    bIgnoreReadErrors = CPLTestBool(CPLGetConfigOption("GTIFF_IGNORE_READ_ERRORS", "NO"));
 
     bEXIFMetadataLoaded = FALSE;
     bICCMetadataLoaded = FALSE;
 
     bScanDeferred = TRUE;
 
-    bDirectIO = CSLTestBoolean(CPLGetConfigOption("GTIFF_DIRECT_IO", "NO"));
+    bDirectIO = CPLTestBool(CPLGetConfigOption("GTIFF_DIRECT_IO", "NO"));
     const char* pszVirtualMemIO = CPLGetConfigOption("GTIFF_VIRTUAL_MEM_IO", "NO");
     if( EQUAL(pszVirtualMemIO, "IF_ENOUGH_RAM") )
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_IF_ENOUGH_RAM;
-    else if( CSLTestBoolean(pszVirtualMemIO) )
+    else if( CPLTestBool(pszVirtualMemIO) )
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_YES;
     else
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
@@ -6163,7 +6163,7 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
 /*      Handle forcing xml:ESRI data to be written to PAM.              */
 /* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
+    if( CPLTestBool(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
     {
         char **papszESRIMD = GetMetadata("xml:ESRI");
         if( papszESRIMD )
@@ -6361,7 +6361,7 @@ int GTiffDataset::GetJPEGOverviewCount()
     nJPEGOverviewCount = 0;
     if( eAccess != GA_ReadOnly || nCompression != COMPRESSION_JPEG ||
         (nRasterXSize < 256 && nRasterYSize < 256) ||
-        !CSLTestBoolean(CPLGetConfigOption("GTIFF_IMPLICIT_JPEG_OVR", "YES")) ||
+        !CPLTestBool(CPLGetConfigOption("GTIFF_IMPLICIT_JPEG_OVR", "YES")) ||
         GDALGetDriverByName("JPEG") == NULL )
     {
         return 0;
@@ -8039,7 +8039,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
     const char* pszInternalMask = CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", NULL);
     if (poMaskDS != NULL &&
         poMaskDS->GetRasterCount() == 1 &&
-        (pszInternalMask == NULL || CSLTestBoolean(pszInternalMask)))
+        (pszInternalMask == NULL || CPLTestBool(pszInternalMask)))
     {
         int nMaskOvrCompression;
         if( strstr(GDALGetMetadataItem(GDALGetDriverByName( "GTiff" ),
@@ -8081,7 +8081,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                 }
                 else
                 {
-                    poODS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
+                    poODS->bPromoteTo8Bits = CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
                     poODS->poBaseDS = this;
                     papoOverviewDS[i]->poMaskDS = poODS;
                     poMaskDS->nOverviewCount++;
@@ -8124,8 +8124,8 @@ CPLErr GTiffDataset::IBuildOverviews(
 /*      If RRD or external OVR overviews requested, then invoke         */
 /*      generic handling.                                               */
 /* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" )) 
-        || CSLTestBoolean(CPLGetConfigOption( "TIFF_USE_OVR", "NO" )) )
+    if( CPLTestBool(CPLGetConfigOption( "USE_RRD", "NO" )) 
+        || CPLTestBool(CPLGetConfigOption( "TIFF_USE_OVR", "NO" )) )
     {
         bUseGenericHandling = TRUE;
     }
@@ -8630,8 +8630,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
     {
         bPixelIsPoint = true;
         bPointGeoIgnore =
-            CPL_TO_BOOL(CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
-                                               "FALSE") ));
+            CPLTestBool( CPLGetConfigOption( "GTIFF_POINT_GEO_IGNORE",
+                                             "FALSE") );
     }
 
     if( bForceUnsetGTOrGCPs )
@@ -8895,8 +8895,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             continue; // ignored
         if( EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC) )
             continue; // handled elsewhere
-        if( EQUAL(papszDomainList[iDomain], "xml:ESRI") 
-            && CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
+        if( EQUAL(papszDomainList[iDomain], "xml:ESRI")
+            && CPLTestBool(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
             continue; // handled elsewhere
 
         if( STARTS_WITH_CI(papszDomainList[iDomain], "xml:") )
@@ -9506,9 +9506,9 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
     if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
-    if( nCompression == COMPRESSION_JPEG 
-        && nPhotometric == PHOTOMETRIC_YCBCR 
-        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+    if( nCompression == COMPRESSION_JPEG
+        && nPhotometric == PHOTOMETRIC_YCBCR
+        && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
                                               "YES") ) )
     {
         int nColorMode;
@@ -9891,12 +9891,12 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->fpL == NULL )
             return NULL;
     }
-    else if( !(pszReadStreaming && !CSLTestBoolean(pszReadStreaming)) &&
+    else if( !(pszReadStreaming && !CPLTestBool(pszReadStreaming)) &&
              poOpenInfo->nHeaderBytes >= 24 &&
              ((int)VSIFTellL(poOpenInfo->fpL) == poOpenInfo->nHeaderBytes || /* A pipe has no seeking capability, so its position is 0 despite having read bytes */
               strcmp(pszFilename, "/vsistdin/") == 0 ||
               //STARTS_WITH(pszFilename, "/vsicurl_streaming/") ||
-              (pszReadStreaming && CSLTestBoolean(pszReadStreaming))) )
+              (pszReadStreaming && CPLTestBool(pszReadStreaming))) )
     {
         bStreaming = TRUE;
         if( !GTIFFMakeBufferedStream(poOpenInfo) )
@@ -9990,7 +9990,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             /* There is a risk of DoS due to huge amount of memory allocated in ChopUpSingleUncompressedStrip() */
             /* in libtiff */
             if (nStrips > 128 * 1024 * 1024 &&
-                !CSLTestBoolean(CPLGetConfigOption("GTIFF_FORCE_STRIP_CHOP", "NO")))
+                !CPLTestBool(CPLGetConfigOption("GTIFF_FORCE_STRIP_CHOP", "NO")))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                         "Potential denial of service detected. Avoid using strip chop. "
@@ -10249,7 +10249,7 @@ void GTiffDataset::LookForProjection()
 
             // Should we simplify away vertical CS stuff?
             if( STARTS_WITH_CI(pszProjection, "COMPD_CS")
-                && !CSLTestBoolean( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
+                && !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
                                                        "NO") ) )
             {
                 OGRSpatialReference oSRS;
@@ -10999,7 +10999,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
     if( nCompression == COMPRESSION_JPEG 
         && nPhotometric == PHOTOMETRIC_YCBCR 
-        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+        && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
                                               "YES") ) )
     {
         int nColorMode;
@@ -11064,7 +11064,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
     if( 
 #ifdef DEBUG
-        CSLTestBoolean(CPLGetConfigOption("GTIFF_FORCE_RGBA", "NO")) ||
+        CPLTestBool(CPLGetConfigOption("GTIFF_FORCE_RGBA", "NO")) ||
 #endif
         (bAllowRGBAInterface &&
         !bTreatAsBitmap && !(nBitsPerSample > 8)
@@ -11129,7 +11129,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         && nBlockYSize == nYSize 
         && nYSize > 2000
         && !bTreatAsRGBA 
-        && CSLTestBoolean(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")))
+        && CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")))
     {
         /* libtiff 3.9.2 (20091104) and older, libtiff 4.0.0beta5 (also 20091104) */
         /* and older will crash when trying to open a all-in-one-strip */
@@ -11615,8 +11615,8 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
             {
                 bPixelIsPoint = true;
                 bPointGeoIgnore =
-                    CPL_TO_BOOL(CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
-                                                    "FALSE") ));
+                    CPLTestBool( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                                    "FALSE") );
             }
 
             GTIFFree( psGTIF );
@@ -11921,7 +11921,7 @@ void GTiffDataset::ScanDirectories()
                 CPLDebug( "GTiff", "Opened band mask.\n");
                 poMaskDS->poBaseDS = this;
 
-                poMaskDS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
+                poMaskDS->bPromoteTo8Bits = CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
             }
         }
 
@@ -11952,7 +11952,7 @@ void GTiffDataset::ScanDirectories()
                         CPLDebug( "GTiff", "Opened band mask for %dx%d overview.\n",
                                   poDS->GetRasterXSize(), poDS->GetRasterYSize());
                         ((GTiffDataset*)papoOverviewDS[i])->poMaskDS = poDS;
-                        poDS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
+                        poDS->bPromoteTo8Bits = CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
                         poDS->poBaseDS = this;
                         break;
                     }
@@ -12314,7 +12314,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( nCompression == COMPRESSION_NONE && 
         dfUncompressedImageSize >= 1e9 &&
         !CSLFetchBoolean(papszParmList, "SPARSE_OK", FALSE) &&
-        CSLTestBoolean(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
+        CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
     {
         GIntBig nFreeDiskSpace = VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
         if( nFreeDiskSpace >= 0 &&
@@ -12351,7 +12351,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     else
     {
-        bCreateBigTIFF = CSLTestBoolean( pszBIGTIFF );
+        bCreateBigTIFF = CPLTestBool( pszBIGTIFF );
         if (!bCreateBigTIFF && nCompression == COMPRESSION_NONE &&
              dfUncompressedImageSize > 4200000000.0 )
         {
@@ -12790,7 +12790,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 #if defined(BIGTIFF_SUPPORT)
     if( nCompression == COMPRESSION_JPEG &&
         !STARTS_WITH(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_") &&
-        CSLTestBoolean(CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
+        CPLTestBool(CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
         CPLString osTmpFilenameIn;
         osTmpFilenameIn.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", hTIFF);
@@ -12825,7 +12825,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             if(nJpegQuality > 0) 
                 TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, nJpegQuality); 
             if( nPhotometric == PHOTOMETRIC_YCBCR 
-                && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
                                                     "YES") ) )
             {
                 TIFFSetField(hTIFFTmp, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
@@ -12991,7 +12991,7 @@ int GTiffDataset::GuessJPEGQuality(int& bOutHasQuantizationTable,
         TIFFSetDirectory( hTIFFTmp, 0 );
         // Now reset jpegcolormode. 
         if( nPhotometric == PHOTOMETRIC_YCBCR 
-            && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+            && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
                                                 "YES") ) )
         {
             TIFFSetField(hTIFFTmp, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
@@ -13121,7 +13121,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( poDS->nCompression == COMPRESSION_JPEG 
         && poDS->nPhotometric == PHOTOMETRIC_YCBCR 
-        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+        && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
                                               "YES") ) )
     {
         int nColorMode;
@@ -13708,8 +13708,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         bPixelIsPoint = true;
         bPointGeoIgnore =
-            CPL_TO_BOOL(CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
-                                               "FALSE") ));
+            CPLTestBool( CPLGetConfigOption( "GTIFF_POINT_GEO_IGNORE",
+                                                "FALSE") );
     }
 
 /* -------------------------------------------------------------------- */
@@ -14049,7 +14049,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Handle forcing xml:ESRI data to be written to PAM.              */
 /* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
+    if( CPLTestBool(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
     {
         char **papszESRIMD = poSrcDS->GetMetadata("xml:ESRI");
         if( papszESRIMD )
@@ -14367,7 +14367,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         delete poDS;
         poDS = NULL;
 
-        if (CSLTestBoolean(CPLGetConfigOption("GTIFF_DELETE_ON_ERROR", "YES")))
+        if (CPLTestBool(CPLGetConfigOption("GTIFF_DELETE_ON_ERROR", "YES")))
         {
             if( !bStreaming )
                 VSIUnlink( pszFilename ); // should really delete more carefully.
@@ -14948,7 +14948,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                  "This TIFF dataset has already an internal mask band");
         return CE_Failure;
     }
-    else if (CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
+    else if (CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
     {
         toff_t  nOffset;
         int     bIsTiled;
@@ -15018,7 +15018,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
             return CE_Failure;
 
         poMaskDS = new GTiffDataset();
-        poMaskDS->bPromoteTo8Bits = CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
+        poMaskDS->bPromoteTo8Bits = CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
         if( poMaskDS->OpenOffset( hTIFF, ppoActiveDSRef, nOffset, 
                                   FALSE, GA_Update ) != CE_None)
         {
@@ -15049,7 +15049,7 @@ CPLErr GTiffRasterBand::CreateMaskBand(int nFlagsIn)
                  "This TIFF dataset has already an internal mask band");
         return CE_Failure;
     }
-    else if (CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
+    else if (CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
     {
         return poGDS->CreateMaskBand(nFlagsIn);
     }

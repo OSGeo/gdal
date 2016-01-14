@@ -393,7 +393,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn )
     /* ERO : note I'm not sure if CFloat64 can be transmitted as NBPP is only 2 characters */
     else
     {
-        int bOpenUnderlyingDS = CSLTestBoolean(
+        int bOpenUnderlyingDS = CPLTestBool(
                 CPLGetConfigOption("NITF_OPEN_UNDERLYING_DS", "YES"));
         if (!bOpenUnderlyingDS && psImage->nBitsPerSample > 8 && psImage->nBitsPerSample < 16)
         {

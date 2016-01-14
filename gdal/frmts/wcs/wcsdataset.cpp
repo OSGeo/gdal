@@ -515,7 +515,7 @@ int WCSDataset::TestUseBlockIO( CPL_UNUSED int nXOff,
         bUseBlockedIO = TRUE;
 
     if( bUseBlockedIO
-        && CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
+        && CPLTestBool( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
         bUseBlockedIO = FALSE;
 
     return bUseBlockedIO;

@@ -1967,7 +1967,7 @@ void ADRGDataset::WriteGENFile()
     WriteGENFile_GeneralInformationRecord(fdGEN, osNAM, osBAD, ARV, BRV, LSO, PSO,
                                           adfGeoTransform, SCA, nRasterXSize, nRasterYSize, NFL, NFC, TILEINDEX);
 
-    if (CSLTestBoolean(CPLGetConfigOption("ADRG_SIMULATE_MULTI_IMG", "OFF")))
+    if (CPLTestBool(CPLGetConfigOption("ADRG_SIMULATE_MULTI_IMG", "OFF")))
     {
         strncpy(tmp, osBaseFileName.c_str(), 6);
         tmp[6] = '\0';
@@ -2177,7 +2177,7 @@ void ADRGDataset::WriteTHFFile()
         int sizeOfFields[] = {0, 0, 0, 0, 0, 0, 0};
 
         /* Debug option to simulate ADRG datasets made of several images */
-        int nTotalFields = (CSLTestBoolean(CPLGetConfigOption("ADRG_SIMULATE_MULTI_IMG", "OFF"))) ? 6 : 5;
+        int nTotalFields = (CPLTestBool(CPLGetConfigOption("ADRG_SIMULATE_MULTI_IMG", "OFF"))) ? 6 : 5;
 
         const char* nameOfFields[] = { "001", "VFF", "VFF", "VFF", "VFF", "VFF", "VFF" };
         int pos = BeginLeader(fd, 9, 9, 3, nTotalFields);

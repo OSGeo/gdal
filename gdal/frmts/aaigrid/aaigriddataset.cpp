@@ -1008,7 +1008,7 @@ GDALDataset * AAIGDataset::CreateCopy(
 
     if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001
         || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
-        || (pszForceCellsize && CSLTestBoolean(pszForceCellsize)) )
+        || (pszForceCellsize && CPLTestBool(pszForceCellsize)) )
         CPLsnprintf( szHeader, sizeof(szHeader),
                  "ncols        %d\n"
                  "nrows        %d\n"

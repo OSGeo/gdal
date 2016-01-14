@@ -162,7 +162,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
     if( nRequestCount > 0 &&
         STARTS_WITH(pasRequest[0].pszURL, "/vsimem/") &&
         /* Disabled by default for potential security issues */
-        CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+        CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
         for(i = 0; i< nRequestCount;i++)
         {

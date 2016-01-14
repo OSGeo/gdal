@@ -156,7 +156,7 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
     nGribDataYSize = poDSIn->nRasterYSize;
 
     const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
-    int bMetricUnits = CSLTestBoolean(pszGribNormalizeUnits);
+    int bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
 
     SetMetadataItem( "GRIB_UNIT", ConvertUnitInText(bMetricUnits, psInv->unitName) );
     SetMetadataItem( "GRIB_COMMENT", ConvertUnitInText(bMetricUnits, psInv->comment) );
@@ -432,7 +432,7 @@ void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum, do
     IS_Init (&is);
 
     const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
-    if ( !CSLTestBoolean(pszGribNormalizeUnits) )
+    if ( !CPLTestBool(pszGribNormalizeUnits) )
         f_unit = 0; /* do not normalize units to metric */
 
     /* Read GRIB message from file position "start". */
@@ -703,7 +703,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i );
-            if( CSLTestBoolean( CPLGetConfigOption( "GRIB_PDS_ALL_BANDS", "ON" ) ) )
+            if( CPLTestBool( CPLGetConfigOption( "GRIB_PDS_ALL_BANDS", "ON" ) ) )
             {
                 if( Inv->GribVersion == 2 )
                     gribBand->FindPDSTemplate();

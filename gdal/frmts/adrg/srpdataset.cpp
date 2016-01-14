@@ -1430,7 +1430,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
             if (papszFileNames == NULL)
                 return NULL;
             if (papszFileNames[1] == NULL &&
-                CSLTestBoolean(CPLGetConfigOption("SRP_SINGLE_GEN_IN_THF_AS_DATASET", "TRUE")))
+                CPLTestBool(CPLGetConfigOption("SRP_SINGLE_GEN_IN_THF_AS_DATASET", "TRUE")))
             {
                 osFileName = papszFileNames[0];
                 CSLDestroy(papszFileNames);

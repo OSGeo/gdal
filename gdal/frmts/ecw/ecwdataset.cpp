@@ -136,7 +136,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
     }
     else if( poDSIn->psFileInfo->eColorSpace == NCSCS_YCbCr )
     {
-        if( CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ))
+        if( CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ))
         {
             if( nBand == 1 )
                 eBandInterp = GCI_RedBand;
@@ -185,7 +185,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
         poDSIn->psFileInfo->pBands[3].nBits == 1 &&
         eBandInterp == GCI_AlphaBand && 
         CSLFetchBoolean(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-            CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+            CPLTestBool(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
     if( bPromoteTo8Bit )
         CPLDebug("ECW", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
@@ -1964,7 +1964,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         if( !(sCachedMultiBandIO.bEnabled) &&
             sCachedMultiBandIO.nBandsTried == nBands &&
-            CSLTestBoolean(CPLGetConfigOption("ECW_CLEVER", "YES")) )
+            CPLTestBool(CPLGetConfigOption("ECW_CLEVER", "YES")) )
         {
             sCachedMultiBandIO.bEnabled = TRUE;
             CPLDebug("ECW", "Detecting successive band reading pattern (for next time)");
@@ -2400,7 +2400,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
     try
     {
 #ifdef WIN32
-        if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+        if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
         {
             wchar_t *pwszDatasetName = CPLRecodeToWChar( pszDatasetName, CPL_ENC_UTF8, CPL_ENC_UCS2 );
             oErr = poFileView->Open( pwszDatasetName, bProgressive, false );
@@ -3290,7 +3290,7 @@ void ECWInitialize()
 /*      This will disable automatic conversion of YCbCr to RGB by       */
 /*      the toolkit.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
+    if( !CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
         NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
 #if ECWSDK_VERSION>= 50
 	NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT, "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
@@ -3313,7 +3313,7 @@ void ECWInitialize()
     /*		behaviour.														*/
     /* -------------------------------------------------------------------- */
     #if ECWSDK_VERSION >= 50
-    if( CSLTestBoolean( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE) 
+    if( CPLTestBool( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE) 
         NCSecwSetConfig(NCSCFG_PROJECTION_FORMAT, NCS_PROJECTION_ERMAPPER_FORMAT);
     #endif
 /* -------------------------------------------------------------------- */
@@ -3353,13 +3353,13 @@ void ECWInitialize()
     pszOpt = CPLGetConfigOption( "ECW_TEXTURE_DITHER", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_TEXTURE_DITHER, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
 
     pszOpt = CPLGetConfigOption( "ECW_FORCE_FILE_REOPEN", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
     pszOpt = CPLGetConfigOption( "ECW_CACHE_MAXOPEN", NULL );
     if( pszOpt )
@@ -3369,18 +3369,18 @@ void ECWInitialize()
     pszOpt = CPLGetConfigOption( "ECW_AUTOGEN_J2I", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_JP2_AUTOGEN_J2I, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
     pszOpt = CPLGetConfigOption( "ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
 
     pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_RESILIENT_DECODING, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 #endif
 }
 

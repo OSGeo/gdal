@@ -305,7 +305,7 @@ int VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
 {
     const char* pszUseSources = CPLGetConfigOption("VRT_MIN_MAX_FROM_SOURCES", NULL);
     if( pszUseSources )
-        return CSLTestBoolean(pszUseSources);
+        return CPLTestBool(pszUseSources);
 
     // Use heuristics to determine if we are going to use the source GetMinimum()
     // or GetMaximum() implementation: all the sources must be "simple" sources

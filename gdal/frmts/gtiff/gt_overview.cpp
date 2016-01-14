@@ -543,7 +543,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         }
         else
         {
-            bCreateBigTIFF = CSLTestBoolean( pszBIGTIFF );
+            bCreateBigTIFF = CPLTestBool( pszBIGTIFF );
             if (!bCreateBigTIFF && nCompression == COMPRESSION_NONE 
                 && dfUncompressedOverviewSize > 4200000000.0 )
             {

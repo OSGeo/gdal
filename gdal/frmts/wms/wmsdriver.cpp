@@ -221,7 +221,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     nXSize = (int) dXSize;
     nYSize = (int) dYSize;
 
-    int bTransparent = osTransparent.size() ? CSLTestBoolean(osTransparent) : FALSE;
+    int bTransparent = osTransparent.size() ? CPLTestBool(osTransparent) : FALSE;
 
     if (osFormat.size() == 0)
     {

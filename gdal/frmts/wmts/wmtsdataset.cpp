@@ -902,7 +902,7 @@ char** WMTSDataset::BuildHTTPRequestOpts(CPLString osOtherXML)
         optstr.Printf("REFERER=%s", CPLGetXMLValue(psXML, "Referer", NULL));
         http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
     }
-    if (CSLTestBoolean(CPLGetXMLValue(psXML, "UnsafeSSL", "false"))) {
+    if (CPLTestBool(CPLGetXMLValue(psXML, "UnsafeSSL", "false"))) {
         http_request_opts = CSLAddString(http_request_opts, "UNSAFESSL=1");
     }
     if (CPLGetXMLValue(psXML, "UserPwd", NULL)) {
@@ -963,7 +963,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                     else if( EQUAL(pszKey, "style") )
                         osStyle = pszValue;
                     else if( EQUAL(pszKey, "extendbeyonddateline") )
-                        bExtendBeyondDateLine = CSLTestBoolean(pszValue);
+                        bExtendBeyondDateLine = CPLTestBool(pszValue);
                     else
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Unknown parameter: %s'", pszKey);
@@ -1018,7 +1018,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         osTileFormat = CPLGetXMLValue(psRoot, "Format", osTileFormat);
         osInfoFormat = CPLGetXMLValue(psRoot, "InfoFormat", osInfoFormat);
         osProjection = CPLGetXMLValue(psRoot, "Projection", osProjection);
-        bExtendBeyondDateLine = CSLTestBoolean(CPLGetXMLValue(psRoot, "ExtendBeyondDateLine",
+        bExtendBeyondDateLine = CPLTestBool(CPLGetXMLValue(psRoot, "ExtendBeyondDateLine",
                                             (bExtendBeyondDateLine) ? "true": "false"));
 
         osOtherXML = "";
@@ -1201,7 +1201,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             }
             else if( strcmp(psSubIter->pszValue, "Style") == 0 )
             {
-                int bIsDefault = CSLTestBoolean(CPLGetXMLValue(
+                int bIsDefault = CPLTestBool(CPLGetXMLValue(
                                             psSubIter, "isDefault", "false"));
                 const char* l_pszIdentifier = CPLGetXMLValue(
                                             psSubIter, "Identifier", "");

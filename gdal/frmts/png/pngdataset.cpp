@@ -1821,8 +1821,8 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const char* apszKeywords[] = { "Title", "Author", "Description", "Copyright",
                                    "Creation Time", "Software", "Disclaimer",
                                    "Warning", "Source", "Comment", NULL };
-    const bool bWriteMetadataAsText = CPL_TO_BOOL(CSLTestBoolean(
-        CSLFetchNameValueDef(papszOptions, "WRITE_METADATA_AS_TEXT", "FALSE")));
+    const bool bWriteMetadataAsText = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRITE_METADATA_AS_TEXT", "FALSE"));
     for(int i=0;apszKeywords[i]!=NULL;i++)
     {
         const char* pszKey = apszKeywords[i];
@@ -1927,7 +1927,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     /* If writing to stdout, we can't reopen it, so return */
     /* a fake dataset to make the caller happy */
-    if( CSLTestBoolean(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
+    if( CPLTestBool(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);

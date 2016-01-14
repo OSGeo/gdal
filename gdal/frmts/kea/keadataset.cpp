@@ -275,11 +275,12 @@ GDALDataset *KEADataset::Create( const char * pszFilename,
     if( keaImgH5File == NULL )
         return NULL;
 
-    bool bThematic = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef( papszParmList, "THEMATIC", "FALSE" )));
+    bool bThematic =
+        CPLTestBool(CSLFetchNameValueDef( papszParmList, "THEMATIC", "FALSE" ));
 
     try
     {
-        // create our dataset object                            
+        // create our dataset object
         KEADataset *pDataset = new KEADataset( keaImgH5File, GA_Update );
 
         pDataset->SetDescription( pszFilename );
@@ -320,7 +321,8 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
     if( keaImgH5File == NULL )
         return NULL;
 
-    bool bThematic = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef( papszParmList, "THEMATIC", "FALSE" )));
+    bool bThematic =
+        CPLTestBool(CSLFetchNameValueDef( papszParmList, "THEMATIC", "FALSE" ));
 
     try
     {

@@ -362,7 +362,7 @@ class GDALPDFDumper
         GDALPDFDumper(const char* pszFilename,
                       const char* pszDumpFile, int nDepthLimitIn = -1) : nDepthLimit(nDepthLimitIn)
         {
-            bDumpParent = CSLTestBoolean(CPLGetConfigOption("PDF_DUMP_PARENT", "FALSE"));
+            bDumpParent = CPLTestBool(CPLGetConfigOption("PDF_DUMP_PARENT", "FALSE"));
             if (strcmp(pszDumpFile, "stderr") == 0)
                 f = stderr;
             else if (EQUAL(pszDumpFile, "YES"))
@@ -1838,7 +1838,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
         int nRet;
 
 #ifdef notdef
-        int bUseSpawn = CSLTestBoolean(CPLGetConfigOption("GDAL_PDF_USE_SPAWN", "YES"));
+        int bUseSpawn = CPLTestBool(CPLGetConfigOption("GDAL_PDF_USE_SPAWN", "YES"));
         if( !bUseSpawn )
         {
             CPLString osCmd = CPLSPrintf("pdftoppm -r %f -x %d -y %d -W %d -H %d -f %d -l %d \"%s\"",
@@ -2213,7 +2213,7 @@ PDFDataset::PDFDataset(PDFDataset* poParentDSIn, int nXSize, int nYSize)
 
     dfPageWidth = dfPageHeight = 0;
 
-    bSetStyle = CSLTestBoolean(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES"));
+    bSetStyle = CPLTestBool(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES"));
 
     InitMapOperators();
 }
@@ -4059,8 +4059,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if (globalParams == NULL)
             globalParams = new GlobalParams();
 
-        globalParams->setPrintCommands(CPL_TO_BOOL(CSLTestBoolean(
-            CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE"))));
+        globalParams->setPrintCommands(CPLTestBool(
+            CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
     }
 
     while( true )
@@ -4128,7 +4128,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     nPages = poDocPoppler->getNumPages();
 
     if( iPage == 1 && nPages > 10000 &&
-        CSLTestBoolean(CPLGetConfigOption("GDAL_PDF_LIMIT_PAGE_COUNT", "YES")) )
+        CPLTestBool(CPLGetConfigOption("GDAL_PDF_LIMIT_PAGE_COUNT", "YES")) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "This PDF document reports %d pages. "
@@ -5224,7 +5224,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
     bHasCTM = FALSE;
     if ((poCTM = poLGIDict->Get("CTM")) != NULL &&
         poCTM->GetType() == PDFObjectType_Array &&
-        CSLTestBoolean(CPLGetConfigOption("PDF_USE_CTM", "YES")) )
+        CPLTestBool(CPLGetConfigOption("PDF_USE_CTM", "YES")) )
     {
         int nLength = poCTM->GetArray()->GetLength();
         if ( nLength != 6 )
@@ -5256,7 +5256,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
         GDALPDFArray* poRegistrationArray = poRegistration->GetArray();
         int nLength = poRegistrationArray->GetLength();
         if( nLength > 4 || (!bHasCTM && nLength >= 2) ||
-            CSLTestBoolean(CPLGetConfigOption("PDF_REPORT_GCPS", "NO")) )
+            CPLTestBool(CPLGetConfigOption("PDF_REPORT_GCPS", "NO")) )
         {
             nGCPCount = 0;
             pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nLength);
@@ -5327,7 +5327,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     GDALPDFObject* poWKT;
     if ( (poWKT = poProjDict->Get("WKT")) != NULL &&
          poWKT->GetType() == PDFObjectType_String &&
-         CSLTestBoolean( CPLGetConfigOption("GDAL_PDF_OGC_BP_READ_WKT", "TRUE") ) )
+         CPLTestBool( CPLGetConfigOption("GDAL_PDF_OGC_BP_READ_WKT", "TRUE") ) )
     {
         CPLDebug("PDF", "Found WKT attribute (GDAL extension). Using it");
         const char* pszWKTRead = poWKT->GetString().c_str();

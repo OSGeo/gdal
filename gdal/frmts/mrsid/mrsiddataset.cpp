@@ -855,7 +855,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( nBufYSize == 1 || nBufXSize * ((double) nBufYSize) < 100.0 )
         bUseBlockedIO = TRUE;
 
-    if( CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
         bUseBlockedIO = FALSE;
 
     if( bUseBlockedIO )

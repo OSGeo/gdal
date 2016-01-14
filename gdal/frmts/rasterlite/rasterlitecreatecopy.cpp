@@ -376,7 +376,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    const bool bTiled = CPL_TO_BOOL(CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "TILED", "YES")));
+    const bool bTiled = CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "YES"));
     int nBlockXSize, nBlockYSize;
     if (bTiled)
     {
@@ -498,7 +498,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Create or wipe existing tables                                  */
 /* -------------------------------------------------------------------- */
     const int bWipeExistingData =
-        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WIPE", "NO"));
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "WIPE", "NO"));
 
     hDS = RasterliteCreateTables(hDS, osTableName.c_str(),
                                  nSRSId, bWipeExistingData);

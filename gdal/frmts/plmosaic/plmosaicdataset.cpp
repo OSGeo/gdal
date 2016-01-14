@@ -622,10 +622,10 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->osCachePathRoot = PLMosaicGetParameter(poOpenInfo, papszOptions, "cache_path",
                                           CPLGetConfigOption("PL_CACHE_PATH",""));
 
-    poDS->bTrustCache = CSLTestBoolean(PLMosaicGetParameter(
+    poDS->bTrustCache = CPLTestBool(PLMosaicGetParameter(
                         poOpenInfo, papszOptions, "trust_cache", "FALSE"));
 
-    poDS->bUseTMSForMain = CSLTestBoolean(PLMosaicGetParameter(
+    poDS->bUseTMSForMain = CPLTestBool(PLMosaicGetParameter(
                         poOpenInfo, papszOptions, "use_tiles", "FALSE"));
 
     CSLDestroy(papszOptions);

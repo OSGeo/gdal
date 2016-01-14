@@ -421,7 +421,7 @@ GDALDataset *ZMapDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = nRows;
     poDS->dfNoDataValue = dfNoDataValue;
 
-    if (CSLTestBoolean(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
+    if (CPLTestBool(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
     {
         const double dfStepX = (dfMaxX - dfMinX) / (nCols - 1);
         const double dfStepY = (dfMaxY - dfMinY) / (nRows - 1);
@@ -604,7 +604,7 @@ GDALDataset* ZMapDataset::CreateCopy( const char * pszFilename,
     WriteRightJustified(fp, nXSize, 10);
     VSIFPrintfL(fp, ",");
 
-    if (CSLTestBoolean(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
+    if (CPLTestBool(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
     {
         WriteRightJustified(fp, adfGeoTransform[0] + adfGeoTransform[1] / 2, 14, 7);
         VSIFPrintfL(fp, ",");

@@ -618,7 +618,7 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
         return TRUE;
     }
 
-    return CSLTestBoolean(pszGDAL_ONE_BIG_READ);
+    return CPLTestBool(pszGDAL_ONE_BIG_READ);
 }
 
 /************************************************************************/
@@ -1123,7 +1123,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
     if( !bIsVSIL || VSIFGetNativeFileDescriptorL(fpRawL) == NULL ||
         !CPLIsVirtualMemFileMapAvailable() || (eDataType != GDT_Byte && !bNativeOrder) ||
         (size_t)nSize != nSize || nPixelOffset < 0 || nLineOffset < 0 ||
-        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO")) )
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO")) )
     {
         return GDALRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace,
                                                  pnLineSpace, papszOptions);

@@ -858,7 +858,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 break;
 
             default:
-                if( !CSLTestBoolean(CPLGetConfigOption("JPEG2000_FORCE_CREATION", "NO")) )
+                if( !CPLTestBool(CPLGetConfigOption("JPEG2000_FORCE_CREATION", "NO")) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "A band of the source dataset is of type %s, which might cause crashes in libjasper. "

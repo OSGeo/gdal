@@ -102,7 +102,7 @@ PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
     bRegularBlocking = false;
     bAllTilesSnapToSameGrid = false;
 
-    bCheckAllTiles = CSLTestBoolean( 
+    bCheckAllTiles = CPLTestBool(
         CPLGetConfigOption("PR_ALLOW_WHOLE_TABLE_SCAN", "YES"));
 
     pszSchema = NULL;
@@ -316,7 +316,7 @@ GBool PostGISRasterDataset::HasSpatialIndex()
     bHasTriedHasSpatialIndex = true;
 
     /* For debugging purposes only */
-    if( CSLTestBoolean(CPLGetConfigOption("PR_DISABLE_GIST", "FALSE") ) )
+    if( CPLTestBool(CPLGetConfigOption("PR_DISABLE_GIST", "FALSE") ) )
         return false;
 
     // Copyright dustymugs !!!
@@ -382,7 +382,7 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
     bHasTriedFetchingPrimaryKeyName = true;
 
     /* For debugging purposes only */
-    if( CSLTestBoolean(CPLGetConfigOption("PR_DISABLE_PK", "FALSE") ) )
+    if( CPLTestBool(CPLGetConfigOption("PR_DISABLE_PK", "FALSE") ) )
         return NULL;
 
     /* Determine the primary key/unique column on the table */
@@ -708,7 +708,7 @@ void PostGISRasterDataset::BuildOverviews()
             poOvrDS->pszWhere = pszWhere ? CPLStrdup(pszWhere) : NULL;
             poOvrDS->poParentDS = this;
 
-            if (!CSLTestBoolean(CPLGetConfigOption("PG_DIFFERED_OVERVIEWS", "YES")) &&
+            if (!CPLTestBool(CPLGetConfigOption("PG_DIFFERED_OVERVIEWS", "YES")) &&
                 (!poOvrDS->SetRasterProperties(NULL) ||
                 poOvrDS->GetRasterCount() != GetRasterCount()))
             {
