@@ -1433,7 +1433,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /*      Handle the projection transformation.                           */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = poSRS->GetAttrValue( "PROJECTION" );
-    int bWritePEString = FALSE;
+    bool bWritePEString = false;
 
     if( nPCS != KvUserDefined )
     {
@@ -1442,7 +1442,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         // that requires not setting GTModelTypeGeoKey to ProjectedCSTypeGeoKey
         if( eFlavor == GEOTIFF_KEYS_ESRI_PE && nPCS == 3857 )
         {
-            bWritePEString = TRUE;
+            bWritePEString = true;
         }
         else
         {
@@ -2197,7 +2197,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 
     else
     {
-        bWritePEString = TRUE;
+        bWritePEString = true;
     }
 
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
@@ -2206,8 +2206,8 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 
     bWritePEString |= (eFlavor == GEOTIFF_KEYS_ESRI_PE);
 
-    bWritePEString &= CPLTestBool( CPLGetConfigOption("GTIFF_ESRI_CITATION",
-                                              "YES") );
+    bWritePEString &=
+        CPLTestBool( CPLGetConfigOption("GTIFF_ESRI_CITATION", "YES") );
 
     if( bWritePEString )
     {
