@@ -647,8 +647,11 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
         return OGRERR_FAILURE;
     }
 
-    delete papoGeometries[iField];
-    papoGeometries[iField] = poGeomIn;
+    if( papoGeometries[iField] != poGeomIn )
+    {
+        delete papoGeometries[iField];
+        papoGeometries[iField] = poGeomIn;
+    }
 
     // I should be verifying that the geometry matches the defn's type.
     
@@ -721,12 +724,15 @@ OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
     if( iField < 0 || iField >= GetGeomFieldCount() )
         return OGRERR_FAILURE;
 
-    delete papoGeometries[iField];
+    if( papoGeometries[iField] != poGeomIn )
+    {
+        delete papoGeometries[iField];
 
-    if( poGeomIn != NULL )
-        papoGeometries[iField] = poGeomIn->clone();
-    else
-        papoGeometries[iField] = NULL;
+        if( poGeomIn != NULL )
+            papoGeometries[iField] = poGeomIn->clone();
+        else
+            papoGeometries[iField] = NULL;
+    }
 
     // I should be verifying that the geometry matches the defn's type.
     
