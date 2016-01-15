@@ -1450,8 +1450,8 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 char pszGCPTagName[64];
                 char pszGCPInfoTagName[64];
-                strcpy( pszGCPTagName, CPLSPrintf( "GDAL/GCP%d", i ) );
-                strcpy( pszGCPInfoTagName, CPLSPrintf( "GDAL/GCP%d_INFO", i ) );
+                snprintf( pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i );
+                snprintf( pszGCPInfoTagName, sizeof(pszGCPInfoTagName), "GDAL/GCP%d_INFO", i );
                 if( pasGCPs[i].pszInfo && pasGCPs[i].pszInfo[0] != '\0' )
                 {
                     oHeader.global_taglist().set( pszGCPInfoTagName, pasGCPs[i].pszInfo );
