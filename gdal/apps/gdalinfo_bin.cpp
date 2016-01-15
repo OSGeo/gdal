@@ -107,6 +107,7 @@ int main( int argc, char ** argv )
             Usage();
         }
     }
+    argv = CSLAddString(argv, "-stdout");
 
     GDALInfoOptionsForBinary* psOptionsForBinary = GDALInfoOptionsForBinaryNew();
 
@@ -211,9 +212,6 @@ int main( int argc, char ** argv )
 
     char* pszGDALInfoOutput = GDALInfo( hDataset, psOptions );
 
-#ifdef __AFL_HAVE_MANUAL_CONTROL
-    if( iIter == 1 )
-#endif
     if( pszGDALInfoOutput )
         printf( "%s", pszGDALInfoOutput );
 
