@@ -1184,7 +1184,7 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
 %typemap(freearg) (CPLXMLNode *xmlnode)
 {
   /* %typemap(freearg) (CPLXMLNode *xmlnode) */
-  if ( $1 ) CPLDestroyXMLNode( $1 );
+  CPLDestroyXMLNode( $1 );
 }
 
 %fragment("XMLTreeToPyList","header") %{
