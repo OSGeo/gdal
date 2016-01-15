@@ -77,7 +77,7 @@ void ReprojFunc(void* unused)
 int main(int argc, char* argv[])
 {
     int nThreads = 2;
-    
+
     int i;
     for(i=0;i<argc;i++)
     {

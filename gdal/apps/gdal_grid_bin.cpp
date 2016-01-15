@@ -126,7 +126,7 @@ int main(int argc, char** argv)
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );
-    
+
     for( int i = 0; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
     if(bUsageError == TRUE)
         Usage();
     int nRetCode = (hOutDS) ? 0 : 1;
-    
+
     GDALClose(hInDS);
     GDALClose(hOutDS);
     GDALGridOptionsFree(psOptions);

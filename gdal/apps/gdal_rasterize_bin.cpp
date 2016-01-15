@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );
-    
+
     for( int i = 0; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
     if (hDstDS == NULL && !psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
         CheckExtensionConsistency(psOptionsForBinary->pszDest, psOptionsForBinary->pszFormat);
 
-    
+
     int bUsageError = FALSE;
     GDALDatasetH hRetDS = GDALRasterize(psOptionsForBinary->pszDest,
                                         hDstDS,
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
     if(bUsageError == TRUE)
         Usage();
     int nRetCode = (hRetDS) ? 0 : 1;
-    
+
     GDALClose(hInDS);
     GDALClose(hRetDS);
     GDALRasterizeOptionsFree(psOptions);

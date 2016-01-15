@@ -463,7 +463,7 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
     poPkLayer->ResetReading();
 
     std::map<double, OGRFeature *> moParts;
-    
+
     while ((pFeature = poPkLayer->GetNextFeature()) != NULL)
     {
         double dfStart = pFeature->GetFieldAsDouble(FIELD_START);
@@ -471,7 +471,7 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
     }
 
     OGRLineString SubLine;
-    
+
     if (moParts.size() == 0)
     {
         fprintf(stderr, "Get parts for positions %f - %f failed\n", dfPosBeg, dfPosEnd);
@@ -560,7 +560,7 @@ static double Project(OGRLineString* pLine, OGRPoint* pPoint)
     pLine->EndPoint(&TestPoint);
     if(TestPoint.Equals(pPoint))
         return pLine->get_Length();
-        
+
     return pLine->Project(pPoint);    
 }
 #endif
@@ -843,7 +843,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
     }
 
     double dfRoundBeg;
-    
+
     if (pPtBeg != NULL)
         dfRoundBeg = ceil(dfPtBegPosition / dfStep) * dfStep;
     else
@@ -930,7 +930,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
 
         ++IT;
     }
-    
+
     for( std::map<double, OGRPoint*>::iterator oIter = moRepers.begin();
                                                oIter != moRepers.end();
                                                ++oIter)
@@ -1214,9 +1214,9 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszPicketsSepFieldName = NULL;
     const char  *pszOutputSepFieldName = "uniq_uid";
 #endif
-    
+
     char        **papszDSCO = NULL, **papszLCO = NULL;
-    
+
     operation stOper = op_unknown;
 #ifdef HAVE_GEOS_PROJECT
     double dfX(-100000000), dfY(-100000000);
@@ -1224,7 +1224,7 @@ int main( int nArgc, char ** papszArgv )
     double dfPos(-100000000);
 
     int bDisplayProgress = FALSE;
-    
+
     double dfPosBeg(-100000000), dfPosEnd(-100000000);
 #ifdef HAVE_GEOS_PROJECT
     double dfStep(-100000000);
@@ -1245,7 +1245,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
-    
+
     if( nArgc < 1 )
         exit( -nArgc );
 
@@ -1485,7 +1485,7 @@ int main( int nArgc, char ** papszArgv )
 
             exit( 1 );
         }
-        
+
         poPkDS = (GDALDataset*) OGROpen( pszPicketsDataSource, FALSE, NULL );
     /* -------------------------------------------------------------------- */
     /*      Report failure                                                  */
@@ -1493,7 +1493,7 @@ int main( int nArgc, char ** papszArgv )
         if( poPkDS == NULL )
         {
             OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-            
+
             fprintf( stderr, "FAILURE:\n"
                     "Unable to open repers datasource `%s' with the following drivers.\n",
                     pszPicketsDataSource);
@@ -1505,8 +1505,7 @@ int main( int nArgc, char ** papszArgv )
 
             exit( 1 );
         }
-    
-    
+
     /* -------------------------------------------------------------------- */
     /*      Find the output driver.                                         */
     /* -------------------------------------------------------------------- */
@@ -1522,7 +1521,7 @@ int main( int nArgc, char ** papszArgv )
         {
             fprintf( stderr, "Unable to find driver `%s'.\n", pszFormat );
             fprintf( stderr,  "The following drivers are available:\n" );
-        
+
             for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
             {
                 fprintf( stderr,  "  -> `%s'\n", poR->GetDriver(iDriver)->GetDescription() );
@@ -1558,13 +1557,13 @@ int main( int nArgc, char ** papszArgv )
         {
             poLnLayer = poLnDS->GetLayerByName(pszLineLayerName);
         }
-        
+
         if(poLnLayer == NULL)
         {
             fprintf( stderr, "Get path layer failed.\n" );
             exit( 1 );
-        }   
-        
+        }
+
         if(pszPicketsLayerName == NULL)
         {
             poPkLayer = poPkDS->GetLayer(0);
@@ -1573,13 +1572,13 @@ int main( int nArgc, char ** papszArgv )
         {
             poPkLayer = poPkDS->GetLayerByName(pszPicketsLayerName);
         }
-        
+
         if(poPkLayer == NULL)
         {
             fprintf( stderr, "Get repers layer failed.\n" );
             exit( 1 );    
         }
-                 
+
         OGRFeatureDefn *poPkFDefn = poPkLayer->GetLayerDefn();
         int nMValField = poPkFDefn->GetFieldIndex( pszPicketsMField );
 
@@ -1590,7 +1589,7 @@ int main( int nArgc, char ** papszArgv )
             {
                 fprintf( stderr, "Create output layer failed.\n" );
                 exit( 1 );    
-            }    
+            }
 
             //do the work
             eErr = CreatePartsMultiple(poLnLayer, pszLineSepFieldName, poPkLayer, pszPicketsSepFieldName, nMValField, dfStep, poOutLayer, pszOutputSepFieldName, bDisplayProgress, bQuiet);
@@ -1602,17 +1601,17 @@ int main( int nArgc, char ** papszArgv )
             {
                 fprintf( stderr, "Create output layer failed.\n" );
                 exit( 1 );    
-            }     
-        
+            }
+
             //do the work
             eErr = CreateParts(poLnLayer, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet);
         }
-        
-        //clean up        
+
+        //clean up
         GDALClose( (GDALDatasetH)poLnDS);
         GDALClose( (GDALDatasetH)poPkDS);
         GDALClose( (GDALDatasetH)poODS);
-            
+
         if (NULL != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
 #else //HAVE_GEOS_PROJECT
@@ -1630,7 +1629,7 @@ int main( int nArgc, char ** papszArgv )
             Usage("no parts datasource provided");
         else if(dfX == -100000000 || dfY == -100000000)
             Usage("no coordinates provided");
-            
+
         poPartsDS = (GDALDataset*) OGROpen( pszPartsDataSource, FALSE, NULL );
     /* -------------------------------------------------------------------- */
     /*      Report failure                                                  */
@@ -1638,7 +1637,7 @@ int main( int nArgc, char ** papszArgv )
         if (poPartsDS == NULL)
         {
             OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-            
+
             fprintf( stderr, "FAILURE:\n"
                     "Unable to open parts datasource `%s' with the following drivers.\n",
                     pszPicketsDataSource);
@@ -1650,7 +1649,7 @@ int main( int nArgc, char ** papszArgv )
 
             exit( 1 );
         }
-            
+
         if(pszPartsLayerName == NULL)
         {
             poPartsLayer = poPartsDS->GetLayer(0);
@@ -1659,7 +1658,7 @@ int main( int nArgc, char ** papszArgv )
         {
             poPartsLayer = poPartsDS->GetLayerByName(pszPartsLayerName);
         }
-        
+
         if (poPartsLayer == NULL)
         {
             fprintf( stderr, "Get parts layer failed.\n" );
@@ -1685,7 +1684,7 @@ int main( int nArgc, char ** papszArgv )
             Usage("no parts datasource provided");
         else if(dfPos == -100000000)
             Usage("no position provided");
-            
+
         poPartsDS = (GDALDataset*) OGROpen(pszPartsDataSource, FALSE, NULL);
     /* -------------------------------------------------------------------- */
     /*      Report failure                                                  */
@@ -1693,7 +1692,7 @@ int main( int nArgc, char ** papszArgv )
         if (poPartsDS == NULL)
         {
             OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-            
+
             fprintf( stderr, "FAILURE:\n"
                     "Unable to open parts datasource `%s' with the following drivers.\n",
                     pszPicketsDataSource);
@@ -1705,7 +1704,7 @@ int main( int nArgc, char ** papszArgv )
 
             exit( 1 );
         }
-            
+
         if(pszPartsLayerName == NULL)
         {
             poPartsLayer = poPartsDS->GetLayer(0);
@@ -1714,7 +1713,7 @@ int main( int nArgc, char ** papszArgv )
         {
             poPartsLayer = poPartsDS->GetLayerByName(pszPartsLayerName);
         }
-        
+
         if (poPartsLayer == NULL)
         {
             fprintf( stderr, "Get parts layer failed.\n" );
@@ -1843,8 +1842,8 @@ int main( int nArgc, char ** papszArgv )
     else
     {
         Usage("no operation provided");
-    }  
-    
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
@@ -1858,6 +1857,6 @@ int main( int nArgc, char ** papszArgv )
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
-    
+
     return eErr == OGRERR_NONE ? 0 : 1;
 }

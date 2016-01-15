@@ -3181,7 +3181,7 @@ static int SetupCT( TargetLayerInfo* psInfo,
         OGRSpatialReference* poSourceSRS = NULL;
         OGRCoordinateTransformation* poCT = NULL;
         char** papszTransformOptions = NULL;
-        
+
         int iSrcGeomField;
         if( psInfo->iRequestedSrcGeomField >= 0 )
             iSrcGeomField = psInfo->iRequestedSrcGeomField;
@@ -3200,7 +3200,7 @@ static int SetupCT( TargetLayerInfo* psInfo,
                     continue;
             }
         }
-        
+
         if( bTransform || bWrapDateline )
         {
             if( psInfo->nFeaturesRead == 0 )
@@ -3736,7 +3736,7 @@ end_loop:
 
         if (pnReadFeatureCount)
             *pnReadFeatureCount = nCount;
-        
+
         if( psOptions->nFIDToFetch != OGRNullFID )
             break;
     }
@@ -3790,7 +3790,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                                                       GDALVectorTranslateOptionsForBinary* psOptionsForBinary)
 {
     GDALVectorTranslateOptions *psOptions = (GDALVectorTranslateOptions *) CPLCalloc( 1, sizeof(GDALVectorTranslateOptions) );
-    
+
     psOptions->eAccessMode = ACCESS_CREATION;
     psOptions->bSkipFailures = FALSE;
     psOptions->bLayerTransaction = -1;

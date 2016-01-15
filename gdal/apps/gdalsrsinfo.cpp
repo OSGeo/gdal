@@ -316,8 +316,8 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         GDALClose( (GDALDatasetH) poGDALDS );
         if ( ! bGotSRS ) 
             CPLDebug( "gdalsrsinfo", "did not open with GDAL" );
-    }    
-    
+    }
+
     /* Try ESRI file */
     if ( ! bGotSRS && bIsFile && (strstr(pszInput,".prj") != NULL) ) {
         CPLDebug( "gdalsrsinfo", 
@@ -561,7 +561,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
 
             if ( nPos == 0 )
                 continue;
-            
+
             strncpy( szTemp, pszLine, nPos );
             szTemp[nPos] = '\0';
             nCode = atoi(szTemp);
@@ -582,7 +582,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
             }
         }
     }
-    
+
     VSIFCloseL( fp );
 
     return nFound;

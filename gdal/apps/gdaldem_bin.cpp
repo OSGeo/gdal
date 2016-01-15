@@ -186,7 +186,7 @@ int main( int argc, char ** argv )
 
     // Open Dataset and get raster band
     GDALDatasetH hSrcDataset = GDALOpen( psOptionsForBinary->pszSrcFilename, GA_ReadOnly );
-    
+
     if( hSrcDataset == NULL )
     {
         fprintf( stderr,
@@ -204,7 +204,7 @@ int main( int argc, char ** argv )
     if(bUsageError == TRUE)
         Usage();
     int nRetCode = (hOutDS) ? 0 : 1;
-    
+
     GDALClose(hSrcDataset);
     GDALClose(hOutDS);
     GDALDEMProcessingOptionsFree(psOptions);

@@ -56,7 +56,7 @@ int main( int nArgc, char ** papszArgv )
     char* current_path = NULL;
     int accept_different_schemas = FALSE;
     int bFirstWarningForNonMatchingAttributes = TRUE;
-    
+
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
         exit(1);
@@ -64,7 +64,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
     OGRRegisterAll();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
@@ -144,7 +144,7 @@ int main( int nArgc, char ** papszArgv )
         {
             fprintf( stderr, "Unable to find driver `%s'.\n", pszFormat );
             fprintf( stderr, "The following drivers are available:\n" );
-        
+
             for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
             {
                 fprintf( stderr, "  -> `%s'\n", poR->GetDriver(iDriver)->GetDescription() );
@@ -162,7 +162,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Now create it.                                                  */
 /* -------------------------------------------------------------------- */
-        
+
         poDstDS = poDriver->Create( pszOutputName, 0, 0, 0, GDT_Unknown, NULL );
         if( poDstDS == NULL )
         {
@@ -174,16 +174,16 @@ int main( int nArgc, char ** papszArgv )
         if( poDstDS->GetLayerCount() == 0 )
         {
             OGRFieldDefn oLocation( pszTileIndexField, OFTString );
-            
+
             oLocation.SetWidth( 200 );
-            
+
             if( nFirstSourceDataset < nArgc && papszArgv[nFirstSourceDataset][0] == '-' )
             {
                 nFirstSourceDataset++;
             }
-            
+
             OGRSpatialReference* poSrcSpatialRef = NULL;
-            
+
             /* Fetches the SRS of the first layer and use it when creating the tileindex layer */
             if (nFirstSourceDataset < nArgc)
             {
@@ -210,19 +210,19 @@ int main( int nArgc, char ** papszArgv )
 
                         if( !bRequested )
                             continue;
-                            
+
                         if ( poLayer->GetSpatialRef() )
                             poSrcSpatialRef = poLayer->GetSpatialRef()->Clone();
                         break;
                     }
                 }
-                
+
                 GDALClose( (GDALDatasetH)poDS );
             }
 
             poDstLayer = poDstDS->CreateLayer( "tileindex", poSrcSpatialRef );
             poDstLayer->CreateField( &oLocation, OFTString );
-            
+
             OGRSpatialReference::DestroySpatialReference( poSrcSpatialRef );
         }
     }
@@ -287,7 +287,7 @@ int main( int nArgc, char ** papszArgv )
                             alreadyExistingSpatialRefValid = TRUE;
                             alreadyExistingSpatialRef =
                                     (poLayer->GetSpatialRef()) ? poLayer->GetSpatialRef()->Clone() : NULL;
-                                    
+
                             if (poFeatureDefn == NULL)
                                 poFeatureDefn = poLayer->GetLayerDefn()->Clone();
                         }
@@ -323,7 +323,7 @@ int main( int nArgc, char ** papszArgv )
             nFirstSourceDataset++;
             continue;
         }
-        
+
         char* fileNameToWrite;
         VSIStatBuf sStatBuf;
 
@@ -466,7 +466,7 @@ int main( int nArgc, char ** papszArgv )
                         break;
 					}
 				}
-                
+
                 if (bSkip)
                     continue;
 			}
@@ -487,7 +487,7 @@ int main( int nArgc, char ** papszArgv )
                         papszArgv[nFirstSourceDataset] );
                 continue;
             }
-            
+
             oRing.addPoint( sExtents.MinX, sExtents.MinY );
             oRing.addPoint( sExtents.MinX, sExtents.MaxY );
             oRing.addPoint( sExtents.MaxX, sExtents.MaxY );
@@ -527,12 +527,12 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     GDALClose( (GDALDatasetH) poDstDS );
 	OGRFeatureDefn::DestroyFeatureDefn( poFeatureDefn );
-  
+
     if (alreadyExistingSpatialRef != NULL)
         OGRSpatialReference::DestroySpatialReference( alreadyExistingSpatialRef );
-  
+
     CPLFree(current_path);
-    
+
     if (nExistingLayers)
     {
         int i;

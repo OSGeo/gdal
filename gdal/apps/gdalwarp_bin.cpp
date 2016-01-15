@@ -355,7 +355,7 @@ int main( int argc, char ** argv )
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         GDALExit( -argc );
-    
+
     for( int i = 0; argv != NULL && argv[i] != NULL; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
@@ -370,7 +370,7 @@ int main( int argc, char ** argv )
             Usage(NULL);
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set optimal setting for best performance with huge input VRT.   */
 /*      The rationale for 450 is that typical Linux process allow       */
@@ -406,7 +406,7 @@ int main( int argc, char ** argv )
         CPLError(CE_Failure, CPLE_IllegalArg, "Source and destination datasets must be different.\n");
         GDALExit(1);
     }
-     
+
 /* -------------------------------------------------------------------- */
 /*      Open Source files.                                              */
 /* -------------------------------------------------------------------- */
@@ -416,7 +416,7 @@ int main( int argc, char ** argv )
         pahSrcDS = (GDALDatasetH *) CPLRealloc(pahSrcDS, sizeof(GDALDatasetH) * nSrcCount);
         pahSrcDS[nSrcCount-1] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                                             (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
-    
+
         if( pahSrcDS[nSrcCount-1] == NULL )
             GDALExit(2);
     }
@@ -428,7 +428,7 @@ int main( int argc, char ** argv )
     /* FIXME ? source filename=target filename and -overwrite is definitely */
     /* an error. But I can't imagine of a valid case (without -overwrite), */
     /* where it would make sense. In doubt, let's keep that dubious possibility... */
-    
+
     int bOutStreaming = FALSE;
     if( strcmp(psOptionsForBinary->pszDstFilename, "/vsistdout/") == 0 )
     {
@@ -483,7 +483,7 @@ int main( int argc, char ** argv )
         CPLPushErrorHandler( CPLQuietErrorHandler );
         hDstDS = GDALOpen( psOptionsForBinary->pszDstFilename, GA_ReadOnly );
         CPLPopErrorHandler();
-        
+
         if (hDstDS)
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -498,7 +498,7 @@ int main( int argc, char ** argv )
     {
         GDALWarpAppOptionsSetProgress(psOptions, GDALTermProgress, NULL);
     }
-    
+
     if (hDstDS == NULL && !psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
         CheckExtensionConsistency(psOptionsForBinary->pszDstFilename, psOptionsForBinary->pszFormat);
 

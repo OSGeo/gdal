@@ -46,7 +46,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
 
 {
     int iDr;
-        
+
     printf( "Usage: gdal_translate [--help-general] [--long-usage]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
@@ -70,7 +70,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);
-            
+
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
                 || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
@@ -137,7 +137,7 @@ int main( int argc, char ** argv )
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );
-    
+
     for( int i = 0; argv != NULL && argv[i] != NULL; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
@@ -156,7 +156,7 @@ int main( int argc, char ** argv )
             Usage(NULL, FALSE);
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set optimal setting for best performance with huge input VRT.   */
 /*      The rationale for 450 is that typical Linux process allow       */
@@ -208,7 +208,7 @@ int main( int argc, char ** argv )
 
     hDataset = GDALOpenEx( psOptionsForBinary->pszSource, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                            (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
-    
+
     if( hDataset == NULL )
     {
         GDALDestroyDriverManager();
@@ -299,7 +299,7 @@ int main( int argc, char ** argv )
     GDALClose(hDataset);
     GDALTranslateOptionsFree(psOptions);
     GDALTranslateOptionsForBinaryFree(psOptionsForBinary);
-    
+
     GDALDestroyDriverManager();
 
     return nRetCode;

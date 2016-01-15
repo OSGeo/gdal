@@ -216,7 +216,7 @@ int main( int argc, char ** argv )
     {
         Usage("Missing destination filename.");
     }
-    
+
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
 

@@ -95,7 +95,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
-    
+
     if( nArgc < 1 )
         exit( -nArgc );
 
@@ -243,7 +243,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poDS;
-        
+
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
 
 /* -------------------------------------------------------------------- */
@@ -252,7 +252,7 @@ int main( int nArgc, char ** papszArgv )
     if( poDS == NULL )
     {
         OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-        
+
         printf( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 pszDataSource );
@@ -269,7 +269,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Try opening the output datasource as an existing, writable      */
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poODS;
-    
+
     if( bUpdate )
     {
         poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE );
@@ -305,7 +305,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf( "Unable to find driver `%s'.\n", pszFormat );
             printf( "The following drivers are available:\n" );
-        
+
             for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
             {
                 printf( "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
@@ -371,7 +371,7 @@ int main( int nArgc, char ** papszArgv )
             printf( "-where clause ignored in combination with -sql.\n" );
         if( CSLCount(papszLayers) > 0 )
             printf( "layer names ignored in combination with -sql.\n" );
-        
+
         poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
                                         NULL );
 
@@ -414,10 +414,10 @@ int main( int nArgc, char ** papszArgv )
         {
             if( pszWHERE != NULL )
                 poLayer->SetAttributeFilter( pszWHERE );
-            
+
             if( poSpatialFilter != NULL )
                 poLayer->SetSpatialFilter( poSpatialFilter );
-            
+
             if( !DissolveLayer( poDS, poLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
@@ -453,7 +453,7 @@ int main( int nArgc, char ** papszArgv )
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
-    
+
     return 0;
 }
 
@@ -476,7 +476,7 @@ static void Usage()
             "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n"
             "\n"
             " -f format_name: output file format name, possible values are:\n");
-    
+
     for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
     {
         OGRSFDriver *poDriver = poR->GetDriver(iDriver);
@@ -540,16 +540,16 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
     {
 
         poFeature = poSrcLayer->GetNextFeature();
-        
+
         if( poFeature == NULL )
             break;
         CPLString poKey("");
-        
+
         for( iField=0; papszFields[iField] != NULL; iField++) {
             int nField = poFeature->GetFieldIndex(papszFields[iField]);
             poKey = poKey + poFeature->GetFieldAsString(nField);
         }
-        
+
         if (poFeature->GetGeometryRef()->IsValid()) {
         poGeometriesMap.insert(std::make_pair(
                         CPLString(  poKey), 
@@ -573,7 +573,7 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
     StringIntMap poFieldsmap;    
 
     StringGeometryMMap::const_iterator pos;
-    
+
     for (pos = poGeometriesMap.begin();
          pos != poGeometriesMap.end();
          ++pos) {
@@ -594,14 +594,13 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
 
     StringGeometryColMap poCollections;
 
-             
     CPLDebug("CollectGeometries", "Field map size: %d", poFieldsmap.size());
 
     for (ipos = poFieldsmap.begin();
          ipos != poFieldsmap.end();
          ++ipos) 
-         {   
-    
+         {
+
               CPLString fid = ipos->first;
               CPLDebug ("CollectGeometries", "First %s Second %d", ipos->first.c_str(), ipos->second);
 
@@ -615,8 +614,7 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
              }    
              poCollections.insert(std::make_pair(fid, geom));
     }
-    
-    
+
     CPLDebug("CollectGeometries", "Geo map size: %d", poCollections.size()); 
 
 /* -------------------------------------------------------------------- */
@@ -627,7 +625,7 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
     StringGeometryMap* buffers = new StringGeometryMap;
 
     StringGeometryColMap::const_iterator collections_i;
-        
+
     for (   collections_i = poCollections.begin();
             collections_i != poCollections.end();
             ++collections_i){
@@ -643,8 +641,8 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
           collections_i != poCollections.end();
           ++collections_i) {     
               delete collections_i->second;
-     }     
-    
+    }
+
     return buffers;
 }
 
@@ -652,7 +650,7 @@ GeometriesList* FlattenGeometries(GeometriesList* input) {
 
     GeometriesList::const_iterator geometry_i;
     GeometriesList* output = new GeometriesList;
-    
+
     CPLDebug("CollectGeometries", "Input geometries in FlattenGeometries size: %d", input->size());
     for (   geometry_i = input->begin();
             geometry_i != input->end();
@@ -661,7 +659,7 @@ GeometriesList* FlattenGeometries(GeometriesList* input) {
                 OGRGeometry* buffer = (*geometry_i);
                 // int nGeometries = buffer->getNumGeometries();
                 OGRwkbGeometryType iGType = buffer->getGeometryType();
-                
+
                 if (iGType == wkbPolygon) {
                         OGRPolygon* geom = (OGRPolygon*)buffer;
                         output->push_back((OGRGeometry*)geom);
@@ -700,9 +698,8 @@ GeometriesList* FlattenGeometries(GeometriesList* input) {
                 // CPLDebug(   "CollectGeometries", 
                 //             "Buffered Geometry size %d", 
                 //             nGeometries);
+    }
 
-    }    
-    
     return output;
 }
 /************************************************************************/
@@ -765,21 +762,21 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
                    "following coordinate systems.  This may be because they\n"
                    "are not transformable, or because projection services\n"
                    "(PROJ.4 DLL/.so) could not be loaded.\n" );
-            
+
             poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
             printf( "Source:\n%s\n", pszWKT );
-            
+
             poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
             printf( "Target:\n%s\n", pszWKT );
             exit( 1 );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get other info.                                                 */
 /* -------------------------------------------------------------------- */
     poFDefn = poSrcLayer->GetLayerDefn();
-    
+
     if( poOutputSRS == NULL )
         poOutputSRS = poSrcLayer->GetSpatialRef();
 
@@ -800,7 +797,7 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
             break;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      If the user requested overwrite, and we have the layer in       */
 /*      question we need to delete it now so it will get recreated      */
@@ -891,7 +888,7 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
     int         nFeaturesInTransaction = 0;
-    
+
     poSrcLayer->ResetReading();
 
     if( nGroupTransactions )
@@ -902,7 +899,7 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
 
     StringGeometryMap::const_iterator buffers_i;
     GeometriesList* input = new GeometriesList;
-    
+
     CPLDebug("CollectGeometries", "Buffers size: %d", buffers->size());
     for (   buffers_i = buffers->begin();
             buffers_i != buffers->end();
@@ -910,7 +907,7 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
                 input->push_back(buffers_i->second);
     }
     GeometriesList* geometries = FlattenGeometries(input);
-    
+
     GeometriesList::const_iterator g_i;
     for (g_i=geometries->begin();
     g_i!=geometries->end();
@@ -920,35 +917,29 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
         feature->SetField("TAXDIST","fid");
         poDstLayer->CreateFeature(feature);        
     }
-    
-    
-    
 
     if( nGroupTransactions )
         poDstLayer->CommitTransaction();
-        
 
-
-            
       //  getGeometryType
 //     if( pszNewLayerName == NULL )
 //         pszNewLayerName = poSrcLayer->GetLayerDefn()->GetName();
-// 
+//
 //     if( wkbFlatten(eGType) == wkbPolygon )
 //         bForceToPolygon = TRUE;
 //     else if( wkbFlatten(eGType) == wkbMultiPolygon )
 //         bForceToMultiPolygon = TRUE;
-// 
+//
 // /* -------------------------------------------------------------------- */
 // /*      Setup coordinate transformation if we need it.                  */
 // /* -------------------------------------------------------------------- */
 //     OGRCoordinateTransformation *poCT = NULL;
-// 
+//
 //     if( bTransform )
 //     {
 //         if( poSourceSRS == NULL )
 //             poSourceSRS = poSrcLayer->GetSpatialRef();
-// 
+//
 //         if( poSourceSRS == NULL )
 //         {
 //             printf( "Can't transform coordinates, source layer has no\n"
