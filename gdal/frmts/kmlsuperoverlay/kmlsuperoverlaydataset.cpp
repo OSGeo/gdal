@@ -1136,18 +1136,30 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 {
     if( eRWFlag == GF_Write )
         return CE_Failure;
-    
+
     if( bIsOvr )
+    {
+        GDALRasterIOExtraArg sExtraArgs;
+        GDALCopyRasterIOExtraArg(&sExtraArgs, psExtraArg);
+        const int nOvrFactor = poParent->nFactor / nFactor;
+        if( sExtraArgs.bFloatingPointWindowValidity )
+        {
+            sExtraArgs.dfXOff *= nOvrFactor;
+            sExtraArgs.dfYOff *= nOvrFactor;
+            sExtraArgs.dfXSize *= nOvrFactor;
+            sExtraArgs.dfYSize *= nOvrFactor;
+        }
         return poParent->IRasterIO( eRWFlag,
-                                    nXOff * (poParent->nFactor / nFactor),
-                                    nYOff * (poParent->nFactor / nFactor),
-                                    nXSize * (poParent->nFactor / nFactor),
-                                    nYSize * (poParent->nFactor / nFactor),
+                                    nXOff * nOvrFactor,
+                                    nYOff * nOvrFactor,
+                                    nXSize * nOvrFactor,
+                                    nYSize * nOvrFactor,
                                     pData, nBufXSize, nBufYSize,
                                     eBufType, 
                                     nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
-    
+                                    nPixelSpace, nLineSpace, nBandSpace, &sExtraArgs);
+    }
+
     double dfXOff = 1.0 * nXOff / nFactor;
     double dfYOff = 1.0 * nYOff / nFactor;
     double dfXSize = 1.0 * nXSize / nFactor;
@@ -1384,6 +1396,9 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
             if( nReqYOff + nReqYSize > poVRTDS->GetRasterYSize() )
                 nReqYSize = poVRTDS->GetRasterYSize() - nReqYOff;
 
+            GDALRasterIOExtraArg sExtraArgs;
+            INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
+            sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;
             CPLErr eErr = poVRTDS->RasterIO( eRWFlag,
                                              nReqXOff,
                                              nReqYOff,
@@ -1392,7 +1407,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                              pData, nBufXSize, nBufYSize, eBufType,
                                              nBandCount, panBandMap,
                                              nPixelSpace, nLineSpace, nBandSpace,
-                                             psExtraArg);
+                                             &sExtraArgs);
 
             for(i=0; i < (int)aosImages.size(); i++)
             {
@@ -1435,8 +1450,11 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
         if( nReqYOff + nReqYSize > poDSIcon->GetRasterYSize() )
             nReqYSize = poDSIcon->GetRasterYSize() - nReqYOff;
 
-        psExtraArg->pfnProgress = GDALScaledProgress;
-        psExtraArg->pProgressData = 
+        GDALRasterIOExtraArg sExtraArgs;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
+        sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;
+        sExtraArgs.pfnProgress = GDALScaledProgress;
+        sExtraArgs.pProgressData = 
             GDALCreateScaledProgress( 1.0 * iBandIdx / nBandCount,
                                       1.0 * (iBandIdx + 1) / nBandCount,
                                       pfnProgressGlobal,
@@ -1450,9 +1468,9 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                                       ((GByte*) pData) + nBandSpace * iBandIdx,
                                                       nBufXSize, nBufYSize, eBufType,
                                                       nPixelSpace, nLineSpace,
-                                                      psExtraArg);
+                                                      &sExtraArgs);
 
-        GDALDestroyScaledProgress( psExtraArg->pProgressData );
+        GDALDestroyScaledProgress( sExtraArgs.pProgressData );
     }
 
     psExtraArg->pfnProgress = pfnProgressGlobal;
