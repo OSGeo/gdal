@@ -2587,6 +2587,136 @@ def gpkg_26():
     return 'success'
 
 ###############################################################################
+# Test behaviour with low block cache max
+
+def gpkg_27():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    src_ds = gdal.Open('data/small_world.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
+    gdal.SetCacheMax(oldSize)
+
+    expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that reading a block in a band doesn't wipe another band of the same
+# block that would have gone through the GPKG in-memory cache
+
+def gpkg_28():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    src_ds = gdal.Open('data/small_world.tif')
+    data = []
+    for b in range(3):
+        data.append( src_ds.GetRasterBand(b+1).ReadRaster() )
+    expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    src_ds = None
+
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 400 ,200, 3, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'])
+    out_ds.SetGeoTransform([0,10,0,0,0,-10])
+
+    out_ds.GetRasterBand(1).WriteRaster(0,0,400,200, data[0])
+    # Force the block to go through IWriteBlock()
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    gdal.SetCacheMax(oldSize)
+    # Read (another, but could be any) band
+    out_ds.GetRasterBand(2).ReadRaster(0,0,400,200)
+    # Write remaining bands 2 and 3
+    for b in range(2):
+        out_ds.GetRasterBand(b+2).WriteRaster(0,0,400,200, data[b+1])
+    out_ds = None
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=3'])
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Variation of gpkg_28 with 2 blocks
+
+def gpkg_29(x = 0):
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    src_ds = gdal.Open('data/small_world.tif')
+    left = []
+    right = []
+    for b in range(3):
+        left.append( src_ds.GetRasterBand(b+1).ReadRaster(0,0,200,200) )
+        right.append( src_ds.GetRasterBand(b+1).ReadRaster(200,0,200,200) )
+    expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    src_ds = None
+
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 400 ,200, 3, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
+    out_ds.SetGeoTransform([0,10,0,0,0,-10])
+
+    out_ds.GetRasterBand(1).WriteRaster(0,0,200,200, left[0])
+    # Force the block to go through IWriteBlock()
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    gdal.SetCacheMax(oldSize)
+    out_ds.GetRasterBand(2).ReadRaster(x,0,200,200)
+    for b in range(2):
+        out_ds.GetRasterBand(b+2).WriteRaster(0,0,200,200, left[b+1])
+    for b in range(3):
+        out_ds.GetRasterBand(b+1).WriteRaster(200,0,200,200, right[b])
+    out_ds = None
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=3'])
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Variation of gpkg_29 where the read is done in another block
+
+def gpkg_30():
+
+    return gpkg_29(x = 200)
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2634,9 +2764,13 @@ gdaltest_list = [
     gpkg_24,
     gpkg_25,
     gpkg_26,
+    gpkg_27,
+    gpkg_28,
+    gpkg_29,
+    gpkg_30,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_28, gpkg_29, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )
