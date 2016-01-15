@@ -338,7 +338,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
     {
         GDALDriver *poDriver = poR->GetDriver(iDriver);
 
-        if( CSLTestBoolean( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
+        if( CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
             printf( "     -f \"%s\"\n", poDriver->GetDescription() );
     }
 

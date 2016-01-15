@@ -2238,7 +2238,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
 
     if( eErr == OGRERR_FAILURE )
     {
-        if( CSLTestBoolean(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+        if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
             CPLError(CE_Warning, CPLE_AppDefined, "Cutline transformation failed");
         else
         {
@@ -2249,7 +2249,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     }
     else if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) )
     {
-        if( CSLTestBoolean(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+        if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
             CPLError(CE_Warning, CPLE_AppDefined, "Cutline is not valid after transformation");
         else
         {

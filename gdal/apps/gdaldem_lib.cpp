@@ -2553,23 +2553,23 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
             return NULL;
         }
     }
-    
+
     // We might actually want to always go through the intermediate dataset
-    int bForceUseIntermediateDataset = FALSE;
-    
+    bool bForceUseIntermediateDataset = false;
+
     GDALProgressFunc pfnProgress = psOptions->pfnProgress;
     void* pProgressData = psOptions->pProgressData;
-    
+
     if( EQUAL(psOptions->pszFormat, "GTiff") )
     {
         if( !EQUAL(CSLFetchNameValueDef(psOptions->papszCreateOptions, "COMPRESS", "NONE"), "NONE") &&
-            CSLTestBoolean(CSLFetchNameValueDef(psOptions->papszCreateOptions, "TILED", "NO")) )
+            CPLTestBool(CSLFetchNameValueDef(psOptions->papszCreateOptions, "TILED", "NO")) )
         {
-            bForceUseIntermediateDataset = TRUE;
+            bForceUseIntermediateDataset = true;
         }
         else if( strcmp(pszDest, "/vsistdout/") == 0 )
         {
-            bForceUseIntermediateDataset = TRUE;
+            bForceUseIntermediateDataset = true;
             pfnProgress = GDALDummyProgress;
             pProgressData = NULL;
         }
@@ -2580,7 +2580,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
             if( VSIStatExL(pszDest, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
                 S_ISFIFO(sStat.st_mode) )
             {
-                bForceUseIntermediateDataset = TRUE;
+                bForceUseIntermediateDataset = true;
             }
         }
 #endif
@@ -2591,7 +2591,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
          GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
     {
         GDALDatasetH hIntermediateDataset;
-        
+
         if (eUtilityMode == COLOR_RELIEF)
         {
             GDALColorReliefDataset* poDS =
