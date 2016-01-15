@@ -214,7 +214,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
         GDALValidateCreationOptions( this, papszOptions );
 
 /* -------------------------------------------------------------------- */
@@ -788,7 +788,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES")))
         GDALValidateCreationOptions( this, papszOptions);
 
 /* -------------------------------------------------------------------- */
@@ -797,7 +797,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      Create() method.                                                */
 /* -------------------------------------------------------------------- */
     GDALDataset *poDstDS;
-    if( pfnCreateCopy != NULL && !CSLTestBoolean(CPLGetConfigOption("GDAL_DEFAULT_CREATE_COPY", "NO")) )
+    if( pfnCreateCopy != NULL && !CPLTestBool(CPLGetConfigOption("GDAL_DEFAULT_CREATE_COPY", "NO")) )
     {
         poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
                                  pfnProgress, pProgressData );

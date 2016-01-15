@@ -1132,7 +1132,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 /*      possible.  Otherwise we will need to use them as GCPs.          */
 /* -------------------------------------------------------------------- */
     if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
-                                 CSLTestBoolean(CPLGetConfigOption("OZI_APPROX_GEOTRANSFORM", "NO")) ) )
+                                 CPLTestBool(CPLGetConfigOption("OZI_APPROX_GEOTRANSFORM", "NO")) ) )
     {
         if ( pnGCPCount && ppasGCPs )
         {
@@ -1316,7 +1316,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 /*      possible.  Otherwise we will need to use them as GCPs.          */
 /* -------------------------------------------------------------------- */
     if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
-                                 CSLTestBoolean(CPLGetConfigOption("TAB_APPROX_GEOTRANSFORM", "NO")) ) )
+                                 CPLTestBool(CPLGetConfigOption("TAB_APPROX_GEOTRANSFORM", "NO")) ) )
     {
         if (pnGCPCount && ppasGCPs)
         {

@@ -558,7 +558,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
 
     GDALRasterBand    *CreateFakeMaskBand();
 
-    int                                              bEnableLineCaching;
+    bool                                             bEnableLineCaching;
     int                                              nSuccessiveLinesRead;
     GDALDataType                                     eLastBufType;
     int                                              nLastYOff;
@@ -4379,7 +4379,8 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn,
     poMaskBand = NULL;
     poRAT = NULL;
     memcpy(abyCaps, abyCapsIn, sizeof(abyCaps));
-    bEnableLineCaching = CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_LINE_CACHING", "YES"));
+    bEnableLineCaching = CPLTestBool(CPLGetConfigOption(
+        "GDAL_API_PROXY_LINE_CACHING", "YES"));
     nSuccessiveLinesRead = 0;
     eLastBufType = GDT_Unknown;
     nLastYOff = -1;
@@ -4680,10 +4681,10 @@ CPLErr GDALClientRasterBand::GetStatistics( int bApproxOK, int bForce,
             bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev);
 
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CPLTestBool(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     CPLErr eDefaultRet = CE_Failure;
-    if( CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
+    if( CPLTestBool(CPLGetConfigOption("QGIS_HACK", "NO")) )
     {
         if( pdfMin ) *pdfMin = 0;
         if( pdfMax ) *pdfMax = 255;
@@ -4737,7 +4738,7 @@ CPLErr GDALClientRasterBand::ComputeStatistics( int bApproxOK,
             bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress, pProgressData);
 
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CPLTestBool(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     if( !WriteInstr(INSTR_Band_ComputeStatistics) ||
         !GDALPipeWrite(p, bApproxOK) )
@@ -4796,7 +4797,7 @@ CPLErr GDALClientRasterBand::ComputeRasterMinMax( int bApproxOK,
         return GDALPamRasterBand::ComputeRasterMinMax(bApproxOK, padfMinMax);
 
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CPLTestBool(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     if( !WriteInstr(INSTR_Band_ComputeRasterMinMax) ||
         !GDALPipeWrite(p, bApproxOK) )
@@ -4833,10 +4834,10 @@ CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
             dfMin, dfMax, nBuckets, panHistogram, bIncludeOutOfRange, bApproxOK, pfnProgress, pProgressData);
 
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CPLTestBool(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     CPLErr eDefaultRet = CE_Failure;
-    if( CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
+    if( CPLTestBool(CPLGetConfigOption("QGIS_HACK", "NO")) )
     {
         memset(panHistogram, 0, sizeof(GUIntBig) * nBuckets);
         eDefaultRet = CE_None;
@@ -6362,7 +6363,7 @@ GDALDriver* GDALGetAPIPROXYDriver()
             bRecycleChild = TRUE;
             nMaxRecycled = MIN(atoi(pszConnPool), MAX_RECYCLED);
         }
-        else if( CSLTestBoolean(pszConnPool) )
+        else if( CPLTestBool(pszConnPool) )
         {
             bRecycleChild = TRUE;
             nMaxRecycled = DEFAULT_RECYCLED;

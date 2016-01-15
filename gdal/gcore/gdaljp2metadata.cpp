@@ -315,7 +315,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
     while( strlen(oBox.GetType()) > 0 )
     {
 #ifdef DEBUG
-        if (CSLTestBoolean(CPLGetConfigOption("DUMP_JP2_BOXES", "NO")))
+        if (CPLTestBool(CPLGetConfigOption("DUMP_JP2_BOXES", "NO")))
             oBox.DumpReadable(stderr);
 #endif
 
@@ -540,7 +540,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 int GDALJP2Metadata::ParseJP2GeoTIFF()
 
 {
-    if(! CSLTestBoolean(CPLGetConfigOption("GDAL_USE_GEOJP2", "TRUE")) )
+    if(! CPLTestBool(CPLGetConfigOption("GDAL_USE_GEOJP2", "TRUE")) )
         return FALSE;
 
     bool abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { false };
@@ -848,7 +848,7 @@ int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
 int GDALJP2Metadata::ParseGMLCoverageDesc() 
 
 {
-    if(! CSLTestBoolean(CPLGetConfigOption("GDAL_USE_GMLJP2", "TRUE")) )
+    if(! CPLTestBool(CPLGetConfigOption("GDAL_USE_GMLJP2", "TRUE")) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1036,7 +1036,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /*      Do we need to flip the axes?                                    */
 /* -------------------------------------------------------------------- */
     if( bNeedAxisFlip
-        && CSLTestBoolean( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
+        && CPLTestBool( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
                                                "FALSE" ) ) )
     {
         bNeedAxisFlip = false;
@@ -1117,7 +1117,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
             strstr(pszCoverage, "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE") != NULL;
 
         if( bHasAltOffsetVectorOrderComment ||
-            CSLTestBoolean( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
+            CPLTestBool( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
                                                 "FALSE" ) ) )
         {
             swapWith1Index = 5;
@@ -1308,7 +1308,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     adfYVector[1] = adfGeoTransform[5];
 
     if( bNeedAxisFlip
-        && CSLTestBoolean( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
+        && CPLTestBool( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
                                                "FALSE" ) ) )
     {
         bNeedAxisFlip = FALSE;
@@ -1326,7 +1326,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
         adfOrigin[0] = adfOrigin[1];
         adfOrigin[1] = dfTemp;
 
-        if( CSLTestBoolean( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
+        if( CPLTestBool( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
                                                 "FALSE" ) ) )
         {
             CPLDebug( "GMLJP2", "Choosing alternate GML \"<offsetVector>\" order based on "
@@ -1917,7 +1917,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         if( poDynamicMetadata && json_object_get_type(poDynamicMetadata) == json_type_object )
                         {
 #ifdef HAVE_LIBXML2
-                            if( CSLTestBoolean(CPLGetConfigOption("GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", "YES")) )
+                            if( CPLTestBool(CPLGetConfigOption("GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", "YES")) )
                             {
                                 json_object* poTemplate = json_object_object_get(poDynamicMetadata, "template");
                                 if( poTemplate && json_object_get_type(poTemplate) == json_type_string )

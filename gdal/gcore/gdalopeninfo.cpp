@@ -207,7 +207,7 @@ retry:
             papszSiblingFiles = CSLAddString( NULL, CPLGetFilename(pszFilename) );
             bHasGotSiblingFiles = TRUE;
         }
-        else if( CSLTestBoolean(pszOptionVal) )
+        else if( CPLTestBool(pszOptionVal) )
         {
             /* skip reading the directory */
             papszSiblingFiles = NULL;

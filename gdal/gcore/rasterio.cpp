@@ -228,7 +228,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         nBufXSize < nXSize / 100 && nBufYSize < nYSize / 100 &&
         nPixelSpace == nBufDataSize &&
         nLineSpace == nPixelSpace * nBufXSize &&
-        CSLTestBoolean(CPLGetConfigOption("GDAL_NO_COSTLY_OVERVIEW", "NO")) )
+        CPLTestBool(CPLGetConfigOption("GDAL_NO_COSTLY_OVERVIEW", "NO")) )
     {
         memset(pData, 0, (size_t)(nLineSpace * nBufYSize));
         return CE_None;
@@ -3463,7 +3463,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     /* disk space (GTiff case for example), and to avoid data loss (JPEG compression for example) */
     int bDstIsCompressed = FALSE;
     const char* pszDstCompressed= CSLFetchNameValue( papszOptions, "COMPRESSED" );
-    if (pszDstCompressed != NULL && CSLTestBoolean(pszDstCompressed))
+    if (pszDstCompressed != NULL && CPLTestBool(pszDstCompressed))
         bDstIsCompressed = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -3715,7 +3715,7 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
     /* disk space (GTiff case for example), and to avoid data loss (JPEG compression for example) */
     int bDstIsCompressed = FALSE;
     const char* pszDstCompressed= CSLFetchNameValue( papszOptions, "COMPRESSED" );
-    if (pszDstCompressed != NULL && CSLTestBoolean(pszDstCompressed))
+    if (pszDstCompressed != NULL && CPLTestBool(pszDstCompressed))
         bDstIsCompressed = TRUE;
 
 /* -------------------------------------------------------------------- */
