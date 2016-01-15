@@ -25099,14 +25099,14 @@ SWIGINTERN PyObject *_wrap_SerializeXMLTree(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   {
     /* %typemap(freearg) (CPLXMLNode *xmlnode) */
-    if ( arg1 ) CPLDestroyXMLNode( arg1 );
+    CPLDestroyXMLNode( arg1 );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
   {
     /* %typemap(freearg) (CPLXMLNode *xmlnode) */
-    if ( arg1 ) CPLDestroyXMLNode( arg1 );
+    CPLDestroyXMLNode( arg1 );
   }
   return NULL;
 }
