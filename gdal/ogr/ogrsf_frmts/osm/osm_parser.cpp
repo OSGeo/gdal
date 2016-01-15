@@ -656,7 +656,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
             /* if( pabyDataVisible )
                 READ_VARINT32(pabyDataVisible, pabyDataLimit, nVisible); */
 
-            if( pabyDataKeyVal )
+            if( pabyDataKeyVal != NULL && pasTags != NULL )
             {
                 while( true )
                 {
@@ -679,7 +679,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
                 }
             }
 
-            if( nTags > nKVIndexStart )
+            if( pasTags != NULL && nTags > nKVIndexStart )
                 pasNodes[nNodes].pasTags = pasTags + nKVIndexStart;
             else
                 pasNodes[nNodes].pasTags = NULL;
