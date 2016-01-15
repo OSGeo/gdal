@@ -158,9 +158,9 @@ static OGRErr CreateAndFillOutputDataset(OGRLayer* poSrcLayer,
         return OGRERR_FAILURE;
     }
 
-    if( !CSLTestBoolean(
-                CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE,
-                                     "FALSE") ) )
+    if( !CPLTestBool(
+            CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE,
+                                 "FALSE") ) )
     {
         fprintf( stderr,  "%s driver does not support data source creation.\n",
                 pszFormat );

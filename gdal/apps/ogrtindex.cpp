@@ -152,7 +152,7 @@ int main( int nArgc, char ** papszArgv )
             exit( 1 );
         }
 
-        if( !CSLTestBoolean( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
+        if( !CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
         {
             fprintf( stderr, "%s driver does not support data source creation.\n",
                     pszFormat );

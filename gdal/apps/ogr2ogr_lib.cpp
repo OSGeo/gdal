@@ -1452,7 +1452,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             return NULL;
         }
 
-        if( !CSLTestBoolean( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
+        if( !CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "%s driver does not support data source creation.",
                     psOptions->pszFormat );
@@ -1791,7 +1791,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /*      Special case for layer interleaving mode.                       */
 /* -------------------------------------------------------------------- */
     else if( bSrcIsOSM &&
-                CSLTestBoolean(CPLGetConfigOption("OGR_INTERLEAVED_READING", "YES")) )
+                CPLTestBool(CPLGetConfigOption("OGR_INTERLEAVED_READING", "YES")) )
     {
         CPLSetConfigOption("OGR_INTERLEAVED_READING", "YES");
 
@@ -4445,7 +4445,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
         psOptionsForBinary->eAccessMode = psOptions->eAccessMode;
 
-        if( !(CSLTestBoolean(CSLFetchNameValueDef(
+        if( !(CPLTestBool(CSLFetchNameValueDef(
                 psOptionsForBinary->papszOpenOptions, "NATIVE_DATA",
                 CSLFetchNameValueDef(
                     psOptionsForBinary->papszOpenOptions, "@NATIVE_DATA", "TRUE")))) )
