@@ -61,10 +61,10 @@ struct GDALGridOptions
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress;
-    
+
     /*! pointer to the progress data variable */
     void *pProgressData;
-    
+
     char            **papszLayers;
     char            *pszBurnAttribute;
     double          dfIncreaseBurnValue;
@@ -539,7 +539,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }
-    
+
     GDALGridContextFree(psContext);
 
     CPLFree( pData );
@@ -562,7 +562,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
     OGRLayer            *poLyr;
     OGRFeature          *poFeat;
     OGRGeometryCollection *poGeom = NULL;
-        
+
     poDS = (GDALDataset*) GDALOpen( pszDS, GA_ReadOnly );
     if ( poDS == NULL )
         return NULL;
@@ -573,7 +573,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
         poLyr = poDS->GetLayerByName( pszLyr );
     else
         poLyr = poDS->GetLayer(0);
-        
+
     if ( poLyr == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -581,10 +581,10 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
         GDALClose( (GDALDatasetH) poDS );
         return NULL;
     }
-    
+
     if ( pszWhere )
         poLyr->SetAttributeFilter( pszWhere );
-        
+
     while ( (poFeat = poLyr->GetNextFeature()) != NULL )
     {
         OGRGeometry* poSrcGeom = poFeat->GetGeometryRef();
@@ -592,7 +592,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
         {
             OGRwkbGeometryType eType =
                 wkbFlatten( poSrcGeom->getGeometryType() );
-            
+
             if ( poGeom == NULL )
                 poGeom = new OGRMultiPolygon();
 
@@ -621,14 +621,14 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                 return NULL;
             }
         }
-    
+
         OGRFeature::DestroyFeature( poFeat );
     }
-    
+
     if( pszSQL != NULL )
         poDS->ReleaseResultSet( poLyr );
     GDALClose( (GDALDatasetH) poDS );
-    
+
     return poGeom;
 }
 
@@ -683,7 +683,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         psOptionsToFree = GDALGridOptionsNew(NULL, NULL);
         psOptions = psOptionsToFree;
     }
-    
+
     GDALDataset* poSrcDS = (GDALDataset*) hSrcDataset;
 
     if( psOptions->pszSQL == NULL && psOptions->papszLayers == NULL &&
@@ -703,8 +703,8 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     GDALDriverH hDriver = GDALGetDriverByName( psOptions->pszFormat );
     if( hDriver == NULL )
     {
-        int	iDr;
-        
+        int iDr;
+
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Output driver `%s' not recognised.", psOptions->pszFormat );
         fprintf( stderr,
@@ -754,7 +754,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         GDALGridOptionsFree(psOptionsToFree);
         return NULL;
     }
-    
+
     if( psOptions->bNoDataSet )
     {
         for( int i = 1; i <= nBands; i++ )
@@ -763,7 +763,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
             GDALSetRasterNoDataValue( hBand, psOptions->dfNoDataValue );
         }
     }
-    
+
     double dfXMin = psOptions->dfXMin;
     double dfYMin = psOptions->dfYMin;
     double dfXMax = psOptions->dfXMax;
@@ -941,7 +941,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
     psOptions->pszClipSrcWhere = NULL;
     psOptions->bNoDataSet = FALSE;
     psOptions->dfNoDataValue = 0;
-    
+
     ParseAlgorithmAndOptions( szAlgNameInvDist, &psOptions->eAlgorithm, &psOptions->pOptions );
 
     bool bGotSourceFilename = false;
@@ -972,7 +972,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
         else if( EQUAL(papszArgv[i],"-ot") && papszArgv[i+1] )
         {
             int iType;
-            
+
             for( iType = 1; iType < GDT_TypeCount; iType++ )
             {
                 if( GDALGetDataTypeName((GDALDataType)iType) != NULL

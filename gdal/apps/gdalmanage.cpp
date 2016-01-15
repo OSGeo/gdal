@@ -229,7 +229,7 @@ int main( int argc, char ** argv )
 
     else if( EQUAL(argv[1],"rename") )
         Copy( hDriver, nRemainingArgc, papszRemainingArgv, "rename" );
-    
+
     else if( EQUAL(argv[1],"delete") )
         Delete( hDriver, nRemainingArgc, papszRemainingArgv );
 

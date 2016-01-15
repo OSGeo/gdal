@@ -119,7 +119,6 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations, int nRe
         TortureBand(hMaskBand, FALSE, nRecurse + 1);
     GDALGetMaskFlags(hBand);
     //GDALCreateMaskBand
-    
 }
 
 /************************************************************************/
@@ -172,7 +171,7 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
     // GDALFlushCache
     // GDALCreateDatasetMaskBand
     // GDALDatasetCopyWholeRaster
-    
+
     for(iBand=0;iBand<nBands;iBand++)
     {
         hBand = GDALGetRasterBand(hDS, iBand + 1);

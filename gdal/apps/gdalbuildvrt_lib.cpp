@@ -1302,7 +1302,7 @@ struct GDALBuildVRTOptions
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress;
-    
+
     /*! pointer to the progress data variable */
     void *pProgressData;
 };
@@ -1444,7 +1444,7 @@ GDALDatasetH GDALBuildVRT( const char *pszDest,
         (GDALDatasetH)oBuilder.Build(psOptions->pfnProgress, psOptions->pProgressData);
 
     GDALBuildVRTOptionsFree(psOptions);
-    
+
     return hDstDS;
 }
 
@@ -1459,7 +1459,7 @@ static char *SanitizeSRS( const char *pszUserInput )
     char *pszResult = NULL;
 
     CPLErrorReset();
-    
+
     hSRS = OSRNewSpatialReference( NULL );
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
         OSRExportToWkt( hSRS, &pszResult );
@@ -1469,7 +1469,7 @@ static char *SanitizeSRS( const char *pszUserInput )
                   "Translating SRS failed:\n%s",
                   pszUserInput );
     }
-    
+
     OSRDestroySpatialReference( hSRS );
 
     return pszResult;

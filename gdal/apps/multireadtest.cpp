@@ -116,7 +116,7 @@ int main( int argc, char ** argv )
                                    0, 0, 
                                    GDALGetRasterXSize( hDS ), 
                                    GDALGetRasterYSize( hDS ) );
-    
+
     GDALClose( hDS );
 
     printf( "Got checksum %d, launching %d worker threads on %s, %d iterations.\n", 
@@ -147,11 +147,11 @@ int main( int argc, char ** argv )
     CPLReleaseMutex( pGlobalMutex );
 
     printf( "All threads complete.\n" );
-    
+
     CSLDestroy( argv );
-    
+
     GDALDestroyDriverManager();
-    
+
     return 0;
 }
 
@@ -179,7 +179,7 @@ static void WorkerFunc( void * )
         for( iIter = 0; iIter < nIterations && hDS != NULL; iIter++ )
         {
             int nMyChecksum;
-        
+
             nMyChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ), 
                                              0, 0, 
                                              GDALGetRasterXSize( hDS ), 

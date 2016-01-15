@@ -66,7 +66,7 @@ static char *SanitizeSRS( const char *pszUserInput )
     char *pszResult = NULL;
 
     CPLErrorReset();
-    
+
     hSRS = OSRNewSpatialReference( NULL );
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
         OSRExportToWkt( hSRS, &pszResult );
@@ -77,7 +77,7 @@ static char *SanitizeSRS( const char *pszUserInput )
                   pszUserInput );
         exit( 1 );
     }
-    
+
     OSRDestroySpatialReference( hSRS );
 
     return pszResult;
@@ -202,8 +202,8 @@ int main( int argc, char ** argv )
             }
 
             /* should set id and info? */
-        }   
-        
+        }
+
         else if( EQUAL(argv[i],"-output_xy") )
         {
             bOutputXY = TRUE;
@@ -246,7 +246,7 @@ int main( int argc, char ** argv )
         fprintf( stderr, "Commandline GCPs and input file specified, specify one or the other.\n" );
         exit( 1 );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */

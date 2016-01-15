@@ -217,8 +217,8 @@ int main( int nArgc, char ** papszArgv )
                     papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             CSLDestroy( papszArgv );
             return 0;
-        }        
-    
+        }
+
         else if( EQUAL(papszArgv[iArg],"--help") )
         {
             Usage();

@@ -73,37 +73,37 @@ static void InvertGeometries( GDALDatasetH hDstDS,
     GDALGetGeoTransform( hDstDS, adfGeoTransform );
 
     hUniverseRing = OGR_G_CreateGeometry( wkbLinearRing );
-    
+
     OGR_G_AddPoint_2D( 
         hUniverseRing, 
         adfGeoTransform[0] + -2*adfGeoTransform[1] + -2*adfGeoTransform[2],
         adfGeoTransform[3] + -2*adfGeoTransform[4] + -2*adfGeoTransform[5] );
-                       
+
     OGR_G_AddPoint_2D( 
         hUniverseRing, 
         adfGeoTransform[0] + brx*adfGeoTransform[1] + -2*adfGeoTransform[2],
         adfGeoTransform[3] + brx*adfGeoTransform[4] + -2*adfGeoTransform[5] );
-                       
+
     OGR_G_AddPoint_2D( 
         hUniverseRing, 
         adfGeoTransform[0] + brx*adfGeoTransform[1] + bry*adfGeoTransform[2],
         adfGeoTransform[3] + brx*adfGeoTransform[4] + bry*adfGeoTransform[5] );
-                       
+
     OGR_G_AddPoint_2D( 
         hUniverseRing, 
         adfGeoTransform[0] + -2*adfGeoTransform[1] + bry*adfGeoTransform[2],
         adfGeoTransform[3] + -2*adfGeoTransform[4] + bry*adfGeoTransform[5] );
-                       
+
     OGR_G_AddPoint_2D( 
         hUniverseRing, 
         adfGeoTransform[0] + -2*adfGeoTransform[1] + -2*adfGeoTransform[2],
         adfGeoTransform[3] + -2*adfGeoTransform[4] + -2*adfGeoTransform[5] );
-                       
+
     hUniversePoly = OGR_G_CreateGeometry( wkbPolygon );
     OGR_G_AddGeometryDirectly( hUniversePoly, hUniverseRing );
 
     OGR_G_AddGeometryDirectly( hCollection, hUniversePoly );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Add the rest of the geometries into our collection.             */
 /* -------------------------------------------------------------------- */
@@ -142,9 +142,9 @@ static CPLErr ProcessLayer(
         if( GDALGetProjectionRef( hDstDS ) != NULL )
         {
             char *pszProjection;
-    
+
             pszProjection = (char *) GDALGetProjectionRef( hDstDS );
-    
+
             hDstSRS = OSRNewSpatialReference(NULL);
             if( OSRImportFromWkt( hDstSRS, &pszProjection ) != OGRERR_NONE )
             {
@@ -152,7 +152,7 @@ static CPLErr ProcessLayer(
                 hDstSRS = NULL;
             }
         }
-    
+
         OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hSrcLayer);
         if( hDstSRS != NULL && hSrcSRS != NULL )
         {
@@ -179,7 +179,7 @@ static CPLErr ProcessLayer(
                     "The input vector layer has a SRS, but the output raster dataset SRS is unknown.\n"
                     "Ensure output raster dataset has the same SRS, otherwise results might be incorrect.");
         }
-    
+
         if( hDstSRS != NULL )
         {
             OSRDestroySpatialReference(hDstSRS);
@@ -215,7 +215,7 @@ static CPLErr ProcessLayer(
     std::vector<double> adfFullBurnValues;
 
     OGR_L_ResetReading( hSrcLayer );
-    
+
     while( (hFeat = OGR_L_GetNextFeature( hSrcLayer )) != NULL )
     {
         OGRGeometryH hGeom;
@@ -305,7 +305,7 @@ static CPLErr ProcessLayer(
 
     for( iGeom = static_cast<int>(ahGeometries.size())-1; iGeom >= 0; iGeom-- )
         OGR_G_DestroyGeometry( ahGeometries[iGeom] );
-    
+
     return eErr;
 }
 
@@ -467,7 +467,7 @@ struct GDALRasterizeOptions
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress;
-    
+
     /*! pointer to the progress data variable */
     void *pProgressData;
 
@@ -733,9 +733,9 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         if( eErr != CE_None )
             break;
     }
-    
+
     GDALRasterizeOptionsFree(psOptionsToFree);
-    
+
     if( eErr != CE_None )
     {
         if( bCloseOutDSOnError )
@@ -990,7 +990,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-ot") && i < argc-1 )
         {
             int iType;
-            
+
             for( iType = 1; iType < GDT_TypeCount; iType++ )
             {
                 if( GDALGetDataTypeName((GDALDataType)iType) != NULL
@@ -1088,7 +1088,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             GDALRasterizeOptionsFree(psOptions);
             return NULL;
         }
-    
+
         if (psOptions->bTargetAlignedPixels && psOptions->dfXRes == 0 && psOptions->dfYRes == 0)
         {
             CPLError(CE_Failure, CPLE_NotSupported, "-tap option cannot be used without using -tr.");

@@ -64,14 +64,14 @@ int main( int nArgc, char ** papszArgv )
     {
         if( EQUAL(papszArgv[i],"-xml") )
             bReportXML = TRUE;
-        
+
         else if( EQUAL(papszArgv[i],"-t") && i < nArgc - 4 )
         {
             OGRSpatialReference oSourceSRS, oTargetSRS;
             OGRCoordinateTransformation *poCT;
             double                      x, y, z_orig, z;
             int                         nArgsUsed = 4;
-            
+
             if( oSourceSRS.SetFromUserInput(papszArgv[i+1]) != OGRERR_NONE )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -86,7 +86,7 @@ int main( int nArgc, char ** papszArgv )
                           papszArgv[i+2] );
                 continue;
             }
-            
+
             poCT = OGRCreateCoordinateTransformation( &oSourceSRS,
                                                       &oTargetSRS );
             x = CPLAtof( papszArgv[i+3] );

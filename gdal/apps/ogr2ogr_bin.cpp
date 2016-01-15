@@ -137,7 +137,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
-    
+
     if( nArgc < 1 )
     {
         papszArgv = NULL;
@@ -234,7 +234,7 @@ int main( int nArgc, char ** papszArgv )
     if( hDS == NULL )
     {
         OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-        
+
         fprintf( stderr, "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 psOptionsForBinary->pszDataSource );
