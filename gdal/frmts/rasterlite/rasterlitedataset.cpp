@@ -280,12 +280,21 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 GDALClose(hDSTile);
                 hDSTile = NULL;
             }
+            
+            if( hDSTile )
+            {
+                if( GDALGetRasterXSize(hDSTile) != nTileXSize ||
+                    GDALGetRasterYSize(hDSTile) != nTileYSize )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions for tile %d", 
+                             nTileId);
+                    GDALClose(hDSTile);
+                    hDSTile = NULL;
+                }
+            }
 
             if (hDSTile)
             {
-                CPLAssert(GDALGetRasterXSize(hDSTile) == nTileXSize);
-                CPLAssert(GDALGetRasterYSize(hDSTile) == nTileYSize);
-
                 bHasFoundTile = true;
 
                 bool bHasJustMemsetTileBand1 = false;
@@ -1240,7 +1249,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "res=%d, xres=%.15f, yres=%.15f",
                          i, poDS->padfXResolutions[i], poDS->padfYResolutions[i]);
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                OGR_DS_ReleaseResultSet(poDS->hDS, hSQLLyr);
                 delete poDS;
                 poDS = NULL;
                 goto end;
