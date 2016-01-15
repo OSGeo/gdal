@@ -390,7 +390,8 @@ INPUT                  = port \
                          ogr/ogrsf_frmts/generic \
                          ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
                          ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
-			 swig/python/scripts
+			 swig/python/scripts \
+			 gnm 
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
