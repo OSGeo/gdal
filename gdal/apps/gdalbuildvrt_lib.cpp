@@ -249,6 +249,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
+    pahSrcDS = NULL;
 
     if( ppszInputFilenamesIn )
     {
@@ -257,7 +258,6 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
         {
             ppszInputFilenames[i] = CPLStrdup(ppszInputFilenamesIn[i]);
         }
-        pahSrcDS = NULL;
     }
     else if( pahSrcDSIn )
     {
@@ -1654,7 +1654,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
         }
         else if ( EQUAL(papszArgv[iArg],"-vrtnodata") && iArg + 1 < argc )
         {
-            CPLFree(psOptions->pszSrcNoData);
+            CPLFree(psOptions->pszVRTNoData);
             psOptions->pszVRTNoData = CPLStrdup(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg + 1 < argc )
