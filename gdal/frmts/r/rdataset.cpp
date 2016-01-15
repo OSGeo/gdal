@@ -249,7 +249,13 @@ const char *RDataset::ReadString()
         return "";
     }
 
-    size_t nLen = ReadInteger();
+    int nLenSigned = ReadInteger();
+    if( nLenSigned < 0 )
+    {
+        osLastStringRead = "";
+        return "";
+    }
+    const size_t nLen = static_cast<size_t>(nLenSigned);
 
     char *pachWrkBuf = (char *) VSIMalloc(nLen);
     if (pachWrkBuf == NULL)
