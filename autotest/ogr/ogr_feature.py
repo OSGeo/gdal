@@ -1082,6 +1082,24 @@ def ogr_feature_native_data():
 
     return 'success'
 
+###############################################################################
+# Test assigning our geometry to ourselves
+
+def ogr_feature_set_geometry_self():
+
+    feat_def = ogr.FeatureDefn( 'test' )
+    f = ogr.Feature(feat_def)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    f.SetGeometryDirectly(f.GetGeometryRef())
+    f.SetGeometryDirectly(f.GetGeometryRef())
+    f.SetGeometry(f.GetGeometryRef())
+    f.SetGeometry(f.GetGeometryRef())
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 def ogr_feature_cleanup():
 
     gdaltest.src_feature = None
@@ -1107,6 +1125,7 @@ gdaltest_list = [
     ogr_feature_nullable_validate,
     ogr_feature_default,
     ogr_feature_native_data,
+    ogr_feature_set_geometry_self,
     ogr_feature_cleanup ]
 
 if __name__ == '__main__':
