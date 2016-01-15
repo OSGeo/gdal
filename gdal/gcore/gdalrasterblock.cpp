@@ -70,7 +70,7 @@ static CPLLockType GetLockType()
                      pszLockType);
             nLockType = LOCK_ADAPTIVE_MUTEX;
         }
-        bDebugContention = CSLTestBoolean(CPLGetConfigOption("GDAL_RB_LOCK_DEBUG_CONTENTION", "NO"));
+        bDebugContention = CPLTestBool(CPLGetConfigOption("GDAL_RB_LOCK_DEBUG_CONTENTION", "NO"));
     }
     return (CPLLockType) nLockType;
 }
@@ -224,7 +224,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         {
             INITIALIZE_LOCK;
         }
-        bSleepsForBockCacheDebug = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO")));
+        bSleepsForBockCacheDebug = CPLTestBool(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO"));
 
         const char* pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX","5%");
 

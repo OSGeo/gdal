@@ -271,7 +271,7 @@ void GDALDefaultOverviews::OverviewScan()
 
         if( poODS )
         {
-            int bUseRRD = CSLTestBoolean(CPLGetConfigOption("USE_RRD","NO"));
+            int bUseRRD = CPLTestBool(CPLGetConfigOption("USE_RRD","NO"));
 
             bOvrIsAux = TRUE;
             if( GetOverviewCount(1) == 0 && !bUseRRD )
@@ -486,7 +486,7 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
     // Reset the saved overview filename.
     if( !EQUAL(poDS->GetDescription(),":::VIRTUAL:::") )
     {
-        const bool bUseRRD = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("USE_RRD","NO")));
+        const bool bUseRRD = CPLTestBool(CPLGetConfigOption("USE_RRD","NO"));
 
         if( bUseRRD )
             osOvrFilename = CPLResetExtension( poDS->GetDescription(), "aux" );
@@ -576,7 +576,7 @@ GDALDefaultOverviews::BuildOverviews(
 /* -------------------------------------------------------------------- */
     if( poODS == NULL )
     {
-        bOvrIsAux = CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" ));
+        bOvrIsAux = CPLTestBool(CPLGetConfigOption( "USE_RRD", "NO" ));
         if( bOvrIsAux )
         {
             VSIStatBufL sStatBuf;

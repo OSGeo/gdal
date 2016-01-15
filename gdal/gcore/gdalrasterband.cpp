@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 GDALRasterBand::GDALRasterBand()
 
 {
-    Init(CSLTestBoolean( CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
+    Init(CPLTestBool( CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
 }
 
 GDALRasterBand::GDALRasterBand(int bForceCachedIOIn)
@@ -2714,7 +2714,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     /* Not advertized. May be removed at any time. Just as a provision if the */
     /* old behaviour made sense somethimes... */
     bGotNoDataValue = bGotNoDataValue &&
-        !CSLTestBoolean(CPLGetConfigOption("GDAL_NODATA_IN_HISTOGRAM", "NO"));
+        !CPLTestBool(CPLGetConfigOption("GDAL_NODATA_IN_HISTOGRAM", "NO"));
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     const bool bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
@@ -5205,7 +5205,7 @@ CPLVirtualMem  *GDALRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                             "CACHE_SIZE", "40000000"));
     size_t nPageSizeHint = atoi(CSLFetchNameValueDef(papszOptions,
                                             "PAGE_SIZE_HINT", "0"));
-    int bSingleThreadUsage = CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+    int bSingleThreadUsage = CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                             "SINGLE_THREAD", "FALSE"));
     return GDALRasterBandGetVirtualMem( (GDALRasterBandH) this,
                                         eRWFlag,

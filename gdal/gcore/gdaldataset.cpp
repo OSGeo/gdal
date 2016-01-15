@@ -175,7 +175,7 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
 GDALDataset::GDALDataset()
 
 {
-    Init( CSLTestBoolean( 
+    Init( CPLTestBool( 
         CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
 }
 

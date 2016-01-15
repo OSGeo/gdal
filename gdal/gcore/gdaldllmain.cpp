@@ -120,7 +120,7 @@ static void GDALDestructor(void)
 {
     if( bGDALDestroyAlreadyCalled )
         return;
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_DESTROY", "YES")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_DESTROY", "YES")) )
         return;
     GDALDestroy();
 }
