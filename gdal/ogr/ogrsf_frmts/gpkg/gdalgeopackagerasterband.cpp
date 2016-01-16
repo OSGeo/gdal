@@ -855,7 +855,7 @@ CPLErr GDALGeoPackageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                       WEBPSupports4Bands()                           */
 /************************************************************************/
 
-static int WEBPSupports4Bands()
+static bool WEBPSupports4Bands()
 {
     static int bRes = -1;
     if( bRes < 0 )
@@ -874,7 +874,7 @@ static int WEBPSupports4Bands()
                         "The version of WEBP available does not support 4-band RGBA");
         }
     }
-    return bRes;
+    return CPL_TO_BOOL(bRes);
 }
 
 /************************************************************************/
@@ -1092,9 +1092,9 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         if( bPartialTile || (nBands == 2 && !bAllOpaque) || (nBands == 4 && !bAllOpaque) || m_poCT != NULL )
         {
             pszDriverName = "PNG";
-            bTileDriverSupports2Bands = TRUE;
+            bTileDriverSupports2Bands = m_bPNGSupports2Bands;
             bTileDriverSupports4Bands = TRUE;
-            bTileDriverSupportsCT = TRUE;
+            bTileDriverSupportsCT = m_bPNGSupportsCT;
         }
         else
             pszDriverName = "JPEG";
@@ -1104,9 +1104,9 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     {
         pszDriverName = "PNG";
         bTileDriverSupports1Band = TRUE;
-        bTileDriverSupports2Bands = TRUE;
+        bTileDriverSupports2Bands = m_bPNGSupports2Bands;
         bTileDriverSupports4Bands = TRUE;
-        bTileDriverSupportsCT = TRUE;
+        bTileDriverSupportsCT = m_bPNGSupportsCT;
     }
     else if( m_eTF == GPKG_TF_JPEG )
     {

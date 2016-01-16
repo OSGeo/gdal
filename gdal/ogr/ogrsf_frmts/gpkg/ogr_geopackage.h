@@ -98,6 +98,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
     int                 m_nTileMatrixHeight;
 
     GPKGTileFormat      m_eTF;
+    bool                m_bPNGSupports2Bands; // for test/debug purposes only. true is the nominal value
+    bool                m_bPNGSupportsCT; // for test/debug purposes only. true is the nominal value
     int                 m_nZLevel;
     int                 m_nQuality;
     bool                m_bDither;

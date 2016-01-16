@@ -440,6 +440,8 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_nTileMatrixWidth(0),
     m_nTileMatrixHeight(0),
     m_eTF(GPKG_TF_PNG_JPEG),
+    m_bPNGSupports2Bands(true),
+    m_bPNGSupportsCT(true),
     m_nZLevel(6),
     m_nQuality(75),
     m_bDither(false),
@@ -2500,6 +2502,10 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     m_bNew = true;
     bUpdate = TRUE;
     eAccess = GA_Update; /* hum annoying duplication */
+
+    // for test/debug purposes only. true is the nominal value
+    m_bPNGSupports2Bands = CPLTestBool(CPLGetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", "TRUE"));
+    m_bPNGSupportsCT = CPLTestBool(CPLGetConfigOption("GPKG_PNG_SUPPORTS_CT", "TRUE"));
 
     if (!OpenOrCreateDB(bFileExists ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE))
         return FALSE;

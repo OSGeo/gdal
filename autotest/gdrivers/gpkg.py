@@ -2717,6 +2717,113 @@ def gpkg_30():
     return gpkg_29(x = 200)
 
 ###############################################################################
+# 1 band to RGBA
+
+def gpkg_31():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    # Force use of RGBA instead of Grey-Alpha (the natural use case is WEBP)
+    # but here we can test losslessly
+    gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', 'NO')
+    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', gdal.Open('data/byte.tif'), options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=21'])
+    gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', None)
+
+    ds = gdal.Open('tmp/tmp.gpkg')
+    if check_tile_format(ds, 'PNG', 4, False) != 'success':
+        return 'fail'
+    expected_cs = [ 4672, 4672, 4672, 4873 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# grey-alpha to RGBA
+
+def gpkg_32():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    # Force use of RGBA instead of Grey-Alpha (the natural use case is WEBP)
+    # but here we can test losslessly
+    gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', 'NO')
+    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', get_georeferenced_greyalpha_ds(), options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=200'])
+    gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', None)
+
+    ds = gdal.Open('tmp/tmp.gpkg')
+    if check_tile_format(ds, 'PNG', 4, False) != 'success':
+        return 'fail'
+    expected_cs = [ 1970, 1970, 1970, 10807 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=2'])
+    expected_cs = [ 1970, 10807 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Single band with 32 bit color table -> RGBA
+
+def gpkg_33():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    # Force use of RGBA instead of color-table (the natural use case is WEBP)
+    # but here we can test losslessly
+    gdal.SetConfigOption('GPKG_PNG_SUPPORTS_CT', 'NO')
+    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', get_georeferenced_ds_with_pct32(), options = ['TILE_FORMAT=PNG'])
+    gdal.SetConfigOption('GPKG_PNG_SUPPORTS_CT', None)
+
+    ds = gdal.Open('tmp/tmp.gpkg')
+    if check_tile_format(ds, 'PNG', 4, False) != 'success':
+        return 'fail'
+    expected_cs = [ 10991, 57677, 34965, 10638 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2768,6 +2875,9 @@ gdaltest_list = [
     gpkg_28,
     gpkg_29,
     gpkg_30,
+    gpkg_31,
+    gpkg_32,
+    gpkg_33,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_28, gpkg_29, gpkg_cleanup ]
