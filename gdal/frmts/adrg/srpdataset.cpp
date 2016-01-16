@@ -33,6 +33,7 @@
 #include "gdal_frmts.h"
 #include "iso8211.h"
 #include "ogr_spatialref.h"
+#include <algorithm>
 
 // Uncomment to recognize also .gen files in addition to .img files
 // #define OPEN_GEN
@@ -656,8 +657,8 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
             if( record->FindField( "COL" ) != NULL ) 
             {
                 int            iColor;
-                int            nColorCount = 
-                    record->FindField("COL")->GetRepeatCount();
+                int            nColorCount = std::min(256,
+                    record->FindField("COL")->GetRepeatCount());
 
                 for( iColor = 0; iColor < nColorCount; iColor++ )
                 {
@@ -666,7 +667,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 
                     nCCD = record->GetIntSubfield( "COL", 0, "CCD", iColor,
                         &bSuccess );
-                    if( !bSuccess )
+                    if( !bSuccess || nCCD < 0 || nCCD > 255 )
                         break;
 
                     nNSR = record->GetIntSubfield( "COL", 0, "NSR", iColor );
