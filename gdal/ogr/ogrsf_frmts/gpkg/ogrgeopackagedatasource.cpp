@@ -1088,7 +1088,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         return FALSE;
     }
 
-    CheckUnknownExtensions(TRUE);
+    CheckUnknownExtensions(true);
 
     // Do this after CheckUnknownExtensions() so that m_eTF is set to GPKG_TF_WEBP
     // if the table already registers the gpkg_webp extension
@@ -3718,13 +3718,13 @@ void GDALGeoPackageDataset::ReleaseResultSet( OGRLayer * poLayer )
 /*                         HasExtensionsTable()                         */
 /************************************************************************/
 
-int GDALGeoPackageDataset::HasExtensionsTable()
+bool GDALGeoPackageDataset::HasExtensionsTable()
 {
     SQLResult oResultTable;
     OGRErr err = SQLQuery(hDB,
         "SELECT * FROM sqlite_master WHERE name = 'gpkg_extensions' "
         "AND type IN ('table', 'view')", &oResultTable);
-    int bHasExtensionsTable = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
+    bool bHasExtensionsTable = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
     SQLResultFree(&oResultTable);
     return bHasExtensionsTable;
 }
@@ -3733,7 +3733,7 @@ int GDALGeoPackageDataset::HasExtensionsTable()
 /*                    CheckUnknownExtensions()                          */
 /************************************************************************/
 
-void GDALGeoPackageDataset::CheckUnknownExtensions(int bCheckRasterTable)
+void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
 {
     if( !HasExtensionsTable() )
         return;
@@ -3820,10 +3820,10 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(int bCheckRasterTable)
 /*                         HasGDALAspatialExtension()                       */
 /************************************************************************/
 
-int GDALGeoPackageDataset::HasGDALAspatialExtension()
+bool GDALGeoPackageDataset::HasGDALAspatialExtension()
 {
     if (!HasExtensionsTable())
-        return 0;
+        return false;
 
     SQLResult oResultTable;
     OGRErr err = SQLQuery(hDB,
@@ -3835,7 +3835,7 @@ int GDALGeoPackageDataset::HasGDALAspatialExtension()
         " OR 0"
 #endif
         , &oResultTable);
-    int bHasExtension = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
+    bool bHasExtension = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
     SQLResultFree(&oResultTable);
     return bHasExtension;
 }
@@ -4137,7 +4137,7 @@ void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
         return;
     }
 
-    sqlite3_result_int( pContext, poLyr->DropSpatialIndex(TRUE) );
+    sqlite3_result_int( pContext, poLyr->DropSpatialIndex(true) );
 }
 
 /************************************************************************/

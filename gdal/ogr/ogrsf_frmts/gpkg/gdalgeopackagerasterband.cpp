@@ -243,7 +243,7 @@ static int GPKGFindBestEntry(GDALColorTable* poCT,
 
 CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
                                        GByte* pabyTileData,
-                                       int* pbIsLossyFormat)
+                                       bool* pbIsLossyFormat)
 {
     const char* apszDrivers[] = { "JPEG", "PNG", "WEBP", NULL };
     int nBlockXSize, nBlockYSize;
@@ -491,11 +491,11 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol)
     else
     {
         GByte* pabyDest = m_pabyCachedTiles + 8 * nBlockXSize * nBlockYSize;
-        int bAllNonDirty = TRUE;
+        bool bAllNonDirty = true;
         for( int i = 0; i < nBands; i++ )
         {
             if( m_asCachedTilesDesc[0].abBandDirty[i] )
-                bAllNonDirty = FALSE;
+                bAllNonDirty = false;
         }
         if( bAllNonDirty )
         {
@@ -532,13 +532,13 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol)
 /************************************************************************/
 
 GByte* GDALGeoPackageDataset::ReadTile( int nRow, int nCol, GByte *pabyData,
-                                        int *pbIsLossyFormat)
+                                        bool *pbIsLossyFormat)
 {
     int nBlockXSize;
     int nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    if( pbIsLossyFormat ) *pbIsLossyFormat = FALSE;
+    if( pbIsLossyFormat ) *pbIsLossyFormat = false;
 
     if( nRow < 0 || nCol < 0 || nRow >= m_nTileMatrixHeight ||
         nCol >= m_nTileMatrixWidth )
@@ -862,7 +862,7 @@ static bool WEBPSupports4Bands()
     {
         GDALDriver* poDrv = (GDALDriver*) GDALGetDriverByName("WEBP");
         if( poDrv == NULL || CPLTestBool(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
-            bRes = FALSE;
+            bRes = false;
         else
         {
             // LOSSLESS and RGBA support appeared in the same version
@@ -901,14 +901,14 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     int nRow = m_asCachedTilesDesc[0].nRow;
     int nCol = m_asCachedTilesDesc[0].nCol;
 
-    int bAllDirty = TRUE;
-    int bAllNonDirty = TRUE;
+    bool bAllDirty = true;
+    bool bAllNonDirty = true;
     for( int i = 0; i < nBands; i++ )
     {
         if( m_asCachedTilesDesc[0].abBandDirty[i] )
-            bAllNonDirty = FALSE;
+            bAllNonDirty = false;
         else
-            bAllDirty = FALSE;
+            bAllDirty = false;
     }
     if( bAllNonDirty )
         return CE_None;
@@ -918,7 +918,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
 
     /* If all bands for that block are not dirty/written, we need to */
     /* fetch the missing ones if the tile exists */
-    int bIsLossyFormat = FALSE;
+    bool bIsLossyFormat = false;
     if( !bAllDirty )
     {
         for( int i = 1; i <= 3; i++ )
@@ -985,30 +985,30 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     int iXCount = nBlockXSize;
     int iYCount = nBlockYSize;
 
-    int bPartialTile = FALSE;
+    bool bPartialTile = false;
     int nAlphaBand = (nBands == 2) ? 2 : (nBands == 4) ? 4 : 0;
     if( nAlphaBand == 0 )
     {
         if( nXOff < 0 )
         {
-            bPartialTile = TRUE;
+            bPartialTile = true;
             iXOff = -nXOff;
             iXCount += nXOff;
         }
         if( nXOff + nBlockXSize > nRasterXSize )
         {
-            bPartialTile = TRUE;
+            bPartialTile = true;
             iXCount -= nXOff + nBlockXSize - nRasterXSize;
         }
         if( nYOff < 0 )
         {
-            bPartialTile = TRUE;
+            bPartialTile = true;
             iYOff = -nYOff;
             iYCount += nYOff;
         }
         if( nYOff + nBlockYSize > nRasterYSize )
         {
-            bPartialTile = TRUE;
+            bPartialTile = true;
             iYCount -= nYOff + nBlockYSize - nRasterYSize;
         }
         CPLAssert(iXOff >= 0);
@@ -1022,14 +1022,14 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     m_asCachedTilesDesc[0].nRow = -1;
     m_asCachedTilesDesc[0].nCol = -1;
     m_asCachedTilesDesc[0].nIdxWithinTileData = -1;
-    m_asCachedTilesDesc[0].abBandDirty[0] = FALSE;
-    m_asCachedTilesDesc[0].abBandDirty[1] = FALSE;
-    m_asCachedTilesDesc[0].abBandDirty[2] = FALSE;
-    m_asCachedTilesDesc[0].abBandDirty[3] = FALSE;
+    m_asCachedTilesDesc[0].abBandDirty[0] = false;
+    m_asCachedTilesDesc[0].abBandDirty[1] = false;
+    m_asCachedTilesDesc[0].abBandDirty[2] = false;
+    m_asCachedTilesDesc[0].abBandDirty[3] = false;
 
     CPLErr eErr = CE_Failure;
 
-    int bAllOpaque = TRUE;
+    bool bAllOpaque = true;
     if( m_poCT == NULL && nAlphaBand != 0 )
     {
         GByte byFirstAlphaVal =  m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize];
@@ -1065,7 +1065,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             bAllOpaque = (byFirstAlphaVal == 255);
         }
         else
-            bAllOpaque = FALSE;
+            bAllOpaque = false;
     }
 
     if( bIsLossyFormat )
@@ -1078,22 +1078,22 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     CPLString osMemFileName;
     osMemFileName.Printf("/vsimem/gpkg_write_tile_%p", this);
     const char* pszDriverName = "PNG";
-    int bTileDriverSupports1Band = FALSE;
-    int bTileDriverSupports2Bands = FALSE;
-    int bTileDriverSupports4Bands = FALSE;
-    int bTileDriverSupportsCT = FALSE;
+    bool bTileDriverSupports1Band = false;
+    bool bTileDriverSupports2Bands = false;
+    bool bTileDriverSupports4Bands = false;
+    bool bTileDriverSupportsCT = false;
 
     if( nBands == 1 )
         GetRasterBand(1)->GetColorTable();
 
     if( m_eTF == GPKG_TF_PNG_JPEG )
     {
-        bTileDriverSupports1Band = TRUE;
+        bTileDriverSupports1Band = true;
         if( bPartialTile || (nBands == 2 && !bAllOpaque) || (nBands == 4 && !bAllOpaque) || m_poCT != NULL )
         {
             pszDriverName = "PNG";
             bTileDriverSupports2Bands = m_bPNGSupports2Bands;
-            bTileDriverSupports4Bands = TRUE;
+            bTileDriverSupports4Bands = true;
             bTileDriverSupportsCT = m_bPNGSupportsCT;
         }
         else
@@ -1103,15 +1103,15 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
              m_eTF == GPKG_TF_PNG8 )
     {
         pszDriverName = "PNG";
-        bTileDriverSupports1Band = TRUE;
+        bTileDriverSupports1Band = true;
         bTileDriverSupports2Bands = m_bPNGSupports2Bands;
-        bTileDriverSupports4Bands = TRUE;
+        bTileDriverSupports4Bands = true;
         bTileDriverSupportsCT = m_bPNGSupportsCT;
     }
     else if( m_eTF == GPKG_TF_JPEG )
     {
         pszDriverName = "JPEG";
-        bTileDriverSupports1Band = TRUE;
+        bTileDriverSupports1Band = true;
     }
     else if( m_eTF == GPKG_TF_WEBP )
     {
@@ -1448,13 +1448,13 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
     }
 
     CPLErr eErr = CE_None;
-    int bGotPartialTiles = FALSE;
+    bool bGotPartialTiles = false;
     do
     {
         rc = sqlite3_step(hStmt);
         if ( rc == SQLITE_ROW )
         {
-            bGotPartialTiles = TRUE;
+            bGotPartialTiles = true;
 
             int nRow = sqlite3_column_int(hStmt, 0);
             int nCol = sqlite3_column_int(hStmt, 1);
@@ -1506,10 +1506,8 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
                                                               nBytes, FALSE);
                         VSIFCloseL(fp);
 
-                        int bIsLossyFormat;
                         ReadTile(osMemFileName,
-                                 m_pabyCachedTiles + 4 * nBlockXSize * nBlockYSize,
-                                 &bIsLossyFormat);
+                                 m_pabyCachedTiles + 4 * nBlockXSize * nBlockYSize);
                         VSIUnlink(osMemFileName);
 
                         int iYQuadrantMax = ( m_nShiftYPixelsMod ) ? 1 : 0;
@@ -1572,10 +1570,10 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
             m_asCachedTilesDesc[0].nRow = nRow;
             m_asCachedTilesDesc[0].nCol = nCol;
             m_asCachedTilesDesc[0].nIdxWithinTileData = 0;
-            m_asCachedTilesDesc[0].abBandDirty[0] = TRUE;
-            m_asCachedTilesDesc[0].abBandDirty[1] = TRUE;
-            m_asCachedTilesDesc[0].abBandDirty[2] = TRUE;
-            m_asCachedTilesDesc[0].abBandDirty[3] = TRUE;
+            m_asCachedTilesDesc[0].abBandDirty[0] = true;
+            m_asCachedTilesDesc[0].abBandDirty[1] = true;
+            m_asCachedTilesDesc[0].abBandDirty[2] = true;
+            m_asCachedTilesDesc[0].abBandDirty[3] = true;
 
             eErr = WriteTile();
         }
@@ -1805,10 +1803,10 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
         m_asCachedTilesDesc[0].nRow = nRow;
         m_asCachedTilesDesc[0].nCol = nCol;
         m_asCachedTilesDesc[0].nIdxWithinTileData = 0;
-        m_asCachedTilesDesc[0].abBandDirty[0] = TRUE;
-        m_asCachedTilesDesc[0].abBandDirty[1] = TRUE;
-        m_asCachedTilesDesc[0].abBandDirty[2] = TRUE;
-        m_asCachedTilesDesc[0].abBandDirty[3] = TRUE;
+        m_asCachedTilesDesc[0].abBandDirty[0] = true;
+        m_asCachedTilesDesc[0].abBandDirty[1] = true;
+        m_asCachedTilesDesc[0].abBandDirty[2] = true;
+        m_asCachedTilesDesc[0].abBandDirty[3] = true;
 
         pszSQL = CPLSPrintf("UPDATE partial_tiles SET zoom_level = %d, "
                             "partial_flag = 0 WHERE id = %d",
@@ -1956,7 +1954,7 @@ CPLErr GDALGeoPackageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
             // Composite block data into tile, and check if all bands for this block
             // are dirty, and if so write the tile
-            int bAllDirty = TRUE;
+            bool bAllDirty = true;
             for(int iBand=1;iBand<=poGDS->nBands;iBand++)
             {
                 GDALRasterBlock* poBlock = NULL;
@@ -1987,14 +1985,14 @@ CPLErr GDALGeoPackageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                         {
                             if( poBlock )
                                 poBlock->DropLock();
-                            bAllDirty = FALSE;
+                            bAllDirty = false;
                             continue;
                         }
                     }
                 }
 
                 if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
-                    poGDS->m_asCachedTilesDesc[0].abBandDirty[iBand - 1] = TRUE;
+                    poGDS->m_asCachedTilesDesc[0].abBandDirty[iBand - 1] = true;
 
                 int nDstXOffset = 0, nDstXSize = nBlockXSize,
                     nDstYOffset = 0, nDstYSize = nBlockYSize;

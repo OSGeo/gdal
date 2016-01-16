@@ -48,7 +48,7 @@ typedef struct
     int     nRow;
     int     nCol;
     int     nIdxWithinTileData;
-    int     abBandDirty[4];
+    bool    abBandDirty[4];
 } CachedTileDesc;
 
 typedef enum
@@ -68,7 +68,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
     OGRGeoPackageTableLayer** m_papoLayers;
     int                 m_nLayers;
     bool                m_bUtf8;
-    void                CheckUnknownExtensions(int bCheckRasterTable = FALSE);
+    void                CheckUnknownExtensions(bool bCheckRasterTable = false);
 
     bool                m_bNew;
 
@@ -172,10 +172,10 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
 
         CPLErr                  ReadTile(const CPLString& osMemFileName,
                                          GByte* pabyTileData,
-                                         int* pbIsLossyFormat = NULL);
+                                         bool* pbIsLossyFormat = NULL);
         GByte*                  ReadTile(int nRow, int nCol);
         GByte*                  ReadTile(int nRow, int nCol, GByte* pabyData,
-                                         int* pbIsLossyFormat = NULL);
+                                         bool* pbIsLossyFormat = NULL);
 
         bool                    m_bInWriteTile;
         CPLErr                  WriteTile();
@@ -251,9 +251,9 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
         int                 GetSrsId( const OGRSpatialReference * poSRS );
         const char*         GetSrsName( const OGRSpatialReference * poSRS );
         OGRSpatialReference* GetSpatialRef( int iSrsId );
-        virtual int         GetUTF8() { return m_bUtf8; }
+        bool                GetUTF8() { return m_bUtf8; }
         OGRErr              CreateExtensionsTableIfNecessary();
-        int                 HasExtensionsTable();
+        bool                HasExtensionsTable();
         OGRErr              CreateGDALAspatialExtension();
         void                SetMetadataDirty() { m_bMetadataDirty = true; }
 
@@ -270,7 +270,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
         OGRErr              SetApplicationId();
         int                 OpenOrCreateDB(int flags);
-        int                 HasGDALAspatialExtension();
+        bool                HasGDALAspatialExtension();
 };
 
 /************************************************************************/
@@ -364,11 +364,11 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     sqlite3_stmt*               m_poUpdateStatement;
     bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
-    bool                        bDeferedSpatialIndexCreation;
+    bool                        m_bDeferedSpatialIndexCreation;
     // m_bHasSpatialIndex cannot be bool.  -1 is unset.
     int                         m_bHasSpatialIndex;
-    int                         bDropRTreeTable;
-    int                         m_anHasGeometryExtension[wkbMultiSurface+1];
+    bool                        m_bDropRTreeTable;
+    bool                        m_abHasGeometryExtension[wkbMultiSurface+1];
     bool                        m_bPreservePrecision;
     bool                        m_bTruncateFields;
     bool                        m_bDeferredCreation;
@@ -424,11 +424,11 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                                const char* pszIdentifier,
                                                const char* pszDescription );
     void                SetDeferedSpatialIndexCreation( bool bFlag )
-                                { bDeferedSpatialIndexCreation = bFlag; }
+                                { m_bDeferedSpatialIndexCreation = bFlag; }
 
     void                CreateSpatialIndexIfNecessary();
-    int                 CreateSpatialIndex();
-    int                 DropSpatialIndex(int bCalledFromSQLFunction = FALSE);
+    bool                CreateSpatialIndex();
+    bool                DropSpatialIndex(bool bCalledFromSQLFunction = false);
 
     virtual char **     GetMetadata( const char *pszDomain = NULL );
     virtual const char *GetMetadataItem( const char * pszName,
@@ -447,7 +447,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     virtual CPLString    GetSpatialWhere(int iGeomCol,
                                          OGRGeometry* poFilterGeom);
 
-    int                 HasSpatialIndex();
+    bool                HasSpatialIndex();
     void                SetPrecisionFlag( int bFlag )
                                 { m_bPreservePrecision = CPL_TO_BOOL( bFlag ); }
     void                SetTruncateFieldsFlag( int bFlag )
@@ -463,13 +463,13 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              BuildColumns();
     OGRBoolean          IsGeomFieldSet( OGRFeature *poFeature );
     CPLString           FeatureGenerateUpdateSQL( OGRFeature *poFeature );
-    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, int bAddFID, int bBindNullFields );
+    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID, bool bBindNullFields );
     OGRErr              FeatureBindUpdateParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt );
-    OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int bAddFID, int bBindNullFields );
-    OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, int bAddFID, int bBindNullFields );
+    OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, bool bAddFID, bool bBindNullFields );
+    OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, bool bAddFID, bool bBindNullFields );
 
     void                CheckUnknownExtensions();
-    int                 CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType);
+    bool                CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType);
 };
 
 /************************************************************************/
