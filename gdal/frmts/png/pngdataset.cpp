@@ -1522,6 +1522,17 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         nBitDepth = 16;
     }
 
+    const char* pszNbits = CSLFetchNameValue(papszOptions, "NBITS");
+    if( eType == GDT_Byte && pszNbits != NULL )
+    {
+        nBitDepth = atoi(pszNbits);
+        if( !(nBitDepth == 1 || nBitDepth == 2 || nBitDepth == 4 || nBitDepth == 8) )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported, "Invalid bit depth. Using 8");
+            nBitDepth = 8;
+        }
+    }
+
     png_set_write_fn( hPNG, fpImage, png_vsi_write_data, png_vsi_flush );
 
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -2068,6 +2079,7 @@ void GDALRegister_PNG()
 "   <Option name='COPYRIGHT' type='string' description='Copyright'/>\n"
 "   <Option name='COMMENT' type='string' description='Comment'/>\n"
 "   <Option name='WRITE_METADATA_AS_TEXT' type='boolean' description='Whether to write source dataset metadata in TEXT chunks' default='FALSE'/>\n"
+"   <Option name='NBITS' type='int' description='Force output bit depth: 1, 2 or 4'/>\n"
 "</CreationOptionList>\n" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
