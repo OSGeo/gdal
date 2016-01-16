@@ -324,6 +324,27 @@ def png_14():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    # Test explicit NBITS
+    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['NBITS=2'])
+    out_ds = gdal.Open('/vsimem/tmp.png')
+    nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
+    gdal.Unlink('/vsimem/tmp.png')
+    if nbits != '2':
+        gdaltest.post_reason('failure')
+        print(nbits)
+        return 'fail'
+
+    # Test (wrong) explicit NBITS
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['NBITS=7'])
+    out_ds = gdal.Open('/vsimem/tmp.png')
+    nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
+    gdal.Unlink('/vsimem/tmp.png')
+    if nbits is not None:
+        gdaltest.post_reason('failure')
+        print(nbits)
+        return 'fail'
+
     return 'success'
 
 gdaltest_list = [
