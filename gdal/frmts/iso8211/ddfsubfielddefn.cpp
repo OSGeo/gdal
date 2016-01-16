@@ -107,6 +107,13 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
     if( pszFormatString[1] == '(' )
     {
         nFormatWidth = atoi(pszFormatString+2);
+        if( nFormatWidth < 0 )
+        {
+             CPLError( CE_Failure, CPLE_AppDefined,
+                       "Format width %s is invalid.",
+                       pszFormatString+2 );
+            return FALSE;
+        }
         bIsVariable = nFormatWidth == 0;
     }
     else
@@ -137,7 +144,8 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
         bIsVariable = FALSE;
         if( pszFormatString[1] == '(' )
         {
-            if( atoi(pszFormatString+2) % 8 != 0 )
+            nFormatWidth = atoi(pszFormatString+2);
+            if( nFormatWidth < 0 || nFormatWidth % 8 != 0 )
             {
                  CPLError( CE_Failure, CPLE_AppDefined,
                            "Format width %s is invalid.",
@@ -145,7 +153,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
                 return FALSE;
             }
 
-            nFormatWidth = atoi(pszFormatString+2) / 8;
+            nFormatWidth = nFormatWidth / 8;
             eBinaryFormat = SInt; // good default, works for SDTS.
 
             if( nFormatWidth < 5 )
@@ -159,6 +167,13 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
         {
             eBinaryFormat = (DDFBinaryFormat) (pszFormatString[1] - '0');
             nFormatWidth = atoi(pszFormatString+2);
+            if( nFormatWidth < 0 )
+            {
+                 CPLError( CE_Failure, CPLE_AppDefined,
+                           "Format width %s is invalid.",
+                           pszFormatString+2 );
+                return FALSE;
+            }
 
             if( eBinaryFormat == SInt || eBinaryFormat == UInt )
                 eType = DDFInt;
