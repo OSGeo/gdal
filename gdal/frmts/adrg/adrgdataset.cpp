@@ -1001,6 +1001,15 @@ ADRGDataset* ADRGDataset::OpenDataset(
 
     NFC = record->GetIntSubfield("SPR", 0, "NFC", 0);
     CPLDebug("ADRG", "NFC=%d", NFC);
+    
+    if( NFL <= 0 || NFC <= 0 ||
+        NFL > INT_MAX / 128 ||
+        NFC > INT_MAX / 128 ||
+        NFL > (INT_MAX - 1) / (NFC * 5) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,"Invalid NFL / NFC values");
+        return FALSE;
+    }
 
     int PNC = record->GetIntSubfield("SPR", 0, "PNC", 0);
     CPLDebug("ADRG", "PNC=%d", PNC);
@@ -1062,7 +1071,14 @@ ADRGDataset* ADRGDataset::OpenDataset(
             return NULL;
         }
 
-        TILEINDEX = new int [NFL * NFC];
+        try
+        {
+            TILEINDEX = new int [NFL * NFC];
+        }
+        catch( const std::bad_alloc& )
+        {
+            return FALSE;
+        }
         const char* ptr = field->GetData();
         char offset[5+1]={0};
         for(int i=0;i<NFL*NFC;i++)

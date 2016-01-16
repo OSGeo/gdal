@@ -481,6 +481,15 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 
     NFC = record->GetIntSubfield( "SPR", 0, "NFC", 0, &bSuccess );
     CPLDebug("SRP", "NFC=%d", NFC);
+    
+    if( NFL <= 0 || NFC <= 0 ||
+        NFL > INT_MAX / 128 ||
+        NFC > INT_MAX / 128 ||
+        NFL > INT_MAX / NFC )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,"Invalid NFL / NFC values");
+        return FALSE;
+    }
 
     int PNC = record->GetIntSubfield( "SPR", 0, "PNC", 0, &bSuccess );
     CPLDebug("SRP", "PNC=%d", PNC);
@@ -536,12 +545,20 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 
         /* Should be strict comparison, but apparently a few datasets */
         /* have GetDataSize() greater than the required minimum (#3862) */
-        if (field->GetDataSize() < nIndexValueWidth * NFL * NFC + 1)
+        if (nIndexValueWidth > (INT_MAX - 1) / (NFL * NFC) ||
+            field->GetDataSize() < nIndexValueWidth * NFL * NFC + 1)
         {
             return FALSE;
         }
 
-        TILEINDEX = new int [NFL * NFC];
+        try
+        {
+            TILEINDEX = new int [NFL * NFC];
+        }
+        catch( const std::bad_alloc& )
+        {
+            return FALSE;
+        }
         const char* ptr = field->GetData();
         char offset[30]={0};
         offset[nIndexValueWidth] = '\0';
