@@ -409,13 +409,13 @@ int DDFRecord::ReadHeader()
 
             nEntryOffset += _sizeFieldLength;
             nFieldPos = DDFScanInt( pachData+nEntryOffset, _sizeFieldPos );
-
+            
 /* -------------------------------------------------------------------- */
 /*      Find the corresponding field in the module directory.           */
 /* -------------------------------------------------------------------- */
             DDFFieldDefn    *poFieldDefn = poModule->FindFieldDefn( szTag );
 
-            if( poFieldDefn == NULL )
+            if( poFieldDefn == NULL || nFieldLength < 0 || nFieldPos < 0  )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Undefined field `%s' encountered in data record.",
@@ -597,7 +597,7 @@ int DDFRecord::ReadHeader()
             /* ------------------------------------------------------------- */
             DDFFieldDefn    *poFieldDefn = poModule->FindFieldDefn( szTag );
 
-            if( poFieldDefn == NULL )
+            if( poFieldDefn == NULL || nFieldLength < 0 || nFieldPos < 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Undefined field `%s' encountered in data record.",
