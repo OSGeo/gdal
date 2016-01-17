@@ -45,13 +45,10 @@ extern "C" void RegisterOGROpenFileGDB();
 /*                         OGROpenFileGDBDriverIdentify()               */
 /************************************************************************/
 
-// Returns TRUE for a match, FALSE for not identified, and -1 for not enough
-// information to be sure.
-
-static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
+static GDALIdentifyEnum OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
                                                  const char*& pszFilename )
 {
-    // TODO: What is FUSIL?
+    // FUSIL is a fuzzer
 #ifdef FOR_FUSIL
     CPLString osOrigFilename(pszFilename);
 #endif
@@ -76,10 +73,10 @@ static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
                   VSIStatL( CPLFormFilename(
                       pszFilename, "a00000001", "gdbtable"), &stat ) == 0) )
             {
-                return false;
+                return GDAL_IDENTIFY_FALSE;
             }
         }
-        return true;
+        return GDAL_IDENTIFY_TRUE;
     }
     /* We also accept zipped GDB */
     else if( ENDS_WITH(pszFilename, nLen, ".gdb.zip") ||
@@ -89,12 +86,12 @@ static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
               (strstr(pszFilename, "_gdb") != NULL ||
                strstr(pszFilename, "_GDB") != NULL)) )
     {
-        return true;
+        return GDAL_IDENTIFY_TRUE;
     }
     /* We also accept tables themselves */
     else if( ENDS_WITH(pszFilename, nLen, ".gdbtable") )
     {
-        return true;
+        return GDAL_IDENTIFY_TRUE;
     }
 #ifdef FOR_FUSIL
     /* To be able to test fuzzer on any auxiliary files used (indexes, etc.) */
@@ -104,7 +101,7 @@ static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
         pszFilename = CPLFormFilename(CPLGetPath(pszFilename),
                                       CPLGetBasename(pszFilename),
                                       "gdbtable");
-        return true;
+        return GDAL_IDENTIFY_TRUE;
     }
     else if( strlen(CPLGetBasename(CPLGetBasename(pszFilename))) == 9 &&
              CPLGetBasename(CPLGetBasename(pszFilename))[0] == 'a' )
@@ -113,7 +110,7 @@ static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
             CPLFormFilename( CPLGetPath(pszFilename),
                              CPLGetBasename(CPLGetBasename(pszFilename)),
                              "gdbtable");
-        return true;
+        return GDAL_IDENTIFY_TRUE;
     }
 #endif
 
@@ -123,13 +120,13 @@ static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     {
         // This file may be recognized or not by this driver,
         // but there were not enough elements to judge.
-        return -1;
+        return GDAL_IDENTIFY_UNKNOWN;
     }
 #endif
 
     else
     {
-        return false;
+        return GDAL_IDENTIFY_FALSE;
     }
 }
 
