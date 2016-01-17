@@ -102,8 +102,8 @@ int main(int nArgc, char* papszArgv[])
     char chVersionNumber = '1';
     char chAppIndicator = ' ';
     const char *pszExtendedCharSet = " ! ";
-    int nSizeFieldLength = 3;
-    int nSizeFieldPos = 4;
+    int nSizeFieldLength = atoi(CPLGetConfigOption("HEADER_SIZEFIELDLENGTH","3"));
+    int nSizeFieldPos = atoi(CPLGetConfigOption("HEADER_SIZEFIELDPOS","4"));
 
     oModule.Initialize(chInterchangeLevel,
                        chLeaderIden,

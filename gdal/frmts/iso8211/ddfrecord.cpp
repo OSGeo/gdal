@@ -1483,8 +1483,8 @@ int DDFRecord::ResetDirectory()
 /*      field length.  For now we will use 5 for each which is          */
 /*      pretty big.                                                     */
 /* -------------------------------------------------------------------- */
-    _sizeFieldPos = 5;
-    _sizeFieldLength = 5;
+    _sizeFieldPos = atoi(CPLGetConfigOption("SIZEFIELDPOS", "5"));
+    _sizeFieldLength = atoi(CPLGetConfigOption("SIZEFIELDLENGTH", "5"));
 
 /* -------------------------------------------------------------------- */
 /*      Compute how large the directory needs to be.                    */
