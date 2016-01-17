@@ -1052,10 +1052,13 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 
     void                (*pfnUnloadDriver)(GDALDriver *);
 
-    /* Return 1 if the passed file is certainly recognized by the driver */
-    /* Return 0 if the passed file is certainly NOT recognized by the driver */
-    /* Return -1 if the passed file may be or may not be recognized by the driver,
-       and that a potentially costly test must be done with pfnOpen */
+    /** Identify() if the file is recognized or not by the driver.
+
+       Return 1 if the passed file is certainly recognized by the driver.
+       Return 0 if the passed file is certainly NOT recognized by the driver.
+       Return -1 if the passed file may be or may not be recognized by the driver,
+       and that a potentially costly test must be done with pfnOpen.
+    */
     int                 (*pfnIdentify)( GDALOpenInfo * );
 
     CPLErr              (*pfnRename)( const char * pszNewName,
