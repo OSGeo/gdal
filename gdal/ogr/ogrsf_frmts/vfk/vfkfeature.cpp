@@ -429,7 +429,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
         }
     }
     /* append last property */
-    if (inString) {
+    if (inString && nLength > 0) {
         nLength--; /* ignore '"' */
     }
     pszProp = (char *) CPLRealloc(pszProp, nLength + 1);
