@@ -171,17 +171,31 @@ int DDFFieldDefn::Create( const char *pszTagIn, const char *pszFieldName,
 }
 
 /************************************************************************/
+/*                         SetFormatControls()                          */
+/************************************************************************/
+
+void DDFFieldDefn::SetFormatControls(const char* pszVal)
+{
+    CPLFree(_formatControls);
+    _formatControls = CPLStrdup(pszVal ? pszVal : "");
+}
+
+/************************************************************************/
 /*                          GenerateDDREntry()                          */
 /************************************************************************/
 
-int DDFFieldDefn::GenerateDDREntry( char **ppachData, 
+int DDFFieldDefn::GenerateDDREntry( DDFModule * poModuleIn, char **ppachData, 
                                     int *pnLength )
 
 {
-    *pnLength = static_cast<int>(9 + strlen(_fieldName) + 1 
+    const int         iFDOffset = poModuleIn->GetFieldControlLength();
+    CPLAssert(iFDOffset >= 6 && iFDOffset <= 9);
+    *pnLength = static_cast<int>(iFDOffset + strlen(_fieldName) + 1 
         + strlen(_arrayDescr) + 1
         + strlen(_formatControls) + 1);
 
+    if( strlen(_arrayDescr) == 0 )
+        *pnLength -= 1;
     if( strlen(_formatControls) == 0 )
         *pnLength -= 1;
 
@@ -218,12 +232,18 @@ int DDFFieldDefn::GenerateDDREntry( char **ppachData,
     (*ppachData)[3] = '0';
     (*ppachData)[4] = ';';
     (*ppachData)[5] = '&';
-    (*ppachData)[6] = ' ';
-    (*ppachData)[7] = ' ';
-    (*ppachData)[8] = ' ';
-    snprintf( *ppachData + 9, *pnLength+1 - 9, "%s%c%s", 
-             _fieldName, DDF_UNIT_TERMINATOR, _arrayDescr );
-
+    if( iFDOffset > 6 )
+        (*ppachData)[6] = ' ';
+    if( iFDOffset > 7 )
+        (*ppachData)[7] = ' ';
+    if( iFDOffset > 8 )
+        (*ppachData)[8] = ' ';
+    snprintf( *ppachData + iFDOffset, *pnLength+1 - iFDOffset, "%s", 
+             _fieldName );
+    if( strlen(_arrayDescr) > 0 )
+        snprintf( *ppachData + strlen(*ppachData),
+                  *pnLength+1 - strlen(*ppachData), "%c%s",
+                 DDF_UNIT_TERMINATOR, _arrayDescr );
     if( strlen(_formatControls) > 0 )
         snprintf( *ppachData + strlen(*ppachData),
                   *pnLength+1 - strlen(*ppachData), "%c%s",
