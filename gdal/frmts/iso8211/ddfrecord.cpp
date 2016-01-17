@@ -740,6 +740,8 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
     const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
+    if( l_pachData == NULL )
+        return 0;
 
 /* -------------------------------------------------------------------- */
 /*      Return the extracted value.                                     */
@@ -813,6 +815,8 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
     const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
+    if( l_pachData == NULL )
+        return 0;
 
 /* -------------------------------------------------------------------- */
 /*      Return the extracted value.                                     */
@@ -887,6 +891,8 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
     const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
+    if( l_pachData == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Return the extracted value.                                     */
@@ -1650,6 +1656,8 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
     char *pachSubfieldData = (char *) 
         poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                  iSubfieldIndex);
+    if( pachSubfieldData == NULL )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Add new instance if we have run out of data.                    */
@@ -1663,6 +1671,8 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
         pachSubfieldData = (char *) 
             poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                      iSubfieldIndex);
+        if( pachSubfieldData == NULL )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1761,6 +1771,8 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
     char *pachSubfieldData = (char *) 
         poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                  iSubfieldIndex);
+    if( pachSubfieldData == NULL )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Add new instance if we have run out of data.                    */
@@ -1774,6 +1786,8 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
         pachSubfieldData = (char *) 
             poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                      iSubfieldIndex);
+        if( pachSubfieldData == NULL )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1872,6 +1886,8 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
     char *pachSubfieldData = (char *) 
         poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                  iSubfieldIndex);
+    if( pachSubfieldData == NULL )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Add new instance if we have run out of data.                    */
@@ -1885,6 +1901,8 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
         pachSubfieldData = (char *) 
             poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                      iSubfieldIndex);
+        if( pachSubfieldData == NULL )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
