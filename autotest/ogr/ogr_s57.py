@@ -293,6 +293,31 @@ def ogr_s57_9():
     return 'success'
 
 ###############################################################################
+# Test opening a fake very small S57 file
+
+def ogr_s57_10():
+    
+    ds = ogr.Open('data/fake_s57.000')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['DSID_EXPP'] != 2:
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test opening a fake very small S57 file with ISO8211 record with zero length,
+# using variant (C.1.5.1) logic.
+
+def ogr_s57_11():
+    
+    ds = ogr.Open('data/fake_s57_variant_C151.000')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['DSID_EXPP'] != 2:
+        return 'fail'
+    return 'success'
+
+###############################################################################
 # Test decoding of Dutch inland ENCs (#3881).
 
 def ogr_s57_online_1():
@@ -448,6 +473,8 @@ gdaltest_list = [
     ogr_s57_7,
     ogr_s57_8,
     ogr_s57_9,
+    ogr_s57_10,
+    ogr_s57_11,
     ogr_s57_online_1,
     ogr_s57_online_2,
     ogr_s57_online_3,
