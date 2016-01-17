@@ -45,8 +45,11 @@ extern "C" void RegisterOGROpenFileGDB();
 /*                         OGROpenFileGDBDriverIdentify()               */
 /************************************************************************/
 
-static bool OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
-                                                  const char*& pszFilename )
+// Returns TRUE for a match, FALSE for not identified, and -1 for not enough
+// information to be sure.
+
+static int OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
+                                                 const char*& pszFilename )
 {
     // TODO: What is FUSIL?
 #ifdef FOR_FUSIL
@@ -118,8 +121,9 @@ static bool OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     /* For AFL, so that .cur_input is detected as the archive filename */
     else if( EQUAL(CPLGetFilename(pszFilename), ".cur_input") )
     {
-        // TODO: What was the -1 about?
-        return false;
+        // This file may be recognized or not by this driver,
+        // but there were not enough elements to judge.
+        return -1;
     }
 #endif
 
