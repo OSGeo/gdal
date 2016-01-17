@@ -710,6 +710,11 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
                                 FILE * fp )
 
 {
+    if( nMaxBytes < 0 )
+    {
+        fprintf( fp, "      Subfield `%s' = {invalid length}\n", pszName );
+        return;
+    }
     if( eType == DDFFloat )
         fprintf( fp, "      Subfield `%s' = %f\n",
                  pszName,
