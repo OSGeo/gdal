@@ -268,7 +268,11 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 
             if (ipcb == 1) {
                 poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(iIdx);
-                CPLAssert(NULL != poFeature);
+                if( poFeature == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot retrieve feature %d", iIdx);
+                    break;
+                }
                 poFeature->SetRowId(rowId);
 
                 /* set geometry & reset */
