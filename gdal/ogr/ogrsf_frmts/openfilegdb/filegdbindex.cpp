@@ -1641,8 +1641,9 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
             awsVal[nStrLen] = 0;
             char* pszOut = CPLRecodeFromWChar(awsVal, CPL_ENC_UCS2, CPL_ENC_UTF8);
             returnErrorIf(pszOut == NULL );
-            returnErrorAndCleanupIf(strlen(pszOut) >
-                                        MAX_UTF8_LEN_STR, VSIFree(pszOut) );
+            returnErrorAndCleanupIf(
+                strlen(pszOut) > static_cast<size_t>(MAX_UTF8_LEN_STR),
+                VSIFree(pszOut) );
             strcpy(psField->String, pszOut);
             CPLFree(pszOut);
             eOutType = OFTString;
