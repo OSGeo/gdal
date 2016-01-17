@@ -1025,7 +1025,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
         /* In case the first branch didn't result to an iterator, temporarily */
         /* restore the flag */
         const bool bSaveIteratorSufficientToEvaluateFilter =
-            m_bIteratorSufficientToEvaluateFilter;
+            CPL_TO_BOOL(m_bIteratorSufficientToEvaluateFilter);
         m_bIteratorSufficientToEvaluateFilter = -1;
         FileGDBIterator* poIter2 = BuildIteratorFromExprNode(poNode->papoSubExpr[1]);
         m_bIteratorSufficientToEvaluateFilter = bSaveIteratorSufficientToEvaluateFilter;

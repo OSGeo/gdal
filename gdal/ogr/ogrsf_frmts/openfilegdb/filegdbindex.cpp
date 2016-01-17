@@ -1542,8 +1542,8 @@ int FileGDBIndexIterator::GetRowCount()
         return nSortedCount;
 
     int nRowCount = 0;
-    int bSaveAscending = bAscending;
-    bAscending = TRUE; /* for a tiny bit of more efficiency */
+    bool bSaveAscending = bAscending;
+    bAscending = true; /* for a tiny bit of more efficiency */
     Reset();
     while( GetNextRow() >= 0 )
         nRowCount ++;
@@ -1782,8 +1782,8 @@ int FileGDBIndexIterator::GetMinMaxSumCount(double& dfMin, double& dfMax,
                   eFieldType != FGFT_FLOAT32 && eFieldType != FGFT_FLOAT64 &&
                   eFieldType != FGFT_DATETIME );
 
-    int bSaveAscending = bAscending;
-    bAscending = TRUE;
+    bool bSaveAscending = bAscending;
+    bAscending = true;
     Reset();
 
     switch( eFieldType )

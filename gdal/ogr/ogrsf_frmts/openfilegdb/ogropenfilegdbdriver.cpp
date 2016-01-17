@@ -118,7 +118,8 @@ static bool OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     /* For AFL, so that .cur_input is detected as the archive filename */
     else if( EQUAL(CPLGetFilename(pszFilename), ".cur_input") )
     {
-        return -1;
+        // TODO: What was the -1 about?
+        return false;
     }
 #endif
 
