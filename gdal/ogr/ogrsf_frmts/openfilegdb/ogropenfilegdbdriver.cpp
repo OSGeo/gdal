@@ -150,7 +150,7 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 #ifdef FOR_FUSIL
     CPLString osOrigFilename(pszFilename);
 #endif
-    if( !OGROpenFileGDBDriverIdentifyInternal( poOpenInfo, pszFilename ) )
+    if( OGROpenFileGDBDriverIdentifyInternal( poOpenInfo, pszFilename ) == GDAL_IDENTIFY_FALSE )
         return NULL;
 
 #ifdef FOR_FUSIL
