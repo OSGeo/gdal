@@ -140,7 +140,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
             m_osGDBFilename(pszGDBFilename),
             m_osName(pszName),
             m_poLyrTable(NULL),
-            m_poFeatureDefn(new OGROpenFileGDBFeatureDefn(this, pszName)),
+            m_poFeatureDefn(NULL),
             m_iGeomFieldIdx(-1),
             m_iCurFeat(0),
             m_osDefinition(osDefinition),
@@ -158,6 +158,9 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
             m_pahFilteredFeatures(NULL),
             m_nFilteredFeatureCount(-1)
 {
+    // We cannot initialize m_poFeatureDefn in above list since MSVC doesn't like
+    // this to be used in initialization list.
+    m_poFeatureDefn = new OGROpenFileGDBFeatureDefn(this, pszName);
     SetDescription( m_poFeatureDefn->GetName() );
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
