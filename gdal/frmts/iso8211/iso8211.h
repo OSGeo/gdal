@@ -119,6 +119,18 @@ class CPL_ODLL DDFModule
     VSILFILE   *GetFP() { return fpDDF; }
     int         GetSizeFieldTag() const { return (int)_sizeFieldTag; }
 
+    // Advanced uses for 8211dump/8211createfromxml
+    int         GetSizeFieldPos() const { return _sizeFieldPos; }
+    int         GetSizeFieldLength() const { return _sizeFieldLength; }
+    char        GetInterchangeLevel() const { return _interchangeLevel; }
+    char        GetLeaderIden() const { return _leaderIden; }
+    char        GetCodeExtensionIndicator() const { return _inlineCodeExtensionIndicator; }
+    char        GetVersionNumber() const { return _versionNumber; }
+    char        GetAppIndicator() const { return _appIndicator; }
+    const char* GetExtendedCharSet() const { return _extendedCharSet; }
+    void        SetFieldControlLength(int nVal) { _fieldControlLength = nVal; }
+
+
   private:
     VSILFILE    *fpDDF;
     int         bReadOnly;
@@ -183,7 +195,7 @@ class CPL_ODLL DDFFieldDefn
     void        AddSubfield( DDFSubfieldDefn *poNewSFDefn,
                              int bDontAddToFormat = FALSE );
     void        AddSubfield( const char *pszName, const char *pszFormat );
-    int         GenerateDDREntry( char **ppachData, int *pnLength ); 
+    int         GenerateDDREntry( DDFModule * poModule, char **ppachData, int *pnLength ); 
 
     int         Initialize( DDFModule * poModule, const char *pszTag,
                             int nSize, const char * pachRecord );
@@ -233,6 +245,8 @@ class CPL_ODLL DDFFieldDefn
     const char  *GetFormatControls() const { return _formatControls; }
     DDF_data_struct_code GetDataStructCode() const { return _data_struct_code; }
     DDF_data_type_code GetDataTypeCode() const { return _data_type_code; }
+    
+    void        SetFormatControls(const char* pszVal);
 
   private:
 
@@ -443,6 +457,16 @@ class CPL_ODLL DDFRecord
                         const char *pachRawData, int nRawDataSize );
 
     int         Write();
+
+    // Advanced uses for 8211dump/8211createfromxml
+    int         GetReuseHeader() const { return nReuseHeader; }
+    int         GetSizeFieldTag() const { return _sizeFieldTag; }
+    int         GetSizeFieldPos() const { return _sizeFieldPos; }
+    int         GetSizeFieldLength() const { return _sizeFieldLength; }
+    //void        SetReuseHeader(int bFlag) { nReuseHeader = bFlag; }
+    void        SetSizeFieldTag(int nVal) { _sizeFieldTag = nVal; }
+    void        SetSizeFieldPos(int nVal) { _sizeFieldPos = nVal; }
+    void        SetSizeFieldLength(int nVal) { _sizeFieldLength = nVal; }
 
     // This is really just for the DDFModule class.
     int         Read();

@@ -57,8 +57,8 @@ DDFRecord::DDFRecord( DDFModule * poModuleIn )
     bIsClone = FALSE;
 
     _sizeFieldTag = poModuleIn->GetSizeFieldTag();
-    _sizeFieldPos = 0;
-    _sizeFieldLength = 0;
+    _sizeFieldPos = 5;
+    _sizeFieldLength = 5;
 }
 
 /************************************************************************/
@@ -1486,11 +1486,8 @@ int DDFRecord::ResetDirectory()
 
 /* -------------------------------------------------------------------- */
 /*      Eventually we should try to optimize the size of offset and     */
-/*      field length.  For now we will use 5 for each which is          */
-/*      pretty big.                                                     */
+/*      field length.                                                   */
 /* -------------------------------------------------------------------- */
-    _sizeFieldPos = atoi(CPLGetConfigOption("SIZEFIELDPOS", "5"));
-    _sizeFieldLength = atoi(CPLGetConfigOption("SIZEFIELDLENGTH", "5"));
 
 /* -------------------------------------------------------------------- */
 /*      Compute how large the directory needs to be.                    */
