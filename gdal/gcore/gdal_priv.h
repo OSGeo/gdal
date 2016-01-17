@@ -32,6 +32,12 @@
 #ifndef GDAL_PRIV_H_INCLUDED
 #define GDAL_PRIV_H_INCLUDED
 
+/**
+ * \file gdal_priv.h
+ *
+ * C++ GDAL entry points.
+ */
+
 /* -------------------------------------------------------------------- */
 /*      Predeclare various classes before pulling in gdal.h, the        */
 /*      public declarations.                                            */
@@ -986,6 +992,25 @@ class GDALRescaledAlphaBand : public GDALRasterBand
 };
 
 /* ******************************************************************** */
+/*                          GDALIdentifyEnum                            */
+/* ******************************************************************** */
+
+/**
+ * Enumeration used by GDALDriver::pfnIdentify().
+ *
+ * @since GDAL 2.1
+ */
+typedef enum
+{
+    /** Identify could not determine if the file is recognized or not by the probed driver. */
+    GDAL_IDENTIFY_UNKNOWN = -1,
+    /** Identify determined the file is not recognized by the probed driver. */
+    GDAL_IDENTIFY_FALSE = 0,
+    /** Identify determined the file is recognized by the probed driver. */
+    GDAL_IDENTIFY_TRUE = 1
+} GDALIdentifyEnum;
+
+/* ******************************************************************** */
 /*                              GDALDriver                              */
 /* ******************************************************************** */
 
@@ -1054,9 +1079,9 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 
     /** Identify() if the file is recognized or not by the driver.
 
-       Return 1 if the passed file is certainly recognized by the driver.
-       Return 0 if the passed file is certainly NOT recognized by the driver.
-       Return -1 if the passed file may be or may not be recognized by the driver,
+       Return GDAL_IDENTIFY_TRUE (1) if the passed file is certainly recognized by the driver.
+       Return GDAL_IDENTIFY_FALSE (0) if the passed file is certainly NOT recognized by the driver.
+       Return GDAL_IDENTIFY_UNKNOWN (-1) if the passed file may be or may not be recognized by the driver,
        and that a potentially costly test must be done with pfnOpen.
     */
     int                 (*pfnIdentify)( GDALOpenInfo * );
