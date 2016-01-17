@@ -290,7 +290,9 @@ class FileGDBTable
        int                      GetFieldCount() const { return (int)apoFields.size(); }
        FileGDBField*            GetField(int i) const { return apoFields[i]; }
        int                      GetGeomFieldIdx() const { return iGeomField; }
-       const FileGDBGeomField*  GetGeomField() const { return (iGeomField >= 0) ? (FileGDBGeomField*)apoFields[iGeomField] : NULL; }
+       const FileGDBGeomField*  GetGeomField() const {
+           return (iGeomField >= 0) ?
+               reinterpret_cast<FileGDBGeomField*>(apoFields[iGeomField]) : NULL; }
        const std::string&       GetObjectIdColName() const { return osObjectIdColName; }
 
        int                      GetFieldIdx(const std::string& osName) const;
