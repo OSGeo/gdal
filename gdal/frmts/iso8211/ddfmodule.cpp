@@ -462,7 +462,7 @@ int DDFModule::Create( const char *pszFilename )
         snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldLength);
         snprintf( achDirEntry + _sizeFieldTag, sizeof(achDirEntry) - _sizeFieldTag,
                   szFormat, nLength );
-        snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldTag);
+        snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldPos);
         snprintf( achDirEntry + _sizeFieldTag + _sizeFieldLength,
                   sizeof(achDirEntry) - _sizeFieldTag - _sizeFieldLength,
                   szFormat, nOffset );
