@@ -159,7 +159,7 @@ class OGROpenFileGDBDataSource : public OGRDataSource
   std::map<std::string, int>     m_osMapNameToIdx;
 
   /* For debugging/testing */
-  int                            bLastSQLUsedOptimizedImplementation;
+  bool                           bLastSQLUsedOptimizedImplementation;
 
   int                 OpenFileGDBv10(int iGDBItems,
                                      int nInterestTable);

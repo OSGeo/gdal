@@ -36,12 +36,11 @@ CPL_CVSID("$Id");
 /************************************************************************/
 /*                      OGROpenFileGDBDataSource()                      */
 /************************************************************************/
-OGROpenFileGDBDataSource::OGROpenFileGDBDataSource()
-{
-    m_pszName = NULL;
-    m_papszFiles = NULL;
-    bLastSQLUsedOptimizedImplementation = FALSE;
-}
+OGROpenFileGDBDataSource::OGROpenFileGDBDataSource() :
+    m_pszName(NULL),
+    m_papszFiles(NULL),
+    bLastSQLUsedOptimizedImplementation(false)
+{}
 
 /************************************************************************/
 /*                     ~OGROpenFileGDBDataSource()                      */
@@ -49,10 +48,9 @@ OGROpenFileGDBDataSource::OGROpenFileGDBDataSource()
 OGROpenFileGDBDataSource::~OGROpenFileGDBDataSource()
 
 {
-    size_t i;
-    for( i = 0; i < m_apoLayers.size(); i++ )
+    for( size_t i = 0; i < m_apoLayers.size(); i++ )
         delete m_apoLayers[i];
-    for( i = 0; i < m_apoHiddenLayers.size(); i++ )
+    for( size_t i = 0; i < m_apoHiddenLayers.size(); i++ )
         delete m_apoHiddenLayers[i];
     CPLFree(m_pszName);
     CSLDestroy(m_papszFiles);
@@ -66,11 +64,9 @@ int OGROpenFileGDBDataSource::FileExists(const char* pszFilename)
 {
     if( m_papszFiles )
         return CSLFindString(m_papszFiles, CPLGetFilename(pszFilename)) >= 0;
-    else
-    {
-        VSIStatBufL sStat;
-        return VSIStatExL(pszFilename, &sStat, VSI_STAT_EXISTS_FLAG) == 0;
-    }
+
+    VSIStatBufL sStat;
+    return VSIStatExL(pszFilename, &sStat, VSI_STAT_EXISTS_FLAG) == 0;
 }
 
 /************************************************************************/
@@ -119,7 +115,8 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
         {
             VSIStatBufL sStat;
             if( EQUAL(CPLGetExtension(papszDir[i]), "gdb") &&
-                VSIStatL( CPLSPrintf("%s/%s", m_osDirName.c_str(), papszDir[i]), &sStat ) == 0 &&
+                VSIStatL( CPLSPrintf("%s/%s", m_osDirName.c_str(), papszDir[i]),
+                          &sStat ) == 0 &&
                 VSI_ISDIR(sStat.st_mode) )
             {
                 if( iCandidate < 0 )
@@ -142,7 +139,8 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     m_papszFiles = VSIReadDir(m_osDirName);
 
     /* Explore catalog table */
-    const char* psza00000001 = CPLFormFilename(m_osDirName, "a00000001", "gdbtable");
+    const char* psza00000001 =
+        CPLFormFilename(m_osDirName, "a00000001", "gdbtable");
     if( !FileExists(psza00000001) || !oTable.Open(psza00000001) )
     {
         if( nInterestTable >= 0 && FileExists(m_pszName) )
@@ -178,10 +176,9 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     int iGDBItems = -1; /* V10 */
     int iGDBFeatureClasses = -1; /* V9.X */
     int iGDBObjectClasses = -1; /* V9.X */
-    int i;
 
     std::vector<std::string> aosTableNames;
-    for(i=0;i<oTable.GetTotalRecordCount();i++)
+    for( int i=0;i<oTable.GetTotalRecordCount();i++)
     {
         if( !oTable.SelectRow(i) )
         {
@@ -328,10 +325,10 @@ void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
 int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
                                              int nInterestTable)
 {
-    FileGDBTable oTable;
-    int i;
 
     CPLDebug("OpenFileGDB", "FileGDB v10 or later");
+
+    FileGDBTable oTable;
 
     if( !oTable.Open(CPLFormFilename(m_osDirName,
             CPLSPrintf("a%08x.gdbtable", iGDBItems + 1), NULL)) )
@@ -350,8 +347,9 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
         return FALSE;
     }
 
-    int nCandidateLayers = 0, nLayersSDCOrCDF = 0;
-    for(i=0;i<oTable.GetTotalRecordCount();i++)
+    int nCandidateLayers = 0;
+    int nLayersSDCOrCDF = 0;
+    for( int i=0;i<oTable.GetTotalRecordCount();i++)
     {
         if( !oTable.SelectRow(i) )
         {
@@ -483,7 +481,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
         psField = oTable.GetFieldValue(iGeometryType);
         if( psField == NULL )
             continue;
-        int nGeomType = psField->Integer;
+        const int nGeomType = psField->Integer;
         OGRwkbGeometryType eGeomType = wkbUnknown;
         switch( nGeomType )
         {
@@ -505,7 +503,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             continue;
 
         int idx = psField->Integer;
-        if( psField != NULL && idx > 0 && idx <= (int)aosName.size() &&
+        if( idx > 0 && idx <= static_cast<int>(aosName.size()) &&
             aosName[idx-1].size() > 0 )
         {
             const std::string osName(aosName[idx-1]);
@@ -525,9 +523,8 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
 /*                         TestCapability()                            */
 /***********************************************************************/
 
-int OGROpenFileGDBDataSource::TestCapability( const char * pszCap )
+int OGROpenFileGDBDataSource::TestCapability( const char * /* pszCap */ )
 {
-    (void)pszCap;
     return FALSE;
 }
 
@@ -849,16 +846,16 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerDefinition "))
     {
-        OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
-            GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition "));
+        OGROpenFileGDBLayer* poLayer = reinterpret_cast<OGROpenFileGDBLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition ")) );
         if (poLayer)
         {
             OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
                 "LayerDefinition", poLayer->GetXMLDefinition().c_str() );
             return poRet;
         }
-        else
-            return NULL;
+
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -866,16 +863,16 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerMetadata "))
     {
-        OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
-            GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata "));
+        OGROpenFileGDBLayer* poLayer = reinterpret_cast<OGROpenFileGDBLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata ")) );
         if (poLayer)
         {
             OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
                 "LayerMetadata", poLayer->GetXMLDocumentation().c_str() );
             return poRet;
         }
-        else
-            return NULL;
+
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -883,16 +880,17 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerAttrIndexUse "))
     {
-        OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
-            GetLayerByName(pszSQLCommand + strlen("GetLayerAttrIndexUse "));
+        OGROpenFileGDBLayer* poLayer = reinterpret_cast<OGROpenFileGDBLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerAttrIndexUse ")) );
         if (poLayer)
         {
             OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
-                "LayerAttrIndexUse", CPLSPrintf("%d", poLayer->GetAttrIndexUse()) );
+                "LayerAttrIndexUse",
+                CPLSPrintf("%d", poLayer->GetAttrIndexUse()) );
             return poRet;
         }
-        else
-            return NULL;
+
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -900,16 +898,18 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerSpatialIndexState "))
     {
-        OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
-            GetLayerByName(pszSQLCommand + strlen("GetLayerSpatialIndexState "));
+        OGROpenFileGDBLayer* poLayer = reinterpret_cast<OGROpenFileGDBLayer*>(
+            GetLayerByName(pszSQLCommand +
+                           strlen("GetLayerSpatialIndexState ")) );
         if (poLayer)
         {
             OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
-                "LayerSpatialIndexState", CPLSPrintf("%d", poLayer->GetSpatialIndexState()) );
+                "LayerSpatialIndexState",
+                CPLSPrintf("%d", poLayer->GetSpatialIndexState()) );
             return poRet;
         }
-        else
-            return NULL;
+
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -919,17 +919,19 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
             "GetLastSQLUsedOptimizedImplementation",
-                    CPLSPrintf("%d", bLastSQLUsedOptimizedImplementation) );
+            CPLSPrintf(
+                "%d", static_cast<int>(bLastSQLUsedOptimizedImplementation))) ;
         return poRet;
     }
 
-    bLastSQLUsedOptimizedImplementation = FALSE;
+    bLastSQLUsedOptimizedImplementation = false;
 
 /* -------------------------------------------------------------------- */
 /*      Special cases for SQL optimizations                             */
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") &&
-        (pszDialect == NULL || EQUAL(pszDialect, "") || EQUAL(pszDialect, "OGRSQL")) &&
+        (pszDialect == NULL || EQUAL(pszDialect, "") ||
+         EQUAL(pszDialect, "OGRSQL")) &&
         CPLTestBool(CPLGetConfigOption("OPENFILEGDB_USE_INDEX", "YES")) )
     {
         swq_select oSelect;
@@ -943,8 +945,9 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             oSelect.table_count == 1 && oSelect.order_specs == 0 &&
             oSelect.query_mode != SWQM_DISTINCT_LIST )
         {
-            OGROpenFileGDBLayer* poLayer = 
-                (OGROpenFileGDBLayer*)GetLayerByName( oSelect.table_defs[0].table_name);
+            OGROpenFileGDBLayer* poLayer =
+                reinterpret_cast<OGROpenFileGDBLayer *>(
+                    GetLayerByName( oSelect.table_defs[0].table_name));
             if( poLayer )
             {
                 OGRMemLayer* poMemLayer = NULL;
@@ -976,8 +979,6 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                         break;
 
                     int eOutOGRType = -1;
-                    int nCount = 0;
-                    double dfSum = 0.0;
                     const OGRField* psField = NULL;
                     OGRField sField;
                     if( col_func == SWQCF_MIN || col_func == SWQCF_MAX )
@@ -989,8 +990,13 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                     }
                     else
                     {
-                        double dfMin = 0.0, dfMax = 0.0;
-                        if( !poLayer->GetMinMaxSumCount(poFieldDefn, dfMin, dfMax,
+                        double dfMin = 0.0;
+                        double dfMax = 0.0;
+                        int nCount = 0;
+                        double dfSum = 0.0;
+
+                        if( !poLayer->GetMinMaxSumCount(poFieldDefn,
+                                                        dfMin, dfMax,
                                                         dfSum, nCount) )
                             break;
                         psField = &sField;
@@ -1061,7 +1067,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                 {
                     CPLDebug("OpenFileGDB",
                         "Using optimized MIN/MAX/SUM/AVG/COUNT implementation");
-                    bLastSQLUsedOptimizedImplementation = TRUE;
+                    bLastSQLUsedOptimizedImplementation = true;
                     return poMemLayer;
                 }
             }
@@ -1074,8 +1080,9 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             oSelect.table_count == 1 && oSelect.order_specs == 1 &&
             oSelect.query_mode != SWQM_DISTINCT_LIST )
         {
-            OGROpenFileGDBLayer* poLayer = 
-                (OGROpenFileGDBLayer*)GetLayerByName( oSelect.table_defs[0].table_name);
+            OGROpenFileGDBLayer* poLayer =
+                reinterpret_cast<OGROpenFileGDBLayer *>(
+                    GetLayerByName( oSelect.table_defs[0].table_name) );
             if( poLayer != NULL &&
                 poLayer->HasIndexForField(oSelect.order_defs[0].field_name) )
             {
@@ -1147,7 +1154,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                     if( poIter != NULL )
                     {
                         CPLDebug("OpenFileGDB", "Using OGROpenFileGDBSimpleSQLLayer");
-                        bLastSQLUsedOptimizedImplementation = TRUE;
+                        bLastSQLUsedOptimizedImplementation = true;
                         return new OGROpenFileGDBSimpleSQLLayer(poLayer,
                                                                 poIter,
                                                                 oSelect.result_columns,
