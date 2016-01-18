@@ -1423,7 +1423,7 @@ all_tables:
     for( iRow = 0; iRow < nRowCount; iRow++ )
     {
         const char* pszTableName = papszResult[iRow+1];
-        if (CPLHashSetLookup(hSet, pszTableName) == NULL)
+        if( pszTableName != NULL && CPLHashSetLookup(hSet, pszTableName) == NULL )
             OpenTable( pszTableName );
     }
 
