@@ -44,23 +44,25 @@ static int OGROSMDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     if (poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0)
-        return FALSE;
-    
+        return GDAL_IDENTIFY_FALSE;
+
     if( strstr((const char*)poOpenInfo->pabyHeader, "<osm") != NULL )
     {
-        return TRUE;
+        return GDAL_IDENTIFY_TRUE;
     }
-    
-    int nLimitI = poOpenInfo->nHeaderBytes - static_cast<int>(strlen("OSMHeader"));
+
+    const int nLimitI =
+        poOpenInfo->nHeaderBytes - static_cast<int>(strlen("OSMHeader"));
     for(int i = 0; i < nLimitI; i++)
     {
-        if( memcmp(poOpenInfo->pabyHeader + i, "OSMHeader", strlen("OSMHeader") ) == 0 )
+        if( memcmp( poOpenInfo->pabyHeader + i, "OSMHeader",
+                    strlen("OSMHeader") ) == 0 )
         {
-            return TRUE;
+            return GDAL_IDENTIFY_TRUE;
         }
     }
 
-    return FALSE;
+    return GDAL_IDENTIFY_TRUE;
 }
 
 /************************************************************************/
@@ -75,7 +77,7 @@ static GDALDataset *OGROSMDriverOpen( GDALOpenInfo* poOpenInfo )
     if( OGROSMDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
 
-    OGROSMDataSource   *poDS = new OGROSMDataSource();
+    OGROSMDataSource *poDS = new OGROSMDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions ) )
     {

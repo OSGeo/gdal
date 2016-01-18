@@ -45,47 +45,41 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 
-OGROSMLayer::OGROSMLayer(OGROSMDataSource* poDSIn, int nIdxLayerIn, const char* pszName )
+OGROSMLayer::OGROSMLayer( OGROSMDataSource* poDSIn, int nIdxLayerIn,
+                          const char* pszName ) :
+    poDS(poDSIn),
+    nIdxLayer(nIdxLayerIn),
+    poFeatureDefn(new OGRFeatureDefn( pszName )),
+    poSRS(new OGRSpatialReference()),
+    nFeatureCount(0),
+    bResetReadingAllowed(false),
+    nFeatureArraySize(0),
+    nFeatureArrayMaxSize(0),
+    nFeatureArrayIndex(0),
+    papoFeatures(NULL),
+    bHasOSMId(false),
+    nIndexOSMId(-1),
+    nIndexOSMWayId(-1),
+    bHasVersion(false),
+    bHasTimestamp(false),
+    bHasUID(false),
+    bHasUser(false),
+    bHasChangeset(false),
+    bHasOtherTags(true),
+    nIndexOtherTags(-1),
+    bHasAllTags(false),
+    nIndexAllTags(-1),
+    bHasWarnedTooManyFeatures(false),
+    pszAllTags(static_cast<char *>(CPLMalloc(ALLTAGS_LENGTH))),
+    bHasWarnedAllTagsTruncated(false),
+    bUserInterested(true)
 {
-    this->poDS = poDSIn;
-    this->nIdxLayer = nIdxLayerIn;
-
-    poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
-    poSRS = new OGRSpatialReference();
     poSRS->SetWellKnownGeogCS("WGS84");
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-
-    nFeatureArraySize = 0;
-    nFeatureArrayMaxSize = 0;
-    nFeatureArrayIndex = 0;
-    papoFeatures = NULL;
-
-    nFeatureCount = 0;
-
-    bHasOSMId = FALSE;
-    nIndexOSMId = -1;
-    nIndexOSMWayId = -1;
-    bHasVersion = FALSE;
-    bHasTimestamp = FALSE;
-    bHasUID = FALSE;
-    bHasUser = FALSE;
-    bHasChangeset = FALSE;
-    bHasOtherTags = TRUE;
-    nIndexOtherTags = -1;
-    bHasAllTags = FALSE;
-    nIndexAllTags = -1;
-
-    bResetReadingAllowed = FALSE;
-    bHasWarnedTooManyFeatures = FALSE;
-
-    pszAllTags = (char*)CPLMalloc(ALLTAGS_LENGTH);
-    bHasWarnedAllTagsTruncated = FALSE;
-
-    bUserInterested = TRUE;
 }
 
 /************************************************************************/
@@ -94,29 +88,27 @@ OGROSMLayer::OGROSMLayer(OGROSMDataSource* poDSIn, int nIdxLayerIn, const char* 
 
 OGROSMLayer::~OGROSMLayer()
 {
-    int i;
-
     poFeatureDefn->Release();
 
     if (poSRS)
         poSRS->Release();
 
-    for(i=0;i<nFeatureArraySize;i++)
+    for( int i=0; i<nFeatureArraySize; i++ )
     {
         if (papoFeatures[i])
             delete papoFeatures[i];
     }
 
-    for(i=0;i<(int)apszNames.size();i++)
+    for( int i=0; i<static_cast<int>(apszNames.size()); i++ )
         CPLFree(apszNames[i]);
 
-    for(i=0;i<(int)apszUnsignificantKeys.size();i++)
+    for( int i=0; i<static_cast<int>(apszUnsignificantKeys.size()); i++ )
         CPLFree(apszUnsignificantKeys[i]);
 
-    for(i=0;i<(int)apszIgnoreKeys.size();i++)
+    for( int i=0; i<static_cast<int>(apszIgnoreKeys.size()); i++ )
         CPLFree(apszIgnoreKeys[i]);
 
-    for(i=0; i<(int)oComputedAttributes.size();i++)
+    for( int i=0; i<static_cast<int>(oComputedAttributes.size()); i++ )
     {
         sqlite3_finalize(oComputedAttributes[i].hStmt);
     }
@@ -152,7 +144,7 @@ void OGROSMLayer::ForceResetReading()
     nFeatureArrayIndex = 0;
     nFeatureArraySize = 0;
     nFeatureCount = 0;
-    bResetReadingAllowed = FALSE;
+    bResetReadingAllowed = false;
 }
 
 /************************************************************************/
@@ -180,9 +172,11 @@ OGRErr OGROSMLayer::SetAttributeFilter( const char* pszAttrQuery )
     }
     else
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "The new attribute filter will "
-                 "not be taken into account immediately. It is advised to "
-                 "set attribute filters for all needed layers, before reading *any* layer");
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "The new attribute filter will "
+                  "not be taken into account immediately. It is advised to "
+                  "set attribute filters for all needed layers, before "
+                  "reading *any* layer" );
     }
 
     return OGRERR_NONE;
@@ -206,7 +200,7 @@ GIntBig OGROSMLayer::GetFeatureCount( int bForce )
 
 OGRFeature *OGROSMLayer::GetNextFeature()
 {
-    bResetReadingAllowed = TRUE;
+    bResetReadingAllowed = true;
 
     if ( nFeatureArraySize == 0)
     {
@@ -323,7 +317,7 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
                     "Use OGR_INTERLEAVED_READING=YES mode",
                     GetName());
         }
-        bHasWarnedTooManyFeatures = TRUE;
+        bHasWarnedTooManyFeatures = true;
         return FALSE;
     }
 
@@ -407,7 +401,7 @@ int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
 /************************************************************************/
 
 OGRErr OGROSMLayer::GetExtent( OGREnvelope *psExtent,
-                               CPL_UNUSED int bForce )
+                               int /* bForce */ )
 {
     if (poDS->GetExtent(psExtent) == OGRERR_NONE)
         return OGRERR_NONE;
@@ -425,20 +419,20 @@ const char* OGROSMLayer::GetLaunderedFieldName(const char* pszName)
     if( poDS->DoesAttributeNameLaundering()  &&
         strchr(pszName, ':') != NULL )
     {
-        size_t i;
-        for( i = 0;
-             pszName[i] != '\0' && i < sizeof(szLaunderedFieldName) - 1; i++ )
+        for( size_t i = 0;
+             i < sizeof(szLaunderedFieldName) - 1 && pszName[i] != '\0';
+             i++ )
         {
             if( pszName[i] == ':' )
                 szLaunderedFieldName[i] = '_';
             else
                 szLaunderedFieldName[i] = pszName[i];
         }
-        szLaunderedFieldName[i] = '\0';
+        szLaunderedFieldName[sizeof(szLaunderedFieldName) - 1] = '\0';
         return szLaunderedFieldName;
     }
-    else
-        return pszName;
+
+    return pszName;
 }
 
 /************************************************************************/
@@ -479,8 +473,8 @@ int OGROSMLayer::GetFieldIndex(const char* pszName)
         oMapFieldNameToIndex.find(pszName);
     if( oIter != oMapFieldNameToIndex.end() )
         return oIter->second;
-    else
-        return -1;
+
+    return -1;
 }
 
 /************************************************************************/
@@ -489,7 +483,7 @@ int OGROSMLayer::GetFieldIndex(const char* pszName)
 
 int OGROSMLayer::AddInOtherOrAllTags(const char* pszK)
 {
-    int bAddToOtherTags = FALSE;
+    bool bAddToOtherTags = false;
 
     if ( aoSetIgnoreKeys.find(pszK) == aoSetIgnoreKeys.end() )
     {
@@ -503,7 +497,7 @@ int OGROSMLayer::AddInOtherOrAllTags(const char* pszK)
             pszColon[1] = chBackup;
         }
         else
-            bAddToOtherTags = TRUE;
+            bAddToOtherTags = true;
     }
 
     return bAddToOtherTags;
@@ -515,13 +509,11 @@ int OGROSMLayer::AddInOtherOrAllTags(const char* pszK)
 
 static int OGROSMFormatForHSTORE(const char* pszV, char* pszAllTags)
 {
-    int k;
-
     int nAllTagsOff = 0;
 
     pszAllTags[nAllTagsOff++] = '"';
 
-    for(k=0;pszV[k] != '\0'; k++)
+    for( int k=0; pszV[k] != '\0'; k++ )
     {
         if( pszV[k] == '"' || pszV[k] == '\\' )
             pszAllTags[nAllTagsOff++] = '\\';
@@ -633,8 +625,10 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                     1 >= ALLTAGS_LENGTH - 1 )
                 {
                     if( !bHasWarnedAllTagsTruncated )
-                        CPLDebug("OSM", "all_tags/other_tags field truncated for feature " CPL_FRMT_GIB, nID);
-                    bHasWarnedAllTagsTruncated = TRUE;
+                        CPLDebug( "OSM",
+                                  "all_tags/other_tags field truncated for "
+                                  "feature " CPL_FRMT_GIB, nID);
+                    bHasWarnedAllTagsTruncated = true;
                     continue;
                 }
 
@@ -684,7 +678,9 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                 }
                 else
                 {
-                    OGRFieldType eType = poFeatureDefn->GetFieldDefn(oAttr.anIndexToBind[j])->GetType();
+                    OGRFieldType eType =
+                        poFeatureDefn->GetFieldDefn(oAttr.anIndexToBind[j])->
+                          GetType();
                     if( eType == OFTInteger )
                         sqlite3_bind_int( oAttr.hStmt, j + 1,
                                           poFeature->GetFieldAsInteger(oAttr.anIndexToBind[j]) );
@@ -702,7 +698,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
             }
             else
             {
-                int bTagFound = FALSE;
+                bool bTagFound = false;
                 for(unsigned int k = 0; k < nTags; k++)
                 {
                     const char* pszK = pasTags[k].pszK;
@@ -710,7 +706,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                     if( strcmp(pszK, oAttr.aosAttrToBind[j]) == 0 )
                     {
                         sqlite3_bind_text( oAttr.hStmt, j + 1, pszV, -1, SQLITE_TRANSIENT);
-                        bTagFound = TRUE;
+                        bTagFound = true;
                         break;
                     }
                 }
