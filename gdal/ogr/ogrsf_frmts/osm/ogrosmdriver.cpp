@@ -62,7 +62,7 @@ static int OGROSMDriverIdentify( GDALOpenInfo* poOpenInfo )
         }
     }
 
-    return GDAL_IDENTIFY_TRUE;
+    return GDAL_IDENTIFY_FALSE;
 }
 
 /************************************************************************/
