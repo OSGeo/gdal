@@ -2102,8 +2102,11 @@ unsigned int OGROSMDataSource::LookupWays( std::map< GIntBig,
                 strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0 )
             {
                 nToQuery ++;
-                if( nToQuery == LIMIT_IDS_PER_REQUEST )
+                if( nToQuery ==
+                    static_cast<unsigned int>(LIMIT_IDS_PER_REQUEST) )
+                {
                     break;
+                }
             }
         }
 
