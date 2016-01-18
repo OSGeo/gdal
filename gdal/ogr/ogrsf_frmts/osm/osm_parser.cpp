@@ -97,23 +97,23 @@ struct _OSMContext
 
 #ifdef HAVE_EXPAT
     XML_Parser     hXMLParser;
-    int            bEOF;
-    int            bStopParsing;
-    int            bHasFoundFeature;
+    bool           bEOF;
+    bool           bStopParsing;
+    bool           bHasFoundFeature;
     int            nWithoutEventCounter;
     int            nDataHandlerCounter;
 
     unsigned int   nStrLength;
     unsigned int   nTags;
 
-    int            bInNode;
-    int            bInWay;
-    int            bInRelation;
+    bool           bInNode;
+    bool           bInWay;
+    bool           bInRelation;
 
     OSMWay         sWay;
     OSMRelation    sRelation;
 
-    int            bTryToFetchBounds;
+    bool           bTryToFetchBounds;
 #endif
 
     VSILFILE      *fp;
@@ -1611,46 +1611,42 @@ end_error:
 /*                        EmptyNotifyNodesFunc()                        */
 /************************************************************************/
 
-static void EmptyNotifyNodesFunc(CPL_UNUSED unsigned int nNodes,
-                                 CPL_UNUSED OSMNode* pasNodes,
-                                 CPL_UNUSED OSMContext* psCtxt,
-                                 CPL_UNUSED void* user_data)
-{
-}
+static void EmptyNotifyNodesFunc(unsigned int /* nNodes */,
+                                 OSMNode* /* pasNodes */,
+                                 OSMContext* /* psCtxt */,
+                                 void* /* user_data */)
+{}
 
 
 /************************************************************************/
 /*                         EmptyNotifyWayFunc()                         */
 /************************************************************************/
 
-static void EmptyNotifyWayFunc(CPL_UNUSED OSMWay* psWay,
-                               CPL_UNUSED OSMContext* psCtxt,
-                               CPL_UNUSED void* user_data)
-{
-}
+static void EmptyNotifyWayFunc(OSMWay* /* psWay */,
+                               OSMContext* /* psCtxt */,
+                               void* /* user_data */)
+{}
 
 /************************************************************************/
 /*                       EmptyNotifyRelationFunc()                      */
 /************************************************************************/
 
-static void EmptyNotifyRelationFunc(CPL_UNUSED OSMRelation* psRelation,
-                                    CPL_UNUSED OSMContext* psCtxt,
-                                    CPL_UNUSED void* user_data)
-{
-}
+static void EmptyNotifyRelationFunc( OSMRelation* /* psRelation */,
+                                     OSMContext* /* psCtxt */,
+                                     void* /* user_data */)
+{}
 
 /************************************************************************/
 /*                         EmptyNotifyBoundsFunc()                      */
 /************************************************************************/
 
-static void EmptyNotifyBoundsFunc( CPL_UNUSED double dfXMin,
-                                   CPL_UNUSED double dfYMin,
-                                   CPL_UNUSED double dfXMax,
-                                   CPL_UNUSED double dfYMax,
-                                   CPL_UNUSED OSMContext* psCtxt,
-                                   CPL_UNUSED void* user_data )
-{
-}
+static void EmptyNotifyBoundsFunc( double /* dfXMin */,
+                                   double /* dfYMin */,
+                                   double /* dfXMax */,
+                                   double /* dfYMax */,
+                                   OSMContext* /*psCtxt */,
+                                   void * /* user_data */)
+{}
 
 #ifdef HAVE_EXPAT
 
@@ -1698,8 +1694,9 @@ static GIntBig OSM_Atoi64( const char *pszString )
 /*                      OSM_XML_startElementCbk()                       */
 /************************************************************************/
 
-static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName,
-                                            const char **ppszAttr)
+static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
+                                             const char *pszName,
+                                             const char **ppszAttr)
 {
     OSMContext* psCtxt = (OSMContext*) pUserData;
     const char** ppszIter = ppszAttr;
@@ -1715,7 +1712,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
         {
             int nCountCoords = 0;
 
-            psCtxt->bTryToFetchBounds = FALSE;
+            psCtxt->bTryToFetchBounds = false;
 
             if( ppszIter )
             {
@@ -1770,8 +1767,8 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
         strcmp(pszName, "node") == 0 )
     {
-        psCtxt->bInNode = TRUE;
-        psCtxt->bTryToFetchBounds = FALSE;
+        psCtxt->bInNode = true;
+        psCtxt->bTryToFetchBounds = false;
 
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
@@ -1825,7 +1822,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     else if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
              strcmp(pszName, "way") == 0 )
     {
-        psCtxt->bInWay = TRUE;
+        psCtxt->bInWay = true;
 
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
@@ -1871,7 +1868,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     else if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
              strcmp(pszName, "relation") == 0 )
     {
-        psCtxt->bInRelation = TRUE;
+        psCtxt->bInRelation = true;
 
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
@@ -2065,7 +2062,7 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
             psCtxt->pfnNotifyNodes(1, psCtxt->pasNodes, psCtxt, psCtxt->user_data);
 
-            psCtxt->bHasFoundFeature = TRUE;
+            psCtxt->bHasFoundFeature = true;
         }
         psCtxt->bInNode = FALSE;
     }
@@ -2080,7 +2077,7 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
         psCtxt->pfnNotifyWay(&(psCtxt->sWay), psCtxt, psCtxt->user_data);
 
-        psCtxt->bHasFoundFeature = TRUE;
+        psCtxt->bHasFoundFeature = true;
 
         psCtxt->bInWay = FALSE;
     }
@@ -2095,20 +2092,20 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
         psCtxt->pfnNotifyRelation(&(psCtxt->sRelation), psCtxt, psCtxt->user_data);
 
-        psCtxt->bHasFoundFeature = TRUE;
+        psCtxt->bHasFoundFeature = true;
 
-        psCtxt->bInRelation = FALSE;
+        psCtxt->bInRelation = false;
     }
 }
 /************************************************************************/
 /*                           dataHandlerCbk()                           */
 /************************************************************************/
 
-static void XMLCALL OSM_XML_dataHandlerCbk(void *pUserData,
-                                           CPL_UNUSED const char *data,
-                                           CPL_UNUSED int nLen)
+static void XMLCALL OSM_XML_dataHandlerCbk( void *pUserData,
+                                            const char * /* data */,
+                                            int /* nLen */)
 {
-    OSMContext* psCtxt = (OSMContext*) pUserData;
+    OSMContext* psCtxt = static_cast<OSMContext *>(pUserData);
 
     if (psCtxt->bStopParsing) return;
 
@@ -2120,7 +2117,7 @@ static void XMLCALL OSM_XML_dataHandlerCbk(void *pUserData,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
         XML_StopParser(psCtxt->hXMLParser, XML_FALSE);
-        psCtxt->bStopParsing = TRUE;
+        psCtxt->bStopParsing = true;
         return;
     }
 }
@@ -2136,7 +2133,7 @@ static OSMRetCode XML_ProcessBlock(OSMContext* psCtxt)
     if( psCtxt->bStopParsing )
         return OSM_ERROR;
 
-    psCtxt->bHasFoundFeature = FALSE;
+    psCtxt->bHasFoundFeature = false;
     psCtxt->nWithoutEventCounter = 0;
 
     do
@@ -2151,7 +2148,7 @@ static OSMRetCode XML_ProcessBlock(OSMContext* psCtxt)
 
         psCtxt->nBytesRead += nLen;
 
-        psCtxt->bEOF = VSIFEofL(psCtxt->fp);
+        psCtxt->bEOF = CPL_TO_BOOL(VSIFEofL(psCtxt->fp));
         eErr = XML_Parse(psCtxt->hXMLParser, (const char*) psCtxt->pabyBlob,
                          nLen, psCtxt->bEOF );
 
@@ -2163,18 +2160,18 @@ static OSMRetCode XML_ProcessBlock(OSMContext* psCtxt)
                      XML_ErrorString(XML_GetErrorCode(psCtxt->hXMLParser)),
                      (int)XML_GetCurrentLineNumber(psCtxt->hXMLParser),
                      (int)XML_GetCurrentColumnNumber(psCtxt->hXMLParser));
-            psCtxt->bStopParsing = TRUE;
+            psCtxt->bStopParsing = true;
         }
         psCtxt->nWithoutEventCounter ++;
     } while (!psCtxt->bEOF && !psCtxt->bStopParsing &&
-             psCtxt->bHasFoundFeature == FALSE &&
+             !psCtxt->bHasFoundFeature &&
              psCtxt->nWithoutEventCounter < 10);
 
     if (psCtxt->nWithoutEventCounter == 10)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
-        psCtxt->bStopParsing = TRUE;
+        psCtxt->bStopParsing = true;
     }
 
     return psCtxt->bStopParsing ? OSM_ERROR : psCtxt->bEOF ? OSM_EOF : OSM_OK;
@@ -2193,19 +2190,17 @@ OSMContext* OSM_Open( const char* pszFilename,
                       NotifyBoundsFunc pfnNotifyBounds,
                       void* user_data )
 {
-    OSMContext* psCtxt;
-    GByte abyHeader[1024];
-    int nRead;
-    VSILFILE* fp;
-    int i;
-    int bPBF = FALSE;
 
-    fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
         return NULL;
 
-    nRead = (int)VSIFReadL(abyHeader, 1, sizeof(abyHeader)-1, fp);
+    GByte abyHeader[1024];
+    int nRead = static_cast<int>(
+        VSIFReadL(abyHeader, 1, sizeof(abyHeader)-1, fp));
     abyHeader[nRead] = '\0';
+
+    bool bPBF = false;
 
     if( strstr((const char*)abyHeader, "<osm") != NULL )
     {
@@ -2219,8 +2214,8 @@ OSMContext* OSM_Open( const char* pszFilename,
     }
     else
     {
-        int nLimitI = nRead - static_cast<int>(strlen("OSMHeader"));
-        for(i = 0; i < nLimitI; i++)
+        const int nLimitI = nRead - static_cast<int>(strlen("OSMHeader"));
+        for( int i = 0; i < nLimitI; i++)
         {
             if( memcmp(abyHeader + i, "OSMHeader", strlen("OSMHeader") ) == 0 )
             {
@@ -2237,7 +2232,8 @@ OSMContext* OSM_Open( const char* pszFilename,
 
     VSIFSeekL(fp, 0, SEEK_SET);
 
-    psCtxt = (OSMContext*) VSI_MALLOC_VERBOSE(sizeof(OSMContext));
+    OSMContext* psCtxt = static_cast<OSMContext *>(
+        VSI_MALLOC_VERBOSE(sizeof(OSMContext)) );
     if (psCtxt == NULL)
     {
         VSIFCloseL(fp);
@@ -2281,7 +2277,7 @@ OSMContext* OSM_Open( const char* pszFilename,
                               OSM_XML_endElementCbk);
         XML_SetCharacterDataHandler(psCtxt->hXMLParser, OSM_XML_dataHandlerCbk);
 
-        psCtxt->bTryToFetchBounds = TRUE;
+        psCtxt->bTryToFetchBounds = true;
 
         psCtxt->nNodesAllocated = 1;
         psCtxt->pasNodes = (OSMNode*) VSI_MALLOC_VERBOSE(sizeof(OSMNode) * psCtxt->nNodesAllocated);
@@ -2370,16 +2366,16 @@ void OSM_ResetReading( OSMContext* psCtxt )
                               OSM_XML_startElementCbk,
                               OSM_XML_endElementCbk);
         XML_SetCharacterDataHandler(psCtxt->hXMLParser, OSM_XML_dataHandlerCbk);
-        psCtxt->bEOF = FALSE;
-        psCtxt->bStopParsing = FALSE;
+        psCtxt->bEOF = false;
+        psCtxt->bStopParsing = false;
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
         psCtxt->nTags = 0;
 
-        psCtxt->bTryToFetchBounds = TRUE;
-        psCtxt->bInNode = FALSE;
+        psCtxt->bTryToFetchBounds = true;
+        psCtxt->bInNode = false;
         psCtxt->bInWay = FALSE;
-        psCtxt->bInRelation = FALSE;
+        psCtxt->bInRelation = false;
     }
 #endif
 }
