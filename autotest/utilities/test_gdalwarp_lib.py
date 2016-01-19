@@ -945,7 +945,7 @@ def test_gdalwarp_lib_126():
 
 def test_gdalwarp_lib_127():
 
-    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', srcNoData = 1)
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', srcNodata = 1)
     if ds.GetRasterBand(1).GetNoDataValue() != 1:
         gdaltest.post_reason('bad nodata value')
         print(ds.GetRasterBand(1).GetNoDataValue())
