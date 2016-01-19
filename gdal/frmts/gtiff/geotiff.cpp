@@ -259,6 +259,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     int         bTreatAsRGBA;
     int         bCrystalized;
+    bool        bCheckIfColorInterpMustGoToPamAtCrystalization;
 
     void        Crystalize();  // TODO: Spelling.
 
@@ -4322,6 +4323,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                 CPLFree(pasNewExtraSamples);
             }
         }
+        poGDS->bCheckIfColorInterpMustGoToPamAtCrystalization = true;
         return CE_None;
     }
 
@@ -4361,19 +4363,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
             }
         }
 
-        for(int i=1;i<=poGDS->nBands;i++)
-        {
-            if( i != nBand )
-            {
-                ((GDALPamRasterBand*)poGDS->GetRasterBand(i))->GDALPamRasterBand::SetColorInterpretation(
-                    poGDS->GetRasterBand(i)->GetColorInterpretation() );
-                CPLDebug("GTIFF", "ColorInterpretation %s for band %d goes to PAM instead of TIFF tag",
-                            GDALGetColorInterpretationName(poGDS->GetRasterBand(i)->GetColorInterpretation()), i);
-            }
-        }
-        CPLDebug("GTIFF", "ColorInterpretation %s for band %d goes to PAM instead of TIFF tag",
-                    GDALGetColorInterpretationName(eInterp), nBand);
-        return GDALPamRasterBand::SetColorInterpretation( eInterp );
+        poGDS->bCheckIfColorInterpMustGoToPamAtCrystalization = true;
     }
 
     /* Mark alpha band in extrasamples */
@@ -4438,9 +4428,8 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         TIFFSetField(poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, poGDS->nPhotometric);
     }
 
-    CPLDebug("GTIFF", "ColorInterpretation %s for band %d goes to PAM instead of TIFF tag",
-                GDALGetColorInterpretationName(eInterp), nBand);
-    return GDALPamRasterBand::SetColorInterpretation( eInterp );
+    poGDS->bCheckIfColorInterpMustGoToPamAtCrystalization = true;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -6031,6 +6020,7 @@ GTiffDataset::GTiffDataset() :
     bForceUnsetGTOrGCPs = FALSE;
     bForceUnsetProjection = FALSE;
     bCrystalized = TRUE;
+    bCheckIfColorInterpMustGoToPamAtCrystalization = false;
     poColorTable = NULL;
     bNoDataChanged = FALSE;
     bNoDataSet = FALSE;
@@ -7359,6 +7349,54 @@ void GTiffDataset::Crystalize()
 {
     if( !bCrystalized )
     {
+        if( bCheckIfColorInterpMustGoToPamAtCrystalization )
+        {
+            bool bColorInterpToPam = false;
+            if( nPhotometric == PHOTOMETRIC_MINISBLACK )
+            {
+                for( int i=0;i<nBands;i++)
+                {
+                    GDALColorInterp eInterp = GetRasterBand(i+1)->GetColorInterpretation();
+                    if( !(eInterp == GCI_GrayIndex || eInterp == GCI_Undefined ||
+                          (i > 0 && eInterp == GCI_AlphaBand)) )
+                    {
+                        bColorInterpToPam = true;
+                        break;
+                    }
+                }
+            }
+            else if( nPhotometric == PHOTOMETRIC_RGB )
+            {
+                for( int i=0;i<nBands;i++)
+                {
+                    GDALColorInterp eInterp = GetRasterBand(i+1)->GetColorInterpretation();
+                    if( !((i == 0 && eInterp == GCI_RedBand) ||
+                          (i == 1 && eInterp == GCI_GreenBand) ||
+                          (i == 2 && eInterp == GCI_BlueBand) ||
+                          (i >= 3 && (eInterp == GCI_Undefined || eInterp == GCI_AlphaBand))) )
+                    {
+                        bColorInterpToPam = true;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                bColorInterpToPam = true;
+            }
+            if( bColorInterpToPam )
+            {
+                CPLDebug("GTiff", "Color interpretations have to go to PAM");
+                for( int i=0;i<nBands;i++)
+                {
+                    static_cast<GDALPamRasterBand*>(GetRasterBand(i+1))->
+                        GDALPamRasterBand::SetColorInterpretation(
+                            GetRasterBand(i+1)->GetColorInterpretation() );
+                }
+            }
+            bCheckIfColorInterpMustGoToPamAtCrystalization = false;
+        }
+        
         // FIXME? libtiff writes extended tags in the order they are specified
         // and not in increasing order
         WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
