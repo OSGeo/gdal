@@ -4208,6 +4208,23 @@ def ogr_shape_90():
     return 'success'
 
 ###############################################################################
+# Test reading XYM geometries but with missing M array (#6317)
+
+def ogr_shape_91():
+
+    ds = ogr.Open('data/arcm_without_m.shp')
+    lyr = ds.GetLayer(0)
+    for f in lyr:
+        pass
+
+    ds = ogr.Open('data/polygonm_without_m.shp')
+    lyr = ds.GetLayer(0)
+    for f in lyr:
+        pass
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_shape_cleanup():
@@ -4341,6 +4358,7 @@ gdaltest_list = [
     ogr_shape_88,
     ogr_shape_89,
     ogr_shape_90,
+    ogr_shape_91,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
