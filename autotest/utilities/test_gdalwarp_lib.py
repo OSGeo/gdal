@@ -941,6 +941,23 @@ def test_gdalwarp_lib_126():
     return 'success'
 
 ###############################################################################
+# Test -srcnodata (#6315)
+
+def test_gdalwarp_lib_127():
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', srcNoData = 1)
+    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+        gdaltest.post_reason('bad nodata value')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('bad checksum')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1015,6 +1032,7 @@ gdaltest_list = [
     test_gdalwarp_lib_124,
     test_gdalwarp_lib_125,
     test_gdalwarp_lib_126,
+    test_gdalwarp_lib_127,
     test_gdalwarp_lib_cleanup,
     ]
 
