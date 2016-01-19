@@ -1267,19 +1267,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
             for( int i = 0; i < psWO->nBandCount; i++ )
             {
-                int bHaveNodata = FALSE;
-
-                GDALRasterBandH hBand = GDALGetRasterBand( hWrkSrcDS, i+1 );
-                GDALGetRasterNoDataValue( hBand, &bHaveNodata );
-
-                CPLDebug("WARP", "band=%d bHaveNodata=%d", i, bHaveNodata);
-                if( bHaveNodata )
-                {
-                    psWO->padfDstNoDataReal[i] = psWO->padfSrcNoDataReal[i];
-                    psWO->padfDstNoDataImag[i] = psWO->padfSrcNoDataImag[i];
-                    CPLDebug("WARP", "srcNoData=%f dstNoData=%f", 
-                             psWO->padfSrcNoDataReal[i], psWO->padfDstNoDataReal[i] );
-                }
+                psWO->padfDstNoDataReal[i] = psWO->padfSrcNoDataReal[i];
+                psWO->padfDstNoDataImag[i] = psWO->padfSrcNoDataImag[i];
+                CPLDebug("WARP", "srcNoData=%f dstNoData=%f", 
+                            psWO->padfSrcNoDataReal[i], psWO->padfDstNoDataReal[i] );
 
                 if( psOptions->bCreateOutput && iSrc == 0 )
                 {
