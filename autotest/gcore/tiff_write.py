@@ -4986,12 +4986,27 @@ def tiff_write_123():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgba.tif')
 
-    # Test fix for #6306
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_oneband.tif', 1,1)
-    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    # From that implicit RGBA to Gray,Undefined,Undefined,Alpha doesn't
+    # produce PAM file
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_guua.tif', 1,1,4,gdal.GDT_Byte)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GrayIndex)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_Undefined)
+    ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_Undefined)
+    ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
     ds = None
-
-    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_oneband.tif')
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_guua.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_123_guua.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_guua.tif')
 
     return 'success'
 
