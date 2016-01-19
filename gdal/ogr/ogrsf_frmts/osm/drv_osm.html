@@ -84,10 +84,10 @@ OGR_INTERLEAVED_READING=YES configuration option to turn on a special
 reading mode where the following reading pattern must be used:
 
 <pre>
-    int bHasLayersNonEmpty;
+    bool bHasLayersNonEmpty;
     do
     {
-        bHasLayersNonEmpty = FALSE;
+        bHasLayersNonEmpty = false;
 
         for( int iLayer = 0; iLayer &lt; poDS->GetLayerCount(); iLayer++ )
         {
@@ -96,7 +96,7 @@ reading mode where the following reading pattern must be used:
             OGRFeature* poFeature;
             while( (poFeature = poLayer->GetNextFeature()) != NULL )
             {
-                bHasLayersNonEmpty = TRUE;
+                bHasLayersNonEmpty = true;
                 OGRFeature::DestroyFeature(poFeature);
             }
         }

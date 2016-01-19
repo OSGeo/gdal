@@ -80,7 +80,7 @@ static int ReadVarInt32(GByte** ppabyData)
     int nShift = 0;
     GByte* pabyData = *ppabyData;
 
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
@@ -119,7 +119,7 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
     int nShift = 0;
     GByte* pabyData = *ppabyData;
 
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
@@ -157,7 +157,7 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
     int nShift = 0;
     GByte* pabyData = *ppabyData;
 
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
@@ -199,7 +199,7 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
 static void SkipVarInt(GByte** ppabyData)
 {
     GByte* pabyData = *ppabyData;
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
