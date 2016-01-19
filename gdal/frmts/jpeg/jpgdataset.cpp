@@ -924,7 +924,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( poGDS->GetRasterCount() == 1 )
     {
-#ifdef JPEG_LIB_MK1_OR_12BIT
+#ifdef JPEG_LIB_MK1
         GDALCopyWords( poGDS->pabyScanline, GDT_UInt16, 2, 
                        pImage, eDataType, nWordSize, 
                        nXSize );
@@ -934,16 +934,16 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
     {
-#ifdef JPEG_LIB_MK1_OR_12BIT
+#ifdef JPEG_LIB_MK1
         GDALCopyWords( poGDS->pabyScanline + (nBand-1) * 2, 
                        GDT_UInt16, 6, 
                        pImage, eDataType, nWordSize, 
                        nXSize );
 #else
         if (poGDS->eGDALColorSpace == JCS_RGB &&
-            poGDS->GetOutColorSpace() == JCS_CMYK)
+            poGDS->GetOutColorSpace() == JCS_CMYK &&
+            eDataType == GDT_Byte)
         {
-            CPLAssert(eDataType == GDT_Byte);
             if (nBand == 1)
             {
                 for(int i=0;i<nXSize;i++)
@@ -2389,7 +2389,8 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
     }
     else if( poDS->sDInfo.jpeg_color_space == JCS_CMYK )
     {
-        if (CPLTestBool(CPLGetConfigOption("GDAL_JPEG_TO_RGB", "YES")))
+        if (poDS->sDInfo.data_precision == 8 &&
+            CPLTestBool(CPLGetConfigOption("GDAL_JPEG_TO_RGB", "YES")))
         {
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->nBands = 3;
@@ -2402,7 +2403,8 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
     }
     else if( poDS->sDInfo.jpeg_color_space == JCS_YCCK )
     {
-        if (CPLTestBool(CPLGetConfigOption("GDAL_JPEG_TO_RGB", "YES")))
+        if (poDS->sDInfo.data_precision == 8 &&
+            CPLTestBool(CPLGetConfigOption("GDAL_JPEG_TO_RGB", "YES")))
         {
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->nBands = 3;
