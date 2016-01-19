@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_pds.h"
 #include "cpl_conv.h"
+#include "ogr_pds.h"
 
 CPL_CVSID("$Id$");
 
@@ -50,7 +50,7 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
     if( strstr((const char*)poOpenInfo->pabyHeader, "PDS_VERSION_ID") == NULL )
         return NULL;
 
-    OGRPDSDataSource   *poDS = new OGRPDSDataSource();
+    OGRPDSDataSource *poDS = new OGRPDSDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {

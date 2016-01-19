@@ -84,7 +84,7 @@ class OGRPDSLayer : public OGRLayer
                                          CPLString osStructureFilename,
                                          int nRecords,
                                          int nStartBytes, int nRecordSize,
-                                         GByte* pabyRecord, int bIsASCII);
+                                         GByte* pabyRecord, bool bIsASCII);
                         ~OGRPDSLayer();
 
 
