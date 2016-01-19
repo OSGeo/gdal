@@ -56,7 +56,7 @@ CPL_CVSID("$Id$");
     sInfo.nChangeset = 0; \
     sInfo.nVersion = 0; \
     sInfo.nUID = 0; \
-    sInfo.bTimeStampIsStr = 0; \
+    sInfo.bTimeStampIsStr = false; \
     sInfo.pszUserSID = NULL;
 /*    \    sInfo.nVisible = 1; */
 
@@ -691,7 +691,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
             if( pasNodes[nNodes].dfLon < -180 || pasNodes[nNodes].dfLon > 180 ||
                 pasNodes[nNodes].dfLat < -90 || pasNodes[nNodes].dfLat > 90 )
                 GOTO_END_ERROR;
-            pasNodes[nNodes].sInfo.bTimeStampIsStr = FALSE;
+            pasNodes[nNodes].sInfo.bTimeStampIsStr = false;
             pasNodes[nNodes].sInfo.ts.nTimeStamp = nTimeStamp;
             pasNodes[nNodes].sInfo.nChangeset = nChangeset;
             pasNodes[nNodes].sInfo.nVersion = nVersion;
@@ -1812,7 +1812,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
                 else if( strcmp(ppszIter[0], "timestamp") == 0 )
                 {
                     psCtxt->pasNodes[0].sInfo.ts.pszTimeStamp = OSM_AddString(psCtxt, ppszIter[1]);
-                    psCtxt->pasNodes[0].sInfo.bTimeStampIsStr = 1;
+                    psCtxt->pasNodes[0].sInfo.bTimeStampIsStr = true;
                 }
                 ppszIter += 2;
             }
@@ -1858,7 +1858,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
                 else if( strcmp(ppszIter[0], "timestamp") == 0 )
                 {
                     psCtxt->sWay.sInfo.ts.pszTimeStamp = OSM_AddString(psCtxt, ppszIter[1]);
-                    psCtxt->sWay.sInfo.bTimeStampIsStr = 1;
+                    psCtxt->sWay.sInfo.bTimeStampIsStr = true;
                 }
                 ppszIter += 2;
             }
@@ -1904,7 +1904,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
                 else if( strcmp(ppszIter[0], "timestamp") == 0 )
                 {
                     psCtxt->sRelation.sInfo.ts.pszTimeStamp = OSM_AddString(psCtxt, ppszIter[1]);
-                    psCtxt->sRelation.sInfo.bTimeStampIsStr = 1;
+                    psCtxt->sRelation.sInfo.bTimeStampIsStr = true;
 
                 }
                 ppszIter += 2;

@@ -404,27 +404,27 @@ class OGROSMDataSource : public OGRDataSource
                                        unsigned int* pnTags, OSMTag* pasTags,
                                        OSMInfo* psInfo );
 
-    int                 ParseConf(char** papszOpenOptions);
+    bool                ParseConf(char** papszOpenOptions);
     int                 CreateTempDB();
-    int                 SetDBOptions();
-    int                 SetCacheSize();
-    int                 CreatePreparedStatements();
+    bool                SetDBOptions();
+    bool                SetCacheSize();
+    bool                CreatePreparedStatements();
     void                CloseDB();
 
     int                 IndexPoint(OSMNode* psNode);
     int                 IndexPointSQLite(OSMNode* psNode);
-    int                 FlushCurrentSector();
-    int                 FlushCurrentSectorCompressedCase();
-    int                 FlushCurrentSectorNonCompressedCase();
-    int                 IndexPointCustom(OSMNode* psNode);
+    bool                FlushCurrentSector();
+    bool                FlushCurrentSectorCompressedCase();
+    bool                FlushCurrentSectorNonCompressedCase();
+    bool                IndexPointCustom(OSMNode* psNode);
 
     void                IndexWay(GIntBig nWayID,
                                  unsigned int nTags, IndexedKVP* pasTags,
                                  LonLat* pasLonLatPairs, int nPairs,
                                  OSMInfo* psInfo);
 
-    int                 StartTransactionCacheDB();
-    int                 CommitTransactionCacheDB();
+    bool                StartTransactionCacheDB();
+    bool                CommitTransactionCacheDB();
 
     int                 FindNode(GIntBig nID);
     void                ProcessWaysBatch();
@@ -445,10 +445,11 @@ class OGROSMDataSource : public OGRDataSource
                                           OSMTag* pasTags);
     OGRGeometry*        BuildGeometryCollection(OSMRelation* psRelation, int bMultiLineString);
 
-    int                 TransferToDiskIfNecesserary();
+    bool                TransferToDiskIfNecesserary();
 
-    int                 AllocBucket(int iBucket);
-    int                 AllocMoreBuckets(int nNewBucketIdx, int bAllocBucket = FALSE);
+    bool                AllocBucket(int iBucket);
+    bool                AllocMoreBuckets( int nNewBucketIdx,
+                                          bool bAllocBucket = false );
 
     void                AddComputedAttributes(int iCurLayer,
                                              const std::vector<OGROSMComputedAttribute>& oAttributes);
@@ -472,7 +473,7 @@ class OGROSMDataSource : public OGRDataSource
     int                 Open ( const char* pszFilename, char** papszOpenOptions );
 
     int                 ResetReading();
-    int                 ParseNextChunk(int nIdxLayer);
+    bool                ParseNextChunk(int nIdxLayer);
     OGRErr              GetExtent( OGREnvelope *psExtent );
     int                 IsInterleavedReading();
 
