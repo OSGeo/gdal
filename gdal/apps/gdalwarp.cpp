@@ -1792,19 +1792,10 @@ int main( int argc, char ** argv )
 
             for( i = 0; i < psWO->nBandCount; i++ )
             {
-                int bHaveNodata = FALSE;
-                
-                GDALRasterBandH hBand = GDALGetRasterBand( hWrkSrcDS, i+1 );
-                GDALGetRasterNoDataValue( hBand, &bHaveNodata );
-
-                CPLDebug("WARP", "band=%d bHaveNodata=%d", i, bHaveNodata);
-                if( bHaveNodata )
-                {
-                    psWO->padfDstNoDataReal[i] = psWO->padfSrcNoDataReal[i];
-                    psWO->padfDstNoDataImag[i] = psWO->padfSrcNoDataImag[i];
-                    CPLDebug("WARP", "srcNoData=%f dstNoData=%f", 
-                             psWO->padfSrcNoDataReal[i], psWO->padfDstNoDataReal[i] );
-                }
+                psWO->padfDstNoDataReal[i] = psWO->padfSrcNoDataReal[i];
+                psWO->padfDstNoDataImag[i] = psWO->padfSrcNoDataImag[i];
+                CPLDebug("WARP", "srcNoData=%f dstNoData=%f", 
+                            psWO->padfSrcNoDataReal[i], psWO->padfDstNoDataReal[i] );
 
                 if( bCreateOutput )
                 {
