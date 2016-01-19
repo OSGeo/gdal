@@ -1866,7 +1866,7 @@ int OGRGeometryFactory::haveGEOS()
  *             created geometry object.  This may be NULL.
  * @param ppoReturn the newly created geometry object will be assigned to the
  *                  indicated pointer on return.  This will be NULL in case
- *                  of failure.
+ *                  of failure, but NULL might be a valid return for a NULL shape.
  * @param nBytes the number of bytes available in pabyData.
  * @param pnBytesConsumed if not NULL, it will be set to the number of bytes 
  * consumed (at most nBytes).
@@ -2154,12 +2154,15 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
             }
 
             nBytesUsed += nThisGeomSize;
-            eErr = poGC->addGeometryDirectly( poThisGeom );
-            if( eErr != OGRERR_NONE )
+            if( poThisGeom != NULL )
             {
-                delete poGC;
-                delete poThisGeom;
-                return eErr;
+                eErr = poGC->addGeometryDirectly( poThisGeom );
+                if( eErr != OGRERR_NONE )
+                {
+                    delete poGC;
+                    delete poThisGeom;
+                    return eErr;
+                }
             }
         }
 
