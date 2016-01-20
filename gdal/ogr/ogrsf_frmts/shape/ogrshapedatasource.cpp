@@ -37,7 +37,6 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                          DS_SHPOpen()                                */
 /************************************************************************/
@@ -124,11 +123,12 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
     bSingleFileDataSource = bForceSingleFileDataSource;
 
 /* -------------------------------------------------------------------- */
-/*      If  bSingleFileDataSource is TRUE we don't try to do anything else.     */
+/*      If bSingleFileDataSource is TRUE we don't try to do anything    */
+/*      else.                                                           */
 /*      This is only utilized when the OGRShapeDriver::Create()         */
 /*      method wants to create a stub OGRShapeDataSource for a          */
 /*      single shapefile.  The driver will take care of creating the    */
-/*      file by callingICreateLayer().                                  */
+/*      file by calling ICreateLayer().                                 */
 /* -------------------------------------------------------------------- */
     if( bSingleFileDataSource )
         return TRUE;
@@ -975,10 +975,11 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
         || (CSLCount(papszTokens) == 7 && !EQUAL(papszTokens[5],"DEPTH")) )
     {
         CSLDestroy( papszTokens );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Syntax error in CREATE SPATIAL INDEX command.\n"
                   "Was '%s'\n"
-                  "Should be of form 'CREATE SPATIAL INDEX ON <table> [DEPTH <n>]'",
+                  "Should be of form 'CREATE SPATIAL INDEX ON <table> "
+                  "[DEPTH <n>]'",
                   pszStatement );
         return NULL;
     }
@@ -997,8 +998,8 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 
     if( poLayer == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Layer %s not recognised.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Layer %s not recognised.",
                   papszTokens[4] );
         CSLDestroy( papszTokens );
         return NULL;
@@ -1018,8 +1019,6 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
 
 {
-    char *pszFilename;
-
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
 /* -------------------------------------------------------------------- */
@@ -1027,7 +1026,7 @@ OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Data source %s opened read-only.\n"
-                  "Layer %d cannot be deleted.\n",
+                  "Layer %d cannot be deleted.",
                   pszName, iLayer );
 
         return OGRERR_FAILURE;
@@ -1035,15 +1034,15 @@ OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
 
     if( iLayer < 0 || iLayer >= nLayers )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Layer %d not in legal range of 0 to %d.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Layer %d not in legal range of 0 to %d.",
                   iLayer, nLayers-1 );
         return OGRERR_FAILURE;
     }
 
     OGRShapeLayer* poLayerToDelete = (OGRShapeLayer*) papoLayers[iLayer];
 
-    pszFilename = CPLStrdup(poLayerToDelete->GetFullName());
+    char *pszFilename = CPLStrdup(poLayerToDelete->GetFullName());
 
     delete poLayerToDelete;
 
