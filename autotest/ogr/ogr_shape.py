@@ -2847,6 +2847,7 @@ def ogr_shape_59():
     if gdaltest.shape_ds is None:
         return 'skip'
 
+    # Hack: M is stored in Z component
     shp_ds = ogr.Open( 'data/testpointm.shp' )
     if shp_ds is None:
         return 'skip'
@@ -2868,6 +2869,35 @@ def ogr_shape_59():
         gdaltest.post_reason( 'Did not get right point result.' )
         return 'fail'
 
+    # Hack: M is stored in Z component
+    shp_ds = ogr.Open('data/arcm_with_m.shp')
+    shp_lyr = shp_ds.GetLayer(0)
+    feat = shp_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'LINESTRING (0 0 10,1 1 20)':
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+    feat = shp_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'MULTILINESTRING ((0 0 10,1 1 20),(2 2 30,3 3 40))':
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+    geom = None
+    feat = None
+
+    # Currently M is completely lost on polygons
+    shp_ds = ogr.Open('data/polygonm_with_m.shp')
+    shp_lyr = shp_ds.GetLayer(0)
+    feat = shp_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+    feat = shp_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0),(0.25 0.25,0.75 0.75,0.25 0.75,0.25 0.25))':
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
     geom = None
     feat = None
 
