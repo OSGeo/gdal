@@ -1891,6 +1891,25 @@ def ogr_gpkg_27():
     return 'success'
 
 ###############################################################################
+# Test ogr2ogr -a_srs (as the geopackage driver doesn't clone the passed SRS
+# but inc/dec its ref count, which can exhibit issues in GDALVectorTanslate())
+
+def ogr_gpkg_28():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    srcDS = gdal.OpenEx('../ogr/data/poly.shp')
+    ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_28.gpkg', srcDS, format = 'GPKG', dstSRS='EPSG:4326')
+    if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
+        return 'fail'
+
+    ds = None
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_28.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1975,6 +1994,7 @@ gdaltest_list = [
     ogr_gpkg_25,
     ogr_gpkg_26,
     ogr_gpkg_27,
+    ogr_gpkg_28,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
