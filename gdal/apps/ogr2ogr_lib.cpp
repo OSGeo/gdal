@@ -2750,13 +2750,25 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             CPLDebug("GDALVectorTranslate", "Transfering layer NATIVE_DATA");
         }
 
-        poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
+        OGRSpatialReference* poOutputSRSClone = NULL;
+        if( poOutputSRS != NULL )
+        {
+            poOutputSRSClone = poOutputSRS->Clone();
+        }
+        poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRSClone,
                                            (OGRwkbGeometryType) eGCreateLayerType,
                                            papszLCOTemp );
         CSLDestroy(papszLCOTemp);
 
+        if( poOutputSRSClone != NULL )
+        {
+            poOutputSRSClone->Release();
+        }
+
         if( poDstLayer == NULL )
+        {
             return NULL;
+        }
 
         if( bCopyMD )
         {
@@ -2794,7 +2806,11 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 OGRGeomFieldDefn oGFldDefn
                     (poSrcFDefn->GetGeomFieldDefn(iSrcGeomField));
                 if( poOutputSRSIn != NULL )
-                    oGFldDefn.SetSpatialRef(poOutputSRSIn);
+                {
+                    poOutputSRSClone = poOutputSRSIn->Clone();
+                    oGFldDefn.SetSpatialRef(poOutputSRSClone);
+                    poOutputSRSClone->Release();
+                }
                 if( bForceGType )
                     oGFldDefn.SetType((OGRwkbGeometryType) eGType);
                 else
