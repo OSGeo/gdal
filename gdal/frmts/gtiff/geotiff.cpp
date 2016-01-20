@@ -5173,7 +5173,7 @@ int GTiffDataset::GetJPEGOverviewCount()
         return nJPEGOverviewCount;
 
     nJPEGOverviewCount = 0;
-    if( eAccess != GA_ReadOnly || nCompression != COMPRESSION_JPEG ||
+    if( !bBase || eAccess != GA_ReadOnly || nCompression != COMPRESSION_JPEG ||
         (nRasterXSize < 256 && nRasterYSize < 256) ||
         !CSLTestBoolean(CPLGetConfigOption("GTIFF_IMPLICIT_JPEG_OVR", "YES")) ||
         GDALGetDriverByName("JPEG") == NULL )
