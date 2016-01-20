@@ -637,6 +637,21 @@ def ogr_wkbwkt_export_wkt_iso_multipoint():
     return 'success'
 
 ###############################################################################
+# Test exporting WKT with non finite values (#6319)
+
+def ogr_wkt_inf_nan():
+
+    g = ogr.Geometry(ogr.wkbPoint)
+    g.AddPoint(float('inf'), float('-inf'), float('nan'))
+    out_wkt = g.ExportToWkt()
+    if out_wkt != 'POINT (inf -inf nan)':
+        gdaltest.post_reason('fail')
+        print(out_wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -658,6 +673,7 @@ gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wktwkb )
 gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkt_recursion )
 gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkb_recursion )
 gdaltest_list.append( ogr_wkbwkt_export_wkt_iso_multipoint )
+gdaltest_list.append( ogr_wkt_inf_nan )
 
 if __name__ == '__main__':
 

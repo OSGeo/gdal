@@ -53,6 +53,22 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
     int i;
     int nTruncations = 0;
     char szFormat[16];
+
+    // So to have identical cross platform representation
+    if( CPLIsInf(dfVal) )
+    {
+        if( dfVal > 0 )
+            CPLsnprintf(pszBuffer, nBufferLen, "%s", "inf");
+        else
+            CPLsnprintf(pszBuffer, nBufferLen, "%s", "-inf");
+        return;
+    }
+    if( CPLIsNan(dfVal) )
+    {
+        CPLsnprintf(pszBuffer, nBufferLen, "%s", "nan");
+        return;
+    }
+
     snprintf(szFormat, sizeof(szFormat), "%%.%d%c", nPrecision, chConversionSpecifier);
 
     int ret = CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
@@ -204,11 +220,17 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     else
     {
         OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision, fabs(x) < 1 ? 'f' : 'g' );
-        if( strchr(szX, '.') == NULL && strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+        if( CPLIsFinite(x) && strchr(szX, '.') == NULL &&
+            strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+        {
             strcat(szX, ".0");
+        }
         OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision, fabs(y) < 1 ? 'f' : 'g' );
-        if( strchr(szY, '.') == NULL && strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+        if( CPLIsFinite(y) && strchr(szY, '.') == NULL &&
+            strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+        {
             strcat(szY, ".0");
+        }
     }
 
     nLenX = strlen(szX);
