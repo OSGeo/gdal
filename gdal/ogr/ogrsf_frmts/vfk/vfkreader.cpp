@@ -491,7 +491,7 @@ void VFKReader::AddInfo(const char *pszLine)
         }
         poChar++;
     }
-    if (nSkip > 3)
+    if (nSkip > 3 && iValueLength > 0 )
         iValueLength--;
 
     char *pszValue = (char *) CPLMalloc(iValueLength + 1);
