@@ -44,6 +44,7 @@
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 
 using namespace PCIDSK;
 
@@ -79,7 +80,15 @@ SysBlockMap::~SysBlockMap()
         virtual_files[i] = NULL;
     }
 
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& e )
+    {
+        fprintf(stderr, "Exception in SysBlockMap::~SysBlockMap(): %s\n",
+                e.what());
+    }
 }
 
 /************************************************************************/
