@@ -1,4 +1,6 @@
 use strict;
+use warnings;
+use Scalar::Util 'blessed';
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 Geo::GDAL::PushFinderLocation('../../data');
