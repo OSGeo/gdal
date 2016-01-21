@@ -129,7 +129,7 @@ $dataset->GeoTransform($transform);
 $transform = $dataset->GeoTransform();
 
 $dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff');
-my @list = $dataset->GetFileList();
+@list = $dataset->GetFileList();
 undef $dataset;
 
 @list = Geo::GDAL::VSIF::ReadDir('/vsimem/');
