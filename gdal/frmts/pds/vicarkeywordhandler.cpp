@@ -92,7 +92,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
     keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
     LabelSize = atoi( keyval );
-    if( LabelSize > 10 * 1024 * 124 )
+    if( LabelSize <= 0 || LabelSize > 10 * 1024 * 124 )
         return FALSE;
 
     char* pszChunk = reinterpret_cast<char *>(  VSIMalloc( LabelSize + 1 ) );
@@ -149,7 +149,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     const long int starteol = LabelSize + nBandOffset * nBands;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
-        printf("Error seeking to EOL!\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
         return FALSE;
     }
     char szChunk[100];
@@ -171,11 +171,13 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
 
     int EOLabelSize = atoi( keyval );
+    if( EOLabelSize <= 0 )
+        return FALSE;
     if( EOLabelSize > static_cast<int>(sizeof(szChunk) - 1) )
         EOLabelSize = static_cast<int>(sizeof(szChunk) - 1);
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
-        printf("Error seeking again to EOL!\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
         return FALSE;
     }
 
