@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use Scalar::Util 'blessed';
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
@@ -27,7 +28,7 @@ ok($ds eq 'metri', "Unit");
 
 $band->ScaleAndOffset(0.1, 5);
 @list = $band->ScaleAndOffset();
-ok(($list[0] == 0.1 and $list[1] == 5), "ScaleAndOffset");
+ok((sprintf("%.1f", $list[0]) eq '0.1' and $list[1] == 5), "ScaleAndOffset");
 
 my $nr = $band->GetBandNumber;
 ok($nr == 1, "GetBandNumber");
@@ -40,7 +41,7 @@ ok((defined($rat) and blessed($rat) and $rat->isa('Geo::GDAL::RasterAttributeTab
 my $c = $band->ColorInterpretation;
 my %c = map {$_=>1} Geo::GDAL::Band::ColorInterpretations;
 ok($c{$c}, "Get ColorInterpretation");
-$c = (keys %c)[0];
+$c = 'BlueBand'; # (keys %c)[0]; setting RedBand leads to core dump in geotiff.cpp:4288 #6306
 $band->ColorInterpretation($c);
 ok($band->ColorInterpretation eq $c, "Set ColorInterpretation");
 
@@ -70,7 +71,7 @@ $dataset->AddBand('Float64');
 $band = $dataset->Band(3);
 $band->	Fill(123.45);
 $data = $band->ReadTile;
-ok($data->[0][0] == 123.45, "Fill with real");
+ok(sprintf("%.2f", $data->[0][0]) eq '123.45', "Fill with real");
 for my $row (@$data) {
 #    print "@$row\n";
 }
@@ -184,7 +185,7 @@ my $band2 = $dataset->Band(2);
 $band1->RegenerateOverviews([$band2]); #scalar resampling, subref callback, scalar callback_data
 $band1->RegenerateOverview($band2); #scalar resampling, subref callback, scalar callback_data
 
-my $c = $band1->GetOverviewCount;
+$c = $band1->GetOverviewCount;
 ok($c == 2, "GetOverviewCount, got $c");
 my $o = $band1->GetOverview(1);
 ok(defined($o), "GetOverview");
@@ -192,11 +193,10 @@ my $b = $band1->HasArbitraryOverviews;
 ok(!$b, "HasArbitraryOverviews");
 
 Geo::GDAL::VSIF::Unlink('/vsimem/test.gtiff');
-$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Type => 'Float64');
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 256, Type => 'Float64');
 $band = $dataset->Band;
 
-my $data = $band->ReadTile;
-my ($min, $max);
+$data = $band->ReadTile;
 for my $y (0..@$data-1) {
     for my $x (0..@{$data->[$y]}-1) {
         $data->[$y][$x] = rand 10;
@@ -221,7 +221,8 @@ for (@$h) {
 }
 ok($sum == 256*256, "GetHistogram");
 ok(@$h == 11, "GetHistogram");
-my ($min, $max, $histogram) = $band->GetDefaultHistogram;
+my $histogram;
+($min, $max, $histogram) = $band->GetDefaultHistogram;
 ok(ref($histogram) eq 'ARRAY', "GetDefaultHistogram");
 eval {
     $band->SetDefaultHistogram($min, $max, $histogram);
@@ -231,7 +232,7 @@ ok(!$@, "SetDefaultHistogram");
 my $buf = $band->ReadRaster();
 my $pc = $band->PackCharacter;
 my @data = unpack("$pc*", $buf);
-my $n = @data;
+$n = @data;
 ok($n == 256*256, "ReadRaster");
 
 $buf = pack("$pc*", @data);
