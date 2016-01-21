@@ -406,6 +406,8 @@ public:
 
     explicit LevellerRasterBand(LevellerDataset*);
     ~LevellerRasterBand();
+    
+    bool        Init();
 
     // Geomeasure support.
     virtual const char* GetUnitType();
@@ -433,11 +435,19 @@ LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDSIn ) :
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1; // poDS->GetRasterYSize();
-
-    m_pLine = reinterpret_cast<float*>(
-        CPLMalloc( sizeof(float) * nBlockXSize) );
 }
 
+
+/************************************************************************/
+/*                           Init()                                     */
+/************************************************************************/
+
+bool LevellerRasterBand::Init()
+{
+    m_pLine = reinterpret_cast<float*>(
+        VSI_MALLOC2_VERBOSE( sizeof(float), nBlockXSize) );
+    return m_pLine != NULL;
+}
 
 LevellerRasterBand::~LevellerRasterBand()
 {
@@ -928,9 +938,16 @@ GDALDataset* LevellerDataset::Create
 // --------------------------------------------------------------------
 //      Instance a band.
 // --------------------------------------------------------------------
-    poDS->SetBand( 1, new LevellerRasterBand( poDS ) );
+    LevellerRasterBand* poBand = new LevellerRasterBand( poDS );
+    poDS->SetBand( 1, poBand );
+    
+    if( !poBand->Init() )
+    {
+        delete poDS;
+        return NULL;
+    }
 
-	return poDS;
+    return poDS;
 }
 
 
@@ -1291,7 +1308,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 	}
 
     // Sanity check: do we have enough pixels?
-    if(datalen != nRasterXSize * nRasterYSize * sizeof(float))
+    if(static_cast<GUIntBig>(datalen) != static_cast<GUIntBig>(nRasterXSize) * static_cast<GUIntBig>(nRasterYSize) * sizeof(float))
 	{
 		CPLError( CE_Failure, CPLE_OpenFailed,
 					  "File does not have enough data." );
@@ -1543,7 +1560,13 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 1, new LevellerRasterBand( poDS ));
+    LevellerRasterBand* poBand = new LevellerRasterBand( poDS );
+    poDS->SetBand( 1, poBand);
+    if( !poBand->Init() )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
