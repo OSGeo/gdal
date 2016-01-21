@@ -345,6 +345,9 @@ void SysVirtualFile::LoadBlock( int requested_block )
     LoadBMEntrysTo( requested_block );
     PCIDSKSegment *data_seg_obj =
         file->GetSegment( GetBlockSegment( requested_block ) );
+    if( data_seg_obj == NULL )
+        return ThrowPCIDSKException( "SysVirtualFile::LoadBlock(%d) - no segment found",
+                                     requested_block );
 
     data_seg_obj->ReadFromFile( block_data,
                                 block_size * (uint64) GetBlockIndexInSegment( requested_block ),
