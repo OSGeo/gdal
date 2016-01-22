@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.deegree.org/app http://deegree3-demo.deegree.org/utah-workspace/services?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;OUTPUTFORMAT=text%2Fxml%3B+subtype%3Dgml%2F3.2.1&amp;TYPENAME=app:SGID024_Municipalities2004_edited&amp;NAMESPACE=xmlns(app=http%3A%2F%2Fwww.deegree.org%2Fapp)" timeStamp="2012-05-20T21:45:29.579Z" numberMatched="unknown" numberReturned="0">
+  <!--NOTE: numberReturned attribute should be 'unknown', but this would not validate against the current version of the WFS 2.0 schema (change upcoming). See change request (CR 144): https://portal.opengeospatial.org/files?artifact_id=43925.-->
+  <wfs:member>
+    <app:SGID024_Municipalities2004_edited xmlns:app="http://www.deegree.org/app" xmlns:gml="http://www.opengis.net/gml/3.2" gml:id="SGID024_MUNICIPALITIES2004_EDITED_0">
+      <app:OBJECTID>1</app:OBJECTID>
+      <app:COUNTYNBR>01</app:COUNTYNBR>
+      <app:ENTITYNBR>3020.0000000000000000</app:ENTITYNBR>
+      <app:ENTITYYR>2004</app:ENTITYYR>
+      <app:SHORTDESC>MILFORD</app:SHORTDESC>
+      <app:GISKEY>302001.0000000000000000</app:GISKEY>
+      <app:SDEKEY>0130202003</app:SDEKEY>
+      <app:NAME>Milford</app:NAME>
+      <app:IMSCOLOR>2</app:IMSCOLOR>
+      <app:MINNAME>Milford</app:MINNAME>
+      <app:COUNTYSEAT>0</app:COUNTYSEAT>
+      <app:POP2000>1451</app:POP2000>
+      <app:FIPS>50040</app:FIPS>
+      <app:SHAPE_AREA>4178397.6250000000000000</app:SHAPE_AREA>
+      <app:SHAPE_LEN>10689.3287256000000000</app:SHAPE_LEN>
+      <app:COUNTY>Beaver</app:COUNTY>
+      <app:geometry>
+        <gml:MultiSurface gml:id="GEOMETRY_4cb9d8bb-f512-4529-8771-15f586c1b8b9" srsName="EPSG:26912">
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="GEOMETRY_d8a9fe26-c6b8-46b3-b353-4265fbcb9062" srsName="EPSG:26912">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>325218.003 4250567.050 324469.003 4250572.550 324449.503 4250572.550 323628.003 4250578.550 323628.503 4250991.050 323243.003 4250993.050 322872.003 4250995.550 322875.003 4251797.550 322874.003 4251920.550 323234.003 4251808.050 323249.003 4251803.550 323263.503 4251799.550 323278.503 4251795.550 323293.503 4251792.050 323308.503 4251788.550 323323.503 4251785.050 323339.003 4251782.550 323354.003 4251779.550 323369.003 4251777.550 323384.503 4251775.550 323400.003 4251773.550 323415.003 4251772.050 323430.503 4251770.550 323446.003 4251769.550 323461.503 4251769.050 323476.503 4251768.550 323498.003 4251768.050 323629.003 4251768.550 323629.003 4252187.550 323839.503 4252186.550 323859.503 4252186.550 323944.003 4252186.050 323970.003 4252186.050 324018.003 4252185.550 324018.503 4252205.050 324019.003 4252224.550 324029.503 4252611.550 324063.503 4252611.050 324510.503 4252602.550 324535.503 4252602.050 324582.003 4252601.050 324581.003 4252260.050 324568.003 4252182.550 324739.003 4252181.550 324760.503 4252181.050 325227.503 4252178.050 325284.503 4252176.550 325285.503 4251360.550 326099.003 4251360.050 326085.003 4250552.550 325271.503 4250552.050 325218.003 4250567.050</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </app:geometry>
+    </app:SGID024_Municipalities2004_edited>
+  </wfs:member>
+</wfs:FeatureCollection>

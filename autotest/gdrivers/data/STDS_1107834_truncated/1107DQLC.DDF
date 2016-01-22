@@ -1,0 +1,18 @@
+001482L 1 0600049   22040000210000012921DQLC49500000;&1107DQLC.DDF0100;&DDF RECORD IDENTIFER1600;&Logical ConsistencyMODN!RCID!COMT(A,I,A)00650 D 1   00041   310400010080DQLC60180000001DQLC1EDGE MATCH STATUS: West(1), North(1), East(4), South(4).
+
+Edge matching is a process of matching elevation values along common
+quadrangle edges. The objective of edge matching is to improve the
+alignment of ridges and drains and overall topographic shaping and
+representation. Code of 0 = not edge matched; 1 = edge match checked
+and joined; 2 = not edge matched because adjoining DEM is on a
+different horizontal or vertical datum; 3 = not edge matched because
+the adjoining DEM is not part of the current project; 4 = not edge
+matched because the adjoining DEM has a different vertical unit.00618 D 1   00041   310400010080DQLC56980000002DQLC2NULL SCHEME: The method for indicating no value for a cell in the
+Cell module records contained in this transfer is described here. In
+the Data Dictionary Domain module there are specific values that are
+reserved to mean VOID and FILL for ELEVATION. VOID means there is no
+elevation measurement available for a cell that falls within the
+*geographic boundaries* of the DEM. (In the geographic coordinate
+system the bounds of the DEM data are rectangular.) A fill also means
+there is no data, but is used to make the DEM rectangular in the UTM
+coordinate system.

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!--
+Copyright 2008, 2009 University Corporation for Atmospheric Research
+
+This file is part of the UDUNITS-2 package.  See the file LICENSE
+in the top-level source-directory of the package for copying and
+redistribution conditions.
+
+Units accepted for use with the SI
+-->
+<unit-system>
+    <!-- Hour, degree, liter, and the like -->
+        <unit>
+            <def>60 s</def>
+            <name><singular>minute</singular></name>
+            <symbol>min</symbol>
+        </unit>
+        <unit>
+            <def>60 min</def>
+            <name><singular>hour</singular></name>
+            <symbol>h</symbol>
+            <aliases> <symbol>hr</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>24 h</def>
+            <name><singular>day</singular></name>
+            <symbol>d</symbol>
+        </unit>
+        <unit>
+            <!-- This "unit" is useful in the definition of subsequent
+                 units.  -->
+            <def>3.141592653589793238462643383279</def>
+            <aliases>
+                <name><singular>pi</singular><noplural/></name>
+                <symbol>&#x3c0;</symbol>        <!-- GREEK SMALL LETTER PI -->
+            </aliases>
+        </unit>
+        <unit>
+            <def>(pi/180) rad</def>
+            <name><singular>arc_degree</singular></name>
+            <symbol>&#xB0;</symbol>             <!-- DEGREE SIGN -->
+            <aliases>
+                <name><singular>angular_degree</singular></name>
+                <name><singular>degree</singular></name>
+                <name><singular>arcdeg</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>&#xB0;/60</def>                <!-- DEGREE SIGN -->
+            <name><singular>arc_minute</singular></name>
+            <symbol>'</symbol>
+            <symbol>&#x2032;</symbol>           <!-- PRIME -->
+            <aliases>
+                <name><singular>angular_minute</singular></name>
+                <name><singular>arcminute</singular></name>
+                <name><singular>arcmin</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>'/60</def>
+            <name><singular>arc_second</singular></name>
+            <symbol>"</symbol>
+            <symbol>&#x2033;</symbol>           <!-- DOUBLE PRIME -->
+            <aliases>
+                <name><singular>angular_second</singular></name>
+                <name><singular>arcsecond</singular></name>
+                <name><singular>arcsec</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <!-- The following is exact.  From 1901 to 1964, however, 1
+                 liter was 1.000028 dm^3 -->
+            <def>dm^3</def>		        <!-- exact -->
+            <name><singular>liter</singular></name>
+            <symbol>L</symbol>                  <!-- NIST recommendation -->
+            <aliases>
+                <name><singular>litre</singular></name>
+                <symbol>l</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1000 kg</def>
+            <name><singular>metric_ton</singular></name>
+            <symbol>t</symbol>
+            <aliases> <name><singular>tonne</singular></name> </aliases>
+        </unit>
+
+    <!-- Units whose values are obtained experimentally -->
+        <unit>
+            <def>1.60217733e-19 J</def>
+            <name><singular>electronvolt</singular></name>
+            <symbol>eV</symbol>
+            <aliases>
+                <name><singular>electron_volt</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.6605402e-27 kg</def>
+            <name><singular>unified_atomic_mass_unit</singular></name>
+            <symbol>u</symbol>
+            <aliases>
+                <name> <singular>atomic_mass_unit</singular> </name>
+                <name> <singular>atomicmassunit</singular> </name>
+                <name> <singular>amu</singular><noplural/></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.495979e11 m</def>
+            <aliases>
+                <name><singular>astronomical_unit</singular></name>
+                <symbol>ua</symbol>
+            </aliases>
+        </unit>
+
+    <!-- Units temporarily accepted for use with the SI.  NB: <name>
+         and <symbol> elements appear only within <aliases>. -->
+        <unit>
+            <def>1852 m</def>
+            <aliases>
+                <name><singular>nautical_mile</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>nautical_mile/hour</def>
+            <aliases>
+                <name><singular>international_knot</singular></name>
+                <name><singular>knot_international</singular></name>
+                <name><singular>knot</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-10 m</def>
+            <aliases>
+                <name><singular>angstrom</singular></name>
+                <name><singular>&#xE5;ngstr&#xF6;m</singular></name>
+                <symbol>&#xC5;</symbol>         <!-- LATIN CAPITAL LETTER A
+                                                     WITH RING ABOVE -->
+                <symbol>&#x212B;</symbol>       <!-- ANGSTROM SIGN -->
+            </aliases>
+        </unit>
+        <unit>
+            <def>dam^2</def>
+            <aliases>
+                <name><singular>are</singular></name>
+                <symbol>a</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>100 are</def>
+            <aliases> <name><singular>hectare</singular></name> </aliases>
+        </unit>
+        <unit>
+            <def>100 fm^2</def>			<!-- exact -->
+            <aliases>
+                <name><singular>barn</singular></name>
+                <symbol>b</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1000 hPa</def>
+            <aliases>
+                <name><singular>bar</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>cm/s^2</def>
+            <aliases>
+                <name><singular>gal</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.7e10 Bq</def>
+            <aliases>
+                <name><singular>curie</singular></name>
+                <symbol>Ci</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.58e-4 C/kg</def>
+            <aliases>
+                <name><singular>roentgen</singular></name>
+                <symbol>R</symbol>
+            </aliases>
+        </unit>
+        <!-- The following is commented-out because "rad" has already
+             been mapped to "radian"
+        <unit>
+            <def>cGy</def>
+            <aliases> <name><singular>rad</singular></name> </aliases>
+        </unit>
+        -->
+        <unit>
+            <def>cSv</def>
+            <aliases>
+                <name><singular>rem</singular></name>
+            </aliases>
+        </unit>
+</unit-system>

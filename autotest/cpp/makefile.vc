@@ -1,0 +1,130 @@
+# $Id: makefile.vc,v 1.5 2006/12/06 15:38:16 mloskot Exp $
+#
+# Makefile to build GDAL C++ Unit Tests (subset of Python tests)
+#
+# These tests are dedicated to Windows CE platform and cover features
+# supported by Windows CE port of GDAL.
+# Also, compilable and runnable on Windows 2000/XP.
+#
+#############################################################################
+# CONFIGURATION
+
+# GDAL library
+
+!IFNDEF GDAL_ROOT
+!IF EXIST("..\..\gdal\nmake.opt")
+GDAL_ROOT = ..\..\gdal
+!ENDIF
+!ENDIF
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+# Specification of enabled GDAL drivers
+#GDAL_SUPPORT = \
+#    -DHAVE_GEOS \
+#    -DOGR_ENABLED \
+#    -DSHAPE_ENABLED \
+#    -DFRMT_aaigrid \
+#    -DFRMT_dted \
+#    -DFRMT_gtiff
+GDAL_SUPPORT = \
+    -DOGR_ENABLED \
+    -DSHAPE_ENABLED \
+    -DFRMT_aaigrid \
+    -DFRMT_dted \
+    -DFRMT_gtiff
+
+# END OF CONFIGURATION
+#############################################################################
+
+GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
+
+INCLUDE_DIR = \
+    -I. \
+    -Itut \
+    -I$(PROJ4_ROOT)\src
+
+OBJ = \
+    test_cpl.obj \
+    test_gdal.obj \
+    test_gdal_aaigrid.obj \
+    test_gdal_dted.obj \
+    test_gdal_gtiff.obj \
+    test_ogr.obj \
+    test_ogr_geos.obj \
+    test_ogr_shape.obj \
+    test_osr.obj \
+    test_osr_ct.obj \
+    test_osr_pci.obj \
+    test_osr_proj4.obj \
+    tut/tut_gdal.obj
+
+# Commands
+RM = -del
+
+# Complete set of compilation flags
+CFLAGS	= $(CFLAGS) $(INCLUDE_DIR)
+CPPFLAGS = $(CFLAGS)
+
+GDAL_TEST_EXE = gdal_unit_test.exe
+
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
+
+check:	 $(GDAL_TEST_EXE)
+	 $(GDAL_TEST_EXE)
+
+check-all:	 $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
+	 $(GDAL_TEST_EXE)
+	testcopywords.exe
+	testperfcopywords.exe
+	testclosedondestroydm.exe
+	testthreadcond.exe
+
+$(GDAL_TEST_EXE): gdal_unit_test.cpp $(GDAL_DLL) $(OBJ)
+	$(CC) gdal_unit_test.cpp $(CFLAGS) $(OBJ) $(GDAL_LIB) $(GEOS_LIB) $(PROJ4_LIB)
+    if exist $(GDAL_TEST_EXE).manifest mt -manifest $(GDAL_TEST_EXE).manifest -outputresource:$(GDAL_TEST_EXE);1
+
+testcopywords.exe: testcopywords.cpp
+	$(CC) testcopywords.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testcopywords.exe.manifest mt -manifest testcopywords.exe.manifest -outputresource:testcopywords.exe;1
+
+testperfcopywords.exe: testperfcopywords.cpp
+	$(CC) testperfcopywords.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testperfcopywords.exe.manifest mt -manifest testperfcopywords.exe.manifest -outputresource:testperfcopywords.exe;1
+
+testclosedondestroydm.exe: testclosedondestroydm.c
+	$(CC) testclosedondestroydm.c $(CFLAGS) $(GDAL_LIB)
+    if exist testclosedondestroydm.exe.manifest mt -manifest testclosedondestroydm.exe.manifest -outputresource:testclosedondestroydm.exe;1
+
+testthreadcond.exe: testthreadcond.c
+	$(CC) testthreadcond.c $(CFLAGS) $(GDAL_LIB)
+    if exist testthreadcond.exe.manifest mt -manifest testthreadcond.exe.manifest -outputresource:testthreadcond.exe;1
+
+copy-gdal-dll:	$(GDAL_DLL) 
+
+$(GDAL_DLL):	$(GDAL_ROOT)\$(GDAL_DLL)
+    copy /y $(GDAL_ROOT)\$(GDAL_DLL) .
+
+.cpp.obj:
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$@
+
+.c.obj:
+	$(CC) $(CFLAGS) /c $*.c /Fo$@
+
+clean:
+	$(RM) *~
+	$(RM) *.dll
+	$(RM) *.exe
+	$(RM) *.exp
+	$(RM) *.ilk
+	$(RM) *.lib
+	$(RM) *.manifest
+	$(RM) *.obj
+	$(RM) *.pdb
+	$(RM) tmp\*.dbf
+	$(RM) tmp\*.dt0
+	$(RM) tmp\*.grd
+	$(RM) tmp\*.shp
+	$(RM) tmp\*.shx
+	$(RM) tut\*.obj
+

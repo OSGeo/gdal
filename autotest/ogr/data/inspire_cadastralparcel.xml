@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml/3.2"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:xlink="http://www.w3.org/1999/xlink" 
+                       xmlns:base="urn:x-inspire:specification:gmlas:BaseTypes:3.2"
+                       xmlns:cp="urn:x-inspire:specification:gmlas:CadastralParcels:3.0"
+                       gml:id="some_id"
+                       xsi:schemaLocation="urn:x-inspire:specification:gmlas:CadastralParcels:3.0 http://esdin.fgi.fi/schemas/CadastralParcels.xsd">
+  <gml:boundedBy>
+    <gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      <gml:lowerCorner>49 2</gml:lowerCorner>
+      <gml:upperCorner>50 3</gml:upperCorner>
+    </gml:Envelope>
+  </gml:boundedBy>
+  <gml:featureMember>
+    <cp:CadastralParcel gml:id="CadastralParcel-01">
+      <cp:areaValue uom="m2">10</cp:areaValue>
+      <cp:beginLifespanVersion>2000-01-01T00:00:00.0Z</cp:beginLifespanVersion>
+      <cp:endLifespanVersion>2001-01-01T00:00:00.0Z</cp:endLifespanVersion>
+      <cp:geometry>
+        <gml:Surface gml:id="CadastralParcel-01-geom" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:patches>
+            <gml:PolygonPatch>
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList srsDimension="2" count="4">49 2 50 2 50 3 49 3</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:PolygonPatch>
+          </gml:patches>
+        </gml:Surface>
+      </cp:geometry>
+      <cp:inspireId>
+        <base:Identifier>
+          <base:localId>CadastralParcel-01-localId</base:localId>
+          <base:namespace>namespace</base:namespace>
+        </base:Identifier>
+      </cp:inspireId>
+      <cp:label>label</cp:label>
+      <cp:nationalCadastralReference>nationalCadastralReference</cp:nationalCadastralReference>
+      <cp:referencePoint>
+        <gml:Point gml:id="CadastralParcel-01-refpoint" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:pos>49.5 2.5</gml:pos>
+        </gml:Point>
+      </cp:referencePoint>
+      <cp:validFrom>2002-01-01T00:00:00.0Z</cp:validFrom>
+      <cp:validTo>2003-01-01T00:00:00.0Z</cp:validTo>
+      <cp:basicPropertyUnit xlink:type="simple" xlink:href="#BPU.1" />
+      <cp:basicPropertyUnit xlink:type="simple" xlink:href="#BPU.2" />
+      <cp:administrativeUnit xlink:type="simple" xlink:href="#AU.1" />
+      <cp:zoning xlink:type="simple" xlink:href="#CZ.1" />
+    </cp:CadastralParcel>
+  </gml:featureMember>
+  <gml:featureMember>
+    <cp:CadastralParcel gml:id="CadastralParcel-02">
+      <cp:beginLifespanVersion>2000-01-01T00:00:00.0Z</cp:beginLifespanVersion>
+      <cp:geometry>
+        <gml:Surface gml:id="CadastralParcel-01-geom" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:patches>
+            <gml:PolygonPatch>
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList srsDimension="2" count="4">49 2 50 2 50 3 49 3</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:PolygonPatch>
+          </gml:patches>
+        </gml:Surface>
+      </cp:geometry>
+      <cp:inspireId>
+        <base:Identifier>
+          <base:localId>CadastralParcel-02-localId</base:localId>
+          <base:namespace>namespace</base:namespace>
+        </base:Identifier>
+      </cp:inspireId>
+      <cp:label>label</cp:label>
+      <cp:nationalCadastralReference>nationalCadastralReference</cp:nationalCadastralReference>
+    </cp:CadastralParcel>
+  </gml:featureMember>
+</gml:FeatureCollection>

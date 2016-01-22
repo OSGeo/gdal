@@ -1,0 +1,27 @@
+{
+  "objectIdFieldName" : "objectid",
+  "globalIdFieldName" : "",
+  "geometryType" : "esriGeometryPolyline",
+  "fields" : [
+  ],
+  "features" : [
+    {
+      "geometry" : {
+        "paths" : [
+          [
+            [
+              2,
+              49
+            ],
+            [
+              3,
+              50
+            ]
+          ]
+        ]
+      },
+      "attributes" : {
+      }
+    }
+  ]
+}

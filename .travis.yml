@@ -1,0 +1,133 @@
+# This is the config file for building GDAL and running its autotest suite
+# with Travis-ci.org
+
+language: cpp
+
+# We use clang, --without-libtool and --with-debug for faster build
+compiler:
+  - clang
+
+# remove libogdi3.2-dev : it pulls projects.h from PROJ.4 which no longer exists
+before_install:
+  - sudo mv /etc/apt/sources.list.d/pgdg-source.list* /tmp
+  - sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
+  - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+  - sudo add-apt-repository -y ppa:marlam/gta
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq python-numpy postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev liblcms2-2 libpcre3-dev
+  - psql -c "drop database if exists autotest" -U postgres
+  - psql -c "create database autotest" -U postgres
+  - psql -c "create extension postgis" -d autotest -U postgres
+  - mysql -e "create database autotest;"
+  - mysql -e "GRANT ALL ON autotest.* TO 'root'@'localhost';" -u root
+  - mysql -e "GRANT ALL ON autotest.* TO 'travis'@'localhost';" -u root
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/FileGDB_API_1_2-64.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-64bit.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-64bit.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-openjpeg-2.0.0-ubuntu12.04-64bit.tar.gz
+  - tar xzf MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Raster_DSDK/include/* /usr/local/include
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Raster_DSDK/lib/* /usr/local/lib
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Lidar_DSDK/include/* /usr/local/include
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Lidar_DSDK/lib/* /usr/local/lib
+  - tar xzf FileGDB_API_1_2-64.tar.gz
+  - sudo cp -r FileGDB_API/include/* /usr/local/include
+  - sudo cp -r FileGDB_API/lib/* /usr/local/lib
+  - tar xzf install-libecwj2-ubuntu12.04-64bit.tar.gz
+  - sudo cp -r install-libecwj2/include/* /usr/local/include
+  - sudo cp -r install-libecwj2/lib/* /usr/local/lib
+  - tar xzf install-libkml-r864-64bit.tar.gz
+  - sudo cp -r install-libkml/include/* /usr/local/include
+  - sudo cp -r install-libkml/lib/* /usr/local/lib
+  - tar xzf install-openjpeg-2.0.0-ubuntu12.04-64bit.tar.gz
+  - sudo cp -r install-openjpeg/include/* /usr/local/include
+  - sudo cp -r install-openjpeg/lib/* /usr/local/lib
+  - sudo ldconfig
+
+# installing PostGIS 2 from Ubuntu PPA draws libgdal1.9 dependency. We must install ourselves
+# in /usr too to avoid gdal version conflict. Might be fragile however
+
+install:
+  - cd gdal
+  - ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-gta --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local
+  - make -j3
+  - cd apps
+  - make test_ogrsf
+  - cd ..
+  - cd swig/java
+  - cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" > java.opt.tmp
+  - mv java.opt.tmp java.opt
+  - make
+  - cd ../..
+  - cd swig/perl
+  - make generate
+  - make
+  - cd ../..
+  - sudo rm -f /usr/lib/libgdal.so*
+  - sudo make install
+  - sudo ldconfig
+  - cd ../autotest/cpp
+  - make -j3
+  - cd ../../gdal
+  - wget http://mdb-sqlite.googlecode.com/files/mdb-sqlite-1.0.2.tar.bz2
+  - tar xjvf mdb-sqlite-1.0.2.tar.bz2
+  - sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext
+
+# When run in the same process after ogr_pgeo.py (with the MDB driver), FileGDB tests fail.
+# Run it in isolation
+script:
+# Perl unit tests
+  - cd swig/perl
+  - make test
+  - cd ../..
+# Java unit tests
+  - cd swig/java
+  - make test
+  - cd ../..
+# CPP unit tests
+  - cd ../autotest
+  - cd cpp
+  - GDAL_SKIP=JP2ECW make quick_test
+# Compile and test vsipreload
+  - make vsipreload.so
+  - LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
+  - LD_PRELOAD=./vsipreload.so sqlite3  /vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db "select * from polygon limit 10"
+  - cd ..
+# Download a sample file
+  - mkdir -p ogr/tmp/cache/
+  - cd ogr/tmp/cache/
+  - wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
+  - unzip PGeoTest.zip
+  - cd ../../..
+# Run ogr_fgdb.py in isolation from the rest
+  - cd ogr
+  - python ogr_fgdb.py
+  - mkdir disabled
+  - mv ogr_fgdb.* disabled
+  - cd ..
+# Run ogr_pgeo.py in isolation from the rest
+  - cd ogr
+  - python ogr_pgeo.py
+  - mv ogr_pgeo.* disabled
+  - cd ..
+# Run all the Python autotests
+  - GDAL_SKIP="JP2ECW ECW" python run_all.py
+# A bit messy, but force testing with libspatialite 4.0dev (that has been patched a bit to remove any hard-coded SRS definition so it is very small)
+  - cd ogr
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/libspatialite4.0dev_ubuntu12.04-64bit_srs_stripped.tar.gz
+  - tar xzf libspatialite4.0dev_ubuntu12.04-64bit_srs_stripped.tar.gz
+  - ln -s install-libspatialite-4.0dev/lib/libspatialite.so.5.0.1 libspatialite.so.3
+  - LD_LIBRARY_PATH=$PWD python ogr_sqlite.py
+  - cd ..
+
+notifications:
+  email:
+    recipients:
+      - gdal-commits@lists.osgeo.org
+
+  irc:
+    channels:
+      - "irc.freenode.org#gdal"
+    use_notice: true
+
