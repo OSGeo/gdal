@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_rec.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_rec.h"
 
 CPL_CVSID("$Id$");
 
@@ -57,13 +57,11 @@ int RECGetFieldCount( FILE * fp )
 /*                       RECGetFieldDefinition()                        */
 /************************************************************************/
 
-int RECGetFieldDefinition( FILE *fp, char *pszFieldname, 
+int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
                            int *pnType, int *pnWidth, int *pnPrecision )
 
 {
     const char *pszLine = CPLReadLine( fp );
-    int         nTypeCode;
-    OGRFieldType eFType = OFTString;
 
     if( pszLine == NULL )
         return FALSE;
@@ -71,11 +69,13 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
     if( strlen(pszLine) < 44 )
         return FALSE;
 
-    // Extract field width. 
+    // Extract field width.
     *pnWidth = atoi( RECGetField( pszLine, 37, 4 ) );
 
+    OGRFieldType eFType = OFTString;
+
     // Is this an real, integer or string field?  Default to string.
-    nTypeCode = atoi(RECGetField(pszLine,33,4));
+    int nTypeCode = atoi(RECGetField(pszLine,33,4));
     if( nTypeCode == 0 )
         eFType = OFTInteger;
     else if( nTypeCode > 100 && nTypeCode < 120 )

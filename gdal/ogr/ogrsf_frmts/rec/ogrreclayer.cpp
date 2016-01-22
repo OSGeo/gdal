@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_rec.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_rec.h"
 
 CPL_CVSID("$Id$");
 
@@ -42,20 +42,18 @@ CPL_CVSID("$Id$");
 
 OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
                           FILE * fp, int nFieldCountIn ) :
+  poFeatureDefn(new OGRFeatureDefn( pszLayerNameIn )),
     fpREC(fp),
     nStartOfData(0),
     bIsValid(FALSE),
     nFieldCount(0),
+    panFieldOffset(static_cast<int *>(CPLCalloc(sizeof(int),nFieldCountIn))),
+    panFieldWidth(static_cast<int *>(CPLCalloc(sizeof(int),nFieldCountIn))),
     nRecordLength(0),
     nNextFID(1)
 {
-
-    poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-
-    panFieldOffset = (int *) CPLCalloc(sizeof(int),nFieldCountIn);
-    panFieldWidth = (int *) CPLCalloc(sizeof(int),nFieldCountIn);
 
 /* -------------------------------------------------------------------- */
 /*      Read field definition lines.                                    */
@@ -141,7 +139,7 @@ OGRRECLayer::~OGRRECLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "REC", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  static_cast<int>(m_nFeaturesRead),
                   poFeatureDefn->GetName() );
     }
 
@@ -177,12 +175,11 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 /*      Read and assemble the source data record.                       */
 /* -------------------------------------------------------------------- */
     int        nDataLen = 0;
-    char       *pszRecord = (char *) CPLMalloc(nRecordLength + 2 );
+    char       *pszRecord = static_cast<char *>(CPLMalloc(nRecordLength + 2 ));
 
     while( nDataLen < nRecordLength )
     {
         const char *pszLine = CPLReadLine( fpREC );
-        int         iSegLen;
 
         if( pszLine == NULL )
         {
@@ -197,7 +194,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
         }
 
         // If the end-of-line markers is '?' the record is deleted.
-        iSegLen = (int)strlen(pszLine);
+        int iSegLen = static_cast<int>(strlen(pszLine));
         if( pszLine[iSegLen-1] == '?' )
         {
             pszRecord[0] = '\0';
@@ -205,12 +202,12 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
             continue;
         }
 
-        // Strip off end-of-line '!' marker. 
-        if( pszLine[iSegLen-1] != '!' 
+        // Strip off end-of-line '!' marker.
+        if( pszLine[iSegLen-1] != '!'
             && pszLine[iSegLen-1] != '^' )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Apparent corrupt data line .. record FID=%d", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Apparent corrupt data line .. record FID=%d",
                       nNextFID );
             CPLFree( pszRecord );
             return NULL;
@@ -219,8 +216,8 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
         iSegLen--;
         if( nDataLen + iSegLen > nRecordLength )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Too much data for record %d.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Too much data for record %d.",
                       nNextFID );
             CPLFree( pszRecord );
             return NULL;
@@ -234,19 +231,15 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Create the OGR feature.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Set attributes for any indicated attribute records.             */
 /* -------------------------------------------------------------------- */
-    int         iAttr;
-
-    for( iAttr = 0; iAttr < nFieldCount; iAttr++)
+    for( int iAttr = 0; iAttr < nFieldCount; iAttr++)
     {
-        const char *pszFieldText = 
-            RECGetField( pszRecord, 
+        const char *pszFieldText =
+            RECGetField( pszRecord,
                          panFieldOffset[iAttr] + 1,
                          panFieldWidth[iAttr] );
 
@@ -301,7 +294,7 @@ OGRFeature *OGRRECLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRRECLayer::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRRECLayer::TestCapability( const char * /* pszCap */)
 {
     return FALSE;
 }
