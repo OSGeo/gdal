@@ -158,7 +158,7 @@ GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
   GIntBig days = brokendowntime->tm_mday - 1;
 
   /* Add the number of days of the current year */
-  const int* ip = mon_lengths[isleap(TM_YEAR_BASE + brokendowntime->tm_year)];
+  const int* ip = mon_lengths[static_cast<int>(isleap(TM_YEAR_BASE + brokendowntime->tm_year))];
   for( int mon = 0; mon < brokendowntime->tm_mon; mon++ )
       days += ip[mon];
 

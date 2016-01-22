@@ -2277,7 +2277,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                     oFileList.AddString( beginFilename );
                     if (ENABLE_DEBUG)
                         CPLDebug("VSICURL", "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB ", time = %04d/%02d/%02d %02d:%02d:%02d",
-                                nCount, beginFilename, bIsDirectory, nFileSize,
+                                nCount, beginFilename, bIsDirectory ? 1 : 0, nFileSize,
                                 brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
                                 brokendowntime.tm_hour, brokendowntime.tm_min, brokendowntime.tm_sec);
                     nCount ++;
@@ -2651,7 +2651,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
                             struct tm brokendowntime;
                             CPLUnixTimeToYMDHMS(mUnixTime, &brokendowntime);
                             CPLDebug("VSICURL", "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB ", time = %04d/%02d/%02d %02d:%02d:%02d",
-                                    nCount, pszFilename, bIsDirectory, nFileSize,
+                                    nCount, pszFilename, bIsDirectory ? 1 : 0, nFileSize,
                                     brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
                                     brokendowntime.tm_hour, brokendowntime.tm_min, brokendowntime.tm_sec);
                         }
