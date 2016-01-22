@@ -4,7 +4,6 @@ use v5.10;
 use Scalar::Util 'blessed';
 use Test::More tests => 5;
 BEGIN { use_ok('Geo::GDAL') };
-Geo::GDAL::PushFinderLocation('../../data');
 
 # test GCPs
 

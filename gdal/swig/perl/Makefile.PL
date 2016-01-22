@@ -35,6 +35,9 @@ To assign environment variables, specify them as VAR=VALUE.
 
 Control the GDAL that this module is built against:
 
+  --gdal-source-tree=PATH  use PATH as the gdal source
+    the same as environment variable PERL_GDAL_SOURCE_TREE=PATH
+
   --gdal-config=PATH  use PATH as the gdal-config
     the same as environment variable PERL_GDAL_CONFIG=PATH
 
@@ -54,6 +57,8 @@ my $source_tree;
 if ($ARGV{'--gdal-source-tree'}) {
     $source_tree = $ARGV{'--gdal-source-tree'};
     die "Path '$source_tree' does not exist." unless -e $source_tree && -d $source_tree;
+}
+elsif ($ARGV{'--gdal-source-tree'} == 0) {
 }
 elsif (-r '../../GDALmake.opt.in') {
     $source_tree = '../..';
@@ -147,8 +152,10 @@ end
 die $msg if ($gdal_config && $different_versions && !$versions_may_differ) ||
     (!$downloads_are_ok && $different_versions && !$versions_may_differ);
 
-$config = download_and_compile_gdal($my_gdal_version, $gdal_version) 
-    if $different_versions && !$gdal_config && !$versions_may_differ && $downloads_are_ok;
+if ($different_versions && !$gdal_config && !$versions_may_differ && $downloads_are_ok) {
+    $source_tree = download_and_compile_gdal($my_gdal_version, $gdal_version);
+    $config = "$source_tree/apps/gdal-config";
+}
 
 # still in the game?
 
@@ -173,7 +180,7 @@ if ($ARGV{'--debug'}) {
     print "INC = $INC\n";
 }
 
-for my $module (keys %object) {
+for my $module (sort keys %object) {
     my $add = $module;
     $add =~ s/:/_/g;
     my $LD = $Config{ld};
@@ -212,6 +219,16 @@ for my $module (keys %object) {
                    LD => $LD,
                    OBJECT => $object{$module},
                    PM => \%PM,
+                   CONFIGURE_REQUIRES => {
+                       'strict' => 0,
+                       'warnings' => 0,
+                       'File::Basename' => 0,
+                       'ExtUtils::MakeMaker' => 0,
+                       'Config' => 0,
+                       'Cwd' => 0,
+                       'File::Fetch' => 0,
+                       'Capture::Tiny' => 0,
+                   },
                    BUILD_REQUIRES => {
                        'strict' => 0,
                        'warnings' => 0,
@@ -220,12 +237,14 @@ for my $module (keys %object) {
                        'Config' => 0,
                        'File::Fetch' => 0,
                        'Capture::Tiny' => 0,
-                       'Cwd' => 0 },
+                       'Cwd' => 0 
+                   },
                    PREREQ_PM => {
                        Carp => 0,
                        Encode => 0,
                        'Scalar::Util' => 0,
-                       POSIX => 0 },
+                       POSIX => 0 
+                   },
                    TEST_REQUIRES => {
                        'Scalar::Util' => 0,
                        'Test::More' => 0,
@@ -341,7 +360,7 @@ end
     if ($ok) {
         for my $cmd (["cd", $gdal],
                      ["./configure"],
-                     ["make", "-j4"],
+                     [($^O =~ /bsd/i ? "gmake" : "make"), "-j4"],
                      ["cd", ".."]) 
         {
             $ok = $step->(@$cmd);

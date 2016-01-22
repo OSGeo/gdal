@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
-Geo::GDAL::PushFinderLocation('../../data');
 
 use vars qw/%available_driver %test_driver $loaded $verbose @types @fails @tested_drivers/;
 

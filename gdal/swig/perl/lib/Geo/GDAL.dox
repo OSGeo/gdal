@@ -124,22 +124,28 @@
 
 ## @sub PushFinderLocation($path)
 # Add a path to the set of paths from where GDAL support files are
-# sought.
+# sought. Note that GDAL puts initially into the finder the current
+# directory and value of GDAL_DATA environment variable (if it
+# exists), installation directory (prepended with '/share/gdal' or
+# '/Resources/gdal'), or '/usr/local/share/gdal'. It is usually only
+# needed to add paths to the finder if using an alternate set of data
+# files or a non-installed GDAL is used (as in testing).
 
 ## @sub PopFinderLocation()
 # Remove the latest addition from the set of support file search
-# paths.
+# paths. Note that calling this subroutine may remove paths GDAL put
+# into the finder.
 
 ## @sub FinderClean()
 # Clear the set of support file search paths.
 
-## @sub $FindFile($class, $basename)
+## @sub $FindFile($basename)
 # Search for GDAL support files.
 #
 # An example:
 # \code
 # use Geo::GDAL;
-# $a = Geo::GDAL::FindFile('gdal', 'pcs.csv');
+# $a = Geo::GDAL::FindFile('pcs.csv');
 # print STDERR "$a\n";
 # \endcode
 # Prints (for example):
@@ -147,9 +153,8 @@
 # c:\msys\1.0\local\share\gdal\pcs.csv
 # \endcode
 #
-# @param class The class of files to search for. For example 'gdal'.
-# @param basename The basename of the file to search for. For example
-#  'pcs.csv'.
+# @param basename The name of the file to search for. For example
+# 'pcs.csv'.
 # @return the path to the searched file or undef.
 
 ## @sub SetConfigOption($key, $value)
