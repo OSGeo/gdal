@@ -230,20 +230,20 @@ static int ReadVarUInt(GByte*& pabyIter, GByte* pabyEnd, OutType& nOutVal)
 
 struct ControleTypeVerboseErrorTrue
 {
-    static const bool check_bounds = true;
-    static const bool verbose_error = true;
+    static const EMULATED_BOOL check_bounds = true;
+    static const EMULATED_BOOL verbose_error = true;
 };
 
 struct ControleTypeVerboseErrorFalse
 {
-    static const bool check_bounds = true;
-    static const bool verbose_error = false;
+    static const EMULATED_BOOL check_bounds = true;
+    static const EMULATED_BOOL verbose_error = false;
 };
 
 struct ControleTypeNone
 {
-    static const bool check_bounds = false;
-    static const bool verbose_error = false;
+    static const EMULATED_BOOL check_bounds = false;
+    static const EMULATED_BOOL verbose_error = false;
 };
 
 static int ReadVarUInt32(GByte*& pabyIter, GByte* pabyEnd, GUInt32& nOutVal)

@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifdef DEBUG_BOOL
+#define DO_NOT_USE_DEBUG_BOOL
+#endif
+
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "gdal_frmts.h"
@@ -1275,7 +1279,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->bPreferNPReads = !CPLTestBool(pszPersist);
 
         CPLDebug( "JP2KAK", "Cuse_precincts=%d, PreferNonPersistentReads=%d", 
-                  (int) use_precincts, poDS->bPreferNPReads );
+                  use_precincts ? 1 : 0, poDS->bPreferNPReads ? 1 : 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Deduce some other info about the dataset.                       */

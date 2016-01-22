@@ -27,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "libkml_headers.h"
+
 #include  <ogrsf_frmts.h>
 #include <ogr_feature.h>
 #include "ogr_p.h"
-
-#include "libkml_headers.h"
 
 #include <iostream>
 

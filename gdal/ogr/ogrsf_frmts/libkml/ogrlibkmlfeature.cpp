@@ -27,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "libkml_headers.h"
+
 #include <ogrsf_frmts.h>
 #include <ogr_geometry.h>
 #include "gdal.h"
-
-#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::PlacemarkPtr;

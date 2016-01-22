@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
 **/
 
+#ifdef DEBUG_BOOL
+#define DO_NOT_USE_DEBUG_BOOL
+#endif
+
 #include "gdal_frmts.h"
 #include "jpipkakdataset.h"
 

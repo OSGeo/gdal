@@ -36,12 +36,6 @@
 #define INFINITY INFINITY_XERCES
 #endif
 
-#include "ili2reader.h"
-#include "ogr_ili2.h"
-
-#include <string>
-#include <set>
-
 #include <util/PlatformUtils.hpp>
 #include <sax2/DefaultHandler.hpp>
 #include <sax2/ContentHandler.hpp>
@@ -53,6 +47,12 @@
 #if _XERCES_VERSION >= 30000
 # include <sax2/Attributes.hpp>
 #endif
+
+#include "ili2reader.h"
+#include "ogr_ili2.h"
+
+#include <string>
+#include <set>
 
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE

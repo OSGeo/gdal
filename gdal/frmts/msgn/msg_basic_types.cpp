@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "msg_basic_types.h"
 #include "cpl_port.h"
+#include "msg_basic_types.h"
 
 CPL_CVSID("$Id$");
 

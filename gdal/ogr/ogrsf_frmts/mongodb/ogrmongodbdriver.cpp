@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "mongocxx_headers.h"
+
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
-
-#include "mongocxx_headers.h"
 
 #include "ogr_p.h"
 #include "cpl_time.h"
@@ -2414,10 +2414,11 @@ int OGRMongoDBDataSource::ListLayers(const char* pszDatabase)
 {
     try
     {
-        std::list<std::string> l = m_poConn->getCollectionNames( pszDatabase );
-        for ( std::list<std::string>::iterator i = l.begin(); i != l.end(); i++ )
+        std::list<std::string> aoListNames = m_poConn->getCollectionNames( pszDatabase );
+        for ( std::list<std::string>::iterator oIter = aoListNames.begin(); oIter != aoListNames.end(); ++oIter )
         {
-            const std::string& osCollection(*i);
+            printf("%s\n", (*oIter).c_str());
+            const std::string& osCollection(*oIter);
             if( !STARTS_WITH(osCollection.c_str(), "system.") &&
                 osCollection != "startup_log" &&
                 osCollection != "_ogr_metadata" )
@@ -2717,7 +2718,17 @@ static void OGRMongoDBDriverUnload( CPL_UNUSED GDALDriver* poDriver )
 static int OGRMongoDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return STARTS_WITH_CI(poOpenInfo->pszFilename, "MongoDB:");
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "MongoDB:") )
+    {
+#ifdef DEBUG_BOOL
+        // Defining -DDO_NOT_USE_DEBUG_BOOL doesn't solve runtime problems
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MongoDB incompatible at runtime with DEBUG_BOOL");
+#else
+        return TRUE;
+#endif
+    }
+    return FALSE;
 }
 
 /************************************************************************/

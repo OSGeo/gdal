@@ -40,7 +40,9 @@ using namespace PCIDSK;
 /*      determined by the PCIDSK format and may not be changed.         */
 /* -------------------------------------------------------------------- */
 static const int block_page_size = 8192;
+#ifndef CPL_BASE_H_INCLUDED
 template<class T> static void CPL_IGNORE_RET_VAL(T) {}
+#endif
 
 /************************************************************************/
 /* ==================================================================== */

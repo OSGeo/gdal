@@ -27,13 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "libkml_headers.h"
+
 #include <ogrsf_frmts.h>
 #include <ogr_featurestyle.h>
 #include <string>
 #include <iostream>
 using namespace std;
-
-#include "libkml_headers.h"
 
 using kmldom::KmlFactory;;
 using kmldom::IconStylePtr;

@@ -27,9 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "libkml_headers.h"
+
 #include <ogr_geometry.h>
 #include "ogr_p.h"
-#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::CoordinatesPtr;

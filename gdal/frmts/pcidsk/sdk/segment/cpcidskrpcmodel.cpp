@@ -25,6 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "pcidsk_config.h"
 #include "pcidsk_rpc.h"
 #include "segment/cpcidsksegment.h"
 #include "core/pcidsk_utils.h"

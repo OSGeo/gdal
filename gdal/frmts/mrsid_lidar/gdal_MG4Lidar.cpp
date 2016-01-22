@@ -35,6 +35,10 @@
 * POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************************/
 
+#ifdef DEBUG_BOOL
+#define DO_NOT_USE_DEBUG_BOOL
+#endif
+
 #include "mg4lidar_headers.h"
 
 #include <float.h>

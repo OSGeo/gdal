@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifdef DEBUG_BOOL
+#undef DEBUG_BOOL
+#endif
+
 #include "cpl_vsi_virtual.h"
 
 CPL_C_START

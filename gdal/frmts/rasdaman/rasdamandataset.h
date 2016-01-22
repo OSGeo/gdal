@@ -28,14 +28,11 @@
 
 #ifndef RASDAMAN_DATASET_H_
 #define RASDAMAN_DATASET_H_
-#include "gdal.h"
-
-void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();
 
 #define __EXECUTABLE__
 #define EARLY_TEMPLATE
 
-#ifdef HAVE_GCC_SYSTEM_HEADER
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER))
 #pragma GCC system_header
 #endif
 

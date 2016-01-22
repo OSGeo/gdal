@@ -1624,7 +1624,7 @@ void OGROSMDataSource::ProcessWaysBatch()
     {
         WayFeaturePair* psWayFeaturePairs = &pasWayFeaturePairs[iPair];
 
-        bool bIsArea = psWayFeaturePairs->bIsArea;
+        const EMULATED_BOOL bIsArea = psWayFeaturePairs->bIsArea;
 
         unsigned int nFound = 0;
 
