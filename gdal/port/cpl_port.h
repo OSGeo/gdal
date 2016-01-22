@@ -878,6 +878,7 @@ class MSVCPedanticBool
 #include <limits>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 } /* extern C++ */
 
