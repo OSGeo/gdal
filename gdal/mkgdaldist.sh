@@ -94,6 +94,7 @@ fi
 
 echo "* Cleaning .svn directories under $PWD..."
 find gdal -name .svn | xargs rm -rf
+rm -f gdal/.gitignore
 
 #
 # Generate man pages
