@@ -468,7 +468,10 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
         ogrPoint.setX(CPLAtof(tokens[1])); ogrPoint.setY(CPLAtof(tokens[2]));
         if (arc) {
           arc->addPoint(&ogrPoint);
-          ogrCurve->addCurveDirectly(arc);
+          OGRErr error =  ogrCurve->addCurveDirectly(arc);
+          if (error != OGRERR_NONE) {
+            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", arc->exportToJson() );
+          }
           arc = NULL;
         }
         ogrLine->addPoint(&ogrPoint);
@@ -477,7 +480,10 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
       {
         //Finish line and start arc
         if (ogrLine->getNumPoints() > 1) {
-          ogrCurve->addCurveDirectly(ogrLine);
+          OGRErr error = ogrCurve->addCurveDirectly(ogrLine);
+          if (error != OGRERR_NONE) {
+            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrLine->exportToJson() );
+          }
           ogrLine = new OGRLineString();
         } else {
           ogrLine->empty();
@@ -489,19 +495,28 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
       }
       else if (EQUAL(firsttok, "ELIN"))
       {
-        if (!ogrLine->IsEmpty()) {
-          ogrCurve->addCurveDirectly(ogrLine);
+        if (ogrLine->getNumPoints() > 1) { // Ignore single LIPT after ARCP
+          OGRErr error = ogrCurve->addCurveDirectly(ogrLine);
+          if (error != OGRERR_NONE) {
+            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrLine->exportToJson() );
+          }
           ogrLine = NULL;
         }
         if (!ogrCurve->IsEmpty()) {
           if (ogrMultiLine)
           {
-            ogrMultiLine->addGeometryDirectly(ogrCurve);
+            OGRErr error = ogrMultiLine->addGeometryDirectly(ogrCurve);
+            if (error != OGRERR_NONE) {
+              CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrCurve->exportToJson() );
+            }
             ogrCurve = NULL;
           }
           if (ogrPoly)
           {
-            ogrPoly->addRingDirectly(ogrCurve);
+            OGRErr error = ogrPoly->addRingDirectly(ogrCurve);
+            if (error != OGRERR_NONE) {
+              CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrCurve->exportToJson() );
+            }
             ogrCurve = NULL;
           }
         }
