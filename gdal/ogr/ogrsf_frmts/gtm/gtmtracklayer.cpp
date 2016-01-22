@@ -208,7 +208,7 @@ inline void GTMTrackLayer::WriteTrackpoint( double lat, double lon,
     appendInt(pBufferAux, 0);
     pBufferAux = (char*)pBufferAux + 4;
     // start
-    appendUChar(pBufferAux, start);
+    appendUChar(pBufferAux, static_cast<int>(start));
     pBufferAux = (char*)pBufferAux + 1;
     // altitude
     appendFloat(pBufferAux, altitude);

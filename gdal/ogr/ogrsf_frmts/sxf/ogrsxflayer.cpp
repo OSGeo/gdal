@@ -712,7 +712,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     }
     stCertInfo.nSubObjectCount = stRecordHeader.nSubObjectCount;
 
-    bool bFloatType = 0, bBigType = 0;
+    bool bFloatType(false), bBigType(false);
     bool b3D(true);
     if (m_nSXFFormatVer == 3)
     {

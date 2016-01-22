@@ -388,7 +388,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 #endif
 
     CPLDebug( "GDAL_netCDF", "netcdf type=%d gdal type=%d signedByte=%d",
-              nc_datatype, eDataType, bSignedData );
+              nc_datatype, eDataType, static_cast<int>(bSignedData) );
 
     /* set nodata value */
 #ifdef NCDF_DEBUG
@@ -1159,7 +1159,8 @@ void  netCDFRasterBand::CheckData ( void * pImage,
   /* If minimum longitude is > 180, subtract 360 from all.
      If not, disable checking for further calls (check just once).
      Only check first and last block elements since lon must be monotonic. */
-  if ( bCheckLongitude && std::numeric_limits<T>::is_signed &&
+  const bool bIsSigned = std::numeric_limits<T>::is_signed;
+  if ( bCheckLongitude && bIsSigned &&
        MIN( ((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize-1] ) > 180.0 ) {
     for( size_t j=0; j<nTmpBlockYSize; j++) {
       size_t k = j*nBlockXSize;
@@ -1595,7 +1596,7 @@ int netCDFDataset::SetDefineMode( bool bNewDefineMode )
         return CE_None;
 
     CPLDebug( "GDAL_netCDF", "SetDefineMode(%d) old=%d",
-              bNewDefineMode, bDefineMode );
+              static_cast<int>(bNewDefineMode), static_cast<int>(bDefineMode) );
 
     bDefineMode = bNewDefineMode;
 
@@ -1896,7 +1897,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
     CPLDebug( "GDAL_netCDF", 
               "bIsGdalFile=%d bIsGdalCfFile=%d bBottomUp=%d", 
-              bIsGdalFile, bIsGdalCfFile, bBottomUp );
+              static_cast<int>(bIsGdalFile), static_cast<int>(bIsGdalCfFile),
+              static_cast<int>(bBottomUp) );
 
 /* -------------------------------------------------------------------- */
 /*      Look for dimension: lon                                         */
@@ -2574,7 +2576,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
         poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
 
-        CPLDebug( "GDAL_netCDF", "set bBottomUp = %d from Y axis", poDS->bBottomUp );
+        CPLDebug( "GDAL_netCDF", "set bBottomUp = %d from Y axis",
+                  static_cast<int>(poDS->bBottomUp) );
 
 /* -------------------------------------------------------------------- */
 /*      convert ]180,360] longitude values to [-180,180]                */
@@ -2964,7 +2967,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
     CPLDebug( "GDAL_netCDF",
               "bGotGeogCS=%d bGotCfSRS=%d bGotCfGT=%d bGotGdalSRS=%d "
               "bGotGdalGT=%d",
-              bGotGeogCS, bGotCfSRS, bGotCfGT, bGotGdalSRS, bGotGdalGT );
+              static_cast<int>(bGotGeogCS), static_cast<int>(bGotCfSRS),
+              static_cast<int>(bGotCfGT), static_cast<int>(bGotGdalSRS),
+              static_cast<int>(bGotGdalGT) );
 
     if ( !bGotCfGT && !bGotGdalGT )
         CPLDebug( "GDAL_netCDF", "did not get geotransform from CF nor GDAL!");
@@ -3250,7 +3255,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         bIsGeographic = true;
 
     CPLDebug( "GDAL_netCDF", "SetProjection, WKT now = [%s]\nprojected: %d geographic: %d", 
-              pszProjection ? pszProjection : "(null)",bIsProjected,bIsGeographic );
+              pszProjection ? pszProjection : "(null)",
+              static_cast<int>(bIsProjected),
+              static_cast<int>(bIsGeographic) );
 
     if ( ! bSetGeoTransform )
         CPLDebug( "GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
@@ -3401,8 +3408,13 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     CPLDebug( "GDAL_netCDF", 
               "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d "
               "bWriteGDALTags=%d bWriteLonLat=%d bBottomUp=%d bHasGeoloc=%d",
-              bIsProjected,bIsGeographic,bWriteGridMapping,
-              bWriteGDALTags,bWriteLonLat,bBottomUp,bHasGeoloc );
+              static_cast<int>(bIsProjected),
+              static_cast<int>(bIsGeographic),
+              static_cast<int>(bWriteGridMapping),
+              static_cast<int>(bWriteGDALTags),
+              static_cast<int>(bWriteLonLat),
+              static_cast<int>(bBottomUp),
+              static_cast<int>(bHasGeoloc) );
 
     /* exit if nothing to do */
     if ( !bIsProjected && !bWriteLonLat )
@@ -4848,7 +4860,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->bBottomUp = CPLTestBool( pszValue );
         CPLDebug( "GDAL_netCDF", 
                   "set bBottomUp=%d because GDAL_NETCDF_BOTTOMUP=%s",
-                  poDS->bBottomUp, pszValue );
+                  static_cast<int>(poDS->bBottomUp), pszValue );
     }
 
 /* -------------------------------------------------------------------- */

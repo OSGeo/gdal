@@ -2379,7 +2379,7 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
         " VALUES "
         "('%q','%q','%q',%d,%d,%d)",
         GetName(),GetGeometryColumn(),pszGeometryType,
-        m_iSrs,bGeometryTypeHasZ,0);
+        m_iSrs,static_cast<int>(bGeometryTypeHasZ),0);
 
     OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);

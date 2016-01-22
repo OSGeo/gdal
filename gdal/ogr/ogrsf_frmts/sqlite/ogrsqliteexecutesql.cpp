@@ -603,7 +603,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
                         pszLayerNameEscaped,
                         pszGeomColEscaped, nGeomType,
                         nCoordDimension,
-                        nSRSId, bCreateSpatialIndex );
+                        nSRSId, static_cast<int>(bCreateSpatialIndex) );
         }
         else
         {
@@ -618,7 +618,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
                         pszLayerNameEscaped,
                         pszGeomColEscaped, pszGeometryType,
                         wkbHasZ( poLayer->GetGeomType() ) ? "XYZ" : "XY",
-                        nSRSId, bCreateSpatialIndex );
+                        nSRSId, static_cast<int>(bCreateSpatialIndex) );
         }
     }
 #endif // HAVE_SPATIALITE

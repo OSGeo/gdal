@@ -384,7 +384,8 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
         return CE_None;
 
     CPLDebug( "gdalsrsinfo", "PrintSRS( oSRS, %s, %d, %d )\n",
-              pszOutputType, bPretty, bPrintSep );
+              pszOutputType, static_cast<int>(bPretty),
+              static_cast<int>(bPrintSep) );
 
     char *pszOutput = NULL;
 

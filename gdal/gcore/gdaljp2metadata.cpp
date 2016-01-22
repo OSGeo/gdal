@@ -1076,13 +1076,13 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                     (STARTS_WITH_CI(psIter->psChild->pszValue, "EAST") ||
                      STARTS_WITH_CI(psIter->psChild->pszValue, "LONG") ) )
                 {
-                    bFirstAxisIsEastOrLong = TRUE;
+                    bFirstAxisIsEastOrLong = true;
                 }
                 else if( nAxisCount == 1 &&
                          (STARTS_WITH_CI(psIter->psChild->pszValue, "NORTH") ||
                           STARTS_WITH_CI(psIter->psChild->pszValue, "LAT")) )
                 {
-                    bSecondAxisIsNorthOrLat = TRUE;
+                    bSecondAxisIsNorthOrLat = true;
                 }
                 nAxisCount ++;
             }
@@ -2961,7 +2961,7 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
                 papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
                 if( papszSrcMD && *papszSrcMD )
                 {
-                    bHasMD = TRUE;
+                    bHasMD = true;
                     oLocalMDMD.SetMetadata(papszSrcMD, *papszMDListIter);
                 }
             }

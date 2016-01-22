@@ -90,7 +90,7 @@ CPCIDSKFile::CPCIDSKFile( std::string filename )
     pixel_group_size = 0;
     first_line_offset = 0;
     last_block_index = 0;
-    last_block_dirty = 0;
+    last_block_dirty = false;
     last_block_xoff = 0;
     last_block_xsize = 0;
     last_block_data = 0;
@@ -430,7 +430,7 @@ void CPCIDSKFile::InitializeFromHeader()
 
     block_size = 0;
     last_block_index = -1;
-    last_block_dirty = 0;
+    last_block_dirty = false;
     last_block_data = NULL;
     last_block_mutex = NULL;
 
@@ -719,7 +719,7 @@ void CPCIDSKFile::FlushBlock()
         if( last_block_dirty ) // is it still dirty?
         {
             WriteBlock( last_block_index, last_block_data );
-            last_block_dirty = 0;
+            last_block_dirty = false;
         }
         last_block_mutex->Release();
     }

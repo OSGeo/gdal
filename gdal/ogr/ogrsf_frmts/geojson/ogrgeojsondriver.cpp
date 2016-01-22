@@ -99,8 +99,8 @@ OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(
     poDS(poDSIn),
     nFeaturesRead(0),
     nLastFID(0),
-    bOtherPage(FALSE),
-    bUseSequentialFID(FALSE)
+    bOtherPage(false),
+    bUseSequentialFID(false)
 {
     OGRFeatureDefn* poSrcFeatDefn = poDS->GetUnderlyingLayer()->GetLayerDefn();
     poFeatureDefn = new OGRFeatureDefn(poSrcFeatDefn->GetName());
@@ -131,8 +131,8 @@ void OGRESRIFeatureServiceLayer::ResetReading()
     poDS->ResetReading();
     nFeaturesRead = 0;
     nLastFID = 0;
-    bOtherPage = FALSE;
-    bUseSequentialFID = FALSE;
+    bOtherPage = false;
+    bUseSequentialFID = false;
 }
 
 /************************************************************************/
@@ -152,12 +152,12 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
             poSrcFeat = poDS->GetUnderlyingLayer()->GetNextFeature();
             if( poSrcFeat == NULL )
                 return NULL;
-            bOtherPage = TRUE;
+            bOtherPage = true;
         }
         if( bOtherPage && bWasInFirstPage && poSrcFeat->GetFID() == 0 &&
             nLastFID == nFeaturesRead - 1 )
         {
-            bUseSequentialFID = TRUE;
+            bUseSequentialFID = true;
         }
 
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);

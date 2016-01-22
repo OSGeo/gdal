@@ -1359,7 +1359,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
             {
                 char szWKT[1024];
                 if(!get(szWKT, 1023, file, "coordsys_wkt"))
-                    return 0;
+                    return false;
 
                 m_pszProjection = reinterpret_cast<char *>( CPLMalloc(strlen(szWKT) + 1) );
                 strcpy(m_pszProjection, szWKT);
