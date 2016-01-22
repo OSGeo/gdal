@@ -250,6 +250,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
     pahSrcDS = NULL;
+    ppszInputFilenames = NULL;
 
     if( ppszInputFilenamesIn )
     {
