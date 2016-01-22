@@ -5773,7 +5773,7 @@ int netCDFDataset::DefVarDeflate(
         // TODO: make sure this is okay.
         CPLDebug( "GDAL_netCDF",
                   "DefVarDeflate( %d, %d ) nZlevel=%d",
-                  nVarId, bChunkingArg, nZLevel );
+                  nVarId, static_cast<int>(bChunkingArg), nZLevel );
 
         int status = nc_def_var_deflate(cdfid,nVarId,1,1,nZLevel);
         NCDF_ERR(status);
