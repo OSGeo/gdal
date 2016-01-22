@@ -39,15 +39,13 @@ CPL_CVSID("$Id$");
 static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRRECDataSource   *poDS;
-
     if( poOpenInfo->fpL == NULL ||
         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "REC") )
     {
         return NULL;
     }
 
-    poDS = new OGRRECDataSource();
+    OGRRECDataSource *poDS = new OGRRECDataSource();
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
