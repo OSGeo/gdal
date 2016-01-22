@@ -150,14 +150,18 @@ sub Open {
     my @p = @_; # name, update
     my @flags = qw/VECTOR/;
     push @flags, qw/UPDATE/ if $p[1];
-    Geo::GDAL::OpenEx($p[0], \@flags);
+    my $dataset = Geo::GDAL::OpenEx($p[0], \@flags);
+    Geo::GDAL::error("Failed to open $p[0]. Is it a vector dataset?") unless $dataset;
+    return $dataset;
 }
 
 sub OpenShared {
     my @p = @_; # name, update
     my @flags = qw/VECTOR SHARED/;
     push @flags, qw/UPDATE/ if $p[1];
-    Geo::GDAL::OpenEx($p[0], \@flags);
+    my $dataset = Geo::GDAL::OpenEx($p[0], \@flags);
+    Geo::GDAL::error("Failed to open $p[0]. Is it a vector dataset?") unless $dataset;
+    return $dataset;
 }
 
 package Geo::OGR::Driver;
@@ -180,7 +184,9 @@ sub Open {
     my @p = @_; # name, update
     my @flags = qw/VECTOR/;
     push @flags, qw/UPDATE/ if $p[1];
-    Geo::GDAL::OpenEx($p[0], \@flags, [$self->Name()]);
+    my $dataset = Geo::GDAL::OpenEx($p[0], \@flags, [$self->Name()]);
+    Geo::GDAL::error("Failed to open $p[0]. Is it a vector dataset?") unless $dataset;
+    return $dataset;
 }
 
 
