@@ -1,4 +1,4 @@
-
+#SWIG = /home/even/install-swig-3.0.6/bin/swig
 SWIG = swig
 SWIGARGS = -Wall -I../include -I../include/$(BINDING) -I../include/$(BINDING)/docs
 SWIGOUTPUTDIR=
