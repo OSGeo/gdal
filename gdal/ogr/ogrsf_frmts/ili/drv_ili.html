@@ -58,6 +58,10 @@ or without model:
 <pre>
 ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml
 </pre>
+Example with curves and multiple geometries:
+<pre>
+ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' shpdir ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,OeREBKRM09vs.imd OeREBKRM09trsfr.Transferstruktur.Geometrie
+</pre>
 </li>
 
 <li>

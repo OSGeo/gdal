@@ -460,6 +460,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
 {
     CPLDebug( "OGR_ILI", "Joining surface layer %s with geometries", GetLayerDefn()->GetName());
     OGRwkbGeometryType geomType = GetLayerDefn()->GetGeomFieldDefn(nSurfaceFieldIndex)->GetType();
+    OGRCompoundCurve *surface_lines = 0; // collected lines of SURFACE polygon ring
     poSurfaceLineLayer->ResetReading();
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
         //OBJE entries with same _RefTID are polygon rings of same feature
@@ -469,7 +470,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
         if (feature) {
             OGRCurvePolygon *poly;
             if (feature->GetGeomFieldRef(nSurfaceFieldIndex)) {
-                CPLDebug( "OGR_ILI", "Adding ring to FID " CPL_FRMT_GIB, reftid );
+                CPLDebug( "OGR_ILI", "Appending lines to FID " CPL_FRMT_GIB, reftid );
                 poly = (OGRCurvePolygon *)feature->GetGeomFieldRef(nSurfaceFieldIndex);
             } else {
                 poly = (geomType == wkbPolygon) ? new OGRPolygon() : new OGRCurvePolygon();
@@ -478,10 +479,33 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
             OGRMultiCurve *lines = (OGRMultiCurve*)linefeature->GetGeomFieldRef(0);
             for( int i = 0; i < lines->getNumGeometries(); i++ ) {
                 OGRCurve *line = (OGRCurve*)lines->getGeometryRef(i);
-                OGRCurve *ring = (geomType == wkbPolygon) ?
-                    OGRCurve::CastToLinearRing((OGRCurve*)line->clone()) :
-                    (OGRCurve*)line->clone();
-                poly->addRingDirectly(ring);
+                OGRCurve *ring = 0;
+                if (surface_lines) {
+                    //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
+                    OGRCompoundCurve* ccurve = (OGRCompoundCurve*)line;
+                    for (int j=0; j<ccurve->getNumCurves(); j++) {
+                        surface_lines->addCurveDirectly(ccurve->getCurve(j));
+                    }
+                    line = surface_lines;
+                }
+                if (line->get_IsClosed()) {
+                    if (geomType == wkbPolygon) {
+                        ring = OGRCurve::CastToLinearRing((OGRCurve*)line->clone());
+                    } else { // wkbMultiCurve
+                        ring = (OGRCurve*)line->clone();
+                    }
+                }
+                if (ring == 0 && surface_lines == 0) {
+                    //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
+                    surface_lines = (OGRCompoundCurve*)line->clone();
+                }
+                if (ring) {
+                    OGRErr error = poly->addRingDirectly(ring);
+                    if (error != OGRERR_NONE) {
+                        CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ring->exportToJson() );
+                    }
+                    surface_lines = 0;
+                }
             }
         } else {
             CPLError(CE_Warning, CPLE_AppDefined, "Couldn't join feature FID " CPL_FRMT_GIB, reftid );
