@@ -1,0 +1,19 @@
+<GMLFeatureClassList>
+  <GMLFeatureClass>
+    <Name>GEM</Name>
+    <ElementPath>GEM</ElementPath>
+    <DatasetSpecificInfo>
+      <FeatureCount>1</FeatureCount>
+      <ExtentXMin>437.00000</ExtentXMin>
+      <ExtentXMax>44137.00000</ExtentXMax>
+      <ExtentYMin>51131.00000</ExtentYMin>
+      <ExtentYMax>511549.00000</ExtentYMax>
+    </DatasetSpecificInfo>
+    <PropertyDefn>
+      <Name>Name</Name>
+      <ElementPath>Name</ElementPath>
+      <Type>String</Type>
+      <Width>0</Width>
+    </PropertyDefn>
+  </GMLFeatureClass>
+</GMLFeatureClassList>

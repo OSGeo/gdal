@@ -1,0 +1,24 @@
+!table
+!Version 300
+!charset WindowsLatin1
+
+Definition Table
+  File "small_grc.grc"
+  Type "RASTER"
+  (-121.555000,47.625000) (0,0) Label "Pt 1",
+  (-118.915000,45.825000) (264,180) Label "Pt 2",
+  (-121.555000,45.825000) (0,180) Label "Pt 3"
+CoordSys Earth Projection 1, 0
+UNITS "degree"
+
+ReadOnly
+begin_metadata
+"\Vm\Grid" = "Character"
+"\IsReadOnly" = "FALSE"
+
+"\\Vm\\Creation Method" = "Region To Grid (2.1)"
+"\\Vm\\Source File" = "C:\Tom\GIS data\usa_counties_wgs84\regions.TAB"
+"\\Vm\\Attritute Column" = "region_name"
+"\\Vm\\Date" = "Wed Nov 25 13:55:44 2009"
+"\\Vm\\Created By" = "tom"
+end_metadata

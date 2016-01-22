@@ -1,0 +1,34 @@
+DatasetHeader Begin
+	LastUpdated	= Tue Sep 30 02:13:00 GMT 2008
+	Version	= "5.0"
+	DataSetType	= ERStorage
+	DataType	= Raster
+	HeaderOffset	= 512
+	CoordinateSpace Begin
+		Projection	= "GEODETIC"
+		CoordinateType	= LATLONG
+		Datum	= "GDA94"
+		Rotation	= 0:0:0 
+	CoordinateSpace End
+	ByteOrder	= MSBFirst
+	RasterInfo Begin
+		CellType	= IEEE4ByteReal
+		NrOfLines	= 36
+		NrOfCellsPerLine	= 30
+		NrOfBands	= 1
+		NullCellValue	= -9999.00000000
+		CellInfo Begin
+			Xdimension	=           0.025
+			Ydimension	=           0.025
+		CellInfo End
+		RegistrationCellX	= 0
+		RegistrationCellY	= 0
+		RegistrationCoord Begin
+			Longitude	= 143:35:46.500000000
+			Latitude	= -39:22:52.500000108
+		RegistrationCoord End
+		BandId Begin
+			Value	= "9secDEM"
+		BandId End
+	RasterInfo End
+DatasetHeader End

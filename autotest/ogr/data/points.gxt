@@ -1,0 +1,9 @@
+//$DELIMITER "	"
+//$QUOTED-TEXT "no"
+//$CHARSET ANSI
+//$UNIT Distance:m
+//$FORMAT 2
+//$SYSCOORD {Type: 101}
+//$FIELDS Class=points;Subclass=points;Kind=1;Fields=Private#Identifier	Private#Class	Private#Subclass	Private#Name	Private#NbFields	Primary_ID	Secondary_ID	Third_ID	Private#X	Private#Y
+-1	points	points	points	3	PID1	SID1	TID1	0	1
+-1	points	points	points	3	PID2	SID2		2	3

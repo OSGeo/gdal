@@ -1,0 +1,156 @@
+PDS_VERSION_ID            = PDS3
+/* Identification Information */
+NOT_APPLICABLE_CONSTANT   = -9998
+DATA_SET_ID               = "MRO-M-HIRISE-3-RDR-V1.1"
+DATA_SET_NAME             = "MRO MARS HIGH RESOLUTION IMAGING SCIENCE
+                            EXPERIMENT RDR V1.1"
+PRODUCER_INSTITUTION_NAME = "UNIVERSITY OF ARIZONA"
+PRODUCER_ID               = "UA"
+PRODUCER_FULL_NAME        = "ALFRED MCEWEN"
+OBSERVATION_ID            = "ESP_013951_1955"
+PRODUCT_ID                = "ESP_013951_1955_RED"
+PRODUCT_VERSION_ID        = "1.0"
+INSTRUMENT_HOST_NAME      = "MARS RECONNAISSANCE ORBITER"
+INSTRUMENT_HOST_ID        = "MRO"
+INSTRUMENT_NAME           = "HIGH RESOLUTION IMAGING SCIENCE EXPERIMENT"
+INSTRUMENT_ID             = "HIRISE"
+TARGET_NAME               = "MARS"
+MISSION_PHASE_NAME        = "EXTENDED SCIENCE PHASE"
+ORBIT_NUMBER              = 13951
+SOURCE_PRODUCT_ID         = (ESP_013951_1955_RED0_0, ESP_013951_1955_RED0_1,
+                            ESP_013951_1955_RED1_0, ESP_013951_1955_RED1_1,
+                            ESP_013951_1955_RED2_0, ESP_013951_1955_RED2_1,
+                            ESP_013951_1955_RED3_0, ESP_013951_1955_RED3_1,
+                            ESP_013951_1955_RED4_0, ESP_013951_1955_RED4_1,
+                            ESP_013951_1955_RED5_0, ESP_013951_1955_RED5_1,
+                            ESP_013951_1955_RED6_0, ESP_013951_1955_RED6_1,
+                            ESP_013951_1955_RED7_0, ESP_013951_1955_RED7_1,
+                            ESP_013951_1955_RED8_0, ESP_013951_1955_RED8_1,
+                            ESP_013951_1955_RED9_0, ESP_013951_1955_RED9_1)
+RATIONALE_DESC            = "Ancient Noachian bedrock in northeast Syrtis
+                            Major"
+SOFTWARE_NAME             = "PDS_to_JP2 v3.15.3 (1.49 2008/07/12 04:09:51)"
+OBJECT = IMAGE_MAP_PROJECTION
+    ^DATA_SET_MAP_PROJECTION     = "DSMAP.CAT"
+    MAP_PROJECTION_TYPE          = "EQUIRECTANGULAR"
+    PROJECTION_LATITUDE_TYPE     = PLANETOCENTRIC
+    /* NOTE: The EQUIRECTANGULAR projection is based on the formula  */
+    /* for a sphere. To eliminate confusion in the                   */
+    /* IMAGE_MAP_PROJECTION object we have set all three radii,      */
+    /* A_AXIS_RADIUS, B_AXIS_RADIUS, and C_AXIS_RADIUS to the same   */
+    /* number. The value recorded in the three radii is the local    */
+    /* radius at the CENTER_LATITUDE on the Mars ellipsoid. That is, */
+    /* equatorial radius of 3396.190000 km and polar radius of       */
+    /* 3376.200000 kilometers. Using the local radius of the         */
+    /* ellipsoid implies that the MAP_SCALE and MAP_RESOLUTION are   */
+    /* true at the CENTER_LATITUDE.                                  */
+    A_AXIS_RADIUS                = 3394.8398133163 <KM>
+    B_AXIS_RADIUS                = 3394.8398133163 <KM>
+    C_AXIS_RADIUS                = 3394.8398133163 <KM>
+    COORDINATE_SYSTEM_NAME       = PLANETOCENTRIC
+    POSITIVE_LONGITUDE_DIRECTION = EAST
+    KEYWORD_LATITUDE_TYPE        = PLANETOCENTRIC
+    /* NOTE:  CENTER_LATITUDE and CENTER_LONGITUDE describe the location  */
+    /* of the center of projection, which is not necessarily equal to the */
+    /* location of the center point of the image.                         */
+    CENTER_LATITUDE              = 15.000 <DEG>
+    CENTER_LONGITUDE             = 180.000 <DEG>
+    LINE_FIRST_PIXEL             = 1
+    LINE_LAST_PIXEL              = 67395
+    SAMPLE_FIRST_PIXEL           = 1
+    SAMPLE_LAST_PIXEL            = 19243
+    MAP_PROJECTION_ROTATION      = 0.0 <DEG>
+    MAP_RESOLUTION               = 118502.26464032 <PIX/DEG>
+    MAP_SCALE                    = 0.5 <METERS/PIXEL>
+    MAXIMUM_LATITUDE             = 15.797211542227 <DEG>
+    MINIMUM_LATITUDE             = 15.228493633562 <DEG>
+    LINE_PROJECTION_OFFSET       = 1872006.5 <PIXEL>
+    SAMPLE_PROJECTION_OFFSET     = 12278395.5 <PIXEL>
+    EASTERNMOST_LONGITUDE        = 72.899868557294 <DEG>
+    WESTERNMOST_LONGITUDE        = 72.731756232301 <DEG>
+END_OBJECT = IMAGE_MAP_PROJECTION
+/* All xxx_COUNT values are for the MRO spacecraft clock (SCLK)         */
+/* in seconds:subseconds form. A subsecond tick = 15.2588 microseconds. */
+/* All xxx_TIME values are referenced to UTC.                           */
+GROUP = TIME_PARAMETERS
+    /* Time when the observation first started */
+    MRO:OBSERVATION_START_TIME   = 2009-07-18T13:54:41.340
+    /* Time of the first image line */
+    START_TIME                   = 2009-07-18T13:54:41.485
+    SPACECRAFT_CLOCK_START_COUNT = "932392503:59742"
+    /* Time of the last image line */
+    STOP_TIME                    = 2009-07-18T13:54:52.028
+    SPACECRAFT_CLOCK_STOP_COUNT  = "932392514:29736"
+    /* Time when this RDR product was created */
+    PRODUCT_CREATION_TIME        = 2009-08-09T01:26:11
+END_GROUP = TIME_PARAMETERS
+GROUP = INSTRUMENT_SETTING_PARAMETERS
+    MRO:CCD_FLAG                = (ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON,
+                                  ON, ON, ON)
+    MRO:BINNING                 = (2, 2, 2, 2, 2, 2, 2, 2, 2, 2, -9998, -9998,
+                                  -9998, -9998)
+    MRO:TDI                     = (64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+                                  -9998, -9998, -9998, -9998)
+    MRO:SPECIAL_PROCESSING_FLAG = (NOMINAL, NOMINAL, NOMINAL, NOMINAL,
+                                  NOMINAL, NOMINAL, NOMINAL, NOMINAL, NOMINAL,
+                                  NOMINAL, "NULL", "NULL", "NULL", "NULL")
+END_GROUP = INSTRUMENT_SETTING_PARAMETERS
+GROUP = VIEWING_PARAMETERS
+    INCIDENCE_ANGLE   = 49.990076 <DEG>
+    EMISSION_ANGLE    = 8.476113 <DEG>
+    PHASE_ANGLE       = 43.677223 <DEG>
+    LOCAL_TIME        = 14.37002 <LOCALDAY/24>
+    SOLAR_LONGITUDE   = 305.594678 <DEG>
+    SUB_SOLAR_AZIMUTH = 135.482409 <DEG>
+    NORTH_AZIMUTH     = 270.000000 <DEG>
+END_GROUP = VIEWING_PARAMETERS
+
+/* The JPEG2000 image data file associated with this label. */
+OBJECT = COMPRESSED_FILE
+    FILE_NAME                  = "byte.tif"
+    RECORD_TYPE                = UNDEFINED
+    ENCODING_TYPE              = "JP2"
+    ENCODING_TYPE_VERSION_NAME = "ISO/IEC15444-1:2004"
+    INTERCHANGE_FORMAT         = BINARY
+    /* The name of the original source file. */
+    UNCOMPRESSED_FILE_NAME     = "ESP_013951_1955_RED_cnode26:398.IMG"
+    /* The amount of original image data. */
+    REQUIRED_STORAGE_BYTES     = 2593763970 <BYTES>
+    ^DESCRIPTION               = "JP2INFO.TXT"
+END_OBJECT = COMPRESSED_FILE
+
+/* The source image data definition. */
+OBJECT = UNCOMPRESSED_FILE
+    FILE_NAME    = "ESP_013951_1955_RED_cnode26:398.IMG"
+    RECORD_TYPE  = FIXED_LENGTH
+    RECORD_BYTES = 38486 <BYTES>
+    FILE_RECORDS = 67395
+    ^IMAGE       = "ESP_013951_1955_RED_cnode26:398.IMG"
+    OBJECT = IMAGE
+        DESCRIPTION                = "HiRISE projected and mosaicked product"
+        LINES                      = 67395
+        LINE_SAMPLES               = 19243
+        BANDS                      = 1
+        SAMPLE_TYPE                = MSB_UNSIGNED_INTEGER
+        SAMPLE_BITS                = 16
+        SAMPLE_BIT_MASK            = 2#0000001111111111#
+        /* NOTE: The conversion from DN to I/F (intensity/flux) is: */
+        /* I/F = (DN * SCALING_FACTOR) + OFFSET                     */
+        /* I/F is defined as the ratio of the observed radiance and */
+        /* the radiance of a 100% lambertian reflector with the sun */
+        /* and camera orthogonal to the observing surface.          */
+        SCALING_FACTOR             = 1.07543902665525e-04
+        OFFSET                     = 0.081203337858079
+        BAND_STORAGE_TYPE          = BAND_SEQUENTIAL
+        CORE_NULL                  = 0
+        CORE_LOW_REPR_SATURATION   = 1
+        CORE_LOW_INSTR_SATURATION  = 2
+        CORE_HIGH_REPR_SATURATION  = 1023
+        CORE_HIGH_INSTR_SATURATION = 1022
+        CENTER_FILTER_WAVELENGTH   = 700 <NM>
+        MRO:MINIMUM_STRETCH        = 3
+        MRO:MAXIMUM_STRETCH        = 1021
+        FILTER_NAME                = "RED"
+    END_OBJECT = IMAGE
+END_OBJECT = UNCOMPRESSED_FILE
+END

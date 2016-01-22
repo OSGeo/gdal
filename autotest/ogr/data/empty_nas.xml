@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Die NAS-Datei wurde mit der 3A-Version 6.0.9.3 erstellt.-->
+<AX_NutzerbezogeneBestandsdatenaktualisierung_NBA xsi:schemaLocation="http://www.adv-online.de/namespaces/adv/gid/6.0 NAS-Operationen.xsd" xmlns="http://www.adv-online.de/namespaces/adv/gid/6.0" xmlns:gsr="http://www.isotc211.org/2005/gsr" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:fc="http://www.adv-online.de/namespaces/adv/gid/fc/6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:kom="http://www.lverma.nrw.de/namespaces/geobasis/3.5" xmlns:wfsext="http://www.adv-online.de/namespaces/adv/gid/wfsext" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:ogc="http://www.adv-online.de/namespaces/adv/gid/ogc" xmlns:wfs="http://www.adv-online.de/namespaces/adv/gid/wfs" xmlns:gss="http://www.isotc211.org/2005/gss">
+  <erlaeuterung>&lt;?xml version="1.0" encoding="utf-8"?&gt;&lt;Protocol xmlns="http://www.aed-sicad.de/namespaces/va" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;&lt;auftragsid&gt;AMGR000000161077&lt;/auftragsid&gt;&lt;profilkennung&gt;NBABenutzerLA&lt;/profilkennung&gt;&lt;auftragsnummer&gt;Admin_100413082150_001_0006&lt;/auftragsnummer&gt;&lt;antragsnummer&gt;Admin_100413082150_0006&lt;/antragsnummer&gt;&lt;nasoperation&gt;NutzerbezogeneBestandsdatenaktualisierung_NBA&lt;/nasoperation&gt;&lt;status&gt;beendet&lt;/status&gt;&lt;startzeitreal&gt;2010-10-13T22:29:43.66646+02:00&lt;/startzeitreal&gt;&lt;endzeitreal&gt;2010-10-13T22:29:43.66646+02:00&lt;/endzeitreal&gt;&lt;Message&gt;&lt;Category&gt;NOTHING&lt;/Category&gt;&lt;MessageLevel&gt;Info&lt;/MessageLevel&gt;&lt;MessageObject&gt;&lt;FeatureClass /&gt;&lt;Id /&gt;&lt;/MessageObject&gt;&lt;MessageText&gt;Das Ergebnis wurde mit der 3A-Version 6.0.9.3 erstellt.&lt;/MessageText&gt;&lt;ProcessingTime&gt;2010-10-13T22:29:43.66646+02:00&lt;/ProcessingTime&gt;&lt;/Message&gt;&lt;/Protocol&gt;</erlaeuterung>
+  <erfolgreich>true</erfolgreich>
+  <antragsnummer>Admin_100413082150_0006</antragsnummer>
+  <allgemeineAngaben>
+    <AX_K_Benutzungsergebnis>
+      <folgeverarbeitung>
+        <AX_FOLGEVA />
+      </folgeverarbeitung>
+      <empfaenger>
+        <AA_Empfaenger>
+          <direkt>true</direkt>
+        </AA_Empfaenger>
+      </empfaenger>
+    </AX_K_Benutzungsergebnis>
+  </allgemeineAngaben>
+  <geaenderteObjekte>
+    <wfs:Transaction version="1.0.0" service="WFS" />
+  </geaenderteObjekte>
+  <auftragsnummer>Admin_100413082150_001_0006</auftragsnummer>
+  <portionskennung>
+    <AX_Portionskennung>
+      <profilkennung>NBABenutzerLA</profilkennung>
+      <datum>2010-10-13T20:10:14Z</datum>
+      <laufendeNummerVonGesamtzahl>16</laufendeNummerVonGesamtzahl>
+      <gesamtzahl>130</gesamtzahl>
+      <suedwestEcke>484560.000 5753705.000</suedwestEcke>
+    </AX_Portionskennung>
+  </portionskennung>
+</AX_NutzerbezogeneBestandsdatenaktualisierung_NBA>

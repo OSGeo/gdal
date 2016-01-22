@@ -1,0 +1,81 @@
+$Id: README,v 1.4 2006/12/06 15:38:16 mloskot Exp $
+--------------------------------------------------------------------------
+GDAL C++ Unit Tests package
+
+Author: Mateusz Loskot (mateusz@loskot.net)
+--------------------------------------------------------------------------
+
+The C++ Unit Tests package is dedicated to Windows CE platform,
+though it's runnable on desktop Windows.
+It should also compile on Unix, but internally Windows paths (with \)are used,
+so you may need to replace them with Unix paths (with /)
+
+This package includes subset of tests from gdalautotest but implemented in
+C++ language and TUT - C++ Unit Test Framework.
+The C++ Unit Tests are based on GDAL C API, so they can be used to tests
+both sets of GDAL APIs: C and C++.
+
+-------------------------------------
+Tests coverage
+-------------------------------------
+
+1. GDAL
+- Common features
+- AAIGrid
+- DTED
+- GTIff
+
+2. OGR
+- Common features
+- GEOS support
+- Shape
+
+3. OSR
+- Common features
+- PROJ.4
+- PCI
+
+-------------------------------------
+Compilation for desktop Windows
+-------------------------------------
+
+Configuration:
+
+Open makefile.vc in your favourite editor and check if section "CONFIGURATION"
+looks correctly for your environment.
+Makefile expects to find gdal_i.lib and gdalXY.dll in GDAL_ROOT location,
+where XY is GDAL_VERSION.
+Update the configuration block to fit your environment.
+Customize GEOS_ROOT and PROJ4_ROOT variables.
+
+Makefile tries to copy gdalXY.dll into 'gdalautotest\cpp' directory,
+so test runner executable can find it without any problems.
+Clean target will delete all binaries, executable and copied DLL.
+
+
+Build:
+
+nmake /f makefile.vc
+
+Clean:
+
+nmake /f makefile.vc clean
+
+No project file is available for desktop Windows target.
+
+-------------------------------------
+Compilation for Windows CE system
+-------------------------------------
+
+IMPORTANT: Currently, the project file is not integrated with GDAL project files,
+           so Unit Test executable does not link automatically, unless you hack project
+           settings yourself and configure linker settings properly.
+           Please, wait for GDAL 1.4.0.
+
+
+Use project file from 'msvc80ce' subdirectory
+
+No makefile is available for Windows CE target.
+
+--------------------------------------------------------------------------
+Contact: Mateusz Loskot (mateusz@loskot.net)
