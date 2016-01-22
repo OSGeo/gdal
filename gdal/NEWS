@@ -1,3 +1,105 @@
+= GDAL/OGR 1.11.4 Release Notes = 
+
+The 1.11.4 release is a bug fix release.
+
+== Port ==
+ * Fix CPLGetValueType() to recognize D1 as a string and not a real number (#6305)
+ * /vsistdout/: flush when closing the handle (#6149)
+ * CPLFormFilename(): use '/' directory separator on Windows on /vsicurl_streaming/ files (#6310)
+
+== GDAL Core ==
+ * Fix leak in GetMetadataItem() on GDALProxyPoolDataset (#6238)
+
+== Utilities ==
+ * ogr2ogr: prevent from the gt setting to override transaction group size of 1 set by skipfailures earlier (#2409)
+ * gdalwarp: fix -srcnodata to not put garbage values as target dstnodata (#6315)
+
+== GDAL drivers ==
+
+BSB driver:
+ * remove broken and useless logic to deal with extension lines in headers (#6307)
+
+ECRG driver:
+ * fix base34 decoding and Windows filename handling (#6271)
+
+GTiff driver:
+ * fix SetMetadata() to properly clear existing PAM metadata (complement to #5807)
+ * prevent potential out of bounds read to TIFFTAG_EXTRASAMPLES (#6282)
+ * do not use first directory as potential mask, to avoid assertion in GTiffDataset::SetDirectory() (#6287)
+ * reject files with strips/tiles/scanlines bigger than 2 GB to avoid 32 bit integer overflow.
+   Also in case of files with Contig PlanarConfiguration do not make reading one block for band 2 OK when reading for band 1 issued an error (#6288)
+
+HFA driver:
+ * fix crash when nNumRuns = 0 with RLE compression (#6208)
+ * avoid potential out-of-bounds buffer write (#6286)
+
+netCDF driver:
+ * fix one byte heap write overflow in NCDFTokenizeArray() (#6231)
+ * fix potential buffer overflows with uses of nc_inq_varname(), nc_inq_attname() and nc_get_att_text() (#6227)
+ * validate that gridmapping:GeoTransform has 6 values (#6244)
+ * NCDFIsGDALVersionGTE(): validate content of NC_GLOBAL#GDAL variable (#6245)
+
+NITF driver:
+ * fix TRE parser to properly deal with variable length items not in first nesting level, such as ENGRDA (not added in nitf_spec.xml in this changeset) (#6285)
+
+PDF driver:
+ * correctly take into account non-meter linear units with OGC BP encoding, and add support for US FOOT (#6292)
+
+PDS driver:
+ * change default values of PDS_SampleProjOffset_Shift and PDS_LineProjOffset_Shift to 0.5 (#5941)
+
+VRT driver:
+ * serialize NODATA and NoDataValue items with %.16g, e.g. so as to be able to hold large int32 nodata values (#6151)
+ * VRT raw: don't truncate last figure of ImageOffset if there are left space padding (#6290)
+
+WMS driver:
+ * limit number of zoom levels for ArcGIS MapServer JSon (#6186)
+
+XPM driver:
+ * fix vulnerabilities in reading (#6253)
+
+== OGR core ==
+ * OGRSQL: correctly sort NULL values in first positions (#6155)
+ * OGRLayer::SetIgnoredFields(): properly reset state of non first geometry fields (#6283)
+ * Make OGRLayer::SetSpatialFilter(GetSpatialFilter()) work with non empty spatial filter (#6284)
+ * OGRLayer::Erase(): do not discard input geometries that have no intersection with method layer (#6322)
+
+== OGRSpatialReference == 
+ * Fix recently introduced memory leak in morphFromESRI() with Mercator Auxiliary Sphere (#5924)
+
+== OGR drivers == 
+
+CSV driver:
+ * Make OGRCSVLayer::CreateGeomField() returns OGRERR_NONE in case of success instead of OGRERR_FAILURE (#6280)
+
+GML driver:
+ * serialize in .gfs file the name of the geometry element when it is 'geometry' since this is a particular case (#6247)
+ * VFR: fix broken processing VFR ST_UVOH files (#6248)
+ * VFR: fix reading ZpusobOchrany attributes (#6258)
+
+MITAB driver:
+ * fix segfault when parsing a Region 0 (#6273)
+ * TABPolyline::ReadGeometryFromMIFFile(): fix segfaults on invalid geometries (#6273)
+ * TABRectangle::ReadGeometryFromMIFFile(): fix crash on malformed ROUNDRECT (#6273)
+
+NTF driver:
+ * fix potential buffer overflows when reading too short lines (#6277)
+
+OpenFileGDB driver:
+ * fix min/max on columns without indices (#6150)
+
+PG driver:
+ * fix creation of multiple geometry fields with SCHEMA creation option (#6141)
+
+PGDump driver:
+ * fix issue with case of ogc_fid field in case the FID layer creation option is not set by user or by ogr2ogr (related to #6232)
+
+Shape driver:
+ * fix crash on MultiLineStringM shapes that have no M component (#6317)
+
+VRT driver:
+ * fix editing with 'direct' geometry mode which could cause attribute column to be empty (#6289)
+
 = GDAL/OGR 1.11.3 Release Notes = 
 
 The 1.11.3 release is a bug fix release.
