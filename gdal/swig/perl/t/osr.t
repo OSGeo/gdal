@@ -2,18 +2,29 @@ use strict;
 use warnings;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
-Geo::GDAL::PushFinderLocation('../../data');
 
-my $srs1 = Geo::OSR::SpatialReference->new(EPSG=>2936);
-my $srs2 = Geo::OSR::SpatialReference->new(Text=>$srs1->AsText);
+Geo::GDAL::PushFinderLocation('../../data'); # built in src tree
+Geo::GDAL::PushFinderLocation('./gdal/data'); # built with downloaded srcs
 
-ok($srs1->ExportToProj4 eq $srs2->ExportToProj4, "new EPSG, Text, Proj4");
-
-my $src = Geo::OSR::SpatialReference->new(EPSG => 2392);
-my $dst = Geo::OSR::SpatialReference->new(EPSG => 2393);
-ok(($src and $dst), "new Geo::OSR::SpatialReference");
+my $find = Geo::GDAL::FindFile('pcs.csv');
 
 SKIP: {
+    skip "GDAL data files are not available", 2 if !$find;
+    my $srs1 = Geo::OSR::SpatialReference->new(EPSG=>2936);
+    my $srs2 = Geo::OSR::SpatialReference->new(Text=>$srs1->AsText);
+    ok($srs1->ExportToProj4 eq $srs2->ExportToProj4, "new EPSG, Text, Proj4");
+
+    my $src = Geo::OSR::SpatialReference->new(EPSG => 2392);
+    my $dst = Geo::OSR::SpatialReference->new(EPSG => 2393);
+    ok(($src and $dst), "new Geo::OSR::SpatialReference");
+}
+
+SKIP: {
+    skip "GDAL data files are not available", 3 if !$find;
+
+    my $src = Geo::OSR::SpatialReference->new(EPSG => 2392);
+    my $dst = Geo::OSR::SpatialReference->new(EPSG => 2393);
+
     skip "PROJSO not set", 1 if (!$ENV{PROJSO} and $^O eq 'MSWin32');
     my ($t1, $t2);
     eval {
@@ -47,4 +58,3 @@ SKIP: {
     ok(int($p2) == int($polygon[0][0][0]), "from EPSG 2392 to 2393 and back in polygon"); 
     
 }
-

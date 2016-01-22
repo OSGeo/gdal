@@ -63,6 +63,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
 /* Make room for Perl interface */
 
+%rename (_FindFile) FindFile;
+
 %rename (_GetDriver) GetDriver;
 
 %rename (_Open) Open;
@@ -328,6 +330,14 @@ sub string2int {
 }
 
 sub RELEASE_PARENTS {
+}
+
+sub FindFile {
+    if (@_ == 1) {
+        _FindFile('', @_);
+    } else {
+        _FindFile(@_);
+    }
 }
 
 sub DataTypes {
