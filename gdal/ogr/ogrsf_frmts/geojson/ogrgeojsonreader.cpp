@@ -495,12 +495,12 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
             if( it.val != NULL && json_object_get_type(it.val) == json_type_object )
             {
                 OGRGeoJSONReaderAddOrUpdateField(poDefn, osAttrName, it.val,
-                                                 TRUE, chNestedAttributeSeparator,
+                                                 true, chNestedAttributeSeparator,
                                                  bArrayAsString);
             }
             else
             {
-                OGRGeoJSONReaderAddOrUpdateField(poDefn, osAttrName, it.val, FALSE, 0,
+                OGRGeoJSONReaderAddOrUpdateField(poDefn, osAttrName, it.val, false, 0,
                                                  bArrayAsString);
             }
         }
@@ -810,7 +810,7 @@ static void OGRGeoJSONReaderSetFieldNestedAttribute(OGRLayer* poLayer,
         {
             int nField = poFeature->GetFieldIndex(osAttrName);
             OGRGeoJSONReaderSetField(poLayer, poFeature, nField,
-                                     osAttrName, it.val, FALSE, 0);
+                                     osAttrName, it.val, false, 0);
         }
     }
 }

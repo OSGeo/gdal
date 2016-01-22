@@ -47,8 +47,8 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
         papoLayers_(NULL), papoLayersWriter_(NULL), nLayers_(0), fpOut_(NULL),
         flTransGeom_( OGRGeoJSONDataSource::eGeometryPreserve ),
         flTransAttrs_( OGRGeoJSONDataSource::eAtributesPreserve ),
-        bOtherPages_(FALSE),
-        bFpOutputIsSeekable_( FALSE ),
+        bOtherPages_(false),
+        bFpOutputIsSeekable_( false ),
         nBBOXInsertLocation_(0),
         bUpdatable_( false )
 { }

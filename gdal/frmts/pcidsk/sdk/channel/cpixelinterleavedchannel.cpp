@@ -151,7 +151,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
             return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
     
-    file->UnlockBlock( 0 );
+    file->UnlockBlock( false );
 
 /* -------------------------------------------------------------------- */
 /*      Do byte swapping if needed.                                     */
@@ -251,7 +251,7 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
             return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
     
-    file->UnlockBlock( 1 );
+    file->UnlockBlock( true );
 
 /* -------------------------------------------------------------------- */
 /*      Do byte swapping if needed.                                     */

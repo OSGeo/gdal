@@ -134,7 +134,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
     // if path exist check if network already present and OVERWRITE option
     // else create the path
 
-    bool bOverwrite = CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE);
+    bool bOverwrite = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE));
 
     if(m_soName.empty())
     {

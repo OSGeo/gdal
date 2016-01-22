@@ -759,7 +759,7 @@ void OGRJMLLayer::endElementLoadSchemaCbk( const char * /* pszName */ )
                       oCurColumn.osElementName.c_str(),
                       oCurColumn.osAttributeName.c_str(),
                       oCurColumn.osAttributeValue.c_str(),
-                      oCurColumn.bIsBody );
+                      static_cast<int>(oCurColumn.bIsBody) );
         }
 
         nColumnDepth = 0;

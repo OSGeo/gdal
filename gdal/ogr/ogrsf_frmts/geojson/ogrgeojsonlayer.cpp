@@ -54,8 +54,8 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRGeoJSONDataSource* poDS )
   : OGRMemLayer( pszName, poSRSIn, eGType), poDS_(poDS), bUpdated_(false)
 {
-    SetAdvertizeUTF8(TRUE);
-    SetUpdatable( poDS->IsUpdatable() ? TRUE : FALSE );
+    SetAdvertizeUTF8(true);
+    SetUpdatable( poDS->IsUpdatable() );
 }
 
 /************************************************************************/
@@ -131,10 +131,10 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
     if( !CPL_INT64_FITS_ON_INT32(nFID) )
         SetMetadataItem(OLMD_FID64, "YES");
 
-    SetUpdatable( TRUE ); /* temporary toggle on updatable flag */
+    SetUpdatable( true ); /* temporary toggle on updatable flag */
     CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(poFeature));
-    SetUpdatable( poDS_->IsUpdatable() ? TRUE : FALSE );
-    SetUpdated( FALSE );
+    SetUpdatable( poDS_->IsUpdatable() );
+    SetUpdated( false );
 }
 
 /************************************************************************/

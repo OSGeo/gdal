@@ -314,7 +314,7 @@ static void ParseObject(const char* pszId,
         {
             const int nField
                 = poFeature->GetFieldIndex(it.key);
-            OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key, it.val, FALSE, 0);
+            OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key, it.val, false, 0);
         }
     }
 
@@ -397,7 +397,7 @@ static void EstablishLayerDefn(OGRFeatureDefn* poDefn,
         it.entry = NULL;
         json_object_object_foreachC( poObjProps, it )
         {
-            OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val, FALSE, 0);
+            OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val, false, 0);
         }
     }
 }

@@ -1613,7 +1613,7 @@ GDALInfoOptions *GDALInfoOptionsNew(char** papszArgv,
         }
         /* Not documented: used by gdalinfo_bin.cpp only */
         else if( EQUAL(papszArgv[i], "-stdout") )
-            psOptions->bStdoutOutput = TRUE;
+            psOptions->bStdoutOutput = true;
         else if( papszArgv[i][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,

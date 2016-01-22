@@ -1863,7 +1863,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                             exportToWkt ( &pszOtherValue );
                             CPLDebug( "OGR_ESRI", 
                                       "morphFromESRI() got SRS %s, matching: %d", 
-                                      pszOtherValue, bIsSame );
+                                      pszOtherValue, static_cast<int>(bIsSame) );
                             CPLFree( pszOtherValue );
                             delete poSRSTemp2;
 

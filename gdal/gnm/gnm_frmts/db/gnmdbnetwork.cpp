@@ -214,7 +214,7 @@ int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszO
                                       GDAL_OF_UPDATE, NULL, NULL, papszOptions );
     }
 
-    bool bOverwrite = CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE);
+    bool bOverwrite = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE));
 
     std::vector<int> anDeleteLayers;
     int i;

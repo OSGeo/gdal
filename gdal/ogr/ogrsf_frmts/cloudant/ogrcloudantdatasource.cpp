@@ -303,7 +303,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
     if (eGType != wkbNone)
     {
         char szSrid[100];
-        bool bSrid = FALSE;
+        bool bSrid = false;
         const char* designDoc = "_design/SpatialView";
         osURI = "/";
         osURI += osEscapedName;
@@ -337,7 +337,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
                     return NULL;
                 }
                 else
-                    bSrid = TRUE;
+                    bSrid = true;
             }
         }
 
