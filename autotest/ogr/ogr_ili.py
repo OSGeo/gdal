@@ -914,7 +914,7 @@ def ogr_interlis2_2():
     for i in range(ds.GetLayerCount()):
       if not ds.GetLayer(i).GetName() in layers:
           gdaltest.post_reason( 'Did not get right layers' )
-          #return 'fail'
+          return 'fail'
 
     lyr = ds.GetLayerByName('RoadsExdm2ien.RoadsExtended.RoadSign')
     if lyr.GetFeatureCount() != 4:
@@ -1103,6 +1103,99 @@ def ogr_interlis2_3():
     return 'success'
 
 ###############################################################################
+# Ili2 Oereb model
+
+def ogr_interlis2_4():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.imd')
+    if ds is None:
+        return 'fail'
+
+    layers = ['chGeoId10.BFSNr_',
+              'chGeoId10.Kanton_',
+              'chGeoId10.KantonInklFl_',
+              'CodeISO.CountryCodeISO_',
+              'CodeISO.LanguageCodeISO_',
+              'MultilingualText09.LocalizedMText',
+              'MultilingualText09.LocalizedText',
+              'MultilingualText09.LocalizedURI',
+              'MultilingualText09.MultilingualText',
+              'MultilingualText09.MultilingualURI',
+              'OeREBKRM09.ArtikelNummer_',
+              'OeREBKRM09.Datum_',
+              'OeREBKRM09.Thema_',
+              'OeREBKRM09.WebReferenz_',
+              'OeREBKRM09.ArtikelInhaltMehrsprachig',
+              'OeREBKRM09vs.Vorschriften.Amt',
+              'OeREBKRM09vs.Vorschriften.Artikel',
+              'OeREBKRM09vs.Vorschriften.Rechtsvorschrift',
+              'OeREBKRM09vs.Vorschriften.HinweisWeitereDokumente',
+              'OeREBKRM09trsfr.Transferstruktur.DarstellungsDienst',
+              'OeREBKRM09trsfr.Transferstruktur.Eigentumsbeschraenkung',
+              'OeREBKRM09trsfr.Transferstruktur.Geometrie',
+              'OeREBKRM09trsfr.Transferstruktur.HinweisDefinition',
+              'OeREBKRM09trsfr.Transferstruktur.GrundlageVerfeinerung',
+              'OeREBKRM09trsfr.Transferstruktur.HinweisDefinitionDokument',
+              'OeREBKRM09trsfr.Transferstruktur.HinweisVorschrift',
+              'OeREBKRM09vs.Vorschriften.Dokument']
+
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason('layer count wrong.')
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
+
+    lyr = ds.GetLayerByName('OeREBKRM09trsfr.Transferstruktur.Geometrie')
+    if lyr.GetFeatureCount() != 36:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    field_values = ['108-G-0002', 'inKraft', '1975-06-27',
+                    'http://www.geocat.ch/geonetwork/srv/ger/metadata.show?fileIdentifier=ff218384-7251-4e68-85e7-c163dd366616',
+                    '108-Z-0002', 'ch.admin.bazl']
+
+    if feat.GetFieldCount() != len(field_values):
+        feat.DumpReadable()
+        gdaltest.post_reason('field count wrong.')
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
+
+    geom_field_values = [None, None, 'CURVEPOLYGON (COMPOUNDCURVE ((658593.928 254957.714,658511.628 254948.614,658418.028 254938.516,658106.426 254913.918,658192.222 254445.914,658771.228 254619.412,659667.232 254699.606,660369.238 254827.202,661016.442 255010.1,661279.644 255090.198,661866.648 255138.094,661784.45 255601.798,661211.146 255432.8,660320.54 255352.806,659523.436 255206.71,658703.528 254966.814,658624.228 254961.014,658593.928 254957.714)))']
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason('geom field count wrong.')
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        val = geom_field_values[i]
+        if val is None:
+            ok = geom is None
+        else:
+            ok = ogrtest.check_feature_geometry(geom, val) == 0
+        if not ok:
+            gdaltest.post_reason('geom check failed.')
+            print geom
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Check arc segmentation
 
 def ogr_interlis_arc1():
@@ -1226,6 +1319,7 @@ gdaltest_list = [
     ogr_interlis2_1,
     ogr_interlis2_2,
     ogr_interlis2_3,
+    ogr_interlis2_4,
     ogr_interlis_arc1,
     ogr_interlis_arc2,
     ogr_interlis_cleanup ]
