@@ -332,7 +332,7 @@ class OGROSMDataSource : public OGRDataSource
     bool                bIndexWays;
     bool                bUseWaysIndex;
 
-    std::vector<int>    abSavedDeclaredInterest;
+    std::vector<bool>   abSavedDeclaredInterest;
     OGRLayer*           poResultSetLayer;
     bool                bIndexPointsBackup;
     bool                bUsePointsIndexBackup;
