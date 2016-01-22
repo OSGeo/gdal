@@ -3808,6 +3808,15 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
                 delete x_geom_diff;
             delete geom;
         }
+        else
+        {
+            z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            OGRGeometry* x_geom_diff = x_geom->clone();
+            if( bPromoteToMulti )
+                x_geom_diff = promote_to_multi(x_geom_diff);
+            z->SetGeometryDirectly(x_geom_diff);
+        }
         delete x;
         if (z) {
             if (z->GetGeometryRef() != NULL && !z->GetGeometryRef()->IsEmpty())
