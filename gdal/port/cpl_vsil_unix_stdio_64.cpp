@@ -385,7 +385,7 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
             m_nOffset = nNewOffset;
         else
             CPLDebug("VSI", "%s", VSIStrerror(errno));
-        bAtEOF = feof(fp);
+        bAtEOF = CPL_TO_BOOL(feof(fp));
     }
 
     return nResult;
