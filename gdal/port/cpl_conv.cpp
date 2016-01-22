@@ -413,7 +413,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
         while( (chCheck != 13 && chCheck != EOF)
                || VSIFTell(fp) < nOriginalOffset + nActuallyRead )
         {
-            static volatile bool bWarned = false;
+            static bool bWarned = false;
 
             if( !bWarned )
             {

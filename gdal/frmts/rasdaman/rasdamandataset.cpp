@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+#include "rasdamandataset.h"
 
 #include "cpl_string.h"
 #include "gdal_pam.h"
@@ -35,7 +36,10 @@
 #include <string>
 #include <memory>
 #include <map>
-#include "rasdamandataset.h"
+
+#include "gdal.h"
+
+void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();
 
 CPL_CVSID("$Id$");
 

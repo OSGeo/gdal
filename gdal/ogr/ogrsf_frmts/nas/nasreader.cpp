@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gmlreaderp.h"
 #include "gmlreader.h"
 #include "cpl_error.h"
 #include "cpl_string.h"

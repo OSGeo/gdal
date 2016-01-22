@@ -27,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "libkml_headers.h"
+
 #include <ogr_featurestyle.h>
 
 #include <set>
-
-#include "libkml_headers.h"
 
 using kmldom::KmlFactory;;
 using kmldom::ElementPtr;

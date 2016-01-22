@@ -31,6 +31,29 @@
 #ifndef CPL_GMLREADERP_H_INCLUDED
 #define CPL_GMLREADERP_H_INCLUDED
 
+#if defined(HAVE_XERCES)
+
+// This works around problems with math.h on some platforms #defining INFINITY
+#ifdef INFINITY
+#undef  INFINITY
+#define INFINITY INFINITY_XERCES
+#endif
+
+#include <util/PlatformUtils.hpp>
+#include <sax2/DefaultHandler.hpp>
+#include <sax2/ContentHandler.hpp>
+#include <sax2/SAX2XMLReader.hpp>
+#include <sax2/XMLReaderFactory.hpp>
+#include <sax2/Attributes.hpp>
+#include <sax/InputSource.hpp>
+#include <util/BinInputStream.hpp>
+
+#ifdef XERCES_CPP_NAMESPACE_USE
+XERCES_CPP_NAMESPACE_USE
+#endif
+
+#endif /* HAVE_XERCES */
+
 #include "gmlreader.h"
 #include "ogr_api.h"
 #include "cpl_vsi.h"
@@ -199,25 +222,6 @@ public:
 
 
 #if defined(HAVE_XERCES)
-
-// This works around problems with math.h on some platforms #defining INFINITY
-#ifdef INFINITY
-#undef  INFINITY
-#define INFINITY INFINITY_XERCES
-#endif
-
-#include <util/PlatformUtils.hpp>
-#include <sax2/DefaultHandler.hpp>
-#include <sax2/ContentHandler.hpp>
-#include <sax2/SAX2XMLReader.hpp>
-#include <sax2/XMLReaderFactory.hpp>
-#include <sax2/Attributes.hpp>
-#include <sax/InputSource.hpp>
-#include <util/BinInputStream.hpp>
-
-#ifdef XERCES_CPP_NAMESPACE_USE
-XERCES_CPP_NAMESPACE_USE
-#endif
 
 /************************************************************************/
 /*                        GMLBinInputStream                             */

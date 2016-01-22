@@ -309,14 +309,6 @@ typedef int              GPtrDiff_t;
 #  define NULL  0
 #endif
 
-#ifndef FALSE
-#  define FALSE 0
-#endif
-
-#ifndef TRUE
-#  define TRUE  1
-#endif
-
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
 #  define MAX(a,b)      ((a>b) ? a : b)
@@ -509,7 +501,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #    define CPLIsInf(x)    (!finite(x) && !isnan(x))
 #    define CPLIsFinite(x) finite(x)
 #  else
-#    define CPLIsInf(x)    FALSE
+#    define CPLIsInf(x)    (0)
 #    define CPLIsFinite(x) (!isnan(x))
 #  endif
 #endif
@@ -833,7 +825,7 @@ CPL_C_END
 
 extern "C++" {
 template<class T> static void CPL_IGNORE_RET_VAL(T) {}
-inline static bool CPL_TO_BOOL(int x) { return x != FALSE; }
+inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 } /* extern "C++" */
 
 #endif  /* __cplusplus */
@@ -851,5 +843,72 @@ inline static bool CPL_TO_BOOL(int x) { return x != FALSE; }
 #else
 #  define CPL_FALLTHROUGH
 #endif
+
+// Define DEBUG_BOOL to compile in "MSVC mode", ie error out when
+// a integer is assigned to a bool
+// WARNING: use only at compilation time, since it is know to not work
+//  at runtime for unknown reasons (crash in MongoDB driver for example)
+#if defined(__cplusplus) && defined(DEBUG_BOOL) && !defined(DO_NOT_USE_DEBUG_BOOL)
+extern "C++" {
+class MSVCPedanticBool
+{
+        bool b;
+        MSVCPedanticBool(int bIn);
+
+    public:
+        MSVCPedanticBool() {}
+        MSVCPedanticBool(bool bIn) : b(bIn) {}
+        MSVCPedanticBool(const MSVCPedanticBool& other) : b(other.b) {}
+
+        MSVCPedanticBool& operator= (const MSVCPedanticBool& other) { b = other.b; return *this; }
+        MSVCPedanticBool& operator&= (const MSVCPedanticBool& other) { b &= other.b; return *this; }
+        MSVCPedanticBool& operator|= (const MSVCPedanticBool& other) { b |= other.b; return *this; }
+
+        bool operator! () const { return !b; }
+        operator bool() const { return b; }
+        operator int() const { return b; }
+};
+
+/* We must include all C++ stuff before to avoid issues with templates that use bool */
+#include <vector>
+#include <map>
+#include <set>
+#include <string>
+#include <cstddef>
+#include <limits>
+#include <sstream>
+#include <fstream>
+
+} /* extern C++ */
+
+#undef FALSE
+#define FALSE false
+#undef TRUE
+#define TRUE true
+
+/* In the very few cases we really need a "simple" type, fallback to bool */
+#define EMULATED_BOOL int
+
+/* Use our class instead of bool */
+#define bool MSVCPedanticBool
+
+/* "volatile bool" with the below substitution doesn't really work. */
+/* Just for the sake of the debug, we don't really need volatile */
+#define VOLATILE_BOOL bool
+
+#else /* defined(__cplusplus) && defined(DEBUG_BOOL) */
+
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
+#ifndef TRUE
+#  define TRUE  1
+#endif
+
+#define EMULATED_BOOL bool
+#define VOLATILE_BOOL volatile bool
+
+#endif /* defined(__cplusplus) && defined(DEBUG_BOOL) */
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

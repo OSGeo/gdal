@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "libkml_headers.h"
+
 #include "ogr_libkml.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"

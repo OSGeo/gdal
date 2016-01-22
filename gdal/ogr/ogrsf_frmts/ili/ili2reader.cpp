@@ -28,12 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "ili2readerp.h"
 #include "ogr_ili2.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
 #include "ili2reader.h"
-#include "ili2readerp.h"
+
 
 //from trstring.cpp/gmlreaderp.h
 char *tr_strdup( const XMLCh * );

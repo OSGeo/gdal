@@ -28,11 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gmlreaderp.h"
 #include "gmlreader.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "gmlutils.h"
-#include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include <map>
 #include "cpl_multiproc.h"

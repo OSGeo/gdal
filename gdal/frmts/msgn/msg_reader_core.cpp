@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 #include "msg_reader_core.h"
 #include "msg_basic_types.h"
 #include <stdio.h>
