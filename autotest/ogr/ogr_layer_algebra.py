@@ -48,6 +48,7 @@ C = None
 pointInB = None
 D1 = None
 D2 = None
+empty = None
 
 def recreate_layer_C():
     global C
@@ -73,7 +74,7 @@ def is_same(A,B):
 
 def algebra_setup():
 
-    global ds, A, B, C, pointInB, D1, D2
+    global ds, A, B, C, pointInB, D1, D2, empty
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -140,6 +141,8 @@ def algebra_setup():
     feat = ogr.Feature( D2.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = d2) )
     D2.CreateFeature( feat )
+
+    empty = ds.CreateLayer('empty')
 
     return 'success'
 
@@ -563,13 +566,41 @@ def algebra_erase():
 
     recreate_layer_C()
 
+
+    # Erase with empty layer (or no intersection)
+
+    A.Erase( empty, C )
+
+    if C.GetFeatureCount() != A.GetFeatureCount():
+        gdaltest.post_reason( 'Layer.Erase returned '+str(C.GetFeatureCount())+' features' )
+        return 'fail'
+
+    A.ResetReading()
+    feat_a = A.GetNextFeature()
+    feat_c = C.GetNextFeature()
+    if feat_a.Equal(feat_c) != 0:
+        gdaltest.post_reason('features not identical')
+        feat_a.DumpReadable()
+        feat_c.DumpReadable()
+        return 'fail'
+
+    recreate_layer_C()
+
+    A.Erase( empty, C, options = ['PROMOTE_TO_MULTI=YES']  )
+
+    if C.GetFeatureCount() != A.GetFeatureCount():
+        gdaltest.post_reason( 'Layer.Erase returned '+str(C.GetFeatureCount())+' features' )
+        return 'fail'
+
+    recreate_layer_C()
+
     return 'success'
 
 def algebra_cleanup():
     if not ogrtest.have_geos():
         return 'skip'
 
-    global ds, A, B, C, pointInB, D1, D2
+    global ds, A, B, C, pointInB, D1, D2, empty
 
     D2 = None
     D1 = None
@@ -577,6 +608,7 @@ def algebra_cleanup():
     C = None
     B = None
     A = None
+    empty = None
     ds = None
 
     return 'success'
