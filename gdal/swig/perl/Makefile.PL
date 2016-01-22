@@ -58,7 +58,7 @@ if ($ARGV{'--gdal-source-tree'}) {
     $source_tree = $ARGV{'--gdal-source-tree'};
     die "Path '$source_tree' does not exist." unless -e $source_tree && -d $source_tree;
 }
-elsif ($ARGV{'--gdal-source-tree'} == 0) {
+elsif ($ARGV{'--gdal-source-tree'} eq '0') {
 }
 elsif (-r '../../GDALmake.opt.in') {
     $source_tree = '../..';
