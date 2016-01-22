@@ -2417,7 +2417,6 @@ int OGRMongoDBDataSource::ListLayers(const char* pszDatabase)
         std::list<std::string> aoListNames = m_poConn->getCollectionNames( pszDatabase );
         for ( std::list<std::string>::iterator oIter = aoListNames.begin(); oIter != aoListNames.end(); ++oIter )
         {
-            printf("%s\n", (*oIter).c_str());
             const std::string& osCollection(*oIter);
             if( !STARTS_WITH(osCollection.c_str(), "system.") &&
                 osCollection != "startup_log" &&
