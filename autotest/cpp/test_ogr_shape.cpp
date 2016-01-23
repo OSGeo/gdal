@@ -296,11 +296,11 @@ namespace tut
 
         // Fetch feature without geometry
         OGRFeatureH featNonSpatial = OGR_L_GetNextFeature(lyr);
-        ensure("Didnt get feature with null geometry back", NULL != featNonSpatial);
+        ensure("Didn't get feature with null geometry back", NULL != featNonSpatial);
 
         // Null geometry is expected
         OGRGeometryH nonGeom = OGR_F_GetGeometryRef(featNonSpatial);
-        ensure("Didnt get null geometry as expected", NULL == nonGeom);
+        ensure("Didn't get null geometry as expected", NULL == nonGeom);
 
         OGR_F_Destroy(featNonSpatial);
         OGR_DS_Destroy(ds);
