@@ -44,7 +44,7 @@ The numbers in an image file may be integer, byte or real. This is termed the da
 2. Byte values are positive integer numbers ranging from 0 to 255. 
 3. Real numbers have a fractional part, or are whole numbers outside the integer range. 
 
-The real data types can store values within a range of ± 1 x 10 to the power of 38 with a precision of 7 significant figures. IDRISI supports the standard IEEE 4-byte real number format. 
+The real data types can store values within a range of Â± 1 x 10 to the power of 38 with a precision of 7 significant figures. IDRISI supports the standard IEEE 4-byte real number format. 
 Two other data types are supported by Idrisi32. These are RGB8 and RGB24. Both of these are produced by the COMPOSITE module. An RGB8 file has byte data values, but these values have special meaning. The RGB24 data type indicates a band-interleaved-by-pixel format that is displayed in true color. For more information on both RGB8 and RGB24 files, see COMPOSITE.
 
 Image files may be stored in ASCII, binary or packed binary file types. The module CONVERT may be used to change data or file type. However, most routines in IDRISI expect the binary format only. 

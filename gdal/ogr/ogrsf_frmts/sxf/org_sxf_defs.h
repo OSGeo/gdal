@@ -66,8 +66,8 @@
  * Note 4. Flag of the method of coding (2 bits):
  * x00xxxxx - the classification codes of objects and semantic characteristics 
  *          are represented by the decimal numbers, recorded in the binary 
- *          form (for example: the code of the object “32100000” will be written 
- *          down in the form 0x01E9CEA0, the code of semantics “253” - in the form 0x00FD).
+ *          form (for example: the code of the object "32100000" will be written 
+ *          down in the form 0x01E9CEA0, the code of semantics "253" - in the form 0x00FD).
  *
  * Note 5. Table of generalization (1 bit):
  * 0xxxxxxx - the level of generalization is assigned according to the table of the 
@@ -81,10 +81,10 @@
  * 2- in the coding KOI-8 (Unix).
  *
  * Note 7.  Flag of the accuracy of coordinates (1 bytes):
- * 0 – are not established;
- * 1 – the increased accuracy of storage of coordinates (meters, radians or degrees);
- * 2 – of coordinate are recorded with an accuracy to centimeter (meters, 2 signs after comma);
- * 3 – coordinates are recorded with an accuracy to millimeter (meters, 3 sign after comma).
+ * 0 - are not established;
+ * 1 - the increased accuracy of storage of coordinates (meters, radians or degrees);
+ * 2 - of coordinate are recorded with an accuracy to centimeter (meters, 2 signs after comma);
+ * 3 - coordinates are recorded with an accuracy to millimeter (meters, 3 sign after comma).
  *
  * Note 8. Form of the framework (1 byte):
  * -1- it is not established;
@@ -119,9 +119,9 @@
  * xx1xxxxx - the arbitrary symbol of object is scaled during the mapping.
  * 
  * Note 13. Sign of the construction of spline on the certificate (2 bits):
- * 00xxxxxx – the construction of spline with the visualization is not carried out;
- * 01xxxxxx – smoothing out spline (cutting angles);
- * 10xxxxxx – enveloping spline (it penetrates all points of certificate).
+ * 00xxxxxx - the construction of spline with the visualization is not carried out;
+ * 01xxxxxx - smoothing out spline (cutting angles);
+ * 10xxxxxx - enveloping spline (it penetrates all points of certificate).
  ****************************************************************************/
 
 #ifndef SXF_DEFS_H

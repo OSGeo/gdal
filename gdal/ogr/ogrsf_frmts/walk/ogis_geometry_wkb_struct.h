@@ -83,7 +83,7 @@ typedef Point Vector;        //Space Vector    {dx, dy, dz}
 /* ones in the curve.                                                     */
 /* A LineString is a curve with linear interpolation between points. Each */
 /* consecutive pair of points defines a line segment.                     */
-/* Extension£ºLineString is composed of CurveSegment, but self-crossing   */
+/* Extension LineString is composed of CurveSegment, but self-crossing   */
 /* is not allowed.                                                        */
 /**************************************************************************/
 

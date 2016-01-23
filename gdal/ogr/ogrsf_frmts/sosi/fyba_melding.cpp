@@ -45,8 +45,8 @@ void LC_Error(short feil_nr, const char *logtx, const char *vartx)
    /* Hent feilmeldingstekst og strategi */
    strategi = LC_StrError(feil_nr,&pszFeilmelding);
    switch(strategi) {
-      case 2:  sprintf(szErrMsg,"%s","Observer følgende! \n\n");break;
-      case 3:  sprintf(szErrMsg,"%s","Det er oppstått en feil! \n\n");break;
+      case 2:  sprintf(szErrMsg,"%s","Observer fÃ¸lgende! \n\n");break;
+      case 3:  sprintf(szErrMsg,"%s","Det er oppstÃ¥tt en feil! \n\n");break;
       case 4:  sprintf(szErrMsg,"%s","Alvorlig feil avslutt programmet! \n\n");break;
       default: szErrMsg[0]='\0';
    }

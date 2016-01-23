@@ -55,7 +55,7 @@ display max: The value in the image to display with the last palette color and l
 
 value units: The unit of measure of the values in the image. It is suggested that the term classes be used for all qualitative data sets, and that whenever standard linear units are appropriate, that the same abbreviations that are used for reference units should also be used (m, ft, mi, km, deg, rad).
 
-value error: This field is very important and should be filled out whenever possible. It records the error in the data values that appear in image cells. For qualitative data, this should be recorded as a proportional error. For quantitative data, the value here should be an RMS error figure. For example, for a DEM, an RMS error of 3 would indicate 68% of all values will be within ± 3 meters of the stated elevation, that approximately 95% will be within ± 6 meters, and so on. This field is analytical for some modules (e.g., PCLASS) and it is intended that it will become more so in the future.
+value error: This field is very important and should be filled out whenever possible. It records the error in the data values that appear in image cells. For qualitative data, this should be recorded as a proportional error. For quantitative data, the value here should be an RMS error figure. For example, for a DEM, an RMS error of 3 would indicate 68% of all values will be within Â± 3 meters of the stated elevation, that approximately 95% will be within Â± 6 meters, and so on. This field is analytical for some modules (e.g., PCLASS) and it is intended that it will become more so in the future.
 
 flag value: Any value in the image that is not a data value, but rather has a special meaning. If there is no flag value, this entry should remain blank.
 
