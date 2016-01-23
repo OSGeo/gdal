@@ -475,7 +475,7 @@ namespace Selafin {
         Header *poHeader=new Header();
         poHeader->fp=fp;
         poHeader->pszFilename=CPLStrdup(pszFilename);
-        int *panTemp;
+        int *panTemp = NULL;
         // Read the title
         nLength=read_string(fp,poHeader->pszTitle);
         if (nLength==0) {
