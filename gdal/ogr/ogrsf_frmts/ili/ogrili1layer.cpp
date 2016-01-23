@@ -482,9 +482,13 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
                 OGRCurve *ring = 0;
                 if (surface_lines) {
                     //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
-                    OGRCompoundCurve* ccurve = (OGRCompoundCurve*)line;
-                    for (int j=0; j<ccurve->getNumCurves(); j++) {
-                        surface_lines->addCurveDirectly(ccurve->getCurve(j));
+                    if (line->getGeometryType() == wkbCompoundCurve) {
+                        OGRCompoundCurve* ccurve = (OGRCompoundCurve*)line;
+                        for (int j=0; j<ccurve->getNumCurves(); j++) {
+                            surface_lines->addCurveDirectly(ccurve->getCurve(j));
+                        }
+                    } else { // wkbLineString (linearized)
+                        surface_lines->addCurve(line);
                     }
                     line = surface_lines;
                 }
@@ -497,7 +501,12 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
                 }
                 if (ring == 0 && surface_lines == 0) {
                     //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
-                    surface_lines = (OGRCompoundCurve*)line->clone();
+                    if (line->getGeometryType() == wkbCompoundCurve) {
+                        surface_lines = (OGRCompoundCurve*)line->clone();
+                    } else { // wkbLineString (linearized)
+                        surface_lines = new OGRCompoundCurve();
+                        surface_lines->addCurve(line);
+                    }
                 }
                 if (ring) {
                     OGRErr error = poly->addRingDirectly(ring);

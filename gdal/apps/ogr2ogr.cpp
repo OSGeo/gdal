@@ -4049,6 +4049,19 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
             {
                 CPLDebug( "OGR2OGR", "Unable to write feature " CPL_FRMT_GIB " into layer %s.\n",
                            poFeature->GetFID(), poSrcLayer->GetName() );
+                if( nGroupTransactions )
+                {
+                    if( bLayerTransaction )
+                    {
+                        poDstLayer->RollbackTransaction();
+                        poDstLayer->StartTransaction();
+                    }
+                    else
+                    {
+                        poODS->RollbackTransaction();
+                        poODS->StartTransaction(bForceTransaction);
+                    }
+                }
             }
 
 end_loop:

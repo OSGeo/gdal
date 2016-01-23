@@ -4847,6 +4847,51 @@ def ogr_pg_78():
     return 'success'
 
 ###############################################################################
+# Test that ogr2ogr -skip properly rollbacks transactions (#6328)
+
+def ogr_pg_81():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_1(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_1','dummy',-1,'POINT',2);")
+    gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_2(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_2','dummy',-1,'POINT',2);")
+
+    gdal.Mkdir('tmp/ogr_pg_81', 0755)
+    open('tmp/ogr_pg_81/ogr_pg_81_1.csv', 'wt').write(
+"""id,foo
+1,1""")
+
+    open('tmp/ogr_pg_81/ogr_pg_81_2.csv', 'wt').write(
+"""id,foo
+1,1""")
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' PG:' + gdaltest.pg_connection_string + ' tmp/ogr_pg_81 -append')
+
+    open('tmp/ogr_pg_81/ogr_pg_81_2.csv', 'wt').write(
+"""id,foo
+2,2""")
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' PG:' + gdaltest.pg_connection_string + ' tmp/ogr_pg_81 -append -skip')
+
+    gdal.Unlink('tmp/ogr_pg_81/ogr_pg_81_1.csv')
+    gdal.Unlink('tmp/ogr_pg_81/ogr_pg_81_2.csv')
+    gdal.Unlink('tmp/ogr_pg_81')
+
+    lyr = gdaltest.pg_ds.GetLayer('ogr_pg_81_2')
+    f = lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    if f['id'] != '2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -4904,7 +4949,9 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_78' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_78_2' )
-    
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_81_1' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_81_2' )
+
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.test41' )
@@ -5014,6 +5061,7 @@ gdaltest_list_internal = [
     ogr_pg_76,
     ogr_pg_77,
     ogr_pg_78,
+    ogr_pg_81,
     ogr_pg_cleanup ]
 
 DISABLED_gdaltest_list_internal = [ 

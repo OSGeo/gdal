@@ -29,6 +29,7 @@ The 2.0.2 release is a bug fix release.
 
 == Utilities ==
  * ogr2ogr: prevent from the gt setting to override transaction group size of 1 set by skipfailures earlier (#2409)
+ * ogr2ogr: fix -skip mode to rollback current transaction in case of failed insertion (#6328)
  * gdalmove.py: fix to run with GDAL 2.0 gdal.InvGeoTransform() signature (#6173)
  * gdaladdo: emit error message if passed an invalid dataset name (#6240)
  * gdalwarp: fix -srcnodata to not put garbage values as target dstnodata (#6315)
