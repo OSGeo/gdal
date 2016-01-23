@@ -123,7 +123,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  GDALRasterIOExtraArg* psExtraArg )
 
 {
-    // If resampling with non-nearest neighbour, we need to be carefull
+    // If resampling with non-nearest neighbour, we need to be careful
     // if the VRT band exposes a nodata value, but the sources do not have it
     if (eRWFlag == GF_Read &&
         (nXSize != nBufXSize || nYSize != nBufYSize) &&

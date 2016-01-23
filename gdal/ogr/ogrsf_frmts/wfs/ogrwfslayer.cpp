@@ -297,12 +297,12 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
     }
     else if (bHaveSchema)
     {
-        std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
-        std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
-        while (iter != eiter)
+        std::vector<GMLFeatureClass*>::const_iterator oIter = aosClasses.begin();
+        std::vector<GMLFeatureClass*>::const_iterator oEndIter = aosClasses.end();
+        while (oIter != oEndIter)
         {
-            GMLFeatureClass* poClass = *iter;
-            iter ++;
+            GMLFeatureClass* poClass = *oIter;
+            oIter ++;
             delete poClass;
         }
     }

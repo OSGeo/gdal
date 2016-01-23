@@ -1151,7 +1151,7 @@ static void OGR2SQLITE_ExportGeometry(OGRGeometry* poGeom, int nSRSId,
         pabyGeomBLOB = (GByte*) CPLRealloc(pabyGeomBLOB,
                                 nGeomBLOBLen + nWkbSize + 1);
         poGeom->exportToWkb(wkbNDR, pabyGeomBLOB + nGeomBLOBLen);
-        /* Sheat a bit and add a end-of-blob spatialite marker */
+        /* Cheat a bit and add a end-of-blob spatialite marker */
         pabyGeomBLOB[nGeomBLOBLen + nWkbSize] = 0xFE;
         nGeomBLOBLen += nWkbSize + 1;
     }

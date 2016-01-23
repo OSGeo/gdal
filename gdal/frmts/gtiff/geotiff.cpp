@@ -9228,7 +9228,7 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
                     {
                         ((GTiffDataset *) poSrcDS)->PushMetadataToPam();
                         CPLError( CE_Warning, CPLE_AppDefined, 
-                            "Metadata exceeding 32000 bytes cannot be written into GeoTIFF. Transfered to PAM instead." );
+                            "Metadata exceeding 32000 bytes cannot be written into GeoTIFF. Transferred to PAM instead." );
                     }
                 }
                 else

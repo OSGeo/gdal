@@ -122,7 +122,7 @@ the schema that best fit to the found fields and values.<p>
 It is also possible to set the JSON_FIELD=YES open option so that a _json special
 field is added to the OGR schema. When reading Elastic Search documents as OGR features,
 the full JSon version of the document will be stored in the _json field. This might
-be usefull in case of complex documents or with data types that do not translate well
+be useful in case of complex documents or with data types that do not translate well
 in OGR data types. On creation/update of documents, if the _json field is present
 and set, its content will be used directly (other fields will be ignored).<p>
 
@@ -169,7 +169,7 @@ Standard SQL requests will be executed on client-side.<p>
 
 <h2>Getting metadata</h2>
 
-Getting feature count is efficent.<p>
+Getting feature count is efficient.<p>
 
 Getting extent is efficient, only on geometry columns mapped to ElasticSearch type geo_point.
 On geo_shape fields, feature retrieval of the whole layer is done, which might be slow.<p>

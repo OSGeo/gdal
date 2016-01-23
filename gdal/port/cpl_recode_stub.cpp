@@ -1237,7 +1237,7 @@ int utf8locale(void) {
 
 /*! Convert the UTF-8 used by FLTK to the locale-specific encoding
     used for filenames (and sometimes used for data in files).
-    Unfortunatley due to stupid design you will have to do this as
+    Unfortunately due to stupid design you will have to do this as
     needed for filenames. This is a bug on both Unix and Windows.
 
     Up to \a dstlen bytes are written to \a dst, including a null

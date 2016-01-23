@@ -1722,7 +1722,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       return -1;
    }
 
-   /* Preceeding was in degrib2, next part is specific to GRIB1. */
+   /* Preceding was in degrib2, next part is specific to GRIB1. */
    curLoc = 8;
    if (ReadGrib1Sect1 (c_ipack + curLoc, gribLen, &curLoc, &(meta->pds1),
                        &f_gds, &gridID, &f_bms, &DSF, &(meta->center),

@@ -14,7 +14,7 @@ functionality was introduced in GDAL/OGR 1.6.0. </p>
 <p>When opening a database, it's name should be specified in the form
 "@driver=ingres,[host=<i>host</i>, instance=<i>instance</i>],dbname=<i>[vnode::]dbname</i>
 [,options]". where the options can
-include comma seperated
+include comma separated
 items like "host=*ip_address*","instance=*instance*", "username=*userid*", "password=*password*",
 "effuser=*database_user*", "dbpwd=*database_passwd*", "timeout=*timeout*",
 "tables=table1/table2".</p>
@@ -26,7 +26,7 @@ is made to authenticate as the current OS user.</p>
 <p>If the host and instance options are both specified,
 the username and password *must* be supplied as it creates a temporary
 <a href=http://docs.actian.com/ingres/10.0/command-reference-guide/1207-dynamic-vnode-specificationconnect-to-remote-node>dynamic vnode connection</a>.
-The default protocal is TCP/IP. If any other protocal is expected to be used, a pre-built vnode is preferable.
+The default protocol is TCP/IP. If any other protocol is expected to be used, a pre-built vnode is preferable.
 If vnode and these two options are passed at the same time, an error will occur.
 </p>
 

@@ -1317,7 +1317,7 @@ int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord ** papoGroup,
         /*
          * this logic assumes we always get a point geometry with a CPOLY
          * but that isn't always true, for instance with BL2000 data.  The
-         * preceeding check will handle this case.
+         * preceding check will handle this case.
          */
         if( papoGroup[iRec-1]->GetType() != NRT_GEOMETRY )
             return TRUE;

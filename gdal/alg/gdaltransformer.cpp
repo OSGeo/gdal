@@ -120,7 +120,7 @@ points may have failed) or FALSE if the overall transformation fails.
  * Then a resolution is computed with the intent that the length of the
  * distance from the top left corner of the output imagery to the bottom right
  * corner would represent the same number of pixels as in the source image. 
- * Note that if the image is somewhat rotated the diagonal taken isnt of the
+ * Note that if the image is somewhat rotated the diagonal taken isn't of the
  * whole output bounding rectangle, but instead of the locations where the
  * top/left and bottom/right corners transform.  The output pixel size is 
  * always square.  This is intended to approximately preserve the resolution
@@ -307,7 +307,7 @@ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
  * Then a resolution is computed with the intent that the length of the
  * distance from the top left corner of the output imagery to the bottom right
  * corner would represent the same number of pixels as in the source image. 
- * Note that if the image is somewhat rotated the diagonal taken isnt of the
+ * Note that if the image is somewhat rotated the diagonal taken isn't of the
  * whole output bounding rectangle, but instead of the locations where the
  * top/left and bottom/right corners transform.  The output pixel size is 
  * always square.  This is intended to approximately preserve the resolution

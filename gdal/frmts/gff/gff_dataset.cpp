@@ -216,7 +216,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    /* Check the endianess of the file */
+    /* Check the endianness of the file */
     VSIFSeekL(poDS->fp,54,SEEK_SET);
     VSIFReadL(&(poDS->nEndianess),2,1,poDS->fp);
 

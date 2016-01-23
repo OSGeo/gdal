@@ -2747,7 +2747,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                     poSrcLayer->GetMetadataItem("NATIVE_DATA", "NATIVE_DATA"));
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "NATIVE_MEDIA_TYPE", 
                     poSrcLayer->GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA"));
-            CPLDebug("GDALVectorTranslate", "Transfering layer NATIVE_DATA");
+            CPLDebug("GDALVectorTranslate", "Transferring layer NATIVE_DATA");
         }
 
         OGRSpatialReference* poOutputSRSClone = NULL;

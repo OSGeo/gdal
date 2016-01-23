@@ -321,7 +321,7 @@ static void KEACopyMetadata( GDALMajorObject *pObject, kealib::KEAImageIO *pImag
                 pszValue = "";
             if( pszName != NULL )
             {
-                // it is LAYER_TYPE and a Band? if so handle seperately
+                // it is LAYER_TYPE and a Band? if so handle separately
                 if( ( nBand != -1 ) && EQUAL( pszName, "LAYER_TYPE" ) )
                 {
                     if( EQUAL( pszValue, "athematic" ) )
@@ -360,7 +360,7 @@ static void KEACopyDescription(GDALRasterBand *pBand, kealib::KEAImageIO *pImage
     pImageIO->setImageBandDescription(nBand, pszDesc);
 }
 
-// copies the no data value accross
+// copies the no data value across
 static void KEACopyNoData(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int nBand)
 {
     int bSuccess = 0;
@@ -426,7 +426,7 @@ static void KEACopySpatialInfo(GDALDataset *pDataset, kealib::KEAImageIO *pImage
     pImageIO->setSpatialInfo( pSpatialInfo );
 }
 
-// copies the GCP's accross
+// copies the GCP's across
 static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
 {
     int nGCPs = pDataset->GetGCPCount();

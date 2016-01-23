@@ -134,9 +134,9 @@ int64 PCIDSK::atoint64( const char *str_value )
 /*                            SwapPixels()                              */
 /************************************************************************/
 /**
- * @brief Perform an endianess swap for a given buffer of pixels
+ * @brief Perform an endianness swap for a given buffer of pixels
  *
- * Baed on the provided data type, do an appropriate endianess swap for
+ * Baed on the provided data type, do an appropriate endianness swap for
  * a buffer of pixels. Deals with the Complex case specially, in
  * particular.
  *

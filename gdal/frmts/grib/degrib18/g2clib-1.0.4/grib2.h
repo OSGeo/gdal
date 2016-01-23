@@ -114,7 +114,7 @@
 //        gfld->idrtmpl  = Contains the data values for the specified Data
 //                         Representation Template ( N=gfld->idrtnum ).  Each
 //                         element of this integer array contains an entry
-//                         (in the order specified) of Product Defintion
+//                         (in the order specified) of Product Definition
 //                         Template 5.N.
 //                         This element is a pointer to an array
 //                         that holds the data.

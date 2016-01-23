@@ -35,7 +35,7 @@
 // Construction/Destruction
 //
 // Upon successful parsing of a header in ifile, isValid() returns true
-// and ifile is seeked to the beginning of the image data
+// and ifile is sought to the beginning of the image data
 //////////////////////////////////////////////////////////////////////
 
 XRITHeaderParser::XRITHeaderParser(std::ifstream & ifile)

@@ -384,7 +384,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      Loop over all these files trying to open them.  In testopen     */
 /*      mode we first read the first 80 characters, to verify that      */
 /*      it looks like an Tiger file.  Note that we don't keep the file  */
-/*      open ... we don't want to occupy alot of file handles when      */
+/*      open ... we don't want to occupy a lot of file handles when      */
 /*      handling a whole directory.                                     */
 /* -------------------------------------------------------------------- */
     papszModules = NULL;

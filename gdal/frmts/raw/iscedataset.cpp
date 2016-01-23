@@ -473,7 +473,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
         CSLDestroy( papszXmlProps );
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unkown scheme \"%s\" within ISCE raster.\n",
+                  "Unknown scheme \"%s\" within ISCE raster.\n",
                   CSLFetchNameValue( papszXmlProps, "SCHEME" ) );
         return NULL;
     }

@@ -573,7 +573,7 @@ See the documentation of the GeoTIFF driver for further explanations on all thos
 
 \section gdaladdo_api C API
 
-Functionnality of this utility can be done from C with GDALBuildOverviews().
+Functionality of this utility can be done from C with GDALBuildOverviews().
 
 \section gdaladdo_example EXAMPLE
 

@@ -917,7 +917,7 @@ import org.gdal.gdalconst.gdalconstConstants;
     parentReference = reference;
   }
 
-  /* For backward compatibilty */
+  /* For backward compatibility */
   public int SetMetadata(java.util.Hashtable metadata, String domain)
   {
       if (metadata == null)

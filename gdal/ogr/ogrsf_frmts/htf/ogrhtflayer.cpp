@@ -625,11 +625,11 @@ OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMDIn) :
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone  );
 
-    std::vector<CPLString>::const_iterator iter = aosMD.begin();
-    std::vector<CPLString>::const_iterator eiter = aosMD.end();
-    while(iter != eiter)
+    std::vector<CPLString>::const_iterator oIter = aosMD.begin();
+    std::vector<CPLString>::const_iterator oEndIter = aosMD.end();
+    while(oIter != oEndIter)
     {
-        const CPLString& osStr = *iter;
+        const CPLString& osStr = *oIter;
         char* pszStr = CPLStrdup(osStr.c_str());
         char* pszSep = strstr(pszStr, ": ");
         if (pszSep)
@@ -654,16 +654,16 @@ OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMDIn) :
             poFeatureDefn->AddFieldDefn( &oField );
         }
         CPLFree(pszStr);
-        ++iter;
+        ++oIter;
     }
 
     poFeature = new OGRFeature(poFeatureDefn);
-    iter = aosMD.begin();
-    eiter = aosMD.end();
+    oIter = aosMD.begin();
+    oEndIter = aosMD.end();
     int nField = 0;
-    while(iter != eiter)
+    while(oIter != oEndIter)
     {
-        const CPLString& osStr = *iter;
+        const CPLString& osStr = *oIter;
         const char* pszStr = osStr.c_str();
         const char* pszSep = strstr(pszStr, ": ");
         if (pszSep)
@@ -673,7 +673,7 @@ OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMDIn) :
 
             nField ++;
         }
-        ++iter;
+        ++oIter;
     }
 }
 

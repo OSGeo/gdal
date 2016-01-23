@@ -3,7 +3,7 @@
  *
  * Project:  Oracle Spatial Driver
  * Purpose:  Implementation of the OGROCITableLayer class.  This class provides
- *           layer semantics on a table, but utilizing alot of machinery from
+ *           layer semantics on a table, but utilizing a lot of machinery from
  *           the OGROCILayer base class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

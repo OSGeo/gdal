@@ -7,7 +7,7 @@
  *
  ******************************************************************************/
 
-/* Following code is mostly derived from jas_stream.c, which is licenced */
+/* Following code is mostly derived from jas_stream.c, which is licensed */
 /* under the below terms */
  
 /*

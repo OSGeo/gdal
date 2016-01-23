@@ -839,12 +839,12 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * destination image to be initialized to the indicated value (for all bands)
  * or indicates that it should be initialized to the NO_DATA value in
  * padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
- * destination image will be read and overlayed.  
+ * destination image will be read and overlaid.  
  *
  * - WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
  * each chunk is processed.  In some cases this helps ensure a serial 
  * writing of the output data otherwise a block of data may be written to disk
- * each time a block of data is read for the input buffer resulting in alot
+ * each time a block of data is read for the input buffer resulting in a lot
  * of extra seeking around the disk, and reduced IO throughput.  The default
  * at this time is NO.
  *

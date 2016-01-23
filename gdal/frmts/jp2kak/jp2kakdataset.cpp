@@ -2315,7 +2315,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( nTileXSize > 25000 )
     {
         // Don't generate tiles that are terrible wide by default, as
-        // they consume alot of memory for the compression engine.
+        // they consume a lot of memory for the compression engine.
         nTileXSize = 20000;
     }
 

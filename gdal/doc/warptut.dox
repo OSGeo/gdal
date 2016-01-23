@@ -152,7 +152,7 @@ include:
  destination image to be initialized to the indicated value (for all bands)
  or indicates that it should be initialized to the NO_DATA value in
  padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
- destination image will be read and the source warp overlayed on it.
+ destination image will be read and the source warp overlaid on it.
 
 <li> WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
  each chunk is processed.  In some cases this helps ensure a serial 

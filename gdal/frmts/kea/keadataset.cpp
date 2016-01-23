@@ -639,7 +639,7 @@ const char *KEADataset::GetMetadataItem (const char *pszName, const char *pszDom
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return NULL;
-    // string returned from CSLFetchNameValue should be persistant
+    // string returned from CSLFetchNameValue should be persistent
     return CSLFetchNameValue(m_papszMetadataList, pszName);
 }
 

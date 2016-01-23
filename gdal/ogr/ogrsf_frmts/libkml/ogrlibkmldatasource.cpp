@@ -444,7 +444,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
     if ( CPLTestBool ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
-        // If we dont have the doc.kml root
+        // If we don't have the doc.kml root
         // make it and add the container.
 
         if ( !m_poKmlDocKmlRoot ) {

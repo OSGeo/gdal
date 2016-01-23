@@ -463,7 +463,7 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 
                 if (got_hi_surrogate) {
 		  if (IS_LOW_SURROGATE(tok->ucs_char)) {
-                    /* Recalculate the ucs_char, then fall thru to process normally */
+                    /* Recalculate the ucs_char, then fall through to process normally */
                     tok->ucs_char = DECODE_SURROGATE_PAIR(got_hi_surrogate, tok->ucs_char);
                   } else {
                     /* Hi surrogate was not followed by a low surrogate */

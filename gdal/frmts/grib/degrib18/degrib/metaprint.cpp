@@ -360,8 +360,8 @@ static void PrintSect4_Category (grib_MetaData *meta)
    /* Based on Grib2 Code Table 4.1 discipline 0 */
    static const char * const tbl41_0[] = {
       "Temperature", "Moisture", "Momentum", "Mass", "Short-wave Radiation",
-      "Long-wave Radiation", "Cloud", "Thermodynamic Stability indicies",
-      "Kinematic Stability indicies", "Temperature Probabilities",
+      "Long-wave Radiation", "Cloud", "Thermodynamic Stability indices",
+      "Kinematic Stability indices", "Temperature Probabilities",
       "Moisture Probabilities", "Momentum Probabilities",
       "Mass Probabilities", "Aerosols", "Trace gases (e.g. ozone, C02)",
       "Radar", "Forecast Radar Imagery", "Electro-dynamics",

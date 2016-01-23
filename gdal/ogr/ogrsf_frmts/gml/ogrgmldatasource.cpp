@@ -978,14 +978,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             {
                 CPLDebug("GML", "Schema found, but only partially understood. Cannot be used in a WFS join context");
 
-                std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
-                std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
-                while (iter != eiter)
+                std::vector<GMLFeatureClass*>::const_iterator oIter = aosClasses.begin();
+                std::vector<GMLFeatureClass*>::const_iterator oEndIter = aosClasses.end();
+                while (oIter != oEndIter)
                 {
-                    GMLFeatureClass* poClass = *iter;
+                    GMLFeatureClass* poClass = *oIter;
 
                     delete poClass;
-                    iter ++;
+                    oIter ++;
                 }
                 aosClasses.resize(0);
                 bHaveSchema = false;
@@ -994,25 +994,25 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             if( bHaveSchema )
             {
                 CPLDebug("GML", "Using %s", osXSDFilename.c_str());
-                std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
-                std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
-                while (iter != eiter)
+                std::vector<GMLFeatureClass*>::const_iterator oIter = aosClasses.begin();
+                std::vector<GMLFeatureClass*>::const_iterator oEndIter = aosClasses.end();
+                while (oIter != oEndIter)
                 {
-                    GMLFeatureClass* poClass = *iter;
+                    GMLFeatureClass* poClass = *oIter;
 
                     if( poClass->HasFeatureProperties() )
                     {
                         bHasFeatureProperties = true;
                         break;
                     }
-                    iter ++;
+                    oIter ++;
                 }
 
-                iter = aosClasses.begin();
-                while (iter != eiter)
+                oIter = aosClasses.begin();
+                while (oIter != oEndIter)
                 {
-                    GMLFeatureClass* poClass = *iter;
-                    iter ++;
+                    GMLFeatureClass* poClass = *oIter;
+                    oIter ++;
 
                     /* We have no way of knowing if the geometry type is 25D */
                     /* when examining the xsd only, so if there was a hint */
