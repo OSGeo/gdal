@@ -3707,6 +3707,19 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
             {
                 CPLDebug( "GDALVectorTranslate", "Unable to write feature " CPL_FRMT_GIB " into layer %s.",
                            poFeature->GetFID(), poSrcLayer->GetName() );
+                if( psOptions->nGroupTransactions )
+                {
+                    if( psOptions->bLayerTransaction )
+                    {
+                        poDstLayer->RollbackTransaction();
+                        CPL_IGNORE_RET_VAL(poDstLayer->StartTransaction());
+                    }
+                    else
+                    {
+                        poODS->RollbackTransaction();
+                        poODS->StartTransaction(psOptions->bForceTransaction);
+                    }
+                }
             }
 
 end_loop:
