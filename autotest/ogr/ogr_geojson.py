@@ -2353,7 +2353,7 @@ def ogr_geojson_49():
     return 'success'
 
 ###############################################################################
-# Test that we serialize floating point values with enough signficant figures
+# Test that we serialize floating point values with enough significant figures
 
 def ogr_geojson_50():
     if gdaltest.geojson_drv is None:

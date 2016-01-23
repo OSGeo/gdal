@@ -302,7 +302,7 @@ def CheckExtension(fname):
     return 'success'
 
 def WriteLongStrings(fname):
-    # this will force the string column to be re-written to accomodate
+    # this will force the string column to be re-written to accommodate
     # a longer string size
     ds = gdal.Open(fname, gdal.GA_Update)
     band = ds.GetRasterBand(1)

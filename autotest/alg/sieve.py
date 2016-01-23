@@ -276,7 +276,7 @@ NODATA_value 0
        or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( '/vsimem/sieve_7.tif' )
 
-    # Expeced:
+    # Expected:
     #[[0 0 0 0 0 0 0]
     # [0 1 1 1 1 1 1]
     # [0 1 0 0 1 1 1]
