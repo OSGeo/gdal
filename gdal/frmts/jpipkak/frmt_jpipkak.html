@@ -1,5 +1,6 @@
 <html>
 <head>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
 <title>JPIPKAK - JPIP Streaming</title>
 </head>
 <body bgcolor="#ffffff">
@@ -9,7 +10,7 @@
   </p>
   <h2>JPIPKAK - JPIP Overview</h2>
   <p>
-  A brief overview of the JPIP event sequence is presented in this section, more information can be found at <a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ñ JPIP)</a> and the specification can (and should) be purchased from <a target="_blank" href="http://www.iso.org">ISO</a>.  
+  A brief overview of the JPIP event sequence is presented in this section, more information can be found at <a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ‚Äì JPIP)</a> and the specification can (and should) be purchased from <a target="_blank" href="http://www.iso.org">ISO</a>.  
   </p>
   <p>
   An earlier version of JPEG 2000 Part 9 is available here <a href="http://www.jpeg.org/public/fcd15444-9v2.pdf">http://www.jpeg.org/public/fcd15444-9v2.pdf</a>, noting the ISO copyright, diagrams are not replicated in this documentation.
@@ -43,7 +44,7 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
   The implementation supports the GDAL C++ and C API, and provides an initial SWIG wrapper for this driver with a Java ImageIO example (<b>TODO</b> - qGIS Example).
   </p>
   <p>
-  The driver uses a simple threading model to support requesting reads of the data and remote fetching.  This threading model supports two separate client windows, with just one connection to the server.  Requests to the server are multiplexed to utilize available bandwidth efficiently. The client identifies these windows by using ì0î (low) or ì1î (high) values to a ìPRIORITYî metadata request option.
+  The driver uses a simple threading model to support requesting reads of the data and remote fetching.  This threading model supports two separate client windows, with just one connection to the server.  Requests to the server are multiplexed to utilize available bandwidth efficiently. The client identifies these windows by using ‚Äú0‚Äù (low) or ‚Äú1‚Äù (high) values to a ‚ÄúPRIORITY‚Äù metadata request option.
   </p>
   <i>
   <p>
@@ -241,7 +242,7 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
   <p>Currently only a Windows makefile is provided, however this should compile on Linux as well as there are no Windows dependencies.</p>
   <p>See Also:
     <ul>
-        <li><a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ñ JPIP)</a></li>
+        <li><a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ‚Äì JPIP)</a></li>
         <li><a target="_blank" href="http://www.opengeospatial.org/standards/gmljp2">http://www.opengeospatial.org/standards/gmljp2</a></li>
         <li><a target="_blank" href="http://www.kakadusoftware.com">Kakadu Software </a></li>
         <li><a target="_blank" href="http://iasdemo.ittvis.com/">IAS demo (example JPIP(S) streams)</a></li>

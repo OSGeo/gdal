@@ -120,7 +120,7 @@
 
 0.6
   * Fix bug in escaping of control characters
-    Johan Björklund, johbjo09 at kth dot se
+    Johan BjÃ¶rklund, johbjo09 at kth dot se
   * Remove include "config.h" from headers (should only
     be included from .c files)
     Michael Clark <michael@metaparadigm.com>
@@ -166,7 +166,7 @@
     Added cast and mask to suffice size_t v. unsigned int conversion
     correctness 
   * json_tokener.c - sign reversal issue on error info for nested object parse
-    spotted by Johan Björklund (johbjo09 at kth.se)
+    spotted by Johan BjÃ¶rklund (johbjo09 at kth.se)
   * json_object.c - escape " in json_escape_str
   * Change to automake and libtool to build shared and static library
     Michael Clark <michael@metaparadigm.com>
