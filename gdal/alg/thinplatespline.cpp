@@ -733,7 +733,7 @@ static int matrixInvert( int N, double input[], double output[] )
     double* temp = (double*) new double[ tempSize ];
     double ftemp;
 	
-    if (temp == 0) {
+    if (temp == NULL) {
 		
         CPLError(CE_Failure, CPLE_AppDefined, "matrixInvert(): ERROR - memory allocation failed.");
         return false;
