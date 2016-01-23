@@ -130,7 +130,9 @@ AUTO, will select the overview level whose resolution is the closest to the
 target resolution. Specify an integer value (0-based, i.e. 0=1st overview level) 
 to select a particular level. Specify AUTO-n where n is an integer greater or
 equal to 1, to select an overview level below the AUTO one. Or specify NONE to
-force the base resolution to be used.</dd>
+force the base resolution to be used (can be useful if overviews have been
+generated with a low quality resampling method, and the warping is done using a
+higher quality resampling method).</dd>
 <dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp option.  The 
 GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
  <b>-wo</b> options may be listed.</dd>
