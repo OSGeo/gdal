@@ -660,19 +660,19 @@ void CPLSleep( double dfWaitInSeconds )
 
 static void **papTLSList = NULL;
 
-static void **CPLGetTLSList(int *pbMemoryErrorOccured)
+static void **CPLGetTLSList(int *pbMemoryErrorOccurred)
 
 {
-    if( pbMemoryErrorOccured )
-        *pbMemoryErrorOccured = FALSE;
+    if( pbMemoryErrorOccurred )
+        *pbMemoryErrorOccurred = FALSE;
     if( papTLSList == NULL )
     {
         papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
         if( papTLSList == NULL )
         {
-            if( pbMemoryErrorOccured )
+            if( pbMemoryErrorOccurred )
             {
-                *pbMemoryErrorOccured = TRUE;
+                *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr, "CPLGetTLSList() failed to allocate TLS list!\n");
                 return NULL;
             }
@@ -1171,21 +1171,21 @@ static DWORD         nTLSKey;
 /*                           CPLGetTLSList()                            */
 /************************************************************************/
 
-static void **CPLGetTLSList(int *pbMemoryErrorOccured)
+static void **CPLGetTLSList(int *pbMemoryErrorOccurred)
 
 {
     void **papTLSList;
 
-    if( pbMemoryErrorOccured )
-        *pbMemoryErrorOccured = FALSE;
+    if( pbMemoryErrorOccurred )
+        *pbMemoryErrorOccurred = FALSE;
     if( !bTLSKeySetup )
     {
         nTLSKey = TlsAlloc();
         if( nTLSKey == TLS_OUT_OF_INDEXES )
         {
-            if( pbMemoryErrorOccured )
+            if( pbMemoryErrorOccurred )
             {
-                *pbMemoryErrorOccured = TRUE;
+                *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr, "CPLGetTLSList(): TlsAlloc() failed!\n" );
                 return NULL;
             }
@@ -1200,9 +1200,9 @@ static void **CPLGetTLSList(int *pbMemoryErrorOccured)
         papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
         if( papTLSList == NULL )
         {
-            if( pbMemoryErrorOccured )
+            if( pbMemoryErrorOccurred )
             {
-                *pbMemoryErrorOccured = TRUE;
+                *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr, "CPLGetTLSList() failed to allocate TLS list!\n" );
                 return NULL;
             }
@@ -1210,9 +1210,9 @@ static void **CPLGetTLSList(int *pbMemoryErrorOccured)
         }
         if( TlsSetValue( nTLSKey, papTLSList ) == 0 )
         {
-            if( pbMemoryErrorOccured )
+            if( pbMemoryErrorOccurred )
             {
-                *pbMemoryErrorOccured = TRUE;
+                *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr, "CPLGetTLSList(): TlsSetValue() failed!\n" );
                 return NULL;
             }
@@ -1694,19 +1694,19 @@ static void CPLMake_key()
 /*                           CPLGetTLSList()                            */
 /************************************************************************/
 
-static void **CPLGetTLSList(int* pbMemoryErrorOccured)
+static void **CPLGetTLSList(int* pbMemoryErrorOccurred)
 
 {
     void **papTLSList;
 
-    if( pbMemoryErrorOccured )
-        *pbMemoryErrorOccured = FALSE;
+    if( pbMemoryErrorOccurred )
+        *pbMemoryErrorOccurred = FALSE;
     if ( pthread_once(&oTLSKeySetup, CPLMake_key) != 0 )
     {
-        if( pbMemoryErrorOccured )
+        if( pbMemoryErrorOccurred )
         {
             fprintf(stderr, "CPLGetTLSList(): pthread_once() failed!\n" );
-            *pbMemoryErrorOccured = TRUE;
+            *pbMemoryErrorOccurred = TRUE;
             return NULL;
         }
         CPLEmergencyError( "CPLGetTLSList(): pthread_once() failed!" );
@@ -1718,20 +1718,20 @@ static void **CPLGetTLSList(int* pbMemoryErrorOccured)
         papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
         if( papTLSList == NULL )
         {
-            if( pbMemoryErrorOccured )
+            if( pbMemoryErrorOccurred )
             {
                 fprintf(stderr, "CPLGetTLSList() failed to allocate TLS list!\n" );
-                *pbMemoryErrorOccured = TRUE;
+                *pbMemoryErrorOccurred = TRUE;
                 return NULL;
             }
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         }
         if( pthread_setspecific( oTLSKey, papTLSList ) != 0 )
         {
-            if( pbMemoryErrorOccured )
+            if( pbMemoryErrorOccurred )
             {
                 fprintf(stderr, "CPLGetTLSList(): pthread_setspecific() failed!\n" );
-                *pbMemoryErrorOccured = TRUE;
+                *pbMemoryErrorOccurred = TRUE;
                 return NULL;
             }
             CPLEmergencyError( 
@@ -2101,10 +2101,10 @@ void *CPLGetTLS( int nIndex )
 /*                            CPLGetTLSEx()                             */
 /************************************************************************/
 
-void *CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccured )
+void *CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccurred )
 
 {
-    void** papTLSList = CPLGetTLSList(pbMemoryErrorOccured);
+    void** papTLSList = CPLGetTLSList(pbMemoryErrorOccurred);
     if( papTLSList == NULL )
         return NULL;
 
@@ -2147,10 +2147,10 @@ void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 /* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
 /* use or fetch any TLS data, or a terminating thread will hang ! */
 void CPLSetTLSWithFreeFuncEx( int nIndex, void *pData,
-                              CPLTLSFreeFunc pfnFree, int* pbMemoryErrorOccured  )
+                              CPLTLSFreeFunc pfnFree, int* pbMemoryErrorOccurred  )
 
 {
-    void **papTLSList = CPLGetTLSList(pbMemoryErrorOccured);
+    void **papTLSList = CPLGetTLSList(pbMemoryErrorOccurred);
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 

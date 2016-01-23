@@ -1592,7 +1592,7 @@ class ECWWriteDataset : public GDALDataset
     int       nLoadedLine;
     GByte     *pabyBILBuffer;
 
-    int       bOutOfOrderWriteOccured;  // TODO: Spelling.
+    int       bOutOfOrderWriteOccurred;
 #ifdef OPTIMIZED_FOR_GDALWARP
     int       nPrevIRasterIOBand;
 #endif
@@ -1709,7 +1709,7 @@ ECWWriteDataset::ECWWriteDataset( const char *pszFilenameIn,
         SetBand( iBand, new ECWWriteRasterBand( this, iBand ) );
     }
 
-    bOutOfOrderWriteOccured = FALSE;
+    bOutOfOrderWriteOccurred = FALSE;
 #ifdef OPTIMIZED_FOR_GDALWARP
     nPrevIRasterIOBand = -1;
 #endif
@@ -1726,7 +1726,7 @@ ECWWriteDataset::~ECWWriteDataset()
 
     if( bCrystalized )
     {
-        if( bOutOfOrderWriteOccured )
+        if( bOutOfOrderWriteOccurred )
         {
             /* Otherwise there's a hang-up in the destruction of the oCompressor object */
             while( nLoadedLine < nRasterYSize - 1 )
@@ -1905,7 +1905,7 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
     ECWWriteRasterBand* po4thBand = NULL;
     IRasterIORequest* poIORequest = NULL;
 
-    if( bOutOfOrderWriteOccured )
+    if( bOutOfOrderWriteOccurred )
         return CE_Failure;
 
     if( eRWFlag == GF_Write && nBandCount == 3 && nBands == 4 )
@@ -1922,7 +1922,7 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
                 nBufYSize != poIORequest->nBufYSize )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Out of order write");
-                bOutOfOrderWriteOccured = TRUE;
+                bOutOfOrderWriteOccurred = TRUE;
                 return CE_Failure;
             }
         }
@@ -2072,7 +2072,7 @@ CPLErr ECWWriteRasterBand::IWriteBlock( CPL_UNUSED int nBlockX,
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLErr eErr;
 
-    if( poGDS->bOutOfOrderWriteOccured )
+    if( poGDS->bOutOfOrderWriteOccurred )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -2095,7 +2095,7 @@ CPLErr ECWWriteRasterBand::IWriteBlock( CPL_UNUSED int nBlockX,
                   "Apparent attempt to write to ECW non-sequentially.\n"
                   "Loaded line is %d, but %d of band %d was written to.",
                   poGDS->nLoadedLine, nBlockY, nBand );
-        poGDS->bOutOfOrderWriteOccured = TRUE;
+        poGDS->bOutOfOrderWriteOccurred = TRUE;
         return CE_Failure;
     }
 

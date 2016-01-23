@@ -85,7 +85,7 @@ char **VSIReadDir(const char *pszPath)
  * If nMaxFiles is set to a positive number, directory listing will stop after
  * that limit has been reached. Note that to indicate truncate, at least one
  * element more than the nMaxFiles limit will be returned. If CSLCount() on the
- * result is lesser or equal to nMaxFiles, then no truncation occured.
+ * result is lesser or equal to nMaxFiles, then no truncation occurred.
  *
  * @param pszPath the relative, or absolute path of a directory to read.  
  * UTF-8 encoded.

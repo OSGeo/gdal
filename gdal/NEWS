@@ -1985,7 +1985,7 @@ Core:
  * introduce OGRLayer::FindFieldIndex() / OGR_L_FindFieldIndex() to lookup potentially laundered field names (RFC 42)
  * OGR SQL: upgrade to support RFC 41 (multiple geometry fields)
  * OGR SQL: more stricter checks
- * OGR SQL: make parsing error report a useful hint where the syntax error occured
+ * OGR SQL: make parsing error report a useful hint where the syntax error occurred
  * OGR SQL: fix thread-safety of swq_op_registrar::GetOperator() (#5196)
  * OGR SQL: support not explicitly specifying AS keyword for aliasing a column spec
  * OGR SQL: don't call CONCAT(a_column ...) or SUBSTR(a_column ...) as a_column

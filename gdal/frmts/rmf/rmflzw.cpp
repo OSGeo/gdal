@@ -92,7 +92,7 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
         nNext = nLocal;
     else
     {
-        // If collision has occured
+        // If collision has occurred
         while ( (nNext = poCodeTab[nLocal].iNext) != 0 )
             nLocal = nNext;
 
