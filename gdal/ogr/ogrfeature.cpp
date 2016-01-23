@@ -3364,7 +3364,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
             if( (GIntBig)nVal32 != nValue )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Integer overflow occured when trying to set "
+                          "Integer overflow occurred when trying to set "
                           "32bit field." );
             }
             anValues.push_back( nVal32 );

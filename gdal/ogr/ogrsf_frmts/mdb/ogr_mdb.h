@@ -54,7 +54,7 @@ class OGRMDBJavaEnv
     JNIEnv *env;
     int bCalledFromJava;
 
-    int ExceptionOccured();
+    int ExceptionOccurred();
 
     jclass byteArray_class;
 
