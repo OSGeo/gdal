@@ -465,7 +465,7 @@ protected:
 
 /**
  * GNM layer which represents a geography network layer of generic format.
- * The class override some OGRLayer methods to fullfill the network requirements.
+ * The class override some OGRLayer methods to fulfill the network requirements.
  *
  * @since GDAL 2.1
  */
