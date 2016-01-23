@@ -59,9 +59,9 @@ namespace PCIDSK {
         // Set the Geosys string
         virtual void SetGeosysString(const std::string& oGeosys) =0;
 
-        //Get the projection informations
+        //Get the projection information
         virtual std::vector<double> GetProjParmInfo() const=0;
-        //Set the projection informations
+        //Set the projection information
         virtual void SetProjParmInfo(const std::vector<double>& oInfo) =0;
 
         // Virtual destructor

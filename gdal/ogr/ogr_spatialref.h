@@ -223,7 +223,7 @@ class CPL_DLL OGRSpatialReference
                          const char *pszYAxisName, 
                          OGRAxisOrientation eYAxisOrientation );
 
-    // Machinary for accessing parse nodes
+    // Machinery for accessing parse nodes
     OGR_SRSNode *GetRoot() { return poRoot; }
     const OGR_SRSNode *GetRoot() const { return poRoot; }
     void        SetRoot( OGR_SRSNode * );

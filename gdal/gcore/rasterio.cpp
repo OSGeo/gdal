@@ -2211,7 +2211,7 @@ static inline void GDALFastByteCopy(GByte* CPL_RESTRICT pabyDest,
  * less the 0 to be set to 0, and values larger than 255 to be set to 255. 
  * Assignment from floating point to integer uses default C type casting
  * semantics.   Assignment from non-complex to complex will result in the 
- * imaginary part being set to zero on output.  Assigment from complex to 
+ * imaginary part being set to zero on output.  Assignment from complex to 
  * non-complex will result in the complex portion being lost and the real
  * component being preserved (<i>not magnitidue!</i>). 
  *

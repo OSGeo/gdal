@@ -903,7 +903,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     }
 
     //  -----------------------------------------------------------
-    //  Prepare UPDATE or INSERT comand
+    //  Prepare UPDATE or INSERT command
     //  -----------------------------------------------------------
 
     CPLString sCommand;

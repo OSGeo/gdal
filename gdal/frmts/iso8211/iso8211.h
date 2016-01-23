@@ -366,11 +366,11 @@ private:
 
 /* -------------------------------------------------------------------- */
 /*      bIsVariable determines whether we using the                     */
-/*      chFormatDelimeter (TRUE), or the fixed width (FALSE).           */
+/*      chFormatDelimiter (TRUE), or the fixed width (FALSE).           */
 /* -------------------------------------------------------------------- */
   int        bIsVariable;
 
-  char       chFormatDelimeter;  // TODO: Spelling.
+  char       chFormatDelimiter;
   int        nFormatWidth;
 
 /* -------------------------------------------------------------------- */

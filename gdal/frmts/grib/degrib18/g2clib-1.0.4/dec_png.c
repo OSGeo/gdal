@@ -38,7 +38,7 @@ void user_read_data(png_structp png_ptr,png_bytep data, png_uint_32 length)
 
 int dec_png(unsigned char *pngbuf,g2int *width,g2int *height,char *cout)
 {
-    int interlace,color,compres,filter,bit_depth;
+    int interlace,color,compress,filter,bit_depth;
     g2int j,k,n,bytes,clen;
     png_structp png_ptr;
     png_infop info_ptr,end_info;
@@ -101,7 +101,7 @@ int dec_png(unsigned char *pngbuf,g2int *width,g2int *height,char *cout)
 
     /*printf("SAGT:png %d %d %d\n",info_ptr->width,info_ptr->height,info_ptr->bit_depth);*/
     (void)png_get_IHDR(png_ptr, info_ptr, (png_uint_32 *)width, (png_uint_32 *)height,
-               &bit_depth, &color, &interlace, &compres, &filter);
+               &bit_depth, &color, &interlace, &compress, &filter);
 
 /*     Check if image was grayscale      */
 

@@ -45,7 +45,7 @@ DDFSubfieldDefn::DDFSubfieldDefn()
 
     bIsVariable = TRUE;
     nFormatWidth = 0;
-    chFormatDelimeter = DDF_UNIT_TERMINATOR;  // TODO: Spelling delimeter.
+    chFormatDelimiter = DDF_UNIT_TERMINATOR;
     eBinaryFormat = NotBinary;
     eType = DDFString;
 
@@ -307,7 +307,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
         // If the whole field ends with 0x1e 0x00 then we assume this
         // field is a double byte character set.
         if( nMaxBytes > 1 
-            && (pachSourceData[nMaxBytes-2] == chFormatDelimeter
+            && (pachSourceData[nMaxBytes-2] == chFormatDelimiter
                 || pachSourceData[nMaxBytes-2] == DDF_FIELD_TERMINATOR) 
             && pachSourceData[nMaxBytes-1] == 0x00 )
             bAsciiField = FALSE;
@@ -319,14 +319,14 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
         {
             if (bAsciiField)
             {
-                if (pachSourceData[nLength] == chFormatDelimeter ||
+                if (pachSourceData[nLength] == chFormatDelimiter ||
                     pachSourceData[nLength] == DDF_FIELD_TERMINATOR)
                     break;
             }
             else
             {
                 if (nLength > 0 
-                    && (pachSourceData[nLength-1] == chFormatDelimeter 
+                    && (pachSourceData[nLength-1] == chFormatDelimiter 
                         || pachSourceData[nLength-1] == DDF_FIELD_TERMINATOR) 
                     && pachSourceData[nLength] == 0)
                 {

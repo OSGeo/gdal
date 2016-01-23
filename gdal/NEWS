@@ -1802,7 +1802,7 @@ HFA driver:
  * add minimally tested support for u2 and u4 data in basedata
  * use direct binning for thematic layers and real instead of integer for values (#5066)
  * add a HFA_COMPRESS_OVR config option to select whether to create compressed overviews (#4866)
- * fix rewriting of statics in existing HFA file where base data value is 8-bit (#5175)
+ * fix rewriting of statistics in existing HFA file where base data value is 8-bit (#5175)
  * implement re-writing existing histogram in HFA file, after raster editing (#5176)
  * avoid segfaults when creating a Imagine dataset with an invalid WKT (#5258)
  * expose color columns in RAT as Integer with values in range [0-255] instead of Real with values [0-1] (#5362)
