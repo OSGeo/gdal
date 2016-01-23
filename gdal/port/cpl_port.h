@@ -305,9 +305,47 @@ typedef int              GPtrDiff_t;
 #define CPL_INLINE
 #endif
 
+// Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
+// to detect misuses of NULL
+#if defined(NULL_AS_NULLPTR) && defined(__cplusplus) && __cplusplus >= 201103L
+
+#ifdef __GNUC__
+// We need to include all that bunch of system headers, otherwise
+// as they include <stddef.h> with __need_NULL, this overrides our #define NULL nullptr
+// with #define NULL __null
+#include <locale.h>
+#include <unistd.h>
+#include <sys/types.h>
+#ifdef HAVE_ICONV
+#include <iconv.h>
+#endif
+#ifdef HAVE_MMAP
+#include <sys/mman.h>
+#endif
+#include <signal.h>
+#ifndef _WIN32
+#include <dlfcn.h>
+#include <netdb.h>
+#include <fcntl.h>
+#endif
+
+extern "C++" {
+#include <string>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstddef>
+}
+#endif /* __GNUC__ */
+
+#undef NULL
+#define NULL nullptr
+#else /* defined(NULL_AS_NULLPTR) && defined(__cplusplus) && __cplusplus >= 201103L */
 #ifndef NULL
 #  define NULL  0
 #endif
+#endif /* defined(NULL_AS_NULLPTR) && defined(__cplusplus) && __cplusplus >= 201103L */
+
 
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
