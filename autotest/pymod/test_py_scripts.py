@@ -160,7 +160,7 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
 
     if has_imported_module:
         # Unload the module so that it gets imported again next time
-        # (usefull if wanting to run a script without main() function
+        # (useful if wanting to run a script without main() function
         # several time)
         del sys.modules[script_name]
 

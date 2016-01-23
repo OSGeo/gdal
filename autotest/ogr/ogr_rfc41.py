@@ -565,7 +565,7 @@ def ogr_rfc41_5():
     except:
         pass
 
-    # This works.  Default Python behaviour. Stored in a dictionnary
+    # This works.  Default Python behaviour. Stored in a dictionary
     f.nonexistent_field = 'bar'
     if f.nonexistent_field != 'bar':
         gdaltest.post_reason('fail')

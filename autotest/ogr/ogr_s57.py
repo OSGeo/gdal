@@ -83,7 +83,7 @@ def ogr_s57_2():
 
 
     if gdaltest.s57_ds.GetLayerCount() != len(layer_list):
-        gdaltest.post_reason( 'Did not get expected number of layers, likely cant find support files.' )
+        gdaltest.post_reason( 'Did not get expected number of layers, likely can't find support files.' )
         return 'fail'
 
     for i in range(len(layer_list)):

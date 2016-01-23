@@ -2228,7 +2228,7 @@ def ogr_geom_curvepolygon():
 
     # Intersects optimizations on a circle
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (CIRCULARSTRING (0 0,2 0,0 0))')
-    # Point slighly within circle
+    # Point slightly within circle
     p1 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi/6)-1e-4,math.sin(math.pi/6)))
     # To prove that we don't use discretization
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
@@ -2241,7 +2241,7 @@ def ogr_geom_curvepolygon():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Test point slighly outside circle
+    # Test point slightly outside circle
     p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi/6)+1e-4,math.sin(math.pi/6)))
     if p2.Within(g1):
         gdaltest.post_reason('fail')
