@@ -703,7 +703,7 @@ is required for each GRIB2 message.
  * ker=5 jer[4,0]=400  jer[4,1]=2: Error unpacking section 4.
  * ker=6 jer[5,0]=500  jer[5,1]=2: Error unpacking section 5.
  *                                 Data Template not implemented.
- *                                 Durring Transfer, nx * ny != ngrdpts.
+ *                                 During Transfer, nx * ny != ngrdpts.
  * ker=7 jer[6,0]=600  jer[6,1]=2: Error unpacking section 6.
  * ker=8 jer[7,0]=700  jer[7,1]=2: Error unpacking section 7.
  * ker=9 jer[8,0]=2001 jer[8,1]=2: nd2x3 is not large enough.

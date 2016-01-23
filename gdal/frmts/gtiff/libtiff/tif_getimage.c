@@ -356,7 +356,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			_TIFFmemcpy( img->greencmap, green_orig, n_color * 2 );
 			_TIFFmemcpy( img->bluecmap, blue_orig, n_color * 2 );
 
-			/* fall thru... */
+			/* fall through... */
 		case PHOTOMETRIC_MINISWHITE:
 		case PHOTOMETRIC_MINISBLACK:
 			if (planarconfig == PLANARCONFIG_CONTIG
@@ -2476,7 +2476,7 @@ buildMap(TIFFRGBAImage* img)
     case PHOTOMETRIC_SEPARATED:
 	if (img->bitspersample == 8)
 	    break;
-	/* fall thru... */
+	/* fall through... */
     case PHOTOMETRIC_MINISBLACK:
     case PHOTOMETRIC_MINISWHITE:
 	if (!setupMap(img))

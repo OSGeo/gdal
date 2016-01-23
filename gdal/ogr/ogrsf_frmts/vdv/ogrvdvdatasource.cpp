@@ -960,7 +960,7 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
     {
         char** papszFiles = VSIReadDir(poOpenInfo->pszFilename);
 
-        // Identify the extension with the most occurences
+        // Identify the extension with the most occurrences
         std::map<CPLString, int> oMapOtherExtensions;
         CPLString osMajorityExtension, osMajorityFile;
         int nFiles = 0;

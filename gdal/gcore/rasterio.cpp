@@ -2215,7 +2215,7 @@ static inline void GDALFastByteCopy(GByte* CPL_RESTRICT pabyDest,
  * non-complex will result in the complex portion being lost and the real
  * component being preserved (<i>not magnitidue!</i>). 
  *
- * No assumptions are made about the source or destination words occuring
+ * No assumptions are made about the source or destination words occurring
  * on word boundaries.  It is assumed that all values are in native machine
  * byte order. 
  *

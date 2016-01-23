@@ -504,7 +504,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
 
         if( poDataset != NULL )
         {
-            // Check that the spectral band has a georeferencing consistant
+            // Check that the spectral band has a georeferencing consistent
             // of the pan band. Allow an error of at most the size of one pixel
             // of the spectral band.
             if( bPanGeoTransformValid )

@@ -4926,7 +4926,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     pszTextBuf = (char *) CPLMalloc(pszSize);
     pszTextBufCurrent = pszTextBuf;
 
-    /* Convert the 1st byte, which is the endianess flag, to hex. */
+    /* Convert the 1st byte, which is the endianness flag, to hex. */
     pszHex = CPLBinaryToHex( 1, pabyWKB );
     strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
@@ -4939,7 +4939,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     /* Now add the SRID flag if an SRID is provided */
     if (nSRSId > 0)
     {
-        /* Change the flag to wkbNDR (little) endianess */
+        /* Change the flag to wkbNDR (little) endianness */
         GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
         /* Apply the flag */
         geomType = geomType | nGSrsFlag;
@@ -4954,7 +4954,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     /* Now include SRID if provided */
     if (nSRSId > 0)
     {
-        /* Force the srsid to wkbNDR (little) endianess */
+        /* Force the srsid to wkbNDR (little) endianness */
         GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
         pszHex = CPLBinaryToHex( sizeof(nGSRSId),(GByte*) &nGSRSId );
         strcpy(pszTextBufCurrent, pszHex );

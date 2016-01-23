@@ -251,7 +251,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      Loop over all these files trying to open them.  In testopen     */
 /*      mode we first read the first 80 characters, to verify that      */
 /*      it looks like an NTF file.  Note that we don't keep the file    */
-/*      open ... we don't want to occupy alot of file handles when      */
+/*      open ... we don't want to occupy a lot of file handles when      */
 /*      handling a whole directory.                                     */
 /* -------------------------------------------------------------------- */
     int         i;
@@ -504,7 +504,7 @@ const char *OGRNTFDataSource::GetOption( const char * pszOption )
 /*      it's tilename is unique relative to all the readers already     */
 /*      assigned to this data source.  If not, a unique name is         */
 /*      selected for it and assigned.  This method should not be        */
-/*      called with readers that are allready attached to the data      */
+/*      called with readers that are already attached to the data      */
 /*      source.                                                         */
 /************************************************************************/
 

@@ -163,7 +163,7 @@ Utilities:
  * gdalwarp: do not emit warning when using -cutline with a SRS and the source raster has RPC or GEOLOCATION
  * gdalwarp: check that the cutline is valid after transformation/reprojection
  * gdalwarp: better deal when dealing with a mix of RGB and RGBA datasets as input
- * gdalserver: add a -nofork mode (Unix only for now), so that multiple clients can connect to the same dataset. Usefull for safe 'concurrent' updates
+ * gdalserver: add a -nofork mode (Unix only for now), so that multiple clients can connect to the same dataset. Useful for safe 'concurrent' updates
  * add gdal_pansharpen.py script
  * gdal2tiles.py: fix error on a raster with less than 3 bands that resulted in a 'IndexError: list index out of range'
  * gdal2tiles.py: Change EPSG:3785 / EPSG:900913 into EPSG:3857 (#5622)
@@ -1068,7 +1068,7 @@ PCIDSK driver:
  * close dataset in case of exception in PCIDSK2Dataset::LLOpen() (#5729)
 
 PCRaster driver:
- * Allign libcsf code with PCRaster raster format code (#5843)
+ * Align libcsf code with PCRaster raster format code (#5843)
  * Implement Create() (#5844)
  * Improve handling of no-data value (#5953)
 
@@ -8027,7 +8027,7 @@ GDAL 1.1.6 - Overview of Changes
 
  o Various fixes to OGDI driver.
 
- o Stripped out the GDALProjDef related capabilities.  Superceeded by
+ o Stripped out the GDALProjDef related capabilities.  Superseded by
    OGRSpatialReference, and OGRCoordinateTransformation functionality.
 
  o Improved CEOS support, notable for ESA LANDSAT files, D-PAF ERS-1 and

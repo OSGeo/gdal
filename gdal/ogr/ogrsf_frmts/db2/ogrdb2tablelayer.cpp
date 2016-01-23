@@ -324,7 +324,7 @@ CPLErr OGRDB2TableLayer::Initialize( const char *pszSchema,
     /* -------------------------------------------------------------------- */
 //    CPLFree( pszGeomColumn ); LATER
     if( pszGeomCol == NULL )
-        GetLayerDefn(); /* fetch geom colum if not specified */
+        GetLayerDefn(); /* fetch geom column if not specified */
     else
         pszGeomColumn = CPLStrdup( pszGeomCol );
 

@@ -12,7 +12,7 @@ GDAL_VERSION=$1
 if test "$GDAL_VERSION" != "`cat VERSION`" ; then
   echo
   echo "NOTE: local VERSION file (`cat VERSION`) does not match supplied version ($GDAL_VERSION)."
-  echo "      Consider updating local VERSION file, and commiting to CVS." 
+  echo "      Consider updating local VERSION file, and committing to CVS." 
   echo
 fi
 

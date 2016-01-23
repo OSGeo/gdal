@@ -122,7 +122,7 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     m_poSpatialFilter = NULL;
     m_bIgnoreSourceID = FALSE;
 
-    // Undocumented. Only usefull for developers
+    // Undocumented. Only useful for developers
     m_bAddPretty = CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"));
 
     ResetReading();

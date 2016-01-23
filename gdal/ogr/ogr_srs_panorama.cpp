@@ -280,7 +280,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                     nZone = (int) padfPrjParams[7];
 
                 // XXX: no way to determine south hemisphere. Always assume
-                // nothern hemisphere.
+                // northern hemisphere.
                 SetUTM( nZone, TRUE );
             }
             break;

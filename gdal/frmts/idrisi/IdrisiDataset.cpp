@@ -842,7 +842,7 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             int nCode = 0;
             int nCount = 0;
-            sscanf( poDS->papszRDC[++nLine], rdcCODE_N, &nCode );//asign legend cats to nCode
+            sscanf( poDS->papszRDC[++nLine], rdcCODE_N, &nCode );//assign legend cats to nCode
             for( int i = 0;( i < 255 ) &&( nCount < nCatCount ); i++ )
             {
                 if( i == nCode )

@@ -97,7 +97,7 @@ error:	return(0);	/* failure */
  * blocks accordingly.
  * Writing can still fail since there is no check if that space is really
  * available on the device. After this call returns the file is already
- * seeked to the point the functions returns.
+ * sought to the point the functions returns.
  * returns the file position or 0 in case of error.
  *
  * Merrno
@@ -108,7 +108,7 @@ error:	return(0);	/* failure */
 CSF_FADDR32 CsfSeekAttrSpace(
 	MAP *m,       		/* map handle */
 	CSF_ATTR_ID id,         /* attribute identification only for check if available */
-	size_t size)            /* size to be seeked to */
+	size_t size)            /* size to be sought to */
 {
 	ATTR_CNTRL_BLOCK b;
 	CSF_FADDR32 currBlockPos, prevBlockPos=USED_UNINIT_ZERO, newPos, endBlock, resultPos=0;

@@ -200,7 +200,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
         */
         sprintf(pszDBTarget, "@%s,%s,%s;%s[%s,%s]::%s ", 
             pszHost,        /* host, compute name or IP address */
-            "TCP_IP",       /* protocal, default with TCP/IP */
+            "TCP_IP",       /* protocol, default with TCP/IP */
             pszInstance,    /* instance Name */
             "" ,            /* option, Null */
             pszUsername,    /* user name, could not be empty */

@@ -468,7 +468,7 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
       char *fName = fieldName(childElem);
       int fIndex = feature->GetGeomFieldIndex(fName);
       OGRGeometry *geom = getGeometry(childElem, type);
-      if (fIndex == -1) { // Unkown model
+      if (fIndex == -1) { // Unknown model
         feature->SetGeometryDirectly(geom);
       } else {
         OGRwkbGeometryType geomType = feature->GetGeomFieldDefnRef(fIndex)->GetType();

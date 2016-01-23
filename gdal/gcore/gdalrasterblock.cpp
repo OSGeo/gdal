@@ -373,7 +373,7 @@ int CPL_STDCALL GDALFlushCacheBlock()
 /************************************************************************/
 /*                          FlushCacheBlock()                           */
 /*                                                                      */
-/*      Note, if we have alot of blocks locked for a long time, this    */
+/*      Note, if we have a lot of blocks locked for a long time, this    */
 /*      method is going to get slow because it will have to traverse    */
 /*      the linked list a long ways looking for a flushing              */
 /*      candidate.   It might help to re-touch locked blocks to push    */
@@ -452,7 +452,7 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
  * useful when doing multi-threaded code that can trigger the block cache.
  *
  * Due to the current design of the block cache, dirty blocks belonging to a same
- * dataset could be pushed simultanously to the IWriteBlock() method of that
+ * dataset could be pushed simultaneously to the IWriteBlock() method of that
  * dataset from different threads, causing races.
  *
  * Calling this method before that code can help workarounding that issue,

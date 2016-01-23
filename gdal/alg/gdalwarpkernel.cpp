@@ -4124,7 +4124,7 @@ static void GWKGeneralCaseThread( void* pData)
                 }
                 else
 #ifdef DEBUG
-                if( psWrkStruct != NULL ) /* only usefull for clang static analyzer */
+                if( psWrkStruct != NULL ) /* only useful for clang static analyzer */
 #endif
                 {
                     psWrkStruct->pfnGWKResample( poWK, iBand, 

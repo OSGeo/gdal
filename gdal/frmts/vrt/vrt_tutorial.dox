@@ -1059,7 +1059,7 @@ the special None value is put in NoData to prevent that).</li>
 <i>None</i> or <i>NoneWithoutWarning</i>. Controls the behaviour when panchromatic
 and spectral bands have not the same geospatial extent. By default, Union will take
 the union of all spatial extents. Intersection the intersection of all spatial extents.
-None will not proceed to any adjustment at all (might be usefull if the geotransform are
+None will not proceed to any adjustment at all (might be useful if the geotransform are
 somehow dummy, and the top-left and bottom-right corners of all bands match), but will
 emmit a warning. NoneWithoutWarning is the same as None, but in a silent way.</li>
 </li>

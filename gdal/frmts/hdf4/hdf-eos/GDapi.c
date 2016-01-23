@@ -6079,7 +6079,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 
 	/*
 	 * Compute upperleft and lowerright values based on whether the
-	 * projection is south polar, north polar or equitorial
+	 * projection is south polar, north polar or equatorial
 	 */
 
 	if (plat == -90.0)

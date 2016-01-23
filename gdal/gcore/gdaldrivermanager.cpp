@@ -824,7 +824,7 @@ void GDALDriverManager::AutoLoadDrivers()
 /**
  * \brief Destroy the driver manager.
  *
- * Incidently unloads all managed drivers.
+ * Incidentally unloads all managed drivers.
  *
  * NOTE: This function is not thread safe.  It should not be called while
  * other threads are actively using GDAL. 

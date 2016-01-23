@@ -3789,7 +3789,7 @@ static char** NITFExtractTEXTAndCGMCreationOption( GDALDataset* poSrcDS,
     // Use TEXT information from original image if no creation option is passed in.
     if (poSrcDS != NULL && papszTextMD == NULL)
     {
-        // Read CGM adata from original image, duplicate the list becuase
+        // Read CGM adata from original image, duplicate the list because
         // we frees papszCgmMD at end of the function.
         papszTextMD = CSLDuplicate( poSrcDS->GetMetadata( "TEXT" ));
     }
@@ -3822,7 +3822,7 @@ static char** NITFExtractTEXTAndCGMCreationOption( GDALDataset* poSrcDS,
     // Use CGM information from original image if no creation option is passed in.
     if (poSrcDS != NULL && papszCgmMD == NULL)
     {
-        // Read CGM adata from original image, duplicate the list becuase
+        // Read CGM adata from original image, duplicate the list because
         // we frees papszCgmMD at end of the function.
         papszCgmMD = CSLDuplicate( poSrcDS->GetMetadata( "CGM" ));
     }

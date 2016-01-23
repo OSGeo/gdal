@@ -1806,12 +1806,12 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     int nLayersFound = 0;
     if ((int)aosClasses.size() > 0)
     {
-        std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
-        std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
-        while (iter != eiter)
+        std::vector<GMLFeatureClass*>::const_iterator oIter = aosClasses.begin();
+        std::vector<GMLFeatureClass*>::const_iterator oEndIter = aosClasses.end();
+        while (oIter != oEndIter)
         {
-            GMLFeatureClass* poClass = *iter;
-            iter ++;
+            GMLFeatureClass* poClass = *oIter;
+            oIter ++;
 
             OGRWFSLayer* poLayer;
 
@@ -2150,16 +2150,16 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
         poMEMLayer->CreateField(&oFDefn);
 
         const std::vector<CPLString>& aosFIDList = poLayer->GetLastInsertedFIDList();
-        std::vector<CPLString>::const_iterator iter = aosFIDList.begin();
-        std::vector<CPLString>::const_iterator eiter = aosFIDList.end();
-        while (iter != eiter)
+        std::vector<CPLString>::const_iterator oIter = aosFIDList.begin();
+        std::vector<CPLString>::const_iterator oEndIter = aosFIDList.end();
+        while (oIter != oEndIter)
         {
-            const CPLString& osFID = *iter;
+            const CPLString& osFID = *oIter;
             OGRFeature* poFeature = new OGRFeature(poMEMLayer->GetLayerDefn());
             poFeature->SetField(0, osFID);
             CPL_IGNORE_RET_VAL(poMEMLayer->CreateFeature(poFeature));
             delete poFeature;
-            iter ++;
+            oIter ++;
         }
 
         OGRLayer* poResLayer = new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);

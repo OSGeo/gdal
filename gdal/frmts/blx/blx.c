@@ -1168,7 +1168,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 	signature[0] = get_short_le(&hptr);
 	signature[1] = get_short_le(&hptr);
 
-	/* Determine if the endianess of the BLX file */
+	/* Determine if the endianness of the BLX file */
 	if((signature[0] == 0x4) && (signature[1] == 0x66)) 
 	    ctx->endian = LITTLEENDIAN;
 	else {	

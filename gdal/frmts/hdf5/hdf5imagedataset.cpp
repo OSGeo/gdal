@@ -94,7 +94,7 @@ class HDF5ImageDataset : public HDF5Dataset
     haddr_t      address;
     hid_t        datatype;
     hid_t        native;
-    H5T_class_t  clas;
+    H5T_class_t  class_;
     Hdf5ProductType    iSubdatasetType;
     HDF5CSKProductEnum iCSKProductType;
     double       adfGeoTransform[6];
@@ -184,7 +184,7 @@ HDF5ImageDataset::HDF5ImageDataset() :
     address(0),
     datatype(-1),
     native(-1),
-    clas(H5T_NO_CLASS),
+    class_(H5T_NO_CLASS),
     iSubdatasetType(UNKNOWN_PRODUCT),
     iCSKProductType(PROD_UNKNOWN),
     bHasGeoTransform(false)
@@ -584,7 +584,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                                     poDS->dims,
                                                     poDS->maxdims );
     poDS->datatype = H5Dget_type( poDS->dataset_id );
-    poDS->clas     = H5Tget_class( poDS->datatype );
+    poDS->class_   = H5Tget_class( poDS->datatype );
     poDS->size     = H5Tget_size( poDS->datatype );
     poDS->address = H5Dget_offset( poDS->dataset_id );
     poDS->native  = H5Tget_native_type( poDS->datatype, H5T_DIR_ASCEND );
@@ -797,7 +797,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
         return CE_None;
     }
     /* -------------------------------------------------------------------- */
-    /*      The Lattitude and Longitude arrays must have a rank of 2 to     */
+    /*      The Latitude and Longitude arrays must have a rank of 2 to     */
     /*      retrieve GCPs.                                                  */
     /* -------------------------------------------------------------------- */
     if( poH5Objects->nRank != 2 ) {
@@ -1014,7 +1014,7 @@ void HDF5ImageDataset::IdentifyProductType()
 /**
  * Captures Geolocation information from a COSMO-SKYMED
  * file.
- * The geoid will allways be WGS84
+ * The geoid will always be WGS84
  * The projection type may be UTM or UPS, depending on the
  * latitude from the center of the image.
  * @param iProductType type of CSK subproduct, see HDF5CSKProduct

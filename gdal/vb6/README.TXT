@@ -49,7 +49,7 @@ Quick Test Run
    creation and copies metadata, georeferencing and actual image data to 
    it "manually".  This shows most of the setting API is working OK. 
 
-10) Tools->CreateCopy: Simplier option to create out.tif, demonstrates 
+10) Tools->CreateCopy: Simpler option to create out.tif, demonstrates 
     simple file copying. 
 
 

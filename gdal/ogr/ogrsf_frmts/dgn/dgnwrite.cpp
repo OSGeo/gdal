@@ -285,7 +285,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
  * nUORPerSubUnit, pszMasterUnits, and pszSubUnits arguments will be ignored.
  * <li> DGNCF_USE_SEED_ORIGIN: The origin from the seed file will be used
  * and the X, Y and Z origin passed into the call will be ignored. 
- * <li> DGNCF_COPY_SEED_FILE_COLOR_TABLE: Should the first color table occuring
+ * <li> DGNCF_COPY_SEED_FILE_COLOR_TABLE: Should the first color table occurring
  * in the seed file also be copied? 
  * <li> DGNCF_COPY_WHOLE_SEED_FILE: By default only the first three elements
  * (TCB, Digitizer Setup and Level Symbology) are copied from the seed file. 

@@ -245,7 +245,7 @@ int     TABRawBinBlock::CommitToFile()
      *---------------------------------------------------------------*/
     int numBytesToWrite = m_bHardBlockSize?m_nBlockSize:m_nSizeUsed;
 
-    /*CPLDebug("MITAB", "Commiting to offset %d", m_nFileOffset);*/
+    /*CPLDebug("MITAB", "Committing to offset %d", m_nFileOffset);*/
 
     if (nStatus != 0 ||
         VSIFWriteL(m_pabyBuf,sizeof(GByte),
@@ -305,7 +305,7 @@ int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
     if (nStatus == 0)
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("MITAB", "Commiting GARBAGE block to offset %d", m_nFileOffset);
+        CPLDebug("MITAB", "Committing GARBAGE block to offset %d", m_nFileOffset);
 #endif
         nStatus = TABRawBinBlock::CommitToFile();
         m_nSizeUsed = 0;
@@ -1314,7 +1314,7 @@ GInt32 TABBinBlockManager::GetFirstGarbageBlock()
  *
  * Return address of the block at the head of the list of garbage blocks
  * and remove that block from the list.
- * Retuns 0 if the list is empty.
+ * Returns 0 if the list is empty.
  **********************************************************************/
 GInt32 TABBinBlockManager::PopGarbageBlock()
 {

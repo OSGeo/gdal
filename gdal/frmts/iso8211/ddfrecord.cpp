@@ -1344,7 +1344,7 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
     const char *pachWrkData;
     int         nInstanceSize;
 
-    // We special case this to avoid alot of warnings when initializing 
+    // We special case this to avoid a lot of warnings when initializing 
     // the field the first time.
     if( poField->GetDataSize() == 0 )
     {

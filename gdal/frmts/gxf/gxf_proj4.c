@@ -48,7 +48,7 @@ CPL_CVSID("$Id$");
  *
  * The mapping of GXF projections to PROJ.4 format is not complete.  Please
  * see the gxf_proj4.c code to better understand limitations of this
- * translation.  Noteable PROJ.4 knows little about datums.
+ * translation.  In particular, PROJ.4 knows little about datums.
  *
  * For example, the following GXF definitions:
  * <pre>

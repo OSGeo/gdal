@@ -106,7 +106,7 @@ class TimeDelta
     } 
 
     /* convert to seconds - can handle safely at least 250 years dif. */
-    /*  ... before loosing the microsecond precision */
+    /*  ... before losing the microsecond precision */
     inline operator double( void ) const  
     { 
         return (this->days*86400.0) + this->secs + (this->usecs*1e-6) ;

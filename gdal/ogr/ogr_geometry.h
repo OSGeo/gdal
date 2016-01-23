@@ -570,9 +570,9 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     OGRBoolean isPointInRing(const OGRPoint* pt, int bTestEnvelope = TRUE) const;
     OGRBoolean isPointOnRingBoundary(const OGRPoint* pt, int bTestEnvelope = TRUE) const;
 
-    // IWks Interface - Note this isnt really a first class object
+    // IWks Interface - Note this isn't really a first class object
     // for the purposes of WKB form.  These methods always fail since this
-    // object cant be serialized on its own. 
+    // object can't be serialized on its own. 
     virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;

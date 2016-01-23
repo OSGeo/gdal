@@ -1,5 +1,5 @@
 
-/* We define this here in general so that a VC++ build will publically
+/* We define this here in general so that a VC++ build will publicly
    declare STDCALL interfaces even if an application is built against it
    using MinGW */
 

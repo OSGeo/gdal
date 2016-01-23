@@ -1166,7 +1166,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
         {
             nTokenStackSize--;
             CPLDebug("PDF",
-                     "Remaing values in stack : %s",
+                     "Remaining values in stack : %s",
                      aszTokenStack[nTokenStackSize]);
         }
         return  NULL;

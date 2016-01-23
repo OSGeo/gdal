@@ -13,7 +13,7 @@ eval {
 ok(($@ =~ /called at t\/error.t/), "Error in GDAL is confessed (by a call in cpl_exceptions.i).");
 
 eval {
-    Geo::GDAL::VSIF::MkDir('/cant/make/this');
+    Geo::GDAL::VSIF::MkDir('/cannot/make/this');
 };
 ok(($@ =~ /called at t\/error.t/), "Error in bindings is confessed (by a call in typemaps_perl.i).");
 

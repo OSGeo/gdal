@@ -2,7 +2,7 @@
  * $Id:  $
  *
  * Project:  Project:  Creates a jpeg header
- * Purpose:  Abreviated JPEG support
+ * Purpose:  Abbreviated JPEG support
  * Author:   Ivan Lucena, [lucena_ivan at hotmail.com]
  *
  ******************************************************************************

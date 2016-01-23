@@ -256,7 +256,7 @@ int     TABMAPCoordBlock::CommitToFile()
     if (nStatus == 0)
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("MITAB", "Commiting COORD block to offset %d", m_nFileOffset);
+        CPLDebug("MITAB", "Committing COORD block to offset %d", m_nFileOffset);
 #endif
         nStatus = TABRawBinBlock::CommitToFile();
     }

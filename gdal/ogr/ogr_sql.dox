@@ -77,7 +77,7 @@ keyword may be used against any type of field.  Currently the distinctness
 test against a string value is case insensitive in OGR SQL.  The result of
 a SELECT with a DISTINCT keyword is a layer with one column (named the same
 as the field operated on), and one feature per distinct value.  Geometries
-are discarded.  The distinct values are assembled in memory, so alot of 
+are discarded.  The distinct values are assembled in memory, so a lot of 
 memory may be used for datasets with a large number of distinct values.
 
 \code
