@@ -272,7 +272,9 @@ void GDALPamRasterBand::PamInitialize()
         return;
 
     psPam = (GDALRasterBandPamInfo *)
-        CPLCalloc(sizeof(GDALRasterBandPamInfo),1);
+        VSI_CALLOC_VERBOSE(sizeof(GDALRasterBandPamInfo),1);
+    if( psPam == NULL )
+        return;
 
     psPam->dfScale = 1.0;
     psPam->poParentDS = poParentDS;
