@@ -416,7 +416,7 @@ typedef     struct {
 void   INGR_DGN2IEEEDouble(void * dbl);
 
 //  ------------------------------------------------------------------
-//    Compression, Data Format, Data Type related funtions
+//    Compression, Data Format, Data Type related functions
 //  ------------------------------------------------------------------
 
 uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFileName,

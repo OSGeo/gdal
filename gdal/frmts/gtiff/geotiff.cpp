@@ -5254,7 +5254,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     if( (iBitOffset % 8) == 0 )
                     {
                         poGDS->pabyBlockBuf[iBitOffset>>3] = (GByte) (nInWord >> 4);
-                        /* let 4 lower bits to zero as they're going to be overriden by the next word */
+                        /* let 4 lower bits to zero as they're going to be overridden by the next word */
                         poGDS->pabyBlockBuf[(iBitOffset>>3)+1] = (GByte) ((nInWord & 0xf) << 4);
                     }
                     else

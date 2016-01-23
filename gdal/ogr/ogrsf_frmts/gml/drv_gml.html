@@ -32,7 +32,7 @@ GML writing is always supported, even without Xerces or Expat.<p>
 Note: starting with OGR 1.9.0, if both Xerces and Expat are available at build time,
 the GML driver will preferentially select at runtime the Expat parser for cases where it is possible
 (GML file in a compatible encoding), and default back to Xerces parser in other cases.
-However, the choice of the parser can be overriden by specifying the <b>GML_PARSER</b>
+However, the choice of the parser can be overridden by specifying the <b>GML_PARSER</b>
 configuration option to <b>EXPAT</b> or <b>XERCES</b>.<p>
 
 <h2>CRS support</h2>
@@ -302,7 +302,7 @@ write the content of the gml:id attribute of the created feature.<p>
 Starting with OGR 1.9.0, the driver autodetects the presence of a fid (GML2)
 (resp. gml:id (GML3)) attribute at the beginning of the file, and, if found,
 exposes it by default as a <i>fid</i> (resp. <i>gml_id</i>) field. The autodetection
-can be overriden by specifying the <b>GML_EXPOSE_FID</b> or <b>GML_EXPOSE_GML_ID</b> configuration
+can be overridden by specifying the <b>GML_EXPOSE_FID</b> or <b>GML_EXPOSE_GML_ID</b> configuration
 option to <b>YES</b> or <b>NO</b>.<p>
 
 Starting with OGR 1.9.0, when creating a GML2 document, if a field is called

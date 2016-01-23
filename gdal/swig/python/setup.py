@@ -25,7 +25,7 @@ GNM_ENABLED = False
 
 # ---------------------------------------------------------------------------
 # Default build options
-# (may be overriden with setup.cfg or command line switches).
+# (may be overridden with setup.cfg or command line switches).
 # ---------------------------------------------------------------------------
 
 include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/', '../../ogr/ogrsf_frmts', '../../gnm', '../../apps']

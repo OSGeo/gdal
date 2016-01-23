@@ -2993,7 +2993,7 @@ public class Band:public int getDataType()
  * Fetch default raster histogram. 
  * <p>
  * The default method in GDALRasterBand will compute a default histogram. This
- * method is overriden by derived classes (such as GDALPamRasterBand, VRTDataset, HFADataset...)
+ * method is overridden by derived classes (such as GDALPamRasterBand, VRTDataset, HFADataset...)
  * that may be able to fetch efficiently an already stored histogram.
  * <p>
  * For example,

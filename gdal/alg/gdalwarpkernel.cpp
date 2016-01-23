@@ -45,7 +45,7 @@
 
 CPL_CVSID("$Id$");
 
-//#define INSTANCIATE_FLOAT64_SSE2_IMPL
+//#define INSTANTIATE_FLOAT64_SSE2_IMPL
 
 static const int anGWKFilterRadius[] =
 {
@@ -132,8 +132,7 @@ static CPLErr GWKNearestNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK );
-// TODO: Spelling INSTANCIATE
-#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+#ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK );
 #endif
 static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
@@ -141,7 +140,7 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK );
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK );
-#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+#ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK );
 #endif
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
@@ -1167,7 +1166,7 @@ CPLErr GDALWarpKernel::PerformWarp()
         && bNoMasksOrDstDensityOnly )
         return GWKCubicNoMasksOrDstDensityOnlyFloat( this );
 
-#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+#ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
     if( eWorkingDataType == GDT_Float64
         && eResample == GRA_Bilinear
         && bNoMasksOrDstDensityOnly )
@@ -3522,7 +3521,7 @@ int GWKResampleNoMasksT<float>( GDALWarpKernel *poWK, int iBand,
     return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
 }
 
-#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+#ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
 
 /************************************************************************/
 /*                     GWKResampleNoMasksT<double>()                    */
@@ -3536,7 +3535,7 @@ int GWKResampleNoMasksT<double>( GDALWarpKernel *poWK, int iBand,
     return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
 }
 
-#endif /* INSTANCIATE_FLOAT64_SSE2_IMPL */
+#endif /* INSTANTIATE_FLOAT64_SSE2_IMPL */
 
 #endif /* defined(__x86_64) || defined(_M_X64) */
 
@@ -4367,7 +4366,7 @@ static CPLErr GWKCubicNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK )
                    GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<float,GRA_Cubic> );
 }
 
-#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+#ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
 
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK )
 {
@@ -4577,7 +4576,7 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK )
                    GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<float,GRA_Bilinear> );
 }
 
-#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+#ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
 
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK )
 {

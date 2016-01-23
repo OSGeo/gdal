@@ -756,7 +756,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
         if( bGotFromEPSG )
         {
-            // See #6210. In case there's an overriden linear units, take it
+            // See #6210. In case there's an overridden linear units, take it
             // into account
             char* pszUnitsName = NULL;
             double dfUOMLengthInMeters = oSRS.GetLinearUnits( &pszUnitsName );

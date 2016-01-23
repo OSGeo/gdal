@@ -230,7 +230,7 @@ def ers_10():
         print(units)
         return 'fail'
 
-    # This should be overriden by the above values
+    # This should be overridden by the above values
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
