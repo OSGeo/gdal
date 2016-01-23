@@ -375,12 +375,21 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     for( int i = 0; i < nBandCount; i++ )
     {
         poDS->SetBand( i+1, 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes + i, nBytesPerPixel, nBytesPerLine,
                                GDT_Byte, TRUE, TRUE ) );
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            delete poDS;
+            CPLFree( pszQuadname );
+            CPLFree( pszQuadquad );
+            CPLFree( pszState );
+            return NULL;
+        }
     }
 
     if (nProjType == 1)
