@@ -207,7 +207,7 @@ GBool OGRStyleMgr::SetFeatureStyleString(OGRFeature *poFeature,
                                          GBool bNoMatching)
 {
     const char *pszName;
-    if (poFeature == FALSE)
+    if (poFeature == NULL)
       return FALSE;
 
     if (pszStyleString == NULL)
@@ -1156,8 +1156,8 @@ const char *OGRStyleTable::Find(const char *pszName)
 
 const char *OGR_STBL_Find( OGRStyleTableH hStyleTable, const char *pszName )
 {
-    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_Find", FALSE );
-    VALIDATE_POINTER1( pszName, "OGR_STBL_Find", FALSE );
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_Find", NULL );
+    VALIDATE_POINTER1( pszName, "OGR_STBL_Find", NULL );
 
     return ((OGRStyleTable *) hStyleTable)->Find( pszName );
 }

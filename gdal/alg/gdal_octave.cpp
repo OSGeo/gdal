@@ -37,7 +37,7 @@ CPL_CVSID("$Id");
 
 GDALIntegralImage::GDALIntegralImage()
 {
-    pMatrix = 0;
+    pMatrix = NULL;
     nHeight = 0;
     nWidth = 0;
 }
@@ -159,8 +159,8 @@ GDALOctaveLayer::GDALOctaveLayer(int nOctave, int nInterval)
     this->width = 0;
     this->height = 0;
 
-    this->detHessians = 0;
-    this->signs = 0;
+    this->detHessians = NULL;
+    this->signs = NULL;
 }
 
 void GDALOctaveLayer::ComputeLayer(GDALIntegralImage *poImg)

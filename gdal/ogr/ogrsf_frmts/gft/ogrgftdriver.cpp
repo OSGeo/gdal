@@ -64,7 +64,7 @@ OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
 
 {
     if (!STARTS_WITH_CI(pszFilename, "GFT:"))
-        return FALSE;
+        return NULL;
 
     OGRGFTDataSource   *poDS = new OGRGFTDataSource();
 

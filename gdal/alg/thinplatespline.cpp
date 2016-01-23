@@ -554,7 +554,14 @@ int VizGeorefSpline2D::solve(void)
             for(col = 0; col < _nof_vars; col++)
                 matRHS.at(row, col) = rhs[col][row];
         arma::mat matCoefs(_nof_vars, _nof_eqs);
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
         if( !arma::solve(matCoefs, matA, matRHS) )
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+#pragma GCC diagnostic pop
+#endif
         {
             CPLError(CE_Failure, CPLE_AppDefined, "There is a problem inverting the interpolation matrix.");
             ret = 0;

@@ -117,14 +117,14 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
     if( mysql_query( poDS->GetConn(), osCommand ) )
     {
         poDS->ReportError( "DESCRIBE Failed" );
-        return FALSE;
+        return NULL;
     }
 
     hResult = mysql_store_result( poDS->GetConn() );
     if( hResult == NULL )
     {
         poDS->ReportError( "mysql_store_result() failed on DESCRIBE result." );
-        return FALSE;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */

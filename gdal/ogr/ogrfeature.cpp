@@ -3164,7 +3164,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             }
             else
             {
-                const char *papszValues[2] = { pszValue, 0 };
+                const char *papszValues[2] = { pszValue, NULL };
                 SetField( iField, (char **) papszValues );
             }
         }

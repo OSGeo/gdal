@@ -28,7 +28,7 @@
 #ifndef PCIDSK_CONFIG_H_INCLUDED
 #define PCIDSK_CONFIG_H_INCLUDED
 
-#ifdef DEBUG_BOOL
+#if defined(DEBUG_BOOL) || defined(NULL_AS_NULLPTR)
 #include "cpl_port.h"
 #endif
 

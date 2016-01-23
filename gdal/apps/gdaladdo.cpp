@@ -206,7 +206,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Clean overviews.                                                */
 /* -------------------------------------------------------------------- */
     if ( bClean &&
-        GDALBuildOverviews( hDataset,pszResampling, 0, 0, 
+        GDALBuildOverviews( hDataset,pszResampling, 0, NULL, 
                              0, NULL, pfnProgress, NULL ) != CE_None )
     {
         printf( "Cleaning overviews failed.\n" );

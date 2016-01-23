@@ -186,7 +186,7 @@ bool OGRODBCMDBDriver::InstallMdbDriver()
         // Create installer and register driver
         CPLODBCDriverInstaller dri;
 
-        if ( !dri.InstallDriver(driver.c_str(), 0, ODBC_INSTALL_COMPLETE) )
+        if ( !dri.InstallDriver(driver.c_str(), NULL, ODBC_INSTALL_COMPLETE) )
         {
             // Report ODBC error
             CPLError( CE_Failure, CPLE_AppDefined, "ODBC: %s", dri.GetLastError() );
@@ -229,7 +229,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
         {
             // Find default library in custom directory
             const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], NULL );
-            CPLAssert( 0 != pszDriverFile );
+            CPLAssert( NULL != pszDriverFile );
 
             strLibPath = pszDriverFile;
         }
@@ -248,7 +248,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
         for ( int j = 0; j < nLibNames; j++ )
         {
             const char* pszDriverFile = CPLFormFilename( libPath[i], aszDefaultLibName[j], NULL );
-            CPLAssert( 0 != pszDriverFile );
+            CPLAssert( NULL != pszDriverFile );
 
             if ( LibraryExists( pszDriverFile ) )
             {
@@ -270,7 +270,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
 
 bool OGRODBCMDBDriver::LibraryExists(const char* pszLibPath)
 {
-    CPLAssert( 0 != pszLibPath );
+    CPLAssert( NULL != pszLibPath );
 
     VSIStatBuf stb;
 

@@ -1441,10 +1441,10 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3 (unzFile file, int* method,
     if ((s->cur_file_info.compression_method==Z_DEFLATED) &&
         (!raw))
     {
-      pfile_in_zip_read_info->stream.zalloc = (alloc_func)0;
-      pfile_in_zip_read_info->stream.zfree = (free_func)0;
-      pfile_in_zip_read_info->stream.opaque = (voidpf)0;
-      pfile_in_zip_read_info->stream.next_in = 0;
+      pfile_in_zip_read_info->stream.zalloc = (alloc_func)NULL;
+      pfile_in_zip_read_info->stream.zfree = (free_func)NULL;
+      pfile_in_zip_read_info->stream.opaque = (voidpf)NULL;
+      pfile_in_zip_read_info->stream.next_in = NULL;
       pfile_in_zip_read_info->stream.avail_in = 0;
 
       err=inflateInit2(&pfile_in_zip_read_info->stream, -MAX_WBITS);

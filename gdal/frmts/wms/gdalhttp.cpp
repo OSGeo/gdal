@@ -70,14 +70,14 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
     psRequest->pszURL = CPLStrdup(pszURL);
     psRequest->papszOptions = CSLDuplicate(const_cast<char **>(papszOptions));
     psRequest->nStatus = 0;
-    psRequest->pszContentType = 0;
-    psRequest->pszError = 0;
-    psRequest->pabyData = 0;
+    psRequest->pszContentType = NULL;
+    psRequest->pszError = NULL;
+    psRequest->pabyData = NULL;
     psRequest->nDataLen = 0;
     psRequest->nDataAlloc = 0;
-    psRequest->m_curl_handle = 0;
-    psRequest->m_headers = 0;
-    psRequest->m_curl_error = 0;
+    psRequest->m_curl_handle = NULL;
+    psRequest->m_headers = NULL;
+    psRequest->m_curl_error = NULL;
 
     psRequest->m_curl_handle = curl_easy_init();
     if (psRequest->m_curl_handle == NULL) {
@@ -117,44 +117,44 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
 void CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest) {
     if (psRequest->m_curl_handle) {
         curl_easy_cleanup(psRequest->m_curl_handle);
-        psRequest->m_curl_handle = 0;
+        psRequest->m_curl_handle = NULL;
     }
     if (psRequest->m_headers) {
         curl_slist_free_all(psRequest->m_headers);
-        psRequest->m_headers = 0;
+        psRequest->m_headers = NULL;
     }
     if (psRequest->m_curl_error) {
         CPLFree(psRequest->m_curl_error);
-        psRequest->m_curl_error = 0;
+        psRequest->m_curl_error = NULL;
     }
 
     if (psRequest->pszContentType) {
         CPLFree(psRequest->pszContentType);
-        psRequest->pszContentType = 0;
+        psRequest->pszContentType = NULL;
     }
     if (psRequest->pszError) {
         CPLFree(psRequest->pszError);
-        psRequest->pszError = 0;
+        psRequest->pszError = NULL;
     }
     if (psRequest->pabyData) {
         CPLFree(psRequest->pabyData);
-        psRequest->pabyData = 0;
+        psRequest->pabyData = NULL;
         psRequest->nDataLen = 0;
         psRequest->nDataAlloc = 0;
     }
     if (psRequest->papszOptions) {
         CSLDestroy(psRequest->papszOptions);
-        psRequest->papszOptions = 0;
+        psRequest->papszOptions = NULL;
     }
     if (psRequest->pszURL) {
         CPLFree(psRequest->pszURL);
-        psRequest->pszURL = 0;
+        psRequest->pszURL = NULL;
     }
 }
 
 CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const char *const *papszOptions) {
     CPLErr ret = CE_None;
-    CURLM *curl_multi = 0;
+    CURLM *curl_multi = NULL;
     int still_running;
     int max_conn;
     int i, conn_i;
@@ -253,7 +253,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
         psRequest->nStatus = static_cast<int>(response_code);
 
-        char *content_type = 0;
+        char *content_type = NULL;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);
         if (content_type) psRequest->pszContentType = CPLStrdup(content_type);
 

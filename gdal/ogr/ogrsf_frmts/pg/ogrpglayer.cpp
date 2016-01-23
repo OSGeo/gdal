@@ -1103,7 +1103,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 
         else if( eOGRType == OFTStringList )
         {
-            char **papszTokens = 0;
+            char **papszTokens = NULL;
 
 #if !defined(PG_PRE74)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation

@@ -189,10 +189,10 @@ int VFKReaderSQLite::ReadDataBlocks()
     }
 
     if (m_nDataBlockCount == 0) {
-        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0));
+        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", NULL, NULL, NULL));
         /* CREATE TABLE ... */
         nDataBlocks = VFKReader::ReadDataBlocks();
-        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "COMMIT", 0, 0, 0));
+        CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "COMMIT", NULL, NULL, NULL));
 
         StoreInfo2DB();
     }

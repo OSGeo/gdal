@@ -2055,7 +2055,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     // Seek for "Value" field index (AGIS standards field name)
     // ----------------------------------------------------------
 
-    if( GetColorTable() == 0 || GetColorTable()->GetColorEntryCount() == 0 )
+    if( GetColorTable() == NULL || GetColorTable()->GetColorEntryCount() == 0 )
     {
         for( int i = 0; i < poRAT->GetColumnCount(); i++ )
         {
@@ -2078,7 +2078,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     // ----------------------------------------------------------
 
     int iName  = -1;
-    if( GetCategoryNames() == 0 || CSLCount( GetCategoryNames() ) == 0 )
+    if( CSLCount( GetCategoryNames() ) == 0 )
     {
         iName  = poRAT->GetColOfUsage( GFU_Name );
         if( iName == -1 )

@@ -346,7 +346,7 @@ extern void json_object_object_del(struct json_object* obj, const char *key);
  * @param iter the object iterator
  */
 #define json_object_object_foreachC(obj,iter) \
- for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : 0); iter.entry = iter.entry->next)
+ for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : NULL); iter.entry = iter.entry->next)
 
 /* Array type methods */
 

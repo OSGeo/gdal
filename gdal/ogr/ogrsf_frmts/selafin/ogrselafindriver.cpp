@@ -93,9 +93,9 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName,
     const char *pszTemp=CSLFetchNameValue(papszOptions,"TITLE");
     char pszTitle[81];
     int pnDate[6]={-1,0};
-    if (pszTemp!=0) strncpy(pszTitle,pszTemp,72); else memset(pszTitle,' ',72);
+    if (pszTemp!=NULL) strncpy(pszTitle,pszTemp,72); else memset(pszTitle,' ',72);
     pszTemp=CSLFetchNameValue(papszOptions,"DATE");
-    if (pszTemp!=0) {
+    if (pszTemp!=NULL) {
         const char* pszErrorMessage="Wrong format for date parameter: must be \"%%Y-%%m-%%d_%%H:%%M:%%S\", ignored";
         const char *pszc=pszTemp;
         pnDate[0]=atoi(pszTemp);
@@ -138,8 +138,8 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName,
     if (Selafin::write_intarray(fp,pnTemp,4)==0) bError=true;
     if (Selafin::write_intarray(fp,pnTemp,0)==0) bError=true;
     if (Selafin::write_intarray(fp,pnTemp,0)==0) bError=true;
-    if (Selafin::write_floatarray(fp,0,0)==0) bError=true;
-    if (Selafin::write_floatarray(fp,0,0)==0) bError=true;
+    if (Selafin::write_floatarray(fp,NULL,0)==0) bError=true;
+    if (Selafin::write_floatarray(fp,NULL,0)==0) bError=true;
     VSIFCloseL(fp);
     if (bError) {
         CPLError(CE_Failure, CPLE_AppDefined,"Error writing to file %s.",pszName);

@@ -208,14 +208,14 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
-        return FALSE;
+        return NULL;
     }
     value = poDS->GetKeyword( "REALFMT" );
     if (!EQUAL(value,"RIEEE") ) {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
-        return FALSE;
+        return NULL;
     }
 
     char chByteOrder = 'M';
@@ -248,7 +248,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
-        return FALSE;
+        return NULL;
     }
 
     strcpy(szLayout,"BSQ");
@@ -290,7 +290,8 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                   "File %s appears to be a VICAR file, but failed to find some "
                   "required keywords.",
                   poDS->GetDescription() );
-        return FALSE;
+        delete poDS;
+        return NULL;
     }
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */

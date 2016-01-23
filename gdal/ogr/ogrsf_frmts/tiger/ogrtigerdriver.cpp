@@ -58,7 +58,7 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
             }
         }
         if( !bFoundCompatibleFile )
-            return FALSE;
+            return NULL;
     }
 
     OGRTigerDataSource  *poDS = new OGRTigerDataSource;

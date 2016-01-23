@@ -549,10 +549,10 @@ class CPL_DLL OGRSpatialReference
 
     OGRErr      ImportFromESRIStatePlaneWKT( 
         int nCode, const char* pszDatumName, const char* pszUnitsName, 
-        int nPCSCode, const char* pszCSName = 0 );
+        int nPCSCode, const char* pszCSName = NULL );
     OGRErr      ImportFromESRIWisconsinWKT( 
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin, 
-        const char* pszUnitsName, const char* pszCSName = 0 );
+        const char* pszUnitsName, const char* pszCSName = NULL );
 
     static OGRSpatialReference* GetWGS84SRS();
 };

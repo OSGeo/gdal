@@ -43,9 +43,9 @@ Range::~Range() {
 }
 
 void Range::deleteList(Range::List *poList) {
-    if (poList==0) return;
+    if (poList==NULL) return;
     Range::List *pol=poList;
-    while (pol!=0) {
+    while (pol!=NULL) {
         poList=poList->poNext;
         delete pol;
         pol=poList;
@@ -55,8 +55,8 @@ void Range::deleteList(Range::List *poList) {
 void Range::setRange(const char *pszStr) {
     deleteList(poVals);
     deleteList(poActual);
-    poVals=0;
-    Range::List *poEnd=0;
+    poVals=NULL;
+    Range::List *poEnd=NULL;
     if (pszStr==NULL || pszStr[0]!='[') {
         CPLError( CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
         return;
@@ -81,7 +81,7 @@ void Range::setRange(const char *pszStr) {
             if (*psze!=':' && *psze!=',' && *psze!=']') {
                 CPLError( CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
                 deleteList(poVals);
-                poVals=0;
+                poVals=NULL;
                 return;
             }
             pszc=psze;
@@ -95,7 +95,7 @@ void Range::setRange(const char *pszStr) {
                 if (*psze!=',' && *psze!=']') {
                     CPLError( CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
                     deleteList(poVals);
-                    poVals=0;
+                    poVals=NULL;
                     return;
                 }
                 pszc=psze;
@@ -103,7 +103,7 @@ void Range::setRange(const char *pszStr) {
         } else nMax=nMin;
         Range::List *poNew;
         if (eType!=ALL) poNew=new Range::List(eType,nMin,nMax,NULL); else poNew=new Range::List(POINTS,nMin,nMax,new Range::List(ELEMENTS,nMin,nMax,NULL));
-        if (poVals==0) {
+        if (poVals==NULL) {
             poVals=poNew;
             poEnd=poNew;
         } else {
@@ -115,14 +115,14 @@ void Range::setRange(const char *pszStr) {
     if (*pszc!=']') {
         CPLError( CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
         deleteList(poVals);
-        poVals=0;
+        poVals=NULL;
     }
 }
 
 bool Range::contains(SelafinTypeDef eType,int nValue) const {
-    if (poVals==0) return true;
+    if (poVals==NULL) return true;
     Range::List *poCur=poActual;
-    while (poCur!=0) {
+    while (poCur!=NULL) {
         if (poCur->eType==eType && nValue>=poCur->nMin && nValue<=poCur->nMax) return true;
         poCur=poCur->poNext;
     }
@@ -130,15 +130,15 @@ bool Range::contains(SelafinTypeDef eType,int nValue) const {
 }
 
 void Range::sortList(Range::List *&poList,Range::List *poEnd) {
-    if (poList==0 || poList==poEnd) return;
+    if (poList==NULL || poList==poEnd) return;
     Range::List *pol=poList;
-    Range::List *poBefore=0;
-    Range::List *poBeforeEnd=0;
+    Range::List *poBefore=NULL;
+    Range::List *poBeforeEnd=NULL;
     // poList plays the role of the pivot value. Values greater and smaller are sorted on each side of it.
     // The order relation here is POINTS ranges first, then sorted by nMin value.
     while (pol->poNext!=poEnd) {
         if ((pol->eType==ELEMENTS && (pol->poNext->eType==POINTS || pol->poNext->nMin<pol->nMin)) || (pol->eType==POINTS && pol->poNext->eType==POINTS && pol->poNext->nMin<pol->nMin)) {
-            if (poBefore==0) {
+            if (poBefore==NULL) {
                 poBefore=pol->poNext;
                 poBeforeEnd=poBefore;
             } else {
@@ -148,24 +148,24 @@ void Range::sortList(Range::List *&poList,Range::List *poEnd) {
             pol->poNext=pol->poNext->poNext;
         } else pol=pol->poNext;
     }
-    if (poBefore!=0) poBeforeEnd->poNext=poList;
+    if (poBefore!=NULL) poBeforeEnd->poNext=poList;
     // Now, poList is well placed. We do the same for the sublists before and after poList
     Range::sortList(poBefore,poList);
     Range::sortList(poList->poNext,poEnd);
     // Finally, we restore the right starting point of the list
-    if (poBefore!=0) poList=poBefore;
+    if (poBefore!=NULL) poList=poBefore;
 }
 
 void Range::setMaxValue(int nMaxValueP) {
     nMaxValue=nMaxValueP;
-    if (poVals==0) return;
+    if (poVals==NULL) return;
     // We keep an internal private copy of the list where the range is "resolved", that is simplified to a union of disjoint intervals
     deleteList(poActual);
-    poActual=0;
+    poActual=NULL;
     Range::List *pol=poVals;
-    Range::List *poActualEnd=0;
+    Range::List *poActualEnd=NULL;
     int nMinT,nMaxT;
-    while (pol!=0) {
+    while (pol!=NULL) {
         if (pol->nMin<0) nMinT=pol->nMin+nMaxValue; else nMinT=pol->nMin;
         if (pol->nMin<0) pol->nMin=0;
         if (pol->nMin>=nMaxValue) pol->nMin=nMaxValue-1;
@@ -173,20 +173,20 @@ void Range::setMaxValue(int nMaxValueP) {
         if (pol->nMax<0) pol->nMax=0;
         if (pol->nMax>=nMaxValue) pol->nMax=nMaxValue-1;
         if (nMaxT<nMinT) continue;
-        if (poActual==0) {
-            poActual=new Range::List(pol->eType,nMinT,nMaxT,0);
+        if (poActual==NULL) {
+            poActual=new Range::List(pol->eType,nMinT,nMaxT,NULL);
             poActualEnd=poActual;
         } else {
-            poActualEnd->poNext=new Range::List(pol->eType,nMinT,nMaxT,0);
+            poActualEnd->poNext=new Range::List(pol->eType,nMinT,nMaxT,NULL);
             poActualEnd=poActualEnd->poNext;
         }
         pol=pol->poNext;
     }
     sortList(poActual);
     // Now we merge successive ranges when they intersect or are consecutive
-    if (poActual!=0) {
+    if (poActual!=NULL) {
         pol=poActual;
-        while (pol->poNext!=0) {
+        while (pol->poNext!=NULL) {
             if (pol->poNext->eType==pol->eType && pol->poNext->nMin<=pol->nMax+1) {
                 if (pol->poNext->nMax>pol->nMax) pol->nMax=pol->poNext->nMax;
                 poActualEnd=pol->poNext->poNext;
@@ -198,10 +198,10 @@ void Range::setMaxValue(int nMaxValueP) {
 }
 
 size_t Range::getSize() const {
-    if (poVals==0) return nMaxValue*2;
+    if (poVals==NULL) return nMaxValue*2;
     Range::List *pol=poActual;
     size_t nSize=0;
-    while (pol!=0) {
+    while (pol!=NULL) {
         nSize+=(pol->nMax-pol->nMin+1);
         pol=pol->poNext;
     }
@@ -214,12 +214,12 @@ size_t Range::getSize() const {
 
 OGRSelafinDataSource::OGRSelafinDataSource() :
     pszName(NULL),
-    pszLockName(0),
+    pszLockName(NULL),
     papoLayers(NULL),
     nLayers(0),
     bUpdate(FALSE),
-    poHeader(0),
-    poSpatialRef(0)
+    poHeader(NULL),
+    poSpatialRef(NULL)
 { }
 
 /************************************************************************/
@@ -233,7 +233,7 @@ OGRSelafinDataSource::~OGRSelafinDataSource() {
     CPLFree( pszName );
     ReleaseLock();
     delete poHeader;
-    if (poSpatialRef!=0) poSpatialRef->Release();
+    if (poSpatialRef!=NULL) poSpatialRef->Release();
 }
 
 /************************************************************************/
@@ -423,7 +423,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
 
     // Read header of file to get common information for all layers
     poHeader=Selafin::read_header(fp,pszFilename);
-    if (poHeader==0) {
+    if (poHeader==NULL) {
         VSIFCloseL(fp);
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open %s, wrong format.\n", pszFilename);
         return FALSE;
@@ -433,7 +433,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
         if (poSpatialRef->importFromEPSG(poHeader->nEpsg)!=OGRERR_NONE) {
             CPLError( CE_Warning, CPLE_AppDefined, "EPSG %d not found. Could not set datasource SRS.\n", poHeader->nEpsg);
             delete poSpatialRef;
-            poSpatialRef=0;
+            poSpatialRef=NULL;
         }
     }
 
@@ -455,7 +455,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                     CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open %s, wrong format.\n", pszFilename);
                     return FALSE;
                 }
-                if (poHeader->panStartDate==0) snprintf(szTemp,29,"%d",i); else {
+                if (poHeader->panStartDate==NULL) snprintf(szTemp,29,"%d",i); else {
                     struct tm sDate;
                     memset(&sDate, 0, sizeof(sDate));
                     sDate.tm_year=poHeader->panStartDate[0]-1900;
@@ -497,14 +497,14 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpati
     // Parse options
     double dfDate;
     const char *pszTemp=CSLFetchNameValue(papszOptions,"DATE");
-    if (pszTemp!=0) dfDate=CPLAtof(pszTemp); else dfDate=0.0;
+    if (pszTemp!=NULL) dfDate=CPLAtof(pszTemp); else dfDate=0.0;
     // Set the SRS of the datasource if this is the first layer
-    if (nLayers==0 && poSpatialRefP!=0) {
+    if (nLayers==0 && poSpatialRefP!=NULL) {
         poSpatialRef=poSpatialRefP;
         poSpatialRef->Reference();
         const char* szEpsg=poSpatialRef->GetAttrValue("GEOGCS|AUTHORITY",1);
         int nEpsg=0;
-        if (szEpsg!=0) nEpsg=(int)strtol(szEpsg,0,10);
+        if (szEpsg!=NULL) nEpsg=(int)strtol(szEpsg,NULL,10);
         if (nEpsg==0) {
             CPLError(CE_Warning,CPLE_AppDefined,"Could not find EPSG code for SRS. The SRS won't be saved in the datasource.");
         } else {
@@ -520,7 +520,7 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpati
         CPLError( CE_Failure, CPLE_FileIO, "Could not write to Selafin file %s.\n",pszName);
         return NULL;
     }
-    double *pdfValues=0;
+    double *pdfValues=NULL;
     if (poHeader->nPoints>0)
     {
         pdfValues=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
@@ -564,7 +564,7 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
     // Delete layer in file. Here we don't need to create a copy of the file because we only update values and it can't get corrupted even if the system crashes during the operation
     int nNum=papoLayers[iLayer]->GetStepNumber();
     double dfTime;
-    double *dfValues=0;
+    double *dfValues=NULL;
     int nTemp;
     for (int i=nNum;i<poHeader->nSteps-1;++i) {
         if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+4,SEEK_SET)!=0 ||

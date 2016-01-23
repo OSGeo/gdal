@@ -85,7 +85,7 @@ static const char * const ogr_pj_ellps[] = {
 "WGS72",        "a=6378135.0", "rf=298.26", "WGS 72",
 "WGS84",    "a=6378137.0",  "rf=298.257223563", "WGS 84",
 "sphere",   "a=6370997.0",  "b=6370997.0", "Normal Sphere (r=6370997)",
-0, 0, 0, 0,
+NULL, NULL, NULL, NULL,
 };
 
 typedef struct

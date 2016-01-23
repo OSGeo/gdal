@@ -276,7 +276,7 @@ int OGRFeatureQuery::CanUseIndex( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
 /*      Do we have an index on the targeted layer?                      */
 /* -------------------------------------------------------------------- */
-    if ( poLayer->GetIndex() == FALSE )
+    if ( poLayer->GetIndex() == NULL )
         return FALSE;
 
     return CanUseIndex( psExpr, poLayer );

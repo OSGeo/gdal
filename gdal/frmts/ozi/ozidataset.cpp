@@ -269,9 +269,9 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     z_stream      stream;
-    stream.zalloc = (alloc_func)0;
-    stream.zfree = (free_func)0;
-    stream.opaque = (voidpf)0;
+    stream.zalloc = (alloc_func)NULL;
+    stream.zfree = (free_func)NULL;
+    stream.opaque = (voidpf)NULL;
     stream.next_in = pabyZlibBuffer + 2;
     stream.avail_in = nToRead - 2;
 

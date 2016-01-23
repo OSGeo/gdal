@@ -1008,7 +1008,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         NFL > (INT_MAX - 1) / (NFC * 5) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,"Invalid NFL / NFC values");
-        return FALSE;
+        return NULL;
     }
 
     int PNC = record->GetIntSubfield("SPR", 0, "PNC", 0);
@@ -1077,7 +1077,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         }
         catch( const std::bad_alloc& )
         {
-            return FALSE;
+            return NULL;
         }
         const char* ptr = field->GetData();
         char offset[5+1]={0};

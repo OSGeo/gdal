@@ -448,7 +448,7 @@ int JPEG2000Dataset::DecodeImage()
         return psImage != NULL;
 
     bAlreadyDecoded = TRUE;    
-    if ( !( psImage = jas_image_decode(psStream, iFormat, 0) ) )
+    if ( !( psImage = jas_image_decode(psStream, iFormat, NULL) ) )
     {
         CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
                   jas_image_fmttostr( iFormat ), iFormat );
@@ -627,8 +627,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         // XXX: Hack to read JP2 boxes from input file. JasPer hasn't public
         // API call for such things, so we will use internal JasPer functions.
         jp2_box_t *box;
-        box = 0;
-        while ( ( box = jp2_box_get(poDS->psStream) ) )
+        while ( ( box = jp2_box_get(poDS->psStream) ) != NULL )
         {
             switch (box->type)
             {
@@ -703,7 +702,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
             }
             jp2_box_destroy( box );
-            box = 0;
+            box = NULL;
         }
         if( !paiDepth || !pabSignedness )
         {

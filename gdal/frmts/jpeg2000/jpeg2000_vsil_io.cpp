@@ -148,18 +148,18 @@ static jas_stream_t *JPEG2000_VSIL_jas_stream_create()
 	jas_stream_t *stream;
 
 	if (!(stream = (jas_stream_t*) jas_malloc(sizeof(jas_stream_t)))) {
-		return 0;
+		return NULL;
 	}
 	stream->openmode_ = 0;
 	stream->bufmode_ = 0;
 	stream->flags_ = 0;
-	stream->bufbase_ = 0;
-	stream->bufstart_ = 0;
+	stream->bufbase_ = NULL;
+	stream->bufstart_ = NULL;
 	stream->bufsize_ = 0;
-	stream->ptr_ = 0;
+	stream->ptr_ = NULL;
 	stream->cnt_ = 0;
-	stream->ops_ = 0;
-	stream->obj_ = 0;
+	stream->ops_ = NULL;
+	stream->obj_ = NULL;
 	stream->rwcnt_ = 0;
 	stream->rwlimit_ = -1;
 
@@ -172,7 +172,7 @@ static void JPEG2000_VSIL_jas_stream_destroy(jas_stream_t *stream)
 	this memory. */
 	if ((stream->bufmode_ & JAS_STREAM_FREEBUF) && stream->bufbase_) {
 		jas_free(stream->bufbase_);
-		stream->bufbase_ = 0;
+		stream->bufbase_ = NULL;
 	}
 	jas_free(stream);
 }
@@ -261,7 +261,7 @@ jas_stream_t *JPEG2000_VSIL_fopen(const char *filename, const char *mode)
 
 	/* Allocate a stream object. */
 	if (!(stream = JPEG2000_VSIL_jas_stream_create())) {
-		return 0;
+		return NULL;
 	}
 
 	/* Parse the mode string. */
@@ -270,7 +270,7 @@ jas_stream_t *JPEG2000_VSIL_fopen(const char *filename, const char *mode)
 	/* Allocate space for the underlying file stream object. */
 	if (!(obj = (jas_stream_VSIFL_t*) jas_malloc(sizeof(jas_stream_VSIFL_t)))) {
 		JPEG2000_VSIL_jas_stream_destroy(stream);
-		return 0;
+		return NULL;
 	}
 	obj->fp = NULL;
 	stream->obj_ = (void *) obj;
@@ -281,11 +281,11 @@ jas_stream_t *JPEG2000_VSIL_fopen(const char *filename, const char *mode)
 	/* Open the underlying file. */
 	if ((obj->fp = VSIFOpenL(filename, mode)) == NULL) {
 		jas_stream_close(stream);
-		return 0;
+		return NULL;
 	}
 
 	/* By default, use full buffering for this type of stream. */
-	JPEG2000_VSIL_jas_stream_initbuf(stream, JAS_STREAM_FULLBUF, 0, 0);
+	JPEG2000_VSIL_jas_stream_initbuf(stream, JAS_STREAM_FULLBUF, NULL, 0);
 
 	return stream;
 }

@@ -318,7 +318,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing name attribute on OGRVRTUnionLayer" );
-        return FALSE;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -359,7 +359,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
              {
                  CPLError( CE_Failure, CPLE_AppDefined,
                            "Failed to import LayerSRS `%s'.", pszLayerSRS );
-                 return FALSE;
+                 return NULL;
              }
              poGlobalSRS = oSRS.Clone();
          }

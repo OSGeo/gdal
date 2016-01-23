@@ -398,7 +398,7 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
             {
                 CPLFree( pszFullFilename );
                 delete poFile;
-                return FALSE;
+                return NULL;
             }
         }
         else
@@ -411,7 +411,7 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
             {
                 CPLFree( pszFullFilename );
                 delete poTABFile;
-                return FALSE;
+                return NULL;
             }
             poFile = poTABFile;
         }

@@ -511,7 +511,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
     poHchild->nIndex = idx;
     poHchild->poHparent = poHparent;
     poHchild->nRank     = 0;
-    poHchild->paDims    = 0;
+    poHchild->paDims    = NULL;
     poHchild->HDatatype = 0;
     poHchild->objno[0]  = oStatbuf.objno[0];
     poHchild->objno[1]  = oStatbuf.objno[1];
@@ -530,7 +530,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
             poHchild->nbObjs = 0;
             poHchild->poHchild = NULL;
             poHchild->nRank      = 0;
-            poHchild->paDims    = 0;
+            poHchild->paDims    = NULL;
             poHchild->HDatatype = 0;
             break;
 
@@ -545,7 +545,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
             poHchild->nbAttrs= nbAttrs;
             poHchild->nbObjs = (int) nbObjs;
             poHchild->nRank      = 0;
-            poHchild->paDims    = 0;
+            poHchild->paDims    = NULL;
             poHchild->HDatatype = 0;
 
             if( nbObjs > 0 ) {
@@ -612,7 +612,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
             poHchild->nbObjs = 0;
             poHchild->poHchild = NULL;
             poHchild->nRank      = 0;
-            poHchild->paDims    = 0;
+            poHchild->paDims    = NULL;
             poHchild->HDatatype = 0;
             break;
 

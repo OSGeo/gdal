@@ -594,7 +594,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 
         char** papszCatNames;
         papszCatNames = poSrcBand->GetCategoryNames();
-        if (0 != papszCatNames)
+        if (NULL != papszCatNames)
             poDstBand->SetCategoryNames( papszCatNames );
 
         if( !bStrict )

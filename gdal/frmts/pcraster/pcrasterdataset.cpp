@@ -256,7 +256,7 @@ GDALDataset* PCRasterDataset::createCopy(
     // Write row in target.
     RputRow(map, row, buffer);
 
-    if(!progress((row + 1) / (static_cast<double>(nrRows)), 0, progressData)) {
+    if(!progress((row + 1) / (static_cast<double>(nrRows)), NULL, progressData)) {
       CPLError(CE_Failure, CPLE_UserInterrupt,
          "PCRaster driver: User terminated CreateCopy()");
       errorCode = CE_Failure;
@@ -265,10 +265,10 @@ GDALDataset* PCRasterDataset::createCopy(
   }
 
   Mclose(map);
-  map = 0;
+  map = NULL;
 
   free(buffer);
-  buffer = 0;
+  buffer = NULL;
 
   if( errorCode != CE_None )
       return NULL;
