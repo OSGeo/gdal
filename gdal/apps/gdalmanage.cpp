@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline utility for GDAL identify, delete, rename and copy 
+ * Purpose:  Command line utility for GDAL identify, delete, rename and copy 
  *           (by file) operations. 
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -100,7 +100,7 @@ static void Identify( int nArgc, char **papszArgv )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Scan for commandline switches                                   */
+/*      Scan for command line switches                                   */
 /* -------------------------------------------------------------------- */
     int bRecursive = FALSE, bReportFailures = FALSE;
 

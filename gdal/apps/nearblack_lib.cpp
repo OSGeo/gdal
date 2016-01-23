@@ -155,7 +155,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
         if (bSetAlpha)
         {
-            /***** fixme there should be a way to preserve alpha band data not in the collar *****/
+            /***** FIXME there should be a way to preserve alpha band data not in the collar *****/
             if (nBands == 4)
                 nBands --;
             else

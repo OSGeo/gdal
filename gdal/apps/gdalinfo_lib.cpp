@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline application to list info about a file.
+ * Purpose:  Command line application to list info about a file.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * ****************************************************************************

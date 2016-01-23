@@ -81,6 +81,6 @@ operation should be terminated.
 
 <li> The ratio of completeness should vary from 0.0 to 1.0.  Please ensure the
 exact value 1.0 is always returned at the end of the algorithm as some 
-gui display mechanisms use this as a clue to popdown the progress monitor. 
+GUI display mechanisms use this as a clue to pop down the progress monitor. 
 
 */

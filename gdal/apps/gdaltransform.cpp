@@ -2,7 +2,7 @@
  * $Id: gdalwarp.cpp 12380 2007-10-12 17:35:00Z rouault $
  *
  * Project:  GDAL
- * Purpose:  Commandline point transformer.
+ * Purpose:  Command line point transformer.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
@@ -243,7 +243,7 @@ int main( int argc, char ** argv )
 
     if( hSrcDS != NULL && nGCPCount > 0 )
     {
-        fprintf( stderr, "Commandline GCPs and input file specified, specify one or the other.\n" );
+        fprintf( stderr, "Command line GCPs and input file specified, specify one or the other.\n" );
         exit( 1 );
     }
 

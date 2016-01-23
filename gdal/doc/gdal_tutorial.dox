@@ -170,7 +170,7 @@ In Python:
 \section gdal_tutorial_band Fetching a Raster Band
 
 At this time access to raster data via GDAL is done one band at a time.
-Also, there is metadata, blocksizes, color tables, and various other 
+Also, there is metadata, block sizes, color tables, and various other 
 information available on a band by band basis.  The following codes fetches
 a GDALRasterBand object from the dataset (numbered 1 through GetRasterCount())
 and displays a little information about it.

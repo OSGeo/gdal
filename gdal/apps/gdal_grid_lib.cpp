@@ -451,7 +451,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 
     if (adfX.size() == 0)
     {
-        // FIXME: Shoulda' set to nodata value instead
+        // FIXME: Should' set to nodata value instead
         GDALFillRaster( hBand, 0.0 , 0.0 );
         return CE_None;
     }

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline application to list info about a given CRS.
+ * Purpose:  Command line application to list info about a given CRS.
  *           Outputs a number of formats (WKT, PROJ.4, etc.).
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *           Etienne Tourigny, etourigny.dev-at-gmail-dot-com

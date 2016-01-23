@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Multithreading test application.
+ * Purpose:  Multi-threading test application.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

@@ -44,7 +44,7 @@ The following utility programs are distributed with GDAL.
 \section gdal_utilities_creating Creating New Files
 
 Access an existing file to read it is generally quite simple.  Just
-indicate the name of the file or dataset on the commandline.  However, 
+indicate the name of the file or dataset on the command line.  However, 
 creating a file is more complicated.  It may be necessary to indicate the
 the format to create, various creation options affecting how it will
 be created and perhaps a coordinate system to be assigned.  Many of 
@@ -70,14 +70,14 @@ driver supports creation options to control compression, and whether the file
 should be tiled.<p>
 The creation options available vary by format driver, and some simple 
 formats have no creation options at all.  A list of options supported
-for a format can be listed with the "--format <format>" commandline
+for a format can be listed with the "--format <format>" command line
 option but the web page for the format is the definitive source of 
 information on driver creation options.<p>
 </dd>
 
 <dt> <b>-a_srs</b> <i>SRS</i></dt><dd> 
 Several utilities, (gdal_translate and gdalwarp) include the ability
-to specify coordinate systems with commandline options like
+to specify coordinate systems with command line options like
 <b>-a_srs</b> (assign SRS to output), <b>-s_srs</b> (source SRS) and
 <b>-t_srs</b> (target SRS).<p>
 These utilities allow the coordinate system (SRS = spatial reference system)
@@ -103,7 +103,7 @@ a textual format for describing coordinate systems as part of the Simple
 Features specifications.  This format is the internal working format
 for coordinate systems used in GDAL.  The name of a file containing a 
 WKT coordinate system definition may be used a coordinate system argument,
-or the entire coordinate system itself may be used as a commandline
+or the entire coordinate system itself may be used as a command line
 option (though escaping all the quotes in WKT is quite challenging). <p>
 
 <li> <i>ESRI Well Known Text</i>: ESRI uses a slight variation on OGC WKT
@@ -145,7 +145,7 @@ should be the short name reported in the <b>\-\-formats</b> list, such as
 GTiff.</dd>
 
 <dt> <b>\-\-optfile</b> <i>file</i></dt><dd>
-Read the named file and substitute the contents into the commandline
+Read the named file and substitute the contents into the command line
 options list.  Lines beginning with # will be ignored.  Multi-word arguments
 may be kept together with double quotes. 
 </dd>
@@ -167,7 +167,7 @@ string in the debug prefix code.
 </dd>
 
 <dt> <b>\-\-help-general</b></dt><dd>
-Gives a brief usage message for the generic GDAL commandline options 
+Gives a brief usage message for the generic GDAL command line options 
 and exit.
 </dd>
 
@@ -637,7 +637,7 @@ tileindex.
 
 <dl>
 <dt><b>-f</b> format:</dt><dd> (GDAL >= 1.11)
-<p>The OGR format of the output tile index file. Default is Esri Shapefile.</p>
+<p>The OGR format of the output tile index file. Default is ESRI Shapefile.</p>
 </dd>
 <dt><b>-tileindex</b> field_name:</dt>
 <dd><p>The output field name to hold the file path/location to the indexed rasters. The default tile index field name is <code>location</code>.</p>
@@ -1144,7 +1144,7 @@ color table for multiple files.  The <i>palette_file</i> must be a raster file
 in a GDAL supported format with a palette.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).  Same
 semantics as the <b>-of</b> flag for gdal_translate.  Only output formats
-supporting pseudocolor tables should be used. </dd>
+supporting pseudo-color tables should be used. </dd>
 <dt> <i>source_file</i>:</dt><dd> The input RGB file. </dd>
 <dt> <i>dest_file</i>:</dt><dd> The output pseudo-colored file that will be
 created.</dd>
@@ -1199,7 +1199,7 @@ pct2rgb.py [-of format] [-b band] [-rgba] source_file dest_file
 
 \section pct2rgb_description DESCRIPTION
 
-This utility will convert a pseudocolor band on the input file into an output
+This utility will convert a pseudo-color band on the input file into an output
 RGB file of the desired format. 
 
 <dl>
@@ -1247,12 +1247,12 @@ projection,including  GCP-based transformations.
 <dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
 containing well known text.</dd>
 <dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
 containing well known text.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
 to pass to GDALCreateGenImgProjTransformer2(). </dd>
@@ -1454,8 +1454,8 @@ used.</dd>
 Place each input file into a separate <i>stacked</i> band. 
 </dd>
 <dt> <b>-pct</b>:</dt><dd> 
-Grab a pseudocolor table from the first input image, and use it for the output.
-Merging pseudocolored images this way assumes that all input files use the same
+Grab a pseudo-color table from the first input image, and use it for the output.
+Merging pseudo-colored images this way assumes that all input files use the same
 color table.
 </dd>
 <dt> <b>-n</b> <i>nodata_value</i>:</dt><dd> 
@@ -1671,7 +1671,7 @@ If your number of input tiles exhausts the command line buffer, use the general 
 <dl>
 <dt> <b>-targetDir</b> <i>directory</i>:</dt><dd>
 The directory where the tile result is created. Pyramids are stored
-in  subdirectories  numbered  from  1. Created tile names have a numbering
+in  sub-directories  numbered  from  1. Created tile names have a numbering
 schema and contain the name of the source tiles(s)
 </dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd>
@@ -1700,9 +1700,9 @@ Resampling algorithm, default is near
 </dd>
 <dt> <b>-s_srs</b> <i>srs_def</i>:</dt><dd>
 Source spatial reference to use. The coordinate systems  that  can  be
-passed  are  anything  supported by the OGRSpatialReference.SetFro‐mUserInput()  call,
+passed  are  anything  supported by the OGRSpatialReference.SetFromUserInput()  call,
 which  includes  EPSG, PCS, and GCSes (i.e. EPSG:4296), PROJ.4 declarations (as above),
-or the name of a .prf file containing well known text.
+or the name of a .prj file containing well known text.
 If  no  srs_def  is  given,  the srs_def  of the source tiles is used (if there is any).
 The srs_def will be propagated to created tiles (if possible) and  to  the  optional
 shape file(s)
@@ -1725,8 +1725,8 @@ Normally the tiles of the base image are stored as described in <b>-targetDir</b
 For large images, some file systems have performance problems if the number of files 
 in a directory is to big, causing gdal_retile not to finish in reasonable time. 
 Using this parameter creates a different output structure. The tiles of the base image
-are stored in a subdirectory called 0, the pyramids in subdirectories numbered 1,2,....
-Within each of these directories another level of subdirectories is created, numbered from
+are stored in a sub-directory called 0, the pyramids in sub-directories numbered 1,2,....
+Within each of these directories another level of sub-directories is created, numbered from
 0...n, depending of how many tile rows are needed for each level. Finally, a directory contains
 only the tiles for one row for a specific level. For large images a performance improvement
 of a factor N could be achieved.
@@ -2624,9 +2624,9 @@ gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_
 
 \section gdal_pansharpen_description DESCRIPTION
 
-The gdal_pansharpen.py script performs a pansharpening operation. It can create
+The gdal_pansharpen.py script performs a pan-sharpening operation. It can create
 a "classic" output dataset (such as GeoTIFF), or a VRT dataset describing the
-pansharpening operation.
+pan-sharpening operation.
 
 More details can be found in the <a href="gdal_vrttut.html#gdal_vrttut_pansharpen">VRT tutorial</a>.
 
@@ -2643,14 +2643,14 @@ pseudo panchromatic value. There must be as many -w switches as input spectral b
 <i>{nearest,bilinear,cubic (default),cubicspline,lanczos,average}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
 <dt> <b>-threads</b> <i>{ALL_CPUS,number}</i>:</dt><dd>
-Specify number of threads to use to do the resampling and pansharpening itself.
+Specify number of threads to use to do the resampling and pan-sharpening itself.
 Can be an integer number or ALL_CPUS.</dd>
 <dt> <b>-bitdepth</b> <i>val</i>:</dt><dd>
 Specify the bit depth of the panchromatic and
 spectral bands (e.g. 12). If not specified, the NBITS metadata item from the
 panchromatic band will be used if it exists.</dd>
 <dt> <b>-nodata</b> <i>val</i>:</dt><dd>
-Specify nodata value for bands. Used for the resampling and pansharpening computation
+Specify nodata value for bands. Used for the resampling and pan-sharpening computation
 itself. If not set, deduced from the input bands, provided they have a consistent
 setting.</dd>
 <dt> <b>-spat_adjust</b>

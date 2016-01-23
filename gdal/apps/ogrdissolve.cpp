@@ -532,7 +532,7 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
 
     int iField;
 /* -------------------------------------------------------------------- */
-/*      Get all of the features and put them in a multimap.  This may   */
+/*      Get all of the features and put them in a multi map.  This may   */
 /*      include values for which the selected fields is NULL.           */
 /* -------------------------------------------------------------------- */
 
@@ -585,7 +585,7 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Make a new map of GeometryCollections for each value in the     */
+/*      Make a new map of GeometryCollection for each value in the     */
 /*      poFieldsmap.  This is a 1:1 relationship, and all of the        */
 /*      geometries for a given field are all put into the same          */
 /*      GeometryCollection.  After we build the poCollections, we will  */

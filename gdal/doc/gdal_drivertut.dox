@@ -485,7 +485,7 @@ registering it with the GDALDriverManager().
 <ul>
 <li> The description is the short name for the format.  This is a unique 
 name for this format, often used to identity the driver in scripts and 
-commandline programs.  Normally 3-5 characters in length, and matching the 
+command line programs.  Normally 3-5 characters in length, and matching the 
 prefix of the format classes. (mandatory)
 
 <li> GDAL_DCAP_RASTER: set to YES to indicate that this driver handles
@@ -691,7 +691,7 @@ then the application writes various information by calls to set methods.
 The benefits of the first method are that that all the information is available
 at the point the output file is being created.  This can be especially
 important when implementing file formats using external libraries which 
-require information like colormaps, and georeferencing information at the
+require information like color maps, and georeferencing information at the
 point the file is created.  The other advantage of this method is that the
 CreateCopy() method can read some kinds of information, such as min/max, 
 scaling, description and GCPs for which there are no equivalent set methods.
@@ -719,7 +719,7 @@ return result of the progress function needs always to be checked for
 cancellation, and progress should be reported at reasonable intervals.  The
 JPEGCreateCopy() method demonstrates good handling of the progress function.
 
-<li> Special creation options should be documented in the online help.
+<li> Special creation options should be documented in the on-line help.
 If the options take the format "NAME=VALUE" the papszOptions list can be
 manipulated with CPLFetchNameValue() as demonstrated in the handling of
 the QUALITY and PROGRESSIVE flags for JPEGCreateCopy(). 

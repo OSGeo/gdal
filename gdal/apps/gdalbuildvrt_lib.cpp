@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline application to build VRT datasets from raster products or content of SHP tile index
+ * Purpose:  Command line application to build VRT datasets from raster products or content of SHP tile index
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
@@ -709,7 +709,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                                 CPLError(CE_Warning, CPLE_NotSupported,
                                         "%s has different values than the first raster for some entries in the color table.\n"
                                         "The end result might produce weird colors.\n"
-                                        "You're advised to preprocess your rasters with other tools, such as pct2rgb.py or gdal_translate -expand RGB\n"
+                                        "You're advised to pre-process your rasters with other tools, such as pct2rgb.py or gdal_translate -expand RGB\n"
                                         "to operate gdalbuildvrt on RGB rasters instead", dsFileName);
                             else
                                 CPLError(CE_Warning, CPLE_NotSupported,
@@ -1195,7 +1195,7 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
 #else
         OGRRegisterAll();
 
-        /* Handle GDALTIndex Shapefile as a special case */
+        /* Handle gdaltindex Shapefile as a special case */
         OGRDataSourceH hDS = OGROpen( filename, FALSE, NULL );
         if( hDS  == NULL )
         {
@@ -1363,7 +1363,7 @@ GDALDatasetH GDALBuildVRT( const char *pszDest,
 
     if( nSrcCount == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "No input dataset specifieds.");
+        CPLError( CE_Failure, CPLE_AppDefined, "No input dataset specified.");
 
         if(pbUsageError)
             *pbUsageError = TRUE;

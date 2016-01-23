@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline application to do image enhancement. 
+ * Purpose:  Command line application to do image enhancement. 
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * ****************************************************************************
