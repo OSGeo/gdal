@@ -4968,7 +4968,8 @@ def ogr_pg_81():
     gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_1(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_1','dummy',-1,'POINT',2);")
     gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_2(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_2','dummy',-1,'POINT',2);")
 
-    gdal.Mkdir('/vsimem/ogr_pg_81', 0755)
+    # 0755 = 493
+    gdal.Mkdir('/vsimem/ogr_pg_81', 493)
     gdal.FileFromMemBuffer('/vsimem/ogr_pg_81/ogr_pg_81_1.csv',
 """id,foo
 1,1""")
