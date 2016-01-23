@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.124 2015-11-18 20:35:09 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.125 2016-01-23 21:20:34 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

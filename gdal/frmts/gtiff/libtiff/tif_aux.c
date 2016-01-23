@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.27 2015-11-22 15:31:03 erouault Exp $ */
+/* $Id: tif_aux.c,v 1.28 2016-01-23 21:20:34 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
