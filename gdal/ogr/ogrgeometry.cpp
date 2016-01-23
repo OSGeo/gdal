@@ -4765,6 +4765,28 @@ int OGRPreparedGeometryIntersects( UNUSED_IF_NO_GEOS const OGRPreparedGeometry* 
 #endif
 }
 
+int OGRPreparedGeometryContains( UNUSED_IF_NO_GEOS const OGRPreparedGeometry* poPreparedGeom,
+                                 UNUSED_IF_NO_GEOS const OGRGeometry* poOtherGeom )
+{
+#ifdef HAVE_GEOS_PREPARED_GEOMETRY
+    if( poPreparedGeom == NULL || poOtherGeom == NULL )
+        return FALSE;
+  
+    GEOSGeom hGEOSOtherGeom = poOtherGeom->exportToGEOS(poPreparedGeom->hGEOSCtxt);
+    if( hGEOSOtherGeom == NULL )
+        return FALSE;
+    
+    int bRet = GEOSPreparedContains_r(poPreparedGeom->hGEOSCtxt,
+                                      poPreparedGeom->poPreparedGEOSGeom,
+                                      hGEOSOtherGeom);
+    GEOSGeom_destroy_r( poPreparedGeom->hGEOSCtxt, hGEOSOtherGeom );
+    
+    return bRet;
+#else
+    return FALSE;
+#endif
+}
+
 /************************************************************************/
 /*                       OGRGeometryFromEWKB()                          */
 /************************************************************************/
