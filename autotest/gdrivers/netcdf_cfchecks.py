@@ -1611,7 +1611,7 @@ class CFChecker:
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
 
-                      # stdNameUnits is unicode which udunits can't deal with.  Explicity convert it to ASCII
+                      # stdNameUnits is unicode which udunits can't deal with.  Explicitly convert it to ASCII
                       stdNameUnits=stdNameUnits.encode('ascii')
 
                       canonicalUnit = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")

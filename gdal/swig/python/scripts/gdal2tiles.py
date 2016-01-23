@@ -950,7 +950,7 @@ gdal2tiles temp.vrt""" % self.input )
         # Report error in case rotation/skew is in geotransform (possible only in 'raster' profile)
         if (self.out_gt[2], self.out_gt[4]) != (0,0):
             self.error("Georeference of the raster contains rotation or skew. Such raster is not supported. Please use gdalwarp first.")
-            # TODO: Do the warping in this case automaticaly
+            # TODO: Do the warping in this case automatically
 
         #
         # Here we expect: pixel is square, no rotation on the raster

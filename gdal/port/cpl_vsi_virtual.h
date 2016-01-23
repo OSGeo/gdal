@@ -3,7 +3,7 @@
  *
  * Project:  VSI Virtual File System
  * Purpose:  Declarations for classes related to the virtual filesystem.
- *           These would only be normally required by applications implmenting
+ *           These would only be normally required by applications implementing
  *           their own virtual file system classes which should be rare.  
  *           The class interface may be fragile through versions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com

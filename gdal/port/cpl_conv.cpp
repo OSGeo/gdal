@@ -2011,7 +2011,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
  *
  *  degrees * 1000000 + minutes * 1000 + seconds
  *
- * Example:     ang = 120025045.25 yields
+ * Example:     angle = 120025045.25 yields
  *              deg = 120
  *              min = 25
  *              sec = 45.25
@@ -2021,13 +2021,13 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
  * 1.  The absolute value of the angle is used.
  *
  * 2.  The degrees are separated out:
- *     deg = ang/1000000                    (fractional portion truncated)
+ *     deg = angle/1000000                    (fractional portion truncated)
  *
  * 3.  The minutes are separated out:
- *     min = (ang - deg * 1000000) / 1000   (fractional portion truncated)
+ *     min = (angle - deg * 1000000) / 1000   (fractional portion truncated)
  *
  * 4.  The seconds are then computed:
- *     sec = ang - deg * 1000000 - min * 1000
+ *     sec = angle - deg * 1000000 - min * 1000
  *
  * 5.  The total angle in seconds is computed:
  *     sec = deg * 3600.0 + min * 60.0 + sec

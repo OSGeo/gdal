@@ -1331,7 +1331,7 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_left.tif -srcwin 0 0 200 200 -a_nodata 255')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_right.tif -srcwin 200 0 200 200  -a_nodata 255')
 
-    # NOTE: Current behaviour of gdalwarp is to set a destnodata, but the user specified -dstalpha, so it is a bit suspicous
+    # NOTE: Current behaviour of gdalwarp is to set a destnodata, but the user specified -dstalpha, so it is a bit suspicious
     # Adding "-dstnodata none" would avoid that target nodata setting.
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha')
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_right.tif tmp/test_gdalwarp_42.tif')

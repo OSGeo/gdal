@@ -1006,7 +1006,7 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
                                                       false, /* single file */
                                                       false /* new */);
 
-        // Instanciate the layers.
+        // Instantiate the layers.
         for(char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter)
         {
             if( !EQUAL(CPLGetExtension(*papszIter), osMajorityExtension) )

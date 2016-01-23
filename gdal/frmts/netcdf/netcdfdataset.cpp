@@ -883,7 +883,7 @@ CPLErr netCDFRasterBand::DeleteNoDataValue()
 CPLXMLNode *netCDFRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused )
 {
 /* -------------------------------------------------------------------- */
-/*      Overriden from GDALPamDataset to add only band histogram        */
+/*      Overridden from GDALPamDataset to add only band histogram        */
 /*      and statistics. See bug #4244.                                  */
 /* -------------------------------------------------------------------- */
     if( psPam == NULL )
@@ -1652,7 +1652,7 @@ CPLXMLNode *netCDFDataset::SerializeToXML( const char *pszUnused )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Overriden from GDALPamDataset to add only band histogram        */
+/*      Overridden from GDALPamDataset to add only band histogram        */
 /*      and statistics. See bug #4244.                                  */
 /* -------------------------------------------------------------------- */
 

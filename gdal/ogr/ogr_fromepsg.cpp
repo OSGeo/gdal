@@ -1609,7 +1609,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
                         OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
 
-      case 9821: /* DEPREACTED : this is the spherical form, and really needs different
+      case 9821: /* DEPRECATED : this is the spherical form, and really needs different
                     equations which give different results but PROJ.4 doesn't
                     seem to support the spherical form. */
         poSRS->SetLAEA( OGR_FP( SphericalOriginLat ),

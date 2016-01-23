@@ -885,7 +885,7 @@ double OGRWAsPLayer::AvgZ( OGRGeometry * poGeom )
     case wkbMultiPolygon25D:
         return AvgZ( static_cast< OGRGeometryCollection * >(poGeom) );
     default: 
-        CPLError( CE_Warning, CPLE_NotSupported, "Unsuported geometry type in OGRWAsPLayer::AvgZ()");
+        CPLError( CE_Warning, CPLE_NotSupported, "Unsupported geometry type in OGRWAsPLayer::AvgZ()");
         break;
     }
     return 0; /* avoid warning */

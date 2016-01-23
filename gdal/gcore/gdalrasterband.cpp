@@ -496,7 +496,7 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 /************************************************************************/
 /*                            IWriteBlock()                             */
 /*                                                                      */
-/*      Default internal implementation ... to be overriden by          */
+/*      Default internal implementation ... to be overridden by          */
 /*      subclasses that support writing.                                */
 /************************************************************************/
 
@@ -3152,7 +3152,7 @@ GDALGetRasterHistogramEx( GDALRasterBandH hBand,
  * \brief Fetch default raster histogram. 
  *
  * The default method in GDALRasterBand will compute a default histogram. This
- * method is overriden by derived classes (such as GDALPamRasterBand, VRTDataset, HFADataset...)
+ * method is overridden by derived classes (such as GDALPamRasterBand, VRTDataset, HFADataset...)
  * that may be able to fetch efficiently an already stored histogram.
  *
  * This method is the same as the C functions GDALGetDefaultHistogram() and

@@ -221,7 +221,7 @@ GRIB driver:
 GTiff driver:
  * add NUM_THREADS creation and open options to enable multi-threaded compression
  * fix GTiffDataset::IsBlockAvailable() wrong behaviour when compiling against internal libtiff, when a BigTIFF file has a TileByteCounts with LONG/4-byte counts and not LONG8 (#6001)
- * Correctly take into account overriden linear units for a geotiff with a EPSG PCS code (#6210, #4954)
+ * Correctly take into account overridden linear units for a geotiff with a EPSG PCS code (#6210, #4954)
  * make VirtualMemIO() work with non native endianness
  * improve VirtualMemIO() performance in tiled contig read to single band copy
  * improve single band tiled VirtualMemIO reading
@@ -1105,7 +1105,7 @@ VRT driver:
  * make sure nodata value set on VRT raster band is taken into account in statistics computation (#5463)
  * fix ComputeStatistics() on VRT that are a sub-window of source dataset (#5468)
  * VRT raw: fix corrupted serialization on Windows (#5531)
- * implement heuristics to determine if GetMinimum()/GetMaximum() should use the implementation of their sources of not. Can be overriden by setting VRT_MIN_MAX_FROM_SOURCES = YES/NO (#5444)
+ * implement heuristics to determine if GetMinimum()/GetMaximum() should use the implementation of their sources of not. Can be overridden by setting VRT_MIN_MAX_FROM_SOURCES = YES/NO (#5444)
  * VRT warp: avoid to warp truncated blocks at right/bottom edges, so that scale computation is correct
  * fix RasterIO() to be able to fill buffers larger than 2GB (#5700)
  * fix performance problem when serializing into XML a big number of sources
@@ -2615,7 +2615,7 @@ JPEG driver:
 
 JPEG2000 driver:
  * do not accept by default source bands of type different from Byte, Int16 or UInt16 since they seem to cause crashes in libjasper.
-   This can be overriden, at your own risk, by setting JPEG2000_FORCE_CREATION configuration option to YES (#5002)
+   This can be overridden, at your own risk, by setting JPEG2000_FORCE_CREATION configuration option to YES (#5002)
 
 KMLSuperOverlay driver:
  * Add read support
@@ -7310,7 +7310,7 @@ ogr.py:
    unreference all features before destroying the corresponding 
    layer/datasource.
  - ogr.Feature fields can now be fetched and set directly as attributes. 
- - Geometry contructor can now take various formats (wkt, gml, and wkb). 
+ - Geometry constructor can now take various formats (wkt, gml, and wkb). 
  - Added docstrings. 
  - Added better __str__ methods on several objects. 
  - Various other improvements. 

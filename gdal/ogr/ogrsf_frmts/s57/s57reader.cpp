@@ -83,7 +83,7 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
     {
         // In case of international attributes, only ISO8859-1 code page is
         // used (standard ascii). The result is identical to the source string
-        // if it contains 0..127 ascii code (LL0), can sligthly differ if it
+        // if it contains 0..127 ascii code (LL0), can slightly differ if it
         // contains diacritics 0..255 ascii codes (LL1).
         RecodedString = CPLRecode(SourceString,CPL_ENC_ISO8859_1,CPL_ENC_UTF8);
     }

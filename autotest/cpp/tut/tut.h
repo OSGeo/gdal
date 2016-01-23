@@ -97,7 +97,7 @@ namespace tut
   };
 
   /**
-   * Return type of runned test/test group.
+   * Return type of ran test/test group.
    *
    * For test: contains result of test and, possible, message
    * for failure or exception.

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Mapinfo Image Warper
- * Purpose:  Implemention of the GDALTransformer wrapper around CRS.C functions
+ * Purpose:  Implementation of the GDALTransformer wrapper around CRS.C functions
  *           to build a polynomial transformation based on ground control 
  *           points.
  * Author:   Frank Warmerdam, warmerdam@pobox.com

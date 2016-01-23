@@ -154,7 +154,7 @@ OGRLayer *OGRVFKDataSource::GetLayer(int iLayer)
 }
 
 /*!
-  \brief Test datasource capabilies
+  \brief Test datasource capabilities
 
   \param pszCap capability
 

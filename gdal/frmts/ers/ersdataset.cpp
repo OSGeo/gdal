@@ -350,7 +350,7 @@ CPLErr ERSDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 
     oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
 
-    /* Write the above computed values, unless they have been overriden by */
+    /* Write the above computed values, unless they have been overridden by */
     /* the creation options PROJ, DATUM or UNITS */
 
     poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Datum", 
@@ -432,7 +432,7 @@ CPLErr ERSDataset::SetProjection( const char *pszSRS )
 
     oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
 
-    /* Write the above computed values, unless they have been overriden by */
+    /* Write the above computed values, unless they have been overridden by */
     /* the creation options PROJ, DATUM or UNITS */
     if( osProjForced.size() )
         osProj = osProjForced;

@@ -345,7 +345,7 @@ def ogr_jml_2():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
     lyr.CreateFeature(f)
 
-    # Test that R_G_B is not overriden by feature style
+    # Test that R_G_B is not overridden by feature style
     f.SetField('R_G_B', '445566')
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
     f.SetStyleString('PEN(c:#778899)')

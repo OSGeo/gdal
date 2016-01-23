@@ -280,7 +280,7 @@ def png_13():
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
     src_ds.SetMetadataItem('foo', 'bar')
     src_ds.SetMetadataItem('COPYRIGHT', 'copyright value')
-    src_ds.SetMetadataItem('DESCRIPTION', 'will be overriden by creation option')
+    src_ds.SetMetadataItem('DESCRIPTION', 'will be overridden by creation option')
     out_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['WRITE_METADATA_AS_TEXT=YES', 'DESCRIPTION=my desc'])
     md = out_ds.GetMetadata()
     if len(md) != 3 or md['foo'] != 'bar' or md['Copyright'] != 'copyright value' or md['Description'] != 'my desc':
