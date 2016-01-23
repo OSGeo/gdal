@@ -1992,8 +1992,7 @@ static OGRGeometry* promote_to_multi(OGRGeometry* poGeom)
  *     will be created from the fields of the method layer.
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
- *     with features of this layer. Prepared geometries need GEOS >=
- *     3.1.0.
+ *     with features of this layer.
  * <li>PRETEST_CONTAINMENT=YES/NO. Set to YES to pretest the
  *     containment of features of method layer within the features of
  *     this layer. This will speed up the method significantly in some
@@ -2211,8 +2210,7 @@ done:
  *     will be created from the fields of the method layer.
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
- *     with features of this layer. Prepared geometries need GEOS >=
- *     3.1.0.
+ *     with features of this layer.
  * <li>PRETEST_CONTAINMENT=YES/NO. Set to YES to pretest the
  *     containment of features of method layer within the features of
  *     this layer. This will speed up the method significantly in some
@@ -2298,8 +2296,7 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  *     will be created from the fields of the method layer.
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
- *     with features of this layer. Prepared geometries need GEOS >=
- *     3.1.0.
+ *     with features of this layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Union().
@@ -2583,8 +2580,7 @@ done:
  *     will be created from the fields of the method layer.
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
- *     with features of this layer. Prepared geometries need GEOS >=
- *     3.1.0.
+ *     with features of this layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Union().
@@ -2981,8 +2977,7 @@ OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
  *     will be created from the fields of the method layer.
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
- *     with features of this layer. Prepared geometries need GEOS >=
- *     3.1.0.
+ *     with features of this layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Identity().
@@ -3196,8 +3191,7 @@ done:
  *     will be created from the fields of the method layer.
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
- *     with features of this layer. Prepared geometries need GEOS >=
- *     3.1.0.
+ *     with features of this layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Identity().
