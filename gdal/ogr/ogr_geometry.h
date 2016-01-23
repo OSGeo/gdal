@@ -1343,5 +1343,7 @@ OGRPreparedGeometry* OGRCreatePreparedGeometry( const OGRGeometry* poGeom );
 void OGRDestroyPreparedGeometry( OGRPreparedGeometry* poPreparedGeom );
 int OGRPreparedGeometryIntersects( const OGRPreparedGeometry* poPreparedGeom,
                                    const OGRGeometry* poOtherGeom );
+int OGRPreparedGeometryContains( const OGRPreparedGeometry* poPreparedGeom,
+                                 const OGRGeometry* poOtherGeom );
 
 #endif /* ndef OGR_GEOMETRY_H_INCLUDED */
