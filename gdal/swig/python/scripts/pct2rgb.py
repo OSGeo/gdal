@@ -4,7 +4,7 @@
 #
 #  Name:     pct2rgb
 #  Project:  GDAL Python Interface
-#  Purpose:  Utility to convert palletted images into RGB (or RGBA) images.
+#  Purpose:  Utility to convert paletted images into RGB (or RGBA) images.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 #
 #******************************************************************************

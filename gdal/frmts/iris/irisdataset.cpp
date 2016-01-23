@@ -275,7 +275,7 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             else
                 ((float *) pImage)[i] = (fVal-1)/1000.0f;
         }
-    //HEIGTH (TOPS products)
+    //HEIGHT (TOPS products)
     //See point 3.3.14 at page 3.46 of the manual
     } else if(poGDS->nDataTypeCode == 32){ 
         unsigned char nVal;

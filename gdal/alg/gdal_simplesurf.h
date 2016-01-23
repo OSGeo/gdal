@@ -215,7 +215,7 @@ public:
      * @param nRow Row of left top point of rectangle
      * @param nCol Column of left top point of rectangle
      * @param nWidth Width of rectangular area (number of columns)
-     * @param nHeight Heigth of rectangular area (number of rows)
+     * @param nHeight Height of rectangular area (number of rows)
      *
      * @return Sum of values in specified grid.
      */

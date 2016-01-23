@@ -125,7 +125,7 @@ typedef enum
  * 		considered as tiles of a bigger raster coverage (the whole
  * 		table). If database and table name are specified and mode = 2
  * 		is present in the connection string, this is the selected mode.
- * - BROWSE_SCHEMA: If no table name is speficied, just database and
+ * - BROWSE_SCHEMA: If no table name is specified, just database and
  * 		schema names, the driver will yell of the schema's raster tables
  * 		as possible datasets.
  * - BROWSE_DATABASE: If no table name is specified, just database name,

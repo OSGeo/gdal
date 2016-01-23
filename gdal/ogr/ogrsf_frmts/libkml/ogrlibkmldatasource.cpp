@@ -733,7 +733,7 @@ Method to allocate memory for the layer array, create the layer,
                 poKmlRoot       pointer to the root kml element of the layer
                 pszFileName     the filename of the layer
                 bNew            true if its a new layer
-                bUpdate         true if the layer is writeable
+                bUpdate         true if the layer is writable
                 nGuess          a guess at the number of additional layers
                                 we are going to need
 

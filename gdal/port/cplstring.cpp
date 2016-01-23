@@ -144,7 +144,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
  * Format double in C locale.
  *
  * The passed value is formatted using the C locale (period as decimal 
- * seperator) and appended to the target CPLString. 
+ * separator) and appended to the target CPLString. 
  *
  * @param dfValue the value to format. 
  * @param pszFormat the sprintf() style format to use or omit for default.

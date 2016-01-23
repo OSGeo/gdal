@@ -107,7 +107,7 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
                 poKmlContainer  pointer to the kml container of the layer
                 pszFileName     the filename of the layer
                 bNew            true if its a new layer
-                bUpdate         true if the layer is writeable
+                bUpdate         true if the layer is writable
 
  Returns:       nothing
 
@@ -510,7 +510,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
  Args:          poOgrFeat   pointer to the feature to add
 
  Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
-                not writeable
+                not writable
 
 ******************************************************************************/
 
@@ -601,7 +601,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature (
  Args:          poOgrFeat   pointer to the feature to update
 
  Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
-                not writeable
+                not writable
 
 ******************************************************************************/
 
@@ -639,7 +639,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
  Args:          nFID   id of the feature to delete
 
  Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
-                not writeable
+                not writable
 
 ******************************************************************************/
 
@@ -761,7 +761,7 @@ OGRErr OGRLIBKMLLayer::GetExtent (
                 bApproxOK   no effect as of now
 
  Returns:       OGRERR_NONE on success or OGRERR_UNSUPPORTED_OPERATION if the
-                layer is not writeable
+                layer is not writable
 
 ******************************************************************************/
 
