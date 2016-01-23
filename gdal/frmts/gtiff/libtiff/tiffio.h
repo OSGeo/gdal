@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.91 2012-07-29 15:45:29 tgl Exp $ */
+/* $Id: tiffio.h,v 1.92 2016-01-23 21:20:34 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
