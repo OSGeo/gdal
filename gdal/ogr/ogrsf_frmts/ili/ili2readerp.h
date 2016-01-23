@@ -30,33 +30,13 @@
 #ifndef CPL_ILI2READERP_H_INCLUDED
 #define CPL_ILI2READERP_H_INCLUDED
 
-// This works around problems with math.h on some platforms #defining INFINITY
-#ifdef INFINITY
-#undef  INFINITY
-#define INFINITY INFINITY_XERCES
-#endif
-
-#include <util/PlatformUtils.hpp>
-#include <sax2/DefaultHandler.hpp>
-#include <sax2/ContentHandler.hpp>
-#include <sax2/SAX2XMLReader.hpp>
-#include <sax2/XMLReaderFactory.hpp>
-#include <dom/DOM.hpp>
-#include <util/XMLString.hpp>
-
-#if _XERCES_VERSION >= 30000
-# include <sax2/Attributes.hpp>
-#endif
+#include "xercesc_headers.h"
 
 #include "ili2reader.h"
 #include "ogr_ili2.h"
 
 #include <string>
 #include <set>
-
-#ifdef XERCES_CPP_NAMESPACE_USE
-XERCES_CPP_NAMESPACE_USE
-#endif
 
 int cmpStr(std::string s1, std::string s2);
 
