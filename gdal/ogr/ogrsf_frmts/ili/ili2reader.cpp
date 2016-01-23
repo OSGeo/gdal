@@ -657,7 +657,7 @@ OGRLayer* ILI2Reader::GetLayer(const char* pszName) {
 
 int ILI2Reader::AddFeature(DOMElement *elem) {
   bool newLayer = true;
-  OGRLayer *curLayer = 0;
+  OGRLayer *curLayer = NULL;
   char *pszName = tr_strdup(elem->getTagName());
   //CPLDebug( "OGR_ILI", "Reading layer: %s", pszName );
 
