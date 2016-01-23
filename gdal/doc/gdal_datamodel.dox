@@ -200,7 +200,7 @@ string that can be displayed to the user in a selector.
 
 Drivers which support subdatasets advertize the DMD_SUBDATASETS capability. 
 This information is reported when the \-\-format and \-\-formats options are 
-passed to the commandline utilities.
+passed to the command line utilities.
 
 Currently, drivers which support subdatasets are: 
 ADRG, ECRGTOC, GEORASTER, GTiff, HDF4, HDF5, netCDF, NITF, NTv2, OGDI, PDF, 
@@ -324,7 +324,7 @@ units for elevation data.
 
   <ul> 
   <li> GCI_Undefined: the default, nothing is known.
-  <li> GCI_GrayIndex: this is an independent grayscale image
+  <li> GCI_GrayIndex: this is an independent gray-scale image
   <li> GCI_PaletteIndex: this raster acts as an index into a color table
   <li> GCI_RedBand: this raster is the red portion of an RGB or RGBA image
   <li> GCI_GreenBand: this raster is the green portion of an RGB or RGBA image
@@ -362,7 +362,7 @@ typedef struct
     /- blue, yellow, or saturation -/
     short      c3;      
 
-    /- alpha or blackband -/
+    /- alpha or black band -/
     short      c4;      
 } GDALColorEntry;
 </pre>
@@ -372,7 +372,7 @@ which is one of the following values, and indicates how the c1/c2/c3/c4 values
 of a color entry should be interpreted. 
 
 <ul>
-<li> GPI_Gray: Use c1 as grayscale value. 
+<li> GPI_Gray: Use c1 as gray scale value. 
 <li> GPI_RGB: Use c1 as red, c2 as green, c3 as blue and c4 as alpha.
 <li> GPI_CMYK: Use c1 as cyan, c2 as magenta, c3 as yellow and c4 as black. 
 <li> GPI_HLS: Use c1 as hue, c2 as lightness, and c3 as saturation. 
@@ -381,7 +381,7 @@ of a color entry should be interpreted.
 To associate a color with a raster pixel, the pixel value is used as a
 subscript into the color table.  That means that the colors are always
 applied starting at zero and ascending.  There is no provision for indicating
-a prescaling mechanism before looking up in the color table. 
+a pre-scaling mechanism before looking up in the color table. 
 
 \section gdal_datamodel_rasterband_overviews Overviews
 

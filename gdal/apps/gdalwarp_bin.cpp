@@ -78,12 +78,12 @@ with control information.
 <dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
 containing well known text.</dd>
 <dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set.
 The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
 containing well known text.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
 to pass to GDALCreateGenImgProjTransformer2(). </dd>
@@ -472,7 +472,7 @@ int main( int argc, char ** argv )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                  "Output dataset %s exists,\n"
-                 "but some commandline options were provided indicating a new dataset\n"
+                 "but some command line options were provided indicating a new dataset\n"
                  "should be created.  Please delete existing dataset and run again.\n",
                  psOptionsForBinary->pszDstFilename );
         GDALExit(1);

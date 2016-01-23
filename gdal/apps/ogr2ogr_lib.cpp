@@ -158,7 +158,7 @@ struct GDALVectorTranslateOptions
 
     GeomType eGeomConversion;
 
-    /*! Geomertric operation to perform */
+    /*! Geometric operation to perform */
     GeomOperation eGeomOp;
 
     /*! the parameter to geometric operation */
@@ -1400,7 +1400,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                             GDAL_OF_VECTOR, NULL, psOptions->papszDestOpenOptions, NULL );
                 if (poODS == NULL)
                 {
-                    /* ok the datasource doesn't exist at all */
+                    /* OK the datasource doesn't exist at all */
                     bUpdate = FALSE;
                 }
                 else
@@ -2486,7 +2486,7 @@ void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
     else if( poDstDS->GetDriver() != NULL &&
              poDstDS->GetDriver()->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES) == NULL )
     {
-        // All drivers supporting OFTInteger64 should advertize it theoretically
+        // All drivers supporting OFTInteger64 should advertise it theoretically
         if( oFieldDefn.GetType() == OFTInteger64 )
         {
             if( !bQuiet )

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL
- * Purpose:  Commandline raster query tool.
+ * Purpose:  Command line raster query tool.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
@@ -117,9 +117,9 @@ file(s) used to satisfy requests for that pixel.
 <li> The unscaled pixel value if a Scale and/or Offset apply to the band.
 </ul>
 
-The pixel selected is requested by x/y coordinate on the commandline, or read
+The pixel selected is requested by x/y coordinate on the command line, or read
 from stdin. More than one coordinate pair can be supplied when reading
-coordinatesis from stdin. By default pixel/line coordinates are expected.
+coordinates from stdin. By default pixel/line coordinates are expected.
 However with use of the -geoloc, -wgs84, or -l_srs switches it is possible
 to specify the location in other coordinate systems.
 

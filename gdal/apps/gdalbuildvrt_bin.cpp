@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline application to build VRT datasets from raster products or content of SHP tile index
+ * Purpose:  Command line application to build VRT datasets from raster products or content of SHP tile index
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************

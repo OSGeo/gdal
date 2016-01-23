@@ -56,7 +56,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "    [-q]\n"
         "    <src_datasource> <dst_filename>\n"
         "\n"
-        "Available algorithms and parameters with their's defaults:\n"
+        "Available algorithms and parameters with their defaults:\n"
         "    Inverse distance to a power (default)\n"
         "        invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0\n"
         "    Inverse distance to a power with nearest neighbor search\n"

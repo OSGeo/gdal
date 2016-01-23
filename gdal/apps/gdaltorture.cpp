@@ -2,7 +2,7 @@
  * $Id: gdaltorture.cpp  $
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline utility to torture GDAL API on datasets
+ * Purpose:  Command line utility to torture GDAL API on datasets
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -252,7 +252,7 @@ int main( int argc, char ** argv )
         Usage();
 
 /* -------------------------------------------------------------------- */
-/*      Scan for commandline switches                                   */
+/*      Scan for command line switches                                   */
 /* -------------------------------------------------------------------- */
     papszArgv = argv + 1;
     argc --;

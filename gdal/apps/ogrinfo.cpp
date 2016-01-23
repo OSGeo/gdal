@@ -134,7 +134,7 @@ int main( int nArgc, char ** papszArgv )
             bVerbose = FALSE;
         else if( EQUAL(papszArgv[iArg],"-qq") )
         {
-            /* Undocumented: mainly only useful for afl testing */
+            /* Undocumented: mainly only useful for AFL testing */
             bVerbose = FALSE;
             bSuperQuiet = true;
         }

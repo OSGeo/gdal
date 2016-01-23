@@ -341,7 +341,7 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
     OSRDestroySpatialReference(hDstSRS);
     hDstSRS = NULL;
 
-    // Reproject cutline to target SRS, by doing intermediate vertex densifications
+    // Reproject cutline to target SRS, by doing intermediate vertex densification
     // in source SRS.
     if( hCTSrcToDst != NULL || hCTCutlineToSrc != NULL )
     {
@@ -1559,7 +1559,7 @@ error:
 /************************************************************************/
 /*                        GDALWarpCreateOutput()                        */
 /*                                                                      */
-/*      Create the output file based on various commandline options,    */
+/*      Create the output file based on various command line options,    */
 /*      and the input file.                                             */
 /*      If there's just one source file, then *phTransformArg will be   */
 /*      set in order them to be reused by main function. This saves     */
@@ -2168,7 +2168,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference( hMultiPolygon );
     if( hRasterSRS != NULL && hCutlineSRS != NULL )
     {
-        /* ok, we will reproject */
+        /* OK, we will reproject */
     }
     else if( hRasterSRS != NULL && hCutlineSRS == NULL )
     {

@@ -44,8 +44,7 @@
 #define FIELD_FINISH "end"
 #define FIELD_SCALE_FACTOR "scale"
 #define DELTA 0.00000001 //- delta
-// TODO: TOLLERANCE -> TOLERANCE
-#define TOLLERANCE 0.00008983153
+#define TOLERANCE 0.00008983153
 
 #if defined(HAVE_GEOS)
 #if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
@@ -114,7 +113,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
         " -lco  NAME=VALUE: Layer creation option (format specific)\n"
         " -l src_line_datasource_name: Datasource of line path name\n"
         " -ln layer_name: Layer name in datasource (optional)\n"
-        " -lf field_name: Field name for uniq paths in layer (optional)\n"
+        " -lf field_name: Field name for unique paths in layer (optional)\n"
         " -p src_repers_datasource_name: Datasource of repers name\n"
         " -pn layer_name: Layer name in datasource (optional)\n"
         " -pm pos_field_name: Line position field name\n"
@@ -614,7 +613,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
             else
             {
                 double dfDist = pPathGeom->Distance(pPt);
-                if (dfDist < TOLLERANCE)
+                if (dfDist < TOLERANCE)
                     moRepers[dfReperPos] = pPt;
                 else
                     delete pPt;
@@ -1024,7 +1023,7 @@ static OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, 
 #ifdef HAVE_GEOS_PROJECT
 static OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldName, OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName, int nMValField, double dfStep, OGRLayer* const poOutLayer, const char* pszOutputSepFieldName, int bDisplayProgress, int bQuiet)
 {
-    //read all sep field values into array
+    //read all separate field values into array
     std::set<CPLString> asIDs;
 
     OGRFeatureDefn *pDefn = poLnLayer->GetLayerDefn();

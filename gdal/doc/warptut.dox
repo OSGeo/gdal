@@ -133,7 +133,7 @@ caching.
 
 <li> GDALWarpOpations::eResampleAlg - One of GRA_NearestNeighbour (the default,
 and fastest), GRA_Bilinear (2x2 bilinear resampling) or GRA_Cubic.  The
-GRA_NearestNeighbour type should generally be used for thematic or colormapped 
+GRA_NearestNeighbour type should generally be used for thematic or color mapped 
 images.  The other resampling types may give better results for thematic 
 images, especially when substantially changing resolution. 
 
@@ -282,7 +282,7 @@ To warp to compressed formats, or CreateCopy() style formats it is necessary
 to produce a full temporary copy of the image in a better behaved format, and
 then CreateCopy() it to the desired final format. 
 
-<li> The Warp API copies only pixels.  All colormaps, georeferencing and
+<li> The Warp API copies only pixels.  All color maps, georeferencing and
 other metadata must be copied to the destination by the application.  
 
 </ul>

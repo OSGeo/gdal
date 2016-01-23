@@ -33,7 +33,7 @@ should be the short name reported in the <b>\-\-formats</b> list, such as
 GML.</dd>
 
 <dt> <b>\-\-optfile</b> <i>file</i></dt><dd>
-Read the named file and substitute the contents into the commandline
+Read the named file and substitute the contents into the command line
 options list.  Lines beginning with # will be ignored.  Multi-word arguments
 may be kept together with double quotes. 
 </dd>
@@ -55,7 +55,7 @@ string in the debug prefix code.
 </dd>
 
 <dt> <b>\-\-help-general</b></dt><dd>
-Gives a brief usage message for the generic GDAL OGR commandline options 
+Gives a brief usage message for the generic GDAL OGR command line options 
 and exit.
 </dd>
 
@@ -140,7 +140,7 @@ Formats</a> list for supported datasources.</dd>
 </dl>
 
 If no layer names are passed then ogrinfo will report a list of available
-layers (and their layerwide geometry type).  If layer name(s) are given then
+layers (and their layer wide geometry type).  If layer name(s) are given then
 their extents, coordinate system, feature count, geometry type, schema and
 all features matching query parameters will be reported to the terminal. 
 If no query parameters are provided, all features are reported.  
@@ -610,14 +610,14 @@ format. Also some information is written to the stdout.
 <dt> <b>-l</b><em>src_line_datasource_name</em>:</dt><dd> The path to input linestring 
     datasource (e.g. the road)</dd>
 <dt> <b>-ln</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
-<dt> <b>-lf</b><em>field_name</em>:</dt><dd> The field name of uniq values to 
+<dt> <b>-lf</b><em>field_name</em>:</dt><dd> The field name of unique values to 
     separate the input lines (e.g. the set of roads)</dd>
 <dt> <b>-p</b><em>src_repers_datasource_name</em>:</dt><dd> The path to linear 
     references points (e.g. the road mile-stones)</dd>
 <dt> <b>-pn</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
 <dt> <b>-pm</b><em>pos_field_name</em>:</dt><dd> The field name of distances 
     along path (e.g. mile-stones values)</dd>
-<dt> <b>-pf</b><em>field_name</em>:</dt><dd> The field name of uniq values to 
+<dt> <b>-pf</b><em>field_name</em>:</dt><dd> The field name of unique values to 
     map input reference points to lines</dd>
 <dt> <b>-r</b><em>src_parts_datasource_name</em>:</dt><dd> The path to linear 
     reference file</dd>
@@ -626,7 +626,7 @@ format. Also some information is written to the stdout.
     reference file (linestring datasource)</dd>
 <dt> <b>-on</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
 <dt> <b>-of</b><em>field_name</em>:</dt><dd> The field name for storing the 
-    uniq values of input lines</dd>
+    unique values of input lines</dd>
 <dt> <b>-s</b><em>step</em>:</dt><dd> The part size in linear units</dd>
 <dt> <b>-get_pos</b>:</dt><dd> Return linear referenced position for input X, Y</dd>
 <dt> <b>-x</b><em>long</em>:</dt><dd> Input X coordinate</dd>

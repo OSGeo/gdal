@@ -18,11 +18,11 @@
     - CSV: new options, editing capabilities of existing file
     - ElasticSearch: read support and support writing any geometry type
     - GeoJSON: editing capabilities of existing file, "native data" (RFC 60) support
-    - PDF: add PDFium library as a possible backend. Initial support contributed by Klokan Technologies GmbH  (http://www.maptiler.com/)
-    - VRT: on-the-fly pansharpening
+    - PDF: add PDFium library as a possible back-end. Initial support contributed by Klokan Technologies GmbH  (http://www.maptiler.com/)
+    - VRT: on-the-fly pan-sharpening
  * Driver removed:
     - Google Maps Engine (GME)  (#6261)
- * RFC 26: Add hashset band block cache implementation for very larger rasters (WMS, WMTS, ...)
+ * RFC 26: Add hash-set band block cache implementation for very larger rasters (WMS, WMTS, ...)
         http://trac.osgeo.org/gdal/wiki/rfc26_blockcache
  * RFC 48: Geographical networks support (GNM)
         https://trac.osgeo.org/gdal/wiki/rfc48_geographical_networks_support
@@ -133,7 +133,7 @@ Core:
 
 Algorithms:
  * RPC transformer: provide SSE2 accelerated transformer
- * RPC: fix off-by-half pixel computation of (pixel, line), and in bilinear and bicubic RPC DEM interpolation; fix off-by-one pixel registration for Pleaiades RPC (#5993)
+ * RPC: fix off-by-half pixel computation of (pixel, line), and in bilinear and bicubic RPC DEM interpolation; fix off-by-one pixel registration for Pleiades RPC (#5993)
  * RPC: make RPCInverseTransformPoint() check convergence has been reached (#6162)
  * RPC DEM: optimize when DEM is in NAD83 or any other geodetic CS that transform as a no-op to WGS 84
  * RPC DEM transformer: take into account vertical datum of the DEM when present to convert DEM elevations to ellipsoidal heights (#6084)
@@ -223,7 +223,7 @@ GTiff driver:
  * fix GTiffDataset::IsBlockAvailable() wrong behaviour when compiling against internal libtiff, when a BigTIFF file has a TileByteCounts with LONG/4-byte counts and not LONG8 (#6001)
  * Correctly take into account overridden linear units for a geotiff with a EPSG PCS code (#6210, #4954)
  * make VirtualMemIO() work with non native endianness
- * improve VirtualMemIO() performance in tiled contig read to single band copy
+ * improve VirtualMemIO() performance in tiled Contig read to single band copy
  * improve single band tiled VirtualMemIO reading
  * improve DirectIO() to work on tiled uncompressed geotiff, for non-resampling and nearest resampling cases. Also improve performance of resampling cases on un-tiled files
  * fix DirectIO() mode with complex types and inverted endianness (#6198)
@@ -231,10 +231,10 @@ GTiff driver:
  * implement lazy loading of .aux.xml and .tfw/.wld
  * Internal libtiff: update to CVS HEAD post libtiff 4.0.6
  * make SetColorInterpretation(GCI_AlphaBand) work on a 5 band or more GeoTIFF (#6102)
- * automatically set PHOTOMETRIC=RGB if manually assigning color interpretation Red,Green,Blue to band 1,2,3 before directory crystalization (#6272)
+ * automatically set PHOTOMETRIC=RGB if manually assigning color interpretation Red,Green,Blue to band 1,2,3 before directory crystallization (#6272)
  * add GEOTIFF_KEYS_FLAVOR=ESRI_PE creation option to write EPSG:3857 in a ESRI compatible way (#5924)
  * call XTIFFInitialize() in LibgeotiffOneTimeInit() as the former isn't thread-safe, so better call it from the later which is thread-safe (#6163)
- * fix reading and writing angular units different from degree (namaly arc-second, arc-minute, grad, gon and radian) (#6171)
+ * fix reading and writing angular units different from degree (namely arc-second, arc-minute, grad, gon and radian) (#6171)
  * do not use VirtualMemIO optimization on compressed /vsimem/ files (#6195)
  * correctly set GTRasterTypeGeoKey=RasterPixelIsPoint if AREA_OR_POINT=Point but there is no SRS set (#6225)
  * improve a bit error detection when writing
