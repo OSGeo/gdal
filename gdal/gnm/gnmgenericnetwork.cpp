@@ -1099,7 +1099,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     }
     OGRFeature::DestroyFeature(poFeature);
 
-    // write decription
+    // write description
     if(!sDescription.empty())
     {
         poFeature = OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
