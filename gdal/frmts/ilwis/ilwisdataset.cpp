@@ -720,7 +720,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Unsupported ILWIS data file. \n"
                           "can't treat as raster.\n" );
-                return FALSE;
+                return NULL;
             }
         }
     }	
@@ -737,7 +737,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             //CPLError( CE_Failure, CPLE_AppDefined,
             //			"Unsupported ILWIS data file. \n"
             //			"can't treat as raster.\n" );
-            return FALSE;
+            return NULL;
         }
     }
     else
@@ -745,7 +745,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unsupported ILWIS data file. \n"
                   "can't treat as raster.\n" );
-        return FALSE;
+        return NULL;
     }	
 
 /* -------------------------------------------------------------------- */
@@ -760,12 +760,12 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( GetRowCol(mapsize, Row, Col) != CE_None)
     {
         delete poDS;
-        return FALSE;
+        return NULL;
     }
     if( !GDALCheckDatasetDimensions(Col, Row) )
     {
         delete poDS;
-        return FALSE;
+        return NULL;
     }
     poDS->nRasterXSize = Col;
     poDS->nRasterYSize = Row;
@@ -1825,7 +1825,7 @@ double ILWISRasterBand::GetNoDataValue( int *pbSuccess )
 
 static double doubleConv(const char* s)
 {
-    if (s == 0) return rUNDEF;
+    if (s == NULL) return rUNDEF;
     char *begin = const_cast<char*>(s);
 
     // skip leading spaces; strtol will return 0 on a string with only spaces
@@ -1856,7 +1856,7 @@ ValueRange::ValueRange(string sRng) :
     sRange[sRng.length()] = 0;
 
     char *p1 = strchr(sRange, ':');
-    if (0 == p1)
+    if (NULL == p1)
     {
         delete[] sRange;
         init();
@@ -1864,10 +1864,10 @@ ValueRange::ValueRange(string sRng) :
     }
 
     char *p3 = strstr(sRange, ",offset=");
-    if (0 == p3)
+    if (NULL == p3)
         p3 = strstr(sRange, ":offset=");
     _r0 = rUNDEF;
-    if (0 != p3) {
+    if (NULL != p3) {
         _r0 = doubleConv(p3+8);
         *p3 = 0;
     }
@@ -1879,7 +1879,7 @@ ValueRange::ValueRange(string sRng) :
     }
 
     p2 = strchr(sRange, ':');
-    if (p2 != 0) {
+    if (p2 != NULL) {
         *p2 = 0;
         _rLo = CPLAtof(sRange);
         _rHi = CPLAtof(p2+1);

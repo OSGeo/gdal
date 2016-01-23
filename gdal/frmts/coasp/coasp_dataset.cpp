@@ -459,7 +459,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	poDS->fpBinHH = VSIFOpenL(pszFilename, "r");
 
-	if (poDS->fpBinHH != 0) {
+	if (poDS->fpBinHH != NULL) {
 		/* Set raster band */
 		poDS->SetBand(1, new COASPRasterBand(poDS, GDT_CFloat32, 
 			hh , poDS->fpBinHH));
@@ -472,7 +472,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	poDS->fpBinHV = VSIFOpenL(pszFilename, "r");
 
-	if (poDS->fpBinHV != 0) {
+	if (poDS->fpBinHV != NULL) {
 		poDS->SetBand(2, new COASPRasterBand(poDS, GDT_CFloat32,
 			hv, poDS->fpBinHV));
 	}
@@ -484,7 +484,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	poDS->fpBinVH = VSIFOpenL(pszFilename, "r");
 
-	if (poDS->fpBinVH != 0) {
+	if (poDS->fpBinVH != NULL) {
     	poDS->SetBand(3, new COASPRasterBand(poDS, GDT_CFloat32,
 			vh, poDS->fpBinVH));
 	}
@@ -496,7 +496,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 
 	poDS->fpBinVV = VSIFOpenL(pszFilename, "r");
 
-	if (poDS->fpBinVV != 0) {
+	if (poDS->fpBinVV != NULL) {
 		poDS->SetBand(4, new COASPRasterBand(poDS, GDT_CFloat32,
 			vv, poDS->fpBinVV));
 	}

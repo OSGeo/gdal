@@ -937,7 +937,7 @@ bool VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-    char *content_type = 0;
+    char *content_type = NULL;
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
 
     if (ENABLE_DEBUG)
@@ -1271,7 +1271,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-    char *content_type = 0;
+    char *content_type = NULL;
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
 
     if ((response_code != 200 && response_code != 206 &&

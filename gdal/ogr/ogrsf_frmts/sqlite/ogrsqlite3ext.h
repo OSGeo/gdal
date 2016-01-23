@@ -670,7 +670,7 @@ struct sqlite3_api_routines {
 #define sqlite3_vtab_on_conflict       sqlite3_api->vtab_on_conflict
 #endif /* SQLITE_CORE */
 
-#define SQLITE_EXTENSION_INIT1     const sqlite3_api_routines *sqlite3_api = 0;
+#define SQLITE_EXTENSION_INIT1     const sqlite3_api_routines *sqlite3_api = NULL;
 #define SQLITE_EXTENSION_INIT2(v)  sqlite3_api = v;
 
 #endif /* SQLITE3EXT_H_ */

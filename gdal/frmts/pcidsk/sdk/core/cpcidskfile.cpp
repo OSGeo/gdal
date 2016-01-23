@@ -93,8 +93,8 @@ CPCIDSKFile::CPCIDSKFile( std::string filename )
     last_block_dirty = false;
     last_block_xoff = 0;
     last_block_xsize = 0;
-    last_block_data = 0;
-    last_block_mutex = 0;
+    last_block_data = NULL;
+    last_block_mutex = NULL;
     file_size = 0;
 
 /* -------------------------------------------------------------------- */

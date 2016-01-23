@@ -297,7 +297,7 @@ const char *DDFField::GetInstanceData( int nInstance,
     if( poDefn->GetSubfieldCount() == 0 )
     {
         pachWrkData = GetData();
-        if( pnInstanceSize != 0 )
+        if( pnInstanceSize != NULL )
             *pnInstanceSize = GetDataSize();
         return pachWrkData;
     }

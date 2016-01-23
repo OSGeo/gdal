@@ -806,9 +806,9 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
 
     if ((err==ZIP_OK) && (zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
     {
-        zi->ci.stream.zalloc = (alloc_func)0;
-        zi->ci.stream.zfree = (free_func)0;
-        zi->ci.stream.opaque = (voidpf)0;
+        zi->ci.stream.zalloc = (alloc_func)NULL;
+        zi->ci.stream.zfree = (free_func)NULL;
+        zi->ci.stream.opaque = (voidpf)NULL;
 
         if (windowBits>0)
             windowBits = -windowBits;

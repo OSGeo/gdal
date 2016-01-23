@@ -821,7 +821,7 @@ public:
     T *take()
     {
         T *tmp = _ptr;
-	    _ptr = 0;
+	    _ptr = NULL;
 	    return tmp;
     }
 
@@ -848,7 +848,7 @@ public:
     T *take()
     {
         T *tmp = _ptr;
-	    _ptr = 0;
+	    _ptr = NULL;
 	    return tmp;
     }
 

@@ -70,7 +70,7 @@ extern float strtof(const char *nptr, char **endptr);
  */
 double CPLAtofDelim(const char *nptr, char point)
 {
-  return CPLStrtodDelim(nptr, 0, point);
+  return CPLStrtodDelim(nptr, NULL, point);
 }
 
 /************************************************************************/
@@ -112,7 +112,7 @@ double CPLAtofDelim(const char *nptr, char point)
  */
 double CPLAtof(const char *nptr)
 {
-  return CPLStrtod(nptr, 0);
+  return CPLStrtod(nptr, NULL);
 }
 
 /************************************************************************/
@@ -143,12 +143,12 @@ double CPLAtofM( const char *nptr )
     for( int i = 0; i < nMaxSearch; i++ )
     {
         if( nptr[i] == ',' )
-            return CPLStrtodDelim( nptr, 0, ',' );
+            return CPLStrtodDelim( nptr, NULL, ',' );
         else if( nptr[i] == '.' || nptr[i] == '\0' )
-            return CPLStrtodDelim( nptr, 0, '.' );
+            return CPLStrtodDelim( nptr, NULL, '.' );
     }
 
-    return CPLStrtodDelim( nptr, 0, '.' );
+    return CPLStrtodDelim( nptr, NULL, '.' );
 }
 
 /************************************************************************/

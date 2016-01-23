@@ -57,8 +57,8 @@ GDALWMSDataset::GDALWMSDataset() :
     m_http_max_conn(0),
     m_http_timeout(0)
 {
-    m_mini_driver = 0;
-    m_cache = 0;
+    m_mini_driver = NULL;
+    m_cache = NULL;
     m_hint.m_valid = false;
     m_data_type = GDT_Byte;
     m_clamp_requests = true;
@@ -500,7 +500,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     if (ret == CE_None) {
         // Data values are attributes, they include NoData Min and Max
         // TODO: document those options
-        if (0!=CPLGetXMLNode(config,"DataValues")) {
+        if (NULL!=CPLGetXMLNode(config,"DataValues")) {
             const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",NULL);
             if (nodata!=NULL) WMSSetNoDataValue(nodata);
             const char *min=CPLGetXMLValue(config,"DataValues.min",NULL);

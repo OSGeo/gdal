@@ -395,7 +395,7 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
             GDALDeinitGCPs( psPam->nGCPCount, psPam->pasGCPList );
             CPLFree( psPam->pasGCPList );
             psPam->nGCPCount = 0;
-            psPam->pasGCPList = 0;
+            psPam->pasGCPList = NULL;
         }
 
         GDALDeserializeGCPListFromXML( psGCPList,

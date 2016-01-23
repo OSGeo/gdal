@@ -63,7 +63,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         }
 
         if( j == 80 || pszHeader[j-1] != '%' )
-            return FALSE;
+            return NULL;
     }
 
     OGRNTFDataSource    *poDS = new OGRNTFDataSource;

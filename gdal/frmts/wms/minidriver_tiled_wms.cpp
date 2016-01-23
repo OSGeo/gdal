@@ -417,7 +417,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
         }
 
        // Data values are attributes, they include NoData Min and Max
-       if (0!=CPLGetXMLNode(TG,"DataValues")) {
+       if (NULL!=CPLGetXMLNode(TG,"DataValues")) {
            const char *nodata=CPLGetXMLValue(TG,"DataValues.NoData",NULL);
            if (nodata!=NULL) m_parent_dataset->WMSSetNoDataValue(nodata);
            const char *min=CPLGetXMLValue(TG,"DataValues.min",NULL);

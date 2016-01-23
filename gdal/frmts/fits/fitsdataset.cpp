@@ -147,7 +147,7 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
   // Otherwise read in the image data
   fits_read_img(hFITS, dataset->fitsDataType, offset, nElements,
-		0, pImage, 0, &status);
+		NULL, pImage, NULL, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
 	     "Couldn't read image data from FITS file (%d).", status);
@@ -231,7 +231,7 @@ static bool isIgnorableFITSHeader(const char* name) {
 /************************************************************************/
 
 FITSDataset::FITSDataset() {
-  hFITS = 0;
+  hFITS = NULL;
 }
 
 /************************************************************************/
@@ -245,7 +245,7 @@ FITSDataset::~FITSDataset() {
     if(eAccess == GA_Update) {   // Only do this if we've successfully opened the file and  update capability
       // Write any meta data to the file that's compatible with FITS
       status = 0;
-      fits_movabs_hdu(hFITS, 1, 0, &status);
+      fits_movabs_hdu(hFITS, 1, NULL, &status);
       fits_write_key_longwarn(hFITS, &status);
       if (status) {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -279,7 +279,7 @@ FITSDataset::~FITSDataset() {
 	    // handle. Note: to avoid a compiler warning we copy the
 	    // const value string to a non const one...
             char* valueCpy = CPLStrdup(value);
-	    fits_update_key_longstr(hFITS, key, valueCpy, 0, &status);
+	    fits_update_key_longstr(hFITS, key, valueCpy, NULL, &status);
 	    CPLFree(valueCpy);
 
 	    // Check for errors
@@ -319,7 +319,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   int status = 0;
 
   // Move to the primary HDU
-  fits_movabs_hdu(hFITS, 1, 0, &status);
+  fits_movabs_hdu(hFITS, 1, NULL, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
 	     "Couldn't move to first HDU in FITS file %s (%d).\n", 
@@ -409,7 +409,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   fits_get_hdrspace(hFITS, &nKeys, &nMoreKeys, &status);
   for(keyNum = 1; keyNum <= nKeys; keyNum++)
   {
-    fits_read_keyn(hFITS, keyNum, key, value, 0, &status);
+    fits_read_keyn(hFITS, keyNum, key, value, NULL, &status);
     if (status) {
       CPLError(CE_Failure, CPLE_AppDefined,
 	       "Error while reading key %d from FITS file %s (%d)", 
@@ -434,8 +434,8 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
       // Check for long string
       if (strrchr(newValue, '&') == newValue + strlen(newValue) - 1) {
 	// Value string ends in "&", so use long string conventions
-	char* longString = 0;
-	fits_read_key_longstr(hFITS, key, &longString, 0, &status);
+	char* longString = NULL;
+	fits_read_key_longstr(hFITS, key, &longString, NULL, &status);
         // Note that read_key_longstr already strips quotes
 	if (status) {
 	  CPLError(CE_Failure, CPLE_AppDefined,
@@ -473,7 +473,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
 
   // Get access mode and attempt to open the file
   int status = 0;
-  fitsfile* hFITS = 0;
+  fitsfile* hFITS = NULL;
   if (poOpenInfo->eAccess == GA_ReadOnly) 
     fits_open_file(&hFITS, poOpenInfo->pszFilename, READONLY, &status);
   else

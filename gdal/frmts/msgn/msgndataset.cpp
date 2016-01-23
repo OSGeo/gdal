@@ -286,7 +286,7 @@ MSGNDataset::MSGNDataset() :
     fp(NULL)
 {
     pszProjection = CPLStrdup("");
-    msg_reader_core = 0;
+    msg_reader_core = NULL;
 }
 
 /************************************************************************/

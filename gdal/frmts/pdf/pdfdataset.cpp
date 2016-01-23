@@ -977,7 +977,7 @@ static const char* PDFEnterPasswordFromConsoleIfNeeded(const char* pszUserPwd)
     {
         static char szPassword[81];
         printf( "Enter password (will be echo'ed in the console): " );
-        if (0 == fgets( szPassword, sizeof(szPassword), stdin ))
+        if (NULL == fgets( szPassword, sizeof(szPassword), stdin ))
         {
             fprintf(stderr, "WARNING: Error getting password.\n");
         }

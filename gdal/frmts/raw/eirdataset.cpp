@@ -510,7 +510,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( !poDS->bGotTransform )
         poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, 0, 
+            GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
                                poDS->adfGeoTransform );
 
     if( !poDS->bGotTransform )

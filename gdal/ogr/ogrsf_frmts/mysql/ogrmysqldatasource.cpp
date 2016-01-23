@@ -37,7 +37,14 @@
 #pragma warning( push )
 #pragma warning( disable : 4201 ) /* nonstandard extension used : nameless struct/union */
 #endif
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 #include <my_sys.h>
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+#pragma GCC diagnostic pop
+#endif
 #ifdef _MSC_VER
 #pragma warning( pop ) 
 #endif
@@ -55,7 +62,7 @@ OGRMySQLDataSource::OGRMySQLDataSource() :
     nLayers(0),
     pszName(NULL),
     bDSUpdate(FALSE),
-    hConn(0),
+    hConn(NULL),
     nKnownSRID(0),
     panSRID(NULL),
     papoSRS(NULL),

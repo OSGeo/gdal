@@ -159,7 +159,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         if (poGDS->bHasHeaderLine)
         {
-            const char* pszLine = CPLReadLine2L(poGDS->fp, 100, 0);
+            const char* pszLine = CPLReadLine2L(poGDS->fp, 100, NULL);
             if (pszLine == NULL)
                 return CE_Failure;
             poGDS->nLineNum ++;
@@ -190,7 +190,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         while(poGDS->nDataLineNum < nLineInFile)
         {
-            const char* pszLine = CPLReadLine2L(poGDS->fp, 100, 0);
+            const char* pszLine = CPLReadLine2L(poGDS->fp, 100, NULL);
             if (pszLine == NULL)
                 return CE_Failure;
             poGDS->nLineNum ++;
@@ -239,7 +239,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         do
         {
             const vsi_l_offset nOffsetBefore = VSIFTellL(poGDS->fp);
-            const char* pszLine = CPLReadLine2L(poGDS->fp, 100, 0);
+            const char* pszLine = CPLReadLine2L(poGDS->fp, 100, NULL);
             if (pszLine == NULL)
             {
                 if( poGDS->bSameNumberOfValuesPerLine )

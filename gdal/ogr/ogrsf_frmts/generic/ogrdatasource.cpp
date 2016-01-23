@@ -138,7 +138,7 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
     if (pszName == NULL)
     {
         CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in OGR_DS_CreateLayer");
-        return 0;
+        return NULL;
     }
     OGRLayerH hLayer = (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer( 
         pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );

@@ -71,7 +71,7 @@ OGRDataSource *OGRSXFDriver::Open( const char * pszFilename, int bUpdate )
     if (!EQUAL(CPLGetExtension(pszFilename), "sxf") ||
         VSIStatL(pszFilename, &sStatBuf) != 0 ||
         !VSI_ISREG(sStatBuf.st_mode))
-        return FALSE;
+        return NULL;
 
     OGRSXFDataSource   *poDS = new OGRSXFDataSource();
 

@@ -400,7 +400,7 @@ void ENVIDataset::FlushCache()
     char** catNames = band->GetCategoryNames();
 
     bOK &= VSIFPrintfL( fp, "header offset = 0\n") >= 0;
-    if (0 == catNames)
+    if (NULL == catNames)
         bOK &= VSIFPrintfL( fp, "file type = ENVI Standard\n" ) >= 0;
     else
         bOK &= VSIFPrintfL( fp, "file type = ENVI Classification\n" ) >= 0;
@@ -430,7 +430,7 @@ void ENVIDataset::FlushCache()
 /*      Write class and color information                               */
 /* -------------------------------------------------------------------- */
     catNames = band->GetCategoryNames();
-    if (0 != catNames)
+    if (NULL != catNames)
     {
         int nrClasses = 0;
         while (*catNames++)
@@ -441,7 +441,7 @@ void ENVIDataset::FlushCache()
             bOK &= VSIFPrintfL( fp, "classes = %d\n", nrClasses ) >= 0;
 
             GDALColorTable* colorTable = band->GetColorTable();
-            if (0 != colorTable)
+            if (NULL != colorTable)
             {
                 int nrColors = colorTable->GetColorEntryCount();
                 if (nrColors > nrClasses)
@@ -462,7 +462,7 @@ void ENVIDataset::FlushCache()
             }
 
             catNames = band->GetCategoryNames();
-            if (0 != *catNames)
+            if (NULL != *catNames)
             {
                 bOK &= VSIFPrintfL( fp, "class names = {\n%s", *catNames) >= 0;
                 catNames ++;
@@ -2352,7 +2352,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                 /* Don't show unknown or index units */
                 if (EQUAL(pszWLUnits,"Unknown") ||
                     EQUAL(pszWLUnits,"Index") )
-                    pszWLUnits=0;
+                    pszWLUnits=NULL;
             }
             if (pszWLUnits)
             {
@@ -2587,7 +2587,7 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     int	iENVIType = GetEnviType(eType);
     if (0 == iENVIType)
-      return 0;
+      return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
@@ -2670,7 +2670,7 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
         bRet = false;
 
     if( !bRet )
-        return FALSE;
+        return NULL;
 
     return reinterpret_cast<GDALDataset *>(
         GDALOpen( pszFilename, GA_Update ) );

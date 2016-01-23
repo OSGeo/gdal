@@ -103,7 +103,7 @@ CPLErr RMFRasterBand::ReadBuffer( GByte *pabyBuf, GUInt32 nBytes ) const
 {
     RMFDataset  *poGDS = reinterpret_cast<RMFDataset *>( poDS );
 
-    CPLAssert( pabyBuf != NULL && poGDS->fp != 0 );
+    CPLAssert( pabyBuf != NULL && poGDS->fp != NULL );
 
     const vsi_l_offset nOffset = VSIFTellL( poGDS->fp );
 

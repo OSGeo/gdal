@@ -3646,7 +3646,7 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
     if (pszName == NULL)
     {
         CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in GDALDatasetCreateLayer");
-        return 0;
+        return NULL;
     }
     return (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer( 
         pszName, (OGRSpatialReference *) hSpatialRef, eGType, papszOptions );

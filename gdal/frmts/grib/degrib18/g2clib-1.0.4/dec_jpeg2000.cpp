@@ -133,10 +133,10 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     // JasPer method
     
     g2int i,j,k;
-    jas_image_t *image=0;
+    jas_image_t *image=NULL;
     jas_stream_t *jpcstream;
     jas_image_cmpt_t *pcmpt;
-    char *opts=0;
+    char *opts=NULL;
     jas_matrix_t *data;
 
 //    jas_init();
@@ -152,7 +152,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 //       
 
     image=jpc_decode(jpcstream,opts);
-    if ( image == 0 ) {
+    if ( image == NULL ) {
        printf(" jpc_decode failed\n");
        return -3;
     }

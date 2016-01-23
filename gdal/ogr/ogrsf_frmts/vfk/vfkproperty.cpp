@@ -63,7 +63,7 @@ VFKProperty::VFKProperty(double dValue)
   \brief Set VFK property (string)
 */
 VFKProperty::VFKProperty(const char *pszValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(0 != pszValue ? pszValue : "")
+    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(NULL != pszValue ? pszValue : "")
 {
 }
 

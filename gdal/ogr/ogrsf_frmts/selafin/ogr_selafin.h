@@ -44,15 +44,15 @@ class Range {
             SelafinTypeDef eType;
             int nMin,nMax;
             List *poNext;
-            List():poNext(0) {}
+            List():poNext(NULL) {}
             List(SelafinTypeDef eTypeP,int nMinP,int nMaxP,List *poNextP):eType(eTypeP),nMin(nMinP),nMax(nMaxP),poNext(poNextP) {}
         } List;
         List *poVals,*poActual;
         int nMaxValue;
-        static void sortList(List *&poList,List *poEnd=0);
+        static void sortList(List *&poList,List *poEnd=NULL);
         static void deleteList(List *poList);
     public:
-        Range():poVals(0),poActual(0),nMaxValue(0) {}
+        Range():poVals(NULL),poActual(NULL),nMaxValue(0) {}
         void setRange(const char *pszStr);
         ~Range();
         void setMaxValue(int nMaxValueP);

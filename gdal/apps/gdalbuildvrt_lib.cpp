@@ -629,7 +629,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                     }
                 }
                 else
-                    pasBandProperties[j].colorTable = 0;
+                    pasBandProperties[j].colorTable = NULL;
 
                 if (nVRTNoDataCount > 0)
                 {

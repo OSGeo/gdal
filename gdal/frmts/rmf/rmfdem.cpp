@@ -112,8 +112,8 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
     GInt32 iPrev = 0;           // The last data value decoded
     GInt32 nCode;
 
-    if ( pabyIn == 0 ||
-         pabyOut == 0 ||
+    if ( pabyIn == NULL ||
+         pabyOut == NULL ||
          nSizeOut < nSizeIn ||
          nSizeIn < 2 )
         return 0;

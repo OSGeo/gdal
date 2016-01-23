@@ -140,7 +140,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                     if (advise_read) {
                         need_this_block = false;
                     } else {
-                        void *p = 0;
+                        void *p = NULL;
                         if ((ix == x) && (iy == y)) p = buffer;
                         if (ReadBlockFromFile(ix, iy, file_name.c_str(), nBand, p, 0) == CE_None) need_this_block = false;
                     }
@@ -149,7 +149,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
             if (need_this_block) {
                 if (/*m_parent_dataset->m_offline_mode */ download_blocks == NULL) {
                     if (!advise_read) {
-                        void *p = 0;
+                        void *p = NULL;
                         if ((ix == x) && (iy == y)) p = buffer;
                         if (ZeroBlock(ix, iy, nBand, p) != CE_None) {
                             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
@@ -210,7 +210,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                                 cache->Write(download_requests[i].pszURL, file_name);
                             }
                         } else {
-                            void *p = 0;
+                            void *p = NULL;
                             if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
                             if (ReadBlockFromFile(download_blocks[i].x, download_blocks[i].y, file_name.c_str(), nBand, p, advise_read) == CE_None) {
                                 if (cache != NULL) {
@@ -223,7 +223,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                             }
                         }
                     } else if( wms_exception && m_parent_dataset->m_zeroblock_on_serverexceptions ) {
-                         void *p = 0;
+                         void *p = NULL;
                          if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
                          if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p) != CE_None) {
                              CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
@@ -241,7 +241,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                      download_requests[i].nStatus);
                if ( zero_it != m_parent_dataset->m_http_zeroblock_codes.end() ) {
                     if (!advise_read) {
-                        void *p = 0;
+                        void *p = NULL;
                         if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
                         if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p) != CE_None) {
                             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
@@ -562,7 +562,7 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
 
 CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read) {
     CPLErr ret = CE_None;
-    GDALDataset *ds = 0;
+    GDALDataset *ds = NULL;
     GByte *color_table = NULL;
     int i;
 

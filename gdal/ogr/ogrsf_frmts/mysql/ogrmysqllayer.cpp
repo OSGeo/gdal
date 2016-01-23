@@ -259,7 +259,7 @@ OGRFeature *OGRMySQLLayer::GetNextRawFeature()
         if( hResultSet == NULL )
         {
             poDS->ReportError( "mysql_use_result() failed on query." );
-            return FALSE;
+            return NULL;
         }
     }
 

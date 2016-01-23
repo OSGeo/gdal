@@ -413,7 +413,7 @@ CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
 void *GDALDeserializeTPSTransformer( CPLXMLNode *psTree )
 
 {
-    GDAL_GCP *pasGCPList = 0;
+    GDAL_GCP *pasGCPList = NULL;
     int nGCPCount = 0;
     void *pResult;
     int bReversed;

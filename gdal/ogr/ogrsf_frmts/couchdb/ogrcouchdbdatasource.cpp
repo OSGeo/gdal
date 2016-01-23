@@ -845,7 +845,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
 
-    if( sSelectInfo.parse( &sFieldList, 0 ) != CE_None )
+    if( sSelectInfo.parse( &sFieldList, NULL ) != CE_None )
     {
         return NULL;
     }

@@ -103,7 +103,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
         if (k == 1)
         {
             CPLFree(pabyASCIITextHeader);
-            return FALSE;
+            return NULL;
         }
     }
 
