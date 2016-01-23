@@ -1186,7 +1186,7 @@ json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
         for( it.entry = json_object_get_object(poTmp)->head;
              ( it.entry ?
                ( it.key = (char*)it.entry->k,
-                 it.val = (json_object*)it.entry->v, it.entry) : NULL);
+                 it.val = (json_object*)it.entry->v, 1) : 0);
              it.entry = it.entry->next)
         {
             if( EQUAL( it.key, pszName ) )
