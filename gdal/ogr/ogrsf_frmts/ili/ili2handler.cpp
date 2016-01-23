@@ -58,7 +58,7 @@ ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
 
   // the root element
   tmpCh = XMLString::transcode("ROOT");
-  dom_doc = impl->createDocument(0,tmpCh,0);
+  dom_doc = impl->createDocument(NULL,tmpCh,NULL);
   XMLString::release(&tmpCh);
 
   // the first element is root

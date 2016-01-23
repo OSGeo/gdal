@@ -27,17 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "xercesc_headers.h"
+
 #include "cpl_conv.h"
 #include "ogr_ili2.h"
 #include "ogrsf_frmts.h"
 
-#include <util/PlatformUtils.hpp>  // xercesc
-
 CPL_CVSID("$Id$");
 
-#ifdef XERCES_CPP_NAMESPACE_USE
-XERCES_CPP_NAMESPACE_USE
-#endif
 
 /************************************************************************/
 /*                                Open()                                */

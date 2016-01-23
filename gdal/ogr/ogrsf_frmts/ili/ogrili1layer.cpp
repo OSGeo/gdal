@@ -485,7 +485,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
               GetLayerDefn()->GetName());
     OGRwkbGeometryType geomType
         = GetLayerDefn()->GetGeomFieldDefn(nSurfaceFieldIndex)->GetType();
-    OGRCompoundCurve *surface_lines = 0; // collected lines of SURFACE polygon ring
+    OGRCompoundCurve *surface_lines = NULL; // collected lines of SURFACE polygon ring
     poSurfaceLineLayer->ResetReading();
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
         //OBJE entries with same _RefTID are polygon rings of same feature
@@ -504,7 +504,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                 linefeature->GetGeomFieldRef(0) );
             for( int i = 0; i < lines->getNumGeometries(); i++ ) {
                 OGRCurve *line = reinterpret_cast<OGRCurve*>(lines->getGeometryRef(i));
-                OGRCurve *ring = 0;
+                OGRCurve *ring = NULL;
                 if (surface_lines) {
                     //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
                     if (line->getGeometryType() == wkbCompoundCurve) {
@@ -525,7 +525,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                         ring = reinterpret_cast<OGRCurve*>(line->clone());
                     }
                 }
-                if (ring == 0 && surface_lines == 0) {
+                if (ring == NULL && surface_lines == NULL) {
                     //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
                     if (line->getGeometryType() == wkbCompoundCurve) {
                         surface_lines = reinterpret_cast<OGRCompoundCurve *>(line->clone());
@@ -539,7 +539,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                     if (error != OGRERR_NONE) {
                         CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ring->exportToJson() );
                     }
-                    surface_lines = 0;
+                    surface_lines = NULL;
                 }
             }
         } else {
@@ -549,7 +549,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
     }
 
     ResetReading();
-    poSurfaceLineLayer = 0;
+    poSurfaceLineLayer = NULL;
 }
 
 OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines,
@@ -658,7 +658,7 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer,
     CPLDebug( "OGR_ILI", "Polygonizing layer %s with %d multilines",
               poAreaLineLayer->GetLayerDefn()->GetName(),
               gc->getNumGeometries());
-    poAreaLineLayer = 0;
+    poAreaLineLayer = NULL;
     OGRMultiPolygon* polys = Polygonize( gc , false);
     CPLDebug( "OGR_ILI", "Resulting polygons: %d", polys->getNumGeometries());
     if (polys->getNumGeometries() != GetFeatureCount())
@@ -721,6 +721,6 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer,
     CPLFree( ahInGeoms );
     OGRGeometry::freeGEOSContext( hGEOSCtxt );
 #endif
-    poAreaLineLayer = 0;
+    poAreaLineLayer = NULL;
     delete polys;
 }
