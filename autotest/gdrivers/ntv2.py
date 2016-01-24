@@ -33,7 +33,58 @@ import sys
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal
 import gdaltest
+
+###############################################################################
+# Open a little-endian NTv2 grid
+
+def ntv2_1():
+
+    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10 )
+    gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
+    return tst.testOpen( check_gt = gt, check_prj = 'WGS84' )
+
+###############################################################################
+# Open a big-endian NTv2 grid
+
+def ntv2_2():
+
+    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_be.gsb', 2, 10 )
+    gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
+    return tst.testOpen( check_gt = gt, check_prj = 'WGS84' )
+
+###############################################################################
+# Test creating a little-endian NTv2 grid
+
+def ntv2_3():
+
+    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=LE'] )
+    return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
+# Test creating a big-endian NTv2 grid
+
+def ntv2_4():
+
+    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=BE'] )
+    return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
+# Test appending
+
+def ntv2_5():
+
+    src_ds = gdal.Open('data/test_ntv2_le.gsb')
+    gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_5.gsb', src_ds)
+    gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_5.gsb', src_ds, options = ['APPEND_SUBDATASET=YES'])
+    ds = gdal.Open('NTv2:1:/vsimem/ntv2_5.gsb')
+    if ds.GetRasterBand(2).Checksum() != 10:
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('NTv2').Delete('/vsimem/ntv2_5.gsb')
+
+    return 'success'
 
 ###############################################################################
 
@@ -77,6 +128,11 @@ def ntv2_online_3():
 
 
 gdaltest_list = [
+    ntv2_1,
+    ntv2_2,
+    ntv2_3,
+    ntv2_4,
+    ntv2_5,
     ntv2_online_1,
     ntv2_online_2,
     ntv2_online_3,
