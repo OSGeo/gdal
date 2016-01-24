@@ -117,6 +117,23 @@ def ntv2_6():
     return 'success'
 
 ###############################################################################
+# Test creating a file with invalid filename
+
+def ntv2_7():
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('NTv2').Create('/does/not/exist.gsb', 1, 1, 4, gdal.GDT_Float32)
+    if ds is not None:
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('NTv2').Create('/does/not/exist.gsb', 1, 1, 4, gdal.GDT_Float32, options = ['APPEND_SUBDATASET=YES'])
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ntv2_online_1():
 
@@ -164,6 +181,7 @@ gdaltest_list = [
     ntv2_4,
     ntv2_5,
     ntv2_6,
+    ntv2_7,
     ntv2_online_1,
     ntv2_online_2,
     ntv2_online_3,
