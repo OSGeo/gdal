@@ -174,6 +174,7 @@ def vsis3_2():
         gdaltest.post_reason('fail')
         return 'fail'
     data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+    gdal.VSIFCloseL(f)
     gdal.SetConfigOption('AWS_SESSION_TOKEN', None)
 
     #old_val = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
