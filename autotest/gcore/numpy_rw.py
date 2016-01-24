@@ -332,6 +332,7 @@ def numpy_rw_11():
         return 'skip'
 
     import numpy
+    from osgeo import gdal_array
 
     type_tuples = [ ( 'uint8', gdal.GDT_Byte, numpy.uint8, 255 ),
                     ( 'uint16', gdal.GDT_UInt16, numpy.uint16, 65535 ),
@@ -354,6 +355,18 @@ def numpy_rw_11():
             return 'fail'
 
         ar = numpy.empty([1, 1], dtype = type_tuple[2])
+
+        got_dt = gdal_array.OpenArray(ar).GetRasterBand(1).DataType
+        expected_dt = type_tuple[1]
+        if expected_dt == gdal.GDT_CInt16 or expected_dt == gdal.GDT_CInt32:
+            expected_dt = gdal.GDT_CFloat32
+        if got_dt != expected_dt:
+            gdaltest.post_reason('did not get expected result (0)')
+            print(type_tuple[1])
+            print(got_dt)
+            print(expected_dt)
+            return 'fail'
+
         ar[0][0] = type_tuple[3]
         ds.GetRasterBand(1).WriteArray(ar)
         ds = None
@@ -744,6 +757,44 @@ def numpy_rw_15():
 
     return 'success'
 
+###############################################################################
+# Test errors of OpenArray()
+
+def numpy_rw_16():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    from osgeo import gdal_array
+
+    # 1D
+    array = numpy.empty( [1], numpy.uint8 )
+    with gdaltest.error_handler():
+        ds = gdal_array.OpenArray( array )
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # 4D
+    array = numpy.empty( [1,1,1,1], numpy.uint8 )
+    with gdaltest.error_handler():
+        ds = gdal_array.OpenArray( array )
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Unsupported data type
+    array = numpy.empty( [1,1], numpy.float16 )
+    with gdaltest.error_handler():
+        ds = gdal_array.OpenArray( array )
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+
+    return 'success'
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
@@ -765,6 +816,7 @@ gdaltest_list = [
     numpy_rw_13,
     numpy_rw_14,
     numpy_rw_15,
+    numpy_rw_16,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
