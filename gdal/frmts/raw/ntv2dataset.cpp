@@ -695,7 +695,7 @@ const char *NTv2Dataset::GetProjectionRef()
 
 GDALDataset *NTv2Dataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize,
-                                  CPL_UNUSED int nBands,
+                                  int nBands,
                                   GDALDataType eType,
                                   char ** papszOptions )
 {
@@ -704,6 +704,13 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create NTv2 file with unsupported data type '%s'.",
                  GDALGetDataTypeName( eType ) );
+        return NULL;
+    }
+    if( nBands != 4 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attempt to create NTv2 file with unsupported band number '%d'.",
+                 nBands);
         return NULL;
     }
 
@@ -819,6 +826,7 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
         SwapPtr32IfNecessary( bMustSwap, &nNumFile );
         CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 2*16 + 8, SEEK_SET ));
         CPL_IGNORE_RET_VAL(VSIFWriteL( &nNumFile, 1, 4, fp ));
+        SwapPtr32IfNecessary( bMustSwap, &nNumFile );
 
         CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_END ));
         vsi_l_offset nEnd = VSIFTellL( fp );
