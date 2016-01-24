@@ -50,6 +50,21 @@ GDALRasterBandH MEMCreateRasterBand( GDALDataset *poDS, int nBand,
 }
 
 /************************************************************************/
+/*                       MEMCreateRasterBandEx()                        */
+/************************************************************************/
+
+GDALRasterBandH MEMCreateRasterBandEx( GDALDataset *poDS, int nBand, 
+                                    GByte *pabyData, GDALDataType eType, 
+                                    GSpacing nPixelOffset, GSpacing nLineOffset, 
+                                    int bAssumeOwnership )
+
+{
+    return (GDALRasterBandH) 
+        new MEMRasterBand( poDS, nBand, pabyData, eType, nPixelOffset, 
+                           nLineOffset, bAssumeOwnership );
+}
+
+/************************************************************************/
 /*                           MEMRasterBand()                            */
 /************************************************************************/
 
