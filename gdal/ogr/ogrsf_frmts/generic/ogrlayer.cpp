@@ -2043,7 +2043,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     int bPromoteToMulti = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
     int bUsePreparedGeometries = CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
-    int bPretestContains = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PRETEST_CONTAINS", "NO"));
+    int bPretestContainment = CPLTestBool(CSLFetchNameValueDef(papszOptions, "PRETEST_CONTAINMENT", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2114,7 +2114,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
             OGRGeometry *z_geom = NULL;
 
             if (x_prepared_geom) {
-                if (bPretestContains && OGRPreparedGeometryContains(x_prepared_geom, y_geom)) 
+                if (bPretestContainment && OGRPreparedGeometryContains(x_prepared_geom, y_geom)) 
                 {
                     z_geom = y_geom->clone();
                 }
