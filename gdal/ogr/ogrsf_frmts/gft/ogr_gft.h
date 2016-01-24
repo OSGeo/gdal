@@ -207,7 +207,7 @@ class OGRGFTDataSource : public OGRDataSource
 
     void                DeleteLayer( const char *pszLayerName );
 
-    int                 bMustCleanPersistant;
+    int                 bMustCleanPersistent;
 
     static CPLStringList ParseSimpleJson(const char *pszJSon);
 

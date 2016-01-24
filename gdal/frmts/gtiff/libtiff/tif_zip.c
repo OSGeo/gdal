@@ -460,7 +460,7 @@ bad:
 		     "No space for ZIP state block");
 	return (0);
 }
-#endif /* ZIP_SUPORT */
+#endif /* ZIP_SUPPORT */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
 /*

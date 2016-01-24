@@ -50,7 +50,7 @@ class GFFDataset : public GDALPamDataset
     friend class GFFRasterBand;
     VSILFILE *fp;
     GDALDataType eDataType;
-    unsigned int nEndianess;
+    unsigned int nEndianness;
     /* Some relevant headers */
     unsigned short nVersionMajor;
     unsigned short nVersionMinor;
@@ -80,7 +80,7 @@ public:
 };
 
 GFFDataset::GFFDataset() :
-    fp(NULL), eDataType(GDT_Unknown), nEndianess(0), nVersionMajor(0),
+    fp(NULL), eDataType(GDT_Unknown), nEndianness(0), nVersionMajor(0),
     nVersionMinor(0), nLength(0), nBPP(0), nFrameCnt(0), nImageType(0),
     nRowMajor(0), nRgCnt(0), nAzCnt(0)
 {
@@ -218,7 +218,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 
     /* Check the endianness of the file */
     VSIFSeekL(poDS->fp,54,SEEK_SET);
-    VSIFReadL(&(poDS->nEndianess),2,1,poDS->fp);
+    VSIFReadL(&(poDS->nEndianness),2,1,poDS->fp);
 
     const bool bSwap =
 #if defined(CPL_LSB)

@@ -2582,7 +2582,7 @@ static void PDFDatasetErrorFunctionCommon(const CPLString& osError)
 }
 
 #ifdef POPPLER_0_20_OR_LATER
-static void PDFDatasetErrorFunction(CPL_UNUSED void* userData, CPL_UNUSED ErrorCategory eErrCatagory,
+static void PDFDatasetErrorFunction(CPL_UNUSED void* userData, CPL_UNUSED ErrorCategory eErrCategory,
 #ifdef POPPLER_0_23_OR_LATER
                                     Goffset nPos,
 #else

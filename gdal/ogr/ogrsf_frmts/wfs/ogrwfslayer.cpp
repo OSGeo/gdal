@@ -824,7 +824,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     GByte *pabyData = psResult->pabyData;
     int    nDataLen = psResult->nDataLen;
     int bIsMultiPart = FALSE;
-    const char* pszAttachementFilename = NULL;
+    const char* pszAttachmentFilename = NULL;
 
     if(strstr(pszContentType,"multipart")
         && CPLHTTPParseMultipartMime(psResult) )
@@ -836,12 +836,12 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         for(i=0;i<psResult->nMimePartCount;i++)
         {
             CPLString osTmpFileName = osTmpDirName + "/";
-            pszAttachementFilename =
+            pszAttachmentFilename =
                 OGRWFSFetchContentDispositionFilename(
                     psResult->pasMimePart[i].papszHeaders);
 
-            if (pszAttachementFilename)
-                osTmpFileName += pszAttachementFilename;
+            if (pszAttachmentFilename)
+                osTmpFileName += pszAttachmentFilename;
             else
                 osTmpFileName += CPLSPrintf("file_%d", i);
 
@@ -857,7 +857,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         }
     }
     else
-        pszAttachementFilename =
+        pszAttachmentFilename =
                 OGRWFSFetchContentDispositionFilename(
                     psResult->papszHeaders);
 
@@ -936,11 +936,11 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             osTmpFileName = osTmpDirName + "/file.kmz";
         /* GML is a special case. It needs the .xsd file that has been saved */
         /* as file.xsd, so we cannot used the attachment filename */
-        else if (pszAttachementFilename &&
-                 !EQUAL(CPLGetExtension(pszAttachementFilename), "GML"))
+        else if (pszAttachmentFilename &&
+                 !EQUAL(CPLGetExtension(pszAttachmentFilename), "GML"))
         {
             osTmpFileName = osTmpDirName + "/";
-            osTmpFileName += pszAttachementFilename;
+            osTmpFileName += pszAttachmentFilename;
         }
         else
         {

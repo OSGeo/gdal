@@ -371,7 +371,7 @@ int GetStateCode ( const char *pszState );
 const char *GetStateName( int nCode );
 
 //----- Conversion Table definition
-struct ConvertionTab {
+struct ConversionTab {
     const char *pszName;
     int nDefaultI;
     int nDefaultG;
@@ -379,7 +379,7 @@ struct ConvertionTab {
 };
 
 //----- Linear Unit Conversion Table
-static const ConvertionTab aoLinearUnitsConv[] = {
+static const ConversionTab aoLinearUnitsConv[] = {
     {"m",            /*  0 */  0,   1,  1.0},
     {SRS_UL_METER,   /*  1 */  0,   1,  1.0},
     {"meters",       /*  2 */  0,   1,  1.0},
@@ -408,7 +408,7 @@ static const ConvertionTab aoLinearUnitsConv[] = {
     {SRS_UA_RADIAN,  /* 20 */ 19,  20,  0.0},
     {"radians",      /* 21 */ 19,  20,  0.0}
 };
-#define LINEAR_UNITS_COUNT (sizeof(aoLinearUnitsConv) / sizeof(ConvertionTab))
+#define LINEAR_UNITS_COUNT (sizeof(aoLinearUnitsConv) / sizeof(ConversionTab))
 
 //----- Get the index of a given linear unit
 int GetUnitIndex( const char *pszUnitName );

@@ -325,7 +325,7 @@ OGROSMDataSource::~OGROSMDataSource()
     {
         KeyDesc* psKD = asKeys[i];
         fprintf(f, "%08d idx=%d %s\n",
-                psKD->nOccurences,
+                psKD->nOccurrences,
                 psKD->nKeyIndex,
                 psKD->pszK);
     }
@@ -1989,14 +1989,14 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
                 psKD->pszK = CPLStrdup(pszK);
                 psKD->nKeyIndex = nNextKeyIndex ++;
                 //CPLDebug("OSM", "nNextKeyIndex=%d", nNextKeyIndex);
-                psKD->nOccurences = 0;
+                psKD->nOccurrences = 0;
                 psKD->asValues.push_back(CPLStrdup(""));
                 aoMapIndexedKeys[psKD->pszK] = psKD;
                 asKeys.push_back(psKD);
             }
             else
                 psKD = oIterK->second;
-            psKD->nOccurences ++;
+            psKD->nOccurrences ++;
 
             pasAccumulatedTags[nAccumulatedTags].nKeyIndex = (short)psKD->nKeyIndex;
 

@@ -2214,7 +2214,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
     int         i /* , nLevel */;
     DGNElemCore *psCH;
     DGNPoint    sMin={0.0,0.0,0.0}, sMax={0.0,0.0,0.0};
-    unsigned char abyLevelsOccuring[8] = {0,0,0,0,0,0,0,0};
+    unsigned char abyLevelsOccurring[8] = {0,0,0,0,0,0,0,0};
     DGNInfo *psInfo = (DGNInfo *) hDGN;
 
     DGNLoadTCB( hDGN );
@@ -2250,7 +2250,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
         /* establish level */
         nLevel = papsElems[i]->level;
         nLevel = MAX(1,MIN(nLevel,64));
-        abyLevelsOccuring[(nLevel-1) >> 3] |= (0x1 << ((nLevel-1)&0x7));
+        abyLevelsOccurring[(nLevel-1) >> 3] |= (0x1 << ((nLevel-1)&0x7));
 
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
@@ -2296,7 +2296,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 /*      Create the corresponding cell header.                           */
 /* -------------------------------------------------------------------- */
     if( panLevels == NULL )
-        panLevels = (short *) abyLevelsOccuring + 0;
+        panLevels = (short *) abyLevelsOccurring + 0;
 
     psCH = DGNCreateCellHeaderElem( hDGN, nTotalLength, pszName, 
                                     nClass, panLevels, 

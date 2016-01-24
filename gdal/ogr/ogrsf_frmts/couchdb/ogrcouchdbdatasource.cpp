@@ -46,7 +46,7 @@ OGRCouchDBDataSource::OGRCouchDBDataSource()
 
     bReadWrite = FALSE;
 
-    bMustCleanPersistant = FALSE;
+    bMustCleanPersistent = FALSE;
 }
 
 /************************************************************************/
@@ -60,7 +60,7 @@ OGRCouchDBDataSource::~OGRCouchDBDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CouchDB:%p", this));
@@ -1032,7 +1032,7 @@ char* OGRCouchDBDataSource::GetETag(const char* pszURI)
     char **papszTokens;
     char** papszOptions = NULL;
 
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=CouchDB:%p", this));
     papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/json");
@@ -1079,7 +1079,7 @@ json_object* OGRCouchDBDataSource::REQUEST(const char* pszVerb,
                                            const char* pszURI,
                                            const char* pszData)
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     char** papszOptions = NULL;
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=CouchDB:%p", this));

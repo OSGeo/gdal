@@ -3525,7 +3525,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 osGeoTransform += CPLSPrintf("%.16g ",
                          adfGeoTransform[i] );
             }
-            CPLDebug( "GDAL_netCDF", "szGeoTranform = %s", osGeoTransform.c_str() );
+            CPLDebug( "GDAL_netCDF", "szGeoTransform = %s", osGeoTransform.c_str() );
 
             // if ( strlen(pszProj4Defn) > 0 ) {
             //     nc_put_att_text( cdfid, NCDFVarID, "proj4",

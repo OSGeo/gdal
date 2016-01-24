@@ -43,7 +43,7 @@ static bool isleap(int y) {
   return ((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0;
 }
 
-static int LEAPS_THRU_END_OF(int y) {
+static int LEAPS_THROUGH_END_OF(int y) {
   return y / 4 - y / 100 + y / 400;
 }
 
@@ -111,8 +111,8 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
         if (days < 0)
             --newy;
         days -= (newy - y) * DAYSPERNYEAR +
-            LEAPS_THRU_END_OF(newy - 1) -
-            LEAPS_THRU_END_OF(y - 1);
+            LEAPS_THROUGH_END_OF(newy - 1) -
+            LEAPS_THROUGH_END_OF(y - 1);
         y = newy;
     }
 
@@ -167,10 +167,10 @@ GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
       ( TM_YEAR_BASE
         + static_cast<GIntBig>( brokendowntime->tm_year )
         - EPOCH_YEAR ) * DAYSPERNYEAR
-      + LEAPS_THRU_END_OF( static_cast<int> (TM_YEAR_BASE )
+      + LEAPS_THROUGH_END_OF( static_cast<int> (TM_YEAR_BASE )
                            + static_cast<int>( brokendowntime->tm_year )
                            - static_cast<int>( 1 ) )
-      - LEAPS_THRU_END_OF( EPOCH_YEAR - 1 );
+      - LEAPS_THROUGH_END_OF( EPOCH_YEAR - 1 );
 
   /* Now add the secondes, minutes and hours to the number of days since EPOCH */
   return brokendowntime->tm_sec +

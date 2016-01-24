@@ -2128,7 +2128,7 @@ LIBKML driver:
  * add support for reading <gx:Track> as a LINESTRING (#5095)
  * add support for writing and reading <snippet>
  * add support for writing atom:author, atom:link, phonenumber, Region,
-   ScreenOverlay, 3D model, StlyeMap
+   ScreenOverlay, 3D model, StyleMap
  * add support for reading and generating Camera object
  * add layer creation options to generate a LookAt element at layer level
  * if UPDATE_TARGETHREF dataset creation option is defined, a NetworkLinkControl/Update document will be created
@@ -3221,7 +3221,7 @@ Port:
 Core:
  * Provide for ABI specific plugin subdirectories on all platforms
  * Force cleanup of datasets when destroying the dataset manager
- * Add a GDALDataset::CloseDependantDatasets() that can be used by GDALDriverManager::~GDALDriverManager() to safely close remaining opened datasets (#3954)
+ * Add a GDALDataset::CloseDependentDatasets() that can be used by GDALDriverManager::~GDALDriverManager() to safely close remaining opened datasets (#3954)
  * Add GDALRasterBand::ReportError() and GDALDataset::ReportError() to prepend dataset name (and band) before error message (#4242)
  * Fix performance problem when serializing huge color tables, metadata, CategoryNames and GCPs to VRT/PAM (#3961)
  * Be careful about Nan complex values getting histogram, avoid locale issues with statistics metadata
@@ -4680,7 +4680,7 @@ CSV driver:
  * Port to VSI*L API for read&write; support writing to /vsistdout/
 
 DGN driver:
- * Correct computation of abyLevelsOccuring (#3554).
+ * Correct computation of abyLevelsOccurring (#3554).
 
 DODS driver:
  * Compilation fix to support libdap 3.10

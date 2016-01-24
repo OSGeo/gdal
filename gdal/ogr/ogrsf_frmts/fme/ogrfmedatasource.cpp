@@ -121,13 +121,13 @@ static const char *GetTmpDir()
 }
 
 /************************************************************************/
-/*                            BuildTmpNam()                             */
+/*                            BuildTmpName()                             */
 /*                                                                      */
 /*      Create a basename for the temporary file for a given layer      */
 /*      on this dataset.                                                */
 /************************************************************************/
 
-static char *BuildTmpNam( const char *pszLayerName )
+static char *BuildTmpName( const char *pszLayerName )
 
 {
     int            i;
@@ -785,7 +785,7 @@ void OGRFMEDataSource::BuildSpatialIndexes()
         psCLI->pszCoordSys = NULL;
 
         psCLI->pszIndFile = 
-            BuildTmpNam( papoLayers[iLayer]->GetLayerDefn()->GetName() );
+            BuildTmpName( papoLayers[iLayer]->GetLayerDefn()->GetName() );
 
         psCLI->poIndex = 
             poSession->createSpatialIndex( psCLI->pszIndFile, "WRITE", NULL );

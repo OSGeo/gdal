@@ -181,7 +181,7 @@ typedef struct {
     EBYTE       straylightCorrectionFlag[12];
     CALIBRATION level1_5ImageCalibration[12];
     // rest of structure omitted for now
-} RADIOMETRIC_PROCCESSING_RECORD;
+} RADIOMETRIC_PROCESSING_RECORD;
 
 typedef struct {
     INTEGER     numberOfLines;
@@ -205,7 +205,7 @@ typedef struct {
 void to_native(GP_PK_HEADER& h);
 void to_native(GP_PK_SH1& h);
 void to_native(SUB_VISIRLINE& v);
-void to_native(RADIOMETRIC_PROCCESSING_RECORD& r);
+void to_native(RADIOMETRIC_PROCESSING_RECORD& r);
 void to_native(IMAGE_DESCRIPTION_RECORD& r);
 
 // utility function, alters string fields permanently

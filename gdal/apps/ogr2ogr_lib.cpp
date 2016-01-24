@@ -497,7 +497,7 @@ typedef struct
 {
     int          iSrcIndex;
     OGRFieldType eType;
-    int          nMaxOccurences;  // TODO: Spelling.
+    int          nMaxOccurrences;
     int          nWidth;
 } ListFieldDesc;
 
@@ -631,7 +631,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             pasListFields[nListFieldCount].iSrcIndex = i;
             pasListFields[nListFieldCount].eType = eType;
             if (nMaxSplitListSubFields == 1)
-                pasListFields[nListFieldCount].nMaxOccurences = 1;
+                pasListFields[nListFieldCount].nMaxOccurrences = 1;
             nListFieldCount++;
         }
     }
@@ -685,11 +685,11 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                         CPLAssert(0);
                         break;
                 }
-                if (nCount > pasListFields[i].nMaxOccurences)
+                if (nCount > pasListFields[i].nMaxOccurrences)
                 {
                     if (nCount > nMaxSplitListSubFields)
                         nCount = nMaxSplitListSubFields;
-                    pasListFields[i].nMaxOccurences = nCount;
+                    pasListFields[i].nMaxOccurrences = nCount;
                 }
             }
             OGRFeature::DestroyFeature(poSrcFeature);
@@ -721,11 +721,11 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             eType == OFTRealList ||
             eType == OFTStringList)
         {
-            int nMaxOccurences = pasListFields[iListField].nMaxOccurences;  // TODO: Spelling.
+            int nMaxOccurrences = pasListFields[iListField].nMaxOccurrences;
             int nWidth = pasListFields[iListField].nWidth;
             iListField ++;
             int j;
-            if (nMaxOccurences == 1)
+            if (nMaxOccurrences == 1)
             {
                 OGRFieldDefn oFieldDefn(poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(),
                                             (eType == OFTIntegerList) ? OFTInteger :
@@ -736,7 +736,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             }
             else
             {
-                for(j=0;j<nMaxOccurences;j++)
+                for(j=0;j<nMaxOccurrences;j++)
                 {
                     CPLString osFieldName;
                     osFieldName.Printf("%s%d",
@@ -799,7 +799,7 @@ OGRFeature *OGRSplitListFieldLayer::TranslateFeature(OGRFeature* poSrcFeature)
                 int* paList = psField->IntegerList.paList;
                 for( int j=0;j<nCount; ++j)
                     poFeature->SetField(iDstField + j, paList[j]);
-                iDstField += pasListFields[iListField].nMaxOccurences;
+                iDstField += pasListFields[iListField].nMaxOccurrences;
                 iListField++;
                 break;
             }
@@ -811,7 +811,7 @@ OGRFeature *OGRSplitListFieldLayer::TranslateFeature(OGRFeature* poSrcFeature)
                 GIntBig* paList = psField->Integer64List.paList;
                 for( int j=0; j < nCount; ++j )
                     poFeature->SetField(iDstField + j, paList[j]);
-                iDstField += pasListFields[iListField].nMaxOccurences;
+                iDstField += pasListFields[iListField].nMaxOccurrences;
                 iListField++;
                 break;
             }
@@ -823,7 +823,7 @@ OGRFeature *OGRSplitListFieldLayer::TranslateFeature(OGRFeature* poSrcFeature)
                 double* paList = psField->RealList.paList;
                 for( int j=0; j < nCount; ++j )
                     poFeature->SetField(iDstField + j, paList[j]);
-                iDstField += pasListFields[iListField].nMaxOccurences;
+                iDstField += pasListFields[iListField].nMaxOccurrences;
                 iListField++;
                 break;
             }
@@ -835,7 +835,7 @@ OGRFeature *OGRSplitListFieldLayer::TranslateFeature(OGRFeature* poSrcFeature)
                 char** paList = psField->StringList.paList;
                 for( int j=0; j < nCount; ++j )
                     poFeature->SetField(iDstField + j, paList[j]);
-                iDstField += pasListFields[iListField].nMaxOccurences;
+                iDstField += pasListFields[iListField].nMaxOccurrences;
                 iListField++;
                 break;
             }

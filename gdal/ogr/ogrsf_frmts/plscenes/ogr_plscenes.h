@@ -43,7 +43,7 @@
 class OGRPLScenesLayer;
 class OGRPLScenesDataset: public GDALDataset
 {
-        int             bMustCleanPersistant;
+        int             bMustCleanPersistent;
         CPLString       osBaseURL;
         CPLString       osAPIKey;
 

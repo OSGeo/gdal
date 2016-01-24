@@ -41,7 +41,7 @@ extern "C" void RegisterOGRPLSCENES();
 
 OGRPLScenesDataset::OGRPLScenesDataset()
 {
-    bMustCleanPersistant = FALSE;
+    bMustCleanPersistent = FALSE;
     nLayers = 0;
     papoLayers = NULL;
 }
@@ -56,7 +56,7 @@ OGRPLScenesDataset::~OGRPLScenesDataset()
         delete papoLayers[i];
     CPLFree(papoLayers);
 
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));
@@ -192,7 +192,7 @@ int OGRPLScenesDataset::Identify(GDALOpenInfo* poOpenInfo)
 
 char** OGRPLScenesDataset::GetBaseHTTPOptions()
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     char** papszOptions = NULL;
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=PLSCENES:%p", this));

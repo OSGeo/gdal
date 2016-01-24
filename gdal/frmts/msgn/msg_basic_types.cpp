@@ -64,7 +64,7 @@ static void swap_64_bits(unsigned char* b) {
     }
 }
 
-void to_native(RADIOMETRIC_PROCCESSING_RECORD& r) {
+void to_native(RADIOMETRIC_PROCESSING_RECORD& r) {
     for (int i=0; i < 12; i++) {
         swap_64_bits((unsigned char*)&r.level1_5ImageCalibration[i].cal_slope);
         swap_64_bits((unsigned char*)&r.level1_5ImageCalibration[i].cal_offset);

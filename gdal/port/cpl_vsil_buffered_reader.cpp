@@ -50,7 +50,7 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
     GUIntBig          nCurOffset;
     int               bNeedBaseHandleSeek;
     int               bEOF;
-    vsi_l_offset      nSheatFileSize;
+    vsi_l_offset      nSheetFileSize;
 
     int               SeekBaseTo(vsi_l_offset nTargetOffset);
 
@@ -59,7 +59,7 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
     VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
     VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                             const GByte* pabyBeginningContent,
-                            vsi_l_offset nSheatFileSizeIn);
+                            vsi_l_offset nSheetFileSizeIn);
     ~VSIBufferedReaderHandle();
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
@@ -82,11 +82,11 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle)
 
 VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                                                 const GByte* pabyBeginningContent,
-                                                vsi_l_offset nSheatFileSizeIn)
+                                                vsi_l_offset nSheetFileSizeIn)
 {
     return new VSIBufferedReaderHandle(poBaseHandle,
                                        pabyBeginningContent,
-                                       nSheatFileSizeIn);
+                                       nSheetFileSizeIn);
 }
 
 /************************************************************************/
@@ -102,12 +102,12 @@ VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle)
     nCurOffset = 0;
     bNeedBaseHandleSeek = FALSE;
     bEOF = FALSE;
-    nSheatFileSize = 0;
+    nSheetFileSize = 0;
 }
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                                                  const GByte* pabyBeginningContent,
-                                                 vsi_l_offset nSheatFileSizeIn)
+                                                 vsi_l_offset nSheetFileSizeIn)
 {
     m_poBaseHandle = poBaseHandle;
     nBufferOffset = 0;
@@ -117,7 +117,7 @@ VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
     nCurOffset = 0;
     bNeedBaseHandleSeek = TRUE;
     bEOF = FALSE;
-    nSheatFileSize = nSheatFileSizeIn;
+    nSheetFileSize = nSheetFileSizeIn;
 }
 
 /************************************************************************/
@@ -142,8 +142,8 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
         nCurOffset += nOffset;
     else if (nWhence == SEEK_END)
     {
-        if( nSheatFileSize )
-            nCurOffset = nSheatFileSize;
+        if( nSheetFileSize )
+            nCurOffset = nSheetFileSize;
         else
         {
             m_poBaseHandle->Seek(nOffset, nWhence);

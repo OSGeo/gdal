@@ -77,21 +77,21 @@ int GDALJP2AbstractDataset::CloseDependentDatasets()
 /************************************************************************/
 
 void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
-                                             const char* pszOverideFilenameIn)
+                                             const char* pszOverrideFilenameIn)
 {
-    const char* pszOverideFilename = pszOverideFilenameIn;
-    if( pszOverideFilename == NULL )
-        pszOverideFilename = poOpenInfo->pszFilename;
+    const char* pszOverrideFilename = pszOverrideFilenameIn;
+    if( pszOverrideFilename == NULL )
+        pszOverrideFilename = poOpenInfo->pszFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Check for georeferencing information.                           */
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
 
-    if( (poOpenInfo->fpL != NULL && pszOverideFilenameIn == NULL &&
+    if( (poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL &&
          oJP2Geo.ReadAndParse(poOpenInfo->fpL) ) ||
-        (!(poOpenInfo->fpL != NULL && pszOverideFilenameIn == NULL) &&
-         oJP2Geo.ReadAndParse( pszOverideFilename )) )
+        (!(poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL) &&
+         oJP2Geo.ReadAndParse( pszOverrideFilename )) )
     {
         CPLFree(pszProjection);
         pszProjection = CPLStrdup(oJP2Geo.pszProjection);
@@ -209,10 +209,10 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
     if( !bGeoTransformValid )
     {
         bGeoTransformValid |=
-            GDALReadWorldFile2( pszOverideFilename, NULL,
+            GDALReadWorldFile2( pszOverrideFilename, NULL,
                                 adfGeoTransform,
                                 poOpenInfo->GetSiblingFiles(), &pszWldFilename )
-            || GDALReadWorldFile2( pszOverideFilename, ".wld",
+            || GDALReadWorldFile2( pszOverrideFilename, ".wld",
                                    adfGeoTransform,
                                    poOpenInfo->GetSiblingFiles(), &pszWldFilename );
     }
