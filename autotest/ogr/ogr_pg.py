@@ -4965,8 +4965,8 @@ def ogr_pg_81():
     if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
         return 'skip'
 
-    gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_1(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_1','dummy',-1,'POINT',2);")
-    gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_2(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_2','dummy',-1,'POINT',2);")
+    gdaltest.pg_ds.ReleaseResultSet(gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_1(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_1','dummy',-1,'POINT',2);"))
+    gdaltest.pg_ds.ReleaseResultSet(gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_2(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_2','dummy',-1,'POINT',2);"))
 
     # 0755 = 493
     gdal.Mkdir('/vsimem/ogr_pg_81', 493)
