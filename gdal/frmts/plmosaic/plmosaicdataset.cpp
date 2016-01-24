@@ -68,7 +68,7 @@ class PLMosaicDataset : public GDALPamDataset
 {
     friend class PLMosaicRasterBand;
 
-        int                     bMustCleanPersistant;
+        int                     bMustCleanPersistent;
         CPLString               osCachePathRoot;
         int                     bTrustCache;
         CPLString               osBaseURL;
@@ -337,7 +337,7 @@ GDALColorInterp PLMosaicRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 PLMosaicDataset::PLMosaicDataset() :
-    bMustCleanPersistant(FALSE),
+    bMustCleanPersistent(FALSE),
     bTrustCache(FALSE),
     pszWKT(NULL),
     nQuadSize(0),
@@ -372,7 +372,7 @@ PLMosaicDataset::~PLMosaicDataset()
     FlushCache();
     CPLFree(pszWKT);
     delete poTMSDS;
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
         char** papszOptions
             = CSLSetNameValue(NULL, "CLOSE_PERSISTENT",
@@ -434,7 +434,7 @@ int PLMosaicDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 char** PLMosaicDataset::GetBaseHTTPOptions()
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     char** papszOptions
         = CSLAddString(NULL, CPLSPrintf("PERSISTENT=PLMOSAIC:%p", this));

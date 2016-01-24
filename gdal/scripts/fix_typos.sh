@@ -47,8 +47,17 @@ fi
 EXCLUDED_FILES="*/.svn*,configure,config.status,config.sub,*/autom4te.cache/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/hdf-eos/*,teststream.out,ogrogdilayer.cpp"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/doc/br/*,*/data/*,figures.mp,*/tmp/*,*/ruby/*"
-EXCLUDED_FILES="$EXCLUDED_FILES,*/fix_typos/*,*.eps,geopackage_aspatial.html"
+EXCLUDED_FILES="$EXCLUDED_FILES,*/fix_typos/*,fix_typos.sh,*.eps,geopackage_aspatial.html"
 WORDS_WHITE_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
+# IRIS driver metadata item names: FIXME ?
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,TOP_OF_HEIGTH_INTERVAL,BOTTOM_OF_HEIGTH_INTERVAL"
+# libjpeg
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,JBUF_PASS_THRU"
+# libgif
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,IS_WRITEABLE,E_GIF_ERR_NOT_WRITEABLE"
+# libtiff
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,THRESHHOLD_BILEVEL,THRESHHOLD_HALFTONE,THRESHHOLD_ERRORDIFFUSE"
 
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S $EXCLUDED_FILES \
     -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \

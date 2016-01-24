@@ -369,7 +369,7 @@ public:
     
     int          IsFIDHackInProgress() const { return m_bFIDHackInProgress; }
     void         SetFIDHackInProgress(int bFlag) { m_bFIDHackInProgress = bFlag; }
-    int          OpenGeodatabase(const char* pszOveriddenName);
+    int          OpenGeodatabase(const char* pszOverriddenName);
     void         CloseGeodatabase();
 };
 

@@ -255,10 +255,10 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     sscanf(_main_header.snit.value + 10, "%02u", &_minute);
 
     // read radiometric block
-    RADIOMETRIC_PROCCESSING_RECORD rad;
+    RADIOMETRIC_PROCESSING_RECORD rad;
     off_t offset = RADIOMETRICPROCESSING_RECORD_OFFSET + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
     CPL_IGNORE_RET_VAL(VSIFSeek(fin, offset, SEEK_SET));
-    CPL_IGNORE_RET_VAL(VSIFRead(&rad, sizeof(RADIOMETRIC_PROCCESSING_RECORD), 1, fin));
+    CPL_IGNORE_RET_VAL(VSIFRead(&rad, sizeof(RADIOMETRIC_PROCESSING_RECORD), 1, fin));
     to_native(rad);
     memcpy((void*)_calibration, (void*)&rad.level1_5ImageCalibration,sizeof(_calibration));
 

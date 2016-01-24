@@ -246,7 +246,7 @@ class OGRCouchDBDataSource : public OGRDataSource
 
     int                 bReadWrite;
 
-    int                 bMustCleanPersistant;
+    int                 bMustCleanPersistent;
 
     CPLString           osURL;
     CPLString           osUserPwd;

@@ -46,7 +46,7 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
     : pszName_(NULL), pszGeoData_(NULL), nGeoDataLen_(0),
         papoLayers_(NULL), papoLayersWriter_(NULL), nLayers_(0), fpOut_(NULL),
         flTransGeom_( OGRGeoJSONDataSource::eGeometryPreserve ),
-        flTransAttrs_( OGRGeoJSONDataSource::eAtributesPreserve ),
+        flTransAttrs_( OGRGeoJSONDataSource::eAttributesPreserve ),
         bOtherPages_(false),
         bFpOutputIsSeekable_( false ),
         nBBOXInsertLocation_(0),
@@ -627,7 +627,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
         CPLDebug( "GeoJSON", "Geometry as OGRGeometryCollection type." );
     }
 
-    if( eAtributesSkip == flTransAttrs_ )
+    if( eAttributesSkip == flTransAttrs_ )
     {
         reader.SetSkipAttributes( true );
         CPLDebug( "GeoJSON", "Skip all attributes." );

@@ -44,7 +44,7 @@ OGRCARTODBDataSource::OGRCARTODBDataSource() :
     bReadWrite(FALSE),
     bBatchInsert(TRUE),
     bUseHTTPS(FALSE),
-    bMustCleanPersistant(FALSE),
+    bMustCleanPersistent(FALSE),
     bHasOGRMetadataFunction(-1),
     nPostGISMajor(2),
     nPostGISMinor(0)
@@ -61,7 +61,7 @@ OGRCARTODBDataSource::~OGRCARTODBDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CARTODB:%p", this));
@@ -524,7 +524,7 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
 
 char** OGRCARTODBDataSource::AddHTTPOptions()
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     return CSLAddString(NULL, CPLSPrintf("PERSISTENT=CARTODB:%p", this));
 }

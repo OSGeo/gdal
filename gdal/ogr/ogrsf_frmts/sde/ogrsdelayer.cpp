@@ -458,7 +458,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
 
 /* -------------------------------------------------------------------- */
 /*      Select a geometry type based on the remaining flags.  If        */
-/*      there is a mix we will fall through to the default (wkbUknown). */
+/*      there is a mix we will fall through to the default (wkbUnknown). */
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeoType;
     char *pszTypeName;

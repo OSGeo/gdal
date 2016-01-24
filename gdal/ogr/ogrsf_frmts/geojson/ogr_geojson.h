@@ -166,8 +166,8 @@ public:
 
     enum AttributesTranslation
     {
-        eAtributesPreserve,
-        eAtributesSkip
+        eAttributesPreserve,
+        eAttributesSkip
     };
 
     void SetAttributesTranslation( AttributesTranslation type );

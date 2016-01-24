@@ -46,7 +46,7 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     nLayers(0),
     bReadWrite(FALSE),
     bUseHTTPS(FALSE),
-    bMustCleanPersistant(FALSE),
+    bMustCleanPersistent(FALSE),
     bHasOGRMetadataFunction(-1)
 {}
 
@@ -61,7 +61,7 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("AMIGOCLOUD:%p", this));
@@ -362,7 +362,7 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 
 char** OGRAmigoCloudDataSource::AddHTTPOptions()
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     return CSLAddString(NULL, CPLSPrintf("PERSISTENT=AMIGOCLOUD:%p", this));
 }

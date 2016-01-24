@@ -219,7 +219,7 @@ class OGRCARTODBDataSource : public OGRDataSource
 
     CPLString           osAPIKey;
 
-    int                 bMustCleanPersistant;
+    int                 bMustCleanPersistent;
 
     CPLString           osCurrentSchema;
 

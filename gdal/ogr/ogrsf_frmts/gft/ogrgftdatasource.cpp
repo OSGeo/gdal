@@ -49,7 +49,7 @@ OGRGFTDataSource::OGRGFTDataSource()
     bReadWrite = FALSE;
     bUseHTTPS = FALSE;
 
-    bMustCleanPersistant = FALSE;
+    bMustCleanPersistent = FALSE;
 }
 
 /************************************************************************/
@@ -63,7 +63,7 @@ OGRGFTDataSource::~OGRGFTDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("GFT:%p", this));
@@ -452,7 +452,7 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 
 char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     if (strlen(osAccessToken) > 0)
       papszOptions = CSLAddString(papszOptions,

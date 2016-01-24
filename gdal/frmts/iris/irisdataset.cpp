@@ -898,10 +898,12 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 
     //See point 3.2.73 at page 3.36 of the manual
     } else if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"VIL")){
-        const float fBottomHeigthInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100;
-        poDS->SetMetadataItem( "BOTTOM_OF_HEIGTH_INTERVAL",CPLString().Printf("%.1f m",fBottomHeigthInterval));
-        const float fTopHeigthInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+8+164+12) / 100;
-        poDS->SetMetadataItem( "TOP_OF_HEIGTH_INTERVAL",CPLString().Printf("%.1f m",fTopHeigthInterval));
+        const float fBottomHeightInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100;
+        // TYPO in metadata key: FIXME ?
+        poDS->SetMetadataItem( "BOTTOM_OF_HEIGTH_INTERVAL",CPLString().Printf("%.1f m",fBottomHeightInterval));
+        const float fTopHeightInterval = (float) CPL_LSBSINT32PTR(poDS->abyHeader+8+164+12) / 100;
+        // TYPO in metadata key: FIXME ?
+        poDS->SetMetadataItem( "TOP_OF_HEIGTH_INTERVAL",CPLString().Printf("%.1f m",fTopHeightInterval));
         poDS->SetMetadataItem( "VIL_DENSITY_NOT_AVAILABLE_VALUE","-1");
         poDS->SetMetadataItem( "DATA_TYPE_UNITS","mm");
     //See point 3.2.68 at page 3.36 of the manual

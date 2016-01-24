@@ -134,7 +134,7 @@ typedef int (*OutputFunc) (GifFileType *, const GifByteType *, int);
 ******************************************************************************/
 
 GifFileType *EGifOpenFileName(const char *GifFileName,
-                              int GifTestExistance);
+                              int GifTestExistence);
 GifFileType *EGifOpenFileHandle(int GifFileHandle);
 GifFileType *EGifOpen(void *userPtr, OutputFunc writeFunc);
 

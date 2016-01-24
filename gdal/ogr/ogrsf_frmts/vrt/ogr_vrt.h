@@ -223,11 +223,11 @@ class OGRVRTDataSource : public OGRDataSource
 
     std::set<std::string> aosOtherDSNameSet;
 
-    OGRLayer*           InstanciateWarpedLayer(CPLXMLNode *psLTree,
+    OGRLayer*           InstantiateWarpedLayer(CPLXMLNode *psLTree,
                                                const char *pszVRTDirectory,
                                                int bUpdate,
                                                int nRecLevel);
-    OGRLayer*           InstanciateUnionLayer(CPLXMLNode *psLTree,
+    OGRLayer*           InstantiateUnionLayer(CPLXMLNode *psLTree,
                                                const char *pszVRTDirectory,
                                                int bUpdate,
                                                int nRecLevel);
@@ -243,12 +243,12 @@ class OGRVRTDataSource : public OGRDataSource
 
     virtual int         CloseDependentDatasets();
 
-    OGRLayer*           InstanciateLayer(CPLXMLNode *psLTree,
+    OGRLayer*           InstantiateLayer(CPLXMLNode *psLTree,
                                     const char *pszVRTDirectory,
                                     int bUpdate,
                                     int nRecLevel = 0);
 
-    OGRLayer*           InstanciateLayerInternal(CPLXMLNode *psLTree,
+    OGRLayer*           InstantiateLayerInternal(CPLXMLNode *psLTree,
                                             const char *pszVRTDirectory,
                                             int bUpdate,
                                             int nRecLevel);

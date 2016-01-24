@@ -421,12 +421,12 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
                 OGRGeoJSONDataSource::eGeometryAsCollection );
     }
 
-    poDS->SetAttributesTranslation( OGRGeoJSONDataSource::eAtributesPreserve );
+    poDS->SetAttributesTranslation( OGRGeoJSONDataSource::eAttributesPreserve );
     pszOpt = CPLGetConfigOption("ATTRIBUTES_SKIP", NULL);
     if( NULL != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
     {
         poDS->SetAttributesTranslation( 
-            OGRGeoJSONDataSource::eAtributesSkip );
+            OGRGeoJSONDataSource::eAttributesSkip );
     }
 
 /* -------------------------------------------------------------------- */

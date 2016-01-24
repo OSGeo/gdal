@@ -327,8 +327,7 @@ typedef struct
 */
 typedef struct  {
     GUInt32 nOffset;      //RSC Section offset in bytes from the beginning of the RSC file
-    // TODO: Fix spelling nLenght -> nLength
-    GUInt32 nLenght;      //RSC Section record length
+    GUInt32 nLength;      //RSC Section record length
     GUInt32 nRecordCount; //count of records in the section
 } RSCSection;
 
@@ -365,7 +364,7 @@ typedef struct{
     RSCSection ImageParams;
     RSCSection Tables;
     GByte nFlagKeysAsCodes;
-    GByte nFlagPalleteMods;
+    GByte nFlagPaletteMods;
     GByte Reserved[30];
     GUInt32 nFontEnc;
     GUInt32 nColorsInPalette;

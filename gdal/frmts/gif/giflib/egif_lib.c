@@ -64,19 +64,19 @@ static int EGifBufferedOutput(GifFileType * GifFile, GifByteType * Buf,
                               int c);
 
 /******************************************************************************
- * Open a new gif file for write, given by its name. If TestExistance then
+ * Open a new gif file for write, given by its name. If TestExistence then
  * if the file exists this routines fails (returns NULL).
  * Returns GifFileType pointer dynamically allocated which serves as the gif
  * info record. _GifError is cleared if successfully.
  *****************************************************************************/
 GifFileType *
 EGifOpenFileName(const char *FileName,
-                 int TestExistance) {
+                 int TestExistence) {
 
     int FileHandle;
     GifFileType *GifFile;
 
-    if (TestExistance)
+    if (TestExistence)
         FileHandle = open(FileName, O_WRONLY | O_CREAT | O_EXCL
 #if defined(O_BINARY)
                           | O_BINARY

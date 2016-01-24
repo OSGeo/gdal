@@ -64,7 +64,7 @@
 /*      -- InitializeBand - does most of the work of construction       */
 /*                          of the band and communication with SDE.     */
 /*                          Calls InitializeConstraint and              */
-/*                          IntializeQuery.                             */
+/*                          InitializeQuery.                             */
 /*      -- InitializeQuery -    Initializes a SDE queryinfo object      */
 /*                              that contains information about which   */
 /*                              tables we are querying from.            */

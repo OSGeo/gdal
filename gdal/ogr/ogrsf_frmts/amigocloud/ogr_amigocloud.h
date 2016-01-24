@@ -239,7 +239,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
 
         CPLString           osAPIKey;
 
-        int                 bMustCleanPersistant;
+        int                 bMustCleanPersistent;
 
         CPLString           osCurrentSchema;
 

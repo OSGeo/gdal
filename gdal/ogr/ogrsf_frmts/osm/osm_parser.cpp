@@ -144,7 +144,7 @@ struct _OSMContext
 
 typedef enum
 {
-    BLOB_UNKNOW,
+    BLOB_UNKNOWN,
     BLOB_OSMHEADER,
     BLOB_OSMDATA
 } BlobType;
@@ -154,7 +154,7 @@ int ReadBlobHeader(GByte* pabyData, GByte* pabyDataLimit,
                    unsigned int* pnBlobSize, BlobType* peBlobType)
 {
     *pnBlobSize = 0;
-    *peBlobType = BLOB_UNKNOW;
+    *peBlobType = BLOB_UNKNOWN;
 
     while(pabyData < pabyDataLimit)
     {
@@ -2411,7 +2411,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
 
     memset(psCtxt->pabyBlob + nHeaderSize, 0, EXTRA_BYTES);
     nRet = ReadBlobHeader(psCtxt->pabyBlob, psCtxt->pabyBlob + nHeaderSize, &nBlobSize, &eType);
-    if (!nRet || eType == BLOB_UNKNOW)
+    if (!nRet || eType == BLOB_UNKNOWN)
         GOTO_END_ERROR;
 
     if (nBlobSize > 64*1024*1024)

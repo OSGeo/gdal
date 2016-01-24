@@ -101,7 +101,7 @@ static GDALDataset *OGRSPFDriverOpen( GDALOpenInfo* poOpenInfo )
         return NULL;
 
     OGRSPFDataSource   *poDS = new OGRSPFDataSource();
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAcces == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         return NULL;

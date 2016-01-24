@@ -219,7 +219,7 @@ typedef struct
 {
     char* pszK;
     int nKeyIndex;
-    int nOccurences;  // TODO: Spelling.
+    int nOccurrences;
     std::vector<char*> asValues;
     std::map<const char*, int, ConstCharComp> anMapV; /* map that is the reverse of asValues */
 } KeyDesc;

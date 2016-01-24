@@ -1218,7 +1218,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         char szShortName[16];
         GByte nNo;
         GByte nPos;
-        GUInt16 nSematicCount;
+        GUInt16 nSemanticCount;
     };
 
     GUInt32 i;
