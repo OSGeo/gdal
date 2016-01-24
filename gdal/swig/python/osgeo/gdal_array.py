@@ -102,10 +102,10 @@ def TermProgress_nocb(*args, **kwargs):
   return _gdal_array.TermProgress_nocb(*args, **kwargs)
 TermProgress = _gdal_array.TermProgress
 
-def GetArrayFilename(*args):
-  """GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"""
-  return _gdal_array.GetArrayFilename(*args)
-GetArrayFilename = _gdal_array.GetArrayFilename
+def OpenNumPyArray(*args):
+  """OpenNumPyArray(PyArrayObject * psArray) -> Dataset"""
+  return _gdal_array.OpenNumPyArray(*args)
+OpenNumPyArray = _gdal_array.OpenNumPyArray
 
 def BandRasterIONumPy(*args, **kwargs):
   """
@@ -161,7 +161,7 @@ codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
 
 def OpenArray( array, prototype_ds = None ):
 
-    ds = gdal.Open( GetArrayFilename(array) )
+    ds = OpenNumPyArray( array )
 
     if ds is not None and prototype_ds is not None:
         if type(prototype_ds).__name__ == 'str':

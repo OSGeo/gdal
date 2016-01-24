@@ -76,8 +76,8 @@ typedef void GDALRasterAttributeTableShadow;
 
 CPL_C_START
 
-GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
-                                             GDALDataType, int, int, int );
+GDALRasterBandH CPL_DLL MEMCreateRasterBandEx( GDALDataset *, int, GByte *,
+                                               GDALDataType, GSpacing, GSpacing, int );
 CPL_C_END
 
 typedef char retStringAndCPLFree;
@@ -109,7 +109,7 @@ class NUMPYDataset : public GDALDataset
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open( PyArrayObject *psArray );
 };
 
 
@@ -132,7 +132,7 @@ static void GDALRegister_NUMPY(void)
                                    "Numeric Python Array" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 
-        poDriver->pfnOpen = NUMPYDataset::Open;
+        poDriver->pfnOpen = NULL;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
 
@@ -288,30 +288,10 @@ CPLErr NUMPYDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
-
+GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
 {
-    PyArrayObject *psArray;
     GDALDataType  eType;
     int     nBands;
-
-/* -------------------------------------------------------------------- */
-/*      Is this a numpy dataset name?                                   */
-/* -------------------------------------------------------------------- */
-    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "NUMPY:::")
-        || poOpenInfo->fpL != NULL )
-        return NULL;
-
-    psArray = NULL;
-    sscanf( poOpenInfo->pszFilename+8, "%p", &(psArray) );
-    if( psArray == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to parse meaningful pointer value from NUMPY name\n"
-                  "string: %s\n",
-                  poOpenInfo->pszFilename );
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If we likely have corrupt definitions of the NUMPY stuff,       */
@@ -335,7 +315,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     if( psArray->nd < 2 || psArray->nd > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Illegal numpy array rank %d.\n",
+                  "Illegal numpy array rank %d.",
                   psArray->nd );
         return NULL;
     }
@@ -383,7 +363,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 
       default:
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to access numpy arrays of typecode `%c'.\n",
+                  "Unable to access numpy arrays of typecode `%c'.",
                   psArray->descr->type );
         return NULL;
     }
@@ -394,6 +374,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     NUMPYDataset *poDS;
 
     poDS = new NUMPYDataset();
+    poDS->poDriver = static_cast<GDALDriver*>(GDALGetDriverByName("NUMPY"));
 
     poDS->psArray = psArray;
 
@@ -407,9 +388,9 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Workout the data layout.                                        */
 /* -------------------------------------------------------------------- */
-    int    nBandOffset;
-    int    nPixelOffset;
-    int    nLineOffset;
+    npy_intp nBandOffset;
+    npy_intp nPixelOffset;
+    npy_intp nLineOffset;
 
     if( psArray->nd == 3 )
     {
@@ -437,7 +418,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetBand( iBand+1,
                        (GDALRasterBand *)
-                       MEMCreateRasterBand( poDS, iBand+1,
+                       MEMCreateRasterBandEx( poDS, iBand+1,
                                 (GByte *) psArray->data + nBandOffset*iBand,
                                           eType, nPixelOffset, nLineOffset,
                                           FALSE ) );
@@ -486,15 +467,10 @@ int GDALTermProgress( double, const char *, void * );
 }
 
 %inline %{
-retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
+
+GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray)
 {
-    char      szString[128];
-
-    GDALRegister_NUMPY();
-
-    /* I wish I had a safe way of checking the type */
-    sprintf( szString, "NUMPY:::%p", psArray );
-    return CPLStrdup(szString);
+    return NUMPYDataset::Open( psArray );
 }
 %}
 
@@ -981,7 +957,7 @@ codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
 
 def OpenArray( array, prototype_ds = None ):
 
-    ds = gdal.Open( GetArrayFilename(array) )
+    ds = OpenNumPyArray( array )
 
     if ds is not None and prototype_ds is not None:
         if type(prototype_ds).__name__ == 'str':

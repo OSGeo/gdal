@@ -39,6 +39,8 @@ void GDALRegister_MEM();
    where it is redefined */
 GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
                                              GDALDataType, int, int, int );
+GDALRasterBandH CPL_DLL MEMCreateRasterBandEx( GDALDataset *, int, GByte *,
+                                             GDALDataType, GSpacing, GSpacing, int );
 CPL_C_END
 
 /************************************************************************/
