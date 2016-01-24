@@ -465,7 +465,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     if( poDstDS == NULL )
         return NULL;
     int nDstBands = poDstDS->GetRasterCount();
-    if( nDstBands != nBands )
+    if( nDstBands != nBands && CSLFetchNameValue(papszOptions, "APPEND_SUBDATASET") == NULL )
     {
         if( GetMetadataItem(GDAL_DCAP_RASTER) != NULL )
         {
