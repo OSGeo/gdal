@@ -3592,6 +3592,11 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
             {
                 CPLDebug( "OGR2OGR", "Unable to write feature %ld into layer %s.\n",
                            poFeature->GetFID(), poSrcLayer->GetName() );
+                if( nGroupTransactions )
+                {
+                    poDstLayer->RollbackTransaction();
+                    poDstLayer->StartTransaction();
+                }
             }
 
 end_loop:
