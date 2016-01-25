@@ -527,9 +527,10 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                     if( line == surface_lines ) {
                         delete surface_lines;
                         surface_lines = NULL;
+                        line = NULL; /* to make CLang Static Analyzer happy */
                     }
                 }
-                if (ring == NULL && surface_lines == NULL) {
+                if (ring == NULL && surface_lines == NULL && line != NULL) {
                     //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
                     if (line->getGeometryType() == wkbCompoundCurve) {
                         surface_lines = reinterpret_cast<OGRCompoundCurve *>(line->clone());
