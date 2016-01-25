@@ -524,6 +524,10 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                     } else { // wkbMultiCurve
                         ring = reinterpret_cast<OGRCurve*>(line->clone());
                     }
+                    if( line == surface_lines ) {
+                        delete surface_lines;
+                        surface_lines = NULL;
+                    }
                 }
                 if (ring == NULL && surface_lines == NULL) {
                     //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
@@ -539,7 +543,6 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                     if (error != OGRERR_NONE) {
                         CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ring->exportToJson() );
                     }
-                    surface_lines = NULL;
                 }
             }
         } else {
