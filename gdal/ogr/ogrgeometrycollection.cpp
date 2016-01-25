@@ -562,6 +562,16 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset, eWkbVariant );
+        // Should normally not happen if everyone else does its job
+        // but has happened sometimes (#6332)
+        if( papoGeoms[iGeom]->getCoordinateDimension() != getCoordinateDimension() )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Sub-geometry %d has coordinate dimension %d, but container has %d",
+                      iGeom,
+                      papoGeoms[iGeom]->getCoordinateDimension(),
+                      getCoordinateDimension() );
+        }
 
         nOffset += papoGeoms[iGeom]->WkbSize();
     }
