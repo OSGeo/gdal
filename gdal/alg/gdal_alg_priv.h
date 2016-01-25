@@ -147,7 +147,7 @@ void GDALCleanupTransformDeserializerMutex();
 void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList, 
                                    int bReversed, char** papszOptions );
 
-void CPL_DLL * GDALCloneTransformer( void *pTranformerArg );
+void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
 
 /************************************************************************/
 /*      Color table related                                             */
