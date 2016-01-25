@@ -127,7 +127,7 @@ typedef struct {
 } GDALTransformerInfo;
 
 void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
-int  CPL_DLL GDALUseTransformer( void *pTranformerArg, 
+int  CPL_DLL GDALUseTransformer( void *pTransformerArg, 
                                  int bDstToSrc, int nPointCount, 
                                  double *x, double *y, double *z, 
                                  int *panSuccess );
