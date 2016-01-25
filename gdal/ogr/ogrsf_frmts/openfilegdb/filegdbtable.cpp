@@ -2427,7 +2427,11 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             OGRMultiLineString* poMLS = NULL;
             FileGDBOGRLineString* poLS = NULL;
             if( nParts > 1 )
+            {
                 poMLS = new OGRMultiLineString();
+                if( bHasZ )
+                    poMLS->setCoordinateDimension(3);
+            }
 
             dx = dy = dz = 0;
             for(i=0;i<nParts;i++)
@@ -2680,6 +2684,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             }
 
             OGRMultiPolygon* poMP = new OGRMultiPolygon();
+            poMP->setCoordinateDimension(3);
             OGRPolygon* poLastPoly = NULL;
             int iAccPoints = 0;
             for(i=0;i<nParts;i++)

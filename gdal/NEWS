@@ -8,6 +8,7 @@ The 2.0.2 release is a bug fix release.
 == Build(Unix) ==
  * Add pkg-config support for libkml fork, in addition to the old detection method. The libkml/libkml fork on GitHub supports pkg-config and no longer includes the third_party libraries. (#6077)
  * gdalserver.c: Add include of signal.h for SIGPIPE and signal() (#6193)
+ * fix detection of FreeXL on MinGW/MSYS (#6330)
 
 == Port ==
  * CPLGetValueType(): improve heuristics to avoid detecting some WKB strings as real numbers (#6128)
@@ -150,6 +151,7 @@ NTF driver:
 
 OpenFileGDB driver:
  * fix min/max on columns without indices (#6150)
+ * fix import of MultiLineString Z geometries with several parts (#6332)
 
 PG driver:
  * fix memleak in ExecuteSQL() (#6179)
