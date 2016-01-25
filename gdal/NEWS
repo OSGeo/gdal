@@ -87,6 +87,7 @@ NTF driver:
 
 OpenFileGDB driver:
  * fix min/max on columns without indices (#6150)
+ * fix import of MultiLineString Z geometries with several parts (#6332)
 
 PG driver:
  * fix creation of multiple geometry fields with SCHEMA creation option (#6141)
