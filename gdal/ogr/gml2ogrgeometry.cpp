@@ -2759,7 +2759,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         /*   orientation="+/-" plays no role at all to identify "holes" */
         /* - each <Edge> within a <Face> may indifferently represent    */
         /*   an element of the Exterior or Interior Boundary; relative  */
-        /*   order of <Egdes> is absolutely irrelevant.                 */
+        /*   order of <Edges> is absolutely irrelevant.                 */
         /****************************************************************/
         /* Contributor: Alessandro Furieri, a.furieri@lqt.it            */
         /* Developed for Faunalia (http://www.faunalia.it)              */
@@ -2924,7 +2924,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         /* - any <Face> declaring orientation="-" is expected to        */
         /*   represent an Interior Ring (hole) belonging to the latest  */
         /*   Exterior Ring.                                             */
-        /* - <Egdes> within the same <Face> are expected to be          */
+        /* - <Edges> within the same <Face> are expected to be          */
         /*   arranged in geometrically adjacent and consecutive         */
         /*   sequence.                                                  */
         /****************************************************************/
