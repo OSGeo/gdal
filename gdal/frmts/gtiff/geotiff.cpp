@@ -7556,7 +7556,7 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
 
 {
 #ifdef INTERNAL_LIBTIFF
-
+#ifdef DEFER_STRILE_LOAD
     /* Optimization to avoid fetching the whole Strip/TileCounts and Strip/TileOffsets arrays */
     if( eAccess == GA_ReadOnly &&
         !(hTIFF->tif_flags & TIFF_SWAB) &&
@@ -7660,6 +7660,7 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
         }
         return hTIFF->tif_dir.td_stripbytecount[nBlockId] != 0;
     }
+#endif /* DEFER_STRILE_LOAD */
 #endif /* INTERNAL_LIBTIFF */
     toff_t *panByteCounts = NULL;
 
