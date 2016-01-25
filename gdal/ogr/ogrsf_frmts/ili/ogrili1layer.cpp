@@ -507,13 +507,16 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
                         surface_lines = new OGRCompoundCurve();
                         surface_lines->addCurve(line);
                     }
+                    if( line == surface_lines ) {
+                        delete surface_lines;
+                        surface_lines = NULL;
+                    }
                 }
                 if (ring) {
                     OGRErr error = poly->addRingDirectly(ring);
                     if (error != OGRERR_NONE) {
                         CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ring->exportToJson() );
                     }
-                    surface_lines = 0;
                 }
             }
         } else {
