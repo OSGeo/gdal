@@ -61,6 +61,7 @@ GTiff driver:
 
 GPKG driver:
  * fix various issues in update scenarios when interacting with the GDAL block cache that could result in lost/corrupted band data to be written in tiles (#6309)
+ * fix potential use of freed sqlite temporary DB handle when generating overviews with partial tiles (#6335)
 
 HFA driver:
  * fix crash when nNumRuns = 0 with RLE compression (#6208)
