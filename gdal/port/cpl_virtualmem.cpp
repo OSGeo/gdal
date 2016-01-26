@@ -45,6 +45,14 @@
 
 #include <assert.h>
 
+#ifdef NDEBUG
+/* Non NDEBUG: we ignore the result */
+#define IgnoreOrAssertInDebug CPL_IGNORE_RET_VAL
+#else
+/* Debug: assert */
+#define IgnoreOrAssertInDebug assert
+#endif
+
 #if defined(__linux) && defined(CPL_MULTIPROC_PTHREAD)
 #define HAVE_VIRTUAL_MEM_VMA
 #endif
@@ -196,14 +204,6 @@ static CPLVirtualMemManager* pVirtualMemManager = NULL;
 static CPLMutex* hVirtualMemManagerMutex = NULL;
 
 static bool CPLVirtualMemManagerInit();
-
-#ifdef NDEBUG
-/* Non NDEBUG: we ignore the result */
-#define IgnoreOrAssertInDebug CPL_IGNORE_RET_VAL
-#else
-/* Debug: assert */
-#define IgnoreOrAssertInDebug assert
-#endif
 
 #ifdef DEBUG_VIRTUALMEM
 
