@@ -484,6 +484,11 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     FlushCache();
     FlushMetadata();
 
+    // Destroy overviews before cleaning m_hTempDB as they could still
+    // need it
+    for( int i = 0; i < m_nOverviewCount; i++ )
+        delete m_papoOverviewDS[i];
+
     if( m_poParentDS != NULL )
     {
         hDB = NULL;
@@ -497,8 +502,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
     for( i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
-    for( i = 0; i < m_nOverviewCount; i++ )
-        delete m_papoOverviewDS[i];
 
     CPLFree( m_papoLayers );
     CPLFree( m_papoOverviewDS );
