@@ -2716,6 +2716,37 @@ def gpkg_30():
     return gpkg_29(x = 200)
 
 ###############################################################################
+# Test partial tiles with overviews (#6335)
+
+def gpkg_34():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 417)
+    src_ds.SetGeoTransform([-20037508.342789299786091, 2 * 20037508.342789299786091 / 512, 0,
+                            16213801.067584000527859, 0, -2 * 16213801.067584000527859 / 417])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetProjection(srs.ExportToWkt())
+    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible'])
+    ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    gdal.ErrorReset()
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2767,6 +2798,7 @@ gdaltest_list = [
     gpkg_28,
     gpkg_29,
     gpkg_30,
+    gpkg_34,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_28, gpkg_29, gpkg_cleanup ]
