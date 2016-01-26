@@ -2427,6 +2427,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                         delete x;
                         if (x_geom_diff)
                             delete x_geom_diff;
+                        OGRDestroyPreparedGeometry(x_prepared_geom);
                         goto done;
                     } else {
                         CPLErrorReset();
@@ -3104,6 +3105,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                     if (!bSkipFailures) {
                         delete x;
                         delete x_geom_diff;
+                        OGRDestroyPreparedGeometry(x_prepared_geom);
                         goto done;
                     } else {
                         CPLErrorReset();
