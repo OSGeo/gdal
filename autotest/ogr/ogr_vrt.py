@@ -3432,6 +3432,29 @@ def ogr_vrt_36():
     return 'success'
 
 ###############################################################################
+# Test implict non-spatial layers (#6336)
+
+def ogr_vrt_37():
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/vrt_test.vrt')
+
+    lyr = ds.GetLayerByName('test6')
+    if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/vrt_test.vrt')
+
+    lyr = ds.GetLayerByName('test6')
+    if lyr.GetLayerDefn().GetGeomFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_vrt_cleanup():
@@ -3495,6 +3518,7 @@ gdaltest_list = [
     ogr_vrt_34,
     ogr_vrt_35,
     ogr_vrt_36,
+    ogr_vrt_37,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
