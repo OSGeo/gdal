@@ -371,7 +371,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
         space = poTIFFDirEntry->tdir_count * nDataWidth;
 
         /* Previous multiplication could overflow, hence this additional check */
-        if (poTIFFDirEntry->tdir_count > MAXSTRINGLENGTH)
+        if( poTIFFDirEntry->tdir_count > static_cast<GUInt32>(MAXSTRINGLENGTH) )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Too many bytes in tag: %u, ignoring tag.",
