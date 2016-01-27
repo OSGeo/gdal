@@ -42,6 +42,11 @@
 
 CPL_CVSID("$Id$");
 
+static const int MAXSTRINGLENGTH = 65535;
+static const int EXIFOFFSETTAG = 0x8769;
+static const int INTEROPERABILITYOFFSET = 0xA005;
+static const int GPSOFFSETTAG = 0x8825;
+
 /************************************************************************/
 /*                         EXIFPrintData()                              */
 /************************************************************************/
