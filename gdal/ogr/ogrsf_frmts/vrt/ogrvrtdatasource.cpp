@@ -211,9 +211,12 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
 
     if( pszSourceSRS == NULL )
     {
-        poSrcSRS = poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef();
-        if( poSrcSRS != NULL)
-            poSrcSRS = poSrcSRS->Clone();
+        if( iGeomField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount() )
+        {
+            poSrcSRS = poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef();
+            if( poSrcSRS != NULL)
+                poSrcSRS = poSrcSRS->Clone();
+        }
     }
     else
     {
