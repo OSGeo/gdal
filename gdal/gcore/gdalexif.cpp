@@ -31,6 +31,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <vector>
+
 #include "cpl_conv.h"
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -39,6 +41,8 @@
 
 #include "gdal_priv.h"
 #include "gdalexif.h"
+
+using std::vector;
 
 CPL_CVSID("$Id$");
 
@@ -214,11 +218,15 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 {
     GUInt16        nEntryCount;
     int space;
-    unsigned int           n,i;
-    char          szTemp[MAXSTRINGLENGTH+1];
+    unsigned int i;
+    unsigned int n;
+
+    vector<char> oTempStorage(MAXSTRINGLENGTH+1, 0);
+    char * const szTemp = &oTempStorage[0];
+
     char          szName[128];
 
-    VSILFILE* fp = (VSILFILE* )fpInL;
+    VSILFILE* fp = static_cast<VSILFILE *>(fpInL);
 
     GDALEXIFTIFFDirEntry *poTIFFDirEntry;
     GDALEXIFTIFFDirEntry *poTIFFDir;
