@@ -274,7 +274,7 @@ def misc_6_internal(datatype, nBands):
             drv = gdal.GetDriver(i)
             md = drv.GetMetadata()
             if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
-                print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+                #print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
                 skip = False
                 # FIXME: A few cases that crashes and should be investigated
