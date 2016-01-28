@@ -1759,9 +1759,18 @@ OGRErr GMLHandler::dataHandlerAttribute(const char *data, int nLen)
 
         int nCharsLen = nLen - nIter;
 
+        if( nCharsLen > INT_MAX - static_cast<int>(m_nCurFieldLen) - 1 )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                    "Too much data in a single element");
+            return OGRERR_NOT_ENOUGH_MEMORY;
+        }
         if (m_nCurFieldLen + nCharsLen + 1 > m_nCurFieldAlloc)
         {
-            m_nCurFieldAlloc = m_nCurFieldAlloc * 4 / 3 + nCharsLen + 1;
+            if( m_nCurFieldAlloc < INT_MAX - m_nCurFieldAlloc / 3 - nCharsLen - 1 )
+                m_nCurFieldAlloc = m_nCurFieldAlloc + m_nCurFieldAlloc / 3 + nCharsLen + 1;
+            else
+                m_nCurFieldAlloc = m_nCurFieldLen + nCharsLen + 1;
             char *pszNewCurField = (char *)
                 VSI_REALLOC_VERBOSE( m_pszCurField, m_nCurFieldAlloc );
             if (pszNewCurField == NULL)
@@ -1802,9 +1811,18 @@ OGRErr GMLHandler::dataHandlerGeometry(const char *data, int nLen)
     int nCharsLen = nLen - nIter;
     if (nCharsLen)
     {
+        if( nCharsLen > INT_MAX - static_cast<int>(m_nGeomLen) - 1 )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                    "Too much data in a single element");
+            return OGRERR_NOT_ENOUGH_MEMORY;
+        }
         if( m_nGeomLen + nCharsLen + 1 > m_nGeomAlloc )
         {
-            m_nGeomAlloc = m_nGeomAlloc * 4 / 3 + nCharsLen + 1;
+            if( m_nGeomAlloc < INT_MAX - m_nGeomAlloc / 3 - nCharsLen - 1 )
+                m_nGeomAlloc = m_nGeomAlloc + m_nGeomAlloc / 3 + nCharsLen + 1;
+            else
+                m_nGeomAlloc = m_nGeomAlloc + nCharsLen + 1;
             char* pszNewGeometry = (char *)
                 VSI_REALLOC_VERBOSE( m_pszGeometry, m_nGeomAlloc);
             if (pszNewGeometry == NULL)

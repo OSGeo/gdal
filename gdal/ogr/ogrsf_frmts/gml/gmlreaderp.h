@@ -114,16 +114,16 @@ typedef enum
 class GMLHandler
 {
     char      *m_pszCurField;
-    size_t     m_nCurFieldAlloc;
-    size_t     m_nCurFieldLen;
+    unsigned int m_nCurFieldAlloc;
+    unsigned int m_nCurFieldLen;
     bool       m_bInCurField;
     int        m_nAttributeIndex;
     int        m_nAttributeDepth;
 
 
     char      *m_pszGeometry;
-    int        m_nGeomAlloc;
-    int        m_nGeomLen;
+    unsigned int m_nGeomAlloc;
+    unsigned int m_nGeomLen;
     int        m_nGeometryDepth;
     bool       m_bAlreadyFoundGeometry;
     int        m_nGeometryPropertyIndex;
