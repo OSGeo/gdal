@@ -384,6 +384,14 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
 
 void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
 {
+    if( nLen > INT_MAX - nElementValueLen - 1 - 1000 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Too much data in a single element");
+        XML_StopParser(oParser, XML_FALSE);
+        bStopParsing = true;
+        return;
+    }
     if( nElementValueLen + nLen + 1 > nElementValueAlloc )
     {
         char* pszNewElementValue = (char*) VSIRealloc(pszElementValue,
@@ -401,13 +409,6 @@ void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
     memcpy(pszElementValue + nElementValueLen, data, nLen);
     nElementValueLen += nLen;
     pszElementValue[nElementValueLen] = '\0';
-    if (nElementValueLen > 10000000)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "Too much data inside one element. File probably corrupted");
-        XML_StopParser(oParser, XML_FALSE);
-        bStopParsing = TRUE;
-    }
 }
 
 /************************************************************************/
