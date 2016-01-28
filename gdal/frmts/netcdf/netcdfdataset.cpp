@@ -6416,6 +6416,22 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             CPLFree(pucTemp);
             break;
+        case NC_USHORT:
+        {
+            unsigned short *pusTemp;
+            pusTemp = reinterpret_cast<unsigned short *>(
+                    CPLCalloc( nAttrLen, sizeof( unsigned short ) ) );
+            nc_get_att_ushort( nCdfId, nVarId, pszAttrName, pusTemp );
+            dfValue = static_cast<double>(pusTemp[0]);
+            for(m=0; m < nAttrLen-1; m++) {
+                snprintf( szTemp, sizeof(szTemp), "%d,", pusTemp[m] );
+                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            }
+            snprintf( szTemp, sizeof(szTemp), "%d", pusTemp[m] );
+            NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            CPLFree(pusTemp);
+            break;
+        }
 #endif
         case NC_SHORT:
             short *psTemp;
@@ -6472,8 +6488,6 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         default:
             CPLDebug( "GDAL_netCDF", "NCDFGetAttr unsupported type %d for attribute %s",
                       nAttrType,pszAttrName);
-            CPLFree( pszAttrValue );
-            pszAttrValue = NULL;
             break;
     }
 
