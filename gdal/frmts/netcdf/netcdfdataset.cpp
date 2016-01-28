@@ -223,6 +223,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     /* NC_UBYTE (unsigned byte) is only available for NC4 */
     else if( nc_datatype == NC_UBYTE )
         eDataType = GDT_Byte;
+    else if( nc_datatype == NC_USHORT )
+        eDataType = GDT_UInt16;
 #endif
     else if( nc_datatype == NC_CHAR )
         eDataType = GDT_Byte;
@@ -535,6 +537,11 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                 nc_datatype = NC_UBYTE;
 #endif
             break;
+#ifdef NETCDF_HAS_NC4
+        case GDT_UInt16:
+            nc_datatype = NC_USHORT;
+            break;
+#endif
         case GDT_Int16:
             nc_datatype = NC_SHORT;
             break;
@@ -1309,6 +1316,16 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             CheckData<short int>( pImage, edge[nBandXPos], edge[nBandYPos], 
                                   false ); 
     }
+#ifdef NETCDF_HAS_NC4
+    else if( eDataType == GDT_UInt16 )
+    {
+        status = nc_get_vara_ushort( cdfid, nZId, start, edge, 
+                                    (unsigned short int *) pImage );
+        if ( status == NC_NOERR ) 
+            CheckData<unsigned short int>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                                  false ); 
+    }
+#endif
     else if( eDataType == GDT_Int32 )
     {
         if( sizeof(long) == 4 )
@@ -6346,6 +6363,22 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             snprintf( szTemp, sizeof(szTemp), "%d", pucTemp[m] );
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             CPLFree(pucTemp);
+            break;
+        }
+        case NC_USHORT:
+        {
+            unsigned short *pusTemp;
+            pusTemp = reinterpret_cast<unsigned short *>(
+                    CPLCalloc( nAttrLen, sizeof( unsigned short ) ) );
+            nc_get_att_ushort( nCdfId, nVarId, pszAttrName, pusTemp );
+            dfValue = static_cast<double>(pusTemp[0]);
+            for(m=0; m < nAttrLen-1; m++) {
+                snprintf( szTemp, sizeof(szTemp), "%d,", pusTemp[m] );
+                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            }
+            snprintf( szTemp, sizeof(szTemp), "%d", pusTemp[m] );
+            NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            CPLFree(pusTemp);
             break;
         }
 #endif

@@ -1539,6 +1539,27 @@ def netcdf_43():
     return 'success'
 
 ###############################################################################
+# Test NC_USHORT read - netcdf-4  only (#6337)
+
+def netcdf_44():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ds = gdal.Open('data/ushort.nc')
+    if ds.GetRasterBand(1).Checksum() != 18:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 65535:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1587,6 +1608,7 @@ gdaltest_list = [
     netcdf_41,
     netcdf_42,
     netcdf_43,
+    netcdf_44,
  ]
 
 ###############################################################################
