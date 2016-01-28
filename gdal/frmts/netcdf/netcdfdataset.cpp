@@ -538,9 +538,10 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 #endif
             break;
 #ifdef NETCDF_HAS_NC4
-        case GDT_UInt16:
-            nc_datatype = NC_USHORT;
-            break;
+        // Commented: UInt16 write not supported yet with just that
+        //case GDT_UInt16:
+        //    nc_datatype = NC_USHORT;
+        //    break;
 #endif
         case GDT_Int16:
             nc_datatype = NC_SHORT;
