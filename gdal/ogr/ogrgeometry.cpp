@@ -803,8 +803,8 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
  *
  * This method sets the explicit coordinate dimension.  Setting the coordinate
  * dimension of a geometry to 2 should zero out any existing Z values.  Setting
- * the dimension of a geometry collection will not necessarily affect the
- * children geometries. 
+ * the dimension of a geometry collection, a compound curve, a polygon, etc.
+ * will affect the children geometries. 
  *
  * @param nNewDimension New coordinate dimension value, either 2 or 3.
  */
@@ -823,9 +823,9 @@ void OGRGeometry::setCoordinateDimension( int nNewDimension )
  * \brief Set the coordinate dimension.
  *
  * This method sets the explicit coordinate dimension.  Setting the coordinate
- * dimension of a geometry to 2 should zero out any existing Z values.  Setting
- * the dimension of a geometry collection will not necessarily affect the
- * children geometries.
+ * dimension of a geometry to 2 should zero out any existing Z values. Setting
+ * the dimension of a geometry collection, a compound curve, a polygon, etc.
+ * will affect the children geometries. 
  *
  * @param hGeom handle on the geometry to set the dimension of the
  * coordinates.
