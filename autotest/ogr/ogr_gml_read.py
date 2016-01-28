@@ -3909,6 +3909,30 @@ version="1.0.0">
     return 'success'
 
 ###############################################################################
+# Test we are robust to content of XML elements bigger than 2 GB
+
+def ogr_gml_76():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsisparse/data/huge_attribute_gml_sparse.xml')
+        if ds is not None:
+            lyr = ds.GetLayer(0)
+            lyr.GetNextFeature()
+
+        ds = ogr.Open('/vsisparse/data/huge_geom_gml_sparse.xml')
+        if ds is not None:
+            lyr = ds.GetLayer(0)
+            lyr.GetNextFeature()
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4115,6 +4139,7 @@ gdaltest_list = [
     ogr_gml_73,
     ogr_gml_74,
     ogr_gml_75,
+    ogr_gml_76,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [ 
