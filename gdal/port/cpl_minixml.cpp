@@ -665,11 +665,28 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                     || !EQUAL(sContext.pszToken+1,
                          sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue) )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "Line %d: <%.500s> doesn't have matching <%.500s>.",
-                              sContext.nInputLine,
-                              sContext.pszToken, sContext.pszToken+1 );
-                    break;
+#ifdef DEBUG
+                    /* Makes life of fuzzers easier if we accept somewhat corrupted XML */
+                    /* like <foo> ... </not_foo> */
+                    if( CPLTestBool(CPLGetConfigOption("CPL_MINIXML_RELAXED", "FALSE")) )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                "Line %d: <%.500s> doesn't have matching <%.500s>.",
+                                sContext.nInputLine,
+                                sContext.pszToken, sContext.pszToken+1 );
+                        if( sContext.nStackSize == 0 )
+                            break;
+                        goto end_processing_close;
+                    }
+                    else
+#endif
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                "Line %d: <%.500s> doesn't have matching <%.500s>.",
+                                sContext.nInputLine,
+                                sContext.pszToken, sContext.pszToken+1 );
+                        break;
+                    }
                 }
                 else
                 {
@@ -686,7 +703,9 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                                 sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue,
                                 sContext.pszToken );
                     }
-
+#ifdef DEBUG
+end_processing_close:
+#endif
                     if( ReadToken(&sContext) != TClose )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
@@ -862,10 +881,24 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     if( CPLGetLastErrorType() != CE_Failure && sContext.nStackSize > 0 &&
         sContext.papsStack != NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Parse error at EOF, not all elements have been closed,\n"
-                  "starting with %.500s\n",
-                  sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue );
+#ifdef DEBUG
+        /* Makes life of fuzzers easier if we accept somewhat corrupted XML */
+        /* like <x> ... */
+        if( CPLTestBool(CPLGetConfigOption("CPL_MINIXML_RELAXED", "FALSE")) )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                    "Parse error at EOF, not all elements have been closed,\n"
+                    "starting with %.500s\n",
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue );
+        }
+        else
+#endif
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Parse error at EOF, not all elements have been closed,\n"
+                    "starting with %.500s\n",
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue );
+        }
     }
 
 /* -------------------------------------------------------------------- */
