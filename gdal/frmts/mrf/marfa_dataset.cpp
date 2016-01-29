@@ -49,22 +49,11 @@
 ****************************************************************************/
 
 #include "marfa.h"
+#include "cpl_multiproc.h" /* for CPLSleep() */
 #include <gdal_priv.h>
 #include <assert.h>
 
 #include <vector>
-
-// Sleep is not portable and not covered in GDAL as far as I can tell
-// So we define MRF_sleep_ms, in milliseconds, not very accurate unfortunately
-#if defined(WIN32)
-// Unfortunately this defines all sorts of garbage
-#include <windows.h>
-#define MRF_sleep_ms(t) Sleep(t)
-#else // Assume linux
-#include <unistd.h>
-// Usleep is in usec
-#define MRF_sleep_ms(t) usleep(t*1000)
-#endif
 
 using std::vector;
 using std::string;
@@ -908,7 +897,7 @@ VSILFILE *GDALMRFDataset::IdxFP() {
 	do {
 	    if (CheckFileSize(current.idxfname, expected_size, GA_ReadOnly))
 		return ifp.FP;
-	    MRF_sleep_ms(100);
+	    CPLSleep(0.100); /* 100 ms */
 	} while (--timeout);
 
 	// If we get here it is a time-out
