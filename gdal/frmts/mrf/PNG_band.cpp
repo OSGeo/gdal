@@ -125,7 +125,7 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     png_set_read_fn(pngp, &src, read_png);
     // Ready to read
     png_read_info(pngp, infop);
-    GInt32 height = png_get_image_height(pngp, infop);
+    GInt32 height = static_cast<GInt32>(png_get_image_height(pngp, infop));
     GInt32 byte_count = png_get_bit_depth(pngp, infop) / 8;
     // Check the size
     if (dst.size < (png_get_rowbytes(pngp, infop)*height)) {
@@ -137,7 +137,7 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 
     png_rowp = (png_bytep *)CPLMalloc(sizeof(png_bytep)*height);
 
-    int rowbytes = png_get_rowbytes(pngp, infop);
+    int rowbytes = static_cast<int>(png_get_rowbytes(pngp, infop));
     for (int i = 0; i < height; i++)
 	png_rowp[i] = (png_bytep)dst.buffer + i*rowbytes;
 
@@ -261,7 +261,7 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
 	return CE_Failure;
     }
 
-    int rowbytes = png_get_rowbytes(pngp, infop);
+    int rowbytes = static_cast<int>(png_get_rowbytes(pngp, infop));
     for (int i = 0; i < img.pagesize.y; i++) {
 	png_rowp[i] = (png_bytep)(src.buffer + i*rowbytes);
 	if (img.dt != GDT_Byte) { // Swap to net order if data is short

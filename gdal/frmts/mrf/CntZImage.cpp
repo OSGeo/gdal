@@ -141,7 +141,7 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
   if (!onlyZPart)
   {
     float cntMin, cntMax;
-    if (!computeCntStats(0, height_, 0, width_, cntMin, cntMax))
+    if (!computeCntStats(0, static_cast<int>(height_), 0, static_cast<int>(width_), cntMin, cntMax))
       return false;
 
     bool bCntsNoInt = true;
@@ -173,7 +173,7 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
         }
 
         // determine numBytes needed to encode
-	numBytesOpt = bitMask.RLEsize();
+	numBytesOpt = static_cast<int>(bitMask.RLEsize());
       }
       else
       {
@@ -234,8 +234,8 @@ bool CntZImage::write(Byte** ppByte,
 
   int versionSwap = version;
   int typeSwap    = type_;
-  int heightSwap = height_;
-  int widthSwap  = width_;
+  int heightSwap = static_cast<int>(height_);
+  int widthSwap  = static_cast<int>(width_);
   double maxZErrorSwap = maxZError;
 
   SWAP_4(versionSwap);
@@ -327,7 +327,7 @@ bool CntZImage::write(Byte** ppByte,
         }
 
         // RLE encoding, update numBytesWritten
-	numBytesWritten = bitMask.RLEcompress(bArr);
+	numBytesWritten = static_cast<int>(bitMask.RLEcompress(bArr));
       }
     }
     else
@@ -459,7 +459,7 @@ bool CntZImage::read(Byte** ppByte,
 
 	CntZ* dstPtr = getData();
 	for (int k = 0; k < width_ * height_; k++, dstPtr++)
-	  dstPtr->cnt = bitMask.IsValid(k) ? 1:0;
+	  dstPtr->cnt = bitMask.IsValid(k) ? 1.0f:0.0f;
       }
     }
     else if (!readTiles(zPart, maxZErrorInFile, numTilesVert, numTilesHori, maxValInImg, bArr))
@@ -511,8 +511,8 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
   {
     int tileWidth = tileWidthArr[k];
 
-    int numTilesVert = height_ / tileWidth;
-    int numTilesHori = width_  / tileWidth;
+    int numTilesVert = static_cast<int>(height_ / tileWidth);
+    int numTilesHori = static_cast<int>(width_  / tileWidth);
 
     if (numTilesVert * numTilesHori < 2)
     {
@@ -558,7 +558,7 @@ bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoIntIn,
 
   for (int iTile = 0; iTile <= numTilesVert; iTile++)
   {
-    int tileH = height_ / numTilesVert;
+    int tileH = static_cast<int>(height_ / numTilesVert);
     int i0 = iTile * tileH;
     if (iTile == numTilesVert)
       tileH = height_ % numTilesVert;
@@ -568,7 +568,7 @@ bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoIntIn,
 
     for (int jTile = 0; jTile <= numTilesHori; jTile++)
     {
-      int tileW = width_ / numTilesHori;
+      int tileW = static_cast<int>(width_ / numTilesHori);
       int j0 = jTile * tileW;
       if (jTile == numTilesHori)
         tileW = width_ % numTilesHori;
@@ -617,7 +617,7 @@ bool CntZImage::readTiles(bool zPart, double maxZErrorInFile,
 
   for (int iTile = 0; iTile <= numTilesVert; iTile++)
   {
-    int tileH = height_ / numTilesVert;
+    int tileH = static_cast<int>(height_ / numTilesVert);
     int i0 = iTile * tileH;
     if (iTile == numTilesVert)
       tileH = height_ % numTilesVert;
@@ -627,7 +627,7 @@ bool CntZImage::readTiles(bool zPart, double maxZErrorInFile,
 
     for (int jTile = 0; jTile <= numTilesHori; jTile++)
     {
-      int tileW = width_ / numTilesHori;
+      int tileW = static_cast<int>(width_ / numTilesHori);
       int j0 = jTile * tileW;
       if (jTile == numTilesHori)
         tileW = width_ % numTilesHori;
@@ -1276,7 +1276,7 @@ void CntZImage::readVal(Byte **ppByte, float &val, int numBytes) const
     int v = (int)((signed char)NEXTBYTE); // Low byte, signed extended
     if (2 == numBytes)
 	v = (256 * (signed char)NEXTBYTE) | (v && 0xff);
-    val = v;
+    val = static_cast<float>(v);
 }
 
 NAMESPACE_MRF_END

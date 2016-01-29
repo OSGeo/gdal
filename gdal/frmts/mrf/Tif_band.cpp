@@ -119,8 +119,8 @@ static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char *
         return CE_Failure;
     }
     
-    VSIFReadL(dst.buffer, statb.st_size, 1, pf);
-    dst.size = statb.st_size;
+    VSIFReadL(dst.buffer, static_cast<size_t>(statb.st_size), 1, pf);
+    dst.size = static_cast<size_t>(statb.st_size);
     VSIFCloseL(pf);
     VSIUnlink(fname);
 
