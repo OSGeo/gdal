@@ -461,7 +461,7 @@ CPLString PrintDouble(double d, const char *frmt)
     return CPLString().FormatC(d, frmt);
 }
 
-void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
+static void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
     const char *val)
 {
     CPLCreateXMLNode(parent, CXT_Attribute, pszName);
