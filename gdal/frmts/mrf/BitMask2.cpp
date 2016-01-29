@@ -45,7 +45,7 @@ BitMask2::BitMask2(int nCols, int nRows) : m_pBits(0)
 BitMask2::BitMask2(const BitMask2& src) : m_pBits(0)
 {
   SetSize(src.m_nCols, src.m_nRows);
-  if (src.m_pBits)
+  if (m_pBits && src.m_pBits)
     memcpy(m_pBits, src.m_pBits, Size());
 }
 
