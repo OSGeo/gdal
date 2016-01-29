@@ -49,7 +49,7 @@ NAMESPACE_MRF_START
 
 // Returns a string in /vsimem/ + prefix + count that doesn't exist when this function gets called
 // It is not thread safe, open the result as soon as possible
-CPLString uniq_memfname(const char *prefix)
+static CPLString uniq_memfname(const char *prefix)
 {
 
 // Define MRF_LOCAL_TMP to use local files instead of RAM
@@ -70,7 +70,7 @@ CPLString uniq_memfname(const char *prefix)
 // Uses GDAL to create a temporary TIF file, using the band create options
 // copies the content to the destination buffer then erases the temp TIF
 //
-CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char **papszOptions)
+static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char **papszOptions)
 {
     CPLErr ret;
     GDALDriver *poTiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
@@ -128,7 +128,7 @@ CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char **papszO
 }
 
 // Read from a RAM Tiff. This is rather generic
-CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
+static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 {
     CPLString fname = uniq_memfname("mrf_tif_read");
     VSILFILE *fp = VSIFileFromMemBuffer(fname, (GByte *)(src.buffer), src.size, false);
