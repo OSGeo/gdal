@@ -1183,7 +1183,7 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     }
 
     // Pick up the source data image, if there is one
-    source = CPLStrdup(CPLGetXMLValue(config, "CachedSource.Source", 0));
+    source = CPLGetXMLValue(config, "CachedSource.Source", "");
     // Is it a clone?
     clonedSource = on(CPLGetXMLValue(config, "CachedSource.Source.clone", "no"));
     // Pick up the options, if any
