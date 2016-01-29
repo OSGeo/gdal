@@ -1,0 +1,48 @@
+This project includes the Meta Raster Format (MRF) driver for GDAL.
+
+MRF
+Copyright (c) 2002-2015, California Institute of Technology.
+All rights reserved.  Based on Government Sponsored Research under contracts NAS7-1407 and/or NAS7-03001.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+  1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+  3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL),
+     the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to
+     endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Portions of the MRF source code are Copyright Esri (see notice in files for more information).
+
+------------------------------------------------------------------------------
+This project includes Limited Error Raster Compression (LERC) software.
+
+LERC 
+Copyright 2015 Esri
+
+This software embodiment is an implementation of 
+
+United States Patent 9002126, Limited Error Raster Compression (LERC). 
+Assignee: Esri. 
+Assignors/Inventors: Maurer, Thomas (Redlands, CA); Gao, Peng (Redlands, CA); Becker, Peter (Redlands, CA). 
+
+The right to practice this patent is hereby granted under the Apache V2.0 License Agreement, Clause 3 - Grant of Patent License for the following fields of use: 
+GIS, terrestrial and extra-terrestrial mapping, and other related earth sciences applications. 
+
+The license is available at http://github.com/Esri/lerc/
+
+For additional information, contact:
+
+Environmental Systems Research Institute, Inc.
+Attn: Contracts and Legal Department
+380 New York Street
+Redlands, CA 92373
+E-mail: contracts@esri.com
