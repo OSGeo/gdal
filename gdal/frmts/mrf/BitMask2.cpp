@@ -35,14 +35,14 @@ BitMask2::BitMask2() : m_pBits(NULL), m_nCols(0), m_nRows(0)
 
 // -------------------------------------------------------------------------- ;
 
-BitMask2::BitMask2(int nCols, int nRows) : m_pBits(NULL)
+BitMask2::BitMask2(int nCols, int nRows) : m_pBits(NULL), m_nCols(0), m_nRows(0)
 {
   SetSize(nCols, nRows);
 }
 
 // -------------------------------------------------------------------------- ;
 
-BitMask2::BitMask2(const BitMask2& src) : m_pBits(NULL)
+BitMask2::BitMask2(const BitMask2& src) : m_pBits(NULL), m_nCols(0), m_nRows(0)
 {
   SetSize(src.m_nCols, src.m_nRows);
   if (m_pBits && src.m_pBits)
