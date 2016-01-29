@@ -772,7 +772,7 @@ start_idx = end_idx;
     if (photo_val)
 	ds->SetPhotometricInterpretation(photo_val);
 
-    if (image.quality < 0 && image.quality>99) {
+    if (image.quality < 0 || image.quality>99) {
 	CPLError(CE_Warning, CPLE_AppDefined, "GDAL MRF: Quality setting error, using default of 85");
 	image.quality = 85;
     }
