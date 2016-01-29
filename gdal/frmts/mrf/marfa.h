@@ -103,9 +103,9 @@ enum ILCompression {
 
 // Sequential is not supported by GDAL
 enum ILOrder { IL_Interleaved = 0, IL_Separate, IL_Sequential, IL_ERR_ORD };
-extern char const **ILComp_Name;
-extern char const **ILComp_Ext;
-extern char const **ILOrder_Name;
+extern char const * const * ILComp_Name;
+extern char const * const * ILComp_Ext;
+extern char const * const * ILOrder_Name;
 
 class GDALMRFDataset;
 class GDALMRFRasterBand;
