@@ -1193,9 +1193,13 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     // Load all the options in the IMAGE_STRUCTURE metadata
     for (int i = 0; i < optlist.Count(); i++) {
 	CPLString s(optlist[i]);
-	s.resize(s.find_first_of(":="));
-	const char *key = s.c_str();
-	SetMetadataItem(key, optlist.FetchNameValue(key), "IMAGE_STRUCTURE");
+        size_t nSepPos = s.find_first_of(":=");
+        if( nSepPos != std::string::npos )
+        {
+            s.resize(nSepPos);
+            const char *key = s.c_str();
+            SetMetadataItem(key, optlist.FetchNameValue(key), "IMAGE_STRUCTURE");
+        }
     }
 
     // We have the options, so we can call rasterband
