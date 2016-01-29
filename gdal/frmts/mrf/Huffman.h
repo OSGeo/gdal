@@ -31,7 +31,7 @@ NAMESPACE_MRF_START
 class Huffman
 {
 public:
-  Huffman() : m_maxHistoSize(1 << 15), m_maxNumBitsLUT(12), m_root(0) {};
+  Huffman() : m_maxHistoSize(1 << 15), m_maxNumBitsLUT(12), m_root(NULL) {};
   ~Huffman() { Clear(); };
 
   // Limitation: We limit the max Huffman code length to 32 bit. If this happens, the function ComputeCodes() 
@@ -67,7 +67,7 @@ private:
     {
       value = val;
       weight = -cnt;
-      child0 = child1 = 0;
+      child0 = child1 = NULL;
     }
 
     Node(Node* c0, Node* c1)    // new internal node from children c0 and c1

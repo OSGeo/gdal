@@ -23,7 +23,7 @@ NAMESPACE_MRF_START
 
 size_t RLE::computeNumBytesRLE(const Byte* arr, size_t numBytes) const
 {
-  if (arr == 0 || numBytes == 0)
+  if (arr == NULL || numBytes == 0)
     return 0;
 
   const Byte* ptr = arr;
@@ -117,7 +117,7 @@ size_t RLE::computeNumBytesRLE(const Byte* arr, size_t numBytes) const
 bool RLE::compress(const Byte* arr, size_t numBytes,
                    Byte** arrRLE, size_t& numBytesRLE, bool verify) const
 {
-  if (arr == 0 || numBytes == 0)
+  if (arr == NULL || numBytes == 0)
     return false;
 
   numBytesRLE = computeNumBytesRLE(arr, numBytes);
@@ -229,7 +229,7 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
 
   if (verify)
   {
-    Byte* arr2 = 0;
+    Byte* arr2 = NULL;
     size_t numBytes2 = 0;
     if (!decompress(*arrRLE, &arr2, numBytes2) || numBytes2 != numBytes)
     {

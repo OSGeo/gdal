@@ -29,7 +29,7 @@ NAMESPACE_MRF_START
 class BitMask
 {
 public:
-  BitMask(long nCols, long nRows) : m_pBits(0), m_nRows(nRows), m_nCols(nCols)
+  BitMask(long nCols, long nRows) : m_pBits(NULL), m_nRows(nRows), m_nCols(nCols)
   {
       m_pBits = new Byte[Size()];
       if (!m_pBits)
