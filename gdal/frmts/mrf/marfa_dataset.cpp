@@ -1419,7 +1419,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     catch (CPLString(e)) {
 	if (poDS)
 	    delete poDS;
-	CPLError(CE_Failure, CPLE_ObjectNull, e.c_str());
+	CPLError(CE_Failure, CPLE_ObjectNull, "%s", e.c_str());
 	poDS = NULL;
     }
 
@@ -1571,7 +1571,7 @@ GDALMRFDataset::Create(const char * pszName,
     }
 
     catch (CPLString e) {
-	CPLError(CE_Failure, CPLE_OpenFailed, e.c_str());
+	CPLError(CE_Failure, CPLE_OpenFailed, "%s", e.c_str());
 	delete poDS;
 	poDS = NULL;
     }
