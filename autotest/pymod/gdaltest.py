@@ -341,7 +341,10 @@ class GDALTest:
         self.band = band
         self.chksum = chksum
         if chksum_after_reopening is not None:
-            self.chksum_after_reopening = chksum_after_reopening
+            if type(chksum_after_reopening) == type([]):
+                self.chksum_after_reopening = chksum_after_reopening
+            else:
+                self.chksum_after_reopening = [ chksum_after_reopening ]
         else:
             self.chksum_after_reopening = chksum
         self.xoff = xoff
@@ -582,10 +585,10 @@ class GDALTest:
                 if bnd.Checksum() == 0:
                     post_reason('Got null checksum on reopened file.')
                     return 'fail'
-            elif self.chksum_after_reopening is not None and bnd.Checksum() != self.chksum_after_reopening:
+            elif self.chksum_after_reopening is not None and bnd.Checksum() not in self.chksum_after_reopening:
                 post_reason( 'Did not get expected checksum on reopened file.\n'
-                             '    Got %d instead of %d.' \
-                             % (bnd.Checksum(), self.chksum_after_reopening) )
+                             '    Got %d instead of %s.' \
+                             % (bnd.Checksum(), str(self.chksum_after_reopening)) )
                 return 'fail'
 
             if check_minmax:
