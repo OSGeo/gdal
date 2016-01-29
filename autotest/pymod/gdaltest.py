@@ -333,13 +333,17 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
 class GDALTest:
     def __init__(self, drivername, filename, band, chksum,
                  xoff = 0, yoff = 0, xsize = 0, ysize = 0, options = [],
-                 filename_absolute = 0 ):
+                 filename_absolute = 0, chksum_after_reopening = None ):
         self.driver = None
         self.drivername = drivername
         self.filename = filename
         self.filename_absolute = filename_absolute
         self.band = band
         self.chksum = chksum
+        if chksum_after_reopening is not None:
+            self.chksum_after_reopening = chksum_after_reopening
+        else:
+            self.chksum_after_reopening = chksum
         self.xoff = xoff
         self.yoff = yoff
         self.xsize = xsize
@@ -578,10 +582,10 @@ class GDALTest:
                 if bnd.Checksum() == 0:
                     post_reason('Got null checksum on reopened file.')
                     return 'fail'
-            elif self.chksum is not None and bnd.Checksum() != self.chksum:
+            elif self.chksum_after_reopening is not None and bnd.Checksum() != self.chksum_after_reopening:
                 post_reason( 'Did not get expected checksum on reopened file.\n'
                              '    Got %d instead of %d.' \
-                             % (bnd.Checksum(), self.chksum) )
+                             % (bnd.Checksum(), self.chksum_after_reopening) )
                 return 'fail'
 
             if check_minmax:
