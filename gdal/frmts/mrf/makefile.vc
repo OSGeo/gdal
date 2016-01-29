@@ -1,0 +1,72 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+GDAL_ROOT	=	..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	Tif_band.obj Raw_band.obj PNG_band.obj JPEG_band.obj \
+    mrf_band.obj mrf_overview.obj mrf_util.obj marfa_dataset.obj
+
+# Use the LERC_Band.cpp presence as a signal to use LERC
+!IF EXIST(LERC_Band.cpp)
+LERC	=	1
+EXTRAFLAGS	=	/DLERC
+OBJ	=	$(OBJ) Huffman.obj BitStuffer.obj CntZImage.obj BitMask.obj LERC_Band.obj\
+    Lerc2.obj Bitstuffer2.obj BitMask2.obj RLE.obj
+!ENDIF
+
+!IFDEF JPEG12_SUPPORTED
+OBJ	=	$(OBJ) JPEG12_band.obj
+EXTRAFLAGS	= -DJPEG12_SUPPORTED $(EXTRAFLAGS)
+!ENDIF
+
+PLUGIN_DLL =	gdal_mrf.dll
+
+!IFDEF JPEG_EXTERNAL_LIB
+EXTRAFLAGS =	-I$(JPEGDIR) $(EXTRAFLAGS)
+!ELSE
+EXTRAFLAGS =	-I../jpeg/libjpeg $(JPEG12_FLAGS) $(EXTRAFLAGS)
+!ENDIF
+
+!IFDEF PNG_EXTERNAL_LIB
+EXTRAFLAGS = 	-I../zlib -I$(PNGDIR) $(EXTRAFLAGS)
+!ELSE
+EXTRAFLAGS = 	-I../zlib -I../png/libpng $(EXTRAFLAGS)
+!ENDIF
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+!IFDEF LERC
+$(OBJ):	marfa.h BitMask.h Huffman.h BitStuffer.h CntZImage.h Defines.h Image.h\
+    TImage.hpp Lerc2.h Bitstuffer2.h BitMask2.h RLE.h
+!ELSE
+$(OBJ): marfa.h
+!ENDIF
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+	-del *.exe
+
+plugin:	$(PLUGIN_DLL)
+
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
