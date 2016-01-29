@@ -1354,6 +1354,11 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     int x = poSrcDS->GetRasterXSize();
     int y = poSrcDS->GetRasterYSize();
     int nBands = poSrcDS->GetRasterCount();
+    if( nBands == 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "nBands == 0 not supported");
+        return NULL;
+    }
     GDALRasterBand *poSrcBand1 = poSrcDS->GetRasterBand(1);
 
     GDALDataType dt = poSrcBand1->GetRasterDataType();
@@ -1524,6 +1529,12 @@ GDALMRFDataset::Create(const char * pszName,
     GDALDataType eType, char ** papszOptions)
 
 {   // Pending create
+    if( nBands == 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "nBands == 0 not supported");
+        return NULL;
+    }
+
     GDALMRFDataset *poDS = new GDALMRFDataset();
     CPLErr err = CE_None;
     poDS->fname = pszName;
