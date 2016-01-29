@@ -610,7 +610,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             {
               if (ptrBeginningOfNumber == NULL ||
                   !(ptrCurLine[-1] >= '0' && ptrCurLine[-1] <= '9') ||
-                  exponentFound == 1)
+                  exponentFound )
               {
                 detailedErrorMsg = BAD_FLOAT_NUMBER_FORMAT;
                 goto error;

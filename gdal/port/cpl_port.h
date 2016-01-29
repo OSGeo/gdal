@@ -890,6 +890,9 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 extern "C++" {
 class MSVCPedanticBool
 {
+        friend bool operator== (const bool& one, const MSVCPedanticBool& other);
+        friend bool operator!= (const bool& one, const MSVCPedanticBool& other);
+
         bool b;
         MSVCPedanticBool(int bIn);
 
@@ -902,10 +905,18 @@ class MSVCPedanticBool
         MSVCPedanticBool& operator&= (const MSVCPedanticBool& other) { b &= other.b; return *this; }
         MSVCPedanticBool& operator|= (const MSVCPedanticBool& other) { b |= other.b; return *this; }
 
+        bool operator== (const bool& other) { return b == other; }
+        bool operator!= (const bool& other) { return b != other; }
+        bool operator== (const MSVCPedanticBool& other) { return b == other.b; }
+        bool operator!= (const MSVCPedanticBool& other) { return b != other.b; }
+
         bool operator! () const { return !b; }
         operator bool() const { return b; }
         operator int() const { return b; }
 };
+
+inline bool operator== (const bool& one, const MSVCPedanticBool& other) { return one == other.b; }
+inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return one != other.b; }
 
 /* We must include all C++ stuff before to avoid issues with templates that use bool */
 #include <vector>

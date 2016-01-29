@@ -299,7 +299,7 @@ bool WriteElement(string sSection, string sEntry,
     char strdouble[45];
     snprintf(strdouble, sizeof(strdouble), "%d", nValue);
     string sValue = string(strdouble);
-    return WriteElement(sSection, sEntry, fn, sValue) != 0;
+    return WriteElement(sSection, sEntry, fn, sValue);
 }
 
 bool WriteElement(string sSection, string sEntry,
@@ -311,7 +311,7 @@ bool WriteElement(string sSection, string sEntry,
     char strdouble[45];
     CPLsnprintf(strdouble, sizeof(strdouble), "%.6f", dValue);
     string sValue = string(strdouble);
-    return WriteElement(sSection, sEntry, fn, sValue) != 0;
+    return WriteElement(sSection, sEntry, fn, sValue);
 }
 
 static CPLErr GetRowCol(string str,int &Row, int &Col)

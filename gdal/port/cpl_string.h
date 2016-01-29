@@ -111,7 +111,13 @@ int CPL_DLL CPLTestBoolean( const char *pszValue );
 #define CPLTestBool(x) CPL_TO_BOOL(CPLTestBoolean(x))
 #else
 /* Prefer these for C++ code. */
+#ifdef DEBUG_BOOL
+extern "C++" {
+#endif
 bool CPL_DLL CPLTestBool( const char *pszValue );
+#ifdef DEBUG_BOOL
+}
+#endif
 #endif
 #endif  /* __cplusplus */
 

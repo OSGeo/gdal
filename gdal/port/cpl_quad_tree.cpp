@@ -710,8 +710,7 @@ static bool CPLQuadTreeNodeForeach(const QuadTreeNode *psNode,
 {
     for(int i=0; i<psNode->nNumSubNodes; i++ )
     {
-        if( CPLQuadTreeNodeForeach(psNode->apSubNode[i], pfnForeach, pUserData)
-            == FALSE)
+        if( !CPLQuadTreeNodeForeach(psNode->apSubNode[i], pfnForeach, pUserData) )
             return false;
     }
 
