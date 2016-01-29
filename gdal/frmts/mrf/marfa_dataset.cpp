@@ -260,7 +260,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 		idxSize = AddOverviews(int(scale));
 		if (!CheckFileSize(current.idxfname, idxSize, GA_Update)) {
 		    CPLError(CE_Failure, CPLE_AppDefined, "MRF: Can't extend index file");
-		    return CE_Failure;
+		    throw CE_Failure;
 		}
 
 		//  Set the uniform node, in case it was not set before, and save the new configuration
@@ -269,7 +269,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 
 		if (!WriteConfig(config)) {
 		    CPLError(CE_Failure, CPLE_AppDefined, "MRF: Can't rewrite the metadata file");
-		    return CE_Failure;
+		    throw CE_Failure;
 		}
 		CPLDestroyXMLNode(config);
 		config = NULL;
