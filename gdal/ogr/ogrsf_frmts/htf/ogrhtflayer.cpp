@@ -167,7 +167,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone,
                 for( int i=0;i<poFeatureDefn->GetFieldCount();i++)
                 {
                     panFieldPresence[i] = pszLine[1 + i] != '0';
-                    nFieldsPresent += panFieldPresence[i];
+                    nFieldsPresent += panFieldPresence[i] ? 1 : 0;
                 }
             }
             break;

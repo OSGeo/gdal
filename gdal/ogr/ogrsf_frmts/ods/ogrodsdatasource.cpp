@@ -105,7 +105,7 @@ OGRFeature* OGRODSLayer::GetNextFeature()
 {
     OGRFeature* poFeature = OGRMemLayer::GetNextFeature();
     if (poFeature)
-        poFeature->SetFID(poFeature->GetFID() + 1 + bHasHeaderLine);
+        poFeature->SetFID(poFeature->GetFID() + 1 + (bHasHeaderLine ? 1 : 0));
     return poFeature;
 }
 
@@ -116,7 +116,7 @@ OGRFeature* OGRODSLayer::GetNextFeature()
 OGRFeature* OGRODSLayer::GetFeature( GIntBig nFeatureId )
 {
     OGRFeature* poFeature =
-        OGRMemLayer::GetFeature(nFeatureId - (1 + bHasHeaderLine));
+        OGRMemLayer::GetFeature(nFeatureId - (1 + (bHasHeaderLine ? 1 : 0)));
     if (poFeature)
         poFeature->SetFID(nFeatureId);
     return poFeature;
@@ -133,7 +133,7 @@ OGRErr OGRODSLayer::ISetFeature( OGRFeature *poFeature )
 
     GIntBig nFID = poFeature->GetFID();
     if (nFID != OGRNullFID)
-        poFeature->SetFID(nFID - (1 + bHasHeaderLine));
+        poFeature->SetFID(nFID - (1 + (bHasHeaderLine ? 1 : 0)));
     SetUpdated();
     OGRErr eErr = OGRMemLayer::ISetFeature(poFeature);
     poFeature->SetFID(nFID);
@@ -147,7 +147,7 @@ OGRErr OGRODSLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr OGRODSLayer::DeleteFeature( GIntBig nFID )
 {
     SetUpdated();
-    return OGRMemLayer::DeleteFeature(nFID - (1 + bHasHeaderLine));
+    return OGRMemLayer::DeleteFeature(nFID - (1 + (bHasHeaderLine ? 1 : 0)));
 }
 
 /************************************************************************/

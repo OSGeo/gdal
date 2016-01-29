@@ -1899,7 +1899,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
     WayFeaturePair* psWayFeaturePairs = &pasWayFeaturePairs[nWayFeaturePairs];
 
     psWayFeaturePairs->nWayID = psWay->nID;
-    psWayFeaturePairs->nRefs = psWay->nRefs - bIsArea;
+    psWayFeaturePairs->nRefs = psWay->nRefs - (bIsArea ? 1 : 0);
     psWayFeaturePairs->panNodeRefs = panUnsortedReqIds + nUnsortedReqIds;
     psWayFeaturePairs->poFeature = poFeature;
     psWayFeaturePairs->bIsArea = bIsArea;
@@ -2064,8 +2064,8 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
     nWayFeaturePairs++;
 
     memcpy( panUnsortedReqIds + nUnsortedReqIds,
-            psWay->panNodeRefs, sizeof(GIntBig) * (psWay->nRefs - bIsArea));
-    nUnsortedReqIds += (psWay->nRefs - bIsArea);
+            psWay->panNodeRefs, sizeof(GIntBig) * (psWay->nRefs - (bIsArea ? 1 : 0)));
+    nUnsortedReqIds += (psWay->nRefs - (bIsArea ? 1 : 0));
 }
 
 static void OGROSMNotifyWay ( OSMWay *psWay,
