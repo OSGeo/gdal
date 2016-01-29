@@ -23,17 +23,28 @@ DEPENDS	= marfa.h
 # JPEG12_ENABLED is set only with the internal jpeg library
 ifeq ($(JPEG12_ENABLED),yes)
 FILES	:= $(FILES) JPEG12_band
-CPPFLAGS := -DJPEG12_SUPPORTED
-GDAL_INCLUDE := -I../jpeg/libjpeg $(GDAL_INCLUDE)
+XTRA_OPT := $(XTRA_OPT) -DJPEG12_SUPPORTED -I../jpeg/libjpeg
+endif
+
+ifeq ($(JPEG_SETTING),internal) 
+XTRA_OPT        :=      $(XTRA_OPT) -I../jpeg/libjpeg
+endif
+
+ifeq ($(PNG_SETTING),internal) 
+XTRA_OPT        :=      $(XTRA_OPT) -I../png/libpng
+endif
+
+ifeq ($(LIBZ_SETTING),internal) 
+XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 
 ifneq ("$(wildcard LERC_band.cpp)","")
 FILES	:= $(FILES) LERC_band BitMask BitStuffer CntZImage Lerc2 BitStuffer2 BitMask2 RLE Huffman
 DEPENDS  := $(DEPENDS) BitMask.h BitStuffer.h CntZImage.h Defines.h Image.h TImage.hpp Lerc2.h BitStuffer2.h BitMask2.h RLE.h Huffman.h
-CPPFLAGS := -DLERC
+XTRA_OPT := $(XTRA_OPT) -DLERC
 endif
 
-CPPFLAGS	:= -fPIC $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS        :=      $(XTRA_OPT)  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
