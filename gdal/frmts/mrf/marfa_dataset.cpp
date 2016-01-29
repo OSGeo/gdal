@@ -569,7 +569,8 @@ CPLErr GDALMRFDataset::SetVersion(int version) {
 	srcband->img.idxoffset += idxSize*verCount;
 	for (int l = 0; l < srcband->GetOverviewCount(); l++) {
 	    GDALMRFRasterBand *band = (GDALMRFRasterBand *)srcband->GetOverview(l);
-	    band->img.idxoffset += idxSize*verCount;
+            if( band != NULL )
+                band->img.idxoffset += idxSize*verCount;
 	}
     }
     hasVersions = 0;
@@ -1864,6 +1865,11 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
 
     // Fetch the data from the cloned index
     GDALMRFDataset *pSrc = static_cast<GDALMRFDataset *>(GetSrcDS());
+    if( pSrc == NULL )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Can't open cloned source index");
+        return CE_Failure; // Source reported the error
+    }
 
     VSILFILE *srcidx = pSrc->IdxFP();
     if (!srcidx) {

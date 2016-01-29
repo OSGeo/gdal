@@ -574,6 +574,8 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
 	GDALMRFRasterBand *b = static_cast<GDALMRFRasterBand *>(poSrc->GetRasterBand(nBand));
 	if (b->GetOverviewCount() && m_l)
 	    b = static_cast<GDALMRFRasterBand *>(b->GetOverview(m_l-1));
+        if( b == NULL )
+            return CE_Failure;
 	return b->IReadBlock(xblk,yblk,buffer);
     }
 
