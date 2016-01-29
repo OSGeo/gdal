@@ -651,8 +651,9 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
     }
 
     // Basic checks
-    if (!node || image.size.x < 1 || image.size.y < 1) {
-	CPLError(CE_Failure, CPLE_AppDefined, "Raster size missing");
+    if (!node || image.size.x < 1 || image.size.y < 1 ||
+        !GDALCheckBandCount(image.size.c, FALSE)) {
+	CPLError(CE_Failure, CPLE_AppDefined, "Raster size missing or invalid");
 	return CE_Failure;
     }
 
@@ -665,11 +666,20 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
 
     node = CPLGetXMLNode(defimage, "PageSize");
     if (node)
+    {
 	image.pagesize = ILSize(
 	static_cast<int>(getXMLNum(node, "x", image.pagesize.x)),
 	static_cast<int>(getXMLNum(node, "y", image.pagesize.y)),
 	1, // One z at a time, forced
 	static_cast<int>(getXMLNum(node, "c", image.pagesize.c)));
+        if( image.pagesize.x < 1 ||
+            image.pagesize.y < 1 ||
+            image.pagesize.c <= 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid PageSize");
+            return CE_Failure;
+        }
+    }
 
     // Orientation, some other systems might support something 
     //   if (!EQUAL(CPLGetXMLValue(defimage,"Orientation","TL"), "TL")) {
