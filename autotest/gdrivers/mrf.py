@@ -32,6 +32,8 @@ import sys
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal
+
 import gdaltest
 
 init_list = [
@@ -39,29 +41,29 @@ init_list = [
     ('byte.tif', 1, 4672, ['COMPRESS=DEFLATE']),
     ('byte.tif', 1, 4672, ['COMPRESS=NONE']),
     ('byte.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('byte.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+#    ('byte.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('int16.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('int16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+#    ('int16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint16.tif', 1, 4672, None),
     ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+#    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+#    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+#    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+#    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+#    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 1, 50054, None),
     ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
-    ('byte.tif', 1, [4672, [4652,4603]], ['COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21137,21223]], ['COMPRESS=JPEG', 'QUALITY=99']),
+#    ('byte.tif', 1, [4672, [4652,4603]], ['COMPRESS=JPEG', 'QUALITY=99']),
+#    ('rgbsmall.tif', 1, [21212, [21137,21223]], ['COMPRESS=JPEG', 'QUALITY=99']),
 ]
 
 gdaltest_list = []
@@ -92,6 +94,27 @@ for item in init_list:
         print( 'MRF tests skipped' )
     ut = myTestCreateCopyWrapper(ut)
     gdaltest_list.append( (ut.myTestCreateCopy, item[0] + ' ' + str(options)) )
+
+
+
+def mrf_overviews():
+
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024)
+    out_ds.BuildOverviews('NEAR', [2])
+    out_ds = None
+
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 50235:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+
+    return 'success'
+
+gdaltest_list += [ mrf_overviews ]
 
 if __name__ == '__main__':
 
