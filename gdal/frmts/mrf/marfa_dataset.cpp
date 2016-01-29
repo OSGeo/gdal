@@ -1547,15 +1547,15 @@ GDALMRFDataset::Create(const char * pszName,
     poDS->nBands = nBands;
 
     // Don't know what to do with these in this call
-    int level = -1;
-    int version = 0;
+    //int level = -1;
+    //int version = 0;
 
     size_t pos = poDS->fname.find(":MRF:");
     if (string::npos != pos) { // Tokenize and pick known options
 	vector<string> tokens;
 	stringSplit(tokens, poDS->fname, pos + 5, ':');
-	level = getnum(tokens, 'L', -1);
-	version = getnum(tokens, 'V', 0);
+	//level = getnum(tokens, 'L', -1);
+	//version = getnum(tokens, 'V', 0);
 	poDS->zslice = getnum(tokens, 'Z', 0);
 	poDS->fname.resize(pos); // Cut the ornamentations
     }
