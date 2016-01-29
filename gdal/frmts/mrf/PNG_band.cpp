@@ -222,7 +222,7 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
     // Optional, force certain filters only.  Makes it somewhat faster but worse compression
     // png_set_filter(pngp, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB);
 
-#if defined(PNG_LIBPNG_VER) && (PNG_LIBPNG_VER > 10200)
+#if defined(PNG_LIBPNG_VER) && (PNG_LIBPNG_VER > 10200) && defined(PNG_SELECT_READ)
     png_uint_32 mask, flags;
 
     flags = png_get_asm_flags(pngp);
