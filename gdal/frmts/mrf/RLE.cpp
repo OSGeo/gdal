@@ -225,7 +225,7 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
   }
 
   writeCount(-32768, &cntPtr, &dstPtr);    // write end of stream symbol
-  sum += 2;
+  /*sum += 2;*/
 
   if (verify)
   {
