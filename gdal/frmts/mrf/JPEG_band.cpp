@@ -106,23 +106,23 @@ ErrorMgr::ErrorMgr()
 /**
 *\Brief Do nothing stub function for JPEG library, called
 */
-static void stub_source_dec(j_decompress_ptr cinfo) {};
+static void stub_source_dec(j_decompress_ptr /*cinfo*/) {};
 
 /**
 *\Brief: Do nothing stub function for JPEG library, called?
 */
-static boolean fill_input_buffer_dec(j_decompress_ptr cinfo) { return TRUE; };
+static boolean fill_input_buffer_dec(j_decompress_ptr /*cinfo*/) { return TRUE; };
 
 /**
 *\Brief: Do nothing stub function for JPEG library, not called
 */
-static void skip_input_data_dec(j_decompress_ptr cinfo, long l) {};
+static void skip_input_data_dec(j_decompress_ptr /*cinfo*/, long /*l*/) {};
 
 // Destination should be already set up
-static void init_or_terminate_destination(j_compress_ptr cinfo) {}
+static void init_or_terminate_destination(j_compress_ptr /*cinfo*/) {}
 
 // Called if the buffer provided is too small
-static boolean empty_output_buffer(j_compress_ptr cinfo) {
+static boolean empty_output_buffer(j_compress_ptr /*cinfo*/) {
     std::cerr << "JPEG Output buffer empty called\n";
     return FALSE;
 }

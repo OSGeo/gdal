@@ -313,7 +313,7 @@ public:
 	GDALDataType eType, char ** papszOptions);
 
     // Stub for delete, GDAL should only overwrite the XML
-    static CPLErr Delete(const char * pszName) {
+    static CPLErr Delete(const char *) {
 	return CE_None;
     }
 
@@ -709,7 +709,7 @@ public:
 
 protected:
     virtual int GetOverviewCount() { return 0; }
-    virtual GDALRasterBand *GetOverview(int n) { return 0; }
+    virtual GDALRasterBand *GetOverview(int ) { return 0; }
 
     GDALMRFRasterBand *pBand;
 };
