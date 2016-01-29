@@ -297,8 +297,8 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
   {
     if (32 - bitPos >= numBits)
     {
-      unsigned int n = (*srcPtr) << bitPos;
-      *dstPtr++ = n >> (32 - numBits);
+      unsigned int n2 = (*srcPtr) << bitPos;
+      *dstPtr++ = n2 >> (32 - numBits);
       bitPos += numBits;
       if (bitPos == 32)    // shift >= 32 is undefined
       {
@@ -308,8 +308,8 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
     }
     else
     {
-      unsigned int n = (*srcPtr++) << bitPos;
-      *dstPtr = n >> (32 - numBits);
+      unsigned int n2 = (*srcPtr++) << bitPos;
+      *dstPtr = n2 >> (32 - numBits);
       bitPos -= (32 - numBits);
       *dstPtr++ |= (*srcPtr) >> (32 - bitPos);
     }

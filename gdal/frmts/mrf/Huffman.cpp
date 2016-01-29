@@ -366,7 +366,7 @@ bool Huffman::GetRange(int& i0, int& i1, int& maxCodeLength) const
     return false;
 
   int maxLen = 0;
-  for (int i = i0; i < i1; i++)
+  for (i = i0; i < i1; i++)
   {
     int k = GetIndexWrapAround(i, size);
     int len = m_codeTable[k].first;
