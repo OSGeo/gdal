@@ -62,8 +62,8 @@ init_list = [
 #    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 1, 50054, None),
     ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
-#    ('byte.tif', 1, [4672, [4652,4603]], ['COMPRESS=JPEG', 'QUALITY=99']),
-#    ('rgbsmall.tif', 1, [21212, [21137,21223]], ['COMPRESS=JPEG', 'QUALITY=99']),
+    ('byte.tif', 1, [4672, [4652,4603]], ['COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, [21137,21223]], ['COMPRESS=JPEG', 'QUALITY=99']),
 ]
 
 gdaltest_list = []
