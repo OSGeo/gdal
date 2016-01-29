@@ -100,7 +100,7 @@ long BitMask::RLEcompress(Byte *dst) const {
     long oddrun = 0;
 
     // Store a two byte count in low endian
-#define WRITE_COUNT(val) if (true) { *pCnt++ = Byte(val); *pCnt++ = Byte(val >> 8); }
+#define WRITE_COUNT(val) if (true) { *pCnt++ = Byte(val & 0xff); *pCnt++ = Byte(val >> 8); }
     // Flush an existing odd run
 #define FLUSH if (oddrun) { WRITE_COUNT(oddrun); pCnt += oddrun; dst = pCnt + 2; oddrun = 0; }
 
@@ -114,7 +114,8 @@ long BitMask::RLEcompress(Byte *dst) const {
 		FLUSH;
 	} else { // Found a run
 	    FLUSH;
-	    WRITE_COUNT(-run);
+            int negRun = -static_cast<int>(run);
+	    WRITE_COUNT(negRun);
 	    *pCnt++ = *src;
 	    src += run;
 	    sz -= run;
