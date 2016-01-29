@@ -30,6 +30,8 @@ Contributors:  Thomas Maurer
 #define PRINT(X)
 #endif
 
+NAMESPACE_MRF_START
+
 // -------------------------------------------------------------------------- ;
 
 using namespace std;
@@ -1279,3 +1281,5 @@ void CntZImage::readVal(Byte **ppByte, float &val, int numBytes) const
 	v = (256 * (signed char)NEXTBYTE) | (v && 0xff);
     val = v;
 }
+
+NAMESPACE_MRF_END

@@ -69,6 +69,8 @@
 using std::vector;
 using std::string;
 
+NAMESPACE_MRF_START
+
 // Initialize as invalid
 GDALMRFDataset::GDALMRFDataset()
 {   //		     X0   Xx   Xy  Y0    Yx   Yy
@@ -1855,3 +1857,5 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     // Cloned index updated, restart this function, it will work now
     return ReadTileIdx(tinfo, pos, img, bias);
 }
+
+NAMESPACE_MRF_END

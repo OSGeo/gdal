@@ -31,6 +31,8 @@
 
 using std::vector;
 
+NAMESPACE_MRF_START
+
 // Count the values in a buffer that match a specific value
 template<typename T> int MatchCount(T *buff, int sz, T val) {
     int ncount=0;
@@ -428,3 +430,6 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
 	return CE_None;
     return PatchOverview( BlockXOut, BlockYOut, WidthOut, HeightOut, srcLevel+1, true);
 }
+
+NAMESPACE_MRF_END
+

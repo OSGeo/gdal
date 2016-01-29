@@ -22,6 +22,8 @@ Contributors:  Thomas Maurer
 #include "Defines.h"
 #include <vector>
 
+NAMESPACE_MRF_START
+
 // -------------------------------------------------------------------------- ;
 
 // ---- related classes ----------------------------------------------------- ;
@@ -127,3 +129,4 @@ unsigned int BitStuffer2::NumTailBytesNotNeeded(unsigned int numElem, int numBit
 
 // -------------------------------------------------------------------------- ;
 
+NAMESPACE_MRF_END

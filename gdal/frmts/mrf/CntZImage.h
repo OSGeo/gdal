@@ -26,6 +26,8 @@ Contributors:  Thomas Maurer
 #include "TImage.hpp"
 #include "BitStuffer.h"
 
+NAMESPACE_MRF_START
+
 // -------------------------------------------------------------------------- ;
 
 // ---- related classes ----------------------------------------------------- ;
@@ -161,3 +163,4 @@ protected:
 
 // -------------------------------------------------------------------------- ;
 
+NAMESPACE_MRF_END

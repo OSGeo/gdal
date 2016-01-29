@@ -43,6 +43,8 @@
 
 #include "marfa.h"
 
+NAMESPACE_MRF_START
+
 inline CPLErr NONE(buf_mgr &dst, buf_mgr &src)
 {
     memcpy(dst.buffer, src.buffer, src.size);
@@ -59,3 +61,5 @@ CPLErr Raw_Band::Compress(buf_mgr &dst, buf_mgr &src)
 { 
     return NONE(dst,src);
 }
+
+NAMESPACE_MRF_END

@@ -22,6 +22,9 @@ Contributors:  Thomas Maurer
 #include <vector>
 #include <algorithm>
 #include "Defines.h"
+
+NAMESPACE_MRF_START
+
 // -------------------------------------------------------------------------- ;
 
 // ---- related classes ----------------------------------------------------- ;
@@ -58,3 +61,4 @@ protected:
 
 // -------------------------------------------------------------------------- ;
 
+NAMESPACE_MRF_END

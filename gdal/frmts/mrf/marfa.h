@@ -58,6 +58,18 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef GDAL_COMPILATION
+#define NAMESPACE_MRF_START namespace GDAL_MRF {
+#define NAMESPACE_MRF_END   }
+#define USING_NAMESPACE_MRF using namespace GDAL_MRF;
+#else
+#define NAMESPACE_MRF_START
+#define NAMESPACE_MRF_END
+#define USING_NAMESPACE_MRF
+#endif
+
+NAMESPACE_MRF_START
+
 // ZLIB Bit flag fields
 // 0:3 - level, 4 - GZip, 5 RAW zlib, 6:9 strategy
 #define ZFLAG_LMASK 0xF
@@ -691,6 +703,8 @@ protected:
 
     GDALMRFRasterBand *pBand;
 };
+
+NAMESPACE_MRF_END
 
 #endif // GDAL_FRMTS_MRF_MARFA_H_INCLUDED
 

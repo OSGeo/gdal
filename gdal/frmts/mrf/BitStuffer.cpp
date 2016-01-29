@@ -22,6 +22,8 @@ Contributors:  Thomas Maurer
 
 using namespace std;
 
+NAMESPACE_MRF_START
+
 // -------------------------------------------------------------------------- ;
 
 // see the old stream IO functions below on how to call.
@@ -278,3 +280,5 @@ unsigned int BitStuffer::numTailBytesNotNeeded(unsigned int numElem, int numBits
 }
 
 // -------------------------------------------------------------------------- ;
+
+NAMESPACE_MRF_END

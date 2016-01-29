@@ -18,6 +18,10 @@ Contributors:  Thomas Maurer
 
 #pragma once
 
+#include "Defines.h"
+
+NAMESPACE_MRF_START
+
 // ---- includes ------------------------------------------------------------ ;
 #include <string>
 
@@ -74,3 +78,5 @@ protected:
   long width_, height_;
 
 };
+
+NAMESPACE_MRF_END

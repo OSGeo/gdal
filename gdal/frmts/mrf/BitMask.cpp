@@ -30,6 +30,8 @@ In the encoded stream there are two types of sequences and an end marker
 #include <cassert>
 // #include <algorithm>
 
+NAMESPACE_MRF_START
+
 #define MAX_RUN 32767
 #define MIN_RUN 5
 // End of Transmission
@@ -154,3 +156,5 @@ long BitMask::RLEsize() const {
     SIMFLUSH;
     return osz;
 }
+
+NAMESPACE_MRF_END

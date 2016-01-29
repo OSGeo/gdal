@@ -20,6 +20,8 @@ Contributors:  Thomas Maurer
 #include "Defines.h"
 #include <cstring>
 
+NAMESPACE_MRF_START
+
 /** BitMask2 - Convenient and fast access to binary mask bits
  *
  */
@@ -65,3 +67,4 @@ private:
          m_nRows;
 };
 
+NAMESPACE_MRF_END

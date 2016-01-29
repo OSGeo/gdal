@@ -62,6 +62,8 @@
 using std::vector;
 using std::string;
 
+NAMESPACE_MRF_START
+
 // packs a block of a given type, with a stride
 // Count is the number of items that need to be copied
 // These are separate to allow for optimization
@@ -888,3 +890,5 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     poDS->bdirty = 0;
     return ret;
 }
+
+NAMESPACE_MRF_END
