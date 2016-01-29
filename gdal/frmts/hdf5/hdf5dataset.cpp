@@ -342,7 +342,7 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 /* -------------------------------------------------------------------- */
 /*      Visit all objects                                               */
 /* -------------------------------------------------------------------- */
-    unsigned i = 0;
+    unsigned i = 0;  // i is used after the for loop.
 
     for( ; i < poH5Object->nbObjs; i++ )
         if( poH5Object->poHchild+i != NULL )
@@ -482,8 +482,9 @@ static int HDF5GroupCheckDuplicate( HDF5GroupObjects *poHparent,
 herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
                             void *poHObjParent)
 {
-    HDF5GroupObjects *poHparent = static_cast<HDF5GroupObjects *>(poHObjParent);
-    HDF5GroupObjects *poHchild = poHparent->poHchild;
+    HDF5GroupObjects * const poHparent =
+        static_cast<HDF5GroupObjects *>(poHObjParent);
+    HDF5GroupObjects * poHchild = poHparent->poHchild;
     H5G_stat_t oStatbuf;
 
     if( H5Gget_objinfo( hHDF5, pszObjName, FALSE, &oStatbuf ) < 0  )
@@ -493,7 +494,7 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
 /* -------------------------------------------------------------------- */
 /*      Look for next child                                             */
 /* -------------------------------------------------------------------- */
-    unsigned idx = 0;
+    unsigned idx = 0;  // idx is used after the for loop.
     for( ; idx < poHparent->nbObjs; idx++ ) {
         if( poHchild->pszName == NULL ) break;
         poHchild++;
@@ -522,20 +523,10 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
         CreatePath( poHparent );
     }
 
-    hid_t hGroupID;      // Identifier of group.
-    hid_t hDatasetID;    // Identifier of dataset.
-    hsize_t nbObjs = 0;  // Number of objects in a group.
-    int nbAttrs = 0;     // Number of attributes in object.
-    int n_dims;
-    hsize_t *dims = NULL;
-    hsize_t *maxdims = NULL;
-    hid_t datatype;
-    hid_t dataspace;
-    hid_t native;
-
     switch ( oStatbuf.type )
     {
         case H5G_LINK:
+        {
             poHchild->nbAttrs = 0;
             poHchild->nbObjs = 0;
             poHchild->poHchild = NULL;
@@ -543,14 +534,18 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
             poHchild->paDims    = NULL;
             poHchild->HDatatype = 0;
             break;
-
+        }
         case H5G_GROUP:
+        {
+            hid_t hGroupID = H5I_INVALID_HID;  // Identifier of group.
             if( ( hGroupID = H5Gopen( hHDF5, pszObjName ) ) == -1  ) {
                 printf( "Error: unable to access \"%s\" group.\n",
                         pszObjName );
                 return -1;
             }
-            nbAttrs          = H5Aget_num_attrs( hGroupID );
+            // Number of attributes in object.
+            const int nbAttrs = H5Aget_num_attrs( hGroupID );
+            hsize_t nbObjs = 0;  // Number of objects in a group.
             H5Gget_num_objs( hGroupID, &nbObjs );
             poHchild->nbAttrs= nbAttrs;
             poHchild->nbObjs = (int) nbObjs;
@@ -577,19 +572,22 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
 
             H5Gclose( hGroupID );
             break;
-
+        }
         case H5G_DATASET:
-
+        {
+            hid_t hDatasetID = H5I_INVALID_HID;  // Identifier of dataset.
             if( ( hDatasetID = H5Dopen( hHDF5, pszObjName ) ) == -1  ) {
                 printf( "Error: unable to access \"%s\" dataset.\n",
                         pszObjName );
                 return -1;
             }
-            nbAttrs      = H5Aget_num_attrs( hDatasetID );
-            datatype     = H5Dget_type( hDatasetID );
-            dataspace    = H5Dget_space( hDatasetID );
-            n_dims       = H5Sget_simple_extent_ndims( dataspace );
-            native       = H5Tget_native_type( datatype, H5T_DIR_ASCEND );
+            const int nbAttrs = H5Aget_num_attrs( hDatasetID );
+            const hid_t datatype = H5Dget_type( hDatasetID );
+            const hid_t dataspace = H5Dget_space( hDatasetID );
+            const int n_dims = H5Sget_simple_extent_ndims( dataspace );
+            const hid_t native = H5Tget_native_type( datatype, H5T_DIR_ASCEND );
+            hsize_t *maxdims = NULL;
+            hsize_t *dims = NULL;
 
             if( n_dims > 0 ) {
                 dims = static_cast<hsize_t *>(
@@ -619,8 +617,9 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
             H5Sclose( dataspace );
             H5Dclose( hDatasetID );
             break;
-
+        }
         case H5G_TYPE:
+        {
             poHchild->nbAttrs = 0;
             poHchild->nbObjs = 0;
             poHchild->poHchild = NULL;
@@ -628,7 +627,7 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
             poHchild->paDims    = NULL;
             poHchild->HDatatype = 0;
             break;
-
+        }
         default:
             break;
     }
@@ -676,12 +675,12 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
     }
     CSLDestroy( papszTokens );
 
-    hid_t hAttrID         = H5Aopen_name( hH5ObjID, pszAttrName );
-    hid_t hAttrTypeID     = H5Aget_type( hAttrID );
-    hid_t hAttrNativeType = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
-    hid_t hAttrSpace      = H5Aget_space( hAttrID );
+    const hid_t hAttrID         = H5Aopen_name( hH5ObjID, pszAttrName );
+    const hid_t hAttrTypeID     = H5Aget_type( hAttrID );
+    const hid_t hAttrNativeType = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
+    const hid_t hAttrSpace      = H5Aget_space( hAttrID );
     hsize_t nSize[64];
-    unsigned int nAttrDims =
+    const unsigned int nAttrDims =
         H5Sget_simple_extent_dims( hAttrSpace, nSize, NULL );
 
     unsigned int nAttrElmts = 1;
@@ -861,14 +860,13 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
     if( poH5Object->pszPath == NULL || EQUAL(poH5Object->pszPath, "" ) )
         return CE_None;
 
-    hid_t l_hGroupID;  // Identifier of group.
-
     switch( nType ) {
 
     case H5G_GROUP:
 
         if( nbAttrs > 0 ) {
-            l_hGroupID = H5Gopen( hHDF5, poH5Object->pszPath );
+            // Identifier of group.
+            const hid_t l_hGroupID = H5Gopen( hHDF5, poH5Object->pszPath );
             H5Aiterate( l_hGroupID, NULL, HDF5AttrIterate, (void *)poDS  );
             H5Gclose( l_hGroupID );
         }
@@ -1074,7 +1072,8 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
         return CE_None;
     }
 
-    H5G_stat_t oStatbuf;
+    H5G_stat_t oStatbuf = {{0, 0}, {0, 0}, 0, H5G_UNKNOWN, 0, 0, {0, 0, 0, 0}};
+
     if( H5Gget_objinfo( hHDF5, "/", FALSE, &oStatbuf ) < 0  )
         return CE_Failure;
     poRootGroup->objno[0] = oStatbuf.objno[0];
@@ -1162,10 +1161,10 @@ CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char* pszAttrFullPath,
     else
     {
         // Open attribute handler by name, from the object handler opened
-        // earlier
-        hid_t hAttrID = H5Aopen_name( hObjAttrID, osAttrName.c_str());
+        // earlier.
+        const hid_t hAttrID = H5Aopen_name( hObjAttrID, osAttrName.c_str());
 
-        //Check for errors opening the attribute
+        // Check for errors opening the attribute.
         if(hAttrID <0)
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -1174,9 +1173,10 @@ CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char* pszAttrFullPath,
         }
         else
         {
-            hid_t hAttrTypeID = H5Aget_type( hAttrID );
-            hid_t hAttrNativeType = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
-            hid_t hAttrSpace = H5Aget_space( hAttrID );
+            const hid_t hAttrTypeID = H5Aget_type( hAttrID );
+            const hid_t hAttrNativeType =
+                H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
+            const hid_t hAttrSpace = H5Aget_space( hAttrID );
             hsize_t nSize[64];
             unsigned int nAttrDims =
                 H5Sget_simple_extent_dims( hAttrSpace, nSize, NULL );
