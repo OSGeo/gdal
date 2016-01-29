@@ -26,7 +26,7 @@ CPPFLAGS        :=      $(GDAL_INCLUDE) $(CPPFLAGS)
 # JPEG12_ENABLED is set only with the internal jpeg library
 ifeq ($(JPEG12_ENABLED),yes)
 FILES	:= $(FILES) JPEG12_band
-XTRA_OPT := $(XTRA_OPT) -DJPEG12_SUPPORTED -I../jpeg/libjpeg
+XTRA_OPT := $(XTRA_OPT) -DJPEG12_SUPPORTED
 endif
 
 ifeq ($(JPEG_SETTING),internal) 
