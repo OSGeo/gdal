@@ -55,7 +55,7 @@ public:
   };
 
   /// assignment
-  virtual TImage& operator=(const TImage& tImg);
+  TImage& operator=(const TImage& tImg);
 
   bool resize(long width, long height);
   virtual void clear();
