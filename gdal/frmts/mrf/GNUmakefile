@@ -20,6 +20,9 @@ OBJ 	=	$(addsuffix .o, $(FILES))
 LO_O_OBJ	=	$(addsuffix .lo,$(basename $(O_OBJ)))
 DEPENDS	= marfa.h
 
+# For GDAL < 2.1
+CPPFLAGS        :=      $(GDAL_INCLUDE) $(CPPFLAGS)
+
 # JPEG12_ENABLED is set only with the internal jpeg library
 ifeq ($(JPEG12_ENABLED),yes)
 FILES	:= $(FILES) JPEG12_band
