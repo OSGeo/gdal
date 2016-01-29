@@ -22,6 +22,8 @@ Contributors:  Thomas Maurer
 #include "Defines.h"
 #include <vector>
 
+NAMESPACE_MRF_START
+
 // ---- related classes ----------------------------------------------------- ;
 
 // -------------------------------------------------------------------------- ;
@@ -174,3 +176,4 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
 
 // -------------------------------------------------------------------------- ;
 
+NAMESPACE_MRF_END

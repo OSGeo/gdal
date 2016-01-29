@@ -21,6 +21,16 @@ Contributors:
 // For std::pair
 #include <utility>
 #include <cstddef>
+
+#ifdef GDAL_COMPILATION
+#include "marfa.h"
+#else
+#define NAMESPACE_MRF_START
+#define NAMESPACE_MRF_END
+#endif
+
+NAMESPACE_MRF_START
+
 typedef unsigned char Byte;
 
 // unsigned long pair sortable by first
@@ -66,3 +76,4 @@ struct Quant : public std::pair<unsigned long, unsigned long>
 
 #endif // SWAPB
 
+NAMESPACE_MRF_END

@@ -19,6 +19,8 @@ Contributors:  Thomas Maurer
 #include <algorithm>
 #include <cstring>
 
+NAMESPACE_MRF_START
+
 using namespace std;
 
 // -------------------------------------------------------------------------- ;
@@ -320,3 +322,5 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
 }
 
 // -------------------------------------------------------------------------- ;
+
+NAMESPACE_MRF_END

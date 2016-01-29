@@ -45,6 +45,8 @@
 
 #include "marfa.h"
 
+NAMESPACE_MRF_START
+
 // Returns a string in /vsimem/ + prefix + count that doesn't exist when this function gets called
 // It is not thread safe, open the result as soon as possible
 CPLString uniq_memfname(const char *prefix)
@@ -190,3 +192,4 @@ TIF_Band::~TIF_Band()
     CSLDestroy(papszOptions);
 };
 
+NAMESPACE_MRF_END

@@ -46,6 +46,14 @@
 #include <zlib.h>
 #include <algorithm>
 
+
+CPL_C_START
+void GDALRegister_mrf(void);
+void GDALDeregister_mrf( GDALDriver * ) {};
+CPL_C_END
+
+NAMESPACE_MRF_START
+
 static const char *ILC_N[]={ "PNG", "PPNG", "JPEG", "NONE", "DEFLATE", "TIF", 
 #if defined(LERC)
 	"LERC", 
@@ -61,11 +69,6 @@ static const char *ILO_N[]={ "PIXEL", "BAND", "LINE", "Unknown" };
 char const **ILComp_Name=ILC_N;
 char const **ILComp_Ext=ILC_E;
 char const **ILOrder_Name=ILO_N;
-
-CPL_C_START
-void GDALRegister_mrf(void);
-void GDALDeregister_mrf( GDALDriver * ) {};
-CPL_C_END
 
 /**
  *  Get the string for a compression type
@@ -273,10 +276,13 @@ bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
     return false;
 }
 
+NAMESPACE_MRF_END
 
 /************************************************************************/
 /*                          GDALRegister_mrf()                          */
 /************************************************************************/
+
+USING_NAMESPACE_MRF
 
 void GDALRegister_mrf(void)
 
@@ -334,6 +340,8 @@ void GDALRegister_mrf(void)
 	GetGDALDriverManager()->RegisterDriver(driver);
     }
 }
+
+NAMESPACE_MRF_START
 
 GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, int b, int level)
 
@@ -610,3 +618,4 @@ int ZUnPack(const buf_mgr &src, buf_mgr &dst, int flags) {
     return err == Z_OK;
 }
 
+NAMESPACE_MRF_END

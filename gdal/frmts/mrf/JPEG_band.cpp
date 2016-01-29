@@ -50,6 +50,8 @@ CPL_C_START
 #include <jpeglib.h>
 CPL_C_END
 
+NAMESPACE_MRF_START
+
 /**
 *\Brief Helper class for jpeg error management
 */
@@ -351,3 +353,5 @@ GDALMRFRasterBand(pDS, image, b, int(level)), sameres(FALSE), rgb(FALSE)
 	optimize = TRUE; // Required for 12bit
 }
 #endif
+
+NAMESPACE_MRF_END

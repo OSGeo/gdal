@@ -25,6 +25,8 @@ Contributors:  Thomas Maurer
 #include <iostream>
 #include <cassert>
 
+NAMESPACE_MRF_START
+
 // -------------------------------------------------------------------------- ;
 
 BitMask2::BitMask2() : m_pBits(0), m_nCols(0), m_nRows(0)
@@ -120,3 +122,4 @@ void BitMask2::Clear()
 
 // -------------------------------------------------------------------------- ;
 
+NAMESPACE_MRF_END

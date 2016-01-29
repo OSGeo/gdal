@@ -24,6 +24,9 @@ Contributors:  Lucian Plesea
 #include "Lerc2.h"
 #include <algorithm>
 
+NAMESPACE_MRF_START
+
+
 // Load a buffer into a zImg
 template <typename T> void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)
 {
@@ -288,3 +291,6 @@ LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level
 LERC_Band::~LERC_Band()
 {
 }
+
+
+NAMESPACE_MRF_END

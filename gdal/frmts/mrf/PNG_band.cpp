@@ -50,6 +50,8 @@ CPL_C_START
 #include "../png/libpng/png.h"
 CPL_C_END
 
+NAMESPACE_MRF_START
+
 //Lucian recommended to change the following three lines to above as
 // it is causing trouble compiling for AMNH folks.
 //CPL_C_START
@@ -357,3 +359,5 @@ PNG_Band::~PNG_Band() {
     CPLFree(PNGColors);
     CPLFree(PNGAlpha);
 }
+
+NAMESPACE_MRF_END

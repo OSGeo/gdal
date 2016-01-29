@@ -29,6 +29,8 @@ Contributors:  Thomas Maurer
 #include <cfloat>
 #include <cmath>
 
+NAMESPACE_MRF_START
+
 #define TryHuffman
 
 /**   Lerc2
@@ -1434,3 +1436,5 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
 
 // -------------------------------------------------------------------------- ;
 
+
+NAMESPACE_MRF_END

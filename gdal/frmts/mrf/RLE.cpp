@@ -17,6 +17,8 @@ Contributors:  Thomas Maurer
 #include "RLE.h"
 #include <cstring>
 
+NAMESPACE_MRF_START
+
 // -------------------------------------------------------------------------- ;
 
 size_t RLE::computeNumBytesRLE(const Byte* arr, size_t numBytes) const
@@ -317,3 +319,4 @@ short RLE::readCount(const Byte** ppCnt) const
 
 // -------------------------------------------------------------------------- ;
 
+NAMESPACE_MRF_END
