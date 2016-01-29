@@ -200,6 +200,12 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 
     CPLDebug("MRF_OVERLAY", "IBuildOverviews %d, bands %d\n", nOverviews, nBandsIn);
 
+    if( nBands != nBandsIn )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "nBands = %d not supported", nBandsIn);
+        return CE_Failure;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      If we don't have read access, then create the overviews         */
     /*      externally.                                                     */
