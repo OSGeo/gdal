@@ -181,6 +181,10 @@ PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_kea
 !ENDIF
 !ENDIF
 
+!IFDEF MRF_SETTING
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrf
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:

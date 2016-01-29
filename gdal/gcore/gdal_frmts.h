@@ -186,6 +186,7 @@ void CPL_DLL GDALRegister_ISCE(void);
 void CPL_DLL GDALRegister_WMTS(void);
 void CPL_DLL GDALRegister_SAFE(void);
 void CPL_DLL GDALRegister_SENTINEL2(void);
+void CPL_DLL GDALRegister_mrf(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

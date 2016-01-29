@@ -395,6 +395,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SENTINEL2();
 #endif
 
+#ifdef FRMT_mrf
+    GDALRegister_mrf();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Put raw formats at the end of the list. These drivers support   */
 /*      various ASCII-header labeled formats, so the driver could be    */

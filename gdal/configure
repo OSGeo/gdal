@@ -1799,6 +1799,7 @@ Optional Packages:
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
+  --without-mrf           Disable MRF driver
 
 Some influential environment variables:
   CC          C compiler command
@@ -31271,6 +31272,29 @@ HAVE_CRYPTOPP=$HAVE_CRYPTOPP
 USE_ONLY_CRYPTODLL_ALG=$USE_ONLY_CRYPTODLL_ALG
 
 
+
+
+
+# Check whether --with-grib was given.
+if test "${with_grib+set}" = set; then :
+  withval=$with_grib;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MRF" >&5
+$as_echo_n "checking for MRF... " >&6; }
+if test "$with_mrf" = yes -o x"$with_mrf" = x ; then
+    OPT_GDAL_FORMATS="mrf $OPT_GDAL_FORMATS"
+    HAVE_MRF=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+else
+    HAVE_MRF=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
+$as_echo "disabled by user" >&6; }
+fi
+
+
 ac_config_files="$ac_config_files GDALmake.opt"
 
 
@@ -33793,6 +33817,9 @@ echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
 
 
 echo "  PostgreSQL support:        ${HAVE_PG}"
+
+
+echo "  MRF support:               ${HAVE_MRF}"
 
 
 echo "  MySQL support:             ${HAVE_MYSQL}"
