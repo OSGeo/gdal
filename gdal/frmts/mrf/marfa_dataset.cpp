@@ -1352,7 +1352,7 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
 
 // Try to implement CreateCopy using Create
 GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
-    GDALDataset *poSrcDS, int bStrict, char **papszOptions,
+    GDALDataset *poSrcDS, int /*bStrict*/, char **papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
     ILImage img;
