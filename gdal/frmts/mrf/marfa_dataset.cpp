@@ -125,6 +125,7 @@ GDALMRFDataset::~GDALMRFDataset()
     pbsize = 0;
 }
 
+#ifdef unused
 /*
  *\brief Called before the IRaster IO gets called
  *
@@ -141,6 +142,7 @@ CPLErr GDALMRFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 	nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, nBandCount);
     return CE_None;
 }
+#endif
 
 /*
  *\brief Format specifc RasterIO, may be bypassed by BlockBasedRasterIO by setting
