@@ -76,7 +76,7 @@ static void emitMessage(j_common_ptr cinfo, int msgLevel)
     if (err->num_warnings++ >1) return;
     char buffer[JMSG_LENGTH_MAX];
     err->format_message(cinfo, buffer);
-    CPLError(CE_Failure, CPLE_AppDefined, buffer);
+    CPLError(CE_Failure, CPLE_AppDefined, "%s", buffer);
 }
 
 static void errorExit(j_common_ptr cinfo)
@@ -86,7 +86,7 @@ static void errorExit(j_common_ptr cinfo)
     char buffer[JMSG_LENGTH_MAX];
 
     err->format_message(cinfo, buffer);
-    CPLError(CE_Failure, CPLE_AppDefined, buffer);
+    CPLError(CE_Failure, CPLE_AppDefined, "%s", buffer);
     // return control to the setjmp point
     longjmp(err->setjmpBuffer, 1);
 }
