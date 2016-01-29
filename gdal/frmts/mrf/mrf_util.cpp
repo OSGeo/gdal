@@ -296,6 +296,10 @@ void GDALRegister_mrf(void)
 	driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_marfa.html");
 		driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES" );
 
+#if GDAL_VERSION_MAJOR >= 2
+        driver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+#endif
+
 	// These will need to be revisited, do we support complex data types too?
 	driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
 				"Byte UInt16 Int16 Int32 UInt32 Float32 Float64");

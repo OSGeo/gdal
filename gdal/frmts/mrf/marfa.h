@@ -389,9 +389,15 @@ protected:
 	return pbuffer;
     }
 
+#if GDAL_VERSION_MAJOR >= 2
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
+        void *, int, int, GDALDataType,
+        int, int *, GSpacing, GSpacing, GSpacing, GDALRasterIOExtraArg*);
+#else
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
 	void *, int, int, GDALDataType,
 	int, int *, int, int, int);
+#endif
 
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
 	GDALProgressFunc, void*);

@@ -87,7 +87,11 @@ CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char **papszO
     } else {
 	ret = poTiff->RasterIO(GF_Write, 0,0,img.pagesize.x,img.pagesize.y, 
 	    src.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c, 
-	    NULL, 0,0,0);
+	    NULL, 0,0,0
+#if GDAL_VERSION_MAJOR >= 2
+            ,NULL
+#endif
+	    );
     }
     if (CE_None != ret)	return ret;
     GDALClose(poTiff);
@@ -150,7 +154,11 @@ CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     } else {
 	ret = poTiff->RasterIO(GF_Read,0,0,img.pagesize.x,img.pagesize.y, 
 	    dst.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c, 
-	    NULL, 0,0,0);
+	    NULL, 0,0,0
+#if GDAL_VERSION_MAJOR >= 2
+            ,NULL
+#endif
+	    );
     }
     GDALClose(poTiff);
     if (CE_None != ret)
