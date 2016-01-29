@@ -345,8 +345,10 @@ class GDALTest:
                 self.chksum_after_reopening = chksum_after_reopening
             else:
                 self.chksum_after_reopening = [ chksum_after_reopening ]
+        elif chksum is None:
+            self.chksum_after_reopening = None
         else:
-            self.chksum_after_reopening = chksum
+            self.chksum_after_reopening = [ chksum ]
         self.xoff = xoff
         self.yoff = yoff
         self.xsize = xsize
