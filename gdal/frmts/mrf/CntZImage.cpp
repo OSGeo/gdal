@@ -1275,7 +1275,7 @@ void CntZImage::readVal(Byte **ppByte, float &val, int numBytes) const
 
     int v = (int)((signed char)NEXTBYTE); // Low byte, signed extended
     if (2 == numBytes)
-	v = (256 * (signed char)NEXTBYTE) | (v && 0xff);
+	v = (256 * (signed char)NEXTBYTE) | (v & 0xff);
     val = static_cast<float>(v);
 }
 
