@@ -288,11 +288,13 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img);
 
 enum { SAMPLING_ERR, SAMPLING_Avg, SAMPLING_Near };
 
+GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level = 0);
+
 class GDALMRFDataset : public GDALPamDataset {
 
 
     friend class GDALMRFRasterBand;
-    friend GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level = 0);
+    friend GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level);
 
 public:
     GDALMRFDataset();
