@@ -4943,6 +4943,26 @@ fi
 AC_SUBST(HAVE_CRYPTOPP,$HAVE_CRYPTOPP)
 AC_SUBST(USE_ONLY_CRYPTODLL_ALG,$USE_ONLY_CRYPTODLL_ALG)
 
+
+dnl ---------------------------------------------------------------------------
+dnl Whether to include MRF in the build
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([grib],
+            AS_HELP_STRING([--without-mrf],
+               [Disable MRF driver]),,)
+
+AC_MSG_CHECKING([for MRF])
+if test "$with_mrf" = yes -o x"$with_mrf" = x ; then
+    OPT_GDAL_FORMATS="mrf $OPT_GDAL_FORMATS"
+    HAVE_MRF=yes
+    AC_MSG_RESULT([enabled])
+else
+    HAVE_MRF=no
+    AC_MSG_RESULT([disabled by user])
+fi
+
+
 AC_OUTPUT(GDALmake.opt)
 
 dnl ---------------------------------------------------------------------------
@@ -4994,6 +5014,7 @@ LOC_MSG([  EPSILON support:           ${EPSILON_SETTING}])
 LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
+LOC_MSG([  MRF support:               ${HAVE_MRF}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])

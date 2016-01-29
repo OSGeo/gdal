@@ -675,6 +675,9 @@ QHULL_SETTING = INTERNAL
 # When linking against the static lib:
 # CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptlib.lib
 
+# Comment out to disable MRF support.
+MRF_SETTING=yes
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
 
