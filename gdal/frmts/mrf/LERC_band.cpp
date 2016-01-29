@@ -166,6 +166,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 	case GDT_UInt32:	MASK(GUInt32);	break;
 	case GDT_Float32:	MASK(float);	break;
 	case GDT_Float64:	MASK(double);	break;
+        default:                CPLAssert(FALSE); break;
 
 #undef MASK
 	}
@@ -190,6 +191,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     case GDT_UInt32:	ENCODE(GUInt32);    break;
     case GDT_Float32:	ENCODE(float);	    break;
     case GDT_Float64:	ENCODE(double);	    break;
+    default:            CPLAssert(FALSE); break;
 
 #undef ENCODE
     }
@@ -240,6 +242,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     case GDT_UInt32:	DECODE(GUInt32);    break;
     case GDT_Float32:	DECODE(float);	    break;
     case GDT_Float64:	DECODE(double);	    break;
+    default:            CPLAssert(FALSE);   break;
 #undef DECODE
     }
     if (!success) {
@@ -259,6 +262,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     case GDT_UInt32:	UNMASK(GUInt32);    break;
     case GDT_Float32:	UNMASK(float);	    break;
     case GDT_Float64:	UNMASK(double);	    break;
+    default:            CPLAssert(FALSE);   break;
 #undef DECODE
     }
     return CE_None;
