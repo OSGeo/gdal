@@ -239,12 +239,16 @@ CPLErr JPEG_Band::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 {
     int nbands = img.pagesize.c;
     // Locals, clean up after themselves
-    jpeg_decompress_struct cinfo={0};
+    jpeg_decompress_struct cinfo;
     ErrorMgr jerr;
+    
+    memset(&cinfo, 0, sizeof(cinfo));
 
-    struct jpeg_source_mgr src={(JOCTET *)isrc.buffer, isrc.size};
+    struct jpeg_source_mgr src;
 
     cinfo.err=&jerr;
+    src.next_input_byte = (JOCTET *)isrc.buffer;
+    src.bytes_in_buffer = isrc.size;
     src.term_source = src.init_source = stub_source_dec;
     src.skip_input_data = skip_input_data_dec;
     src.fill_input_buffer = fill_input_buffer_dec;

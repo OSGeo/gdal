@@ -172,10 +172,10 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     }
     // Set bitmask if it has some ndvs
     Lerc2 lerc2(w, h, (ndv_count == 0) ? NULL : bitMask.Bits());
-    bool success;
+    bool success = false;
     Byte *ptr = (Byte *)dst.buffer;
 
-    long sz;
+    long sz = 0;
     switch (img.dt) {
 
 #define ENCODE(T) if (true) { \
@@ -229,7 +229,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     if (!lerc2.GetHeaderInfo(ptr, hdInfo))
 	return DecompressLERC(dst, src, img);
     // It is lerc2 here
-    bool success;
+    bool success = false;
     BitMask2 bitMask(img.pagesize.x, img.pagesize.y);
     switch (img.dt) {
 #define DECODE(T) success = lerc2.Decode(&ptr, reinterpret_cast<T *>(dst.buffer), bitMask.Bits())

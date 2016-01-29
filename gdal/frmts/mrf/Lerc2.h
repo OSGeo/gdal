@@ -641,7 +641,7 @@ bool Lerc2::ComputeStats(const T* data, int i0, int i1, int j0, int j1,
 
   tryLutA = false;
 
-  T zMin, zMax, prevVal = 0;
+  T zMin = 0, zMax = 0, prevVal = 0;
   int numValidPixel = 0;
   int cntSameVal = 0;
 

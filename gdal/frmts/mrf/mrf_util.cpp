@@ -561,9 +561,10 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
 // Similar to compress2() but with flags to control zlib features
 // Returns true if it worked
 int ZPack(const buf_mgr &src, buf_mgr &dst, int flags) {
-    z_stream stream = {0};
+    z_stream stream;
     int err;
 
+    memset(&stream, 0, sizeof(stream));
     stream.next_in = (Bytef*)src.buffer;
     stream.avail_in = (uInt)src.size;
     stream.next_out = (Bytef*)dst.buffer;
@@ -595,9 +596,10 @@ int ZPack(const buf_mgr &src, buf_mgr &dst, int flags) {
 // Return true if it worked
 int ZUnPack(const buf_mgr &src, buf_mgr &dst, int flags) {
 
-    z_stream stream = {0};
+    z_stream stream;
     int err;
 
+    memset(&stream, 0, sizeof(stream));
     stream.next_in = (Bytef*)src.buffer;
     stream.avail_in = (uInt)src.size;
     stream.next_out = (Bytef*)dst.buffer;

@@ -41,8 +41,7 @@ using namespace std;
 CntZImage::CntZImage()
 {
   type_ = CNT_Z;
-  InfoFromComputeNumBytes info0 = {0};
-  m_infoFromComputeNumBytes = info0;
+  memset(&m_infoFromComputeNumBytes, 0, sizeof(m_infoFromComputeNumBytes));
 };
 
 // -------------------------------------------------------------------------- ;
@@ -258,7 +257,8 @@ bool CntZImage::write(Byte** ppByte,
 
   *ppByte = ptr;
 
-  InfoFromComputeNumBytes info = {0};
+  InfoFromComputeNumBytes info;
+  memset(&info, 0, sizeof(InfoFromComputeNumBytes));
 
   if (useInfoFromPrevComputeNumBytes && (maxZError == m_infoFromComputeNumBytes.maxZError))
     info = m_infoFromComputeNumBytes;
@@ -273,7 +273,7 @@ bool CntZImage::write(Byte** ppByte,
       continue;
 
     bool bCntsNoInt = false;
-    int numTilesVert, numTilesHori, numBytesOpt, numBytesWritten;
+    int numTilesVert, numTilesHori, numBytesOpt, numBytesWritten = 0;
     float maxValInImg;
 
     if (!zPart)
@@ -313,9 +313,6 @@ bool CntZImage::write(Byte** ppByte,
 
     if (!zPart && numTilesVert == 0 && numTilesHori == 0)    // no tiling for cnt part
     {
-      if (numBytesOpt == 0)    // cnt part is const
-        numBytesWritten = 0;
-
       if (numBytesOpt > 0)    // cnt part is binary mask, use fast RLE class
       {
         // convert to bit mask
