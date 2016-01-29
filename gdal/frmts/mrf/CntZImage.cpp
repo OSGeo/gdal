@@ -477,7 +477,7 @@ bool CntZImage::read(Byte** ppByte,
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoInt,
+bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
                            int& numTilesVertA,
                            int& numTilesHoriA,
                            int& numBytesOptA,
@@ -491,7 +491,7 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoInt,
   // first, do the entire image as 1 block
   numTilesVertA = 1;
   numTilesHoriA = 1;
-  if (!writeTiles(zPart, maxZError, cntsNoInt, 1, 1, 0, numBytesOptA, maxValInImgA))
+  if (!writeTiles(zPart, maxZError, cntsNoIntIn, 1, 1, 0, numBytesOptA, maxValInImgA))
   {
 //    cout << fctName << "write tiles failed" << endl;
     return false;
@@ -521,7 +521,7 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoInt,
 
     int numBytes = 0;
     float maxVal;
-    if (!writeTiles(zPart, maxZError, cntsNoInt, numTilesVert, numTilesHori, 0, numBytes, maxVal))
+    if (!writeTiles(zPart, maxZError, cntsNoIntIn, numTilesVert, numTilesHori, 0, numBytes, maxVal))
       return false;
 
     if (numBytes < numBytesOptA)
@@ -548,7 +548,7 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoInt,
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoInt,
+bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoIntIn,
                            int numTilesVert, int numTilesHori,
                            Byte* bArr, int& numBytes, float& maxValInImg) const
 {
@@ -587,14 +587,14 @@ bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoInt,
       maxValInImg = zPart ? max(zMax, maxValInImg) : max(cntMax, maxValInImg);
 
       int numBytesNeeded = zPart ? numBytesZTile(numValidPixel, zMin, zMax, maxZError) :
-                                    numBytesCntTile(tileH * tileW, cntMin, cntMax, cntsNoInt);
+                                    numBytesCntTile(tileH * tileW, cntMin, cntMax, cntsNoIntIn);
       numBytes += numBytesNeeded;
 
       if (bArr)
       {
         int numBytesWritten;
-        bool rv = zPart ? writeZTile(  &ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, numValidPixel, zMin, zMax, maxZError) :
-                          writeCntTile(&ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, cntMin, cntMax, cntsNoInt);
+        rv = zPart ? writeZTile(  &ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, numValidPixel, zMin, zMax, maxZError) :
+                          writeCntTile(&ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, cntMin, cntMax, cntsNoIntIn);
         if (!rv)
           return false;
         if (numBytesWritten != numBytesNeeded)
@@ -738,12 +738,12 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
 
 // -------------------------------------------------------------------------- ;
 
-int CntZImage::numBytesCntTile(int numPixel, float cntMin, float cntMax, bool cntsNoInt) const
+int CntZImage::numBytesCntTile(int numPixel, float cntMin, float cntMax, bool cntsNoIntIn) const
 {
   if (cntMin == cntMax && (cntMin == 0 || cntMin == -1 || cntMin == 1))
     return 1;
 
-  if (cntsNoInt || (cntMax - cntMin) > (1 << 28))
+  if (cntsNoIntIn || (cntMax - cntMin) > (1 << 28))
   {
     return(int)(1 + numPixel * sizeof(float));
   }
@@ -779,7 +779,7 @@ int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double m
 
 bool CntZImage::writeCntTile(Byte** ppByte, int& numBytes,
                              int i0, int i1, int j0, int j1,
-                             float cntMin, float cntMax, bool cntsNoInt) const
+                             float cntMin, float cntMax, bool cntsNoIntIn) const
 {
   Byte* ptr = *ppByte;
   int numPixel = (i1 - i0) * (j1 - j0);
@@ -798,7 +798,7 @@ bool CntZImage::writeCntTile(Byte** ppByte, int& numBytes,
     return true;
   }
 
-  if (cntsNoInt || cntMax - cntMin > (1 << 28))
+  if (cntsNoIntIn || cntMax - cntMin > (1 << 28))
   {
     // write cnt's as flt arr uncompressed
     *ptr++ = 0;
