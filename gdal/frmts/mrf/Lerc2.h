@@ -798,7 +798,8 @@ int Lerc2::NumBytesTile(int numValidPixel, T zMin, T zMax, bool& tryLut,  // can
     //enum DataType {DT_Char, DT_Byte, DT_Short, DT_UShort, DT_Int, DT_UInt, DT_Float, DT_Double};
     static const Byte sizeArr[] = {1, 1, 2, 2, 4, 4, 4, 8};
     DataType dtUsed;
-    int bits67 = TypeCode(zMin, dtUsed);
+    // FIXME ?
+    /*int bits67 =*/ TypeCode(zMin, dtUsed);
     int nBytesForMin = sizeArr[dtUsed];
     int nBytes = 1 + nBytesForMin;
 
