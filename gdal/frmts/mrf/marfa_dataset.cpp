@@ -152,12 +152,18 @@ CPLErr GDALMRFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
     int nBandCount, int *panBandMap,
-    int nPixelSpace, int nLineSpace, int nBandSpace)
+#if GDAL_VERSION_MAJOR >= 2
+    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg* psExtraArgs
+#else
+    int nPixelSpace, int nLineSpace, int nBandSpace
+#endif
+    )
 {
     CPLDebug("MRF_IO", "IRasterIO %s, %d, %d, %d, %d, bufsz %d,%d,%d strides P %d, L %d, B %d \n",
 	eRWFlag == GF_Write ? "Write" : "Read",
 	nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, nBandCount,
-	nPixelSpace, nLineSpace, nBandSpace);
+	static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace),
+        static_cast<int>(nBandSpace));
 
     // Finish the Create call
     if (!bCrystalized)
@@ -167,7 +173,11 @@ CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int n
     // Call the parent implementation, which splits it into bands and calls their IRasterIO
     // 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
-	eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace);
+	eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace
+#if GDAL_VERSION_MAJOR >= 2
+        ,psExtraArgs
+#endif
+	);
 }
 
 
