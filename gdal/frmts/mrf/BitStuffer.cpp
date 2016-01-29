@@ -82,17 +82,17 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
       }
       else
       {
-        int n = numBits - (32 - bitPos);
-        *dstPtr++ |= (*srcPtr  ) >> n;
-        *dstPtr   |= (*srcPtr++) << (32 - n);
-        bitPos = n;
+        int n2 = numBits - (32 - bitPos);
+        *dstPtr++ |= (*srcPtr  ) >> n2;
+        *dstPtr   |= (*srcPtr++) << (32 - n2);
+        bitPos = n2;
       }
     }
 
     // save the 0-3 bytes not used in the last ULong
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
-    unsigned int n = numBytesNotNeeded;
-    while (n--)
+    unsigned int n2 = numBytesNotNeeded;
+    while (n2--)
       *dstPtr >>= 8;
 
     dstPtr = arr;
@@ -152,8 +152,8 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
     srcPtr--;
     unsigned int lastULong = *srcPtr;
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
-    unsigned int n = numBytesNotNeeded;
-    while (n--)
+    unsigned int n2 = numBytesNotNeeded;
+    while (n2--)
       *srcPtr <<= 8;
 
     // do the un-stuffing
@@ -165,8 +165,8 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
     {
       if (32 - bitPos >= numBits)
       {
-        unsigned int n = (*srcPtr) << bitPos;
-        *dstPtr++ = n >> (32 - numBits);
+        unsigned int n3 = (*srcPtr) << bitPos;
+        *dstPtr++ = n3 >> (32 - numBits);
         bitPos += numBits;
         if (bitPos == 32)    // shift >= 32 is undefined
         {
@@ -176,8 +176,8 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
       }
       else
       {
-        unsigned int n = (*srcPtr++) << bitPos;
-        *dstPtr = n >> (32 - numBits);
+        unsigned int n3 = (*srcPtr++) << bitPos;
+        *dstPtr = n3 >> (32 - numBits);
         bitPos -= (32 - numBits);
         *dstPtr++ |= (*srcPtr) >> (32 - bitPos);
       }
