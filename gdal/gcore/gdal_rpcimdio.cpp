@@ -205,7 +205,10 @@ char **CPL_STDCALL GDALLoadRPCFile( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */
 /* -------------------------------------------------------------------- */
-    char **papszLines = CSLLoad2( osTarget, 100, 100, NULL );
+    // 100 lines would be enough, but some .rpc files have CR CR LF end of
+    // lines, which result in a blank line to be recognized, so accept up
+    // to 200 lines (#6341)
+    char **papszLines = CSLLoad2( osTarget, 200, 100, NULL );
     if(!papszLines)
         return NULL;
 
