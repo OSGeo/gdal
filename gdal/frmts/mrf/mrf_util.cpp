@@ -248,7 +248,7 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
 
 double getXMLNum(CPLXMLNode *node, const char *pszPath, double def) 
 {
-    const char *textval=CPLGetXMLValue(node,pszPath,0);
+    const char *textval=CPLGetXMLValue(node,pszPath,NULL);
     if (textval) return atof(textval);
     return def;
 }
@@ -447,7 +447,7 @@ char **CSLAddIfMissing(char **papszList,
 CPLString PrintDouble(double d, const char *frmt)
 {
     CPLString res;
-    res.FormatC(d, 0);
+    res.FormatC(d, NULL);
     double v = CPLStrtod(res.c_str(), NULL);
     if (d == v) return res;
 

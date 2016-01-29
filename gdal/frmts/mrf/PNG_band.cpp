@@ -104,14 +104,14 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 
     // pngp=png_create_read_struct(PNG_LIBPNG_VER_STRING,0,pngEH,pngWH);
     png_structp pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (0 == pngp) {
+    if (NULL == pngp) {
 	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG decompress");
 	return CE_Failure;
     }
 
     png_infop infop = png_create_info_struct(pngp);
-    if (0 == infop) {
-	if (pngp) png_destroy_read_struct(&pngp, &infop, 0);
+    if (NULL == infop) {
+	if (pngp) png_destroy_read_struct(&pngp, &infop, NULL);
 	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG info");
 	return CE_Failure;
     }
@@ -131,7 +131,7 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     if (dst.size < (png_get_rowbytes(pngp, infop)*height)) {
 	CPLError(CE_Failure, CPLE_AppDefined,
 	    "MRF: PNG Page data bigger than the buffer provided");
-	png_destroy_read_struct(&pngp, &infop, 0);
+	png_destroy_read_struct(&pngp, &infop, NULL);
 	return CE_Failure;
     }
 
@@ -162,7 +162,7 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     // png_read_png(pngp,infop,PNG_TRANSFORM_IDENTITY,0);
 
     CPLFree(png_rowp);
-    png_destroy_read_struct(&pngp, &infop, 0);
+    png_destroy_read_struct(&pngp, &infop, NULL);
     return CE_None;
 }
 

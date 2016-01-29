@@ -29,20 +29,20 @@ NAMESPACE_MRF_START
 
 // -------------------------------------------------------------------------- ;
 
-BitMask2::BitMask2() : m_pBits(0), m_nCols(0), m_nRows(0)
+BitMask2::BitMask2() : m_pBits(NULL), m_nCols(0), m_nRows(0)
 {
 }
 
 // -------------------------------------------------------------------------- ;
 
-BitMask2::BitMask2(int nCols, int nRows) : m_pBits(0)
+BitMask2::BitMask2(int nCols, int nRows) : m_pBits(NULL)
 {
   SetSize(nCols, nRows);
 }
 
 // -------------------------------------------------------------------------- ;
 
-BitMask2::BitMask2(const BitMask2& src) : m_pBits(0)
+BitMask2::BitMask2(const BitMask2& src) : m_pBits(NULL)
 {
   SetSize(src.m_nCols, src.m_nRows);
   if (m_pBits && src.m_pBits)
@@ -73,7 +73,7 @@ bool BitMask2::SetSize(int nCols, int nRows)
     m_nRows = nRows;
     m_pBits = new Byte[Size()];
   }
-  return m_pBits != 0;
+  return m_pBits != NULL;
 }
 
 // -------------------------------------------------------------------------- ;
@@ -115,7 +115,7 @@ int BitMask2::CountValidBits() const
 void BitMask2::Clear()
 {
   delete[] m_pBits;
-  m_pBits = 0;
+  m_pBits = NULL;
   m_nCols = 0;
   m_nRows = 0;
 }

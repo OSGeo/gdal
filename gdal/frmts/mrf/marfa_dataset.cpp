@@ -80,8 +80,8 @@ GDALMRFDataset::GDALMRFDataset()
 
     memcpy(GeoTransform, gt, sizeof(gt));
     bGeoTransformValid = TRUE;
-    ifp.FP = dfp.FP = 0;
-    pbuffer = 0;
+    ifp.FP = dfp.FP = NULL;
+    pbuffer = NULL;
     pbsize = 0;
     bdirty = 0;
     scale = 0;
@@ -105,7 +105,7 @@ void GDALMRFDataset::SetPBuffer(unsigned int sz)
 	pbsize = 0;
     }
     pbuffer = CPLRealloc(pbuffer, sz);
-    pbsize = (pbuffer == 0) ? 0 : sz;
+    pbsize = (pbuffer == NULL) ? 0 : sz;
 }
 
 GDALMRFDataset::~GDALMRFDataset()
@@ -264,7 +264,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 
 		// The scale value is the same as first overview
 		scale = strtod(CPLGetXMLValue(config, "Rsets.scale",
-		    CPLString().Printf("%d", panOverviewList[0]).c_str()), 0);
+		    CPLString().Printf("%d", panOverviewList[0]).c_str()), NULL);
 
 		// Initialize the empty overlays, all of them for a given scale
 		// They could already exist, in which case they are not erased
@@ -283,7 +283,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 		    return CE_Failure;
 		}
 		CPLDestroyXMLNode(config);
-		config = 0;
+		config = NULL;
 	    }
 	    catch (CPLErr e) {
 		if (config)
@@ -802,11 +802,11 @@ start_idx = end_idx;
     CPLXMLNode *DataValues = CPLGetXMLNode(defimage, "DataValues");
     if (NULL != DataValues) {
 	const char *pszValue;
-	pszValue = CPLGetXMLValue(DataValues, "NoData", 0);
+	pszValue = CPLGetXMLValue(DataValues, "NoData", NULL);
 	if (pszValue) ds->SetNoDataValue(pszValue);
-	pszValue = CPLGetXMLValue(DataValues, "min", 0);
+	pszValue = CPLGetXMLValue(DataValues, "min", NULL);
 	if (pszValue) ds->SetMinValue(pszValue);
-	pszValue = CPLGetXMLValue(DataValues, "max", 0);
+	pszValue = CPLGetXMLValue(DataValues, "max", NULL);
 	if (pszValue) ds->SetMaxValue(pszValue);
     }
 
@@ -820,19 +820,19 @@ start_idx = end_idx;
     // Data File Name and base offset
     image.datfname = getFname(defimage, "DataFile", ds->GetFname(), ILComp_Ext[image.comp]);
     image.dataoffset = static_cast<int>(
-	getXMLNum(CPLGetXMLNode(defimage, "DataFile"), "offset", 0));
+	getXMLNum(CPLGetXMLNode(defimage, "DataFile"), "offset", 0.0));
 
     // Index File Name and base offset
     image.idxfname = getFname(defimage, "IndexFile", ds->GetFname(), ".idx");
     image.idxoffset = static_cast<int>(
-	getXMLNum(CPLGetXMLNode(defimage, "IndexFile"), "offset", 0));
+	getXMLNum(CPLGetXMLNode(defimage, "IndexFile"), "offset", 0.0));
 
     return CE_None;
 }
 
 char      **GDALMRFDataset::GetFileList()
 {
-    char** papszFileList = 0;
+    char** papszFileList = NULL;
 
     // Add the header file name if it is real
     VSIStatBufL  sStat;
@@ -1197,7 +1197,7 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     // Is it a clone?
     clonedSource = on(CPLGetXMLValue(config, "CachedSource.Source.clone", "no"));
     // Pick up the options, if any
-    optlist.Assign(CSLTokenizeString2(CPLGetXMLValue(config, "Options", 0),
+    optlist.Assign(CSLTokenizeString2(CPLGetXMLValue(config, "Options", NULL),
 	" \t\n\r", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
     // Load all the options in the IMAGE_STRUCTURE metadata
@@ -1310,7 +1310,7 @@ static inline void make_absolute(CPLString &name, const CPLString &path)
 */
 GDALDataset *GDALMRFDataset::GetSrcDS() {
     if (poSrcDS) return poSrcDS;
-    if (source.empty())	return 0;
+    if (source.empty())	return NULL;
     // Make the source absolute path
     if (has_path(fname)) make_absolute(source, fname);
     poSrcDS = (GDALDataset *)GDALOpenShared(source.c_str(), GA_ReadOnly);
@@ -1459,7 +1459,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     // Use the GDAL copy call
     // Need to flag the dataset as compressed (COMPRESSED=TRUE) to force block writes
     // This might not be what we want, if the input and out order is truly separate
-    char **papszCWROptions = CSLDuplicate(0);
+    char **papszCWROptions = NULL;
     papszCWROptions = CSLAddNameValue(papszCWROptions, "COMPRESSED", "TRUE");
     CPLErr err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
 	(GDALDatasetH)poDS, papszCWROptions, pfnProgress, pProgressData);
@@ -1683,7 +1683,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     VSILFILE *l_ifp = IdxFP();
 
     // Pointer to verfiy buffer, if it doesn't exist everything worked fine
-    void *tbuff = 0;
+    void *tbuff = NULL;
 
     if (l_ifp == NULL || l_dfp == NULL)
 	return CE_Failure;
@@ -1776,7 +1776,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
 
     // Special case
     // Any non-zero will do, use 1 to only consume one bit
-    if (0 != buff && 0 == size)
+    if (NULL != buff && 0 == size)
 	tinfo.offset = net64(GUIntBig(buff));
 
     VSIFSeekL(l_ifp, infooffset, SEEK_SET);

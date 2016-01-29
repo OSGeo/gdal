@@ -709,7 +709,7 @@ public:
 
 protected:
     virtual int GetOverviewCount() { return 0; }
-    virtual GDALRasterBand *GetOverview(int ) { return 0; }
+    virtual GDALRasterBand *GetOverview(int ) { return NULL; }
 
     GDALMRFRasterBand *pBand;
 };

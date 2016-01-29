@@ -435,7 +435,7 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     ILSize req(xblk, yblk, 0, m_band/cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
-    if ( 0 == (poSrcDS = poDS->GetSrcDS())) {
+    if ( NULL == (poSrcDS = poDS->GetSrcDS())) {
 	CPLError( CE_Failure, CPLE_AppDefined, "MRF: Can't open source file %s", poDS->source.c_str());
 	return CE_Failure;
     }
@@ -564,7 +564,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     assert(poDS->clonedSource);
 
     GDALMRFDataset *poSrc;
-    if ( 0 == (poSrc = static_cast<GDALMRFDataset *>(poDS->GetSrcDS()))) {
+    if ( NULL == (poSrc = static_cast<GDALMRFDataset *>(poDS->GetSrcDS()))) {
 	CPLError( CE_Failure, CPLE_AppDefined, "MRF: Can't open source file %s", poDS->source.c_str());
 	return CE_Failure;
     }
@@ -761,7 +761,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	double val = GetNoDataValue(&success);
 	if (!success) val = 0.0;
 	if (isAllVal(eDataType, buffer, img.pageSizeBytes, val))
-	    return poDS->WriteTile(0, infooffset, 0);
+	    return poDS->WriteTile(NULL, infooffset, 0);
 
 	// Use the pbuffer to hold the compressed page before writing it
 	poDS->tile = ILSize(); // Mark it corrupt
@@ -860,7 +860,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
     if (GIntBig(empties) == AllBandMask()) {
 	CPLFree(tbuffer);
-	return poDS->WriteTile(0, infooffset, 0);
+	return poDS->WriteTile(NULL, infooffset, 0);
     }
 
     if (poDS->bdirty != AllBandMask())

@@ -50,10 +50,10 @@ class Lerc2
 {
 public:
   Lerc2();
-  Lerc2(int nCols, int nRows, const Byte* pMaskBits = 0);    // valid / invalid bits as byte array
+  Lerc2(int nCols, int nRows, const Byte* pMaskBits = NULL);    // valid / invalid bits as byte array
   virtual ~Lerc2()  {}
 
-  bool Set(int nCols, int nRows, const Byte* pMaskBits = 0);
+  bool Set(int nCols, int nRows, const Byte* pMaskBits = NULL);
 
   template<class T>
   unsigned int ComputeNumBytesNeededToWrite(const T* arr, double maxZError, bool encodeMask);
@@ -229,7 +229,7 @@ unsigned int Lerc2::ComputeNumBytesNeededToWrite(const T* arr, double maxZError,
   // data
   m_writeDataOneSweep = false;
   int nBytes = 0;
-  Byte* ptr = 0;    // only emulate the writing and just count the bytes needed
+  Byte* ptr = NULL;    // only emulate the writing and just count the bytes needed
 
   if (!WriteTiles(arr, &ptr, nBytes, m_headerInfo.zMin, m_headerInfo.zMax))
     return 0;
