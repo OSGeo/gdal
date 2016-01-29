@@ -32,17 +32,16 @@
 
 #define H5_USE_16_API
 
-#define MAX_METADATA_LEN 32768
-
 #ifdef _MSC_VER
 #pragma warning( push )
-#pragma warning( disable : 4005 ) /* warning C4005: '_HDF5USEDLL_' : macro redefinition */
+/* warning C4005: '_HDF5USEDLL_' : macro redefinition */
+#pragma warning( disable : 4005 )
 #endif
 
 #include "hdf5.h"
 
 #ifdef _MSC_VER
-#pragma warning( pop ) 
+#pragma warning( pop )
 #endif
 
 #include "cpl_string.h"
@@ -51,6 +50,8 @@
 #include "hdf5dataset.h"
 
 CPL_CVSID("$Id$");
+
+static const int MAX_METADATA_LEN = 32768;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -91,10 +92,16 @@ void GDALRegister_HDF5()
 /*                           HDF5Dataset()                      	*/
 /************************************************************************/
 HDF5Dataset::HDF5Dataset() :
-    hHDF5(-1), hGroupID(-1), papszSubDatasets(NULL), bIsHDFEOS(FALSE),
-    nDatasetType(-1), nSubDataCount(0), poH5RootGroup(NULL),
-    papszMetadata(NULL), poH5CurrentObject(NULL)
-{ }
+    hHDF5(-1),
+    hGroupID(-1),
+    papszSubDatasets(NULL),
+    bIsHDFEOS(FALSE),
+    nDatasetType(-1),
+    nSubDataCount(0),
+    poH5RootGroup(NULL),
+    papszMetadata(NULL),
+    poH5CurrentObject(NULL)
+{}
 
 /************************************************************************/
 /*                            ~HDF5Dataset()                            */
@@ -258,15 +265,13 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    HDF5Dataset *poDS;
-
     if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create datasource.                                              */
 /* -------------------------------------------------------------------- */
-    poDS = new HDF5Dataset();
+    HDF5Dataset *poDS = new HDF5Dataset();
 
     poDS->SetDescription( poOpenInfo->pszFilename );
 
@@ -383,57 +388,68 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 /************************************************************************/
 static void CreatePath( HDF5GroupObjects *poH5Object )
 {
-    char szPath[8192];
-    char szUnderscoreSpaceInName[8192];
-
 /* -------------------------------------------------------------------- */
 /*      Recurse to the root path                                        */
 /* -------------------------------------------------------------------- */
-    szPath[0]='\0';
+    CPLString osPath;
     if( poH5Object->poHparent !=NULL ) {
         CreatePath( poH5Object->poHparent );
-        snprintf( szPath, sizeof(szPath), "%s", poH5Object->poHparent->pszPath );
+        osPath = poH5Object->poHparent->pszPath;
     }
 
 /* -------------------------------------------------------------------- */
 /*      add name to the path                                            */
 /* -------------------------------------------------------------------- */
     if( !EQUAL( poH5Object->pszName,"/" ) ){
-        snprintf( szPath + strlen(szPath), sizeof(szPath) - strlen(szPath),
-                  "/%s", poH5Object->pszName );
+        osPath.append( "/" );
+        osPath.append( poH5Object->pszName );
     }
 
 /* -------------------------------------------------------------------- */
 /*      fill up path for each object                                    */
 /* -------------------------------------------------------------------- */
+    CPLString osUnderscoreSpaceInName;
     if( poH5Object->pszPath == NULL ) {
 
         if( strlen( poH5Object->pszName ) == 1 ) {
-            snprintf( szPath + strlen(szPath), sizeof(szPath) - strlen(szPath),
-                      "%s", poH5Object->pszName );
-            snprintf( szUnderscoreSpaceInName, sizeof(szUnderscoreSpaceInName),
-                      "%s", poH5Object->pszName);
+            osPath.append( poH5Object->pszName );
+            osUnderscoreSpaceInName = poH5Object->pszName;
         }
         else {
 /* -------------------------------------------------------------------- */
 /*      Change space for underscore                                     */
 /* -------------------------------------------------------------------- */
-            char** papszPath = CSLTokenizeString2( szPath,
-                            " ", CSLT_HONOURSTRINGS );
+            char** papszPath = CSLTokenizeString2(
+                osPath.c_str(), " ", CSLT_HONOURSTRINGS );
 
-            szUnderscoreSpaceInName[0] = 0;
-            for( int i=0; papszPath[i] != NULL &&
-                      strlen(szUnderscoreSpaceInName) + 1 + strlen(papszPath[i ]) < sizeof(szUnderscoreSpaceInName) ; i++ ) {
+            for( int i=0; papszPath[i] != NULL ; i++ ) {
                 if( i > 0 )
-                    strcat( szUnderscoreSpaceInName, "_" );
-                strcat( szUnderscoreSpaceInName, papszPath[ i ] );
+                    osUnderscoreSpaceInName.append( "_" );
+                osUnderscoreSpaceInName.append( papszPath[ i ] );
             }
             CSLDestroy(papszPath);
 
         }
+
+        // -1 to give room for NUL in C strings.
+        static const size_t MAX_PATH = 8192 - 1;
+        // TODO(schwehr): Is it an issue if the results are longer than 8192?
+        // It appears that the output can never be longer than the source.
+        if ( osUnderscoreSpaceInName.size() > MAX_PATH )
+            CPLError( CE_Fatal, CPLE_AppDefined,
+                      "osUnderscoreSpaceInName longer than MAX_PATH: "
+                      "%u > %u",
+                      static_cast<unsigned int>(osUnderscoreSpaceInName.size()),
+                      static_cast<unsigned int>(MAX_PATH) );
+        if ( osPath.size() > MAX_PATH )
+            CPLError( CE_Fatal, CPLE_AppDefined,
+                      "osPath longer than MAX_PATH: %u > %u",
+                      static_cast<unsigned int>(osPath.size()),
+                      static_cast<unsigned int>(MAX_PATH) );
+
         poH5Object->pszUnderscorePath  =
-            CPLStrdup( szUnderscoreSpaceInName );
-        poH5Object->pszPath  = CPLStrdup( szPath );
+            CPLStrdup( osUnderscoreSpaceInName.c_str() );
+        poH5Object->pszPath = CPLStrdup( osPath.c_str() );
     }
 }
 
