@@ -352,9 +352,9 @@ GDALMRFRasterBand(pDS, image, b, int(level)), sameres(FALSE), rgb(FALSE)
     }
 
     if (GDT_Byte == image.dt)
-	optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE);
+	optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
     else
-	optimize = TRUE; // Required for 12bit
+	optimize = true; // Required for 12bit
 }
 #endif
 
