@@ -49,7 +49,6 @@
 
 CPL_C_START
 void GDALRegister_mrf(void);
-void GDALDeregister_mrf( GDALDriver * ) {};
 CPL_C_END
 
 NAMESPACE_MRF_START
@@ -337,7 +336,6 @@ void GDALRegister_mrf(void)
 
 	driver->pfnOpen = GDALMRFDataset::Open;
 	driver->pfnIdentify = GDALMRFDataset::Identify;
-	driver->pfnUnloadDriver = GDALDeregister_mrf;
 	driver->pfnCreateCopy = GDALMRFDataset::CreateCopy;
 	driver->pfnCreate = GDALMRFDataset::Create;
 	driver->pfnDelete = GDALMRFDataset::Delete;
