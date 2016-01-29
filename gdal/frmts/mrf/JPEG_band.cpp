@@ -56,11 +56,20 @@ NAMESPACE_MRF_START
 *\Brief Helper class for jpeg error management
 */
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4324 ) /* warning C4324: 'GDAL_MRF::ErrorMgr' : structure was padded due to __declspec(align()) at line where jmp_buf setjmpBuffer is defined */
+#endif
+
 struct ErrorMgr : public jpeg_error_mgr {
     inline ErrorMgr();
     int signaled() { return setjmp(setjmpBuffer); };
     jmp_buf setjmpBuffer;
 };
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 /**
 *\brief Called when jpeg wants to report a warning
