@@ -39,25 +39,59 @@ init_list = [
     ('byte.tif', 1, 4672, ['COMPRESS=DEFLATE']),
     ('byte.tif', 1, 4672, ['COMPRESS=NONE']),
     ('byte.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('byte.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('int16.tif', 1, 4672, None),
+    ('int16.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('int16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint16.tif', 1, 4672, None),
+    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=TIF']),
+    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=TIF']),
+    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=TIF']),
+    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=TIF']),
+    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 1, 50054, None),
-    ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']) ]
+    ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
+    ('byte.tif', 1, [4672, 4652], ['COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, 21137], ['COMPRESS=JPEG', 'QUALITY=99']),
+]
 
 gdaltest_list = []
+
+
+class myTestCreateCopyWrapper:
+
+    def __init__(self, ut):
+        self.ut = ut
+
+    def myTestCreateCopy(self):
+        check_minmax = not 'COMPRESS=JPEG' in self.ut.options
+        return self.ut.testCreateCopy(check_minmax = check_minmax)
 
 for item in init_list:
     options = []
     if item[3]:
         options = item[3]
-    ut = gdaltest.GDALTest( 'MRF', item[0], item[1], item[2], options = options )
+    chksum_param = item[2]
+    if type(chksum_param) == type([]):
+        chksum = chksum_param[0]
+        chksum_after_reopening = chksum_param[1]
+    else:
+        chksum = chksum_param
+        chksum_after_reopening = chksum_param
+    ut = gdaltest.GDALTest( 'MRF', item[0], item[1], chksum, options = options, chksum_after_reopening = chksum_after_reopening )
     if ut is None:
         print( 'MRF tests skipped' )
-    gdaltest_list.append( (ut.testCreateCopy, item[0] + ' ' + str(options)) )
+    ut = myTestCreateCopyWrapper(ut)
+    gdaltest_list.append( (ut.myTestCreateCopy, item[0] + ' ' + str(options)) )
 
 if __name__ == '__main__':
 
