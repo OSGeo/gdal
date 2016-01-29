@@ -371,7 +371,7 @@ CPLErr GDALMRFRasterBand::FillBlock(void *buffer)
  *  The current band output goes directly into the buffer
  */
 
-CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr src, void *buffer) {
+CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) {
     vector<GDALRasterBlock *> blocks;
 
     for (int i = 0; i < poDS->nBands; i++) {
