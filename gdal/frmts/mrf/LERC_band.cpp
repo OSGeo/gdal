@@ -51,8 +51,8 @@ template <typename T> void CntZImgFill(CntZImage &zImg, T *src, const ILImage &i
 // Unload a zImg into a buffer
 template <typename T> void CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img)
 {
-    int h = zImg.getHeight();
-    int w = zImg.getWidth();
+    int h = static_cast<int>(zImg.getHeight());
+    int w = static_cast<int>(zImg.getWidth());
     T *ptr = dst;
     T ndv = (T)(img.NoDataValue);
     // Use 0 if nodata is not defined
@@ -196,7 +196,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 
     // write changes the value of the pointer, we can find the size by testing how far it moved
     dst.size = (char *)ptr - dst.buffer;
-    if (!success || sz != dst.size) {
+    if (!success || sz != static_cast<long>(dst.size)) {
 	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC2 compression");
 	return CE_Failure;
     }

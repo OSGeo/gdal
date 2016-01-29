@@ -604,10 +604,10 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     }
 
     // Need to read the tile from the source
-    char *buf = static_cast<char *>(CPLMalloc(tinfo.size));
+    char *buf = static_cast<char *>(CPLMalloc(static_cast<size_t>(tinfo.size)));
 
     VSIFSeekL(srcfd, tinfo.offset, SEEK_SET);
-    if (tinfo.size != GIntBig(VSIFReadL( buf, 1, tinfo.size, srcfd))) {
+    if (tinfo.size != GIntBig(VSIFReadL( buf, 1, static_cast<size_t>(tinfo.size), srcfd))) {
 	CPLFree(buf);
 	CPLError( CE_Failure, CPLE_AppDefined, "MRF: Can't read data from source %s",
 	    poSrc->current.datfname.c_str() );
@@ -668,7 +668,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
     // Should use a permanent buffer, like the pbuffer mechanism
     // Get a large buffer, in case we need to unzip
-    void *data = CPLMalloc(tinfo.size);
+    void *data = CPLMalloc(static_cast<size_t>(tinfo.size));
 
     VSILFILE *dfp = DataFP();
 
@@ -678,14 +678,14 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
     // This part is not thread safe, but it is what GDAL expects
     VSIFSeekL(dfp, tinfo.offset, SEEK_SET);
-    if (1 != VSIFReadL(data, tinfo.size, 1, dfp)) {
+    if (1 != VSIFReadL(data, static_cast<size_t>(tinfo.size), 1, dfp)) {
 	CPLFree(data);
 	CPLError(CE_Failure, CPLE_AppDefined, "Unable to read data page, %d@%x",
 	    int(tinfo.size), int(tinfo.offset));
 	return CE_Failure;
     }
 
-    buf_mgr src = {(char *)data, tinfo.size};
+    buf_mgr src = {(char *)data, static_cast<size_t>(tinfo.size)};
     buf_mgr dst;
 
     // We got the data, do we need to decompress it before decoding?
@@ -705,7 +705,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     }
 
     src.buffer = (char *)data;
-    src.size = tinfo.size;
+    src.size = static_cast<size_t>(tinfo.size);
 
     // After unpacking, the size has to be pageSizeBytes
     dst.buffer = (char *)buffer;

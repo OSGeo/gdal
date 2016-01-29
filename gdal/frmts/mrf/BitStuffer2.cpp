@@ -83,12 +83,12 @@ bool BitStuffer2::EncodeLut(Byte** ppByte,
 
   for (unsigned int i = 1; i < numElem; i++)
   {
-    unsigned int prev = sortedDataVec[i - 1].first;
+    unsigned int prev = static_cast<unsigned int>(sortedDataVec[i - 1].first);
     m_tmpIndexVec[sortedDataVec[i - 1].second] = indexLut;
 
     if (sortedDataVec[i].first != prev)
     {
-      m_tmpLutVec.push_back(sortedDataVec[i].first);
+      m_tmpLutVec.push_back(static_cast<unsigned int>(sortedDataVec[i].first));
       indexLut++;
     }
   }
@@ -194,7 +194,7 @@ bool BitStuffer2::Decode(const Byte** ppByte, vector<unsigned int>& dataVec) con
 unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<Quant >& sortedDataVec,
                                                     bool& doLut) const
 {
-  unsigned int maxElem = sortedDataVec.back().first;
+  unsigned int maxElem = static_cast<unsigned int>(sortedDataVec.back().first);
   unsigned int numElem = (unsigned int)sortedDataVec.size();
 
   int numBits = 0;
