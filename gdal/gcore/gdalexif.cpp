@@ -219,7 +219,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
     GUInt16 nEntryCount;
-    VSILFILE* fp = static_cast<VSILFILE *>(fpInL);
+    VSILFILE * const fp = static_cast<VSILFILE *>(fpInL);
 
     if( nOffset > INT_MAX - nTIFFHEADER ||
         VSIFSeekL(fp, nOffset+nTIFFHEADER, SEEK_SET) != 0
