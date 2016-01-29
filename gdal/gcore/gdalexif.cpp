@@ -205,7 +205,6 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   }
 }
 
-
 /************************************************************************/
 /*                        EXIFExtractMetadata()                         */
 /*                                                                      */
@@ -216,27 +215,12 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
                            int bSwabflag, int nTIFFHEADER,
                            int& nExifOffset, int& nInterOffset, int& nGPSOffset)
 {
-    GUInt16        nEntryCount;
-    int space;
-    unsigned int i;
-    unsigned int n;
-
-    vector<char> oTempStorage(MAXSTRINGLENGTH+1, 0);
-    char * const szTemp = &oTempStorage[0];
-
-    char          szName[128];
-
-    VSILFILE* fp = static_cast<VSILFILE *>(fpInL);
-
-    GDALEXIFTIFFDirEntry *poTIFFDirEntry;
-    GDALEXIFTIFFDirEntry *poTIFFDir;
-    const struct tagname *poExifTags ;
-    const struct intr_tag *poInterTags = intr_tags;
-    const struct gpsname *poGPSTags;
-
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
+    GUInt16 nEntryCount;
+    VSILFILE* fp = static_cast<VSILFILE *>(fpInL);
+
     if( nOffset > INT_MAX - nTIFFHEADER ||
         VSIFSeekL(fp, nOffset+nTIFFHEADER, SEEK_SET) != 0
         || VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16) )
@@ -263,24 +247,35 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
         return CE_Warning;
     }
 
-    poTIFFDir = (GDALEXIFTIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(GDALEXIFTIFFDirEntry));
+    GDALEXIFTIFFDirEntry *poTIFFDir = static_cast<GDALEXIFTIFFDirEntry *>(
+        CPLMalloc(nEntryCount * sizeof(GDALEXIFTIFFDirEntry)) );
 
 /* -------------------------------------------------------------------- */
 /*      Read all directory entries                                      */
 /* -------------------------------------------------------------------- */
-    n = static_cast<int>(VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(GDALEXIFTIFFDirEntry),fp));
-    if (n != nEntryCount*sizeof(GDALEXIFTIFFDirEntry))
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Could not read all directories");
-        CPLFree(poTIFFDir);
-        return CE_Failure;
+        const unsigned int n = static_cast<int>(VSIFReadL(
+            poTIFFDir, 1,nEntryCount*sizeof(GDALEXIFTIFFDirEntry),fp));
+        if (n != nEntryCount*sizeof(GDALEXIFTIFFDirEntry))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Could not read all directories");
+            CPLFree(poTIFFDir);
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Parse all entry information in this directory                   */
 /* -------------------------------------------------------------------- */
-    for(poTIFFDirEntry = poTIFFDir,i=nEntryCount; i > 0; i--,poTIFFDirEntry++) {
+    vector<char> oTempStorage(MAXSTRINGLENGTH+1, 0);
+    char * const szTemp = &oTempStorage[0];
+
+    char szName[128];
+
+    GDALEXIFTIFFDirEntry *poTIFFDirEntry = poTIFFDir;
+
+    for( unsigned int i = nEntryCount; i > 0; i--,poTIFFDirEntry++ ) {
         if (bSwabflag) {
             TIFFSwabShort(&poTIFFDirEntry->tdir_tag);
             TIFFSwabShort(&poTIFFDirEntry->tdir_type);
@@ -294,28 +289,36 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
         szName[0] = '\0';
         szTemp[0] = '\0';
 
-        for (poExifTags = tagnames; poExifTags->tag; poExifTags++)
+        for ( const struct tagname *poExifTags = tagnames;
+              poExifTags->tag;
+              poExifTags++)
+        {
             if(poExifTags->tag == poTIFFDirEntry->tdir_tag) {
                 CPLAssert( NULL != poExifTags && NULL != poExifTags->name );
 
                 CPLStrlcpy(szName, poExifTags->name, sizeof(szName));
                 break;
             }
-
+        }
 
         if( nOffset == nGPSOffset) {
-            for( poGPSTags = gpstags; poGPSTags->tag != 0xffff; poGPSTags++ )
+            for( const struct gpsname *poGPSTags = gpstags;
+                 poGPSTags->tag != 0xffff;
+                 poGPSTags++ )
+            {
                 if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
                     CPLAssert( NULL != poGPSTags && NULL != poGPSTags->name );
                     CPLStrlcpy(szName, poGPSTags->name, sizeof(szName));
                     break;
                 }
+            }
         }
 /* -------------------------------------------------------------------- */
 /*      If the tag was not found, look into the interoperability table  */
 /* -------------------------------------------------------------------- */
         if( nOffset == nInterOffset ) {
-            for(poInterTags = intr_tags; poInterTags->tag; poInterTags++)
+            const struct intr_tag *poInterTags = intr_tags;
+            for( ; poInterTags->tag; poInterTags++)
                 if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
                     CPLAssert( NULL != poInterTags && NULL != poInterTags->name );
                     CPLStrlcpy(szName, poInterTags->name, sizeof(szName));
@@ -375,8 +378,9 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
-        int nDataWidth = TIFFDataWidth((GDALEXIFTIFFDataType) poTIFFDirEntry->tdir_type);
-        space = poTIFFDirEntry->tdir_count * nDataWidth;
+        const int nDataWidth =
+            TIFFDataWidth((GDALEXIFTIFFDataType) poTIFFDirEntry->tdir_type);
+        const int space = poTIFFDirEntry->tdir_count * nDataWidth;
 
         /* Previous multiplication could overflow, hence this additional check */
         if( poTIFFDirEntry->tdir_count > static_cast<GUInt32>(MAXSTRINGLENGTH) )
