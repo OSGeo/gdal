@@ -330,11 +330,13 @@ public:
     virtual CPLErr GetGeoTransform(double *gt);
     virtual CPLErr SetGeoTransform(double *gt);
 
+#ifdef unused
     virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 	int nBufXSize, int nBufYSize,
 	GDALDataType eDT,
 	int nBandCount, int *panBandList,
 	char **papszOptions);
+#endif
 
     virtual char **GetFileList();
 
