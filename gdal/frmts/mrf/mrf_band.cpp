@@ -638,7 +638,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     ILIdx tinfo;
     GInt32 cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, m_band / cstride, m_l);
-    CPLDebug("MRF_IB", "IReadBlock %d,%d,0,%d, level %d, idxoffset %lld\n", 
+    CPLDebug("MRF_IB", "IReadBlock %d,%d,0,%d, level %d, idxoffset " CPL_FRMT_GIB "\n", 
 	xblk, yblk, m_band, m_l, IdxOffset(req,img));
 
     // If this is a caching file and bypass is on, just do the fetch
@@ -647,7 +647,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
     if (CE_None != poDS->ReadTileIdx(tinfo, req, img)) {
 	CPLError( CE_Failure, CPLE_AppDefined,
-	    "MRF: Unable to read index at offset %lld", IdxOffset(req, img));
+	    "MRF: Unable to read index at offset " CPL_FRMT_GIB, IdxOffset(req, img));
 	return CE_Failure;
     }
 
@@ -663,7 +663,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 	return FetchBlock(xblk, yblk, buffer);
     }
 
-    CPLDebug("MRF_IB","Tinfo offset %lld, size %lld\n", tinfo.offset, tinfo.size);
+    CPLDebug("MRF_IB","Tinfo offset " CPL_FRMT_GIB ", size  " CPL_FRMT_GIB "\n", tinfo.offset, tinfo.size);
     // If we have a tile, read it
 
     // Should use a permanent buffer, like the pbuffer mechanism
@@ -861,7 +861,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
     if (poDS->bdirty != AllBandMask())
 	CPLError(CE_Warning, CPLE_AppDefined,
-	"MRF: IWrite, band dirty mask is %0llx instead of %lld",
+	"MRF: IWrite, band dirty mask is " CPL_FRMT_GIB " instead of " CPL_FRMT_GIB,
 	poDS->bdirty, AllBandMask());
 
 //    ppmWrite("test.ppm",(char *)tbuffer, ILSize(nBlockXSize,nBlockYSize,0,poDS->nBands));
