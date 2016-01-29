@@ -335,6 +335,9 @@ extern "C++" {
 #include <cstdlib>
 #include <cstring>
 #include <cstddef>
+#include <ostream>
+#include <iostream>
+#include <sstream>
 }
 #endif /* __GNUC__ */
 
