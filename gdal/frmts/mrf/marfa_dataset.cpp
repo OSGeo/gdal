@@ -1445,7 +1445,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 
     CSLDestroy(papszCWROptions);
 
-    if (CE_None == err) {
+    if (CE_Failure == err) {
 	delete poDS;
 	return NULL;
     }
