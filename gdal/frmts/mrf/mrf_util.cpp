@@ -46,29 +46,27 @@
 #include <zlib.h>
 #include <algorithm>
 
-
 CPL_C_START
 void GDALRegister_mrf(void);
 CPL_C_END
 
 NAMESPACE_MRF_START
 
-static const char *ILC_N[]={ "PNG", "PPNG", "JPEG", "NONE", "DEFLATE", "TIF", 
+static const char * const ILC_N[]={ "PNG", "PPNG", "JPEG", "NONE", "DEFLATE", "TIF", 
 #if defined(LERC)
 	"LERC", 
 #endif
 	"Unknown" };
-static const char *ILC_E[]={ ".ppg", ".ppg", ".pjg", ".til", ".pzp", ".ptf", 
+static const char * const ILC_E[]={ ".ppg", ".ppg", ".pjg", ".til", ".pzp", ".ptf", 
 #if defined(LERC)
 	".lrc" ,
 #endif
 	"" };
-static const char *ILO_N[]={ "PIXEL", "BAND", "LINE", "Unknown" };
+static const char * const ILO_N[]={ "PIXEL", "BAND", "LINE", "Unknown" };
 
-char const **ILComp_Name=ILC_N;
-char const **ILComp_Ext=ILC_E;
-char const **ILOrder_Name=ILO_N;
-
+char const * const * ILComp_Name=ILC_N;
+char const * const * ILComp_Ext=ILC_E;
+char const * const * ILOrder_Name=ILO_N;
 /**
  *  Get the string for a compression type
  */
