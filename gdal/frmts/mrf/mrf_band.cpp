@@ -488,7 +488,9 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 
     // Might have the block in the pbuffer, mark it anyhow
     poDS->tile = req;
-    buf_mgr filesrc = { (char *)ob, img.pageSizeBytes };
+    buf_mgr filesrc;
+    filesrc.buffer = (char *)ob;
+    filesrc.size = static_cast<size_t>(img.pageSizeBytes);
 
     if (poDS->bypass_cache) { // No local caching, just return the data
 	if (1 == cstride)
@@ -764,7 +766,9 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	// Use the pbuffer to hold the compressed page before writing it
 	poDS->tile = ILSize(); // Mark it corrupt
 
-	buf_mgr src = {(char *)buffer, img.pageSizeBytes};
+	buf_mgr src;
+        src.buffer = (char *)buffer;
+        src.size = static_cast<size_t>(img.pageSizeBytes);
 	buf_mgr dst = {(char *)poDS->GetPBuffer(), poDS->GetPBufferSize()};
 
 	// Swab the source before encoding if we need to 
@@ -866,7 +870,9 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
 //    ppmWrite("test.ppm",(char *)tbuffer, ILSize(nBlockXSize,nBlockYSize,0,poDS->nBands));
 
-    buf_mgr src={(char *)tbuffer, img.pageSizeBytes};
+    buf_mgr src;
+    src.buffer = (char *)tbuffer;
+    src.size = static_cast<size_t>(img.pageSizeBytes);
 
     // Use the space after pagesizebytes for compressed output, it is of pbsize
     char *outbuff = (char *)tbuffer + img.pageSizeBytes;
