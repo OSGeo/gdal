@@ -302,7 +302,7 @@ bool RLE::decompress(const Byte* arrRLE, Byte* arr) const
 void RLE::writeCount(short cnt, Byte** ppCnt, Byte** ppDst) const
 {
   SWAP_2(cnt);    // write short's in little endian byte order, always
-  *((short*)*ppCnt) = cnt;
+  memcpy(*ppCnt, &cnt, sizeof(short));
   *ppCnt = *ppDst;
   *ppDst += 2;
 }
@@ -311,7 +311,8 @@ void RLE::writeCount(short cnt, Byte** ppCnt, Byte** ppDst) const
 
 short RLE::readCount(const Byte** ppCnt) const
 {
-  short cnt = *((const short*)*ppCnt);
+  short cnt;
+  memcpy(&cnt, *ppCnt, sizeof(short));
   SWAP_2(cnt);
   *ppCnt += 2;
   return cnt;

@@ -280,13 +280,14 @@ bool BitStuffer::readULong(Byte** ppByte, unsigned int& k, int numBytes) const
   }
   else if (numBytes == 2)
   {
-    unsigned short s = *((unsigned short*)ptr);
+    unsigned short s;
+    memcpy(&s, ptr, sizeof(unsigned short));
     SWAP_2(s);
     k = s;
   }
   else if (numBytes == 4)
   {
-    k = *((unsigned int*)ptr);
+    memcpy(&k, ptr, sizeof(unsigned int));
     SWAP_4(k);
   }
   else
