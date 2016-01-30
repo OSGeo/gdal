@@ -575,11 +575,8 @@ protected:
     // Overview Support
     // Inherited from GDALRasterBand
     // These are called only in the base level RasterBand
-    virtual int GetOverviewCount() { return static_cast<int>(overviews.size()); }
-    virtual GDALRasterBand *GetOverview(int n) {
-	if (n >= (int)overviews.size()) return NULL;
-	return overviews[n];
-    }
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int n);
     void AddOverview(GDALMRFRasterBand *b) { overviews.push_back(b); }
 };
 

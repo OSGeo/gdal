@@ -196,12 +196,8 @@ CPLErr GDALMRFDataset::IBuildOverviews(
     }
 
     /* -------------------------------------------------------------------- */
-    /*      If we don't have read access, then create the overviews         */
+    /*      If we don't have write access, then create the overviews        */
     /*      externally.                                                     */
-    /*      Copied from the GTIFF driver, but doesn't work, just prints a   */
-    /*      "not supported" message                                         */
-    /*      Don't really know how to use the overview system                */
-    /*                                                                      */
     /* -------------------------------------------------------------------- */
     if (GetAccess() != GA_Update)
     {
@@ -543,6 +539,14 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
     ds->SetPhysicalFilename(pszFileName);
     // Don't mess with metadata after this, otherwise PAM will re-write the aux.xml
     ds->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Open external overviews.                                        */
+/* -------------------------------------------------------------------- */
+    ds->oOvManager.Initialize( ds, pszFileName,
+                               poOpenInfo->GetSiblingFiles() );
+
+
     return ds;
 }
 
