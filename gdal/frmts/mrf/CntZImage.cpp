@@ -249,11 +249,11 @@ bool CntZImage::write(Byte** ppByte,
   memcpy(ptr, getTypeString().c_str(), getTypeString().length());
   ptr += getTypeString().length();
 
-  *((int*)ptr) = versionSwap;  ptr += sizeof(int);
-  *((int*)ptr) = typeSwap;     ptr += sizeof(int);
-  *((int*)ptr) = heightSwap;  ptr += sizeof(int);
-  *((int*)ptr) = widthSwap;   ptr += sizeof(int);
-  *((double*)ptr) = maxZErrorSwap;  ptr += sizeof(double);
+  memcpy(ptr, &versionSwap, sizeof(int));  ptr += sizeof(int);
+  memcpy(ptr, &typeSwap, sizeof(int));  ptr += sizeof(int);
+  memcpy(ptr, &heightSwap, sizeof(int));  ptr += sizeof(int);
+  memcpy(ptr, &widthSwap, sizeof(int));  ptr += sizeof(int);
+  memcpy(ptr, &maxZErrorSwap, sizeof(double));  ptr += sizeof(double);
 
   *ppByte = ptr;
 
@@ -303,10 +303,10 @@ bool CntZImage::write(Byte** ppByte,
     SWAP_4(maxValInImgSwap);
 
     ptr = *ppByte;
-    *((int*)ptr) = numTilesVertSwap;  ptr += sizeof(int);
-    *((int*)ptr) = numTilesHoriSwap;  ptr += sizeof(int);
-    *((int*)ptr) = numBytesOptSwap;   ptr += sizeof(int);
-    *((float*)ptr) = maxValInImgSwap;  ptr += sizeof(float);
+    memcpy(ptr, &numTilesVertSwap, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &numTilesHoriSwap, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &numBytesOptSwap, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &maxValInImgSwap, sizeof(float));  ptr += sizeof(float);
 
     *ppByte = ptr;
     Byte* bArr = ptr;
@@ -378,11 +378,11 @@ bool CntZImage::read(Byte** ppByte,
 
   Byte* ptr = *ppByte;
 
-  version = *((const int*)ptr);   ptr += sizeof(int);
-  type = *((const int*)ptr);   ptr += sizeof(int);
-  height = *((const int*)ptr);   ptr += sizeof(int);
-  width = *((const int*)ptr);   ptr += sizeof(int);
-  maxZErrorInFile = *((const double*)ptr);  ptr += sizeof(double);
+  memcpy(&version, ptr, sizeof(int));  ptr += sizeof(int);
+  memcpy(&type, ptr, sizeof(int));  ptr += sizeof(int);
+  memcpy(&height, ptr, sizeof(int));  ptr += sizeof(int);
+  memcpy(&width, ptr, sizeof(int));  ptr += sizeof(int);
+  memcpy(&maxZErrorInFile, ptr, sizeof(double));  ptr += sizeof(double);
 
   *ppByte = ptr;
 
@@ -424,10 +424,10 @@ bool CntZImage::read(Byte** ppByte,
     float maxValInImg = 0;
 
     ptr = *ppByte;
-    numTilesVert = *((int*)ptr);  ptr += sizeof(int);
-    numTilesHori = *((int*)ptr);  ptr += sizeof(int);
-    numBytes     = *((int*)ptr);  ptr += sizeof(int);
-    maxValInImg  = *((float*)ptr); ptr += sizeof(float);
+    memcpy(&numTilesVert, ptr, sizeof(int));  ptr += sizeof(int);
+    memcpy(&numTilesHori, ptr, sizeof(int));  ptr += sizeof(int);
+    memcpy(&numBytes, ptr, sizeof(int));  ptr += sizeof(int);
+    memcpy(&maxValInImg, ptr, sizeof(float));  ptr += sizeof(float);
 
     *ppByte = ptr;
     Byte *bArr = ptr;
