@@ -953,4 +953,23 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     return ret;
 }
 
+int GDALMRFRasterBand::GetOverviewCount()
+{
+    // First try internal overviews
+    int nInternalOverviewCount = static_cast<int>(overviews.size());
+    if( nInternalOverviewCount > 0 )
+        return nInternalOverviewCount;
+    // Fallback to PAM external overviews
+    return GDALPamRasterBand::GetOverviewCount();
+}
+
+GDALRasterBand* GDALMRFRasterBand::GetOverview(int n)
+{
+    // First try internal overviews
+    if( n >= 0 && n < (int)overviews.size() )
+        return overviews[n];
+    // Fallback to PAM external overviews
+    return GDALPamRasterBand::GetOverview(n);
+}
+
 NAMESPACE_MRF_END
