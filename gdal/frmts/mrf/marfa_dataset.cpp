@@ -235,6 +235,9 @@ CPLErr GDALMRFDataset::IBuildOverviews(
     GDALRasterBand ***papapoOverviewBands =
 	(GDALRasterBand ***)CPLCalloc(sizeof(void*), nBands);
 
+    int* panOverviewListNew = (int*)CPLMalloc( sizeof(int) * nOverviews );
+    memcpy( panOverviewListNew, panOverviewList, sizeof(int) * nOverviews );
+
     try {  // Throw an error code, to make sure memory gets freed properly
 	// Modify the metadata file if it doesn't already have the Rset model set
 	if (0.0 == scale) {
@@ -275,26 +278,52 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 		    CPLDestroyXMLNode(config);
 		throw e; // Rethrow
 	    }
+
+            // To avoid issues with blacks overviews, if the user asked to
+            // generate overviews 2, 4, ..., we finish the sequence until the
+            // last level that will be otherwised initialized to black
+	    if( !EQUAL(pszResampling, "NONE") &&
+                nOverviews != GetRasterBand(1)->GetOverviewCount() &&
+                CSLTestBoolean(CPLGetConfigOption("MRF_ALL_OVERVIEW_LEVELS", "YES")) )
+            {
+                bool bIncreasingPowers = true;
+                for (int i = 1; i < nOverviews; i++) {
+                    if (panOverviewList[i] != (panOverviewList[0] << i)) {
+                        bIncreasingPowers = false;
+                    }
+                }
+                if( bIncreasingPowers )
+                {
+                    CPLDebug("MRF", "Generating %d levels instead of the %d required",
+                             GetRasterBand(1)->GetOverviewCount(), nOverviews);
+                    nOverviews = GetRasterBand(1)->GetOverviewCount();
+                    panOverviewListNew = (int*) CPLRealloc(panOverviewListNew,
+                                                    sizeof(int) * nOverviews );
+                    for (int i = 1; i < nOverviews; i++) {
+                        panOverviewListNew[i] = panOverviewListNew[0] << i;
+                    }
+                }
+            }
 	}
 
 	for (int i = 0; i < nOverviews; i++) {
 
 	    // Verify that scales are reasonable, val/scale has to be an integer
-	    if (!IsPower(panOverviewList[i], scale)) {
+	    if (!IsPower(panOverviewListNew[i], scale)) {
 		CPLError(CE_Warning, CPLE_AppDefined,
 		    "MRF:IBuildOverviews, overview factor %d is not a power of %f",
-		    panOverviewList[i], scale);
+		    panOverviewListNew[i], scale);
 		continue;
 	    };
 
-	    int srclevel = int(-0.5 + logb(panOverviewList[i], scale));
+	    int srclevel = int(-0.5 + logb(panOverviewListNew[i], scale));
 	    GDALMRFRasterBand *b = static_cast<GDALMRFRasterBand *>(GetRasterBand(1));
 
 	    // Warn for requests for invalid levels
 	    if (srclevel >= b->GetOverviewCount()) {
 		CPLError(CE_Warning, CPLE_AppDefined,
 		    "MRF:IBuildOverviews, overview factor %d is not valid for this dataset",
-		    panOverviewList[i]);
+		    panOverviewListNew[i]);
 		continue;
 	    }
 
@@ -352,6 +381,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 	eErr = e;
     }
 
+    CPLFree(panOverviewListNew);
     CPLFree(papapoOverviewBands);
     CPLFree(papoOverviewBandList);
     CPLFree(papoBandList);
