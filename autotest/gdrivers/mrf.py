@@ -203,7 +203,29 @@ def mrf_overview_avg_fact_3():
     return 'success'
 
 
-def mrf_lerf_nodata():
+def mrf_overview_external():
+
+    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF')
+    ds = gdal.Open('/vsimem/out.mrf')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs = 1087
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+
+    return 'success'
+
+
+def mrf_lerc_nodata():
 
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF', noData = 107, creationOptions = ['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
@@ -229,7 +251,8 @@ gdaltest_list += [ mrf_overview_near_fact_2 ]
 gdaltest_list += [ mrf_overview_avg_fact_2 ]
 gdaltest_list += [ mrf_overview_near_fact_3 ]
 gdaltest_list += [ mrf_overview_avg_fact_3 ]
-gdaltest_list += [ mrf_lerf_nodata ]
+gdaltest_list += [ mrf_overview_external ]
+gdaltest_list += [ mrf_lerc_nodata ]
 
 if __name__ == '__main__':
 
