@@ -1494,7 +1494,8 @@ int KmlSuperOverlayFindRegionStartInternal(CPLXMLNode* psNode,
         *ppsLink = psLink;
         return TRUE;
     }
-    if( strcmp(psNode->pszValue, "Document") == 0 &&
+    if( (strcmp(psNode->pszValue, "Document") == 0 ||
+         strcmp(psNode->pszValue, "Folder") == 0) &&
         (psRegion = CPLGetXMLNode(psNode, "Region")) != NULL &&
         (psGroundOverlay = CPLGetXMLNode(psNode, "GroundOverlay")) != NULL )
     {
@@ -2317,6 +2318,15 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
     if( psNode == NULL )
         return NULL;
 
+    GDALDataset* psSingleDocDS = KmlSingleDocRasterDataset::Open(pszFilename,
+                                                                 osFilename,
+                                                                 psNode);
+    if( psSingleDocDS != NULL )
+    {
+        CPLDestroyXMLNode(psNode);
+        return psSingleDocDS;
+    }
+
     CPLXMLNode* psRegion = NULL;
     CPLXMLNode* psDocument = NULL;
     CPLXMLNode* psGroundOverlay = NULL;
@@ -2324,11 +2334,8 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
     if( !KmlSuperOverlayFindRegionStart(psNode, &psRegion,
                                         &psDocument, &psGroundOverlay, &psLink) )
     {
-        GDALDataset* psDS = KmlSingleDocRasterDataset::Open(pszFilename,
-                                                            osFilename,
-                                                            psNode);
         CPLDestroyXMLNode(psNode);
-        return psDS;
+        return NULL;
     }
 
     if( psLink != NULL )
