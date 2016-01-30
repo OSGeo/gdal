@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 DDFRecordIndex::DDFRecordIndex() :
-    bSorted(FALSE),
+    bSorted(false),
     nRecordCount(0),
     nRecordMax(0),
     nLastObjlPos(0),
@@ -75,7 +75,7 @@ void DDFRecordIndex::Clear()
     // for( int i = 0; i < nRecordCount; i++ )
     //   delete pasRecords[i].poRecord;
 
-    bSorted = FALSE;
+    bSorted = false;
 
     nRecordCount = 0;
     nRecordMax = 0;
@@ -106,7 +106,7 @@ void DDFRecordIndex::AddRecord( int nKey, DDFRecord * poRecord )
             CPLRealloc( pasRecords, sizeof(DDFIndexedRecord)*nRecordMax ) );
     }
 
-    bSorted = FALSE;
+    bSorted = false;
 
     pasRecords[nRecordCount].nKey = nKey;
     pasRecords[nRecordCount].poRecord = poRecord;
@@ -320,4 +320,3 @@ void DDFRecordIndex::SetClientInfoByIndex( int nIndex, void *pClientData )
 
     pasRecords[nIndex].pClientData = pClientData;
 }
-

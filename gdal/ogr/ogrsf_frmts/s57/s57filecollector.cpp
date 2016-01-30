@@ -29,9 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "s57.h"
 
 CPL_CVSID("$Id$");
 
@@ -74,7 +74,7 @@ char **S57FileCollector( const char *pszDataset )
                 CPLFormFilename( pszDataset, papszDirFiles[iFile], NULL ) );
 
             // Add to list if it is an S-57 _data_ file.
-            if( VSIStat( pszFullFile, &sStatBuf ) == 0 
+            if( VSIStat( pszFullFile, &sStatBuf ) == 0
                 && VSI_ISREG( sStatBuf.st_mode )
                 && oModule.Open( pszFullFile, TRUE ) )
             {
@@ -103,7 +103,7 @@ char **S57FileCollector( const char *pszDataset )
         return NULL;
     }
 
-    DDFRecord   *poRecord = oModule.ReadRecord();
+    DDFRecord *poRecord = oModule.ReadRecord();
     if( poRecord == NULL )
         return NULL;
 
@@ -129,14 +129,14 @@ char **S57FileCollector( const char *pszDataset )
     {
         pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "ENC_ROOT", NULL ));
     }
-    else if( CPLStat( CPLFormFilename( pszCatDir, "enc_root", NULL ), 
+    else if( CPLStat( CPLFormFilename( pszCatDir, "enc_root", NULL ),
                       &sStatBuf ) == 0 && VSI_ISDIR(sStatBuf.st_mode) )
     {
         pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "enc_root", NULL ));
     }
 
     if( pszRootDir )
-        CPLDebug( "S57", "Found root directory to be %s.", 
+        CPLDebug( "S57", "Found root directory to be %s.",
                   pszRootDir );
 
 /* -------------------------------------------------------------------- */
@@ -152,8 +152,8 @@ char **S57FileCollector( const char *pszDataset )
             const char  *pszFile
                 = poRecord->GetStringSubfield("CATD", 0, "FILE", 0);
 
-            // Often there is an extra ENC_ROOT in the path, try finding 
-            // this file. 
+            // Often there is an extra ENC_ROOT in the path, try finding
+            // this file.
 
             const char  *pszWholePath
                 = CPLFormFilename( pszCatDir, pszFile, NULL );
@@ -166,7 +166,7 @@ char **S57FileCollector( const char *pszDataset )
             if( CPLStat( pszWholePath, &sStatBuf ) != 0 )
             {
                 CPLError( CE_Warning, CPLE_OpenFailed,
-                          "Can't find file %s from catalog %s.", 
+                          "Can't find file %s from catalog %s.",
                           pszFile, pszDataset );
                 continue;
             }
@@ -181,4 +181,3 @@ char **S57FileCollector( const char *pszDataset )
 
     return papszRetList;
 }
-

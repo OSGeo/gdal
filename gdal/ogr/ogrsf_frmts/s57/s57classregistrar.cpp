@@ -71,7 +71,6 @@ S57ClassRegistrar::~S57ClassRegistrar()
 S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrarIn):
     poRegistrar(poRegistrarIn)
 {
-
     iCurrentClass = -1;
 
     papszCurrentFields = NULL;
@@ -171,14 +170,11 @@ const char *S57ClassRegistrar::ReadLine( VSILFILE * fp )
 /*                              LoadInfo()                              */
 /************************************************************************/
 
-int S57ClassRegistrar::LoadInfo( const char * pszDirectory, 
+int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
                                  const char * pszProfile,
                                  int bReportErr )
 
 {
-    VSILFILE   *fp;
-    char        szTargetFile[1024];
-
     if( pszDirectory == NULL )
         pszDirectory = CPLGetConfigOption("S57_CSV",NULL);
 
@@ -188,6 +184,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     if( pszProfile == NULL )
         pszProfile = CPLGetConfigOption( "S57_PROFILE", "" );
 
+    char szTargetFile[1024];  // TODO: Get this off of the stack.
     if( EQUAL(pszProfile, "Additional_Military_Layers") )
     {
        snprintf( szTargetFile, sizeof(szTargetFile), "s57objectclasses_%s.csv", "aml" );
@@ -205,6 +202,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
        strcpy( szTargetFile, "s57objectclasses.csv" );
     }
 
+    VSILFILE *fp = NULL;
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
         return FALSE;
 
@@ -326,21 +324,18 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* -------------------------------------------------------------------- */
 /*      Sort index by acronym.                                          */
 /* -------------------------------------------------------------------- */
-    int         bModified;
+    bool bModified = false;
     do
     {
-        bModified = FALSE;
         for( int iAttr = 0; iAttr < nAttrCount-1; iAttr++ )
         {
             if( strcmp(aoAttrInfos[anAttrIndex[iAttr]]->osAcronym,
                        aoAttrInfos[anAttrIndex[iAttr+1]]->osAcronym) > 0 )
             {
-                int     nTemp;
-
-                nTemp = anAttrIndex[iAttr];
+                int nTemp = anAttrIndex[iAttr];
                 anAttrIndex[iAttr] = anAttrIndex[iAttr+1];
                 anAttrIndex[iAttr+1] = nTemp;
-                bModified = TRUE;
+                bModified = true;
             }
         }
     } while( bModified );
@@ -370,7 +365,7 @@ int S57ClassContentExplorer::SelectClassByIndex( int nNewIndex )
 /*      Has this info been parsed yet?                                  */
 /* -------------------------------------------------------------------- */
     if( papapszClassesFields[nNewIndex] == NULL )
-        papapszClassesFields[nNewIndex] = 
+        papapszClassesFields[nNewIndex] =
             CSLTokenizeStringComplex( poRegistrar->apszClassesInfo[nNewIndex],
                                       ",", TRUE, TRUE );
 
@@ -484,9 +479,7 @@ char **S57ClassContentExplorer::GetAttributeList( const char * pszType )
         if( pszType != NULL && iColumn == 5 && !EQUAL(pszType,"c") )
             continue;
 
-        char    **papszTokens;
-
-        papszTokens =
+        char **papszTokens =
             CSLTokenizeStringComplex( papszCurrentFields[iColumn], ";",
                                       TRUE, FALSE );
 
@@ -530,13 +523,13 @@ char **S57ClassContentExplorer::GetPrimitives()
         && CSLCount(papszCurrentFields) > 7 )
     {
         CSLDestroy( papszTempResult );
-        papszTempResult = 
+        papszTempResult =
             CSLTokenizeStringComplex( papszCurrentFields[7], ";",
                                       TRUE, FALSE );
         return papszTempResult;
     }
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -563,10 +556,8 @@ int    S57ClassRegistrar::FindAttrByAcronym( const char * pszName )
 
     while( iStart <= iEnd )
     {
-        int     nCompareValue;
-
         const int iCandidate = (iStart + iEnd)/2;
-        nCompareValue =
+        int nCompareValue =
             strcmp(pszName, aoAttrInfos[anAttrIndex[iCandidate]]->osAcronym);
 
         if( nCompareValue < 0 )

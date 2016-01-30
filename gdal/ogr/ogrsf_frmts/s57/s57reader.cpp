@@ -632,8 +632,8 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 /* -------------------------------------------------------------------- */
 /*      Next vector feature?                                            */
 /* -------------------------------------------------------------------- */
-    if( (nOptionFlags & S57M_RETURN_DSID) 
-        && nNextDSIDIndex == 0 
+    if( (nOptionFlags & S57M_RETURN_DSID)
+        && nNextDSIDIndex == 0
         && (poTarget == NULL || EQUAL(poTarget->GetName(),"DSID")) )
     {
         return ReadDSID();
@@ -757,10 +757,10 @@ OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
     if( nFeatureId < 0 || nFeatureId >= oFE_Index.GetCount() )
         return NULL;
 
-    OGRFeature  *poFeature;
+    OGRFeature  *poFeature = NULL;
 
     if( (nOptionFlags & S57M_RETURN_DSID)
-        && nFeatureId == 0 
+        && nFeatureId == 0
         && (poTarget == NULL || EQUAL(poTarget->GetName(),"DSID")) )
     {
         poFeature = ReadDSID();
@@ -915,8 +915,8 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         }
 
         /* Fetch the attribute value */
-        const char *pszValue;
-        pszValue = poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr);
+        const char *pszValue =
+            poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr);
         if( pszValue == NULL )
             return;
 
@@ -1057,7 +1057,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 
     for( int iRef = 0; iRef < nRefCount; iRef++ )
     {
-        int nMaxBytes;
+        int nMaxBytes = 0;
 
         unsigned char *pabyData = reinterpret_cast<unsigned char *>(
             const_cast<char *>(
@@ -1076,8 +1076,8 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 
         papszRefs = CSLAddString( papszRefs, szLNAM );
 
-        pabyData = (unsigned char *)
-            poFFPT->GetSubfieldData( poRIND, &nMaxBytes, iRef );
+        pabyData = reinterpret_cast<unsigned char *>(const_cast<char *>(
+            poFFPT->GetSubfieldData( poRIND, &nMaxBytes, iRef ) ) );
         if( pabyData == NULL || nMaxBytes < 1 )
         {
             CSLDestroy( papszRefs );
@@ -1114,10 +1114,10 @@ void S57Reader::GenerateFSPTAttributes( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Allocate working lists of the attributes.                       */
 /* -------------------------------------------------------------------- */
-    int *panORNT = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
-    int *panUSAG = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
-    int *panMASK = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
-    int *panRCNM = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
+    int * const panORNT = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
+    int * const panUSAG = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
+    int * const panMASK = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
+    int * const panRCNM = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
     int *panRCID = static_cast<int *>( CPLMalloc( sizeof(int) * nCount ) );
 
 /* -------------------------------------------------------------------- */
@@ -1575,7 +1575,7 @@ S57StrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
                                   int nVertexCount )
 
 {
-    OGRLineString      *poLine = new OGRLineString;
+    OGRLineString * const poLine = new OGRLineString;
 
     nVertexCount = MAX(2,nVertexCount);
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
@@ -1607,7 +1607,8 @@ S57StrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                   int nVertexCount )
 
 {
-    double      dfStartAngle, dfEndAngle;
+    double      dfStartAngle;
+    double      dfEndAngle;
     double      dfRadius;
 
     if( dfStartX == dfEndX && dfStartY == dfEndY )
@@ -1675,9 +1676,11 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
 
 {
     int             nPoints = 0;
-    DDFField        *poSG2D, *poAR2D;
-    DDFSubfieldDefn *poXCOO=NULL, *poYCOO=NULL;
-    int bStandardFormat = TRUE;
+    DDFField        *poSG2D = NULL;
+    DDFField        *poAR2D = NULL;
+    DDFSubfieldDefn *poXCOO = NULL;
+    DDFSubfieldDefn *poYCOO = NULL;
+    bool bStandardFormat = true;
 
 /* -------------------------------------------------------------------- */
 /*      Points may be multiple rows in one SG2D/AR2D field or           */
@@ -1716,7 +1719,7 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
             return FALSE;
         }
 
-        int nVCount = poSG2D->GetRepeatCount();
+        const int nVCount = poSG2D->GetRepeatCount();
 
 /* -------------------------------------------------------------------- */
 /*      It is legitimate to have zero vertices for line segments        */
@@ -1732,7 +1735,7 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
 /*      Make sure out line is long enough to hold all the vertices      */
 /*      we will apply.                                                  */
 /* -------------------------------------------------------------------- */
-        int nVBase;
+        int nVBase = 0;
 
         if( iDirection < 0 )
             nVBase = iStartVertex + nPoints + nVCount;
@@ -1761,7 +1764,7 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
 /* -------------------------------------------------------------------- */
         if( bStandardFormat )
         {
-            int nBytesRemaining;
+            int nBytesRemaining = 0;
 
             const char *pachData
                 = poSG2D->GetSubfieldData( poYCOO,&nBytesRemaining, 0 );
@@ -1772,7 +1775,7 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
                 memcpy( &nYCOO, pachData, 4 );
                 pachData += 4;
 
-                GInt32      nXCOO;
+                GInt32 nXCOO = 0;
                 memcpy( &nXCOO, pachData, 4 );
                 pachData += 4;
 
@@ -1801,7 +1804,7 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
         {
             for( int i = 0; i < nVCount; i++ )
             {
-                int nBytesRemaining;
+                int nBytesRemaining = 0;
 
                 const char *pachData
                     = poSG2D->GetSubfieldData( poXCOO, &nBytesRemaining, i );
@@ -1879,9 +1882,9 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
     int nRCNM = 0;
     const int nRCID = ParseName( poFSPT, 0, &nRCNM );
 
-    double      dfX = 0.0;
-    double      dfY = 0.0;
-    double      dfZ = 0.0;
+    double dfX = 0.0;
+    double dfY = 0.0;
+    double dfZ = 0.0;
 
     if( nRCID == -1 || !FetchPoint( nRCNM, nRCID, &dfX, &dfY, &dfZ ) )
     {
@@ -1931,7 +1934,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Extract vertices.                                               */
 /* -------------------------------------------------------------------- */
-    OGRMultiPoint *poMP = new OGRMultiPoint();
+    OGRMultiPoint * const poMP = new OGRMultiPoint();
 
     DDFField *poField = poSRecord->FindField( "SG2D" );
     if( poField == NULL )
@@ -1952,7 +1955,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
         delete poMP;
         return;
     }
-    DDFSubfieldDefn *poVE3D
+    DDFSubfieldDefn * const poVE3D
         = poField->GetFieldDefn()->FindSubfieldDefn( "VE3D" );
 
     const int nPointCount = poField->GetRepeatCount();
@@ -2010,7 +2013,7 @@ GetIntSubfield( DDFField *poField,
 /* -------------------------------------------------------------------- */
 /*      Get a pointer to the data.                                      */
 /* -------------------------------------------------------------------- */
-    int nBytesRemaining;
+    int nBytesRemaining = 0;
 
     const char *pachData = poField->GetSubfieldData( poSFDefn,
                                 &nBytesRemaining,
@@ -2038,8 +2041,6 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
     for( int iField = 0; iField < nFieldCount; ++iField )
     {
-        double dfX;
-        double dfY;
         double dlastfX = 0.0;
         double dlastfY = 0.0;
 
@@ -2094,8 +2095,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
             // The "VRPT" field has only one row
             // Get the next row from a second "VRPT" field
-            int  nVC_RCID_firstnode;
-            int  nVC_RCID_lastnode;
+            int nVC_RCID_firstnode = 0;
+            int nVC_RCID_lastnode = 0;
 
             if( poVRPT != NULL && poVRPT->GetRepeatCount() == 1 )
             {
@@ -2135,6 +2136,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                 nVC_RCID_lastnode = ParseName( poVRPT, 1 );
             }
 
+            double dfX = 0.0;
+            double dfY = 0.0;
             if( nVC_RCID_firstnode == -1 ||
                 ! FetchPoint( RCNM_VC, nVC_RCID_firstnode, &dfX, &dfY ) )
             {
@@ -2201,18 +2204,16 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
                     const int nVCount = poSG2D->GetRepeatCount();
 
-                    int nStart;
-                    int nEnd;
-                    int nInc;
+                    int nStart = 0;
+                    int nEnd = 0;
+                    int nInc = 0;
                     if( bReverse )
                     {
                         nStart = nVCount-1;
-                        nEnd = 0;
                         nInc = -1;
                     }
                     else
                     {
-                        nStart = 0;
                         nEnd = nVCount-1;
                         nInc = 1;
                     }
@@ -2220,7 +2221,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                     int nVBase = poLine->getNumPoints();
                     poLine->setNumPoints( nVBase + nVCount );
 
-                    int nBytesRemaining;
+                    int nBytesRemaining = 0;
 
                     for( int i = nStart; i != nEnd+nInc; i += nInc )
                     {
@@ -2302,7 +2303,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
                                       OGRFeature * poFeature )
 
 {
-    OGRGeometryCollection *poLines = new OGRGeometryCollection();
+    OGRGeometryCollection * const poLines = new OGRGeometryCollection();
 
 /* -------------------------------------------------------------------- */
 /*      Find the FSPT fields.                                           */
