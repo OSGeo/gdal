@@ -181,7 +181,7 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
     if (extrasize < (src.size + 64)) {
 	dst.size = src.size + 64;
 
-	dbuff = CPLMalloc(dst.size);
+	dbuff = VSIMalloc(dst.size);
 	dst.buffer = (char *)dbuff;
 	if (!dst.buffer)
 	    return NULL;
@@ -511,7 +511,7 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     // Write the page in the local cache
 
     // Have to use a separate buffer for compression output.
-    void *outbuff = CPLMalloc(poDS->pbsize);
+    void *outbuff = VSIMalloc(poDS->pbsize);
 
     if (!outbuff) {
 	CPLError(CE_Failure, CPLE_AppDefined, 
@@ -608,7 +608,19 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     }
 
     // Need to read the tile from the source
-    char *buf = static_cast<char *>(CPLMalloc(static_cast<size_t>(tinfo.size)));
+    if( tinfo.size <= 0 || tinfo.size > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Invalid tile size " CPL_FRMT_GIB,
+                 tinfo.size);
+        return CE_Failure;
+    }
+    char *buf = static_cast<char *>(VSIMalloc(static_cast<size_t>(tinfo.size)));
+    if( buf == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GIB " bytes",
+                 tinfo.size);
+        return CE_Failure;
+    }
 
     VSIFSeekL(srcfd, tinfo.offset, SEEK_SET);
     if (tinfo.size != GIntBig(VSIFReadL( buf, 1, static_cast<size_t>(tinfo.size), srcfd))) {
@@ -681,7 +693,19 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     // valgrind gdalinfo -checksum out.mrf
     // Invalid read of size 4
     // at BitStuffer::read(unsigned char**, std::vector<unsigned int, std::allocator<unsigned int> >&) const (BitStuffer.cpp:153)
-    void *data = CPLMalloc(static_cast<size_t>(tinfo.size + 3));
+    if( tinfo.size <= 0 || tinfo.size > INT_MAX - 3 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Too big tile size: " CPL_FRMT_GIB, tinfo.size);
+        return CE_Failure;
+    }
+    void *data = VSIMalloc(static_cast<size_t>(tinfo.size + 3));
+    if( data == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Could not allocate memory for tile size: " CPL_FRMT_GIB, tinfo.size);
+        return CE_Failure;
+    }
 
     VSILFILE *dfp = DataFP();
 
@@ -706,8 +730,22 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
     // We got the data, do we need to decompress it before decoding?
     if (deflatep) {
+        if( img.pageSizeBytes > INT_MAX - 1440 )
+        {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_AppDefined, "Too big page size %d",
+                     img.pageSizeBytes);
+            return CE_Failure;
+        }
 	dst.size = img.pageSizeBytes + 1440; // in case the packed page is a bit larger than the raw one
-	dst.buffer = (char *)CPLMalloc(dst.size);
+	dst.buffer = (char *)VSIMalloc(dst.size);
+        if( dst.buffer == NULL )
+        {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate %d bytes",
+                     static_cast<int>(dst.size));
+            return CE_Failure;
+        }
 
 	if (ZUnPack(src, dst, deflate_flags)) {
 	    // Got it unpacked, update the pointers
@@ -810,7 +848,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     // Keep track of what bands are empty
     GUIntBig empties=0;
 
-    void *tbuffer = CPLMalloc(img.pageSizeBytes + poDS->pbsize);
+    void *tbuffer = VSIMalloc(img.pageSizeBytes + poDS->pbsize);
 
     if (!tbuffer) {
 	CPLError(CE_Failure,CPLE_AppDefined, "MRF: Can't allocate write buffer");
