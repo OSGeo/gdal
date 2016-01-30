@@ -66,39 +66,11 @@ init_list = [
     ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
     ('byte.tif', 1, [4672, [4652,4603]], ['COMPRESS=JPEG', 'QUALITY=99']),
     ('rgbsmall.tif', 1, [21212, [21137,21223,21231,21150]], ['COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, [21333]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, [21137]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=RGB']),
+    ('rgbsmall.tif', 1, [21212, [21061]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=YCC']),
+    ('12bit_rose_extract.jpg', 1, [30075, [29650]], ['COMPRESS=JPEG']),
 ]
-
-gdaltest_list = []
-
-
-class myTestCreateCopyWrapper:
-
-    def __init__(self, ut):
-        self.ut = ut
-
-    def myTestCreateCopy(self):
-        check_minmax = not 'COMPRESS=JPEG' in self.ut.options
-        for x in self.ut.options:
-            if x.find('OPTIONS:LERC_PREC=') >= 0:
-                check_minmax = False
-        return self.ut.testCreateCopy(check_minmax = check_minmax)
-
-for item in init_list:
-    options = []
-    if item[3]:
-        options = item[3]
-    chksum_param = item[2]
-    if type(chksum_param) == type([]):
-        chksum = chksum_param[0]
-        chksum_after_reopening = chksum_param[1]
-    else:
-        chksum = chksum_param
-        chksum_after_reopening = chksum_param
-    ut = gdaltest.GDALTest( 'MRF', item[0], item[1], chksum, options = options, chksum_after_reopening = chksum_after_reopening )
-    if ut is None:
-        print( 'MRF tests skipped' )
-    ut = myTestCreateCopyWrapper(ut)
-    gdaltest_list.append( (ut.myTestCreateCopy, item[0] + ' ' + str(options)) )
 
 def mrf_overview_near_fact_2():
 
@@ -412,6 +384,44 @@ def mrf_lerc_nodata():
     gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.til')
 
     return 'success'
+
+gdaltest_list = []
+
+
+class myTestCreateCopyWrapper:
+
+    def __init__(self, ut):
+        self.ut = ut
+
+    def myTestCreateCopy(self):
+        check_minmax = not 'COMPRESS=JPEG' in self.ut.options
+        for x in self.ut.options:
+            if x.find('OPTIONS:LERC_PREC=') >= 0:
+                check_minmax = False
+        return self.ut.testCreateCopy(check_minmax = check_minmax)
+
+for item in init_list:
+    src_filename = item[0]
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/' + src_filename)
+    if ds is None:
+        continue
+    ds = None
+    options = []
+    if item[3]:
+        options = item[3]
+    chksum_param = item[2]
+    if type(chksum_param) == type([]):
+        chksum = chksum_param[0]
+        chksum_after_reopening = chksum_param[1]
+    else:
+        chksum = chksum_param
+        chksum_after_reopening = chksum_param
+    ut = gdaltest.GDALTest( 'MRF', src_filename, item[1], chksum, options = options, chksum_after_reopening = chksum_after_reopening )
+    if ut is None:
+        print( 'MRF tests skipped' )
+    ut = myTestCreateCopyWrapper(ut)
+    gdaltest_list.append( (ut.myTestCreateCopy, item[0] + ' ' + str(options)) )
 
 gdaltest_list += [ mrf_overview_near_fact_2 ]
 gdaltest_list += [ mrf_overview_near_with_nodata_fact_2 ]
