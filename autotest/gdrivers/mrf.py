@@ -41,6 +41,7 @@ init_list = [
     ('byte.tif', 1, 4672, ['COMPRESS=DEFLATE']),
     ('byte.tif', 1, 4672, ['COMPRESS=NONE']),
     ('byte.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('byte.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
 #    ('byte.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('int16.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, ['COMPRESS=LERC']),
@@ -59,6 +60,7 @@ init_list = [
 #    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC']),
+    ('../../gcore/data/float64.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
 #    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 1, 50054, None),
     ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
@@ -76,6 +78,9 @@ class myTestCreateCopyWrapper:
 
     def myTestCreateCopy(self):
         check_minmax = not 'COMPRESS=JPEG' in self.ut.options
+        for x in self.ut.options:
+            if x.find('OPTIONS:LERC_PREC=') >= 0:
+                check_minmax = False
         return self.ut.testCreateCopy(check_minmax = check_minmax)
 
 for item in init_list:
@@ -95,18 +100,24 @@ for item in init_list:
     ut = myTestCreateCopyWrapper(ut)
     gdaltest_list.append( (ut.myTestCreateCopy, item[0] + ' ' + str(options)) )
 
-
-
-def mrf_overviews():
+def mrf_overview_near_fact_2():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024)
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
 
+    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024)
+    ref_ds.BuildOverviews('NEAR', [2])
+    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ref_ds = None
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.tif')
+
     ds = gdal.Open('/vsimem/out.mrf')
     cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 50235:
+    if cs != expected_cs:
         gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
         return 'fail'
     ds = None
 
@@ -114,7 +125,87 @@ def mrf_overviews():
 
     return 'success'
 
-gdaltest_list += [ mrf_overviews ]
+def mrf_overview_avg_fact_2():
+
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024, resampleAlg = 'cubic')
+    out_ds.BuildOverviews('AVERAGE', [2])
+    out_ds = None
+
+    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024, resampleAlg = 'cubic')
+    ref_ds.BuildOverviews('AVERAGE', [2])
+    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ref_ds = None
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.tif')
+
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+
+    return 'success'
+
+def mrf_overview_near_fact_3():
+
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024)
+    out_ds.BuildOverviews('NEAR', [3])
+    out_ds = None
+
+    #ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024)
+    #ref_ds.BuildOverviews('NEAR', [3])
+    #expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    #ref_ds = None
+    #gdal.GetDriverByName('MRF').Delete('/vsimem/out.tif')
+
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs = 13837
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+
+    return 'success'
+
+def mrf_overview_avg_fact_3():
+
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024)
+    out_ds.BuildOverviews('AVERAGE', [3])
+    out_ds = None
+
+    #ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024)
+    #ref_ds.BuildOverviews('AVERAGE', [3])
+    #expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    #ref_ds = None
+    #gdal.GetDriverByName('MRF').Delete('/vsimem/out.tif')
+
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs = 63331
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+
+    return 'success'
+
+gdaltest_list += [ mrf_overview_near_fact_2 ]
+gdaltest_list += [ mrf_overview_avg_fact_2 ]
+gdaltest_list += [ mrf_overview_near_fact_3 ]
+gdaltest_list += [ mrf_overview_avg_fact_3 ]
 
 if __name__ == '__main__':
 
