@@ -202,6 +202,24 @@ def mrf_overview_avg_fact_3():
 
     return 'success'
 
+def mrf_overview_near_implicit_level():
+
+    # We ask only overview level 2, but MRF automatically creates 2 and 4
+    # so check that 4 is properly initialized
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 2048, height = 2048)
+    out_ds.BuildOverviews('NEAR', [2])
+    out_ds = None
+
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+
+    return 'success'
 
 def mrf_overview_external():
 
@@ -251,6 +269,7 @@ gdaltest_list += [ mrf_overview_near_fact_2 ]
 gdaltest_list += [ mrf_overview_avg_fact_2 ]
 gdaltest_list += [ mrf_overview_near_fact_3 ]
 gdaltest_list += [ mrf_overview_avg_fact_3 ]
+gdaltest_list += [ mrf_overview_near_implicit_level ]
 gdaltest_list += [ mrf_overview_external ]
 gdaltest_list += [ mrf_lerc_nodata ]
 
