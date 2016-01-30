@@ -935,7 +935,7 @@ def TranslateOptions(options = [], format = 'GTiff',
                 new_options += ['-r', 'cubicspline']
             elif resampleAlg == GRA_Lanczos:
                 new_options += ['-r', 'lanczos']
-            elif resampleAlg == GRRA_Average:
+            elif resampleAlg == GRA_Average:
                 new_options += ['-r', 'average']
             elif resampleAlg == GRA_Mode:
                 new_options += ['-r', 'mode']
