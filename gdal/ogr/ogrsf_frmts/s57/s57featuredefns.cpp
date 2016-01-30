@@ -507,7 +507,7 @@ void S57GenerateStandardAttributes( OGRFeatureDefn *poFDefn, int nOptionFlags )
         oField.Set( "FFPT_RIND", OFTIntegerList, 1, 0 );
         poFDefn->AddFieldDefn( &oField );
 
-        // We should likely include FFPT_COMT here. 
+        // We should likely include FFPT_COMT here.
     }
 
 /* -------------------------------------------------------------------- */

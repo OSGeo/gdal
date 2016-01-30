@@ -162,42 +162,42 @@ int OGRS57DataSource::Open( const char * pszFilename )
                              GetOption(S57O_LNAM_REFS) );
 
     if( GetOption(S57O_UPDATES) != NULL )
-        papszReaderOptions = 
-            CSLSetNameValue( papszReaderOptions, S57O_UPDATES, 
+        papszReaderOptions =
+            CSLSetNameValue( papszReaderOptions, S57O_UPDATES,
                              GetOption(S57O_UPDATES));
 
     if( GetOption(S57O_SPLIT_MULTIPOINT) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_SPLIT_MULTIPOINT,
                              GetOption(S57O_SPLIT_MULTIPOINT) );
 
     if( GetOption(S57O_ADD_SOUNDG_DEPTH) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_ADD_SOUNDG_DEPTH,
                              GetOption(S57O_ADD_SOUNDG_DEPTH));
 
     if( GetOption(S57O_PRESERVE_EMPTY_NUMBERS) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_PRESERVE_EMPTY_NUMBERS,
                              GetOption(S57O_PRESERVE_EMPTY_NUMBERS) );
 
     if( GetOption(S57O_RETURN_PRIMITIVES) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES,
                              GetOption(S57O_RETURN_PRIMITIVES) );
 
     if( GetOption(S57O_RETURN_LINKAGES) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_LINKAGES,
                              GetOption(S57O_RETURN_LINKAGES) );
 
     if( GetOption(S57O_RETURN_DSID) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_DSID,
                              GetOption(S57O_RETURN_DSID) );
 
     if( GetOption(S57O_RECODE_BY_DSSI) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RECODE_BY_DSSI,
                              GetOption(S57O_RECODE_BY_DSSI) );
 
@@ -224,7 +224,7 @@ int OGRS57DataSource::Open( const char * pszFilename )
         return FALSE;
     }
 
-    int bSuccess = TRUE;
+    bool bSuccess = true;
 
     nModules = 1;
     papoModules = static_cast<S57Reader **>( CPLMalloc(sizeof(void*)) );
@@ -274,15 +274,15 @@ int OGRS57DataSource::Open( const char * pszFilename )
                                           poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateGeomFeatureDefn( wkbLineString, 
+        poDefn = S57GenerateGeomFeatureDefn( wkbLineString,
                                              poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateGeomFeatureDefn( wkbPolygon, 
+        poDefn = S57GenerateGeomFeatureDefn( wkbPolygon,
                                              poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateGeomFeatureDefn( wkbNone, 
+        poDefn = S57GenerateGeomFeatureDefn( wkbNone,
                                              poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     }
@@ -304,8 +304,8 @@ int OGRS57DataSource::Open( const char * pszFilename )
 
         for( int iModule = 0; iModule < nModules; iModule++ )
         {
-            bSuccess &=
-                papoModules[iModule]->CollectClassList(anClassCount);
+            bSuccess &= CPL_TO_BOOL(
+                papoModules[iModule]->CollectClassList(anClassCount) );
         }
 
         bool bGeneric = false;
