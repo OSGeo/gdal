@@ -40,7 +40,7 @@ EXTRAFLAGS =	-I../jpeg/libjpeg $(JPEG12_FLAGS) $(EXTRAFLAGS)
 !IFDEF PNG_EXTERNAL_LIB
 EXTRAFLAGS = 	-I../zlib -I$(PNGDIR) $(EXTRAFLAGS)
 !ELSE
-EXTRAFLAGS = 	-I../zlib -I../png/libpng $(EXTRAFLAGS)
+EXTRAFLAGS = 	-I../zlib -I../png/libpng -DINTERNAL_PNG $(EXTRAFLAGS)
 !ENDIF
 
 default:	$(OBJ)
