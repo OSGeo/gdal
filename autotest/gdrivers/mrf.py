@@ -128,7 +128,7 @@ def mrf_overview_near_fact_2():
 def mrf_overview_avg_fact_2():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024, resampleAlg = 'cubic')
-    out_ds.BuildOverviews('AVERAGE', [2])
+    out_ds.BuildOverviews('AVG', [2])
     out_ds = None
 
     ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024, resampleAlg = 'cubic')
@@ -179,7 +179,7 @@ def mrf_overview_near_fact_3():
 def mrf_overview_avg_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024)
-    out_ds.BuildOverviews('AVERAGE', [3])
+    out_ds.BuildOverviews('AVG', [3])
     out_ds = None
 
     #ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024)
@@ -190,7 +190,7 @@ def mrf_overview_avg_fact_3():
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 63331
+    expected_cs = 13837
     if cs != expected_cs:
         gdaltest.post_reason('fail')
         print(cs)
