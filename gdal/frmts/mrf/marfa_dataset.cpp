@@ -1301,7 +1301,10 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
 
     // If not set by the bands, get a pageSizeBytes buffer
     if (GetPBufferSize() == 0)
-	SetPBuffer(current.pageSizeBytes);
+    {
+        /* Add some arbitrary margin (needed for PNG with very small block sizes) */
+	SetPBuffer(current.pageSizeBytes + 100);
+    }
 
     if (hasVersions) { // It has versions, but how many?
 	verCount = 0; // Assume it only has one
