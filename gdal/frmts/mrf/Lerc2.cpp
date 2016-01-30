@@ -121,17 +121,11 @@ bool Lerc2::WriteHeader(Byte** ppByte) const
   memcpy(ptr, fileKey.c_str(), fileKey.length());
   ptr += fileKey.length();
 
-  for (size_t i = 0; i < intVec.size(); i++)
-  {
-    *((int*)ptr) = intVec[i];
-    ptr += sizeof(int);
-  }
+  memcpy( ptr, &intVec[0], intVec.size() * sizeof(int) );
+  ptr += intVec.size() * sizeof(int);
 
-  for (size_t i = 0; i < dblVec.size(); i++)
-  {
-    *((double*)ptr) = dblVec[i];
-    ptr += sizeof(double);
-  }
+  memcpy( ptr, &dblVec[0], dblVec.size() * sizeof(double) );
+  ptr += dblVec.size() * sizeof(double);
 
   *ppByte = ptr;
   return true;
@@ -155,7 +149,7 @@ bool Lerc2::ReadHeader(const Byte** ppByte, struct HeaderInfo& headerInfo) const
 
   ptr += fileKey.length();
 
-  hd.version = *((int*)ptr);
+  memcpy(&(hd.version), ptr, sizeof(int));
   ptr += sizeof(int);
 
   if (hd.version > m_currentVersion)    // this reader is outdated
@@ -164,17 +158,11 @@ bool Lerc2::ReadHeader(const Byte** ppByte, struct HeaderInfo& headerInfo) const
   std::vector<int>  intVec(7, 0);
   std::vector<double> dblVec(3, 0);
 
-  for (size_t i = 1; i < intVec.size(); i++)
-  {
-    intVec[i] = *((int*)ptr);
-    ptr += sizeof(int);
-  }
+  memcpy(&intVec[1], ptr, sizeof(int) * (intVec.size() - 1));
+  ptr += sizeof(int) * (intVec.size() - 1);
 
-  for (size_t i = 0; i < dblVec.size(); i++)
-  {
-    dblVec[i] = *((double*)ptr);
-    ptr += sizeof(double);
-  }
+  memcpy(&dblVec[0], ptr, sizeof(double) * dblVec.size());
+  ptr += sizeof(double) * dblVec.size();
 
   hd.nRows          = intVec[1];
   hd.nCols          = intVec[2];
@@ -214,7 +202,7 @@ bool Lerc2::WriteMask(Byte** ppByte) const
       return false;
 
     int numBytesMask = (int)numBytesRLE;
-    *((int*)ptr) = numBytesMask;    // num bytes for compressed mask
+    memcpy(ptr, &numBytesMask, sizeof(int));    // num bytes for compressed mask
     ptr += sizeof(int);
     memcpy(ptr, pArrRLE, numBytesRLE);
     ptr += numBytesRLE;
@@ -223,7 +211,8 @@ bool Lerc2::WriteMask(Byte** ppByte) const
   }
   else
   {
-    *((int*)ptr) = 0;    // indicates no mask stored
+    const int zero = 0;
+    memcpy(ptr, &zero, sizeof(int));   // indicates no mask stored
     ptr += sizeof(int);
   }
 
@@ -244,7 +233,8 @@ bool Lerc2::ReadMask(const Byte** ppByte)
 
   const Byte* ptr = *ppByte;
 
-  int numBytesMask = *((int*)ptr);
+  int numBytesMask;
+  memcpy(&numBytesMask, ptr, sizeof(int));
   ptr += sizeof(int);
 
   if ((numValid == 0 || numValid == w * h) && (numBytesMask != 0))

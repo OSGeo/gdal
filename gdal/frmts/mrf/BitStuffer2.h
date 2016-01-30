@@ -84,9 +84,15 @@ bool BitStuffer2::EncodeUInt(Byte** ppByte, unsigned int k, int numBytes) const
   if (numBytes == 1)
     *ptr = (Byte)k;
   else if (numBytes == 2)
-    *((unsigned short*)ptr) = (unsigned short)k;
+  {
+    const unsigned short kShort = (unsigned short)k;
+    memcpy(ptr, &kShort, sizeof(unsigned short));
+  }
   else if (numBytes == 4)
-    *((unsigned int*)ptr) = k;
+  {
+    const unsigned int kInt = (unsigned int)k;
+    memcpy(ptr, &kInt, sizeof(unsigned int));
+  }
   else
     return false;
 
@@ -105,11 +111,14 @@ bool BitStuffer2::DecodeUInt(const Byte** ppByte, unsigned int& k, int numBytes)
     k = *ptr;
   else if (numBytes == 2)
   {
-    unsigned short s = *((unsigned short*)ptr);
+    unsigned short s;
+    memcpy(&s, ptr, sizeof(unsigned short));
     k = s;
   }
   else if (numBytes == 4)
-    k = *((unsigned int*)ptr);
+  {
+    memcpy(&k, ptr, sizeof(unsigned int));
+  }
   else
     return false;
 

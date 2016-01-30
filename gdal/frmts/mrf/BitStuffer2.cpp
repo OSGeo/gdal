@@ -240,7 +240,10 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
   {
     if (32 - bitPos >= numBits)
     {
-      *dstPtr |= (*srcPtr++) << (32 - bitPos - numBits);
+      unsigned int dstValue;
+      memcpy(&dstValue, dstPtr, sizeof(unsigned int));
+      dstValue |= (*srcPtr++) << (32 - bitPos - numBits);
+      memcpy(dstPtr, &dstValue, sizeof(unsigned int));
       bitPos += numBits;
       if (bitPos == 32)    // shift >= 32 is undefined
       {
@@ -250,9 +253,15 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
     }
     else
     {
+      unsigned int dstValue;
       int n = numBits - (32 - bitPos);
-      *dstPtr++ |= (*srcPtr  ) >> n;
-      *dstPtr   |= (*srcPtr++) << (32 - n);
+      memcpy(&dstValue, dstPtr, sizeof(unsigned int));
+      dstValue |= (*srcPtr  ) >> n;
+      memcpy(dstPtr, &dstValue, sizeof(unsigned int));
+      dstPtr ++;
+      memcpy(&dstValue, dstPtr, sizeof(unsigned int));
+      dstValue |= (*srcPtr++) << (32 - n);
+      memcpy(dstPtr, &dstValue, sizeof(unsigned int));
       bitPos = n;
     }
   }
@@ -261,7 +270,12 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
   unsigned int numBytesNotNeeded = NumTailBytesNotNeeded(numElements, numBits);
   unsigned int n = numBytesNotNeeded;
   while (n--)
-    *dstPtr >>= 8;
+  {
+    unsigned int dstValue;
+    memcpy(&dstValue, dstPtr, sizeof(unsigned int));
+    dstValue >>= 8;
+    memcpy(dstPtr, &dstValue, sizeof(unsigned int));
+  }
 
   *ppByte += numBytes - numBytesNotNeeded;
 }
