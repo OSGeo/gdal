@@ -1095,12 +1095,27 @@ bool Lerc2::WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed) cons
   {
     case DT_Char:    *((char*)ptr)           = (char)z;            ptr++;     break;
     case DT_Byte:    *((Byte*)ptr)           = (Byte)z;            ptr++;     break;
-    case DT_Short:   *((short*)ptr)          = (short)z;           ptr += 2;  break;
-    case DT_UShort:  *((unsigned short*)ptr) = (unsigned short)z;  ptr += 2;  break;
-    case DT_Int:     *((int*)ptr)            = (int)z;             ptr += 4;  break;
-    case DT_UInt:    *((unsigned int*)ptr)   = (unsigned int)z;    ptr += 4;  break;
-    case DT_Float:   *((float*)ptr)          = (float)z;           ptr += 4;  break;
-    case DT_Double:  *((double*)ptr)         = (double)z;          ptr += 8;  break;
+    case DT_Short: { short s = (short)z;
+                     memcpy(ptr, &s, sizeof(short));
+                     ptr += 2;
+                     break; }
+    case DT_UShort:{ unsigned short us = (unsigned short)z;
+                     memcpy(ptr, &us, sizeof(unsigned short));
+                     ptr += 2;
+                     break; }
+    case DT_Int:   { int i = (int)z;
+                     memcpy(ptr, &i, sizeof(int));
+                     ptr += 4;
+                     break; }
+    case DT_UInt:  { unsigned int n = (unsigned int)z;
+                     memcpy(ptr, &n, sizeof(unsigned int));
+                     ptr += 4;
+                     break; }
+    case DT_Float: { float f = (float)z;
+                     memcpy(ptr, &f, sizeof(float));
+                     ptr += 4;
+                     break; }
+    case DT_Double:  memcpy(ptr, &z, sizeof(double)); ptr += 8;  break;
     default:
       return false;
   }
@@ -1132,37 +1147,43 @@ double Lerc2::ReadVariableDataType(const Byte** ppByte, DataType dtUsed) const
     }
     case DT_Short:
     {
-      short s = *((short*)ptr);
+      short s;
+      memcpy(&s, ptr, sizeof(short));
       *ppByte = ptr + 2;
       return s;
     }
     case DT_UShort:
     {
-      unsigned short us = *((unsigned short*)ptr);
+      unsigned short us;
+      memcpy(&us, ptr, sizeof(unsigned short));
       *ppByte = ptr + 2;
       return us;
     }
     case DT_Int:
     {
-      int i = *((int*)ptr);
+      int i;
+      memcpy(&i, ptr, sizeof(int));
       *ppByte = ptr + 4;
       return i;
     }
     case DT_UInt:
     {
-      unsigned int n = *((unsigned int*)ptr);
+      unsigned int n;
+      memcpy(&n, ptr, sizeof(unsigned int));
       *ppByte = ptr + 4;
       return n;
     }
     case DT_Float:
     {
-      float f = *((float*)ptr);
+      float f;
+      memcpy(&f, ptr, sizeof(float));
       *ppByte = ptr + 4;
       return f;
     }
     case DT_Double:
     {
-      double d = *((double*)ptr);
+      double d;
+      memcpy(&d, ptr, sizeof(double));
       *ppByte = ptr + 8;
       return d;
     }
