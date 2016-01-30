@@ -327,6 +327,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     bool bModified = false;
     do
     {
+        bModified = false;
         for( int iAttr = 0; iAttr < nAttrCount-1; iAttr++ )
         {
             if( strcmp(aoAttrInfos[anAttrIndex[iAttr]]->osAcronym,
