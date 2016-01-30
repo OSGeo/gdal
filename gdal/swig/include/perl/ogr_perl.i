@@ -1480,6 +1480,7 @@ sub ApproximateArcAngles {
 sub As {
     my $self = shift;
     my $p = Geo::GDAL::named_parameters(\@_, Format => undef, ByteOrder => 'XDR', SRID => undef, Options => undef, AltitudeMode => undef);
+    $p->{byteorder} = Geo::GDAL::string2int($p->{byteorder}, \%Geo::OGR::Geometry::BYTE_ORDER_STRING2INT);
     my $f = $p->{format};
     if ($f =~ /text/i) {
         return $self->AsText;
