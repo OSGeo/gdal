@@ -264,6 +264,11 @@ bool RLE::decompress(const Byte* arrRLE, Byte** arr, size_t& numBytes) const
   }
 
   numBytes = sum;
+  if( numBytes == 0 )
+  {
+    *arr = NULL;
+    return true;
+  }
   *arr = new Byte[numBytes];
   if (!*arr)
     return false;
