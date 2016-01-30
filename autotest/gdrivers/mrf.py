@@ -102,7 +102,7 @@ for item in init_list:
 
 def mrf_overview_near_fact_2():
 
-    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024)
+    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/byte.tif')
     ref_ds.BuildOverviews('NEAR', [2])
     expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
     ref_ds = None
@@ -112,11 +112,10 @@ def mrf_overview_near_fact_2():
                 gdal.GDT_Int32, gdal.GDT_UInt32,
                 gdal.GDT_Float32, gdal.GDT_Float64 ]:
 
-        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif',
+        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE'],
-                                outputType = dt,
-                                width = 1024, height = 1024)
+                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType = dt)
         out_ds.BuildOverviews('NEAR', [2])
         out_ds = None
 
@@ -139,24 +138,50 @@ def mrf_overview_near_fact_2():
 
 def mrf_overview_near_with_nodata_fact_2():
 
-    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/utm.tif',  width = 1024, height = 1024, noData = 107)
-    ref_ds.BuildOverviews('NEAR', [2])
-    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    ref_ds = None
-    gdal.GetDriverByName('MRF').Delete('/vsimem/out.tif')
+    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+                gdal.GDT_Int32, gdal.GDT_UInt32,
+                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+
+        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
+                                format = 'MRF',
+                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType = dt,
+                                noData = 107)
+        out_ds.BuildOverviews('NEAR', [2])
+        out_ds = None
+
+        ds = gdal.Open('/vsimem/out.mrf')
+        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+        expected_cs = 1117
+        if cs != expected_cs:
+            gdaltest.post_reason('fail')
+            print(dt)
+            print(cs)
+            print(expected_cs)
+            return 'fail'
+        ds = None
+
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.aux.xml')
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.ppg')
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.til')
+
+    return 'success'
+
+def mrf_overview_avg_fact_2():
 
     for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                 gdal.GDT_Int32, gdal.GDT_UInt32,
                 gdal.GDT_Float32, gdal.GDT_Float64 ]:
 
-        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif',
+        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE'],
-                                outputType = dt,
-                                noData = 107,
-                                width = 1024, height = 1024)
-        out_ds.BuildOverviews('NEAR', [2])
+                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType = dt)
+        out_ds.BuildOverviews('AVG', [2])
         out_ds = None
+
+        expected_cs = 1152
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -175,73 +200,21 @@ def mrf_overview_near_with_nodata_fact_2():
 
     return 'success'
 
-def mrf_overview_avg_fact_2():
-
-    expected_cs_map = { gdal.GDT_Byte : 1890,
-                        gdal.GDT_Int16 : 64961,
-                        gdal.GDT_UInt16 : 2625,
-                        gdal.GDT_Int32 : 64961,
-                        gdal.GDT_UInt32 : 2625,
-                        gdal.GDT_Float32 : 64282,
-                        gdal.GDT_Float64 : 64282,
-                      }
-
-    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-                gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64 ]:
-
-        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif',
-                                format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE'],
-                                outputType = dt,
-                                width = 1024, height = 1024, resampleAlg = 'cubic')
-        out_ds.BuildOverviews('AVG', [2])
-        out_ds = None
-
-        expected_cs = expected_cs_map[dt]
-
-        ds = gdal.Open('/vsimem/out.mrf')
-        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            gdaltest.post_reason('fail')
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            #return 'fail'
-        ds = None
-
-        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
-        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.aux.xml')
-        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.ppg')
-        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.til')
-
-    return 'success'
-
 def mrf_overview_avg_with_nodata_fact_2():
 
-    expected_cs_map = { gdal.GDT_Byte : 64514,
-                        gdal.GDT_Int16 : 62049,
-                        gdal.GDT_UInt16 : 65249,
-                        gdal.GDT_Int32 : 62049,
-                        gdal.GDT_UInt32 : 65249,
-                        gdal.GDT_Float32 : 64282,
-                        gdal.GDT_Float64 : 64282,
-                      }
-
     for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                 gdal.GDT_Int32, gdal.GDT_UInt32,
                 gdal.GDT_Float32, gdal.GDT_Float64 ]:
 
-        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif',
+        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE'],
+                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
                                 outputType = dt,
-                                noData = 107,
-                                width = 1024, height = 1024, resampleAlg = 'cubic')
+                                noData = 107)
         out_ds.BuildOverviews('AVG', [2])
         out_ds = None
 
-        expected_cs = expected_cs_map[dt]
+        expected_cs = 1164
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -262,13 +235,15 @@ def mrf_overview_avg_with_nodata_fact_2():
 
 def mrf_overview_near_fact_3():
 
-    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024)
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
+                            format = 'MRF',
+                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'])
     out_ds.BuildOverviews('NEAR', [3])
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 13837
+    expected_cs = 478
     if cs != expected_cs:
         gdaltest.post_reason('fail')
         print(cs)
@@ -285,13 +260,15 @@ def mrf_overview_near_fact_3():
 
 def mrf_overview_avg_fact_3():
 
-    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 1024, height = 1024)
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
+                            format = 'MRF',
+                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'])
     out_ds.BuildOverviews('AVG', [3])
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 13837
+    expected_cs = 658
     if cs != expected_cs:
         gdaltest.post_reason('fail')
         print(cs)
@@ -306,18 +283,75 @@ def mrf_overview_avg_fact_3():
 
     return 'success'
 
+def mrf_overview_avg_with_nodata_fact_3():
+
+    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+                gdal.GDT_Int32, gdal.GDT_UInt32,
+                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+
+        out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
+                                format = 'MRF',
+                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType = dt,
+                                noData = 107)
+        out_ds.BuildOverviews('AVG', [3])
+        out_ds = None
+
+        expected_cs = 531
+
+        ds = gdal.Open('/vsimem/out.mrf')
+        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+        if cs != expected_cs:
+            gdaltest.post_reason('fail')
+            print(dt)
+            print(cs)
+            print(expected_cs)
+            return 'fail'
+        ds = None
+
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.aux.xml')
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.ppg')
+        gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.til')
+
+    return 'success'
+
+def mrf_overview_partial_block():
+
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
+                            creationOptions = [ 'COMPRESS=NONE', 'BLOCKSIZE=8' ] )
+    out_ds.BuildOverviews('NEAR', [2])
+    out_ds = None
+
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 1087:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf')
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.aux.xml')
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.ppg')
+    gdal.GetDriverByName('MRF').Delete('/vsimem/out.mrf.til')
+
+    return 'success'
+
 def mrf_overview_near_implicit_level():
 
     # We ask only overview level 2, but MRF automatically creates 2 and 4
     # so check that 4 is properly initialized
-    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/utm.tif', format = 'MRF', width = 2048, height = 2048)
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
+                            creationOptions = [ 'COMPRESS=NONE', 'BLOCKSIZE=5' ])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs= ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs == 0:
+    if cs != 328:
         gdaltest.post_reason('fail')
+        print(cs)
         return 'fail'
     ds = None
 
@@ -355,7 +389,8 @@ def mrf_overview_external():
 
 def mrf_lerc_nodata():
 
-    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF', noData = 107, creationOptions = ['COMPRESS=LERC'])
+    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
+                   noData = 107, creationOptions = ['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     if nodata != 107:
@@ -384,6 +419,8 @@ gdaltest_list += [ mrf_overview_avg_fact_2 ]
 gdaltest_list += [ mrf_overview_avg_with_nodata_fact_2 ]
 gdaltest_list += [ mrf_overview_near_fact_3 ]
 gdaltest_list += [ mrf_overview_avg_fact_3 ]
+gdaltest_list += [ mrf_overview_avg_with_nodata_fact_3 ]
+gdaltest_list += [ mrf_overview_partial_block ]
 gdaltest_list += [ mrf_overview_near_implicit_level ]
 gdaltest_list += [ mrf_overview_external ]
 gdaltest_list += [ mrf_lerc_nodata ]
