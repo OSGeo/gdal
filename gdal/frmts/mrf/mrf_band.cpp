@@ -672,7 +672,16 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
     // Should use a permanent buffer, like the pbuffer mechanism
     // Get a large buffer, in case we need to unzip
-    void *data = CPLMalloc(static_cast<size_t>(tinfo.size));
+
+    // We add a padding of 3 bytes since in LERC1 decompression, we can
+    // dereference a unsigned int at the end of the buffer, that can be
+    // partially out of the buffer.
+    // Can be reproduced with :
+    // gdal_translate ../autotest/gcore/data/byte.tif out.mrf -of MRF -co COMPRESS=LERC -co OPTIONS=V1:YES -ot Float32
+    // valgrind gdalinfo -checksum out.mrf
+    // Invalid read of size 4
+    // at BitStuffer::read(unsigned char**, std::vector<unsigned int, std::allocator<unsigned int> >&) const (BitStuffer.cpp:153)
+    void *data = CPLMalloc(static_cast<size_t>(tinfo.size + 3));
 
     VSILFILE *dfp = DataFP();
 
@@ -688,6 +697,9 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 	    int(tinfo.size), int(tinfo.offset));
 	return CE_Failure;
     }
+
+    /* initialize padding bytes */
+    memset(((char*)data) + static_cast<size_t>(tinfo.size), 0, 3);
 
     buf_mgr src = {(char *)data, static_cast<size_t>(tinfo.size)};
     buf_mgr dst;
