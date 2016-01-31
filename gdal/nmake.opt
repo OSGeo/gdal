@@ -511,6 +511,9 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #FGDB_INC = $(FGDB_SDK)\include 
 #FGDB_LIB = $(FGDB_SDK)\lib\FileGDBAPI.lib
 
+#uncomment to build AmigoCloud as a plugin instead
+#AMIGOCLOUD_PLUGIN = YES
+
 
 #uncomment to use ArcObjects
 #ARCOBJECTS_ENABLED = YES
