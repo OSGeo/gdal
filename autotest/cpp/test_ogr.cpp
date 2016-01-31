@@ -355,5 +355,93 @@ namespace tut
         
     }
     
+    template<>
+    template<>
+    void object::test<6>()
+    {
+        {
+            OGRPoint p;
+            double x = 1, y = 2;
+            OGR_G_SetPoints( (OGRGeometryH)&p, 1, &x, 0, &y, 0, NULL, 0 );
+            ensure_equals(p.getCoordinateDimension(), 2);
+            ensure_equals(p.getX(), 1);
+            ensure_equals(p.getY(), 2);
+            ensure_equals(p.getZ(), 0);
+        }
+
+        {
+            OGRPoint p;
+            double x = 1, y = 2, z = 3;
+            OGR_G_SetPoints( (OGRGeometryH)&p, 1, &x, 0, &y, 0, &z, 0 );
+            ensure_equals(p.getCoordinateDimension(), 3);
+            ensure_equals(p.getX(), 1);
+            ensure_equals(p.getY(), 2);
+            ensure_equals(p.getZ(), 3);
+        }
+
+        {
+            OGRPoint p;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            OGR_G_SetPoints( (OGRGeometryH)&p, 1, NULL, 0, NULL, 0, NULL, 0 );
+            CPLPopErrorHandler();
+        }
+
+        {
+            OGRLineString ls;
+            double x = 1, y = 2;
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 0, &y, 0, NULL, 0 );
+            ensure_equals(ls.getCoordinateDimension(), 2);
+            ensure_equals(ls.getX(0), 1);
+            ensure_equals(ls.getY(0), 2);
+            ensure_equals(ls.getZ(0), 0);
+        }
+
+        {
+            OGRLineString ls;
+            double x = 1, y = 2;
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 0, &y, 0, NULL, 0 );
+            ensure_equals(ls.getCoordinateDimension(), 2);
+            ensure_equals(ls.getX(0), 1);
+            ensure_equals(ls.getY(0), 2);
+            ensure_equals(ls.getZ(0), 0);
+        }
+
+        {
+            OGRLineString ls;
+            double x = 1, y = 2;
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 8, &y, 8, NULL, 0 );
+            ensure_equals(ls.getCoordinateDimension(), 2);
+            ensure_equals(ls.getX(0), 1);
+            ensure_equals(ls.getY(0), 2);
+            ensure_equals(ls.getZ(0), 0);
+        }
+
+        {
+            OGRLineString ls;
+            double x = 1, y = 2, z = 3;
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 0, &y, 0, &z, 0 );
+            ensure_equals(ls.getCoordinateDimension(), 3);
+            ensure_equals(ls.getX(0), 1);
+            ensure_equals(ls.getY(0), 2);
+            ensure_equals(ls.getZ(0), 3);
+        }
+
+        {
+            OGRLineString ls;
+            double x = 1, y = 2, z = 3;
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 8, &y, 8, &z, 8 );
+            ensure_equals(ls.getCoordinateDimension(), 3);
+            ensure_equals(ls.getX(0), 1);
+            ensure_equals(ls.getY(0), 2);
+            ensure_equals(ls.getZ(0), 3);
+        }
+        
+        {
+            OGRLineString ls;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, NULL, 0, NULL, 0, NULL, 0 );
+            CPLPopErrorHandler();
+        }
+    }
 
 } // namespace tut
