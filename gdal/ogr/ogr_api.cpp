@@ -393,13 +393,20 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoints" );
 
+    if( pabyX == NULL || pabyY == NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "pabyX == NULL || pabyY == NULL");
+        return;
+    }
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
       {
-        ((OGRPoint *) hGeom)->setX( pabyX ? *( (double *)pabyX ) : 0.0 );
-        ((OGRPoint *) hGeom)->setY( pabyY ? *( (double *)pabyY ) : 0.0 );
-        ((OGRPoint *) hGeom)->setZ( pabyZ ? *( (double *)pabyZ ) : 0.0 );
+        ((OGRPoint *) hGeom)->setX( *( (double *)pabyX ) );
+        ((OGRPoint *) hGeom)->setY( *( (double *)pabyY ) );
+        if( pabyZ != NULL )
+            ((OGRPoint *) hGeom)->setZ(*( (double *)pabyZ ) );
         break;
       }
       case wkbLineString:
@@ -407,23 +414,30 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
       {
         OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
 
-        if( nXStride == 0 && nYStride == 0 && nZStride == 0 )
+        if( nXStride == (int)sizeof(double) &&
+            nYStride == (int)sizeof(double) &&
+            ((nZStride == 0 && pabyZ == NULL) ||
+             (nZStride == (int)sizeof(double) && pabyZ != NULL)) )
         {
           poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ ); 
         }
         else
         {
-          double x, y, z;		  
-          x = y = z = 0;
           poSC->setNumPoints( nPointsIn );
 
           for (int i = 0; i < nPointsIn; ++i)
           {
-            if( pabyX ) x = *(double*)((char*)pabyX + i * nXStride);
-            if( pabyY ) y = *(double*)((char*)pabyY + i * nYStride);
-            if( pabyZ ) z = *(double*)((char*)pabyZ + i * nZStride);
-
-            poSC->setPoint( i, x, y, z );
+            double x = *(double*)((char*)pabyX + i * nXStride);
+            double y = *(double*)((char*)pabyY + i * nYStride);
+            if( pabyZ )
+            {
+                double z = *(double*)((char*)pabyZ + i * nZStride);
+                poSC->setPoint( i, x, y, z );
+            }
+            else
+            {
+                poSC->setPoint( i, x, y );
+            }
           }
         }
         break;
