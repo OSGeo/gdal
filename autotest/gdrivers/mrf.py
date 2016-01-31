@@ -65,11 +65,12 @@ init_list = [
     ('../../gcore/data/utmsmall.tif', 1, 50054, None),
     ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
     ('byte.tif', 1, [4672, [4652,4603]], ['COMPRESS=JPEG', 'QUALITY=99']),
+    # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX
     ('rgbsmall.tif', 1, [21212, [21137,21223,21231,21150]], ['COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21333]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21137]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=RGB']),
-    ('rgbsmall.tif', 1, [21212, [21061]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=YCC']),
-    ('12bit_rose_extract.jpg', 1, [30075, [29650]], ['COMPRESS=JPEG']),
+    ('rgbsmall.tif', 1, [21212, [21333,21256,21264,21510]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, [21137,21223,21231,21150]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=RGB']),
+    ('rgbsmall.tif', 1, [21212, [21061,21240,21243,21060]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=YCC']),
+    ('12bit_rose_extract.jpg', 1, [30075, [29650,29680,29680,29650]], ['COMPRESS=JPEG']),
 ]
 
 def mrf_overview_near_fact_2():
