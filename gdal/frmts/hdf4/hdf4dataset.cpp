@@ -931,7 +931,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 char **papszFields = CSLTokenizeString2( pszFieldList, ",",
                                                          CSLT_HONOURSTRINGS );
 
-                char szTemp[256];  // TODO: Get this off the stack.
+                char szTemp[256] = {'\0'};  // TODO: Get this off the stack.
                 for( int32 j = 0; j < nFields; j++ )
                 {
                     SWfieldinfo( hSW, papszFields[j], &iRank, aiDimSizes,
@@ -961,6 +961,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                                          papszSwaths[i],
                                          poDS->GetDataTypeName(iNumType) ) );
                     CPLFree( pszString );
+                    szTemp[0] = '\0';
                 }
 
                 CSLDestroy( papszFields );
@@ -1103,7 +1104,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         if ( SDfileinfo( poDS->hSD, &nDatasets, &nAttrs ) != 0 )
             return NULL;
 
-        char szTemp[256];  // TODO: Get this off the stack.
+        char szTemp[256] = {'\0'};  // TODO: Get this off the stack.
         const char *pszName = NULL;
 
         for( int32 i = 0; i < nDatasets; i++ )
@@ -1144,6 +1145,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( pszString );
 
             SDendaccess( iSDS );
+            szTemp[0] = '\0';
         }
 
         SDend( poDS->hSD );
@@ -1173,7 +1175,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        char szTemp[256];  // TODO: Get this off the stack.
+        char szTemp[256] = {'\0'};  // TODO: Get this off the stack.
         for( int32 i = 0; i < poDS->nImages; i++ )
         {
             const int32 iGR = GRselect( poDS->hGR, i );
@@ -1209,6 +1211,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( pszString );
 
             GRendaccess( iGR );
+            szTemp[0] = '\0';
         }
 
         GRend( poDS->hGR );
