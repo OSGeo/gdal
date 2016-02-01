@@ -53,13 +53,15 @@ typedef enum
 
 typedef enum
 {
-    GEOMTYPE_DEFAULT,
-    GEOMTYPE_SET,
-    GEOMTYPE_PROMOTE_TO_MULTI,
-    GEOMTYPE_CONVERT_TO_LINEAR,
-    GEOMTYPE_CONVERT_TO_CURVE,
-} GeomType;
+    GTC_DEFAULT,
+    GTC_PROMOTE_TO_MULTI,
+    GTC_CONVERT_TO_LINEAR,
+    GTC_CONVERT_TO_CURVE,
+} GeomTypeConversion;
 
+#define GEOMTYPE_UNCHANGED  -2
+
+#define COORD_DIM_UNCHANGED -1
 #define COORD_DIM_LAYER_DIM -2
 
 /************************************************************************/
@@ -156,7 +158,7 @@ struct GDALVectorTranslateOptions
     /*! the geometry type for the created layer */
     int eGType;
 
-    GeomType eGeomConversion;
+    GeomTypeConversion eGeomTypeConversion;
 
     /*! Geometric operation to perform */
     GeomOperation eGeomOp;
@@ -348,7 +350,7 @@ public:
     bool                  m_bAppend;
     bool                  m_bAddMissingFields;
     int                   m_eGType;
-    GeomType              m_eGeomConversion;
+    GeomTypeConversion    m_eGeomTypeConversion;
     int                   m_nCoordDim;
     bool                  m_bOverwrite;
     char                **m_papszFieldTypesToString;
@@ -385,7 +387,7 @@ public:
     OGRSpatialReference          *m_poUserSourceSRS;
     OGRCoordinateTransformation  *m_poGCPCoordTrans;
     int                           m_eGType;
-    GeomType                      m_eGeomConversion;
+    GeomTypeConversion            m_eGeomTypeConversion;
     int                           m_nCoordDim;
     GeomOperation                 m_eGeomOp;
     double                        m_dfGeomOpParam;
@@ -1629,7 +1631,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oSetup.m_bAppend = bAppend;
     oSetup.m_bAddMissingFields = psOptions->bAddMissingFields;
     oSetup.m_eGType = psOptions->eGType;
-    oSetup.m_eGeomConversion = psOptions->eGeomConversion;
+    oSetup.m_eGeomTypeConversion = psOptions->eGeomTypeConversion;
     oSetup.m_nCoordDim = psOptions->nCoordDim;
     oSetup.m_bOverwrite = bOverwrite;
     oSetup.m_papszFieldTypesToString = psOptions->papszFieldTypesToString;
@@ -1659,7 +1661,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oTranslator.m_poUserSourceSRS = poSourceSRS;
     oTranslator.m_poGCPCoordTrans = poGCPCoordTrans;
     oTranslator.m_eGType = psOptions->eGType;
-    oTranslator.m_eGeomConversion = psOptions->eGeomConversion;
+    oTranslator.m_eGeomTypeConversion = psOptions->eGeomTypeConversion;
     oTranslator.m_nCoordDim = psOptions->nCoordDim;
     oTranslator.m_eGeomOp = psOptions->eGeomOp;
     oTranslator.m_dfGeomOpParam = psOptions->dfGeomOpParam;
@@ -2370,18 +2372,18 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 /*                          ConvertType()                               */
 /************************************************************************/
 
-static OGRwkbGeometryType ConvertType(GeomType eGeomConversion,
+static OGRwkbGeometryType ConvertType(GeomTypeConversion eGeomTypeConversion,
                                       OGRwkbGeometryType eGType)
 {
     OGRwkbGeometryType eRetType = eGType;
-    if ( eGeomConversion == GEOMTYPE_PROMOTE_TO_MULTI )
+    if ( eGeomTypeConversion == GTC_PROMOTE_TO_MULTI )
     {
         if( !OGR_GT_IsSubClassOf(eGType, wkbGeometryCollection) )
             eRetType = OGR_GT_GetCollection(eGType);
     }
-    else if ( eGeomConversion == GEOMTYPE_CONVERT_TO_LINEAR )
+    else if ( eGeomTypeConversion == GTC_CONVERT_TO_LINEAR )
         eRetType = OGR_GT_GetLinear(eGType);
-    if ( eGeomConversion == GEOMTYPE_CONVERT_TO_CURVE )
+    if ( eGeomTypeConversion == GTC_CONVERT_TO_CURVE )
         eRetType = OGR_GT_GetCurve(eGType);
     return eRetType;
 }
@@ -2620,7 +2622,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             return NULL;
         }
 
-        bool bForceGType = ( eGType != -2 );
+        bool bForceGType = ( eGType != GEOMTYPE_UNCHANGED );
         if( !bForceGType )
         {
             if( anRequestedGeomFields.size() == 0 )
@@ -2636,7 +2638,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 eGType = wkbNone;
 
             bool bHasZ = CPL_TO_BOOL(wkbHasZ((OGRwkbGeometryType)eGType));
-            eGType = ConvertType(m_eGeomConversion, (OGRwkbGeometryType)eGType);
+            eGType = ConvertType(m_eGeomTypeConversion, (OGRwkbGeometryType)eGType);
 
             if ( m_bExplodeCollections )
             {
@@ -2817,7 +2819,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 else
                 {
                     eGType = oGFldDefn.GetType();
-                    eGType = ConvertType(m_eGeomConversion, (OGRwkbGeometryType)eGType);
+                    eGType = ConvertType(m_eGeomTypeConversion, (OGRwkbGeometryType)eGType);
                     eGType = ForceCoordDimension(eGType, m_nCoordDim);
                     oGFldDefn.SetType((OGRwkbGeometryType) eGType);
                 }
@@ -3649,19 +3651,19 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     poDstGeometry = poClipped;
                 }
 
-                if( eGType != -2 )
+                if( eGType != GEOMTYPE_UNCHANGED )
                 {
                     poDstGeometry = OGRGeometryFactory::forceTo(
                             poDstGeometry, (OGRwkbGeometryType)eGType);
                 }
-                else if( m_eGeomConversion == GEOMTYPE_PROMOTE_TO_MULTI ||
-                         m_eGeomConversion == GEOMTYPE_CONVERT_TO_LINEAR ||
-                         m_eGeomConversion == GEOMTYPE_CONVERT_TO_CURVE )
+                else if( m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI ||
+                         m_eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
+                         m_eGeomTypeConversion == GTC_CONVERT_TO_CURVE )
                 {
                     if( poDstGeometry != NULL )
                     {
                         OGRwkbGeometryType eTargetType = poDstGeometry->getGeometryType();
-                        eTargetType = ConvertType(m_eGeomConversion, eTargetType);
+                        eTargetType = ConvertType(m_eGeomTypeConversion, eTargetType);
                         poDstGeometry = OGRGeometryFactory::forceTo(poDstGeometry, eTargetType);
                     }
                 }
@@ -3837,8 +3839,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->papszSelFields = NULL;
     psOptions->pszSQLStatement = NULL;
     psOptions->pszDialect = NULL;
-    psOptions->eGType = -2;
-    psOptions->eGeomConversion = GEOMTYPE_DEFAULT;
+    psOptions->eGType = GEOMTYPE_UNCHANGED;
+    psOptions->eGeomTypeConversion = GTC_DEFAULT;
     psOptions->eGeomOp = GEOMOP_NONE;
     psOptions->dfGeomOpParam = 0;
     psOptions->papszFieldTypesToString = NULL;
@@ -3863,7 +3865,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->bExplodeCollections = false;
     psOptions->pszZField = NULL;
     psOptions->papszFieldMap = NULL;
-    psOptions->nCoordDim = -1;
+    psOptions->nCoordDim = COORD_DIM_UNCHANGED;
     psOptions->papszDestOpenOptions = NULL;
     psOptions->bForceNullable = false;
     psOptions->bUnsetDefault = false;
@@ -3997,11 +3999,11 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             else if( EQUAL(osGeomName,"GEOMETRY") )
                 psOptions->eGType = wkbUnknown;
             else if( EQUAL(osGeomName,"PROMOTE_TO_MULTI") )
-                psOptions->eGeomConversion = GEOMTYPE_PROMOTE_TO_MULTI;
+                psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI;
             else if( EQUAL(osGeomName,"CONVERT_TO_LINEAR") )
-                psOptions->eGeomConversion = GEOMTYPE_CONVERT_TO_LINEAR;
+                psOptions->eGeomTypeConversion = GTC_CONVERT_TO_LINEAR;
             else if( EQUAL(osGeomName,"CONVERT_TO_CURVE") )
-                psOptions->eGeomConversion = GEOMTYPE_CONVERT_TO_CURVE;
+                psOptions->eGeomTypeConversion = GTC_CONVERT_TO_CURVE;
             else
             {
                 psOptions->eGType = OGRFromOGCGeomType(osGeomName);
@@ -4014,7 +4016,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                     return NULL;
                 }
             }
-            if (psOptions->eGType != -2 && psOptions->eGType != wkbNone && bIs3D)
+            if (psOptions->eGType != GEOMTYPE_UNCHANGED && psOptions->eGType != wkbNone && bIs3D)
                 psOptions->eGType = wkbSetZ((OGRwkbGeometryType)psOptions->eGType);
 
             i++;
