@@ -763,6 +763,201 @@ def osr_proj4_20():
 
     return 'success'
 
+###############################################################################
+# Test importing datum other than WGS84, WGS72, NAD27 or NAD83
+
+def osr_proj4_21():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +datum=nzgd49" )
+
+    gdal.SetConfigOption('OVERRIDE_PROJ_DATUM_WITH_TOWGS84', 'NO')
+    got = srs.ExportToProj4()
+    gdal.SetConfigOption('OVERRIDE_PROJ_DATUM_WITH_TOWGS84', None)
+
+    if got.find('+proj=longlat +datum=nzgd49') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing ellipsoid defined with +R
+
+def osr_proj4_22():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +R=1" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=longlat +a=1 +b=1') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing ellipsoid defined with +a and +f
+
+def osr_proj4_23():
+
+    # +f=0 particular case
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +a=1 +f=0" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=longlat +a=1 +b=1') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +a=2 +f=0.5" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=longlat +a=2 +b=1') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing linear units defined with +to_meter
+
+def osr_proj4_24():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=1.0" )
+    got = srs.ExportToProj4()
+
+    if got.find('+units=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Intl foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=0.3048" )
+    got = srs.ExportToProj4()
+
+    if got.find('+units=ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # US foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=0.3048006096012192" )
+    got = srs.ExportToProj4()
+
+    if got.find('+units=us-ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # unknown
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=0.4" )
+    got = srs.ExportToProj4()
+
+    if got.find('+to_meter=0.4') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing linear units defined with +vto_meter
+
+def osr_proj4_25():
+
+    if not have_proj480():
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=1.0" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Intl foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=0.3048" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # US foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=0.3048006096012192" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=us-ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Unknown
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=0.4" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vto_meter=0.4') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing linear units defined with +vunits
+
+def osr_proj4_26():
+
+    if not have_proj480():
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vunits=m" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Intl foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vunits=ft" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # US yard
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vunits=us-yd" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=us-yd') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -783,7 +978,13 @@ gdaltest_list = [
     osr_proj4_17,
     osr_proj4_18,
     osr_proj4_19,
-    osr_proj4_20 ]
+    osr_proj4_20,
+    osr_proj4_21,
+    osr_proj4_22,
+    osr_proj4_23,
+    osr_proj4_24,
+    osr_proj4_25,
+    osr_proj4_26 ]
 
 
 if __name__ == '__main__':
