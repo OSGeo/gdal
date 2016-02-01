@@ -88,6 +88,10 @@ bool Huffman::ComputeCompressedSize(const std::vector<int>& histo, int& numBytes
       numElem += histo[i];
     }
 
+  /* to please Coverity about potential divide by zero below */
+  if( numElem == 0 )
+    return false;
+
   int numUInts = ((((numBits + 7) >> 3) + 3) >> 2) + 1;    // add one more as the decode LUT can read ahead
   numBytes += 4 * numUInts;    // data huffman coded
   avgBpp = 8 * numBytes / (double)numElem;
