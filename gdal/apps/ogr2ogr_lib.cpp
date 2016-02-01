@@ -345,7 +345,7 @@ public:
     OGRSpatialReference *poOutputSRSIn;
     int bNullifyOutputSRS;
     char **papszSelFields;
-    int bAppend;
+    int m_bAppend;
     int bAddMissingFields;
     int eGTypeIn;
     GeomType eGeomConversion;
@@ -1626,7 +1626,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oSetup.poOutputSRSIn = poOutputSRS;
     oSetup.bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
     oSetup.papszSelFields = psOptions->papszSelFields;
-    oSetup.bAppend = bAppend;
+    oSetup.m_bAppend = bAppend;
     oSetup.bAddMissingFields = psOptions->bAddMissingFields;
     oSetup.eGTypeIn = psOptions->eGType;
     oSetup.eGeomConversion = psOptions->eGeomConversion;
@@ -2516,6 +2516,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     OGRFeatureDefn *poDstFDefn = NULL;
     int eGType = eGTypeIn;
     int l_bPreserveFID = bPreserveFID;
+    int bAppend = m_bAppend;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetName();
