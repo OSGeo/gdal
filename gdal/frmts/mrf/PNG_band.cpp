@@ -340,7 +340,7 @@ CPLErr PNG_Band::ResetPalette()
  */
 
 PNG_Band::PNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, level), PNGColors(NULL), PNGAlpha(NULL)
+GDALMRFRasterBand(pDS, image, b, level), PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0)
 
 {   // Check error conditions
     if (image.dt != GDT_Byte && image.dt != GDT_Int16 && image.dt != GDT_UInt16) {
