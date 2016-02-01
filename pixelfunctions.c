@@ -171,7 +171,7 @@ CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
             for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
-                dfPixVal = abs(SRCVAL(papoSources[0], eSrcType, ii));
+                dfPixVal = fabs(SRCVAL(papoSources[0], eSrcType, ii));
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               ((GByte *)pData) + nLineSpace * iLine +
@@ -725,7 +725,7 @@ CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
 
                 /* Source raster pixels may be obtained with SRCVAL macro */
                 dfPixVal = SRCVAL(papoSources[0], eSrcType, ii);
-                dfPixVal = log10( abs( dfPixVal ) );
+                dfPixVal = log10( fabs( dfPixVal ) );
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               ((GByte *)pData) + nLineSpace * iLine +
