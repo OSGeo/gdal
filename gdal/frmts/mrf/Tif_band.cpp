@@ -141,7 +141,7 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
         return CE_Failure;
     }
     GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpen(fname, GA_ReadOnly));
-    if (!fp) {
+    if (poTiff == NULL) {
 	CPLError(CE_Failure,CPLE_AppDefined,
 	    "MRF: TIFF, can't open page as a Tiff");
         return CE_Failure;
