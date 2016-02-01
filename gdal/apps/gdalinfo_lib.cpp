@@ -1120,7 +1120,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     GDALGetRasterScale( hBand, &bSuccess ) );
         }
 
-        GDALInfoReportMetadata( psOptions, hBand, TRUE, bJson, poBandMetadata, osStr );
+        GDALInfoReportMetadata( psOptions, hBand, true, bJson, poBandMetadata, osStr );
         if(bJson)
         {
             if (psOptions->bShowMetadata)
