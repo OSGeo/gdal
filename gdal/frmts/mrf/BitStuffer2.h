@@ -21,6 +21,7 @@ Contributors:  Thomas Maurer
 
 #include "Defines.h"
 #include <vector>
+#include <cstring>
 
 NAMESPACE_MRF_START
 
