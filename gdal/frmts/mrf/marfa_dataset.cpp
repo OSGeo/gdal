@@ -96,7 +96,7 @@ void GDALMRFDataset::SetPBuffer(unsigned int sz)
 {
     if (sz == 0) {
 	CPLFree(pbuffer);
-	pbsize = 0;
+	pbuffer = NULL;
     }
     pbuffer = CPLRealloc(pbuffer, sz);
     pbsize = (pbuffer == NULL) ? 0 : sz;
