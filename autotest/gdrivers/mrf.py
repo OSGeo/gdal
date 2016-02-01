@@ -413,6 +413,9 @@ def mrf_lerc_nodata():
 
 def mrf_cached_source():
 
+    if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
+        return 'skip'
+
     # Caching MRF
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
                    creationOptions = ['CACHEDSOURCE=invalid_source', 'NOCOPY=TRUE'])
