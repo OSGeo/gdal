@@ -1148,27 +1148,27 @@ CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char* pszAttrFullPath,
         osAttrName = pszAttrFullPath;
     }
 
-    const hid_t hObjAttrID = H5Oopen( hHDF5, osObjName.c_str(),H5P_DEFAULT);
+    const hid_t hObjAttrID = H5Oopen( hHDF5, osObjName.c_str(), H5P_DEFAULT );
 
     CPLErr retVal = CE_Failure;
 
     if(hObjAttrID < 0)
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Object %s could not be opened\n", pszAttrFullPath);
+                  "Object %s could not be opened\n", pszAttrFullPath );
         retVal = CE_Failure;
     }
     else
     {
         // Open attribute handler by name, from the object handler opened
         // earlier.
-        const hid_t hAttrID = H5Aopen_name( hObjAttrID, osAttrName.c_str());
+        const hid_t hAttrID = H5Aopen_name( hObjAttrID, osAttrName.c_str() );
 
         // Check for errors opening the attribute.
         if(hAttrID <0)
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Attribute %s could not be opened\n", pszAttrFullPath);
+                      "Attribute %s could not be opened\n", pszAttrFullPath );
             retVal = CE_Failure;
         }
         else
