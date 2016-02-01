@@ -69,7 +69,7 @@ inline
 unsigned int BitStuffer2::ComputeNumBytesNeededSimple(unsigned int numElem, unsigned int maxElem) const
 {
   int numBits = 0;
-  while ((maxElem >> numBits) && (numBits < 32))
+  while ((numBits < 32) && (maxElem >> numBits))
     numBits++;
   return 1 + NumBytesUInt(numElem) + ((numElem * numBits + 7) >> 3);
 }
