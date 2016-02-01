@@ -385,6 +385,8 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
 	if (b != this)
 	{
 	    GDALRasterBlock *poBlock = b->GetLockedBlockRef(xblk, yblk, 1);
+            if( poBlock == NULL )
+                break;
 	    ob = poBlock->GetDataRef();
 	    blocks.push_back(poBlock);
 	} 
