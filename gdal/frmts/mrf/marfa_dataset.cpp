@@ -578,8 +578,7 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Open external overviews.                                        */
 /* -------------------------------------------------------------------- */
-    ds->oOvManager.Initialize( ds, pszFileName,
-                               poOpenInfo->GetSiblingFiles() );
+    ds->oOvManager.Initialize( ds, pszFileName );
 
 
     return ds;
