@@ -883,8 +883,13 @@ char      **GDALMRFDataset::GetFileList()
 // Try to create all the folders in the path in sequence, ignore errors
 static void mkdir_r(string const &fname) {
     size_t loc = fname.find_first_of("\\/");
-    while (string::npos != fname.find_first_of("\\/", ++loc)) {
+    if( loc == string::npos )
+        return;
+    while (true) {
+        ++ loc;
 	loc = fname.find_first_of("\\/", loc);
+        if( loc == string::npos )
+            break;
 	VSIMkdir(fname.substr(0, loc).c_str(), 0);
     }
 }
