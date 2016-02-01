@@ -714,7 +714,10 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
     // No data file to read from
     if (dfp == NULL)
+    {
+        CPLFree(data);
 	return CE_Failure;
+    }
 
     // This part is not thread safe, but it is what GDAL expects
     VSIFSeekL(dfp, tinfo.offset, SEEK_SET);
@@ -901,9 +904,17 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	    case 4: CpySO(GInt32); break;
 	    case 8: CpySO(GIntBig); break;
 	    default:
+            {
 		CPLError(CE_Failure,CPLE_AppDefined, "MRF: Write datatype of %d bytes "
 			"not implemented", GDALGetDataTypeSize(eDataType)/8);
+                if (poBlock != NULL)
+                {
+                    poBlock->MarkClean();
+                    poBlock->DropLock();
+                }
+                CPLFree(tbuffer);
 		return CE_Failure;
+            }
 	}
 
 	if (poBlock != NULL)
