@@ -132,6 +132,7 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
     return false;
 
   // first get the next (up to) 12 bits as a copy
+  /* coverity[large_shift] */
   int valTmp = ((**ppSrc) << bitPos) >> (32 - numBitsLUT);
   if (32 - bitPos < numBitsLUT)
     valTmp |= (*(*ppSrc + 1)) >> (64 - bitPos - numBitsLUT);
@@ -157,6 +158,7 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
   value = -1;
   while (value < 0)
   {
+    /* coverity[large_shift] */
     int bit = ((**ppSrc) << bitPos) >> 31;
     bitPos++;
     if (bitPos == 32)

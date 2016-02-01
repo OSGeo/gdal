@@ -34,7 +34,7 @@ bool BitStuffer2::EncodeSimple(Byte** ppByte, const vector<unsigned int>& dataVe
 
   unsigned int maxElem = *max_element(dataVec.begin(), dataVec.end());
   int numBits = 0;
-  while ((maxElem >> numBits) && (numBits < 32))
+  while ((numBits < 32) && (maxElem >> numBits))
     numBits++;
 
   if (numBits >= 32)
@@ -97,7 +97,7 @@ bool BitStuffer2::EncodeLut(Byte** ppByte,
   // write first 2 data elements same as simple, but bit5 set to 1
   unsigned int maxElem = m_tmpLutVec.back();
   int numBits = 0;
-  while ((maxElem >> numBits) && (numBits < 32))
+  while ((numBits < 32) && (maxElem >> numBits))
     numBits++;
 
   if (numBits >= 32)
@@ -198,7 +198,7 @@ unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<Quant >& sortedD
   unsigned int numElem = (unsigned int)sortedDataVec.size();
 
   int numBits = 0;
-  while ((maxElem >> numBits) && (numBits < 32))
+  while ((numBits < 32) && (maxElem >> numBits))
     numBits++;
   unsigned int numBytes = 1 + NumBytesUInt(numElem) + ((numElem * numBits + 7) >> 3);
 
