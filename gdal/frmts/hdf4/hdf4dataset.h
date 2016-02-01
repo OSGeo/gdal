@@ -65,7 +65,7 @@ class HDF4Dataset : public GDALPamDataset
 
   private:
 
-    int         bIsHDFEOS;
+    bool bIsHDFEOS;
 
     static char **HDF4EOSTokenizeAttrs( const char *pszString );
     static char **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
@@ -107,4 +107,3 @@ char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
 
 
 #endif /* HDF4DATASET_H_INCLUDED_ */
-
