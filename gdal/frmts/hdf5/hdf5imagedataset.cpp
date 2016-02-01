@@ -860,9 +860,10 @@ CPLErr HDF5ImageDataset::CreateProjections()
     break;
   }
  }
- return CE_None;
 
+ return CE_None;
 }
+
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
