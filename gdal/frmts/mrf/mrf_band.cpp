@@ -248,6 +248,7 @@ GDALMRFRasterBand::GDALMRFRasterBand(GDALMRFDataset *parent_dataset,
 	    zv = Z_FIXED;
 	deflate_flags |= (zv << 6);
     }
+    overview = 0;
 }
 
 // Clean up the overviews if they exist

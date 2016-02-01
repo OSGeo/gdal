@@ -187,6 +187,11 @@ ILImage::ILImage()
     comp = IL_PNG;
     order = IL_Interleaved;
     ci = GCI_Undefined;
+    pageSizeBytes = 0;
+    nbo = 0;
+    hasNoData = FALSE;
+    NoDataValue = 0.0;
+    dt = GDT_Unknown;
 }
 
 /**

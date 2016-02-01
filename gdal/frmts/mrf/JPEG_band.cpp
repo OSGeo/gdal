@@ -107,6 +107,7 @@ static void errorExit(j_common_ptr cinfo)
 */
 ErrorMgr::ErrorMgr()
 {
+    memset(&setjmpBuffer, 0, sizeof(setjmpBuffer));
     jpeg_std_error(this);
     error_exit = errorExit;
     emit_message = emitMessage;
@@ -164,6 +165,7 @@ CPLErr JPEG_Band::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 
     // Look at the source of this, some interesting tidbits
     cinfo.err = &jerr;
+    cinfo.client_data = NULL;
     jpeg_create_compress(&cinfo);
     cinfo.dest = &jmgr;
 
@@ -336,7 +338,7 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 
 // PHOTOMETRIC == MULTISPECTRAL turns off YCbCr conversion and downsampling
 JPEG_Band::JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, int(level)), sameres(FALSE), rgb(FALSE)
+GDALMRFRasterBand(pDS, image, b, int(level)), sameres(FALSE), rgb(FALSE), optimize(false)
 {
     int nbands = image.pagesize.c;
     //  TODO: Add 12bit JPEG support

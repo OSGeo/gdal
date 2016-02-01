@@ -85,6 +85,11 @@ GDALMRFDataset::GDALMRFDataset()
     poColorTable = NULL;
     bCrystalized = FALSE; // Assume not in create mode
     bypass_cache = CSLTestBoolean(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"));
+    idxSize = 0;
+    verCount = 0;
+    Quality = 0;
+    dfp.acc = GF_Read;
+    ifp.acc = GF_Read;
 }
 
 void GDALMRFDataset::SetPBuffer(unsigned int sz)
