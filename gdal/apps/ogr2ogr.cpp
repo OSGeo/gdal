@@ -95,7 +95,7 @@ public:
     OGRSpatialReference *poOutputSRSIn;
     int bNullifyOutputSRS;
     char **papszSelFields;
-    int bAppend;
+    int m_bAppend;
     int bAddMissingFields;
     int eGTypeIn;
     GeometryConversion sGeomConversion;
@@ -1942,7 +1942,7 @@ int main( int nArgc, char ** papszArgv )
     oSetup.poOutputSRSIn = poOutputSRS;
     oSetup.bNullifyOutputSRS = bNullifyOutputSRS;
     oSetup.papszSelFields = papszSelFields;
-    oSetup.bAppend = bAppend;
+    oSetup.m_bAppend = bAppend;
     oSetup.bAddMissingFields = bAddMissingFields;
     oSetup.eGTypeIn = eGType;
     oSetup.sGeomConversion = sGeomConversion;
@@ -2932,6 +2932,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     OGRFeatureDefn *poDstFDefn = NULL;
     int eGType = eGTypeIn;
     int bPreserveFID = this->bPreserveFID;
+    int bAppend = m_bAppend;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetName();

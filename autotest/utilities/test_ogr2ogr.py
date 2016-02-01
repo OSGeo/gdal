@@ -2501,6 +2501,48 @@ def test_ogr2ogr_61():
 
     return 'success'
 
+###############################################################################
+# Test appending multiple layers, whose one already exists (#6345)
+
+def test_ogr2ogr_64():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree('tmp/in_csv')
+    except:
+        pass
+    try:
+        shutil.rmtree('tmp/out_csv')
+    except:
+        pass
+
+    os.mkdir('tmp/in_csv')
+    open('tmp/in_csv/lyr1.csv', 'wt').write("id,col\n1,1\n")
+    open('tmp/in_csv/lyr2.csv', 'wt').write("id,col\n1,1\n")
+
+    ds = ogr.Open('tmp/in_csv')
+    first_layer = ds.GetLayer(0).GetName()
+    second_layer = ds.GetLayer(1).GetName()
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/out_csv tmp/in_csv ' + second_layer)
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/out_csv tmp/in_csv')
+
+    ds = ogr.Open('tmp/out_csv')
+    if ds.GetLayerByName(first_layer).GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerByName(second_layer).GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    shutil.rmtree('tmp/in_csv')
+    shutil.rmtree('tmp/out_csv')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2563,7 +2605,8 @@ gdaltest_list = [
     test_ogr2ogr_58,
     test_ogr2ogr_59,
     test_ogr2ogr_60,
-    test_ogr2ogr_61
+    test_ogr2ogr_61,
+    test_ogr2ogr_64
     ]
 
 if __name__ == '__main__':
