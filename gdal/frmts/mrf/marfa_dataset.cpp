@@ -1761,6 +1761,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
 		// Need to write it if not the same
 		new_tile = (0 != memcmp(buff, tbuff, static_cast<size_t>(size)));
 		CPLFree(tbuff);
+                tbuff = NULL;
 	    }
 	    else {
 		// Writing a null tile on top of a null tile, does it count?
