@@ -96,7 +96,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 
             # Below is for ElasticSearch
             if self.path.find('/fakeelasticsearch') != -1:
-                if self.path == '/fakeelasticsearch/_status':
+                if self.path == '/fakeelasticsearch/_stats':
                     self.send_response(200)
                     self.end_headers()
                     self.elastic_search = True
