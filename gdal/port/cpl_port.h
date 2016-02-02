@@ -893,6 +893,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 extern "C++" {
 class MSVCPedanticBool
 {
+
         friend bool operator== (const bool& one, const MSVCPedanticBool& other);
         friend bool operator!= (const bool& one, const MSVCPedanticBool& other);
 
@@ -900,7 +901,9 @@ class MSVCPedanticBool
         MSVCPedanticBool(int bIn);
 
     public:
-        MSVCPedanticBool() : b(false) {}
+        /* b not initialized on purpose in default ctor to flag use. */
+        /* cppcheck-suppress uninitMemberVar */
+        MSVCPedanticBool() {}
         MSVCPedanticBool(bool bIn) : b(bIn) {}
         MSVCPedanticBool(const MSVCPedanticBool& other) : b(other.b) {}
 
