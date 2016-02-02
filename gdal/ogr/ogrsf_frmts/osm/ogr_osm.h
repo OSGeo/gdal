@@ -85,7 +85,7 @@ class OGROSMLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     long                 nFeatureCount;
 
-    std::vector<char*>   apszNames;
+    std::vector<char*>   apszNames; /* Needed to keep a "reference" to the string inserted into oMapFieldNameToIndex */
     std::map<const char*, int, ConstCharComp> oMapFieldNameToIndex;
 
     std::vector<OGROSMComputedAttribute> oComputedAttributes;
