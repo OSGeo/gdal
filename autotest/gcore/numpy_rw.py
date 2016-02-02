@@ -792,6 +792,40 @@ def numpy_rw_16():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    return 'success'
+
+###############################################################################
+# Test old deprecated way with gdal_array.GetArrayFilename()
+
+def numpy_rw_17():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    from osgeo import gdal_array
+
+    # Disabled by default
+    array = numpy.empty( [1,1], numpy.uint8 )
+    with gdaltest.error_handler():
+        ds = gdal.Open(gdal_array.GetArrayFilename(array))
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    gdal.SetConfigOption('GDAL_ARRAY_OPEN_BY_FILENAME', 'TRUE')
+    ds = gdal.Open(gdal_array.GetArrayFilename(array))
+    gdal.SetConfigOption('GDAL_ARRAY_OPEN_BY_FILENAME', None)
+    if ds is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Invalid value
+    with gdaltest.error_handler():
+        ds = gdal.Open('NUMPY:::invalid')
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
 
     return 'success'
 
@@ -817,6 +851,7 @@ gdaltest_list = [
     numpy_rw_14,
     numpy_rw_15,
     numpy_rw_16,
+    numpy_rw_17,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':

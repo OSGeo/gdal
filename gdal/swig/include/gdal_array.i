@@ -110,6 +110,7 @@ class NUMPYDataset : public GDALDataset
                             const char *pszGCPProjection );
 
     static GDALDataset *Open( PyArrayObject *psArray );
+    static GDALDataset *Open( GDALOpenInfo * );
 };
 
 
@@ -132,7 +133,7 @@ static void GDALRegister_NUMPY(void)
                                    "Numeric Python Array" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 
-        poDriver->pfnOpen = NULL;
+        poDriver->pfnOpen = NUMPYDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
 
@@ -282,6 +283,49 @@ CPLErr NUMPYDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
     this->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    PyArrayObject *psArray;
+
+/* -------------------------------------------------------------------- */
+/*      Is this a numpy dataset name?                                   */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8) 
+        || poOpenInfo->fpL != NULL )
+        return NULL;
+
+    psArray = NULL;
+    sscanf( poOpenInfo->pszFilename+8, "%p", &(psArray) );
+    if( psArray == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to parse meaningful pointer value from NUMPY name\n"
+                  "string: %s\n", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", "FALSE")) )
+    {
+        if( CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", NULL) == NULL )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Opening a NumPy array through gdal.Open(gdal_array.GetArrayFilename()) "
+                    "is no longer supported by default unless the GDAL_ARRAY_OPEN_BY_FILENAME "
+                    "configuration option is set to TRUE. The recommended way is to use "
+                    "gdal_array.OpenArray() instead.");
+        }
+        return NULL;
+    }
+
+    return Open(psArray);
 }
 
 /************************************************************************/
@@ -471,6 +515,20 @@ int GDALTermProgress( double, const char *, void * );
 GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray)
 {
     return NUMPYDataset::Open( psArray );
+}
+%}
+
+/* Deprecated */
+%inline %{
+retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
+{
+    char      szString[128];
+    
+    GDALRegister_NUMPY();
+    
+    /* I wish I had a safe way of checking the type */        
+    sprintf( szString, "NUMPY:::%p", psArray );
+    return CPLStrdup(szString);
 }
 %}
 
