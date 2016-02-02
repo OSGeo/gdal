@@ -902,7 +902,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
         EQUAL( poH5Objects->pszUnderscorePath,pszDatasetPath ) ) {
 
 #ifdef DEBUG_VERBOSE
-      printf("found it! %ld\n", static_cast<long>(poH5Objects));
+      printf("found it! %p\n", poH5Objects);
 #endif
         return poH5Objects;
     }
@@ -940,7 +940,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
         EQUAL( poH5Objects->pszName,pszDatasetName ) ) {
 
 #ifdef DEBUG_VERBOSE
-        printf("found it! %ld\n", static_cast<long>(poH5Objects));
+        printf("found it! %p\n", poH5Objects);
 #endif
         return poH5Objects;
     }
