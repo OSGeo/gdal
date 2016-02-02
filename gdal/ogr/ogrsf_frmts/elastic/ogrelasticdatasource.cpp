@@ -187,7 +187,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
     }
 
     // Do a status check to ensure that the server is valid
-    CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/_status", pszFilename), NULL);
+    CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/_stats", pszFilename), NULL);
     int bOK = (psResult != NULL && psResult->pszErrBuf == NULL);
     if (!bOK)
     {
