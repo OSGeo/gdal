@@ -708,7 +708,7 @@ void CPLVirtualMemAddPage(CPLVirtualMemVMA* ctxt, void* target_addr, void* pPage
             {
                 if( ctxt->pahThreads[i] != hRequesterThread )
                 {
-#ifdef DEBUG_VIRTUALMEM && DEBUG_VERBOSE
+#if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
                     fprintfstderr("stopping thread %X\n", ctxt->pahThreads[i]); */
 #endif
                     IGNORE_OR_ASSERT_IN_DEBUG(
