@@ -115,7 +115,7 @@ class GlobalMercator(object):
          LatLon      <->       Meters      <->     Pixels    <->       Tile     
 
      WGS84 coordinates   Spherical Mercator  Pixels in pyramid  Tiles in pyramid
-         lat/lon            XY in metres     XY pixels Z zoom      XYZ from TMS 
+         lat/lon            XY in meters     XY pixels Z zoom      XYZ from TMS 
         EPSG:4326           EPSG:387                                         
          .----.              ---------               --                TMS      
         /      \     <->     |       |     <->     /----/    <->      Google    

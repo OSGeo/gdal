@@ -2526,7 +2526,7 @@ GTiff driver:
  * Add CT_HotineObliqueMercatorAzimuthCenter support
  * Fix PolarStereographic / 9829 support
  * Make sure that GetMetadata() initializes the value of GDALMD_AREA_OR_POINT item, if not already done (#4691)
- * When building overviews, if the image has already an internal mask, then build internal overviews for the mask implicitely
+ * When building overviews, if the image has already an internal mask, then build internal overviews for the mask implicitly
  * Better handling of SetMetadata(a_string) (#4816)
  * Use GTIFAllocDefn/GTIFFreeDefn with libgeotiff 1.4.1+
  * Add support for GEO_NORMALIZE_DISABLE_TOWGS84 (#3309)

@@ -891,7 +891,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
                         return FALSE;
                     }
 
-                    /* Implicitely sets SRS */
+                    /* Implicitly sets SRS */
                     OGRSpatialReference oSRS;
                     if( oSRS.importFromEPSG(asTilingShemes[iScheme].nEPSGCode) != OGRERR_NONE )
                         return FALSE;

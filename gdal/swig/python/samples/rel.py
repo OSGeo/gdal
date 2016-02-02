@@ -56,7 +56,7 @@ def Usage():
     print('  -lsrcel elevation Elevation angle of the diffuse light source (0..180 degrees)')
     print('  -elstep step      Elevation change corresponding to a change of one grey level')
     print('                    (default 1)')
-    print('  -dx xsize         X and Y dimensions (in metres) of one pixel on the ground')
+    print('  -dx xsize         X and Y dimensions (in meters) of one pixel on the ground')
     print('  -dy ysize         (taken from the geotransform matrix by default)')
     print('  -r range	       Dynamic range for output image (default 255)')
     print('  -b band	       Select a band number to convert (default 1)')
