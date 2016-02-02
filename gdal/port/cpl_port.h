@@ -900,7 +900,7 @@ class MSVCPedanticBool
         MSVCPedanticBool(int bIn);
 
     public:
-        MSVCPedanticBool() {}
+        MSVCPedanticBool() : b(false) {}
         MSVCPedanticBool(bool bIn) : b(bIn) {}
         MSVCPedanticBool(const MSVCPedanticBool& other) : b(other.b) {}
 
@@ -908,10 +908,10 @@ class MSVCPedanticBool
         MSVCPedanticBool& operator&= (const MSVCPedanticBool& other) { b &= other.b; return *this; }
         MSVCPedanticBool& operator|= (const MSVCPedanticBool& other) { b |= other.b; return *this; }
 
-        bool operator== (const bool& other) { return b == other; }
-        bool operator!= (const bool& other) { return b != other; }
-        bool operator== (const MSVCPedanticBool& other) { return b == other.b; }
-        bool operator!= (const MSVCPedanticBool& other) { return b != other.b; }
+        bool operator== (const bool& other) const { return b == other; }
+        bool operator!= (const bool& other) const { return b != other; }
+        bool operator== (const MSVCPedanticBool& other) const { return b == other.b; }
+        bool operator!= (const MSVCPedanticBool& other) const { return b != other.b; }
 
         bool operator! () const { return !b; }
         operator bool() const { return b; }
