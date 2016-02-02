@@ -107,6 +107,11 @@ def OpenNumPyArray(*args):
   return _gdal_array.OpenNumPyArray(*args)
 OpenNumPyArray = _gdal_array.OpenNumPyArray
 
+def GetArrayFilename(*args):
+  """GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"""
+  return _gdal_array.GetArrayFilename(*args)
+GetArrayFilename = _gdal_array.GetArrayFilename
+
 def BandRasterIONumPy(*args, **kwargs):
   """
     BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, 
