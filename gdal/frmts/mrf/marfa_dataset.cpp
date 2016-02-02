@@ -1642,7 +1642,7 @@ GDALMRFDataset::Create(const char * pszName,
     catch (CPLString e) {
 	CPLError(CE_Failure, CPLE_OpenFailed, "%s", e.c_str());
 	delete poDS;
-	poDS = NULL;
+	return NULL;
     }
 
     poDS->current = poDS->full;
