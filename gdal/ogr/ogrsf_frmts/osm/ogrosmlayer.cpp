@@ -614,7 +614,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         const char* pszK = pasTags[j].pszK;
         const char* pszV = pasTags[j].pszV;
         int nIndex = GetFieldIndex(pszK);
-        if( nIndex >= 0 )
+        if( nIndex >= 0 && nIndex != nIndexOSMId )
         {
             poFeature->SetField(nIndex, pszV);
             if( nIndexAllTags < 0 )
