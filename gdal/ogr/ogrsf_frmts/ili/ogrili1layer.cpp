@@ -145,6 +145,21 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
     return NULL;
 }
 
+OGRFeature *OGRILI1Layer::GetFeatureRef( const char *fid )
+
+{
+    OGRFeature *poFeature;
+
+    ResetReading();
+    while( (poFeature = GetNextFeatureRef()) != NULL )
+    {
+        if( !strcmp( poFeature->GetFieldAsString(0), fid ) )
+            return poFeature;
+    }
+
+    return NULL;
+}
+
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
@@ -489,9 +504,16 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
     poSurfaceLineLayer->ResetReading();
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
         //OBJE entries with same _RefTID are polygon rings of same feature
-        //TODO: non-numeric _RefTID/FID is not supported yet!
-        GIntBig reftid = linefeature->GetFieldAsInteger64(1); //_RefTID
-        OGRFeature *feature = GetFeatureRef((int)reftid);
+        OGRFeature *feature;
+        if (poFeatureDefn->GetFieldDefn(0)->GetType() == OFTString)
+        {
+          feature = GetFeatureRef(linefeature->GetFieldAsString(1));
+        }
+        else
+        {
+          GIntBig reftid = linefeature->GetFieldAsInteger64(1);
+          feature = GetFeatureRef((int)reftid);
+        }
         if (feature) {
             if (!feature->GetGeomFieldRef(nSurfaceFieldIndex)) {
                 OGRCurvePolygon *newpoly = (geomType == wkbPolygon) ?
@@ -548,7 +570,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
             }
         } else {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Couldn't join feature FID " CPL_FRMT_GIB, reftid );
+                      "Couldn't join feature FID " CPL_FRMT_GIB, linefeature->GetFieldAsInteger64(1) );
         }
     }
 
