@@ -28,4 +28,5 @@ See COMMITERS file.
 				ang = uv2ang(ua, va);
 				i = (int) ang;
 				epsa = fabs(ang - (i+.5));
-
+                "     UN=Metres,SD=HHWLT,DX=2.500000,DY=2.500000\n");
+        pszUnitsPer = CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
