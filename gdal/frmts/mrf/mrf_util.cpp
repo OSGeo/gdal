@@ -46,6 +46,11 @@
 #include <zlib.h>
 #include <algorithm>
 
+// LERC is not ready for big endian hosts for now
+#if defined(LERC) && defined(WORDS_BIGENDIAN)
+#undef LERC
+#endif
+
 CPL_C_START
 void GDALRegister_mrf(void);
 CPL_C_END
