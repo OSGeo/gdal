@@ -220,7 +220,7 @@ CPLString getFname(const CPLString &in, const char *ext)
  *\brief Get a file name, either from the configuration or from the default file name
  * If the token is not defined by CPLGetXMLValue, if the extension of the in name is .xml, 
  * it returns the token with the extension changed to defext.  
- * Otherwise it retuns the token itself
+ * Otherwise it returns the token itself
  * It is pretty hard to separate local vs remote due to the gdal file name ornaments
  * Absolute file names start with: ?:/ or /
  * 
@@ -269,9 +269,9 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
 	(pos.y+img.pagecount.y*pos.z)));
 }
 
-// Is compression type endianess dependent?
+// Is compression type endianness dependent?
 bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
-    // Add here all endianess dependent compressions
+    // Add here all endianness dependent compressions
     if (IL_ZLIB == comp || IL_NONE == comp)
 	if (GDALGetDataTypeSize( dt ) > 8)
 	    return true;
@@ -533,7 +533,7 @@ GDALColorEntry GetXMLColorEntry(CPLXMLNode *p) {
 /**
  *\Brief Verify or make a file that big
  *
- * @return true if size is OK or if extend succedded
+ * @return true if size is OK or if extend succeeded
  */
 
 int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {

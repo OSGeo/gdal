@@ -88,7 +88,7 @@ static inline int csb(unsigned int v) {
 }
 
 // Number of bits set.
-// We really only need to know if full, empty or inbetween
+// We really only need to know if full, empty or in between
 int BitMask2::CountValidBits() const
 {
   assert(Size());

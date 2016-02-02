@@ -290,7 +290,7 @@ CPLErr JPEG_Band::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 
     jpeg_start_decompress(&cinfo);
 
-    // We have a missmatch between the real and the declared data format
+    // We have a mismatch between the real and the declared data format
     // warn and fail if output buffer is too small
     if (linesize*cinfo.image_height!=dst.size) {
         CPLError(CE_Warning,CPLE_AppDefined,"MRF: read JPEG size is wrong");
