@@ -291,7 +291,7 @@ typedef int              GPtrDiff_t;
 #ifdef _MSC_VER
 #  define FORCE_CDECL  __cdecl
 #else
-#  define FORCE_CDECL 
+#  define FORCE_CDECL
 #endif
 
 /* TODO : support for other compilers needed */
@@ -534,7 +534,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsFinite(x) _finite(x)
 #else
 #  define CPLIsNan(x) isnan(x)
-#  ifdef isinf 
+#  ifdef isinf
 #    define CPLIsInf(x) isinf(x)
 #    define CPLIsFinite(x) (!isnan(x) && !isinf(x))
 #  elif defined(__sun__)
@@ -549,8 +549,8 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 
 /*---------------------------------------------------------------------
  *                         CPL_LSB and CPL_MSB
- * Only one of these 2 macros should be defined and specifies the byte 
- * ordering for the current platform.  
+ * Only one of these 2 macros should be defined and specifies the byte
+ * ordering for the current platform.
  * This should be defined in the Makefile, but if it is not then
  * the default is CPL_LSB (Intel ordering, LSB first).
  *--------------------------------------------------------------------*/
@@ -585,7 +585,7 @@ template<> struct CPLStaticAssert<true>
 
 #else  /* __cplusplus */
 
-#define CPL_STATIC_ASSERT_IF_AVAILABLE(x) 
+#define CPL_STATIC_ASSERT_IF_AVAILABLE(x)
 
 #endif  /* __cplusplus */
 
@@ -711,7 +711,7 @@ template<> struct CPLStaticAssert<true>
 
 
 /* Utility macro to explicitly mark intentionally unreferenced parameters. */
-#ifndef UNREFERENCED_PARAM 
+#ifndef UNREFERENCED_PARAM
 #  ifdef UNREFERENCED_PARAMETER /* May be defined by Windows API */
 #    define UNREFERENCED_PARAM(param) UNREFERENCED_PARAMETER(param)
 #  else
@@ -797,7 +797,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
    Must be placed in the private section of a class and should be at the end.
 */
 #ifdef __cplusplus
-#if 1
 
 #if __cplusplus >= 201103L
 #define CPL_FINAL final
@@ -811,10 +810,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
     ClassName &operator=( const ClassName & );
 #endif
 
-#else
-#define CPL_FINAL
-#define CPL_DISALLOW_COPY_ASSIGN(ClassName)
-#endif
 #endif /* __cplusplus */
 
 #if !defined(DOXYGEN_SKIP)
