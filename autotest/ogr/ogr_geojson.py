@@ -2433,6 +2433,90 @@ def ogr_geojson_50():
     return 'success'
 
 ###############################################################################
+# Test writing empty geometries
+
+def ogr_geojson_51():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_51.json')
+    lyr = ds.CreateLayer('test' )
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 1
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT EMPTY'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 2
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING EMPTY'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 3
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON EMPTY'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 4
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 5
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING EMPTY'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 6
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON EMPTY'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 7
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION EMPTY'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_51.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_51.json')
+
+    if data.find('{ "id": 1 }, "geometry": null') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    if data.find('{ "id": 2 }, "geometry": { "type": "LineString", "coordinates": [ ] } }') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    if data.find('{ "id": 3 }, "geometry": { "type": "Polygon", "coordinates": [ ] } }') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    if data.find('{ "id": 4 }, "geometry": { "type": "MultiPoint", "coordinates": [ ] } }') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    if data.find('{ "id": 5 }, "geometry": { "type": "MultiLineString", "coordinates": [ ] } }') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    if data.find('{ "id": 6 }, "geometry": { "type": "MultiPolygon", "coordinates": [ ] } }') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    if data.find('{ "id": 7 }, "geometry": { "type": "GeometryCollection", "geometries": [ ] } }') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -2519,6 +2603,7 @@ gdaltest_list = [
     ogr_geojson_48,
     ogr_geojson_49,
     ogr_geojson_50,
+    ogr_geojson_51,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
