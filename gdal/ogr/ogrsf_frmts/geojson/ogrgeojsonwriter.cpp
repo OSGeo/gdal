@@ -526,6 +526,15 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
 {
     CPLAssert( NULL != poGeometry );
 
+    OGRwkbGeometryType eType = poGeometry->getGeometryType();
+    /* For point empty, return a null geometry. For other empty geometry types, */
+    /* we will generate an empty coordinate array, which is propably also */
+    /* borderline. */
+    if( (wkbPoint == eType || wkbPoint25D == eType) && poGeometry->IsEmpty() )
+    {
+        return NULL;
+    }
+
     json_object* poObj = json_object_new_object();
     CPLAssert( NULL != poObj );
 
@@ -542,7 +551,6 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
 /* -------------------------------------------------------------------- */
     json_object* poObjGeom = NULL;
 
-    OGRwkbGeometryType eType = poGeometry->getGeometryType();
     if( wkbGeometryCollection == eType || wkbGeometryCollection25D == eType )
     {
         poObjGeom = OGRGeoJSONWriteGeometryCollection( static_cast<OGRGeometryCollection*>(poGeometry), nCoordPrecision, nSignificantFigures );
@@ -598,10 +606,6 @@ json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint, int nCoordPrecision, int n
         poObj = OGRGeoJSONWriteCoords( poPoint->getX(),
                                        poPoint->getY(),
                                        nCoordPrecision, nSignificantFigures );
-    }
-    else
-    {
-        /* We can get here with POINT EMPTY geometries */
     }
 
     return poObj;
