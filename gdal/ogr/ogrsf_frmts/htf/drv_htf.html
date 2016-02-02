@@ -29,8 +29,8 @@ The "polygon" layer contains the following fields :
 <li><i>DESCRIPTION</i> : Defines the polygons of each region of similar survey criteria or theme.</li>
 <li><i>IDENTIFIER</i> : Unique polygon identifier for this transmittal.</li>
 <li><i>SEAFLOOR_COVERAGE</i> : All significant seafloor features detected (full ensonification/sweep) or full coverage not achieved and uncharted features may exist.</li>
-<li><i>POSITION_ACCURACY</i> : +/- NNN.n metres at 95% CI (2.45) with respect to the given datum.</li>
-<li><i>DEPTH_ACCURACY</i> : +/- NN.n metres at 95% CI (2.00) at critical depths.</li>
+<li><i>POSITION_ACCURACY</i> : +/- NNN.n meters at 95% CI (2.45) with respect to the given datum.</li>
+<li><i>DEPTH_ACCURACY</i> : +/- NN.n meters at 95% CI (2.00) at critical depths.</li>
 </ul>
 
 The "sounding" layer should contain - at minimum - the following 20 fields :
@@ -42,18 +42,18 @@ The "sounding" layer should contain - at minimum - the following 20 fields :
 <li><i>UTC_TIME</i> : UTC time for the sounding HHMMSS.ss.</li>
 <li><i>LATITUDE</i> : Latitude position of the sounding +/-NN.nnnnnn (degrees of arc, south is negative).</li>
 <li><i>LONGITUDE</i> : Longitude position of the sounding +/-NNN.nnnnnn (degrees of arc, west is negative).</li>
-<li><i>EASTING</i> : Grid coordinate position of the sounding in metres NNNNNNN.n.</li>
-<li><i>NORTHING</i> : Grid coordinate position of the sounding in metres NNNNNNN.n.</li>
-<li><i>DEPTH</i> : Reduced sounding value in metres with corrections applied as indicated in the relevant fields, soundings are positive and drying heights are negative +/-NNNN.nn metres.</li>
+<li><i>EASTING</i> : Grid coordinate position of the sounding in meters NNNNNNN.n.</li>
+<li><i>NORTHING</i> : Grid coordinate position of the sounding in meters NNNNNNN.n.</li>
+<li><i>DEPTH</i> : Reduced sounding value in meters with corrections applied as indicated in the relevant fields, soundings are positive and drying heights are negative +/-NNNN.nn meters.</li>
 <li><i>POSITIONING_SENSOR</i> : Indicate position system number populated in the HTF header record.</li>
 <li><i>DEPTH_SENSOR</i> : Indicate depth sounder system number populated in the HTF header record.</li>
 <li><i>TPE_POSITION</i> : Total propagated error of the horizontal component for the sounding.</li>
 <li><i>TPE_DEPTH</i> : Total propagated error of the vertical component for the sounding.</li>
 <li><i>NBA FLAG</i> : No Bottom at Flag, if 0 not NBA depth or if 1 Depth is NBA, deeper water probably exists.</li>
-<li><i>TIDE</i> : Value of the tidal correction applied +/- NN.nn metres.</li>
-<li><i>DEEP_WATER_CORRECTION</i> : Value of the deep water sounding velocity applied +/- NN.nn metres.</li>
-<li><i>VERTICAL BIAS_CORRECTION</i> : Value of the vertical bias applied +/- NN.nn metres. eg transducer depth correction</li>
-<li><i>SOUND_VELOCITY</i> : Measured sound velocity used to process sounding in metres per second IIII.</li>
+<li><i>TIDE</i> : Value of the tidal correction applied +/- NN.nn meters.</li>
+<li><i>DEEP_WATER_CORRECTION</i> : Value of the deep water sounding velocity applied +/- NN.nn meters.</li>
+<li><i>VERTICAL BIAS_CORRECTION</i> : Value of the vertical bias applied +/- NN.nn meters. eg transducer depth correction</li>
+<li><i>SOUND_VELOCITY</i> : Measured sound velocity used to process sounding in meters per second IIII.</li>
 <li><i>PLOTTED_SOUNDING</i> : if 0 then the reduced depth did not appear on the original fairsheet or id 1 then the reduced depth appeared on the original fairsheet.</li>
 </ul>
 

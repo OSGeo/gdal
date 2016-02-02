@@ -1450,7 +1450,7 @@ void TABMAPIndexBlock::RecomputeMBR()
 }
 
 /**********************************************************************
- *                   TABMAPIndexBlock::UpateCurChildMBR()
+ *                   TABMAPIndexBlock::UpdateCurChildMBR()
  *
  * Update current child MBR info, and propagate info in parent.
  *
