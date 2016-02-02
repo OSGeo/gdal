@@ -695,6 +695,33 @@ def ogr_osm_test_uncompressed_dense_true_nometadata_pbf():
 def ogr_osm_test_uncompressed_dense_false_pbf():
     return ogr_osm_1('data/test_uncompressed_dense_false.pbf')
 
+# Special case: if an object has a 'osm_id' key, then do not use it to override
+# "our" osm_id field. But put it in other_fields (#6347)
+def ogr_osm_13():
+
+    if ogrtest.osm_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_osm_13.osm',
+"""<osm><node id="123" lon="2" lat="49"><tag k="osm_id" v="0"/></node></osm>""")
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_osm_13.osm')
+    if ds is None:
+        gdal.Unlink('/vsimem/ogr_osm_13.osm')
+        return 'skip'
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['osm_id'] != '123' or f['other_tags'] != '"osm_id"=>"0"':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_osm_13.osm')
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -711,7 +738,8 @@ gdaltest_list = [
     ogr_osm_11,
     ogr_osm_12,
     ogr_osm_test_uncompressed_dense_true_nometadata_pbf,
-    ogr_osm_test_uncompressed_dense_false_pbf
+    ogr_osm_test_uncompressed_dense_false_pbf,
+    ogr_osm_13,
     ]
 
 if __name__ == '__main__':
