@@ -823,7 +823,7 @@ start_idx = end_idx;
 	return CE_Failure;
     }
 
-    // Check the endianess if needed, assume host order
+    // Check the endianness if needed, assume host order
     if (is_Endianess_Dependent(image.dt, image.comp))
 	image.nbo = on(CPLGetXMLValue(defimage, "NetByteOrder", "No"));
 
@@ -1031,7 +1031,7 @@ VSILFILE *GDALMRFDataset::DataFP() {
     if (source.empty()) 
 	goto io_error;
 
-    // cacheing, maybe the folder didn't exist
+    // caching, maybe the folder didn't exist
     mkdir_r(current.datfname);
     mode = "a+b";
     dfp.acc = GF_Write;
@@ -1338,7 +1338,7 @@ static inline bool is_absolute(const CPLString &name)
 	name.find("<MRF_META>") != string::npos;
 }
 
-// Add the folder part of path to the begining of the source, if it is relative
+// Add the folder part of path to the beginning of the source, if it is relative
 static inline void make_absolute(CPLString &name, const CPLString &path)
 {
     if (!is_absolute(path) && (path.find_first_of("/\\") != string::npos))
@@ -1786,7 +1786,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     tinfo.size = net64(size);
 
     if (size) do {
-	// Theese statements are the critical MP section for the data file
+	// These statements are the critical MP section for the data file
 	VSIFSeekL(l_dfp, 0, SEEK_END);
 	GUIntBig offset = VSIFTellL(l_dfp);
 	if (static_cast<size_t>(size) != VSIFWriteL(buff, 1, static_cast<size_t>(size), l_dfp))

@@ -141,7 +141,7 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 
     // Finally, the read
     // This is the lower level, the png_read_end allows some transforms
-    // Like pallete to RGBA
+    // Like palette to RGBA
     png_read_image(pngp, png_rowp);
 
     if (byte_count != 1) { // Swap from net order if data is short
@@ -165,7 +165,7 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 }
 
 /**
- *\Brief Compres a page in PNG format
+ *\Brief Compress a page in PNG format
  * Returns the compressed size in dst.size
  *
  */
@@ -240,7 +240,7 @@ CPLErr PNG_Band::CompressPNG(buf_mgr &dst, buf_mgr &src)
     if (deflate_flags & ZFLAG_SMASK)
 	png_set_compression_strategy(pngp, (deflate_flags & ZFLAG_SMASK) >> 6);
 
-    // Write the palete and the transparencies if they exist
+    // Write the palette and the transparencies if they exist
     if (PNGColors != NULL)
     {
 	png_set_PLTE(pngp, infop, (png_colorp)PNGColors, PalSize);

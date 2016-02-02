@@ -180,7 +180,7 @@ typedef struct ILImage {
 
 /**
  *
- *\brief  Converters beween endianess
+ *\brief  Converters between endianness
  *  Call netXX() to guarantee big endian
  *
  */
@@ -561,7 +561,7 @@ protected:
 
     const CPLStringList & GetOptlist() const { return poDS->optlist; }
 
-    // Compresion and decompression functions.  To be overwritten by specific implementations
+    // Compression and decompression functions.  To be overwritten by specific implementations
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) = 0;
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) = 0;
 

@@ -194,7 +194,7 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 
     // source size is used to hold the output size
     src.size = dst.size;
-    // If we didnt' allocate a buffer, the receiver can use it already
+    // If we didn't allocate a buffer, the receiver can use it already
     if (!dbuff) 
 	return dst.buffer;
 
@@ -833,7 +833,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 	if (is_Endianess_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER)) 
 	    swab_buff(src, img);
 
-	// Compress functions need to return the compresed size in
+	// Compress functions need to return the compressed size in
 	// the bytes in buffer field
 	Compress(dst, src);
 	void *usebuff = dst.buffer;

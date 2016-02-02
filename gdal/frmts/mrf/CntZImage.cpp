@@ -1215,7 +1215,7 @@ bool CntZImage::readFlt(Byte** ppByte, float& z, int numBytes) const
   return true;
 }
 
-// ADJUST goes LSB to MSB in bytes, regardless of endianess
+// ADJUST goes LSB to MSB in bytes, regardless of endianness
 // POFFSET is the relative byte offset for a given type, for native endian
 #if defined BIG_ENDIAN
 #define ADJUST(ptr) (--(ptr))
@@ -1227,7 +1227,7 @@ bool CntZImage::readFlt(Byte** ppByte, float& z, int numBytes) const
 
 #define NEXTBYTE (*(*ppByte)++)
 
-// endianess and alignment safe
+// endianness and alignment safe
 // returns the number of bytes it wrote, adjusts *ppByte
 int CntZImage::writeVal(Byte **ppByte, float z, int numBytes) const
 {
@@ -1256,7 +1256,7 @@ int CntZImage::writeVal(Byte **ppByte, float z, int numBytes) const
     return numBytes;
 }
 
-// endianess and alignment safe, not alliasing safe
+// endianness and alignment safe, not alliasing safe
 void CntZImage::readVal(Byte **ppByte, float &val, int numBytes) const
 {
     assert(numBytes == 4 || numBytes == 2 || numBytes == 1);
