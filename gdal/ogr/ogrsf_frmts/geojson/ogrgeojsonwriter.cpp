@@ -548,7 +548,7 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
         poObjGeom = OGRGeoJSONWriteGeometryCollection( static_cast<OGRGeometryCollection*>(poGeometry), nCoordPrecision, nSignificantFigures );
         json_object_object_add( poObj, "geometries", poObjGeom);
     }
-    else
+    else if ( !poGeometry->IsEmpty() )
     {
         if( wkbPoint == eType || wkbPoint25D == eType )
             poObjGeom = OGRGeoJSONWritePoint( static_cast<OGRPoint*>(poGeometry), nCoordPrecision, nSignificantFigures );
