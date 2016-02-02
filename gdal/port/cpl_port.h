@@ -208,7 +208,7 @@ typedef unsigned long long GUIntBig;
 
 #define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
 #define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
-#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFF) << 32) | 0xFFFFFFFFU)
+#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
 #else
 
