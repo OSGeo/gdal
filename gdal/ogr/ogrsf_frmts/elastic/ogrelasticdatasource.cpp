@@ -383,12 +383,12 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
         return FALSE;
     }
 
-    // If no indices, fallback to querying _status
+    // If no indices, fallback to querying _stats
     if( psResult->pabyData == NULL )
     {
         CPLHTTPDestroyResult(psResult);
 
-        json_object* poRes = RunRequest((m_osURL + "/_status").c_str());
+        json_object* poRes = RunRequest((m_osURL + "/_stats").c_str());
         if( poRes == NULL )
             return FALSE;
         json_object_put(poRes);
@@ -544,7 +544,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
     }
 
     // Do a status check to ensure that the server is valid
-    CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/_status", m_osURL.c_str()), NULL);
+    CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/_stats", m_osURL.c_str()), NULL);
     int bOK = (psResult != NULL && psResult->pszErrBuf == NULL);
     if (!bOK)
     {
