@@ -402,7 +402,7 @@ def ogr_mem_11():
 
     if lyr.GetName() != 'extra2':
         gdaltest.post_reason( 'delete layer seems iffy' )
-        return 'failure'
+        return 'fail'
 
     return 'success'
 

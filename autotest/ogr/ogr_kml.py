@@ -610,7 +610,7 @@ def ogr_kml_interleaved_writing():
 
     # CreateFeature() should fail
     if ret == 0:
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
