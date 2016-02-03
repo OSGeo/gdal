@@ -110,7 +110,7 @@ class TestEnvisat:
 
         if (ds.RasterXSize, ds.RasterYSize) != self.size:
             gdaltest.post_reason('Bad size. Expected %s, got %s' % (self.size, (ds.RasterXSize, ds.RasterYSize)))
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -124,7 +124,7 @@ class TestEnvisat:
 
         if ds.GetRasterBand(1).Checksum() != self.checksum:
             gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -143,7 +143,7 @@ class TestEnvisat:
             lp = (gcp.GCPLine, gcp.GCPPixel)
             if lp in d:
                 gdaltest.post_reason('Duplicate GCP coordinates.')
-                return 'failure'
+                return 'fail'
             else:
                 d[lp] = (gcp.GCPX, gcp.GCPY, gcp.GCPZ)
 
@@ -164,7 +164,7 @@ class TestEnvisat:
 
         if ds.RasterCount < mds_num:
             gdaltest.post_reason('Not all bands have been detected')
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -183,7 +183,7 @@ class TestEnvisat:
 
         if product[:3] not in ('ASA', 'SAR', 'MER') and record_md:
             gdaltest.post_reason('Unexpected metadata in the "RECORDS" domain.')
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -204,7 +204,7 @@ class TestEnvisatASAR(TestEnvisat):
 
         if product[:3] not in ('ASA', 'SAR'):
             gdaltest.post_reason('Wrong sensor ID.')
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -223,7 +223,7 @@ class TestEnvisatASAR(TestEnvisat):
 
         if not record_md:
             gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
-            return 'failure'
+            return 'fail'
 
         record = 'SQ_ADS' # it is present in all ASAR poducts
         if product.startswith('ASA_WV'):
@@ -237,7 +237,7 @@ class TestEnvisatASAR(TestEnvisat):
                     gdaltest.post_reason(
                         'No "%s" or "%s" key in "RECORDS" domain.' %
                                                             (key0, key1))
-                    return 'failure'
+                    return 'fail'
         else:
             for mds in range(1, ds.RasterCount + 1):
                 for field in ('ZERO_DOPPLER_TIME',
@@ -249,7 +249,7 @@ class TestEnvisatASAR(TestEnvisat):
                         gdaltest.post_reason(
                             'No "%s" or "%s" key in "RECORDS" domain.' %
                                                             (key0, key1))
-                        return 'failure'
+                        return 'fail'
 
         return 'success'
 
@@ -270,7 +270,7 @@ class TestEnvisatMERIS(TestEnvisat):
 
         if product[:3] not in ('MER',):
             gdaltest.post_reason('Wrong sensor ID.')
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -288,7 +288,7 @@ class TestEnvisatMERIS(TestEnvisat):
 
         if not record_md:
             gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
-            return 'failure'
+            return 'fail'
 
         record = 'Quality_ADS' # it is present in all MER poducts
 
@@ -299,7 +299,7 @@ class TestEnvisatMERIS(TestEnvisat):
                 gdaltest.post_reason(
                     'No "%s" or "%s" key in "RECORDS" domain.' %
                                                         (key0, key1))
-                return 'failure'
+                return 'fail'
 
         return 'success'
 
@@ -328,38 +328,38 @@ class TestEnvisatMERIS(TestEnvisat):
         if level == '1':
             if not flags_band:
                 gdaltest.post_reason('No flag band in MERIS Level 1 product.')
-                return 'failure'
+                return 'fail'
 
             band = ds.GetRasterBand(flags_band)
             if band.DataType != gdal.GDT_Byte:
                 gdaltest.post_reason('Incorrect data type of the flag band in '
                                      'MERIS Level 1 product.')
-                return 'failure'
+                return 'fail'
 
             if not detector_index_band:
                 gdaltest.post_reason('No "detector index" band in MERIS '
                                      'Level 1 product.')
-                return 'failure'
+                return 'fail'
 
             band = ds.GetRasterBand(detector_index_band)
             if band.DataType != gdal.GDT_Int16:
                 gdaltest.post_reason('Incorrect data type of the '
                                      '"detector index" band in MERIS Level 2 '
                                      'product.')
-                return 'failure'
+                return 'fail'
         elif level == '2':
             if not flags_band:
                 gdaltest.post_reason('No flag band in MERIS Level 2 product.')
-                return 'failure'
+                return 'fail'
 
             band = ds.GetRasterBand(flags_band)
             if band.DataType != gdal.GDT_UInt32:
                 gdaltest.post_reason('Incorrect data type of the flag band in '
                                      'MERIS Level 2 product.')
-                return 'failure'
+                return 'fail'
         else:
             gdaltest.post_reason('Invalid product level: %s.' % level)
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -397,7 +397,7 @@ class TestEnvisatMERIS(TestEnvisat):
                     gdaltest.post_reason('Wrong GCP coordinates.')
                     print(r)
                     print(v)
-                    return 'failure'
+                    return 'fail'
 
         return 'success'
 
@@ -438,4 +438,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
