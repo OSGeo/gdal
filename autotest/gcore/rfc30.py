@@ -60,7 +60,7 @@ def rfc30_1():
 
     if ds is None:
         gdaltest.post_reason( 'failed to open utf filename.' )
-        return 'failure'
+        return 'fail'
 
     ds = None
 
@@ -68,7 +68,7 @@ def rfc30_1():
 
     if ds is None:
         gdaltest.post_reason( 'failed to open utf filename (2).' )
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -87,7 +87,7 @@ def rfc30_2():
     fd = gdal.VSIFOpenL( filename, 'w' )
     if fd is None:
         gdaltest.post_reason( 'failed to create utf-8 named file.' )
-        return 'failure'
+        return 'fail'
 
     gdal.VSIFWriteL( 'abc', 3, 1, fd )
     gdal.VSIFCloseL( fd )
@@ -104,12 +104,12 @@ def rfc30_2():
 
     if gdal.Rename( filename_for_rename, new_filename ) != 0:
         gdaltest.post_reason( 'utf-8 rename failed.' )
-        return 'failure'
+        return 'fail'
 
     fd = gdal.VSIFOpenL( new_filename, 'r' )
     if fd is None:
         gdaltest.post_reason( 'reopen failed with utf8' )
-        return 'failure'
+        return 'fail'
 
     data = gdal.VSIFReadL( 3, 1, fd )
     gdal.VSIFCloseL( fd )
@@ -120,14 +120,14 @@ def rfc30_2():
         ok = data == 'abc'
     if not ok:
         gdaltest.post_reason( 'did not get expected data.' )
-        return 'failure'
+        return 'fail'
 
     gdal.Unlink( new_filename )
 
     fd = gdal.VSIFOpenL( new_filename, 'r' )
     if fd is not None:
         gdaltest.post_reason( 'did unlink fail on utf8 filename?' )
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -143,4 +143,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
