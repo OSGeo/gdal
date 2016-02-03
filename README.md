@@ -9,7 +9,7 @@ GDAL - Geospatial Data Abstraction Library
 | Python 3                 | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=python3)](https://travis-ci.org/rouault/gdal_coverage) |
 | MacOS X                  | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_travis_macosx)](https://travis-ci.org/rouault/gdal_coverage) |
 | MSVC 2008                | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc9?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
-| MSVC 2013 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc12?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
+| MSVC 2013 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc12_full?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
 | MSVC 2015 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc13?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
 | MinGW                    | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_mingw)](https://travis-ci.org/rouault/gdal_coverage) |
 | MinGW_W64                | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_mingw_w64)](https://travis-ci.org/rouault/gdal_coverage) |
