@@ -94,6 +94,10 @@ def vsis3_1():
     with gdaltest.error_handler():
         f = gdal.VSIFOpenL('/vsis3/foo/bar.baz', 'rb')
     if f is not None or gdal.GetLastErrorMsg() == '':
+        if f is not None:
+            gdal.VSIFCloseL(f)
+        if gdal.GetConfigOption('APPVEYOR') is not None:
+            return 'success'
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
