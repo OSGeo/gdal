@@ -555,7 +555,7 @@ USE_ONLY_CRYPTODLL_ALG        =       @USE_ONLY_CRYPTODLL_ALG@
 #
 #	Note these codes have to exactly match the format directory names, 
 #	and their uppercase form should be the format portion of the
-#	format registration entry point.  eg. gdb -> GDALRegister_GDB().
+#	format registration entry point.  eg. gdb -> GDALRegister_GTiff().
 #
 GDAL_FORMATS :=
 GDAL_FORMATS += gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm

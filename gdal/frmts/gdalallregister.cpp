@@ -56,7 +56,8 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  * GDAL.  See <a href="http://gdal.org/formats_list.html">raster list</a> and
  * <a href="http://gdal.org/ogr_formats.html">vector full list</a>
  *
- * This function should generally be called once at the beginning of the application.
+ * This function should generally be called once at the beginning of the
+ * application.
  */
 
 void CPL_STDCALL GDALAllRegister()
@@ -66,15 +67,11 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_vrt
     GDALRegister_VRT();
-#endif    
+#endif
 
-#ifdef FRMT_gdb    
-    GDALRegister_GDB();
-#endif    
-
-#ifdef FRMT_gtiff    
+#ifdef FRMT_gtiff
     GDALRegister_GTiff();
-#endif    
+#endif
 
 #ifdef FRMT_nitf
     GDALRegister_NITF();
@@ -85,19 +82,19 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_hfa
     GDALRegister_HFA();
 #endif
-    
+
 #ifdef FRMT_ceos2
     GDALRegister_SAR_CEOS();
 #endif
-    
+
 #ifdef FRMT_ceos
     GDALRegister_CEOS();
 #endif
-    
+
 #ifdef FRMT_jaxapalsar
     GDALRegister_PALSARJaxa();
 #endif
-    
+
 #ifdef FRMT_gff
     GDALRegister_GFF();
 #endif
@@ -105,7 +102,7 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_elas
     GDALRegister_ELAS();
 #endif
-    
+
 #ifdef FRMT_aigrid
 //    GDALRegister_AIGrid2();
     GDALRegister_AIGrid();
@@ -135,7 +132,7 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_dds
     GDALRegister_DDS();
 #endif
-    
+
 #ifdef FRMT_gta
     GDALRegister_GTA();
 #endif
@@ -459,7 +456,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_gxf
     GDALRegister_GXF();
-#endif    
+#endif
 
 #ifdef FRMT_grass
     GDALRegister_GRASS();
@@ -555,7 +552,7 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_wcs
     GDALRegister_HTTP();
 #endif
-    
+
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as suppressed by the   */
 /*      GDAL_SKIP environment variable.                                 */
