@@ -109,7 +109,7 @@ def kea_4():
         return 'skip'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdaltest.kea_driver.Create("/non_existing_path", 1, 1)
+    ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
