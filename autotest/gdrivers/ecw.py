@@ -810,6 +810,12 @@ def ecw_24():
         pass
 
     ds = gdal.Open( 'tmp/spif83.ecw', gdal.GA_Update )
+    if ds is None and gdaltest.ecw_drv.major_version == 3 and gdal.GetConfigOption('APPVEYOR') is not None:
+        try:
+            os.remove( 'tmp/spif83.ecw' )
+        except:
+            pass
+        return 'skip'
     gt = [1,2,0,3,0,-4]
     ds.SetGeoTransform(gt)
     ds = None
@@ -857,6 +863,12 @@ def ecw_25():
     units = 'FEET'
 
     ds = gdal.Open( 'tmp/spif83.ecw', gdal.GA_Update )
+    if ds is None and gdaltest.ecw_drv.major_version == 3 and gdal.GetConfigOption('APPVEYOR') is not None:
+        try:
+            os.remove( 'tmp/spif83.ecw' )
+        except:
+            pass
+        return 'skip'
     sr = osr.SpatialReference()
     sr.ImportFromERM(proj, datum, units)
     wkt = sr.ExportToWkt()
@@ -921,6 +933,12 @@ def ecw_26():
     units = 'FEET'
 
     ds = gdal.Open( 'tmp/spif83.ecw', gdal.GA_Update )
+    if ds is None and gdaltest.ecw_drv.major_version == 3 and gdal.GetConfigOption('APPVEYOR') is not None:
+        try:
+            os.remove( 'tmp/spif83.ecw' )
+        except:
+            pass
+        return 'skip'
     ds.SetMetadataItem("PROJ", proj, "ECW")
     ds.SetMetadataItem("DATUM", datum, "ECW")
     ds.SetMetadataItem("UNITS", units, "ECW")
