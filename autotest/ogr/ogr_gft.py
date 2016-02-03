@@ -96,7 +96,7 @@ def ogr_gft_read():
     if count == 0:
         gdaltest.post_reason('did not get expected feature count')
         print(count)
-        if gdaltest.skip_on_travis():
+        if gdaltest.skip_on_travis() or gdal.GetConfigOption('APPVEYOR') is not None:
             ogrtest.gft_drv = None
             return 'skip'
         return 'fail'
