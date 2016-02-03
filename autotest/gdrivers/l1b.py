@@ -56,11 +56,11 @@ class TestL1B:
 
         if ds.GetRasterBand(1).Checksum() != self.checksum:
             gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'failure'
+            return 'fail'
 
         if len(ds.GetGCPs()) != self.gcpNumber:
             gdaltest.post_reason('Bad GCP number. Expected %d, got %d' % (self.gcpNumber, len(ds.GetGCPs())))
-            return 'failure'
+            return 'fail'
 
         return 'success'
 
@@ -318,4 +318,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
