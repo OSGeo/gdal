@@ -2493,7 +2493,8 @@ def gpkg_26():
 
         ds = gdal.Open('tmp/tmp.gpkg')
         got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
-        if got_cs != expected_cs:
+        # VC12 returns [3561, 3561, 3561, 3691] for GoogleCRS84Quad
+        if max([ abs(got_cs[i] - expected_cs[i]) for i in range(4)]) > 1:
             gdaltest.post_reason('fail')
             print('For %s, got %s, expected %s' % (scheme, str(got_cs), str(expected_cs)))
             return 'fail'
