@@ -191,7 +191,7 @@ def grib_8():
         return 'skip'
     ds = gdal.Open('/vsizip/data/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
     if ds is None:
-        return 'Fail'
+        return 'fail'
     band = ds.GetRasterBand(2)
     md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
     ds = None
