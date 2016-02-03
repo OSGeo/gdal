@@ -69,7 +69,7 @@ def ogr_index_1():
 # writing ... it just blows an assert!
 #    if gdaltest.p_lyr.GetFeatureCount() != 7:
 #        gdaltest.post_reason( 'FeatureCount wrong' )
-#        return 'failure'
+#        return 'fail'
 
     # Close and reopen, since it seems the .mif driver does not allow reading
     # from a newly created (updatable) file.
@@ -99,7 +99,7 @@ def ogr_index_2():
 
     if gdaltest.s_lyr.GetFeatureCount() != 20:
         gdaltest.post_reason( 'FeatureCount wrong' )
-        return 'failure'
+        return 'fail'
 
     gdaltest.s_ds.Release()
     gdaltest.s_lyr = None

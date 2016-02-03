@@ -116,11 +116,11 @@ def ogr_mysql_2():
 
     if gdaltest.mysql_lyr.GetFeatureCount() != shp_lyr.GetFeatureCount():
         gdaltest.post_reason( 'not matching feature count' )
-        return 'failure'
+        return 'fail'
 
     if not gdaltest.mysql_lyr.GetSpatialRef().IsSame(shp_lyr.GetSpatialRef()):
         gdaltest.post_reason( 'not matching spatial ref' )
-        return 'failure'
+        return 'fail'
 
     return 'success'
 

@@ -29,6 +29,7 @@
 
 import os
 import shutil
+import struct
 import sys
 
 sys.path.append( '../pymod' )
@@ -40,7 +41,7 @@ from osgeo import ogr
 from osgeo import osr
 
 ###############################################################################
-# Open Shapefile 
+# Open Shapefile
 
 def ogr_shape_1():
 
@@ -3632,28 +3633,28 @@ def ogr_shape_75():
        ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.prj']:
         gdaltest.post_reason('fail')
         print(ds.GetFileList())
-        return 'failure'
+        return 'fail'
     ds = None
 
     ds = gdal.OpenEx('data/idlink.dbf')
     if ds.GetFileList() != ['data/idlink.dbf']:
         gdaltest.post_reason('fail')
         print(ds.GetFileList())
-        return 'failure'
+        return 'fail'
     ds = None
 
     ds = gdal.OpenEx('data/testpoly.shp')
     if ds.GetFileList() != ['data/testpoly.shp', 'data/testpoly.shx', 'data/testpoly.dbf', 'data/testpoly.qix']:
         gdaltest.post_reason('fail')
         print(ds.GetFileList())
-        return 'failure'
+        return 'fail'
     ds = None
 
     ds = gdal.OpenEx('data/emptyshapefilewithsbn.shx')
     if ds.GetFileList() != ['data/emptyshapefilewithsbn.shp', 'data/emptyshapefilewithsbn.shx', 'data/emptyshapefilewithsbn.sbn', 'data/emptyshapefilewithsbn.sbx']:
         gdaltest.post_reason('fail')
         print(ds.GetFileList())
-        return 'failure'
+        return 'fail'
     ds = None
 
     return 'success'
@@ -3667,7 +3668,7 @@ def ogr_shape_76():
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
     if sr.ExportToWkt().find('GEOGCS["GCS_North_American_1983"') != 0:
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -3681,7 +3682,7 @@ def ogr_shape_77():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'LINESTRING (0 1,2 3)':
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -4145,8 +4146,7 @@ def ogr_shape_88():
 # Test reading geometry bigger than 10 MB
 
 def ogr_shape_89():
-    
-    import struct
+
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_89.shp')
     lyr = ds.CreateLayer('ogr_shape_89')
