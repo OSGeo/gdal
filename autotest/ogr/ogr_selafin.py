@@ -36,7 +36,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-from osgeo import ogr, osr, gdal
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # Create wasp datasource
@@ -65,11 +67,11 @@ def ogr_selafin_create_nodes():
     if ogr_selafin_create_ds() != 'success': return 'skip'
     ref=osr.SpatialReference()
     ref.ImportFromEPSG(4326)
-    layer=gdaltest.selafin_ds.CreateLayer("name",ref,geom_type=ogr.wkbPoint)
+    layer=gdaltest.selafin_ds.CreateLayer('name',ref,geom_type=ogr.wkbPoint)
     if layer == None:
         gdaltest.post_reason( 'unable to create layer')
         return 'fail'
-    layer.CreateField(ogr.FieldDefn("value",ogr.OFTReal))
+    layer.CreateField(ogr.FieldDefn('value',ogr.OFTReal))
     dfn=layer.GetLayerDefn()
     for i in range(5):
         for j in range(5):
@@ -83,12 +85,12 @@ def ogr_selafin_create_nodes():
                 return 'fail'
     # do some checks
     if layer.GetFeatureCount()!=25:
-        gdaltest.post_reason("wrong number of features after point layer creation")
-        return "fail"
+        gdaltest.post_reason('wrong number of features after point layer creation')
+        return 'fail'
     # return
     del gdaltest.selafin_ds
     del layer
-    return "success"
+    return 'success'
 
 ###############################################################################
 # Add a set of elements to the datasource
@@ -97,16 +99,16 @@ def ogr_selafin_create_elements():
 
     gdaltest.selafin_ds = ogr.Open( 'tmp/tmp.slf',1 )
     if gdaltest.selafin_ds is None:
-        return "skip"
+        return 'skip'
     layerCount=gdaltest.selafin_ds.GetLayerCount()
     if layerCount<2:
-        gdaltest.post_reason("elements layer not created with nodes layer")
-        return "fail"
+        gdaltest.post_reason('elements layer not created with nodes layer')
+        return 'fail'
     for i in range(layerCount):
         name=gdaltest.selafin_ds.GetLayer(i).GetName()
-        if "_e" in name:
+        if '_e' in name:
             j=i
-        if "_p" in name:
+        if '_p' in name:
             k=i
     layere=gdaltest.selafin_ds.GetLayer(j)
     dfn=layere.GetLayerDefn()
@@ -140,17 +142,17 @@ def ogr_selafin_create_elements():
         return 'fail'
     # do some checks
     if gdaltest.selafin_ds.GetLayer(k).GetFeatureCount()!=28:
-        gdaltest.post_reason("wrong number of point features after elements layer creation")
-        return "fail"
+        gdaltest.post_reason('wrong number of point features after elements layer creation')
+        return 'fail'
     if math.fabs(layere.GetFeature(5).GetFieldAsDouble(0)-9)>0.01:
-        gdaltest.post_reason("wrong value of attribute in element layer")
-        return "fail"
+        gdaltest.post_reason('wrong value of attribute in element layer')
+        return 'fail'
     if math.fabs(layere.GetFeature(10).GetFieldAsDouble(0)-15)>0.01:
-        gdaltest.post_reason("wrong value of attribute in element layer")
-        return "fail"
+        gdaltest.post_reason('wrong value of attribute in element layer')
+        return 'fail'
     # return
     del gdaltest.selafin_ds
-    return "success"
+    return 'success'
 
 ###############################################################################
 # Add a field and set its values for point features
@@ -158,21 +160,21 @@ def ogr_selafin_set_field():
 
     gdaltest.selafin_ds = ogr.Open( 'tmp/tmp.slf',1 )
     if gdaltest.selafin_ds is None:
-        return "skip"
+        return 'skip'
     layerCount=gdaltest.selafin_ds.GetLayerCount()
     if layerCount<2:
-        gdaltest.post_reason("elements layer not created with nodes layer")
-        return "fail"
+        gdaltest.post_reason('elements layer not created with nodes layer')
+        return 'fail'
     for i in range(layerCount):
         name=gdaltest.selafin_ds.GetLayer(i).GetName()
-        if "_e" in name:
+        if '_e' in name:
             j=i
-        if "_p" in name:
+        if '_p' in name:
             k=i
     layern=gdaltest.selafin_ds.GetLayer(k)
     gdaltest.selafin_ds.GetLayer(j)
-    layern.CreateField(ogr.FieldDefn("reverse",ogr.OFTReal))
-    layern.AlterFieldDefn(0,ogr.FieldDefn("new",ogr.OFTReal),ogr.ALTER_NAME_FLAG)
+    layern.CreateField(ogr.FieldDefn('reverse',ogr.OFTReal))
+    layern.AlterFieldDefn(0,ogr.FieldDefn('new',ogr.OFTReal),ogr.ALTER_NAME_FLAG)
     layern.ReorderFields([1,0])
     layern.GetLayerDefn()
     for i in range(28):
@@ -182,11 +184,11 @@ def ogr_selafin_set_field():
         layern.SetFeature(feat)
     # do some checks
     if math.fabs(layern.GetFeature(11).GetFieldAsDouble(0)-110)>0.01:
-        gdaltest.post_reason("wrong value of attribute in point layer")
-        return "fail"
+        gdaltest.post_reason('wrong value of attribute in point layer')
+        return 'fail'
     # return
     del gdaltest.selafin_ds
-    return "success"
+    return 'success'
 
 
 ###############################################################################
@@ -198,7 +200,7 @@ def ogr_selafin_cleanup():
     selafin_drv.DeleteDataSource( 'tmp/tmp.slf' )
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_selafin_create_ds,
     ogr_selafin_create_nodes,
     ogr_selafin_create_elements,
@@ -208,7 +210,7 @@ gdaltest_list = [
 
 if __name__ == '__main__':
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ogrtest.have_geos() 
+    ogrtest.have_geos()
     gdal.PopErrorHandler()
 
     gdaltest.setup_run( 'ogr_selafin' )
@@ -216,4 +218,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
