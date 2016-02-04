@@ -2550,7 +2550,7 @@ def ogr_geojson_52():
     fld = lyr.GetLayerDefn().GetFieldDefn(2)
     if fld.GetNameRef() != 'double':
         return 'fail'
-    if fld.GetType() != ogr.OFTDouble:
+    if fld.GetType() != ogr.OFTReal:
         return 'fail'
 
     return 'success'
