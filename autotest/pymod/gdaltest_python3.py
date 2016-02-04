@@ -139,7 +139,7 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
         ret = ''
 
     waitcode = p.wait()
-    if waitcode < 0:
+    if waitcode != 0:
         ret = ret + '\nERROR ret code = %d' % waitcode
 
     return ret
