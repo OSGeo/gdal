@@ -2643,6 +2643,7 @@ gdaltest_list = [
     ogr_geojson_49,
     ogr_geojson_50,
     ogr_geojson_51,
+    ogr_geojson_52,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
