@@ -520,6 +520,22 @@ def test_gdalbuildvrt_15():
     return 'success'
 
 ###############################################################################
+# Test output to non writable file
+
+def test_gdalbuildvrt_16():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' /non_existing_dir/non_existing_subdir/out.vrt ../gcore/data/byte.tif')
+    if err.find('ERROR ret code = 1') < 0:
+        gdaltest.post_reason('fail')
+        print(out)
+        print(err)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -578,6 +594,7 @@ gdaltest_list = [
     test_gdalbuildvrt_13,
     test_gdalbuildvrt_14,
     test_gdalbuildvrt_15,
+    test_gdalbuildvrt_16,
     test_gdalbuildvrt_cleanup
     ]
 

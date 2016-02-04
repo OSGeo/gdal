@@ -196,7 +196,12 @@ int main( int argc, char ** argv )
     GDALBuildVRTOptionsFree(psOptions);
     GDALBuildVRTOptionsForBinaryFree(psOptionsForBinary);
 
+    CPLErrorReset();
+    // The flush to disk is only done at that stage, so check if any error has
+    // happened
     GDALClose( hOutDS );
+    if( CPLGetLastErrorType() != CE_None )
+        nRetCode = 1;
 
     GDALDumpOpenDatasets( stderr );
 
