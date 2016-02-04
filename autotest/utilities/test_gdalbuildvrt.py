@@ -527,11 +527,24 @@ def test_gdalbuildvrt_16():
         return 'skip'
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' /non_existing_dir/non_existing_subdir/out.vrt ../gcore/data/byte.tif')
-    if err.find('ERROR ret code = 1') < 0:
-        gdaltest.post_reason('fail')
-        print(out)
-        print(err)
-        return 'fail'
+
+    if 'TRAVIS_BRANCH' in os.environ:
+        val = os.environ['TRAVIS_BRANCH']
+    else:
+        val = ''
+    if val.find('mingw') < 0:
+        if err.find('ERROR ret code = 1') < 0:
+            gdaltest.post_reason('fail')
+            print(out)
+            print(err)
+            return 'fail'
+    else:
+        # We don't get the error code on Travis mingw
+        if err.find('ERROR') < 0:
+            gdaltest.post_reason('fail')
+            print(out)
+            print(err)
+            return 'fail'
 
     return 'success'
 
