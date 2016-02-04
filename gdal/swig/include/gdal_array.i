@@ -510,8 +510,8 @@ int GDALTermProgress( double, const char *, void * );
   }
 }
 
+%newobject OpenNumPyArray;
 %inline %{
-
 GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray)
 {
     return NUMPYDataset::Open( psArray );
