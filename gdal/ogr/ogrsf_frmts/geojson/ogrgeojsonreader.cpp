@@ -515,7 +515,7 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
         }
         poDefn->AddFieldDefn( &fldDefn );
     }
-    else
+    else if ( poVal ) // If there is a null value: do not update field definition
     {
         OGRFieldDefn* poFDefn = poDefn->GetFieldDefn(nIndex);
         OGRFieldType eType = poFDefn->GetType();
