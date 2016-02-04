@@ -141,6 +141,7 @@ int main( int nArgc, char ** papszArgv )
     if( nArgc < 1 )
     {
         papszArgv = NULL;
+        nRetCode = -nArgc;
         goto exit;
     }
 
