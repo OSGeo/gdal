@@ -2240,6 +2240,11 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     }
     else if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) )
     {
+        char *pszWKT = NULL;
+        OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
+        CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+        CPLFree( pszWKT );
+
         if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
             CPLError(CE_Warning, CPLE_AppDefined, "Cutline is not valid after transformation");
         else
