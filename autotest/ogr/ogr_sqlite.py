@@ -1323,6 +1323,11 @@ def ogr_sqlite_27():
         if val == 0:
             ret = ret[0:pos] + ret[pos + len('ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.'):]
 
+            # And remove ERROR ret code consequently
+            pos = ret.find('ERROR ret code = 1')
+            if pos != -1:
+                ret = ret[0:pos]
+
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         gdaltest.post_reason('failed')
         print(ret)
