@@ -167,11 +167,18 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
                                          OGRFieldSubType& eSubType,
-                                         bool bArrayAsString )
+                                         bool bArrayAsString,
+                                         bool* pbIsNull )
 {
+    if ( pbIsNull )
+        *pbIsNull = false;
     eSubType = OFSTNone;
 
-    if (poObject == NULL) { return OFTString; }
+    if ( poObject == NULL ) {
+        if ( pbIsNull )
+            *pbIsNull = true;
+        return OFTString;
+    }
 
     json_type type = json_object_get_type( poObject );
 
@@ -243,8 +250,8 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
             eSubType = OFSTBoolean;
         return eType;
     }
-    else
-        return OFTString; /* null, object */
+    /* default: handle as string */
+    return OFTString;
 }
 
 /************************************************************************/
