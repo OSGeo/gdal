@@ -76,7 +76,8 @@ int GeoJSONIsObject( const char* pszText );
 
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
                                          OGRFieldSubType& eSubType,
-                                         bool bArrayAsString = false );
+                                         bool bArrayAsString = false,
+                                         bool* bIsNull = 0 );
 
 
 /************************************************************************/
