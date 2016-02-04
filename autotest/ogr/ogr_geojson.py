@@ -2517,6 +2517,45 @@ def ogr_geojson_51():
     return 'success'
 
 ###############################################################################
+# Test NULL type detection
+
+def ogr_geojson_52():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/nullvalues.geojson')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    fld = lyr.GetLayerDefn().GetFieldDefn(0)
+    if fld.GetNameRef() != 'int':
+        return 'fail'
+    if fld.GetType() != ogr.OFTInteger:
+        return 'fail'
+    fld = lyr.GetLayerDefn().GetFieldDefn(1)
+    if fld.GetNameRef() != 'string':
+        return 'fail'
+    if fld.GetType() != ogr.OFTString:
+        return 'fail'
+    fld = lyr.GetLayerDefn().GetFieldDefn(2)
+    if fld.GetNameRef() != 'double':
+        return 'fail'
+    if fld.GetType() != ogr.OFTReal:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -2604,6 +2643,7 @@ gdaltest_list = [
     ogr_geojson_49,
     ogr_geojson_50,
     ogr_geojson_51,
+    ogr_geojson_52,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
