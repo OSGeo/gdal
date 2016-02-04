@@ -250,7 +250,7 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
         ret_stderr = q_stderr.get()
 
     waitcode = p.wait()
-    if waitcode < 0:
+    if waitcode != 0:
         ret_stderr = ret_stderr + '\nERROR ret code = %d' % waitcode
 
     return (ret_stdout, ret_stderr)
