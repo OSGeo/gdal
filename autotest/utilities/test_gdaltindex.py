@@ -92,13 +92,22 @@ def test_gdaltindex_1():
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
-    gdaltest.runexternal(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
+
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
+        gdaltest.post_reason('fail')
+        print(ret_stdout)
+        print(ret_stderr)
+        print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
     tileindex_wkt = ds.GetLayer(0).GetSpatialRef().ExportToWkt()
     if tileindex_wkt.find('GCS_WGS_1984') == -1:
+        gdaltest.post_reason('fail')
+        print(ret_stdout)
+        print(ret_stderr)
+        print(tileindex_wkt)
         return 'fail'
 
     expected_wkts =['POLYGON ((49 2,50 2,50 1,49 1,49 2))',
