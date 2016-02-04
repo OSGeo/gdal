@@ -3961,7 +3961,6 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 }
 
 
-
 GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray)
 {
     return NUMPYDataset::Open( psArray );
@@ -4672,7 +4671,7 @@ SWIGINTERN PyObject *_wrap_OpenNumPyArray(PyObject *SWIGUNUSEDPARM(self), PyObje
     }
   }
   result = (GDALDatasetShadow *)OpenNumPyArray(arg1);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
