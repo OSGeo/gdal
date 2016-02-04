@@ -250,8 +250,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
             eSubType = OFSTBoolean;
         return eType;
     }
-    else if ( pbIsNull ) /* null, object */
-        *pbIsNull = true;
+    /* default: handle as string */
     return OFTString;
 }
 
