@@ -516,7 +516,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                                       GeoJSONPropertyToFieldType( it.val ) );
                 poDefn->AddFieldDefn( &fldDefn );
             }
-            else
+            else if ( it.val ) // If there is a null value: do not update field definition
             {
                 OGRFieldDefn* poFDefn = poDefn->GetFieldDefn(nFldIndex);
                 OGRFieldType eType = poFDefn->GetType();
