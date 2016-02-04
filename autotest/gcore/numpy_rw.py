@@ -356,7 +356,9 @@ def numpy_rw_11():
 
         ar = numpy.empty([1, 1], dtype = type_tuple[2])
 
-        got_dt = gdal_array.OpenArray(ar).GetRasterBand(1).DataType
+        ar_ds = gdal_array.OpenArray(ar)
+        got_dt = ar_ds.GetRasterBand(1).DataType
+        ar_ds = None
         expected_dt = type_tuple[1]
         if expected_dt == gdal.GDT_CInt16 or expected_dt == gdal.GDT_CInt32:
             expected_dt = gdal.GDT_CFloat32
