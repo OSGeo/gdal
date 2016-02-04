@@ -163,6 +163,23 @@ static CPL_INLINE double VizGeorefSpline2DBase_func( const double x1, const doub
 }
 
 #if defined(__GNUC__) && defined(__x86_64__)
+/* Some versions of ICC fail to compile VizGeorefSpline2DBase_func4 (#6350) */
+#if defined(__INTEL_COMPILER)
+#if __INTEL_COMPILER >=1500
+#define USE_OPTIMIZED_VizGeorefSpline2DBase_func4
+#else
+#if (__INTEL_COMPILER == 1200) || (__INTEL_COMPILER == 1210)
+#define USE_OPTIMIZED_VizGeorefSpline2DBase_func4
+#else
+#undef USE_OPTIMIZED_VizGeorefSpline2DBase_func4
+#endif
+#endif
+#else // defined(__INTEL_COMPILER)
+#define USE_OPTIMIZED_VizGeorefSpline2DBase_func4
+#endif // defined(__INTEL_COMPILER)
+#endif
+
+#if defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4)
 
 /* Derived and adapted from code originating from: */
 
@@ -343,7 +360,7 @@ static CPL_INLINE void VizGeorefSpline2DBase_func4( double* res,
     res[2] = resv[1].d[0];
     res[3] = resv[1].d[1];
 }
-#else
+#else // defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4)
 static void VizGeorefSpline2DBase_func4( double* res,
                                          const double* pxy,
                                          const double* xr, const double* yr )
@@ -357,7 +374,7 @@ static void VizGeorefSpline2DBase_func4( double* res,
     double dist3  = SQ( xr[3] - pxy[0] ) + SQ( yr[3] - pxy[1] );
     res[3] = dist3 ? dist3 * log(dist3) : 0.0;
 }
-#endif
+#endif // defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4)
 
 int VizGeorefSpline2D::solve(void)
 {
