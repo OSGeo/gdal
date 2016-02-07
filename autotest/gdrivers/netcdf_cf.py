@@ -184,6 +184,13 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
         gdaltest.post_reason('ERROR with command - ' + command)
         return 'fail'
 
+    # There should be a ERRORS detected summary
+    if not 'ERRORS detected' in ret:
+        gdaltest.post_reason('ERROR with command - ' + command)
+        print(ret)
+        print(err)
+        return 'fail'
+
     output_all = ret
     output_err = ''
     output_warn = ''
