@@ -238,10 +238,10 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     nEnd = CPL_LSBWORD32( poDS->sHeader.LE );
     poDS->nRasterXSize = nEnd - nStart + 1;
 
-    poDS->nBands = CPL_LSBWORD32( poDS->sHeader.NC );
+    int nBands = CPL_LSBWORD32( poDS->sHeader.NC );
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
-        !GDALCheckBandCount(poDS->nBands, FALSE))
+        !GDALCheckBandCount(nBands, FALSE))
     {
         delete poDS;
         return NULL;
@@ -266,19 +266,34 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
                   nDIPExDataType, nBytesPerSample );
         return NULL;
     }
+    
+    if( nLineOffset <= 0 || nLineOffset > INT_MAX / nBands )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid values: nLineOffset = %d, nBands = %d.",
+                  nLineOffset, nBands );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < poDS->nBands; iBand++ )
+    CPLErrorReset();
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         poDS->SetBand( iBand+1, 
                        new RawRasterBand( poDS, iBand+1, poDS->fp, 
                                           1024 + iBand * nLineOffset, 
                                           nBytesPerSample, 
-                                          nLineOffset * poDS->nBands,
+                                          nLineOffset * nBands,
                                           poDS->eRasterDataType, 
                                           CPL_IS_LSB, TRUE ) );
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            delete poDS;
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
