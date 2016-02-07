@@ -116,12 +116,18 @@ ErrorMgr::ErrorMgr()
 /**
 *\Brief Do nothing stub function for JPEG library, called
 */
-static void stub_source_dec(j_decompress_ptr /*cinfo*/) {};
+static void stub_source_dec(j_decompress_ptr /*cinfo*/) {}
 
 /**
-*\Brief: Do nothing stub function for JPEG library, called?
+*\Brief: This function is supposed to do refilling of the input buffer,
+* but as we provided everything at the beginning, if it is called, then
+* we have an error.
 */
-static boolean fill_input_buffer_dec(j_decompress_ptr /*cinfo*/) { return TRUE; };
+static boolean fill_input_buffer_dec(j_decompress_ptr /*cinfo*/)
+{
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid JPEG stream");
+    return FALSE;
+}
 
 /**
 *\Brief: Do nothing stub function for JPEG library, not called
@@ -265,11 +271,14 @@ CPLErr JPEG_Band::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
     src.fill_input_buffer = fill_input_buffer_dec;
     src.resync_to_restart = jpeg_resync_to_restart;
 
+    jpeg_create_decompress(&cinfo);
+
     if (jerr.signaled()) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error reading JPEG page");
+        jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
     }
-    jpeg_create_decompress(&cinfo);
+
     cinfo.src = &src;
     jpeg_read_header(&cinfo, TRUE);
     // Use float, it is actually faster than the ISLOW method by a tiny bit
