@@ -78,6 +78,12 @@ static void pngEH(png_struct *png, png_const_charp message)
 static void read_png(png_structp pngp, png_bytep data, png_size_t length)
 {
     buf_mgr *pmgr = (buf_mgr *)png_get_io_ptr(pngp);
+    if( pmgr->size < length )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: PNG Failure: Not enough bytes in buffer");
+        longjmp(png_jmpbuf(pngp), 1);
+    }
     memcpy(data, pmgr->buffer, length);
     pmgr->buffer += length;
     pmgr->size -= length;
@@ -98,7 +104,8 @@ static void write_png(png_structp pngp, png_bytep data, png_size_t length) {
 
 CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 {
-    png_bytep *png_rowp;
+    png_bytep* png_rowp = NULL;
+    volatile png_bytep *p_volatile_png_rowp = (volatile png_bytep *) &png_rowp;
 
     // pngp=png_create_read_struct(PNG_LIBPNG_VER_STRING,0,pngEH,pngWH);
     png_structp pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -115,7 +122,9 @@ CPLErr PNG_Band::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     }
 
     if (setjmp(png_jmpbuf(pngp))) {
-	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error starting PNG decompress");
+	CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during PNG decompress");
+	CPLFree((void*)(*p_volatile_png_rowp));
+	png_destroy_read_struct(&pngp, &infop, NULL);
 	return CE_Failure;
     }
 
