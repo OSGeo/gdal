@@ -555,6 +555,8 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
 
     // There is no ftruncate in VSI, only truncate()
     VSILFILE *ifp = VSIFOpenL(fname, "r+b");
+    if( ifp == NULL )
+        return false;
 
 // There is no VSIFTruncateL in gdal 1.8 and lower, seek and write something at the end
 #if GDAL_VERSION_MAJOR == 1 && GDAL_VERSION_MINOR <= 8
