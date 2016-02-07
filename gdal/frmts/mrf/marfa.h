@@ -386,7 +386,7 @@ protected:
     GIntBig AddOverviews(int scale);
 
     // Late allocation buffer
-    void SetPBuffer(unsigned int sz);
+    bool SetPBuffer(unsigned int sz);
     void *GetPBuffer() {
 	if (!pbuffer && pbsize)
 	    SetPBuffer(pbsize);
