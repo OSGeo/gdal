@@ -140,7 +140,12 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 	    "MRF: TIFF, can't open %s as a temp file", fname.c_str());
         return CE_Failure;
     }
+#if GDAL_VERSION_MAJOR >= 2
+    const char* const apszAllowedDrivers[] = { "GTiff", NULL };
+    GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpenEx(fname, GDAL_OF_RASTER, apszAllowedDrivers, NULL, NULL));
+#else
     GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpen(fname, GA_ReadOnly));
+#endif
     if (poTiff == NULL) {
 	CPLError(CE_Failure,CPLE_AppDefined,
 	    "MRF: TIFF, can't open page as a Tiff");
