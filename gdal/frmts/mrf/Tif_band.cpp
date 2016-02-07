@@ -144,6 +144,7 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     if (poTiff == NULL) {
 	CPLError(CE_Failure,CPLE_AppDefined,
 	    "MRF: TIFF, can't open page as a Tiff");
+        VSIUnlink(fname);
         return CE_Failure;
     }
 
@@ -161,11 +162,9 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 	    );
     }
     GDALClose(poTiff);
-    if (CE_None != ret)
-	return ret;
-
     VSIUnlink(fname);
-    return CE_None;
+
+    return ret;
 }
 
 CPLErr TIF_Band::Decompress(buf_mgr &dst, buf_mgr &src) 
