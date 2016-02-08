@@ -279,8 +279,8 @@ be read by applications intolerant of unrecognized tags.</li>
 <ul>
 <li>YES forces BigTIFF.</li>
 <li>NO forces classic TIFF.</li>
-<li>IF_NEEDED will only create a BigTIFF if it is clearly needed (uncompressed, and image larger than 4GB).</li>
-<li>IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB.</li>
+<li>IF_NEEDED will only create a BigTIFF if it is clearly needed (in the uncompressed case, and image larger than 4GB. So no effect when using a compression).</li>
+<li>IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB. Note: this is only a heuristics that might not always work depending on compression ratios.</li>
 </ul>
 <p>BigTIFF is a TIFF variant which can contain more than 4GiB of data (size of classic TIFF is limited by that value). This option is available if GDAL is built with libtiff library version 4.0 or higher (which is the case of the internal libtiff version from GDAL >= 1.5.0).  The default is IF_NEEDED. (IF_NEEDED and IF_SAFER are available from GDAL 1.6.0).</p>
 <p>When creating a new GeoTIFF with no compression, GDAL computes in advance the
