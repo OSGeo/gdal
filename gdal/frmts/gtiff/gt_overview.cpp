@@ -716,6 +716,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Loop writing overview data.                                     */
 /* -------------------------------------------------------------------- */
 
+    GTIFFSetInExternalOvr(true);
+
     if (nCompression != COMPRESSION_NONE &&
         nPlanarConfig == PLANARCONFIG_CONTIG &&
         GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) == FALSE &&
@@ -831,6 +833,8 @@ GTIFFBuildOverviews( const char * pszFilename,
     if (eErr == CE_None)
         hODS->FlushCache();
     delete hODS;
+    
+    GTIFFSetInExternalOvr(false);
 
     pfnProgress( 1.0, NULL, pProgressData );
 

@@ -74,6 +74,7 @@ CPL_CVSID("$Id$");
 #if SIZEOF_VOIDP == 4
 static int bGlobalStripIntegerOverflow = FALSE;
 #endif
+static bool bGlobalInExternalOvr = false;
 
 typedef enum
 {
@@ -119,6 +120,15 @@ static bool IsPowerOfTwo(unsigned int i)
         i >>= 1;
     }
     return nBitSet == 1;
+}
+
+/************************************************************************/
+/*                          GTIFFSetInExternalOvr()                     */
+/************************************************************************/
+
+void GTIFFSetInExternalOvr(bool b)
+{
+    bGlobalInExternalOvr = b;
 }
 
 /************************************************************************/
@@ -15179,7 +15189,14 @@ GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
 #ifdef BIGTIFF_SUPPORT
     if( strcmp(fmt, "Maximum TIFF file size exceeded") == 0 )
     {
-        fmt = "Maximum TIFF file size exceeded. Use BIGTIFF=YES creation option.";
+        // Ideally there would be a thread-safe way of setting this flag,
+        // but we cannot really use the extended error handler, since the
+        // handler is for all TIFF handles, and not necessarily the ones of
+        // this driver.
+        if( bGlobalInExternalOvr )
+            fmt = "Maximum TIFF file size exceeded. Use --config BIGTIFF_OVERVIEW YES configuration option.";
+        else
+            fmt = "Maximum TIFF file size exceeded. Use BIGTIFF=YES creation option.";
     }
 #endif
 
