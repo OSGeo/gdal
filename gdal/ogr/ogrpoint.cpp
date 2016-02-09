@@ -330,7 +330,7 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
     if( flags & OGR_G_MEASURED )
     {
         memcpy( &m, pabyData, 8 );
-        pabyData += 8;
+        /*pabyData += 8; */
         if( OGR_SWAP( eByteOrder ) )
         {
             CPL_SWAPDOUBLE( &m );
