@@ -24,6 +24,13 @@ Contributors:
 #include <utility>
 #include <cstddef>
 
+// This is useful when compiling within GDAL in DEBUG_BOOL mode, where a
+// MSVCPedanticBool class is used as an alias for the bool type, so as
+// to catch more easily int/bool misuses, even on Linux
+#ifdef DEBUG_BOOL
+#include "cpl_port.h"
+#endif
+
 #define NAMESPACE_LERC_START namespace LercNS {
 #define NAMESPACE_LERC_END }
 #define USING_NAMESPACE_LERC using namespace LercNS;
