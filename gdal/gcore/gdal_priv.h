@@ -1219,8 +1219,8 @@ class CPL_DLL GDALAsyncReader
 /*      An assortment of overview related stuff.                        */
 /* ==================================================================== */
 
-/* Not a public symbol for the moment */
-CPLErr 
+/* Only exported for drivers as plugin. Signature may change */
+CPLErr CPL_DLL
 GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                                  int nOverviews,
                                  GDALRasterBand*** papapoOverviewBands,
