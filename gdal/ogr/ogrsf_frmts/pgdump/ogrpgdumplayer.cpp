@@ -483,7 +483,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
                 //count of utf chars
-                if ((pszStrValue[iChar] & 0xc0) != 0x80) 
+                if ( nOGRFieldType != OFTStringList && (pszStrValue[iChar] & 0xc0) != 0x80) 
                 {
                     if( nMaxWidth > 0 && iUTFChar == nMaxWidth )
                     {
