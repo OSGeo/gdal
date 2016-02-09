@@ -453,7 +453,7 @@ typedef enum
 /** Return if the geometry type is a 3D geometry type
   * @since GDAL 2.0
   */
-#define wkbHasZ(x)     OGR_GT_HasZ(x)
+#define wkbHasZ(x)     (OGR_GT_HasZ(x) != 0)
 
 /** Return the 3D geometry type corresponding to the specified geometry type.
   * @since GDAL 2.0
@@ -463,7 +463,7 @@ typedef enum
 /** Return if the geometry type is a measured geometry type
   * @since GDAL 2.1
   */
-#define wkbHasM(x)     OGR_GT_HasM(x)
+#define wkbHasM(x)     (OGR_GT_HasM(x) != 0)
 
 /** Return the measured geometry type corresponding to the specified geometry type.
   * @since GDAL 2.1
