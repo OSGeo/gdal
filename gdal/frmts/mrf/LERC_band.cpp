@@ -20,12 +20,13 @@ Contributors:  Lucian Plesea
 */
 
 #include "marfa.h"
-#include "CntZImage.h"
-#include "Lerc2.h"
 #include <algorithm>
+#include <CntZImage.h>
+#include <Lerc2.h>
+
+USING_NAMESPACE_LERC
 
 NAMESPACE_MRF_START
-
 
 // Load a buffer into a zImg
 template <typename T> void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)

@@ -17,24 +17,23 @@ Contributors:
     Lucian Plesea
 */
 
-#pragma once
+#ifndef LERC_DEFINES_H
+#define LERC_DEFINES_H
+
 // For std::pair
 #include <utility>
 #include <cstddef>
 
-#ifdef GDAL_COMPILATION
-#include "marfa.h"
-#else
-#define NAMESPACE_MRF_START
-#define NAMESPACE_MRF_END
-#endif
+#define NAMESPACE_LERC_START namespace LercNS {
+#define NAMESPACE_LERC_END }
+#define USING_NAMESPACE_LERC using namespace LercNS;
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 typedef unsigned char Byte;
 
 // unsigned long pair sortable by first
-struct Quant : public std::pair<unsigned long, unsigned long>
+struct Quant : public std::pair<unsigned int, unsigned int>
 {
     // This is default behavior in C++14, but not before
     bool operator<(const Quant& other) const {
@@ -76,4 +75,5 @@ struct Quant : public std::pair<unsigned long, unsigned long>
 
 #endif // SWAPB
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

@@ -17,7 +17,7 @@ Contributors:  Thomas Maurer
 #include "RLE.h"
 #include <cstring>
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
@@ -325,4 +325,4 @@ short RLE::readCount(const Byte** ppCnt) const
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END

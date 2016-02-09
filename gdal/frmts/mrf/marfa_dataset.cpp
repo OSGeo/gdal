@@ -853,7 +853,7 @@ start_idx = end_idx;
         image.pagesize.x * image.pagesize.y * image.pagesize.z > INT_MAX / image.pagesize.c ||
         image.pagesize.x * image.pagesize.y * image.pagesize.z* image.pagesize.c  > INT_MAX / (GDALGetDataTypeSize(image.dt) / 8) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too big page size");
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF page size too big");
         return CE_Failure;
     }
     image.pageSizeBytes = (GDALGetDataTypeSize(image.dt) / 8) *
@@ -1333,8 +1333,7 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     // If not set by the bands, get a pageSizeBytes buffer
     if (GetPBufferSize() == 0)
     {
-        /* Add some arbitrary margin (needed for PNG with very small block sizes) */
-        if( !SetPBuffer(current.pageSizeBytes + 100) )
+        if( !SetPBuffer(current.pageSizeBytes) )
         {
             return CE_Failure;
         }
@@ -1723,7 +1722,6 @@ void GDALMRFDataset::Crystalize()
 // Copy the first index at the end of the file and bump the version count
 CPLErr GDALMRFDataset::AddVersion()
 {
-    // Hides the dataset variables with the same name
     VSILFILE *l_ifp = IdxFP();
 
     void *tbuff = CPLMalloc(static_cast<size_t>(idxSize));

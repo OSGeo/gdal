@@ -15,12 +15,13 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
+#ifndef BITMASK2_H
+#define BITMASK2_H
 
 #include "Defines.h"
 #include <cstring>
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 /** BitMask2 - Convenient and fast access to binary mask bits
  *
@@ -67,4 +68,5 @@ private:
          m_nRows;
 };
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

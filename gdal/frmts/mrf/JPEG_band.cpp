@@ -106,7 +106,7 @@ static void stub_source_dec(j_decompress_ptr /*cinfo*/) {}
 static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 {
     if (0 != cinfo->src->bytes_in_buffer)
-        return TRUE;
+	return TRUE;
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid JPEG stream");
     return FALSE;
 }

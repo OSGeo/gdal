@@ -15,7 +15,8 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
+#ifndef BITSTUFFER_H
+#define BITSTUFFER_H
 
 // ---- includes ------------------------------------------------------------ ;
 
@@ -23,8 +24,7 @@ Contributors:  Thomas Maurer
 #include <algorithm>
 #include "Defines.h"
 
-NAMESPACE_MRF_START
-
+NAMESPACE_LERC_START
 // -------------------------------------------------------------------------- ;
 
 // ---- related classes ----------------------------------------------------- ;
@@ -46,7 +46,7 @@ public:
   bool read( Byte** ppByte, std::vector<unsigned int>& dataVec) const;
 
   static unsigned int computeNumBytesNeeded(unsigned int numElem, unsigned int maxElem);
-  static unsigned int numExtraBytesToAllocate()  { return 3; }
+  static unsigned int numExtraBytesToAllocate()  { return 3; };
 
 protected:
   unsigned int findMax(const std::vector<unsigned int>& dataVec) const;
@@ -61,4 +61,5 @@ protected:
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

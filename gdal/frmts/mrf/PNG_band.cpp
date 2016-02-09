@@ -360,6 +360,8 @@ GDALMRFRasterBand(pDS, image, b, level), PNGColors(NULL), PNGAlpha(NULL), PalSiz
 	CPLError(CE_Failure, CPLE_NotSupported, "MRF PNG can only handle up to 4 bands per page");
 	return;
     }
+    // PNGs can be larger than the source, especially for small page size
+    poDS->SetPBufferSize( image.pageSizeBytes + 100);
 }
 
 PNG_Band::~PNG_Band() {

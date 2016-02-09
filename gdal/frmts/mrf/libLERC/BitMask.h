@@ -16,10 +16,11 @@ Contributors:  Thomas Maurer
 	       Lucian Plesea
 */
 
-#pragma once
+#ifndef BITMASK_H
+#define BITMASK_H
 #include "Defines.h"
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 /** BitMask - Convenient and fast access to binary mask bits
 * includes RLE compression and decompression, in BitMask.cpp
@@ -29,7 +30,7 @@ NAMESPACE_MRF_START
 class BitMask
 {
 public:
-  BitMask(long nCols, long nRows) : m_pBits(NULL), m_nRows(nRows), m_nCols(nCols)
+  BitMask(int nCols, int nRows) : m_pBits(NULL), m_nRows(nRows), m_nCols(nCols)
   {
       m_pBits = new Byte[Size()];
       if (!m_pBits)
@@ -37,27 +38,27 @@ public:
       else
 	  m_pBits[Size() - 1] = 0; // Set potential pad bytes to zero
   }
-  ~BitMask()				       { if (m_pBits) delete[] m_pBits; }
+  ~BitMask()				      { if (m_pBits) delete[] m_pBits; }
 
-  Byte  IsValid(long k) const                  { return (m_pBits[k >> 3] & Bit(k)) != 0; }
-  void  SetValid(long k) const                 { m_pBits[k >> 3] |= Bit(k); }
-  void  SetInvalid(long k) const               { m_pBits[k >> 3] &= ~Bit(k); }
-  long  Size() const			       { return (m_nCols * m_nRows - 1) / 8 + 1; }
+  Byte  IsValid(int k) const                  { return (m_pBits[k >> 3] & Bit(k)) != 0; }
+  void  SetValid(int k) const                 { m_pBits[k >> 3] |= Bit(k); }
+  void  SetInvalid(int k) const               { m_pBits[k >> 3] &= ~Bit(k); }
+  int	Size() const			      { return (m_nCols * m_nRows - 1) / 8 + 1; }
 
   // the max RLE compressed size is n + 2 + 2 * (n + 1) / 32767
   // Returns encoded size
-  long RLEcompress(Byte *aRLE) const;
+  int RLEcompress(Byte *aRLE) const;
   // current encoded size
-  long RLEsize() const;
+  int RLEsize() const;
   // Decompress a RLE bitmask, bitmask size should be already set
   // Returns false if input seems wrong
   bool RLEdecompress(const Byte* src);
 
 private:
   Byte*  m_pBits;
-  long   m_nRows, m_nCols;
+  int   m_nRows, m_nCols;
 
-  Byte  Bit(long k) const                      { return (1 << 7) >> (k & 7); }
+  Byte  Bit(int k) const                      { return (1 << 7) >> (k & 7); }
 
   // Disable assignment op, default and copy constructor
   BitMask();
@@ -65,4 +66,5 @@ private:
   BitMask& operator=(const BitMask& m);
 };
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

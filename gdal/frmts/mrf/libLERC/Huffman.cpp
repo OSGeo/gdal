@@ -20,9 +20,9 @@ Contributors:  Thomas Maurer
 #include <queue>
 #include <cstring>
 
-NAMESPACE_MRF_START
-
 using namespace std;
+
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
@@ -476,4 +476,4 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, int i0, int i1)
 // -------------------------------------------------------------------------- ;
 
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END

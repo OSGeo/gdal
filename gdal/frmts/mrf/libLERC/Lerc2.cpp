@@ -21,9 +21,10 @@ Contributors:  Thomas Maurer
 
 #include "Lerc2.h"
 #include <cassert>
+
 using namespace std;
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
@@ -276,4 +277,4 @@ void Lerc2::SortQuantArray(const vector<unsigned int>& quantVec,
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END

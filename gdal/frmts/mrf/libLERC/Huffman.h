@@ -15,14 +15,14 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
-
+#ifndef HUFFMAN_H
+#define HUFFMAN_H
 // ---- includes ------------------------------------------------------------ ;
 
 #include "Defines.h"
 #include <vector>
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // ---- related classes ----------------------------------------------------- ;
 
@@ -178,4 +178,5 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

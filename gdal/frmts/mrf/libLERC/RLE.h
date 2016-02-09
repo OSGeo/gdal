@@ -15,13 +15,14 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
+#ifndef RLE_H
+#define RLE_H
 
 // ---- includes ------------------------------------------------------------ ;
 
 #include "Defines.h"
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // ---- related classes ----------------------------------------------------- ;
 
@@ -67,4 +68,5 @@ protected:
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

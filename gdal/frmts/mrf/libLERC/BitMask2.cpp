@@ -25,7 +25,7 @@ Contributors:  Thomas Maurer
 #include <iostream>
 #include <cassert>
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
@@ -122,4 +122,4 @@ void BitMask2::Clear()
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
