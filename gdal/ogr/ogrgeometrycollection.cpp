@@ -818,7 +818,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
         else if( eWkbVariant != wkbVariantIso )
         {
             char *substr;
-            if( (substr = strstr(papszGeoms[iGeom], " Z")) )
+            if( (substr = strstr(papszGeoms[iGeom], " Z")) != NULL )
                 memmove(substr, substr+strlen(" Z"), 1+strlen(substr+strlen(" Z")));
         }
 
