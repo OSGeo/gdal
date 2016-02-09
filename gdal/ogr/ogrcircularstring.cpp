@@ -103,7 +103,11 @@ OGRCircularString& OGRCircularString::operator=( const OGRCircularString& other 
 OGRwkbGeometryType OGRCircularString::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbCircularStringZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbCircularStringM;
+    else if( flags & OGR_G_3D )
         return wkbCircularStringZ;
     else
         return wkbCircularString;

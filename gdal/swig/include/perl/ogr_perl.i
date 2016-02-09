@@ -1367,6 +1367,11 @@ for (keys %Geo::OGR::) {
 for my $string (@GEOMETRY_TYPES) {
     my $int = eval "\$Geo::OGR::wkb$string";
     $TYPE_STRING2INT{$string} = $int;
+    if ($string =~ /25D/) {
+        my $s = $string;
+        $s =~ s/25D/Z/;
+        $TYPE_STRING2INT{$s} = $int;
+    }
     $TYPE_INT2STRING{$int} = $string;
 }
 
@@ -1437,7 +1442,8 @@ sub new {
     } elsif (defined $type) {
         $type = Geo::GDAL::string2int($type, \%Geo::OGR::Geometry::TYPE_STRING2INT);
         $self = Geo::OGRc::new_Geometry($type); # flattens the type
-        SetCoordinateDimension($self, 3) if Geo::OGR::GT_HasZ($type);
+        $self->Set3D(1) if Geo::OGR::GT_HasZ($type);
+        $self->SetMeasured(1) if Geo::OGR::GT_HasM($type);
     } elsif (defined $arc) {
         $self = Geo::OGRc::ApproximateArcAngles(@$arc);
     } else {
@@ -1480,7 +1486,6 @@ sub ApproximateArcAngles {
 sub As {
     my $self = shift;
     my $p = Geo::GDAL::named_parameters(\@_, Format => undef, ByteOrder => 'XDR', SRID => undef, Options => undef, AltitudeMode => undef);
-    $p->{byteorder} = Geo::GDAL::string2int($p->{byteorder}, \%Geo::OGR::Geometry::BYTE_ORDER_STRING2INT);
     my $f = $p->{format};
     if ($f =~ /text/i) {
         return $self->AsText;
@@ -1494,6 +1499,7 @@ sub As {
         return $self->ExportToWkb($p->{byteorder});
     } elsif ($f =~ /wkb/i) {
         if ($f =~ /iso/i) {
+            $p->{byteorder} = Geo::GDAL::string2int($p->{byteorder}, \%Geo::OGR::Geometry::BYTE_ORDER_STRING2INT);
             return $self->ExportToIsoWkb($p->{byteorder});
         } elsif ($f =~ /ewkb/i) {
             return $self->AsHEXEWKB($p->{srid});
@@ -1570,18 +1576,55 @@ sub Extent {
 }
 
 sub AddPoint {
-    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
+    my $self = shift;
+    my $t = $self->GetGeometryType;
+    my $has_z = Geo::OGR::GT_HasZ($t);
+    my $has_m = Geo::OGR::GT_HasM($t);
+    if (!$has_z && !$has_m) { 
+        $self->AddPoint_2D(@_[0..1]);
+    } elsif ($has_z && !$has_m) { 
+        $self->AddPoint_3D(@_[0..2]);
+    } elsif (!$has_z && $has_m) { 
+        $self->AddPointM(@_[0..2]);
+    } else {
+        $self->AddPointZM(@_[0..3]);
+    }
 }
 
 sub SetPoint {
-    @_ == 5 ? SetPoint_3D(@_) : SetPoint_2D(@_);
+    my $self = shift;
+    my $t = $self->GetGeometryType;
+    my $has_z = Geo::OGR::GT_HasZ($t);
+    my $has_m = Geo::OGR::GT_HasM($t);
+    if (!$has_z && !$has_m) {
+        $self->SetPoint_2D(@_[0..2]);
+    } elsif ($has_z && !$has_m) { 
+        $self->SetPoint_3D(@_[0..3]);
+    } elsif (!$has_z && $has_m) { 
+        $self->SetPointM(@_[0..3]);
+    } else {
+        $self->SetPointZM(@_[0..4]);
+    }
 }
 
 sub GetPoint {
     my($self, $i) = @_;
     $i //= 0;
-    my $point = ($self->GetGeometryType & 0x80000000) == 0 ? GetPoint_2D($self, $i) : GetPoint_3D($self, $i);
-    return @$point;
+    my $t = $self->GetGeometryType;
+    my $has_z = Geo::OGR::GT_HasZ($t);
+    my $has_m = Geo::OGR::GT_HasM($t);
+    my $point;
+    if (!$has_z && !$has_m) { 
+        $point = $self->GetPoint_2D($i);
+    } elsif ($has_z && !$has_m) { 
+        $point = $self->GetPoint_3D($i);
+    } elsif (!$has_z && $has_m) { 
+        $point = $self->GetPointZM($i);
+        @$point = ($point->[0], $point->[1], $point->[3]);
+    } else {
+        $point = $self->GetPointZM($i);
+    }
+    return wantarray ? @$point : $point;
 }
 
 sub Point {
@@ -1589,26 +1632,38 @@ sub Point {
     my $i;
     if (@_) {
         my $t = $self->GetGeometryType;
-        if ($t == $Geo::OGR::wkbPoint) {
-            shift if @_ > 2;
-            $i = 0;
-        } elsif ($t == $Geo::OGR::wkbPoint25D) {
-            shift if @_ > 3;
-            $i = 0;
-        } else {
-            my $i = shift;
+        my $i;
+        if (Geo::OGR::GT_Flatten($t) == $Geo::OGR::wkbPoint) {
+            my $has_z = Geo::OGR::GT_HasZ($t);
+            my $has_m = Geo::OGR::GT_HasM($t);
+            if (!$has_z && !$has_m) { 
+                shift if @_ > 2;
+                $i = 0;
+            } elsif ($has_z || $has_m) { 
+                shift if @_ > 3;
+                $i = 0;
+            } else {
+                shift if @_ > 4;
+                $i = 0;
+            }
         }
-        SetPoint($self, $i, @_);
+        $i = shift unless defined $i;
+        $self->SetPoint($i, @_);
     }
-    return GetPoint($self, $i) if defined wantarray;
+    return unless defined wantarray;
+    my $point = $self->GetPoint;
+    return wantarray ? @$point : $point;
 }
 
 sub Points {
     my $self = shift;
     my $t = $self->GetGeometryType;
-    my $flat = not Geo::OGR::GT_HasZ($t);
-    $t = Geo::OGR::GT_Flatten($t);
-    $t = $TYPE_INT2STRING{$t};
+    my $has_z = Geo::OGR::GT_HasZ($t);
+    my $has_m = Geo::OGR::GT_HasM($t);
+    my $postfix = '';
+    $postfix .= 'Z' if Geo::OGR::GT_HasZ($t);
+    $postfix .= 'M' if Geo::OGR::GT_HasM($t);
+    $t = $TYPE_INT2STRING{Geo::OGR::GT_Flatten($t)};
     my $points = shift;
     if ($points) {
         Empty($self);
@@ -1617,77 +1672,61 @@ sub Points {
         } elsif ($t eq 'Point') {
             # support both "Point" as a list of one point and one point
             if (ref($points->[0])) {
-                $flat ?
-                    AddPoint_2D($self, @{$points->[0]}[0..1]) :
-                    AddPoint_3D($self, @{$points->[0]}[0..2]);
+                $self->AddPoint(@{$points->[0]});
             } else {
-                $flat ?
-                    AddPoint_2D($self, @$points[0..1]) :
-                    AddPoint_3D($self, @$points[0..2]);
+                $self->AddPoint(@$points);
             }
-        } elsif ($t eq 'LineString' or $t eq 'LinearRing') {
-            if ($flat) {
-                for my $p (@$points) {
-                    AddPoint_2D($self, @$p[0..1]);
-                }
-            } else{
-                for my $p (@$points) {
-                    AddPoint_3D($self, @$p[0..2]);
-                }
+        } elsif ($t eq 'LineString' or $t eq 'LinearRing' or $t eq 'CircularString') {
+            for my $p (@$points) {
+                $self->AddPoint(@$p);
             }
         } elsif ($t eq 'Polygon') {
             for my $r (@$points) {
                 my $ring = Geo::OGR::Geometry->new('LinearRing');
-                $ring->SetCoordinateDimension(3) unless $flat;
+                $ring->Set3D(1) if $has_z;
+                $ring->SetMeasured(1) if $has_m;
                 $ring->Points($r);
                 $self->AddGeometryDirectly($ring);
             }
         } elsif ($t eq 'MultiPoint') {
             for my $p (@$points) {
-                my $point = Geo::OGR::Geometry->new($flat ? 'Point' : 'Point25D');
+                my $point = Geo::OGR::Geometry->new('Point'.$postfix);
                 $point->Points($p);
                 $self->AddGeometryDirectly($point);
             }
         } elsif ($t eq 'MultiLineString') {
             for my $l (@$points) {
-                my $linestring = Geo::OGR::Geometry->new($flat ? 'LineString' : 'LineString25D');
+                my $linestring = Geo::OGR::Geometry->new('Point'.$postfix);
                 $linestring->Points($l);
                 $self->AddGeometryDirectly($linestring);
             }
         } elsif ($t eq 'MultiPolygon') {
             for my $p (@$points) {
-                my $polygon = Geo::OGR::Geometry->new($flat ? 'Polygon' : 'Polygon25D');
+                my $polygon = Geo::OGR::Geometry->new('Point'.$postfix);
                 $polygon->Points($p);
                 $self->AddGeometryDirectly($polygon);
             }
         }
     }
     return unless defined wantarray;
-    $self->_GetPoints($flat);
+    $self->_GetPoints();
 }
 
 sub _GetPoints {
-    my($self, $flat) = @_;
+    my($self) = @_;
     my @points;
     my $n = $self->GetGeometryCount;
     if ($n) {
         for my $i (0..$n-1) {
-            push @points, $self->GetGeometryRef($i)->_GetPoints($flat);
+            push @points, $self->GetGeometryRef($i)->_GetPoints();
         }
     } else {
         $n = $self->GetPointCount;
         if ($n == 1) {
-            push @points, $flat ? GetPoint_2D($self) : GetPoint_3D($self);
+            push @points, $self->GetPoint;
         } else {
-            my $i;
-            if ($flat) {
-                for my $i (0..$n-1) {
-                    push @points, scalar GetPoint_2D($self, $i);
-                }
-            } else {
-                for my $i (0..$n-1) {
-                    push @points, scalar GetPoint_3D($self, $i);
-                }
+            for my $i (0..$n-1) {
+                push @points, scalar $self->GetPoint($i);
             }
         }
     }

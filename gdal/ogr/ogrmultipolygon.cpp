@@ -101,7 +101,11 @@ OGRMultiPolygon& OGRMultiPolygon::operator=( const OGRMultiPolygon& other )
 OGRwkbGeometryType OGRMultiPolygon::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiPolygonZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiPolygonM;
+    else if( flags & OGR_G_3D )
         return wkbMultiPolygon25D;
     else
         return wkbMultiPolygon;

@@ -105,7 +105,11 @@ OGRCompoundCurve& OGRCompoundCurve::operator=( const OGRCompoundCurve& other )
 OGRwkbGeometryType OGRCompoundCurve::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbCompoundCurveZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbCompoundCurveM;
+    else if( flags & OGR_G_3D )
         return wkbCompoundCurveZ;
     else
         return wkbCompoundCurve;
@@ -216,6 +220,7 @@ OGRGeometry *OGRCompoundCurve::clone() const
 
     poNewCC = new OGRCompoundCurve;
     poNewCC->assignSpatialReference( getSpatialReference() );
+    poNewCC->flags = flags;
 
     for( int i = 0; i < oCC.nCurveCount; i++ )
     {
@@ -386,6 +391,16 @@ OGRBoolean  OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
 void OGRCompoundCurve::setCoordinateDimension( int nNewDimension )
 {
     oCC.setCoordinateDimension( this, nNewDimension );
+}
+
+void OGRCompoundCurve::set3D( OGRBoolean bIs3D )
+{
+    oCC.set3D(this, bIs3D);
+}
+
+void OGRCompoundCurve::setMeasured( OGRBoolean bIsMeasured )
+{
+    oCC.setMeasured(this, bIsMeasured);
 }
 
 /************************************************************************/

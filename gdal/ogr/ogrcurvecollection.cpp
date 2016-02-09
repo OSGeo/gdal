@@ -146,10 +146,21 @@ OGRErr OGRCurveCollection::addCurveDirectly( OGRGeometry* poGeom,
                                              OGRCurve* poCurve,
                                              int bNeedRealloc )
 {
-    if( poCurve->getCoordinateDimension() == 3 && poGeom->getCoordinateDimension() != 3 )
-        poGeom->setCoordinateDimension(3);
-    else if( poCurve->getCoordinateDimension() != 3 && poGeom->getCoordinateDimension() == 3 )
-        poCurve->setCoordinateDimension(3);
+    if( poGeom->Is3D() && !poCurve->Is3D() )
+
+        poCurve->set3D(TRUE);
+
+    if( poGeom->IsMeasured() && !poCurve->IsMeasured() )
+
+        poCurve->setMeasured(TRUE);
+
+    if( !poGeom->Is3D() && poCurve->Is3D() )
+
+        poGeom->set3D(TRUE);
+
+    if( !poGeom->IsMeasured() && poCurve->IsMeasured() )
+
+        poGeom->setMeasured(TRUE);
 
     if( bNeedRealloc )
     {
@@ -230,8 +241,7 @@ OGRErr OGRCurveCollection::importBodyFromWkb( OGRGeometry* poGeom,
             return OGRERR_NOT_ENOUGH_DATA;
 
         OGRwkbGeometryType eSubGeomType;
-        OGRBoolean bIs3D;
-        if ( OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType, &bIs3D ) != OGRERR_NONE )
+        if ( OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType ) != OGRERR_NONE )
             return OGRERR_FAILURE;
 
         if( (eSubGeomType != wkbCompoundCurve && OGR_GT_IsCurve(eSubGeomType)) ||
@@ -282,7 +292,11 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
     if( nCurveCount == 0 )
     {
         CPLString osEmpty;
-        if( poGeom->getCoordinateDimension()  == 3 )
+        if( poGeom->Is3D() && poGeom->IsMeasured() )
+            osEmpty.Printf("%s ZM EMPTY",poGeom->getGeometryName());
+        else if( poGeom->IsMeasured() )
+            osEmpty.Printf("%s M EMPTY",poGeom->getGeometryName());
+        else if( poGeom->Is3D() )
             osEmpty.Printf("%s Z EMPTY",poGeom->getGeometryName());
         else
             osEmpty.Printf("%s EMPTY",poGeom->getGeometryName());
@@ -320,7 +334,11 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
     strcpy( *ppszDstText, poGeom->getGeometryName() );
-    if( poGeom->getCoordinateDimension() == 3 )
+    if( poGeom->Is3D() && poGeom->IsMeasured() )
+        strcat( *ppszDstText, " ZM" );
+    else if( poGeom->IsMeasured() )
+        strcat( *ppszDstText, " M" );
+    else if( poGeom->Is3D() )
         strcat( *ppszDstText, " Z" );
     strcat( *ppszDstText, " (" );
     nCumulativeLength = strlen(*ppszDstText);
@@ -336,7 +354,11 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
             STARTS_WITH_CI(papszGeoms[iGeom], "LINESTRING ") )
         {
             nSkip = strlen("LINESTRING ");
-            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
+                nSkip += 3;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
+                nSkip += 2;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
         }
 
@@ -538,6 +560,26 @@ void OGRCurveCollection::setCoordinateDimension( OGRGeometry* poGeom,
     }
 
     poGeom->OGRGeometry::setCoordinateDimension( nNewDimension );
+}
+
+void OGRCurveCollection::set3D( OGRGeometry* poGeom, OGRBoolean bIs3D )
+{
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    {
+        papoCurves[iGeom]->set3D( bIs3D );
+    }
+
+    poGeom->OGRGeometry::set3D( bIs3D );
+}
+
+void OGRCurveCollection::setMeasured( OGRGeometry* poGeom, OGRBoolean bIsMeasured )
+{
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    {
+        papoCurves[iGeom]->setMeasured( bIsMeasured );
+    }
+
+    poGeom->OGRGeometry::setMeasured( bIsMeasured );
 }
 
 /************************************************************************/

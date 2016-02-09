@@ -78,7 +78,16 @@ const char CPL_DLL * OGRWktReadPoints( const char * pszInput,
                                        int * pnMaxPoints,
                                        int * pnReadPoints );
 
+const char CPL_DLL * OGRWktReadPointsM( const char * pszInput,
+                                        OGRRawPoint **ppaoPoints, 
+                                        double **ppadfZ,
+                                        double **ppadfM,
+                                        int * flags, /* geometry flags, are we expecting Z, M, or both; may change due to input */
+                                        int * pnMaxPoints,
+                                        int * pnReadPoints );
+
 void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
+void CPL_DLL OGRMakeWktCoordinateM( char *, double, double, double, double, OGRBoolean, OGRBoolean );
 
 #endif
 
@@ -160,7 +169,7 @@ char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 
 OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
                                OGRwkbVariant wkbVariant,
-                               OGRwkbGeometryType *eGeometryType, OGRBoolean *b3D );
+                               OGRwkbGeometryType *eGeometryType );
 
 /************************************************************************/
 /*                            Other                                     */

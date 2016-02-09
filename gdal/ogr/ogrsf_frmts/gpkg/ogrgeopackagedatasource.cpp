@@ -4017,7 +4017,6 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
 
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
-    OGRBoolean bIs3D;
     OGRwkbGeometryType eGeometryType;
     if( nBLOBLen <= (int)sHeader.szHeader )
     {
@@ -4025,7 +4024,7 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
         return;
     }
     OGRErr err = OGRReadWKBGeometryType( (GByte*)pabyBLOB + sHeader.szHeader,
-                                         wkbVariantIso, &eGeometryType, &bIs3D );
+                                         wkbVariantIso, &eGeometryType );
     if( err != OGRERR_NONE )
         sqlite3_result_null( pContext );
     else

@@ -113,6 +113,7 @@ OGRGeometry *OGRCurvePolygon::clone() const
     if( poNewPolygon == NULL )
         return NULL;
     poNewPolygon->assignSpatialReference( getSpatialReference() );
+    poNewPolygon->flags = flags;
 
     for( int i = 0; i < oCC.nCurveCount; i++ )
     {
@@ -143,7 +144,11 @@ void OGRCurvePolygon::empty()
 OGRwkbGeometryType OGRCurvePolygon::getGeometryType() const
 
 {
-    if( nCoordDimension == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbCurvePolygonZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbCurvePolygonM;
+    else if( flags & OGR_G_3D )
         return wkbCurvePolygonZ;
     else
         return wkbCurvePolygon;
@@ -631,6 +636,21 @@ void OGRCurvePolygon::setCoordinateDimension( int nNewDimension )
     oCC.setCoordinateDimension(this, nNewDimension);
 }
 
+void OGRCurvePolygon::set3D( OGRBoolean bIs3D )
+{
+    if (bIs3D) 
+        flags |= OGR_G_3D; 
+    else 
+        flags &= ~OGR_G_3D;
+}
+
+void OGRCurvePolygon::setMeasured( OGRBoolean bIsMeasured )
+{
+    if (bIsMeasured) 
+        flags |= OGR_G_MEASURED; 
+    else 
+        flags &= ~OGR_G_MEASURED;
+}
 
 /************************************************************************/
 /*                               IsEmpty()                              */
