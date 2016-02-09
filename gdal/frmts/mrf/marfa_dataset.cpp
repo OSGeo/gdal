@@ -1222,6 +1222,11 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
 	// Capture the zslice in pagesize.l
 	current.pagesize.l = zslice; 
 	// Adjust offset for base image
+        if( full.size.z <= 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Invalid Raster.z value");
+            return CE_Failure;
+        }
 	current.idxoffset += sizeof(ILIdx) * current.pagecount.l / full.size.z * zslice; 
     }
 
