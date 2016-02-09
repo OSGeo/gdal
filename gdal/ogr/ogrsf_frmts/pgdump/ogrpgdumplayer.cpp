@@ -634,7 +634,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
                 //count of utf chars
-                if ((pszStrValue[iChar] & 0xc0) != 0x80) 
+                if (nOGRFieldType != OFTStringList && (pszStrValue[iChar] & 0xc0) != 0x80) 
                 {
                     if( nMaxWidth > 0 && iUTFChar == nMaxWidth )
                     {
@@ -1091,7 +1091,7 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
         pszStrValue = poFeature->GetFieldAsInteger(i) ? "'t'" : "'f'";
 
     if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTInteger64 && 
-        nOGRFieldType != OFTReal
+        nOGRFieldType != OFTReal && nOGRFieldType != OFTStringList 
         && !bIsDateNull )
     {
         osCommand += pfnEscapeString( userdata, pszStrValue,
