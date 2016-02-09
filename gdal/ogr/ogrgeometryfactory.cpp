@@ -123,8 +123,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
 
-    OGRBoolean bIs3D;
-    OGRErr err = OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType, &bIs3D );
+    OGRErr err = OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType );
 
     if( err != OGRERR_NONE )
         return err;

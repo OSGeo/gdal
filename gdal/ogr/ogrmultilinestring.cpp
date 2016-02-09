@@ -101,7 +101,11 @@ OGRMultiLineString& OGRMultiLineString::operator=( const OGRMultiLineString& oth
 OGRwkbGeometryType OGRMultiLineString::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiLineStringZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiLineStringM;
+    else if( flags & OGR_G_3D )
         return wkbMultiLineString25D;
     else
         return wkbMultiLineString;

@@ -100,7 +100,11 @@ OGRMultiSurface& OGRMultiSurface::operator=( const OGRMultiSurface& other )
 OGRwkbGeometryType OGRMultiSurface::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiSurfaceZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiSurfaceM;
+    else if( flags & OGR_G_3D )
         return wkbMultiSurfaceZ;
     else
         return wkbMultiSurface;
@@ -147,8 +151,13 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
     int bHasZ = FALSE, bHasM = FALSE;
     bool bIsEmpty = false;
     OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
-    if( eErr != OGRERR_NONE || bIsEmpty )
+    flags = 0;
+    if( eErr != OGRERR_NONE )
         return eErr;
+    if( bHasZ ) flags |= OGR_G_3D;
+    if( bHasM ) flags |= OGR_G_MEASURED;
+    if( bIsEmpty )
+        return OGRERR_NONE;
 
     if( bHasZ )
         setCoordinateDimension(3);

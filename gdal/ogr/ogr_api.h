@@ -98,7 +98,12 @@ OGRGeometryH CPL_DLL OGR_G_ForceTo( OGRGeometryH hGeom,
 
 int    CPL_DLL OGR_G_GetDimension( OGRGeometryH );
 int    CPL_DLL OGR_G_GetCoordinateDimension( OGRGeometryH );
+int    CPL_DLL OGR_G_CoordinateDimension( OGRGeometryH );
 void   CPL_DLL OGR_G_SetCoordinateDimension( OGRGeometryH, int );
+int    CPL_DLL OGR_G_Is3D( OGRGeometryH );
+int    CPL_DLL OGR_G_IsMeasured( OGRGeometryH );
+void   CPL_DLL OGR_G_Set3D( OGRGeometryH, int );
+void   CPL_DLL OGR_G_SetMeasured( OGRGeometryH, int );
 OGRGeometryH CPL_DLL OGR_G_Clone( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 void   CPL_DLL OGR_G_GetEnvelope( OGRGeometryH, OGREnvelope * );
 void   CPL_DLL OGR_G_GetEnvelope3D( OGRGeometryH, OGREnvelope3D * );
@@ -191,22 +196,41 @@ int    CPL_DLL OGR_G_GetPoints( OGRGeometryH hGeom,
                                 void* pabyX, int nXStride,
                                 void* pabyY, int nYStride,
                                 void* pabyZ, int nZStride);
+int    CPL_DLL OGR_G_GetPointsZM( OGRGeometryH hGeom,
+                                  void* pabyX, int nXStride,
+                                  void* pabyY, int nYStride,
+                                  void* pabyZ, int nZStride,
+                                  void* pabyM, int nMStride);
 double CPL_DLL OGR_G_GetX( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetY( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetZ( OGRGeometryH, int );
+double CPL_DLL OGR_G_GetM( OGRGeometryH, int );
 void   CPL_DLL OGR_G_GetPoint( OGRGeometryH, int iPoint, 
                                double *, double *, double * );
+void   CPL_DLL OGR_G_GetPointZM( OGRGeometryH, int iPoint, 
+                                 double *, double *, double *, double * );
 void   CPL_DLL OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount );
 void   CPL_DLL OGR_G_SetPoint( OGRGeometryH, int iPoint, 
                                double, double, double );
 void   CPL_DLL OGR_G_SetPoint_2D( OGRGeometryH, int iPoint, 
                                   double, double );
+void   CPL_DLL OGR_G_SetPointM( OGRGeometryH, int iPoint, 
+                                double, double, double );
+void   CPL_DLL OGR_G_SetPointZM( OGRGeometryH, int iPoint, 
+                                 double, double, double, double );
 void   CPL_DLL OGR_G_AddPoint( OGRGeometryH, double, double, double );
 void   CPL_DLL OGR_G_AddPoint_2D( OGRGeometryH, double, double );
+void   CPL_DLL OGR_G_AddPointM( OGRGeometryH, double, double, double );
+void   CPL_DLL OGR_G_AddPointZM( OGRGeometryH, double, double, double, double );
 void   CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
                                 void* pabyX, int nXStride,
                                 void* pabyY, int nYStride,
                                 void* pabyZ, int nZStride );
+void   CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
+                                  void* pabyX, int nXStride,
+                                  void* pabyY, int nYStride,
+                                  void* pabyZ, int nZStride,
+                                  void* pabyM, int nMStride );
 
 /* Methods for getting/setting rings and members collections */
 

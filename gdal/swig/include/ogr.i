@@ -93,6 +93,10 @@ typedef enum
                              *    ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+   wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
+                               *   ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
+                               *    ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
@@ -102,6 +106,38 @@ typedef enum
     wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+
+    wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolygonM = 2003,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiPointM = 2004,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiLineStringM = 2005,    /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiPolygonM = 2006,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbGeometryCollectionM = 2007, /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCircularStringM = 2008,     /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCompoundCurveM = 2009,      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurvePolygonM = 2010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiCurveM = 2011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+
+    wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolygonZM = 3003,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiPointZM = 3004,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiLineStringZM = 3005,    /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiPolygonZM = 3006,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbGeometryCollectionZM = 3007, /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCircularStringZM = 3008,     /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCompoundCurveZM = 3009,      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurvePolygonZM = 3010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiCurveZM = 3011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
     wkbPoint25D = -2147483647,   /* 2.5D extensions as per 99-402 */
     wkbLineString25D = -2147483646,
@@ -228,6 +264,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygon = 10;
 %constant wkbMultiCurve = 11;
 %constant wkbMultiSurface = 12;
+%constant wkbPolyhedralSurface = 15;
+%constant wkbTIN = 16;
 
 %constant wkbNone = 100;
 %constant wkbLinearRing = 101;
@@ -237,6 +275,38 @@ typedef void retGetPoints;
 %constant wkbCurvePolygonZ = 1010;
 %constant wkbMultiCurveZ = 1011;
 %constant wkbMultiSurfaceZ = 1012;
+%constant wkbPolyhedralSurfaceZ = 1015;
+%constant wkbTINZ = 1016;
+
+%constant wkbPointM = 2001;
+%constant wkbLineStringM = 2002;
+%constant wkbPolygonM = 2003;
+%constant wkbMultiPointM = 2004;
+%constant wkbMultiLineStringM = 2005;
+%constant wkbMultiPolygonM = 2006;
+%constant wkbGeometryCollectionM = 2007;
+%constant wkbCircularStringM = 2008;
+%constant wkbCompoundCurveM = 2009;
+%constant wkbCurvePolygonM = 2010;
+%constant wkbMultiCurveM = 2011;
+%constant wkbMultiSurfaceM = 2012;
+%constant wkbPolyhedralSurfaceM = 2015;
+%constant wkbTINM = 2016;
+
+%constant wkbPointZM = 3001;
+%constant wkbLineStringZM = 3002;
+%constant wkbPolygonZM = 3003;
+%constant wkbMultiPointZM = 3004;
+%constant wkbMultiLineStringZM = 3005;
+%constant wkbMultiPolygonZM = 3006;
+%constant wkbGeometryCollectionZM = 3007;
+%constant wkbCircularStringZM = 3008;
+%constant wkbCompoundCurveZM = 3009;
+%constant wkbCurvePolygonZM = 3010;
+%constant wkbMultiCurveZM = 3011;
+%constant wkbMultiSurfaceZM = 3012;
+%constant wkbPolyhedralSurfaceZM = 3015;
+%constant wkbTINZM = 3016;
 
 %constant wkbPoint25D =              0x80000001;
 %constant wkbLineString25D =         0x80000002;
@@ -1711,6 +1781,30 @@ public:
             case wkbMultiLineString25D:
             case wkbMultiPolygon25D:
             case wkbGeometryCollection25D:
+            case wkbPointM:
+            case wkbLineStringM:
+            case wkbPolygonM:
+            case wkbMultiPointM:
+            case wkbMultiLineStringM:
+            case wkbMultiPolygonM:
+            case wkbGeometryCollectionM:
+            case wkbCircularStringM:
+            case wkbCompoundCurveM:
+            case wkbCurvePolygonM:
+            case wkbMultiCurveM:
+            case wkbMultiSurfaceM:
+            case wkbPointZM:
+            case wkbLineStringZM:
+            case wkbPolygonZM:
+            case wkbMultiPointZM:
+            case wkbMultiLineStringZM:
+            case wkbMultiPolygonZM:
+            case wkbGeometryCollectionZM:
+            case wkbCircularStringZM:
+            case wkbCompoundCurveZM:
+            case wkbCurvePolygonZM:
+            case wkbMultiCurveZM:
+            case wkbMultiSurfaceZM:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
@@ -2414,6 +2508,20 @@ public:
     OGR_G_AddPoint( self, x, y, z );
   }
 
+#ifndef SWIGJAVA
+  %feature("kwargs") AddPointM;
+#endif
+  void AddPointM(double x, double y, double m) {
+      OGR_G_AddPointM( self, x, y, m );
+  }
+
+#ifndef SWIGJAVA
+  %feature("kwargs") AddPointZM;
+#endif
+  void AddPointZM(double x, double y, double z, double m) {
+      OGR_G_AddPointZM( self, x, y, z, m );
+  }
+
   void AddPoint_2D(double x, double y) {
     OGR_G_AddPoint_2D( self, x, y );
   }
@@ -2550,6 +2658,14 @@ public:
   }
 
 #ifdef SWIGJAVA
+  void GetPointZM(int iPoint, double argout[4]) {
+#else
+  void GetPointZM(int iPoint = 0, double argout[4] = NULL) {
+#endif
+      OGR_G_GetPointZM( self, iPoint, argout+0, argout+1, argout+2, argout+3 );
+  }
+
+#ifdef SWIGJAVA
   void GetPoint_2D(int iPoint, double argout[2]) {
 #else
   void GetPoint_2D(int iPoint = 0, double argout[2] = NULL) {
@@ -2566,6 +2682,20 @@ public:
 #endif
   void SetPoint(int point, double x, double y, double z=0) {
     OGR_G_SetPoint(self, point, x, y, z);
+  }
+
+#ifndef SWIGJAVA
+  %feature("kwargs") SetPointM;
+#endif
+  void SetPointM(int point, double x, double y, double m) {
+      OGR_G_SetPointM(self, point, x, y, m);
+  }
+
+#ifndef SWIGJAVA
+  %feature("kwargs") SetPointZM;
+#endif
+  void SetPointZM(int point, double x, double y, double z, double m) {
+      OGR_G_SetPointZM(self, point, x, y, z, m);
   }
 
 #ifndef SWIGJAVA
@@ -2800,8 +2930,28 @@ public:
     return OGR_G_GetCoordinateDimension(self);
   }
 
+  int CoordinateDimension() {
+    return OGR_G_CoordinateDimension(self);
+  }
+
+  int Is3D() {
+      return OGR_G_Is3D(self);
+  }
+
+  int IsMeasured() {
+      return OGR_G_IsMeasured(self);
+  }
+
   void SetCoordinateDimension(int dimension) {
     OGR_G_SetCoordinateDimension(self, dimension);
+  }
+
+  void Set3D(int b3D) {
+      OGR_G_Set3D(self, b3D);
+  }
+
+  void SetMeasured(int bMeasured) {
+      OGR_G_SetMeasured(self, bMeasured);
   }
 
   int GetDimension() {
@@ -2890,15 +3040,27 @@ OGRwkbGeometryType OGR_GT_Flatten( OGRwkbGeometryType eType );
 %rename (GT_SetZ) OGR_GT_SetZ;
 OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType );
 
+#ifndef SWIGPERL
 %inline  %{
 OGRwkbGeometryType GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSetM = FALSE)
 {
     return OGR_GT_SetModifier(eType, bSetZ, bSetM);
 }
 %}
+#else
+%inline  %{
+int GT_SetModifier( int eType, int bSetZ, int bSetM)
+{
+    return OGR_GT_SetModifier((OGRwkbGeometryType)eType, bSetZ, bSetM);
+}
+%}
+#endif
 
 %rename (GT_HasZ) OGR_GT_HasZ;
 int                OGR_GT_HasZ( OGRwkbGeometryType eType );
+
+%rename (GT_HasM) OGR_GT_HasM;
+int                OGR_GT_HasM( OGRwkbGeometryType eType );
 
 %rename (GT_IsSubClassOf) OGR_GT_IsSubClassOf;
 int                OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,

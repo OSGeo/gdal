@@ -130,7 +130,6 @@ void OGRGeometryCollection::empty()
 
     nGeomCount = 0;
     papoGeoms = NULL;
-    nCoordDimension = 2;
 }
 
 /************************************************************************/
@@ -147,6 +146,7 @@ OGRGeometry *OGRGeometryCollection::clone() const
     if( poNewGC == NULL )
         return NULL;
     poNewGC->assignSpatialReference( getSpatialReference() );
+    poNewGC->flags = flags;
 
     for( int i = 0; i < nGeomCount; i++ )
     {
@@ -167,7 +167,11 @@ OGRGeometry *OGRGeometryCollection::clone() const
 OGRwkbGeometryType OGRGeometryCollection::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbGeometryCollectionZM;
+    else if( flags & OGR_G_MEASURED )
+        return wkbGeometryCollectionM;
+    else if( flags & OGR_G_3D )
         return wkbGeometryCollection25D;
     else
         return wkbGeometryCollection;
@@ -206,7 +210,7 @@ void OGRGeometryCollection::flattenTo2D()
     for( int i = 0; i < nGeomCount; i++ )
         papoGeoms[i]->flattenTo2D();
 
-    nCoordDimension = 2;
+    flags &= ~OGR_G_3D;
 }
 
 /************************************************************************/
@@ -347,10 +351,21 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
     if( !isCompatibleSubType(poNewGeom->getGeometryType()) )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    if( poNewGeom->getCoordinateDimension() == 3 && getCoordinateDimension() != 3 )
-        setCoordinateDimension(3);
-    else if( poNewGeom->getCoordinateDimension() != 3 && getCoordinateDimension() == 3 )
-        poNewGeom->setCoordinateDimension(3);
+    if( poNewGeom->Is3D() && !Is3D() )
+
+        set3D(TRUE);
+
+    if( poNewGeom->IsMeasured() && !IsMeasured() )
+
+        setMeasured(TRUE);
+
+    if( !poNewGeom->Is3D() && Is3D() )
+
+        poNewGeom->set3D(TRUE);
+
+    if( !poNewGeom->IsMeasured() && IsMeasured() )
+
+        poNewGeom->setMeasured(TRUE);
 
     OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( papoGeoms,
                                              sizeof(void*) * (nGeomCount+1) );
@@ -486,8 +501,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
             return OGRERR_NOT_ENOUGH_DATA;
 
         OGRwkbGeometryType eSubGeomType;
-        OGRBoolean bIs3D;
-        eErr = OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType, &bIs3D );
+        eErr = OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType );
         if( eErr != OGRERR_NONE )
             return eErr;
 
@@ -525,8 +539,10 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
 
         papoGeoms[iGeom] = poSubGeom;
 
-        if (papoGeoms[iGeom]->getCoordinateDimension() == 3)
-            nCoordDimension = 3;
+        if (papoGeoms[iGeom]->Is3D())
+            flags |= OGR_G_3D;
+        if (papoGeoms[iGeom]->IsMeasured())
+            flags |= OGR_G_MEASURED;
 
         int nSubGeomWkbSize = papoGeoms[iGeom]->WkbSize();
         if( nSize != -1 )
@@ -660,8 +676,12 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
     int bHasZ = FALSE, bHasM = FALSE;
     bool bIsEmpty = false;
     OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
-    if( eErr != OGRERR_NONE || bIsEmpty )
+    if( eErr != OGRERR_NONE )
         return eErr;
+    if( bHasZ ) flags |= OGR_G_3D;
+    if( bHasM ) flags |= OGR_G_MEASURED;
+    if( bIsEmpty )
+        return OGRERR_NONE;
 
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
@@ -695,7 +715,13 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
                                                        NULL, &poGeom );
 
         if( eErr == OGRERR_NONE )
-            eErr = addGeometryDirectly( poGeom );
+        {
+            /* if this has M but not Z it is an error if poGeom does not have M */
+            if( !Is3D() && IsMeasured() && !poGeom->IsMeasured() )
+                eErr = OGRERR_CORRUPT_DATA;
+            else
+                eErr = addGeometryDirectly( poGeom );
+        }
         if( eErr != OGRERR_NONE )
         {
             delete poGeom;
@@ -772,18 +798,28 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
             nSkip = strlen(pszSkipPrefix) + 1;
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
+                nSkip += 3;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
+                nSkip += 2;
             if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
-
+            
             /* skip empty subgeoms */
             if( papszGeoms[iGeom][nSkip] != '(' )
             {
                 CPLDebug( "OGR", "OGRGeometryCollection::exportToWkt() - skipping %s.",
-                         papszGeoms[iGeom] );
+                          papszGeoms[iGeom] );
                 CPLFree( papszGeoms[iGeom] );
                 papszGeoms[iGeom] = NULL;
                 continue;
             }
+        }
+        else if( eWkbVariant != wkbVariantIso )
+        {
+            char *substr;
+            if( (substr = strstr(papszGeoms[iGeom], " Z")) )
+                memmove(substr, substr+strlen(" Z"), 1+strlen(substr+strlen(" Z")));
         }
 
         nCumulativeLength += strlen(papszGeoms[iGeom] + nSkip);
@@ -796,8 +832,17 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
     {
         CPLFree( papszGeoms );
         CPLString osEmpty;
-        if( getCoordinateDimension() == 3 && eWkbVariant == wkbVariantIso )
-            osEmpty.Printf("%s Z EMPTY",getGeometryName());
+        if( eWkbVariant == wkbVariantIso )
+        {
+            if( Is3D() && IsMeasured() )
+                osEmpty.Printf("%s ZM EMPTY",getGeometryName());
+            else if( IsMeasured() )
+                osEmpty.Printf("%s M EMPTY",getGeometryName());
+            else if( Is3D() )
+                osEmpty.Printf("%s Z EMPTY",getGeometryName());
+            else
+                osEmpty.Printf("%s EMPTY",getGeometryName());
+        }
         else
             osEmpty.Printf("%s EMPTY",getGeometryName());
         *ppszDstText = CPLStrdup(osEmpty);
@@ -807,7 +852,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      Allocate the right amount of space for the aggregated string    */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(nCumulativeLength + nGeomCount + 25);
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(nCumulativeLength + nGeomCount + 26);
 
     if( *ppszDstText == NULL )
     {
@@ -819,8 +864,15 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
     strcpy( *ppszDstText, getGeometryName() );
-    if( getCoordinateDimension() == 3 && eWkbVariant == wkbVariantIso )
-        strcat( *ppszDstText, " Z" );
+    if( eWkbVariant == wkbVariantIso )
+    {
+        if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+            strcat( *ppszDstText, " ZM" );
+        else if( flags & OGR_G_3D )
+            strcat( *ppszDstText, " Z" );
+        else if( flags & OGR_G_MEASURED )
+            strcat( *ppszDstText, " M" );
+    }
     strcat( *ppszDstText, " (" );
     nCumulativeLength = strlen(*ppszDstText);
 
@@ -839,7 +891,11 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
             nSkip = strlen(pszSkipPrefix) + 1;
-            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
+            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
+                nSkip += 3;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
+                nSkip += 2;
+            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
         }
 
@@ -1007,6 +1063,26 @@ void OGRGeometryCollection::setCoordinateDimension( int nNewDimension )
     }
 
     OGRGeometry::setCoordinateDimension( nNewDimension );
+}
+
+void OGRGeometryCollection::set3D( OGRBoolean bIs3D )
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        papoGeoms[iGeom]->set3D( bIs3D );
+    }
+
+    OGRGeometry::set3D( bIs3D );
+}
+
+void OGRGeometryCollection::setMeasured( OGRBoolean bIsMeasured )
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        papoGeoms[iGeom]->setMeasured( bIsMeasured );
+    }
+
+    OGRGeometry::setMeasured( bIsMeasured );
 }
 
 

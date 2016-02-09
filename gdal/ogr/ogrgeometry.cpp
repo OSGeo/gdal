@@ -73,7 +73,7 @@ OGRGeometry::OGRGeometry()
 
 {
     poSRS = NULL;
-    nCoordDimension = 2;
+    flags = 0;
 }
 
 /************************************************************************/
@@ -91,7 +91,7 @@ OGRGeometry::OGRGeometry()
 
 OGRGeometry::OGRGeometry( const OGRGeometry& other ) :
     poSRS(other.poSRS),
-    nCoordDimension(other.nCoordDimension)
+    flags(other.flags)
 {
     if( poSRS != NULL )
         poSRS->Reference();
@@ -126,9 +126,19 @@ OGRGeometry& OGRGeometry::operator=( const OGRGeometry& other )
     if( this != &other)
     {
         assignSpatialReference( other.getSpatialReference() );
-        nCoordDimension = other.nCoordDimension;
+        flags = other.flags;
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               IsEmpty()                              */
+/************************************************************************/
+
+OGRBoolean OGRGeometry::IsEmpty() const
+{
+    fprintf(stderr, "Missing IsEmpty method for a class.\n");
+    exit(1);
 }
 
 /************************************************************************/
@@ -178,19 +188,37 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbNone:
             case wkbPoint:
             case wkbPoint25D:
+            case wkbPointM:
+            case wkbPointZM:
+            case wkbPolyhedralSurface: /* not yet implemented */
+            case wkbTIN: /* not yet implemented */
+            case wkbPolyhedralSurfaceZ: /* not yet implemented */
+            case wkbTINZ: /* not yet implemented */
+            case wkbPolyhedralSurfaceM: /* not yet implemented */
+            case wkbTINM: /* not yet implemented */
+            case wkbPolyhedralSurfaceZM: /* not yet implemented */
+            case wkbTINZM: /* not yet implemented */
                 fprintf( fp, "\n");
                 break;
             case wkbLineString:
             case wkbLineString25D:
+            case wkbLineStringM:
+            case wkbLineStringZM:
             case wkbCircularString:
             case wkbCircularStringZ:
+            case wkbCircularStringM:
+            case wkbCircularStringZM:
                 poLine = (OGRLineString*)this;
                 fprintf( fp, "%d points\n", poLine->getNumPoints() );
                 break;
             case wkbPolygon:
             case wkbPolygon25D:
+            case wkbPolygonM:
+            case wkbPolygonZM:
             case wkbCurvePolygon:
             case wkbCurvePolygonZ:
+            case wkbCurvePolygonM:
+            case wkbCurvePolygonZM:
             {
                 int ir;
                 int nRings;
@@ -232,6 +260,8 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             }
             case wkbCompoundCurve:
             case wkbCompoundCurveZ:
+            case wkbCompoundCurveM:
+            case wkbCompoundCurveZM:
             {
                 OGRCompoundCurve* poCC = (OGRCompoundCurve* )this;
                 if( poCC->getNumCurves() == 0 )
@@ -262,6 +292,18 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbMultiCurveZ:
             case wkbMultiSurfaceZ:
             case wkbGeometryCollection25D:
+            case wkbMultiPointM:
+            case wkbMultiLineStringM:
+            case wkbMultiPolygonM:
+            case wkbMultiCurveM:
+            case wkbMultiSurfaceM:
+            case wkbGeometryCollectionM:
+            case wkbMultiPointZM:
+            case wkbMultiLineStringZM:
+            case wkbMultiPolygonZM:
+            case wkbMultiCurveZM:
+            case wkbMultiSurfaceZM:
+            case wkbGeometryCollectionZM:
             {
                 int ig;
                 poColl = (OGRGeometryCollection*)this;
@@ -665,8 +707,10 @@ OGRwkbGeometryType OGRGeometry::getIsoGeometryType() const
 {
     OGRwkbGeometryType nGType = wkbFlatten(getGeometryType());
 
-    if ( getCoordinateDimension() == 3 )
+    if ( flags & OGR_G_3D )
         nGType = (OGRwkbGeometryType)(nGType + 1000);
+    if ( flags & OGR_G_MEASURED )
+        nGType = (OGRwkbGeometryType)(nGType + 2000);
 
     return nGType;
 }
@@ -753,18 +797,36 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
 /**
  * \brief Get the dimension of the coordinates in this object.
  *
- * This method corresponds to the SFCOM IGeometry::GetDimension() method.
- *
  * This method is the same as the C function OGR_G_GetCoordinateDimension().
  *
- * @return in practice this will return 2 or 3. It can also return 0 in the
- * case of an empty point.
+ * @deprecated use CoordinateDimension().
+ *
+ * @return this will return 2 or 3.
  */
 
 int OGRGeometry::getCoordinateDimension() const
 
 {
-    return nCoordDimension;
+    return (flags & OGR_G_3D) ? 3 : 2;
+}
+
+/**
+ * \brief Get the dimension of the coordinates in this object.
+ *
+ * This method is the same as the C function OGR_G_CoordinateDimension().
+ *
+ * @return this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
+ */
+
+int OGRGeometry::CoordinateDimension() const
+
+{
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return 4;
+    else if( (flags & OGR_G_3D) || (flags & OGR_G_MEASURED) )
+        return 3;
+    else
+        return 2;
 }
 
 /************************************************************************/
@@ -774,16 +836,15 @@ int OGRGeometry::getCoordinateDimension() const
  *
  * \brief Get the dimension of the coordinates in this geometry.
  *
- * This function corresponds to the SFCOM IGeometry::GetDimension() method.
- *
  * This function is the same as the CPP method 
  * OGRGeometry::getCoordinateDimension().
  *
  * @param hGeom handle on the geometry to get the dimension of the 
  * coordinates from.
  *
- * @return in practice this will return 2 or 3. It can also return 0 in the
- * case of an empty point.
+ * @deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or OGR_G_IsMeasured().
+ *
+ * @return this will return 2 or 3.
  */
 
 int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
@@ -792,6 +853,67 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_GetCoordinateDimension", 0 );
 
     return ((OGRGeometry *) hGeom)->getCoordinateDimension();
+}
+
+/**
+ *
+ * \brief Get the dimension of the coordinates in this geometry.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometry::CoordinateDimension().
+ *
+ * @param hGeom handle on the geometry to get the dimension of the 
+ * coordinates from.
+ *
+ * @return this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
+ */
+
+int OGR_G_CoordinateDimension( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_CoordinateDimension", 0 );
+
+    return ((OGRGeometry *) hGeom)->CoordinateDimension();
+}
+
+/**
+ *
+ * \brief See whether this geometry has Z coordinates.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometry::Is3D().
+ *
+ * @param hGeom handle on the geometry to check whether it has Z coordinates.
+ *
+ * @return TRUE if the geometry has Z coordinates.
+ */
+
+int OGR_G_Is3D( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_Is3D", 0 );
+
+    return ((OGRGeometry *) hGeom)->Is3D();
+}
+
+/**
+ *
+ * \brief See whether this geometry is measured.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometry::IsMeasured().
+ *
+ * @param hGeom handle on the geometry to check whether it is measured.
+ *
+ * @return TRUE if the geometry has M coordinates.
+ */
+
+int OGR_G_IsMeasured( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_IsMeasured", 0 );
+
+    return ((OGRGeometry *) hGeom)->IsMeasured();
 }
 
 /************************************************************************/
@@ -806,13 +928,60 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
  * the dimension of a geometry collection, a compound curve, a polygon, etc.
  * will affect the children geometries. 
  *
+ * @deprecated use set3D() or setMeasured().
+ *
  * @param nNewDimension New coordinate dimension value, either 2 or 3.
  */
 
 void OGRGeometry::setCoordinateDimension( int nNewDimension )
 
 {
-    nCoordDimension = nNewDimension;
+    if( nNewDimension == 2 )
+        flags &= ~OGR_G_3D;
+    else
+        flags |= OGR_G_3D;
+}
+
+/**
+ * \brief Add or remove the Z coordinate dimension. 
+ *
+ * This method adds or removes the explicit Z coordinate dimension.
+ * Removing the Z coordinate dimension of a geometry will remove any
+ * existing Z values.  Adding the Z dimension to a geometry
+ * collection, a compound curve, a polygon, etc.  will affect the
+ * children geometries.
+ *
+ * @param bIs3D Should the geometry have a Z dimension, either TRUE or FALSE.
+ */
+
+void OGRGeometry::set3D( OGRBoolean bIs3D )
+
+{
+    if (bIs3D) 
+        flags |= OGR_G_3D; 
+    else 
+        flags &= ~OGR_G_3D;
+}
+
+/**
+ * \brief Add or remove the M coordinate dimension. 
+ *
+ * This method adds or removes the explicit M coordinate dimension.
+ * Removing the M coordinate dimension of a geometry will remove any
+ * existing M values.  Adding the M dimension to a geometry
+ * collection, a compound curve, a polygon, etc.  will affect the
+ * children geometries.
+ *
+ * @param bIsMeasured Should the geometry have a M dimension, either TRUE or FALSE.
+ */
+
+void OGRGeometry::setMeasured( OGRBoolean bIsMeasured )
+
+{
+    if (bIsMeasured) 
+        flags |= OGR_G_MEASURED; 
+    else 
+        flags &= ~OGR_G_MEASURED;
 }
 
 /************************************************************************/
@@ -838,6 +1007,58 @@ void OGR_G_SetCoordinateDimension( OGRGeometryH hGeom, int nNewDimension)
     VALIDATE_POINTER0( hGeom, "OGR_G_SetCoordinateDimension" );
 
     ((OGRGeometry *) hGeom)->setCoordinateDimension( nNewDimension );
+}
+
+/************************************************************************/
+/*                    OGR_G_Set3D()                                     */
+/************************************************************************/
+
+/**
+ * \brief Add or remove the Z coordinate dimension. 
+ *
+ * This method adds or removes the explicit Z coordinate dimension.
+ * Removing the Z coordinate dimension of a geometry will remove any
+ * existing Z values.  Adding the Z dimension to a geometry
+ * collection, a compound curve, a polygon, etc.  will affect the
+ * children geometries.
+ *
+ * @param hGeom handle on the geometry to set or unset the Z dimension.
+ * @param bIs3D Should the geometry have a Z dimension, either TRUE or FALSE.
+ */
+
+void OGR_G_Set3D( OGRGeometryH hGeom, int bIs3D)
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_Set3D" );
+
+    ((OGRGeometry *) hGeom)->set3D( bIs3D );
+}
+
+/************************************************************************/
+/*                    OGR_G_SetMeasured()                               */
+/************************************************************************/
+
+/**
+ * \brief Set the coordinate dimension.
+ *
+ * \brief Add or remove the M coordinate dimension. 
+ *
+ * This method adds or removes the explicit M coordinate dimension.
+ * Removing the M coordinate dimension of a geometry will remove any
+ * existing M values.  Adding the M dimension to a geometry
+ * collection, a compound curve, a polygon, etc.  will affect the
+ * children geometries.
+ *
+ * @param hGeom handle on the geometry to set or unset the M dimension.
+ * @param bIsMeasured Should the geometry have a M dimension, either TRUE or FALSE.
+ */
+
+void OGR_G_SetMeasured( OGRGeometryH hGeom, int bIsMeasured)
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_SetMeasured" );
+
+    ((OGRGeometry *) hGeom)->setMeasured( bIsMeasured );
 }
 
 /**
@@ -1281,11 +1502,10 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
             *ppszInput = (char *) pszPreScan;
             empty();
             if( bHasZ )
-                setCoordinateDimension(3);
+                set3D(TRUE);
+            if( bHasM )
+                setMeasured(TRUE);
             *pbIsEmpty = true;
-
-            /* FIXME?: In theory we should store the M presence */
-            /* if we want to allow round-trip with ExportToWKT v1.2 */
             return OGRERR_NONE;
         }
     }
@@ -1951,95 +2171,148 @@ const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType )
 const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
 
 {
-    bool b2D = wkbFlatten(eType) == eType;
+    bool b3D = wkbHasZ(eType);
+    bool bMeasured = wkbHasM(eType);
 
     switch( wkbFlatten(eType) )
     {
-      case wkbUnknown:
-        if( b2D )
-            return "Unknown (any)";
-        else
-            return "3D Unknown (any)";
+        case wkbUnknown:
+            if (b3D && bMeasured)
+                return "3D Measured Unknown (any)";
+            else if (b3D)
+                return "3D Unknown (any)";
+            else if (bMeasured)
+                return "Measured Unknown (any)";
+            else
+                return "Unknown (any)";
 
-      case wkbPoint:
-        if( b2D )
-            return "Point";
-        else
-            return "3D Point";
+        case wkbPoint:
+            if (b3D && bMeasured)
+                return "3D Measured Point";
+            else if (b3D)
+                return "3D Point";
+            else if (bMeasured)
+                return "Measured Point";
+            else
+                return "Point";
 
-      case wkbLineString:
-        if( b2D )
-            return "Line String";
-        else
-            return "3D Line String";
+        case wkbLineString:
+            if (b3D && bMeasured)
+                return "3D Measured Line String";
+            else if (b3D)
+                return "3D Line String";
+            else if (bMeasured)
+                return "Measured Line String";
+            else
+                return "Line String";
 
-      case wkbPolygon:
-        if( b2D )
-            return "Polygon";
-        else
-            return "3D Polygon";
+        case wkbPolygon:
+            if (b3D && bMeasured)
+                return "3D Measured Polygon";
+            else if (b3D)
+                return "3D Polygon";
+            else if (bMeasured)
+                return "Measured Polygon";
+            else
+                return "Polygon";
 
-      case wkbMultiPoint:
-        if( b2D )
-            return "Multi Point";
-        else
-            return "3D Multi Point";
+        case wkbMultiPoint:
+            if (b3D && bMeasured)
+                return "3D Measured Multi Point";
+            else if (b3D)
+                return "3D Multi Point";
+            else if (bMeasured)
+                return "Measured Multi Point";
+            else
+                return "Multi Point";
 
-      case wkbMultiLineString:
-        if( b2D )
-            return "Multi Line String";
-        else
-            return "3D Multi Line String";
+        case wkbMultiLineString:
+            if (b3D && bMeasured)
+                return "3D Measured Multi Line String";
+            else if (b3D)
+                return "3D Multi Line String";
+            else if (bMeasured)
+                return "Measured Multi Line String";
+            else
+                return "Multi Line String";
 
-      case wkbMultiPolygon:
-        if( b2D )
-            return "Multi Polygon";
-        else
-            return "3D Multi Polygon";
+        case wkbMultiPolygon:
+          if (b3D && bMeasured)
+                return "3D Measured Multi Polygon";
+            else if (b3D)
+                return "3D Multi Polygon";
+            else if (bMeasured)
+                return "Measured Multi Polygon";
+            else
+                return "Multi Polygon";
 
-      case wkbGeometryCollection:
-        if( b2D )
-            return "Geometry Collection";
-        else
-            return "3D Geometry Collection";
+        case wkbGeometryCollection:
+            if (b3D && bMeasured)
+                return "3D Measured Geometry Collection";
+            else if (b3D)
+                return "3D Geometry Collection";
+            else if (bMeasured)
+                return "Measured Geometry Collection";
+            else
+                return "Geometry Collection";
 
-      case wkbCircularString:
-        if( b2D )
-            return "Circular String";
-        else
-            return "3D Circular String";
+        case wkbCircularString:
+            if (b3D && bMeasured)
+                return "3D Measured Circular String";
+            else if (b3D)
+                return "3D Circular String";
+            else if (bMeasured)
+                return "Measured Circular String";
+            else
+                return "Circular String";
 
-      case wkbCompoundCurve:
-        if( b2D )
-            return "Compound Curve";
-        else
-            return "3D Compound Curve";
+        case wkbCompoundCurve:
+            if (b3D && bMeasured)
+                return "3D Measured Compound Curve";
+            else if (b3D)
+                return "3D Compound Curve";
+            else if (bMeasured)
+                return "Measured Compound Curve";
+            else
+                return "Compound Curve";
 
-      case wkbCurvePolygon:
-        if( b2D )
-            return "Curve Polygon";
-        else
-            return "3D Curve Polygon";
+        case wkbCurvePolygon:
+            if (b3D && bMeasured)
+                return "3D Measured Curve Polygon";
+            else if (b3D)
+                return "3D Curve Polygon";
+            else if (bMeasured)
+                return "Measured Curve Polygon";
+            else
+                return "Curve Polygon";
 
-      case wkbMultiCurve:
-        if( b2D )
-            return "Multi Curve";
-        else
-            return "3D Multi Curve";
+        case wkbMultiCurve:
+            if (b3D && bMeasured)
+                return "3D Measured Multi Curve";
+            else if (b3D)
+                return "3D Multi Curve";
+            else if (bMeasured)
+                return "Measured Multi Curve";
+            else
+                return "Multi Curve";
 
-      case wkbMultiSurface:
-        if( b2D )
-            return "Multi Surface";
-        else
-            return "3D Multi Surface";
+        case wkbMultiSurface:
+            if (b3D && bMeasured)
+                return "3D Measured Multi Surface";
+            else if (b3D)
+                return "3D Multi Surface";
+            else if (bMeasured)
+                return "Measured Multi Surface";
+            else
+                return "Multi Surface";
 
-      case wkbNone:
-        return "None";
+        case wkbNone:
+            return "None";
 
-      default:
-      {
-          return CPLSPrintf( "Unrecognized: %d", (int) eType );
-      }
+        default:
+        {
+            return CPLSPrintf( "Unrecognized: %d", (int) eType );
+        }
     }
 }
 
@@ -4802,7 +5075,6 @@ OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
 
 {
     OGRGeometry *poGeometry = NULL;
-    unsigned int ewkbFlags = 0;
 
     if (nLength < 5)
     {
@@ -4812,23 +5084,9 @@ OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Detect XYZM variant of PostGIS EWKB                             */
-/*                                                                      */
-/*      OGR does not support parsing M coordinate,                      */
-/*      so we return NULL geometry.                                     */
+/*      Detect byte order                                               */
 /* -------------------------------------------------------------------- */
-    memcpy(&ewkbFlags, pabyWKB+1, 4);
     OGRwkbByteOrder eByteOrder = (pabyWKB[0] == 0 ? wkbXDR : wkbNDR);
-    if( OGR_SWAP( eByteOrder ) )
-        ewkbFlags= CPL_SWAP32(ewkbFlags);
-
-    if (ewkbFlags & WKBMOFFSET)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Reading EWKB with 4-dimensional coordinates (XYZM) is not supported" );
-
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      PostGIS EWKB format includes an  SRID, but this won't be        */
@@ -4993,7 +5251,6 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 OGRErr OGRGeometry::importPreambuleFromWkb( unsigned char * pabyData,
                                             int nSize,
                                             OGRwkbByteOrder& eByteOrder,
-                                            OGRBoolean& b3D,
                                             OGRwkbVariant eWkbVariant )
 {
     if( nSize < 9 && nSize != -1 )
@@ -5011,9 +5268,13 @@ OGRErr OGRGeometry::importPreambuleFromWkb( unsigned char * pabyData,
 /*      Get the geometry feature type.                                  */
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeometryType;
-    OGRErr err = OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType, &b3D );
+    OGRErr err = OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType );
+    if( wkbHasZ(eGeometryType) )
+        flags |= OGR_G_3D;
+    if( wkbHasM(eGeometryType) )
+        flags |= OGR_G_MEASURED;
 
-    if( err != OGRERR_NONE || eGeometryType != wkbFlatten(getGeometryType()) )
+    if( err != OGRERR_NONE || eGeometryType != getGeometryType() )
         return OGRERR_CORRUPT_DATA;
 
     return OGRERR_NONE;
@@ -5035,19 +5296,22 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData
                                                         OGRwkbVariant eWkbVariant )
 {
     nGeomCount = 0;
-    OGRBoolean b3D = FALSE;
 
-    OGRErr eErr = importPreambuleFromWkb( pabyData, nSize, eByteOrder, b3D, eWkbVariant );
+    OGRErr eErr = importPreambuleFromWkb( pabyData, nSize, eByteOrder, eWkbVariant );
     if( eErr != OGRERR_NONE )
         return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing Geoms.                                           */
 /* -------------------------------------------------------------------- */
-    empty();
+    int _flags = flags; // flags set in importPreambuleFromWkb
+    empty(); // may reset flags etc.
 
-    if( b3D )
-        setCoordinateDimension(3);
+    // restore
+    if( _flags & OGR_G_3D )
+        set3D(TRUE);
+    if( _flags & OGR_G_MEASURED )
+        setMeasured(TRUE);
 
 /* -------------------------------------------------------------------- */
 /*      Get the sub-geometry count.                                     */
@@ -5097,11 +5361,13 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
     int bHasZ = FALSE, bHasM = FALSE;
     bool bIsEmpty = false;
     OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
-    if( eErr != OGRERR_NONE || bIsEmpty )
+    flags = 0;
+    if( eErr != OGRERR_NONE )
         return eErr;
-
-    if( bHasZ )
-        setCoordinateDimension(3);
+    if( bHasZ ) flags |= OGR_G_3D;
+    if( bHasM ) flags |= OGR_G_MEASURED;
+    if( bIsEmpty )
+        return OGRERR_NONE;
 
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
@@ -5162,6 +5428,10 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected token : %s", szToken);
             eErr = OGRERR_CORRUPT_DATA;
         }
+
+        /* if this has M it is an error if poGeom does not have M */
+        if( poCurve && !Is3D() && IsMeasured() && !poCurve->IsMeasured() )
+            eErr = OGRERR_CORRUPT_DATA;
 
         if( eErr == OGRERR_NONE )
             eErr = pfnAddCurveDirectly( this, poCurve );
@@ -5243,6 +5513,30 @@ int OGR_GT_HasZ( OGRwkbGeometryType eType )
         return TRUE;
     if( eType >= 1001 && eType < 2000 )
         return TRUE;
+    if( eType >= 3001 && eType < 4000 )
+        return TRUE;
+    return FALSE;
+}
+
+/************************************************************************/
+/*                          OGR_GT_HasM()                               */
+/************************************************************************/
+/**
+ * \brief Return if the geometry type is a measured type.
+ *
+ * @param eType Input geometry type
+ *
+ * @return TRUE if the geometry type is a measured type.
+ *
+ * @since GDAL 2.0
+ */
+
+int OGR_GT_HasM( OGRwkbGeometryType eType )
+{
+    if( eType >= 2001 && eType < 3000 )
+        return TRUE;
+    if( eType >= 3001 && eType < 4000 )
+        return TRUE;
     return FALSE;
 }
 
@@ -5270,6 +5564,31 @@ OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType )
 }
 
 /************************************************************************/
+/*                           OGR_GT_SetM()                              */
+/************************************************************************/
+/**
+ * \brief Returns the measured geometry type corresponding to the passed geometry type.
+ *
+ * @param eType Input geometry type
+ *
+ * @return measured geometry type corresponding to the passed geometry type.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRwkbGeometryType OGR_GT_SetM( OGRwkbGeometryType eType )
+{
+    if( OGR_GT_HasM(eType) || eType == wkbNone )
+        return eType;
+    if( eType & wkb25DBitInternalUse)
+    {
+        eType = (OGRwkbGeometryType)(eType & ~wkb25DBitInternalUse);
+        eType = (OGRwkbGeometryType)(eType + 1000);
+    }
+    return (OGRwkbGeometryType)(eType + 2000);
+}
+
+/************************************************************************/
 /*                        OGR_GT_SetModifier()                          */
 /************************************************************************/
 /**
@@ -5277,7 +5596,7 @@ OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType )
  *
  * @param eType Input geometry type
  * @param bHasZ TRUE if the output geometry type must be 3D.
- * @param bHasM Must be set to FALSE currently.
+ * @param bHasM TRUE if the output geometry type must be measured.
  *
  * @return Output geometry type.
  *
@@ -5285,10 +5604,14 @@ OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType )
  */
 
 OGRwkbGeometryType OGR_GT_SetModifier( OGRwkbGeometryType eType, int bHasZ,
-                                       CPL_UNUSED int bHasM )
+                                       int bHasM )
 {
-    if( bHasZ )
-        return OGR_GT_SetZ(eType);
+    if( bHasZ && bHasM )
+        return OGR_GT_SetM(OGR_GT_SetZ(eType));
+    else if( bHasM )
+        return OGR_GT_SetM(wkbFlatten(eType));
+    else if( bHasZ )
+        return OGR_GT_SetZ(wkbFlatten(eType));
     else
         return wkbFlatten(eType);
 }

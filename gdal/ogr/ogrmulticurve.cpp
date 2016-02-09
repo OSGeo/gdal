@@ -100,7 +100,11 @@ OGRMultiCurve& OGRMultiCurve::operator=( const OGRMultiCurve& other )
 OGRwkbGeometryType OGRMultiCurve::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiCurveZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiCurveM;
+    else if( flags & OGR_G_3D )
         return wkbMultiCurveZ;
     else
         return wkbMultiCurve;

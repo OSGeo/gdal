@@ -279,6 +279,129 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 }
 
 /************************************************************************/
+/*                        OGRMakeWktCoordinateM()                       */
+/*                                                                      */
+/*      Format a well known text coordinate, trying to keep the         */
+/*      ASCII representation compact, but accurate.  These rules        */
+/*      will have to tighten up in the future.                          */
+/*                                                                      */
+/*      Currently a new point should require no more than 64            */
+/*      characters barring the X or Y value being extremely large.      */
+/************************************************************************/
+
+void OGRMakeWktCoordinateM( char *pszTarget, double x, double y, double z, double m,
+                            OGRBoolean hasZ, OGRBoolean hasM )
+
+{
+    const size_t bufSize = 75;
+    const size_t maxTargetSize = 75; /* Assumed max length of the target buffer. */
+    const char chDecimalSep = '.';
+    const int nPrecision = 15;
+
+    char szX[bufSize];
+    char szY[bufSize];
+    char szZ[bufSize];
+    char szM[bufSize];
+
+    szZ[0] = '\0';
+    szM[0] = '\0';
+
+    size_t nLen, nLenX, nLenY;
+
+    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
+    {
+        snprintf( szX, bufSize, "%d", (int) x );
+        snprintf( szY, bufSize, "%d", (int) y );
+    }
+    else
+    {
+        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision, fabs(x) < 1 ? 'f' : 'g' );
+        if( CPLIsFinite(x) && strchr(szX, '.') == NULL &&
+            strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+        {
+            strcat(szX, ".0");
+        }
+        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision, fabs(y) < 1 ? 'f' : 'g' );
+        if( CPLIsFinite(y) && strchr(szY, '.') == NULL &&
+            strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+        {
+            strcat(szY, ".0");
+        }
+    }
+
+    nLenX = strlen(szX);
+    nLenY = strlen(szY);
+    nLen = nLenX + nLenY + 1;
+
+    if( hasZ )
+    {
+        if( CPL_IS_DOUBLE_A_INT(z) )
+        {
+            snprintf( szZ, bufSize, "%d", (int) z );
+        }
+        else
+        {
+            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
+        }
+        nLen += strlen(szZ) + 1;
+    }
+
+    if( hasM )
+    {
+        if( CPL_IS_DOUBLE_A_INT(m) )
+        {
+            snprintf( szM, bufSize, "%d", (int) m );
+        }
+        else
+        {
+            OGRFormatDouble( szM, bufSize, m, chDecimalSep, nPrecision, 'g' );
+        }
+        nLen += strlen(szM) + 1;
+    }
+
+    if( nLen >= maxTargetSize )
+    {
+#ifdef DEBUG
+        CPLDebug( "OGR", 
+                  "Yow!  Got this big result in OGRMakeWktCoordinate()\n"
+                  "%s %s %s %s", 
+                  szX, szY, szZ, szM );
+#endif
+        if( hasZ && hasM )
+            strcpy( pszTarget, "0 0 0 0");
+        else if( hasZ || hasM )
+            strcpy( pszTarget, "0 0 0");
+        else
+            strcpy( pszTarget, "0 0");
+    }
+    else
+    {
+        char *target = pszTarget;
+        strcpy( target, szX );
+        target += nLenX;
+        *target = ' ';
+        target++;
+        strcpy( target, szY );
+        target += nLenY;
+        if( hasZ )
+        {
+            *target = ' ';
+            target++;
+            strcpy( target, szZ );
+            target += strlen(szZ);
+        }
+        if( hasM )
+        {
+            *target = ' ';
+            target++;
+            strcpy( target, szM );
+            target += strlen(szM);
+        }
+        *target = '\0';
+    }
+}
+
+/************************************************************************/
 /*                          OGRWktReadToken()                           */
 /*                                                                      */
 /*      Read one token or delimiter and put into token buffer.  Pre     */
@@ -459,6 +582,217 @@ const char * OGRWktReadPoints( const char * pszInput,
         {
             CPLDebug( "OGR",
                       "Corrupt input in OGRWktReadPoints()\n"
+                      "Got `%s' when expecting `,' or `)', near `%s' in %s.\n",
+                      szDelim, pszInput, pszOrigInput );
+            return NULL;
+        }
+
+    } while( szDelim[0] == ',' );
+
+    return pszInput;
+}
+
+/************************************************************************/
+/*                          OGRWktReadPointsM()                         */
+/*                                                                      */
+/*      Read a point string.  The point list must be contained in       */
+/*      brackets and each point pair separated by a comma.              */
+/************************************************************************/
+
+const char * OGRWktReadPointsM( const char * pszInput,
+                                OGRRawPoint ** ppaoPoints, double **ppadfZ, double **ppadfM,
+                                int * flags,
+                                int * pnMaxPoints,
+                                int * pnPointsRead )
+
+{
+    const char *pszOrigInput = pszInput;
+    int no_flags = !(*flags & OGR_G_3D) && !(*flags & OGR_G_MEASURED);
+    *pnPointsRead = 0;
+
+    if( pszInput == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Eat any leading white space.                                    */
+/* -------------------------------------------------------------------- */
+    while( *pszInput == ' ' || *pszInput == '\t' )
+        pszInput++;
+
+/* -------------------------------------------------------------------- */
+/*      If this isn't an opening bracket then we have a problem!        */
+/* -------------------------------------------------------------------- */
+    if( *pszInput != '(' )
+    {
+        CPLDebug( "OGR",
+                  "Expected '(', but got %s in OGRWktReadPointsM().\n",
+                  pszInput );
+
+        return pszInput;
+    }
+
+    pszInput++;
+
+/* ==================================================================== */
+/*      This loop reads a single point.  It will continue till we       */
+/*      run out of well formed points, or a closing bracket is          */
+/*      encountered.                                                    */
+/* ==================================================================== */
+    char        szDelim[OGR_WKT_TOKEN_MAX];
+
+    do {
+/* -------------------------------------------------------------------- */
+/*      Read the X and Y values, verify they are numeric.               */
+/* -------------------------------------------------------------------- */
+        char    szTokenX[OGR_WKT_TOKEN_MAX];
+        char    szTokenY[OGR_WKT_TOKEN_MAX];
+
+        pszInput = OGRWktReadToken( pszInput, szTokenX );
+        pszInput = OGRWktReadToken( pszInput, szTokenY );
+
+        if( (!isdigit(szTokenX[0]) && szTokenX[0] != '-' && szTokenX[0] != '.' )
+            || (!isdigit(szTokenY[0]) && szTokenY[0] != '-' && szTokenY[0] != '.') )
+            return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to grow the point list to hold this point?           */
+/* -------------------------------------------------------------------- */
+        if( *pnPointsRead == *pnMaxPoints )
+        {
+            *pnMaxPoints = *pnMaxPoints * 2 + 10;
+            *ppaoPoints = (OGRRawPoint *)
+                CPLRealloc(*ppaoPoints, sizeof(OGRRawPoint) * *pnMaxPoints);
+
+            if( *ppadfZ != NULL )
+            {
+                *ppadfZ = (double *)
+                    CPLRealloc(*ppadfZ, sizeof(double) * *pnMaxPoints);
+            }
+
+            if( *ppadfM != NULL )
+            {
+                *ppadfM = (double *)
+                    CPLRealloc(*ppadfM, sizeof(double) * *pnMaxPoints);
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Add point to list.                                              */
+/* -------------------------------------------------------------------- */
+        (*ppaoPoints)[*pnPointsRead].x = CPLAtof(szTokenX);
+        (*ppaoPoints)[*pnPointsRead].y = CPLAtof(szTokenY);
+
+/* -------------------------------------------------------------------- */
+/*      Read the next token.                                            */
+/* -------------------------------------------------------------------- */
+        pszInput = OGRWktReadToken( pszInput, szDelim );
+
+/* -------------------------------------------------------------------- */
+/*      If there are unexpectedly more coordinates, they are Z.         */
+/* -------------------------------------------------------------------- */
+
+        if( !(*flags & OGR_G_3D) && !(*flags & OGR_G_MEASURED) && 
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ))
+        {
+            *flags |= OGR_G_3D;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Get Z if flag says so.                                          */
+/*      Zero out possible remains from earlier strings.                 */
+/* -------------------------------------------------------------------- */
+
+        if( *flags & OGR_G_3D )
+        {
+            if( *ppadfZ == NULL )
+            {
+                *ppadfZ = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
+            }
+            if( isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' )
+            {
+                (*ppadfZ)[*pnPointsRead] = CPLAtof(szDelim);
+                pszInput = OGRWktReadToken( pszInput, szDelim );
+            }
+            else {
+                (*ppadfZ)[*pnPointsRead] = 0.0;
+            }
+        }
+        else if ( *ppadfZ != NULL )
+            (*ppadfZ)[*pnPointsRead] = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      If there are unexpectedly even more coordinates,                */
+/*      they are discarded unless there were no flags originally.       */
+/*      This is for backwards compatibility. Should this be an error?   */
+/* -------------------------------------------------------------------- */
+
+        if( !(*flags & OGR_G_MEASURED) &&
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ) )
+        {
+            if( no_flags )
+            {
+                *flags |= OGR_G_MEASURED;
+            }
+            else
+            {
+                pszInput = OGRWktReadToken( pszInput, szDelim );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Get M if flag says so.                                          */
+/*      Zero out possible remains from earlier strings.                 */
+/* -------------------------------------------------------------------- */
+
+        if( *flags & OGR_G_MEASURED )
+        {
+            if( *ppadfM == NULL )
+            {
+                *ppadfM = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
+            }
+            if( isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' )
+            {
+                (*ppadfM)[*pnPointsRead] = CPLAtof(szDelim);
+                pszInput = OGRWktReadToken( pszInput, szDelim );
+            }
+            else {
+                (*ppadfM)[*pnPointsRead] = 0.0;
+            }
+        }
+        else if ( *ppadfM != NULL )
+            (*ppadfM)[*pnPointsRead] = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      If there are still more coordinates and we do not have Z        */
+/*      then we have a case of flags == M and four coordinates.         */
+/*      This is allowed in BNF.                                         */
+/* -------------------------------------------------------------------- */
+
+        if( !(*flags & OGR_G_3D) && 
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.') )
+        {
+            *flags |= OGR_G_3D;
+            if( *ppadfZ == NULL )
+            {
+                *ppadfZ = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
+            }
+            (*ppadfZ)[*pnPointsRead] = (*ppadfM)[*pnPointsRead];
+            (*ppadfM)[*pnPointsRead] = CPLAtof(szDelim);
+            pszInput = OGRWktReadToken( pszInput, szDelim );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Increase points index.                                          */
+/* -------------------------------------------------------------------- */
+        (*pnPointsRead)++;
+
+/* -------------------------------------------------------------------- */
+/*      The next delimiter should be a comma or an ending bracket.      */
+/* -------------------------------------------------------------------- */
+        if( szDelim[0] != ')' && szDelim[0] != ',' )
+        {
+            CPLDebug( "OGR",
+                      "Corrupt input in OGRWktReadPointsM()\n"
                       "Got `%s' when expecting `,' or `)', near `%s' in %s.\n",
                       szDelim, pszInput, pszOrigInput );
             return NULL;
@@ -1249,9 +1583,9 @@ OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
 
 
 OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVariant,
-                               OGRwkbGeometryType *peGeometryType, OGRBoolean *pbIs3D )
+                               OGRwkbGeometryType *peGeometryType )
 {
-    if ( ! (peGeometryType && pbIs3D) )
+    if ( !peGeometryType )
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
@@ -1263,11 +1597,10 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
     OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder) nByteOrder;
 
 /* -------------------------------------------------------------------- */
-/*      Get the geometry feature type.  For now we assume that          */
-/*      geometry type is between 0 and 255 so we only have to fetch     */
-/*      one byte.                                                       */
+/*      Get the geometry type.                                          */
 /* -------------------------------------------------------------------- */
     int bIs3D = FALSE;
+    int bIsMeasured = FALSE;
     int iRawType;
 
     memcpy(&iRawType, pabyData + 1, 4);
@@ -1276,20 +1609,18 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         CPL_SWAP32PTR(&iRawType);
     }
 
-    /* Old-style OGC z-bit is flipped? */
+    /* Test for M bit in PostGIS WKB, see ogrgeometry.cpp:4956 */
+    if ( 0x40000000 & iRawType )
+    {
+        iRawType &= ~0x40000000;
+        bIsMeasured = TRUE;        
+    }
+    /* Old-style OGC z-bit is flipped? Tests also Z bit in PostGIS WKB */
     if ( wkb25DBitInternalUse & iRawType )
     {
         /* Clean off top 3 bytes */
         iRawType &= 0x000000FF;
         bIs3D = TRUE;        
-    }
-
-    /* ISO SQL/MM style Z types (between 1001 and 1012)? */
-    if ( iRawType >= 1001 && iRawType <= (int)wkbMultiSurfaceZ )
-    {
-        /* Remove the ISO padding */
-        iRawType -= 1000;
-        bIs3D = TRUE;
     }
 
     /*  ISO SQL/MM Part3 draft -> Deprecated */
@@ -1304,66 +1635,78 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         iRawType = wkbMultiCurve;
     else if (iRawType == 1000005)
         iRawType = wkbMultiSurface;
+    else if (iRawType == 2000001)
+        iRawType = wkbPointZM;
+    else if (iRawType == 2000002)
+        iRawType = wkbLineStringZM;
+    else if (iRawType == 2000003)
+        iRawType = wkbCircularStringZM; 
+    else if (iRawType == 2000004)
+        iRawType = wkbCompoundCurveZM; 
+    else if (iRawType == 2000005)
+        iRawType = wkbPolygonZM; 
+    else if (iRawType == 2000006)
+        iRawType = wkbCurvePolygonZM;
+    else if (iRawType == 2000007)
+        iRawType = wkbMultiPointZM;
+    else if (iRawType == 2000008)
+        iRawType = wkbMultiCurveZM;
+    else if (iRawType == 2000009)
+        iRawType = wkbMultiLineStringZM;
+    else if (iRawType == 2000010)
+        iRawType = wkbMultiSurfaceZM;
+    else if (iRawType == 2000011)
+        iRawType = wkbMultiPolygonZM;
+    else if (iRawType == 2000012)
+        iRawType = wkbGeometryCollectionZM;
     else if (iRawType == 3000001)
-    {
-        iRawType = wkbPoint;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbPoint25D;
     else if (iRawType == 3000002)
-    {
-        iRawType = wkbLineString;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbLineString25D;
     else if (iRawType == 3000003)
-    {
-        iRawType = wkbCircularString;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbCircularStringZ;
     else if (iRawType == 3000004)
-    {
-        iRawType = wkbCompoundCurve;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbCompoundCurveZ;
     else if (iRawType == 3000005)
-    {
-        iRawType = wkbPolygon;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbPolygon25D;
     else if (iRawType == 3000006)
-    {
-        iRawType = wkbCurvePolygon;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbCurvePolygonZ;
     else if (iRawType == 3000007)
-    {
-        iRawType = wkbMultiPoint;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiPoint25D;
     else if (iRawType == 3000008)
-    {
-        iRawType = wkbMultiCurve;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiCurveZ;
     else if (iRawType == 3000009)
-    {
-        iRawType = wkbMultiLineString;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiLineString25D;
     else if (iRawType == 3000010)
-    {
-        iRawType = wkbMultiSurface;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiSurfaceZ;
     else if (iRawType == 3000011)
-    {
-        iRawType = wkbMultiPolygon;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiPolygon25D;
     else if (iRawType == 3000012)
-    {
-        iRawType = wkbGeometryCollection;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbGeometryCollection25D;
+    else if (iRawType == 4000001)
+        iRawType = wkbPointM;
+    else if (iRawType == 4000002)
+        iRawType = wkbLineStringM;
+    else if (iRawType == 4000003)
+        iRawType = wkbCircularStringM;
+    else if (iRawType == 4000004)
+        iRawType = wkbCompoundCurveM;
+    else if (iRawType == 4000005)
+        iRawType = wkbPolygonM;
+    else if (iRawType == 4000006)
+        iRawType = wkbCurvePolygonM;
+    else if (iRawType == 4000007)
+        iRawType = wkbMultiPointM;
+    else if (iRawType == 4000008)
+        iRawType = wkbMultiCurveM;
+    else if (iRawType == 4000009)
+        iRawType = wkbMultiLineStringM;
+    else if (iRawType == 4000010)
+        iRawType = wkbMultiSurfaceM;
+    else if (iRawType == 4000011)
+        iRawType = wkbMultiPolygonM;
+    else if (iRawType == 4000012)
+        iRawType = wkbGeometryCollectionM;
 
     /* Sometimes the Z flag is in the 2nd byte? */
     if ( iRawType & (wkb25DBitInternalUse >> 16) )
@@ -1383,16 +1726,32 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
             iRawType = wkbMultiSurface;
     }
 
-    /* Nothing left but (hopefully) basic 2D types */
+    if( bIs3D )
+    {
+        iRawType += 1000;
+    }
+    if( bIsMeasured )
+    {
+        iRawType += 2000;
+    }
 
-    /* What if what we have is still out of range? */
-    if ( iRawType < 1 || iRawType > (int)wkbMultiSurface )
+    /* ISO SQL/MM style types are between 1-16, 1001-1016, 2001-2016, and 3001-3016 */
+    if ( !((iRawType > 0 && iRawType <= 16) ||
+           (iRawType > 1000 && iRawType <= 1016) ||
+           (iRawType > 2000 && iRawType <= 2016) ||
+           (iRawType > 3000 && iRawType <= 3016)) )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);            
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 
-    *pbIs3D = bIs3D;
+    /* convert to OGRwkbGeometryType value */
+    if( iRawType >= 1001 && iRawType <= 1007 )
+    {
+        iRawType -= 1000;
+        iRawType |= wkb25DBitInternalUse;
+    }
+
     *peGeometryType = (OGRwkbGeometryType)iRawType;
 
     return OGRERR_NONE;
