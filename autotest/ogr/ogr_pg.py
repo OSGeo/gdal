@@ -1017,10 +1017,12 @@ def ogr_pg_21():
     feat = layer.GetNextFeature()
     while feat is not None:
         geom = feat.GetGeometryRef()
-        if geom is not None:
-            gdaltest.post_reason( 'expected feature with None geometry' )
+        if geom.GetGeometryType() < 3001:
+            gdaltest.post_reason( 'expected feature with type >3000' )
             feat.Destroy()
             feat = None
+            gdaltest.pg_ds.ReleaseResultSet(layer)
+            layer = None
             return 'fail'
 
         feat.Destroy()
