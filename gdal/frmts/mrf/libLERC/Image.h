@@ -16,14 +16,14 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
-
-#include "Defines.h"
-
-NAMESPACE_MRF_START
+#ifndef IMAGE_H
+#define IMAGE_H
 
 // ---- includes ------------------------------------------------------------ ;
+#include "Defines.h"
 #include <string>
+
+NAMESPACE_LERC_START
 
 /**	Base class for all image classes
  *	
@@ -79,4 +79,5 @@ protected:
 
 };
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

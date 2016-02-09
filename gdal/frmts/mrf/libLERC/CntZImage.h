@@ -16,7 +16,8 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
+#ifndef CNTZIMAGE_H
+#define CNTZIMAGE_H
 
 // Define on big endian machines
 // #define BIG_ENDIAN
@@ -26,7 +27,7 @@ Contributors:  Thomas Maurer
 #include "TImage.hpp"
 #include "BitStuffer.h"
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
@@ -163,4 +164,5 @@ protected:
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

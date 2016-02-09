@@ -22,7 +22,7 @@ Contributors:  Thomas Maurer
 
 using namespace std;
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
@@ -308,4 +308,4 @@ unsigned int BitStuffer::numTailBytesNotNeeded(unsigned int numElem, int numBits
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END

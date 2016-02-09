@@ -28,9 +28,8 @@ In the encoded stream there are two types of sequences and an end marker
 
 #include "BitMask.h"
 #include <cassert>
-// #include <algorithm>
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 #define MAX_RUN 32767
 #define MIN_RUN 5
@@ -43,13 +42,13 @@ NAMESPACE_MRF_START
 // Zero size mask is fine, only checks the end marker
 bool BitMask::RLEdecompress(const Byte* src) {
     Byte *dst = m_pBits;
-    size_t sz = Size();
+    int sz = Size();
     short int count;
-
     assert(src);
+
 // Read a two bye short int
-#define READ_COUNT if (true) { count = *src++; \
-count += (*src++ << 8); }
+#define READ_COUNT if (true) { count = *src++; count += (*src++ << 8); }
+
     while (sz) { // One sequence per loop
 	READ_COUNT;
 	if (count < 0) { // negative count for repeats
@@ -70,43 +69,42 @@ count += (*src++ << 8); }
 // Encode helper function
 // It returns how many times the byte at *s is repeated
 // a value between 1 and min(max_count, MAX_RUN) 
-inline static size_t run_length(const Byte *s, size_t max_count)
+inline static int run_length(const Byte *s, int max_count)
 {
     assert(max_count && s);
     if (max_count > MAX_RUN)
 	max_count = MAX_RUN;
     const Byte c = *s++;
-    for (size_t count = 1; count < max_count; count++)
+    for (int count = 1; count < max_count; count++)
 	if (c != *s++)
 	    return count;
     return max_count;
 }
 
 //
-// RLE compressed size is bound by n + 2 + 2 * (n + 1) / 32767 in most cases
-// For tiny strings, the size can be n + 4, so use n + 4 + 2 * (n + 1) / 32767
+// RLE compressed size is bound by n + 4 + 2 * (n - 1) / 32767
 //
-long BitMask::RLEcompress(Byte *dst) const {
+int BitMask::RLEcompress(Byte *dst) const {
     assert(dst);
     // Next input byte
     Byte *src = m_pBits;
     Byte *start = dst;
     // left to process
-    size_t sz = Size();
+    int sz = Size();
 
     // Pointer to current sequence count
     Byte *pCnt = dst;
     // non-repeated byte count
-    long oddrun = 0;
+    int oddrun = 0;
 
-    // Store a two byte count in low endian
+// Store a two byte count in low endian
 #define WRITE_COUNT(val) if (true) { *pCnt++ = Byte(val & 0xff); *pCnt++ = Byte(val >> 8); }
-    // Flush an existing odd run
+// Flush an existing odd run
 #define FLUSH if (oddrun) { WRITE_COUNT(oddrun); pCnt += oddrun; dst = pCnt + 2; oddrun = 0; }
 
     dst += 2; // Skip the space for the first count
     while (sz) {
-	size_t run = run_length(src, sz);
+	int run = run_length(src, sz);
 	if (run < MIN_RUN) { // Use one byte
 	    *dst++ = *src++;
 	    sz--;
@@ -114,8 +112,7 @@ long BitMask::RLEcompress(Byte *dst) const {
 		FLUSH;
 	} else { // Found a run
 	    FLUSH;
-            int negRun = -static_cast<int>(run);
-	    WRITE_COUNT(negRun);
+	    WRITE_COUNT(-run);
 	    *pCnt++ = *src;
 	    src += run;
 	    sz -= run;
@@ -125,23 +122,23 @@ long BitMask::RLEcompress(Byte *dst) const {
     FLUSH;
     WRITE_COUNT(EOT); // End marker
     // return compressed output size
-    return long(pCnt - start);
+    return int(pCnt - start);
 }
 
 // calculate encoded size
-long BitMask::RLEsize() const {
+int BitMask::RLEsize() const {
     // Next input byte
     Byte *src = m_pBits;
     // left to process
-    size_t sz = Size();
+    int sz = Size();
     // current non-repeated byte count
-    long oddrun = 0;
+    int oddrun = 0;
     // Simulate an odd run flush
 #define SIMFLUSH if (oddrun) { osz += oddrun + 2; oddrun = 0; }
-    // output size, end marker
-    long osz = 2;
+    // output size, start with size of end marker
+    int osz = 2;
     while (sz) {
-	size_t run = run_length(src, sz);
+	int run = run_length(src, sz);
 	if (run < MIN_RUN) {
 	    src++;
 	    sz--;
@@ -158,4 +155,4 @@ long BitMask::RLEsize() const {
     return osz;
 }
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END

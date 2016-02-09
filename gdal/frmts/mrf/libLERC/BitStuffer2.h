@@ -15,15 +15,15 @@ source distribution at:
 http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
-#pragma once
-
+#ifndef BITSTUFFER2_H
+#define BITSTUFFER2_H
 // ---- includes ------------------------------------------------------------ ;
 
 #include "Defines.h"
 #include <vector>
 #include <cstring>
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
@@ -139,4 +139,5 @@ unsigned int BitStuffer2::NumTailBytesNotNeeded(unsigned int numElem, int numBit
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

@@ -15,7 +15,8 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
+#ifndef TIMAGE_HPP
+#define TIMAGE_HPP
 
 // ---- includes ------------------------------------------------------------ ;
 
@@ -24,7 +25,7 @@ Contributors:  Thomas Maurer
 #include <cstdlib>
 #include "Image.h"
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 // -------------------------------------------------------------------------- ;
 // -------------------------------------------------------------------------- ;
 // ---- related classes ----------------------------------------------------- ;
@@ -196,5 +197,5 @@ bool TImage< Element >::operator == (const Image& img) const
   return true;
 }
 
-NAMESPACE_MRF_END
-
+NAMESPACE_LERC_END
+#endif

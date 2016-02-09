@@ -30,11 +30,12 @@ Contributors:  Thomas Maurer
 #define PRINT(X)
 #endif
 
-NAMESPACE_MRF_START
+using namespace std;
+
+NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
 
-using namespace std;
 
 // -------------------------------------------------------------------------- ;
 
@@ -1279,4 +1280,4 @@ void CntZImage::readVal(Byte **ppByte, float &val, int numBytes) const
     val = static_cast<float>(v);
 }
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END

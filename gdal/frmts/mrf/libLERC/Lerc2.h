@@ -15,7 +15,8 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#pragma once
+#ifndef LERC2_H
+#define LERC2_H
 
 #include "BitMask2.h"
 #include "BitStuffer2.h"
@@ -29,7 +30,7 @@ Contributors:  Thomas Maurer
 #include <cfloat>
 #include <cmath>
 
-NAMESPACE_MRF_START
+NAMESPACE_LERC_START
 
 #define TryHuffman
 
@@ -798,8 +799,7 @@ int Lerc2::NumBytesTile(int numValidPixel, T zMin, T zMax, bool& tryLut,  // can
     //enum DataType {DT_Char, DT_Byte, DT_Short, DT_UShort, DT_Int, DT_UInt, DT_Float, DT_Double};
     static const Byte sizeArr[] = {1, 1, 2, 2, 4, 4, 4, 8};
     DataType dtUsed;
-    // FIXME ?
-    /*int bits67 =*/ TypeCode(zMin, dtUsed);
+    TypeCode(zMin, dtUsed); // Called to set dtUsed, return value is ignored
     int nBytesForMin = sizeArr[dtUsed];
     int nBytes = 1 + nBytesForMin;
 
@@ -1459,4 +1459,5 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
 // -------------------------------------------------------------------------- ;
 
 
-NAMESPACE_MRF_END
+NAMESPACE_LERC_END
+#endif

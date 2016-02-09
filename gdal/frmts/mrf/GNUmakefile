@@ -10,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Modified for MRF plugin
-
 include ../../GDALmake.opt
 
 PLUGIN_PATH	=	$(prefix)/lib/gdalplugins/$(GDAL_VERSION_MAJOR).$(GDAL_VERSION_MINOR)
@@ -41,20 +39,25 @@ ifeq ($(LIBZ_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 
-ifneq ("$(wildcard LERC_band.cpp)","")
-FILES	:= $(FILES) LERC_band BitMask BitStuffer CntZImage Lerc2 BitStuffer2 BitMask2 RLE Huffman
-DEPENDS  := $(DEPENDS) BitMask.h BitStuffer.h CntZImage.h Defines.h Image.h TImage.hpp Lerc2.h BitStuffer2.h BitMask2.h RLE.h Huffman.h
-XTRA_OPT := $(XTRA_OPT) -DLERC
+ifneq ("$(wildcard libLERC)","")
+LIBLERC	= libLERC
+OBJ	:=	$(OBJ) $(LIBLERC).o LERC_band.o
+XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I $(LIBLERC)
 endif
 
 CPPFLAGS        :=      $(XTRA_OPT)  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
+$(LIBLERC).o	:
+	cd $(LIBLERC); $(MAKE)
+
 clean:
 	rm -rf *.o *.lo .libs/$(OBJ) .libs $(O_OBJ) $(LO_O_OBJ) gdal_mrf.so.1
+	cd $(LIBLERC); $(MAKE) clean
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
+	cd $(LIBLERC); $(MAKE) install-obj
 
 $(OBJ) $(O_OBJ):    $(DEPENDS)
 
