@@ -2639,11 +2639,21 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
     size_t nDataSize;
     unsigned char *pabyData = NULL;
 
-    OGRGeometry* poLinearGeom = (hasCurveGeometry()) ? getLinearGeometry() : (OGRGeometry*)this;
-    if( IsMeasured() )
+    OGRGeometry* poLinearGeom = NULL;
+    if( hasCurveGeometry() )
     {
-        poLinearGeom = this->clone();
-        poLinearGeom->setMeasured(FALSE);
+        poLinearGeom = getLinearGeometry();
+        if( poLinearGeom->IsMeasured() )
+            poLinearGeom->setMeasured(FALSE);
+    }
+    else
+    {
+        poLinearGeom = const_cast<OGRGeometry*>(this);
+        if( IsMeasured() )
+        {
+            poLinearGeom = clone();
+            poLinearGeom->setMeasured(FALSE);
+        }
     }
     nDataSize = poLinearGeom->WkbSize();
     pabyData = (unsigned char *) CPLMalloc(nDataSize);
