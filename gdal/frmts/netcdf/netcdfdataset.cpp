@@ -5480,7 +5480,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
                     brokendowntime.tm_min = nMinute;
                     brokendowntime.tm_sec = static_cast<int>(fSecond);
                     GIntBig nVal = CPLYMDHMSToUnixTime(&brokendowntime);
-                    dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0);
+                    dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0f);
                 }
                 else
                 {
@@ -5616,7 +5616,7 @@ bool netCDFLayer::AddField(int nVarID)
             eType = OFTInteger;
             char* pszValue = NULL;
             if( GetFillValue( nVarID, &pszValue) == CE_None )
-                nodata.chVal = atoi(pszValue);
+                nodata.chVal = static_cast<signed char>(atoi(pszValue));
             else
                 nodata.chVal = NC_FILL_BYTE;
             CPLFree(pszValue);
@@ -5629,7 +5629,7 @@ bool netCDFLayer::AddField(int nVarID)
             eType = OFTInteger;
             char* pszValue = NULL;
             if( GetFillValue( nVarID, &pszValue) == CE_None )
-                nodata.uchVal = atoi(pszValue);
+                nodata.uchVal = static_cast<unsigned char>(atoi(pszValue));
             else
                 nodata.uchVal = NC_FILL_UBYTE;
             CPLFree(pszValue);
@@ -5671,7 +5671,7 @@ bool netCDFLayer::AddField(int nVarID)
             eSubType = OFSTInt16;
             char* pszValue = NULL;
             if( GetFillValue( nVarID, &pszValue) == CE_None )
-                nodata.sVal = atoi(pszValue);
+                nodata.sVal = static_cast<short>(atoi(pszValue));
             else
                 nodata.sVal = NC_FILL_SHORT;
             CPLFree(pszValue);
@@ -5684,7 +5684,7 @@ bool netCDFLayer::AddField(int nVarID)
             eType = OFTInteger;
             char* pszValue = NULL;
             if( GetFillValue( nVarID, &pszValue) == CE_None )
-                nodata.usVal = atoi(pszValue);
+                nodata.usVal = static_cast<unsigned short>(atoi(pszValue));
             else
                 nodata.usVal = NC_FILL_USHORT;
             CPLFree(pszValue);
