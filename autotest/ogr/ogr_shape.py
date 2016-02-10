@@ -2848,7 +2848,6 @@ def ogr_shape_59():
     if gdaltest.shape_ds is None:
         return 'skip'
 
-    # Hack: M is stored in Z component
     shp_ds = ogr.Open( 'data/testpointm.shp' )
     if shp_ds is None:
         return 'skip'
@@ -2858,45 +2857,47 @@ def ogr_shape_59():
     geom = feat.GetGeometryRef()
 
     if geom.GetGeometryName() != 'POINT':
+        print geom.GetGeometryName()
         gdaltest.post_reason( 'Geometry of wrong type.' )
         return 'fail'
 
-    if geom.GetCoordinateDimension() != 3:
+    if geom.GetCoordinateDimension() != 2:
         gdaltest.post_reason( 'dimension wrong.' )
         return 'fail'
 
-    if geom.GetPoint(0) != (1.0,2.0,3.0):
+    if geom.GetPointZM(0) != (1.0,2.0,0.0,3.0):
         print(geom.GetPoint(0))
         gdaltest.post_reason( 'Did not get right point result.' )
         return 'fail'
 
-    # Hack: M is stored in Z component
     shp_ds = ogr.Open('data/arcm_with_m.shp')
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
-    if geom.ExportToWkt() != 'LINESTRING (0 0 10,1 1 20)':
+    if geom.ExportToIsoWkt() != 'LINESTRING M (0 0 10,1 1 20)':
+        print geom.ExportToIsoWkt()
         gdaltest.post_reason( 'fail' )
         return 'fail'
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
-    if geom.ExportToWkt() != 'MULTILINESTRING ((0 0 10,1 1 20),(2 2 30,3 3 40))':
+    if geom.ExportToIsoWkt() != 'MULTILINESTRING M ((0 0 10,1 1 20),(2 2 30,3 3 40))':
         gdaltest.post_reason( 'fail' )
         return 'fail'
     geom = None
     feat = None
 
-    # Currently M is completely lost on polygons
     shp_ds = ogr.Open('data/polygonm_with_m.shp')
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
-    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+    if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40))':
+        print geom.ExportToIsoWkt()
         gdaltest.post_reason( 'fail' )
         return 'fail'
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
-    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0),(0.25 0.25,0.75 0.75,0.25 0.75,0.25 0.25))':
+    if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40),(0.25 0.25 50,0.75 0.75 60,0.25 0.75 70,0.25 0.25 80))':
+        print geom.ExportToIsoWkt()
         gdaltest.post_reason( 'fail' )
         return 'fail'
     geom = None
