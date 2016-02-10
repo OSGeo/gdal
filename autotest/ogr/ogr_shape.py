@@ -2857,7 +2857,7 @@ def ogr_shape_59():
     geom = feat.GetGeometryRef()
 
     if geom.GetGeometryName() != 'POINT':
-        print geom.GetGeometryName()
+        print (geom.GetGeometryName())
         gdaltest.post_reason( 'Geometry of wrong type.' )
         return 'fail'
 
@@ -2875,7 +2875,7 @@ def ogr_shape_59():
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'LINESTRING M (0 0 10,1 1 20)':
-        print geom.ExportToIsoWkt()
+        print (geom.ExportToIsoWkt())
         gdaltest.post_reason( 'fail' )
         return 'fail'
     feat = shp_lyr.GetNextFeature()
@@ -2891,13 +2891,13 @@ def ogr_shape_59():
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40))':
-        print geom.ExportToIsoWkt()
+        print (geom.ExportToIsoWkt())
         gdaltest.post_reason( 'fail' )
         return 'fail'
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40),(0.25 0.25 50,0.75 0.75 60,0.25 0.75 70,0.25 0.25 80))':
-        print geom.ExportToIsoWkt()
+        print (geom.ExportToIsoWkt())
         gdaltest.post_reason( 'fail' )
         return 'fail'
     geom = None
