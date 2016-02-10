@@ -119,11 +119,13 @@ int OGRMemDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
-    if( EQUAL(pszCap,ODsCDeleteLayer) )
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
-    if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
+    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
-    if( EQUAL(pszCap,ODsCCurveGeometries) )
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
 
     return FALSE;

@@ -5,12 +5,12 @@ use v5.10;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-# test measured geometries in memory driver
-ok(1);
-exit;
+# test measured geometries with memory driver
 
 my @data = (
     PointM => 'POINT M (1 2 3)',
+    );
+my @x = (
     LineStringM => 'LINESTRING M (1 2 3)',
     PolygonM => 'POLYGON M ((1 2 3))',
     MultiPointM => 'MULTIPOINT M ((1 2 3))',

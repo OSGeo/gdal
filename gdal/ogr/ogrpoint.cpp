@@ -167,7 +167,7 @@ OGRPoint& OGRPoint::operator=( const OGRPoint& other )
 OGRGeometry *OGRPoint::clone() const
 
 {
-    OGRPoint    *poNewPoint = new (std::nothrow) OGRPoint( x, y, z );
+    OGRPoint    *poNewPoint = new (std::nothrow) OGRPoint( x, y, z, m );
     if( poNewPoint == NULL )
         return NULL;
 
