@@ -1575,7 +1575,7 @@ def netcdf_45():
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_45.csv', 'rb' )
     if fp is not None:
-        content = gdal.VSIFReadL( 1, 10000, fp )
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
 "POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
@@ -1589,7 +1589,7 @@ def netcdf_45():
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_45.csvt', 'rb' )
     if fp is not None:
-        content = gdal.VSIFReadL( 1, 10000, fp )
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
 """
@@ -1639,7 +1639,7 @@ def netcdf_47():
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_47.csv', 'rb' )
     if fp is not None:
-        content = gdal.VSIFReadL( 1, 10000, fp )
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime,datetime_explicit_fillValue,int64,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field,ubyte_field,ubyte_field_explicit_fillValue,ushort_field,ushort_field_explicit_fillValue,uint_field,uint_field_explicit_fillValue
 "POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,,1,1,1.2,1.2,123,12,5,-125,254,255,65534,65535,4000000000,4294967295
@@ -1653,7 +1653,7 @@ def netcdf_47():
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_47.csvt', 'rb' )
     if fp is not None:
-        content = gdal.VSIFReadL( 1, 10000, fp )
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer,Integer,Integer,Integer,Integer,Integer64,Integer64
 """
@@ -1701,7 +1701,7 @@ def netcdf_49():
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_49.csv', 'rb' )
     if fp is not None:
-        content = gdal.VSIFReadL( 1, 10000, fp )
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32
 "POINT (1 2 3)",1
@@ -1782,7 +1782,7 @@ def netcdf_51():
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_51.csv', 'rb' )
     if fp is not None:
-        content = gdal.VSIFReadL( 1, 10000, fp )
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
 "POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
@@ -1796,7 +1796,7 @@ def netcdf_51():
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_51.csvt', 'rb' )
     if fp is not None:
-        content = gdal.VSIFReadL( 1, 10000, fp )
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
 """
