@@ -97,7 +97,7 @@ typedef struct
 {
     char* pszName;
     char* pszGeomType;
-    int   nCoordDimension;
+    int   GeometryTypeFlags;
     int   nSRID;
     PostgisType   ePostgisType;
     int   bNullable;
@@ -116,7 +116,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
         OGRPGGeomFieldDefn( OGRPGLayer* poLayerIn,
                                 const char* pszFieldName ) :
             OGRGeomFieldDefn(pszFieldName, wkbUnknown), poLayer(poLayerIn),
-            nSRSId(UNDETERMINED_SRID), nCoordDimension(2), ePostgisType(GEOM_TYPE_UNKNOWN)
+            nSRSId(UNDETERMINED_SRID), GeometryTypeFlags(0), ePostgisType(GEOM_TYPE_UNKNOWN)
             {
             }
 
@@ -125,7 +125,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
         void UnsetLayer() { poLayer = NULL; }
 
         int nSRSId;
-        int nCoordDimension;
+        int GeometryTypeFlags;
         PostgisType   ePostgisType;
 };
 
@@ -287,7 +287,7 @@ class OGRPGTableLayer : public OGRPGLayer
 
     char              **papszOverrideColumnTypes;
     int                 nForcedSRSId;
-    int                 nForcedDimension;
+    int                 nForcedGeometryTypeFlags;
     int                 bCreateSpatialIndexFlag;
     int                 bInResetReading;
 
@@ -365,12 +365,12 @@ public:
                                            OGRwkbGeometryType eType,
                                            const char* pszGeomType,
                                            int nSRSId,
-                                           int nCoordDimension);
+                                           int GeometryTypeFlags);
 
     void                SetForcedSRSId( int nForcedSRSIdIn )
                                 { nForcedSRSId = nForcedSRSIdIn; }
-    void                SetForcedDimension( int nForcedDimensionIn )
-                                { nForcedDimension = nForcedDimensionIn; }
+    void                SetForcedGeometryTypeFlags( int GeometryTypeFlagsIn )
+                                { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
     void                AllowAutoFIDOnCreateViaCopy() { bAutoFIDOnCreateViaCopy = TRUE; }

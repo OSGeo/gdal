@@ -6,8 +6,6 @@ use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
 # test measured geometries in pg driver
-ok(1);
-exit;
 
 my @data = (
     PointM => 'POINT M (1 2 3)',
