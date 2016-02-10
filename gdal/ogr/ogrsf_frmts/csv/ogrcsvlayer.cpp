@@ -2218,7 +2218,13 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         }
         else if (poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTReal)
         {
-            pszEscaped = CPLStrdup(poNewFeature->GetFieldAsString(iField));
+            if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTFloat32 &&
+                poNewFeature->IsFieldSet(iField) )
+            {
+                pszEscaped = CPLStrdup(CPLSPrintf("%.8g", poNewFeature->GetFieldAsDouble(iField)));
+            }
+            else
+                pszEscaped = CPLStrdup(poNewFeature->GetFieldAsString(iField));
         }
         else
         {
