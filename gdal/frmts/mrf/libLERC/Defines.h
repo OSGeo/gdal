@@ -27,7 +27,8 @@ Contributors:
 // This is useful when compiling within GDAL in DEBUG_BOOL mode, where a
 // MSVCPedanticBool class is used as an alias for the bool type, so as
 // to catch more easily int/bool misuses, even on Linux
-#ifdef DEBUG_BOOL
+// Also for NULL_AS_NULLPTR mode where NULL is aliased to C++11 nullptr
+#if defined(DEBUG_BOOL) || defined(NULL_AS_NULLPTR)
 #include "cpl_port.h"
 #endif
 
