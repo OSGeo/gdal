@@ -26,9 +26,14 @@ The same applies for SHPT_POLYGON shapefiles, reported as layers of type
 wkbPolygon, but depending on the number of parts of each geometry, the
 actual type can be either OGRPolygon or OGRMultiPolygon.</p>
 
-<p>ESRI measure values (XYM) are read as XYZ geometries. MultiPatch
-files are read and each patch geometry is turned into a multi-polygon 
-representation with one polygon per triangle in triangle fans and meshes.</p>
+<p>Starting with GDAL 2.1 measures are used. XYM geometries are read
+as XYM (in GDAL 2.0 and before they were read as XYZ) and XYZM
+geometries are read as XYZM (Shapefiles with Z always have M
+also, in GDAL 2.0 and before they were read as XYZ).</p>
+
+<p>MultiPatch files are read and each patch geometry is turned into a
+multi-polygon representation with one polygon per triangle in triangle
+fans and meshes.</p>
 
 <p>If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
 it will be read and used to associate a projection with features.</p>
@@ -225,12 +230,14 @@ emitted when the 2GB limit is reached.</p>
 <h3>Layer Creation Options</h3>
 
 <ul>
-<li>
-<b>SHPT=type</b>: Override the type of shapefile created.  Can be one of
-NULL for a simple .dbf file with no .shp file, 
- POINT, ARC, POLYGON or MULTIPOINT for 2D, or 
-POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ for 3D.  Shapefiles with <i>measure</i>
-values are not supported, nor are MULTIPATCH files.</li>
+
+<li><b>SHPT=type</b>: Override the type of shapefile created.  Can be
+one of NULL for a simple .dbf file with no .shp file, POINT, ARC,
+POLYGON or MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ
+for 3D; POINTM, ARCM, POLYGONM or MULTIPOINTM for measured geometries;
+and POINTZM, ARCZM, POLYGONZM or MULTIPOINTZM for 3D measured
+geometries. The measure support was added in GDAL 2.1. MULTIPATCH
+files are not supported.</li>
 
 <li> <b>ENCODING=</b><i>value</i>: set the encoding value in the DBF file. The
 default value is "LDID/87".  It is not clear what other values may be

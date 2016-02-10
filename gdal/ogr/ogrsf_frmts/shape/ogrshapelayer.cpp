@@ -983,6 +983,16 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
             eRequestedGeomType = wkbPoint25D;
             break;
 
+          case wkbPointM:
+            nShapeType = SHPT_POINTM;
+            eRequestedGeomType = wkbPointM;
+            break;
+
+          case wkbPointZM:
+            nShapeType = SHPT_POINTZ;
+            eRequestedGeomType = wkbPointZM;
+            break;
+
           case wkbMultiPoint:
             nShapeType = SHPT_MULTIPOINT;
             eRequestedGeomType = wkbMultiPoint;
@@ -991,6 +1001,16 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
           case wkbMultiPoint25D:
             nShapeType = SHPT_MULTIPOINTZ;
             eRequestedGeomType = wkbMultiPoint25D;
+            break;
+
+          case wkbMultiPointM:
+            nShapeType = SHPT_MULTIPOINTM;
+            eRequestedGeomType = wkbMultiPointM;
+            break;
+
+          case wkbMultiPointZM:
+            nShapeType = SHPT_MULTIPOINTZ;
+            eRequestedGeomType = wkbMultiPointM;
             break;
 
           case wkbLineString:
@@ -1005,6 +1025,18 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
             eRequestedGeomType = wkbLineString25D;
             break;
 
+          case wkbLineStringM:
+          case wkbMultiLineStringM:
+            nShapeType = SHPT_ARCM;
+            eRequestedGeomType = wkbLineStringM;
+            break;
+
+          case wkbLineStringZM:
+          case wkbMultiLineStringZM:
+            nShapeType = SHPT_ARCZ;
+            eRequestedGeomType = wkbLineStringZM;
+            break;
+
           case wkbPolygon:
           case wkbMultiPolygon:
             nShapeType = SHPT_POLYGON;
@@ -1015,6 +1047,18 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
           case wkbMultiPolygon25D:
             nShapeType = SHPT_POLYGONZ;
             eRequestedGeomType = wkbPolygon25D;
+            break;
+
+          case wkbPolygonM:
+          case wkbMultiPolygonM:
+            nShapeType = SHPT_POLYGONM;
+            eRequestedGeomType = wkbPolygonM;
+            break;
+
+          case wkbPolygonZM:
+          case wkbMultiPolygonZM:
+            nShapeType = SHPT_POLYGONZ;
+            eRequestedGeomType = wkbPolygonZM;
             break;
 
           default:
@@ -1454,6 +1498,10 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
         return TRUE;
     }
+
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return TRUE;
+
     else 
         return FALSE;
 }
