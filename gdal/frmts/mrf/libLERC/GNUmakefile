@@ -14,18 +14,15 @@ OBJ = \
 	RLE.o\
 	Lerc2.o
 
-LIBLERC = libLERC.o
+O_OBJ   =       $(foreach file,$(OBJ),../../o/$(file))
 
-CPPFLAGS	:=	$(CPPFLAGS)
+default:	$(OBJ:.o=.$(OBJ_EXT))
 
-default:	$(OBJ) $(LIBLERC)
-	
-$(LIBLERC):	$(OBJ)
-	$(AR) r $@ $^
-	cp $@ ..
-
-install-obj:	$(OBJ)
-	$(AR) r ../../o/$(LIBLERC) $^
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
-	rm -f $(OBJ)
+	rm -f $(O_OBJ) *.a *.o *.lo
+
+../../o/%.$(OBJ_EXT):   %.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -I../../port $< -o $@
+
