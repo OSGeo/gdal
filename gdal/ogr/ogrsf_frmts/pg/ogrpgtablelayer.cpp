@@ -2219,7 +2219,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     else if( poSRS != NULL )
         nSRSId = poDS->FetchSRSId( poSRS );
 
-    int GeometryTypeFlags = OGR_G_3D;
+    int GeometryTypeFlags = 0;
     if( OGR_GT_HasZ((OGRwkbGeometryType)eType) )
         GeometryTypeFlags |= OGR_G_3D;
     if( OGR_GT_HasM((OGRwkbGeometryType)eType) )
