@@ -1016,6 +1016,16 @@ void OGRPGDataSource::LoadTables()
                 }
             }
 
+            int GeomTypeFlags = 0; /* nGeomCoordDimension == 2 */
+            if( nGeomCoordDimension == 3 )
+            {
+                GeomTypeFlags |= OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
+            }
+            else if( nGeomCoordDimension == 4 )
+            {
+                GeomTypeFlags |= OGR_G_3D | OGR_G_MEASURED;
+            }
+
             papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
             papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
             papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
@@ -1023,7 +1033,7 @@ void OGRPGDataSource::LoadTables()
 
             OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
                                             pszGeomColumnName,
-                                            pszGeomType, nGeomCoordDimension,
+                                            pszGeomType, GeomTypeFlags,
                                             nSRID, ePostgisType, bNullable);
             nTableCount ++;
 
@@ -1033,7 +1043,7 @@ void OGRPGDataSource::LoadTables()
             OGRPGTableEntryAddGeomColumn(psEntry,
                                             pszGeomColumnName,
                                             pszGeomType,
-                                            nGeomCoordDimension,
+                                            GeomTypeFlags,
                                             nSRID, ePostgisType, bNullable);
         }
 
@@ -1116,6 +1126,16 @@ void OGRPGDataSource::LoadTables()
             if( EQUAL(pszSchemaName,"information_schema") )
                 continue;
 
+            int GeomTypeFlags = 0; /* nGeomCoordDimension == 2 */
+            if( nGeomCoordDimension == 3 )
+            {
+                GeomTypeFlags |= OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
+            }
+            else if( nGeomCoordDimension == 4 )
+            {
+                GeomTypeFlags |= OGR_G_3D | OGR_G_MEASURED;
+            }
+
             papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
             papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
             papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
@@ -1123,7 +1143,7 @@ void OGRPGDataSource::LoadTables()
             if (pszGeomColumnName)
                 OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
                                              pszGeomColumnName,
-                                             pszGeomType, nGeomCoordDimension,
+                                             pszGeomType, GeomTypeFlags,
                                              nSRID, ePostgisType, bNullable);
             nTableCount ++;
 
@@ -1134,7 +1154,7 @@ void OGRPGDataSource::LoadTables()
                 OGRPGTableEntryAddGeomColumn(psEntry,
                                              pszGeomColumnName,
                                              pszGeomType,
-                                             nGeomCoordDimension,
+                                             GeomTypeFlags,
                                              nSRID, ePostgisType, bNullable);
         }
 
