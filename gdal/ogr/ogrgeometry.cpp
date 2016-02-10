@@ -2639,7 +2639,12 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
     size_t nDataSize;
     unsigned char *pabyData = NULL;
 
-    const OGRGeometry* poLinearGeom = (hasCurveGeometry()) ? getLinearGeometry() : this;
+    OGRGeometry* poLinearGeom = (hasCurveGeometry()) ? getLinearGeometry() : (OGRGeometry*)this;
+    if( IsMeasured() )
+    {
+        poLinearGeom = this->clone();
+        poLinearGeom->setMeasured(FALSE);
+    }
     nDataSize = poLinearGeom->WkbSize();
     pabyData = (unsigned char *) CPLMalloc(nDataSize);
     if( poLinearGeom->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
