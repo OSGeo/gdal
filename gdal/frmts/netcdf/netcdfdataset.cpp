@@ -5213,7 +5213,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
         if( !bXIsNoData && !bYIsNoData ) 
         {
             OGRPoint* poPoint;
-            if( m_nYVarID >= 0 )
+            if( m_nZVarID >= 0 )
             {
                 bool bZIsNoData = false;
                 const double dfZ = Get1DVarAsDouble( m_nZVarID, m_nZVarNCDFType,
