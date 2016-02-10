@@ -120,8 +120,16 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
     }
     else if(psShape->nSHPType == SHPT_POINTZ )
     {
-        poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
-                              psShape->padfZ[0], psShape->padfM[0] );
+        if( psShape->bMeasureIsUsed )
+        {
+            poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
+                                  psShape->padfZ[0], psShape->padfM[0] );
+        }
+        else
+        {
+            poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
+                                  psShape->padfZ[0] );
+        }
     }
     else if(psShape->nSHPType == SHPT_POINTM )
     {
@@ -150,8 +158,18 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                 OGRPoint    *poPoint;
 
                 if( psShape->nSHPType == SHPT_MULTIPOINTZ )
-                    poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
-                                            psShape->padfZ[i], psShape->padfM[i] );
+                {
+                    if( psShape->padfM )
+                    {
+                        poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
+                                                psShape->padfZ[i], psShape->padfM[i] );
+                    }
+                    else
+                    {
+                        poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
+                                                psShape->padfZ[i] );
+                    }
+                }
                 else if( psShape->nSHPType == SHPT_MULTIPOINTM )
                 {
                     poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
