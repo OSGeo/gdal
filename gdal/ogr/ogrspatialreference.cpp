@@ -2064,18 +2064,18 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /* -------------------------------------------------------------------- */
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
-    FILE        *fp;
+    VSILFILE    *fp;
     const size_t nBufMax = 100000;
     char        *pszBufPtr, *pszBuffer;
     size_t      nBytes;
 
-    fp = VSIFOpen( pszDefinition, "rt" );
+    fp = VSIFOpenL( pszDefinition, "rt" );
     if( fp == NULL )
         return OGRERR_CORRUPT_DATA;
 
     pszBuffer = (char *) CPLMalloc(nBufMax);
-    nBytes = VSIFRead( pszBuffer, 1, nBufMax-1, fp );
-    VSIFClose( fp );
+    nBytes = VSIFReadL( pszBuffer, 1, nBufMax-1, fp );
+    VSIFCloseL( fp );
 
     if( nBytes == nBufMax-1 )
     {
