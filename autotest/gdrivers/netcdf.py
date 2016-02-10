@@ -1571,7 +1571,7 @@ def netcdf_45():
     ds = gdal.OpenEx( 'data/test_ogr_nc3.nc', gdal.OF_VECTOR )
 
     with gdaltest.error_handler():
-        gdal.VectorTranslate( '/vsimem/netcdf_45.csv', ds, format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
+        gdal.VectorTranslate( '/vsimem/netcdf_45.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_45.csv', 'rb' )
     if fp is not None:
@@ -1635,7 +1635,7 @@ def netcdf_47():
     ds = gdal.OpenEx( 'data/test_ogr_nc4.nc', gdal.OF_VECTOR )
 
     with gdaltest.error_handler():
-        gdal.VectorTranslate( '/vsimem/netcdf_47.csv', ds, format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
+        gdal.VectorTranslate( '/vsimem/netcdf_47.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_47.csv', 'rb' )
     if fp is not None:
@@ -1697,7 +1697,7 @@ def netcdf_49():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx( 'data/test_ogr_xyz_float.nc', gdal.OF_VECTOR )
-        gdal.VectorTranslate( '/vsimem/netcdf_49.csv', ds, format = 'CSV', layerCreationOptions = ['GEOMETRY=AS_WKT'] )
+        gdal.VectorTranslate( '/vsimem/netcdf_49.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_49.csv', 'rb' )
     if fp is not None:
@@ -1778,7 +1778,7 @@ def netcdf_51():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx( 'tmp/netcdf_51.nc', gdal.OF_VECTOR )
-        gdal.VectorTranslate( '/vsimem/netcdf_51.csv', ds, format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
+        gdal.VectorTranslate( '/vsimem/netcdf_51.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_51.csv', 'rb' )
     if fp is not None:
