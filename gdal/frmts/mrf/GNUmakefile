@@ -41,16 +41,14 @@ endif
 
 ifneq ("$(wildcard libLERC)","")
 LIBLERC	= libLERC
-OBJ	:=	$(OBJ) $(LIBLERC).o LERC_band.o
+OBJ	:=	$(OBJ) LERC_band.o
 XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I $(LIBLERC)
+SUBLIBS := libLERC
 endif
 
 CPPFLAGS        :=      $(XTRA_OPT)  $(CPPFLAGS)
 
-default:	$(OBJ:.o=.$(OBJ_EXT))
-
-$(LIBLERC).o	:
-	cd $(LIBLERC); $(MAKE)
+default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:
 	rm -rf *.o *.lo .libs/$(OBJ) .libs $(O_OBJ) $(LO_O_OBJ) gdal_mrf.so.1
