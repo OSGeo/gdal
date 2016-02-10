@@ -390,11 +390,51 @@ static int OGRSQLiteVFSSleep (sqlite3_vfs* pVFS, int microseconds)
     return pUnderlyingVFS->xSleep(pUnderlyingVFS, microseconds);
 }
 
-static int OGRSQLiteVFSCurrentTime (sqlite3_vfs* pVFS, double* p1)
+// Derived for sqlite3.c implementation of unixCurrentTime64 and winCurrentTime64
+#ifdef WIN32
+#include <windows.h>
+static int OGRSQLiteVFSCurrentTimeInt64 (sqlite3_vfs* /*pVFS*/, sqlite3_int64 *piNow)
 {
-    sqlite3_vfs* pUnderlyingVFS = GET_UNDERLYING_VFS(pVFS);
-    //CPLDebug("SQLITE", "OGRSQLiteVFSCurrentTime()");
-    return pUnderlyingVFS->xCurrentTime(pUnderlyingVFS, p1);
+    FILETIME ft;
+    static const sqlite3_int64 winFiletimeEpoch = 23058135*(sqlite3_int64)8640000;
+    static const sqlite3_int64 max32BitValue =
+      (sqlite3_int64)2000000000 + (sqlite3_int64)2000000000 +
+      (sqlite3_int64)294967296;
+
+#if defined(_WIN32_WCE)
+    SYSTEMTIME time;
+    GetSystemTime(&time);
+    /* if SystemTimeToFileTime() fails, it returns zero. */
+    if (!SystemTimeToFileTime(&time,&ft)){
+        return SQLITE_ERROR;
+    }
+#else
+    GetSystemTimeAsFileTime( &ft );
+#endif
+    *piNow = winFiletimeEpoch +
+            ((((sqlite3_int64)ft.dwHighDateTime)*max32BitValue) +
+               (sqlite3_int64)ft.dwLowDateTime)/(sqlite3_int64)10000;
+    return SQLITE_OK;
+}
+#else
+#include <sys/time.h>
+static int OGRSQLiteVFSCurrentTimeInt64 (sqlite3_vfs* /*pVFS*/, sqlite3_int64 *piNow)
+{
+    struct timeval sNow;
+    static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
+    (void)gettimeofday(&sNow, NULL);  /* Cannot fail given valid arguments */
+    *piNow = unixEpoch + 1000*(sqlite3_int64)sNow.tv_sec + sNow.tv_usec/1000;
+
+    return SQLITE_OK;
+}
+#endif
+
+static int OGRSQLiteVFSCurrentTime (sqlite3_vfs* /*pVFS*/, double* p1)
+{
+    sqlite3_int64 i = 0;
+    int rc = OGRSQLiteVFSCurrentTimeInt64(NULL, &i);
+    *p1 = i/86400000.0;
+    return rc;
 }
 
 static int OGRSQLiteVFSGetLastError (sqlite3_vfs* pVFS, int p1, char *p2)
@@ -417,7 +457,11 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
     pVFSAppData->pfnUserData = pfnUserData;
     pVFSAppData->nCounter = 0;
 
+#if SQLITE_VERSION_NUMBER >= 3008000L /* perhaps not the minimal version that defines xCurrentTimeInt64, but who cares */
+    pMyVFS->iVersion = 2;
+#else
     pMyVFS->iVersion = 1;
+#endif
     pMyVFS->szOsFile = sizeof(OGRSQLiteFileStruct);
     pMyVFS->mxPathname = pDefaultVFS->mxPathname;
     pMyVFS->zName = pVFSAppData->szVFSName;
@@ -434,6 +478,11 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
     pMyVFS->xSleep = OGRSQLiteVFSSleep;
     pMyVFS->xCurrentTime = OGRSQLiteVFSCurrentTime;
     pMyVFS->xGetLastError = OGRSQLiteVFSGetLastError;
+#if SQLITE_VERSION_NUMBER >= 3008000L /* perhaps not the minimal version that defines xCurrentTimeInt64, but who cares */
+    if( pMyVFS->iVersion >= 2 )
+        pMyVFS->xCurrentTimeInt64 = OGRSQLiteVFSCurrentTimeInt64;
+#endif
+
     return pMyVFS;
 }
 
