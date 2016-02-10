@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2016, Even Rouault <even.rouault at spatialys.com>
 # Copyright (c) 2010, Kyle Shannon <kyle at pobox dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -35,6 +35,7 @@ import os
 import sys
 import shutil
 from osgeo import gdal
+from osgeo import ogr
 from osgeo import osr
 
 sys.path.append( '../pymod' )
@@ -1560,6 +1561,257 @@ def netcdf_44():
     return 'success'
 
 ###############################################################################
+# Test reading a vector NetCDF 3 file
+
+def netcdf_45():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.OpenEx( 'data/test_ogr_nc3.nc', gdal.OF_VECTOR )
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate( '/vsimem/netcdf_45.csv', ds, format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_45.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp )
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
+"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT (1 2)",,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_45.csvt', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp )
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+    gdal.Unlink('/vsimem/netcdf_45.csv')
+    gdal.Unlink('/vsimem/netcdf_45.csvt')
+
+    return 'success'
+
+###############################################################################
+# Test reading a vector NetCDF 3 file
+
+def netcdf_46():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_ogr_nc3.nc')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a vector NetCDF 4 file
+
+def netcdf_47():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ds = gdal.OpenEx( 'data/test_ogr_nc4.nc', gdal.OF_VECTOR )
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate( '/vsimem/netcdf_47.csv', ds, format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_47.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp )
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime,datetime_explicit_fillValue,int64,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field,ubyte_field,ubyte_field_explicit_fillValue,ushort_field,ushort_field_explicit_fillValue,uint_field,uint_field_explicit_fillValue
+"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,,1,1,1.2,1.2,123,12,5,-125,254,255,65534,65535,4000000000,4294967295
+"POINT (1 2)",,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_47.csvt', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp )
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer,Integer,Integer,Integer,Integer,Integer64,Integer64
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+    gdal.Unlink('/vsimem/netcdf_47.csv')
+    gdal.Unlink('/vsimem/netcdf_47.csvt')
+
+    return 'success'
+
+###############################################################################
+# Test reading a vector NetCDF 3 file without any geometry
+
+def netcdf_48():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx( 'data/test_ogr_no_xyz_var.nc', gdal.OF_VECTOR )
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['int32'] != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a vector NetCDF 3 file with X,Y,Z vars as float
+
+def netcdf_49():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx( 'data/test_ogr_xyz_float.nc', gdal.OF_VECTOR )
+        gdal.VectorTranslate( '/vsimem/netcdf_49.csv', ds, format = 'CSV', layerCreationOptions = ['GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_49.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp )
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,int32
+"POINT (1 2 3)",1
+"POINT (1 2)",
+,,
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_49.csv')
+
+    return 'success'
+
+###############################################################################
+# Test creatin a vector NetCDF 3 file with WKT geometry field
+
+def netcdf_50():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.OpenEx( '../ogr/data/poly.shp', gdal.OF_VECTOR )
+    out_ds = gdal.VectorTranslate( 'tmp/netcdf_50.nc', ds, format = 'netCDF' )
+    src_lyr = ds.GetLayer(0)
+    src_lyr.ResetReading()
+    out_lyr = out_ds.GetLayer(0)
+    out_lyr.ResetReading()
+    src_f = src_lyr.GetNextFeature()
+    out_f = out_lyr.GetNextFeature()
+    src_f.SetFID(-1)
+    out_f.SetFID(-1)
+    src_json = src_f.ExportToJson()
+    out_json = out_f.ExportToJson()
+    if src_json != out_json:
+        gdaltest.post_reason('failure')
+        print(src_json)
+        print(out_json)
+        return 'fail'
+    out_ds = None
+
+    out_ds = gdal.OpenEx( 'tmp/netcdf_50.nc', gdal.OF_VECTOR )
+    out_lyr = out_ds.GetLayer(0)
+    srs = out_lyr.GetSpatialRef().ExportToWkt()
+    if srs.find('PROJCS["OSGB 1936') < 0:
+        gdaltest.post_reason('failure')
+        print(srs)
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    out_f.SetFID(-1)
+    out_json = out_f.ExportToJson()
+    if src_json != out_json:
+        gdaltest.post_reason('failure')
+        print(src_json)
+        print(out_json)
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('tmp/netcdf_50.nc')
+
+    return 'success'
+
+###############################################################################
+# Test creating a vector NetCDF 3 file with X,Y,Z fields
+
+def netcdf_51():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.OpenEx( 'data/test_ogr_nc3.nc', gdal.OF_VECTOR )
+    gdal.VectorTranslate( 'tmp/netcdf_51.nc', ds, format = 'netCDF' )
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx( 'tmp/netcdf_51.nc', gdal.OF_VECTOR )
+        gdal.VectorTranslate( '/vsimem/netcdf_51.csv', ds, format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_51.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp )
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
+"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT (1 2 0)",,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_51.csvt', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp )
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('tmp/netcdf_51.nc')
+    gdal.Unlink('tmp/netcdf_51.csv')
+    gdal.Unlink('tmp/netcdf_51.csvt')
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1609,6 +1861,13 @@ gdaltest_list = [
     netcdf_42,
     netcdf_43,
     netcdf_44,
+    netcdf_45,
+    netcdf_46,
+    netcdf_47,
+    netcdf_48,
+    netcdf_49,
+    netcdf_50,
+    netcdf_51
  ]
 
 ###############################################################################
