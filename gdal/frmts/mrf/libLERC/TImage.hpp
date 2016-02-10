@@ -58,17 +58,17 @@ public:
   /// assignment
   TImage& operator=(const TImage& tImg);
 
-  bool resize(long width, long height);
+  bool resize(int width, int height);
   virtual void clear();
 
   /// get data
-  Element getPixel(long row, long col) const;
-  const Element& operator() (long row, long col) const;
+  Element getPixel(int row, int col) const;
+  const Element& operator() (int row, int col) const;
   const Element* getData() const;
 
   /// set data
-  void setPixel(long row, long col, Element element);
-  Element& operator() (long row, long col);
+  void setPixel(int row, int col, Element element);
+  Element& operator() (int row, int col);
   Element* getData();
 
   /// compare
@@ -83,14 +83,14 @@ protected:
 // -------------------------------------------------------------------------- ;
 
 template< class Element >
-inline Element TImage< Element >::getPixel(long i, long j) const
+inline Element TImage< Element >::getPixel(int i, int j) const
 {
   assert(isInside(i, j));
   return data_[i * width_ + j];
 }
 
 template< class Element >
-inline const Element& TImage< Element >::operator () (long i, long j) const
+inline const Element& TImage< Element >::operator () (int i, int j) const
 {
   assert(isInside(i, j));
   return data_[i * width_ + j];
@@ -103,14 +103,14 @@ inline const Element* TImage< Element >::getData() const
 }
 
 template< class Element >
-inline void TImage< Element >::setPixel(long i, long j, Element element)
+inline void TImage< Element >::setPixel(int i, int j, Element element)
 {
   assert(isInside(i, j));
   data_[i * width_ + j] = element;
 }
 
 template< class Element >
-inline Element& TImage< Element >::operator () (long i, long j)
+inline Element& TImage< Element >::operator () (int i, int j)
 {
   assert(isInside(i, j));
   return data_[i * width_ + j];
@@ -125,7 +125,7 @@ inline Element* TImage< Element >::getData()
 // -------------------------------------------------------------------------- ;
 
 template< class Element >
-bool TImage< Element >::resize(long width, long height)
+bool TImage< Element >::resize(int width, int height)
 {
   if (width <= 0 || height <= 0)
     return false;

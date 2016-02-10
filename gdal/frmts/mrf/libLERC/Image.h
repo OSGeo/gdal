@@ -52,11 +52,11 @@ public:
 
   bool isType(Type t) const	 { return t == type_; }
   Type getType() const           { return type_; }
-  long getWidth() const          { return width_; }
-  long getHeight() const         { return height_; }
+  int getWidth() const          { return width_; }
+  int getHeight() const         { return height_; }
   long getSize() const           { return width_ * height_; }
 
-  bool isInside(long row, long col) const
+  bool isInside(int row, int col) const
   {
       return row >= 0 && row < height_ && col >= 0 && col < width_;
   }
@@ -75,7 +75,7 @@ protected:
   bool operator != (const Image& img) const	{ return !operator==(img); };
 
   Type type_;
-  long width_, height_;
+  int width_, height_;
 
 };
 
