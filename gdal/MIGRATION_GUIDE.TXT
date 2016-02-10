@@ -1,3 +1,11 @@
+MIGRATION GUIDE FROM GDAL 2.0 to GDAL 2.1
+------------------------------------------
+
+A) RFC 61: Support for measured geometries
+
+Previously the ESRI Shapefile driver read XYM data as XYZ. Now it is read
+as XYM.
+
 MIGRATION GUIDE FROM GDAL 1.11 to GDAL 2.0
 ------------------------------------------
 
