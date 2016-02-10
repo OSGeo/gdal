@@ -607,7 +607,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
 
 {
     const char *pszOrigInput = pszInput;
-    int no_flags = !(*flags & OGR_G_3D) && !(*flags & OGR_G_MEASURED);
+    int no_flags = !(*flags & OGRGeometry::OGR_G_3D) && !(*flags & OGRGeometry::OGR_G_MEASURED);
     *pnPointsRead = 0;
 
     if( pszInput == NULL )
@@ -691,10 +691,10 @@ const char * OGRWktReadPointsM( const char * pszInput,
 /*      If there are unexpectedly more coordinates, they are Z.         */
 /* -------------------------------------------------------------------- */
 
-        if( !(*flags & OGR_G_3D) && !(*flags & OGR_G_MEASURED) && 
+        if( !(*flags & OGRGeometry::OGR_G_3D) && !(*flags & OGRGeometry::OGR_G_MEASURED) && 
             (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ))
         {
-            *flags |= OGR_G_3D;
+            *flags |= OGRGeometry::OGR_G_3D;
         }
 
 /* -------------------------------------------------------------------- */
@@ -702,7 +702,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
 /*      Zero out possible remains from earlier strings.                 */
 /* -------------------------------------------------------------------- */
 
-        if( *flags & OGR_G_3D )
+        if( *flags & OGRGeometry::OGR_G_3D )
         {
             if( *ppadfZ == NULL )
             {
@@ -726,12 +726,12 @@ const char * OGRWktReadPointsM( const char * pszInput,
 /*      This is for backwards compatibility. Should this be an error?   */
 /* -------------------------------------------------------------------- */
 
-        if( !(*flags & OGR_G_MEASURED) &&
+        if( !(*flags & OGRGeometry::OGR_G_MEASURED) &&
             (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ) )
         {
             if( no_flags )
             {
-                *flags |= OGR_G_MEASURED;
+                *flags |= OGRGeometry::OGR_G_MEASURED;
             }
             else
             {
@@ -744,7 +744,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
 /*      Zero out possible remains from earlier strings.                 */
 /* -------------------------------------------------------------------- */
 
-        if( *flags & OGR_G_MEASURED )
+        if( *flags & OGRGeometry::OGR_G_MEASURED )
         {
             if( *ppadfM == NULL )
             {
@@ -768,10 +768,10 @@ const char * OGRWktReadPointsM( const char * pszInput,
 /*      This is allowed in BNF.                                         */
 /* -------------------------------------------------------------------- */
 
-        if( !(*flags & OGR_G_3D) && 
+        if( !(*flags & OGRGeometry::OGR_G_3D) && 
             (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.') )
         {
-            *flags |= OGR_G_3D;
+            *flags |= OGRGeometry::OGR_G_3D;
             if( *ppadfZ == NULL )
             {
                 *ppadfZ = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);

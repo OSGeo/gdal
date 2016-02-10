@@ -1019,11 +1019,11 @@ void OGRPGDataSource::LoadTables()
             int GeomTypeFlags = 0; /* nGeomCoordDimension == 2 */
             if( nGeomCoordDimension == 3 )
             {
-                GeomTypeFlags |= OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
+                GeomTypeFlags |= OGRGeometry::OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
             }
             else if( nGeomCoordDimension == 4 )
             {
-                GeomTypeFlags |= OGR_G_3D | OGR_G_MEASURED;
+                GeomTypeFlags |= OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
             }
 
             papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
@@ -1129,11 +1129,11 @@ void OGRPGDataSource::LoadTables()
             int GeomTypeFlags = 0; /* nGeomCoordDimension == 2 */
             if( nGeomCoordDimension == 3 )
             {
-                GeomTypeFlags |= OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
+                GeomTypeFlags |= OGRGeometry::OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
             }
             else if( nGeomCoordDimension == 4 )
             {
-                GeomTypeFlags |= OGR_G_3D | OGR_G_MEASURED;
+                GeomTypeFlags |= OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
             }
 
             papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
@@ -1464,20 +1464,20 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     }
 
     if( OGR_GT_HasZ((OGRwkbGeometryType)eType) )
-        GeometryTypeFlags |= OGR_G_3D;
+        GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
     if( OGR_GT_HasM((OGRwkbGeometryType)eType) )
-        GeometryTypeFlags |= OGR_G_MEASURED;
+        GeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
 
     int ForcedGeometryTypeFlags = -1;
     if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
     {
         int nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
         if( nDimension == 2 )
-            GeometryTypeFlags &= ~OGR_G_3D;
+            GeometryTypeFlags &= ~OGRGeometry::OGR_G_3D;
         else if( nDimension == 3 )
-            GeometryTypeFlags |= OGR_G_3D;
+            GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
         else if( nDimension == 4 )
-            GeometryTypeFlags |= OGR_G_3D | OGR_G_MEASURED;
+            GeometryTypeFlags |= OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
         ForcedGeometryTypeFlags = GeometryTypeFlags;
     }
 
@@ -1681,11 +1681,11 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                              OGRPGEscapeColumnName(pszTableName).c_str());
 
     const char *suffix;
-    if( (GeometryTypeFlags & OGR_G_3D) && (GeometryTypeFlags & OGR_G_MEASURED) )
+    if( (GeometryTypeFlags & OGRGeometry::OGR_G_3D) && (GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
         suffix = "ZM";
-    else if( GeometryTypeFlags & OGR_G_MEASURED )
+    else if( GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
         suffix = "M";
-    else if( GeometryTypeFlags & OGR_G_3D )
+    else if( GeometryTypeFlags & OGRGeometry::OGR_G_3D )
         suffix = "Z";
     else 
         suffix = "";
@@ -1805,11 +1805,16 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         if( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType, "geography") &&
             sPostGISVersion.nMajor <= 1 )
         {
+            int dim = 2;
+            if( GeometryTypeFlags & OGRGeometry::OGR_G_3D )
+                dim++;
+            if( GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
+                dim++;
             osCommand.Printf(
                     "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
                     pszEscapedSchemaNameSingleQuote, pszEscapedTableNameSingleQuote,
                     OGRPGEscapeString(hPGConn, pszGFldName).c_str(),
-                    nSRSId, pszGeometryType, (GeometryTypeFlags & OGR_G_3D) ? 3 : 2 );
+                    nSRSId, pszGeometryType, dim );
 
             hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 

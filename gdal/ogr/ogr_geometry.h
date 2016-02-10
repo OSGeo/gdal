@@ -80,17 +80,6 @@ typedef OGRPolygon*      (*OGRSurfaceCasterToPolygon)(OGRSurface*);
 typedef OGRCurvePolygon* (*OGRSurfaceCasterToCurvePolygon)(OGRSurface*);
 
 /************************************************************************/
-/*                   Bit flags for OGRGeometry                          */
-/*          The OGR_G_NOT_EMPTY_POINT is used *only* for points.        */
-/*          Do not use these outside of the core.                       */
-/*          Use Is3D, IsMeasured, set3D, and setMeasured instead        */
-/************************************************************************/
-
-#define OGR_G_NOT_EMPTY_POINT 0x1
-#define OGR_G_3D 0x2
-#define OGR_G_MEASURED 0x4
-
-/************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
 
@@ -146,6 +135,18 @@ class CPL_DLL OGRGeometry
     OGRErr                PointOnSurfaceInternal( OGRPoint * poPoint ) const;
 
   public:
+
+/************************************************************************/
+/*                   Bit flags for OGRGeometry                          */
+/*          The OGR_G_NOT_EMPTY_POINT is used *only* for points.        */
+/*          Do not use these outside of the core.                       */
+/*          Use Is3D, IsMeasured, set3D, and setMeasured instead        */
+/************************************************************************/
+
+    static const unsigned int OGR_G_NOT_EMPTY_POINT = 0x1;
+    static const unsigned int OGR_G_3D = 0x2;
+    static const unsigned int OGR_G_MEASURED = 0x4;
+
                 OGRGeometry();
                 OGRGeometry( const OGRGeometry& other );
     virtual     ~OGRGeometry();
