@@ -4646,7 +4646,7 @@ bool netCDFLayer::Create(char** papszOptions)
                                  &m_nWKTMaxWidthDimId );
             NCDF_ERR(status);
             if ( status != NC_NOERR ) {
-                return OGRERR_FAILURE;
+                return false;
             }
 
             int anDims[] = { m_nRecordDimID, m_nWKTMaxWidthDimId };
