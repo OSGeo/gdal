@@ -190,7 +190,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     papszOverrideColumnTypes = NULL;
     nForcedSRSId = UNDETERMINED_SRID;
-    nForcedDimension = -1;
+    nForcedGeometryTypeFlags = -1;
     bCreateSpatialIndexFlag = TRUE;
     bInResetReading = FALSE;
 
@@ -237,13 +237,15 @@ void  OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc* pasDesc,
             new OGRPGGeomFieldDefn(this, pasDesc[i].pszName);
         poGeomFieldDefn->SetNullable(pasDesc[i].bNullable);
         poGeomFieldDefn->nSRSId = pasDesc[i].nSRID;
-        poGeomFieldDefn->nCoordDimension = pasDesc[i].nCoordDimension;
+        poGeomFieldDefn->GeometryTypeFlags = pasDesc[i].GeometryTypeFlags;
         poGeomFieldDefn->ePostgisType = pasDesc[i].ePostgisType;
         if( pasDesc[i].pszGeomType != NULL )
         {
             OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(pasDesc[i].pszGeomType);
-            if( poGeomFieldDefn->nCoordDimension == 3 && eGeomType != wkbUnknown )
+            if( (poGeomFieldDefn->GeometryTypeFlags & OGR_G_3D) && (eGeomType != wkbUnknown) )
                 eGeomType = wkbSetZ(eGeomType);
+            if( (poGeomFieldDefn->GeometryTypeFlags & OGR_G_MEASURED) && (eGeomType != wkbUnknown) )
+                eGeomType = wkbSetM(eGeomType);
             poGeomFieldDefn->SetType(eGeomType);
         }
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
@@ -536,16 +538,21 @@ int OGRPGTableLayer::ReadTableDefinition()
         {
             const char* pszType = PQgetvalue(hResult,0,0);
 
-            int nCoordDimension = atoi(PQgetvalue(hResult,0,1));
+            int dim = atoi(PQgetvalue(hResult,0,1));
+            int GeometryTypeFlags = 0;
+            if( dim == 3 )
+                GeometryTypeFlags |= OGR_G_3D;
 
             int nSRSId = atoi(PQgetvalue(hResult,0,2));
 
-            poGeomFieldDefn->nCoordDimension = nCoordDimension;
+            poGeomFieldDefn->GeometryTypeFlags = GeometryTypeFlags;
             if( nSRSId > 0 )
                 poGeomFieldDefn->nSRSId = nSRSId;
             OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(pszType);
-            if( poGeomFieldDefn->nCoordDimension == 3 && eGeomType != wkbUnknown )
+            if( poGeomFieldDefn->GeometryTypeFlags & OGR_G_3D && eGeomType != wkbUnknown )
                 eGeomType = wkbSetZ(eGeomType);
+            if( poGeomFieldDefn->GeometryTypeFlags & OGR_G_MEASURED && eGeomType != wkbUnknown )
+                eGeomType = wkbSetM(eGeomType); // fixme: will not happen now
             poGeomFieldDefn->SetType(eGeomType);
 
             bGoOn = FALSE;
@@ -593,7 +600,7 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
                                            OGRwkbGeometryType eType,
                                            const char* pszGeomType,
                                            int nSRSId,
-                                           int nCoordDimension)
+                                           int GeometryTypeFlags)
 {
     bTableDefinitionValid = TRUE;
     bGeometryInformationSet = TRUE;
@@ -603,7 +610,7 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
     {
         OGRPGGeomFieldDefn* poGeomFieldDefn = new OGRPGGeomFieldDefn(this, pszGFldName);
         poGeomFieldDefn->SetType(eType);
-        poGeomFieldDefn->nCoordDimension = nCoordDimension;
+        poGeomFieldDefn->GeometryTypeFlags = GeometryTypeFlags;
 
         if( EQUAL(pszGeomType,"geometry") )
         {
@@ -844,7 +851,8 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += osEscapedGeom;
             }
             else if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")) &&
-                     poGeomFieldDefn->nCoordDimension != 4 /* we don't know how to decode 4-dim EWKB for now */)
+                     !(poGeomFieldDefn->GeometryTypeFlags & OGR_G_3D && 
+                       poGeomFieldDefn->GeometryTypeFlags & OGR_G_MEASURED) )
             {
                 if (poDS->sPostGISVersion.nMajor >= 2)
                     osFieldList += "encode(ST_AsEWKB(";
@@ -856,7 +864,9 @@ CPLString OGRPGTableLayer::BuildFields()
                     CPLSPrintf("EWKBBase64_%s", poGeomFieldDefn->GetNameRef()));
             }
             else if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) &&
-                     poGeomFieldDefn->nCoordDimension != 4 && /* we don't know how to decode 4-dim EWKB for now */
+                      !(poGeomFieldDefn->GeometryTypeFlags & OGR_G_3D && 
+                        poGeomFieldDefn->GeometryTypeFlags & OGR_G_MEASURED)
+                      &&
                       /* perhaps works also for older version, but I didn't check */
                       (poDS->sPostGISVersion.nMajor > 1 ||
                       (poDS->sPostGISVersion.nMajor == 1 && poDS->sPostGISVersion.nMinor >= 1)) )
@@ -1174,7 +1184,8 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
             if( poGeom != NULL )
             {
                 poGeom->closeRings();
-                poGeom->setCoordinateDimension( poGeomFieldDefn->nCoordDimension );
+                poGeom->set3D(poGeomFieldDefn->GeometryTypeFlags & OGR_G_3D);
+                poGeom->setMeasured(poGeomFieldDefn->GeometryTypeFlags & OGR_G_MEASURED);
             }
 
             if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
@@ -1623,7 +1634,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             CheckGeomTypeCompatibility(i, poGeom);
 
             poGeom->closeRings();
-            poGeom->setCoordinateDimension( poGeomFieldDefn->nCoordDimension );
+            poGeom->set3D(poGeomFieldDefn->GeometryTypeFlags & OGR_G_3D);
+            poGeom->setMeasured(poGeomFieldDefn->GeometryTypeFlags & OGR_G_MEASURED);
 
             int nSRSId = poGeomFieldDefn->nSRSId;
 
@@ -1800,7 +1812,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             CheckGeomTypeCompatibility(i, poGeom);
 
             poGeom->closeRings();
-            poGeom->setCoordinateDimension( poGeomFieldDefn->nCoordDimension );
+            poGeom->set3D(poGeomFieldDefn->GeometryTypeFlags & OGR_G_3D);
+            poGeom->setMeasured(poGeomFieldDefn->GeometryTypeFlags & OGR_G_MEASURED);
 
             if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
                 pszGeom = GeometryToBYTEA( poGeom,
@@ -1950,6 +1963,9 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return TRUE;
+
     else
         return FALSE;
 }
@@ -2093,7 +2109,7 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
             OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
             OGRPGEscapeString(hPGConn, pszTableName).c_str(),
             OGRPGEscapeString(hPGConn, poGeomField->GetNameRef()).c_str(),
-            poGeomField->nSRSId, pszGeometryType, poGeomField->nCoordDimension );
+            poGeomField->nSRSId, pszGeometryType, poGeomField->GeometryTypeFlags & OGR_G_3D ? 3 : 2 );
 
     hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
@@ -2203,18 +2219,20 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     else if( poSRS != NULL )
         nSRSId = poDS->FetchSRSId( poSRS );
 
-    int nDimension = 3;
-    if( wkbFlatten(eType) == eType )
-        nDimension = 2;
-    if( nForcedDimension > 0 )
+    int GeometryTypeFlags = OGR_G_3D;
+    if( OGR_GT_HasZ((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGR_G_3D;
+    if( OGR_GT_HasM((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGR_G_MEASURED;
+    if( nForcedGeometryTypeFlags >= 0 )
     {
-        nDimension = nForcedDimension;
-        eType = OGR_GT_SetModifier(eType, nDimension == 3, FALSE);
+        GeometryTypeFlags = nForcedGeometryTypeFlags;
+        eType = OGR_GT_SetModifier(eType, GeometryTypeFlags & OGR_G_3D, GeometryTypeFlags & OGR_G_MEASURED);
     }
     poGeomField->SetType(eType);
     poGeomField->SetNullable( poGeomFieldIn->IsNullable() );
     poGeomField->nSRSId = nSRSId;
-    poGeomField->nCoordDimension = nDimension;
+    poGeomField->GeometryTypeFlags = GeometryTypeFlags;
     poGeomField->ePostgisType = GEOM_TYPE_GEOMETRY;
 
 /* -------------------------------------------------------------------- */
@@ -3039,8 +3057,10 @@ OGRErr OGRPGTableLayer::RunDifferedCreationIfNecessary()
             else
                 osCreateTable += "geography(";
             osCreateTable += pszGeometryType;
-            if( poGeomField->nCoordDimension == 3 )
+            if( poGeomField->GeometryTypeFlags & OGR_G_3D )
                 osCreateTable += "Z";
+            if( poGeomField->GeometryTypeFlags & OGR_G_MEASURED )
+                osCreateTable += "M";
             if( poGeomField->nSRSId > 0 )
                 osCreateTable += CPLSPrintf(",%d", poGeomField->nSRSId);
             osCreateTable += ")";
