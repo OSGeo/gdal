@@ -2112,17 +2112,24 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
     CPLString            osCommand;
 
     const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
+    const char *suffix = "";
     int dim = 2;
-    if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D )
-        dim++;
-    if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
-        dim++;
+    if( (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D) && (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
+        dim = 4;
+    else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
+    {
+        suffix = "M";
+        dim = 3;
+    }
+    else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D )
+        dim = 3;
+
     osCommand.Printf(
-            "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
+            "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s%s',%d)",
             OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
             OGRPGEscapeString(hPGConn, pszTableName).c_str(),
             OGRPGEscapeString(hPGConn, poGeomField->GetNameRef()).c_str(),
-            poGeomField->nSRSId, pszGeometryType, dim );
+            poGeomField->nSRSId, pszGeometryType, suffix, dim );
 
     hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 

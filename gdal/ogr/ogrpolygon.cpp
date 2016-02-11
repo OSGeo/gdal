@@ -342,7 +342,15 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     GUInt32 nGType = getGeometryType();
 
-    if ( eWkbVariant == wkbVariantIso )
+    if( eWkbVariant == wkbVariantPostGIS1 )
+    {
+        nGType = wkbFlatten(nGType);
+        if( Is3D() )
+            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse); /* yes we explicitly set wkb25DBit */
+        if( IsMeasured() )
+            nGType = (OGRwkbGeometryType)(nGType | 0x40000000);
+    }
+    else if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
 
     if( eByteOrder == wkbNDR )

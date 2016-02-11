@@ -1439,10 +1439,16 @@ OGRErr  OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     GUInt32 nGType = getGeometryType();
 
-    if ( eWkbVariant == wkbVariantIso )
+    if( eWkbVariant == wkbVariantPostGIS1 )
+    {
+        nGType = wkbFlatten(nGType);
+        if( Is3D() )
+            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse); /* yes we explicitly set wkb25DBit */
+        if( IsMeasured() )
+            nGType = (OGRwkbGeometryType)(nGType | 0x40000000);
+    }
+    else if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
-    else if( eWkbVariant == wkbVariantPostGIS1 && wkbHasZ((OGRwkbGeometryType)nGType) )
-        nGType = (OGRwkbGeometryType)(wkbFlatten(nGType) | wkb25DBitInternalUse); /* yes we explicitly set wkb25DBit */
 
     if( eByteOrder == wkbNDR )
         nGType = CPL_LSBWORD32( nGType );
