@@ -322,7 +322,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
         papszRetList = papszRetListNew;
 
         /* If the last token is an empty token, then we have to catch
-         * it now, otherwise we won't reenter the loop and it will be lost. 
+         * it now, otherwise we won't reenter the loop and it will be lost.
          */
         if ( *pszString == '\0' && *(pszString-1) == chDelimiter )
         {
@@ -864,7 +864,7 @@ char **CSVGetNextLine( const char *pszFilename )
 
     psTable->iLastLine++;
     CSLDestroy( psTable->papszRecFields );
-    psTable->papszRecFields = 
+    psTable->papszRecFields =
         CSVSplitLine( psTable->papszLines[psTable->iLastLine], ',' );
 
     return psTable->papszRecFields;
@@ -1092,14 +1092,14 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
         size_t nBasenameLen = strlen(pszBasename);
 
         for( ;
-             psTable != NULL; 
+             psTable != NULL;
              psTable = psTable->psNext )
         {
             const size_t nFullLen = strlen(psTable->pszFilename);
 
-            if( nFullLen > nBasenameLen 
+            if( nFullLen > nBasenameLen
                 && strcmp(psTable->pszFilename+nFullLen-nBasenameLen,
-                          pszBasename) == 0 
+                          pszBasename) == 0
                 && strchr("/\\",psTable->pszFilename[+nFullLen-nBasenameLen-1])
                           != NULL )
             {

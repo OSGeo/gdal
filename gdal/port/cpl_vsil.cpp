@@ -52,11 +52,11 @@ CPL_CVSID("$Id$");
  *
  * Note that no error is issued via CPLError() if the directory path is
  * invalid, though NULL is returned.
- * 
- * This function used to be known as CPLReadDir(), but the old name is now 
- * deprecated. 
  *
- * @param pszPath the relative, or absolute path of a directory to read.  
+ * This function used to be known as CPLReadDir(), but the old name is now
+ * deprecated.
+ *
+ * @param pszPath the relative, or absolute path of a directory to read.
  * UTF-8 encoded.
  * @return The list of entries in the directory, or NULL if the directory
  * doesn't exist.  Filenames are returned in UTF-8 encoding.
@@ -87,7 +87,7 @@ char **VSIReadDir(const char *pszPath)
  * element more than the nMaxFiles limit will be returned. If CSLCount() on the
  * result is lesser or equal to nMaxFiles, then no truncation occurred.
  *
- * @param pszPath the relative, or absolute path of a directory to read.  
+ * @param pszPath the relative, or absolute path of a directory to read.
  * UTF-8 encoded.
  * @param nMaxFiles maximum number of files after which to stop, or 0 for no limit.
  * @return The list of entries in the directory, or NULL if the directory
@@ -97,7 +97,7 @@ char **VSIReadDir(const char *pszPath)
 
 char **VSIReadDirEx(const char *pszPath, int nMaxFiles)
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszPath );
 
     return poFSHandler->ReadDirEx( pszPath, nMaxFiles );
@@ -120,19 +120,19 @@ typedef struct
  * \brief Read names in a directory recursively.
  *
  * This function abstracts access to directory contents and subdirectories.
- * It returns a list of strings containing the names of files and directories 
+ * It returns a list of strings containing the names of files and directories
  * in this directory and all subdirectories.  The resulting string list becomes
  * the responsibility of the application and should be freed with CSLDestroy()
  *  when no longer needed.
  *
  * Note that no error is issued via CPLError() if the directory path is
  * invalid, though NULL is returned.
- * 
- * @param pszPathIn the relative, or absolute path of a directory to read.  
+ *
+ * @param pszPathIn the relative, or absolute path of a directory to read.
  * UTF-8 encoded.
  *
- * @return The list of entries in the directory and subdirectories 
- * or NULL if the directory doesn't exist.  Filenames are returned in UTF-8 
+ * @return The list of entries in the directory and subdirectories
+ * or NULL if the directory doesn't exist.  Filenames are returned in UTF-8
  * encoding.
  * @since GDAL 1.10.0
  *
@@ -283,7 +283,7 @@ char **CPLReadDir( const char *pszPath )
 /************************************************************************/
 
 /**
- * \brief Create a directory. 
+ * \brief Create a directory.
  *
  * Create a new directory with the indicated mode.  The mode is ignored
  * on some platforms.  A reasonable default mode value would be 0666.
@@ -301,7 +301,7 @@ char **CPLReadDir( const char *pszPath )
 int VSIMkdir( const char *pszPathname, long mode )
 
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszPathname );
 
     return poFSHandler->Mkdir( pszPathname, mode );
@@ -313,9 +313,9 @@ int VSIMkdir( const char *pszPathname, long mode )
 
 /**
  * \brief Delete a file.
- * 
- * Deletes a file object from the file system. 
- * 
+ *
+ * Deletes a file object from the file system.
+ *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
@@ -329,7 +329,7 @@ int VSIMkdir( const char *pszPathname, long mode )
 int VSIUnlink( const char * pszFilename )
 
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );
 
     return poFSHandler->Unlink( pszFilename );
@@ -341,11 +341,11 @@ int VSIUnlink( const char * pszFilename )
 
 /**
  * \brief Rename a file.
- * 
+ *
  * Renames a file object in the file system.  It should be possible
- * to rename a file onto a new filesystem, but it is safest if this 
+ * to rename a file onto a new filesystem, but it is safest if this
  * function is only used to rename files that remain in the same directory.
- * 
+ *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
@@ -360,7 +360,7 @@ int VSIUnlink( const char * pszFilename )
 int VSIRename( const char * oldpath, const char * newpath )
 
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( oldpath );
 
     return poFSHandler->Rename( oldpath, newpath );
@@ -372,10 +372,10 @@ int VSIRename( const char * oldpath, const char * newpath )
 
 /**
  * \brief Delete a directory.
- * 
+ *
  * Deletes a directory object from the file system.  On some systems
  * the directory must be empty before it can be deleted.
- * 
+ *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
@@ -389,7 +389,7 @@ int VSIRename( const char * oldpath, const char * newpath )
 int VSIRmdir( const char * pszDirname )
 
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszDirname );
 
     return poFSHandler->Rmdir( pszDirname );
@@ -401,20 +401,20 @@ int VSIRmdir( const char * pszDirname )
 
 /**
  * \brief Get filesystem object info.
- * 
+ *
  * Fetches status information about a filesystem object (file, directory, etc).
  * The returned information is placed in the VSIStatBufL structure.   For
  * portability, only use the st_size (size in bytes) and st_mode (file type).
- * This method is similar to VSIStat(), but will work on large files on 
- * systems where this requires special calls. 
- * 
+ * This method is similar to VSIStat(), but will work on large files on
+ * systems where this requires special calls.
+ *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
  * Analog of the POSIX stat() function.
  *
  * @param pszFilename the path of the filesystem object to be queried.  UTF-8 encoded.
- * @param psStatBuf the structure to load with information. 
+ * @param psStatBuf the structure to load with information.
  *
  * @return 0 on success or -1 on an error.
  */
@@ -543,7 +543,7 @@ int VSIIsCaseSensitiveFS( const char * pszFilename )
 VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );
 
     VSILFILE* fp = (VSILFILE *) poFSHandler->Open( pszFilename, pszAccess );
@@ -578,7 +578,7 @@ int VSIFCloseL( VSILFILE * fp )
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
 
-    VSIDebug1( "VSICloseL(%p)", fp );
+    VSIDebug1( "VSIFCloseL(%p)", fp );
 
     int nResult = poFileHandle->Close();
 
@@ -594,14 +594,14 @@ int VSIFCloseL( VSILFILE * fp )
 /**
  * \brief Seek to requested offset.
  *
- * Seek to the desired offset (nOffset) in the indicated file. 
+ * Seek to the desired offset (nOffset) in the indicated file.
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
  * Analog of the POSIX fseek() call.
  *
- * @param fp file handle opened with VSIFOpenL(). 
+ * @param fp file handle opened with VSIFOpenL().
  * @param nOffset offset in bytes.
  * @param nWhence one of SEEK_SET, SEEK_CUR or SEEK_END.
  *
@@ -624,14 +624,14 @@ int VSIFSeekL( VSILFILE * fp, vsi_l_offset nOffset, int nWhence )
  * \brief Tell current file offset.
  *
  * Returns the current file read/write offset in bytes from the beginning of
- * the file. 
+ * the file.
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
  * Analog of the POSIX ftell() call.
  *
- * @param fp file handle opened with VSIFOpenL(). 
+ * @param fp file handle opened with VSIFOpenL().
  *
  * @return file offset in bytes.
  */
@@ -655,7 +655,7 @@ vsi_l_offset VSIFTellL( VSILFILE * fp )
  *
  * Analog of the POSIX rewind() call.
  *
- * @param fp file handle opened with VSIFOpenL(). 
+ * @param fp file handle opened with VSIFOpenL().
  */
 
 void VSIRewindL( VSILFILE * fp )
@@ -679,7 +679,7 @@ void VSIRewindL( VSILFILE * fp )
  *
  * Analog of the POSIX fflush() call.
  *
- * @param fp file handle opened with VSIFOpenL(). 
+ * @param fp file handle opened with VSIFOpenL().
  *
  * @return 0 on success or -1 on error.
  */
@@ -708,12 +708,12 @@ int VSIFFlushL( VSILFILE * fp )
  * Analog of the POSIX fread() call.
  *
  * @param pBuffer the buffer into which the data should be read (at least
- * nCount * nSize bytes in size. 
+ * nCount * nSize bytes in size.
  * @param nSize size of objects to read in bytes.
  * @param nCount number of objects to read.
- * @param fp file handle opened with VSIFOpenL(). 
+ * @param fp file handle opened with VSIFOpenL().
  *
- * @return number of objects successfully read. 
+ * @return number of objects successfully read.
  */
 
 size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
@@ -777,10 +777,10 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
  * Analog of the POSIX fwrite() call.
  *
  * @param pBuffer the buffer from which the data should be written (at least
- * nCount * nSize bytes in size. 
+ * nCount * nSize bytes in size.
  * @param nSize size of objects to read in bytes.
  * @param nCount number of objects to read.
- * @param fp file handle opened with VSIFOpenL(). 
+ * @param fp file handle opened with VSIFOpenL().
  *
  * @return number of objects successfully written.
  */
@@ -857,13 +857,13 @@ int VSIFTruncateL( VSILFILE * fp, vsi_l_offset nNewSize )
  * \brief Formatted write to file.
  *
  * Provides fprintf() style formatted output to a VSI*L file.  This formats
- * an internal buffer which is written using VSIFWriteL(). 
+ * an internal buffer which is written using VSIFWriteL().
  *
  * Analog of the POSIX fprintf() call.
  *
- * @param fp file handle opened with VSIFOpenL(). 
- * @param pszFormat the printf style format string. 
- * 
+ * @param fp file handle opened with VSIFOpenL().
+ * @param pszFormat the printf style format string.
+ *
  * @return the number of bytes written or -1 on an error.
  */
 
@@ -897,8 +897,8 @@ int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
  * the number of character written (1 or 0), and not the (cast) character itself or EOF.
  *
  * @param nChar character to write.
- * @param fp file handle opened with VSIFOpenL(). 
- * 
+ * @param fp file handle opened with VSIFOpenL().
+ *
  * @return 1 in case of success, 0 on error.
  */
 
@@ -932,7 +932,7 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
  * @param pnSize pointer to variable to store the file size. May be NULL.
  * @param nMaxSize maximum size of file allowed. If no limit, set to a negative
  *                 value.
- * 
+ *
  * @return TRUE in case of success.
  *
  * @since GDAL 1.11
@@ -1108,8 +1108,8 @@ int VSIIngestFile( VSILFILE* fp,
  * On POSIX systems, this will be a integer value ("fd") cast as a void*.
  * On Windows systems, this will be the HANDLE.
  *
- * @param fp file handle opened with VSIFOpenL(). 
- * 
+ * @param fp file handle opened with VSIFOpenL().
+ *
  * @return the native file descriptor, or NULL.
  */
 
@@ -1136,7 +1136,7 @@ void *VSIFGetNativeFileDescriptorL( VSILFILE* fp )
 
 GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszDirname );
 
     return poFSHandler->GetDiskFreeSpace( pszDirname );
@@ -1153,7 +1153,7 @@ GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
 **
 ** The VSIFileManager maintains a list of file type handlers (mem, large
 ** file, etc).  It should be thread safe as long as all the handlers are
-** instantiated before multiple threads begin to operate. 
+** instantiated before multiple threads begin to operate.
 **/
 
 /************************************************************************/

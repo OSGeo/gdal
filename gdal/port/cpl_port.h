@@ -509,6 +509,10 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define EQUAL(a,b)              (STRCASECMP(a,b)==0)
 #endif
 
+/*---------------------------------------------------------------------
+ * Does a string "a" start with string "b".  Search is case-sensitive or,
+ * with CI, it is a case-insensitive comparison.
+ *--------------------------------------------------------------------- */
 #ifndef STARTS_WITH_CI
 #define STARTS_WITH(a,b)               (strncmp(a,b,strlen(b)) == 0)
 #define STARTS_WITH_CI(a,b)            EQUALN(a,b,strlen(b))
@@ -521,7 +525,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
 /*      are supposed to be macros according to C99, defined in math.h   */
-/*      Some systems (i.e. Tru64) don't have isinf() at all, so if       */
+/*      Some systems (i.e. Tru64) don't have isinf() at all, so if      */
 /*      the macro is not defined we just assume nothing is infinite.    */
 /*      This may mean we have no real CPLIsInf() on systems with isinf()*/
 /*      function but no corresponding macro, but I can live with        */
