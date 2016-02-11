@@ -7,16 +7,17 @@ BEGIN { use_ok('Geo::GDAL') };
 
 # test measured geometries in pg driver
 
+#Geo::GDAL::SetConfigOption('CPL_DEBUG', 'ON');
+#Geo::GDAL::DontUseExceptions();
+
 my @data = (
     Point => 'POINT (1 2)',
     PointZ => 'POINT Z (1 2 3)',
     PointM => 'POINT M (1 2 3)',
     PointZM => 'POINT ZM (1 2 3 4)',
-    );
 
-my @x = (
     LineStringM => 'LINESTRING M (1 2 3)',
-    LineStringZM => 'LINESTRING ZM (1 2 3 4)',
+    LineStringZM => 'LINESTRING ZM (1 2 3 4,5 6 7 8)',
 
     PolygonM => 'POLYGON M ((1 2 3))',
     MultiPointM => 'MULTIPOINT M ((1 2 3))',
@@ -28,22 +29,21 @@ my @x = (
     MultiCurveM => 'MULTICURVE M (CIRCULARSTRING M (0 0 2,1 0 2,0 0 2),(0 0 2,1 1 2))',
     MultiSurfaceM => 'MULTISURFACE M (((1 2 3)))',
 
-    PolygonZM => 'POLYGON ZM ((1 2 3 4))',
+    PolygonZM => 'POLYGON ZM ((1 2 3 4,5 6 7 8,9 6 7 8,1 2 3 0))',
     MultiPointZM => 'MULTIPOINT ZM ((1 2 3 4))',
-    MultiLineStringZM => 'MULTILINESTRING ZM ((1 2 3 4))',
-    MultiPolygonZM => 'MULTIPOLYGON ZM (((1 2 3 4)))',
+    MultiLineStringZM => 'MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))',
+    MultiPolygonZM => 'MULTIPOLYGON ZM (((1 2 3 4,5 6 7 8,9 6 7 8,1 2 3 0)))',
     CircularStringZM => 'CIRCULARSTRING ZM (1 2 3 4,1 2 3 4,1 2 3 4)',
     CompoundCurveZM => 'COMPOUNDCURVE ZM ((0 1 2 3,2 3 4 5))',
     CurvePolygonZM => 'CURVEPOLYGON ZM ((0 0 1 2,0 1 1 2,1 1 1 2,1 0 1 2,0 0 1 2))',
     MultiCurveZM => 'MULTICURVE ZM (CIRCULARSTRING ZM (0 0 2 3,1 0 2 3,0 0 2 3),(0 0 2 3,1 1 2 3))',
-    MultiSurfaceZM => 'MULTISURFACE ZM (((1 2 3 4)))',
+    MultiSurfaceZM => 'MULTISURFACE ZM (((1 2 3 4,5 6 7 8,9 6 7 8,1 2 3 0)))',
 );
 
 my $driver = 'PostgreSQL';
 
 for (my $i = 0; $i < @data; $i+=2) {
     my $type = $data[$i];
-    #next unless $type eq 'CompoundCurveM';
     eval {
         Geo::OGR::Open('PG:dbname=autotest', 1)->DeleteLayer(lc($type));
     };
@@ -79,5 +79,5 @@ for (my $i = 0; $i < @data; $i+=2) {
         ok($wkt eq $data[$i+1], "$driver retrieve feature: $type, expected: $data[$i+1] got: $wkt");
     }
 
-    #Geo::OGR::Open('PG:dbname=autotest', 1)->DeleteLayer(lc($type));
+    Geo::OGR::Open('PG:dbname=autotest', 1)->DeleteLayer(lc($type));
 }
