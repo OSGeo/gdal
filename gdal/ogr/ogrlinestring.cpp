@@ -546,15 +546,7 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn )
 
     if( padfZ != NULL )
     {
-        if( zIn != 0.0 )
-        {
-            Make3D();
-            padfZ[iPoint] = zIn;
-        }
-        else if( flags & OGR_G_3D )
-        {
-            padfZ[iPoint] = 0.0;
-        }
+        padfZ[iPoint] = zIn;
     }
 }
 
@@ -580,15 +572,7 @@ void OGRSimpleCurve::setPointM( int iPoint, double xIn, double yIn, double mIn )
 
     if( padfM != NULL )
     {
-        if( mIn != 0.0 )
-        {
-            AddM();
-            padfM[iPoint] = mIn;
-        }
-        else if( flags & OGR_G_MEASURED )
-        {
-            padfM[iPoint] = 0.0;
-        }
+        padfM[iPoint] = mIn;
     }
 }
 
@@ -616,27 +600,11 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn, d
 
     if( padfZ != NULL )
     {
-        if( zIn != 0.0 )
-        {
-            Make3D();
-            padfZ[iPoint] = zIn;
-        }
-        else if( flags & OGR_G_3D )
-        {
-            padfZ[iPoint] = 0.0;
-        }
+        padfZ[iPoint] = zIn;
     }
     if( padfM != NULL )
     {
-        if( zIn != 0.0 )
-        {
-            AddM();
-            padfM[iPoint] = mIn;
-        }
-        else if( flags & OGR_G_MEASURED )
-        {
-            padfM[iPoint] = 0.0;
-        }
+        padfM[iPoint] = mIn;
     }
 }
 
