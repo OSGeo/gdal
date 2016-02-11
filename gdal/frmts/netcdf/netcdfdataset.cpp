@@ -4455,7 +4455,7 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
         delete poLayer;
         return NULL;
     }
-    papoLayers = static_cast<OGRLayer**>(CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer)));
+    papoLayers = static_cast<OGRLayer**>(CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*)));
     papoLayers[nLayers++] = poLayer;
     return poLayer;
 }
@@ -4709,7 +4709,8 @@ void netCDFLayer::SetRecordDimID(int nRecordDimID)
     m_nRecordDimID = nRecordDimID;
     char szTemp[NC_MAX_NAME+1];
     szTemp[0] = 0;
-    nc_inq_dimname( m_poDS->GetCDFID(), m_nRecordDimID, szTemp);
+    int status = nc_inq_dimname( m_poDS->GetCDFID(), m_nRecordDimID, szTemp);
+    NCDF_ERR(status);
     m_osRecordDimName = szTemp;
 }
 
@@ -6625,7 +6626,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 poLayer->SetWKTGeometryField( osGeometryField );
             }
             poDS->papoLayers = static_cast<OGRLayer**>(
-                CPLRealloc(poDS->papoLayers, (poDS->nLayers + 1) * sizeof(OGRLayer)));
+                CPLRealloc(poDS->papoLayers, (poDS->nLayers + 1) * sizeof(OGRLayer*)));
             poDS->papoLayers[poDS->nLayers++] = poLayer;
 
             for( size_t j = 0; j < anPotentialVectorVarID.size(); j++ )
