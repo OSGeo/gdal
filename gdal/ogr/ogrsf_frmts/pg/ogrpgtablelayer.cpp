@@ -539,9 +539,15 @@ int OGRPGTableLayer::ReadTableDefinition()
             const char* pszType = PQgetvalue(hResult,0,0);
 
             int dim = atoi(PQgetvalue(hResult,0,1));
+            bool bHasM = pszType[strlen(pszType)-1] == 'M';
             int GeometryTypeFlags = 0;
             if( dim == 3 )
-                GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
+            {
+                if (bHasM)
+                    GeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
+                else
+                    GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
+            }
             else if( dim == 4 )
                 GeometryTypeFlags |= OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
 
@@ -554,7 +560,7 @@ int OGRPGTableLayer::ReadTableDefinition()
             if( poGeomFieldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_3D && eGeomType != wkbUnknown )
                 eGeomType = wkbSetZ(eGeomType);
             if( poGeomFieldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED && eGeomType != wkbUnknown )
-                eGeomType = wkbSetM(eGeomType); // fixme: will not happen now if data is XYM
+                eGeomType = wkbSetM(eGeomType);
             poGeomFieldDefn->SetType(eGeomType);
 
             bGoOn = FALSE;

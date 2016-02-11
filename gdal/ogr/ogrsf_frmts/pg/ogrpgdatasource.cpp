@@ -969,6 +969,7 @@ void OGRPGDataSource::LoadTables()
                 ePostgisType = GEOM_TYPE_GEOGRAPHY;
 
             int nGeomCoordDimension = atoi(pszDim);
+            bool bHasM = pszGeomType[strlen(pszGeomType)-1] == 'M';
             int nSRID = atoi(pszSRID);
 
             /* Analyze constraints that might override geometrytype, */
@@ -990,6 +991,7 @@ void OGRPGDataSource::LoadTables()
                         osGeometryType = pszNeedle;
                         osGeometryType.resize(pszEnd - pszNeedle);
                         pszGeomType = osGeometryType.c_str();
+                        bHasM = pszGeomType[strlen(pszGeomType)-1] == 'M';
                     }
                 }
             }
@@ -1016,10 +1018,13 @@ void OGRPGDataSource::LoadTables()
                 }
             }
 
-            int GeomTypeFlags = 0; /* nGeomCoordDimension == 2 */
+            int GeomTypeFlags = 0;
             if( nGeomCoordDimension == 3 )
             {
-                GeomTypeFlags |= OGRGeometry::OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
+                if (bHasM)
+                    GeomTypeFlags |= OGRGeometry::OGR_G_MEASURED;
+                else
+                    GeomTypeFlags |= OGRGeometry::OGR_G_3D;
             }
             else if( nGeomCoordDimension == 4 )
             {
@@ -1098,6 +1103,7 @@ void OGRPGDataSource::LoadTables()
             const char *pszGeomColumnName = NULL;
             const char *pszGeomType = NULL;
             int nGeomCoordDimension = 0;
+            bool bHasM = false;
             int nSRID = 0;
             int bNullable = TRUE;
             PostgisType ePostgisType = GEOM_TYPE_UNKNOWN;
@@ -1105,6 +1111,7 @@ void OGRPGDataSource::LoadTables()
             {
                 pszGeomColumnName = PQgetvalue(hResult, iRecord, 3);
                 pszGeomType = PQgetvalue(hResult, iRecord, 4);
+                bHasM = pszGeomType[strlen(pszGeomType)-1] == 'M';
                 nGeomCoordDimension = atoi(PQgetvalue(hResult, iRecord, 5));
                 nSRID = atoi(PQgetvalue(hResult, iRecord, 6));
                 ePostgisType = (PostgisType) atoi(PQgetvalue(hResult, iRecord, 7));
@@ -1126,10 +1133,13 @@ void OGRPGDataSource::LoadTables()
             if( EQUAL(pszSchemaName,"information_schema") )
                 continue;
 
-            int GeomTypeFlags = 0; /* nGeomCoordDimension == 2 */
+            int GeomTypeFlags = 0;
             if( nGeomCoordDimension == 3 )
             {
-                GeomTypeFlags |= OGRGeometry::OGR_G_3D; // fixme: 3 is ambiguous, may be both XYM, XYZ
+                if (bHasM)
+                    GeomTypeFlags |= OGRGeometry::OGR_G_MEASURED;
+                else
+                    GeomTypeFlags |= OGRGeometry::OGR_G_3D;
             }
             else if( nGeomCoordDimension == 4 )
             {
