@@ -499,9 +499,9 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Assign attributes.                                              */
 /* -------------------------------------------------------------------- */
-    nc_put_att_text (cdfid, x_range_id, "units", 7, "meters");
-    nc_put_att_text (cdfid, y_range_id, "units", 7, "meters");
-    nc_put_att_text (cdfid, z_range_id, "units", 7, "meters");
+    CPL_IGNORE_RET_VAL(nc_put_att_text (cdfid, x_range_id, "units", 7, "meters"));
+    CPL_IGNORE_RET_VAL(nc_put_att_text (cdfid, y_range_id, "units", 7, "meters"));
+    CPL_IGNORE_RET_VAL(nc_put_att_text (cdfid, z_range_id, "units", 7, "meters"));
 
     double default_scale = 1.0;
     nc_put_att_double (cdfid, z_id, "scale_factor", NC_DOUBLE, 1, 
@@ -511,10 +511,10 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                        &default_offset );
 
     int default_node_offset = 1; // pixel is area
-    nc_put_att_int (cdfid, z_id, "node_offset", NC_LONG, 1, 
-                    &default_node_offset );
-    nc_put_att_text (cdfid, NC_GLOBAL, "title", 1, "");
-    nc_put_att_text (cdfid, NC_GLOBAL, "source", 1, "");
+    CPL_IGNORE_RET_VAL(nc_put_att_int (cdfid, z_id, "node_offset", NC_LONG, 1, 
+                    &default_node_offset ));
+    CPL_IGNORE_RET_VAL(nc_put_att_text (cdfid, NC_GLOBAL, "title", 1, ""));
+    CPL_IGNORE_RET_VAL(nc_put_att_text (cdfid, NC_GLOBAL, "source", 1, ""));
 
     /* leave define mode */
     nc_enddef (cdfid);
