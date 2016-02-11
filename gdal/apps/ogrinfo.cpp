@@ -380,13 +380,14 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
-    CPLDebug( "OGR", "GetLayerCount() = %d\n", poDS->GetLayerCount() );
-
     /* coverity[tainted_data] */
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
         if ( papszLayers == NULL || *papszLayers == NULL )
         {
+            if( iRepeat == 0 )
+                CPLDebug( "OGR", "GetLayerCount() = %d\n", poDS->GetLayerCount() );
+
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
