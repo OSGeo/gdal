@@ -3692,9 +3692,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                empty values from dfNN, dfSN, dfEE, dfWE; */
             /* TODO: fix this in 1.8 branch, and then remove this here */
             if ( bWriteGeoTransform && bSetGeoTransform ) {
-                nc_put_att_text( cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
+                CPL_IGNORE_RET_VAL(nc_put_att_text( cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
                                  osGeoTransform.size(),
-                                 osGeoTransform.c_str() );
+                                 osGeoTransform.c_str() ));
             }
         }
 
@@ -8038,13 +8038,13 @@ static void NCDFAddGDALHistory( int fpImage,
                          const char * pszFunctionName,
                                 const char * pszCFVersion )
 {
-    nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
+    CPL_IGNORE_RET_VAL(nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
                      strlen(pszCFVersion),
-                     pszCFVersion ); 
+                     pszCFVersion )); 
 
     const char* pszNCDF_GDAL = GDALVersionInfo("--version");
-    nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
-                     strlen(pszNCDF_GDAL), pszNCDF_GDAL );
+    CPL_IGNORE_RET_VAL(nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
+                     strlen(pszNCDF_GDAL), pszNCDF_GDAL ));
 
     /* Add history */
     CPLString osTmp;
