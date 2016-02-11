@@ -1587,6 +1587,7 @@ netCDFDataset::~netCDFDataset()
 
     for(int i=0;i<nLayers;i++)
         delete papoLayers[i];
+    CPLFree(papoLayers);
 
     /* make sure projection variable is written to band variable */
     if( (GetAccess() == GA_Update) && ! bAddedGridMappingRef )
