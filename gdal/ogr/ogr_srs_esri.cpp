@@ -407,6 +407,7 @@ static void InitDatumMappingTable()
 /*      Try to open the datum.csv file.                                 */
 /* -------------------------------------------------------------------- */
     const char  *pszFilename = CSVFilename("gdal_datum.csv");
+    // TODO(schwehr): FILE -> VSILFILE.
     FILE * fp = VSIFOpen( pszFilename, "rb" );
 
 /* -------------------------------------------------------------------- */
@@ -2518,7 +2519,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT( const char* prjName, dou
 static int FindCodeFromDict( const char* pszDictFile, const char* CSName, char* code )
 {
     const char *pszFilename;
-    FILE *fp;
+    VSILFILE *fp;
     OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
@@ -2528,7 +2529,7 @@ static int FindCodeFromDict( const char* pszDictFile, const char* CSName, char* 
     if( pszFilename == NULL )
         return OGRERR_UNSUPPORTED_SRS;
 
-    fp = VSIFOpen( pszFilename, "rb" );
+    fp = VSIFOpenL( pszFilename, "rb" );
     if( fp == NULL )
         return OGRERR_UNSUPPORTED_SRS;
 
@@ -2537,7 +2538,7 @@ static int FindCodeFromDict( const char* pszDictFile, const char* CSName, char* 
 /* -------------------------------------------------------------------- */
     const char *pszLine;
 
-    while( (pszLine = CPLReadLine(fp)) != NULL )
+    while( (pszLine = CPLReadLineL(fp)) != NULL )
 
     {
         if( pszLine[0] == '#' )
@@ -2559,7 +2560,7 @@ static int FindCodeFromDict( const char* pszDictFile, const char* CSName, char* 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     return eErr;
 }
