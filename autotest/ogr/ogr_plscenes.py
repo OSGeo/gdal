@@ -66,7 +66,12 @@ def ogr_plscenes_2():
     # Error: no API_KEY
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    old_key = gdal.GetConfigOption('PL_API_KEY')
+    if old_key:
+        gdal.SetConfigOption('PL_API_KEY', '')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR)
+    if old_key:
+        gdal.SetConfigOption('PL_API_KEY', old_key)
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
@@ -214,7 +219,7 @@ def ogr_plscenes_2():
     ds = gdal.OpenEx('PLScenes:api_key=foo,unsupported_option=val', gdal.OF_VECTOR)
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
-    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option unsupported_option') < 0:
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -767,11 +772,686 @@ def ogr_plscenes_4():
 
     return 'success'
 
+###############################################################################
+# Test V1 API catalog listing with a single catalog
+
+def ogr_plscenes_v1_catalog_no_paging():
+
+    if gdaltest.plscenes_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": {}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if ds.GetLayerByName('non_existing') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    if ds.GetLayerByName('my_catalog') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if ds.GetLayerByName('non_existing') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    gdal.Unlink('/vsimem/v1/catalogs')
+
+    return 'success'
+
+###############################################################################
+# Test V1 API catalog listing with catalog paging
+
+def ogr_plscenes_v1_catalog_paging():
+
+    if gdaltest.plscenes_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": { "_next" : "/vsimem/v1/catalogs_page_2"}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs_page_2', '{ "_links": { "_next" : "/vsimem/v1/catalogs_page_3"}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog_2/items/", "spec": "/vsimem/v1/catalogs/my_catalog_2/spec"}, "id": "my_catalog_2"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs_page_3', '{ "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog_3/items/", "spec": "/vsimem/v1/catalogs/my_catalog_3/spec"}, "id": "my_catalog_3"}]}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if ds.GetLayerByName('non_existing') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    if ds.GetLayerByName('my_catalog') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerByName('my_catalog_2') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerByName('my_catalog_3') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if ds.GetLayerByName('non_existing') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    gdal.Unlink('/vsimem/v1/catalogs')
+    gdal.Unlink('/vsimem/v1/catalogs_page_2')
+    gdal.Unlink('/vsimem/v1/catalogs_page_3')
+
+    return 'success'
+
+###############################################################################
+# Test V1 API
+
+def ogr_plscenes_v1_nominal():
+
+    if gdaltest.plscenes_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": {}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'my_catalog':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1 or \
+       lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1 or \
+       lyr.TestCapability(ogr.OLCRandomRead) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetGeomType() != ogr.wkbMultiPolygon:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ext = lyr.GetExtent()
+    if ext != (-180.0, 180.0, -90.0, 90.0):
+        gdaltest.post_reason('fail')
+        print(ext)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/spec',
+"""{
+    "paths": {
+        "/catalogs/my_catalog/items/" : {
+            "get": {
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/ItemPage"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "$ref":"#/parameters/qFloat"
+                    },
+                    {
+                        "$ref":"#/parameters/qCreated"
+                    },
+                    {
+                        "$ref":"#/parameters/qInt32"
+                    },
+                    {
+                        "$ref":"#/parameters/qString"
+                    }
+                ]
+            }
+        }
+    },
+    "parameters": {
+        "qFloat":{
+            "in": "query",
+            "name": "catalog::float"
+        },
+        "qCreated":{
+            "in": "query",
+            "name": "created"
+        },
+        "qInt32":{
+            "in": "query",
+            "name": "catalog::int32"
+        },
+        "qString":{
+            "in": "query",
+            "name": "catalog::string"
+        }
+    },
+    "definitions": {
+
+        "ItemPage": {
+            "type": "object",
+            "allOf": [
+                {
+                    "$ref": "#/definitions/GeoJSONFeatureCollection"
+                },
+                {
+                "type": "object",
+                "properties": {
+                    "_links": {
+                        "$ref": "#/definitions/PageLinks"
+                    },
+                    "features": {
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    },
+                    "type": "array"
+                    }
+                }
+                }
+            ]
+        },
+
+        "Item": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/GeoJSONFeature"
+                },
+                {
+                    "properties": {
+                        "_embeds": {
+                            "$ref": "#/definitions/ItemEmbeds"
+                        },
+                        "_links": {
+                            "$ref": "#/definitions/ItemLinks"
+                        },
+                        "id": {
+                            "type": "string"
+                        },
+                        "properties": {
+                            "$ref": "#/definitions/ItemProperties"
+                        }
+                    }
+                }
+            ]
+        },
+
+        "ItemLinks": {
+            "allOf": [
+                {
+                "$ref": "#/definitions/SelfLink"
+                },
+                {
+                "type": "object",
+                "properties": {
+                    "assets": {
+                    "type": "string",
+                    }
+                }
+                }
+            ]
+        },
+
+        "SelfLink": {
+            "type": "object",
+            "properties": {
+                "_self": {
+                "type": "string",
+                }
+            }
+        },
+
+        "ItemProperties": {
+            "allOf": [
+                {
+                "$ref": "#/definitions/CoreItemProperties"
+                },
+                {
+                "$ref": "#/definitions/ExtraItemProperties"
+                }
+            ]
+        },
+
+        "CoreItemProperties": {
+            "required": [
+                "created"
+            ],
+            "type": "object",
+            "properties": {
+                "created": {
+                "type": "string",
+                "format": "date-time"
+                }
+            }
+        },
+
+        "ExtraItemProperties": {
+            "type": "object",
+            "properties": {
+                "catalog::float": {
+                "format": "float",
+                "type": "number",
+                },
+                "catalog::string": {
+                "type": "string",
+                },
+                "catalog::int32": {
+                "format": "int32",
+                "type": "integer",
+                },
+                "catalog::int64": {
+                "format": "int64",
+                "type": "integer",
+                }
+            }
+        }
+    }
+}
+""")
+
+    expected_md = """{
+  "id":{
+    "type":"string"
+  },
+  "self_link":{
+    "type":"string",
+    "src_field":"_links._self"
+  },
+  "assets_link":{
+    "type":"string",
+    "src_field":"_links.assets"
+  },
+  "created":{
+    "type":"string",
+    "format":"date-time",
+    "src_field":"properties.created"
+  },
+  "float":{
+    "format":"float",
+    "type":"number",
+    "src_field":"properties.catalog::float"
+  },
+  "string":{
+    "type":"string",
+    "src_field":"properties.catalog::string"
+  },
+  "int32":{
+    "format":"int32",
+    "type":"integer",
+    "src_field":"properties.catalog::int32"
+  },
+  "int64":{
+    "format":"int64",
+    "type":"integer",
+    "src_field":"properties.catalog::int64"
+  }
+}"""
+
+    md = lyr.GetMetadataItem('FIELDS_DESCRIPTION')
+    if md != expected_md:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+
+    md = lyr.GetMetadata()['FIELDS_DESCRIPTION']
+    if md != expected_md:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+
+    field_count = lyr.GetLayerDefn().GetFieldCount()
+    if field_count != 8:
+        gdaltest.post_reason('fail')
+        print(field_count)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000',
+"""{
+    "_links":
+    {
+        "_next": "/vsimem/v1/catalogs/my_catalog/items_page2/?_embeds=features.*.assets&_page_size=1000"
+    },
+    "features" : [
+        {
+            "id": "id",
+            "_links" : {
+                "_self" : "self",
+                "assets" : "assets"
+            },
+            "properties": {
+                "created" : "2016-02-11T12:34:56.789Z",
+                "catalog::float": 1.23,
+                "catalog::string": "string",
+                "catalog::int32": 123,
+                "catalog::int64": 1234567890123
+            },
+            "geometry":
+            {
+                "type": "Polygon",
+                "coordinates" : [ [ [2,49],[2,49.1],[2.1,49.1],[2.1,49],[2,49] ] ]
+            }
+        }
+    ]
+}""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1 or f['id'] != 'id' or f['self_link'] != 'self' or f['assets_link'] != 'assets' or \
+       f['created'] != '2016/02/11 12:34:56.789+00' or \
+       f['float'] != 1.23 or f['string'] != 'string' or f['int32'] != 123 or \
+       f['int64'] != 1234567890123 or f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.0 49.1,2.1 49.1,2.1 49.0,2 49)))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items_page2/?_embeds=features.*.assets&_page_size=1000',
+"""{
+    "features" : [
+        {
+            "id": "id2"
+        }
+    ]
+}""")
+
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 2 or f['id'] != 'id2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POINT(2%2049)',
+"""{
+    "features" : [
+        {
+            "id": "id3"
+        }
+    ]
+}""")
+
+    # POINT spatial filter
+    lyr.SetSpatialFilterRect(2,49,2,49)
+    f = lyr.GetNextFeature()
+    if f['id'] != 'id3':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POLYGON%20((2%2049,2.0%2049.1,2.1%2049.1,2.1%2049.0,2%2049))',
+"""{
+    "features" : [
+        {
+            "id": "id4"
+        }
+    ]
+}""")
+
+    # POLYGON spatial filter
+    lyr.SetSpatialFilterRect(2,49,2.1,49.1)
+    f = lyr.GetNextFeature()
+    if f['id'] != 'id4':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Reset spatial filter
+    lyr.SetSpatialFilter(None)
+    f = lyr.GetNextFeature()
+    if f['id'] != 'id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Test attribute filter on id (special case)
+    lyr.SetAttributeFilter("id = 'filtered_id'")
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/filtered_id?_embeds=assets',
+"""{
+    "id": "filtered_id",
+    "properties": {}
+}""")
+
+    f = lyr.GetNextFeature()
+    if f['id'] != 'filtered_id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Test attribute filter fully evaluated on server side.
+    lyr.SetAttributeFilter("float >= 0 AND int32 < 3 AND float <= 1 AND string = 'foo' AND int32 > 1 AND created = '2016/02/11 12:34:56'")
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]',
+"""{
+    "features" : [
+        {
+            "id": "filtered_1",
+            "properties": {
+                "catalog::float": 0.5,
+                "catalog::int32" : 2,
+                "catalog::string": "foo",
+                "created": "2016-02-11T12:34:56.789Z"
+            }
+        }
+    ]
+}""")
+    f = lyr.GetNextFeature()
+    if f['id'] != 'filtered_1':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Another one but with no range
+    lyr.SetAttributeFilter("float > 0 AND int32 < 3 AND created > '2016/02/11 12:34:56'")
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:]&catalog::float=[0.00000000:]&catalog::int32=[:3]',
+"""{
+    "features" : [
+        {
+            "id": "filtered_2",
+            "properties": {
+                "catalog::float": 0.5,
+                "catalog::int32" : 2,
+                "catalog::string": "foo",
+                "created": "2016-02-11T12:34:56.789Z"
+            }
+        }
+    ]
+}""")
+    f = lyr.GetNextFeature()
+    if f['id'] != 'filtered_2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Partly server / partly client
+    lyr.SetAttributeFilter("int64 = 4 AND string = 'foo' AND int32 >= 3 AND int32 >= 3 AND float >= 0 AND float <= 2 AND float <= 3")
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&catalog::float=[:3.00000000]&catalog::string=foo&catalog::int32=[3:]',
+"""{
+    "features" : [
+        {
+            "id": "filtered_3",
+            "properties": {
+                "catalog::int64" : 4,
+                "catalog::int32" : 4,
+                "catalog::float" : 1,
+                "catalog::string": "foo",
+            }
+        }
+    ]
+}""")
+    f = lyr.GetNextFeature()
+    if f['id'] != 'filtered_3':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Completely client side
+    lyr.SetAttributeFilter("int32 = 123 OR string = 'foo'")
+    f = lyr.GetNextFeature()
+    if f['id'] != 'id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Reset attribute filter
+    lyr.SetAttributeFilter(None)
+    f = lyr.GetNextFeature()
+    if f['id'] != 'id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/v1/catalogs')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/spec')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items_page2/?_embeds=features.*.assets&_page_size=1000')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POINT(2%2049)')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&geometry=POLYGON%20((2%2049,2.0%2049.1,2.1%2049.1,2.1%2049.0,2%2049))')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/filtered_id?_embeds=assets')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:]&catalog::float=[0.00000000:]&catalog::int32=[:3]')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&catalog::float=[:3.00000000]&catalog::string=foo&catalog::int32=[3:]')
+
+    return 'success'
+
+###############################################################################
+# Test V1 API against real server
+
+def ogr_plscenes_v1_live():
+
+    if gdaltest.plscenes_drv is None:
+        return 'skip'
+
+    api_key = gdal.GetConfigOption('PL_API_KEY')
+    if api_key is None:
+        print('Skipping test as PL_API_KEY not defined')
+        return 'skip'
+
+    gdal.SetConfigOption('PLSCENES_PAGE_SIZE', '10')
+    ds = ogr.Open('PLScenes:version=v1')
+    gdal.SetConfigOption('PLSCENES_PAGE_SIZE', None)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr_defn = lyr.GetLayerDefn()
+    created_field = lyr_defn.GetFieldIndex('created')
+    if created_field < 0 or lyr_defn.GetFieldDefn(created_field).GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if not f.IsFieldSet(created_field):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    int_field = -1
+    float_field = -1
+    string_field = -1
+    for i in range(lyr_defn.GetFieldCount()):
+        typ = lyr_defn.GetFieldDefn(i).GetType()
+        if int_field < 0 and typ == ogr.OFTInteger and f.IsFieldSet(i):
+            int_field = i
+        elif float_field < 0 and typ == ogr.OFTReal and f.IsFieldSet(i):
+            float_field = i
+        elif string_field < 0 and typ == ogr.OFTString and f.IsFieldSet(i):
+            string_field = i
+
+    filter = "created='%s'" % f.GetFieldAsString(created_field)
+    if int_field >= 0:
+        name = lyr_defn.GetFieldDefn(int_field).GetName()
+        min = f.GetField(int_field) - 1
+        max = f.GetField(int_field) + 1
+        filter += ' AND %s >= %d AND %s <= %d' % (name, min, name, max)
+    if float_field >= 0:
+        name = lyr_defn.GetFieldDefn(float_field).GetName()
+        min = f.GetField(float_field) - 0.01
+        max = f.GetField(float_field) + 0.01
+        filter += ' AND %s BETWEEN %f AND %f' % (name, min, max)
+    if string_field >= 0:
+        name = lyr_defn.GetFieldDefn(string_field).GetName()
+        value = f.GetField(string_field)
+        filter += " AND %s = '%s'" % (name, value)
+
+    lyr.SetAttributeFilter(filter)
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [ 
     ogr_plscenes_1,
     ogr_plscenes_2,
     ogr_plscenes_3,
-    ogr_plscenes_4 ]
+    ogr_plscenes_4,
+    ogr_plscenes_v1_catalog_no_paging,
+    ogr_plscenes_v1_catalog_paging,
+    ogr_plscenes_v1_nominal,
+    ogr_plscenes_v1_live
+    ]
 
 if __name__ == '__main__':
 
