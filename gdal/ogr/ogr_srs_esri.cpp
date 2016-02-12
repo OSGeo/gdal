@@ -712,7 +712,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
             const double dfCentralMeridian = OSR_GDV( papszPrj, "PARAM_1", 0.0 );
             const double dfRefLat = OSR_GDV( papszPrj, "PARAM_2", 0.0 );
 
-            const double nZone = static_cast<int>(
+            const int nZone = static_cast<int>(
                 (dfCentralMeridian+183) / 6.0 + 0.0000001 );
             SetUTM( nZone, dfRefLat >= 0.0 );
         }
