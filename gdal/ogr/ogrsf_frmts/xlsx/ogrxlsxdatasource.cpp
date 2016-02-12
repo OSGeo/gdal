@@ -677,11 +677,16 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
         if (pszR)
         {
             /* Convert col number from base 26 */
+            /*
+            A Z   AA AZ   BA BZ   ZA   ZZ   AAA    ZZZ      AAAA
+            0 25  26 51   52 77   676  701  702    18277    18278
+            */
             int nNewCurCol = (pszR[0] - 'A');
             int i = 1;
             while(pszR[i] >= 'A' && pszR[i] <= 'Z')
             {
-                nNewCurCol = nNewCurCol * 26 + (pszR[i] - 'A');
+                // We wouldn't need the +1 if this was a proper base 26
+                nNewCurCol = (nNewCurCol + 1) * 26 + (pszR[i] - 'A');
                 i ++;
             }
             for(;nCurCol<nNewCurCol;nCurCol++)
