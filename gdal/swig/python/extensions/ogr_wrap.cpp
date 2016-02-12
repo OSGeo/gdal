@@ -3153,10 +3153,10 @@ SWIG_FromCharPtr(const char *cptr)
 }
 
 
-int bUseExceptions=0;
-CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
+static int bUseExceptions=0;
+static CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
-void CPL_STDCALL
+static void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 {
   /*
@@ -3183,11 +3183,13 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 
 
 
+static
 int GetUseExceptions() {
   CPLErrorReset();
   return bUseExceptions;
 }
 
+static
 void UseExceptions() {
   CPLErrorReset();
   if( !bUseExceptions )
@@ -3198,6 +3200,7 @@ void UseExceptions() {
   }
 }
 
+static
 void DontUseExceptions() {
   CPLErrorReset();
   if( bUseExceptions )
@@ -3304,7 +3307,7 @@ typedef struct {
 /*                          PyProgressProxy()                           */
 /************************************************************************/
 
-int CPL_STDCALL
+static int CPL_STDCALL
 PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 {
@@ -5127,10 +5130,12 @@ OGRwkbGeometryType GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSet
   }
 
 
+static
 OGRDriverShadow* GetDriverByName( char const *name ) {
   return (OGRDriverShadow*) OGRGetDriverByName( name );
 }
 
+static
 OGRDriverShadow* GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
 }
@@ -5152,6 +5157,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
   }
 
 
+static
 int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
   return GDALTermProgress( dfProgress, pszMessage, pData);
 }

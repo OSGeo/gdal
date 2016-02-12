@@ -4,10 +4,10 @@
  * it was moved into this file.
  */
 %{
-int bUseExceptions=0;
-CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
+static int bUseExceptions=0;
+static CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
-void CPL_STDCALL
+static void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 {
   /*
@@ -35,11 +35,13 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 
 %inline %{
 
+static
 int GetUseExceptions() {
   CPLErrorReset();
   return bUseExceptions;
 }
 
+static
 void UseExceptions() {
   CPLErrorReset();
   if( !bUseExceptions )
@@ -50,6 +52,7 @@ void UseExceptions() {
   }
 }
 
+static
 void DontUseExceptions() {
   CPLErrorReset();
   if( bUseExceptions )

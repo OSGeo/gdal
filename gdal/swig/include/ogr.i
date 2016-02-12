@@ -3144,10 +3144,12 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 #ifndef FROM_GDAL_I
 
 %inline %{
+static
 OGRDriverShadow* GetDriverByName( char const *name ) {
   return (OGRDriverShadow*) OGRGetDriverByName( name );
 }
 
+static
 OGRDriverShadow* GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
 }
@@ -3164,6 +3166,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
 /* Interface method added for GDAL 1.7.0 */
 #ifdef SWIGJAVA
 %inline %{
+  static
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
 
@@ -3238,6 +3241,7 @@ class GeometryNative {
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
 %inline %{
+static
 int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
   return GDALTermProgress( dfProgress, pszMessage, pData);
 }
