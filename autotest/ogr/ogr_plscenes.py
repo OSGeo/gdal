@@ -1365,6 +1365,310 @@ def ogr_plscenes_v1_nominal():
     return 'success'
 
 ###############################################################################
+# Test robustness to errors in V1 API
+
+def ogr_plscenes_v1_errors():
+
+    if gdaltest.plscenes_drv is None:
+        return 'skip'
+
+    # Invalid JSON
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{invalid_json')
+    with gdaltest.error_handler():
+        gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+        ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+        gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Not an object
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', 'false')
+    with gdaltest.error_handler():
+        gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+        ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+        gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Lack of "catalogs"
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{}')
+    with gdaltest.error_handler():
+        gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+        ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+        gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid catalog objects
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', """{"catalogs": [{}, [], null, {"id":null},
+    {"id":"foo"},{"id":"foo", "links":null},{"id":"foo", "links":[]},{"id":"foo", "links":{}},
+    {"id":"foo", "links":{"spec": []}}, {"id":"foo", "links":{"spec": "x", "items": []}}]}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid next URL
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": { "_next": "/vsimem/inexisting" }, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    with gdaltest.error_handler():
+        lyr_count = ds.GetLayerCount()
+    if lyr_count != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/invalid_spec"}, "id": "my_catalog"}]}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn().GetFieldCount()
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+
+    # Test various errors in spec
+    for spec in [ '{}', # no path 
+                  '{ "paths": [] }', # bad type
+                  '{ "paths": {} }', # no path for /vsimem/v1/catalogs/my_catalog/items/
+                  '{ "paths": { "/catalogs/my_catalog/items/" : false } }', # wrong type
+                  '{ "paths": { "/catalogs/my_catalog/items/" : {} } }', # no schema
+                  """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "$ref": "#/definitions/ItemPage"
+                                }
+                            }
+                        }
+                    }} } }""", # wrong link
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "$ref": "#/definitions/ItemPage"
+                                }
+                            }
+                        }
+                    }} },
+                        "definitions" :
+                        {
+                            "ItemPage": {}
+                        }
+                        }""", # Cannot find ItemPage allOf
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": false
+                                }
+                            }
+                        }
+                    }} }}""", # Cannot find ItemPage properties
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {}
+                                }
+                            }
+                        }
+                    }} }}""", # Cannot find ItemPage properties.features.items
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "$ref": "#/definitions/Item"
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # Cannot find object 'Item' of '#/definitions/Item'
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # Cannot find Item allOf
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": false
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # Cannot find Item properties
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # Cannot find Item properties.properties
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                        "$ref": "inexisting"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # Cannot expand ref inexisting
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        },
+                        "parameters": false
+                       }}}}""", # Invalid parameters
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        },
+                        "parameters": [
+                            null,
+                            false,
+                            {
+                                "$ref": "inexisting2"
+                            },
+                            {},
+                            {"name":false},
+                            {"name":""},
+                            {"name":"","in":false},
+                            {"name":"","in":"foo"}
+                        ]
+                       }}}}""", # Invalid parameters
+
+                        ]:
+        gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+        ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+        gdal.SetConfigOption('PL_URL', None)
+        lyr = ds.GetLayer(0)
+
+        gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/spec', spec)
+        with gdaltest.error_handler():
+            lyr.GetLayerDefn().GetFieldCount()
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/spec',
+    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""")
+
+    # Cannot find /vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000
+    with gdaltest.error_handler():
+        lyr.GetNextFeature()
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000', '{}')
+    lyr.ResetReading()
+    lyr.GetNextFeature()
+
+    gdal.Unlink('/vsimem/v1/catalogs')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/spec')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000')
+
+    return 'success'
+
+###############################################################################
 # Test V1 API against real server
 
 def ogr_plscenes_v1_live():
@@ -1450,6 +1754,7 @@ gdaltest_list = [
     ogr_plscenes_v1_catalog_no_paging,
     ogr_plscenes_v1_catalog_paging,
     ogr_plscenes_v1_nominal,
+    ogr_plscenes_v1_errors,
     ogr_plscenes_v1_live
     ]
 
