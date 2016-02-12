@@ -399,12 +399,12 @@ OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
 OGRErr CPL_DLL OSRSetGeocCS( OGRSpatialReferenceH hSRS, const char * pszName );
 OGRErr CPL_DLL OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
                                       const char * pszName );
-OGRErr CPL_DLL CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS, 
+OGRErr CPL_DLL CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
                                     const char * );
-OGRErr CPL_DLL OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS, 
-                                  OGRSpatialReferenceH hSrcSRS );
-OGRErr CPL_DLL OSRSetTOWGS84( OGRSpatialReferenceH hSRS, 
-                              double, double, double, 
+OGRErr CPL_DLL OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
+                                  const OGRSpatialReferenceH hSrcSRS );
+OGRErr CPL_DLL OSRSetTOWGS84( OGRSpatialReferenceH hSRS,
+                              double, double, double,
                               double, double, double, double );
 OGRErr CPL_DLL OSRGetTOWGS84( OGRSpatialReferenceH hSRS, double *, int );
 
