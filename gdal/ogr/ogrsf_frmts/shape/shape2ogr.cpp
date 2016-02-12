@@ -653,11 +653,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_ARCZ )
     {
         OGRGeometry     *poForcedGeom;
-        double          *padfX=NULL, *padfY=NULL, *padfZ=NULL;
+        double          *padfX=NULL, *padfY=NULL, *padfZ=NULL, *padfM=NULL;
         int             iGeom, iPoint, nPointCount = 0;
         SHPObject       *psShape;
         int             *panRingStart;
         int             nParts = 0;
+        const bool       bSupportMeasures =
+            hSHP->nShapeType == SHPT_ARCM ||
+             (hSHP->nShapeType == SHPT_ARCZ && poGeom->IsMeasured());
 
         poForcedGeom = OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
 
@@ -698,12 +701,19 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 CPLRealloc( padfY, sizeof(double)*(nNewPoints+nPointCount) );
             padfZ = (double *) 
                 CPLRealloc( padfZ, sizeof(double)*(nNewPoints+nPointCount) );
+            if( bSupportMeasures )
+            {
+                padfM = (double *) 
+                    CPLRealloc( padfM, sizeof(double)*(nNewPoints+nPointCount) );
+            }
 
             for( iPoint = 0; iPoint < nNewPoints; iPoint++ )
             {
                 padfX[nPointCount] = poArc->getX( iPoint );
                 padfY[nPointCount] = poArc->getY( iPoint );
                 padfZ[nPointCount] = poArc->getZ( iPoint );
+                if( bSupportMeasures )
+                    padfM[nPointCount] = poArc->getM( iPoint );
                 nPointCount++;
             }
         }
@@ -713,7 +723,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         psShape = SHPCreateObject( hSHP->nShapeType, iShape, 
                                     nParts, 
                                     panRingStart, NULL,
-                                    nPointCount, padfX, padfY, padfZ, NULL);
+                                    nPointCount, padfX, padfY, padfZ, padfM);
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
@@ -721,6 +731,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         CPLFree( padfX );
         CPLFree( padfY );
         CPLFree( padfZ );
+        CPLFree( padfM );
 
         delete poML;
         if( nReturnedShapeID == -1 )
