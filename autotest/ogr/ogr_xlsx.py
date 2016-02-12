@@ -428,6 +428,26 @@ def ogr_xlsx_10():
 
     return 'success'
 
+###############################################################################
+# Test reading sheet with more than 26 columns with holes (#6363)"
+
+def ogr_xlsx_11():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/not_all_columns_present.xlsx')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in (0,27,28,29):
+        if f['Field%d' % (i+1)] != 'val%d' % (i+1):
+            f.DumpReadable()
+            return 'fail'
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     ogr_xlsx_1,
     ogr_xlsx_2,
@@ -438,7 +458,8 @@ gdaltest_list = [
     ogr_xlsx_7,
     ogr_xlsx_8,
     ogr_xlsx_9,
-    ogr_xlsx_10
+    ogr_xlsx_10,
+    ogr_xlsx_11
 ]
 
 if __name__ == '__main__':
