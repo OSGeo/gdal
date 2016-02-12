@@ -537,10 +537,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         dfX = poPoint->getX();
         dfY = poPoint->getY();
         dfZ = poPoint->getZ();
-        dfM = poPoint->getM();
+        dfM = poPoint->getM(); // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
 
         psShape = SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL, 1,
-                                   &dfX, &dfY, &dfZ, &dfM );
+                                   &dfX, &dfY, &dfZ, poGeom->IsMeasured() ? &dfM : NULL );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         if( nReturnedShapeID == -1 )
@@ -584,7 +584,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 padfX[iDstPoints] = poPoint->getX();
                 padfY[iDstPoints] = poPoint->getY();
                 padfZ[iDstPoints] = poPoint->getZ();
-                padfM[iDstPoints] = poPoint->getM();
+                padfM[iDstPoints] = poPoint->getM();  // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
                 iDstPoints ++;
             }
             else
@@ -594,7 +594,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
         psShape = SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL,
                                    iDstPoints,
-                                   padfX, padfY, padfZ, padfM );
+                                   padfX, padfY, padfZ, poGeom->IsMeasured() ? padfM : NULL );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
@@ -629,12 +629,12 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             padfX[iPoint] = poArc->getX( iPoint );
             padfY[iPoint] = poArc->getY( iPoint );
             padfZ[iPoint] = poArc->getZ( iPoint );
-            padfM[iPoint] = poArc->getM( iPoint );
+            padfM[iPoint] = poArc->getM( iPoint ); // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
         }
 
         psShape = SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL,
                                    poArc->getNumPoints(),
-                                   padfX, padfY, padfZ, padfM );
+                                   padfX, padfY, padfZ, poGeom->IsMeasured() ? padfM : NULL );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
@@ -877,14 +877,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 padfX[nVertex] = poRing->getX( iPoint );
                 padfY[nVertex] = poRing->getY( iPoint );
                 padfZ[nVertex] = poRing->getZ( iPoint );
-                padfM[nVertex] = poRing->getM( iPoint );
+                padfM[nVertex] = poRing->getM( iPoint ); // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
                 nVertex++;
             }
         }
 
         SHPObject* psShape = SHPCreateObject( hSHP->nShapeType, iShape, nRings,
                                    panRingStart, NULL,
-                                   nVertex, padfX, padfY, padfZ, padfM );
+                                   nVertex, padfX, padfY, padfZ, poGeom->IsMeasured() ? padfM : NULL );
         if( bRewind )
             SHPRewindObject( hSHP, psShape );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
@@ -1149,7 +1149,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
             /*
             * NOTE - mloskot:
-            * Two possibilities are expected here (bot hare tested by GDAL Autotests):
+            * Two possibilities are expected here (both are tested by GDAL Autotests):
             * 1. Read valid geometry and assign it directly.
             * 2. Read and assign null geometry if it can not be read correctly from a shapefile
             *

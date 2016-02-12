@@ -649,7 +649,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
  * without assigning new one.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is invalid,
- * or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
+ * or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
  * OGRFeatureDefn (checking not yet implemented).
  *
  * @since GDAL 1.11
@@ -664,13 +664,43 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
         return OGRERR_FAILURE;
     }
 
+    // (Verify the type) and set/unset flags.
+    OGRwkbGeometryType eMyGeomType = poDefn->GetGeomFieldDefn(iField)->GetType();
+    
+    if( eMyGeomType != wkbUnknown )
+    {
+        OGRwkbGeometryType eGeomInType = poGeomIn->getGeometryType();
+        /*
+          This leads to segfaults in tests probably because issues with simple vs multi geometries
+          if( wkbFlatten(eGeomInType) != wkbFlatten(eMyGeomType) )
+          {
+          delete poGeomIn;
+          return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+          }
+        */
+        if( wkbHasZ(eMyGeomType) && !wkbHasZ(eGeomInType) )
+        {
+            poGeomIn->set3D(TRUE);
+        }
+        else if( !wkbHasZ(eMyGeomType) && wkbHasZ(eGeomInType) )
+        {
+            poGeomIn->set3D(FALSE);
+        }
+        if( wkbHasM(eMyGeomType) && !wkbHasM(eGeomInType) )
+        {
+            poGeomIn->setMeasured(TRUE);
+        }
+        else if( !wkbHasM(eMyGeomType) && wkbHasM(eGeomInType) )
+        {
+            poGeomIn->setMeasured(FALSE);
+        }
+    }
+        
     if( papoGeometries[iField] != poGeomIn )
     {
         delete papoGeometries[iField];
         papoGeometries[iField] = poGeomIn;
     }
-
-    // I should be verifying that the geometry matches the defn's type.
 
     return OGRERR_NONE;
 }
