@@ -48,7 +48,8 @@ typedef void OGRGeometryShadow;
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
 %inline %{
-int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
+static int
+GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
   return GDALTermProgress( dfProgress, pszMessage, pData);
 }
 %}

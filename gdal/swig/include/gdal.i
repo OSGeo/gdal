@@ -740,6 +740,7 @@ int GetDriverCount() {
 
 %apply Pointer NONNULL { char const *name };
 %inline %{
+static
 GDALDriverShadow* GetDriverByName( char const *name ) {
   return (GDALDriverShadow*) GDALGetDriverByName( name );
 }
@@ -754,6 +755,7 @@ GDALDriverShadow* GetDriver( int i ) {
 #ifdef SWIGJAVA
 %newobject Open;
 %inline %{
+static
 GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
   CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
@@ -868,6 +870,7 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 
 #ifdef SWIGJAVA
 %inline %{
+  static
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
 

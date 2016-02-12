@@ -3120,10 +3120,10 @@ typedef int RETURN_NONE;
 typedef int VSI_RETVAL;
 
 
-int bUseExceptions=0;
-CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
+static int bUseExceptions=0;
+static CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
-void CPL_STDCALL
+static void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 {
   /*
@@ -3150,11 +3150,13 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 
 
 
+static
 int GetUseExceptions() {
   CPLErrorReset();
   return bUseExceptions;
 }
 
+static
 void UseExceptions() {
   CPLErrorReset();
   if( !bUseExceptions )
@@ -3165,6 +3167,7 @@ void UseExceptions() {
   }
 }
 
+static
 void DontUseExceptions() {
   CPLErrorReset();
   if( bUseExceptions )
@@ -3477,7 +3480,7 @@ typedef struct {
 /*                          PyProgressProxy()                           */
 /************************************************************************/
 
-int CPL_STDCALL
+static int CPL_STDCALL
 PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 {
@@ -5281,7 +5284,8 @@ typedef void OGRGeometryShadow;
 #endif
 
 
-int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
+static int
+GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
   return GDALTermProgress( dfProgress, pszMessage, pData);
 }
 
@@ -5817,6 +5821,7 @@ int GetDriverCount() {
 }
 
 
+static
 GDALDriverShadow* GetDriverByName( char const *name ) {
   return (GDALDriverShadow*) GDALGetDriverByName( name );
 }
