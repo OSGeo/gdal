@@ -386,11 +386,11 @@ def ogr_xlsx_9():
 
 def ogr_xlsx_10():
 
-    drv = ogr.GetDriverByName('ODS')
+    drv = ogr.GetDriverByName('XLSX')
     if drv is None:
         return 'skip'
 
-    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_10.ods')
+    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_10.xlsx')
     lyr = ds.CreateLayer('foo')
     lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTDateTime))
     lyr.CreateField(ogr.FieldDefn('Field2', ogr.OFTDateTime))
@@ -403,7 +403,7 @@ def ogr_xlsx_10():
     f = None
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_xlsx_10.ods')
+    ds = ogr.Open('/vsimem/ogr_xlsx_10.xlsx')
     lyr = ds.GetLayer(0)
     for i in range(3):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
@@ -424,7 +424,7 @@ def ogr_xlsx_10():
         return 'fail'
     ds = None
 
-    gdal.Unlink('/vsimem/ogr_xlsx_10.ods')
+    gdal.Unlink('/vsimem/ogr_xlsx_10.xlsx')
 
     return 'success'
 
