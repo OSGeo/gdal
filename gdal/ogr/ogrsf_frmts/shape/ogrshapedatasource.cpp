@@ -590,22 +590,22 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
     }
     else if( EQUAL(pszOverride,"POINTZM") )
     {
-        nShapeType = SHPT_POINTM;
+        nShapeType = SHPT_POINTZ;
         eType = wkbPointZM;
     }
     else if( EQUAL(pszOverride,"ARCZM") )
     {
-        nShapeType = SHPT_ARCM;
+        nShapeType = SHPT_ARCZ;
         eType = wkbLineStringZM;
     }
     else if( EQUAL(pszOverride,"POLYGONZM") )
     {
-        nShapeType = SHPT_POLYGONM;
+        nShapeType = SHPT_POLYGONZ;
         eType = wkbPolygonZM;
     }
     else if( EQUAL(pszOverride,"MULTIPOINTZM") )
     {
-        nShapeType = SHPT_MULTIPOINTM;
+        nShapeType = SHPT_MULTIPOINTZ;
         eType = wkbMultiPointZM;
     }
     else if( EQUAL(pszOverride,"NONE") || EQUAL(pszOverride,"NULL") )
