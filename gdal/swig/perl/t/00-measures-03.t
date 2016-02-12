@@ -8,6 +8,11 @@ BEGIN { use_ok('Geo::GDAL') };
 # test measured geometries in shape driver
 
 my @data = (
+    PointZ => 'POINT Z (1 2 3)',
+    LineStringZ => 'LINESTRING Z (1 2 3)',
+    PolygonZ => 'POLYGON Z ((1 2 3))',
+    MultiPointZ => 'MULTIPOINT Z ((1 2 3))',
+
     PointM => 'POINT M (1 2 3)',
     LineStringM => 'LINESTRING M (1 2 3)',
     PointZM => 'POINT ZM (1 2 3 4)',
@@ -34,11 +39,12 @@ my @data = (
 );
 
 my $driver = 'ESRI Shapefile';
+my $dir = '/vsimem/';
 
 for (my $i = 0; $i < @data; $i+=2) {
     my $type = $data[$i];
     #next unless $type eq 'CompoundCurveM';
-    my $l = Geo::OGR::Driver($driver)->Create('/vsimem/test.shp')->CreateLayer(GeometryType => $type);
+    my $l = Geo::OGR::Driver($driver)->Create($dir.$type.'.shp')->CreateLayer(GeometryType => $type);
     eval {
         my $g = Geo::OGR::Geometry->new(WKT => $data[$i+1]);
         $l->InsertFeature({Geometry => {WKT => $data[$i+1]}});
@@ -49,10 +55,20 @@ for (my $i = 0; $i < @data; $i+=2) {
         ok(0, "$driver, insert feature: $type => $data[$i+1] ($e[0])");
         next;
     }
+    #next;
+
+    # close and open
+    undef $l;
+    $l = Geo::OGR::Open($dir)->GetLayer($type);
+    my $t = $l->GeometryType;
+    $t =~ s/25D/Z/;
+    ok($t eq $type, "$driver layer geom type: expected: $type, got: $t");
+
     $l->ResetReading;
     while (my $f = $l->GetNextFeature()) {
         my $g = $f->GetGeometryRef;
         my $t = $g->GeometryType;
+        $t =~ s/25D/Z/;
         ok($t eq $type, "$driver retrieve feature: expected: $type, got: $t");
         my $wkt = $g->As(Format => 'ISO WKT');
         ok($wkt eq $data[$i+1], "$driver retrieve feature: $type, expected: $data[$i+1] got: $wkt");

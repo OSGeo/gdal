@@ -151,8 +151,31 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     OGRwkbGeometryType eGeomType = poFeatureDefn->GetGeomType();
     if( eGeomType != wkbNone )
     {
+        OGRwkbGeometryType eType;
+
+        if( eRequestedGeomType == wkbNone )
+        {
+            eType = eGeomType;
+
+            if( hSHP->nRecords > 0 && hDBF->nRecords > 0 )
+            {
+                SHPObject   *psShape = SHPReadObject( hSHP, 0 );
+                if( psShape )
+                {
+                    if( wkbHasM(eType) && !psShape->bMeasureIsUsed )
+                        eType = OGR_GT_SetModifier(eType, wkbHasZ(eType), FALSE);
+                        
+                    SHPDestroyObject(psShape);
+                }
+            }
+            
+        }
+        else
+            eType = eRequestedGeomType;
+
         OGRShapeGeomFieldDefn* poGeomFieldDefn =
-            new OGRShapeGeomFieldDefn(pszFullName, eGeomType, bSRSSetIn, poSRSIn);
+            //new OGRShapeGeomFieldDefn(pszFullName, eGeomType, bSRSSetIn, poSRSIn);
+            new OGRShapeGeomFieldDefn(pszFullName, eType, bSRSSetIn, poSRSIn);
         poFeatureDefn->SetGeomType(wkbNone);
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
     }
