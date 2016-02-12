@@ -730,7 +730,7 @@ MAKE	=	nmake /nologo
 CC	=	cl
 !ENDIF
 
-INSTALL	=	xcopy /y /r /d /f
+INSTALL	=	xcopy /y /r /d /f /I
 
 CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
 
