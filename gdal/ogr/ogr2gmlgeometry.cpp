@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************
  *
@@ -33,19 +33,19 @@
  *   overflows and stack corruptions if caller could be trusted.
  *
  * Security Audit 2003/03/28 warmerda:
- *   Completed security audit.  I believe that this module may be safely used 
+ *   Completed security audit.  I believe that this module may be safely used
  *   to generate GML from arbitrary but well formed OGRGeomety objects that
  *   come from a potentially hostile source, but through a trusted OGR importer
  *   without compromising the system.
  *
  */
 
-#include "cpl_minixml.h"
-#include "ogr_geometry.h"
-#include "ogr_api.h"
-#include "ogr_p.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
+#include "ogr_api.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
 
 #define SRSDIM_LOC_GEOMETRY (1 << 0)
 #define SRSDIM_LOC_POSLIST  (1 << 1)
