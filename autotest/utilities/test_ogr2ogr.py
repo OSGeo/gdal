@@ -354,7 +354,7 @@ def test_ogr2ogr_11():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygonZM:
+    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
         return 'fail'
     ds.Destroy()
 
@@ -378,7 +378,7 @@ def test_ogr2ogr_12():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygonZM:
+    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
         return 'fail'
     ds.Destroy()
 
@@ -1532,7 +1532,7 @@ def test_ogr2ogr_43():
 
     ds = ogr.Open('tmp/test_ogr2ogr_43_3d.shp')
     lyr = ds.GetLayerByIndex(0)
-    if lyr.GetGeomType() != ogr.wkbPolygonZM:
+    if lyr.GetGeomType() != ogr.wkbPolygon25D:
         return 'fail'
     ds = None
 
