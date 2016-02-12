@@ -201,7 +201,7 @@ def test_ogr2ogr_lib_7():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('/vsimem/poly.shp', srcDS, layerCreationOptions=['SHPT=POLYGONZ'])
-    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygonZM:
+    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
         return 'fail'
 
     ds = None
