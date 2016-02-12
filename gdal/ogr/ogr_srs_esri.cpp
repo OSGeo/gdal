@@ -39,28 +39,28 @@
 CPL_CVSID("$Id$");
 
 void  SetNewName( OGRSpatialReference* pOgr, const char* keyName, const char* newName );
-int   RemapImgWGSProjcsName(OGRSpatialReference* pOgr, const char* pszProjCSName, 
+int   RemapImgWGSProjcsName(OGRSpatialReference* pOgr, const char* pszProjCSName,
                             const char* pszProgCSName);
-int   RemapImgUTMNames(OGRSpatialReference* pOgr, const char* pszProjCSName, 
+int   RemapImgUTMNames(OGRSpatialReference* pOgr, const char* pszProjCSName,
                        const char* pszProgCSName, char **mappingTable);
-int   RemapNameBasedOnKeyName(OGRSpatialReference* pOgr, const char* pszName, 
+int   RemapNameBasedOnKeyName(OGRSpatialReference* pOgr, const char* pszName,
                              const char* pszkeyName, char **mappingTable);
-int   RemapNamesBasedOnTwo(OGRSpatialReference* pOgr, const char* name1, const char* name2, 
-                             char **mappingTable, int nTableStepSize, 
+int   RemapNamesBasedOnTwo(OGRSpatialReference* pOgr, const char* name1, const char* name2,
+                             char **mappingTable, int nTableStepSize,
                              char** pszkeyNames, long nKeys);
-int   RemapPValuesBasedOnProjCSAndPName(OGRSpatialReference* pOgr, 
+int   RemapPValuesBasedOnProjCSAndPName(OGRSpatialReference* pOgr,
                              const char* pszProgCSName, char **mappingTable);
-int   RemapPNamesBasedOnProjCSAndPName(OGRSpatialReference* pOgr, 
+int   RemapPNamesBasedOnProjCSAndPName(OGRSpatialReference* pOgr,
                              const char* pszProgCSName, char **mappingTable);
-int   DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr, 
+int   DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr,
                              const char* pszProjectionName, char **mappingTable);
-int   AddParamBasedOnPrjName( OGRSpatialReference* pOgr, 
+int   AddParamBasedOnPrjName( OGRSpatialReference* pOgr,
                              const char* pszProjectionName, char **mappingTable);
 int   RemapGeogCSName(OGRSpatialReference* pOgr, const char *pszGeogCSName);
 
 extern void OGREPSGDatumNameMassage( char ** ppszDatum );
 
-CPL_C_START 
+CPL_C_START
 void CleanupESRIDatumMappingTable(void);
 CPL_C_END
 
@@ -71,24 +71,24 @@ static const char * const apszProjMapping[] = {
     "Cassini", SRS_PT_CASSINI_SOLDNER,
     "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
     "Plate_Carree", SRS_PT_EQUIRECTANGULAR,
-    "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
+    "Hotine_Oblique_Mercator_Azimuth_Natural_Origin",
                                         SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP,
     "Van_der_Grinten_I", SRS_PT_VANDERGRINTEN,
     SRS_PT_TRANSVERSE_MERCATOR, SRS_PT_TRANSVERSE_MERCATOR,
     "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
-    NULL, NULL }; 
+    NULL, NULL };
 
 static const char * const apszAlbersMapping[] = {
-    SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
+    SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     "Central_Parallel", SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
 static const char * const apszECMapping[] = {
-    SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
-    SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER, 
+    SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER,
+    SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
 static const char * const apszPolarStereographicMapping[] = {
@@ -110,7 +110,7 @@ static CPLMutex* hDatumMappingMutex = NULL;
 static const char * const apszDefaultDatumMapping[] = {
     "6267", "North_American_1927", SRS_DN_NAD27,
     "6269", "North_American_1983", SRS_DN_NAD83,
-    NULL, NULL, NULL }; 
+    NULL, NULL, NULL };
 
 static const char * const apszSpheroidMapping[] = {
     "WGS_84", "WGS_1984",
@@ -118,21 +118,21 @@ static const char * const apszSpheroidMapping[] = {
     "GRS_1967_Modified", "GRS_1967_Truncated",
     "Krassowsky_1940", "Krasovsky_1940",
     "Everest_1830_1937_Adjustment", "Everest_Adjustment_1937",
-    NULL, NULL }; 
+    NULL, NULL };
 
 static const char * const apszUnitMapping[] = {
     "Meter", "meter",
     "Meter", "metre",
     "Foot", "foot",
     "Foot", "feet",
-    "Foot", "international_feet", 
+    "Foot", "international_feet",
     "Foot_US", SRS_UL_US_FOOT,
     "Foot_Clarke", "clarke_feet",
     "Degree", "degree",
     "Degree", "degrees",
     "Degree", SRS_UA_DEGREE,
     "Radian", SRS_UA_RADIAN,
-    NULL, NULL }; 
+    NULL, NULL };
 
 /* -------------------------------------------------------------------- */
 /*      Table relating USGS and ESRI state plane zones.                 */
@@ -277,7 +277,7 @@ static const int anUsgsEsriZones[] =
  5200, 6076,
  5201, 6051,
  5202, 6051,
- 5300,    0, 
+ 5300,    0,
  5400,    0
 };
 
@@ -352,7 +352,7 @@ static void MorphNameToESRI( char ** ppszName )
 /* -------------------------------------------------------------------- */
 /*      Remove repeated and trailing underscores.                       */
 /* -------------------------------------------------------------------- */
-    int j = 0;
+    int j = 0;  // Used after the for loop.
     for( int i = 1; pszName[i] != '\0'; i++ )
     {
         if( pszName[j] == '_' && pszName[i] == '_' )
@@ -370,7 +370,7 @@ static void MorphNameToESRI( char ** ppszName )
 /*                     CleanESRIDatumMappingTable()                     */
 /************************************************************************/
 
-CPL_C_START 
+CPL_C_START
 void CleanupESRIDatumMappingTable()
 
 {
@@ -435,7 +435,7 @@ static void InitDatumMappingTable()
                   "Failed to find required field in gdal_datum.csv in "
                   "InitDatumMappingTable(), using default table setup." );
 
-        papszDatumMapping = (char **)apszDefaultDatumMapping;
+        papszDatumMapping = const_cast<char **>(apszDefaultDatumMapping);
         VSIFClose( fp );
         return;
     }
@@ -517,7 +517,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 
     if( STARTS_WITH_CI(pszField, "PARAM_") )
     {
-        int iLine = 0;
+        int iLine = 0;  // iLine is used after the for loop.
         for( ;
              papszNV[iLine] != NULL &&
                  !STARTS_WITH_CI(papszNV[iLine], "Paramet");
@@ -575,7 +575,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
         return dfDefaultValue;
     }
 
-    int iLine = 0;
+    int iLine = 0;  // iLine used after for loop.
     for( ;
          papszNV[iLine] != NULL &&
              !EQUALN(papszNV[iLine],pszField,strlen(pszField));
@@ -598,7 +598,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
     if( papszNV == NULL || papszNV[0] == NULL )
         return pszDefaultValue;
 
-    int iLine = 0;
+    int iLine = 0;  // iLine used after for loop.
     for( ;
          papszNV[iLine] != NULL &&
              !EQUALN(papszNV[iLine],pszField,strlen(pszField));
@@ -1062,6 +1062,8 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
 /* -------------------------------------------------------------------- */
+    // TODO(schwehr): How is applyRemapper safe with
+    //   static const char * const apszProjMapping[]?
     GetRoot()->applyRemapper( "PROJECTION",
                               const_cast<char **>(apszProjMapping+1),
                               const_cast<char **>(apszProjMapping),
@@ -2094,7 +2096,8 @@ int RemapImgUTMNames( OGRSpatialReference* pOgr, const char* pszProjCSName,
 /*      Convert a name to ESRI style name                               */
 /************************************************************************/
 
-int RemapNameBasedOnKeyName( OGRSpatialReference* pOgr, const char* pszName, const char* pszkeyName, 
+int RemapNameBasedOnKeyName( OGRSpatialReference* pOgr, const char* pszName,
+                             const char* pszkeyName,
                              char **mappingTable )
 {
     int iIndex = -1;
@@ -2289,7 +2292,7 @@ int DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr,
 /*                                                                      */
 /*      Add ESRI style parameters                                       */
 /************************************************************************/
-int AddParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjectionName, 
+int AddParamBasedOnPrjName( OGRSpatialReference* pOgr, const char* pszProjectionName,
                             char **mappingTable )
 {
     int ret = -1;
@@ -2334,6 +2337,8 @@ int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
 
     const char* pszUnitName = pOgr->GetAttrValue( "GEOGCS|UNIT");
     if(pszUnitName)
+        // TODO(schwehr): Figure out a safer way to rename.
+        //   The casting away const here looks dangerous.
         ret = RemapNamesBasedOnTwo(
             pOgr, pszGeogCSName+4, pszUnitName,
             const_cast<char**>(apszGcsNameMappingBasedOnUnit),
