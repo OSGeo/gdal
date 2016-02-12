@@ -157,12 +157,12 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         {
             eType = eGeomType;
 
-            if( hSHP->nRecords > 0 && hDBF->nRecords > 0 )
+            if( (hSHP != NULL) && (hSHP->nRecords > 0) && wkbHasM(eType) )
             {
                 SHPObject   *psShape = SHPReadObject( hSHP, 0 );
                 if( psShape )
                 {
-                    if( wkbHasM(eType) && !psShape->bMeasureIsUsed )
+                    if( !psShape->bMeasureIsUsed )
                         eType = OGR_GT_SetModifier(eType, wkbHasZ(eType), FALSE);
                         
                     SHPDestroyObject(psShape);

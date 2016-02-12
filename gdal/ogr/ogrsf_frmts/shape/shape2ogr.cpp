@@ -1156,27 +1156,30 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
             * It's NOT required here to test poGeometry == NULL.
             */
 
-            // (Verify the type) and set/unset flags.
-            OGRwkbGeometryType eMyGeomType = poFeature->GetDefnRef()->GetGeomFieldDefn(0)->GetType();
-    
-            if( eMyGeomType != wkbUnknown )
+            if (poGeometry)
             {
-                OGRwkbGeometryType eGeomInType = poGeometry->getGeometryType();
-                if( wkbHasZ(eMyGeomType) && !wkbHasZ(eGeomInType) )
+                /* Set/unset flags. */
+                OGRwkbGeometryType eMyGeomType = poFeature->GetDefnRef()->GetGeomFieldDefn(0)->GetType();
+    
+                if( eMyGeomType != wkbUnknown )
                 {
-                    poGeometry->set3D(TRUE);
-                }
-                else if( !wkbHasZ(eMyGeomType) && wkbHasZ(eGeomInType) )
-                {
-                    poGeometry->set3D(FALSE);
-                }
-                if( wkbHasM(eMyGeomType) && !wkbHasM(eGeomInType) )
-                {
-                    poGeometry->setMeasured(TRUE);
-                }
-                else if( !wkbHasM(eMyGeomType) && wkbHasM(eGeomInType) )
-                {
-                    poGeometry->setMeasured(FALSE);
+                    OGRwkbGeometryType eGeomInType = poGeometry->getGeometryType();
+                    if( wkbHasZ(eMyGeomType) && !wkbHasZ(eGeomInType) )
+                    {
+                        poGeometry->set3D(TRUE);
+                    }
+                    else if( !wkbHasZ(eMyGeomType) && wkbHasZ(eGeomInType) )
+                    {
+                        poGeometry->set3D(FALSE);
+                    }
+                    if( wkbHasM(eMyGeomType) && !wkbHasM(eGeomInType) )
+                    {
+                        poGeometry->setMeasured(TRUE);
+                    }
+                    else if( !wkbHasM(eMyGeomType) && wkbHasM(eGeomInType) )
+                    {
+                        poGeometry->setMeasured(FALSE);
+                    }
                 }
             }
             
