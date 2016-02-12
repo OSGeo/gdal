@@ -1,5 +1,5 @@
 
-OBJ	=	ogrplscenesdataset.obj ogrplsceneslayer.obj
+OBJ	=	ogrplscenesdriver.obj ogrplscenesdataset.obj ogrplscenesv1dataset.obj ogrplsceneslayer.obj ogrplscenesv1layer.obj
 EXTRAFLAGS =	-I.. -I..\..  -I..\geojson -I..\geojson\libjson
 
 GDAL_ROOT	=	..\..\..
