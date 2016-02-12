@@ -664,20 +664,21 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
         return OGRERR_FAILURE;
     }
 
+    /*
     // (Verify the type) and set/unset flags.
     OGRwkbGeometryType eMyGeomType = poDefn->GetGeomFieldDefn(iField)->GetType();
     
     if( eMyGeomType != wkbUnknown )
     {
         OGRwkbGeometryType eGeomInType = poGeomIn->getGeometryType();
-        /*
+        
           This leads to segfaults in tests probably because issues with simple vs multi geometries
           if( wkbFlatten(eGeomInType) != wkbFlatten(eMyGeomType) )
           {
           delete poGeomIn;
           return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
           }
-        */
+        
         if( wkbHasZ(eMyGeomType) && !wkbHasZ(eGeomInType) )
         {
             poGeomIn->set3D(TRUE);
@@ -695,6 +696,7 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
             poGeomIn->setMeasured(FALSE);
         }
     }
+    */
         
     if( papoGeometries[iField] != poGeomIn )
     {
