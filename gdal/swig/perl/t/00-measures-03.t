@@ -19,8 +19,9 @@ my @data = (
     LineStringZM => 'LINESTRING ZM (1 2 3 4)',
     PolygonM => 'POLYGON M ((1 2 3))',
     MultiPointM => 'MULTIPOINT M ((1 2 3))',
-#    MultiLineStringM => 'MULTILINESTRING M ((1 2 3))',
-#    MultiPolygonM => 'MULTIPOLYGON M (((1 2 3)))',
+
+    MultiLineStringM => 'MULTILINESTRING M ((1 2 3))',
+    MultiPolygonM => 'MULTIPOLYGON M (((1 2 3)))',
 #    CircularStringM => 'CIRCULARSTRING M (1 2 3,1 2 3,1 2 3)',
 #    CompoundCurveM => 'COMPOUNDCURVE M ((0 1 2,2 3 4))',
 #    CurvePolygonM => 'CURVEPOLYGON M ((0 0 1,0 1 1,1 1 1,1 0 1,0 0 1))',
@@ -29,8 +30,9 @@ my @data = (
 
     PolygonZM => 'POLYGON ZM ((1 2 3 4))',
     MultiPointZM => 'MULTIPOINT ZM ((1 2 3 4))',
-#    MultiLineStringZM => 'MULTILINESTRING ZM ((1 2 3 4))',
-#    MultiPolygonZM => 'MULTIPOLYGON ZM (((1 2 3 4)))',
+
+    MultiLineStringZM => 'MULTILINESTRING ZM ((1 2 3 4))',
+    MultiPolygonZM => 'MULTIPOLYGON ZM (((1 2 3 4)))',
 #    CircularStringZM => 'CIRCULARSTRING ZM (1 2 3 4,1 2 3 4,1 2 3 4)',
 #    CompoundCurveZM => 'COMPOUNDCURVE ZM ((0 1 2 3,2 3 4 5))',
 #    CurvePolygonZM => 'CURVEPOLYGON ZM ((0 0 1 2,0 1 1 2,1 1 1 2,1 0 1 2,0 0 1 2))',
@@ -62,15 +64,25 @@ for (my $i = 0; $i < @data; $i+=2) {
     $l = Geo::OGR::Open($dir)->GetLayer($type);
     my $t = $l->GeometryType;
     $t =~ s/25D/Z/;
-    ok($t eq $type, "$driver layer geom type: expected: $type, got: $t");
+    my $exp = $type;
+    $exp =~ s/^Multi// if $exp =~ /MultiLine|MultiPoly/;
+    ok($t eq $exp, "$driver layer geom type: expected: $exp, got: $t");
 
     $l->ResetReading;
     while (my $f = $l->GetNextFeature()) {
         my $g = $f->GetGeometryRef;
         my $t = $g->GeometryType;
         $t =~ s/25D/Z/;
-        ok($t eq $type, "$driver retrieve feature: expected: $type, got: $t");
+        my $exp = $type;
+        $exp =~ s/^Multi// if $exp =~ /MultiLine|MultiPoly/;
+        ok($t eq $exp, "$driver retrieve feature: expected: $type, got: $t");
         my $wkt = $g->As(Format => 'ISO WKT');
-        ok($wkt eq $data[$i+1], "$driver retrieve feature: $type, expected: $data[$i+1] got: $wkt");
+        $exp = $data[$i+1];
+        if ($exp =~ /MULTILINE|MULTIPOLY/) {
+            $exp =~ s/^MULTI//;
+            $exp =~ s/\(\(/\(/;
+            $exp =~ s/\)\)/\)/;
+        }
+        ok($wkt eq $exp, "$driver retrieve feature: $type, expected: $exp got: $wkt");
     }
 }
