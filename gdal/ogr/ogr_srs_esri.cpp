@@ -377,7 +377,7 @@ void CleanupESRIDatumMappingTable()
     if( papszDatumMapping == NULL )
         return;
 
-    if( papszDatumMapping != const_cast<char **>(apszDefaultDatumMapping) )
+    if( papszDatumMapping != apszDefaultDatumMapping )
     {
         CSLDestroy( papszDatumMapping );
         papszDatumMapping = NULL;
@@ -990,16 +990,20 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Fixup ordering, missing linear units, etc.                      */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr = Fixup();
-    if( eErr != OGRERR_NONE )
-        return eErr;
+    {
+        const OGRErr eErr = Fixup();
+        if( eErr != OGRERR_NONE )
+            return eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Strip all CT parameters (AXIS, AUTHORITY, TOWGS84, etc).        */
 /* -------------------------------------------------------------------- */
-    eErr = StripCTParms();
-    if( eErr != OGRERR_NONE )
-        return eErr;
+    {
+        const OGRErr eErr = StripCTParms();
+        if( eErr != OGRERR_NONE )
+            return eErr;
+    }
 
     if( GetRoot() == NULL )
         return OGRERR_NONE;
