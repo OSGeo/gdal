@@ -1260,6 +1260,14 @@ def ogr_plscenes_v1_nominal():
         f.DumpReadable()
         return 'fail'
 
+    # Reset spatial filter
+    lyr.SetSpatialFilter(0, None)
+    f = lyr.GetNextFeature()
+    if f['id'] != 'id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
     # All world filter
     lyr.SetSpatialFilterRect(-1000,-1000,1000,1000)
     f = lyr.GetNextFeature()
