@@ -830,6 +830,10 @@ def ogr_plscenes_v1_catalog_paging():
     if ds.GetLayerByName('my_catalog') is None:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog_2', '{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog_2/items/", "spec": "/vsimem/v1/catalogs/my_catalog_2/spec"}, "id": "my_catalog_2"} }')
+    if ds.GetLayerByName('my_catalog_2') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if ds.GetLayerCount() != 3:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -847,6 +851,7 @@ def ogr_plscenes_v1_catalog_paging():
     gdal.Unlink('/vsimem/v1/catalogs')
     gdal.Unlink('/vsimem/v1/catalogs_page_2')
     gdal.Unlink('/vsimem/v1/catalogs_page_3')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog_2')
 
     return 'success'
 
@@ -865,6 +870,14 @@ def ogr_plscenes_v1_nominal():
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:version=v1,api_key=foo', gdal.OF_VECTOR)
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'my_catalog':
         gdaltest.post_reason('fail')
@@ -1247,6 +1260,14 @@ def ogr_plscenes_v1_nominal():
         f.DumpReadable()
         return 'fail'
 
+    # All world filter
+    lyr.SetSpatialFilterRect(-1000,-1000,1000,1000)
+    f = lyr.GetNextFeature()
+    if f['id'] != 'id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
     # Reset spatial filter
     lyr.SetSpatialFilter(None)
     f = lyr.GetNextFeature()
@@ -1274,6 +1295,15 @@ def ogr_plscenes_v1_nominal():
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]',
 """{
     "features" : [
+        {
+            "id": "filtered_0",
+            "properties": {
+                "catalog::float": 0.5,
+                "catalog::int32" : 3,
+                "catalog::string": "foo",
+                "created": "2016-02-11T12:34:56.789Z"
+            }
+        },
         {
             "id": "filtered_1",
             "properties": {
@@ -1372,6 +1402,30 @@ def ogr_plscenes_v1_errors():
     if gdaltest.plscenes_drv is None:
         return 'skip'
 
+    # No PL_API_KEY
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    old_key = gdal.GetConfigOption('PL_API_KEY')
+    if old_key:
+        gdal.SetConfigOption('PL_API_KEY', '')
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1'])
+    if old_key:
+        gdal.SetConfigOption('PL_API_KEY', old_key)
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid option
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [] }')
+    with gdaltest.error_handler():
+        gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+        ds = gdal.OpenEx('PLScenes:version=v1,api_key=foo,invalid=invalid', gdal.OF_VECTOR)
+        gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Invalid JSON
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{invalid_json')
     with gdaltest.error_handler():
@@ -1404,8 +1458,8 @@ def ogr_plscenes_v1_errors():
 
     # Invalid catalog objects
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs', """{"catalogs": [{}, [], null, {"id":null},
-    {"id":"foo"},{"id":"foo", "links":null},{"id":"foo", "links":[]},{"id":"foo", "links":{}},
-    {"id":"foo", "links":{"spec": []}}, {"id":"foo", "links":{"spec": "x", "items": []}}]}""")
+    {"id":"foo"},{"id":"foo", "_links":null},{"id":"foo", "_links":[]},{"id":"foo", "_links":{}},
+    {"id":"foo", "_links":{"spec": []}}, {"id":"foo", "_links":{"spec": "x", "items": []}}]}""")
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
@@ -1449,6 +1503,16 @@ def ogr_plscenes_v1_errors():
                             }
                         }
                     }} } }""", # wrong link
+
+                  """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "$ref": false
+                                }
+                            }
+                        }
+                    }} } }""", # invalid type for $ref
 
                     """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
                         "responses": {
@@ -1634,6 +1698,14 @@ def ogr_plscenes_v1_errors():
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
+
+    # Invalid index 
+    ds.GetLayer(-1)
+    ds.GetLayer(1)
+
+    with gdaltest.error_handler():
+        ds.GetLayerByName('invalid_name')
+
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/spec',
     """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
                         "responses": {
@@ -1658,7 +1730,13 @@ def ogr_plscenes_v1_errors():
     with gdaltest.error_handler():
         lyr.GetNextFeature()
 
+    # Empty object
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000', '{}')
+    lyr.ResetReading()
+    lyr.GetNextFeature()
+
+    # null feature
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000', '{ "features": [ null ] }')
     lyr.ResetReading()
     lyr.GetNextFeature()
 
