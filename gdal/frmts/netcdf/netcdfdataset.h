@@ -742,7 +742,7 @@ class netCDFDataset : public GDALPamDataset
     void AddGridMappingRef(); 
 
     bool GetDefineMode() { return bDefineMode; }
-    int SetDefineMode( bool bNewDefineMode );
+    bool SetDefineMode( bool bNewDefineMode );
 
     CPLErr      ReadAttributes( int, int );
 
@@ -841,7 +841,7 @@ class netCDFLayer: public OGRLayer
         std::vector<nc_type> m_anNCDFType; // as much as fields
         std::vector<int> m_anVarId; // as much as fields
         int             m_nCurFeatureId;
-        char           *m_pszCFProjection;
+        CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;
         bool            m_bUseStringInNC4;
 
@@ -867,6 +867,7 @@ class netCDFLayer: public OGRLayer
         void            SetRecordDimID(int nRecordDimID);
         void            SetXYZVars(int nXVarId, int nYVarId, int nZVarId);
         void            SetWKTGeometryField(const char* pszWKTVarName);
+        void            SetGridMapping(const char* pszGridMapping);
         bool            AddField(int nVarId);
 
         virtual void ResetReading();
