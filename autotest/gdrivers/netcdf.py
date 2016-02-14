@@ -1595,10 +1595,10 @@ def netcdf_45():
     if fp is not None:
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
-    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
-"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
-"POINT (1 2)",,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
+    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string1char,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
+"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT (1 2)",,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -1609,7 +1609,7 @@ def netcdf_45():
     if fp is not None:
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
-    expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
+    expected_content = """WKT,Integer,Integer,Real,Real,String(1),String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -1810,10 +1810,10 @@ def netcdf_51():
     if fp is not None:
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
-    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
-"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
-"POINT (1 2 0)",,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
+    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string1char,string3chars,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
+"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT (1 2 0)",,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -1824,7 +1824,7 @@ def netcdf_51():
     if fp is not None:
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
-    expected_content = """WKT,Integer,Integer,Real,Real,String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
+    expected_content = """WKT,Integer,Integer,Real,Real,String(1),String(3),Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -1834,11 +1834,13 @@ def netcdf_51():
     ds = gdal.OpenEx( 'tmp/netcdf_51.nc', gdal.OF_VECTOR | gdal.OF_UPDATE )
     lyr = ds.GetLayer(0)
     lyr.CreateField( ogr.FieldDefn('extra', ogr.OFTInteger) )
+    lyr.CreateField( ogr.FieldDefn('extra_str', ogr.OFTString) )
     f = lyr.GetNextFeature()
     if f is None:
         gdaltest.post_reason('failure')
         return 'fail'
     f['extra'] = 5
+    f['extra_str'] = 'foobar'
     if lyr.CreateFeature(f) != 0:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1847,7 +1849,7 @@ def netcdf_51():
     ds = gdal.OpenEx( 'tmp/netcdf_51.nc', gdal.OF_VECTOR )
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(lyr.GetFeatureCount())
-    if f['int32'] != 1 or f['extra'] != 5:
+    if f['int32'] != 1 or f['extra'] != 5 or f['extra_str'] != 'foobar':
         gdaltest.post_reason('failure')
         return 'fail'
     f = None
@@ -1948,6 +1950,103 @@ def netcdf_52():
     return 'success'
 
 ###############################################################################
+# Test creatin a vector NetCDF 4 file with WKT geometry field
+
+def netcdf_53():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ds = gdal.OpenEx( '../ogr/data/poly.shp', gdal.OF_VECTOR )
+    out_ds = gdal.VectorTranslate( 'tmp/netcdf_53.nc', ds, format = 'netCDF', datasetCreationOptions = ['FORMAT=NC4'] )
+    src_lyr = ds.GetLayer(0)
+    src_lyr.ResetReading()
+    out_lyr = out_ds.GetLayer(0)
+    out_lyr.ResetReading()
+    src_f = src_lyr.GetNextFeature()
+    out_f = out_lyr.GetNextFeature()
+    src_f.SetFID(-1)
+    out_f.SetFID(-1)
+    src_json = src_f.ExportToJson()
+    out_json = out_f.ExportToJson()
+    if src_json != out_json:
+        gdaltest.post_reason('failure')
+        print(src_json)
+        print(out_json)
+        return 'fail'
+    out_ds = None
+
+    out_ds = gdal.OpenEx( 'tmp/netcdf_53.nc', gdal.OF_VECTOR )
+    out_lyr = out_ds.GetLayer(0)
+    srs = out_lyr.GetSpatialRef().ExportToWkt()
+    if srs.find('PROJCS["OSGB 1936') < 0:
+        gdaltest.post_reason('failure')
+        print(srs)
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    out_f.SetFID(-1)
+    out_json = out_f.ExportToJson()
+    if src_json != out_json:
+        gdaltest.post_reason('failure')
+        print(src_json)
+        print(out_json)
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('tmp/netcdf_53.nc')
+
+    return 'success'
+
+###############################################################################
+# Test appending to a vector NetCDF 4 file with unusual types (ubyte, ushort...)
+
+def netcdf_54():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    shutil.copy( 'data/test_ogr_nc4.nc', 'tmp/netcdf_54.nc')
+
+    ds = gdal.OpenEx( 'tmp/netcdf_54.nc', gdal.OF_VECTOR | gdal.OF_UPDATE )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f['int32'] += 1
+    f.SetFID(-1)
+    f.ExportToJson()
+    src_json = f.ExportToJson()
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    ds = gdal.OpenEx( 'tmp/netcdf_54.nc', gdal.OF_VECTOR )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(lyr.GetFeatureCount())
+    f.SetFID(-1)
+    out_json = f.ExportToJson()
+    f = None
+    ds = None
+
+    gdal.Unlink('tmp/netcdf_54.nc')
+
+    if src_json != out_json:
+        gdaltest.post_reason('failure')
+        print(src_json)
+        print(out_json)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2004,7 +2103,9 @@ gdaltest_list = [
     netcdf_49,
     netcdf_50,
     netcdf_51,
-    netcdf_52
+    netcdf_52,
+    netcdf_53,
+    netcdf_54
  ]
 
 ###############################################################################

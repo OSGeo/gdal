@@ -816,6 +816,14 @@ class netCDFLayer: public OGRLayer
             double  dfVal;
         } NCDFNoDataUnion;
 
+        typedef struct
+        {
+            NCDFNoDataUnion uNoData;
+            nc_type         nType;
+            int             nVarId;
+            int             nDimCount;
+        } FieldDesc;
+
         netCDFDataset  *m_poDS;
         OGRFeatureDefn *m_poFeatureDefn;
         CPLString       m_osRecordDimName;
@@ -837,9 +845,10 @@ class netCDFLayer: public OGRLayer
         int             m_nWKTVarID;
         nc_type         m_nWKTNCDFType;
         CPLString       m_osCoordinatesValue;
-        std::vector<NCDFNoDataUnion> m_aNoData; // as much as fields
-        std::vector<nc_type> m_anNCDFType; // as much as fields
-        std::vector<int> m_anVarId; // as much as fields
+        std::vector<FieldDesc> m_aoFieldDesc;
+        //std::vector<NCDFNoDataUnion> m_aNoData; // as much as fields
+        //std::vector<nc_type> m_anNCDFType; // as much as fields
+        //std::vector<int> m_anVarId; // as much as fields
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;

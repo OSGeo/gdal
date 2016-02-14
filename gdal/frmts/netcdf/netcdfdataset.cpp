@@ -4958,34 +4958,56 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
 
     for(int i=0;i<m_poFeatureDefn->GetFieldCount();i++)
     {
-        switch( m_anNCDFType[i] )
+        switch( m_aoFieldDesc[i].nType )
         {
             case NC_CHAR:
             {
-                size_t anCount[2];
-                anCount[0] = 1;
-                anCount[1] = m_poFeatureDefn->GetFieldDefn(i)->GetWidth();
-                if( anCount[1] == 0 )
-                    anCount[1] = m_nDefaultMaxWidth;
-                char* pszVal = (char*) CPLCalloc( 1, anCount[1] + 1 );
-                int status = nc_get_vara_text( m_poDS->GetCDFID(),
-                                    m_anVarId[i],
-                                    anIndex, anCount,
-                                    pszVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
+                if( m_aoFieldDesc[i].nDimCount == 1 )
                 {
-                    CPLFree(pszVal);
-                    delete poFeature;
-                    return NULL;
+                    char szVal[] = {0,0};
+                    int status = nc_get_var1_text( m_poDS->GetCDFID(),
+                                        m_aoFieldDesc[i].nVarId,
+                                        anIndex,
+                                        szVal );
+                    if( status == NC_EINVALCOORDS || status == NC_EEDGE )
+                    {
+                        delete poFeature;
+                        return NULL;
+                    }
+                    if( status != NC_NOERR )
+                    {
+                        NCDF_ERR(status);
+                        continue;
+                    }
+                    poFeature->SetField(i, szVal);
                 }
-                if( status != NC_NOERR )
+                else
                 {
-                    NCDF_ERR(status);
+                    size_t anCount[2];
+                    anCount[0] = 1;
+                    anCount[1] = m_poFeatureDefn->GetFieldDefn(i)->GetWidth();
+                    if( anCount[1] == 0 )
+                        anCount[1] = m_nDefaultMaxWidth;
+                    char* pszVal = (char*) CPLCalloc( 1, anCount[1] + 1 );
+                    int status = nc_get_vara_text( m_poDS->GetCDFID(),
+                                        m_aoFieldDesc[i].nVarId,
+                                        anIndex, anCount,
+                                        pszVal );
+                    if( status == NC_EINVALCOORDS || status == NC_EEDGE )
+                    {
+                        CPLFree(pszVal);
+                        delete poFeature;
+                        return NULL;
+                    }
+                    if( status != NC_NOERR )
+                    {
+                        NCDF_ERR(status);
+                        CPLFree(pszVal);
+                        continue;
+                    }
+                    poFeature->SetField(i, pszVal);
                     CPLFree(pszVal);
-                    continue;
                 }
-                poFeature->SetField(i, pszVal);
-                CPLFree(pszVal);
                 break;
             }
 
@@ -4994,7 +5016,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             {
                 char* pszVal = NULL;
                 int status = nc_get_var1_string( m_poDS->GetCDFID(),
-                                    m_anVarId[i],
+                                    m_aoFieldDesc[i].nVarId,
                                     anIndex,
                                     &pszVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
@@ -5019,7 +5041,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_BYTE:
             {
                 signed char chVal = 0;
-                int status = nc_get_var1_schar( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_schar( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                 anIndex, &chVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5031,7 +5053,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( chVal == m_aNoData[i].chVal )
+                if( chVal == m_aoFieldDesc[i].uNoData.chVal )
                     continue;
                 poFeature->SetField(i, static_cast<int>(chVal));
                 break;
@@ -5041,7 +5063,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_UBYTE:
             {
                 unsigned char uchVal = 0;
-                int status = nc_get_var1_uchar( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_uchar( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                 anIndex, &uchVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5053,7 +5075,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( uchVal == m_aNoData[i].uchVal )
+                if( uchVal == m_aoFieldDesc[i].uNoData.uchVal )
                     continue;
                 poFeature->SetField(i, static_cast<int>(uchVal));
                 break;
@@ -5063,7 +5085,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_SHORT:
             {
                 short sVal = 0;
-                int status = nc_get_var1_short( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_short( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &sVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5075,7 +5097,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( sVal == m_aNoData[i].sVal )
+                if( sVal == m_aoFieldDesc[i].uNoData.sVal )
                     continue;
                 poFeature->SetField(i, static_cast<int>(sVal));
                 break;
@@ -5085,7 +5107,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_USHORT:
             {
                 unsigned short usVal = 0;
-                int status = nc_get_var1_ushort( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_ushort( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                  anIndex, &usVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5097,7 +5119,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( usVal == m_aNoData[i].usVal )
+                if( usVal == m_aoFieldDesc[i].uNoData.usVal )
                     continue;
                 poFeature->SetField(i, static_cast<int>(usVal));
                 break;
@@ -5107,7 +5129,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_INT:
             {
                 int nVal = 0;
-                int status = nc_get_var1_int( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_int( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &nVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5119,7 +5141,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( nVal == m_aNoData[i].nVal )
+                if( nVal == m_aoFieldDesc[i].uNoData.nVal )
                     continue;
                 poFeature->SetField(i, nVal);
                 break;
@@ -5134,7 +5156,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 // https://bugtracking.unidata.ucar.edu/browse/NCF-226
                 // nc_get_vara_uint() has not this bug
                 size_t nCount = 1;
-                int status = nc_get_vara_uint( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_vara_uint( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                anIndex, &nCount, &unVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5146,7 +5168,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( unVal == m_aNoData[i].unVal )
+                if( unVal == m_aoFieldDesc[i].uNoData.unVal )
                     continue;
                 poFeature->SetField(i, static_cast<GIntBig>(unVal));
                 break;
@@ -5157,7 +5179,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_INT64:
             {
                 GIntBig nVal = 0;
-                int status = nc_get_var1_longlong( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_longlong( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                         anIndex, &nVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5169,7 +5191,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( nVal == m_aNoData[i].nVal64 )
+                if( nVal == m_aoFieldDesc[i].uNoData.nVal64 )
                     continue;
                 poFeature->SetField(i, nVal);
                 break;
@@ -5179,7 +5201,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_FLOAT:
             {
                 float fVal = 0.f;
-                int status = nc_get_var1_float( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_float( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &fVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5191,7 +5213,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( fVal == m_aNoData[i].fVal )
+                if( fVal == m_aoFieldDesc[i].uNoData.fVal )
                     continue;
                 poFeature->SetField(i, static_cast<double>(fVal));
                 break;
@@ -5200,7 +5222,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
             case NC_DOUBLE:
             {
                 double dfVal = 0.0;
-                int status = nc_get_var1_double( m_poDS->GetCDFID(), m_anVarId[i],
+                int status = nc_get_var1_double( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &dfVal );
                 if( status == NC_EINVALCOORDS || status == NC_EEDGE )
                 {
@@ -5212,7 +5234,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                     NCDF_ERR(status);
                     continue;
                 }
-                if( dfVal == m_aNoData[i].dfVal )
+                if( dfVal == m_aoFieldDesc[i].uNoData.dfVal )
                     continue;
                 if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
                     m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
@@ -5388,7 +5410,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             continue;
 
         status = NC_NOERR;
-        switch( m_anNCDFType[i] )
+        switch( m_aoFieldDesc[i].nType )
         {
             case NC_CHAR:
             {
@@ -5407,7 +5429,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
                 {
                     anCount[1] = m_nDefaultMaxWidth;
                 }
-                status = nc_put_vara_text( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_vara_text( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                             anIndex, anCount, pszVal );
                 break;
             }
@@ -5416,7 +5438,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             case NC_STRING:
             {
                 const char* pszVal = poFeature->GetFieldAsString(i);
-                status = nc_put_var1_string( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_string( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                              anIndex, &pszVal );
                 break;
             }
@@ -5426,7 +5448,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             {
                 int nVal = poFeature->GetFieldAsInteger(i);
                 signed char chVal = static_cast<signed char>(nVal);
-                status = nc_put_var1_schar( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_schar( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                             anIndex, &chVal );
                 break;
             }
@@ -5436,7 +5458,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             {
                 int nVal = poFeature->GetFieldAsInteger(i);
                 unsigned char uchVal = static_cast<unsigned char>(nVal);
-                status = nc_put_var1_uchar( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_uchar( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                             anIndex, &uchVal );
                 break;
             }
@@ -5446,7 +5468,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             {
                 int nVal = poFeature->GetFieldAsInteger(i);
                 short sVal = static_cast<short>(nVal);
-                status = nc_put_var1_short( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_short( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                             anIndex, &sVal );
                 break;
             }
@@ -5456,7 +5478,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             {
                 int nVal = poFeature->GetFieldAsInteger(i);
                 unsigned short usVal = static_cast<unsigned short>(nVal);
-                status = nc_put_var1_ushort( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_ushort( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                             anIndex, &usVal );
                 break;
             }
@@ -5465,7 +5487,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             case NC_INT:
             {
                 int nVal = poFeature->GetFieldAsInteger(i);
-                status = nc_put_var1_int( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_int( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                           anIndex, &nVal );
                 break;
             }
@@ -5475,7 +5497,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             {
                 GIntBig nVal = poFeature->GetFieldAsInteger64(i);
                 unsigned int unVal = static_cast<unsigned int>(nVal);
-                status = nc_put_var1_uint( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_uint( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                             anIndex, &unVal );
                 break;
             }
@@ -5485,7 +5507,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             case NC_INT64:
             {
                 GIntBig nVal = poFeature->GetFieldAsInteger64(i);
-                status = nc_put_var1_longlong( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_longlong( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                anIndex, &nVal );
                 break;
             }
@@ -5495,7 +5517,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             {
                 double dfVal = poFeature->GetFieldAsDouble(i);
                 float fVal = static_cast<float>(dfVal);
-                status = nc_put_var1_float( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_float( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                             anIndex, &fVal );
                 break;
             }
@@ -5529,7 +5551,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
                 {
                     dfVal = poFeature->GetFieldAsDouble(i);
                 }
-                status = nc_put_var1_double( m_poDS->GetCDFID(), m_anVarId[i],
+                status = nc_put_var1_double( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                              anIndex, &dfVal );
                 break;
             }
@@ -5650,6 +5672,7 @@ bool netCDFLayer::AddField(int nVarID)
 
     NCDFNoDataUnion nodata;
     memset(&nodata, 0, sizeof(nodata));
+    int nDimCount = 1;
 
     switch( vartype )
     {
@@ -5682,13 +5705,12 @@ bool netCDFLayer::AddField(int nVarID)
         case NC_CHAR:
         {
             eType = OFTString;
-            int nd;
-            nc_inq_varndims( m_poDS->GetCDFID(), nVarID, &nd );
-            if( nd == 1 )
+            nc_inq_varndims( m_poDS->GetCDFID(), nVarID, &nDimCount );
+            if( nDimCount == 1 )
             {
                 nWidth = 1;
             }
-            else if( nd == 2 )
+            else if( nDimCount == 2 )
             {
                 int anDimIds[2] = { -1, -1 };
                 nc_inq_vardimid( m_poDS->GetCDFID(), nVarID, anDimIds );
@@ -5855,9 +5877,12 @@ bool netCDFLayer::AddField(int nVarID)
     oFieldDefn.SetWidth(nWidth);
     oFieldDefn.SetPrecision(nPrecision);
 
-    m_anVarId.push_back(nVarID);
-    m_aNoData.push_back(nodata);
-    m_anNCDFType.push_back(vartype);
+    FieldDesc fieldDesc;
+    fieldDesc.uNoData = nodata;
+    fieldDesc.nType = vartype;
+    fieldDesc.nVarId = nVarID;
+    fieldDesc.nDimCount = nDimCount;
+    m_aoFieldDesc.push_back(fieldDesc);
 
     m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
 
@@ -5901,6 +5926,8 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
     const OGRFieldType eType = poFieldDefn->GetType();
     const OGRFieldSubType eSubType = poFieldDefn->GetSubType();
     nc_type nType = NC_NAT;
+    int nDimCount = 1;
+
     switch( eType )
     {
         case OFTString:
@@ -5908,16 +5935,23 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
         case OFTIntegerList:
         case OFTRealList:
         {
+            if( poFieldDefn->GetWidth() == 1 )
+            {
+                nType = NC_CHAR;
+                status = nc_def_var( m_poDS->GetCDFID(),
+                                    pszVarName,
+                                    nType, 1, &m_nRecordDimID, &nVarID );
+            }
 #ifdef NETCDF_HAS_NC4
-            if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
+            else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
             {
                 nType = NC_STRING;
                 status = nc_def_var( m_poDS->GetCDFID(),
                                      pszVarName,
                                      nType, 1, &m_nRecordDimID, &nVarID );
             }
-            else
 #endif
+            else
             {
                 if( poFieldDefn->GetWidth() == 0 )
                 {
@@ -5945,6 +5979,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
                     }
                 }
 
+                nDimCount = 2;
                 int anDims[] = { m_nRecordDimID, nSecDimID };
                 nType = NC_CHAR;
                 status = nc_def_var( m_poDS->GetCDFID(),
@@ -6054,9 +6089,13 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
             return OGRERR_FAILURE;
     }
 
-    m_anVarId.push_back(nVarID);
-    m_aNoData.push_back(nodata);
-    m_anNCDFType.push_back(nType);
+
+    FieldDesc fieldDesc;
+    fieldDesc.uNoData = nodata;
+    fieldDesc.nType = nType;
+    fieldDesc.nVarId = nVarID;
+    fieldDesc.nDimCount = nDimCount;
+    m_aoFieldDesc.push_back(fieldDesc);
 
     const char* pszLongName = CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
     status = nc_put_att_text( m_poDS->GetCDFID(), nVarID, CF_LNG_NAME,
