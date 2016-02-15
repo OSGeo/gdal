@@ -1627,7 +1627,6 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
     }
 
     VSIStatBufL sStatBuf;
-    int bGotTFW;
 
     pszTFW = CPLResetExtension( pszBaseFilename, szExtLower );
 
@@ -1654,7 +1653,7 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
 /*      Try lower case, then upper case.                                */
 /* -------------------------------------------------------------------- */
 
-    bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
+    bool bGotTFW = VSIStatExL( pszTFW, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0;
 
     if( !bGotTFW  && VSIIsCaseSensitiveFS(pszTFW) )
     {
