@@ -911,8 +911,32 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
             }
             else
             {
-                // If unknown, default to WGS84 so there is something there.
-                SetWellKnownGeogCS( "WGS84" );
+                bool bFoundParameters = false;
+                for( int iLine = 0; papszPrj[iLine] != NULL; iLine++ )
+                {
+                    if( STARTS_WITH_CI(papszPrj[iLine],"Parameters") )
+                    {
+                        char** papszTokens = CSLTokenizeString(papszPrj[iLine] + strlen("Parameters"));
+                        if( CSLCount(papszTokens) == 2 )
+                        {
+                            OGRSpatialReference oGCS;
+                            const double dfSemiMajor = CPLAtof( papszTokens[0] );
+                            const double dfSemiMinor = CPLAtof( papszTokens[1] );
+                            const double dfInvFlattening = OSRCalcInvFlattening( dfSemiMajor, dfSemiMinor );
+                            oGCS.SetGeogCS( "unknown", "unknown", "unknown",
+                                            dfSemiMajor, dfInvFlattening );
+                            CopyGeogCSFrom( &oGCS );
+                            bFoundParameters = true;
+                        }
+                        CSLDestroy(papszTokens);
+                        break;
+                    }
+                }
+                if( !bFoundParameters )
+                {
+                    // If unknown, default to WGS84 so there is something there.
+                    SetWellKnownGeogCS( "WGS84" );
+                }
             }
         }
     }

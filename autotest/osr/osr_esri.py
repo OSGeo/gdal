@@ -1434,6 +1434,33 @@ def osr_esri_29():
     return 'success'
 
 ###############################################################################
+# Verify import of custom ellipsoid
+
+def osr_esri_30():
+
+    prj = [ 'Projection    GEOGRAPHIC',
+            'Parameters    6370000.0  6370000.0',
+            '' ]
+
+    srs_prj = osr.SpatialReference()
+    srs_prj.ImportFromESRI( prj )
+
+    wkt = """GEOGCS["unknown",
+    DATUM["unknown",
+        SPHEROID["unknown",6370000,0]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]"""
+
+    srs_wkt = osr.SpatialReference(wkt = wkt)
+
+    if not srs_prj.IsSame( srs_wkt ):
+        gdaltest.post_reason( 'fail' )
+        print(srs_prj)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1466,9 +1493,10 @@ gdaltest_list = [
     osr_esri_27,
     osr_esri_28,
     osr_esri_29,
+    osr_esri_30,
    None ]
 
-#gdaltest_list = [osr_esri_29]
+#gdaltest_list = [osr_esri_30]
 
 if __name__ == '__main__':
 
