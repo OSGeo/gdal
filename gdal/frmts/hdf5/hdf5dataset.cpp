@@ -699,6 +699,10 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
     const hid_t hAttrTypeID     = H5Aget_type( hAttrID );
     const hid_t hAttrNativeType = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
     const hid_t hAttrSpace      = H5Aget_space( hAttrID );
+
+    if( H5Tget_class( hAttrNativeType ) == H5T_VLEN )
+        return 0;
+
     hsize_t nSize[64];
     const unsigned int nAttrDims =
         H5Sget_simple_extent_dims( hAttrSpace, nSize, NULL );
