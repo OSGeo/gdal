@@ -754,6 +754,10 @@ class netCDFDataset : public GDALPamDataset
     CPLErr Set1DGeolocation( int nVarId, const char *szDimName );
     double * Get1DGeolocation( const char *szDimName, int &nVarLen );
 
+    bool CloneAttributes(int new_cdfid, int nSrcVarId, int nDstVarId);
+    bool CloneVariableContent(int new_cdfid, int nSrcVarId, int nDstVarId);
+    bool GrowDim(int nDimIdToGrow, size_t nNewSize);
+
   protected:
 
     CPLXMLNode *SerializeToXML( const char *pszVRTPath );
@@ -812,6 +816,7 @@ class netCDFLayer: public OGRLayer
             int     nVal;
             unsigned int unVal;
             GIntBig nVal64;
+            GUIntBig unVal64;
             float   fVal;
             double  dfVal;
         } NCDFNoDataUnion;
@@ -822,13 +827,16 @@ class netCDFLayer: public OGRLayer
             nc_type         nType;
             int             nVarId;
             int             nDimCount;
+            bool            bHasWarnedAboutTruncation;
+            int             nSecDimId;
         } FieldDesc;
 
         netCDFDataset  *m_poDS;
         OGRFeatureDefn *m_poFeatureDefn;
         CPLString       m_osRecordDimName;
         int             m_nRecordDimID;
-        int             m_nDefaultMaxWidth;
+        int             m_nDefaultWidth;
+        bool            m_bAutoGrowStrings;
         int             m_nDefaultMaxWidthDimId;
         int             m_nXVarID;
         int             m_nYVarID;
@@ -846,9 +854,6 @@ class netCDFLayer: public OGRLayer
         nc_type         m_nWKTNCDFType;
         CPLString       m_osCoordinatesValue;
         std::vector<FieldDesc> m_aoFieldDesc;
-        //std::vector<NCDFNoDataUnion> m_aNoData; // as much as fields
-        //std::vector<nc_type> m_anNCDFType; // as much as fields
-        //std::vector<int> m_anVarId; // as much as fields
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;

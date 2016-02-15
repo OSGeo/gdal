@@ -4462,6 +4462,383 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
 }
 
 /************************************************************************/
+/*                           CloneAttributes()                          */
+/************************************************************************/
+
+bool netCDFDataset::CloneAttributes(int new_cdfid, int nSrcVarId, int nDstVarId)
+{
+    int nAttCount = -1;
+    int status = nc_inq_varnatts( cdfid, nSrcVarId, &nAttCount);
+    NCDF_ERR(status);
+
+    for( int i=0; i < nAttCount; i++ )
+    {
+        char szName[ NC_MAX_NAME + 1 ];
+        szName[0] = 0;
+        status = nc_inq_attname(cdfid, nSrcVarId, i, szName);
+        NCDF_ERR(status);
+
+        status = nc_copy_att(cdfid, nSrcVarId, szName, new_cdfid, nDstVarId);
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
+            return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                          CloneVariableContent()                      */
+/************************************************************************/
+
+bool netCDFDataset::CloneVariableContent(int new_cdfid, int nSrcVarId, int nDstVarId)
+{
+    int nVarDimCount = -1;
+    int status = nc_inq_varndims( cdfid, nSrcVarId, &nVarDimCount );
+    NCDF_ERR(status);
+    int anDimIds[] = { -1, 1 };
+    status = nc_inq_vardimid( cdfid, nSrcVarId, anDimIds );
+    NCDF_ERR(status);
+    nc_type nc_datatype = NC_NAT;
+    status = nc_inq_vartype( cdfid, nSrcVarId, &nc_datatype );
+    NCDF_ERR(status);
+    size_t nTypeSize = 0;
+    switch (nc_datatype)
+    {
+        case NC_BYTE:
+        case NC_CHAR:
+            nTypeSize = 1;
+            break;
+        case NC_SHORT:
+            nTypeSize = 2;
+            break;
+        case NC_INT:
+            nTypeSize = 4;
+            break;
+        case NC_FLOAT:
+            nTypeSize = 4;
+            break;
+        case NC_DOUBLE:
+            nTypeSize = 8;
+            break;
+#ifdef NETCDF_HAS_NC4
+        case NC_UBYTE:
+            nTypeSize = 1;
+            break;
+        case NC_USHORT:
+            nTypeSize = 2;
+            break;
+        case NC_UINT:
+            nTypeSize = 4;
+            break;
+        case NC_INT64:
+        case NC_UINT64:
+            nTypeSize = 8;
+            break;
+        case NC_STRING:
+            nTypeSize = sizeof(char*);
+            break;
+#endif
+        default:
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type: %d",
+                     nc_datatype);
+            return false;
+        }
+    }
+
+    size_t nElems = 1;
+    size_t anStart[NC_MAX_DIMS];
+    size_t anCount[NC_MAX_DIMS];
+    size_t nRecords = 1;
+    for( int i=0; i < nVarDimCount; i++)
+    {
+        anStart[i] = 0;
+        if( i == 0 )
+        {
+            anCount[i] = 1;
+            status = nc_inq_dimlen(cdfid, anDimIds[i], &nRecords);
+            NCDF_ERR(status);
+        }
+        else
+        {
+            anCount[i] = 0;
+            status = nc_inq_dimlen(cdfid, anDimIds[i], &anCount[i]);
+            NCDF_ERR(status);
+            nElems *= anCount[i];
+        }
+    }
+
+    void* pBuffer = VSI_MALLOC2_VERBOSE( nElems, nTypeSize );
+    if( pBuffer == NULL )
+        return false;
+
+    for(size_t iRecord = 0; iRecord < nRecords; iRecord ++ )
+    {
+        anStart[0] = iRecord;
+
+        switch (nc_datatype)
+        {
+            case NC_BYTE:
+                status = nc_get_vara_schar(cdfid, nSrcVarId, anStart, anCount,
+                                            (signed char *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_schar(new_cdfid, nDstVarId, anStart, anCount, 
+                                                (const signed char *)pBuffer);
+                break;
+            case NC_CHAR:
+                status = nc_get_vara_text(cdfid, nSrcVarId, anStart, anCount,
+                                            (char *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_text(new_cdfid, nDstVarId, anStart, anCount, 
+                                                (char *)pBuffer);
+                break;
+            case NC_SHORT:
+                status = nc_get_vara_short(cdfid, nSrcVarId, anStart, anCount,
+                                            (short *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_short(new_cdfid, nDstVarId, anStart, anCount,
+                                                (short *)pBuffer);
+                break;
+            case NC_INT:
+                status = nc_get_vara_int(cdfid, nSrcVarId, anStart, anCount,
+                                            (int *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_int(new_cdfid, nDstVarId, anStart, anCount,
+                                            (int *)pBuffer);
+                break;
+            case NC_FLOAT:
+                status = nc_get_vara_float(cdfid, nSrcVarId, anStart, anCount,
+                                            (float *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_float(new_cdfid, nDstVarId, anStart, anCount,
+                                                (float *)pBuffer);
+                break;
+            case NC_DOUBLE:
+                status = nc_get_vara_double(cdfid, nSrcVarId, anStart, anCount,
+                                            (double *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_double(new_cdfid, nDstVarId, anStart, anCount, 
+                                                (double *)pBuffer);
+            break;
+#ifdef NETCDF_HAS_NC4
+            case NC_STRING:
+                status = nc_get_vara_string( cdfid, nSrcVarId, anStart, anCount, 
+                                             (char**) pBuffer );
+                if( !status )
+                {
+                    status = nc_put_vara_string( new_cdfid, nDstVarId, anStart, anCount, 
+                                                 (const char**) pBuffer );
+                    nc_free_string(nElems, (char**) pBuffer);
+                }
+                break;
+
+            case NC_UBYTE:
+                status = nc_get_vara_uchar(cdfid, nSrcVarId, anStart, anCount,
+                                            (unsigned char *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_uchar(new_cdfid, nDstVarId, anStart, anCount, 
+                                                (unsigned char *)pBuffer);
+                break;
+            case NC_USHORT:
+                status = nc_get_vara_ushort(cdfid, nSrcVarId, anStart, anCount,
+                                            (unsigned short *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_ushort(new_cdfid, nDstVarId, anStart, anCount, 
+                                                (unsigned short *)pBuffer);
+                break;
+            case NC_UINT:
+                status = nc_get_vara_uint(cdfid, nSrcVarId, anStart, anCount,
+                                            (unsigned int *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_uint(new_cdfid, nDstVarId, anStart, anCount, 
+                                                (unsigned int *)pBuffer);
+                break;
+            case NC_INT64:
+                status = nc_get_vara_longlong(cdfid, nSrcVarId, anStart, anCount,
+                                                (long long *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_longlong(new_cdfid, nDstVarId, anStart, anCount, 
+                                                    (long long *)pBuffer);
+                break;
+            case NC_UINT64:
+                status = nc_get_vara_ulonglong(cdfid, nSrcVarId, anStart, anCount,
+                                                (unsigned long long *)pBuffer);
+                if (!status)
+                    status = nc_put_vara_ulonglong(new_cdfid, nDstVarId, anStart, anCount, 
+                                                    (unsigned long long *)pBuffer);
+                break;
+#endif
+            default:
+                status = NC_EBADTYPE;
+        }
+
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
+            VSIFree(pBuffer);
+            return false;
+        }
+    }
+
+    VSIFree(pBuffer);
+    return true;
+}
+
+/************************************************************************/
+/*                              GrowDim()                               */
+/************************************************************************/
+
+bool netCDFDataset::GrowDim(int nDimIdToGrow, size_t nNewSize)
+{
+    int nTmpFormat = NCDF_FORMAT_NONE;
+    int status = nc_inq_format (cdfid, &nTmpFormat);
+    NCDF_ERR(status)
+
+    int nCreationMode;
+    /* set nCreationMode based on nTmpFormat */
+    switch ( nTmpFormat ) {
+#ifdef NETCDF_HAS_NC2
+        case NCDF_FORMAT_NC2:
+            nCreationMode = NC_CLOBBER|NC_64BIT_OFFSET;
+            break;
+#endif
+#ifdef NETCDF_HAS_NC4
+        case NCDF_FORMAT_NC4:
+            nCreationMode = NC_CLOBBER|NC_NETCDF4;
+            break;
+        case NCDF_FORMAT_NC4C:
+            nCreationMode = NC_CLOBBER|NC_NETCDF4|NC_CLASSIC_MODEL;
+            break;
+#endif
+        case NCDF_FORMAT_NC:
+        default:
+            nCreationMode = NC_CLOBBER;
+            break;
+    }
+
+    int new_cdfid = -1;
+    CPLString osTmpFilename( osFilename + ".tmp" );
+    status = nc_create( osTmpFilename, nCreationMode, &new_cdfid );
+    NCDF_ERR(status)
+    if( status != NC_NOERR )
+        return false;
+
+    // Clone dimensions
+    int nDimCount = -1;
+    status = nc_inq_ndims( cdfid, &nDimCount );
+    NCDF_ERR(status)
+    int nUnlimiDimID = -1;
+    status = nc_inq_unlimdim (cdfid, &nUnlimiDimID);
+    NCDF_ERR(status);
+    for( int i=0; i < nDimCount; i++ )
+    {
+        char szDimName[ NC_MAX_NAME + 1 ];
+        szDimName[0] = 0;
+        size_t nLen = 0;
+        status = nc_inq_dim (cdfid, i, szDimName, &nLen);
+        NCDF_ERR(status);
+        if( i == nUnlimiDimID )
+            nLen = NC_UNLIMITED;
+        else if( i == nDimIdToGrow )
+            nLen = nNewSize;
+        int nNewDimId = -1;
+        status = nc_def_dim (new_cdfid, szDimName, nLen, &nNewDimId);
+        NCDF_ERR(status);
+        CPLAssert( i == nNewDimId );
+        if( status != NC_NOERR )
+        {
+            nc_close(new_cdfid);
+            return false;
+        }
+    }
+
+    // Clone main attributes
+    if( !CloneAttributes(new_cdfid, NC_GLOBAL, NC_GLOBAL) )
+    {
+        nc_close(new_cdfid);
+        return false;
+    }
+
+    // Clone variable definitions
+    int nVarCount = -1;
+    status = nc_inq_nvars(cdfid, &nVarCount);
+    NCDF_ERR(status);
+    for( int i=0; i < nVarCount; i++ )
+    {
+        char szVarName[ NC_MAX_NAME + 1 ];
+        szVarName[0] = 0;
+        status = nc_inq_varname( cdfid, i, szVarName );
+        NCDF_ERR(status);
+        nc_type nc_datatype = NC_NAT;
+        status = nc_inq_vartype( cdfid, i, &nc_datatype );
+        NCDF_ERR(status);
+        int nVarDimCount = -1;
+        status = nc_inq_varndims( cdfid, i, &nVarDimCount );
+        NCDF_ERR(status);
+        int anDimIds[NC_MAX_DIMS];
+        status = nc_inq_vardimid( cdfid, i, anDimIds );
+        NCDF_ERR(status);
+        int nNewVarId = -1;
+        status = nc_def_var( new_cdfid, szVarName, nc_datatype, 
+                             nVarDimCount, anDimIds, &nNewVarId );
+        NCDF_ERR(status);
+        CPLAssert( i == nNewVarId );
+        if( status != NC_NOERR )
+        {
+            nc_close(new_cdfid);
+            return false;
+        }
+
+        if( !CloneAttributes(new_cdfid, i, i) )
+        {
+            nc_close(new_cdfid);
+            return false;
+        }
+    }
+
+    status = nc_enddef( new_cdfid );
+    NCDF_ERR(status);
+    if( status != NC_NOERR )
+    {
+        nc_close(new_cdfid);
+        return false;
+    }
+
+    // Clone variable content
+    for( int i=0; i < nVarCount; i++ )
+    {
+        if( !CloneVariableContent(new_cdfid, i, i) )
+        {
+            nc_close(new_cdfid);
+            return false;
+        }
+    }
+
+    nc_close(cdfid);
+    cdfid = -1;
+    nc_close(new_cdfid);
+
+    CPLString osOriFilename( osFilename + ".ori" );
+    if( VSIRename( osFilename, osOriFilename ) != 0 ||
+        VSIRename( osTmpFilename, osFilename ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Renaming of files failed");
+        return false;
+    }
+    VSIUnlink( osOriFilename );
+
+    status = nc_open( osFilename, NC_WRITE, &cdfid );
+    NCDF_ERR(status);
+    if( status != NC_NOERR )
+        return false;
+    bDefineMode = false;
+
+    return true;
+}
+
+
+/************************************************************************/
 /*                            netCDFLayer()                             */
 /************************************************************************/
 
@@ -4473,7 +4850,8 @@ netCDFLayer::netCDFLayer(netCDFDataset* poDS,
         m_poFeatureDefn(new OGRFeatureDefn(pszName)),
         m_osRecordDimName("record"),
         m_nRecordDimID(-1),
-        m_nDefaultMaxWidth(80),
+        m_nDefaultWidth(10),
+        m_bAutoGrowStrings(true),
         m_nDefaultMaxWidthDimId(-1),
         m_nXVarID(-1),
         m_nYVarID(-1),
@@ -4481,7 +4859,7 @@ netCDFLayer::netCDFLayer(netCDFDataset* poDS,
         m_nXVarNCDFType(NC_NAT),
         m_nYVarNCDFType(NC_NAT),
         m_nZVarNCDFType(NC_NAT),
-        m_osWKTVarName("wkt"),
+        m_osWKTVarName("ogc_wkt"),
         m_nWKTMaxWidth(10000),
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
@@ -4517,8 +4895,10 @@ bool netCDFLayer::Create(char** papszOptions)
 {
     m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
                                              m_osRecordDimName.c_str());
-    m_nDefaultMaxWidth = atoi(CSLFetchNameValueDef(papszOptions,
-                                                   "STRING_MAX_WIDTH", "80"));
+    m_bAutoGrowStrings = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "AUTOGROW_STRINGS", TRUE ));
+    m_nDefaultWidth = atoi(CSLFetchNameValueDef(papszOptions,
+                                                "STRING_DEFAULT_WIDTH",
+                                                CPLSPrintf("%d", m_bAutoGrowStrings ? 10 : 80)));
     m_bWriteGDALTags = CPL_TO_BOOL(CSLFetchBoolean(
                     m_poDS->papszCreationOptions, "WRITE_GDAL_TAGS", TRUE ));
     m_bUseStringInNC4 = CPL_TO_BOOL(CSLFetchBoolean(
@@ -4637,8 +5017,8 @@ bool netCDFLayer::Create(char** papszOptions)
 #endif
         {
             m_nWKTNCDFType = NC_CHAR;
-            m_nWKTMaxWidth = atoi(CSLFetchNameValueDef(papszOptions, "WKT_MAX_WIDTH",
-                                                       CPLSPrintf("%d", m_nWKTMaxWidth)));
+            m_nWKTMaxWidth = atoi(CSLFetchNameValueDef(papszOptions, "WKT_DEFAULT_WIDTH",
+                                        CPLSPrintf("%d", m_bAutoGrowStrings ? 1000 : 10000)));
             status = nc_def_dim( m_poDS->GetCDFID(),
                                  CPLSPrintf("%s_max_width", m_osWKTVarName.c_str()),
                                  m_nWKTMaxWidth,
@@ -4969,11 +5349,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                                         m_aoFieldDesc[i].nVarId,
                                         anIndex,
                                         szVal );
-                    if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                    {
-                        delete poFeature;
-                        return NULL;
-                    }
                     if( status != NC_NOERR )
                     {
                         NCDF_ERR(status);
@@ -4985,20 +5360,13 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 {
                     size_t anCount[2];
                     anCount[0] = 1;
-                    anCount[1] = m_poFeatureDefn->GetFieldDefn(i)->GetWidth();
-                    if( anCount[1] == 0 )
-                        anCount[1] = m_nDefaultMaxWidth;
+                    anCount[1] = 0;
+                    nc_inq_dimlen( m_poDS->GetCDFID(), m_aoFieldDesc[i].nSecDimId, &(anCount[1]) );
                     char* pszVal = (char*) CPLCalloc( 1, anCount[1] + 1 );
                     int status = nc_get_vara_text( m_poDS->GetCDFID(),
                                         m_aoFieldDesc[i].nVarId,
                                         anIndex, anCount,
                                         pszVal );
-                    if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                    {
-                        CPLFree(pszVal);
-                        delete poFeature;
-                        return NULL;
-                    }
                     if( status != NC_NOERR )
                     {
                         NCDF_ERR(status);
@@ -5019,11 +5387,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                                     m_aoFieldDesc[i].nVarId,
                                     anIndex,
                                     &pszVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5043,11 +5406,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 signed char chVal = 0;
                 int status = nc_get_var1_schar( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                 anIndex, &chVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5065,11 +5423,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 unsigned char uchVal = 0;
                 int status = nc_get_var1_uchar( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                 anIndex, &uchVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5087,11 +5440,7 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 short sVal = 0;
                 int status = nc_get_var1_short( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &sVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
+
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5109,11 +5458,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 unsigned short usVal = 0;
                 int status = nc_get_var1_ushort( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                  anIndex, &usVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5131,11 +5475,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 int nVal = 0;
                 int status = nc_get_var1_int( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &nVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5158,11 +5497,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 size_t nCount = 1;
                 int status = nc_get_vara_uint( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                anIndex, &nCount, &unVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5181,11 +5515,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 GIntBig nVal = 0;
                 int status = nc_get_var1_longlong( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                         anIndex, &nVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5196,6 +5525,22 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 poFeature->SetField(i, nVal);
                 break;
             }
+
+            case NC_UINT64:
+            {
+                GUIntBig nVal = 0;
+                int status = nc_get_var1_ulonglong( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
+                                        anIndex, &nVal );
+                if( status != NC_NOERR )
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if( nVal == m_aoFieldDesc[i].uNoData.unVal64 )
+                    continue;
+                poFeature->SetField(i, static_cast<double>(nVal));
+                break;
+            }
 #endif
 
             case NC_FLOAT:
@@ -5203,11 +5548,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 float fVal = 0.f;
                 int status = nc_get_var1_float( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &fVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5224,11 +5564,6 @@ OGRFeature* netCDFLayer::GetNextRawFeature()
                 double dfVal = 0.0;
                 int status = nc_get_var1_double( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                     anIndex, &dfVal );
-                if( status == NC_EINVALCOORDS || status == NC_EEDGE )
-                {
-                    delete poFeature;
-                    return NULL;
-                }
                 if( status != NC_NOERR )
                 {
                     NCDF_ERR(status);
@@ -5415,22 +5750,55 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             case NC_CHAR:
             {
                 const char* pszVal = poFeature->GetFieldAsString(i);
-                size_t anCount[2];
-                anCount[0] = 1;
-                anCount[1] = strlen(pszVal);
-                unsigned int nWidth = static_cast<unsigned int>
-                    (m_poFeatureDefn->GetFieldDefn(i)->GetWidth());
-                if( nWidth > 0 && anCount[1] > nWidth )
+                if( m_aoFieldDesc[i].nDimCount == 1 )
                 {
-                    anCount[1] = nWidth;
+                    if( strlen(pszVal) > 1 && !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                "Content of field %s exceeded the 1 character limit and will be truncated",
+                                m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+                        m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
+                    }
+                    status = nc_put_var1_text( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
+                                               anIndex, pszVal );
                 }
-                else if( nWidth == 0 && anCount[1] >
-                            static_cast<unsigned int>(m_nDefaultMaxWidth) )
+                else
                 {
-                    anCount[1] = m_nDefaultMaxWidth;
+                    size_t anCount[2];
+                    anCount[0] = 1;
+                    anCount[1] = strlen(pszVal);
+                    size_t nWidth = 0;
+                    nc_inq_dimlen( m_poDS->GetCDFID(), m_aoFieldDesc[i].nSecDimId, &nWidth );
+                    if( anCount[1] > nWidth )
+                    {
+                        if( m_bAutoGrowStrings && m_poFeatureDefn->GetFieldDefn(i)->GetWidth() == 0 )
+                        {
+                            size_t nNewSize = anCount[1] + anCount[1] / 3;
+
+                            CPLDebug("GDAL_netCDF", "Growing %s from %u to %u",
+                                    m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                    static_cast<unsigned>(nWidth),
+                                    static_cast<unsigned>(nNewSize) );
+                            m_poDS->GrowDim( m_aoFieldDesc[i].nSecDimId, nNewSize );
+
+                            pszVal = poFeature->GetFieldAsString(i);
+                        }
+                        else
+                        {
+                            anCount[1] = nWidth;
+                            if( !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Content of field %s exceeded the %u character limit and will be truncated",
+                                         m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                         static_cast<unsigned int>(nWidth));
+                                m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
+                            }
+                        }
+                    }
+                    status = nc_put_vara_text( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
+                                                anIndex, anCount, pszVal );
                 }
-                status = nc_put_vara_text( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
-                                            anIndex, anCount, pszVal );
                 break;
             }
 
@@ -5509,6 +5877,15 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
                 GIntBig nVal = poFeature->GetFieldAsInteger64(i);
                 status = nc_put_var1_longlong( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
                                                anIndex, &nVal );
+                break;
+            }
+
+            case NC_UINT64:
+            {
+                double dfVal = poFeature->GetFieldAsDouble(i);
+                GUIntBig nVal = static_cast<GUIntBig>(dfVal);
+                status = nc_put_var1_ulonglong( m_poDS->GetCDFID(), m_aoFieldDesc[i].nVarId,
+                                                anIndex, &nVal );
                 break;
             }
 #endif
@@ -5625,12 +6002,30 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
             anCount[1] = strlen(pszWKT);
             if( anCount[1] > static_cast<unsigned int>(m_nWKTMaxWidth) )
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot write geometry as WKT. Would require %d "
-                         "characters but field width is %d",
-                         static_cast<int>(anCount[1]),
-                         m_nWKTMaxWidth);
-                status = NC_NOERR;
+                if( m_bAutoGrowStrings )
+                {
+                    size_t nNewSize = anCount[1] + anCount[1] / 3;
+
+                    CPLDebug("GDAL_netCDF", "Growing %s from %u to %u",
+                             m_osWKTVarName.c_str(),
+                             static_cast<unsigned>(m_nWKTMaxWidth),
+                             static_cast<unsigned>(nNewSize) );
+                    m_poDS->GrowDim( m_nWKTMaxWidthDimId, nNewSize );
+
+                    m_nWKTMaxWidth = static_cast<int>(nNewSize);
+
+                    status = nc_put_vara_text( m_poDS->GetCDFID(), m_nWKTVarID,
+                                               anIndex, anCount, pszWKT );
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Cannot write geometry as WKT. Would require %d "
+                            "characters but field width is %d",
+                            static_cast<int>(anCount[1]),
+                            m_nWKTMaxWidth);
+                    status = NC_NOERR;
+                }
             }
             else
             {
@@ -5673,6 +6068,7 @@ bool netCDFLayer::AddField(int nVarID)
     NCDFNoDataUnion nodata;
     memset(&nodata, 0, sizeof(nodata));
     int nDimCount = 1;
+    int nSecDimId = -1;
 
     switch( vartype )
     {
@@ -5717,6 +6113,7 @@ bool netCDFLayer::AddField(int nVarID)
                 size_t nDimLen = 0;
                 nc_inq_dimlen( m_poDS->GetCDFID(), anDimIds[1], &nDimLen );
                 nWidth = static_cast<int>(nDimLen);
+                nSecDimId = anDimIds[1];
             }
             break;
         }
@@ -5791,6 +6188,24 @@ bool netCDFLayer::AddField(int nVarID)
                 nodata.nVal64 = CPLAtoGIntBig(pszValue);
             else
                 nodata.nVal64 = NC_FILL_INT64;
+            CPLFree(pszValue);
+            break;
+        }
+
+        case NC_UINT64:
+        {
+            eType = OFTReal;
+            char* pszValue = NULL;
+            if( GetFillValue( nVarID, &pszValue) == CE_None )
+            {
+                nodata.unVal64 = 0;
+                for(int i=0; pszValue[i] != '\0'; i++)
+                {
+                    nodata.unVal64 = nodata.unVal64 * 10 + (pszValue[i] - '0');
+                }
+            }
+            else
+                nodata.unVal64 = NC_FILL_UINT64;
             CPLFree(pszValue);
             break;
         }
@@ -5882,6 +6297,8 @@ bool netCDFLayer::AddField(int nVarID)
     fieldDesc.nType = vartype;
     fieldDesc.nVarId = nVarID;
     fieldDesc.nDimCount = nDimCount;
+    fieldDesc.nSecDimId = nSecDimId;
+    fieldDesc.bHasWarnedAboutTruncation = false;
     m_aoFieldDesc.push_back(fieldDesc);
 
     m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
@@ -5895,7 +6312,7 @@ bool netCDFLayer::AddField(int nVarID)
 
 OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
 {
-    int nSecDimID = -1;
+    int nSecDimId = -1;
     int nVarID = -1;
     int status;
 
@@ -5953,26 +6370,28 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
 #endif
             else
             {
-                if( poFieldDefn->GetWidth() == 0 )
+                if( poFieldDefn->GetWidth() == 0 && !m_bAutoGrowStrings )
                 {
                     if( m_nDefaultMaxWidthDimId < 0 )
                     {
                         status = nc_def_dim( m_poDS->GetCDFID(),
                                             "string_default_max_width",
-                                            m_nDefaultMaxWidth,
+                                            m_nDefaultWidth,
                                             &m_nDefaultMaxWidthDimId );
                         NCDF_ERR(status);
                         if ( status != NC_NOERR ) {
                             return OGRERR_FAILURE;
                         }
                     }
-                    nSecDimID = m_nDefaultMaxWidthDimId;
+                    nSecDimId = m_nDefaultMaxWidthDimId;
                 }
                 else
                 {
+                    size_t nDim = ( poFieldDefn->GetWidth() == 0 ) ?
+                                    m_nDefaultWidth : poFieldDefn->GetWidth();
                     status = nc_def_dim( m_poDS->GetCDFID(),
                                         CPLSPrintf("%s_max_width", pszVarName),
-                                        poFieldDefn->GetWidth(), &nSecDimID );
+                                        nDim, &nSecDimId );
                     NCDF_ERR(status);
                     if ( status != NC_NOERR ) {
                         return OGRERR_FAILURE;
@@ -5980,7 +6399,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
                 }
 
                 nDimCount = 2;
-                int anDims[] = { m_nRecordDimID, nSecDimID };
+                int anDims[] = { m_nRecordDimID, nSecDimId };
                 nType = NC_CHAR;
                 status = nc_def_var( m_poDS->GetCDFID(),
                                     pszVarName,
@@ -6095,6 +6514,8 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
     fieldDesc.nType = nType;
     fieldDesc.nVarId = nVarID;
     fieldDesc.nDimCount = nDimCount;
+    fieldDesc.nSecDimId = nSecDimId;
+    fieldDesc.bHasWarnedAboutTruncation = false;
     m_aoFieldDesc.push_back(fieldDesc);
 
     const char* pszLongName = CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
@@ -6119,7 +6540,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
         NCDF_ERR(status);
 
         const int nWidth = poFieldDefn->GetWidth();
-        if( nWidth )
+        if( nWidth || nType == NC_CHAR )
         {
             status = nc_put_att_int( m_poDS->GetCDFID(), nVarID, "ogr_field_width",
                             NC_INT, 1, &nWidth );
@@ -8087,11 +8508,17 @@ void GDALRegister_netCDF()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "   <Option name='RECORD_DIM_NAME' type='string' description='Name of the unlimited dimension' default='record'/>"
-"   <Option name='STRING_MAX_WIDTH' type='string' description='"
+"   <Option name='STRING_DEFAULT_WIDTH' type='string' description='"
 #ifdef NETCDF_HAS_NC4
 "For non-NC4 format, "
 #endif
-"default maximum width of strings' default='80'/>"
+"default width of strings. Default is 10 in autogrow mode, 80 otherwise.'/>"
+"   <Option name='WKT_DEFAULT_WIDTH' type='string' description='"
+#ifdef NETCDF_HAS_NC4
+"For non-NC4 format, "
+#endif
+"default width of WKT strings. Default is 1000 in autogrow mode, 10000 otherwise.'/>"
+"   <Option name='AUTOGROW_STRINGS' type='boolean' description='Whether to auto-grow non-bounded string fields of bidimensional char variable' default='YES'/>"
 #ifdef NETCDF_HAS_NC4
 "   <Option name='USE_STRING_IN_NC4'  type='boolean' description='Whether to use NetCDF string type for strings in NC4 format. If NO, bidimensional char variable are used' default='YES'/>"
 #endif
@@ -8640,6 +9067,23 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
             snprintf( szTemp, sizeof(szTemp), CPL_FRMT_GIB, panTemp[m] );
+            NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            CPLFree(panTemp);
+            break;
+        }
+
+        case NC_UINT64:
+        {
+            GUIntBig *panTemp
+                = reinterpret_cast<GUIntBig *>(
+                    CPLCalloc( nAttrLen, sizeof( GUIntBig ) ) );
+            nc_get_att_ulonglong( nCdfId, nVarId, pszAttrName, panTemp );
+            dfValue = static_cast<double>( panTemp[0] );
+            for(m=0; m < nAttrLen-1; m++) {
+                snprintf( szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",", panTemp[m] );
+                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            }
+            snprintf( szTemp, sizeof(szTemp), CPL_FRMT_GUIB, panTemp[m] );
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             CPLFree(panTemp);
             break;
