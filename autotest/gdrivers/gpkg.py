@@ -2859,6 +2859,58 @@ def gpkg_34():
     return 'success'
 
 ###############################################################################
+# Test dirty block flushing while reading block (#6365)
+
+def gpkg_35():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 417, 4)
+    src_ds.SetGeoTransform([-20037508.342789299786091, 2 * 20037508.342789299786091 / 512, 0,
+                            16213801.067584000527859, 0, -2 * 16213801.067584000527859 / 417])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetProjection(srs.ExportToWkt())
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible'])
+    out_ds.GetRasterBand(1).Fill(32)
+    out_ds.GetRasterBand(2).Fill(64)
+    out_ds.GetRasterBand(3).Fill(128)
+    out_ds.GetRasterBand(4).Fill(255)
+    height = out_ds.RasterYSize
+    expected_data = out_ds.ReadRaster(0, 0, 256, height)
+    out_ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 256, height, 4)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.GetRasterBand(2).Fill(255)
+    src_ds.GetRasterBand(3).Fill(255)
+    src_ds.GetRasterBand(4).Fill(255)
+    white_data = src_ds.ReadRaster(0, 0, 256, height)
+
+    ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    ds.WriteRaster(256, 0, 256, height, white_data)
+
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(256 * 256 * 4)
+
+    got_data = ds.ReadRaster(0, 0, 256, height)
+
+    gdal.SetCacheMax(oldSize)
+
+    if got_data != expected_data:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2914,9 +2966,10 @@ gdaltest_list = [
     gpkg_32,
     gpkg_33,
     gpkg_34,
+    gpkg_35,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_28, gpkg_29, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_35, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )
