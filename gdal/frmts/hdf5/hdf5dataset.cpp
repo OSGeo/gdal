@@ -229,23 +229,43 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 
     if( memcmp(poOpenInfo->pabyHeader,achSignature,8) == 0 )
     {
+        CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+
         /* The tests to avoid opening KEA and BAG drivers are not */
         /* necessary when drivers are built in the core lib, as they */
         /* are registered after HDF5, but in the case of plugins, we */
         /* cannot do assumptions about the registration order */
 
         /* Avoid opening kea files if the kea driver is available */
-        if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "KEA") &&
+        if( EQUAL(osExt, "KEA") &&
             GDALGetDriverByName("KEA") != NULL )
         {
             return FALSE;
         }
 
-        /* Avoid opening kea files if the bag driver is available */
-        if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "BAG") &&
+        /* Avoid opening BAG files if the bag driver is available */
+        if( EQUAL(osExt, "BAG") &&
             GDALGetDriverByName("BAG") != NULL )
         {
             return FALSE;
+        }
+
+        /* Avoid opening NC files if the netCDF driver is available and */
+        /* they are recognized by it */
+        if( (EQUAL(osExt, "NC") || EQUAL(osExt, "CDF") || EQUAL(osExt, "NC4")) &&
+            GDALGetDriverByName("netCDF") != NULL )
+        {
+            const char* const apszAllowedDriver [] = { "netCDF", NULL };
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            GDALDatasetH hDS =
+                GDALOpenEx( poOpenInfo->pszFilename, GDAL_OF_RASTER | GDAL_OF_VECTOR,
+                            apszAllowedDriver, NULL, NULL);
+            CPLPopErrorHandler();
+            if( hDS )
+            {
+                GDALClose(hDS);
+                return FALSE;
+            }
         }
 
         return TRUE;
