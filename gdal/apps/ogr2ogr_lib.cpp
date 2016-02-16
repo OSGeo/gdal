@@ -63,6 +63,7 @@ typedef enum
 
 #define COORD_DIM_UNCHANGED -1
 #define COORD_DIM_LAYER_DIM -2
+#define COORD_DIM_XYM -3
 
 /************************************************************************/
 /*                        GDALVectorTranslateOptions                    */
@@ -2306,7 +2307,11 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
     if( nCoordDim == 2 && eGType != wkbNone )
         return wkbFlatten(eGType);
     else if( nCoordDim == 3 && eGType != wkbNone )
-        return wkbSetZ((OGRwkbGeometryType)eGType);
+        return wkbSetZ(wkbFlatten((OGRwkbGeometryType)eGType));
+    else if( nCoordDim == COORD_DIM_XYM && eGType != wkbNone )
+        return wkbSetM(wkbFlatten((OGRwkbGeometryType)eGType));
+    else if( nCoordDim == 4 && eGType != wkbNone )
+        return OGR_GT_SetModifier((OGRwkbGeometryType)eGType, TRUE, TRUE);
     else
         return eGType;
 }
@@ -3556,6 +3561,16 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
 
                 if (m_nCoordDim == 2 || m_nCoordDim == 3)
                     poDstGeometry->setCoordinateDimension( m_nCoordDim );
+                else if (m_nCoordDim == 4)
+                {
+                    poDstGeometry->set3D( TRUE );
+                    poDstGeometry->setMeasured( TRUE );
+                }
+                else if (m_nCoordDim == COORD_DIM_XYM)
+                {
+                    poDstGeometry->set3D( FALSE );
+                    poDstGeometry->setMeasured( TRUE );
+                }
                 else if ( m_nCoordDim == COORD_DIM_LAYER_DIM )
                     poDstGeometry->setCoordinateDimension(
                         wkbHasZ(poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetType()) ? 3 : 2 );
@@ -4025,10 +4040,14 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         {
             if( EQUAL(papszArgv[i+1], "layer_dim") )
                 psOptions->nCoordDim = COORD_DIM_LAYER_DIM;
+            else if( EQUAL(papszArgv[i+1], "2+M") )
+                psOptions->nCoordDim = COORD_DIM_XYM;
+            else if( EQUAL(papszArgv[i+1], "3+M") )
+                psOptions->nCoordDim = 4;
             else
             {
                 psOptions->nCoordDim = atoi(papszArgv[i+1]);
-                if( psOptions->nCoordDim != 2 && psOptions->nCoordDim != 3 )
+                if( psOptions->nCoordDim != 2 && psOptions->nCoordDim != 3 && psOptions->nCoordDim != 4 )
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,"-dim %s: value not handled.",
                             papszArgv[i+1] );
