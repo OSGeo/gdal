@@ -2129,6 +2129,86 @@ def netcdf_56():
     return 'success'
 
 ###############################################################################
+# Test one layer per file creation
+
+def netcdf_57():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('netCDF').CreateDataSource('/not_existing_dir/invalid_subdir', options = ['MULTIPLE_LAYERS=SEPARATE_FILES'])
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    open('tmp/netcdf_57', 'wb').close()
+
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('netCDF').CreateDataSource('/not_existing_dir/invalid_subdir', options = ['MULTIPLE_LAYERS=SEPARATE_FILES'])
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    os.unlink('tmp/netcdf_57')
+
+    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_57', options = ['MULTIPLE_LAYERS=SEPARATE_FILES'])
+    for ilayer in range(2):
+        lyr = ds.CreateLayer('lyr%d' % ilayer)
+        lyr.CreateField(ogr.FieldDefn('lyr_id', ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f['lyr_id'] = ilayer
+        lyr.CreateFeature(f)
+    ds = None
+
+    for ilayer in range(2):
+        ds = ogr.Open('tmp/netcdf_57/lyr%d.nc' % ilayer)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f['lyr_id'] != ilayer:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        ds = None
+
+    shutil.rmtree('tmp/netcdf_57')
+
+    return 'success'
+
+###############################################################################
+# Test one layer per group (NC4)
+
+def netcdf_58():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_58.nc', options = ['FORMAT=NC4', 'MULTIPLE_LAYERS=SEPARATE_GROUPS'])
+    for ilayer in range(2):
+        # Make sure auto-grow will happen to test this works well with multiple groups
+        lyr = ds.CreateLayer('lyr%d' % ilayer, geom_type = ogr.wkbNone, options = ['USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1' ])
+        lyr.CreateField(ogr.FieldDefn('lyr_id', ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f['lyr_id'] = 'lyr_%d' % ilayer
+        lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open('tmp/netcdf_58.nc')
+    for ilayer in range(2):
+        lyr = ds.GetLayer(ilayer)
+        f = lyr.GetNextFeature()
+        if f['lyr_id'] != 'lyr_%d' % ilayer:
+            gdaltest.post_reason('failure')
+            return 'fail'
+    ds = None
+
+    gdal.Unlink('tmp/netcdf_58.nc')
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2189,7 +2269,9 @@ gdaltest_list = [
     netcdf_53,
     netcdf_54,
     netcdf_55,
-    netcdf_56
+    netcdf_56,
+    netcdf_57,
+    netcdf_58
 ]
 
 ###############################################################################
