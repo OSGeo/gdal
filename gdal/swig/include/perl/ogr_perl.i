@@ -731,7 +731,7 @@ sub STORE {
     eval {$i = $self->_GetFieldIndex($index)};
     $self->SetField($i, @_) unless $@;
     $i = $self->_GetGeomFieldIndex($index);
-    $self->SetGeometry($i, @_);
+    $self->Geometry($i, @_);
 }
 
 sub FID {
@@ -783,7 +783,7 @@ sub Row {
         for my $name (keys %row) {
             next if $name eq 'FID';
             if ($name eq 'Geometry') {
-                $self->SetGeometry(0, $row{$name});
+                $self->Geometry(0, $row{$name});
                 next;
             }
             my $f = 0;
@@ -797,7 +797,7 @@ sub Row {
             next if $f;
             for my $i (0..$ngf-1) {
                 if ($self->GetGeomFieldDefnRef($i)->Name eq $name) {
-                    $self->SetGeometry($i, $row{$name});
+                    $self->Geometry($i, $row{$name});
                     $f = 1;
                     last;
                 }
@@ -813,12 +813,10 @@ sub Row {
         $row{$name} = $self->GetField($i);
     }
     for my $i (0..$ngf-1) {
-        my $name = $self->GetGeomFieldDefnRef($i)->Name;
-        $name = 'Geometry' if $name eq '';
+        my $name = $self->GetGeomFieldDefnRef($i)->Name || 'Geometry';
         $row{$name} = $self->GetGeometry($i);
     }
     $row{FID} = $self->GetFID;
-    #$row{Geometry} = $self->Geometry;
     return \%row;
 }
 
@@ -840,7 +838,7 @@ sub Tuple {
             $self->SetField($i, $values->[$i]);
         }
         for my $i (0..$ngf-1) {
-            $self->SetGeometry($i, $values->[$nf+$i]);
+            $self->Geometry($i, $values->[$nf+$i]);
         }
     }
     return unless defined wantarray;
@@ -1026,10 +1024,9 @@ sub Geometry {
             Geo::GDAL::error("The type of the inserted geometry ('$gtype') is not the same as the type of the field ('$type').")
                 if $type ne 'Unknown' and $type ne $gtype;
             eval {
-                $self->SetGeomFieldDirectly($field, $geometry);
+                $self->SetGeomFieldDirectly($field, $geometry->Clone);
             };
             confess Geo::GDAL->last_error if $@;
-            $GEOMETRIES{tied(%$geometry)} = $self;
         } elsif (ref($geometry) eq 'HASH') {
             $geometry->{GeometryType} //= $type;
             eval {

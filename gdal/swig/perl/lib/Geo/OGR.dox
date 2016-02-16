@@ -538,10 +538,10 @@
 #
 # Get and/or set the data of the feature. The key of the (key,value)
 # pairs of the row is the field name. Special field names FID and
-# Geometry are used for feature id and geometry respectively. The
-# geometry is set and get using the Geo::OGR::Feature::Geometry
-# method. Field values are set using the Geo::OGR::Feature::SetField
-# method.
+# Geometry are used for feature id and (single) geometry
+# respectively. The geometry is set and get using the
+# Geo::OGR::Feature::Geometry method. Field values are set using the
+# Geo::OGR::Feature::SetField method.
 # @param row [optional] feature data in a hash.
 # @return a reference to feature data in a hash. Spatial fields are
 # returned as Geo::OGR::Geometry objects.
@@ -645,18 +645,19 @@
 # SetGeomFieldDirectly, GetGeometry, GetGeometryRef.
 #
 # Set or get the geometry in the feature. When setting, does a check
-# against the schema (GeometryType) of the feature. The ownership of
-# the geometry is given (if the parameter is an object) or kept to the
-# feature and thus the geometry will keep the feature alive as long as
-# the geometry is alive.
+# against the schema (GeometryType) of the feature. If the parameter
+# is a geometry object, it is cloned.
 # @param name [optional] the name of the spatial field,
 # whose geometry is to be set. If not given, sets or gets the geometry
-# of the first spatial field.
+# of the first (or the single) spatial field.
 # @param geometry [optional] a Geo::OGR::Geometry object or a hash
 # array from which such can be created (using
 # Geo::OGR::Geometry::new)
-# @return in a non-void context the geometry in the feature
-# as a Geo::OGR::Geometry object.
+# @return in a non-void context the indicated geometry in the feature
+# as a Geo::OGR::Geometry object. The returned object contains a
+# reference to the actual geometry data in the feature (the geometry
+# is not cloned) and to the feature object, thus keeping the feature
+# object from being destroyed while the geometry object exists.
 
 ## @ignore SetFromWithMap
 
