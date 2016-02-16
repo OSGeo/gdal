@@ -1607,7 +1607,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
             pszGeomType = "bytea";
     }
 
-    const char *pszGFldName = NULL;
+    const char *pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
     if( eType != wkbNone && EQUAL(pszGeomType, "geography") )
     {
         if( !bHaveGeography )
@@ -1621,16 +1621,12 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
             return NULL;
         }
 
-        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
-            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
-        else
+        if( pszGFldName == NULL )
             pszGFldName = "the_geog";
     }
     else if ( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType, "geography") )
     {
-        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
-            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
-        else
+        if( pszGFldName == NULL )
             pszGFldName = "wkb_geometry";
     }
 
