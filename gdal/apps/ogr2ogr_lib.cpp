@@ -4040,22 +4040,22 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         {
             if( EQUAL(papszArgv[i+1], "layer_dim") )
                 psOptions->nCoordDim = COORD_DIM_LAYER_DIM;
-            else if( EQUAL(papszArgv[i+1], "2+M") )
+            else if( EQUAL(papszArgv[i+1], "XY") || EQUAL(papszArgv[i+1], "2") )
+                psOptions->nCoordDim = 2;
+            else if( EQUAL(papszArgv[i+1], "XYZ") || EQUAL(papszArgv[i+1], "3") )
+                psOptions->nCoordDim = 3;
+            else if( EQUAL(papszArgv[i+1], "XYM") )
                 psOptions->nCoordDim = COORD_DIM_XYM;
-            else if( EQUAL(papszArgv[i+1], "3+M") )
+            else if( EQUAL(papszArgv[i+1], "XYZM") )
                 psOptions->nCoordDim = 4;
             else
             {
-                psOptions->nCoordDim = atoi(papszArgv[i+1]);
-                if( psOptions->nCoordDim != 2 && psOptions->nCoordDim != 3 && psOptions->nCoordDim != 4 )
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,"-dim %s: value not handled.",
-                            papszArgv[i+1] );
-                    GDALVectorTranslateOptionsFree(psOptions);
-                    return NULL;
-                }
+                CPLError(CE_Failure, CPLE_IllegalArg,"-dim %s: value not handled.",
+                         papszArgv[i+1] );
+                GDALVectorTranslateOptionsFree(psOptions);
+                return NULL;
             }
-            i ++;
+            i++;
         }
         else if( (EQUAL(papszArgv[i],"-tg") ||
                  EQUAL(papszArgv[i],"-gt")) && i+1 < nArgc )
