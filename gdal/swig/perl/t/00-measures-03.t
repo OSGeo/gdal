@@ -130,8 +130,7 @@ for (my $i = 0; $i < @data; $i+=2) {
     my $basetype = $type;
     $basetype =~ s/(M|Z|ZM)$//;
     my $shpt = $type2shpt{$basetype};
-    #for my $dim ('','Z','M','ZM') {
-    for my $dim ('M','ZM') {
+    for my $dim ('','Z','M','ZM') {
         my $l = Geo::OGR::Driver($driver)->Create($dir.$type.'.shp')->CreateLayer(
             GeometryType => 'Unknown', 
             Options => { SHPT => $shpt.$dim });
@@ -171,6 +170,9 @@ for (my $i = 0; $i < @data; $i+=2) {
             my $wkt = $g->As(Format => 'ISO WKT');
             $exp = $data{$basetype.$dim};
             if (!($type =~ /M$/) and $dim eq 'M') {
+                $exp =~ s/3/0/;
+            } elsif (($type =~ /ZM$/) and $dim eq 'Z') {
+            } elsif (!($type =~ /Z$/) and $dim eq 'Z') {
                 $exp =~ s/3/0/;
             } elsif (($type =~ /ZM$/) and $dim eq 'M') {
                 $exp =~ s/4 //;
