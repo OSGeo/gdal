@@ -2129,6 +2129,29 @@ def netcdf_56():
     return 'success'
 
 ###############################################################################
+#check for UnitType set/get.
+def netcdf_57():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    # get
+    ds = gdal.Open( 'data/unittype.nc' )
+
+    unit = ds.GetRasterBand( 1 ).GetUnitType();
+
+    if unit != 'm/s':
+        gdaltest.post_reason( 'Incorrect unit(%s)' % unit )
+        return 'fail'
+
+    ds = None
+
+    # set
+    tst = gdaltest.GDALTest( 'NetCDF', 'unittype.nc', 1, 4672 )
+
+    return tst.testSetUnitType()
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2189,7 +2212,8 @@ gdaltest_list = [
     netcdf_53,
     netcdf_54,
     netcdf_55,
-    netcdf_56
+    netcdf_56,
+    netcdf_57
 ]
 
 ###############################################################################
