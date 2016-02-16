@@ -187,6 +187,9 @@ int main( int nArgc, char ** papszArgv )
         goto exit;
     }
 
+    if( strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0 )
+        psOptionsForBinary->bQuiet = TRUE;
+
     if (!psOptionsForBinary->bQuiet && psOptionsForBinary->bFormatExplicitlySet)
     {
         CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
