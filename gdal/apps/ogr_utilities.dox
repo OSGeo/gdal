@@ -331,12 +331,13 @@ multilinestrings to multilinestrings. Can be useful when converting shapefiles t
 Starting with GDAL 2.0, CONVERT_TO_LINEAR can be used to to convert non-linear geometries
 types into linear geometries by approximating them.</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force
-the coordinate dimension to val (valid values are 2, 2+M, 3, 3+M, and
-4, the last two values having the same effect). This affects both the
-layer geometry type, and feature geometries. Starting with GDAL 1.11,
-the value can be set to "layer_dim" to instruct feature geometries to
-be promoted to the coordinate dimension declared by the layer. Support
-for M was added in GDAL 2.1</dd>
+the coordinate dimension to val (valid values are XY, XYZ, XYM, and
+XYZM - for backwards compatibility 2 is an alias for XY and 3 is an
+alias for XYZ). This affects both the layer geometry type, and feature
+geometries. Starting with GDAL 1.11, the value can be set to
+"layer_dim" to instruct feature geometries to be promoted to the
+coordinate dimension declared by the layer. Support for M was added in
+GDAL 2.1</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
