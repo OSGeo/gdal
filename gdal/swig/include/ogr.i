@@ -3040,6 +3040,9 @@ OGRwkbGeometryType OGR_GT_Flatten( OGRwkbGeometryType eType );
 %rename (GT_SetZ) OGR_GT_SetZ;
 OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType );
 
+%rename (GT_SetM) OGR_GT_SetM;
+OGRwkbGeometryType OGR_GT_SetM( OGRwkbGeometryType eType );
+
 #ifndef SWIGPERL
 %inline  %{
 OGRwkbGeometryType GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSetM = FALSE)
