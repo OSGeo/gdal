@@ -2232,6 +2232,226 @@ def netcdf_59():
     return tst.testSetUnitType()
 
 ###############################################################################
+# Test reading a "Indexed ragged array representation of profiles" v1.6.0 H3.5
+# http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_indexed_ragged_array_representation_of_profiles
+
+def netcdf_60():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    # Test that a vector cannot be opened in raster-only mode
+    ds = gdal.OpenEx( 'data/profile.nc', gdal.OF_RASTER )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.OpenEx( 'data/profile.nc', gdal.OF_VECTOR)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate( '/vsimem/netcdf_60.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_60.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,profile,id,station,foo
+"POINT (2 49 100)",1,1,Palo Alto,bar
+"POINT (3 50 50)",2,2,Santa Fe,baz
+"POINT (2 49 200)",1,3,Palo Alto,baw
+"POINT (3 50 100)",2,4,Santa Fe,baz2
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_60.csv')
+
+    return 'success'
+
+###############################################################################
+# Test appending to a "Indexed ragged array representation of profiles" v1.6.0 H3.5
+
+def netcdf_61():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    shutil.copy('data/profile.nc', 'tmp/netcdf_61.nc')
+    ds = gdal.VectorTranslate( 'tmp/netcdf_61.nc', 'data/profile.nc', accessMode = 'append' )
+    gdal.VectorTranslate( '/vsimem/netcdf_61.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_61.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,profile,id,station,foo
+"POINT (2 49 100)",1,1,Palo Alto,bar
+"POINT (3 50 50)",2,2,Santa Fe,baz
+"POINT (2 49 200)",1,3,Palo Alto,baw
+"POINT (3 50 100)",2,4,Santa Fe,baz2
+"POINT (2 49 100)",1,1,Palo Alto,bar
+"POINT (3 50 50)",2,2,Santa Fe,baz
+"POINT (2 49 200)",1,3,Palo Alto,baw
+"POINT (3 50 100)",2,4,Santa Fe,baz2
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_61.csv')
+    gdal.Unlink('/vsimem/netcdf_61.nc')
+
+    return 'success'
+
+###############################################################################
+# Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
+
+def netcdf_62():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    shutil.copy('data/profile.nc', 'tmp/netcdf_61.nc')
+    ds = gdal.VectorTranslate( 'tmp/netcdf_62.nc', 'data/profile.nc', format = 'netCDF', layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1'] )
+    gdal.VectorTranslate( '/vsimem/netcdf_62.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_62.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+
+    expected_content = """WKT,profile,id,station,foo
+"POINT (2 49 100)",1,1,Palo Alto,bar
+"POINT (3 50 50)",2,2,Santa Fe,baz
+"POINT (2 49 200)",1,3,Palo Alto,baw
+"POINT (3 50 100)",2,4,Santa Fe,baz2
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_62.csv')
+
+    return 'success'
+
+def netcdf_62_ncdump_check():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    # get file header with ncdump (if available)
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+    except:
+        err = None
+    if err is not None and 'netcdf library version' in err:
+        (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h tmp/netcdf_62.nc' )
+        if ret.find('profile = 2') < 0 or \
+           ret.find('record = UNLIMITED') < 0 or \
+           ret.find('profile:cf_role = "profile_id"') < 0 or \
+           ret.find('parentIndex:instance_dimension = "profile"') < 0 or \
+           ret.find(':featureType = "profile"') < 0 or \
+           ret.find('char station(record') < 0:
+            gdaltest.post_reason('failure')
+            print(ret)
+            return 'fail'
+    else:
+        return 'skip'
+
+    return 'success'
+
+def netcdf_62_cf_check():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    import netcdf_cf
+    if netcdf_cf.netcdf_cf_setup() == 'success' and \
+       gdaltest.netcdf_cf_method is not None:
+        result_cf = netcdf_cf.netcdf_cf_check_file( 'tmp/netcdf_62.nc','auto',False )
+        if result_cf != 'success':
+            gdaltest.post_reason('failure')
+            return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_62.nc')
+
+    return 'success'
+
+###############################################################################
+# Test creating a NC4 "Indexed ragged array representation of profiles" v1.6.0 H3.5
+
+def netcdf_63():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    shutil.copy('data/profile.nc', 'tmp/netcdf_63.nc')
+    ds = gdal.VectorTranslate( 'tmp/netcdf_63.nc', 'data/profile.nc', format = 'netCDF', datasetCreationOptions = ['FORMAT=NC4'], layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1' ] )
+    gdal.VectorTranslate( '/vsimem/netcdf_63.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_63.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+
+    expected_content = """WKT,profile,id,station,foo
+"POINT (2 49 100)",1,1,Palo Alto,bar
+"POINT (3 50 50)",2,2,Santa Fe,baz
+"POINT (2 49 200)",1,3,Palo Alto,baw
+"POINT (3 50 100)",2,4,Santa Fe,baz2
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_63.csv')
+
+    return 'success'
+
+def netcdf_63_ncdump_check():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    # get file header with ncdump (if available)
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+    except:
+        err = None
+    if err is not None and 'netcdf library version' in err:
+        (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h tmp/netcdf_63.nc' )
+        if ret.find('profile = UNLIMITED') < 0 or \
+           ret.find('record = UNLIMITED') < 0 or \
+           ret.find('profile:cf_role = "profile_id"') < 0 or \
+           ret.find('parentIndex:instance_dimension = "profile"') < 0 or \
+           ret.find(':featureType = "profile"') < 0 or \
+           ret.find('char station(record') < 0:
+            gdaltest.post_reason('failure')
+            print(ret)
+            return 'fail'
+    else:
+        gdal.Unlink('/vsimem/netcdf_63.nc')
+        return 'skip'
+
+    gdal.Unlink('/vsimem/netcdf_63.nc')
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2295,7 +2515,14 @@ gdaltest_list = [
     netcdf_56,
     netcdf_57,
     netcdf_58,
-    netcdf_59
+    netcdf_59,
+    netcdf_60,
+    netcdf_61,
+    netcdf_62,
+    netcdf_62_ncdump_check,
+    netcdf_62_cf_check,
+    netcdf_63,
+    netcdf_63_ncdump_check,
 ]
 
 ###############################################################################
