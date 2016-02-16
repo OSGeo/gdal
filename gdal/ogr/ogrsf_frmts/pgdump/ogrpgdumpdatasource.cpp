@@ -360,12 +360,10 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 
     const char *pszGeometryType = OGRToOGCGeomType(eType);
 
-    const char *pszGFldName = NULL;
+    const char *pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
     if( bHavePostGIS && !EQUAL(pszGeomType, "geography"))
     {
-        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
-            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
-        else
+        if( pszGFldName == NULL )
             pszGFldName = "wkb_geometry";
 
         if( pszPostgisVersion == NULL || atoi(pszPostgisVersion) < 2 )
@@ -508,6 +506,8 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         poGeomField->nCoordDimension = nDimension;
         poLayer->GetLayerDefn()->AddGeomFieldDefn(poGeomField, FALSE);
     }
+    else if( pszGFldName )
+        poLayer->SetGeometryFieldName(pszGFldName);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

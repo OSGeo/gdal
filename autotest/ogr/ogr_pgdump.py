@@ -768,6 +768,32 @@ def ogr_pgdump_10():
     return ogr_pgdump_9('NO')
 
 ###############################################################################
+# Test that GEOMETRY_NAME works even when the geometry column creation is
+# done through CreateGeomField (#6366)
+# This is important for the ogr2ogr use case when the source geometry column
+# is not-nullable, and hence the CreateGeomField() interface is used.
+
+def ogr_pgdump_12():
+
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_12.sql', options = [ 'LINEFORMAT=LF' ] )
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone, options = [ 'GEOMETRY_NAME=another_name' ])
+    lyr.CreateGeomField(ogr.GeomFieldDefn('my_geom', ogr.wkbPoint))
+    f = None
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_12.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_pgdump_12.sql')
+
+    if sql.find('another_name') < 0:
+        print(sql)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_pgdump_cleanup():
@@ -793,6 +819,7 @@ gdaltest_list = [
     ogr_pgdump_8,
     ogr_pgdump_9,
     ogr_pgdump_10,
+    ogr_pgdump_12,
     ogr_pgdump_cleanup ]
 
 

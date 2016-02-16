@@ -115,6 +115,8 @@ class OGRPGDumpLayer : public OGRLayer
 
     char              **papszOverrideColumnTypes;
 
+    CPLString           m_osFirstGeometryFieldName;
+
     OGRErr              StartCopy(int bSetFID);
     CPLString           BuildCopyFields(int bSetFID);
 
@@ -159,6 +161,7 @@ class OGRPGDumpLayer : public OGRLayer
                                 { bCreateSpatialIndexFlag = bFlag; }
     void                SetPostGIS2( int bFlag )
                                 { bPostGIS2 = bFlag; }
+    void                SetGeometryFieldName( const char* pszGeomFieldName ) { m_osFirstGeometryFieldName = pszGeomFieldName; }
     OGRErr              EndCopy();
 
     static char*        GByteArrayToBYTEA( const GByte* pabyData, int nLen);

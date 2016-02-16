@@ -627,6 +627,8 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
         }
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
     }
+    else if( pszGFldName != NULL )
+        m_osFirstGeometryFieldName = pszGFldName;
 }
 
 /************************************************************************/
@@ -2162,9 +2164,16 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                  "Cannot create geometry field of type wkbNone");
         return OGRERR_FAILURE;
     }
-    
+ 
+    // Check if GEOMETRY_NAME layer creation option was set, but no initial
+    // column was created in ICreateLayer()
+    CPLString osGeomFieldName = 
+        ( m_osFirstGeometryFieldName.size() ) ? m_osFirstGeometryFieldName :
+                                                CPLString(poGeomFieldIn->GetNameRef());
+    m_osFirstGeometryFieldName = ""; // reset for potential next geom columns
+
     OGRPGGeomFieldDefn *poGeomField =
-        new OGRPGGeomFieldDefn( this, poGeomFieldIn->GetNameRef() );
+        new OGRPGGeomFieldDefn( this, osGeomFieldName );
     if( EQUAL(poGeomField->GetNameRef(), "") )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
