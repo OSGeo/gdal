@@ -2232,6 +2232,25 @@ def netcdf_59():
     return tst.testSetUnitType()
 
 ###############################################################################
+# ticket #5950: optimize IReadBlock() and CheckData() handling of partial
+# blocks in the x axischeck for partial block reading.
+def netcdf_60():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    # disable bottom-up mode to use the real file's blocks size
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', 'NO' )
+    tst = gdaltest.GDALTest( 'NetCDF', 'partial_block_ticket5950.nc', 1, 45 )
+    result = tst.testOpen( check_stat=(1, 9, 5, 2.582) )
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', None )
+
+    return result
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2295,7 +2314,8 @@ gdaltest_list = [
     netcdf_56,
     netcdf_57,
     netcdf_58,
-    netcdf_59
+    netcdf_59,
+    netcdf_60
 ]
 
 ###############################################################################
