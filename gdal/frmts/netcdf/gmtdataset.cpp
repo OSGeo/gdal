@@ -479,22 +479,22 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     int side_dim, xysize_dim;
 
-    nc_def_dim(cdfid, "side", 2, &side_dim);
-    nc_def_dim(cdfid, "xysize", (int) (nXSize * nYSize), &xysize_dim);
+    CPL_IGNORE_RET_VAL(nc_def_dim(cdfid, "side", 2, &side_dim));
+    CPL_IGNORE_RET_VAL(nc_def_dim(cdfid, "xysize", (int) (nXSize * nYSize), &xysize_dim));
 
     int dims[1] = {side_dim};
 
     int x_range_id, y_range_id, z_range_id;
-    nc_def_var (cdfid, "x_range", NC_DOUBLE, 1, dims, &x_range_id);
-    nc_def_var (cdfid, "y_range", NC_DOUBLE, 1, dims, &y_range_id);
-    nc_def_var (cdfid, "z_range", NC_DOUBLE, 1, dims, &z_range_id);
+    CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "x_range", NC_DOUBLE, 1, dims, &x_range_id));
+    CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "y_range", NC_DOUBLE, 1, dims, &y_range_id));
+    CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "z_range", NC_DOUBLE, 1, dims, &z_range_id));
 
     int inc_id, nm_id, z_id;
-    nc_def_var (cdfid, "spacing", NC_DOUBLE, 1, dims, &inc_id);
-    nc_def_var (cdfid, "dimension", NC_LONG, 1, dims, &nm_id);
+    CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "spacing", NC_DOUBLE, 1, dims, &inc_id));
+    CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "dimension", NC_LONG, 1, dims, &nm_id));
 
     dims[0]		= xysize_dim;
-    nc_def_var (cdfid, "z", nc_datatype, 1, dims, &z_id);
+    CPL_IGNORE_RET_VAL(nc_def_var (cdfid, "z", nc_datatype, 1, dims, &z_id));
 
 /* -------------------------------------------------------------------- */
 /*      Assign attributes.                                              */
