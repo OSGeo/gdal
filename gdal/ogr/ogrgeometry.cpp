@@ -320,6 +320,14 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
                 break;
         }
     }
+    else if (pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "WKT2"))
+    {
+        if( exportToWkt( &pszWkt, wkbVariantIso ) == OGRERR_NONE )
+        {
+            fprintf( fp, "%s%s\n", pszPrefix, pszWkt );
+            CPLFree( pszWkt );
+        }
+    }
     else if (pszDisplayGeometry == NULL || CSLTestBoolean(pszDisplayGeometry) ||
              EQUAL(pszDisplayGeometry, "WKT"))
     {
