@@ -185,6 +185,13 @@ static void INGR_MultiplyMatrix( double *padfA, real64 *padfB, const double *pad
     }
 }
 
+// TODO: Move function to port and change gdal_priv.h macro to function header.
+#undef DIV_ROUND_UP
+static int DIV_ROUND_UP(int a, int b)
+{
+    return (a % b) == 0 ? (a / b) : (a / b) + 1;
+}
+
 // -----------------------------------------------------------------------------
 //                                                            INGR_GetDataType()
 // -----------------------------------------------------------------------------
@@ -438,7 +445,6 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
     // ----------------------------------------------------------------
     // Calculate the number of tiles
     // ----------------------------------------------------------------
-#define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
     int nTilesPerCol = DIV_ROUND_UP(nBandXSize, pTileDir->TileSize);
     int nTilesPerRow = DIV_ROUND_UP(nBandYSize, pTileDir->TileSize);
     if( nTilesPerCol > INT_MAX / nTilesPerRow )
