@@ -985,6 +985,50 @@ class GDALTest:
 
         return 'success'
 
+    def testSetUnitType(self):
+        if self.testDriver() == 'fail':
+            return 'skip'
+
+        src_ds = gdal.Open( 'data/' + self.filename )
+        xsize = src_ds.RasterXSize
+        ysize = src_ds.RasterYSize
+
+        new_filename = 'tmp/' + self.filename + '.tst'
+        new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
+                                     src_ds.GetRasterBand(self.band).DataType,
+                                     options = self.options  )
+        if new_ds is None:
+            post_reason( 'Failed to create test file using Create method.' )
+            return 'fail'
+
+        unit = 'mg/m3'
+        if new_ds.GetRasterBand(1).SetUnitType( unit ) is not gdal.CE_None:
+            post_reason( 'Failed to set unit type.' )
+            return 'fail'
+
+        src_ds = None
+        new_ds = None
+
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
+
+        new_unit = new_ds.GetRasterBand(1).GetUnitType()
+        if new_unit != unit:
+            print('')
+            print('old = ', unit)
+            print('new = ', new_unit)
+            post_reason( 'Did not get expected unit type.' )
+            return 'fail'
+
+        new_ds = None
+
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
+
+        return 'success'
+
 
 def approx_equal( a, b ):
     a = float(a)

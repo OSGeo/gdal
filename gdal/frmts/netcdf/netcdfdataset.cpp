@@ -113,6 +113,7 @@ class netCDFRasterBand : public GDALPamRasterBand
     double      adfValidRange[2];
     double      dfScale;
     double      dfOffset;
+    CPLString   osUnitType;
     bool        bSignedData;
     bool        bCheckLongitude;
 
@@ -154,6 +155,8 @@ class netCDFRasterBand : public GDALPamRasterBand
     virtual CPLErr SetOffset( double );
     virtual double GetScale( int * );
     virtual CPLErr SetScale( double );
+    virtual const char *GetUnitType();
+    virtual CPLErr SetUnitType( const char * );
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
 };
@@ -429,6 +432,11 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     bCheckLongitude =
         CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))
         && NCDFIsVarLongitude( cdfid, nZId, NULL );
+
+/* -------------------------------------------------------------------- */
+/* Attempt to fetch the units attribute for the variable and set it.    */
+/* -------------------------------------------------------------------- */
+    SetUnitType( GetMetadataItem( CF_UNITS ) );
 
 /* -------------------------------------------------------------------- */
 /*      Check for variable chunking (netcdf-4 only)                     */
@@ -742,6 +750,52 @@ CPLErr netCDFRasterBand::SetScale( double dfNewScale )
             return CE_None;
 
         return CE_Failure;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+const char *netCDFRasterBand::GetUnitType()
+
+{
+    if( osUnitType.size() > 0 )
+        return osUnitType;
+    else
+        return GDALRasterBand::GetUnitType();
+}
+
+/************************************************************************/
+/*                           SetUnitType()                              */
+/************************************************************************/
+
+CPLErr netCDFRasterBand::SetUnitType( const char* pszNewValue )
+
+{
+    CPLMutexHolderD(&hNCMutex);
+
+    osUnitType = (pszNewValue != NULL ? pszNewValue : "");
+
+    if ( osUnitType.size() > 0 ) {
+        /* write value if in update mode */
+        if ( poDS->GetAccess() == GA_Update ) {
+
+            /* make sure we are in define mode */
+            ( ( netCDFDataset * ) poDS )->SetDefineMode( TRUE );
+
+            int status = nc_put_att_text( cdfid, nZId, CF_UNITS,
+                                          osUnitType.size(),
+                                          osUnitType.c_str() );
+
+            NCDF_ERR(status);
+            if ( status == NC_NOERR )
+                return CE_None;
+
+            return CE_Failure;
+        }
     }
 
     return CE_None;
