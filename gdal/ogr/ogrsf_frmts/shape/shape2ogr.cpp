@@ -492,7 +492,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /************************************************************************/
 static
 OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
-                          int bRewind)
+                          int bRewind, OGRwkbGeometryType eRequestedGeomType )
 
 {
     int nReturnedShapeID;
@@ -521,7 +521,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_POINTZ )
     {
         SHPObject       *psShape;
-        double          dfX, dfY, dfZ, dfM = 0;
+        double          dfX, dfY, dfZ, dfM;
+        double          *pdfM;
 
         if( wkbFlatten(poGeom->getGeometryType()) != wkbPoint )        
         {
@@ -537,10 +538,19 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         dfX = poPoint->getX();
         dfY = poPoint->getY();
         dfZ = poPoint->getZ();
-        dfM = poPoint->getM(); // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
+        if( wkbHasM(eRequestedGeomType) && (hSHP->nShapeType == SHPT_POINTM || hSHP->nShapeType == SHPT_POINTZ) )
+        {
+            if( poGeom->IsMeasured() )
+                dfM = poPoint->getM();
+            else
+                dfM = 0.0; // fixme: should this be "no data" (value < -10^38)?
+            pdfM = &dfM;
+        }
+        else
+            pdfM = NULL;
 
         psShape = SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL, 1,
-                                   &dfX, &dfY, &dfZ, poGeom->IsMeasured() ? &dfM : NULL );
+                                   &dfX, &dfY, &dfZ, pdfM );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         if( nReturnedShapeID == -1 )
@@ -571,7 +581,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         padfX = (double *) CPLMalloc(sizeof(double)*poMP->getNumGeometries());
         padfY = (double *) CPLMalloc(sizeof(double)*poMP->getNumGeometries());
         padfZ = (double *) CPLCalloc(sizeof(double),poMP->getNumGeometries());
-        padfM = (double *) CPLCalloc(sizeof(double),poMP->getNumGeometries());
+        if( wkbHasM(eRequestedGeomType) && (hSHP->nShapeType == SHPT_MULTIPOINTM || hSHP->nShapeType == SHPT_MULTIPOINTZ) )
+            padfM = (double *) CPLCalloc(sizeof(double),poMP->getNumGeometries());
+        else
+            padfM = NULL;
 
         int iDstPoints = 0;
         for( iPoint = 0; iPoint < poMP->getNumGeometries(); iPoint++ )
@@ -584,7 +597,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 padfX[iDstPoints] = poPoint->getX();
                 padfY[iDstPoints] = poPoint->getY();
                 padfZ[iDstPoints] = poPoint->getZ();
-                padfM[iDstPoints] = poPoint->getM();  // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
+                if( padfM )
+                {
+                    if( poGeom->IsMeasured() )
+                        padfM[iDstPoints] = poPoint->getM();
+                    else
+                        padfM[iDstPoints] = 0.0; // fixme: should this be "no data" (value < -10^38)?
+                }
                 iDstPoints ++;
             }
             else
@@ -594,7 +613,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
         psShape = SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL,
                                    iDstPoints,
-                                   padfX, padfY, padfZ, poGeom->IsMeasured() ? padfM : NULL );
+                                   padfX, padfY, padfZ, padfM );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
@@ -622,19 +641,28 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         padfX = (double *) CPLMalloc(sizeof(double)*poArc->getNumPoints());
         padfY = (double *) CPLMalloc(sizeof(double)*poArc->getNumPoints());
         padfZ = (double *) CPLCalloc(sizeof(double),poArc->getNumPoints());
-        padfM = (double *) CPLCalloc(sizeof(double),poArc->getNumPoints());
+        if( wkbHasM(eRequestedGeomType) && (hSHP->nShapeType == SHPT_ARCM || hSHP->nShapeType == SHPT_ARCZ) )
+            padfM = (double *) CPLCalloc(sizeof(double),poArc->getNumPoints());
+        else
+            padfM = NULL;
 
         for( iPoint = 0; iPoint < poArc->getNumPoints(); iPoint++ )
         {
             padfX[iPoint] = poArc->getX( iPoint );
             padfY[iPoint] = poArc->getY( iPoint );
             padfZ[iPoint] = poArc->getZ( iPoint );
-            padfM[iPoint] = poArc->getM( iPoint ); // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
+            if( padfM )
+            {
+                if( poGeom->IsMeasured() )
+                    padfM[iPoint] = poArc->getM( iPoint );
+                else
+                    padfM[iPoint] = 0.0; // fixme: should this be "no data" (value < -10^38)?
+            }
         }
 
         psShape = SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL,
                                    poArc->getNumPoints(),
-                                   padfX, padfY, padfZ, poGeom->IsMeasured() ? padfM : NULL );
+                                   padfX, padfY, padfZ, padfM );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
@@ -659,8 +687,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         int             *panRingStart;
         int             nParts = 0;
         const bool       bSupportMeasures =
-            hSHP->nShapeType == SHPT_ARCM ||
-             (hSHP->nShapeType == SHPT_ARCZ && poGeom->IsMeasured());
+            wkbHasM(eRequestedGeomType) && (hSHP->nShapeType == SHPT_ARCM ||
+                                            hSHP->nShapeType == SHPT_ARCZ);
 
         poForcedGeom = OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
 
@@ -713,7 +741,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 padfY[nPointCount] = poArc->getY( iPoint );
                 padfZ[nPointCount] = poArc->getZ( iPoint );
                 if( bSupportMeasures )
-                    padfM[nPointCount] = poArc->getM( iPoint );
+                    padfM[nPointCount] = poGeom->IsMeasured() ? poArc->getM( iPoint ) : 0.0; // fixme: should this be "no data" (value < -10^38)?
                 nPointCount++;
             }
         }
@@ -874,7 +902,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         padfX = (double *) CPLMalloc(sizeof(double)*nVertex);
         padfY = (double *) CPLMalloc(sizeof(double)*nVertex);
         padfZ = (double *) CPLMalloc(sizeof(double)*nVertex);
-        padfM = (double *) CPLMalloc(sizeof(double)*nVertex);
+        if( wkbHasM(eRequestedGeomType) && (hSHP->nShapeType == SHPT_POLYGONM || hSHP->nShapeType == SHPT_POLYGONZ) )
+            padfM = (double *) CPLMalloc(sizeof(double)*nVertex);
 
         /* collect vertices */
         nVertex = 0;
@@ -888,14 +917,17 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 padfX[nVertex] = poRing->getX( iPoint );
                 padfY[nVertex] = poRing->getY( iPoint );
                 padfZ[nVertex] = poRing->getZ( iPoint );
-                padfM[nVertex] = poRing->getM( iPoint ); // fixme: should take into account requested geom type and whether to skip M or write no data (value < 1038.0)
+                if( padfM )
+                {
+                    padfM[nVertex] = poGeom->IsMeasured() ? poRing->getM( iPoint ) : 0.0; // fixme: should this be "no data" (value < -10^38)?
+                }
                 nVertex++;
             }
         }
 
         SHPObject* psShape = SHPCreateObject( hSHP->nShapeType, iShape, nRings,
                                    panRingStart, NULL,
-                                   nVertex, padfX, padfY, padfZ, poGeom->IsMeasured() ? padfM : NULL );
+                                   nVertex, padfX, padfY, padfZ, padfM );
         if( bRewind )
             SHPRewindObject( hSHP, psShape );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
@@ -1335,7 +1367,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeature * poFeature,
                            const char *pszSHPEncoding,
                            int* pbTruncationWarningEmitted,
-                           int bRewind )
+                           int bRewind,
+                           OGRwkbGeometryType eRequestedGeomType )
 
 {
 #ifdef notdef
@@ -1360,7 +1393,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     if( hSHP != NULL )
     {
         eErr = SHPWriteOGRObject( hSHP, (int)poFeature->GetFID(),
-                                  poFeature->GetGeometryRef(), bRewind );
+                                  poFeature->GetGeometryRef(), bRewind, eRequestedGeomType );
         if( eErr != OGRERR_NONE )
             return eErr;
     }

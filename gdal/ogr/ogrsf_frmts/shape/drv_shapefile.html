@@ -27,10 +27,14 @@ The same applies for SHPT_POLYGON shapefiles, reported as layers of type
 wkbPolygon, but depending on the number of parts of each geometry, the
 actual type can be either OGRPolygon or OGRMultiPolygon.</p>
 
-<p>Starting with GDAL 2.1 measures are used. XYM geometries are read
-as XYM (in GDAL 2.0 and before they were read as XYZ) and XYZM
-geometries are read as XYZM (Shapefiles with Z always have M
-also, in GDAL 2.0 and before they were read as XYZ).</p>
+<p>Starting with GDAL 2.1 measures (M coordinate) are supported. A
+Shapefile with measures is created if the specified geometry type is
+measured or an appropriate layer creation option is used. When a
+shapefile which may have measured geometries is opened, the first
+shape is examined and if it uses measures, the geometry type of the
+layer is set accordingly. Note that currently "no data" values for the
+M coordinate (a floating point value smaller than -10^38) are not
+supported.</p>
 
 <p>MultiPatch files are read and each patch geometry is turned into a
 multi-polygon representation with one polygon per triangle in triangle
