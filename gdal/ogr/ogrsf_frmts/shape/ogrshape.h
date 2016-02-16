@@ -59,7 +59,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
                            OGRFeature *poFeature, const char *pszSHPEncoding,
                            int* pbTruncationWarningEmitted,
-                           int bRewind );
+                           int bRewind,
+                           OGRwkbGeometryType eRequestedGeomType );
 
 /************************************************************************/
 /*                         OGRShapeGeomFieldDefn                        */

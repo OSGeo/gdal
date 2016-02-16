@@ -892,7 +892,7 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
     OGRErr eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
                                       osEncoding, &bTruncationWarningEmitted,
-                                      bRewindOnWrite );
+                                      bRewindOnWrite, eRequestedGeomType );
 
     if( hSHP != NULL )
     {
@@ -1097,7 +1097,7 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
     eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
                                osEncoding, &bTruncationWarningEmitted,
-                               bRewindOnWrite );
+                               bRewindOnWrite, eRequestedGeomType );
 
     if( hSHP != NULL )
         nTotalShapeCount = hSHP->nRecords;
