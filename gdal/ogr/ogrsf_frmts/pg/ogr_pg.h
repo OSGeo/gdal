@@ -298,6 +298,8 @@ class OGRPGTableLayer : public OGRPGLayer
     CPLString           osCreateTable;
 
     int                 iFIDAsRegularColumnIndex;
+    
+    CPLString           m_osFirstGeometryFieldName;
 
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
 
