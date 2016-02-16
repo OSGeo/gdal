@@ -839,6 +839,7 @@ class netCDFLayer: public OGRLayer
             int             nVarId;
             int             nDimCount;
             bool            bHasWarnedAboutTruncation;
+            int             nMainDimId;
             int             nSecDimId;
         } FieldDesc;
 
@@ -872,6 +873,13 @@ class netCDFLayer: public OGRLayer
         bool            m_bUseStringInNC4;
         bool            m_bNCDumpCompat;
 
+        CPLString       m_osProfileDimName;
+        int             m_nProfileDimID;
+        CPLString       m_osProfileVariables;
+        int             m_nProfileVarID;
+        bool            m_bProfileVarUnlimited;
+        int             m_nParentIndexVarID;
+
         OGRFeature     *GetNextRawFeature();
         double          Get1DVarAsDouble( int nVarId, nc_type nVarType,
                                           size_t nIndex,
@@ -882,6 +890,8 @@ class netCDFLayer: public OGRLayer
         void            GetNoDataValueForFloat( int nVarId, NCDFNoDataUnion* puNoData );
         void            GetNoDataValueForDouble( int nVarId, NCDFNoDataUnion* puNoData );
         void            GetNoDataValue( int nVarId, nc_type nVarType, NCDFNoDataUnion* puNoData );
+        bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
+        bool            FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
 
     public:
                 netCDFLayer(netCDFDataset* poDS,
@@ -896,6 +906,7 @@ class netCDFLayer: public OGRLayer
         void            SetXYZVars(int nXVarId, int nYVarId, int nZVarId);
         void            SetWKTGeometryField(const char* pszWKTVarName);
         void            SetGridMapping(const char* pszGridMapping);
+        void            SetProfile(int nProfileDimID, int nParentIndexVarID);
         bool            AddField(int nVarId);
 
         int             GetCDFID() const { return m_nLayerCDFId; }
