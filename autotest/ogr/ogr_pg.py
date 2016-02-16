@@ -4893,6 +4893,26 @@ def ogr_pg_81():
     return 'success'
 
 ###############################################################################
+# Test that GEOMETRY_NAME works even when the geometry column creation is
+# done through CreateGeomField (#6366)
+# This is important for the ogr2ogr use case when the source geometry column
+# is not-nullable, and hence the CreateGeomField() interface is used.
+
+def ogr_pg_82():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_82', geom_type = ogr.wkbNone, options = ['GEOMETRY_NAME=another_name'])
+    lyr.CreateGeomField(ogr.GeomFieldDefn('my_geom', ogr.wkbPoint))
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() != 'another_name':
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -4952,6 +4972,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_78_2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_81_1' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_81_2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_82' )
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -5063,6 +5084,7 @@ gdaltest_list_internal = [
     ogr_pg_77,
     ogr_pg_78,
     ogr_pg_81,
+    ogr_pg_82,
     ogr_pg_cleanup ]
 
 DISABLED_gdaltest_list_internal = [ 

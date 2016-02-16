@@ -1545,9 +1545,19 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         return OGRERR_FAILURE;
     }
 
+    // Check if GEOMETRY_NAME layer creation option was set, but no initial
+    // column was created in ICreateLayer()
+    CPLString osGeomFieldName = 
+        ( m_osFirstGeometryFieldName.size() ) ? m_osFirstGeometryFieldName :
+                                                CPLString(poGeomFieldIn->GetNameRef());
+    m_osFirstGeometryFieldName = ""; // reset for potential next geom columns
+
+    OGRGeomFieldDefn oTmpGeomFieldDefn( poGeomFieldIn );
+    oTmpGeomFieldDefn.SetName(osGeomFieldName);
+
     CPLString               osCommand;
     OGRPGDumpGeomFieldDefn *poGeomField =
-        new OGRPGDumpGeomFieldDefn( poGeomFieldIn );
+        new OGRPGDumpGeomFieldDefn( &oTmpGeomFieldDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into Postgres          */
