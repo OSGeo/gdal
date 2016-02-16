@@ -687,6 +687,13 @@ class netCDFDataset : public GDALPamDataset
     friend class netCDFRasterBand; //TMP
     friend class netCDFLayer;
 
+    typedef enum
+    {
+        SINGLE_LAYER,
+        SEPARATE_FILES,
+        SEPARATE_GROUPS
+    } MultipleLayerBehaviour;
+
     /* basic dataset vars */
     CPLString     osFilename;
     int           cdfid;
@@ -699,6 +706,8 @@ class netCDFDataset : public GDALPamDataset
     bool          bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
     char         *pszCFProjection;
     char         *pszCFCoordinates;
+    MultipleLayerBehaviour eMultipleLayerBehaviour;
+    std::vector<netCDFDataset*> apoVectorDatasets;
 
     /* projection/GT */
     double       adfGeoTransform[6];
@@ -726,7 +735,7 @@ class netCDFDataset : public GDALPamDataset
     bool         bSignedData;
 
     int          nLayers;
-    OGRLayer   **papoLayers;
+    netCDFLayer   **papoLayers;
 
     static double       rint( double );
 
@@ -754,9 +763,11 @@ class netCDFDataset : public GDALPamDataset
     CPLErr Set1DGeolocation( int nVarId, const char *szDimName );
     double * Get1DGeolocation( const char *szDimName, int &nVarLen );
 
-    bool CloneAttributes(int new_cdfid, int nSrcVarId, int nDstVarId);
-    bool CloneVariableContent(int new_cdfid, int nSrcVarId, int nDstVarId);
-    bool GrowDim(int nDimIdToGrow, size_t nNewSize);
+    static bool CloneAttributes(int old_cdfid, int new_cdfid, int nSrcVarId, int nDstVarId);
+    static bool CloneVariableContent(int old_cdfid, int new_cdfid, int nSrcVarId, int nDstVarId);
+    static bool CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4, int nLayerId,
+                         int nDimIdToGrow, size_t nNewSize);
+    bool GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize);
 
   protected:
 
@@ -832,6 +843,7 @@ class netCDFLayer: public OGRLayer
         } FieldDesc;
 
         netCDFDataset  *m_poDS;
+        int             m_nLayerCDFId;
         OGRFeatureDefn *m_poFeatureDefn;
         CPLString       m_osRecordDimName;
         int             m_nRecordDimID;
@@ -858,6 +870,7 @@ class netCDFLayer: public OGRLayer
         CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;
         bool            m_bUseStringInNC4;
+        bool            m_bNCDumpCompat;
 
         OGRFeature     *GetNextRawFeature();
         double          Get1DVarAsDouble( int nVarId, nc_type nVarType,
@@ -872,6 +885,7 @@ class netCDFLayer: public OGRLayer
 
     public:
                 netCDFLayer(netCDFDataset* poDS,
+                            int nLayerCDFId,
                             const char* pszName,
                             OGRwkbGeometryType eGeomType,
                             OGRSpatialReference* poSRS);
@@ -883,6 +897,9 @@ class netCDFLayer: public OGRLayer
         void            SetWKTGeometryField(const char* pszWKTVarName);
         void            SetGridMapping(const char* pszGridMapping);
         bool            AddField(int nVarId);
+
+        int             GetCDFID() const { return m_nLayerCDFId; }
+        void            SetCDFID(int nId) { m_nLayerCDFId = nId; }
 
         virtual void ResetReading();
         virtual OGRFeature* GetNextFeature();
