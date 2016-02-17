@@ -2136,6 +2136,11 @@ def netcdf_57():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
+    try:
+        shutil.rmtree('tmp/netcdf_57')
+    except:
+        pass
+
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('netCDF').CreateDataSource('/not_existing_dir/invalid_subdir', options = ['MULTIPLE_LAYERS=SEPARATE_FILES'])
     if ds is not None:
@@ -2534,6 +2539,8 @@ def netcdf_66():
 
     myconfig = \
 """<Configuration>
+    <!-- comment -->
+    <unrecognized_elt/>
     <DatasetCreationOption/>
     <DatasetCreationOption name="x"/>
     <DatasetCreationOption value="x"/>
@@ -2545,8 +2552,14 @@ def netcdf_66():
     <Attribute value="foo"/>
     <Attribute name="foo" value="bar" type="unsupported"/>
     <Field/>
+    <Field name="x">
+        <!-- comment -->
+        <unrecognized_elt/>
+    </Field>
     <Layer/>
     <Layer name="x">
+        <!-- comment -->
+        <unrecognized_elt/>
         <LayerCreationOption/>
         <LayerCreationOption name="x"/>
         <LayerCreationOption value="x"/>
