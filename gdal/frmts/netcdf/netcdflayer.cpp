@@ -863,7 +863,20 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size
                 }
                 if( nVal == m_aoFieldDesc[i].uNoData.nVal )
                     continue;
-                poFeature->SetField(i, nVal);
+                if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate )
+                {
+                    struct tm brokendowntime;
+                    CPLUnixTimeToYMDHMS( static_cast<GIntBig>(nVal) * 86400, &brokendowntime );
+                    poFeature->SetField( i,
+                                        brokendowntime.tm_year + 1900,
+                                        brokendowntime.tm_mon + 1,
+                                        brokendowntime.tm_mday,
+                                        0, 0, 0);
+                }
+                else
+                {
+                    poFeature->SetField(i, nVal);
+                }
                 break;
             }
 
@@ -955,6 +968,8 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size
                 if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
                     m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
                 {
+                    if( m_aoFieldDesc[i].bIsDays )
+                        dfVal *= 86400.0;
                     struct tm brokendowntime;
                     GIntBig nVal = static_cast<GIntBig>(floor(dfVal));
                     CPLUnixTimeToYMDHMS( nVal, &brokendowntime );
@@ -1362,7 +1377,31 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size
 
             case NC_INT:
             {
-                int nVal = poFeature->GetFieldAsInteger(i);
+                int nVal;
+                if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate )
+                {
+                    int nYear;
+                    int nMonth;
+                    int nDay;
+                    int nHour;
+                    int nMinute;
+                    float fSecond;
+                    int nTZ;
+                    poFeature->GetFieldAsDateTime( i, &nYear, &nMonth, &nDay,
+                                                &nHour, &nMinute, &fSecond, &nTZ );
+                    struct tm brokendowntime;
+                    brokendowntime.tm_year = nYear - 1900;
+                    brokendowntime.tm_mon= nMonth - 1;
+                    brokendowntime.tm_mday = nDay;
+                    brokendowntime.tm_hour = 0;
+                    brokendowntime.tm_min = 0;
+                    brokendowntime.tm_sec = 0;
+                    nVal = static_cast<int>(CPLYMDHMSToUnixTime(&brokendowntime) / 86400);
+                }
+                else
+                {
+                    nVal = poFeature->GetFieldAsInteger(i);
+                }
                 status = nc_put_var1_int( m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
                                           anIndex, &nVal );
                 break;
@@ -1431,6 +1470,8 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size
                     brokendowntime.tm_sec = static_cast<int>(fSecond);
                     GIntBig nVal = CPLYMDHMSToUnixTime(&brokendowntime);
                     dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0f);
+                    if( m_aoFieldDesc[i].bIsDays )
+                        dfVal /= 86400.0;
                 }
                 else
                 {
@@ -1777,7 +1818,8 @@ bool netCDFLayer::AddField(int nVarID)
     char* pszValue = NULL;
     if( NCDFGetAttr( m_nLayerCDFId, nVarID, "ogr_field_type", &pszValue ) == CE_None )
     {
-        if( (eType == OFTReal || eType == OFTDateTime) && EQUAL(pszValue, "Date") )
+        if( (eType == OFTInteger || eType == OFTReal || eType == OFTDateTime) &&
+            EQUAL(pszValue, "Date") )
             eType = OFTDate;
         else if( eType == OFTReal && EQUAL(pszValue, "DateTime") )
             eType = OFTDateTime;
@@ -1789,10 +1831,19 @@ bool netCDFLayer::AddField(int nVarID)
     CPLFree(pszValue);
     pszValue = NULL;
 
+    bool bIsDays = false;
     if( NCDFGetAttr( m_nLayerCDFId, nVarID, "units", &pszValue ) == CE_None )
     {
-        if( eType == OFTReal && EQUAL(pszValue, "seconds since 1970-1-1 0:0:0") )
+        if( eType == OFTReal && (EQUAL(pszValue, "seconds since 1970-1-1 0:0:0") ||
+                                 EQUAL(pszValue, "seconds since 1970-01-01 00:00:00")) )
             eType = OFTDateTime;
+        else if( (eType == OFTInteger || eType == OFTReal) &&
+                    (EQUAL(pszValue, "days since 1970-1-1") ||
+                     EQUAL(pszValue, "days since 1970-01-01")) )
+        {
+            eType = OFTDate;
+            bIsDays = true;
+        }
     }
     CPLFree(pszValue);
     pszValue = NULL;
@@ -1832,6 +1883,7 @@ bool netCDFLayer::AddField(int nVarID)
     fieldDesc.nMainDimId = anDimIds[0];
     fieldDesc.nSecDimId = anDimIds[1];
     fieldDesc.bHasWarnedAboutTruncation = false;
+    fieldDesc.bIsDays = bIsDays;
     m_aoFieldDesc.push_back(fieldDesc);
 
     m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
@@ -1878,6 +1930,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
         fieldDesc.nMainDimId = m_nProfileDimID;
         fieldDesc.nSecDimId = -1;
         fieldDesc.bHasWarnedAboutTruncation = false;
+        fieldDesc.bIsDays = false;
         m_aoFieldDesc.push_back(fieldDesc);
         m_poFeatureDefn->AddFieldDefn(poFieldDefn);
         return OGRERR_NONE;
@@ -2088,6 +2141,25 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
         }
 
         case OFTDate:
+        {
+            nType = NC_INT;
+            status = nc_def_var( m_nLayerCDFId,
+                                 pszVarName,
+                                 nType, 1, &nMainDimId, &nVarID );
+            NCDF_ERR(status);
+            if ( status != NC_NOERR ) {
+                return OGRERR_FAILURE;
+            }
+            nodata.nVal = NC_FILL_INT;
+
+            status = nc_put_att_text( m_nLayerCDFId, nVarID, CF_UNITS, 
+                                      strlen("days since 1970-1-1"),
+                                      "days since 1970-1-1" );
+            NCDF_ERR(status);
+
+            break;
+        }
+
         case OFTDateTime:
         {
             nType = NC_DOUBLE;
@@ -2121,6 +2193,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
     fieldDesc.nMainDimId = nMainDimId;
     fieldDesc.nSecDimId = nSecDimId;
     fieldDesc.bHasWarnedAboutTruncation = false;
+    fieldDesc.bIsDays = (eType == OFTDate);
     m_aoFieldDesc.push_back(fieldDesc);
 
     const char* pszLongName = CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
