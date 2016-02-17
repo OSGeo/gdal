@@ -2647,6 +2647,40 @@ def netcdf_66_ncdump_check():
     return 'success'
 
 ###############################################################################
+# ticket #5950: optimize IReadBlock() and CheckData() handling of partial
+# blocks in the x axischeck for partial block reading.
+def netcdf_67():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    try:
+        import numpy
+    except:
+        return 'skip'
+
+    # disable bottom-up mode to use the real file's blocks size
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', 'NO' )
+    # for the moment the next test using check_stat does not work, seems like
+    # the last pixel (9) of the image is not handled by stats...
+#    tst = gdaltest.GDALTest( 'NetCDF', 'partial_block_ticket5950.nc', 1, 45 )
+#    result = tst.testOpen( check_stat=(1, 9, 5, 2.582) )
+    # so for the moment compare the full image
+    ds = gdal.Open( 'data/partial_block_ticket5950.nc', gdal.GA_ReadOnly )
+    ref = numpy.arange(1, 10).reshape((3, 3))
+    if numpy.array_equal(ds.GetRasterBand(1).ReadAsArray(), ref):
+        result = 'success'
+    else:
+        result = 'fail'
+    ds = None
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', None )
+
+    return result
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2721,7 +2755,8 @@ gdaltest_list = [
     netcdf_64,
     netcdf_65,
     netcdf_66,
-    netcdf_66_ncdump_check
+    netcdf_66_ncdump_check,
+    netcdf_67
 ]
 
 ###############################################################################
