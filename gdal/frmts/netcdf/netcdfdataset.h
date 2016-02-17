@@ -675,6 +675,62 @@ static const oNetcdfSRS_PT poNetcdfSRS_PT[] = {
 
 /************************************************************************/
 /* ==================================================================== */
+/*                        netCDFWriterConfig classes                    */
+/* ==================================================================== */
+/************************************************************************/
+
+class netCDFWriterConfigAttribute
+{
+    public:
+        CPLString m_osName;
+        CPLString m_osType;
+        CPLString m_osValue;
+
+        bool Parse(CPLXMLNode* psNode);
+};
+
+class netCDFWriterConfigField
+{
+    public:
+        CPLString m_osName;
+        CPLString m_osNetCDFName;
+        CPLString m_osMainDim;
+        std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
+
+        bool Parse(CPLXMLNode* psNode);
+};
+
+class netCDFWriterConfigLayer
+{
+    public:
+        CPLString m_osName;
+        CPLString m_osNetCDFName;
+        std::map<CPLString, CPLString> m_oLayerCreationOptions;
+        std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
+        std::map<CPLString, netCDFWriterConfigField> m_oFields;
+
+        bool Parse(CPLXMLNode* psNode);
+};
+
+class netCDFWriterConfiguration
+{
+    public:
+        bool m_bIsValid;
+        std::map<CPLString, CPLString> m_oDatasetCreationOptions;
+        std::map<CPLString, CPLString> m_oLayerCreationOptions;
+        std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
+        std::map<CPLString, netCDFWriterConfigField> m_oFields;
+        std::map<CPLString, netCDFWriterConfigLayer> m_oLayers;
+
+        netCDFWriterConfiguration() : m_bIsValid(false) {}
+
+        bool Parse(const char* pszFilename);
+        static bool SetNameValue(CPLXMLNode* psNode,
+                                 std::map<CPLString,CPLString>& oMap);
+};
+
+/************************************************************************/
+/* ==================================================================== */
 /*                           netCDFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
@@ -736,6 +792,8 @@ class netCDFDataset : public GDALPamDataset
 
     int          nLayers;
     netCDFLayer   **papoLayers;
+
+    netCDFWriterConfiguration oWriterConfig;
 
     static double       rint( double );
 
@@ -880,6 +938,8 @@ class netCDFLayer: public OGRLayer
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
 
+        const netCDFWriterConfigLayer* m_poLayerConfig;
+
         OGRFeature     *GetNextRawFeature();
         double          Get1DVarAsDouble( int nVarId, nc_type nVarType,
                                           size_t nIndex,
@@ -901,7 +961,7 @@ class netCDFLayer: public OGRLayer
                             OGRSpatialReference* poSRS);
                ~netCDFLayer();
 
-        bool            Create(char** papszOptions);
+        bool            Create(char** papszOptions, const netCDFWriterConfigLayer* poLayerConfig);
         void            SetRecordDimID(int nRecordDimID);
         void            SetXYZVars(int nXVarId, int nYVarId, int nZVarId);
         void            SetWKTGeometryField(const char* pszWKTVarName);
@@ -924,5 +984,16 @@ class netCDFLayer: public OGRLayer
         virtual OGRErr ICreateFeature(OGRFeature* poFeature);
         virtual OGRErr CreateField(OGRFieldDefn* poFieldDefn, int bApproxOK);
 };
+
+void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID);
+void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
+                                      OGRSpatialReference* poSRS);
+int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
+                                char** ppszCFProjection, bool bWriteGDALTags);
+CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
+                    double *pdfValue );
+CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
+                    char **pszValue );
+bool NCDFIsUnlimitedDim(bool bIsNC4, int cdfid, int nDimId);
 
 #endif
