@@ -2079,13 +2079,20 @@ OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
 {
     OGRwkbGeometryType eType;
     bool bConvertTo3D = false;
+    bool bIsMeasured = false;
     if( *pszGeomType != '\0' )
     {
         char ch = pszGeomType[strlen(pszGeomType)-1];
+        if( ch == 'm' || ch == 'M' )
+        {
+            bIsMeasured = true;
+            if( strlen(pszGeomType) > 1 )
+                ch = pszGeomType[strlen(pszGeomType)-2];
+        }
         if( ch == 'z' || ch == 'Z' )
         {
             bConvertTo3D = true;
-        }
+        } 
     }
     if ( STARTS_WITH_CI(pszGeomType, "POINT") )
         eType = wkbPoint;
@@ -2116,6 +2123,8 @@ OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
 
     if( bConvertTo3D )
         eType = wkbSetZ(eType);
+    if( bIsMeasured )
+        eType = wkbSetM(eType);
 
     return eType;
 }
