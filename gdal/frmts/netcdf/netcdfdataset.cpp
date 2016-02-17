@@ -7208,12 +7208,12 @@ void GDALRegister_netCDF()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "   <Option name='RECORD_DIM_NAME' type='string' description='Name of the unlimited dimension' default='record'/>"
-"   <Option name='STRING_DEFAULT_WIDTH' type='string' description='"
+"   <Option name='STRING_DEFAULT_WIDTH' type='int' description='"
 #ifdef NETCDF_HAS_NC4
 "For non-NC4 format, "
 #endif
 "default width of strings. Default is 10 in autogrow mode, 80 otherwise.'/>"
-"   <Option name='WKT_DEFAULT_WIDTH' type='string' description='"
+"   <Option name='WKT_DEFAULT_WIDTH' type='int' description='"
 #ifdef NETCDF_HAS_NC4
 "For non-NC4 format, "
 #endif
