@@ -2317,7 +2317,6 @@ def netcdf_62():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    shutil.copy('data/profile.nc', 'tmp/netcdf_61.nc')
     ds = gdal.VectorTranslate( 'tmp/netcdf_62.nc', 'data/profile.nc', format = 'netCDF', layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1'] )
     gdal.VectorTranslate( '/vsimem/netcdf_62.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
 
@@ -2452,6 +2451,71 @@ def netcdf_63_ncdump_check():
     return 'success'
 
 ###############################################################################
+# Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
+# but without a profile field.
+
+def netcdf_64():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    gdal.VectorTranslate( 'tmp/netcdf_64.nc', 'data/profile.nc', format = 'netCDF', selectFields = ['id,station,foo'], layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1'] )
+    gdal.VectorTranslate( '/vsimem/netcdf_64.csv', 'tmp/netcdf_64.nc', format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_64.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+
+    expected_content = """WKT,profile,id,station,foo
+"POINT (2 49 100)",0,1,Palo Alto,bar
+"POINT (3 50 50)",1,2,Santa Fe,baz
+"POINT (2 49 200)",0,3,Palo Alto,baw
+"POINT (3 50 100)",1,4,Santa Fe,baz2
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_64.csv')
+    gdal.Unlink('/vsimem/netcdf_64.nc')
+
+    return 'success'
+
+###############################################################################
+# Test creating a NC4 file with empty string fields / WKT fields
+# (they must be filled as empty strings to avoid crashes in netcdf lib)
+
+def netcdf_65():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_65.nc', options = ['FORMAT=NC4'])
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open('tmp/netcdf_65.nc')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['str'] != '':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('tmp/netcdf_65.nc')
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2523,6 +2587,8 @@ gdaltest_list = [
     netcdf_62_cf_check,
     netcdf_63,
     netcdf_63_ncdump_check,
+    netcdf_64,
+    netcdf_65
 ]
 
 ###############################################################################
