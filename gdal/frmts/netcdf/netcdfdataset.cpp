@@ -115,7 +115,7 @@ class netCDFRasterBand : public GDALPamRasterBand
     bool        bCheckLongitude;
 
     CPLErr	    CreateBandMetadata( const int *paDimIds ); 
-    template <class T> void CheckData ( void * pImage, 
+    template <class T> void CheckData ( void * pImage, void * pImageNC,
                                         size_t nTmpBlockXSize, size_t nTmpBlockYSize,
                                         bool bCheckIsNan=false ) ;
 
@@ -1169,25 +1169,20 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
 /*                             CheckData()                              */
 /************************************************************************/
 template <class T>
-void  netCDFRasterBand::CheckData ( void * pImage, 
+void  netCDFRasterBand::CheckData ( void * pImage, void * pImageNC,
                                     size_t nTmpBlockXSize, size_t nTmpBlockYSize,
                                     bool bCheckIsNan ) 
 {
-  CPLAssert( pImage != NULL );
+  CPLAssert( pImage != NULL && pImageNC != NULL );
 
   /* if this block is not a full block (in the x axis), we need to re-arrange the data 
      this is because partial blocks are not arranged the same way in netcdf and gdal */
   if ( nTmpBlockXSize != static_cast<size_t>(nBlockXSize) ) {
-    T* ptr = (T *) CPLCalloc( nTmpBlockXSize*nTmpBlockYSize, sizeof( T ) );
-    memcpy( ptr, pImage, nTmpBlockXSize*nTmpBlockYSize*sizeof( T ) );
-    for( size_t j=0; j<nTmpBlockYSize; j++) {
-      size_t k = j*nBlockXSize;
-      for( size_t i=0; i<nTmpBlockXSize; i++,k++)
-        ((T *) pImage)[k] = ptr[j*nTmpBlockXSize+i];
-      for( size_t i=nTmpBlockXSize; i<static_cast<size_t>(nBlockXSize); i++,k++)
-        ((T *) pImage)[k] = (T)dfNoDataValue;
+    T* ptrWrite = (T *) pImage;
+    T* ptrRead = (T *) pImageNC;
+    for( size_t j=0; j<nTmpBlockYSize; j++, ptrWrite += nBlockXSize, ptrRead += nTmpBlockXSize) {
+        memmove( ptrWrite, ptrRead, nTmpBlockXSize * sizeof(T) );
     }
-    CPLFree( ptr );
   }
 
   /* is valid data checking needed or requested? */
@@ -1341,6 +1336,20 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     /* make sure we are in data mode */
     ( ( netCDFDataset * ) poDS )->SetDefineMode( false );
 
+    /*
+     * If this block is not a full block in the x axis, we need to
+     * re-arrange the data because partial blocks are not arranged the
+     * same way in netcdf and gdal, so we first we read the netcdf data at
+     * the end of the gdal block buffer then re-arrange rows in CheckData().
+     */
+    void *pImageNC = pImage;
+    if( edge[nBandXPos] != (size_t) nBlockXSize )
+    {
+        pImageNC = (GByte *) pImage
+            + ( (nBlockXSize * nBlockYSize - edge[nBandXPos] * edge[nBandYPos])
+                * (GDALGetDataTypeSize(eDataType) / 8) );
+    }
+
     /* read data according to type */
     int status;
     if( eDataType == GDT_Byte ) 
@@ -1348,16 +1357,16 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if (this->bSignedData) 
         {
             status = nc_get_vara_schar( cdfid, nZId, start, edge, 
-                                        (signed char *) pImage );
+                                        (signed char *) pImageNC );
             if ( status == NC_NOERR ) 
-                CheckData<signed char>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                CheckData<signed char>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
                                         false );
         }
         else {
             status = nc_get_vara_uchar( cdfid, nZId, start, edge, 
-                                        (unsigned char *) pImage );
+                                        (unsigned char *) pImageNC );
             if ( status == NC_NOERR ) 
-                CheckData<unsigned char>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                CheckData<unsigned char>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
                                           false ); 
         }
     }
@@ -1365,18 +1374,18 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else if( eDataType == GDT_Int16 )
     {
         status = nc_get_vara_short( cdfid, nZId, start, edge, 
-                                    (short int *) pImage );
+                                    (short *) pImageNC );
         if ( status == NC_NOERR ) 
-            CheckData<short int>( pImage, edge[nBandXPos], edge[nBandYPos], 
-                                  false ); 
+            CheckData<short>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
+                              false ); 
     }
 #ifdef NETCDF_HAS_NC4
     else if( eDataType == GDT_UInt16 )
     {
         status = nc_get_vara_ushort( cdfid, nZId, start, edge, 
-                                    (unsigned short int *) pImage );
+                                    (unsigned short int *) pImageNC );
         if ( status == NC_NOERR ) 
-            CheckData<unsigned short int>( pImage, edge[nBandXPos], edge[nBandYPos], 
+            CheckData<unsigned short int>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
                                   false ); 
     }
 #endif
@@ -1385,34 +1394,34 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( sizeof(long) == 4 )
         {
             status = nc_get_vara_long( cdfid, nZId, start, edge, 
-                                       (long int *) pImage );
+                                       (long int *) pImageNC );
             if ( status == NC_NOERR ) 
-                CheckData<long int>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                CheckData<long int>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
                                      false ); 
         }
         else
         {
             status = nc_get_vara_int( cdfid, nZId, start, edge, 
-                                      (int *) pImage );
+                                      (int *) pImageNC );
             if ( status == NC_NOERR ) 
-                CheckData<int>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                CheckData<int>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
                                 false ); 
         }
     }
     else if( eDataType == GDT_Float32 )
     {
         status = nc_get_vara_float( cdfid, nZId, start, edge, 
-                                    (float *) pImage );
+                                    (float *) pImageNC );
         if ( status == NC_NOERR ) 
-            CheckData<float>( pImage, edge[nBandXPos], edge[nBandYPos], 
+            CheckData<float>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
                               true ); 
     }
     else if( eDataType == GDT_Float64 )
     {
         status = nc_get_vara_double( cdfid, nZId, start, edge, 
-                                     (double *) pImage ); 
+                                     (double *) pImageNC ); 
         if ( status == NC_NOERR ) 
-            CheckData<double>( pImage, edge[nBandXPos], edge[nBandYPos], 
+            CheckData<double>( pImage, pImageNC, edge[nBandXPos], edge[nBandYPos], 
                                true ); 
     }
     else
