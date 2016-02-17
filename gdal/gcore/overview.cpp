@@ -431,7 +431,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         nB = (nTotalB + nCount / 2) / nCount;
                     pDstScanline[iDstPixel] = (T)GDALFindBestEntry(
                         nEntryCount, aEntries, nR, nG, nB,
-                        bHasNoData ? tNoDataValue : -1);
+                        bHasNoData ? static_cast<int>(tNoDataValue) : -1);
                 }
             }
         }
