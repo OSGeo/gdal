@@ -248,7 +248,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name]
                [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]
-               [-dim 2|2+M|3|3+M|4|layer_dim] [layer [layer ...]]
+               [-dim XY|XYZ|XYM|XYZM|2|3|layer_dim] [layer [layer ...]]
 
 Advanced options :
                [-gt n]
@@ -318,18 +318,21 @@ on which the spatial filter operates on.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
 <dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
-<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
-created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
-GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. And CIRCULARSTRING,
-COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and MULTISURFACE for GDAL 2.0 non-linear geometry
-types. 
-Add "25D" to the name to get 2.5D versions.
-Starting with GDAL 1.10, PROMOTE_TO_MULTI can be used to automatically promote layers
-that mix polygon or multipolygons to multipolygons, and layers that mix linestrings or
-multilinestrings to multilinestrings. Can be useful when converting shapefiles to PostGIS
-(and other target drivers) that implements strict checks for geometry type.
-Starting with GDAL 2.0, CONVERT_TO_LINEAR can be used to to convert non-linear geometries
-types into linear geometries by approximating them.</dd>
+<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for
+the created layer. One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON,
+GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. And
+CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and
+MULTISURFACE for GDAL 2.0 non-linear geometry types. Add "Z", "M", or
+"ZM" to the name to get coordinates with elevation, measure, or
+elevation and measure. Starting with GDAL 1.10, PROMOTE_TO_MULTI can
+be used to automatically promote layers that mix polygon or
+multipolygons to multipolygons, and layers that mix linestrings or
+multilinestrings to multilinestrings. Can be useful when converting
+shapefiles to PostGIS and other target drivers that implement strict
+checks for geometry types. Starting with GDAL 2.0, CONVERT_TO_LINEAR
+can be used to to convert non-linear geometries types into linear
+geometries by approximating them. Starting with 2.1 the type can be
+defined as measured ("25D" remains as an alias for single "Z").</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force
 the coordinate dimension to val (valid values are XY, XYZ, XYM, and
 XYZM - for backwards compatibility 2 is an alias for XY and 3 is an
