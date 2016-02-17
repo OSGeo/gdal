@@ -1993,6 +1993,31 @@ def tiff_ovr_50():
     return 'success'
 
 ###############################################################################
+# Test average overview on a color palette with nodata values (#6371)
+
+def tiff_ovr_51():
+
+    src_ds = gdal.Open('data/stefan_full_rgba_pct32.png')
+    if src_ds is None:
+        return 'skip'
+
+    ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tiff_ovr_51.png', src_ds)
+    ds.BuildOverviews('AVERAGE', [2])
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_ovr_51.png.ovr')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 24518:
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('PNG').Delete('/vsimem/tiff_ovr_51.png')
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -2106,6 +2131,8 @@ for item in gdaltest_list_internal:
     if item.__name__ != 'tiff_ovr_46':
         gdaltest_list.append( (item, item.__name__ + '_inverted') )
 gdaltest_list.append(tiff_ovr_restore_endianness)
+
+gdaltest_list += [ tiff_ovr_51 ]
 
 if __name__ == '__main__':
 
