@@ -1871,6 +1871,53 @@ def netcdf_51():
     return 'success'
 
 ###############################################################################
+# Test creating a vector NetCDF 3 file with X,Y,Z fields with WRITE_GDAL_TAGS=NO
+
+def netcdf_51_no_gdal_tags():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.OpenEx( 'data/test_ogr_nc3.nc', gdal.OF_VECTOR )
+    gdal.VectorTranslate( 'tmp/netcdf_51_no_gdal_tags.nc', ds, format = 'netCDF', datasetCreationOptions = [ 'WRITE_GDAL_TAGS=NO'] )
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx( 'tmp/netcdf_51_no_gdal_tags.nc', gdal.OF_VECTOR )
+        gdal.VectorTranslate( '/vsimem/netcdf_51_no_gdal_tags.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'] )
+        ds = None
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_51_no_gdal_tags.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string1char,string3chars,twodimstringchar,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x1,byte_field
+"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT (1 2 0)",,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_51_no_gdal_tags.csvt', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+    expected_content = """WKT,Integer,Integer,Real,Real,String(1),String(3),String(10),Date,DateTime,DateTime,Real,Real,Integer,Integer,Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('tmp/netcdf_51_no_gdal_tags.nc')
+    gdal.Unlink('tmp/netcdf_51_no_gdal_tags.csv')
+    gdal.Unlink('tmp/netcdf_51_no_gdal_tags.csvt')
+
+    return 'success'
+
+###############################################################################
 # Test creating a vector NetCDF 4 file with X,Y,Z fields
 
 def netcdf_52():
@@ -2740,6 +2787,7 @@ gdaltest_list = [
     netcdf_49,
     netcdf_50,
     netcdf_51,
+    netcdf_51_no_gdal_tags,
     netcdf_52,
     netcdf_53,
     netcdf_54,

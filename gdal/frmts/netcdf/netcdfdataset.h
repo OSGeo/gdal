@@ -899,6 +899,7 @@ class netCDFLayer: public OGRLayer
             bool            bHasWarnedAboutTruncation;
             int             nMainDimId;
             int             nSecDimId;
+            bool            bIsDays;
         } FieldDesc;
 
         netCDFDataset  *m_poDS;
