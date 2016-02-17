@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <limits>
+
 #include "gdal_priv.h"
 #include "gdalwarper.h"
 
@@ -172,16 +174,18 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
 /************************************************************************/
 
 static int GDALFindBestEntry(int nEntryCount, const GDALColorEntry* aEntries,
-                             int nR, int nG, int nB)
+                             int nR, int nG, int nB, int nNoDataIndex)
 {
-    int nMinDist = 0;
-    int iBestEntry = 0;
+    int nMinDist = std::numeric_limits<int>::max();
+    int iBestEntry = (nNoDataIndex != 0 || nEntryCount == 1) ? 0 : 1;
     for( int i=0; i < nEntryCount; i++ )
     {
+        if (i == nNoDataIndex || aEntries[i].c4 == 0)
+            continue;
         int nDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
             (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
             (nB - aEntries[i].c3) *  (nB - aEntries[i].c3);
-        if (i == 0 || nDist < nMinDist)
+        if (nDist < nMinDist)
         {
             nMinDist = nDist;
             iBestEntry = i;
@@ -426,7 +430,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         nG = (nTotalG + nCount / 2) / nCount,
                         nB = (nTotalB + nCount / 2) / nCount;
                     pDstScanline[iDstPixel] = (T)GDALFindBestEntry(
-                        nEntryCount, aEntries, nR, nG, nB);
+                        nEntryCount, aEntries, nR, nG, nB,
+                        bHasNoData ? tNoDataValue : -1);
                 }
             }
         }
@@ -729,7 +734,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             nB = (nTotalB + nTotalWeight / 2) / nTotalWeight;
                         pafDstScanline[iDstPixel - nDstXOff] =
                             (float) GDALFindBestEntry(
-                                    nEntryCount, aEntries, nR, nG, nB);
+                                    nEntryCount, aEntries, nR, nG, nB, bHasNoData ? (int)fNoDataValue : -1);
                     }
                 }
             }
