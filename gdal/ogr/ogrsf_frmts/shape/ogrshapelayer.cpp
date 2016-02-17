@@ -1091,6 +1091,7 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
         if( nShapeType != -1 )
         {
+            poFeatureDefn->SetGeomType(eRequestedGeomType);
             ResetGeomType( nShapeType );
         }
     }
