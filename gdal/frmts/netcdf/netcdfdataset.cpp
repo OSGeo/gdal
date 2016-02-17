@@ -7605,10 +7605,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 atttype == NC_CHAR && attlen < NC_MAX_NAME )
             {
                 char szInstanceDimension[NC_MAX_NAME+1];
-                szInstanceDimension[0] = 0;
                 if( nc_get_att_text ( poDS->cdfid, j, "instance_dimension",
-                                    szInstanceDimension ) == NC_NOERR )
+                                      szInstanceDimension ) == NC_NOERR )
                 {
+                    szInstanceDimension[attlen] = 0;
                     for(int idim = 0; idim < ndims; idim ++)
                     {
                         char szDimName[NC_MAX_NAME+1];
