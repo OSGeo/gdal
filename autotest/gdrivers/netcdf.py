@@ -2516,6 +2516,124 @@ def netcdf_65():
     return 'success'
 
 ###############################################################################
+# Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
+# from a config file
+
+def netcdf_66():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    # First trying with no so good configs
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate( 'tmp/netcdf_66.nc', 'data/profile.nc', format = 'netCDF', datasetCreationOptions = ['CONFIG_FILE=not_existing'] )
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate( 'tmp/netcdf_66.nc', 'data/profile.nc', format = 'netCDF', datasetCreationOptions = ['CONFIG_FILE=<Configuration>'] )
+
+    myconfig = \
+"""<Configuration>
+    <DatasetCreationOption/>
+    <DatasetCreationOption name="x"/>
+    <DatasetCreationOption value="x"/>
+    <LayerCreationOption/>
+    <LayerCreationOption name="x"/>
+    <LayerCreationOption value="x"/>
+    <Attribute/>
+    <Attribute name="foo"/>
+    <Attribute value="foo"/>
+    <Attribute name="foo" value="bar" type="unsupported"/>
+    <Field/>
+    <Layer/>
+    <Layer name="x">
+        <LayerCreationOption/>
+        <LayerCreationOption name="x"/>
+        <LayerCreationOption value="x"/>
+        <Attribute/>
+        <Attribute name="foo"/>
+        <Attribute value="foo"/>
+        <Attribute name="foo" value="bar" type="unsupported"/>
+        <Field/>
+    </Layer>
+</Configuration>
+"""
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate( 'tmp/netcdf_66.nc', 'data/profile.nc', format = 'netCDF', datasetCreationOptions = ['CONFIG_FILE=' + myconfig] )
+
+    # Now with a correct configuration
+    myconfig = \
+"""<Configuration>
+    <DatasetCreationOption name="WRITE_GDAL_TAGS" value="NO"/>
+    <LayerCreationOption name="STRING_DEFAULT_WIDTH" value="1"/>
+    <Attribute name="foo" value="bar"/>
+    <Attribute name="foo2" value="bar2"/>
+    <Field name="id">
+        <Attribute name="my_extra_attribute" value="5.23" type="double"/>
+    </Field>
+    <Layer name="profile" netcdf_name="my_profile">
+        <LayerCreationOption name="FEATURE_TYPE" value="PROFILE"/>
+        <Attribute name="foo" value="123" type="integer"/> <!-- override global one -->
+        <Field name="station" netcdf_name="my_station">
+            <Attribute name="long_name" value="my station attribute"/>
+        </Field>
+    </Layer>
+</Configuration>
+"""
+
+    gdal.VectorTranslate( 'tmp/netcdf_66.nc', 'data/profile.nc', format = 'netCDF', datasetCreationOptions = ['CONFIG_FILE=' + myconfig] )
+    gdal.VectorTranslate( '/vsimem/netcdf_66.csv', 'tmp/netcdf_66.nc', format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
+
+    fp = gdal.VSIFOpenL( '/vsimem/netcdf_66.csv', 'rb' )
+    if fp is not None:
+        content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
+        gdal.VSIFCloseL(fp)
+
+    expected_content = """WKT,profile,id,my_station,foo
+"POINT (2 49 100)",1,1,Palo Alto,bar
+"POINT (3 50 50)",2,2,Santa Fe,baz
+"POINT (2 49 200)",1,3,Palo Alto,baw
+"POINT (3 50 100)",2,4,Santa Fe,baz2
+"""
+    if content != expected_content:
+        gdaltest.post_reason('failure')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/netcdf_66.csv')
+
+    return 'success'
+
+def netcdf_66_ncdump_check():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    # get file header with ncdump (if available)
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+    except:
+        err = None
+    if err is not None and 'netcdf library version' in err:
+        (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h tmp/netcdf_66.nc' )
+        if ret.find('my_station:long_name = "my station attribute"') < 0 or \
+           ret.find('id:my_extra_attribute = 5.23') < 0 or \
+           ret.find('profile:cf_role = "profile_id"') < 0 or \
+           ret.find('parentIndex:instance_dimension = "profile"') < 0 or \
+           ret.find(':featureType = "profile"') < 0:
+            gdaltest.post_reason('failure')
+            print(ret)
+            return 'fail'
+    else:
+        gdal.Unlink('/vsimem/netcdf_66.nc')
+        return 'skip'
+
+    gdal.Unlink('/vsimem/netcdf_66.nc')
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2588,7 +2706,9 @@ gdaltest_list = [
     netcdf_63,
     netcdf_63_ncdump_check,
     netcdf_64,
-    netcdf_65
+    netcdf_65,
+    netcdf_66,
+    netcdf_66_ncdump_check
 ]
 
 ###############################################################################
