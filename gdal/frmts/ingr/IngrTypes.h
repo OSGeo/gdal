@@ -124,11 +124,11 @@ typedef enum {
     AdaptiveGrayScale                = 29,    
     JPEGGRAY                         = 30,  // Gray Scale  
     JPEGRGB                          = 31,  // Full Color RGB  
-    JPEGCYMK                         = 32,  // CYMK  
+    JPEGCMYK                         = 32,  // CMYK  
     TiledRasterData                  = 65,  // See tile directory Data Type Code (DTC)
     NotUsedReserved                  = 66,   
-    ContinuousTone                   = 67,  // CYMK  
-    LineArt                          = 68   // CYMK/RGB  
+    ContinuousTone                   = 67,  // CMYK  
+    LineArt                          = 68   // CMYK/RGB  
 } INGR_Format;
 
 struct INGR_FormatDescription {

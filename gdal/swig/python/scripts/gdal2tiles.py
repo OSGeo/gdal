@@ -1222,7 +1222,7 @@ gdal2tiles temp.vrt""" % self.input )
 
                 if self.options.resume and os.path.exists(tilefilename):
                     if self.options.verbose:
-                        print("Tile generation skiped because of --resume")
+                        print("Tile generation skipped because of --resume")
                     else:
                         self.progressbar( ti / float(tcount) )
                     continue
@@ -1367,7 +1367,7 @@ gdal2tiles temp.vrt""" % self.input )
 
                     if self.options.resume and os.path.exists(tilefilename):
                         if self.options.verbose:
-                            print("Tile generation skiped because of --resume")
+                            print("Tile generation skipped because of --resume")
                         else:
                             self.progressbar( ti / float(tcount) )
                         continue

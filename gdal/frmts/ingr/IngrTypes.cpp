@@ -63,7 +63,7 @@ static const INGR_FormatDescription INGR_FormatTable[] = {
     {AdaptiveGrayScale,       "Adaptive Gray Scale",         GDT_Byte},
     {JPEGGRAY,                "JPEG GRAY",                   GDT_Byte},
     {JPEGRGB,                 "JPEG RGB",                    GDT_Byte},
-    {JPEGCYMK,                "JPEG CYMK",                   GDT_Byte},
+    {JPEGCMYK,                "JPEG CMYK",                   GDT_Byte},
     {TiledRasterData,         "Tiled Raste Data",            GDT_Byte},
     {NotUsedReserved,         "Not Used( Reserved )",        GDT_Byte},
     {ContinuousTone,          "Continuous Tone",             GDT_Byte},

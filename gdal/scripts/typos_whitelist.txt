@@ -30,3 +30,10 @@ See COMMITERS file.
 				epsa = fabs(ang - (i+.5));
                 "     UN=Metres,SD=HHWLT,DX=2.500000,DY=2.500000\n");
         pszUnitsPer = CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
+    {"kilometre",    /* 15 */ 12,  13,  1000.0},
+                    oSRS.SetLinearUnits( "kilometre", 1000.0 );
+{ "kilometre", SRS_UL_KILOMETER_CONV, "km" }, // Leave as 'kilometre' instead of SRS_UL_KILOMETER due to historical usage
+            passport.stMapDescription.eUnitInPlan = SXF_COORD_MU_CENTIMETRE;
+            passport.stMapDescription.eUnitInPlan = SXF_COORD_MU_MILLIMETRE;
+    SXF_COORD_MU_CENTIMETRE,
+    SXF_COORD_MU_MILLIMETRE,
