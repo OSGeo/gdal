@@ -65,7 +65,7 @@
         <xs:sequence>
             <xs:element name="Attribute" type="attributeType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
-        <xs:attribute name="name" type="xs:string"/>
+        <xs:attribute name="name" type="xs:string" use="optional"/>
         <xs:attribute name="netcdf_name" type="xs:string" use="optional"/>
         <xs:attribute name="main_dim" type="xs:string" use="optional"/>
     </xs:complexType>
