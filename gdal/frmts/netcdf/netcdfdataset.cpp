@@ -2625,6 +2625,48 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             }
 
 /* -------------------------------------------------------------------- */
+/*      Geostationary                                                   */
+/* -------------------------------------------------------------------- */
+            else if( EQUAL( pszValue, CF_PT_GEOS ) ) {
+                dfCenterLon = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         CF_PP_LON_PROJ_ORIGIN, 0.0 );
+
+                double dfSatelliteHeight =
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         CF_PP_PERSPECTIVE_POINT_HEIGHT, 35785831.0 );
+
+                snprintf(szTemp, sizeof(szTemp), "%s#%s", szGridMappingValue, CF_PP_SWEEP_ANGLE_AXIS);
+                const char *pszSweepAxisAngle = CSLFetchNameValue(papszMetadata, szTemp);
+
+                dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         CF_PP_FALSE_EASTING, 0.0 );
+
+                dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         CF_PP_FALSE_NORTHING, 0.0 );
+
+                bGotCfSRS = true;
+                oSRS.SetGEOS( dfCenterLon, dfSatelliteHeight,
+                              dfFalseEasting, dfFalseNorthing );
+
+                if( !bGotGeogCS )
+                    oSRS.SetWellKnownGeogCS( "WGS84" );
+
+                if( pszSweepAxisAngle != NULL && EQUAL(pszSweepAxisAngle, "x") )
+                {
+                    char* pszProj4 = NULL;
+                    oSRS.exportToProj4(&pszProj4);
+                    CPLString osProj4 = pszProj4;
+                    osProj4 += " +sweep=x";
+                    oSRS.SetExtension( oSRS.GetRoot()->GetValue(), "PROJ4", osProj4 );
+                    CPLFree(pszProj4);
+                }
+
+            }
+
+/* -------------------------------------------------------------------- */
 /*      Is this Latitude/Longitude Grid, default                        */
 /* -------------------------------------------------------------------- */
 
@@ -3363,6 +3405,16 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
         /* Various projection attributes */
         // PDS: keep in sync with SetProjection function
         NCDFWriteProjAttribs(poPROJCS, pszProjName, cdfid, NCDFVarID);
+
+        if( EQUAL( pszProjName, SRS_PT_GEOSTATIONARY_SATELLITE ) )
+        {
+            const char *pszPredefProj4 = poSRS->GetExtension(
+                        poSRS->GetRoot()->GetValue(), "PROJ4", NULL );
+            const char* pszSweepAxisAngle =
+             ( pszPredefProj4 != NULL && strstr(pszPredefProj4, "+sweep=x") ) ? "x" : "y";
+            nc_put_att_text( cdfid, NCDFVarID, CF_PP_SWEEP_ANGLE_AXIS,
+                             strlen(pszSweepAxisAngle), pszSweepAxisAngle );
+        }
     }
     else 
     {
