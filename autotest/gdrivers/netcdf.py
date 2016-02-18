@@ -2634,12 +2634,18 @@ def netcdf_66():
     <Field name="id">
         <Attribute name="my_extra_attribute" value="5.23" type="double"/>
     </Field>
+    <Field netcdf_name="lon"> <!-- edit predefined variable -->
+        <Attribute name="my_extra_lon_attribute" value="foo"/>
+    </Field>
     <Layer name="profile" netcdf_name="my_profile">
         <LayerCreationOption name="FEATURE_TYPE" value="PROFILE"/>
         <LayerCreationOption name="RECORD_DIM_NAME" value="obs"/>
         <Attribute name="foo" value="123" type="integer"/> <!-- override global one -->
         <Field name="station" netcdf_name="my_station" main_dim="obs">
             <Attribute name="long_name" value="my station attribute"/>
+        </Field>
+        <Field netcdf_name="lat"> <!-- edit predefined variable -->
+            <Attribute name="long_name" value=""/> <!-- remove predefined attribute -->
         </Field>
     </Layer>
 </Configuration>
@@ -2682,6 +2688,8 @@ def netcdf_66_ncdump_check():
         (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h tmp/netcdf_66.nc' )
         if ret.find('char my_station(obs, my_station_max_width)') < 0 or \
            ret.find('my_station:long_name = "my station attribute"') < 0 or \
+           ret.find('lon:my_extra_lon_attribute = "foo"') < 0 or \
+           ret.find('lat:long_name') >= 0 or \
            ret.find('id:my_extra_attribute = 5.23') < 0 or \
            ret.find('profile:cf_role = "profile_id"') < 0 or \
            ret.find('parentIndex:instance_dimension = "profile"') < 0 or \

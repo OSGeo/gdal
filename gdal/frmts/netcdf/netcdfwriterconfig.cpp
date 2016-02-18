@@ -79,7 +79,7 @@ bool netCDFWriterConfiguration::Parse(const char* pszFilename)
         {
             netCDFWriterConfigField oField;
             if( oField.Parse(psIter) )
-                m_oFields[oField.m_osName] = oField;
+                m_oFields[oField.m_osName.size() ? oField.m_osName : CPLString("__") +  oField.m_osNetCDFName] = oField;
         }
         else if( EQUAL(psIter->pszValue, "Layer") )
         {
@@ -122,12 +122,13 @@ bool netCDFWriterConfigField::Parse(CPLXMLNode* psNode)
     const char* pszName = CPLGetXMLValue(psNode, "name", NULL);
     const char* pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
     const char* pszMainDim = CPLGetXMLValue(psNode, "main_dim", NULL);
-    if( pszName == NULL  )
+    if( pszName == NULL && pszNetCDFName == NULL )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Missing name");
+        CPLError(CE_Failure, CPLE_IllegalArg, "Bot name and netcdf_name are missing");
         return false;
     }
-    m_osName = pszName;
+    if( pszName != NULL )
+        m_osName = pszName;
     if( pszNetCDFName != NULL )
         m_osNetCDFName = pszNetCDFName;
     if( pszMainDim != NULL )
@@ -183,7 +184,7 @@ bool netCDFWriterConfigLayer::Parse(CPLXMLNode* psNode)
         {
             netCDFWriterConfigField oField;
             if( oField.Parse(psIter) )
-                m_oFields[oField.m_osName] = oField;
+                m_oFields[oField.m_osName.size() ? oField.m_osName : CPLString("__") +  oField.m_osNetCDFName] = oField;
         }
         else
             CPLDebug("GDAL_netCDF", "Ignoring %s", psIter->pszValue);

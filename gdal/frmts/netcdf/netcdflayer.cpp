@@ -100,7 +100,16 @@ static void netCDFWriteAttributesFromConf( int cdfid, int varid,
     {
         const netCDFWriterConfigAttribute& oAtt = aoAttributes[i];
         int status = NC_NOERR;
-        if( EQUAL(oAtt.m_osType, "string") )
+        if( oAtt.m_osValue.size() == 0 )
+        {
+            int attid = -1;
+            status = nc_inq_attid( cdfid, varid, oAtt.m_osName, &attid );
+            if( status == NC_NOERR )
+                status = nc_del_att( cdfid, varid, oAtt.m_osName );
+            else
+                status = NC_NOERR;
+        }
+        else if( EQUAL(oAtt.m_osType, "string") )
         {
             status = nc_put_att_text( cdfid, varid, oAtt.m_osName, 
                                         oAtt.m_osValue.size(), oAtt.m_osValue );
@@ -140,6 +149,8 @@ bool netCDFLayer::Create(char** papszOptions,
                                 papszOptions, "USE_STRING_IN_NC4", TRUE ));
     m_bNCDumpCompat = CPL_TO_BOOL(CSLFetchBoolean(
                                 papszOptions, "NCDUMP_COMPAT", TRUE ));
+
+    std::vector< std::pair<CPLString, int> > aoAutoVariables;
 
     const char* pszFeatureType = CSLFetchNameValue(papszOptions,"FEATURE_TYPE");
     if( pszFeatureType != NULL )
@@ -185,12 +196,15 @@ bool netCDFLayer::Create(char** papszOptions,
                 if( status != NC_NOERR ) 
                     return false;
 
+                aoAutoVariables.push_back(
+                    std::pair<CPLString,int>(m_osProfileDimName, m_nProfileVarID) );
+
                 status = nc_put_att_text( m_nLayerCDFId, m_nProfileVarID, "cf_role",
                                           strlen("profile_id"), "profile_id" );
                 NCDF_ERR(status);
             }
         }
-        else
+        else if( !EQUAL(pszFeatureType, "AUTO") )
         {
             CPLError(CE_Warning, CPLE_NotSupported,
                      "FEATURE_TYPE=%s not supported.", pszFeatureType);
@@ -218,6 +232,8 @@ bool netCDFLayer::Create(char** papszOptions,
         NCDF_ERR(status);
         if( status != NC_NOERR ) 
             return false;
+
+        aoAutoVariables.push_back( std::pair<CPLString,int>("parentIndex", m_nParentIndexVarID) );
 
         status = nc_put_att_text( m_nLayerCDFId, m_nParentIndexVarID, CF_LNG_NAME,
                                   strlen("index of profile"), "index of profile" );
@@ -257,6 +273,9 @@ bool netCDFLayer::Create(char** papszOptions,
             return false;
         }
 
+        aoAutoVariables.push_back( std::pair<CPLString,int>(pszXVarName, m_nXVarID) );
+        aoAutoVariables.push_back( std::pair<CPLString,int>(pszYVarName, m_nYVarID) );
+
         m_nXVarNCDFType = NC_DOUBLE;
         m_nYVarNCDFType = NC_DOUBLE;
         m_uXVarNoData.dfVal = NC_FILL_DOUBLE;
@@ -285,6 +304,8 @@ bool netCDFLayer::Create(char** papszOptions,
             if ( status != NC_NOERR ) {
                 return false;
             }
+
+            aoAutoVariables.push_back( std::pair<CPLString,int>(pszZVarName, m_nZVarID) );
 
             m_nZVarNCDFType = NC_DOUBLE;
             m_uZVarNoData.dfVal = NC_FILL_DOUBLE;
@@ -350,6 +371,8 @@ bool netCDFLayer::Create(char** papszOptions,
             return false;
         }
 
+        aoAutoVariables.push_back( std::pair<CPLString,int>(m_osWKTVarName, m_nWKTVarID) );
+
         status = nc_put_att_text( m_nLayerCDFId, m_nWKTVarID, CF_LNG_NAME,
                          strlen("Geometry as ISO WKT"), "Geometry as ISO WKT" );
         NCDF_ERR(status);
@@ -386,6 +409,8 @@ bool netCDFLayer::Create(char** papszOptions,
             CPLFree(pszCFProjection);
         }
 
+        aoAutoVariables.push_back( std::pair<CPLString,int>(pszCFProjection, nSRSVarId) );
+
         if( m_nWKTVarID >= 0 && m_osGridMapping.size() != 0 )
         {
             status = nc_put_att_text( m_nLayerCDFId, m_nWKTVarID, CF_GRD_MAPPING, 
@@ -404,6 +429,30 @@ bool netCDFLayer::Create(char** papszOptions,
         {
             netCDFWriteAttributesFromConf(m_nLayerCDFId, NC_GLOBAL,
                                           poLayerConfig->m_aoAttributes);
+        }
+
+        for(size_t i=0; i<aoAutoVariables.size(); i++)
+        {
+            const netCDFWriterConfigField* poConfig = NULL;
+            CPLString osLookup = "__" + aoAutoVariables[i].first;
+            std::map<CPLString, netCDFWriterConfigField>::const_iterator oIter;
+            if( m_poLayerConfig != NULL &&
+                (oIter = m_poLayerConfig->m_oFields.find(osLookup)) !=
+                m_poLayerConfig->m_oFields.end() )
+            {
+                poConfig = &(oIter->second);
+            }
+            else if( (oIter = m_poDS->oWriterConfig.m_oFields.find(osLookup)) !=
+                    m_poDS->oWriterConfig.m_oFields.end() )
+            {
+                poConfig = &(oIter->second);
+            }
+
+            if( poConfig != NULL )
+            {
+                netCDFWriteAttributesFromConf(m_nLayerCDFId, aoAutoVariables[i].second,
+                                              poConfig->m_aoAttributes);
+            }
         }
     }
 

@@ -7225,7 +7225,8 @@ void GDALRegister_netCDF()
 "   <Option name='NCDUMP_COMPAT' type='boolean' description='When USE_STRING_IN_NC4=YEs, whether to use empty string instead of null string to avoid crashes with ncdump' default='NO'/>"
 #endif
 #endif
-"   <Option name='FEATURE_TYPE' type='string-select' description='CF FeatureType'>"
+"   <Option name='FEATURE_TYPE' type='string-select' description='CF FeatureType' default='AUTO'>"
+"       <Value>AUTO</Value>"
 "       <Value>POINT</Value>"
 "       <Value>PROFILE</Value>"
 "   </Option>"
