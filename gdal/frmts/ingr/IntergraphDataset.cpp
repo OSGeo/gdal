@@ -254,7 +254,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         eFormat != ContinuousTone &&
         eFormat != JPEGGRAY &&
         eFormat != JPEGRGB && 
-        eFormat != JPEGCYMK )
+        eFormat != JPEGCMYK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
             "Intergraph Raster Format %d ( \"%s\" ) not supported",
@@ -342,7 +342,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         switch( eFormat )
         {
         case JPEGRGB:
-        case JPEGCYMK:
+        case JPEGCMYK:
         {
             IntergraphBitmapBand* poBand;
             nBands++;

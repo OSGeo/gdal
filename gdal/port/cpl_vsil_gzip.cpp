@@ -62,7 +62,7 @@
    API. It also adds the capability to seek at the end of the file, which is not
    implemented in original gzSeek. It also implements a concept of in-memory "snapshots",
    that are a way of improving efficiency while seeking GZip files. Snapshots are
-   ceated regularly when decompressing  the data a snapshot of the gzip state.
+   created regularly when decompressing  the data a snapshot of the gzip state.
    Later we can seek directly in the compressed data to the closest snapshot in order to
    reduce the amount of data to uncompress again.
 

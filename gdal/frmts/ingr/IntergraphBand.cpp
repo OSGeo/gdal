@@ -900,7 +900,7 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
 
 	if( eFormat == JPEGGRAY ||
 		eFormat == JPEGRGB  ||
-		eFormat == JPEGCYMK )
+		eFormat == JPEGCMYK )
 	{
         nQuality = INGR_ReadJpegQuality( poDSIn->fp, 
             hHeaderTwo.ApplicationPacketPointer,

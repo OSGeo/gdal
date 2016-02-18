@@ -305,7 +305,7 @@ class CFChecker:
       self.err = 0
       self.warn = 0
       self.info = 0
-      self.cf_roleCount = 0          # Number of occurences of the cf_role attribute in the file
+      self.cf_roleCount = 0          # Number of occurrences of the cf_role attribute in the file
       self.raggedArrayFlag = 0       # Flag to indicate if file contains any ragged array representations
 
   def checker(self, file):
@@ -434,7 +434,7 @@ class CFChecker:
     self.climatologyVars = climatologyVars
     self.gridMappingVars = gridMappingVars
 
-    #print "Auxillary Coordinate Vars:",auxCoordVars
+    #print "Auxiliary Coordinate Vars:",auxCoordVars
     #print "Coordinate Vars: ",coordVars
 
     allCoordVars=coordVars[:]
@@ -542,13 +542,13 @@ class CFChecker:
                 self.warn = self.warn + 1
                     
             if re.match('^(timeSeries|trajectory|profile)$',featureType,re.I) and self.cf_roleCount != 1:
-                # Should only be a single occurence of a cf_role attribute
-                print("WARNING (9.5): CF Files containing",featureType,"featureType should only include a single occurance of a cf_role attribute")
+                # Should only be a single occurrence of a cf_role attribute
+                print("WARNING (9.5): CF Files containing",featureType,"featureType should only include a single occurrence of a cf_role attribute")
                 self.warn = self.warn + 1
 
             elif re.match('^(timeSeriesProfile|trajectoryProfile)$',featureType,re.I) and self.cf_roleCount > 2:
-                # May contain up to 2 occurences of cf_roles attribute
-                print("ERROR (9.5): CF Files containing",featureType,"featureType may contain 2 occurences of a cf_role attribute")
+                # May contain up to 2 occurrences of cf_roles attribute
+                print("ERROR (9.5): CF Files containing",featureType,"featureType may contain 2 occurrences of a cf_role attribute")
                 self.err = self.err + 1
         
 
@@ -780,11 +780,11 @@ class CFChecker:
                 for dataVar in coordinates:
                     if dataVar in variables:
 
-                        # Has Auxillary Coordinate already been identified and checked?
+                        # Has Auxiliary Coordinate already been identified and checked?
                         if dataVar not in auxCoordVars:
                             auxCoordVars.append(dataVar)
 
-                            # Is the auxillary coordinate var actually a label?
+                            # Is the auxiliary coordinate var actually a label?
                             if self.getTypeCode(self.f[dataVar]) == 'c':
                                 # Label variable
                                 num_dimensions = len(self.f[dataVar].getAxisIds())
@@ -877,7 +877,7 @@ class CFChecker:
                     print("ERROR (7.1): bounds attribute referencing non-existent variable:",bounds)
                     self.err = self.err+1
                     
-            # Check that points specified by a coordinate or auxilliary coordinate
+            # Check that points specified by a coordinate or auxiliary coordinate
             # variable should lie within, or on the boundary, of the cells specified by
             # the associated boundary variable.
             if bounds in variables:
@@ -2099,7 +2099,7 @@ class CFChecker:
 
           # axis attribute is allowed on an aux coord var as of CF-1.6
           if self.version >= vn1_1 and self.version < vn1_6 and varName in self.auxCoordVars:
-              print("ERROR (4): Axis attribute is not allowed for auxillary coordinate variables.")
+              print("ERROR (4): Axis attribute is not allowed for auxiliary coordinate variables.")
               self.err = self.err+1
               return 0
 
