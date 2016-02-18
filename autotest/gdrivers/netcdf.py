@@ -2369,7 +2369,7 @@ def netcdf_62():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    ds = gdal.VectorTranslate( 'tmp/netcdf_62.nc', 'data/profile.nc', format = 'netCDF', layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1'] )
+    ds = gdal.VectorTranslate( 'tmp/netcdf_62.nc', 'data/profile.nc', format = 'netCDF', layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1', 'PROFILE_VARIABLES=station'] )
     gdal.VectorTranslate( '/vsimem/netcdf_62.csv', ds, format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_62.csv', 'rb' )
@@ -2409,7 +2409,8 @@ def netcdf_62_ncdump_check():
            ret.find('profile:cf_role = "profile_id"') < 0 or \
            ret.find('parentIndex:instance_dimension = "profile"') < 0 or \
            ret.find(':featureType = "profile"') < 0 or \
-           ret.find('char station(record') < 0:
+           ret.find('char station(profile') < 0 or \
+           ret.find('char foo(record') < 0:
             gdaltest.post_reason('failure')
             print(ret)
             return 'fail'
@@ -2511,7 +2512,7 @@ def netcdf_64():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    gdal.VectorTranslate( 'tmp/netcdf_64.nc', 'data/profile.nc', format = 'netCDF', selectFields = ['id,station,foo'], layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1'] )
+    gdal.VectorTranslate( 'tmp/netcdf_64.nc', 'data/profile.nc', format = 'netCDF', selectFields = ['id,station,foo'], layerCreationOptions = ['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_NAME=profile_dim', 'PROFILE_DIM_INIT_SIZE=1'] )
     gdal.VectorTranslate( '/vsimem/netcdf_64.csv', 'tmp/netcdf_64.nc', format = 'CSV', layerCreationOptions = ['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'] )
 
     fp = gdal.VSIFOpenL( '/vsimem/netcdf_64.csv', 'rb' )
@@ -2519,7 +2520,7 @@ def netcdf_64():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
 
-    expected_content = """WKT,profile,id,station,foo
+    expected_content = """WKT,profile_dim,id,station,foo
 "POINT (2 49 100)",0,1,Palo Alto,bar
 "POINT (3 50 50)",1,2,Santa Fe,baz
 "POINT (2 49 200)",0,3,Palo Alto,baw
