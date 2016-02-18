@@ -183,6 +183,7 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 #define CF_PT_ORTHOGRAPHIC           "orthographic"
 #define CF_PT_POLAR_STEREO           "polar_stereographic"
 #define CF_PT_STEREO                 "stereographic"
+#define CF_PT_GEOS                   "geostationary"
 
 /* projection parameters */
 #define CF_PP_STD_PARALLEL           "standard_parallel"
@@ -211,6 +212,8 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 #define CF_PP_SEMI_MAJOR_AXIS        "semi_major_axis"
 #define CF_PP_SEMI_MINOR_AXIS        "semi_minor_axis"
 #define CF_PP_VERT_PERSP             "vertical_perspective" /*not used yet */
+#define CF_PP_PERSPECTIVE_POINT_HEIGHT "perspective_point_height"
+#define CF_PP_SWEEP_ANGLE_AXIS        "sweep_angle_axis"
 
 
 /* -------------------------------------------------------------------- */
@@ -623,6 +626,17 @@ static const oNetcdfSRS_PP poTMMappings[] = {
 // TODO: see how to map this to OGR
 
 
+static const oNetcdfSRS_PP poGEOSMappings[] = {
+    {CF_PP_LON_PROJ_ORIGIN, SRS_PP_CENTRAL_MERIDIAN},
+    {CF_PP_PERSPECTIVE_POINT_HEIGHT, SRS_PP_SATELLITE_HEIGHT},
+    {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },  
+    {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
+    /* { CF_PP_SWEEP_ANGLE_AXIS, .... } handled as a proj.4 extension */
+    {NULL, NULL}
+  };
+
+
+
 /* Mappings for various projections, including netcdf and GDAL projection names 
    and corresponding oNetcdfSRS_PP mapping struct. 
    A NULL mappings value means that the projection is not included in the CF
@@ -643,7 +657,7 @@ static const oNetcdfSRS_PT poNetcdfSRS_PT[] = {
     {"equidistant_conic", SRS_PT_EQUIDISTANT_CONIC, NULL },
     {"equirectangular", SRS_PT_EQUIRECTANGULAR, NULL },
     {"gall_stereographic", SRS_PT_GALL_STEREOGRAPHIC, NULL },
-    {"geostationary_satellite", SRS_PT_GEOSTATIONARY_SATELLITE, NULL },
+    {CF_PT_GEOS, SRS_PT_GEOSTATIONARY_SATELLITE, poGEOSMappings },
     {"goode_homolosine", SRS_PT_GOODE_HOMOLOSINE, NULL },
     {"gnomonic", SRS_PT_GNOMONIC, NULL },
     {"hotine_oblique_mercator", SRS_PT_HOTINE_OBLIQUE_MERCATOR, NULL },
