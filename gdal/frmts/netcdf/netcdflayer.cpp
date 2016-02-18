@@ -405,11 +405,11 @@ bool netCDFLayer::Create(char** papszOptions,
             return false;
         if( pszCFProjection != NULL )
         {
+            aoAutoVariables.push_back( std::pair<CPLString,int>(pszCFProjection, nSRSVarId) );
+
             m_osGridMapping = pszCFProjection;
             CPLFree(pszCFProjection);
         }
-
-        aoAutoVariables.push_back( std::pair<CPLString,int>(pszCFProjection, nSRSVarId) );
 
         if( m_nWKTVarID >= 0 && m_osGridMapping.size() != 0 )
         {
