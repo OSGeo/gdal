@@ -870,6 +870,9 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                  OSR_GDV( papszNV, "h", 35785831.0 ), 
                  OSR_GDV( papszNV, "x_0", 0.0 ), 
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
+
+        if( EQUAL(CSLFetchNameValueDef( papszNV, "sweep", "y" ), "x") )
+            bAddProj4Extension = true;
     }
 
     else if( EQUAL(pszProj,"lcc") ) 

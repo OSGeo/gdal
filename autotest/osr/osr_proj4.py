@@ -958,6 +958,25 @@ def osr_proj4_26():
 
     return 'success'
 
+###############################################################################
+# Test geostationary +sweep (#6030)
+
+def osr_proj4_27():
+
+    if not have_proj480():
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -984,7 +1003,8 @@ gdaltest_list = [
     osr_proj4_23,
     osr_proj4_24,
     osr_proj4_25,
-    osr_proj4_26 ]
+    osr_proj4_26,
+    osr_proj4_27 ]
 
 
 if __name__ == '__main__':
