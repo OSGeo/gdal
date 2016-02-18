@@ -976,6 +976,7 @@ class CFChecker:
           validNames = ['albers_conical_equal_area','azimuthal_equidistant','lambert_azimuthal_equal_area',
                         'lambert_conformal_conic','polar_stereographic','rotated_latitude_longitude',
                         'stereographic','transverse_mercator']
+          validNames += [ 'geostationary' ] # GDAL addition
           
           if self.version >= vn1_2:
               # Extra grid_mapping_names at vn1.2
