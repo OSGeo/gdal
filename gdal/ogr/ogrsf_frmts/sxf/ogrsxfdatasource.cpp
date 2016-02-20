@@ -1256,30 +1256,28 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         char* pszRecoded;
         if (bLayerFullName)
         {
-            if (stRSCFileHeader.nFontEnc == 125)
+            if(LAYER.szName[0] == 0)
+                pszRecoded = CPLStrdup("Unnamed");   
+            else if (stRSCFileHeader.nFontEnc == 125)
                 pszRecoded = CPLRecode(LAYER.szName, "KOI8-R", CPL_ENC_UTF8);
             else if (stRSCFileHeader.nFontEnc == 126)
                 pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
             else
                 pszRecoded = CPLStrdup(LAYER.szName);
-                
-            if(CPLStrnlen(pszRecoded, 255) == 0)
-                pszRecoded = CPLStrdup("Unnamed");    
-
+            
             papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
         else
         {
-            if (stRSCFileHeader.nFontEnc == 125)
+            if(LAYER.szShortName[0] == 0)
+                pszRecoded = CPLStrdup("Unnamed");   
+            else if (stRSCFileHeader.nFontEnc == 125)
                 pszRecoded = CPLRecode(LAYER.szShortName, "KOI8-R", CPL_ENC_UTF8);
             else if (stRSCFileHeader.nFontEnc == 126)
                 pszRecoded = CPLRecode(LAYER.szShortName, "CP1251", CPL_ENC_UTF8);
             else
                 pszRecoded = CPLStrdup(LAYER.szShortName);
-                
-            if(CPLStrnlen(pszRecoded, 255) == 0)
-                pszRecoded = CPLStrdup("Unnamed");       
-
+            
             papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
         CPLFree(pszRecoded);
@@ -1320,15 +1318,14 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         if (NULL != pLayer)
         {
             char* pszRecoded;
-            if (stRSCFileHeader.nFontEnc == 125)
+            if(OBJECT.szName[0] == 0)
+                pszRecoded = CPLStrdup("Unnamed");   
+            else if (stRSCFileHeader.nFontEnc == 125)
                 pszRecoded = CPLRecode(OBJECT.szName, "KOI8-R", CPL_ENC_UTF8);
             else if (stRSCFileHeader.nFontEnc == 126)
                 pszRecoded = CPLRecode(OBJECT.szName, "CP1251", CPL_ENC_UTF8);
             else
                 pszRecoded = CPLStrdup(OBJECT.szName); //already in  CPL_ENC_UTF8
-                
-            if(CPLStrnlen(pszRecoded, 255) == 0)
-                pszRecoded = CPLStrdup("Unnamed");       
                 
             pLayer->AddClassifyCode(OBJECT.nClassifyCode, pszRecoded);
             //printf("%d;%s\n", OBJECT.nClassifyCode, OBJECT.szName);
