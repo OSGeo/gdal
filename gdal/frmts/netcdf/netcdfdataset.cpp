@@ -3412,8 +3412,9 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
                         poSRS->GetRoot()->GetValue(), "PROJ4", NULL );
             const char* pszSweepAxisAngle =
              ( pszPredefProj4 != NULL && strstr(pszPredefProj4, "+sweep=x") ) ? "x" : "y";
-            nc_put_att_text( cdfid, NCDFVarID, CF_PP_SWEEP_ANGLE_AXIS,
+            status = nc_put_att_text( cdfid, NCDFVarID, CF_PP_SWEEP_ANGLE_AXIS,
                              strlen(pszSweepAxisAngle), pszSweepAxisAngle );
+            NCDF_ERR(status);
         }
     }
     else 
@@ -3809,9 +3810,12 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                empty values from dfNN, dfSN, dfEE, dfWE; */
             /* TODO: fix this in 1.8 branch, and then remove this here */
             if ( bWriteGeoTransform && bSetGeoTransform ) {
-                CPL_IGNORE_RET_VAL(nc_put_att_text( cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
+              {
+                int status = nc_put_att_text( cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
                                  osGeoTransform.size(),
-                                 osGeoTransform.c_str() ));
+                                 osGeoTransform.c_str() );
+                NCDF_ERR(status);
+              }
             }
         }
 
@@ -7368,13 +7372,15 @@ static void NCDFAddGDALHistory( int fpImage,
                          const char * pszFunctionName,
                                 const char * pszCFVersion )
 {
-    CPL_IGNORE_RET_VAL(nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
+    int status = nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
                      strlen(pszCFVersion),
-                     pszCFVersion )); 
+                     pszCFVersion ); 
+    NCDF_ERR(status);
 
     const char* pszNCDF_GDAL = GDALVersionInfo("--version");
-    CPL_IGNORE_RET_VAL(nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
-                     strlen(pszNCDF_GDAL), pszNCDF_GDAL ));
+    status = nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
+                     strlen(pszNCDF_GDAL), pszNCDF_GDAL );
+    NCDF_ERR(status);
 
     /* Add history */
     CPLString osTmp;
