@@ -382,6 +382,7 @@ static char *CSVFindNextLine( char *pszThisLine )
 /*      Load entire file into memory and setup index if possible.       */
 /************************************************************************/
 
+// TODO(schwehr): Clean up all the casting in CSVIngest.
 static void CSVIngest( const char *pszFilename )
 
 {
@@ -407,7 +408,7 @@ static void CSVIngest( const char *pszFilename )
         return;
     }
     const vsi_l_offset nFileLen = VSIFTellL( psTable->fp );
-    if( nFileLen == -1 )
+    if( static_cast<long>(nFileLen) == -1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed using seek end and tell to get file length: %s",
@@ -416,12 +417,13 @@ static void CSVIngest( const char *pszFilename )
     }
     VSIRewindL( psTable->fp );
 
-    psTable->pszRawData = reinterpret_cast<char *>( VSI_MALLOC_VERBOSE(nFileLen+1) );
+    psTable->pszRawData = reinterpret_cast<char *>(
+        VSI_MALLOC_VERBOSE( static_cast<size_t>(nFileLen) + 1) );
     if( psTable->pszRawData == NULL )
         return;
-    if( static_cast<int>( VSIFReadL( psTable->pszRawData, 1,
-                                     nFileLen, psTable->fp ) )
-        != nFileLen )
+    if( VSIFReadL( psTable->pszRawData, 1,
+                   static_cast<size_t>(nFileLen), psTable->fp )
+        != static_cast<size_t>(nFileLen) )
     {
         CPLFree( psTable->pszRawData );
         psTable->pszRawData = NULL;
@@ -437,7 +439,7 @@ static void CSVIngest( const char *pszFilename )
 /*      Get count of newlines so we can allocate line array.            */
 /* -------------------------------------------------------------------- */
     int nMaxLineCount = 0;
-    for( int i = 0; i < nFileLen; i++ )
+    for( int i = 0; i < static_cast<int>(nFileLen); i++ )
     {
         if( psTable->pszRawData[i] == 10 )
             nMaxLineCount++;
