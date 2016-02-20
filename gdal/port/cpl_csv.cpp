@@ -406,7 +406,7 @@ static void CSVIngest( const char *pszFilename )
                   pszFilename );
         return;
     }
-    const long nFileLen = VSIFTellL( psTable->fp );
+    const vsi_l_offset nFileLen = VSIFTellL( psTable->fp );
     if( nFileLen == -1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
