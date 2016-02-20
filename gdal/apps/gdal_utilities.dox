@@ -725,7 +725,7 @@ of the command line, or put in a text file (one filename per line) for very long
 or it can be a MapServer tileindex (see \ref gdaltindex utility). In the later case, all
 entries in the tile index will be added to the VRT.
 
-With -separate, each files goes into a separate <i>stacked</i> band in the VRT band. Otherwise,
+With -separate, each files goes into a separate band in the VRT band. Otherwise,
 the files are considered as tiles of a larger mosaic and the VRT file has as many bands as one
 of the input files.
 
@@ -737,8 +737,13 @@ in the resulting VRT have similar characteristics : number of bands, projection,
 interpretation... If not, files that do not match the common characteristics will be skipped.
 (This is only true in the default mode, and not when using the -separate option)
 
-If there is some amount of spatial overlapping between files, the order may depend on the order they
-are inserted in the VRT file, but this behaviour should not be relied on.
+If there is some amount of spatial overlapping between files, the order of files
+appearing in the list of source matter: files that are listed at the end are the ones
+from which the content will be fetched. Note that nodata will be taken into account
+to potentially fetch data from less prioritary datasets, but currently, alpha channel
+is not taken into account to do alpha compositing (so a source with alpha=0
+appearing on top of another source will override is content). This might be
+changed in later versions.
 
 This utility is somehow equivalent to the gdal_vrtmerge.py utility and is build by default
 in GDAL 1.6.1.
@@ -814,7 +819,7 @@ is written in the NoDataValue element of each VRTRasterBand element. Use a value
 <tt>None</tt> to ignore intrinsic nodata settings on the source datasets.</dd>
 
 <dt> <b>-separate</b>:</dt><dd> (starting with GDAL 1.7.0)
-Place each input file into a separate <i>stacked</i> band. In that case, only the first
+Place each input file into a separate band. In that case, only the first
 band of each dataset will be placed into a new band. Contrary to the default mode, it is not
 required that all bands have the same datatype.
 </dd>
@@ -1451,7 +1456,7 @@ used.</dd>
 <dt>
 <dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicing operations as they are done.</dd>
 <dt> <b>-separate</b>:</dt><dd> 
-Place each input file into a separate <i>stacked</i> band. 
+Place each input file into a separate band. 
 </dd>
 <dt> <b>-pct</b>:</dt><dd> 
 Grab a pseudo-color table from the first input image, and use it for the output.
