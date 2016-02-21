@@ -1,3 +1,12 @@
+= GDAL/OGR 1.11.5 Release Notes = 
+
+The 1.11.5 release is a bug fix release.
+
+== OGR drivers == 
+
+ * Driver removed:
+    - Google Maps Engine (GME)  (#6261)
+
 = GDAL/OGR 1.11.4 Release Notes = 
 
 The 1.11.4 release is a bug fix release.
