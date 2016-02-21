@@ -38,6 +38,15 @@
 
 //#define VSI_COUNT_BYTES_READ
 
+// Some unusual filesystems do not work if _FORTIFY_SOURCE in GCC or
+// clang is used within this source file, especially if techniques
+// like those in vsipreload are used.  Fortify source interacts poorly with
+// filesystems that use fread for forward seeks.  This leads to SIGSEGV within
+// fread calls.
+//
+// See this for hardening background info: https://wiki.debian.org/Hardening
+#undef _FORTIFY_SOURCE
+
 #include "cpl_port.h"
 
 #if !defined(WIN32)
