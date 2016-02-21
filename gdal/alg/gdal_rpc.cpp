@@ -403,7 +403,8 @@ int GDALRPCGetDEMHeight( const GDALRPCTransformInfo *psTransform,
 
 static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
                                        const double dfXIn, const double dfYIn,
-                                       double* pdfHeight )
+                                       double* pdfHeight,
+                                       double* pdfDEMPixel = NULL, double* pdfDEMLine = NULL)
 {
     double dfVDatumShift = 0.0;
     double dfDEMH = 0;
@@ -430,6 +431,10 @@ static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
 
         GDALApplyGeoTransform( (double*)(psTransform->adfDEMReverseGeoTransform),
                                 dfXTemp, dfYTemp, &dfX, &dfY );
+        if( pdfDEMPixel )
+            *pdfDEMPixel = dfX;
+        if( pdfDEMLine )
+            *pdfDEMLine = dfY;
 
         if( !GDALRPCGetDEMHeight( psTransform, dfX, dfY, &dfDEMH) )
         {
@@ -807,16 +812,60 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
             bHasJustAdjustedDEMH = true;
             bForceDEMHUpdate = false;
             dfDEMH = 0;
+            double dfDEMPixel = 0.0, dfDEMLine = 0.0;
             if( !GDALRPCGetHeightAtLongLat(psTransform, dfResultX, dfResultY,
-                                           &dfDEMH) )
+                                           &dfDEMH, &dfDEMPixel, &dfDEMLine) )
             {
+                if( psTransform->poDS )
+                {
+                    CPLDebug("RPC", "DEM (pixel, line) = (%g, %g)", dfDEMPixel, dfDEMLine);
+                }
+
                 // The first time, the guess might be completely out of the
                 // validity of the DEM, so pickup the "reference Z" as the
-                // first guess
+                // first guess or the closest point of the DEM by snapping to it
                 if( iIter == 0 )
-                    dfDEMH = psTransform->dfRefZ;
+                {
+                    bool bUseRefZ = true;
+                    if( psTransform->poDS )
+                    {
+                        if( dfDEMPixel >= psTransform->poDS->GetRasterXSize() )
+                            dfDEMPixel = psTransform->poDS->GetRasterXSize() - 0.5;
+                        else if( dfDEMPixel < 0 )
+                            dfDEMPixel = 0.5;
+                        if( dfDEMLine >= psTransform->poDS->GetRasterYSize() )
+                            dfDEMLine = psTransform->poDS->GetRasterYSize() - 0.5;
+                        else if( dfDEMPixel < 0 )
+                            dfDEMPixel = 0.5;
+                        if( GDALRPCGetDEMHeight( psTransform, dfDEMPixel, dfDEMLine, &dfDEMH) )
+                        {
+                            bUseRefZ = false;
+                            CPLDebug("RPC", "Iteration %d for (pixel, line) = (%g, %g): "
+                                    "No elevation value at %.15g %.15g. "
+                                    "Using elevation %g at DEM (pixel, line) = (%g, %g) (snapping to boundaries) instead",
+                                    iIter, dfPixel, dfLine,
+                                    dfResultX, dfResultY,
+                                    dfDEMH, dfDEMPixel, dfDEMLine );
+                        }
+                    }
+                    if( bUseRefZ )
+                    {
+                        dfDEMH = psTransform->dfRefZ;
+                        CPLDebug("RPC", "Iteration %d for (pixel, line) = (%g, %g): "
+                                "No elevation value at %.15g %.15g. "
+                                "Using elevation %g of reference point instead",
+                                iIter, dfPixel, dfLine,
+                                dfResultX, dfResultY,
+                                dfDEMH);
+                    }
+                }
                 else
+                {
+                    CPLDebug("RPC", "Iteration %d for (pixel, line) = (%g, %g): "
+                             "No elevation value at %.15g %.15g. Erroring out",
+                             iIter, dfPixel, dfLine, dfResultX, dfResultY);
                     return false;
+                }
             }
         }
 
@@ -852,7 +901,6 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
         // error decreases
         if( iIter >= 10 && dfError >= dfPrevError && !bHasJustAdjustedDEMH )
         {
-            //CPLDebug( "RPC", "No convergence" ); 
             break;
         }
         dfPrevError = dfError;
@@ -860,15 +908,13 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
 
     if( iIter != -1 )
     {
-#ifdef notdef
         CPLDebug( "RPC", "Failed Iterations %d: Got: %g,%g  Offset=%g,%g", 
                   iIter, 
                   dfResultX, dfResultY,
                   dfPixelDeltaX, dfPixelDeltaY );
-#endif
         return false;
     }
-    
+
     *pdfLong = dfResultX;
     *pdfLat = dfResultY;
     return true;
