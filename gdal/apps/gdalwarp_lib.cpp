@@ -39,6 +39,7 @@
 #include "commonutils.h"
 #include "gdal_priv.h"
 #include <vector>
+#include <algorithm>
 #include "gdal_utils_priv.h"
 
 CPL_CVSID("$Id$");
@@ -2120,6 +2121,55 @@ public:
     }
 };
 
+static
+double GetMaximumSegmentLength( OGRGeometry* poGeom )
+{
+    switch( wkbFlatten(poGeom->getGeometryType()) )
+    {
+        case wkbLineString:
+        {
+            OGRLineString* poLS = static_cast<OGRLineString*>(poGeom);
+            double dfMaxSquaredLength = 0.0;
+            for(int i=0; i<poLS->getNumPoints()-1;i++)
+            {
+                double dfDeltaX = poLS->getX(i+1) - poLS->getX(i);
+                double dfDeltaY = poLS->getY(i+1) - poLS->getY(i);
+                double dfSquaredLength = dfDeltaX * dfDeltaX + dfDeltaY * dfDeltaY;
+                dfMaxSquaredLength = std::max( dfMaxSquaredLength, dfSquaredLength );
+            }
+            return sqrt(dfMaxSquaredLength);
+        }
+
+        case wkbPolygon:
+        {
+            OGRPolygon* poPoly = static_cast<OGRPolygon*>(poGeom);
+            double dfMaxLength = GetMaximumSegmentLength( poPoly->getExteriorRing() );
+            for(int i=0; i<poPoly->getNumInteriorRings();i++)
+            {
+                dfMaxLength = std::max( dfMaxLength,
+                    GetMaximumSegmentLength( poPoly->getInteriorRing(i) ) );
+            }
+            return dfMaxLength;
+        }
+
+        case wkbMultiPolygon:
+        {
+            OGRMultiPolygon* poMP = static_cast<OGRMultiPolygon*>(poGeom);
+            double dfMaxLength = 0.0;
+            for(int i=0; i<poMP->getNumGeometries();i++)
+            {
+                dfMaxLength = std::max( dfMaxLength,
+                    GetMaximumSegmentLength( poMP->getGeometryRef(i) ) );
+            }
+            return dfMaxLength;
+        }
+
+        default:
+            CPLAssert(0);
+            return 0.0;
+    }
+}
+
 /************************************************************************/
 /*                      TransformCutlineToSource()                      */
 /*                                                                      */
@@ -2220,10 +2270,55 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     CSLDestroy( papszTO );
 
     if( oTransformer.hSrcImageTransformer == NULL )
+    {
+        OGR_G_DestroyGeometry( hMultiPolygon );
         return CE_Failure;
+    }
 
+    // Some transforms like RPC can transform a valid geometry into an invalid
+    // one if the node density of the input geometry isn't sufficient before
+    // reprojection. So after an initial reprojection, we check that the
+    // maximum length of a segment is no longer than 1 pixel, and if not,
+    // we densify the input geometry before doing a new reprojection
+    const double dfMaxLengthInSpatUnits = GetMaximumSegmentLength(
+                reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
     OGRErr eErr = OGR_G_Transform( hMultiPolygon, 
                      (OGRCoordinateTransformationH) &oTransformer );
+    double dfMaxLengthInPixels = GetMaximumSegmentLength(
+                            reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
+
+    bool bDensify = false;
+    if( eErr == OGRERR_NONE && dfMaxLengthInPixels > 1.0 )
+    {
+        const char* pszDensifyCutline = CPLGetConfigOption("GDALWARP_DENSIFY_CUTLINE", "YES");
+        if( EQUAL(pszDensifyCutline, "ONLY_IF_INVALID") )
+        {
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            bDensify = ( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) );
+            CPLPopErrorHandler();
+        }
+        else
+            bDensify = CPLTestBool(pszDensifyCutline);
+    }
+    if( bDensify )
+    {
+        CPLDebug("WARP", "Cutline maximum segment size was %.0f pixel after reprojection to source coordinates",
+                 dfMaxLengthInPixels);
+
+        // Densify and reproject with the aim of having a 1 pixel density
+        OGR_G_DestroyGeometry( hMultiPolygon );
+        hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
+        OGR_G_Segmentize(hMultiPolygon, dfMaxLengthInSpatUnits / dfMaxLengthInPixels);
+        eErr = OGR_G_Transform( hMultiPolygon, 
+                     (OGRCoordinateTransformationH) &oTransformer );
+        if( eErr == OGRERR_NONE )
+        {
+            dfMaxLengthInPixels = GetMaximumSegmentLength(
+                                reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
+            CPLDebug("WARP", "After densification, cutline maximum segment size is now %.0f pixel",
+                     dfMaxLengthInPixels);
+        }
+    }
 
     GDALDestroyGenImgProjTransformer( oTransformer.hSrcImageTransformer );
 
@@ -2261,6 +2356,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     char *pszWKT = NULL;
 
     OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
+    //fprintf(stderr, "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
     OGR_G_DestroyGeometry( hMultiPolygon );
 
     *ppapszWarpOptions = CSLSetNameValue( *ppapszWarpOptions, 

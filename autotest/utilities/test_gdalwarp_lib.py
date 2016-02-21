@@ -958,6 +958,82 @@ def test_gdalwarp_lib_127():
     return 'success'
 
 ###############################################################################
+# Test automatic densification of cutline (#6375)
+
+def test_gdalwarp_lib_128():
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 1177, 4719)
+    rpc =  [ "HEIGHT_OFF=109",
+             "LINE_NUM_COEFF=-0.001245683 -0.09427649 -1.006342 -1.954469e-05 0.001033926 2.020534e-08 -3.845472e-07 -0.002075817 0.0005520694 0 -4.642442e-06 -3.271793e-06 2.705977e-05 -7.634384e-07 -2.132832e-05 -3.248862e-05 -8.17894e-06 -3.678094e-07 2.002032e-06 3.693162e-08",
+             "LONG_OFF=7.1477",
+             "SAMP_DEN_COEFF=1 0.01415176 -0.003715018 -0.001205632 -0.0007738299 4.057763e-05 -1.649126e-05 0.0001453584 0.0001628194 -7.354731e-05 4.821444e-07 -4.927701e-06 -1.942371e-05 -2.817499e-06 1.946396e-06 3.04243e-06 2.362282e-07 -2.5371e-07 -1.36993e-07 1.132432e-07",
+             "LINE_SCALE=2360",
+             "SAMP_NUM_COEFF=0.04337163 1.775948 -0.87108 0.007425391 0.01783631 0.0004057179 -0.000184695 -0.04257537 -0.01127869 -1.531228e-06 1.017961e-05 0.000572344 -0.0002941 -0.0001301705 -0.0003289546 5.394918e-05 6.388447e-05 -4.038289e-06 -7.525785e-06 -5.431241e-07",
+             "LONG_SCALE=0.8383",
+             "SAMP_SCALE=593",
+             "SAMP_OFF=589",
+             "LAT_SCALE=1.4127",
+             "LAT_OFF=33.8992",
+             "LINE_OFF=2359",
+             "LINE_DEN_COEFF=1 0.0007273139 -0.0006006867 -4.272095e-07 2.578717e-05 4.718479e-06 -2.116976e-06 -1.347805e-05 -2.209958e-05 8.131258e-06 -7.290143e-08 5.105109e-08 -7.353388e-07 0 2.131142e-06 9.697701e-08 1.237039e-08 7.153246e-08 6.758015e-08 5.811124e-08",
+             "HEIGHT_SCALE=96.3" ]
+    mem_ds.SetMetadata(rpc, "RPC")
+    mem_ds.GetRasterBand(1).Fill(255)
+
+    cutlineDSName = '/vsimem/test_gdalwarp_lib_128.json'
+    cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
+    cutline_lyr = cutline_ds.CreateLayer('cutline')
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((7.2151 32.51930,7.214316 32.58116,7.216043 32.59476,7.21666 32.5193,7.2151 32.51930))'))
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    # Default is GDALWARP_DENSIFY_CUTLINE=YES
+    ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                   dstSRS = 'EPSG:4326',
+                   outputBounds = [7.2, 32.52, 7.217, 32.59],
+                   xRes=0.000226555, yRes=0.000226555,
+                   transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 4351:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'ONLY_IF_INVALID')
+    ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                   dstSRS = 'EPSG:4326',
+                   outputBounds = [7.2, 32.52, 7.217, 32.59],
+                   xRes=0.000226555, yRes=0.000226555,
+                   transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 4351:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'NO')
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                    dstSRS = 'EPSG:4326',
+                    outputBounds = [7.2, 32.52, 7.217, 32.59],
+                    xRes=0.000226555, yRes=0.000226555,
+                    transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
+    if ds is not None:
+        gdaltest.post_reason('expected none return')
+        return 'fail'
+
+    gdal.Unlink(cutlineDSName)
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1033,6 +1109,7 @@ gdaltest_list = [
     test_gdalwarp_lib_125,
     test_gdalwarp_lib_126,
     test_gdalwarp_lib_127,
+    test_gdalwarp_lib_128,
     test_gdalwarp_lib_cleanup,
     ]
 
