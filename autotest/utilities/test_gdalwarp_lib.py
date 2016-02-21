@@ -1003,6 +1003,11 @@ def test_gdalwarp_lib_128():
         print(cs)
         return 'fail'
 
+    # Below steps depend on GEOS
+    if not ogrtest.have_geos():
+        gdal.Unlink(cutlineDSName)
+        return 'success'
+
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'ONLY_IF_INVALID')
     ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
                    dstSRS = 'EPSG:4326',
