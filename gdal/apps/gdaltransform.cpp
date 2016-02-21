@@ -104,6 +104,10 @@ int main( int argc, char ** argv )
     int                 bInverse = FALSE;
     char              **papszTO = NULL;
     int                 bOutputXY = FALSE;
+    double              dfX = 0.0;
+    double              dfY = 0.0;
+    double              dfZ = 0.0;
+    bool                bCoordOnCommandLine = false;
 
     /* Check that we are running against at least GDAL 1.5 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -209,6 +213,15 @@ int main( int argc, char ** argv )
             bOutputXY = TRUE;
         }
 
+        else if( EQUAL(argv[i],"-coord")  && i + 2 < argc)
+        {
+            bCoordOnCommandLine = true;
+            dfX = CPLAtof(argv[++i]);
+            dfY = CPLAtof(argv[++i]);
+            if( i + 1 < argc && CPLGetValueType(argv[i+1]) != CPL_VALUE_STRING )
+                dfZ = CPLAtof(argv[++i]);
+            bOutputXY = TRUE;
+        }
         else if( argv[i][0] == '-' )
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
 
@@ -280,28 +293,33 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Read points from stdin, transform and write to stdout.          */
 /* -------------------------------------------------------------------- */
-    while( !feof(stdin) )
+    while( bCoordOnCommandLine || !feof(stdin) )
     {
-        char szLine[1024];
-
-        if( fgets( szLine, sizeof(szLine)-1, stdin ) == NULL )
-            break;
-
-        char **papszTokens = CSLTokenizeString(szLine);
-        double dfX, dfY, dfZ = 0.0;
-        int bSuccess = TRUE;
-
-        if( CSLCount(papszTokens) < 2 )
+        if( !bCoordOnCommandLine )
         {
+            char szLine[1024];
+
+            if( fgets( szLine, sizeof(szLine)-1, stdin ) == NULL )
+                break;
+
+            char **papszTokens = CSLTokenizeString(szLine);
+
+            if( CSLCount(papszTokens) < 2 )
+            {
+                CSLDestroy(papszTokens);
+                continue;
+            }
+
+            dfX = CPLAtof(papszTokens[0]);
+            dfY = CPLAtof(papszTokens[1]);
+            if( CSLCount(papszTokens) >= 3 )
+                dfZ = CPLAtof(papszTokens[2]);
+            else
+                dfZ = 0.0;
             CSLDestroy(papszTokens);
-            continue;
         }
 
-        dfX = CPLAtof(papszTokens[0]);
-        dfY = CPLAtof(papszTokens[1]);
-        if( CSLCount(papszTokens) >= 3 )
-            dfZ = CPLAtof(papszTokens[2]);
-
+        int bSuccess = TRUE;
         if( pfnTransformer( hTransformArg, bInverse, 1, 
                             &dfX, &dfY, &dfZ, &bSuccess )
             && bSuccess )
@@ -316,7 +334,8 @@ int main( int argc, char ** argv )
             printf( "transformation failed.\n" );
         }
 
-        CSLDestroy(papszTokens);
+        if( bCoordOnCommandLine )
+            break;
     }
 
     if( nGCPCount != 0 && nOrder == -1 )
