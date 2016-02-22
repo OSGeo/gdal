@@ -38,8 +38,6 @@ from osgeo import gdal
 
 SCOPES = {
     'ft' : 'https://www.googleapis.com/auth/fusiontables',
-    'gme' : 'https://www.googleapis.com/auth/mapsengine',
-    'gme.ro' : 'https://www.googleapis.com/auth/mapsengine.readonly',
     }
 
 # =============================================================================
@@ -55,7 +53,7 @@ def Usage():
     print('Usage: gdal_auth.py auth2refresh [-s scope] auth_token')
     print('Usage: gdal_auth.py refresh2access [-s scope] refresh_token')
     print('')
-    print('scopes: ft/gme/gme.ro/full_url')
+    print('scopes: ft/full_url')
     print('')
     sys.exit(1)
 
