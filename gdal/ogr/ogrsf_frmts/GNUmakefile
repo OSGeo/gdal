@@ -1,4 +1,3 @@
-
 include ../../GDALmake.opt
 
 SUBDIRS-yes	:= \
@@ -30,7 +29,6 @@ SUBDIRS-$(HAVE_LIBKML)  += libkml
 SUBDIRS-$(CURL_SETTING) += wfs
 SUBDIRS-$(MDB_ENABLED)  += mdb
 SUBDIRS-$(CURL_SETTING) += gft
-SUBDIRS-$(CURL_SETTING) += gme
 SUBDIRS-$(CURL_SETTING) += couchdb
 SUBDIRS-$(CURL_SETTING) += cloudant
 SUBDIRS-$(HAVE_FREEXL)  += xls
