@@ -223,9 +223,6 @@ void OGRRegisterAllInternal()
 #ifdef GFT_ENABLED
     RegisterOGRGFT();
 #endif
-#ifdef GME_ENABLED
-    RegisterOGRGME();
-#endif
 #ifdef SVG_ENABLED
     RegisterOGRSVG();
 #endif
