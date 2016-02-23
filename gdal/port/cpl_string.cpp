@@ -131,7 +131,7 @@ char **CSLAddStringMayFail(char **papszStrList, const char *pszNewString)
  *
  * @return the number of entries.
  */
-int CSLCount(char **papszStrList)
+int CSLCount(char const * const *papszStrList)
 {
     if (!papszStrList)
         return 0;
@@ -525,16 +525,16 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
 /**********************************************************************
  *                       CSLInsertString()
  *
- * Insert a string at a given line number inside a StringList 
+ * Insert a string at a given line number inside a StringList
  *
  * nInsertAtLineNo is a 0-based line index before which the new string
- * should be inserted.  If this value is -1 or is larger than the actual 
+ * should be inserted.  If this value is -1 or is larger than the actual
  * number of strings in the list then the string is added at the end
  * of the source StringList.
  *
  * Returns the modified StringList.
  **********************************************************************/
-char **CSLInsertString(char **papszStrList, int nInsertAtLineNo, 
+char **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
                        const char *pszNewLine)
 {
     char *apszList[2] = {const_cast<char *>(pszNewLine), NULL};
@@ -545,10 +545,10 @@ char **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 /**********************************************************************
  *                       CSLRemoveStrings()
  *
- * Remove strings inside a StringList 
+ * Remove strings inside a StringList
  *
- * nFirstLineToDelete is the 0-based line index of the first line to 
- * remove. If this value is -1 or is larger than the actual 
+ * nFirstLineToDelete is the 0-based line index of the first line to
+ * remove. If this value is -1 or is larger than the actual
  * number of strings in list then the nNumToRemove last strings are
  * removed.
  *
@@ -772,18 +772,18 @@ char ** CSLTokenizeStringComplex( const char * pszString,
  *
  * The available parsing options are:
  *
- * - CSLT_ALLOWEMPTYTOKENS: allow the return of empty tokens when two 
- * delimiters in a row occur with no other text between them.  If not set, 
+ * - CSLT_ALLOWEMPTYTOKENS: allow the return of empty tokens when two
+ * delimiters in a row occur with no other text between them.  If not set,
  * empty tokens will be discarded;
  * - CSLT_STRIPLEADSPACES: strip leading space characters from the token (as
  * reported by isspace());
  * - CSLT_STRIPENDSPACES: strip ending space characters from the token (as
  * reported by isspace());
- * - CSLT_HONOURSTRINGS: double quotes can be used to hold values that should 
- * not be broken into multiple tokens; 
+ * - CSLT_HONOURSTRINGS: double quotes can be used to hold values that should
+ * not be broken into multiple tokens;
  * - CSLT_PRESERVEQUOTES: string quotes are carried into the tokens when this
  * is set, otherwise they are removed;
- * - CSLT_PRESERVEESCAPES: if set backslash escapes (for backslash itself, 
+ * - CSLT_PRESERVEESCAPES: if set backslash escapes (for backslash itself,
  * and for literal double quotes) will be preserved in the tokens, otherwise
  * the backslashes will be removed in processing.
  *
@@ -1542,16 +1542,16 @@ int CPLTestBoolean( const char *pszValue )
  *
  * In a StringList of "Name=Value" pairs, look to see if there is a key
  * with the given name, and if it can be interpreted as being TRUE.  If
- * the key appears without any "=Value" portion it will be considered true. 
+ * the key appears without any "=Value" portion it will be considered true.
  * If the value is NO, FALSE or 0 it will be considered FALSE otherwise
  * if the key appears in the list it will be considered TRUE.  If the key
- * doesn't appear at all, the indicated default value will be returned. 
+ * doesn't appear at all, the indicated default value will be returned.
  *
  * @param papszStrList the string list to search.
  * @param pszKey the key value to look for (case insensitive).
- * @param bDefault the value to return if the key isn't found at all. 
+ * @param bDefault the value to return if the key isn't found at all.
  *
- * @return TRUE or FALSE 
+ * @return TRUE or FALSE
  **********************************************************************/
 
 int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
@@ -1806,7 +1806,7 @@ char **CSLSetNameValue( char **papszList,
     while(papszPtr && *papszPtr != NULL)
     {
         if (EQUALN(*papszPtr, pszName, nLen)
-            && ( (*papszPtr)[nLen] == '=' || 
+            && ( (*papszPtr)[nLen] == '=' ||
                  (*papszPtr)[nLen] == ':' ) )
         {
             /* Found it!
@@ -1857,7 +1857,7 @@ char **CSLSetNameValue( char **papszList,
 
 /**
  * Replace the default separator (":" or "=") with the passed separator
- * in the given name/value list. 
+ * in the given name/value list.
  *
  * Note that if a separator other than ":" or "=" is used, the resulting
  * list will not be manipulable by the CSL name/value functions any more.
@@ -1921,8 +1921,8 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and
  * should not be included in the input.
  *
- * CPLES_URL(2): Everything except alphanumerics and the characters 
- * '$', '-', '_', '.', '+', '!', '*', ''', '(', ')' and ',' (see RFC1738) are 
+ * CPLES_URL(2): Everything except alphanumerics and the characters
+ * '$', '-', '_', '.', '+', '!', '*', ''', '(', ')' and ',' (see RFC1738) are
  * converted to a percent followed by a two digit hex encoding of the character
  * (leading zero supplied if needed).  This is the mechanism used for encoding
  * values to be passed in URLs.
@@ -2062,7 +2062,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
                 || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
                 || pszInput[iIn] == '$' || pszInput[iIn] == '-'
-                || pszInput[iIn] == '_' || pszInput[iIn] == '.' 
+                || pszInput[iIn] == '_' || pszInput[iIn] == '.'
                 || pszInput[iIn] == '+' || pszInput[iIn] == '!'
                 || pszInput[iIn] == '*' || pszInput[iIn] == '\''
                 || pszInput[iIn] == '(' || pszInput[iIn] == ')'
