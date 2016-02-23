@@ -198,7 +198,7 @@ void CPLPushFileFinder( CPLFileFinder pfnFinder )
 
     pTLSData->papfnFinders = static_cast<CPLFileFinder *>(
         CPLRealloc(pTLSData->papfnFinders,
-            sizeof(CPLFileFinder *) * ++pTLSData->nFileFinders) );
+            sizeof(CPLFileFinder) * ++pTLSData->nFileFinders) );
     pTLSData->papfnFinders[pTLSData->nFileFinders-1] = pfnFinder;
 }
 
