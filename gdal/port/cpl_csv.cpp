@@ -190,7 +190,7 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS,
     CSVTable *psLast = NULL;
     CSVTable *psTable = *ppsCSVTableList;
     for( ;
-         psTable != NULL && !EQUAL(psTable->pszFilename,pszFilename);
+         psTable != NULL && !EQUAL(psTable->pszFilename, pszFilename);
          psTable = psTable->psNext )
     {
         psLast = psTable;
@@ -533,7 +533,9 @@ char CSVDetectSeperator (const char* pszLine)
             }
         }
         else if( !bInString && *pszLine == ' ' )
+        {
             nCountSpace++;
+        }
         else if( *pszLine == '"' )
         {
             if( !bInString || pszLine[1] != '"' )
@@ -981,7 +983,7 @@ char **CSVGetNextLine( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     CPLAssert( pszFilename != NULL );
 
-    CSVTable *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return NULL;
 
@@ -1025,7 +1027,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
     if( iKeyField < 0 )
         return NULL;
 
-    CSVTable *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return NULL;
 
@@ -1182,7 +1184,7 @@ char **CSVScanFileByName( const char * pszFilename,
                           const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
-    int iKeyField = CSVGetFileFieldId( pszFilename, pszKeyFieldName );
+    const int iKeyField = CSVGetFileFieldId( pszFilename, pszKeyFieldName );
     if( iKeyField == -1 )
         return NULL;
 
@@ -1209,7 +1211,7 @@ const char *CSVGetField( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Find the table.                                                 */
 /* -------------------------------------------------------------------- */
-    CSVTable    *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return "";
 
@@ -1261,7 +1263,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     {
         const size_t nBasenameLen = strlen(pszBasename);
 
-        for( CSVTable *psTable = *ppsCSVTableList;
+        for( const CSVTable *psTable = *ppsCSVTableList;
              psTable != NULL;
              psTable = psTable->psNext )
         {
