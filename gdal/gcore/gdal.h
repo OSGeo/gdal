@@ -80,8 +80,8 @@ double CPL_DLL GDALAdjustValueToDataType( GDALDataType eDT, double dfValue, int*
 /**
 * status of the asynchronous stream
 */
-typedef enum 
-{	
+typedef enum
+{
 	GARIO_PENDING = 0,
 	GARIO_UPDATE = 1,
 	GARIO_ERROR = 2,
@@ -104,7 +104,7 @@ typedef enum {
     /*! Write data */  GF_Write = 1
 } GDALRWFlag;
 
-/* NOTE: values are selected to be consistent with GDALResampleAlg of alg/gdalwarper.h */ 
+/* NOTE: values are selected to be consistent with GDALResampleAlg of alg/gdalwarper.h */
 /** RasterIO() resampling method.
   * @since GDAL 2.0
   */
@@ -129,15 +129,15 @@ typedef enum
   */
 typedef struct
 {
-    /*! Version of structure (to allow future extensions of the structure) */ 
+    /*! Version of structure (to allow future extensions of the structure) */
     int                    nVersion;
 
-    /*! Resampling algorithm */ 
+    /*! Resampling algorithm */
     GDALRIOResampleAlg     eResampleAlg;
 
-    /*! Progress callback */ 
+    /*! Progress callback */
     GDALProgressFunc       pfnProgress;
-    /*! Progress callback user data */ 
+    /*! Progress callback user data */
     void                  *pProgressData;
 
     /*! Indicate if dfXOff, dfYOff, dfXSize and dfYSize are set.
@@ -194,7 +194,7 @@ const char CPL_DLL *GDALGetColorInterpretationName( GDALColorInterp );
 GDALColorInterp CPL_DLL GDALGetColorInterpretationByName( const char *pszName );
 
 /*! Types of color interpretations for a GDALColorTable. */
-typedef enum 
+typedef enum
 {
   /*! Grayscale (in GDALColorEntry.c1) */                      GPI_Gray=0,
   /*! Red, Green, Blue and Alpha in (in c1, c2, c3 and c4) */  GPI_RGB=1,
@@ -206,7 +206,7 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
 /* "well known" metadata items. */
 
-#define GDALMD_AREA_OR_POINT   "AREA_OR_POINT" 
+#define GDALMD_AREA_OR_POINT   "AREA_OR_POINT"
 #  define GDALMD_AOP_AREA      "Area"
 #  define GDALMD_AOP_POINT     "Point"
 
@@ -278,7 +278,7 @@ typedef GIntBig GSpacing;
 /** XML snippet with open options.
  * @since GDAL 2.0
  */
-#define GDAL_DMD_OPENOPTIONLIST "DMD_OPENOPTIONLIST" 
+#define GDAL_DMD_OPENOPTIONLIST "DMD_OPENOPTIONLIST"
 
 /** List of (space separated) raster data types support by the Create()/CreateCopy() API. */
 #define GDAL_DMD_CREATIONDATATYPES "DMD_CREATIONDATATYPES"
@@ -289,7 +289,7 @@ typedef GIntBig GSpacing;
 #define GDAL_DMD_CREATIONFIELDDATATYPES "DMD_CREATIONFIELDDATATYPES"
 
 /** Capability set by a driver that exposes Subdatasets. */
-#define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS" 
+#define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 
 /** Capability set by a driver that implements the Open() API. */
 #define GDAL_DCAP_OPEN       "DCAP_OPEN"
@@ -318,20 +318,20 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_GNM         "DCAP_GNM"
 
-/** Capability set by a driver that can create fields with NOT NULL constraint. 
+/** Capability set by a driver that can create fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
-#define GDAL_DCAP_NOTNULL_FIELDS "DCAP_NOTNULL_FIELDS" 
+#define GDAL_DCAP_NOTNULL_FIELDS "DCAP_NOTNULL_FIELDS"
 
-/** Capability set by a driver that can create fields with DEFAULT values. 
+/** Capability set by a driver that can create fields with DEFAULT values.
  * @since GDAL 2.0
  */
-#define GDAL_DCAP_DEFAULT_FIELDS "DCAP_DEFAULT_FIELDS" 
+#define GDAL_DCAP_DEFAULT_FIELDS "DCAP_DEFAULT_FIELDS"
 
 /** Capability set by a driver that can create geometry fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
-#define GDAL_DCAP_NOTNULL_GEOMFIELDS "DCAP_NOTNULL_GEOMFIELDS" 
+#define GDAL_DCAP_NOTNULL_GEOMFIELDS "DCAP_NOTNULL_GEOMFIELDS"
 
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
@@ -420,7 +420,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  * cached blocks must be used.
  *
  * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
- * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive.
  *
  * Used by GDALOpenEx().
  * @since GDAL 2.1
@@ -430,7 +430,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
 /** Use a array-based storage strategy for cached blocks.
  *
  * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
- * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive.
  *
  * Used by GDALOpenEx().
  * @since GDAL 2.1
@@ -440,7 +440,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
 /** Use a hashset-based storage strategy for cached blocks.
  *
  * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
- * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive.
  *
  * Used by GDALOpenEx().
  * @since GDAL 2.1
@@ -468,10 +468,10 @@ void        CPL_DLL CPL_STDCALL GDALDeregisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDestroyDriverManager( void );
 void        CPL_DLL             GDALDestroy( void );
 CPLErr      CPL_DLL CPL_STDCALL GDALDeleteDataset( GDALDriverH, const char * );
-CPLErr      CPL_DLL CPL_STDCALL GDALRenameDataset( GDALDriverH, 
+CPLErr      CPL_DLL CPL_STDCALL GDALRenameDataset( GDALDriverH,
                                                    const char * pszNewName,
                                                    const char * pszOldName );
-CPLErr      CPL_DLL CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH, 
+CPLErr      CPL_DLL CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH,
                                                       const char * pszNewName,
                                                       const char * pszOldName);
 int         CPL_DLL CPL_STDCALL GDALValidateCreationOptions( GDALDriverH,
@@ -491,7 +491,7 @@ const char CPL_DLL * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH );
 typedef struct
 {
     /** Unique identifier, often numeric */
-    char        *pszId; 
+    char        *pszId;
 
     /** Informational message or "" */
     char        *pszInfo;
@@ -516,12 +516,12 @@ void CPL_DLL CPL_STDCALL GDALDeinitGCPs( int, GDAL_GCP * );
 GDAL_GCP CPL_DLL * CPL_STDCALL GDALDuplicateGCPs( int, const GDAL_GCP * );
 
 int CPL_DLL CPL_STDCALL
-GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs, 
-                        double *padfGeoTransform, int bApproxOK )  CPL_WARN_UNUSED_RESULT; 
+GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
+                        double *padfGeoTransform, int bApproxOK )  CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPL_STDCALL
-GDALInvGeoTransform( double *padfGeoTransformIn, 
+GDALInvGeoTransform( double *padfGeoTransformIn,
                      double *padfInvGeoTransformOut ) CPL_WARN_UNUSED_RESULT;
-void CPL_DLL CPL_STDCALL GDALApplyGeoTransform( double *, double, double, 
+void CPL_DLL CPL_STDCALL GDALApplyGeoTransform( double *, double, double,
                                                 double *, double * );
 void CPL_DLL GDALComposeGeoTransforms(const double *padfGeoTransform1,
                                       const double *padfGeoTransform2,
@@ -535,7 +535,7 @@ char CPL_DLL  ** CPL_STDCALL GDALGetMetadataDomainList( GDALMajorObjectH hObject
 char CPL_DLL  ** CPL_STDCALL GDALGetMetadata( GDALMajorObjectH, const char * );
 CPLErr CPL_DLL CPL_STDCALL GDALSetMetadata( GDALMajorObjectH, char **,
                                             const char * );
-const char CPL_DLL * CPL_STDCALL 
+const char CPL_DLL * CPL_STDCALL
 GDALGetMetadataItem( GDALMajorObjectH, const char *, const char * );
 CPLErr CPL_DLL CPL_STDCALL
 GDALSetMetadataItem( GDALMajorObjectH, const char *, const char *,
@@ -547,7 +547,7 @@ void CPL_DLL CPL_STDCALL GDALSetDescription( GDALMajorObjectH, const char * );
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
-#define GDAL_DS_LAYER_CREATIONOPTIONLIST "DS_LAYER_CREATIONOPTIONLIST" 
+#define GDAL_DS_LAYER_CREATIONOPTIONLIST "DS_LAYER_CREATIONOPTIONLIST"
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH );
 char CPL_DLL ** CPL_STDCALL GDALGetFileList( GDALDatasetH );
@@ -557,10 +557,10 @@ int CPL_DLL CPL_STDCALL     GDALGetRasterYSize( GDALDatasetH );
 int CPL_DLL CPL_STDCALL     GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetRasterBand( GDALDatasetH, int );
 
-CPLErr CPL_DLL  CPL_STDCALL GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
+CPLErr CPL_DLL  CPL_STDCALL GDALAddBand( GDALDatasetH hDS, GDALDataType eType,
                              char **papszOptions );
 
-GDALAsyncReaderH CPL_DLL CPL_STDCALL 
+GDALAsyncReaderH CPL_DLL CPL_STDCALL
 GDALBeginAsyncReader(GDALDatasetH hDS, int nXOff, int nYOff,
                      int nXSize, int nYSize,
                      void *pBuf, int nBufXSize, int nBufYSize,
@@ -568,25 +568,25 @@ GDALBeginAsyncReader(GDALDatasetH hDS, int nXOff, int nYOff,
                      int nPixelSpace, int nLineSpace, int nBandSpace,
                      char **papszOptions) CPL_WARN_UNUSED_RESULT;
 
-void  CPL_DLL CPL_STDCALL 
+void  CPL_DLL CPL_STDCALL
 GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsynchReaderH);
 
-CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO( 
+CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO(
     GDALDatasetH hDS, GDALRWFlag eRWFlag,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
-    int nBandCount, int *panBandCount, 
+    int nBandCount, int *panBandCount,
     int nPixelSpace, int nLineSpace, int nBandSpace) CPL_WARN_UNUSED_RESULT;
 
-CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx( 
+CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx(
     GDALDatasetH hDS, GDALRWFlag eRWFlag,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
-    int nBandCount, int *panBandCount, 
+    int nBandCount, int *panBandCount,
     GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
     GDALRasterIOExtraArg* psExtraArg) CPL_WARN_UNUSED_RESULT;
 
-CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead( GDALDatasetH hDS, 
+CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead( GDALDatasetH hDS,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     int nBXSize, int nBYSize, GDALDataType eBDataType,
     int nBandCount, int *panBandCount, char **papszOptions );
@@ -613,28 +613,28 @@ void CPL_DLL CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **hDS, int *pnCount )
 int CPL_DLL CPL_STDCALL GDALGetAccess( GDALDatasetH hDS );
 void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
 
-CPLErr CPL_DLL CPL_STDCALL 
+CPLErr CPL_DLL CPL_STDCALL
               GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags );
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetCopyWholeRaster(
-    GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions, 
+    GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData ) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALRasterBandCopyWholeRaster(
     GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand, char **papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData ) CPL_WARN_UNUSED_RESULT;
 
-CPLErr CPL_DLL 
-GDALRegenerateOverviews( GDALRasterBandH hSrcBand, 
+CPLErr CPL_DLL
+GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                          int nOverviewCount, GDALRasterBandH *pahOverviewBands,
-                         const char *pszResampling, 
+                         const char *pszResampling,
                          GDALProgressFunc pfnProgress, void *pProgressData );
 
 int    CPL_DLL GDALDatasetGetLayerCount( GDALDatasetH );
 OGRLayerH CPL_DLL GDALDatasetGetLayer( GDALDatasetH, int );
 OGRLayerH CPL_DLL GDALDatasetGetLayerByName( GDALDatasetH, const char * );
 OGRErr    CPL_DLL GDALDatasetDeleteLayer( GDALDatasetH, int );
-OGRLayerH CPL_DLL GDALDatasetCreateLayer( GDALDatasetH, const char *, 
+OGRLayerH CPL_DLL GDALDatasetCreateLayer( GDALDatasetH, const char *,
                                       OGRSpatialReferenceH, OGRwkbGeometryType,
                                       char ** );
 OGRLayerH CPL_DLL GDALDatasetCopyLayer( GDALDatasetH, OGRLayerH, const char *,
@@ -690,19 +690,19 @@ typedef CPLErr
                         int nPixelSpace, int nLineSpace);
 
 GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
 GDALGetBlockSize( GDALRasterBandH, int * pnXSize, int * pnYSize );
 
-CPLErr CPL_DLL CPL_STDCALL GDALRasterAdviseRead( GDALRasterBandH hRB, 
+CPLErr CPL_DLL CPL_STDCALL GDALRasterAdviseRead( GDALRasterBandH hRB,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     int nBXSize, int nBYSize, GDALDataType eBDataType, char **papszOptions );
 
-CPLErr CPL_DLL CPL_STDCALL 
+CPLErr CPL_DLL CPL_STDCALL
 GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
               int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
               void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
               int nPixelSpace, int nLineSpace ) CPL_WARN_UNUSED_RESULT;
-CPLErr CPL_DLL CPL_STDCALL 
+CPLErr CPL_DLL CPL_STDCALL
 GDALRasterIOEx( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
               int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
               void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
@@ -718,7 +718,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALGetBandDataset( GDALRasterBandH );
 
 GDALColorInterp CPL_DLL CPL_STDCALL
 GDALGetRasterColorInterpretation( GDALRasterBandH );
-CPLErr CPL_DLL CPL_STDCALL 
+CPLErr CPL_DLL CPL_STDCALL
 GDALSetRasterColorInterpretation( GDALRasterBandH, GDALColorInterp );
 GDALColorTableH CPL_DLL CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
@@ -732,15 +732,15 @@ char CPL_DLL ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
 double CPL_DLL CPL_STDCALL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL CPL_STDCALL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
-CPLErr CPL_DLL CPL_STDCALL GDALGetRasterStatistics( 
-    GDALRasterBandH, int bApproxOK, int bForce, 
+CPLErr CPL_DLL CPL_STDCALL GDALGetRasterStatistics(
+    GDALRasterBandH, int bApproxOK, int bForce,
     double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev );
-CPLErr CPL_DLL CPL_STDCALL GDALComputeRasterStatistics( 
-    GDALRasterBandH, int bApproxOK, 
+CPLErr CPL_DLL CPL_STDCALL GDALComputeRasterStatistics(
+    GDALRasterBandH, int bApproxOK,
     double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev,
     GDALProgressFunc pfnProgress, void *pProgressData );
-CPLErr CPL_DLL CPL_STDCALL GDALSetRasterStatistics( 
-    GDALRasterBandH hBand, 
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterStatistics(
+    GDALRasterBandH hBand,
     double dfMin, double dfMax, double dfMean, double dfStdDev );
 
 const char CPL_DLL * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH );
@@ -749,7 +749,7 @@ double CPL_DLL CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess 
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset);
 double CPL_DLL CPL_STDCALL GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset );
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
 GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                          double adfMinMax[2] );
 CPLErr CPL_DLL CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand );
@@ -792,26 +792,26 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH, GUIntBig );
 CPLErr CPL_DLL CPL_STDCALL GDALFillRaster( GDALRasterBandH hBand,
                           double dfRealValue, double dfImaginaryValue );
 CPLErr CPL_DLL CPL_STDCALL
-GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
-                             double *pdfMean, double *pdfStdDev, 
+GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep,
+                             double *pdfMean, double *pdfStdDev,
                              GDALProgressFunc pfnProgress,
                              void *pProgressData );
-CPLErr CPL_DLL  GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand, 
-                                        int nOverviewCount, 
-                                        GDALRasterBandH *pahOverviews, 
-                                        GDALProgressFunc pfnProgress, 
+CPLErr CPL_DLL  GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
+                                        int nOverviewCount,
+                                        GDALRasterBandH *pahOverviews,
+                                        GDALProgressFunc pfnProgress,
                                         void *pProgressData );
 
-GDALRasterAttributeTableH CPL_DLL CPL_STDCALL GDALGetDefaultRAT( 
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL GDALGetDefaultRAT(
     GDALRasterBandH hBand );
-CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH, 
+CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH,
                                               GDALRasterAttributeTableH );
 CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
                                     GDALDerivedPixelFunc pfnPixelFunc );
 
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand );
 int CPL_DLL CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand );
-CPLErr CPL_DLL CPL_STDCALL 
+CPLErr CPL_DLL CPL_STDCALL
                        GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags );
 
 #define GMF_ALL_VALID     0x01
@@ -823,31 +823,31 @@ CPLErr CPL_DLL CPL_STDCALL
 /*     GDALAsyncReader                                                  */
 /* ==================================================================== */
 
-GDALAsyncStatusType CPL_DLL CPL_STDCALL 
+GDALAsyncStatusType CPL_DLL CPL_STDCALL
 GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
-                         int* pnXBufOff, int* pnYBufOff, 
+                         int* pnXBufOff, int* pnYBufOff,
                          int* pnXBufSize, int* pnYBufSize );
 int CPL_DLL CPL_STDCALL GDALARLockBuffer(GDALAsyncReaderH hARIO,
                                         double dfTimeout);
-void CPL_DLL CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO); 
+void CPL_DLL CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO);
 
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
 /* -------------------------------------------------------------------- */
-int CPL_DLL CPL_STDCALL GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, 
+int CPL_DLL CPL_STDCALL GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
                                          int nOptions );
 void CPL_DLL CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                             int nWordSkip );
 void CPL_DLL CPL_STDCALL GDALSwapWordsEx( void *pData, int nWordSize, size_t nWordCount,
                                   int nWordSkip );
 
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
     GDALCopyWords( const void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                    void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
-void CPL_DLL 
-GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep, 
+void CPL_DLL
+GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
               GByte *pabyDstData, int nDstOffset, int nDstStep,
               int nBitCount, int nStepCount );
 
@@ -862,7 +862,7 @@ int CPL_DLL CPL_STDCALL GDALReadTabFile( const char *, double *, char **,
                                          int *, GDAL_GCP ** );
 int CPL_DLL CPL_STDCALL GDALLoadOziMapFile( const char *, double *, char **,
                                             int *, GDAL_GCP ** );
-int CPL_DLL CPL_STDCALL GDALReadOziMapFile( const char * ,  double *,
+int CPL_DLL CPL_STDCALL GDALReadOziMapFile( const char *,  double *,
                                             char **, int *, GDAL_GCP ** );
 
 const char CPL_DLL * CPL_STDCALL GDALDecToDMS( double, const char *, int );
@@ -889,7 +889,7 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 #endif
 
-typedef struct { 
+typedef struct {
     double      dfLINE_OFF;
     double      dfSAMP_OFF;
     double      dfLAT_OFF;
@@ -924,16 +924,16 @@ int CPL_DLL CPL_STDCALL GDALExtractRPCInfo( char **, GDALRPCInfo * );
 typedef struct
 {
     /*! gray, red, cyan or hue */
-    short      c1;      
+    short      c1;
 
-    /*! green, magenta, or lightness */    
-    short      c2;      
+    /*! green, magenta, or lightness */
+    short      c2;
 
     /*! blue, yellow, or saturation */
-    short      c3;      
+    short      c3;
 
     /*! alpha or blackband */
-    short      c4;      
+    short      c4;
 } GDALColorEntry;
 
 GDALColorTableH CPL_DLL CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp ) CPL_WARN_UNUSED_RESULT;
@@ -944,7 +944,7 @@ int CPL_DLL CPL_STDCALL GDALGetColorEntryCount( GDALColorTableH );
 const GDALColorEntry CPL_DLL * CPL_STDCALL GDALGetColorEntry( GDALColorTableH, int );
 int CPL_DLL CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
 void CPL_DLL CPL_STDCALL GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
-void CPL_DLL CPL_STDCALL GDALCreateColorRamp( GDALColorTableH hTable, 
+void CPL_DLL CPL_STDCALL GDALCreateColorRamp( GDALColorTableH hTable,
             int nStartIndex, const GDALColorEntry *psStartColor,
             int nEndIndex, const GDALColorEntry *psEndColor );
 
@@ -954,14 +954,14 @@ void CPL_DLL CPL_STDCALL GDALCreateColorRamp( GDALColorTableH hTable,
 
 /** Field type of raster attribute table */
 typedef enum {
-    /*! Integer field */	   	   GFT_Integer , 
+    /*! Integer field */	   	   GFT_Integer,
     /*! Floating point (double) field */   GFT_Real,
     /*! String field */                    GFT_String
 } GDALRATFieldType;
 
 /** Field usage of raster attribute table */
 typedef enum {
-    /*! General purpose field. */          GFU_Generic = 0,  
+    /*! General purpose field. */          GFU_Generic = 0,
     /*! Histogram pixel count */           GFU_PixelCount = 1,
     /*! Class name */                      GFU_Name = 2,
     /*! Class range minimum */             GFU_Min = 3,
@@ -982,30 +982,30 @@ typedef enum {
     /*! Maximum GFU value */               GFU_MaxCount
 } GDALRATFieldUsage;
 
-GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
                                            GDALCreateRasterAttributeTable(void) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL GDALDestroyRasterAttributeTable(
     GDALRasterAttributeTableH );
 
 int CPL_DLL CPL_STDCALL GDALRATGetColumnCount( GDALRasterAttributeTableH );
 
-const char CPL_DLL * CPL_STDCALL GDALRATGetNameOfCol( 
+const char CPL_DLL * CPL_STDCALL GDALRATGetNameOfCol(
     GDALRasterAttributeTableH, int );
-GDALRATFieldUsage CPL_DLL CPL_STDCALL GDALRATGetUsageOfCol( 
+GDALRATFieldUsage CPL_DLL CPL_STDCALL GDALRATGetUsageOfCol(
     GDALRasterAttributeTableH, int );
-GDALRATFieldType CPL_DLL CPL_STDCALL GDALRATGetTypeOfCol( 
+GDALRATFieldType CPL_DLL CPL_STDCALL GDALRATGetTypeOfCol(
     GDALRasterAttributeTableH, int );
 
-int CPL_DLL CPL_STDCALL GDALRATGetColOfUsage( GDALRasterAttributeTableH, 
+int CPL_DLL CPL_STDCALL GDALRATGetColOfUsage( GDALRasterAttributeTableH,
                                               GDALRATFieldUsage );
 int CPL_DLL CPL_STDCALL GDALRATGetRowCount( GDALRasterAttributeTableH );
 
-const char CPL_DLL * CPL_STDCALL GDALRATGetValueAsString( 
-    GDALRasterAttributeTableH, int ,int);
-int CPL_DLL CPL_STDCALL GDALRATGetValueAsInt( 
-    GDALRasterAttributeTableH, int ,int);
-double CPL_DLL CPL_STDCALL GDALRATGetValueAsDouble( 
-    GDALRasterAttributeTableH, int ,int);
+const char CPL_DLL * CPL_STDCALL GDALRATGetValueAsString(
+    GDALRasterAttributeTableH, int, int);
+int CPL_DLL CPL_STDCALL GDALRATGetValueAsInt(
+    GDALRasterAttributeTableH, int, int);
+double CPL_DLL CPL_STDCALL GDALRATGetValueAsDouble(
+    GDALRasterAttributeTableH, int, int);
 
 void CPL_DLL CPL_STDCALL GDALRATSetValueAsString( GDALRasterAttributeTableH, int, int,
                                                   const char * );
@@ -1016,36 +1016,36 @@ void CPL_DLL CPL_STDCALL GDALRATSetValueAsDouble( GDALRasterAttributeTableH, int
 
 int CPL_DLL CPL_STDCALL GDALRATChangesAreWrittenToFile( GDALRasterAttributeTableH hRAT );
 
-CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsDouble( GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag, 
+CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsDouble( GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag,
                                         int iField, int iStartRow, int iLength, double *pdfData );
-CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsInteger( GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag, 
+CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsInteger( GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag,
                                         int iField, int iStartRow, int iLength, int *pnData);
-CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsString( GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag, 
+CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsString( GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag,
                                         int iField, int iStartRow, int iLength, char **papszStrList);
 
-void CPL_DLL CPL_STDCALL GDALRATSetRowCount( GDALRasterAttributeTableH, 
+void CPL_DLL CPL_STDCALL GDALRATSetRowCount( GDALRasterAttributeTableH,
                                              int );
-CPLErr CPL_DLL CPL_STDCALL GDALRATCreateColumn( GDALRasterAttributeTableH, 
-                                                const char *, 
-                                                GDALRATFieldType, 
+CPLErr CPL_DLL CPL_STDCALL GDALRATCreateColumn( GDALRasterAttributeTableH,
+                                                const char *,
+                                                GDALRATFieldType,
                                                 GDALRATFieldUsage );
-CPLErr CPL_DLL CPL_STDCALL GDALRATSetLinearBinning( GDALRasterAttributeTableH, 
+CPLErr CPL_DLL CPL_STDCALL GDALRATSetLinearBinning( GDALRasterAttributeTableH,
                                                     double, double );
-int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH, 
+int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH,
                                                  double *, double * );
 CPLErr CPL_DLL CPL_STDCALL GDALRATInitializeFromColorTable(
     GDALRasterAttributeTableH, GDALColorTableH );
 GDALColorTableH CPL_DLL CPL_STDCALL GDALRATTranslateToColorTable(
     GDALRasterAttributeTableH, int nEntryCount );
-void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH, 
+void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH,
                                               FILE * );
-GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
     GDALRATClone( GDALRasterAttributeTableH );
 
-void CPL_DLL* CPL_STDCALL 
+void CPL_DLL* CPL_STDCALL
     GDALRATSerializeJSON( GDALRasterAttributeTableH ) CPL_WARN_UNUSED_RESULT;
 
-int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH , double );
+int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH, double );
 
 
 /* ==================================================================== */
