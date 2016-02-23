@@ -964,7 +964,6 @@ CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
 /*                         GDALLoadOziMapFile()                         */
 /************************************************************************/
 
-#define MAX_GCP 30
 
 int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                     double *padfGeoTransform, char **ppszWKT, 
@@ -973,6 +972,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 
 {
     int	        nCoordinateCount = 0;
+    static const int MAX_GCP = 30;
     GDAL_GCP    asGCPs[MAX_GCP];
 
     VALIDATE_POINTER1( pszFilename, "GDALLoadOziMapFile", FALSE );
@@ -1154,8 +1154,6 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
 
     return TRUE;
 }
-
-#undef MAX_GCP
 
 /************************************************************************/
 /*                       GDALReadOziMapFile()                           */
