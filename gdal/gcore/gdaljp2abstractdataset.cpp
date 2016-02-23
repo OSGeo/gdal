@@ -95,7 +95,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
     {
         CPLFree(pszProjection);
         pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-        bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
+        bGeoTransformValid = CPL_TO_BOOL( oJP2Geo.bHaveGeoTransform );
         memcpy( adfGeoTransform, oJP2Geo.adfGeoTransform, 
                 sizeof(double) * 6 );
         nGCPCount = oJP2Geo.nGCPCount;
