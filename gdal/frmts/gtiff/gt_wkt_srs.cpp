@@ -1249,7 +1249,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
 
 {
-    FILE	*fp;
     char	**papszTokens;
     int		nReturn = KvUserDefined;
 
@@ -1272,9 +1271,9 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
 /* -------------------------------------------------------------------- */
 /*      Open the table if possible.                                     */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( CSVFilename("gdal_datum.csv"), "r" );
+    VSILFILE *fp = VSIFOpenL( CSVFilename("gdal_datum.csv"), "r" );
     if( fp == NULL )
-        fp = VSIFOpen( CSVFilename("datum.csv"), "r" );
+        fp = VSIFOpenL( CSVFilename("datum.csv"), "r" );
 
     if( fp == NULL )
         return nReturn;
@@ -1282,14 +1281,14 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
 /* -------------------------------------------------------------------- */
 /*	Discard the first line with field names.			*/
 /* -------------------------------------------------------------------- */
-    CSLDestroy( CSVReadParseLine( fp ) );
+    CSLDestroy( CSVReadParseLineL( fp ) );
 
 /* -------------------------------------------------------------------- */
 /*      Read lines looking for our datum.                               */
 /* -------------------------------------------------------------------- */
-    for( papszTokens = CSVReadParseLine( fp );
+    for( papszTokens = CSVReadParseLineL( fp );
          CSLCount(papszTokens) > 2 && nReturn == KvUserDefined;
-         papszTokens = CSVReadParseLine( fp ) )
+         papszTokens = CSVReadParseLineL( fp ) )
     {
         WKTMassageDatum( papszTokens + 1 );
 
@@ -1300,7 +1299,7 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
     }
 
     CSLDestroy( papszTokens );
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     return nReturn;
 }
