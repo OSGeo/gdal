@@ -4407,6 +4407,78 @@ def ogr_shape_95():
     return 'success'
 
 ###############################################################################
+# Test updating a XYM shapefile (#6331)
+
+def ogr_shape_96():
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_96.shp')
+    lyr = ds.CreateLayer('ogr_shape_96')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT M (1 2 3)'))
+    lyr.CreateFeature(f)
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_shape_96.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT M (1 2 3)':
+        gdaltest.post_reason('fail')
+        print(f.GetGeometryRef().ExportToIsoWkt())
+        return 'fail'
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT M (1 2 4)'))
+    lyr.SetFeature(f)
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_shape_96.shp')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT M (1 2 4)':
+        gdaltest.post_reason('fail')
+        print(f.GetGeometryRef().ExportToIsoWkt())
+        return 'fail'
+    ds = None
+    
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_96.shp')
+    
+    return 'success'
+
+###############################################################################
+# Test updating a XYZM shapefile
+
+def ogr_shape_97():
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_97.shp')
+    lyr = ds.CreateLayer('ogr_shape_97')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)'))
+    lyr.CreateFeature(f)
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_shape_97.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
+        gdaltest.post_reason('fail')
+        print(f.GetGeometryRef().ExportToIsoWkt())
+        return 'fail'
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 5 6)'))
+    lyr.SetFeature(f)
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_shape_97.shp')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 5 6)':
+        gdaltest.post_reason('fail')
+        print(f.GetGeometryRef().ExportToIsoWkt())
+        return 'fail'
+    ds = None
+    
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_97.shp')
+    
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_shape_cleanup():
@@ -4545,6 +4617,8 @@ gdaltest_list = [
     ogr_shape_93,
     ogr_shape_94,
     ogr_shape_95,
+    ogr_shape_96,
+    ogr_shape_97,
     ogr_shape_cleanup ]
 
 #gdaltest_list = [ ogr_shape_94 ]
