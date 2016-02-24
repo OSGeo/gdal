@@ -1596,7 +1596,7 @@ def netcdf_45():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string1char,string3chars,twodimstringchar,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
-"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT Z (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
 "POINT (1 2)",,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,
 """
@@ -1667,7 +1667,7 @@ def netcdf_47():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,twodimstringchar,date,datetime,datetime_explicit_fillValue,int64,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field,ubyte_field,ubyte_field_explicit_fillValue,ushort_field,ushort_field_explicit_fillValue,uint_field,uint_field_explicit_fillValue,uint64_field,uint64_field_explicit_fillValue
-"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,,1,1,1.2,1.2,123,12,5,-125,254,255,65534,65535,4000000000,4294967295,1234567890123,
+"POINT Z (1 2 3)",1,1,1.23456789012,1.23456789012,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,,1,1,1.2,1.2,123,12,5,-125,254,255,65534,65535,4000000000,4294967295,1234567890123,
 "POINT (1 2)",,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,
 """
@@ -1729,7 +1729,7 @@ def netcdf_49():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32
-"POINT (1 2 3)",1
+"POINT Z (1 2 3)",1
 "POINT (1 2)",
 ,,
 """
@@ -1812,8 +1812,8 @@ def netcdf_51():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string1char,string3chars,twodimstringchar,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field
-"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
-"POINT (1 2 0)",,,,,,,,,,,,,,,,,,,,
+"POINT Z (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT Z (1 2 0)",,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,
 """
     if content != expected_content:
@@ -1891,8 +1891,8 @@ def netcdf_51_no_gdal_tags():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string1char,string3chars,twodimstringchar,date,datetime_explicit_fillValue,datetime,int64var,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x1,byte_field
-"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
-"POINT (1 2 0)",,,,,,,,,,,,,,,,,,,,
+"POINT Z (1 2 3)",1,1,1.23456789012,1.23456789012,x,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,1234567890123,1,1,1.2,1.2,123,12,5,-125
+"POINT Z (1 2 0)",,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,
 """
     if content != expected_content:
@@ -1941,8 +1941,8 @@ def netcdf_52():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,int32,int32_explicit_fillValue,float64,float64_explicit_fillValue,string3chars,twodimstringchar,date,datetime,datetime_explicit_fillValue,int64,int64var_explicit_fillValue,boolean,boolean_explicit_fillValue,float32,float32_explicit_fillValue,int16,int16_explicit_fillValue,x,byte_field,ubyte_field,ubyte_field_explicit_fillValue,ushort_field,ushort_field_explicit_fillValue,uint_field,uint_field_explicit_fillValue,uint64_field,uint64_field_explicit_fillValue
-"POINT (1 2 3)",1,1,1.23456789012,1.23456789012,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,,1,1,1.2,1.2,123,12,5,-125,254,255,65534,65535,4000000000,4294967295,1234567890123,
-"POINT (1 2 0)",,,,,,,,,,,,,,,,,,,,,,,,,,,
+"POINT Z (1 2 3)",1,1,1.23456789012,1.23456789012,STR,STR,1970/01/02,2016/02/06 12:34:56.789,2016/02/06 12:34:56.789,1234567890123,,1,1,1.2,1.2,123,12,5,-125,254,255,65534,65535,4000000000,4294967295,1234567890123,
+"POINT Z (1 2 0)",,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,
 """
     if content != expected_content:
@@ -2311,10 +2311,10 @@ def netcdf_60():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,profile,id,station,foo
-"POINT (2 49 100)",1,1,Palo Alto,bar
-"POINT (3 50 50)",2,2,Santa Fe,baz
-"POINT (2 49 200)",1,3,Palo Alto,baw
-"POINT (3 50 100)",2,4,Santa Fe,baz2
+"POINT Z (2 49 100)",1,1,Palo Alto,bar
+"POINT Z (3 50 50)",2,2,Santa Fe,baz
+"POINT Z (2 49 200)",1,3,Palo Alto,baw
+"POINT Z (3 50 100)",2,4,Santa Fe,baz2
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -2342,14 +2342,14 @@ def netcdf_61():
         content = gdal.VSIFReadL( 1, 10000, fp ).decode('ascii')
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,profile,id,station,foo
-"POINT (2 49 100)",1,1,Palo Alto,bar
-"POINT (3 50 50)",2,2,Santa Fe,baz
-"POINT (2 49 200)",1,3,Palo Alto,baw
-"POINT (3 50 100)",2,4,Santa Fe,baz2
-"POINT (2 49 100)",1,1,Palo Alto,bar
-"POINT (3 50 50)",2,2,Santa Fe,baz
-"POINT (2 49 200)",1,3,Palo Alto,baw
-"POINT (3 50 100)",2,4,Santa Fe,baz2
+"POINT Z (2 49 100)",1,1,Palo Alto,bar
+"POINT Z (3 50 50)",2,2,Santa Fe,baz
+"POINT Z (2 49 200)",1,3,Palo Alto,baw
+"POINT Z (3 50 100)",2,4,Santa Fe,baz2
+"POINT Z (2 49 100)",1,1,Palo Alto,bar
+"POINT Z (3 50 50)",2,2,Santa Fe,baz
+"POINT Z (2 49 200)",1,3,Palo Alto,baw
+"POINT Z (3 50 100)",2,4,Santa Fe,baz2
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -2378,10 +2378,10 @@ def netcdf_62():
         gdal.VSIFCloseL(fp)
 
     expected_content = """WKT,profile,id,station,foo
-"POINT (2 49 100)",1,1,Palo Alto,bar
-"POINT (3 50 50)",2,2,Santa Fe,baz
-"POINT (2 49 200)",1,3,Palo Alto,baw
-"POINT (3 50 100)",2,4,Santa Fe,baz2
+"POINT Z (2 49 100)",1,1,Palo Alto,bar
+"POINT Z (3 50 50)",2,2,Santa Fe,baz
+"POINT Z (2 49 200)",1,3,Palo Alto,baw
+"POINT Z (3 50 100)",2,4,Santa Fe,baz2
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -2457,10 +2457,10 @@ def netcdf_63():
         gdal.VSIFCloseL(fp)
 
     expected_content = """WKT,profile,id,station,foo
-"POINT (2 49 100)",1,1,Palo Alto,bar
-"POINT (3 50 50)",2,2,Santa Fe,baz
-"POINT (2 49 200)",1,3,Palo Alto,baw
-"POINT (3 50 100)",2,4,Santa Fe,baz2
+"POINT Z (2 49 100)",1,1,Palo Alto,bar
+"POINT Z (3 50 50)",2,2,Santa Fe,baz
+"POINT Z (2 49 200)",1,3,Palo Alto,baw
+"POINT Z (3 50 100)",2,4,Santa Fe,baz2
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -2521,10 +2521,10 @@ def netcdf_64():
         gdal.VSIFCloseL(fp)
 
     expected_content = """WKT,profile_dim,id,station,foo
-"POINT (2 49 100)",0,1,Palo Alto,bar
-"POINT (3 50 50)",1,2,Santa Fe,baz
-"POINT (2 49 200)",0,3,Palo Alto,baw
-"POINT (3 50 100)",1,4,Santa Fe,baz2
+"POINT Z (2 49 100)",0,1,Palo Alto,bar
+"POINT Z (3 50 50)",1,2,Santa Fe,baz
+"POINT Z (2 49 200)",0,3,Palo Alto,baw
+"POINT Z (3 50 100)",1,4,Santa Fe,baz2
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
@@ -2660,10 +2660,10 @@ def netcdf_66():
         gdal.VSIFCloseL(fp)
 
     expected_content = """WKT,profile,id,my_station,foo
-"POINT (2 49 100)",1,1,Palo Alto,bar
-"POINT (3 50 50)",2,2,Santa Fe,baz
-"POINT (2 49 200)",1,3,Palo Alto,baw
-"POINT (3 50 100)",2,4,Santa Fe,baz2
+"POINT Z (2 49 100)",1,1,Palo Alto,bar
+"POINT Z (3 50 50)",2,2,Santa Fe,baz
+"POINT Z (2 49 200)",1,3,Palo Alto,baw
+"POINT Z (3 50 100)",2,4,Santa Fe,baz2
 """
     if content != expected_content:
         gdaltest.post_reason('failure')
