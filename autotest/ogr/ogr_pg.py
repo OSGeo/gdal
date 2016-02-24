@@ -939,19 +939,19 @@ def ogr_pg_20():
     # ( <EWKT>, <WKT> ) <=> ( <tested>, <expected> )
     geometries = (
         ( 'POINT (10 20 5 5)',
-          'POINT (10 20 5)' ),
+          'POINT ZM (10 20 5 5)' ),
         ( 'LINESTRING (10 10 1 2,20 20 3 4,30 30 5 6,40 40 7 8)',
-          'LINESTRING (10 10 1,20 20 3,30 30 5,40 40 7)' ),
+          'LINESTRING ZM (10 10 1 2,20 20 3 4,30 30 5 6,40 40 7 8)' ),
         ( 'POLYGON ((0 0 1 2,4 0 3 4,4 4 5 6,0 4 7 8,0 0 1 2))',
-          'POLYGON ((0 0 1,4 0 3,4 4 5,0 4 7,0 0 1))' ),
+          'POLYGON ZM ((0 0 1 2,4 0 3 4,4 4 5 6,0 4 7 8,0 0 1 2))' ),
         ( 'MULTIPOINT (10 20 5 5,30 30 7 7)',
-          'MULTIPOINT (10 20 5,30 30 7)' ),
+          'MULTIPOINT ZM ((10 20 5 5),(30 30 7 7))' ),
         ( 'MULTILINESTRING ((10 10 1 2,20 20 3 4),(30 30 5 6,40 40 7 8))',
-          'MULTILINESTRING ((10 10 1,20 20 3),(30 30 5,40 40 7))' ),
+          'MULTILINESTRING ZM ((10 10 1 2,20 20 3 4),(30 30 5 6,40 40 7 8))' ),
         ( 'MULTIPOLYGON(((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))',
-          'MULTIPOLYGON (((0 0 0,4 0 0,4 4 0,0 4 0,0 0 0),(1 1 0,2 1 0,2 2 0,1 2 0,1 1 0)),((-1 -1 0,-1 -2 0,-2 -2 0,-2 -1 0,-1 -1 0)))' ),
+          'MULTIPOLYGON ZM (((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))' ),
         ( 'GEOMETRYCOLLECTION(POINT(2 3 11 101),LINESTRING(2 3 12 102,3 4 13 103))',
-          'GEOMETRYCOLLECTION (POINT (2 3 11),LINESTRING (2 3 12,3 4 13))' )
+          'GEOMETRYCOLLECTION ZM (POINT ZM (2 3 11 101),LINESTRING ZM (2 3 12 102,3 4 13 103))' )
     )
 
     # This layer is also used in ogr_pg_21() test.
@@ -983,18 +983,24 @@ def ogr_pg_20():
         gdaltest.post_reason( 'did not get testgeom layer' )
         return 'fail'
 
+    # Test updating the geometries
+    for i in range(len(geometries)):
+        feat = layer.GetFeature(i)
+        layer.SetFeature(feat)
+
+    # Test we get them back as expected
     for i in range(len(geometries)):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
         if geom is None:
             gdaltest.post_reason( 'did not get geometry, expected %s' % geometries[i][1] )
             return 'fail'
-        wkt = geom.ExportToWkt()
+        wkt = geom.ExportToIsoWkt()
         feat.Destroy()
         feat = None
 
         if wkt != geometries[i][1]:
-            gdaltest.post_reason( 'WKT do not match' )
+            gdaltest.post_reason( 'WKT do not match: expected %s, got %s' % (geometries[i][1], wkt) )
             return 'fail'
 
     layer = None
@@ -1017,7 +1023,7 @@ def ogr_pg_21():
     feat = layer.GetNextFeature()
     while feat is not None:
         geom = feat.GetGeometryRef()
-        if geom.GetGeometryType() < 3001:
+        if ogr.GT_HasZ(geom.GetGeometryType()) == 0 or ogr.GT_HasM(geom.GetGeometryType()) == 0:
             gdaltest.post_reason( 'expected feature with type >3000' )
             feat.Destroy()
             feat = None
