@@ -28,13 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "ogr_srs_api.h"
-#include "cpl_multiproc.h"
-#include "gdal_pam.h"
 #include "gdal_alg_priv.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_srs_api.h"
 
 #ifdef _MSC_VER
 #  ifdef MSVC_USE_VLD
@@ -580,13 +579,13 @@ GDALDriverH CPL_STDCALL GDALGetDriverByName( const char * pszName )
 /**
  * \brief This method unload undesirable drivers.
  *
- * All drivers specified in the comma delimited list in the GDAL_SKIP 
- * environment variable) will be deregistered and destroyed.  This method 
- * should normally be called after registration of standard drivers to allow 
+ * All drivers specified in the comma delimited list in the GDAL_SKIP
+ * environment variable) will be deregistered and destroyed.  This method
+ * should normally be called after registration of standard drivers to allow
  * the user a way of unloading undesired drivers.  The GDALAllRegister()
  * function already invokes AutoSkipDrivers() at the end, so if that functions
  * is called, it should not be necessary to call this method from application
- * code. 
+ * code.
  *
  * Note: space separator is also accepted for backward compatibility, but some
  * vector formats have spaces in their names, so it is encouraged to use comma
@@ -618,8 +617,8 @@ void GDALDriverManager::AutoSkipDrivers()
             GDALDriver *poDriver = GetDriverByName( apapszList[j][i] );
 
             if( poDriver == NULL )
-                CPLError( CE_Warning, CPLE_AppDefined, 
-                        "Unable to find driver %s to unload from GDAL_SKIP environment variable.", 
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Unable to find driver %s to unload from GDAL_SKIP environment variable.",
                         apapszList[j][i] );
             else
             {
@@ -665,7 +664,7 @@ void GDALDriverManager::AutoLoadDrivers()
 #ifdef GDAL_NO_AUTOLOAD
     CPLDebug( "GDAL", "GDALDriverManager::AutoLoadDrivers() not compiled in." );
 #else
-    const char *pszGDAL_DRIVER_PATH = 
+    const char *pszGDAL_DRIVER_PATH =
         CPLGetConfigOption( "GDAL_DRIVER_PATH", NULL );
     if( pszGDAL_DRIVER_PATH == NULL )
         pszGDAL_DRIVER_PATH = CPLGetConfigOption( "OGR_DRIVER_PATH", NULL );
@@ -674,7 +673,7 @@ void GDALDriverManager::AutoLoadDrivers()
 /*      Allow applications to completely disable this search by         */
 /*      setting the driver path to the special string "disable".        */
 /* -------------------------------------------------------------------- */
-    if( pszGDAL_DRIVER_PATH != NULL && EQUAL(pszGDAL_DRIVER_PATH,"disable")) 
+    if( pszGDAL_DRIVER_PATH != NULL && EQUAL(pszGDAL_DRIVER_PATH,"disable"))
     {
         CPLDebug( "GDAL", "GDALDriverManager::AutoLoadDrivers() disabled." );
         return;
@@ -688,17 +687,17 @@ void GDALDriverManager::AutoLoadDrivers()
     if( pszGDAL_DRIVER_PATH != NULL )
     {
 #ifdef WIN32
-        papszSearchPath = 
+        papszSearchPath =
             CSLTokenizeStringComplex( pszGDAL_DRIVER_PATH, ";", TRUE, FALSE );
 #else
-        papszSearchPath = 
+        papszSearchPath =
             CSLTokenizeStringComplex( pszGDAL_DRIVER_PATH, ":", TRUE, FALSE );
 #endif
     }
     else
     {
 #ifdef GDAL_PREFIX
-        papszSearchPath = CSLAddString( papszSearchPath, 
+        papszSearchPath = CSLAddString( papszSearchPath,
     #ifdef MACOSX_FRAMEWORK
                                         GDAL_PREFIX "/PlugIns");
     #else
@@ -716,17 +715,17 @@ void GDALDriverManager::AutoLoadDrivers()
         }
         else
         {
-            papszSearchPath = CSLAddString( papszSearchPath, 
+            papszSearchPath = CSLAddString( papszSearchPath,
                                             "/usr/local/lib/gdalplugins" );
         }
 #endif
 
    #ifdef MACOSX_FRAMEWORK
    #define num2str(x) str(x)
-   #define str(x) #x 
-     papszSearchPath = CSLAddString( papszSearchPath, 
+   #define str(x) #x
+     papszSearchPath = CSLAddString( papszSearchPath,
                                      "/Library/Application Support/GDAL/"
-                                     num2str(GDAL_VERSION_MAJOR) "."  
+                                     num2str(GDAL_VERSION_MAJOR) "."
                                      num2str(GDAL_VERSION_MINOR) "/PlugIns" );
    #endif
 
@@ -769,7 +768,7 @@ void GDALDriverManager::AutoLoadDrivers()
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
                 snprintf( pszFuncName,
                           strlen(papszFiles[iFile])+20,
-                          "GDALRegister_%s", 
+                          "GDALRegister_%s",
                         CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
             }
             else if ( STARTS_WITH_CI(papszFiles[iFile], "ogr_") )
@@ -777,7 +776,7 @@ void GDALDriverManager::AutoLoadDrivers()
                 pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
                 snprintf( pszFuncName,
                          strlen(papszFiles[iFile])+20,
-                         "RegisterOGR%s", 
+                         "RegisterOGR%s",
                          CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
             }
             else
@@ -805,7 +804,7 @@ void GDALDriverManager::AutoLoadDrivers()
 
             if( pRegister != NULL )
             {
-                CPLDebug( "GDAL", "Auto register %s using %s.", 
+                CPLDebug( "GDAL", "Auto register %s using %s.",
                           pszFilename, pszFuncName );
 
                 ((void (*)()) pRegister)();
@@ -833,13 +832,13 @@ void GDALDriverManager::AutoLoadDrivers()
  * Incidentally unloads all managed drivers.
  *
  * NOTE: This function is not thread safe.  It should not be called while
- * other threads are actively using GDAL. 
+ * other threads are actively using GDAL.
  */
 
 void CPL_STDCALL GDALDestroyDriverManager( void )
 
 {
-    // THREADSAFETY: We would like to lock the mutex here, but it 
+    // THREADSAFETY: We would like to lock the mutex here, but it
     // needs to be reacquired within the destructor during driver
     // deregistration.
     if( poDM != NULL )
