@@ -1154,6 +1154,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     int         RegisterDriver( GDALDriver * );
     void        DeregisterDriver( GDALDriver * );
 
+    // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     void        AutoLoadDrivers();
     void        AutoSkipDrivers();
 };
