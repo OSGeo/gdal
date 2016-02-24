@@ -2414,6 +2414,40 @@ def ogr_csv_46():
     return 'success'
 
 ###############################################################################
+# Test writing XYZM
+
+def ogr_csv_47():
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_47.csv')
+    if ds.TestCapability(ogr.ODsCMeasuredGeometries) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.CreateLayer('ogr_csv_47', options = ['GEOMETRY=AS_WKT'])
+    if ds.TestCapability(ogr.OLCMeasuredGeometries) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 1
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_csv_47.csv')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_47.csv')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -2494,6 +2528,7 @@ gdaltest_list = [
     ogr_csv_44,
     ogr_csv_45,
     ogr_csv_46,
+    ogr_csv_47,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
