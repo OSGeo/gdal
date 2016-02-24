@@ -662,6 +662,9 @@ void GDALDriverManager::AutoSkipDrivers()
 void GDALDriverManager::AutoLoadDrivers()
 
 {
+#ifdef GDAL_NO_AUTOLOAD
+    CPLDebug( "GDAL", "GDALDriverManager::AutoLoadDrivers() not compiled in." );
+#else
     const char *pszGDAL_DRIVER_PATH = 
         CPLGetConfigOption( "GDAL_DRIVER_PATH", NULL );
     if( pszGDAL_DRIVER_PATH == NULL )
@@ -815,6 +818,9 @@ void GDALDriverManager::AutoLoadDrivers()
     }
 
     CSLDestroy( papszSearchPath );
+
+#endif  // GDAL_NO_AUTOLOAD
+
 }
 
 /************************************************************************/
