@@ -533,7 +533,7 @@
 }
 #endif
 
-
+#ifdef no_longer_defined_since_it_breaks_py2exe_pyinstaller_ticket_6364
 %pythoncode %{
 
 # Backup original dictionary before doing anything else
@@ -611,3 +611,4 @@ del _MyHelper
 del _Module
 
 %}
+#endif
