@@ -375,6 +375,7 @@ typedef void retGetPoints;
 %constant char *OLCIgnoreFields        = "IgnoreFields";
 %constant char *OLCCreateGeomField     = "CreateGeomField";
 %constant char *OLCCurveGeometries     = "CurveGeometries";
+%constant char *OLCMeasuredGeometries  = "MeasuredGeometries";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -382,6 +383,7 @@ typedef void retGetPoints;
 %constant char *ODsCCurveGeometries    = "CurveGeometries";
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
+%constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -413,6 +415,7 @@ typedef int OGRErr;
 #define OLCStringsAsUTF8       "StringsAsUTF8"
 #define OLCCreateGeomField     "CreateGeomField"
 #define OLCCurveGeometries     "CurveGeometries"
+#define OLCMeasuredGeometries  "MeasuredGeometries";
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
@@ -420,6 +423,7 @@ typedef int OGRErr;
 #define ODsCCurveGeometries    "CurveGeometries"
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
+#define ODsCMeasuredGeometries  "MeasuredGeometries";
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
