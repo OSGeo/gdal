@@ -156,19 +156,45 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         if( eRequestedGeomType == wkbNone )
         {
             eType = eGeomType;
-
-            if( (hSHP != NULL) && (hSHP->nRecords > 0) && wkbHasM(eType) )
-            {
-                SHPObject   *psShape = SHPReadObject( hSHP, 0 );
-                if( psShape )
-                {
-                    if( !psShape->bMeasureIsUsed )
-                        eType = OGR_GT_SetModifier(eType, wkbHasZ(eType), FALSE);
-                        
-                    SHPDestroyObject(psShape);
-                }
-            }
             
+            const char* pszAdjustGeomType = CSLFetchNameValueDef(
+                            poDS->GetOpenOptions(), "ADJUST_GEOM_TYPE", "FIRST_SHAPE");
+            const bool bFirstShape = EQUAL(pszAdjustGeomType, "FIRST_SHAPE");
+            const bool bAllShapes  = EQUAL(pszAdjustGeomType, "ALL_SHAPES");
+            if( (hSHP != NULL) && (hSHP->nRecords > 0) && wkbHasM(eType) &&
+                (bFirstShape || bAllShapes) )
+            {
+                bool bMIsUsed = false;
+                for(int iShape=0; iShape < hSHP->nRecords; iShape++)
+                {
+                    SHPObject   *psShape = SHPReadObject( hSHP, iShape );
+                    if( psShape )
+                    {
+                        if( psShape->bMeasureIsUsed &&
+                            psShape->nVertices > 0 &&
+                            psShape->padfM != NULL )
+                        {
+                            for(int i=0;i<psShape->nVertices;i++)
+                            {
+                                /* Per the spec, if the M value is smaller than -1e38,
+                                 * it is a nodata value
+                                 */
+                                if( psShape->padfM[i] > -1e38 )
+                                {
+                                    bMIsUsed = true;
+                                    break;
+                                }
+                            }
+                        }
+                            
+                        SHPDestroyObject(psShape);
+                    }
+                    if( bFirstShape || bMIsUsed )
+                        break;
+                }
+                if( !bMIsUsed )
+                    eType = OGR_GT_SetModifier(eType, wkbHasZ(eType), FALSE);
+            }
         }
         else
             eType = eRequestedGeomType;

@@ -4361,6 +4361,52 @@ def ogr_shape_94():
     return 'success'
 
 ###############################################################################
+# Test demoting of ZM to Z when the M values are nodata
+
+def ogr_shape_95():
+    
+    ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbPoint25D:
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeomType())
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT Z (1 2 3)':
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeomType())
+        return 'fail'
+    
+    ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp', open_options = ['ADJUST_GEOM_TYPE=NO'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbPointZM:
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeomType())
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, ogr.CreateGeometryFromWkt( 'POINT ZM (1 2 3 -1.79769313486232e+308)')) != 0:
+        gdaltest.post_reason('fail')
+        print(f.GetGeometryRef().ExportToIsoWkt())
+        return 'fail'
+    
+    # The shape with a non nodata M is the second one
+    ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options = ['ADJUST_GEOM_TYPE=FIRST_SHAPE'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbPoint25D:
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeomType())
+        return 'fail'
+        
+    ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options = ['ADJUST_GEOM_TYPE=ALL_SHAPES'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbPointZM:
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeomType())
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_shape_cleanup():
@@ -4498,6 +4544,7 @@ gdaltest_list = [
     ogr_shape_92,
     ogr_shape_93,
     ogr_shape_94,
+    ogr_shape_95,
     ogr_shape_cleanup ]
 
 #gdaltest_list = [ ogr_shape_94 ]
