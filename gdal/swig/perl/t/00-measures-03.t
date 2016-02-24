@@ -124,7 +124,7 @@ for (my $j = 0; $j < @shpt; $j+=2) {
     $type2shpt{$shpt[$j+1]} = $shpt[$j];
 }
 
-if (1) {
+if (0) {
 for (my $i = 0; $i < @data; $i+=2) {
     my $type = $data[$i];
     my $basetype = $type;
