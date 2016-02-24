@@ -355,6 +355,8 @@ int OGRCSVDataSource::TestCapability( const char * pszCap )
         return bUpdate && bEnableGeometryFields;
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
     else
         return FALSE;
 }
