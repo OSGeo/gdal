@@ -75,6 +75,14 @@ can be used when field widths are ambiguous and that by default OGR would select
 the larger data type. For example, a numeric column with 0 decimal figures and with
 width of 10/11 character may hold Integer or Integer64, and with width 19/20 may
 hold Integer64 or larger integer (hold as Real)</li>
+<li><b>ADJUST_GEOM_TYPE</b>=NO/FIRST_SHAPE/ALL_SHAPES. (Starting with GDAL 2.1)
+Defines how layer geometry type is computed, in particular to distinguish
+shapefiles that have shapes with significant values in the M dimension from the
+ones where the M values are set to the nodata value. By default (FIRST_SHAPE),
+the driver will look at the first shape and if it has M values it will expose the
+layer as having a M dimension. By specifying
+ALL_SHAPES, the driver will iterate over features until a shape with a valid
+M value is found to decide the appropriate layer type.</li>
 </ul>
 
 <h2>Spatial and Attribute Indexing</h2>

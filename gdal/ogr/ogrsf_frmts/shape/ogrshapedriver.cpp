@@ -278,6 +278,11 @@ void RegisterOGRShape()
 "  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DBF with any encoding supported by CPLRecode or to \"\" to avoid any recoding'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "  <Option name='ADJUST_TYPE' type='boolean' description='Whether to read whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer field types if possible' default='NO'/>"
+"  <Option name='ADJUST_GEOM_TYPE' type='string-select' description='Whether and how to adjust layer geometry type from actual shapes' default='FIRST_SHAPE'>"
+"    <Value>NO</Value>"
+"    <Value>FIRST_SHAPE</Value>"
+"    <Value>ALL_SHAPES</Value>"
+"  </Option>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
