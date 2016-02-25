@@ -359,14 +359,14 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if( nColType == SQLITE_BLOB && m_poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
-            if( nBytes > 4 )
+            if( nBytes >= 8 )
             {
-                int iGpkgSize = sqlite3_column_bytes(hStmt, iCol);
                 const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = NULL;
                 int nSRID;
-                if( GPkgHeaderFromWKB(pabyGpkg, &oHeader) == OGRERR_NONE )
+                if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) == OGRERR_NONE &&
+                    (poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL)) != NULL )
                 {
                     OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
 
@@ -381,10 +381,11 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     OGRwkbGeometryType eGeomType = wkbUnknown;
                     if( pszDeclType != NULL )
                     {
-                        eGeomType = GPkgGeometryTypeToWKB(pszDeclType, (oHeader.iDims == 3));
-                        if( eGeomType != wkbNone )
-                            oGeomField.SetType( eGeomType );
+                        eGeomType = poGeom->getGeometryType();
+                        oGeomField.SetType( eGeomType );
                     }
+                    delete poGeom;
+                    poGeom = NULL;
 
 #ifdef SQLITE_HAS_COLUMN_METADATA
                     const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
@@ -405,7 +406,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                 }
 
                 // Try also spatialite geometry blobs
-                else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
+                else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, nBytes,
                                                                    &poGeom, &nSRID ) == OGRERR_NONE )
                 {
                     OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);

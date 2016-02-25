@@ -522,6 +522,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     CPLString osGeomColumnName;
     CPLString osGeomColsType;
     bool bHasZ = false;
+    bool bHasM = false;
 
     /* Check that the table name is registered in gpkg_contents */
     pszSQL = sqlite3_mprintf(
@@ -581,7 +582,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         /* Check that the table name is registered in gpkg_geometry_columns */
         pszSQL = sqlite3_mprintf(
                     "SELECT table_name, column_name, "
-                    "geometry_type_name, srs_id, z "
+                    "geometry_type_name, srs_id, z, m "
                     "FROM gpkg_geometry_columns "
                     "WHERE table_name = '%q'"
 #ifdef WORKAROUND_SQLITE3_BUGS
@@ -614,6 +615,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             osGeomColsType = pszGeomColsType;
         m_iSrs = SQLResultGetValueAsInteger(&oResultGeomCols, 3, 0);
         bHasZ = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 4, 0));
+        bHasM = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 5, 0));
 
         SQLResultFree(&oResultGeomCols);
     }
@@ -665,12 +667,12 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             /* Maybe it's a geometry type? */
             OGRwkbGeometryType oGeomType;
             if( oType > OFTMaxType )
-                oGeomType = GPkgGeometryTypeToWKB(pszType, bHasZ);
+                oGeomType = GPkgGeometryTypeToWKB(pszType, bHasZ, bHasM);
             else
                 oGeomType = wkbUnknown;
             if ( oGeomType != wkbNone )
             {
-                OGRwkbGeometryType oGeomTypeGeomCols = GPkgGeometryTypeToWKB(osGeomColsType.c_str(), bHasZ);
+                OGRwkbGeometryType oGeomTypeGeomCols = GPkgGeometryTypeToWKB(osGeomColsType.c_str(), bHasZ, bHasM);
                 /* Enforce consistency between table and metadata */
                 if( wkbFlatten(oGeomType) == wkbUnknown )
                     oGeomType = oGeomTypeGeomCols;
@@ -1702,6 +1704,8 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
     }
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return TRUE;
     else
     {
         return OGRGeoPackageLayer::TestCapability(pszCap);
@@ -2371,6 +2375,7 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
     /* Requirement 27: The z value in a gpkg_geometry_columns table row */
     /* SHALL be one of 0 (none), 1 (mandatory), or 2 (optional) */
     bool bGeometryTypeHasZ = CPL_TO_BOOL(wkbHasZ(eGType));
+    bool bGeometryTypeHasM = CPL_TO_BOOL(wkbHasM(eGType));
 
     /* Update gpkg_geometry_columns with the table info */
     char* pszSQL = sqlite3_mprintf(
@@ -2379,7 +2384,8 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
         " VALUES "
         "('%q','%q','%q',%d,%d,%d)",
         GetName(),GetGeometryColumn(),pszGeometryType,
-        m_iSrs,static_cast<int>(bGeometryTypeHasZ),0);
+        m_iSrs,static_cast<int>(bGeometryTypeHasZ),
+        static_cast<int>(bGeometryTypeHasM));
 
     OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);

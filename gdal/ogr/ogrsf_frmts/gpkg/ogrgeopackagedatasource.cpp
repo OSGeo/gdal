@@ -3508,6 +3508,8 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
     }
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }
 
@@ -3907,13 +3909,13 @@ static int OGRGeoPackageGetHeader(sqlite3_context* pContext,
     }
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
-    if( nBLOBLen < 4 ||
-        GPkgHeaderFromWKB(pabyBLOB, psHeader) != OGRERR_NONE )
+    if( nBLOBLen < 8 ||
+        GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, psHeader) != OGRERR_NONE )
     {
         sqlite3_result_null(pContext);
         return FALSE;
     }
-    if( psHeader->iDims == 0 && bNeedExtent )
+    if( !(psHeader->bExtentHasXY) && bNeedExtent )
     {
         OGRGeometry *poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, NULL);
         if( poGeom == NULL || poGeom->IsEmpty() )
