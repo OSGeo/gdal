@@ -196,7 +196,7 @@ int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 /* LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, */
 /* GeomCollection) */
 /* http://opengis.github.io/geopackage/#geometry_types */
-OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
+OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bool bHasM)
 {
     OGRwkbGeometryType oType;
 
@@ -216,6 +216,10 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
     if ( (oType != wkbNone) && bHasZ )
     {
         oType = wkbSetZ(oType);
+    }
+    if ( (oType != wkbNone) && bHasM )
+    {
+        oType = wkbSetM(oType);
     }
 
     return oType;
@@ -393,6 +397,8 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
     OGRErr err;
     OGRBoolean bPoint = (wkbFlatten(poGeometry->getGeometryType()) == wkbPoint);
     OGRBoolean bEmpty = poGeometry->IsEmpty();
+    /* We voluntarily use getCoordinateDimension() so as to get only 2 for XY/XYM */
+    /* and 3 for XYZ/XYZM as we currently don't write envelopes with M extent. */
     int iDims = poGeometry->getCoordinateDimension();
 
     /* Header has 8 bytes for sure, and optional extra space for bounds */
@@ -491,13 +497,14 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
 }
 
 
-OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
+OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader)
 {
     CPLAssert( pabyGpkg != NULL );
     CPLAssert( poHeader != NULL );
 
     /* Magic (match required) */
-    if ( pabyGpkg[0] != 0x47 || 
+    if ( szGpkg < 8 ||
+         pabyGpkg[0] != 0x47 || 
          pabyGpkg[1] != 0x50 ||
          pabyGpkg[2] != 0 )  /* Version (only 0 supported at this time)*/
     {
@@ -509,16 +516,44 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
     poHeader->bEmpty = (byFlags & (0x01 << 4)) >> 4;
     poHeader->bExtended = (byFlags & (0x01 << 5)) >> 5;
     poHeader->eByteOrder = (OGRwkbByteOrder)(byFlags & 0x01);
+    poHeader->bExtentHasXY = false;
+    poHeader->bExtentHasZ = false;
+#ifdef notdef
+    poHeader->bExtentHasM = false;
+#endif
     OGRBoolean bSwap = OGR_SWAP(poHeader->eByteOrder);
 
     /* Envelope */
     int iEnvelope = (byFlags & (0x07 << 1)) >> 1;
-    if ( iEnvelope == 1 )
-        poHeader->iDims = 2; /* 2D envelope */
-    else if ( iEnvelope == 2 )
-        poHeader->iDims = 3; /* 3D envelope */
-    else 
-        poHeader->iDims = 0; /* No envelope */
+    int nEnvelopeDim = 0;
+    if( iEnvelope )
+    {
+        poHeader->bExtentHasXY = true;
+        if( iEnvelope == 1 )
+        {
+            nEnvelopeDim = 2; /* 2D envelope */
+        }
+        else if ( iEnvelope == 2 )
+        {
+            poHeader->bExtentHasZ = true;
+            nEnvelopeDim = 3; /* 2D+Z envelope */
+        }
+        else if ( iEnvelope == 3 )
+        {
+#ifdef notdef
+            poHeader->bExtentHasM = true;
+#endif
+            nEnvelopeDim = 3; /* 2D+M envelope */
+        }
+        else if ( iEnvelope == 4 )
+        {
+            poHeader->bExtentHasZ = true;
+#ifdef notdef
+            poHeader->bExtentHasM = true;
+#endif
+            nEnvelopeDim = 4; /* 2D+ZM envelope */
+        }
+    }
 
     /* SrsId */
     int iSrsId;
@@ -528,10 +563,16 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
         iSrsId = CPL_SWAP32(iSrsId);
     }
     poHeader->iSrsId = iSrsId;
+    
+    if( szGpkg < static_cast<size_t>(8 + 8*2*nEnvelopeDim) )
+    {
+        // Not enough bytes
+        return OGRERR_FAILURE;
+    }
 
     /* Envelope */
     double *padPtr = (double*)(pabyGpkg+8);
-    if ( poHeader->iDims >= 2 )
+    if ( poHeader->bExtentHasXY )
     {
         poHeader->MinX = padPtr[0];
         poHeader->MaxX = padPtr[1];
@@ -545,7 +586,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
             CPL_SWAPDOUBLE(&(poHeader->MaxY));
         }
     }
-    if ( poHeader->iDims == 3 )
+    if ( poHeader->bExtentHasZ )
     {
         poHeader->MinZ = padPtr[4];
         poHeader->MaxZ = padPtr[5];
@@ -555,9 +596,21 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
             CPL_SWAPDOUBLE(&(poHeader->MaxZ));
         }
     }
+#ifdef notdef
+    if ( poHeader->bExtentHasM )
+    {
+        poHeader->MinM = padPtr[ ( poHeader->bExtentHasZ ) ? 6 : 4 ];
+        poHeader->MaxM = padPtr[ ( poHeader->bExtentHasZ ) ? 7 : 5 ];
+        if ( bSwap )
+        {
+            CPL_SWAPDOUBLE(&(poHeader->MinM));
+            CPL_SWAPDOUBLE(&(poHeader->MaxM));
+        }
+    }
+#endif
 
     /* Header size in byte stream */
-    poHeader->szHeader = 8 + 8*2*(poHeader->iDims);
+    poHeader->szHeader = 8 + 8*2*nEnvelopeDim;
 
     return OGRERR_NONE;
 }
@@ -570,7 +623,7 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
     OGRGeometry *poGeom;
 
     /* Read header */
-    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, &oHeader);
+    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
     if ( err != OGRERR_NONE )
         return NULL;
 
@@ -589,7 +642,7 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
 
 
 OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
-                         CPL_UNUSED size_t szGpkg,
+                         size_t szGpkg,
                          OGREnvelope *poEnv)
 {
     CPLAssert( poEnv != NULL );
@@ -598,11 +651,11 @@ OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
     GPkgHeader oHeader;
 
     /* Read header */
-    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, &oHeader);
+    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
     if ( err != OGRERR_NONE )
         return err;
 
-    if ( oHeader.bEmpty || oHeader.iDims == 0 )
+    if ( oHeader.bEmpty || !oHeader.bExtentHasXY )
     {
         return OGRERR_FAILURE;
     }
@@ -611,12 +664,6 @@ OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
     poEnv->MaxX = oHeader.MaxX;
     poEnv->MinY = oHeader.MinY;
     poEnv->MaxY = oHeader.MaxY;
-
-    // if ( oHeader.iDims == 3 )
-    // {
-    //     poEnv->MinZ = oHeader.MinZ;
-    //     poEnv->MaxZ = oHeader.MaxZ;
-    // }
 
     return OGRERR_NONE;
 }

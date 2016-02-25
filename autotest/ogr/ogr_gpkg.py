@@ -1910,6 +1910,91 @@ def ogr_gpkg_28():
     return 'success'
 
 ###############################################################################
+# Test XYM / XYZM support
+
+def ogr_gpkg_29():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_29.gpkg')
+    if ds.TestCapability(ogr.ODsCMeasuredGeometries) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.CreateLayer('pointm', geom_type = ogr.wkbPointM)
+    if lyr.TestCapability(ogr.OLCMeasuredGeometries) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT M (1 2 3)'))
+    lyr.CreateFeature(f)
+    lyr = ds.CreateLayer('pointzm', geom_type = ogr.wkbPointZM)
+    if lyr.TestCapability(ogr.OLCMeasuredGeometries) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)'))
+    lyr.CreateFeature(f)
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_29.gpkg', update = 1)
+    lyr = ds.GetLayerByName('pointm')
+    if lyr.GetGeomType() != ogr.wkbPointM:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT M (1 2 3)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    
+    # Generate a XYM envelope
+    ds.ExecuteSQL("UPDATE pointm SET geom = x'4750000700000000000000000000F03F000000000000F03F000000000000004000000000000000400000000000000840000000000000084001D1070000000000000000F03F00000000000000400000000000000840'")
+    
+    lyr = ds.GetLayerByName('pointzm')
+    if lyr.GetGeomType() != ogr.wkbPointZM:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    
+    # Generate a XYZM envelope
+    ds.ExecuteSQL("UPDATE pointzm SET geom = x'4750000900000000000000000000F03F000000000000F03F00000000000000400000000000000040000000000000084000000000000008400000000000001040000000000000104001B90B0000000000000000F03F000000000000004000000000000008400000000000001040'")
+    
+    ds = None
+
+    # Check again
+    ds = ogr.Open('/vsimem/ogr_gpkg_29.gpkg')
+    lyr = ds.GetLayerByName('pointm')
+    if lyr.GetGeomType() != ogr.wkbPointM:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT M (1 2 3)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    lyr = ds.GetLayerByName('pointzm')
+    if lyr.GetGeomType() != ogr.wkbPointZM:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+    
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_29.gpkg')
+
+    return 'success'
+
+
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1995,6 +2080,7 @@ gdaltest_list = [
     ogr_gpkg_26,
     ogr_gpkg_27,
     ogr_gpkg_28,
+    ogr_gpkg_29,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
