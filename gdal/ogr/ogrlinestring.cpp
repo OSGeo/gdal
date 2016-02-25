@@ -643,6 +643,26 @@ void OGRSimpleCurve::setZ( int iPoint, double zIn )
 }
 
 /************************************************************************/
+/*                                setM()                                */
+/************************************************************************/
+
+void OGRSimpleCurve::setM( int iPoint, double mIn )
+{
+    if( !(flags & OGR_G_MEASURED) )
+        AddM();
+
+    if( iPoint >= nPointCount )
+    {
+        setNumPoints( iPoint+1 );
+        if (nPointCount < iPoint + 1)
+            return;
+    }
+
+    if( padfM != NULL )
+        padfM[iPoint] = mIn;
+}
+
+/************************************************************************/
 /*                              addPoint()                              */
 /************************************************************************/
 
