@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  JP2 Box Reader (and GMLJP2 Interpreter)
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -32,10 +32,10 @@
 #define GDAL_JP2READER_H_INCLUDED
 
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "cpl_minixml.h"
 
 /************************************************************************/
 /*                              GDALJP2Box                              */
