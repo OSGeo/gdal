@@ -2573,7 +2573,7 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
             int nDimension;
             int nPointsDouble = nPoints;
             int nPointsFloat = 0;
-            bool bHasM = poGeometry->IsMeasured();
+            bool bHasM = CPL_TO_BOOL(poGeometry->IsMeasured());
             if ( bSpatialite2D == TRUE )
             {
                 nDimension = 2;
