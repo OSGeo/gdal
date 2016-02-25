@@ -62,9 +62,9 @@ OGRErr OSRImportFromERM( OGRSpatialReferenceH hSRS, const char *pszProj,
  * Create OGR WKT from ERMapper projection definitions.
  *
  * Generates an OGRSpatialReference definition from an ERMapper datum
- * and projection name.  Based on the ecw_cs.wkt dictionary file from 
- * gdal/data. 
- * 
+ * and projection name.  Based on the ecw_cs.wkt dictionary file from
+ * gdal/data.
+ *
  * @param pszProj the projection name, such as "NUTM11" or "GEOGRAPHIC".
  * @param pszDatum the datum name, such as "NAD83".
  * @param pszUnits the linear units "FEET" or "METERS".
@@ -72,7 +72,7 @@ OGRErr OSRImportFromERM( OGRSpatialReferenceH hSRS, const char *pszProj,
  * @return OGRERR_NONE on success or OGRERR_UNSUPPORTED_SRS if not found.
  */
 
-OGRErr OGRSpatialReference::importFromERM( const char *pszProj, 
+OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
                                            const char *pszDatum,
                                            const char *pszUnits )
 
@@ -137,7 +137,7 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
 /************************************************************************/
 /*                          OSRExportToERM()                            */
 /************************************************************************/
-/** 
+/**
  * \brief Convert coordinate system to ERMapper format.
  *
  * This function is the same as OGRSpatialReference::exportToERM().
@@ -167,7 +167,7 @@ OGRErr OSRExportToERM( OGRSpatialReferenceH hSRS,
  * found, or OGRERR_FAILURE on other failures.
  */
 
-OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum, 
+OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
                                          char *pszUnits )
 
 {
@@ -176,7 +176,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     strcpy( pszUnits, "METERS" );
 
     if( !IsProjected() && !IsGeographic() )
-        return OGRERR_NONE; /* not sure what to return. We returned TRUE before... */
+        return OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
 /*      Try to find the EPSG code.                                      */
@@ -208,7 +208,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     OGRSpatialReference oSRSWork;
     const char *pszWKTDatum = GetAttrValue( "DATUM" );
 
-    if( pszWKTDatum != NULL 
+    if( pszWKTDatum != NULL
         && oSRSWork.importFromDict( "ecw_cs.wkt", pszWKTDatum ) == OGRERR_NONE)
     {
         strncpy( pszDatum, pszWKTDatum, 32 );
@@ -308,8 +308,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         const char *pszPROJCS = GetAttrValue( "PROJCS" );
 
-        if( pszPROJCS != NULL 
-            && oSRSWork.importFromDict( "ecw_cs.wkt", pszPROJCS ) == OGRERR_NONE 
+        if( pszPROJCS != NULL
+            && oSRSWork.importFromDict( "ecw_cs.wkt", pszPROJCS ) == OGRERR_NONE
             && oSRSWork.IsProjected() )
         {
             strncpy( pszProj, pszPROJCS, 32 );
