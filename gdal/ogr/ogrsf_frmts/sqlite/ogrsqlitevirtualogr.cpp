@@ -21,7 +21,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, MAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
@@ -636,8 +636,11 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         {
             osSQL += "_";
             osSQL += OGRToOGCGeomType(poFieldDefn->GetType());
-            osSQL += "_";
-            osSQL += wkbHasZ(poFieldDefn->GetType()) ? "25D" : "2D";
+            osSQL += "_XY";
+            if( wkbHasZ(poFieldDefn->GetType()) )
+                osSQL += "Z";
+            if( wkbHasM(poFieldDefn->GetType()) )
+                osSQL += "M";
             OGRSpatialReference* poSRS = poFieldDefn->GetSpatialRef();
             if( poSRS == NULL && i == 0 )
                 poSRS = poLayer->GetSpatialRef();
@@ -1136,7 +1139,7 @@ static void OGR2SQLITE_ExportGeometry(OGRGeometry* poGeom, int nSRSId,
                                       int& nGeomBLOBLen)
 {
     if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-            poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
+            poGeom, nSRSId, wkbNDR, FALSE, FALSE,
             &pabyGeomBLOB,
             &nGeomBLOBLen ) != OGRERR_NONE )
     {
@@ -1150,7 +1153,7 @@ static void OGR2SQLITE_ExportGeometry(OGRGeometry* poGeom, int nSRSId,
 
         pabyGeomBLOB = (GByte*) CPLRealloc(pabyGeomBLOB,
                                 nGeomBLOBLen + nWkbSize + 1);
-        poGeom->exportToWkb(wkbNDR, pabyGeomBLOB + nGeomBLOBLen);
+        poGeom->exportToWkb(wkbNDR, pabyGeomBLOB + nGeomBLOBLen, wkbVariantIso);
         /* Cheat a bit and add a end-of-blob spatialite marker */
         pabyGeomBLOB[nGeomBLOBLen + nWkbSize] = 0xFE;
         nGeomBLOBLen += nWkbSize + 1;
@@ -1703,7 +1706,7 @@ void OGR2SQLITE_ogr_layer_Extent(sqlite3_context* pContext,
     int nBLOBLen = 0;
     int nSRID = poModule->FetchSRSId(poLayer->GetSpatialRef());
     if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    &oPoly, nSRID, wkbNDR, FALSE,
+                    &oPoly, nSRID, wkbNDR,
                     FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);

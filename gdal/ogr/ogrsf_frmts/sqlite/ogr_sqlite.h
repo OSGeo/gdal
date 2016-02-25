@@ -160,7 +160,7 @@ class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
         OGRSQLiteGeomFieldDefn( const char* pszNameIn, int iGeomColIn ) :
             OGRGeomFieldDefn(pszNameIn, wkbUnknown), nSRSId(-1),
             iCol(iGeomColIn), bTriedAsSpatiaLite(FALSE), eGeomFormat(OSGF_None),
-            bHasM(FALSE), bCachedExtentIsValid(FALSE), bHasSpatialIndex(FALSE),
+            bCachedExtentIsValid(FALSE), bHasSpatialIndex(FALSE),
             bHasCheckedSpatialIndexTable(FALSE)
             {
             }
@@ -169,7 +169,6 @@ class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
         int iCol; /* ordinal of geometry field in SQL statement */
         int bTriedAsSpatiaLite;
         OGRSQLiteGeomFormat eGeomFormat;
-        int bHasM;
         OGREnvelope         oCachedExtent;
         int                 bCachedExtentIsValid;
         int                 bHasSpatialIndex;
@@ -225,17 +224,17 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     static int          CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeometry);
 
     static int          ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
-                                                      int bHasM, int bSpatialite2D,
+                                                      int bSpatialite2D,
                                                       int bUseComprGeom );
 
     static int          GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
-                                                  int bHasM, int bSpatialite2D,
+                                                  int bSpatialite2D,
                                                   int bUseComprGeom,
                                                   int bAcceptMultiGeom);
 
     static int          ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
                                                         OGRwkbByteOrder eByteOrder,
-                                                        int bHasM, int bSpatialite2D,
+                                                        int bSpatialite2D,
                                                         int bUseComprGeom,
                                                         GByte* pabyData );
 
@@ -319,7 +318,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
                                                   OGRGeometry **, int *pnSRID );
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
-                                                  int, int, int bUseComprGeom, GByte **, int * );
+                                                  int, int bUseComprGeom, GByte **, int * );
 
 };
 
