@@ -2044,11 +2044,10 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCTransactions) )
         return bUpdate && poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCIgnoreFields) )
+    else if( EQUAL(pszCap,OLCIgnoreFields) ||
+             EQUAL(pszCap,OLCCurveGeometries) ||
+             EQUAL(pszCap,OLCMeasuredGeometries) )
         return poSrcLayer->TestCapability(pszCap);
-
-    else if( EQUAL(pszCap,OLCCurveGeometries) )
-        return TRUE;
 
     return FALSE;
 }
