@@ -1770,38 +1770,53 @@ def ogr_spatialite_5(bUseComprGeom = False):
     geometries = [
         #'POINT EMPTY',
         'POINT (1 2)',
-        'POINT (1 2 3)',
+        'POINT Z (1 2 3)',
+        'POINT M (1 2 3)',
+        'POINT ZM (1 2 3 4)',
         'LINESTRING EMPTY',
         'LINESTRING (1 2)',
         'LINESTRING (1 2,3 4)',
         'LINESTRING (1 2,3 4,5 6)',
-        'LINESTRING (1 2 3,4 5 6)',
-        'LINESTRING (1 2 3,4 5 6,7 8 9)',
+        'LINESTRING Z (1 2 3,4 5 6)',
+        'LINESTRING Z (1 2 3,4 5 6,7 8 9)',
+        'LINESTRING M (1 2 3,4 5 6)',
+        'LINESTRING M (1 2 3,4 5 6,7 8 9)',
+        'LINESTRING ZM (1 2 3 4,5 6 7 8)',
+        'LINESTRING ZM (1 2 3 4,5 6 7 8,9 10 11 12)',
         'POLYGON EMPTY',
         'POLYGON ((1 2,1 3,2 3,2 2,1 2))',
-        'POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
+        'POLYGON Z ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
+        'POLYGON M ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
+        'POLYGON ZM ((1 2 10 20,1 3 -10 -20,2 3 20 30,2 2 -20 -30,1 2 10 20))',
         'POLYGON ((1 2,1 3,2 3,2 2,1 2),(1.25 2.25,1.25 2.75,1.75 2.75,1.75 2.25,1.25 2.25))',
-        'POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
         'MULTIPOINT EMPTY',
-        'MULTIPOINT (1 2,3 4)',
-        'MULTIPOINT (1 2 3,4 5 6)',
+        'MULTIPOINT ((1 2),(3 4))',
+        'MULTIPOINT Z ((1 2 3),(4 5 6))',
+        'MULTIPOINT M ((1 2 3),(4 5 6))',
+        'MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))',
         'MULTILINESTRING EMPTY',
         'MULTILINESTRING ((1 2,3 4),(5 6,7 8))',
-        'MULTILINESTRING ((1 2 3,4 5 6),(7 8 9,10 11 12))',
+        'MULTILINESTRING Z ((1 2 3,4 5 6),(7 8 9,10 11 12))',
+        'MULTILINESTRING M ((1 2 3,4 5 6),(7 8 9,10 11 12))',
+        'MULTILINESTRING ZM ((1 2 3 4,5 6 7 8),(9 10 11 12,13 14 15 16))',
         'MULTIPOLYGON EMPTY',
         'MULTIPOLYGON (((1 2,1 3,2 3,2 2,1 2)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2)))',
         'MULTIPOLYGON (((1 2,1 3,2 3,2 2,1 2),(1.25 2.25,1.25 2.75,1.75 2.75,1.75 2.25,1.25 2.25)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2)))',
-        'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0)))',
+        'MULTIPOLYGON Z (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0)))',
+        'MULTIPOLYGON M (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0)))',
+        'MULTIPOLYGON ZM (((1 2 -4 -40,1 3 -3 -30,2 3 -3 -30,2 2 -3 30,1 2 -6 -60)),((-1 -2 0 0,-1 -3 0 0,-2 -3 0 0,-2 -2 0 0,-1 -2 0 0)))',
         'GEOMETRYCOLLECTION EMPTY',
         #'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION EMPTY)',
         'GEOMETRYCOLLECTION (POINT (1 2))',
-        'GEOMETRYCOLLECTION (POINT (1 2 3))',
+        'GEOMETRYCOLLECTION Z (POINT Z (1 2 3))',
+        'GEOMETRYCOLLECTION M (POINT M (1 2 3))',
+        'GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4))',
         'GEOMETRYCOLLECTION (LINESTRING (1 2,3 4))',
-        'GEOMETRYCOLLECTION (LINESTRING (1 2 3,4 5 6))',
+        'GEOMETRYCOLLECTION Z (LINESTRING Z (1 2 3,4 5 6))',
         'GEOMETRYCOLLECTION (POLYGON ((1 2,1 3,2 3,2 2,1 2)))',
-        'GEOMETRYCOLLECTION (POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10)))',
+        'GEOMETRYCOLLECTION Z (POLYGON Z ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10)))',
         'GEOMETRYCOLLECTION (POINT (1 2),LINESTRING (1 2,3 4),POLYGON ((1 2,1 3,2 3,2 2,1 2)))',
-        'GEOMETRYCOLLECTION (POINT (1 2 3),LINESTRING (1 2 3,4 5 6),POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10)))',
+        'GEOMETRYCOLLECTION Z (POINT Z (1 2 3),LINESTRING Z (1 2 3,4 5 6),POLYGON Z ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10)))',
     ]
 
     srs = osr.SpatialReference()
@@ -1809,6 +1824,7 @@ def ogr_spatialite_5(bUseComprGeom = False):
 
     num_layer = 0
     for wkt in geometries:
+        #print(wkt)
         geom = ogr.CreateGeometryFromWkt(wkt)
         if bUseComprGeom:
             options = ['COMPRESS_GEOM=YES']
@@ -1832,11 +1848,11 @@ def ogr_spatialite_5(bUseComprGeom = False):
             gdaltest.post_reason('got %d, expected %d' % (lyr.GetGeomType(), geom.GetGeometryType()))
             return 'fail'
         feat = lyr.GetNextFeature()
-        got_wkt = feat.GetGeometryRef().ExportToWkt()
+        got_wkt = feat.GetGeometryRef().ExportToIsoWkt()
         # Spatialite < 2.4 only supports 2D geometries
         if gdaltest.spatialite_version == '2.3.1' and (geom.GetGeometryType() & ogr.wkb25DBit) != 0:
             geom.SetCoordinateDimension(2)
-            expected_wkt = geom.ExportToWkt()
+            expected_wkt = geom.ExportToIsoWkt()
             if got_wkt != expected_wkt:
                 gdaltest.post_reason('got %s, expected %s' % (got_wkt, expected_wkt))
                 return 'fail'

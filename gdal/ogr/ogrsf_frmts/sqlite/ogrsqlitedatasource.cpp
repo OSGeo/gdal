@@ -1565,6 +1565,8 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
         return bUpdate;
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return !bIsSpatiaLiteDB;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
     else if EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
         return bUpdate;
     else

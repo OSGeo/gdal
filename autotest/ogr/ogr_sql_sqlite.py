@@ -1743,6 +1743,59 @@ def ogr_sql_sqlite_29():
 
     return 'success'
 
+###############################################################################
+# Test compat with M geometries
+
+def ogr_sql_sqlite_30():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('testm', geom_type = ogr.wkbLineStringM)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING M (1 2 3)'))
+    lyr.CreateFeature(f)
+    f = None
+    lyr = ds.CreateLayer('testzm', geom_type = ogr.wkbLineStringZM)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING ZM (1 2 3 4)'))
+    lyr.CreateFeature(f)
+    f = None
+    sql_lyr = ds.ExecuteSQL('select * from testm', dialect = 'SQLite')
+    geom_type = sql_lyr.GetGeomType()
+    f = sql_lyr.GetNextFeature()
+    got_wkt = f.GetGeometryRef().ExportToIsoWkt()
+    ds.ReleaseResultSet(sql_lyr)
+
+    if geom_type != ogr.wkbLineStringM:
+        gdaltest.post_reason('fail')
+        print(geom_type)
+        return 'fail'
+
+    if got_wkt != 'LINESTRING M (1 2 3)':
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('select * from testzm', dialect = 'SQLite')
+    geom_type = sql_lyr.GetGeomType()
+    f = sql_lyr.GetNextFeature()
+    got_wkt = f.GetGeometryRef().ExportToIsoWkt()
+    ds.ReleaseResultSet(sql_lyr)
+
+    if geom_type != ogr.wkbLineStringZM:
+        gdaltest.post_reason('fail')
+        print(geom_type)
+        return 'fail'
+
+    if got_wkt != 'LINESTRING ZM (1 2 3 4)':
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -1774,7 +1827,8 @@ gdaltest_list = [
     ogr_sql_sqlite_26,
     ogr_sql_sqlite_27,
     ogr_sql_sqlite_28,
-    ogr_sql_sqlite_29
+    ogr_sql_sqlite_29,
+    ogr_sql_sqlite_30
 ]
 
 if __name__ == '__main__':
