@@ -757,7 +757,7 @@ static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context* pContext,
     GByte* pabySLBLOB = NULL;
     int nBLOBLen = 0;
     if( poGeom != NULL && OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poGeom, nSRSId, wkbNDR, FALSE,
+                    poGeom, nSRSId, wkbNDR,
                     FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
