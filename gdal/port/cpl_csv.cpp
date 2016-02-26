@@ -111,7 +111,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
          psTable != NULL;
          psTable = psTable->psNext )
     {
-        if( EQUAL(psTable->pszFilename,pszFilename) )
+        if( EQUAL(psTable->pszFilename, pszFilename) )
         {
             /*
              * Eventually we should consider promoting to the front of
@@ -132,7 +132,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      Create an information structure about this table, and add to    */
 /*      the front of the list.                                          */
 /* -------------------------------------------------------------------- */
-    CSVTable *psTable = reinterpret_cast<CSVTable *>(
+    CSVTable * const psTable = reinterpret_cast<CSVTable *>(
         VSI_CALLOC_VERBOSE( sizeof(CSVTable), 1 ) );
     if( psTable == NULL )
     {
@@ -266,7 +266,6 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
     while( pszString != NULL && *pszString != '\0' )
     {
         bool bInString = false;
-
         int nTokenLen = 0;
 
         /* Try to find the next delimiter, marking end of token */
@@ -627,7 +626,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         if (pszWorkLineTmp == NULL)
             break;
         pszWorkLine = pszWorkLineTmp;
-         // The newline gets lost in CPLReadLine().
+        // The newline gets lost in CPLReadLine().
         strcat( pszWorkLine + nWorkLineLength, "\n" );
         strcat( pszWorkLine + nWorkLineLength, pszLine );
 
@@ -661,11 +660,11 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
 {
     CPLAssert( fp != NULL );
     if( fp == NULL )
-        return( NULL );
+        return NULL;
 
     const char  *pszLine = CPLReadLineL( fp );
     if( pszLine == NULL )
-        return( NULL );
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If there are no quotes, then this is the simple case.           */
@@ -1103,7 +1102,7 @@ int CSVGetFieldId( FILE * fp, const char * pszFieldName )
 }
 
 /************************************************************************/
-/*                           CPLGetFieldIdL()                            */
+/*                           CPLGetFieldIdL()                           */
 /*                                                                      */
 /*      Read the first record of a CSV file (rewinding to be sure),     */
 /*      and find the field with the indicated name.  Returns -1 if      */
@@ -1150,7 +1149,7 @@ int CSVGetFileFieldId( const char * pszFilename, const char * pszFieldName )
 /* -------------------------------------------------------------------- */
     CPLAssert( pszFilename != NULL );
 
-    CSVTable *psTable = CSVAccess( pszFilename );
+    CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return -1;
 
