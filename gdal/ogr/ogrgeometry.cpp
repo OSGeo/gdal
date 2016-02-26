@@ -5554,9 +5554,9 @@ int OGR_GT_HasZ( OGRwkbGeometryType eType )
 {
     if( eType & wkb25DBitInternalUse )
         return TRUE;
-    if( eType >= 1001 && eType < 2000 )
+    if( eType >= 1000 && eType < 2000 ) /* we accept 1000 for wkbUnknownZ */
         return TRUE;
-    if( eType >= 3001 && eType < 4000 )
+    if( eType >= 3000 && eType < 4000 ) /* we accept 3000 for wkbUnknownZM */
         return TRUE;
     return FALSE;
 }
@@ -5576,9 +5576,9 @@ int OGR_GT_HasZ( OGRwkbGeometryType eType )
 
 int OGR_GT_HasM( OGRwkbGeometryType eType )
 {
-    if( eType >= 2001 && eType < 3000 )
+    if( eType >= 2000 && eType < 3000 ) /* we accept 2000 for wkbUnknownM */
         return TRUE;
-    if( eType >= 3001 && eType < 4000 )
+    if( eType >= 3000 && eType < 4000 ) /* we accept 3000 for wkbUnknownZM */
         return TRUE;
     return FALSE;
 }
