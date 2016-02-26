@@ -811,7 +811,8 @@ OGRGeometry* OGRPolygon::getCurveGeometry(const char* const* papszOptions) const
 OGRCurvePolygon* OGRPolygon::CastToCurvePolygon(OGRPolygon* poPoly)
 {
     OGRCurvePolygon* poCP = new OGRCurvePolygon();
-    poCP->setCoordinateDimension(poPoly->getCoordinateDimension());
+    poCP->set3D(poPoly->Is3D());
+    poCP->setMeasured(poPoly->IsMeasured());
     poCP->assignSpatialReference(poPoly->getSpatialReference());
     poCP->oCC.nCurveCount = poPoly->oCC.nCurveCount;
     poCP->oCC.papoCurves = poPoly->oCC.papoCurves;

@@ -894,6 +894,7 @@ int OGR_G_CoordinateDimension( OGRGeometryH hGeom )
  * @param hGeom handle on the geometry to check whether it has Z coordinates.
  *
  * @return TRUE if the geometry has Z coordinates.
+ * @since GDAL 2.1
  */
 
 int OGR_G_Is3D( OGRGeometryH hGeom )
@@ -914,6 +915,7 @@ int OGR_G_Is3D( OGRGeometryH hGeom )
  * @param hGeom handle on the geometry to check whether it is measured.
  *
  * @return TRUE if the geometry has M coordinates.
+ * @since GDAL 2.1
  */
 
 int OGR_G_IsMeasured( OGRGeometryH hGeom )
@@ -935,6 +937,7 @@ int OGR_G_IsMeasured( OGRGeometryH hGeom )
  * dimension of a geometry to 2 should zero out any existing Z values.  Setting
  * the dimension of a geometry collection, a compound curve, a polygon, etc.
  * will affect the children geometries. 
+ * This will also remove the M dimension if present before this call.
  *
  * @deprecated use set3D() or setMeasured().
  *
@@ -948,6 +951,7 @@ void OGRGeometry::setCoordinateDimension( int nNewDimension )
         flags &= ~OGR_G_3D;
     else
         flags |= OGR_G_3D;
+    setMeasured( FALSE );
 }
 
 /**
@@ -960,6 +964,7 @@ void OGRGeometry::setCoordinateDimension( int nNewDimension )
  * children geometries.
  *
  * @param bIs3D Should the geometry have a Z dimension, either TRUE or FALSE.
+ * @since GDAL 2.1
  */
 
 void OGRGeometry::set3D( OGRBoolean bIs3D )
@@ -981,6 +986,7 @@ void OGRGeometry::set3D( OGRBoolean bIs3D )
  * children geometries.
  *
  * @param bIsMeasured Should the geometry have a M dimension, either TRUE or FALSE.
+ * @since GDAL 2.1
  */
 
 void OGRGeometry::setMeasured( OGRBoolean bIsMeasured )
@@ -1003,6 +1009,9 @@ void OGRGeometry::setMeasured( OGRBoolean bIsMeasured )
  * dimension of a geometry to 2 should zero out any existing Z values. Setting
  * the dimension of a geometry collection, a compound curve, a polygon, etc.
  * will affect the children geometries. 
+ * This will also remove the M dimension if present before this call.
+ *
+ * @deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().
  *
  * @param hGeom handle on the geometry to set the dimension of the
  * coordinates.
@@ -1032,6 +1041,7 @@ void OGR_G_SetCoordinateDimension( OGRGeometryH hGeom, int nNewDimension)
  *
  * @param hGeom handle on the geometry to set or unset the Z dimension.
  * @param bIs3D Should the geometry have a Z dimension, either TRUE or FALSE.
+ * @since GDAL 2.1
  */
 
 void OGR_G_Set3D( OGRGeometryH hGeom, int bIs3D)
@@ -1059,6 +1069,7 @@ void OGR_G_Set3D( OGRGeometryH hGeom, int bIs3D)
  *
  * @param hGeom handle on the geometry to set or unset the M dimension.
  * @param bIsMeasured Should the geometry have a M dimension, either TRUE or FALSE.
+ * @since GDAL 2.1
  */
 
 void OGR_G_SetMeasured( OGRGeometryH hGeom, int bIsMeasured)

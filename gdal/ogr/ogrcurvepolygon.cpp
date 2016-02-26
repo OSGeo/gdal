@@ -638,18 +638,12 @@ void OGRCurvePolygon::setCoordinateDimension( int nNewDimension )
 
 void OGRCurvePolygon::set3D( OGRBoolean bIs3D )
 {
-    if (bIs3D) 
-        flags |= OGR_G_3D; 
-    else 
-        flags &= ~OGR_G_3D;
+    oCC.set3D( this, bIs3D );
 }
 
 void OGRCurvePolygon::setMeasured( OGRBoolean bIsMeasured )
 {
-    if (bIsMeasured) 
-        flags |= OGR_G_MEASURED; 
-    else 
-        flags &= ~OGR_G_MEASURED;
+    oCC.setMeasured( this, bIsMeasured );
 }
 
 /************************************************************************/
