@@ -2423,7 +2423,7 @@ def ogr_csv_47():
         gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.CreateLayer('ogr_csv_47', options = ['GEOMETRY=AS_WKT'])
-    if ds.TestCapability(ogr.OLCMeasuredGeometries) != 1:
+    if lyr.TestCapability(ogr.OLCMeasuredGeometries) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
