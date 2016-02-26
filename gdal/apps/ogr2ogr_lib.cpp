@@ -3572,8 +3572,12 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     poDstGeometry->setMeasured( TRUE );
                 }
                 else if ( m_nCoordDim == COORD_DIM_LAYER_DIM )
-                    poDstGeometry->setCoordinateDimension(
-                        wkbHasZ(poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetType()) ? 3 : 2 );
+                {
+                    const OGRwkbGeometryType eDstLayerGeomType =
+                      poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetType();
+                    poDstGeometry->set3D( wkbHasZ(eDstLayerGeomType) );
+                    poDstGeometry->setMeasured( wkbHasM(eDstLayerGeomType) );
+                }
 
                 if (m_eGeomOp == GEOMOP_SEGMENTIZE)
                 {
