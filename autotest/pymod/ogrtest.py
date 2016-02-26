@@ -112,10 +112,15 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
             x_dist = abs(f_geom.GetX(i) - geom.GetX(i))
             y_dist = abs(f_geom.GetY(i) - geom.GetY(i))
             z_dist = abs(f_geom.GetZ(i) - geom.GetZ(i))
+            m_dist = abs(f_geom.GetM(i) - geom.GetM(i))
+            
+            # Hack to deal with shapefile not-a-number M values that equal to -1.79769313486232e+308
+            if m_dist > max_error and f_geom.GetM(i) < -1.7e308 and geom.GetM(i) < -1.7e308:
+                m_dist = 0
 
-            if max(x_dist,y_dist,z_dist) > max_error:
+            if max(x_dist,y_dist,z_dist,m_dist) > max_error:
                 gdaltest.post_reason( 'Error in vertex %d, off by %g.'
-                                      % (i, max(x_dist,y_dist,z_dist)) )
+                                      % (i, max(x_dist,y_dist,z_dist,m_dist)) )
                 #print(f_geom.GetX(i))
                 #print(geom.GetX(i))
                 #print(f_geom.GetY(i))
