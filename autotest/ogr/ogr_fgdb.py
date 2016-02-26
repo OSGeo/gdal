@@ -71,6 +71,34 @@ def ogr_fgdb_init():
     return 'success'
 
 ###############################################################################
+def ogr_fgdb_is_sdk_1_4_or_later():
+
+    if ogrtest.fgdb_drv is None:
+        return False
+    
+    if hasattr(ogrtest, 'fgdb_is_sdk_1_4'):
+        return ogrtest.fgdb_is_sdk_1_4
+    
+    ogrtest.fgdb_is_sdk_1_4 = False
+
+    try:
+        shutil.rmtree("tmp/ogr_fgdb_is_sdk_1_4_or_later.gdb")
+    except:
+        pass
+
+    ds = ogrtest.fgdb_drv.CreateDataSource("tmp/ogr_fgdb_is_sdk_1_4_or_later.gdb")
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4('+proj=tmerc +datum=WGS84 +no_defs')
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
+    if lyr is not None:
+        ogrtest.fgdb_is_sdk_1_4 = True
+    ds = None
+    shutil.rmtree("tmp/ogr_fgdb_is_sdk_1_4_or_later.gdb")
+    return ogrtest.fgdb_is_sdk_1_4
+
+
+###############################################################################
 # Write and read back various geometry types
 
 def ogr_fgdb_1():
@@ -2327,6 +2355,91 @@ def ogr_fgdb_20():
     return 'success'
 
 ###############################################################################
+# Test M support
+
+def ogr_fgdb_21():
+
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    if not ogr_fgdb_is_sdk_1_4_or_later():
+        print('SDK 1.4 required')
+        return 'skip'
+    
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    
+
+    datalist = [ [ "pointm", ogr.wkbPointM, "POINT M (1 2 3)" ],
+                 [ "pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)" ],
+                 [ "multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))" ],
+                 [ "multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))" ],
+                 [ "linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))" ],
+                 [ "linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
+                 [ "multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))" ],
+                 [ "multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
+                 [ "polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
+                 [ "polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
+                 [ "multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
+                 [ "multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
+                 [ "empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
+               ]
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    for data in datalist:
+        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [] )
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        #print(data[2])
+        feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
+        lyr.CreateFeature(feat)
+
+    ds = None
+    ds = ogr.Open('tmp/test.gdb')
+
+    for data in datalist:
+        lyr = ds.GetLayerByName(data[0])
+        expected_geom_type = data[1]
+        if expected_geom_type == ogr.wkbLineStringM:
+            expected_geom_type = ogr.wkbMultiLineStringM
+        elif expected_geom_type == ogr.wkbLineStringZM:
+            expected_geom_type = ogr.wkbMultiLineStringZM
+        elif expected_geom_type == ogr.wkbPolygonM:
+            expected_geom_type = ogr.wkbMultiPolygonM
+        elif expected_geom_type == ogr.wkbPolygonZM:
+            expected_geom_type = ogr.wkbMultiPolygonZM
+            
+        if lyr.GetGeomType() != expected_geom_type:
+            gdaltest.post_reason('fail')
+            print(data)
+            print(lyr.GetGeomType())
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        try:
+            expected_wkt = data[3]
+        except:
+            expected_wkt = data[2]
+        if expected_wkt is None:
+            if feat.GetGeometryRef() is not None:
+                gdaltest.post_reason('fail')
+                print(data)
+                feat.DumpReadable()
+                return 'fail'
+        elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
+            gdaltest.post_reason('fail')
+            print(data)
+            feat.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -2384,6 +2497,7 @@ gdaltest_list = [
     ogr_fgdb_19,
     ogr_fgdb_19bis,
     ogr_fgdb_20,
+    ogr_fgdb_21,
     ogr_fgdb_cleanup,
     ]
 

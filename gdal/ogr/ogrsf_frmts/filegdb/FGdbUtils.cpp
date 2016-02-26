@@ -120,28 +120,28 @@ bool GDBDebug(long int hr, std::string desc)
 /*                            GDBToOGRGeometry()                         */
 /*************************************************************************/
 
-bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
+bool GDBToOGRGeometry(string geoType, bool hasZ, bool hasM, OGRwkbGeometryType* pOut)
 {
     if (geoType == "esriGeometryPoint")
     {
-        *pOut = hasZ? wkbPoint25D : wkbPoint;
+        *pOut = wkbPoint;
     }
     else if (geoType == "esriGeometryMultipoint")
     {
-        *pOut = hasZ? wkbMultiPoint25D : wkbMultiPoint;
+        *pOut = wkbMultiPoint;
     }
     else if (geoType == "esriGeometryLine")
     {
-        *pOut = hasZ? wkbLineString25D : wkbLineString;
+        *pOut = wkbLineString;
     }
     else if (geoType == "esriGeometryPolyline")
     {
-        *pOut = hasZ? wkbMultiLineString25D : wkbMultiLineString;
+        *pOut = wkbMultiLineString;
     }
     else if (geoType == "esriGeometryPolygon" ||
             geoType == "esriGeometryMultiPatch")
     {
-        *pOut = hasZ? wkbMultiPolygon25D : wkbMultiPolygon; // no mapping to single polygon
+        *pOut = wkbMultiPolygon; // no mapping to single polygon
     }
     else
     {
@@ -149,6 +149,10 @@ bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
                 "Cannot map esriGeometryType(%s) to OGRwkbGeometryType", geoType.c_str());
         return false;
     }
+    if( hasZ )
+        *pOut = wkbSetZ(*pOut);
+    if( hasM )
+        *pOut = wkbSetM(*pOut);
 
     return true;
 }
@@ -157,53 +161,21 @@ bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
 /*                            OGRGeometryToGDB()                         */
 /*************************************************************************/
 
-bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ)
+bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ, bool *hasM)
 {
-    switch (ogrType)
+    *hasZ = wkbHasZ(ogrType);
+    *hasM = wkbHasM(ogrType);
+    switch (wkbFlatten(ogrType))
     {
-        /* 3D forms */
-        case wkbPoint25D:
-        {
-            *gdbType = "esriGeometryPoint";
-            *hasZ = true;
-            break;
-        }
-
-        case wkbMultiPoint25D:
-        {
-            *gdbType = "esriGeometryMultipoint";
-            *hasZ = true;
-            break;
-        }
-
-        case wkbLineString25D:
-        case wkbMultiLineString25D:
-        {
-            *gdbType = "esriGeometryPolyline";
-            *hasZ = true;
-            break;
-        }
-
-        case wkbPolygon25D:
-        case wkbMultiPolygon25D:
-        {
-            *gdbType = "esriGeometryPolygon";
-            *hasZ = true;
-            break;
-        }
-
-        /* 2D forms */
         case wkbPoint:
         {
             *gdbType = "esriGeometryPoint";
-            *hasZ = false;
             break;
         }
 
         case wkbMultiPoint:
         {
             *gdbType = "esriGeometryMultipoint";
-            *hasZ = false;
             break;
         }
 
@@ -211,7 +183,6 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
         case wkbMultiLineString:
         {
             *gdbType = "esriGeometryPolyline";
-            *hasZ = false;
             break;
         }
 
@@ -219,7 +190,6 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
         case wkbMultiPolygon:
         {
             *gdbType = "esriGeometryPolygon";
-            *hasZ = false;
             break;
         }
         

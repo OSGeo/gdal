@@ -222,6 +222,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
     /* It sometimes misses a few fields ! */
 
     const bool bHasZ = CPLTestBool(CPLGetXMLValue( psInfo, "HasZ", "NO" ));
+    const bool bHasM = CPLTestBool(CPLGetXMLValue( psInfo, "HasM", "NO" ));
     const char* pszShapeType = CPLGetXMLValue(psInfo, "ShapeType", NULL);
     const char* pszShapeFieldName =
         CPLGetXMLValue(psInfo, "ShapeFieldName", NULL);
@@ -231,7 +232,8 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
             FileGDBOGRGeometryConverter::GetGeometryTypeFromESRI(pszShapeType);
         if( bHasZ )
             m_eGeomType = wkbSetZ( m_eGeomType );
-
+        if( bHasM )
+            m_eGeomType = wkbSetM( m_eGeomType );
         const char* pszWKT =
             CPLGetXMLValue( psInfo, "SpatialReference.WKT", NULL );
         const int nWKID =
@@ -408,6 +410,20 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         m_eGeomType = eGeomType;
         if( poGDBGeomField->Has3D() )
             m_eGeomType = wkbSetZ(m_eGeomType);
+        
+        // Check that the first feature has actually a M value before advertizing
+        // it.
+        if( poGDBGeomField->HasM() && m_poLyrTable->GetAndSelectNextNonEmptyRow(0) >= 0 )
+        {
+            const OGRField* psField = m_poLyrTable->GetFieldValue(m_iGeomFieldIdx);
+            if( psField != NULL )
+            {
+                OGRGeometry* poGeom = m_poGeomConverter->GetAsGeometry(psField);
+                if( poGeom != NULL && poGeom->IsMeasured() )
+                    m_eGeomType = wkbSetM(m_eGeomType);
+                delete poGeom;
+            }
+        }
 
         OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn;
 

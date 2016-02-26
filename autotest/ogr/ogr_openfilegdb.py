@@ -62,6 +62,23 @@ ogrtest.openfilegdb_datalist = [ [ "none", ogr.wkbNone, None],
                 [ "empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
             ]
 
+        
+ogrtest.openfilegdb_datalist_m = [ [ "pointm", ogr.wkbPointM, "POINT M (1 2 3)" ],
+                 [ "pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)" ],
+                 [ "multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))" ],
+                 [ "multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))" ],
+                 [ "linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))" ],
+                 [ "linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
+                 [ "multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))" ],
+                 [ "multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
+                 [ "polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
+                 [ "polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
+                 [ "multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
+                 [ "multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
+                 [ "empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
+               ]
+
+
 ###############################################################################
 # Disable FileGDB driver
 
@@ -227,6 +244,13 @@ def ogr_openfilegdb_make_test_data():
         lyr.CreateFeature(f)
         f = None
 
+    for data in ogrtest.openfilegdb_datalist_m:
+        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [] )
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
+        lyr.CreateFeature(feat)
+
     for fld_name in [ 'id', 'str', 'smallint', 'int', 'float', 'real', 'adate', 'guid', 'nullint' ]:
         ds.ExecuteSQL('CREATE INDEX idx_%s ON point(%s)' % (fld_name, fld_name))
     ds.ExecuteSQL('CREATE INDEX idx_id ON none(id)')
@@ -363,6 +387,41 @@ def ogr_openfilegdb_1(filename = 'data/testopenfilegdb.gdb.zip', version10 = Tru
         if sql_lyr is not None:
             gdaltest.post_reason('failure')
             return 'fail'
+
+    if version10:
+        for data in ogrtest.openfilegdb_datalist_m:
+            lyr = ds.GetLayerByName(data[0])
+            expected_geom_type = data[1]
+            if expected_geom_type == ogr.wkbLineStringM:
+                expected_geom_type = ogr.wkbMultiLineStringM
+            elif expected_geom_type == ogr.wkbLineStringZM:
+                expected_geom_type = ogr.wkbMultiLineStringZM
+            elif expected_geom_type == ogr.wkbPolygonM:
+                expected_geom_type = ogr.wkbMultiPolygonM
+            elif expected_geom_type == ogr.wkbPolygonZM:
+                expected_geom_type = ogr.wkbMultiPolygonZM
+                
+            if lyr.GetGeomType() != expected_geom_type:
+                gdaltest.post_reason('fail')
+                print(data)
+                print(lyr.GetGeomType())
+                return 'fail'
+            feat = lyr.GetNextFeature()
+            try:
+                expected_wkt = data[3]
+            except:
+                expected_wkt = data[2]
+            if expected_wkt is None:
+                if feat.GetGeometryRef() is not None:
+                    gdaltest.post_reason('fail')
+                    print(data)
+                    feat.DumpReadable()
+                    return 'fail'
+            elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
+                gdaltest.post_reason('fail')
+                print(data)
+                feat.DumpReadable()
+                return 'fail'
 
     ds = None
 
@@ -1008,7 +1067,7 @@ def ogr_openfilegdb_10():
                 unfuzz(backup)
 
         for (filename, offsets) in [ ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes', [0, 4, 5, 44, 45, 66, 67, 100, 101, 116, 117, 148, 149, 162, 163, 206, 207, 220, 221, 224, 280, 281]),
-                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 12, 8196, 8224, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298]) ]:
+                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 12, 8196, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298]) ]:
             for offset in offsets:
                 #print(offset)
                 backup = fuzz(filename, offset)
