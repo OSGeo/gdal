@@ -4865,6 +4865,9 @@ SWIGINTERN double OGRGeometryShadow_GetY(OGRGeometryShadow *self,int point=0){
 SWIGINTERN double OGRGeometryShadow_GetZ(OGRGeometryShadow *self,int point=0){
     return OGR_G_GetZ(self, point);
   }
+SWIGINTERN double OGRGeometryShadow_GetM(OGRGeometryShadow *self,int point=0){
+    return OGR_G_GetM(self, point);
+  }
 
 static PyObject *
 CreateTupleFromDoubleArray( double *first, unsigned int size ) {
@@ -21369,6 +21372,56 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_GetM(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  int arg2 = (int) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "point", NULL 
+  };
+  double result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:Geometry_GetM",kwnames,&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetM" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_GetM" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (double)OGRGeometryShadow_GetM(arg1,arg2);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_GetPoint(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -28585,6 +28638,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_GetX", (PyCFunction) _wrap_Geometry_GetX, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetX(Geometry self, int point=0) -> double"},
 	 { (char *)"Geometry_GetY", (PyCFunction) _wrap_Geometry_GetY, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetY(Geometry self, int point=0) -> double"},
 	 { (char *)"Geometry_GetZ", (PyCFunction) _wrap_Geometry_GetZ, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetZ(Geometry self, int point=0) -> double"},
+	 { (char *)"Geometry_GetM", (PyCFunction) _wrap_Geometry_GetM, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetM(Geometry self, int point=0) -> double"},
 	 { (char *)"Geometry_GetPoint", _wrap_Geometry_GetPoint, METH_VARARGS, (char *)"Geometry_GetPoint(Geometry self, int iPoint=0)"},
 	 { (char *)"Geometry_GetPointZM", _wrap_Geometry_GetPointZM, METH_VARARGS, (char *)"Geometry_GetPointZM(Geometry self, int iPoint=0)"},
 	 { (char *)"Geometry_GetPoint_2D", _wrap_Geometry_GetPoint_2D, METH_VARARGS, (char *)"Geometry_GetPoint_2D(Geometry self, int iPoint=0)"},

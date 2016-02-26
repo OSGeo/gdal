@@ -2653,6 +2653,13 @@ public:
     return OGR_G_GetZ(self, point);
   }
 
+#ifndef SWIGJAVA
+  %feature("kwargs") GetM;
+#endif
+  double GetM(int point=0) {
+    return OGR_G_GetM(self, point);
+  }
+
 #ifdef SWIGJAVA
   void GetPoint(int iPoint, double argout[3]) {
 #else
