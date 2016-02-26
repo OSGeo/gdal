@@ -4396,6 +4396,10 @@ class Geometry(_object):
         """GetZ(Geometry self, int point=0) -> double"""
         return _ogr.Geometry_GetZ(self, *args, **kwargs)
 
+    def GetM(self, *args, **kwargs):
+        """GetM(Geometry self, int point=0) -> double"""
+        return _ogr.Geometry_GetM(self, *args, **kwargs)
+
     def GetPoint(self, *args):
         """GetPoint(Geometry self, int iPoint=0)"""
         return _ogr.Geometry_GetPoint(self, *args)
