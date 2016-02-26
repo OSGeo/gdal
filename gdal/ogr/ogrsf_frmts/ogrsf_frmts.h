@@ -66,7 +66,7 @@ class OGRSFDriver;
 class CPL_DLL OGRLayer : public GDALMajorObject
 {
   private:
-    void         ConvertNonLinearGeomsIfNecessary( OGRFeature *poFeature );
+    void         ConvertGeomsIfNecessary( OGRFeature *poFeature );
 
   protected:
     int          m_bFilterIsEnvelope;

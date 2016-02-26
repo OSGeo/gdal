@@ -2556,6 +2556,33 @@ def ogr_geojson_52():
     return 'success'
 
 ###############################################################################
+# Test that M is ignored (this is a test of OGRLayer::CreateFeature() actually)
+
+def ogr_geojson_53():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_53.json')
+    lyr = ds.CreateLayer('test' )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_53.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_53.json')
+
+    if data.find('{ "type": "Point", "coordinates": [ 1.0, 2.0, 3.0 ] }') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -2644,6 +2671,7 @@ gdaltest_list = [
     ogr_geojson_50,
     ogr_geojson_51,
     ogr_geojson_52,
+    ogr_geojson_53,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
