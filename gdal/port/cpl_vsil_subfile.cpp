@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 class VSISubFileHandle : public VSIVirtualHandle
-{ 
+{
   public:
     VSILFILE     *fp;
     vsi_l_offset  nSubregionOffset;
@@ -65,19 +65,22 @@ class VSISubFileHandle : public VSIVirtualHandle
 /* ==================================================================== */
 /************************************************************************/
 
-class VSISubFileFilesystemHandler : public VSIFilesystemHandler 
+class VSISubFileFilesystemHandler : public VSIFilesystemHandler
 {
 public:
                      VSISubFileFilesystemHandler();
     virtual          ~VSISubFileFilesystemHandler();
 
-    int              DecomposePath( const char *pszPath, 
-                                    CPLString &osFilename, 
+    int              DecomposePath( const char *pszPath,
+                                    CPLString &osFilename,
                                     vsi_l_offset &nSubFileOffset,
                                     vsi_l_offset &nSubFileSize );
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
-                                    const char *pszAccess);
+    using VSIFilesystemHandler::Open;
+
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Mkdir( const char *pszDirname, long nMode );
@@ -300,8 +303,9 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
 /************************************************************************/
 
 VSIVirtualHandle *
-VSISubFileFilesystemHandler::Open( const char *pszFilename, 
-                                   const char *pszAccess )
+VSISubFileFilesystemHandler::Open( const char *pszFilename,
+                                   const char *pszAccess,
+                                   bool /* bSetError */ )
 
 {
     CPLString osSubFilePath;
@@ -350,7 +354,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 /*                                Stat()                                */
 /************************************************************************/
 
-int VSISubFileFilesystemHandler::Stat( const char * pszFilename, 
+int VSISubFileFilesystemHandler::Stat( const char * pszFilename,
                                        VSIStatBufL * psStatBuf,
                                        int nFlags )
 
@@ -426,11 +430,11 @@ char **VSISubFileFilesystemHandler::ReadDir( CPL_UNUSED const char *pszPath )
 /************************************************************************/
 
 /**
- * Install /vsisubfile/ virtual file handler. 
+ * Install /vsisubfile/ virtual file handler.
  *
- * This virtual file system handler allows access to subregions of 
- * files, treating them as a file on their own to the virtual file 
- * system functions (VSIFOpenL(), etc). 
+ * This virtual file system handler allows access to subregions of
+ * files, treating them as a file on their own to the virtual file
+ * system functions (VSIFOpenL(), etc).
  *
  * A special form of the filename is used to indicate a subportion
  * of another file:
@@ -439,11 +443,11 @@ char **VSISubFileFilesystemHandler::ReadDir( CPL_UNUSED const char *pszPath )
  *
  * The size parameter is optional.  Without it the remainder of the
  * file from the start offset as treated as part of the subfile.  Otherwise
- * only <size> bytes from <offset> are treated as part of the subfile. 
- * The <filename> portion may be a relative or absolute path using normal 
- * rules.   The <offset> and <size> values are in bytes. 
+ * only <size> bytes from <offset> are treated as part of the subfile.
+ * The <filename> portion may be a relative or absolute path using normal
+ * rules.   The <offset> and <size> values are in bytes.
  *
- * eg. 
+ * eg.
  *   /vsisubfile/1000_3000,/data/abc.ntf
  *   /vsisubfile/5000,../xyz/raw.dat
  *
@@ -451,12 +455,11 @@ char **VSISubFileFilesystemHandler::ReadDir( CPL_UNUSED const char *pszPath )
  * is no meaningful support for filesystem operations for creating new
  * files, traversing directories, and deleting files within the /vsisubfile/
  * area.  Only the VSIStatL(), VSIFOpenL() and operations based on the file
- * handle returned by VSIFOpenL() operate properly. 
+ * handle returned by VSIFOpenL() operate properly.
  */
 
 void VSIInstallSubFileHandler()
 {
-    VSIFileManager::InstallHandler( "/vsisubfile/", 
+    VSIFileManager::InstallHandler( "/vsisubfile/",
                                     new VSISubFileFilesystemHandler );
 }
-

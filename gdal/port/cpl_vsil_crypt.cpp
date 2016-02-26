@@ -23,7 +23,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -591,7 +591,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
         return VSICryptReadError();
     CPL_LSBPTR64(&nPayloadFileSize);
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "nPayloadFileSize read = " CPL_FRMT_GUIB, 
+    CPLDebug("VSICRYPT", "nPayloadFileSize read = " CPL_FRMT_GUIB,
              nPayloadFileSize);
 #endif
 
@@ -1265,7 +1265,7 @@ int VSICryptFileHandle::Flush()
     if( bUpdateHeader )
     {
 #ifdef VERBOSE_VSICRYPT
-        CPLDebug("VSICRYPT", "nPayloadFileSize = " CPL_FRMT_GUIB, 
+        CPLDebug("VSICRYPT", "nPayloadFileSize = " CPL_FRMT_GUIB,
                  poHeader->nPayloadFileSize);
 #endif
         if( !poHeader->WriteToFile(poBaseHandle, poEncCipher) )
@@ -1300,14 +1300,17 @@ int VSICryptFileHandle::Close()
 /*                   VSICryptFilesystemHandler                          */
 /************************************************************************/
 
-class VSICryptFilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
+class VSICryptFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
     VSICryptFilesystemHandler();
     ~VSICryptFilesystemHandler();
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
-                                    const char *pszAccess);
+    using VSIFilesystemHandler::Open;
+
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
     virtual int      Rename( const char *oldpath, const char *newpath );
@@ -1400,8 +1403,9 @@ static CPLString GetKey(const char* pszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename, 
-                                                   const char *pszAccess)
+VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
+                                                   const char *pszAccess,
+                                                   bool /* bSetError */ )
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Open(%s, %s)", pszFilename, pszAccess);
@@ -1747,7 +1751,7 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
  *     The default is AES.
  *     Only used on creation. Ignored otherwise.
  *     Note: depending on how GDAL is build, if linked against the DLL version of libcrypto++,
- *     only a subset of those algorithms will be available, namely AES, DES_EDE2, DES_EDE3 and SKIPJACK. 
+ *     only a subset of those algorithms will be available, namely AES, DES_EDE2, DES_EDE3 and SKIPJACK.
  *     Also available as VSICRYPT_ALG configuration option.</li>
  * <li>mode=CBC/CFB/OFB/CTR/CBC_CTS: to specify the <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation">block cipher mode of operation</a>.
  *     The default is CBC.
@@ -1867,12 +1871,12 @@ void VSIInstallCryptFileHandler(void)
 
 #else /* HAVE_CRYPTOPP */
 
-class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler 
+class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler
 {
 public:
     VSIDummyCryptFilesystemHandler() {}
 
-    virtual VSIVirtualHandle *Open( CPL_UNUSED const char *pszFilename, 
+    virtual VSIVirtualHandle *Open( CPL_UNUSED const char *pszFilename,
                                     CPL_UNUSED const char *pszAccess)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

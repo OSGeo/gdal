@@ -52,6 +52,7 @@
 #if !defined(WIN32)
 
 #include "cpl_vsi_virtual.h"
+#include "cpl_vsi_error.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
@@ -117,7 +118,7 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIUnixStdioFilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
+class VSIUnixStdioFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 #ifdef VSI_COUNT_BYTES_READ
     vsi_l_offset  nTotalBytesRead;
@@ -130,8 +131,11 @@ public:
     virtual                  ~VSIUnixStdioFilesystemHandler();
 #endif
 
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                            int nFlags );
     virtual int      Unlink( const char *pszFilename );
@@ -510,7 +514,8 @@ VSIUnixStdioFilesystemHandler::~VSIUnixStdioFilesystemHandler()
 
 VSIVirtualHandle *
 VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
-                                     const char *pszAccess )
+                                     const char *pszAccess,
+                                     bool bSetError )
 
 {
     FILE    *fp = VSI_FOPEN64( pszFilename, pszAccess );
@@ -521,6 +526,7 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 
     if( fp == NULL )
     {
+        if(bSetError) { VSIError(VSIE_FileError, "%s", strerror(nError)); }
         errno = nError;
         return NULL;
     }

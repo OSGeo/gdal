@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -48,10 +48,10 @@ static FILE* pWriteStream = stdout;
 
 /** Set an alternative write function and output file handle instead of
  *  fwrite() / stdout.
- * 
+ *
  * @param pFct Function with same signature as fwrite()
  * @param stream File handle on which to output. Passed to pFct.
- * 
+ *
  * @since GDAL 2.0
  */
 void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
@@ -70,8 +70,11 @@ void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
 class VSIStdoutFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
-                                    const char *pszAccess);
+    using VSIFilesystemHandler::Open;
+
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
 };
 
@@ -150,7 +153,7 @@ size_t VSIStdoutHandle::Read( CPL_UNUSED void * pBuffer,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIStdoutHandle::Write( const void * pBuffer, size_t nSize, 
+size_t VSIStdoutHandle::Write( const void * pBuffer, size_t nSize,
                                size_t nCount )
 
 {
@@ -191,7 +194,8 @@ int VSIStdoutHandle::Close()
 
 VSIVirtualHandle *
 VSIStdoutFilesystemHandler::Open( CPL_UNUSED const char *pszFilename,
-                                  const char *pszAccess )
+                                  const char *pszAccess,
+                                  bool /* bSetError */ )
 {
     if ( strchr(pszAccess, 'r') != NULL ||
          strchr(pszAccess, '+') != NULL )
@@ -234,8 +238,11 @@ int VSIStdoutFilesystemHandler::Stat( CPL_UNUSED const char * pszFilename,
 class VSIStdoutRedirectFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
+    using VSIFilesystemHandler::Open;
+
     virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess);
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
 };
 
@@ -364,7 +371,8 @@ int VSIStdoutRedirectHandle::Close()
 
 VSIVirtualHandle *
 VSIStdoutRedirectFilesystemHandler::Open( const char *pszFilename,
-                                          const char *pszAccess )
+                                          const char *pszAccess,
+                                          bool /* bSetError */ )
 
 {
     if ( strchr(pszAccess, 'r') != NULL ||

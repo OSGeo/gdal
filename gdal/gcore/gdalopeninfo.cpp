@@ -51,6 +51,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
                             char **papszSiblingsIn )
 
 {
+
 /* -------------------------------------------------------------------- */
 /*      Ensure that C: is treated as C:\ so we can stat it on           */
 /*      Windows.  Similar to what is done in CPLStat().                 */
@@ -75,8 +76,8 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     nHeaderBytes = 0;
     nHeaderBytesTried = 0;
     pabyHeader = NULL;
-    bIsDirectory = FALSE;
     bStatOK = FALSE;
+    bIsDirectory = FALSE;
     nOpenFlags = nOpenFlagsIn;
     eAccess = (nOpenFlags & GDAL_OF_UPDATE) ? GA_Update : GA_ReadOnly;
     fpL = NULL;
@@ -124,20 +125,23 @@ retry:
 
     if( bPotentialDirectory )
     {
+        int nStatFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG;
+        if(nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR)
+            nStatFlags |= VSI_STAT_SET_ERROR_FLAG;
+
         /* For those special files, opening them with VSIFOpenL() might result */
         /* in content, even if they should be considered as directories, so */
         /* use stat */
-        if( VSIStatExL( pszFilename, &sStat,
-                        VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
-        {
+        if(VSIStatExL( pszFilename, &sStat, nStatFlags) == 0) {
             bStatOK = TRUE;
             if( VSI_ISDIR( sStat.st_mode ) )
                 bIsDirectory = TRUE;
         }
     }
 
-    if( !bIsDirectory )
-        fpL = VSIFOpenL( pszFilename, (eAccess == GA_Update) ? "r+b" : "rb" );
+    if( !bIsDirectory ) {
+        fpL = VSIFOpenExL( pszFilename, (eAccess == GA_Update) ? "r+b" : "rb", (nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR) > 0);
+    }
     if( fpL != NULL )
     {
         bStatOK = TRUE;
@@ -161,7 +165,7 @@ retry:
     }
     else if( !bStatOK )
     {
-        if( VSIStatExL( pszFilename, &sStat,
+        if( !bPotentialDirectory && VSIStatExL( pszFilename, &sStat,
                         VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0 )
         {
             bStatOK = TRUE;
@@ -254,6 +258,7 @@ char** GDALOpenInfo::GetSiblingFiles()
 
     CPLString osDir = CPLGetDirname( pszFilename );
     const int nMaxFiles = atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
+
     papszSiblingFiles = VSIReadDirEx( osDir, nMaxFiles );
     if( nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles )
     {
