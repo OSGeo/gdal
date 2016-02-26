@@ -211,6 +211,7 @@ void OGRGeometryCollection::flattenTo2D()
         papoGeoms[i]->flattenTo2D();
 
     flags &= ~OGR_G_3D;
+    flags &= ~OGR_G_MEASURED;
 }
 
 /************************************************************************/
@@ -1277,7 +1278,8 @@ OGRGeometryCollection* OGRGeometryCollection::TransferMembersAndDestroy(
                                             OGRGeometryCollection* poDst)
 {
     poDst->assignSpatialReference(poSrc->getSpatialReference());
-    poDst->setCoordinateDimension(poSrc->getCoordinateDimension());
+    poDst->set3D(poSrc->Is3D());
+    poDst->setMeasured(poSrc->IsMeasured());
     poDst->nGeomCount = poSrc->nGeomCount;
     poDst->papoGeoms = poSrc->papoGeoms;
     poSrc->nGeomCount = 0;

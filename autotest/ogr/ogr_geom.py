@@ -560,19 +560,23 @@ def ogr_geom_flattenTo2D():
 
     # Point is 0 dimension, LineString 1, ...
     if geom.GetDimension() != 0:
+        gdaltest.post_reason('fail')
         print(geom.GetDimension())
         return 'fail'
 
     if geom.GetCoordinateDimension() != 3:
+        gdaltest.post_reason('fail')
         print(geom.GetCoordinateDimension())
         return 'fail'
 
     geom.FlattenTo2D()
     if geom.GetCoordinateDimension() != 2:
+        gdaltest.post_reason('fail')
         print(geom.GetCoordinateDimension())
         return 'fail'
 
     if geom.ExportToWkt() != 'POINT (1 2)':
+        gdaltest.post_reason('fail')
         print(geom.ExportToWkt())
         return 'fail'
 
@@ -3332,6 +3336,74 @@ def ogr_geom_equals():
     return 'success'
 
 ###############################################################################
+# Test FlattenTo2D(), SetCoordinateDimension(2) and SetCoordinateDimension(3) with Measured geometries
+
+def ogr_geom_measured_geometries_to_2D_or_3D():
+
+    list_wkt = [ [ 'POINT M (1 2 3)', 'POINT (1 2)', 'POINT Z (1 2 0)' ],
+                 [ 'POINT ZM (1 2 3 4)', 'POINT (1 2)', 'POINT Z (1 2 3)' ],
+                 [ 'LINESTRING M (1 2 3)', 'LINESTRING (1 2)', 'LINESTRING Z (1 2 0)' ],
+                 [ 'LINESTRING ZM (1 2 3 4)', 'LINESTRING (1 2)', 'LINESTRING Z (1 2 3)' ],
+                 [ 'POLYGON M ((1 2 3))', 'POLYGON ((1 2))', 'POLYGON Z ((1 2 0))' ],
+                 [ 'POLYGON ZM ((1 2 3 4))', 'POLYGON ((1 2))', 'POLYGON Z ((1 2 3))' ],
+                 [ 'CIRCULARSTRING M (1 2 3,4 5 6,7 8 9)', 'CIRCULARSTRING (1 2,4 5,7 8)', 'CIRCULARSTRING Z (1 2 0,4 5 0,7 8 0)' ],
+                 [ 'CIRCULARSTRING ZM (1 2 3 0,4 5 6 0,7 8 9 0)', 'CIRCULARSTRING (1 2,4 5,7 8)', 'CIRCULARSTRING Z (1 2 3,4 5 6,7 8 9)' ],
+                 [ 'COMPOUNDCURVE M ((1 2 3,4 5 6))', 'COMPOUNDCURVE ((1 2,4 5))', 'COMPOUNDCURVE Z ((1 2 0,4 5 0))' ],
+                 [ 'COMPOUNDCURVE ZM ((1 2 3 4,5 6 7 8))', 'COMPOUNDCURVE ((1 2,5 6))', 'COMPOUNDCURVE Z ((1 2 3,5 6 7))' ],
+                 [ 'MULTIPOINT M ((1 2 3))', 'MULTIPOINT ((1 2))', 'MULTIPOINT Z ((1 2 0))' ],
+                 [ 'MULTIPOINT ZM ((1 2 3 4))', 'MULTIPOINT ((1 2))', 'MULTIPOINT Z ((1 2 3))' ],
+                 [ 'MULTILINESTRING M ((1 2 3))', 'MULTILINESTRING ((1 2))', 'MULTILINESTRING Z ((1 2 0))' ],
+                 [ 'MULTILINESTRING ZM ((1 2 3 4))', 'MULTILINESTRING ((1 2))', 'MULTILINESTRING Z ((1 2 3))' ],
+                 [ 'MULTICURVE M ((1 2 3))', 'MULTICURVE ((1 2))', 'MULTICURVE Z ((1 2 0))' ],
+                 [ 'MULTICURVE ZM ((1 2 3 4))', 'MULTICURVE ((1 2))', 'MULTICURVE Z ((1 2 3))' ],
+                 [ 'MULTIPOLYGON M (((1 2 3)))', 'MULTIPOLYGON (((1 2)))', 'MULTIPOLYGON Z (((1 2 0)))' ],
+                 [ 'MULTIPOLYGON ZM (((1 2 3 4)))', 'MULTIPOLYGON (((1 2)))', 'MULTIPOLYGON Z (((1 2 3)))' ],
+                 [ 'MULTISURFACE M (((1 2 3)))', 'MULTISURFACE (((1 2)))', 'MULTISURFACE Z (((1 2 0)))' ],
+                 [ 'MULTISURFACE ZM (((1 2 3 4)))', 'MULTISURFACE (((1 2)))', 'MULTISURFACE Z (((1 2 3)))' ],
+                 [ 'GEOMETRYCOLLECTION M (POINT M (1 2 3))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 0))' ],
+                 [ 'GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 3))' ],
+               ]
+    for (before, after_2D, after_3D) in list_wkt:
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.FlattenTo2D()
+        if geom.ExportToIsoWkt() != after_2D:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after_2D)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.SetCoordinateDimension(2)
+        if geom.ExportToIsoWkt() != after_2D:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after_2D)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.SetCoordinateDimension(3)
+        if geom.ExportToIsoWkt() != after_3D:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after_3D)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+        # Test no-op
+        geom = ogr.CreateGeometryFromWkt(before)
+        geom.Set3D(geom.Is3D())
+        geom.SetMeasured(geom.IsMeasured())
+        if geom.ExportToIsoWkt() != before:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -3382,6 +3454,7 @@ gdaltest_list = [
     ogr_geom_gt_functions,
     ogr_geom_api_limit_tests,
     ogr_geom_equals,
+    ogr_geom_measured_geometries_to_2D_or_3D,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':

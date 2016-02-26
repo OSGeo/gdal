@@ -159,11 +159,6 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
     if( bIsEmpty )
         return OGRERR_NONE;
 
-    if( bHasZ )
-        setCoordinateDimension(3);
-
-    int bIsMultiSurface = (wkbFlatten(getGeometryType()) == wkbMultiSurface);
-
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
     eErr = OGRERR_NONE;
@@ -208,8 +203,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
         }
         /* We accept POLYGON() but this is an extension to the BNF, also */
         /* accepted by PostGIS */
-        else if (bIsMultiSurface &&
-                 (EQUAL(szToken,"POLYGON") ||
+        else if ((EQUAL(szToken,"POLYGON") ||
                   EQUAL(szToken,"CURVEPOLYGON")))
         {
             OGRGeometry* poGeom = NULL;

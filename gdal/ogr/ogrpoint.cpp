@@ -231,8 +231,9 @@ const char * OGRPoint::getGeometryName() const
 void OGRPoint::flattenTo2D()
 
 {
-    z = 0;
+    z = m = 0;
     flags &= ~OGR_G_3D;
+    setMeasured(FALSE);
 }
 
 /************************************************************************/
@@ -242,16 +243,12 @@ void OGRPoint::flattenTo2D()
 void OGRPoint::setCoordinateDimension( int nNewDimension )
 
 {
-    int nCoordDimension = IsEmpty() ? -nNewDimension : nNewDimension;
-
     if( nNewDimension == 2 )
         flattenTo2D();
-
-    if( nCoordDimension < 0 )
-        flags &= ~OGR_G_NOT_EMPTY_POINT;
-
-    if( (nCoordDimension == 3) || (nCoordDimension == -3) )
+    else if( nNewDimension == 3 )
         flags |= OGR_G_3D;
+
+    setMeasured(FALSE);
 }
 
 /************************************************************************/

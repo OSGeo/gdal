@@ -113,6 +113,7 @@ void OGRSimpleCurve::flattenTo2D()
 
 {
     Make2D();
+    setMeasured(FALSE);
 }
 
 /************************************************************************/
@@ -136,7 +137,6 @@ OGRGeometry *OGRSimpleCurve::clone() const
         delete poCurve;
         return NULL;
     }
-    poCurve->setCoordinateDimension( getCoordinateDimension() );
     poCurve->flags = flags;
 
     return poCurve;
@@ -163,6 +163,7 @@ void OGRSimpleCurve::setCoordinateDimension( int nNewDimension )
         Make2D();
     else if( nNewDimension == 3 )
         Make3D();
+    setMeasured(FALSE);
 }
 
 void OGRSimpleCurve::set3D( OGRBoolean bIs3D )
@@ -2632,7 +2633,8 @@ OGRLineString* OGRLineString::TransferMembersAndDestroy(
                                             OGRLineString* poSrc,
                                             OGRLineString* poDst)
 {
-    poDst->setCoordinateDimension(poSrc->getCoordinateDimension());
+    poDst->set3D(poSrc->Is3D());
+    poDst->setMeasured(poSrc->IsMeasured());
     poDst->assignSpatialReference(poSrc->getSpatialReference());
     poDst->nPointCount = poSrc->nPointCount;
     poDst->paoPoints = poSrc->paoPoints;
