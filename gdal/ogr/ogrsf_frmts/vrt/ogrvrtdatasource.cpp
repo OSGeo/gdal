@@ -81,6 +81,8 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
 
             if( strstr(pszGType,"25D") != NULL || strstr(pszGType,"Z") != NULL )
                 eGeomType = wkbSetZ(eGeomType);
+            if( strstr(pszGType,"M") != NULL )
+                eGeomType = wkbSetM(eGeomType);
             break;
         }
     }
