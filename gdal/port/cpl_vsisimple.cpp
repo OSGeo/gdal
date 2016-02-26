@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Common Portability Library 
+ * Project:  Common Portability Library
  * Purpose:  Simple implementation of POSIX VSI functions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -36,10 +36,10 @@
  ****************************************************************************/
 
 #include "cpl_config.h"
-#include "cpl_port.h"
-#include "cpl_vsi.h"
 #include "cpl_error.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 
 /* Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(), */
 /* VSICalloc(), VSIFree(), VSIStrdup() */
@@ -101,9 +101,9 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        wchar_t *pwszFilename = 
+        wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
-        wchar_t *pwszAccess = 
+        wchar_t *pwszAccess =
             CPLRecodeToWChar( pszAccess, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         fp = _wfopen( pwszFilename, pwszAccess );
@@ -115,11 +115,11 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 #endif
     fp = fopen( (char *) pszFilename, (char *) pszAccess );
 
-    int nError = errno;  // Save errno from VSIDebug possible errors.
+    const int nError = errno;  // Save errno from VSIDebug possible errors.
     VSIDebug3( "VSIFOpen(%s,%s) = %p", pszFilename, pszAccess, fp );
     errno = nError;
 
-    return( fp );
+    return fp;
 }
 
 /************************************************************************/
@@ -131,7 +131,7 @@ int VSIFClose( FILE * fp )
 {
     VSIDebug1( "VSIClose(%p)", fp );
 
-    return( fclose(fp) );
+    return fclose(fp);
 }
 
 /************************************************************************/
@@ -150,7 +150,7 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
     int nResult = fseek( fp, nOffset, nWhence );
 
 #ifdef VSI_DEBUG
-    int nError = errno;  // Save errorno from VSIDebug possible errors.
+    const int nError = errno;  // Save errorno from VSIDebug possible errors.
 
     if( nWhence == SEEK_SET )
     {
@@ -183,10 +183,10 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 long VSIFTell( FILE * fp )
 
 {
-    long nOffset = ftell(fp);
+    const long nOffset = ftell(fp);
 
 #ifdef VSI_DEBUG
-    int nError = errno;
+    const int nError = errno;
 
     VSIDebug2( "VSIFTell(%p) = %ld", fp, nOffset );
 
@@ -214,10 +214,10 @@ void VSIRewind( FILE * fp )
 size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
-    size_t  nResult = fread( pBuffer, nSize, nCount, fp );
+    const size_t nResult = fread( pBuffer, nSize, nCount, fp );
 
 #ifdef VSI_DEBUG
-    int     nError = errno;
+    const int nError = errno;
 
     VSIDebug4( "VSIFRead(%p,%ld,%ld) = %ld",
                fp, (long)nSize, (long)nCount, (long)nResult );
@@ -235,10 +235,10 @@ size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 size_t VSIFWrite( const void *pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
-    size_t  nResult = fwrite( pBuffer, nSize, nCount, fp );
+    const size_t nResult = fwrite( pBuffer, nSize, nCount, fp );
 
 #ifdef VSI_DEBUG
-    int     nError = errno;
+    const int nError = errno;
 
     VSIDebug4( "VSIFWrite(%p,%ld,%ld) = %ld",
                fp, (long)nSize, (long)nCount, (long)nResult );
@@ -267,7 +267,7 @@ void VSIFFlush( FILE * fp )
 char *VSIFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 
 {
-    return( fgets( pszBuffer, nBufferSize, fp ) );
+    return fgets( pszBuffer, nBufferSize, fp );
 }
 
 /************************************************************************/
@@ -277,7 +277,7 @@ char *VSIFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 int VSIFGetc( FILE * fp )
 
 {
-    return( fgetc( fp ) );
+    return fgetc( fp );
 }
 
 /************************************************************************/
@@ -287,7 +287,7 @@ int VSIFGetc( FILE * fp )
 int VSIUngetc( int c, FILE * fp )
 
 {
-    return( ungetc( c, fp ) );
+    return ungetc( c, fp );
 }
 
 /************************************************************************/
@@ -302,13 +302,12 @@ int     VSIFPrintf( FILE * fp, const char * pszFormat, ... )
 
 {
     va_list     args;
-    int         nReturn;
 
     va_start( args, pszFormat );
-    nReturn = vfprintf( fp, pszFormat, args );
+    const int nReturn = vfprintf( fp, pszFormat, args );
     va_end( args );
 
-    return( nReturn );
+    return nReturn;
 }
 
 /************************************************************************/
@@ -318,7 +317,7 @@ int     VSIFPrintf( FILE * fp, const char * pszFormat, ... )
 int VSIFEof( FILE * fp )
 
 {
-    return( feof( fp ) );
+    return feof( fp );
 }
 
 /************************************************************************/
@@ -338,7 +337,7 @@ int VSIFPuts( const char * pszString, FILE * fp )
 int VSIFPutc( int nChar, FILE * fp )
 
 {
-    return( fputc( nChar, fp ) );
+    return fputc( nChar, fp );
 }
 
 
@@ -464,7 +463,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
 #endif
     return ptr + 2 * sizeof(void*);
 #else
-    return( calloc( nCount, nSize ) );
+    return calloc( nCount, nSize );
 #endif
 }
 
@@ -476,7 +475,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
 void *VSIMalloc( size_t nSize )
 
 {
-    return( malloc( nSize ) );
+    return malloc( nSize );
 }
 
 #else  // DEBUG_VSIMALLOC
@@ -672,7 +671,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #endif
     return ptr + 2 * sizeof(void*);
 #else
-    return( realloc( pData, nNewSize ) );
+    return realloc( pData, nNewSize );
 #endif
 }
 
@@ -737,7 +736,7 @@ char *VSIStrdup( const char * pszString )
 
 {
     const size_t nSize = strlen(pszString) + 1;
-    char* ptr = (char*) VSIMalloc(nSize);
+    char* ptr = static_cast<char*>( VSIMalloc(nSize) );
     if (ptr == NULL)
         return NULL;
     memcpy(ptr, pszString, nSize);
@@ -767,7 +766,7 @@ static size_t VSICheckMul2( size_t mul1, size_t mul2, int *pbOverflowFlag,
             CPLError(CE_Failure, CPLE_OutOfMemory,
                      "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
                      pszFile ? pszFile : "(unknown file)",
-                     nLine, 
+                     nLine,
                      (GUIntBig)mul1, (GUIntBig)mul2);
         }
     }
@@ -807,7 +806,7 @@ static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3, int *pbOverfl
                     CPLError(CE_Failure, CPLE_OutOfMemory,
                             "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
                             pszFile ? pszFile : "(unknown file)",
-                            nLine, 
+                            nLine,
                             (GUIntBig)mul1, (GUIntBig)mul2, (GUIntBig)mul3);
                 }
             }
@@ -824,7 +823,7 @@ static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3, int *pbOverfl
             CPLError(CE_Failure, CPLE_OutOfMemory,
                     "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
                     pszFile ? pszFile : "(unknown file)",
-                    nLine, 
+                    nLine,
                     (GUIntBig)mul1, (GUIntBig)mul2, (GUIntBig)mul3);
         }
     }
@@ -987,7 +986,7 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         int nResult;
-        wchar_t *pwszFilename = 
+        wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         nResult = _wstat( pwszFilename, (struct _stat *) pStatBuf );
@@ -998,7 +997,7 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
     }
 
 #endif
-    return( stat( pszFilename, pStatBuf ) );
+    return stat( pszFilename, pStatBuf );
 }
 
 /************************************************************************/
@@ -1013,9 +1012,9 @@ unsigned long VSITime( unsigned long * pnTimeToSet )
     tTime = time( NULL );
 
     if( pnTimeToSet != NULL )
-        *pnTimeToSet = (unsigned long) tTime;
+      *pnTimeToSet = static_cast<unsigned long>( tTime );
 
-    return (unsigned long) tTime;
+    return static_cast<unsigned long>( tTime );
 }
 
 /************************************************************************/
@@ -1027,7 +1026,7 @@ const char *VSICTime( unsigned long nTime )
 {
     time_t tTime = (time_t) nTime;
 
-    return (const char *) ctime( &tTime );
+    return reinterpret_cast<const char *>(ctime( &tTime ));
 }
 
 /************************************************************************/
@@ -1088,7 +1087,8 @@ char *VSIStrerror( int nErrno )
  */
 GIntBig CPLGetPhysicalRAM(void)
 {
-    return ((GIntBig)sysconf(_SC_PHYS_PAGES)) * sysconf(_SC_PAGESIZE);
+    return static_cast<GIntBig>(sysconf(_SC_PHYS_PAGES))
+        * sysconf(_SC_PAGESIZE);
 }
 
 #elif defined(__MACH__) && defined(__APPLE__)
@@ -1123,7 +1123,7 @@ GIntBig CPLGetPhysicalRAM(void)
     statex.ullTotalPhys = 0;
     statex.dwLength = sizeof (statex);
     GlobalMemoryStatusEx (&statex);
-    return (GIntBig) statex.ullTotalPhys;
+    return static_cast<GIntBig>( statex.ullTotalPhys );
 }
 
 #else
