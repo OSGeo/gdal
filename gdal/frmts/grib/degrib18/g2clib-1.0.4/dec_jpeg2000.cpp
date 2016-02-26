@@ -34,7 +34,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 *   PRGMMR: Gilbert          ORG: W/NP11     DATE: 2002-12-02
 *
 * ABSTRACT: This Function decodes a JPEG2000 code stream specified in the
-*   JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1) using JasPer 
+*   JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1) using JasPer
 *   Software version 1.500.4 (or 1.700.2) written by the University of British
 *   Columbia and Image Power Inc, and others.
 *   JasPer is available at http://www.ece.uvic.ca/~mdadams/jasper/.
@@ -70,7 +70,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 {
 #ifndef HAVE_JASPER
     // J2K_SUBFILE method
-    
+
     // create "memory file" from buffer
     int fileNumber = 0;
     VSIStatBufL   sStatBuf;
@@ -81,14 +81,14 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
         osFileName.Printf( "/vsimem/work%d.jpc", ++fileNumber );
     }
 
-    VSIFCloseL( VSIFileFromMemBuffer( 
-                    osFileName, (unsigned char*)injpc, bufsize, 
+    VSIFCloseL( VSIFileFromMemBuffer(
+                    osFileName, (unsigned char*)injpc, bufsize,
                     FALSE ) ); // TRUE to let vsi delete the buffer when done
 
-    // Open memory buffer for reading 
+    // Open memory buffer for reading
     GDALDataset* poJ2KDataset = (GDALDataset *)
         GDALOpen( osFileName, GA_ReadOnly );
- 
+
     if( poJ2KDataset == NULL )
     {
         printf("dec_jpeg2000: Unable to open JPEG2000 image within GRIB file.\n"
@@ -103,8 +103,8 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     }
 
     // Fulfill administration: initialize parameters required for RasterIO
-    int nXSize = poJ2KDataset->GetRasterXSize();
-    int nYSize = poJ2KDataset->GetRasterYSize();
+    const int nXSize = poJ2KDataset->GetRasterXSize();
+    const int nYSize = poJ2KDataset->GetRasterYSize();
     int nXOff = 0;
     int nYOff = 0;
     int nBufXSize = nXSize;
@@ -117,9 +117,9 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     int nBandSpace = 0;
 
     //    Decompress the JPEG2000 into the output integer array.
-    CPLErr eErr = poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
+    const CPLErr eErr = poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
                             outfld, nBufXSize, nBufYSize, eBufType,
-                            nBandCount, panBandMap, 
+                            nBandCount, panBandMap,
                             nPixelSpace, nLineSpace, nBandSpace, NULL );
 
     // close source file, and "unlink" it.
@@ -128,10 +128,10 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 
     return (eErr == CE_None) ? 0 : -3;
 
-#else 
+#else
 
     // JasPer method
-    
+
     g2int i,j,k;
     jas_image_t *image=NULL;
     jas_stream_t *jpcstream;
@@ -141,15 +141,15 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 
 //    jas_init();
 
-//   
+//
 //     Create jas_stream_t containing input JPEG200 codestream in memory.
-//       
+//
 
     jpcstream=jas_stream_memopen(injpc,bufsize);
 
-//   
+//
 //     Decode JPEG200 codestream into jas_image_t structure.
-//       
+//
 
     image=jpc_decode(jpcstream,opts);
     if ( image == NULL ) {
@@ -167,7 +167,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
        return (-5);
     }
 
-// 
+//
 //    Create a data matrix of grayscale image values decoded from
 //    the jpeg2000 codestream.
 //
@@ -178,8 +178,8 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 //    Copy data matrix to output integer array.
 //
     k=0;
-    for (i=0;i<pcmpt->height_;i++) 
-      for (j=0;j<pcmpt->width_;j++) 
+    for (i=0;i<pcmpt->height_;i++)
+      for (j=0;j<pcmpt->width_;j++)
         outfld[k++]=static_cast<g2int>(data->rows_[i][j]);
 //
 //     Clean up JasPer work structures.
