@@ -551,18 +551,24 @@ OGRFeatureH OGR_L_GetNextFeature( OGRLayerH hLayer )
 }
 
 /************************************************************************/
-/*                    ConvertNonLinearGeomsIfNecessary()                */
+/*                       ConvertGeomsIfNecessary()                      */
 /************************************************************************/
 
-void OGRLayer::ConvertNonLinearGeomsIfNecessary( OGRFeature *poFeature )
+void OGRLayer::ConvertGeomsIfNecessary( OGRFeature *poFeature )
 {
-    if( !TestCapability(OLCCurveGeometries) )
+    const bool bSupportsCurve = CPL_TO_BOOL(TestCapability(OLCCurveGeometries));
+    const bool bSupportsM = CPL_TO_BOOL(TestCapability(OLCMeasuredGeometries));
+    if( !bSupportsCurve || !bSupportsM )
     {
         int nGeomFieldCount = GetLayerDefn()->GetGeomFieldCount();
         for(int i=0;i<nGeomFieldCount;i++)
         {
             OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
-            if( poGeom != NULL && OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
+            if( poGeom != NULL && (!bSupportsM && OGR_GT_HasM(poGeom->getGeometryType())) )
+            {
+                poGeom->setMeasured(FALSE);
+            }
+            if( poGeom != NULL && (!bSupportsCurve && OGR_GT_IsNonLinear(poGeom->getGeometryType())) )
             {
                 OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(poGeom->getGeometryType());
                 poFeature->SetGeomFieldDirectly(i,
@@ -579,7 +585,7 @@ void OGRLayer::ConvertNonLinearGeomsIfNecessary( OGRFeature *poFeature )
 OGRErr OGRLayer::SetFeature( OGRFeature *poFeature )
 
 {
-    ConvertNonLinearGeomsIfNecessary(poFeature);
+    ConvertGeomsIfNecessary(poFeature);
     return ISetFeature(poFeature);
 }
 
@@ -618,7 +624,7 @@ OGRErr OGR_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 OGRErr OGRLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    ConvertNonLinearGeomsIfNecessary(poFeature);
+    ConvertGeomsIfNecessary(poFeature);
     return ICreateFeature(poFeature);
 }
 
