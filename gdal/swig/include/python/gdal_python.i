@@ -1160,6 +1160,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          layers = None,
          layerName = None,
          geometryType = None,
+         dim = None,
          segmentizeMaxDist= None,
          zField = None,
          skipFailures = False,
@@ -1182,6 +1183,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           layers --- list of layers to convert
           layerName --- output layer name
           geometryType --- output layer geometry type ('POINT', ....)
+          dim --- output dimension ('XY', 'XYZ', 'XYM', 'XYZM', 'layer_dim')
           segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
           zField --- name of field to use to set the Z component of geometries
           skipFailures --- whether to skip failures
@@ -1241,6 +1243,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             new_options += ['-nln', layerName]
         if geometryType is not None:
             new_options += ['-nlt', geometryType]
+        if dim is not None:
+            new_options += ['-dim', dim]
         if zField is not None:
             new_options += ['-zfield', zField]
         if skipFailures:
