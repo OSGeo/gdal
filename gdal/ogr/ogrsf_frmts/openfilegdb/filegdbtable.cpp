@@ -965,6 +965,10 @@ int FileGDBTable::Open(const char* pszFilename,
                 if( poField->bHasM )
                 {
                     READ_DOUBLE(poField->dfMTolerance);
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("OpenFileGDB", "MOrigin = %g, MScale = %g, MTolerance = %g",
+                             poField->dfMOrigin, poField->dfMScale, poField->dfMTolerance);
+#endif
                 }
 
                 if( poField->bHasZ )
@@ -2061,6 +2065,11 @@ class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConve
                                                 GByte* pabyEnd,
                                                 GUInt32 nPoints,
                                                 GIntBig& dz);
+        template <class MSetter> int ReadMArray(MSetter& setter,
+                                                GByte*& pabyCur,
+                                                GByte* pabyEnd,
+                                                GUInt32 nPoints,
+                                                GIntBig& dm);
 
     public:
                                         FileGDBOGRGeometryConverterImpl(
@@ -2279,18 +2288,18 @@ class ZMultiPointSetter
 };
 
 /************************************************************************/
-/*                             ZArraySetter                            */
+/*                             FileGDBArraySetter                            */
 /************************************************************************/
 
-class ZArraySetter
+class FileGDBArraySetter
 {
-        double* padfZ;
+        double* padfValues;
     public:
-        ZArraySetter(double* padfZIn) : padfZ(padfZIn) {}
+        FileGDBArraySetter(double* padfValuesIn) : padfValues(padfValuesIn) {}
 
-        void set(int i, double dfZ)
+        void set(int i, double dfValue)
         {
-            padfZ[i] = dfZ;
+            padfValues[i] = dfValue;
         }
 };
 
@@ -2317,6 +2326,60 @@ template <class ZSetter> int FileGDBOGRGeometryConverterImpl::ReadZArray(ZSetter
 }
 
 /************************************************************************/
+/*                          MLineStringSetter                           */
+/************************************************************************/
+
+class MLineStringSetter
+{
+        OGRLineString* poLS;
+    public:
+        MLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
+
+        void set(int i, double dfM)
+        {
+            poLS->setM(i, dfM);
+        }
+};
+
+/************************************************************************/
+/*                         MMultiPointSetter                           */
+/************************************************************************/
+
+class MMultiPointSetter
+{
+        OGRMultiPoint* poMPoint;
+    public:
+        MMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
+
+        void set(int i, double dfM)
+        {
+            ((OGRPoint*)poMPoint->getGeometryRef(i))->setM(dfM);
+        }
+};
+
+/************************************************************************/
+/*                          ReadMArray()                                */
+/************************************************************************/
+
+template <class MSetter> int FileGDBOGRGeometryConverterImpl::ReadMArray(MSetter& setter,
+                                                      GByte*& pabyCur,
+                                                      GByte* pabyEnd,
+                                                      GUInt32 nPoints,
+                                                      GIntBig& dm)
+{
+    const int errorRetValue = FALSE;
+    for(GUInt32 i = 0; i < nPoints; i++ )
+    {
+        returnErrorIf(pabyCur >= pabyEnd);
+        ReadVarIntAndAddNoCheck(pabyCur, dm);
+
+        double dfM = dm / poGeomField->GetMScale() + poGeomField->GetMOrigin();
+        setter.set(i, dfM);
+    }
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          GetAsGeometry()                             */
 /************************************************************************/
 
@@ -2332,6 +2395,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
     ReadVarUInt32NoCheck(pabyCur, nGeomType);
 
     int bHasZ = (nGeomType & 0x80000000) != 0;
+    bool bHasM = (nGeomType & 0x40000000) != 0;
     switch( (nGeomType & 0xff) )
     {
         case SHPT_NULL:
@@ -2344,6 +2408,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_POINT:
         case SHPT_POINTM:
         {
+            if( nGeomType == SHPT_POINTM || nGeomType == SHPT_POINTZM )
+                bHasM = true;
+
             double dfX, dfY, dfZ;
             ReadVarUInt64NoCheck(pabyCur, x);
             ReadVarUInt64NoCheck(pabyCur, y);
@@ -2354,7 +2421,23 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             {
                 ReadVarUInt64NoCheck(pabyCur, z);
                 dfZ = (z - 1) / poGeomField->GetZScale() + poGeomField->GetZOrigin();
+                if( bHasM )
+                {
+                    GUIntBig m;
+                    ReadVarUInt64NoCheck(pabyCur, m);
+                    double dfM = (m - 1) / poGeomField->GetMScale() + poGeomField->GetMOrigin();
+                    return new OGRPoint(dfX, dfY, dfZ, dfM);
+                }
                 return new OGRPoint(dfX, dfY, dfZ);
+            }
+            else if( bHasM )
+            {
+                OGRPoint* poPoint = new OGRPoint(dfX, dfY);
+                GUIntBig m;
+                ReadVarUInt64NoCheck(pabyCur, m);
+                double dfM = (m - 1) / poGeomField->GetMScale() + poGeomField->GetMOrigin();
+                poPoint->setM(dfM);
+                return poPoint;
             }
             else
             {
@@ -2370,12 +2453,17 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_MULTIPOINT:
         case SHPT_MULTIPOINTM:
         {
+            if( nGeomType == SHPT_MULTIPOINTM || nGeomType == SHPT_MULTIPOINTZM )
+                bHasM = true;
+
             returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nPoints) );
             if( nPoints == 0 )
             {
                 OGRMultiPoint* poMP = new OGRMultiPoint();
                 if( bHasZ )
-                    poMP->setCoordinateDimension(3);
+                    poMP->set3D(TRUE);
+                if( bHasM )
+                    poMP->setMeasured(TRUE);
                 return poMP;
             }
 
@@ -2404,6 +2492,19 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 }
             }
 
+            if( bHasM )
+            {
+                poMP->setMeasured(TRUE);
+                GIntBig dm = 0;
+                MMultiPointSetter mpmSetter(poMP);
+                if( !ReadMArray<MMultiPointSetter>(mpmSetter,
+                                pabyCur, pabyEnd, nPoints, dm) )
+                {
+                    delete poMP;
+                    returnError();
+                }
+            }
+
             return poMP;
             break;
         }
@@ -2416,6 +2517,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_ARCM:
         case SHPT_GENERALPOLYLINE:
         {
+            if( nGeomType == SHPT_ARCM || nGeomType == SHPT_ARCZM )
+                bHasM = true;
+
             returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
                               (nGeomType & 0x20000000) != 0,
                               FALSE) );
@@ -2424,7 +2528,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             {
                 OGRLineString* poLS = new OGRLineString();
                 if( bHasZ )
-                    poLS->setCoordinateDimension(3);
+                    poLS->set3D(TRUE);
+                if( bHasM )
+                    poLS->setMeasured(TRUE);
                 return poLS;
             }
 
@@ -2480,6 +2586,28 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 }
             }
 
+            if( bHasM )
+            {
+                GIntBig dm = 0;
+                for(i=0;i<nParts;i++)
+                {
+                    if( nParts > 1 )
+                        poLS = (FileGDBOGRLineString*) poMLS->getGeometryRef(i);
+
+                    MLineStringSetter lsmSetter(poLS);
+                    if( !ReadMArray<MLineStringSetter>(lsmSetter,
+                                    pabyCur, pabyEnd,
+                                    panPointCount[i], dm) )
+                    {
+                        if( nParts > 1 )
+                            delete poMLS;
+                        else
+                            delete poLS;
+                        returnError();
+                    }
+                }
+            }
+
             if( poMLS )
                 return poMLS;
             else
@@ -2496,6 +2624,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_POLYGONM:
         case SHPT_GENERALPOLYGON:
         {
+            if( nGeomType == SHPT_POLYGONM || nGeomType == SHPT_POLYGONZM )
+                bHasM = true;
+
             returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
                               (nGeomType & 0x20000000) != 0,
                               FALSE) );
@@ -2504,7 +2635,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             {
                 OGRPolygon* poPoly = new OGRPolygon();
                 if( bHasZ )
-                    poPoly->setCoordinateDimension(3);
+                    poPoly->set3D(TRUE);
+                if( bHasM )
+                    poPoly->setMeasured(TRUE);
                 return poPoly;
             }
 
@@ -2540,6 +2673,26 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                     if( !ReadZArray<ZLineStringSetter>(lszSetter,
                                     pabyCur, pabyEnd,
                                     panPointCount[i], dz) )
+                    {
+                        while( (int)i >= 0 )
+                            delete papoRings[i--];
+                        delete[] papoRings;
+                        returnError();
+                    }
+                }
+            }
+
+            if( bHasM )
+            {
+                GIntBig dm = 0;
+                for(i=0;i<nParts;i++)
+                {
+                    papoRings[i]->setMeasured(TRUE);
+
+                    MLineStringSetter lsmSetter(papoRings[i]);
+                    if( !ReadMArray<MLineStringSetter>(lsmSetter,
+                                    pabyCur, pabyEnd,
+                                    panPointCount[i], dm) )
                     {
                         while( (int)i >= 0 )
                             delete papoRings[i--];
@@ -2675,8 +2828,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
             if( bHasZ )
             {
-                ZArraySetter arrayzSetter(padfZ);
-                if( !ReadZArray<ZArraySetter>(arrayzSetter,
+                FileGDBArraySetter arrayzSetter(padfZ);
+                if( !ReadZArray<FileGDBArraySetter>(arrayzSetter,
                                 pabyCur, pabyEnd, nPoints, dz) )
                 {
                     VSIFree(panPartType);
