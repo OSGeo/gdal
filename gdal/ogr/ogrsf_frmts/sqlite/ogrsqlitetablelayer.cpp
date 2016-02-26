@@ -1578,14 +1578,12 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
         / is found we'll unconditionally activate 2D casting mode
         */
         int iSpatialiteVersion = poDS->GetSpatialiteVersionNumber();
+        const char* pszCoordDim = "2";
         if ( iSpatialiteVersion < 24 && nCoordDim == 3 )
         {
             CPLDebug("SQLITE", "Spatialite < 2.4.0 --> 2.5D geometry not supported. Casting to 2D");
-            nCoordDim = 2;
         }
-
-        const char* pszCoordDim = "2";
-        if( OGR_GT_HasM( eType ) )
+        else if( OGR_GT_HasM( eType ) )
         {
             pszCoordDim = ( OGR_GT_HasZ( eType ) ) ? "'XYZM'" : "'XYM'";
         }
