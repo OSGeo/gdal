@@ -33,6 +33,7 @@
 #include "ogrpgeogeometry.h"
 #include "ogr_p.h"
 #include "cpl_string.h"
+#include <limits>
 
 CPL_CVSID("$Id$");
 
