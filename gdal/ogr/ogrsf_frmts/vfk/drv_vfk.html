@@ -23,15 +23,15 @@ used. Feature types cannot be mixed in one layer.
 <h3>Configuration</h3>
 
 Starting with OGR 1.9, the driver reads and writes VFK data from/to
-internal SQLite database. Default name of the database is
-&quot;input_vfk_file.db&quot;. Since OGR 1.10, you can define
-an alternative DB name with <b>OGR_VFK_DB_NAME</b> configuration
+internal SQLite database. Default name for the database is
+&quot;input_vfk_file.db&quot;. Since OGR 1.10, you can define an
+alternative DB name with <b>OGR_VFK_DB_NAME</b> configuration
 option. If <b>OGR_VFK_DB_OVERWRITE=YES</b> configuration option is
 given, than the driver overwrites existing SQLite database and reads
-data from original input VFK file. By default, the internal SQLite
-database is not automatically deleted. Since OGR 1.11, the internal
-database is deleted if <b>OGR_VFK_DB_DELETE=YES</b> configuration
-option is given.
+data from original input VFK file into newly created DB. Since OGR
+1.11, if <b>OGR_VFK_DB_DELETE=YES</b> configuration option is given
+than the driver deletes the internal SQLite database when closing the
+data source.
 
 <p>
 Starting with OGR 1.10, resolved geometries are stored also in SQLite
