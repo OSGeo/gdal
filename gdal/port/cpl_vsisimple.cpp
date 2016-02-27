@@ -589,7 +589,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     char* ptr = ((char*)pData) - 2 * sizeof(void*);
     VSICheckMarkerBegin(ptr);
 
-    size_t nOldSize;
+    size_t nOldSize = 0;
     memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
     VSICheckMarkerEnd(ptr, 2 * sizeof(void*) + nOldSize);
 
@@ -1098,11 +1098,9 @@ GIntBig CPLGetPhysicalRAM(void)
 
 GIntBig CPLGetPhysicalRAM(void)
 {
-    int mib[2];
     GIntBig nPhysMem = 0;
 
-    mib[0] = CTL_HW;
-    mib[1] = HW_MEMSIZE;
+    int mib[2] = { CTL_HW, HW_MEMSIZE };
     size_t nLengthRes = sizeof(nPhysMem);
     sysctl(mib, 2, &nPhysMem, &nLengthRes, NULL, 0);
 
