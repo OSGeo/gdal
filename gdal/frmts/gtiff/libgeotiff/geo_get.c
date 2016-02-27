@@ -49,7 +49,7 @@ int GTIFKeyInfo(GTIF *gtif, geokey_t key, int *size, tagtype_t* type)
         return (int)keyptr->gk_count;
 }
 
-/** 
+/**
 
 This function reads the value of a single GeoKey from a GeoTIFF file.
 
@@ -138,8 +138,8 @@ ValuePair(  ProjScaleAtCenterGeoKey,	3093)     -- ratio   --
 ValuePair(  ProjAzimuthAngleGeoKey,	3094)     -- GeogAzimuthUnit --
 ValuePair(  ProjStraightVertPoleLongGeoKey,	3095)     -- GeogAngularUnit --
 
- 6.2.4 Vertical CS Keys 
-   
+ 6.2.4 Vertical CS Keys
+
 ValuePair(  VerticalCSTypeGeoKey,	4096)  -- Section 6.3.4.1 codes   --
 ValuePair(  VerticalCitationGeoKey,	4097)  -- documentation --
 ValuePair(  VerticalDatumGeoKey,	4098)  -- Section 6.3.4.2 codes   --

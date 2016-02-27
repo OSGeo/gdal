@@ -15,7 +15,7 @@ OBJ	= \
 	geotiff_proj4.o \
 	geo_extra.o \
 	geo_trans.o \
-	geo_simpletags.o 
+	geo_simpletags.o
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
