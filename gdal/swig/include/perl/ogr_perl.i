@@ -168,8 +168,9 @@ package Geo::OGR::Driver;
 our @ISA = qw/Geo::GDAL::Driver/;
 
 sub Create {
-    my ($self, @p) = @_; # name, options
-    $self->SUPER::Create($p[0], 0, 0, 0, 'Byte', $p[1]); # path, w, h, bands, type, options
+    my ($self, $name, $options) = @_; # name, options
+    $options //= {};
+    $self->SUPER::Create(Name => $name, Width => 0, Height => 0, Bands => 0, Type => 'Byte', Options => $options);
 }
 
 sub Copy {

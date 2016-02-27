@@ -278,16 +278,18 @@
 # @param access Access type, either 'ReadOnly' (the default) or 'Update'.
 # @return a new Geo::GDAL::Dataset object or undef.
 
-## @sub Geo::GDAL::Dataset OpenEx($name, $open_flags = [], $allowed_drivers = [], $open_options = {}, $sibling_files = [])
+## @sub Geo::GDAL::Dataset OpenEx(%params)
 # The generic dataset open method, used internally by all Open and OpenShared methods.
-# @param name The name of the data set or source to open.
-# @param open_flags A list of open flags. Available flags are listed by Geo::GDAL::OpenFlags().
-# @param allowed_drivers A list of short names of drivers that may be used.
-# @param open_options A hash of open options passed to candidate drivers.
-# @param sibling_files A list of names of files that are auxiliary to the main file.
+# @param params Named parameters:
+# - \a Name The name of the data set or source to open. (Default is '.')
+# - \a Flags A list of access mode flags. Available flags are listed by Geo::GDAL::OpenFlags(). (Default is [])
+# - \a Drivers A list of short names of drivers that may be used. Empty list means all. (Default is [])
+# - \a Options A hash of GDAL open options passed to candidate drivers. (Default is {})
+# - \a Files A list of names of files that are auxiliary to the main file. (Default is [])
+#
 # An example
 # \code
-# $ds = Geo::GDAL::OpenEx('existing.tiff', qw/RASTER UPDATE/);
+# $ds = Geo::GDAL::OpenEx(Name => 'existing.tiff', Flags => [qw/RASTER UPDATE/]);
 # \endcode
 # @return a new Geo::GDAL::Dataset object.
 

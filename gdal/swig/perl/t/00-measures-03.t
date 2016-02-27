@@ -124,7 +124,7 @@ for (my $j = 0; $j < @shpt; $j+=2) {
     $type2shpt{$shpt[$j+1]} = $shpt[$j];
 }
 
-if (0) {
+if (1) {
 for (my $i = 0; $i < @data; $i+=2) {
     my $type = $data[$i];
     my $basetype = $type;
@@ -154,11 +154,15 @@ for (my $i = 0; $i < @data; $i+=2) {
         
         # close and open
         undef $l;
-        $l = Geo::OGR::Open($dir)->GetLayer($type);
+        my $adjust = 'NO';
+        if ($dim eq 'Z') { # M is added implicitly
+            $adjust = 'ALL_SHAPES'; # but we strip it away with this
+        }
+        $l = Geo::GDAL::OpenEx(name => $dir, options => {ADJUST_GEOM_TYPE=>$adjust})->GetLayer($type);
         my $t = $l->GeometryType;
         $t =~ s/25D/Z/;
         my $exp = $shpt{$shpt}.$dim;
-        ok($t eq $exp, "$driver with option SHPT=$shpt$dim layer geom type: expected: $exp, got: $t");
+        ok($t eq $exp, "$driver with option SHPT=$shpt$dim layer geom type ($type): expected: $exp, got: $t");
         
         $l->ResetReading;
         while (my $f = $l->GetNextFeature()) {
@@ -170,7 +174,7 @@ for (my $i = 0; $i < @data; $i+=2) {
             my $wkt = $g->As(Format => 'ISO WKT');
             $exp = $data{$basetype.$dim};
             if (!($type =~ /M$/) and $dim eq 'M') {
-                $exp =~ s/3/0/;
+                $exp =~ s/3/-0/;
             } elsif (($type =~ /ZM$/) and $dim eq 'Z') {
             } elsif (!($type =~ /Z$/) and $dim eq 'Z') {
                 $exp =~ s/3/0/;
@@ -178,7 +182,7 @@ for (my $i = 0; $i < @data; $i+=2) {
                 $exp =~ s/4 //;
                 $exp =~ s/3/4/;
             } elsif (($type =~ /Z$/) and $dim eq 'ZM') {
-                $exp =~ s/4/0/;
+                $exp =~ s/4/-0/;
             } elsif (($type =~ /ZM$/) and $dim eq 'ZM') {
             } elsif (($type =~ /ZM$/) and $dim eq 'ZM') {
                 $exp =~ s/3 //;
@@ -187,9 +191,10 @@ for (my $i = 0; $i < @data; $i+=2) {
                 $exp =~ s/4/3/;
             } elsif (!($type =~ /ZM$/) and $dim eq 'ZM') {
                 $exp =~ s/3/0/;
-                $exp =~ s/4/0/;
+                $exp =~ s/4/-0/;
             }
-            ok($wkt eq $exp, "$driver with option SHPT=$shpt$dim retrieve feature: $type, expected: $exp got: $wkt");
+            $wkt =~ s/-[\d\.e\+]+/-0/; # "no data" M to "-0"
+            ok($wkt eq $exp, "$driver with option SHPT=$shpt$dim retrieve feature: expected: $exp got: $wkt");
         }
     }
 }
