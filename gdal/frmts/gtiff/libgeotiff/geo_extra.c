@@ -459,7 +459,7 @@ int	GTIFMapSysToPCS( int MapSys, int Datum, int nZone )
             PCSCode = 2205;
     }
 
-    return( PCSCode );
+    return PCSCode;
 }
 
 /************************************************************************/
@@ -499,7 +499,7 @@ int	GTIFMapSysToProj( int MapSys, int nZone )
             ProjCode = 15303;
     }
 
-    return( ProjCode );
+    return ProjCode;
 }
 
 /************************************************************************/
@@ -654,7 +654,7 @@ int GTIFPCSToMapSys( int PCSCode, int * pDatum, int * pZone )
     if( pZone != NULL )
         *pZone = nZone;
 
-    return( Proj );
+    return Proj;
 }
 
 /************************************************************************/
@@ -727,5 +727,5 @@ int GTIFProjToMapSys( int ProjCode, int * pZone )
     if( pZone != NULL )
         *pZone = nZone;
 
-    return( MapSys );
+    return MapSys;
 }

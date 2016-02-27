@@ -49,7 +49,7 @@ gdata_t _GTIFcalloc(gsize_t size)
 
 gdata_t _GTIFrealloc(gdata_t ptr, gsize_t size)
 {
-    return( _TIFFrealloc((tdata_t)ptr, (tsize_t) size) );
+    return _TIFFrealloc((tdata_t)ptr, (tsize_t) size);
 }
 
 void _GTIFmemcpy(gdata_t out,gdata_t in,gsize_t size)

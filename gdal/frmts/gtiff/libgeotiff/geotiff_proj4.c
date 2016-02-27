@@ -1340,7 +1340,7 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     /* If we don't have anything, reset */
     if (strstr(szProjection, "+proj=") == NULL) { return CPLStrdup(""); }
 
-    return( CPLStrdup( szProjection ) );
+    return CPLStrdup( szProjection );
 }
 
 #if !defined(HAVE_LIBPROJ)

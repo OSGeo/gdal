@@ -272,7 +272,7 @@ double GTIFAngleToDD( double dfAngle, int nUOMAngle )
         dfAngle = dfAngle * dfInDegrees;
     }
 
-    return( dfAngle );
+    return dfAngle;
 }
 
 /************************************************************************/
@@ -352,7 +352,7 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
         dfAngle = GTIFAtof(pszAngle );
     }
 
-    return( dfAngle );
+    return dfAngle;
 }
 
 /************************************************************************/
@@ -488,7 +488,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
                                    "COORD_REF_SYS_CODE",szSearchKey,CC_Integer,
                                    "COORD_REF_SYS_NAME" ));
 
-    return( TRUE );
+    return TRUE;
 }
 
 /************************************************************************/
@@ -624,7 +624,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
                                    "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                    "ELLIPSOID_NAME" ));
 
-    return( TRUE );
+    return TRUE;
 }
 
 /************************************************************************/
@@ -701,7 +701,7 @@ int GTIFGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
                              "PRIME_MERIDIAN_CODE", szSearchKey, CC_Integer,
                              "PRIME_MERIDIAN_NAME" ));
 
-    return( TRUE );
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1027,7 +1027,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
     if( pdfInDegrees != NULL )
         *pdfInDegrees = dfInDegrees;
 
-    return( TRUE );
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1045,83 +1045,83 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG, int bReturnExtendedCTCode )
     switch( nEPSG )
     {
       case 9801:
-        return( CT_LambertConfConic_1SP );
+        return CT_LambertConfConic_1SP;
 
       case 9802:
-        return( CT_LambertConfConic_2SP );
+        return CT_LambertConfConic_2SP;
 
       case 9803:
-        return( CT_LambertConfConic_2SP ); /* Belgian variant not supported */
+        return CT_LambertConfConic_2SP; /* Belgian variant not supported */
 
       case 9804:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        return CT_Mercator;  /* 1SP and 2SP not differentiated */
 
       case 9805:
         if( bReturnExtendedCTCode )
-            return( CT_Ext_Mercator_2SP );
+            return CT_Ext_Mercator_2SP;
         else
-            return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+            return CT_Mercator;  /* 1SP and 2SP not differentiated */
 
       /* Mercator 1SP (Spherical) For EPSG:3785 */
       case 9841:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        return CT_Mercator;  /* 1SP and 2SP not differentiated */
 
       /* Google Mercator For EPSG:3857 */
       case 1024:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        return CT_Mercator;  /* 1SP and 2SP not differentiated */
 
       case 9806:
-        return( CT_CassiniSoldner );
+        return CT_CassiniSoldner;
 
       case 9807:
-        return( CT_TransverseMercator );
+        return CT_TransverseMercator;
 
       case 9808:
-        return( CT_TransvMercator_SouthOriented );
+        return CT_TransvMercator_SouthOriented;
 
       case 9809:
-        return( CT_ObliqueStereographic );
+        return CT_ObliqueStereographic;
 
       case 9810:
       case 9829: /* variant B not quite the same - not sure how to handle */
-        return( CT_PolarStereographic );
+        return CT_PolarStereographic;
 
       case 9811:
-        return( CT_NewZealandMapGrid );
+        return CT_NewZealandMapGrid;
 
       case 9812:
-        return( CT_ObliqueMercator ); /* is hotine actually different? */
+        return CT_ObliqueMercator; /* is hotine actually different? */
 
       case 9813:
-        return( CT_ObliqueMercator_Laborde );
+        return CT_ObliqueMercator_Laborde;
 
       case 9814:
-        return( CT_ObliqueMercator_Rosenmund ); /* swiss  */
+        return CT_ObliqueMercator_Rosenmund; /* swiss  */
 
       case 9815:
-        return( CT_HotineObliqueMercatorAzimuthCenter );
+        return CT_HotineObliqueMercatorAzimuthCenter;
 
       case 9816: /* tunesia mining grid has no counterpart */
-        return( KvUserDefined );
+        return KvUserDefined;
 
       case 9818:
-        return( CT_Polyconic );
+        return CT_Polyconic;
 
       case 9820:
       case 1027:
-        return( CT_LambertAzimEqualArea );
+        return CT_LambertAzimEqualArea;
 
       case 9822:
-        return( CT_AlbersEqualArea );
+        return CT_AlbersEqualArea;
 
       case 9834:
-        return( CT_CylindricalEqualArea );
+        return CT_CylindricalEqualArea;
 
       case 1028:
       case 1029:
       case 9823: /* spherical */
       case 9842: /* elliptical */
-        return( CT_Equirectangular );
+        return CT_Equirectangular;
 
       default: /* use the EPSG code for other methods */
         return nEPSG;
@@ -1317,7 +1317,7 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       default:
-        return( FALSE );
+        return FALSE;
     }
 }
 
@@ -2601,7 +2601,7 @@ const char *GTIFDecToDMS( double dfAngle, const char * pszAxis,
              nPrecision+3, nPrecision, pszHemisphere );
     sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
 
-    return( szBuffer );
+    return szBuffer;
 }
 
 /************************************************************************/

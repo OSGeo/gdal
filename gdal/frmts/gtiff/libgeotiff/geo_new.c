@@ -263,7 +263,7 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
                 /* issue warning... if we could */
             }
             else if (offset + count > tempData->tk_asciiParamsLength)
-                return (0);
+                return 0;
 
             keyptr->gk_count = MAX(1,count+1);
             keyptr->gk_data = (char *) _GTIFcalloc (keyptr->gk_count);
