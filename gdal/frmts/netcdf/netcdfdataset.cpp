@@ -8034,7 +8034,7 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId,
         nTmpAttrType = NC_CHAR;
         bool bFoundType = false;
         errno = 0;
-        int nValue = strtol( papszValues[i], &pszTemp, 10 );
+        int nValue = static_cast<int>(strtol( papszValues[i], &pszTemp, 10 ));
         /* test for int */
         /* TODO test for Byte and short - can this be done safely? */
         if ( (errno == 0) && (papszValues[i] != pszTemp) && (*pszTemp == 0) ) {
@@ -8046,7 +8046,8 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId,
             }
 #ifdef NETCDF_HAS_NC4
             else {
-                unsigned int unValue = strtoul( papszValues[i], &pszTemp, 10 );
+                unsigned int unValue = static_cast<unsigned int>(
+                    strtoul( papszValues[i], &pszTemp, 10 ));
                 CPLsnprintf( szTemp, sizeof(szTemp), "%u", unValue );
                 if ( EQUAL( szTemp, papszValues[i] ) ) {
                     bFoundType = true;
