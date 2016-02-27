@@ -205,6 +205,7 @@ L<https://trac.osgeo.org/gdal>
 
 =cut
 
+use Scalar::Util 'blessed';
 use vars qw/
     @DATA_TYPES @OPEN_FLAGS @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
     %TYPE_STRING2INT %TYPE_INT2STRING
@@ -309,7 +310,12 @@ sub named_parameters {
         } else {
             for (my $i = 0; $i < @p; $i++) {
                 my $c = lc($_[$i*2]); $c =~ s/_//g;
-                $named{$c} = $p[$i];
+                my $t = ref($defaults{$c{$c}});
+                if (!blessed($p[$i]) and (ref($p[$i]) ne $t)) {
+                    $t = $t eq '' ? 'SCALAR' : "a reference to $t";
+                    error("parameter '$p[$i]' is not $t as it should for parameter $c{$c}.");
+                }
+                $named{$c} = $p[$i]; # $p[$i] could be a sub ...
             }
         }
     }
@@ -476,16 +482,21 @@ sub OpenShared {
 }
 
 sub OpenEx {
-    my @p = @_; # name, flags, allow_drivers, open_options, sibling_files
-    if (defined $p[1]) { # a list of written flags
-        my $f;
-        for my $flag (@{$p[1]}) {
+    my $p = Geo::GDAL::named_parameters(\@_, Name => '.', Flags => [], Drivers => [], Options => {}, Files => []);
+    unless ($p) {
+        my $name = shift // '';
+        my @flags = @_;
+        $p = {name => $name, flags => \@flags, drivers => [], options => {}, files => []};
+    }
+    if ($p->{flags}) {
+        my $f = 0;
+        for my $flag (@{$p->{flags}}) {
             Geo::GDAL::error(1, $flag, \%OF_STRING2INT) unless exists $OF_STRING2INT{$flag};
             $f |= $Geo::GDAL::OF_STRING2INT{$flag};
         }
-        $p[1] = $f;
+        $p->{flags} = $f;
     }
-    return _OpenEx(@p);
+    return _OpenEx($p->{name}, $p->{flags}, $p->{drivers}, $p->{options}, $p->{files});
 }
 
 sub Polygonize {
