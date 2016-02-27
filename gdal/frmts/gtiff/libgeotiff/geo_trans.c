@@ -27,7 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
- 
+
 #include "geotiff.h"
 #include "geo_tiffp.h" /* external TIFF interface */
 #include "geo_keyp.h"  /* private interface       */
@@ -86,7 +86,7 @@ int GTIFTiepointTranslate( int gcp_count, double * gcps_in, double * gcps_out,
     (void) y_in;
     (void) x_out;
     (void) y_out;
-    
+
     /* I would appreciate a _brief_ block of code for doing second order
        polynomial regression here! */
     return FALSE;
@@ -141,7 +141,7 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 /*      If the pixelscale count is zero, but we have tiepoints use      */
 /*      the tiepoint based approach.                                    */
 /* -------------------------------------------------------------------- */
-    if( tiepoint_count > 6 && count == 0 ) 
+    if( tiepoint_count > 6 && count == 0 )
     {
         res = GTIFTiepointTranslate( tiepoint_count / 6,
                                      tiepoints, tiepoints + 3,
@@ -151,25 +151,25 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 /* -------------------------------------------------------------------- */
 /*	If we have a transformation matrix, use it. 			*/
 /* -------------------------------------------------------------------- */
-    else if( transform_count == 16 ) 
+    else if( transform_count == 16 )
     {
         double x_in = *x, y_in = *y;
 
         *x = x_in * transform[0] + y_in * transform[1] + transform[3];
         *y = x_in * transform[4] + y_in * transform[5] + transform[7];
-        
+
         res = TRUE;
-    } 
+    }
 
 /* -------------------------------------------------------------------- */
 /*      For now we require one tie point, and a valid pixel scale.      */
 /* -------------------------------------------------------------------- */
-    else if( count < 3 || tiepoint_count < 6 ) 
+    else if( count < 3 || tiepoint_count < 6 )
     {
         res = FALSE;
-    } 
+    }
 
-    else 
+    else
     {
         *x = (*x - tiepoints[0]) * pixel_scale[0] + tiepoints[3];
         *y = (*y - tiepoints[1]) * (-1 * pixel_scale[1]) + tiepoints[4];
@@ -180,11 +180,11 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    if(tiepoints)   
+    if(tiepoints)
         _GTIFFree(tiepoints);
     if(pixel_scale)
         _GTIFFree(pixel_scale);
-    if(transform)  
+    if(transform)
         _GTIFFree(transform);
 
     return res;
@@ -198,7 +198,7 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
  * Translate a projection coordinate to pixel/line coordinates.
  *
  * At this time this function does not support PCS to image translations for
- * tiepoints-only based definitions, only matrix and pixelscale/tiepoints 
+ * tiepoints-only based definitions, only matrix and pixelscale/tiepoints
  * formulations are supposed.
  *
  * @param gtif The handle from GTIFNew() indicating the target file.
@@ -255,7 +255,7 @@ int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
     {
         double  x_in = *x, y_in = *y;
         double	gt_in[6], gt_out[6];
-        
+
         gt_in[0] = transform[0];
         gt_in[1] = transform[1];
         gt_in[2] = transform[3];
@@ -269,7 +269,7 @@ int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
         {
             *x = x_in * gt_out[0] + y_in * gt_out[1] + gt_out[2];
             *y = x_in * gt_out[3] + y_in * gt_out[4] + gt_out[5];
-            
+
             result = TRUE;
         }
     }
@@ -288,13 +288,12 @@ int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-    if(tiepoints)   
+    if(tiepoints)
         _GTIFFree(tiepoints);
     if(pixel_scale)
         _GTIFFree(pixel_scale);
-    if(transform)  
+    if(transform)
         _GTIFFree(transform);
 
     return result;
 }
-

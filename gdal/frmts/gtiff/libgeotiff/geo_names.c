@@ -1,8 +1,8 @@
 /*
  * geo_names.c
  *
- *  This encapsulates all of the value-naming mechanism of 
- *  libgeotiff. 
+ *  This encapsulates all of the value-naming mechanism of
+ *  libgeotiff.
  *
  *  Written By: Niles Ritter
  *
@@ -44,7 +44,7 @@ static const KeyInfo _tagInfo[] =  {
 static char *FindName(const KeyInfo *info,int key)
 {
    static char errmsg[80];
-   
+
    while (info->ki_key>=0 && info->ki_key != key) info++;
 
    if (info->ki_key<0)
@@ -73,14 +73,14 @@ char *GTIFTagName(int tag)
 char *GTIFValueName(geokey_t key, int value)
 {
    const KeyInfo *info;
-   
+
    switch (key)
    {
 	/* All codes using linear/angular/whatever units */
-	case GeogLinearUnitsGeoKey: 
-	case ProjLinearUnitsGeoKey: 
-	case GeogAngularUnitsGeoKey: 
-	case GeogAzimuthUnitsGeoKey: 
+	case GeogLinearUnitsGeoKey:
+	case ProjLinearUnitsGeoKey:
+	case GeogAngularUnitsGeoKey:
+	case GeogAzimuthUnitsGeoKey:
     case VerticalUnitsGeoKey:
 		                      info=_geounitsValue; break;
 
@@ -100,12 +100,12 @@ char *GTIFValueName(geokey_t key, int value)
 	/* And if all else fails... */
    	default:                      info = _csdefaultValue;break;
    }
-   
+
    return FindName( info,value);
 }
 
-/* 
- * Inverse Utilities (name->code) 
+/*
+ * Inverse Utilities (name->code)
  */
 
 
@@ -150,15 +150,15 @@ int GTIFTagCode(char *tag)
 int GTIFValueCode(geokey_t key, char *name)
 {
    const KeyInfo *info;
-   
+
    switch (key)
    {
 	/* All codes using linear/angular/whatever units */
-	case GeogLinearUnitsGeoKey: 
-	case ProjLinearUnitsGeoKey: 
-	case GeogAngularUnitsGeoKey: 
+	case GeogLinearUnitsGeoKey:
+	case ProjLinearUnitsGeoKey:
+	case GeogAngularUnitsGeoKey:
 	case GeogAzimuthUnitsGeoKey:
-    case VerticalUnitsGeoKey: 
+    case VerticalUnitsGeoKey:
 		                      info=_geounitsValue; break;
 
    	/* put other key-dependent lists here */
@@ -177,7 +177,6 @@ int GTIFValueCode(geokey_t key, char *name)
 	/* And if all else fails... */
    	default:                      info = _csdefaultValue;break;
    }
-   
+
    return FindCode( info,name);
 }
-

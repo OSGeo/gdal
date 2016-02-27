@@ -28,7 +28,7 @@
  *    with the appropriate one for your own TIFF parsing routines.
  *
  *   Revision History
- * 
+ *
  *      19 September 1995   ndr    Demoted Intergraph trans matrix.
  *
  **********************************************************************/
@@ -58,12 +58,12 @@ typedef double dblparam_t;
  *   with the appropriate definitions to access the geo-tags
  *
  **********************************************************************/
- 
+
 typedef unsigned short pinfo_t;    /* SHORT ProjectionInfo tag type */
 typedef TIFF    tiff_t;            /* TIFF file descriptor          */
 typedef tdata_t  gdata_t;          /* pointer to data */
 typedef tsize_t  gsize_t;          /* data allocation size */
- 
+
 #define GTIFF_GEOKEYDIRECTORY   TIFFTAG_GEOKEYDIRECTORY /* from xtiffio.h */
 #define GTIFF_DOUBLEPARAMS      TIFFTAG_GEODOUBLEPARAMS
 #define GTIFF_ASCIIPARAMS       TIFFTAG_GEOASCIIPARAMS
@@ -91,7 +91,7 @@ typedef struct     _TIFFMethod {
 
 /**********************************************************************
  *
- *               Protected Function Declarations  
+ *               Protected Function Declarations
  *
  *   These routines are exposed implementations, and should not
  *   be used by external GEOTIFF client programs.
@@ -106,7 +106,7 @@ extern void CPL_DLL _GTIFFree(gdata_t data);
 extern void CPL_DLL _GTIFmemcpy(gdata_t out,gdata_t in,gsize_t size);
 
 #if defined(__cplusplus)
-} 
+}
 #endif
 
 
