@@ -894,14 +894,52 @@ def netcdf_24():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0,255',\
-                       'NC_GLOBAL#valid_min' : '10.1' }
-    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1,10', \
-                      'valid_range_d' : '0.1111112222222,255.555555555556', \
-                      'valid_range_f' : '0.1111111,255.5556', \
-                      'valid_range_s' : '0,255' }
+    vals_global = {'NC_GLOBAL#test': 'testval',
+                   'NC_GLOBAL#valid_range_i': '0,255',
+                   'NC_GLOBAL#valid_min': '10.1',
+                   'NC_GLOBAL#test_b': '1'}
+    vals_band = {'_Unsigned': 'true',
+                 'valid_min': '10.1',
+                 'valid_range_b': '1,10',
+                 'valid_range_d': '0.1111112222222,255.555555555556',
+                 'valid_range_f': '0.1111111,255.5556',
+                 'valid_range_s': '0,255'}
 
     return netcdf_check_vars( 'data/nc_vars.nc', vals_global, vals_band )
+
+###############################################################################
+# check support for NC4 reading attributes (single values and array values)
+def netcdf_24_nc4():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    vals_global = {'NC_GLOBAL#test': 'testval',
+                   'NC_GLOBAL#test_string': 'testval_string',
+                   'NC_GLOBAL#valid_range_i': '0,255',
+                   'NC_GLOBAL#valid_min': '10.1',
+                   'NC_GLOBAL#test_b': '-100',
+                   'NC_GLOBAL#test_ub': '200',
+                   'NC_GLOBAL#test_s': '-16000',
+                   'NC_GLOBAL#test_us': '32000',
+                   'NC_GLOBAL#test_l': '-2000000000',
+                   'NC_GLOBAL#test_ul': '4000000000'}
+    vals_band = {'test_string_arr': 'test,string,arr',
+                 'valid_min': '10.1',
+                 'valid_range_b': '1,10',
+                 'valid_range_ub': '1,200',
+                 'valid_range_s': '0,255',
+                 'valid_range_us': '0,32000',
+                 'valid_range_l': '0,255',
+                 'valid_range_ul': '0,4000000000',
+                 'valid_range_d': '0.1111112222222,255.555555555556',
+                 'valid_range_f': '0.1111111,255.5556',
+                 'valid_range_s': '0,255'}
+
+    return netcdf_check_vars( 'data/nc4_vars.nc', vals_global, vals_band )
 
 ###############################################################################
 # check support for writing attributes (single values and array values)
@@ -914,14 +952,56 @@ def netcdf_25():
     if result != 'success':
         return result
 
-    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0,255',\
-                       'NC_GLOBAL#valid_min' : '10.1' }
-    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1,10', \
-                      'valid_range_d' : '0.1111112222222,255.555555555556', \
-                      'valid_range_f' : '0.1111111,255.5556', \
-                      'valid_range_s' : '0,255' }
+    vals_global = {'NC_GLOBAL#test': 'testval',
+                   'NC_GLOBAL#valid_range_i': '0,255',
+                   'NC_GLOBAL#valid_min': '10.1',
+                   'NC_GLOBAL#test_b': '1'}
+    vals_band = {'_Unsigned': 'true',
+                 'valid_min': '10.1',
+                 'valid_range_b': '1,10',
+                 'valid_range_d': '0.1111112222222,255.555555555556',
+                 'valid_range_f': '0.1111111,255.5556',
+                 'valid_range_s': '0,255'}
 
     return netcdf_check_vars( 'tmp/netcdf_25.nc', vals_global, vals_band )
+
+###############################################################################
+# check support for NC4 writing attributes (single values and array values)
+def netcdf_25_nc4():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    result = netcdf_test_copy( 'data/nc4_vars.nc', 1, None, 'tmp/netcdf_25_nc4.nc', [ 'FORMAT=NC4' ] ) 
+    if result != 'success':
+        return result
+
+    vals_global = {'NC_GLOBAL#test': 'testval',
+                   'NC_GLOBAL#test_string': 'testval_string',
+                   'NC_GLOBAL#valid_range_i': '0,255',
+                   'NC_GLOBAL#valid_min': '10.1',
+                   'NC_GLOBAL#test_b': '-100',
+                   'NC_GLOBAL#test_ub': '200',
+                   'NC_GLOBAL#test_s': '-16000',
+                   'NC_GLOBAL#test_us': '32000',
+                   'NC_GLOBAL#test_l': '-2000000000',
+                   'NC_GLOBAL#test_ul': '4000000000'}
+    vals_band = {'test_string_arr': 'test,string,arr',
+                 'valid_min': '10.1',
+                 'valid_range_b': '1,10',
+                 'valid_range_ub': '1,200',
+                 'valid_range_s': '0,255',
+                 'valid_range_us': '0,32000',
+                 'valid_range_l': '0,255',
+                 'valid_range_ul': '0,4000000000',
+                 'valid_range_d': '0.1111112222222,255.555555555556',
+                 'valid_range_f': '0.1111111,255.5556',
+                 'valid_range_s': '0,255'}
+
+    return netcdf_check_vars( 'tmp/netcdf_25_nc4.nc', vals_global, vals_band )
 
 ###############################################################################
 # check support for WRITE_BOTTOMUP file creation option
@@ -1546,7 +1626,7 @@ def netcdf_43():
     return 'success'
 
 ###############################################################################
-# Test NC_USHORT read - netcdf-4  only (#6337)
+# Test NC_USHORT/UINT read/write - netcdf-4 only (#6337)
 
 def netcdf_44():
 
@@ -1556,13 +1636,10 @@ def netcdf_44():
     if not gdaltest.netcdf_drv_has_nc4:
         return 'skip'
 
-    ds = gdal.Open('data/ushort.nc')
-    if ds.GetRasterBand(1).Checksum() != 18:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != 65535:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    for f, md5 in ('data/ushort.nc', 18), ('data/uint.nc', 10):
+        if (netcdf_test_copy( f, 1, md5, 'tmp/netcdf_44.nc', [ 'FORMAT=NC4' ] )
+            != 'success'):
+            return 'fail'
 
     return 'success'
 
