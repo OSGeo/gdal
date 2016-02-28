@@ -699,6 +699,7 @@ SQLITE3_VERSION
 SPATIALITE_412_OR_LATER
 SPATIALITE_AMALGAMATION
 SPATIALITE_INC
+SPATIALITE_SONAME
 HAVE_SPATIALITE
 LIBXML2_LIB
 LIBXML2_INC
@@ -998,6 +999,7 @@ with_dods_root
 with_curl
 with_xml2
 with_spatialite
+with_spatialite_soname
 with_sqlite3
 with_pcre
 with_dwgdirect
@@ -1759,7 +1761,8 @@ Optional Packages:
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
   --with-xml2=ARG       Include libxml2 (ARG=path to xml2-config.)
-  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes or path)
+  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)
+  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
   --with-pcre             Include libpcre support (REGEXP support for SQLite)
@@ -26606,8 +26609,8 @@ OCI_INCLUDE=$OCI_INCLUDE
 
 HAVE_DODS=no
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for DODS" >&5
-$as_echo_n "checking Checking for DODS... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for DODS" >&5
+$as_echo_n "checking for DODS... " >&6; }
 
 # Check whether --with-dods_root was given.
 if test "${with_dods_root+set}" = set; then :
@@ -26948,10 +26951,20 @@ LIBXML2_LIB=$LIBXML2_LIB
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite" >&5
+$as_echo_n "checking for spatialite... " >&6; }
+
 
 # Check whether --with-spatialite was given.
 if test "${with_spatialite+set}" = set; then :
   withval=$with_spatialite;
+fi
+
+
+
+# Check whether --with-spatialite-soname was given.
+if test "${with_spatialite_soname+set}" = set; then :
+  withval=$with_spatialite_soname;
 fi
 
 
@@ -27033,6 +27046,16 @@ fi
 $as_echo "not found : spatialite support disabled" >&6; }
         fi
     fi
+elif test "$with_spatialite" = "dlopen"; then
+  HAVE_SPATIALITE=dlopen
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: dlopen" >&5
+$as_echo "dlopen" >&6; }
+
+  if test "$with_spatialite_soname" != ""; then
+      SPATIALITE_SONAME="$with_spatialite_soname"
+  else
+      SPATIALITE_SONAME="spatialite.so"
+  fi
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
 $as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
@@ -27173,6 +27196,8 @@ fi
 
 HAVE_SPATIALITE=$HAVE_SPATIALITE
 
+SPATIALITE_SONAME=$SPATIALITE_SONAME
+
 SPATIALITE_INC=$SPATIALITE_INC
 
 SPATIALITE_AMALGAMATION=$SPATIALITE_AMALGAMATION
@@ -27181,7 +27206,7 @@ SPATIALITE_412_OR_LATER=$SPATIALITE_412_OR_LATER
 
 
 
-if test "${HAVE_SPATIALITE}" = "no" ; then
+if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
     SQLITE3_REQ_VERSION="3.0.0"
 
 
@@ -33881,6 +33906,11 @@ echo "  PCRE support:              ${HAVE_PCRE}"
 
 echo "  SpatiaLite support:        ${HAVE_SPATIALITE}"
 
+if test "x$SPATIALITE_SONAME" != "x"; then
+
+echo "  SpatiaLite shared obj name:${SPATIALITE_SONAME}"
+
+fi
 
 echo "  DWGdirect support          ${HAVE_DWGDIRECT}"
 

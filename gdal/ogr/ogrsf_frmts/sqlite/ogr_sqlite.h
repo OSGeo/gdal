@@ -697,7 +697,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 
 #ifdef SPATIALITE_412_OR_LATER
     void               *hSpatialiteCtxt;
-    int                 InitNewSpatialite();
+    bool                InitNewSpatialite();
     void                FinishNewSpatialite();
 #endif
 
@@ -857,5 +857,7 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
 #endif
 
 void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
+
+void OGRSQLiteDriverUnload(GDALDriver*);
 
 #endif /* ndef OGR_SQLITE_H_INCLUDED */

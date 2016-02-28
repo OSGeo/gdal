@@ -38,22 +38,7 @@
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"
 
-#ifdef HAVE_SPATIALITE
-#include "spatialite.h"
-#endif
-
 CPL_CVSID("$Id$");
-
-/************************************************************************/
-/*                          OGRSQLiteDriverUnload()                     */
-/************************************************************************/
-
-static void OGRSQLiteDriverUnload(CPL_UNUSED GDALDriver* poDriver)
-{
-#ifdef SPATIALITE_412_OR_LATER
-    spatialite_shutdown();
-#endif
-}
 
 /************************************************************************/
 /*                     OGRSQLiteDriverIdentify()                        */
