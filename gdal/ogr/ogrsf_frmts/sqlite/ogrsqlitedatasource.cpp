@@ -59,7 +59,9 @@ CPL_CVSID("$Id$");
 
 #ifndef SPATIALITE_412_OR_LATER
 
+#ifdef HAVE_SPATIALITE
 static const char *(*pfn_spatialite_version) (void) = spatialite_version;
+#endif
 
 static int OGRSQLiteInitOldSpatialite()
 {
