@@ -34,6 +34,10 @@ Process :
    dev workstation) to avoid unnecessary churn from different autoconf or swig
    versions.
 
+   c) "cd scripts; make completion" to regenerate scripts/gdal-bash-completion.sh
+      if new command line switches have been added. scripts/completionFinder.py
+      must also be edited before if new utilities/scripts are added/removed.
+
 2) Update the release date, and number information in gcore/gdal_version.h.
 
 3) Update the VERSION file. 
