@@ -84,20 +84,28 @@ void OGRSQLiteDriverUnload(GDALDriver*)
 
 #else
 
+#ifdef SPATIALITE_DLOPEN
 static CPLMutex* hMutexLoadSpatialiteSymbols = NULL;
 static void * (*pfn_spatialite_alloc_connection) (void) = NULL;
 static void (*pfn_spatialite_shutdown) (void) = NULL;
 static void (*pfn_spatialite_init_ex) (sqlite3*, const void *, int) = NULL;
 static void (*pfn_spatialite_cleanup_ex) (const void *) = NULL;
 static const char *(*pfn_spatialite_version) (void) = NULL;
+#else
+static void * (*pfn_spatialite_alloc_connection) (void) = spatialite_alloc_connection;
+static void (*pfn_spatialite_shutdown) (void) = spatialite_shutdown;
+static void (*pfn_spatialite_init_ex) (sqlite3*, const void *, int) = spatialite_init_ex;
+static void (*pfn_spatialite_cleanup_ex) (const void *) = spatialite_cleanup_ex;
+static const char *(*pfn_spatialite_version) (void) = spatialite_version;
+#endif
 
 #ifndef SPATIALITE_SONAME
 #define SPATIALITE_SONAME "libspatialite.so"
 #endif
 
+#ifdef SPATIALITE_DLOPEN
 static bool OGRSQLiteLoadSpatialiteSymbols()
 {
-#ifdef SPATIALITE_DLOPEN
     static bool bInitializationDone = false;
     CPLMutexHolderD(&hMutexLoadSpatialiteSymbols);
     if( bInitializationDone )
@@ -140,15 +148,8 @@ static bool OGRSQLiteLoadSpatialiteSymbols()
         return false;
     }
     return true;
-#else
-    pfn_spatialite_alloc_connection = spatialite_alloc_connection;
-    pfn_spatialite_shutdown = pfn_spatialite_shutdown;
-    pfn_spatialite_init_ex = spatialite_init_ex;
-    pfn_spatialite_cleanup_ex = spatialite_cleanup_ex;
-    pfn_spatialite_version = spatialite_version;
-    return true;
-#endif
 }
+#endif
 
 /************************************************************************/
 /*                          OGRSQLiteDriverUnload()                     */
@@ -158,11 +159,13 @@ void OGRSQLiteDriverUnload(GDALDriver*)
 {
     if( pfn_spatialite_shutdown != NULL )
         pfn_spatialite_shutdown();
+#ifdef SPATIALITE_DLOPEN
     if( hMutexLoadSpatialiteSymbols != NULL )
     {
         CPLDestroyMutex(hMutexLoadSpatialiteSymbols);
         hMutexLoadSpatialiteSymbols = NULL;
     }
+#endif
 }
 
 /************************************************************************/
@@ -173,8 +176,10 @@ bool OGRSQLiteBaseDataSource::InitNewSpatialite()
 {
     if( CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
     {
+#ifdef SPATIALITE_DLOPEN
         if( !OGRSQLiteLoadSpatialiteSymbols() )
             return false;
+#endif
         CPLAssert(hSpatialiteCtxt == NULL);
         hSpatialiteCtxt = pfn_spatialite_alloc_connection();
         if( hSpatialiteCtxt != NULL )
