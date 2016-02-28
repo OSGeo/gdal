@@ -136,6 +136,7 @@ static const char * const papszProjectionSupported[] =
     SRS_PT_GAUSSSCHREIBERTMERCATOR,
     SRS_PT_KROVAK,
     SRS_PT_CYLINDRICAL_EQUAL_AREA,
+    SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA,
     SRS_PT_GOODE_HOMOLOSINE, 
     SRS_PT_IGH,
     NULL
@@ -539,6 +540,13 @@ static const char * const papszProjWithParms[] = {
     NULL,
 
     SRS_PT_IGH,
+    NULL,
+
+    SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA,
+    SRS_PP_LATITUDE_OF_POINT_1,
+    SRS_PP_LONGITUDE_OF_POINT_1,
+    SRS_PP_LATITUDE_OF_POINT_2,
+    SRS_PP_LONGITUDE_OF_POINT_2,
     NULL,
 
     NULL

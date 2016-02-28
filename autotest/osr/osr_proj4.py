@@ -456,7 +456,8 @@ def osr_proj4_11():
                      '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +no_defs',
 
                      '+proj=qsc +lat_0=0 +lon_0=0 +ellps=WGS84 +units=m +no_defs ',
-                     '+proj=sch +plat_0=1 +plon_0=2 +phdg_0=3 +h_0=4'
+                     '+proj=sch +plat_0=1 +plon_0=2 +phdg_0=3 +h_0=4',
+                     '+proj=ocea +lat_1=0 +lat_2=0 +lon_1=0 +lon_2=0 +a=2439700 +b=2439700 +units=m +no_defs '
                      ]
 
     for proj4str in proj4strlist:

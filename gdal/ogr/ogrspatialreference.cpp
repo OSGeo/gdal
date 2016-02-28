@@ -4029,6 +4029,45 @@ OGRErr OSRSetCEA( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                             SetOCEA()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetOCEA( 
+                  double dfAzimuth, double dfCenterLong,
+                  double dfLat1, double dfLong1,
+                  double dfLat2, double dfLong2 )
+
+{
+    SetProjection( SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA );
+    SetNormProjParm( SRS_PP_AZIMUTH, dfAzimuth );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_1ST_POINT, dfLat1 );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_1ST_POINT, dfLong1 );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_2ND_POINT, dfLat2 );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_2ND_POINT, dfLong2 );
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             OSRSetOCEA()                             */
+/************************************************************************/
+
+OGRErr OSRSetOCEA( OGRSpatialReferenceH hSRS,
+                  double dfAzimuth, double dfCenterLong,
+                  double dfLat1, double dfLong1,
+                  double dfLat2, double dfLong2 )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetOCEA", OGRERR_FAILURE );
+    
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->SetOCEA(
+        dfAzimuth, dfCenterLong,
+        dfLat1, dfLong1,
+        dfLat2, dfLong2 );
+}
+
+/************************************************************************/
 /*                               SetCS()                                */
 /************************************************************************/
 

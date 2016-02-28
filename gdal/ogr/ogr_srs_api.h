@@ -99,6 +99,8 @@ typedef enum {
 #define SRS_PT_AZIMUTHAL_EQUIDISTANT "Azimuthal_Equidistant"
 #define SRS_PT_CASSINI_SOLDNER  "Cassini_Soldner"
 #define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
+#define SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA                           \
+                                "Oblique_Cylindrical_Equal_Area"
 #define SRS_PT_BONNE            "Bonne"
 #define SRS_PT_ECKERT_I         "Eckert_I"
 #define SRS_PT_ECKERT_II        "Eckert_II"
@@ -489,6 +491,12 @@ OGRErr CPL_DLL OSRSetBonne(OGRSpatialReferenceH hSRS,
 /** Cylindrical Equal Area */
 OGRErr CPL_DLL OSRSetCEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
+
+/** Oblique Cylindrical Equal Area */
+OGRErr CPL_DLL OSRSetOCEA( OGRSpatialReferenceH hSRS,
+                        double dfAzimuth, double dfCenterLong,
+                        double dfLat1, double dfLong1,
+                        double dfLat2, double dfLong2 );
 
 /** Cassini-Soldner */
 OGRErr CPL_DLL OSRSetCS( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
