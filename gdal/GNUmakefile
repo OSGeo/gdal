@@ -211,6 +211,7 @@ endif
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
 endif
+	(cd scripts; $(MAKE) install)
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig
