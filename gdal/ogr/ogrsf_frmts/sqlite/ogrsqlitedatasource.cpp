@@ -40,9 +40,10 @@
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 #include "cpl_csv.h"
+#include "cpl_multiproc.h"
 #include "ogrsqlitevirtualogr.h"
 
-#ifdef HAVE_SPATIALITE
+#if defined(HAVE_SPATIALITE) && !defined(SPATIALITE_DLOPEN)
 #include "spatialite.h"
 #endif
 
@@ -73,21 +74,112 @@ static int OGRSQLiteInitOldSpatialite()
     return bSpatialiteGlobalLoaded;
 }
 
+/************************************************************************/
+/*                          OGRSQLiteDriverUnload()                     */
+/************************************************************************/
+
+void OGRSQLiteDriverUnload(GDALDriver*)
+{
+}
+
 #else
+
+static CPLMutex* hMutexLoadSpatialiteSymbols = NULL;
+static void * (*pfn_spatialite_alloc_connection) (void) = NULL;
+static void (*pfn_spatialite_shutdown) (void) = NULL;
+static void (*pfn_spatialite_init_ex) (sqlite3*, const void *, int) = NULL;
+static void (*pfn_spatialite_cleanup_ex) (const void *) = NULL;
+static const char *(*pfn_spatialite_version) (void) = NULL;
+
+#ifndef SPATIALITE_SONAME
+#define SPATIALITE_SONAME "libspatialite.so"
+#endif
+
+static bool OGRSQLiteLoadSpatialiteSymbols()
+{
+#ifdef SPATIALITE_DLOPEN
+    static bool bInitializationDone = false;
+    CPLMutexHolderD(&hMutexLoadSpatialiteSymbols);
+    if( bInitializationDone )
+      return pfn_spatialite_alloc_connection != NULL;
+    bInitializationDone = true;
+
+    const char *pszLibName = CPLGetConfigOption("SPATIALITESO",
+                                                SPATIALITE_SONAME);
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+
+    /* coverity[tainted_string] */
+    pfn_spatialite_alloc_connection = (void* (*)(void))
+                    CPLGetSymbol( pszLibName, "spatialite_alloc_connection" );
+    CPLPopErrorHandler();
+
+    if( pfn_spatialite_alloc_connection == NULL )
+    {
+        CPLDebug("SQLITE", "Cannot find %s in %s", "spatialite_alloc_connection",
+                 pszLibName);
+        return false;
+    }
+
+    pfn_spatialite_shutdown = (void (*)(void))
+                    CPLGetSymbol( pszLibName, "spatialite_shutdown" );
+    pfn_spatialite_init_ex = (void (*)(sqlite3*, const void *, int))
+                    CPLGetSymbol( pszLibName, "spatialite_init_ex" );
+    pfn_spatialite_cleanup_ex = (void (*)(const void *))
+                    CPLGetSymbol( pszLibName, "spatialite_cleanup_ex" );
+    pfn_spatialite_version = (const char* (*)(void))
+                    CPLGetSymbol( pszLibName, "spatialite_version" );
+    if( pfn_spatialite_shutdown == NULL ||
+        pfn_spatialite_init_ex == NULL ||
+        pfn_spatialite_cleanup_ex == NULL ||
+        pfn_spatialite_version == NULL )
+    {
+        pfn_spatialite_shutdown = NULL;
+        pfn_spatialite_init_ex = NULL;
+        pfn_spatialite_cleanup_ex = NULL;
+        pfn_spatialite_version = NULL;
+        return false;
+    }
+    return true;
+#else
+    pfn_spatialite_alloc_connection = spatialite_alloc_connection;
+    pfn_spatialite_shutdown = pfn_spatialite_shutdown;
+    pfn_spatialite_init_ex = spatialite_init_ex;
+    pfn_spatialite_cleanup_ex = spatialite_cleanup_ex;
+    pfn_spatialite_version = spatialite_version;
+    return true;
+#endif
+}
+
+/************************************************************************/
+/*                          OGRSQLiteDriverUnload()                     */
+/************************************************************************/
+
+void OGRSQLiteDriverUnload(GDALDriver*)
+{
+    if( pfn_spatialite_shutdown != NULL )
+        pfn_spatialite_shutdown();
+    if( hMutexLoadSpatialiteSymbols != NULL )
+    {
+        CPLDestroyMutex(hMutexLoadSpatialiteSymbols);
+        hMutexLoadSpatialiteSymbols = NULL;
+    }
+}
 
 /************************************************************************/
 /*                          InitNewSpatialite()                         */
 /************************************************************************/
 
-int OGRSQLiteBaseDataSource::InitNewSpatialite()
+bool OGRSQLiteBaseDataSource::InitNewSpatialite()
 {
     if( CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
     {
+        if( !OGRSQLiteLoadSpatialiteSymbols() )
+            return false;
         CPLAssert(hSpatialiteCtxt == NULL);
-        hSpatialiteCtxt = spatialite_alloc_connection();
+        hSpatialiteCtxt = pfn_spatialite_alloc_connection();
         if( hSpatialiteCtxt != NULL )
         {
-            spatialite_init_ex(hDB, hSpatialiteCtxt,
+            pfn_spatialite_init_ex(hDB, hSpatialiteCtxt,
                 CPLTestBool(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
         }
     }
@@ -102,7 +194,7 @@ void OGRSQLiteBaseDataSource::FinishNewSpatialite()
 {
     if( hSpatialiteCtxt != NULL )
     {
-        spatialite_cleanup_ex(hSpatialiteCtxt);
+        pfn_spatialite_cleanup_ex(hSpatialiteCtxt);
         hSpatialiteCtxt = NULL;
     }
 }
@@ -132,7 +224,7 @@ int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
 #ifdef HAVE_SPATIALITE
     if( IsSpatialiteLoaded() )
     {
-        v = (int)(( CPLAtof( spatialite_version() ) + 0.001 )  * 10.0);
+        v = (int)(( CPLAtof( pfn_spatialite_version() ) + 0.001 )  * 10.0);
     }
 #endif
     return v;

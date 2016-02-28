@@ -3033,7 +3033,7 @@ dnl ---------------------------------------------------------------------------
 
 HAVE_DODS=no
 
-AC_MSG_CHECKING(Checking for DODS)
+AC_MSG_CHECKING(for DODS)
 AC_ARG_WITH(dods_root,
     [  --with-dods-root[=ARG]  Include DODS support (ARG=no or absolute path)],
     ,,)
@@ -3214,8 +3214,14 @@ dnl ---------------------------------------------------------------------------
 dnl Check for SpatiaLite.
 dnl ---------------------------------------------------------------------------
 
+AC_MSG_CHECKING(for spatialite)
+
 AC_ARG_WITH(spatialite,
-    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes or path)],
+    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)],
+    ,,)
+
+AC_ARG_WITH(spatialite-soname,
+    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen],
     ,,)
 
 HAVE_SPATIALITE=no
@@ -3240,6 +3246,15 @@ elif test "$with_spatialite" = "yes"; then
             AC_MSG_RESULT(not found : spatialite support disabled)
         fi
     fi
+elif test "$with_spatialite" = "dlopen"; then
+  HAVE_SPATIALITE=dlopen
+  AC_MSG_RESULT(dlopen)
+
+  if test "$with_spatialite_soname" != ""; then
+      SPATIALITE_SONAME="$with_spatialite_soname"
+  else
+      SPATIALITE_SONAME="spatialite.so"
+  fi
 else
     AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
     if test -f "$with_spatialite/include/spatialite.h" -a \
@@ -3283,6 +3298,7 @@ if test "$HAVE_SPATIALITE" = "yes"; then
 fi
 
 AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
+AC_SUBST([SPATIALITE_SONAME], $SPATIALITE_SONAME)
 AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
 AC_SUBST([SPATIALITE_AMALGAMATION], $SPATIALITE_AMALGAMATION)
 AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
@@ -3291,7 +3307,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check for SQLite (only if SpatiaLite is not detected)
 dnl ---------------------------------------------------------------------------
 
-if test "${HAVE_SPATIALITE}" = "no" ; then
+if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
     SQLITE3_REQ_VERSION="3.0.0"
     AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
 
@@ -5035,6 +5051,9 @@ LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  PCRE support:              ${HAVE_PCRE}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
+if test "x$SPATIALITE_SONAME" != "x"; then
+LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
+fi
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
