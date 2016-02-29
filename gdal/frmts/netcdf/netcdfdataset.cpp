@@ -6454,10 +6454,10 @@ static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
         const double dfAddOffset = GDALGetRasterOffset( poRB , &bGotAddOffset );
         const double dfScale = GDALGetRasterScale( poRB, &bGotScale );
 
-        if ( bGotAddOffset && dfAddOffset != 0.0 && bGotScale && dfScale != 1.0 ) {
+        if ( bGotAddOffset && dfAddOffset != 0.0 )
             GDALSetRasterOffset( poRB, dfAddOffset );
+        if ( bGotScale && dfScale != 1.0 )
             GDALSetRasterScale( poRB, dfScale );
-        }
     }
 }
 
