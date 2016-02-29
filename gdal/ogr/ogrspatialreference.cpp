@@ -4072,7 +4072,7 @@ OGRErr OGRSpatialReference::SetOCEA2PT(
                   double dfFalseEasting, double dfFalseNorthing )
 
 {
-    SetProjection( SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA );
+    SetProjection( SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA_2_POINT );
     SetNormProjParm( SRS_PP_LATITUDE_OF_1ST_POINT, dfLat1 );
     SetNormProjParm( SRS_PP_LONGITUDE_OF_1ST_POINT, dfLong1 );
     SetNormProjParm( SRS_PP_LATITUDE_OF_2ND_POINT, dfLat2 );
