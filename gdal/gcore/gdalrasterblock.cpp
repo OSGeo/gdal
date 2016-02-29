@@ -130,7 +130,7 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 {
-#ifdef notdef
+#if 0
     if( nNewSizeInBytes == 12346789 )
     {
         GDALRasterBlock::DumpAll();
@@ -686,7 +686,7 @@ void GDALRasterBlock::Verify()
 void GDALRasterBlock::Verify() {}
 #endif
 
-#ifdef notdef
+#if 0
 void GDALRasterBlock::CheckNonOrphanedBlocks(GDALRasterBand* poBand)
 {
     TAKE_LOCK;
@@ -1072,7 +1072,7 @@ int GDALRasterBlock::DropLockForRemovalFromStorage()
     return FALSE;
 }
 
-#ifdef notdef
+#if 0
 void GDALRasterBlock::DumpAll()
 {
     int iBlock = 0;
