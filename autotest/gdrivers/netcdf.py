@@ -566,7 +566,7 @@ def netcdf_12():
     return 'success'
 
 ###############################################################################
-#check for scale/offset = 1.0/0.0 if no scale or offset is available
+#check for scale/offset = None if no scale or offset is available
 def netcdf_13():
 
     if gdaltest.netcdf_drv is None:
@@ -577,7 +577,7 @@ def netcdf_13():
     scale = ds.GetRasterBand( 1 ).GetScale();
     offset = ds.GetRasterBand( 1 ).GetOffset()
 
-    if scale != 1.0 or offset != 0.0:
+    if scale != None or offset != None:
         gdaltest.post_reason( 'Incorrect scale or offset' )
         return 'fail'
 
