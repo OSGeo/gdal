@@ -642,7 +642,8 @@ vsi_l_offset VSICurlHandle::GetFileSize()
             const size_t nExtensionLen = strlen(papszExtensions[i]);
             if( EQUAL(papszExtensions[i], "{noext}") )
             {
-                if( nURLLen > 4 && strchr(pszURL + nURLLen - 4, '.') == NULL )
+                const char* pszLastSlash = strrchr(pszURL, '/');
+                if( pszLastSlash != NULL && strchr(pszLastSlash, '.') == NULL )
                 {
                     bFound = true;
                     break;
