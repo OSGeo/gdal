@@ -4067,15 +4067,15 @@ OGRErr OSRSetOCEA( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetOCEA2PT( 
-                  double dfLat1, double dfLong1,
-                  double dfLat2, double dfLong2,
+                  double dfLat1, double dfLat2,
+                  double dfLong1, double dfLong2,
                   double dfFalseEasting, double dfFalseNorthing )
 
 {
     SetProjection( SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA_2_POINT );
     SetNormProjParm( SRS_PP_LATITUDE_OF_1ST_POINT, dfLat1 );
-    SetNormProjParm( SRS_PP_LONGITUDE_OF_1ST_POINT, dfLong1 );
     SetNormProjParm( SRS_PP_LATITUDE_OF_2ND_POINT, dfLat2 );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_1ST_POINT, dfLong1 );
     SetNormProjParm( SRS_PP_LONGITUDE_OF_2ND_POINT, dfLong2 );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
@@ -4088,16 +4088,16 @@ OGRErr OGRSpatialReference::SetOCEA2PT(
 /************************************************************************/
 
 OGRErr OSRSetOCEA2PT( OGRSpatialReferenceH hSRS,
-                  double dfLat1, double dfLong1,
-                  double dfLat2, double dfLong2,
+                  double dfLat1, double dfLat2,
+                  double dfLong1, double dfLong2,
                   double dfFalseEasting, double dfFalseNorthing )
 
 {
     VALIDATE_POINTER1( hSRS, "OSRSetOCEA2PT", OGRERR_FAILURE );
     
     return reinterpret_cast<OGRSpatialReference *>(hSRS)->SetOCEA2PT(
-        dfLat1, dfLong1,
-        dfLat2, dfLong2,
+        dfLat1, dfLat2,
+        dfLong1, dfLong2,
         dfFalseEasting, dfFalseNorthing );
 }
 
