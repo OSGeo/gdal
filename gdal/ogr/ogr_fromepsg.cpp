@@ -108,7 +108,7 @@ void OGREPSGDatumNameMassage( char ** ppszDatum )
 /* -------------------------------------------------------------------- */
     for( int i = 0; apszDatumEquiv[i] != NULL; i += 2 )
     {
-        if( EQUAL(*ppszDatum,apszDatumEquiv[i]) )
+        if( EQUAL(*ppszDatum, apszDatumEquiv[i]) )
         {
             CPLFree( *ppszDatum );
             *ppszDatum = CPLStrdup( apszDatumEquiv[i+1] );
@@ -643,9 +643,9 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the CoordSysCode                                            */
 /* -------------------------------------------------------------------- */
-    int nCSC = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                 szSearchKey, CC_Integer,
-                                 "COORD_SYS_CODE" ) );
+    const int nCSC = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
+                                       szSearchKey, CC_Integer,
+                                       "COORD_SYS_CODE" ) );
 
     if( pnCoordSysCode != NULL )
         *pnCoordSysCode = nCSC;
@@ -683,7 +683,6 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
                      double * pdfSemiMajor, double * pdfInvFlattening )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Get the semi major axis.                                        */
 /* -------------------------------------------------------------------- */
@@ -708,7 +707,7 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
     double dfToMeters = 1.0;
     if ( !EPSGGetUOMLengthInfo( nUOMLength, NULL, &dfToMeters ) )
     {
-      dfToMeters = 1.0;
+        dfToMeters = 1.0;
     }
 
     dfSemiMajor *= dfToMeters;
@@ -803,9 +802,9 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 /*      number, then the whole function fails.                          */
 /* -------------------------------------------------------------------- */
     CPLString osFilename = CSVFilename( "pcs.override.csv" );
-
-    char szTRFCode[16];
+    char szTRFCode[16] = { '\0' };
     snprintf( szTRFCode, sizeof(szTRFCode), "%d", nPCS );
+
     int nProjMethod =
         atoi( CSVGetField( osFilename,
                            "COORD_REF_SYS_CODE", szTRFCode, CC_Integer,
@@ -829,7 +828,16 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 
     for( int i = 0; i < 7; i++ )
     {
-        char szParamUOMID[32], szParamValueID[32], szParamCodeID[32];
+        if( panParmIds == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "panParmIds cannot be NULL." );
+            return false;
+        }
+
+        char szParamUOMID[32] = { '\0' };
+        char szParamValueID[32] = { '\0' };
+        char szParamCodeID[32] = { '\0' };
 
         snprintf( szParamCodeID, sizeof(szParamCodeID),
                   "PARAMETER_CODE_%d", i+1 );
@@ -837,17 +845,12 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
         snprintf( szParamValueID, sizeof(szParamValueID),
                   "PARAMETER_VALUE_%d", i+1 );
 
-        if( panParmIds == NULL )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "panParmIds cannot be NULL." );
-            return false;
-        }
         panParmIds[i] =
             atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
                               CC_Integer, szParamCodeID ));
 
-        int nUOM = atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
+        int nUOM = atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE",
+                                     szTRFCode,
                                      CC_Integer, szParamUOMID ));
         char *pszValue = CPLStrdup(
             CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
@@ -1440,7 +1443,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /* -------------------------------------------------------------------- */
     int nProjMethod = 0;
     int anParmIds[7] = { 0 };
-    double adfProjParms[7] = { 0 };
+    double adfProjParms[7] = { 0.0 };
 
     if( !EPSGGetProjTRFInfo( nPCSCode, &nProjMethod, anParmIds, adfProjParms ))
         return OGRERR_UNSUPPORTED_SRS;
@@ -1678,7 +1681,6 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
         pszFilename = CSVFilename( "vertcs.csv" );
         papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                          szSearchKey, CC_Integer );
-
     }
 
     if( papszRecord == NULL )
@@ -2323,7 +2325,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
                            "EPSG_PCS_CODE" ) );
     if( nPCSCode < 1 )
     {
-        static bool bFailureReported = FALSE;
+        static bool bFailureReported = false;
 
         if( !bFailureReported )
         {
