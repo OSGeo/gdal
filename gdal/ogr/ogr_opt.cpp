@@ -109,6 +109,8 @@ static const char * const papszProjectionDefinitions[] = {
     "*",
     SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA,
     "Oblique Cylindrical Equal Area",
+    SRS_PP_AZIMUTH,
+    SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_LATITUDE_OF_POINT_1,
     SRS_PP_LONGITUDE_OF_POINT_1,
     SRS_PP_LATITUDE_OF_POINT_2,

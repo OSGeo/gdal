@@ -492,11 +492,16 @@ OGRErr CPL_DLL OSRSetBonne(OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetCEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
 
-/** Oblique Cylindrical Equal Area */
+/** Oblique Cylindrical Equal Area 1point+1azimuth */
 OGRErr CPL_DLL OSRSetOCEA( OGRSpatialReferenceH hSRS,
                         double dfAzimuth, double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Oblique Cylindrical Equal Area 2 points */
+OGRErr CPL_DLL OSRSetOCEA2PT( OGRSpatialReferenceH hSRS,
                         double dfLat1, double dfLong1,
-                        double dfLat2, double dfLong2 );
+                        double dfLat2, double dfLong2,
+                        double dfFalseEasting, double dfFalseNorthing );
 
 /** Cassini-Soldner */
 OGRErr CPL_DLL OSRSetCS( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,

@@ -626,18 +626,16 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             SetOCEA(                 
                 OSR_GDV( papszNV, "alpha", 0.0 ), 
                 OSR_GDV( papszNV, "lonc", 0.0 ), 
-                OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                OSR_GDV( papszNV, "lon_1", 0.0 ), 
-                OSR_GDV( papszNV, "lat_2", 0.0 ), 
-                OSR_GDV( papszNV, "lon_2", 0.0 ) );
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
         else
-            SetOCEA(                 
-                OSR_GDV( papszNV, "alpha", 0.0 ), 
-                OSR_GDV( papszNV, "lonc", 0.0 ), 
+            SetOCEA2PT(                 
                 OSR_GDV( papszNV, "lat_1", 0.0 ), 
                 OSR_GDV( papszNV, "lon_1", 0.0 ), 
                 OSR_GDV( papszNV, "lat_2", 0.0 ), 
-                OSR_GDV( papszNV, "lon_2", 0.0 ) );
+                OSR_GDV( papszNV, "lon_2", 0.0 ),
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"tmerc") )
