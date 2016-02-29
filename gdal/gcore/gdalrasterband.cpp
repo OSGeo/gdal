@@ -3096,6 +3096,11 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         {
             nSampleRate = 
                 (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+            // We want to avoid probing only the first column of blocks for
+            // a square shaped raster, because it is not unlikely that it may
+            // be padding only (#6378)
+            if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
+              nSampleRate += 1;
         }
         else
             nSampleRate = 1;
@@ -3974,6 +3979,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         {
             nSampleRate = 
                 (int)MAX( 1, sqrt((double)nBlocksPerRow * nBlocksPerColumn) );
+            // We want to avoid probing only the first column of blocks for
+            // a square shaped raster, because it is not unlikely that it may
+            // be padding only (#6378)
+            if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
+              nSampleRate += 1;
         }
         else
             nSampleRate = 1;
@@ -4445,6 +4455,11 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         {
             nSampleRate = 
                 (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+            // We want to avoid probing only the first column of blocks for
+            // a square shaped raster, because it is not unlikely that it may
+            // be padding only (#6378)
+            if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
+              nSampleRate += 1;
         }
         else
             nSampleRate = 1;
