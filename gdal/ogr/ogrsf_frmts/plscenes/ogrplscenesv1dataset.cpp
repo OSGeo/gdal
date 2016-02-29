@@ -206,6 +206,7 @@ void OGRPLScenesV1Dataset::EstablishLayerList()
             json_object_put(poObj);
             break;
         }
+        json_object_put(poObj);
     }
 }
 
