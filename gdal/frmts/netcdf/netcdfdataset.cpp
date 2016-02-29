@@ -108,6 +108,8 @@ class netCDFRasterBand : public GDALPamRasterBand
     int         bNoDataSet;
     double      dfNoDataValue;
     double      adfValidRange[2];
+    int         bHaveScale;
+    int         bHaveOffset;
     double      dfScale;
     double      dfOffset;
     CPLString   osUnitType;
@@ -173,6 +175,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     cdfid(poNCDFDS->GetCDFID()),
     nBandXPos(panBandZPosIn[0]),
     nBandYPos(panBandZPosIn[1]),
+    bHaveScale(false),
+    bHaveOffset(false),
     dfScale(1.0),
     dfOffset(0.0),
     bSignedData(true),   // Default signed, except for Byte.
@@ -415,20 +419,18 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* variable and set them.  If these values are not available, set       */
 /* offset to 0 and scale to 1                                           */
 /* -------------------------------------------------------------------- */
-    double dfOffset_ = 0.0;
     if ( nc_inq_attid ( cdfid, nZId, CF_ADD_OFFSET, NULL) == NC_NOERR ) {
-        status = nc_get_att_double( cdfid, nZId, CF_ADD_OFFSET, &dfOffset_ );
-        CPLDebug( "GDAL_netCDF", "got add_offset=%.16g, status=%d", dfOffset_, status );
+        status = nc_get_att_double( cdfid, nZId, CF_ADD_OFFSET, &dfOffset );
+        CPLDebug( "GDAL_netCDF", "got add_offset=%.16g, status=%d", dfOffset, status );
+        SetOffset( dfOffset );
     }
 
-    double dfScale_ = 1.0;
     if ( nc_inq_attid ( cdfid, nZId,
                         CF_SCALE_FACTOR, NULL) == NC_NOERR ) {
-        status = nc_get_att_double( cdfid, nZId, CF_SCALE_FACTOR, &dfScale_ );
-        CPLDebug( "GDAL_netCDF", "got scale_factor=%.16g, status=%d", dfScale_, status );
+        status = nc_get_att_double( cdfid, nZId, CF_SCALE_FACTOR, &dfScale );
+        CPLDebug( "GDAL_netCDF", "got scale_factor=%.16g, status=%d", dfScale, status );
+        SetScale( dfScale );
     }
-    SetOffset( dfOffset_ );
-    SetScale( dfScale_ );
 
     /* should we check for longitude values > 360 ? */
     bCheckLongitude =
@@ -692,7 +694,7 @@ netCDFRasterBand::~netCDFRasterBand()
 double netCDFRasterBand::GetOffset( int *pbSuccess ) 
 {
     if( pbSuccess != NULL ) 
-        *pbSuccess = TRUE; 
+        *pbSuccess = bHaveOffset;
 
     return dfOffset; 
 }
@@ -705,6 +707,7 @@ CPLErr netCDFRasterBand::SetOffset( double dfNewOffset )
     CPLMutexHolderD(&hNCMutex);
 
     dfOffset = dfNewOffset; 
+    bHaveOffset = true;
 
     /* write value if in update mode */
     if ( poDS->GetAccess() == GA_Update ) {
@@ -731,7 +734,7 @@ CPLErr netCDFRasterBand::SetOffset( double dfNewOffset )
 double netCDFRasterBand::GetScale( int *pbSuccess ) 
 {
     if( pbSuccess != NULL ) 
-        *pbSuccess = TRUE;
+        *pbSuccess = bHaveScale;
 
     return dfScale; 
 }
@@ -744,6 +747,7 @@ CPLErr netCDFRasterBand::SetScale( double dfNewScale )
     CPLMutexHolderD(&hNCMutex);
 
     dfScale = dfNewScale; 
+    bHaveScale = true;
 
     /* write value if in update mode */
     if ( poDS->GetAccess() == GA_Update ) {
@@ -6450,10 +6454,10 @@ static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
         const double dfAddOffset = GDALGetRasterOffset( poRB , &bGotAddOffset );
         const double dfScale = GDALGetRasterScale( poRB, &bGotScale );
 
-        if ( bGotAddOffset && dfAddOffset != 0.0 && bGotScale && dfScale != 1.0 ) {
+        if ( bGotAddOffset && dfAddOffset != 0.0 )
             GDALSetRasterOffset( poRB, dfAddOffset );
+        if ( bGotScale && dfScale != 1.0 )
             GDALSetRasterScale( poRB, dfScale );
-        }
     }
 }
 
