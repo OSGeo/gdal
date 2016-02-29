@@ -501,8 +501,8 @@ OGRErr CPL_DLL OSRSetOCEA( OGRSpatialReferenceH hSRS,
 
 /** Oblique Cylindrical Equal Area 2 points */
 OGRErr CPL_DLL OSRSetOCEA2PT( OGRSpatialReferenceH hSRS,
-                        double dfLat1, double dfLong1,
-                        double dfLat2, double dfLong2,
+                        double dfLat1, double dfLat2,
+                        double dfLong1, double dfLong2,
                         double dfFalseEasting, double dfFalseNorthing );
 
 /** Cassini-Soldner */

@@ -343,8 +343,8 @@ class CPL_DLL OGRSpatialReference
                         double dfFalseEasting, double dfFalseNorthing );
 
     /** Oblique Cylindrical Equal Area 2 points*/
-    OGRErr      SetOCEA2PT( double dfLat1, double dfLong1,
-                        double dfLat2, double dfLong2,
+    OGRErr      SetOCEA2PT( double dfLat1, double dfLat2,
+                        double dfLong1, double dfLong2,
                         double dfFalseEasting, double dfFalseNorthing );
 
     /** Cassini-Soldner */

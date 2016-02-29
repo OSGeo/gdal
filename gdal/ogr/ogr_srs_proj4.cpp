@@ -631,8 +631,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         else
             SetOCEA2PT(                 
                 OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                OSR_GDV( papszNV, "lon_1", 0.0 ), 
                 OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                OSR_GDV( papszNV, "lon_1", 0.0 ), 
                 OSR_GDV( papszNV, "lon_2", 0.0 ),
                 OSR_GDV( papszNV, "x_0", 0.0 ), 
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
