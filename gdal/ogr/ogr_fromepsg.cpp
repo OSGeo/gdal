@@ -777,8 +777,10 @@ static const int FalseOriginEasting =   8826;
 static const int FalseOriginNorthing =  8827;
 static const int SphericalOriginLat =   8828;
 static const int SphericalOriginLong =  8829;
+#if 0
 static const int InitialLongitude =     8830;
 static const int ZoneWidth =            8831;
+#endif
 static const int PolarLatStdParallel =  8832;
 static const int PolarLongOrigin =      8833;
 
