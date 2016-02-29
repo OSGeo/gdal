@@ -863,7 +863,13 @@ def ogr_plscenes_v1_nominal():
     if gdaltest.plscenes_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{"_links": {}, "catalogs": [{"count": 2, "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', 
+"""{"_links": {}, "catalogs": [
+    {"count": 2,
+     "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"},
+     "asset_categories": {"analytic": {"description": "", "id": "analytic", "name": "Analytic Products"}, "visual": {"description": "", "id": "visual", "name": "Visual Products"}},
+     "id": "my_catalog"}
+]}""")
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
@@ -995,6 +1001,38 @@ def ogr_plscenes_v1_nominal():
             ]
         },
 
+        "ItemEmbeds": {
+          "properties": {
+            "assets": {
+              "additionalProperties": {
+                "$ref": "#/definitions/ItemAsset"
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+
+        "ItemAsset": {
+          "properties": {
+            "_links": {
+              "$ref": "#/definitions/SelfLink"
+            },
+            "category_id": {
+              "description": "Category identifier of this ItemAsset.",
+              "type": "string"
+            },
+            "file": {
+              "description": "RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
+              "type": "string"
+            },
+            "mimetype": {
+              "description": "The MIME type of the underlying asset file.",
+              "type": "string"
+            }
+          }
+        },
+
         "ItemLinks": {
             "allOf": [
                 {
@@ -1070,39 +1108,84 @@ def ogr_plscenes_v1_nominal():
 
     expected_md = """{
   "id":{
-    "type":"string"
+    "type":"string",
+    "src_field":"id",
+    "server_queryable":true
   },
   "self_link":{
     "type":"string",
-    "src_field":"_links._self"
+    "src_field":"_links._self",
+    "server_queryable":false
   },
   "assets_link":{
     "type":"string",
-    "src_field":"_links.assets"
+    "src_field":"_links.assets",
+    "server_queryable":false
   },
   "created":{
     "type":"string",
     "format":"date-time",
-    "src_field":"properties.created"
+    "src_field":"properties.created",
+    "server_queryable":true
   },
   "float":{
     "format":"float",
     "type":"number",
-    "src_field":"properties.catalog::float"
+    "src_field":"properties.catalog::float",
+    "server_queryable":true
   },
   "string":{
     "type":"string",
-    "src_field":"properties.catalog::string"
+    "src_field":"properties.catalog::string",
+    "server_queryable":true
   },
   "int32":{
     "format":"int32",
     "type":"integer",
-    "src_field":"properties.catalog::int32"
+    "src_field":"properties.catalog::int32",
+    "server_queryable":true
   },
   "int64":{
     "format":"int64",
     "type":"integer",
-    "src_field":"properties.catalog::int64"
+    "src_field":"properties.catalog::int64",
+    "server_queryable":false
+  },
+  "asset_analytic_self_link":{
+    "description":"RFC 3986 URI representing the canonical location of this asset.",
+    "type":"string",
+    "src_field":"_embeds.assets.analytic._links._self",
+    "server_queryable":false
+  },
+  "asset_analytic_file":{
+    "description":"RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
+    "type":"string",
+    "src_field":"_embeds.assets.analytic.file",
+    "server_queryable":false
+  },
+  "asset_analytic_mimetype":{
+    "description":"The MIME type of the underlying asset file.",
+    "type":"string",
+    "src_field":"_embeds.assets.analytic.mimetype",
+    "server_queryable":false
+  },
+  "asset_visual_self_link":{
+    "description":"RFC 3986 URI representing the canonical location of this asset.",
+    "type":"string",
+    "src_field":"_embeds.assets.visual._links._self",
+    "server_queryable":false
+  },
+  "asset_visual_file":{
+    "description":"RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
+    "type":"string",
+    "src_field":"_embeds.assets.visual.file",
+    "server_queryable":false
+  },
+  "asset_visual_mimetype":{
+    "description":"The MIME type of the underlying asset file.",
+    "type":"string",
+    "src_field":"_embeds.assets.visual.mimetype",
+    "server_queryable":false
   }
 }"""
 
@@ -1129,7 +1212,7 @@ def ogr_plscenes_v1_nominal():
     lyr = ds.GetLayer(0)
 
     field_count = lyr.GetLayerDefn().GetFieldCount()
-    if field_count != 8:
+    if field_count != 14:
         gdaltest.post_reason('fail')
         print(field_count)
         return 'fail'
@@ -1146,6 +1229,17 @@ def ogr_plscenes_v1_nominal():
             "_links" : {
                 "_self" : "self",
                 "assets" : "assets"
+            },
+            "_embeds" : {
+              "assets": {
+                "visual" : {
+                    "_links": {
+                      "_self": "visual_links_self"
+                    },
+                    "file": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download",
+                    "mimetype": "visual_mimetype"
+                }
+              }
             },
             "properties": {
                 "created" : "2016-02-11T12:34:56.789Z",
@@ -1172,7 +1266,11 @@ def ogr_plscenes_v1_nominal():
     if f.GetFID() != 1 or f['id'] != 'id' or f['self_link'] != 'self' or f['assets_link'] != 'assets' or \
        f['created'] != '2016/02/11 12:34:56.789+00' or \
        f['float'] != 1.23 or f['string'] != 'string' or f['int32'] != 123 or \
-       f['int64'] != 1234567890123 or f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.0 49.1,2.1 49.1,2.1 49.0,2 49)))':
+       f['int64'] != 1234567890123 or \
+       f['asset_visual_self_link'] != 'visual_links_self' or \
+       f['asset_visual_file'] != '/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download' or \
+       f['asset_visual_mimetype'] != 'visual_mimetype' or \
+       f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.0 49.1,2.1 49.1,2.1 49.0,2 49)))':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -1183,6 +1281,171 @@ def ogr_plscenes_v1_nominal():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+
+    # Try raster access
+
+    # Missing catalog
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None or gdal.GetLastErrorMsg().find('Missing catalog') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid catalog
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=invalid', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+
+    # visual not an object
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{ "visual": false }""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing file
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{ "visual": { } }""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Empty file
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{ "visual": { "file": "" } }""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets',
+"""{ "visual": { "file": "/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download"} }""")
+
+    # Missing /vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None or gdal.GetLastErrorMsg().find('The generation of the product is in progress. Retry later') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # JSon content for /vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download',
+                           """{}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing /vsimem/v1/catalogs/my_catalog
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download',
+                           open('../gcore/data/byte.tif', 'rb').read())
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Failed filter by scene id
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog',
+                           """{"count": 2,
+     "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"},
+     "asset_categories": {"analytic": {"description": "", "id": "analytic", "name": "Analytic Products"}, "visual": {"description": "", "id": "visual", "name": "Visual Products"}},
+     "id": "my_catalog"}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds_raster = None
+
+    # Test metadata items attached to dataset
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/id?_embeds=assets',
+"""{
+    "id": "id",
+    "properties": {
+        "catalog::int32": 123,
+    },
+}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'PRODUCT_TYPE=visual', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds_raster.GetMetadataItem('int32') != '123':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds_raster = None
+
+    # Test invalid product_type
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'PRODUCT_TYPE=invalid', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test subdatasets
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'PRODUCT_TYPE=list', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if len(ds_raster.GetSubDatasets()) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds_raster = None
+
+    # Unsupported option
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds_raster = gdal.OpenEx('PLScenes:unsupported=yes', gdal.OF_RASTER, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog', 'SCENE=id'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds_raster is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test catalog with vector access
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds2 = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=my_catalog'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds2 is None or ds2.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    with gdaltest.error_handler():
+        ds2 = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo', 'CATALOG=invalid'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds2 is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id/assets')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id/assets/visual/download')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/id?_embeds=assets')
 
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items_page2/?_embeds=features.*.assets&_page_size=1000',
 """{
@@ -1239,7 +1502,10 @@ def ogr_plscenes_v1_nominal():
         f.DumpReadable()
         return 'fail'
 
-    if lyr.GetFeatureCount() != 1:
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=0&geometry=POINT(2%2049)',
+"""{ "_result_count": 123456 }""")
+
+    if lyr.GetFeatureCount() != 123456:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1399,6 +1665,7 @@ def ogr_plscenes_v1_nominal():
     gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]')
     gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&created=[2016-02-11T12:34:56Z:]&catalog::float=[0.00000000:]&catalog::int32=[:3]')
     gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_embeds=features.*.assets&_page_size=1000&catalog::float=[:3.00000000]&catalog::string=foo&catalog::int32=[3:]')
+    gdal.Unlink('/vsimem/v1/catalogs/my_catalog/items/?_page_size=0&geometry=POINT(2%2049)')
 
     return 'success'
 
@@ -1494,7 +1761,17 @@ def ogr_plscenes_v1_errors():
     with gdaltest.error_handler():
         lyr.GetLayerDefn().GetFieldCount()
 
-    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "id": "my_catalog"}]}')
+
+    # Invalid asset_categories
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/invalid_spec"}, "asset_categories": false, "id": "my_catalog"}]}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn().GetFieldCount()
+
+    gdal.FileFromMemBuffer('/vsimem/v1/catalogs', '{ "catalogs": [{ "_links": { "items": "/vsimem/v1/catalogs/my_catalog/items/", "spec": "/vsimem/v1/catalogs/my_catalog/spec"}, "asset_categories": { "my_asset": {} }, "id": "my_catalog"}]}')
 
     # Test various errors in spec
     for spec in [ '{}', # no path 
@@ -1692,6 +1969,139 @@ def ogr_plscenes_v1_errors():
                         ]
                        }}}}""", # Invalid parameters
 
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    },
+                                                    "_embeds": false
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # invalid type for _embeds
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    },
+                                                    "_embeds": {
+                                                      "properties": {
+                                                        "assets": {
+                                                          "additionalProperties": {
+                                                            "$ref": "invalid_ref"
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # invalid ref for additionalProperties
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    },
+                                                    "_embeds": {
+                                                      "properties": {
+                                                        "assets": {
+                                                          "XXadditionalProperties": {
+                                                            "properties": {
+                                                                "file": {
+                                                                }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # missing additionalProperties
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    },
+                                                    "_embeds": {
+                                                      "properties": {
+                                                        "assets": {
+                                                          "additionalProperties": false
+                                                        }
+                                                      }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # additionalProperties of wrong type
+
+                    """{ "paths": { "/catalogs/my_catalog/items/" : {"get": {
+                        "responses": {
+                            "200": {
+                                "schema": {
+                                    "properties": {
+                                        "features": {
+                                            "items": {
+                                                "properties": {
+                                                    "properties": {
+                                                    },
+                                                    "_embeds": {
+                                                      "properties": {
+                                                        "assets": {
+                                                          "additionalProperties": {
+                                                            "xxproperties": {}
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                     }
+                               }
+                            }
+                        }
+                       }}}}""", # no properties in additionalProperties
+
                         ]:
         gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
         ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])
@@ -1700,7 +2110,10 @@ def ogr_plscenes_v1_errors():
 
         gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/spec', spec)
         with gdaltest.error_handler():
-            lyr.GetLayerDefn().GetFieldCount()
+            field_count =lyr.GetLayerDefn().GetFieldCount()
+        if field_count != 0:
+          gdaltest.post_reason('fail')
+          return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/v1/catalogs/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['VERSION=v1', 'API_KEY=foo'])

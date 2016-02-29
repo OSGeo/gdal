@@ -51,7 +51,8 @@ OGRPLScenesV1Layer::OGRPLScenesV1Layer(OGRPLScenesV1Dataset* poDS,
                                        const char* pszName,
                                        const char* pszSpecURL,
                                        const char* pszItemsURL,
-                                       GIntBig nCount)
+                                       GIntBig nCount,
+                                       std::vector<CPLString> aoAssetCategories)
 {
     m_poDS = poDS;
     SetDescription(pszName);
@@ -64,6 +65,7 @@ OGRPLScenesV1Layer::OGRPLScenesV1Layer(OGRPLScenesV1Dataset* poDS,
     m_osSpecURL = pszSpecURL;
     m_osItemsURL = pszItemsURL;
     m_nTotalFeatures = nCount;
+    m_aoAssetCategories = aoAssetCategories;
     m_nNextFID = 1;
     m_bEOF = false;
     m_bStillInFirstPage = true;
@@ -194,8 +196,9 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
     json_object* poItemsDef = NULL;
     json_object_object_foreachC( poPaths, it )
     {
-        const char* pszNeedle = strstr( m_osItemsURL.c_str(), it.key );
-        if( pszNeedle != NULL && it.val != NULL &&
+        if( m_osItemsURL.size() >= strlen(it.key) &&
+            strcmp( m_osItemsURL.c_str() + m_osItemsURL.size() - strlen(it.key), it.key ) == 0 &&
+            it.val != NULL &&
             json_object_get_type(it.val) == json_type_object )
         {
             poItemsDef = it.val;
@@ -306,7 +309,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
     json_object* poParameters = json_ex_get_object_by_path(poItemsDef, "get.parameters");
     if( poParameters == NULL || json_object_get_type(poParameters) != json_type_array )
     {
-        CPLDebug("PLSCENES", "No queriable parameters found");
+        CPLDebug("PLSCENES", "No queryable parameters found");
     }
     else
     {
@@ -413,6 +416,9 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
     json_object* poId = json_object_object_get(poProperties, "id");
     if( poId != NULL )
     {
+        json_object_object_add(poId, "src_field", json_object_new_string("id") );
+        json_object_object_add(poId, "server_queryable", json_object_new_boolean(TRUE) );
+
         osPropertiesDesc += "\"id\""; 
         osPropertiesDesc += ":"; 
         osPropertiesDesc += json_object_to_json_string(poId);
@@ -431,6 +437,8 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         ParseProperties(poLinks, poSpec, osPropertiesDesc, "_links");
     }
 
+    json_object* poEmbeds = json_object_object_get(poProperties, "_embeds");
+
     poProperties = json_object_object_get(poProperties, "properties");
     if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
     {
@@ -448,6 +456,15 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
     }
 
     ParseProperties(poProperties, poSpec, osPropertiesDesc, "properties");
+
+    if( poEmbeds != NULL && json_object_get_type(poEmbeds) == json_type_object )
+        poEmbeds = ResolveRefIfNecessary(poEmbeds, poSpec);
+    else
+        poEmbeds = NULL;
+    if( poEmbeds != NULL )
+    {
+        ParseEmbeds(poEmbeds, poSpec, osPropertiesDesc);
+    }
 
     osPropertiesDesc += "}";
 
@@ -490,6 +507,51 @@ const char *OGRPLScenesV1Layer::GetMetadataItem( const char * pszName, const cha
         EstablishLayerDefn();
     }
     return OGRLayer::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
+/*                      OGRPLScenesV1LayerGetFieldType()                */
+/************************************************************************/
+
+static OGRFieldType OGRPLScenesV1LayerGetFieldType(json_object* poObj,
+                                                   const char* pszJSonFieldName )
+{
+    json_object* poType = json_object_object_get(poObj, "type");
+    OGRFieldType eType = OFTString;
+    if( poType != NULL && json_object_get_type(poType) == json_type_string )
+    {
+        const char* pszType = json_object_get_string(poType);
+        if( EQUAL(pszType, "string") )
+            eType = OFTString;
+        else if( EQUAL(pszType, "number") )
+            eType = OFTReal;
+        else if( EQUAL(pszType, "integer") )
+            eType = OFTInteger;
+        else
+        {
+            CPLDebug("PLSCENES", "Unknown type '%s' for '%s'",
+                      pszType, pszJSonFieldName);
+        }
+        json_object* poFormat = json_object_object_get(poObj, "format");
+        if( poFormat != NULL && json_object_get_type(poFormat) == json_type_string )
+        {
+            const char* pszFormat = json_object_get_string(poFormat);
+            if( EQUAL(pszFormat, "date-time") )
+                eType = OFTDateTime;
+            else if( EQUAL(pszFormat, "int32") )
+                eType = OFTInteger;
+            else if( EQUAL(pszFormat, "int64") )
+                eType = OFTInteger64;
+            else if( EQUAL(pszFormat, "float") )
+                eType = OFTReal;
+            else
+            {
+                CPLDebug("PLSCENES", "Unknown type '%s' for '%s'",
+                          pszFormat, pszJSonFieldName);
+            }
+        }
+    }
+    return eType;
 }
 
 /************************************************************************/
@@ -556,48 +618,137 @@ void OGRPLScenesV1Layer::ParseProperties(json_object* poProperties,
             json_object_object_add( it.val, "src_field",
                 json_object_new_string( (CPLString(pszCategory) + CPLString(".") + pszJSonFieldName).c_str() ) );
 
+             json_object_object_add( it.val, "server_queryable",
+                json_object_new_boolean( EQUAL(pszCategory, "properties") &&
+                    m_oSetQueriable.find(pszJSonFieldName) != m_oSetQueriable.end() ) );
+
             osPropertiesDesc += json_object_to_json_string(it.val);
 
-            json_object* poType = json_object_object_get(it.val, "type");
-            OGRFieldType eType = OFTString;
-            if( poType != NULL && json_object_get_type(poType) == json_type_string )
-            {
-                const char* pszType = json_object_get_string(poType);
-                if( EQUAL(pszType, "string") )
-                    eType = OFTString;
-                else if( EQUAL(pszType, "number") )
-                    eType = OFTReal;
-                else if( EQUAL(pszType, "integer") )
-                    eType = OFTInteger;
-                else
-                {
-                    CPLDebug("PLSCENES", "Unknown type '%s' for '%s'",
-                             pszType, pszJSonFieldName);
-                }
-                json_object* poFormat = json_object_object_get(it.val, "format");
-                if( poFormat != NULL && json_object_get_type(poFormat) == json_type_string )
-                {
-                    const char* pszFormat = json_object_get_string(poFormat);
-                    if( EQUAL(pszFormat, "date-time") )
-                        eType = OFTDateTime;
-                    else if( EQUAL(pszFormat, "int32") )
-                        eType = OFTInteger;
-                    else if( EQUAL(pszFormat, "int64") )
-                        eType = OFTInteger64;
-                    else if( EQUAL(pszFormat, "float") )
-                        eType = OFTReal;
-                    else
-                    {
-                        CPLDebug("PLSCENES", "Unknown type '%s' for '%s'",
-                                 pszFormat, pszJSonFieldName);
-                    }
-                }
-            }
-
+            const OGRFieldType eType =
+                  OGRPLScenesV1LayerGetFieldType(it.val, pszJSonFieldName);
             OGRFieldDefn oFieldDefn(pszOGRFieldName, eType);
             RegisterField(&oFieldDefn,
                           EQUAL(pszCategory, "_links") ? NULL : pszJSonFieldName,
                           (CPLString(pszCategory) + CPLString(".") + pszJSonFieldName).c_str());
+        }
+    }
+}
+
+/************************************************************************/
+/*                           ParseEmbeds()                          */
+/************************************************************************/
+
+void OGRPLScenesV1Layer::ParseEmbeds(json_object* poProperties,
+                                         json_object* poSpec,
+                                         CPLString& osPropertiesDesc)
+{
+/*
+    "ItemEmbeds": {
+      "properties": {
+        "assets": {
+          "additionalProperties": {
+            "$ref": "#/definitions/ItemAsset"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+*/
+    json_object* poAddProperties = json_ex_get_object_by_path(poProperties, "properties.assets.additionalProperties");
+    if( poAddProperties == NULL || json_object_get_type(poAddProperties) != json_type_object )
+        return;
+    poAddProperties = ResolveRefIfNecessary(poAddProperties, poSpec);
+    if( poAddProperties == NULL )
+      return;
+
+/*
+    "ItemAsset": {
+      "properties": {
+        "_links": {
+          "$ref": "#/definitions/SelfLink"
+        },
+        "category_id": {
+          "description": "Category identifier of this ItemAsset.",
+          "type": "string"
+        },
+        "file": {
+          "description": "RFC 3986 URI representing a location that will either directly serve the underlying asset data, or redirect to a location that will. A client must never attempt to construct this URI, as only its behavior is governed by this specification, not its location. In the event that a 202 is returned from a GET request against this URI, the response's `X-Retry-After` header indicates how long the client should wait before reattempting the request.",
+          "type": "string"
+        },
+        "mimetype": {
+          "description": "The MIME type of the underlying asset file.",
+          "type": "string"
+        }
+      }
+*/
+    poProperties = json_object_object_get(poAddProperties, "properties");
+    if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
+        return;
+
+    bool bFoundLinks = false;
+    for(size_t i = 0; i < m_aoAssetCategories.size(); i++ )
+    {
+        json_object_iter it;
+        it.key = NULL;
+        it.val = NULL;
+        it.entry = NULL;
+        json_object_object_foreachC( poProperties, it )
+        {
+            if( it.val != NULL && json_object_get_type(it.val) == json_type_object )
+            {
+                const char* pszJSonFieldName = it.key;
+                if( strcmp(pszJSonFieldName, "category_id") == 0 )
+                  continue;
+                const char* pszOGRFieldName = pszJSonFieldName;
+                CPLString osSrcField(CPLString("_embeds.assets.") + m_aoAssetCategories[i] + CPLString("."));
+                json_object* poLinksRef = NULL;
+                if( EQUAL(pszJSonFieldName, "_links") &&
+                    (bFoundLinks ||
+                     ((poLinksRef = json_object_object_get( it.val, "$ref" )) != NULL &&
+                     json_object_get_type(poLinksRef) == json_type_string &&
+                     strcmp(json_object_get_string(poLinksRef), "#/definitions/SelfLink") == 0)) )
+                {
+                    bFoundLinks = true;
+                    pszOGRFieldName = CPLSPrintf("asset_%s_self_link", m_aoAssetCategories[i].c_str());
+                    osSrcField += "_links._self";
+                }
+                else
+                {
+                    pszOGRFieldName = CPLSPrintf("asset_%s_%s", m_aoAssetCategories[i].c_str(), pszJSonFieldName);
+                    osSrcField += pszJSonFieldName;
+                }
+                json_object* poKey = json_object_new_string(pszOGRFieldName);
+                const char* pszKeySerialized = json_object_to_json_string(poKey);
+                if( osPropertiesDesc != "{" )
+                    osPropertiesDesc += ",";
+                osPropertiesDesc += pszKeySerialized; 
+                osPropertiesDesc += ":"; 
+                json_object_put(poKey);
+
+                if( EQUAL(pszJSonFieldName, "_links") && bFoundLinks )
+                {
+                    json_object_object_del( it.val, "$ref" );
+                    json_object_object_add( it.val, "description",
+                            json_object_new_string("RFC 3986 URI representing the canonical location of this asset.") );
+                    json_object_object_add( it.val, "type", json_object_new_string("string") );
+                }
+
+                json_object_object_add( it.val, "src_field",
+                    json_object_new_string( osSrcField.c_str() ) );
+
+                json_object_object_add( it.val, "server_queryable",
+                                        json_object_new_boolean( FALSE ) );
+
+                osPropertiesDesc += json_object_to_json_string(it.val);
+
+                const OGRFieldType eType =
+                  OGRPLScenesV1LayerGetFieldType(it.val, pszJSonFieldName);
+                OGRFieldDefn oFieldDefn(pszOGRFieldName, eType);
+                RegisterField(&oFieldDefn,
+                              NULL,
+                              osSrcField.c_str());
+            }
         }
     }
 }
@@ -682,19 +833,25 @@ void OGRPLScenesV1Layer::ResetReading()
         m_poFeatures = NULL;
     m_nNextFID = 1;
     m_bStillInFirstPage = true;
-    m_osRequestURL = BuildRequestURL();
+    m_osRequestURL = BuildRequestURL(false);
 }
 
 /************************************************************************/
 /*                          BuildRequestURL()                           */
 /************************************************************************/
 
-CPLString OGRPLScenesV1Layer::BuildRequestURL()
+CPLString OGRPLScenesV1Layer::BuildRequestURL(bool bForHits)
 {
-    CPLString osURL = m_osItemsURL + "?_embeds=features.*.assets";
+    CPLString osURL = m_osItemsURL;
 
-    if( m_nPageSize > 0 )
-        osURL += CPLSPrintf("&_page_size=%d", m_nPageSize);
+    if( bForHits )
+        osURL += "?_page_size=0";
+    else
+    {
+        osURL += "?_embeds=features.*.assets";
+        if( m_nPageSize > 0 )
+            osURL += CPLSPrintf("&_page_size=%d", m_nPageSize);
+    }
 
     if( m_poFilterGeom != NULL )
     {
@@ -1157,24 +1314,46 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
             it.entry = NULL;
             json_object_object_foreachC( poProperties, it )
             {
-                std::map<CPLString, int>::iterator oIter = m_oMapPrefixedJSonFieldNameToFieldIdx.find(
-                        CPLString(pszFeaturePart) + CPLString(".") + it.key);
-                if( it.val != NULL && oIter != m_oMapPrefixedJSonFieldNameToFieldIdx.end() )
+                SetFieldFromPrefixedJSonFieldName(
+                    poFeature, CPLString(pszFeaturePart) + CPLString(".") + it.key,
+                    it.val);
+            }
+        }
+    }
+
+    json_object* poAssets = json_ex_get_object_by_path(poJSonFeature, "_embeds.assets");
+    if( poAssets != NULL && json_object_get_type(poAssets) == json_type_object )
+    {
+        json_object_iter itAsset;
+        itAsset.key = NULL;
+        itAsset.val = NULL;
+        itAsset.entry = NULL;
+        json_object_object_foreachC( poAssets, itAsset )
+        {
+            json_object* poAsset = itAsset.val;
+            if( poAsset != NULL && json_object_get_type(poAsset) == json_type_object )
+            {
+                json_object_iter it;
+                it.key = NULL;
+                it.val = NULL;
+                it.entry = NULL;
+                json_object_object_foreachC( poAsset, it )
                 {
-                    const int iField = oIter->second;
-                    json_type eJSonType = json_object_get_type(it.val);
-                    if( eJSonType == json_type_int )
+                    if( it.val == NULL ) continue;
+                    CPLString osPrefixedJSonFieldName("_embeds.assets." + CPLString(itAsset.key));
+                    if( strcmp(it.key, "_links") == 0 &&
+                        json_object_get_type(it.val) == json_type_object &&
+                        json_object_object_get(it.val, "_self") != NULL )
                     {
-                        poFeature->SetField(iField,
-                                static_cast<GIntBig>(json_object_get_int64(it.val)));
+                        osPrefixedJSonFieldName += "._links._self";
+                        SetFieldFromPrefixedJSonFieldName(
+                            poFeature, osPrefixedJSonFieldName, json_object_object_get(it.val, "_self"));
                     }
-                    else if( eJSonType == json_type_double )
+                    else
                     {
-                        poFeature->SetField(iField, json_object_get_double(it.val));
-                    }
-                    else if( eJSonType == json_type_string )
-                    {
-                        poFeature->SetField(iField, json_object_get_string(it.val));
+                        osPrefixedJSonFieldName += "." + CPLString(it.key);
+                        SetFieldFromPrefixedJSonFieldName(
+                            poFeature, osPrefixedJSonFieldName, it.val);
                     }
                 }
             }
@@ -1185,6 +1364,37 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
 }
 
 /************************************************************************/
+/*                    SetFieldFromPrefixedJSonFieldName()               */
+/************************************************************************/
+
+void OGRPLScenesV1Layer::SetFieldFromPrefixedJSonFieldName(
+                                  OGRFeature* poFeature,
+                                  const CPLString& osPrefixedJSonFieldName,
+                                  json_object* poVal )
+{
+    std::map<CPLString, int>::iterator oIter = m_oMapPrefixedJSonFieldNameToFieldIdx.find(
+            osPrefixedJSonFieldName);
+    if( poVal != NULL && oIter != m_oMapPrefixedJSonFieldNameToFieldIdx.end() )
+    {
+        const int iField = oIter->second;
+        json_type eJSonType = json_object_get_type(poVal);
+        if( eJSonType == json_type_int )
+        {
+            poFeature->SetField(iField,
+                    static_cast<GIntBig>(json_object_get_int64(poVal)));
+        }
+        else if( eJSonType == json_type_double )
+        {
+            poFeature->SetField(iField, json_object_get_double(poVal));
+        }
+        else if( eJSonType == json_type_string )
+        {
+            poFeature->SetField(iField, json_object_get_string(poVal));
+        }
+    }
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
@@ -1192,6 +1402,20 @@ GIntBig OGRPLScenesV1Layer::GetFeatureCount(int bForce)
 {
     if( m_nTotalFeatures > 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return m_nTotalFeatures;
+
+    json_object* poRes = m_poDS->RunRequest(BuildRequestURL(true));
+    if( poRes != NULL )
+    {
+        json_object* poResultCount = json_object_object_get(poRes, "_result_count");
+        if( poResultCount != NULL && json_object_get_type(poResultCount) == json_type_int )
+        {
+            GIntBig nRes = static_cast<GIntBig>(json_object_get_int64(poResultCount));
+            json_object_put(poRes);
+            return nRes;
+        }
+        json_object_put(poRes);
+    }
+
     return OGRLayer::GetFeatureCount(bForce);
 }
 
@@ -1223,7 +1447,7 @@ OGRErr OGRPLScenesV1Layer::GetExtent( OGREnvelope *psExtent, int bForce )
 int OGRPLScenesV1Layer::TestCapability(const char* pszCap)
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return !m_bFilterMustBeClientSideEvaluated;
     if( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
     return FALSE;

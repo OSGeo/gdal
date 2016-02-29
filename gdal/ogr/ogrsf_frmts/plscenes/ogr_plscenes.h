@@ -40,6 +40,7 @@
 #include "swq.h"
 #include <map>
 #include <set>
+#include <vector>
 
 class OGRPLScenesLayer;
 class OGRPLScenesDataset: public GDALDataset
@@ -153,7 +154,9 @@ class OGRPLScenesV1Dataset: public GDALDataset
         bool                ParseCatalogsPage(json_object* poObj,
                                               CPLString& osNext);
         void                EstablishLayerList();
-
+        GDALDataset       *OpenRasterScene(GDALOpenInfo* poOpenInfo,
+                                           CPLString osScene,
+                                           char** papszOptions);
 
     public:
                             OGRPLScenesV1Dataset();
@@ -199,6 +202,7 @@ class OGRPLScenesV1Layer: public OGRLayer
             CPLString             m_osSpecURL;
             CPLString             m_osItemsURL;
             GIntBig               m_nTotalFeatures;
+            std::vector<CPLString> m_aoAssetCategories;
             std::map<CPLString, int> m_oMapPrefixedJSonFieldNameToFieldIdx;
             std::map<int,CPLString>  m_oMapFieldIdxToQueriableJSonFieldName;
             std::set<CPLString>   m_oSetQueriable;
@@ -218,6 +222,10 @@ class OGRPLScenesV1Layer: public OGRLayer
             bool                  m_bFilterMustBeClientSideEvaluated;
 
             OGRFeature           *GetNextRawFeature();
+            void                  SetFieldFromPrefixedJSonFieldName(
+                                        OGRFeature* poFeature,
+                                        const CPLString& osPrefixedJSonFieldName,
+                                        json_object* poVal );
             void                  EstablishLayerDefn();
             void                  RegisterField(OGRFieldDefn* poFieldDefn,
                                                 const char* pszQueriableJSonName,
@@ -228,8 +236,11 @@ class OGRPLScenesV1Layer: public OGRLayer
                                                   json_object* poSpec,
                                                   CPLString& osPropertiesDesc,
                                                   const char* pszCategory);
+            void                  ParseEmbeds(json_object* poProperties,
+                                              json_object* poSpec,
+                                              CPLString& osPropertiesDesc);
             bool                  GetNextPage();
-            CPLString             BuildRequestURL();
+            CPLString             BuildRequestURL(bool bForHits);
             CPLString             BuildFilter(swq_expr_node* poNode);
             bool                  IsSimpleComparison(const swq_expr_node* poNode);
             void                  FlattendAndOperands(swq_expr_node* poNode,
@@ -239,7 +250,8 @@ class OGRPLScenesV1Layer: public OGRLayer
                                                const char* pszName,
                                                const char* pszSpecURL,
                                                const char* pszItemsURL,
-                                               GIntBig nCount);
+                                               GIntBig nCount,
+                                               std::vector<CPLString> aoAssetCategories);
                            ~OGRPLScenesV1Layer();
 
         virtual void            ResetReading();

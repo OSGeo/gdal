@@ -300,7 +300,8 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
         {
             if( !EQUAL(pszKey, "api_key") &&
                 !EQUAL(pszKey, "scene") &&
-                !EQUAL(pszKey, "product_type") )
+                !EQUAL(pszKey, "product_type") &&
+                !EQUAL(pszKey, "version") )
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
                 CPLFree(pszKey);
@@ -400,7 +401,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     if( poOutDS )
     {
         poOutDS->SetDescription(poOpenInfo->pszFilename);
-        poOutDS->GetFileList(); /* so as to probe all auxiliary files before reseting the allowed extensions */
+        CSLDestroy(poOutDS->GetFileList()); /* so as to probe all auxiliary files before reseting the allowed extensions */
 
         if( !EQUAL(pszProductType, "thumb") )
         {
