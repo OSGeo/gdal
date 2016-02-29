@@ -76,15 +76,15 @@
 #define CT_Ext_Mercator_2SP     -CT_Mercator
 
 #ifndef CPL_INLINE
-#if (defined(__GNUC__) && !defined(__NO_INLINE__)) || defined(_MSC_VER)
-#define HAS_CPL_INLINE  1
-#define CPL_INLINE __inline
-#elif defined(__SUNPRO_CC)
-#define HAS_CPL_INLINE  1
-#define CPL_INLINE inline
-#else
-#define CPL_INLINE
-#endif
+#  if (defined(__GNUC__) && !defined(__NO_INLINE__)) || defined(_MSC_VER)
+#    define HAS_CPL_INLINE  1
+#    define CPL_INLINE __inline
+#  elif defined(__SUNPRO_CC)
+#    define HAS_CPL_INLINE  1
+#    define CPL_INLINE inline
+#  else
+#    define CPL_INLINE
+#  endif
 #endif
 
 #ifndef CPL_UNUSED
