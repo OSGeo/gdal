@@ -379,6 +379,38 @@ cellsize     1
     return 'success'
 
 ###############################################################################
+# Test approximate statistics computation on a square shaped raster whose first column
+# of blocks is nodata only
+
+def stats_square_shape():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_square_shape.tif', 32, 32, options = ['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16'])
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    import struct
+    ds.GetRasterBand(1).WriteRaster(16, 0, 16, 32, struct.pack('B' * 1, 255), buf_xsize = 1, buf_ysize = 1 )
+    stats = ds.GetRasterBand(1).ComputeStatistics(True)
+    hist = ds.GetRasterBand(1).GetHistogram(approx_ok = 1)
+    minmax = ds.GetRasterBand(1).ComputeRasterMinMax(1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_square_shape.tif')
+
+    if stats != [255, 255, 255, 0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+    if hist[255] != 16 * 16:
+        gdaltest.post_reason('did not get expected histogram')
+        print(hist)
+        return 'fail'
+    if minmax != (255, 255):
+        gdaltest.post_reason('did not get expected minmax')
+        print(hist)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Run tests
 
 gdaltest_list = [
@@ -398,7 +430,8 @@ gdaltest_list = [
     stats_nodata_neginf_msvc,
     stats_nodata_posinf_linux,
     stats_nodata_posinf_msvc,
-    stats_stddev_huge_values
+    stats_stddev_huge_values,
+    stats_square_shape
     ]
 
 if __name__ == '__main__':
