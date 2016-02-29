@@ -101,6 +101,8 @@ typedef enum {
 #define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
 #define SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA                           \
                                 "Oblique_Cylindrical_Equal_Area"
+#define SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA_2_POINT                   \
+                                "Oblique_Cylindrical_Equal_Area_2_Point"
 #define SRS_PT_BONNE            "Bonne"
 #define SRS_PT_ECKERT_I         "Eckert_I"
 #define SRS_PT_ECKERT_II        "Eckert_II"
