@@ -318,7 +318,7 @@ def osr_proj4_8():
     srs.ImportFromEPSG( 3857 )
 
     proj4 = srs.ExportToProj4()
-    expected = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs'
+    expected = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs'
     if proj4 != expected:
         gdaltest.post_reason( 'did not get expected EPSG:3857 (google mercator) result.' )
         print(proj4)
