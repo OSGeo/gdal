@@ -5,7 +5,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
- 			$(GDAL_ROOT)/apps/commonutils.o \
+			$(GDAL_ROOT)/apps/commonutils.o \
 			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
 			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
 			$(GDAL_ROOT)/apps/gdalwarp_lib.o \
@@ -211,7 +211,7 @@ endif
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
 endif
-	(cd scripts; $(MAKE) install)
+	echo Skipping "(cd scripts; $(MAKE) install)"
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig
