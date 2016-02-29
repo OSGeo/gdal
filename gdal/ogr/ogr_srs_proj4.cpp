@@ -1540,16 +1540,20 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         /* Test presence of Azimuth param called "alpha" = 0.0*/
         if( GetNormProjParm(SRS_PP_AZIMUTH,0.0) == 0.0 )
         CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
-            "+proj=ocea +lat_1=%.16g +lat_2=%.16g +lon_1=%.16g +lon_2=%.16g ",
+            "+proj=ocea +lat_1=%.16g +lat_2=%.16g +lon_1=%.16g +lon_2=%.16g +x_0=%.16g +y_0=%.16g ",
             GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
             GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,0.0),
             GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0),
-            GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0) );
+            GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0),
+            GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+            GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
         else
         CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
-            "+proj=ocea +alpha=%.16g +lonc=%.16g ",
+            "+proj=ocea +alpha=%.16g +lonc=%.16g +x_0=%.16g +y_0=%.16g ",
             GetNormProjParm(SRS_PP_AZIMUTH,0.0),
-            GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0) );
+            GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
+            GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+            GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
         
     }
 
