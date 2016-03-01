@@ -416,7 +416,7 @@ GDALDataset* OGRPLScenesV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     else if( pszProductType == NULL &&
              (poSubObj = json_object_object_get(poObj, "visual")) != NULL )
     {
-        pszProductType = "visual";
+        /* do nothing */
     }
     else
     {
