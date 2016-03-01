@@ -35,7 +35,7 @@
 #define _INC_STAT
 #endif
 
-#if defined(INTERNAL_QHULL)
+#if defined(INTERNAL_QHULL) && !defined(DONT_DEPRECATE_SPRINTF)
 #define DONT_DEPRECATE_SPRINTF
 #endif
 
