@@ -31320,6 +31320,28 @@ $as_echo "disabled by user" >&6; }
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if sprintf can be overloaded for GDAL compilation" >&5
+$as_echo_n "checking if sprintf can be overloaded for GDAL compilation... " >&6; }
+echo '#define _XOPEN_SOURCE' > testdeprecated.cpp
+echo '#include <vector>' >> testdeprecated.cpp
+echo '#include <stdio.h>' >> testdeprecated.cpp
+echo 'extern "C"' >> testdeprecated.cpp
+echo '{' >> testdeprecated.cpp
+echo 'int sprintf(char *str, const char* fmt, ...);' >> testdeprecated.cpp
+echo '}' >> testdeprecated.cpp
+${CXX} ${CXXFLAGS} testdeprecated.cpp -c 2>/dev/null
+RETVAL=$?
+if test $RETVAL -eq 0; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+    CPPFLAGS="$CPPFLAGS -DDONT_DEPRECATE_SPRINTF"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f testdeprecated.*
+rm -f testdeprecated
+
 ac_config_files="$ac_config_files GDALmake.opt"
 
 
