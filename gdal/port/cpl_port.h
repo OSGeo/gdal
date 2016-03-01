@@ -831,12 +831,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #endif
 #endif
 
-#if defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
-#define CPL_WARN_DEPRECATED_IF_GDAL_COMPILATION(x) CPL_WARN_DEPRECATED(x)
-#else
-#define CPL_WARN_DEPRECATED_IF_GDAL_COMPILATION(x)
-#endif
-
 #if !defined(_MSC_VER) && !defined(__APPLE__)
 CPL_C_START
 #ifdef WARN_STANDARD_PRINTF

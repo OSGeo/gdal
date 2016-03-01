@@ -4978,6 +4978,29 @@ else
     AC_MSG_RESULT([disabled by user])
 fi
 
+dnl ---------------------------------------------------------------------------
+dnl Test if sprintf can be overloaded with _XOPEN_SOURCE being defined or other,
+dnl includes being included before, which mingw64 4.8 doesn't like (#6390)
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([if sprintf can be overloaded for GDAL compilation])
+echo '#define _XOPEN_SOURCE' > testdeprecated.cpp
+echo '#include <vector>' >> testdeprecated.cpp
+echo '#include <stdio.h>' >> testdeprecated.cpp
+echo 'extern "C"' >> testdeprecated.cpp
+echo '{' >> testdeprecated.cpp
+echo 'int sprintf(char *str, const char* fmt, ...);' >> testdeprecated.cpp
+echo '}' >> testdeprecated.cpp
+${CXX} ${CXXFLAGS} testdeprecated.cpp -c 2>/dev/null
+RETVAL=$?
+if test $RETVAL -eq 0; then
+    AC_MSG_RESULT([yes])
+else
+    CPPFLAGS="$CPPFLAGS -DDONT_DEPRECATE_SPRINTF"
+    AC_MSG_RESULT([no])
+fi
+rm -f testdeprecated.*
+rm -f testdeprecated
 
 AC_OUTPUT(GDALmake.opt)
 
