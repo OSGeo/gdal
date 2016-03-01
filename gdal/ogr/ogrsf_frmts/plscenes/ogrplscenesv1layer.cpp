@@ -700,7 +700,7 @@ void OGRPLScenesV1Layer::ParseEmbeds(json_object* poProperties,
                 const char* pszJSonFieldName = it.key;
                 if( strcmp(pszJSonFieldName, "category_id") == 0 )
                   continue;
-                const char* pszOGRFieldName = pszJSonFieldName;
+                const char* pszOGRFieldName;
                 CPLString osSrcField(CPLString("_embeds.assets.") + m_aoAssetCategories[i] + CPLString("."));
                 json_object* poLinksRef = NULL;
                 if( EQUAL(pszJSonFieldName, "_links") &&
