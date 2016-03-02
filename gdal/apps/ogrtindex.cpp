@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Program to generate a UMN MapServer compatible tile index for a
- *           set of OGR data sources. 
+ *           set of OGR data sources.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -96,7 +96,7 @@ int main( int nArgc, char ** papszArgv )
         {
             pszTileIndexField = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-lnum") 
+        else if( EQUAL(papszArgv[iArg],"-lnum")
                  || EQUAL(papszArgv[iArg],"-lname") )
         {
             iArg++;
@@ -166,7 +166,7 @@ int main( int nArgc, char ** papszArgv )
         poDstDS = poDriver->Create( pszOutputName, 0, 0, 0, GDT_Unknown, NULL );
         if( poDstDS == NULL )
         {
-            fprintf( stderr, "%s driver failed to create %s\n", 
+            fprintf( stderr, "%s driver failed to create %s\n",
                     pszFormat, pszOutputName );
             exit( 1 );
         }
@@ -199,10 +199,10 @@ int main( int nArgc, char ** papszArgv )
 
                         for( iArg = 1; iArg < nArgc && !bRequested; iArg++ )
                         {
-                            if( EQUAL(papszArgv[iArg],"-lnum") 
+                            if( EQUAL(papszArgv[iArg],"-lnum")
                                 && atoi(papszArgv[iArg+1]) == iLayer )
                                 bRequested = TRUE;
-                            else if( EQUAL(papszArgv[iArg],"-lname") 
+                            else if( EQUAL(papszArgv[iArg],"-lname")
                                      && EQUAL(papszArgv[iArg+1],
                                               poLayer->GetLayerDefn()->GetName()) )
                                 bRequested = TRUE;
@@ -239,11 +239,11 @@ int main( int nArgc, char ** papszArgv )
         exit( 1 );
     }
 
-    iTileIndexField = 
+    iTileIndexField =
         poDstLayer->GetLayerDefn()->GetFieldIndex( pszTileIndexField );
     if( iTileIndexField == -1 )
     {
-        fprintf( stderr, "Can't find %s field in tile index dataset.\n", 
+        fprintf( stderr, "Can't find %s field in tile index dataset.\n",
                 pszTileIndexField );
         exit( 1 );
     }
@@ -341,7 +341,7 @@ int main( int nArgc, char ** papszArgv )
 
         if( poDS == NULL )
         {
-            fprintf( stderr, "Failed to open dataset %s, skipping.\n", 
+            fprintf( stderr, "Failed to open dataset %s, skipping.\n",
                     papszArgv[nFirstSourceDataset] );
             CPLFree(fileNameToWrite);
             continue;
@@ -359,10 +359,10 @@ int main( int nArgc, char ** papszArgv )
 
             for( iArg = 1; iArg < nArgc && !bRequested; iArg++ )
             {
-                if( EQUAL(papszArgv[iArg],"-lnum") 
+                if( EQUAL(papszArgv[iArg],"-lnum")
                     && atoi(papszArgv[iArg+1]) == iLayer )
                     bRequested = TRUE;
-                else if( EQUAL(papszArgv[iArg],"-lname") 
+                else if( EQUAL(papszArgv[iArg],"-lname")
                          && EQUAL(papszArgv[iArg+1],
                                   poLayer->GetLayerDefn()->GetName()) )
                     bRequested = TRUE;
@@ -375,7 +375,7 @@ int main( int nArgc, char ** papszArgv )
             for(i=0;i<nExistingLayers;i++)
             {
                 char        szLocation[5000];
-                snprintf( szLocation, sizeof(szLocation), "%s,%d", 
+                snprintf( szLocation, sizeof(szLocation), "%s,%d",
                         fileNameToWrite, iLayer );
                 if (EQUAL(szLocation, existingLayersTab[i]))
                 {
@@ -438,20 +438,20 @@ int main( int nArgc, char ** papszArgv )
                     }
 					continue;
 				}
-				
+
                 int bSkip = FALSE;
 				for( int fn = 0; fn < poFeatureDefnCur->GetFieldCount(); fn++ )
 				{
  					OGRFieldDefn* poField = poFeatureDefn->GetFieldDefn(fn);
  					OGRFieldDefn* poFieldCur = poFeatureDefnCur->GetFieldDefn(fn);
 
-					/* XXX - Should those pointers be checked against NULL? */ 
+					/* XXX - Should those pointers be checked against NULL? */
 					assert(NULL != poField);
 					assert(NULL != poFieldCur);
 
-					if( poField->GetType() != poFieldCur->GetType() 
-						|| poField->GetWidth() != poFieldCur->GetWidth() 
-						|| poField->GetPrecision() != poFieldCur->GetPrecision() 
+					if( poField->GetType() != poFieldCur->GetType()
+						|| poField->GetWidth() != poFieldCur->GetWidth()
+						|| poField->GetPrecision() != poFieldCur->GetPrecision()
 						|| !EQUAL( poField->GetNameRef(), poFieldCur->GetNameRef() ) )
 					{
 						fprintf( stderr, "Schema of attributes of layer %s of %s does not match ... skipping it.\n",
@@ -462,7 +462,7 @@ int main( int nArgc, char ** papszArgv )
                                              "but this may result in a tileindex incompatible with MapServer\n");
                             bFirstWarningForNonMatchingAttributes = FALSE;
                         }
-                        bSkip = TRUE; 
+                        bSkip = TRUE;
                         break;
 					}
 				}
@@ -482,8 +482,8 @@ int main( int nArgc, char ** papszArgv )
 
             if( poLayer->GetExtent( &sExtents, TRUE ) != OGRERR_NONE )
             {
-                fprintf( stderr, "GetExtent() failed on layer %s of %s, skipping.\n", 
-                        poLayer->GetLayerDefn()->GetName(), 
+                fprintf( stderr, "GetExtent() failed on layer %s of %s, skipping.\n",
+                        poLayer->GetLayerDefn()->GetName(),
                         papszArgv[nFirstSourceDataset] );
                 continue;
             }
@@ -502,7 +502,7 @@ int main( int nArgc, char ** papszArgv )
             char        szLocation[5000];
             OGRFeature  oTileFeat( poDstLayer->GetLayerDefn() );
 
-            snprintf( szLocation, sizeof(szLocation), "%s,%d", 
+            snprintf( szLocation, sizeof(szLocation), "%s,%d",
                      fileNameToWrite, iLayer );
             oTileFeat.SetGeometry( &oRegion );
             oTileFeat.SetField( iTileIndexField, szLocation );

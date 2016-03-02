@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
- * Copyright (c) 2002, i3 - information integration and imaging 
+ * Copyright (c) 2002, i3 - information integration and imaging
  *                          Fort Collin, CO
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at mines-paris dot org>
  *
@@ -44,7 +44,7 @@ image reprojection and warping utility
 \section gdalwarp_synopsis SYNOPSIS
 
 \htmlonly
-Usage: 
+Usage:
 \endhtmlonly
 
 \verbatim
@@ -127,13 +127,13 @@ guessed from the computed resolution. Note that -ts cannot be used with -tr</dd>
 <dt> <b>-ovr</b> <em>level|AUTO|AUTO-n|NONE></em>:</dt><dd>(GDAL >= 2.0) To
 specify which overview level of source files must be used. The default choice,
 AUTO, will select the overview level whose resolution is the closest to the
-target resolution. Specify an integer value (0-based, i.e. 0=1st overview level) 
+target resolution. Specify an integer value (0-based, i.e. 0=1st overview level)
 to select a particular level. Specify AUTO-n where n is an integer greater or
 equal to 1, to select an overview level below the AUTO one. Or specify NONE to
 force the base resolution to be used (can be useful if overviews have been
 generated with a low quality resampling method, and the warping is done using a
 higher quality resampling method).</dd>
-<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp option.  The 
+<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp option.  The
 GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
  <b>-wo</b> options may be listed.</dd>
 <dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the
@@ -157,9 +157,9 @@ algorithm, worst interpolation quality).</dd>
 <dt><b>q3</b></dt>: <dd>third quartile resampling, selects the third quartile value of all non-NODATA contributing pixels. (GDAL >= 2.0.0)</dd>
 </dl>
 <dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking
-values for input bands (different values can be supplied for each band).  If 
-more than one value is supplied all values should be quoted to keep them 
-together as a single operating system argument.  Masked values will not be 
+values for input bands (different values can be supplied for each band).  If
+more than one value is supplied all values should be quoted to keep them
+together as a single operating system argument.  Masked values will not be
 used in interpolation.  Use a value of <tt>None</tt> to ignore intrinsic nodata settings on the source dataset.</dd>
 <dt> <b>-dstnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata values
 for output bands (different values can be supplied for each band).  If more
@@ -168,7 +168,7 @@ as a single operating system argument.  New files will be initialized to this
 value and if possible the nodata value will be recorded in the output
 file. Use a value of <tt>None</tt> to ensure that nodata is not defined (GDAL>=1.11).
 If this argument is not used then nodata values will be copied from the source dataset (GDAL>=1.11).</dd>
-<dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify 
+<dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify
 nodata (unset/transparent) pixels. </dd>
 <dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
 megabytes) that the warp API is allowed to use for caching.</dd>
@@ -183,19 +183,19 @@ format specific documentation for legal creation options for each format.
 </dd>
 
 <dt> <b>-cutline</b> <em>datasource</em>:</dt><dd>Enable use of a blend cutline from the name OGR support datasource.</dd>
-<dt> <b>-cl</b> <em>layername</em>:</dt><dd>Select the named layer from the 
+<dt> <b>-cl</b> <em>layername</em>:</dt><dd>Select the named layer from the
 cutline datasource.</dd>
 <dt> <b>-cwhere</b> <em>expression</em>:</dt><dd>Restrict desired cutline features based on attribute query.</dd>
 <dt> <b>-csql</b> <em>query</em>:</dt><dd>Select cutline features using an SQL query instead of from a layer with -cl.</dd>
 <dt> <b>-cblend</b> <em>distance</em>:</dt><dd>Set a blend distance to use to blend over cutlines (in pixels).</dd>
 <dt> <b>-crop_to_cutline</b>:</dt><dd>(GDAL >= 1.8.0) Crop the extent of the target dataset to the extent of the cutline.</dd>
 <dt> <b>-overwrite</b>:</dt><dd>(GDAL >= 1.8.0) Overwrite the target dataset if it already exists.</dd>
-<dt> <b>-nomd</b>:</dt><dd>(GDAL >= 1.10.0) Do not copy metadata. Without this option, dataset and band metadata 
-(as well as some band information) will be copied from the first source dataset. 
+<dt> <b>-nomd</b>:</dt><dd>(GDAL >= 1.10.0) Do not copy metadata. Without this option, dataset and band metadata
+(as well as some band information) will be copied from the first source dataset.
 Items that differ between source datasets will be set to * (see -cvmd option).</dd>
-<dt> <b>-cvmd</b> <em>meta_conflict_value</em>:</dt><dd>(GDAL >= 1.10.0) 
+<dt> <b>-cvmd</b> <em>meta_conflict_value</em>:</dt><dd>(GDAL >= 1.10.0)
 Value to set metadata items that conflict between source datasets (default is "*"). Use "" to remove conflicting items. </dd>
-<dt> <b>-setci</b>:</dt><dd>(GDAL >= 1.10.0) 
+<dt> <b>-setci</b>:</dt><dd>(GDAL >= 1.10.0)
 Set the color interpretation of the bands of the target dataset from the source dataset.</dd>
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
 <dt> <b>-doo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.1) Output dataset open option (format specific)</dd>
@@ -204,7 +204,7 @@ Set the color interpretation of the bands of the target dataset from the source 
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
 </dl>
 
-Mosaicing into an existing output file is supported if the output file 
+Mosaicing into an existing output file is supported if the output file
 already exists. The spatial extent of the existing file will not
 be modified to accommodate new data, so you may have to remove it in that case, or
 use the -overwrite option.
@@ -265,7 +265,7 @@ static int GDALExit( int nCode )
 {
   const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",NULL);
   if( pszDebug && (EQUAL(pszDebug,"ON") || EQUAL(pszDebug,"") ) )
-  {  
+  {
     GDALDumpOpenDatasets( stderr );
     CPLDumpSharedList( NULL );
   }
@@ -286,14 +286,14 @@ static int GDALExit( int nCode )
 static void Usage(const char* pszErrorMsg = NULL)
 
 {
-    printf( 
+    printf(
         "Usage: gdalwarp [--help-general] [--formats]\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
         "    [-order n | -tps | -rpc | -geoloc] [-et err_threshold]\n"
         "    [-refine_gcps tolerance [minimum_gcps]]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]\n"
         "    [-ovr level|AUTO|AUTO-n|NONE] [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
-        "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
+        "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n"
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
         "    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]\n"
@@ -470,7 +470,7 @@ int main( int argc, char ** argv )
 
     if( hDstDS != NULL && psOptionsForBinary->bCreateOutput )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                  "Output dataset %s exists,\n"
                  "but some command line options were provided indicating a new dataset\n"
                  "should be created.  Please delete existing dataset and run again.\n",
@@ -488,7 +488,7 @@ int main( int argc, char ** argv )
 
         if (hDstDS)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                      "Output dataset %s exists, but cannot be opened in update mode\n",
                      psOptionsForBinary->pszDstFilename );
             GDALClose(hDstDS);

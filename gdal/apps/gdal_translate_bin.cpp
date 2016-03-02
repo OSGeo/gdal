@@ -57,7 +57,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
             "       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]\n"
             "       [-projwin ulx uly lrx lry] [-projwin_srs srs_def]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
-            "       [-gcp pixel line easting northing [elevation]]*\n" 
+            "       [-gcp pixel line easting northing [elevation]]*\n"
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
             "       [-co \"NAME=VALUE\"]* [-stats] [-norat]\n"
             "       [-oo NAME=VALUE]*\n"
@@ -218,8 +218,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Handle subdatasets.                                             */
 /* -------------------------------------------------------------------- */
-    if( !psOptionsForBinary->bCopySubDatasets 
-        && CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 
+    if( !psOptionsForBinary->bCopySubDatasets
+        && CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0
         && GDALGetRasterCount(hDataset) == 0 )
     {
         fprintf( stderr,
@@ -229,7 +229,7 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
-    if( CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 
+    if( CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0
         && psOptionsForBinary->bCopySubDatasets )
     {
         char **papszSubdatasets = GDALGetMetadata(hDataset,"SUBDATASETS");
@@ -261,7 +261,7 @@ int main( int argc, char ** argv )
         {
             char* pszSource = CPLStrdup(strstr(papszSubdatasets[i],"=")+1);
             osTemp = CPLSPrintf( pszFormat, osBasename.c_str(), i/2 + 1 );
-            osTemp = CPLFormFilename( osPath, osTemp, osExtension ); 
+            osTemp = CPLFormFilename( osPath, osTemp, osExtension );
             strcpy( pszSubDest, osTemp.c_str() );
             hDataset = GDALOpenEx( pszSource, GDAL_OF_RASTER, NULL,
                            (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );

@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 static void Usage(const char* pszErrorMsg = NULL)
 
 {
-    printf( 
+    printf(
         "Usage: gdal_rasterize [-b band]* [-i] [-at]\n"
         "       [-burn value]* | [-a attribute_name] [-3d] [-add]\n"
         "       [-l layername]* [-where expression] [-sql select_statement]\n"

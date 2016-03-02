@@ -47,7 +47,7 @@ char**  papszOptions = NULL;
 
 static void Usage(const char* pszErrorMsg = NULL);
 
-static void ReportOnLayer( OGRLayer *, const char *, const char* pszGeomField, 
+static void ReportOnLayer( OGRLayer *, const char *, const char* pszGeomField,
                            OGRGeometry *,
                            int bListMDD,
                            int bShowMetadata,
@@ -211,7 +211,7 @@ int main( int nArgc, char ** papszArgv )
         {
             bAllLayers = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-so") 
+        else if( EQUAL(papszArgv[iArg],"-so")
                  || EQUAL(papszArgv[iArg],"-summary")  )
         {
             bSummaryOnly = TRUE;
@@ -419,15 +419,15 @@ int main( int nArgc, char ** papszArgv )
                                 printf(", ");
                             OGRGeomFieldDefn* poGFldDefn =
                                 poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                            printf( "%s", 
-                                OGRGeometryTypeToName( 
+                            printf( "%s",
+                                OGRGeometryTypeToName(
                                     poGFldDefn->GetType() ) );
                         }
                         printf( ")");
                     }
                     else if( poLayer->GetGeomType() != wkbUnknown )
-                        printf( " (%s)", 
-                                OGRGeometryTypeToName( 
+                        printf( " (%s)",
+                                OGRGeometryTypeToName(
                                     poLayer->GetGeomType() ) );
 
                     printf( "\n" );
@@ -524,7 +524,7 @@ static void Usage(const char* pszErrorMsg)
 /************************************************************************/
 
 static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
-                           const char* pszGeomField, 
+                           const char* pszGeomField,
                            OGRGeometry *poSpatialFilter,
                            int bListMDD,
                            int bShowMetadata,
@@ -587,13 +587,13 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             {
                 OGRGeomFieldDefn* poGFldDefn =
                     poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                printf( "Geometry (%s): %s\n", poGFldDefn->GetNameRef(), 
+                printf( "Geometry (%s): %s\n", poGFldDefn->GetNameRef(),
                     OGRGeometryTypeToName( poGFldDefn->GetType() ) );
             }
         }
         else
         {
-            printf( "Geometry: %s\n", 
+            printf( "Geometry: %s\n",
                     OGRGeometryTypeToName( poLayer->GetGeomType() ) );
         }
 
@@ -617,7 +617,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         }
         else if ( bExtent && poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
         {
-            CPLprintf("Extent: (%f, %f) - (%f, %f)\n", 
+            CPLprintf("Extent: (%f, %f) - (%f, %f)\n",
                    oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
         }
 
@@ -656,7 +656,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         }
 
         if( strlen(poLayer->GetFIDColumn()) > 0 )
-            printf( "FID Column = %s\n", 
+            printf( "FID Column = %s\n",
                     poLayer->GetFIDColumn() );
 
         for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
@@ -714,7 +714,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         poFeature = poLayer->GetFeature( nFetchFID );
         if( poFeature == NULL )
         {
-            printf( "Unable to locate feature id " CPL_FRMT_GIB " on this layer.\n", 
+            printf( "Unable to locate feature id " CPL_FRMT_GIB " on this layer.\n",
                     nFetchFID );
         }
         else

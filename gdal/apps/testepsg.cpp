@@ -41,7 +41,7 @@ static void Usage()
     printf( "  -t: transform a coordinate from source GCS/PCS to target GCS/PCS\n" );
     printf( "\n" );
     printf( "def's  on their own are translated to WKT & XML and printed.\n" );
-    printf( "def's may be of any user input format, a WKT def, an\n" ); 
+    printf( "def's may be of any user input format, a WKT def, an\n" );
     printf( "EPSG:n definition or the name of a file containing WKT/XML.\n");
 }
 
@@ -74,15 +74,15 @@ int main( int nArgc, char ** papszArgv )
 
             if( oSourceSRS.SetFromUserInput(papszArgv[i+1]) != OGRERR_NONE )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "SetFromUserInput(%s) failed.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "SetFromUserInput(%s) failed.",
                           papszArgv[i+1] );
                 continue;
             }
             if( oTargetSRS.SetFromUserInput(papszArgv[i+2]) != OGRERR_NONE )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "SetFromUserInput(%s) failed.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "SetFromUserInput(%s) failed.",
                           papszArgv[i+2] );
                 continue;
             }
@@ -91,7 +91,7 @@ int main( int nArgc, char ** papszArgv )
                                                       &oTargetSRS );
             x = CPLAtof( papszArgv[i+3] );
             y = CPLAtof( papszArgv[i+4] );
-            if( i < nArgc - 5 
+            if( i < nArgc - 5
                 && (CPLAtof(papszArgv[i+5]) > 0.0 || papszArgv[i+5][0] == '0') )
             {
                 z_orig = z = CPLAtof(papszArgv[i+5]);
@@ -103,19 +103,19 @@ int main( int nArgc, char ** papszArgv )
             if( poCT == NULL || !poCT->Transform( 1, &x, &y, &z ) )
                 printf( "Transformation failed.\n" );
             else
-                printf( "(%f,%f,%f) -> (%f,%f,%f)\n", 
+                printf( "(%f,%f,%f) -> (%f,%f,%f)\n",
                         CPLAtof( papszArgv[i+3] ),
                         CPLAtof( papszArgv[i+4] ),
-                        z_orig, 
+                        z_orig,
                         x, y, z );
 
             i += nArgsUsed;
         }
-        else 
+        else
         {
             /* coverity[tainted_data] */
             if( oSRS.SetFromUserInput(papszArgv[i]) != OGRERR_NONE )
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Error occurred translating %s.\n",
                           papszArgv[i] );
             else
@@ -128,14 +128,14 @@ int main( int nArgc, char ** papszArgv )
                     printf( "Validate Succeeds.\n" );
 
                 oSRS.exportToPrettyWkt( &pszWKT, FALSE );
-                printf( "WKT[%s] =\n%s\n", 
+                printf( "WKT[%s] =\n%s\n",
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
 
                 printf( "\n" );
 
                 oSRS.exportToPrettyWkt( &pszWKT, TRUE );
-                printf( "Simplified WKT[%s] =\n%s\n", 
+                printf( "Simplified WKT[%s] =\n%s\n",
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
 
@@ -146,7 +146,7 @@ int main( int nArgc, char ** papszArgv )
                 poSRS2 = oSRS.Clone();
                 poSRS2->StripCTParms();
                 poSRS2->exportToWkt( &pszWKT );
-                printf( "Old Style WKT[%s] = %s\n", 
+                printf( "Old Style WKT[%s] = %s\n",
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
                 OGRSpatialReference::DestroySpatialReference( poSRS2 );
@@ -154,13 +154,13 @@ int main( int nArgc, char ** papszArgv )
                 poSRS2 = oSRS.Clone();
                 poSRS2->morphToESRI();
                 poSRS2->exportToPrettyWkt( &pszWKT, FALSE );
-                printf( "ESRI'ified WKT[%s] = \n%s\n", 
+                printf( "ESRI'ified WKT[%s] = \n%s\n",
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
                 OGRSpatialReference::DestroySpatialReference( poSRS2 );
 
                 oSRS.exportToProj4( &pszWKT );
-                printf( "PROJ.4 rendering of [%s] = %s\n", 
+                printf( "PROJ.4 rendering of [%s] = %s\n",
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
 
@@ -170,7 +170,7 @@ int main( int nArgc, char ** papszArgv )
                     char       *pszRawXML;
                     if( oSRS.exportToXML(&pszRawXML) == OGRERR_NONE )
                     {
-                        printf( "XML[%s] =\n%s\n", 
+                        printf( "XML[%s] =\n%s\n",
                                 papszArgv[i], pszRawXML );
                         CPLFree( pszRawXML );
                     }
@@ -189,6 +189,6 @@ int main( int nArgc, char ** papszArgv )
     OSRCleanup();
     CPLFinderClean();
     CPLCleanupTLS();
-    
+
     return 0;
 }

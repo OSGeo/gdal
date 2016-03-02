@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL DEM Utilities
- * Purpose:  
+ * Purpose:
  * Authors:  Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************

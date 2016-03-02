@@ -57,7 +57,7 @@ typedef enum {
 /*                           GDALInfoOptions                            */
 /************************************************************************/
 
-/** Options for use with GDALInfo(). GDALInfoOptions* must be allocated and freed with GDALInfoOptionsNew() and 
+/** Options for use with GDALInfo(). GDALInfoOptions* must be allocated and freed with GDALInfoOptionsNew() and
  * GDALInfoOptionsFree() respectively.
  */
 struct GDALInfoOptions
@@ -282,7 +282,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         json_object_object_add(poJsonObject, "size", poSize);
     }
     else
-        Concat(osStr, psOptions->bStdoutOutput, "Size is %d, %d\n", GDALGetRasterXSize( hDataset ), 
+        Concat(osStr, psOptions->bStdoutOutput, "Size is %d, %d\n", GDALGetRasterXSize( hDataset ),
             GDALGetRasterYSize( hDataset ) );
 
 /* -------------------------------------------------------------------- */
@@ -897,14 +897,14 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                         json_object_array_add(poOverviews, poOverview);
                     }
                     else
-                        Concat(osStr, psOptions->bStdoutOutput, "%dx%d", 
+                        Concat(osStr, psOptions->bStdoutOutput, "%dx%d",
                             GDALGetRasterBandXSize( hOverview ),
                             GDALGetRasterBandYSize( hOverview ) );
 
                     const char *pszResampling
                         = GDALGetMetadataItem( hOverview, "RESAMPLING", "" );
 
-                    if( pszResampling != NULL && !bJson 
+                    if( pszResampling != NULL && !bJson
                         && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
                         Concat(osStr, psOptions->bStdoutOutput, "*" );
                 }

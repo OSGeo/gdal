@@ -168,8 +168,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
                 nDstBands = nBands = 3;
         }
 
-        hDstDS = GDALCreate( hDriver, pszDest, 
-                             nXSize, nYSize, nDstBands, GDT_Byte, 
+        hDstDS = GDALCreate( hDriver, pszDest,
+                             nXSize, nYSize, nDstBands, GDT_Byte,
                              psOptions->papszCreationOptions );
         if( hDstDS == NULL )
         {
@@ -238,7 +238,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
             /***** black or white? *****/
 
-            if (bNearWhite) 
+            if (bNearWhite)
                 oColor.push_back(255);
             else
                 oColor.push_back(0);
@@ -322,8 +322,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
     {
         CPLErr eErr;
 
-        eErr = GDALDatasetRasterIO( hSrcDataset, GF_Read, 0, iLine, nXSize, 1, 
-                                    pabyLine, nXSize, 1, GDT_Byte, 
+        eErr = GDALDatasetRasterIO( hSrcDataset, GF_Read, 0, iLine, nXSize, 1,
+                                    pabyLine, nXSize, 1, GDT_Byte,
                                     nBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
         {
@@ -366,8 +366,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
                      FALSE  // bBottomUp
                     );
 
-        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1, 
-                                    pabyLine, nXSize, 1, GDT_Byte, 
+        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1,
+                                    pabyLine, nXSize, 1, GDT_Byte,
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
 
         if( eErr != CE_None )
@@ -414,8 +414,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
     {
         CPLErr eErr;
 
-        eErr = GDALDatasetRasterIO( hDstDS, GF_Read, 0, iLine, nXSize, 1, 
-                                    pabyLine, nXSize, 1, GDT_Byte, 
+        eErr = GDALDatasetRasterIO( hDstDS, GF_Read, 0, iLine, nXSize, 1,
+                                    pabyLine, nXSize, 1, GDT_Byte,
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
         {
@@ -456,8 +456,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
                      TRUE   // bBottomUp
                     );
 
-        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1, 
-                                    pabyLine, nXSize, 1, GDT_Byte, 
+        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1,
+                                    pabyLine, nXSize, 1, GDT_Byte,
                                     nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
         if( eErr != CE_None )
         {
@@ -564,17 +564,17 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                 }
 
                 if (bIsNonBlack == FALSE)
-                    break;          
+                    break;
             }
 
             if (bIsNonBlack) {
                 panLastLineCounts[i]++;
 
                 if( panLastLineCounts[i] > nMaxNonBlack )
-                    continue; 
+                    continue;
             }
             //else
-            //  panLastLineCounts[i] = 0; // not sure this even makes sense 
+            //  panLastLineCounts[i] = 0; // not sure this even makes sense
 
             /***** replace the pixel values *****/
 
@@ -602,7 +602,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
     {
         int nNonBlackPixels = 0;
 
-        /***** on a bottom up pass assume nMaxNonBlack is 0 *****/ 
+        /***** on a bottom up pass assume nMaxNonBlack is 0 *****/
 
         if (bBottomUp)
             nMaxNonBlack = 0;
@@ -649,7 +649,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                     }
 
                     if (bIsNonBlack == FALSE)
-                        break;          
+                        break;
                 }
 
                 if (bIsNonBlack) {
@@ -659,7 +659,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
                     if( panLastLineCounts[i] <= nMaxNonBlack )
                         nNonBlackPixels = panLastLineCounts[i];
-                    else 
+                    else
                         nNonBlackPixels++;
                 }
 

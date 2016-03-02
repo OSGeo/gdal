@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
- * Copyright (c) 2003, Applied Coherent Technology (www.actgate.com). 
+ * Copyright (c) 2003, Applied Coherent Technology (www.actgate.com).
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -54,11 +54,11 @@ static int ArgIsNumeric( const char *pszArg )
 static void Usage(const char* pszErrorMsg = NULL)
 
 {
-    printf( 
+    printf(
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
-        "                    [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"   
-        "                    [-off <offset>] [-fl <level> <level>...]\n" 
+        "                    [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
+        "                    [-off <offset>] [-fl <level> <level>...]\n"
         "                    [-nln <outlayername>] [-q]\n"
         "                    <src_filename> <dst_filename>\n" );
 
@@ -141,8 +141,8 @@ int main( int argc, char ** argv )
         {
             if( i >= argc-1 )
                 Usage(CPLSPrintf("%s option requires at least 1 argument", argv[i]));
-            while( i < argc-1 
-                   && nFixedLevelCount 
+            while( i < argc-1
+                   && nFixedLevelCount
                              < (int)(sizeof(adfFixedLevels)/sizeof(double))
                    && ArgIsNumeric(argv[i+1]) )
                 adfFixedLevels[nFixedLevelCount++] = CPLAtof(argv[++i]);
@@ -232,8 +232,8 @@ int main( int argc, char ** argv )
     hBand = GDALGetRasterBand( hSrcDS, nBandIn );
     if( hBand == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Band %d does not exist on dataset.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Band %d does not exist on dataset.",
                   nBandIn );
         exit(2);
     }
@@ -261,7 +261,7 @@ int main( int argc, char ** argv )
 
     if( hDriver == NULL )
     {
-        fprintf( stderr, "Unable to find format driver named %s.\n", 
+        fprintf( stderr, "Unable to find format driver named %s.\n",
                  pszFormat );
         exit( 10 );
     }
@@ -270,7 +270,7 @@ int main( int argc, char ** argv )
     if( hDS == NULL )
         exit( 1 );
 
-    hLayer = OGR_DS_CreateLayer( hDS, pszNewLayerName, hSRS, 
+    hLayer = OGR_DS_CreateLayer( hDS, pszNewLayerName, hSRS,
                                  b3D ? wkbLineString25D : wkbLineString,
                                  papszLCO );
     if( hLayer == NULL )
