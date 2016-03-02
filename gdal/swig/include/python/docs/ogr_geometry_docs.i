@@ -1,7 +1,7 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrgeometry.cpp
-23140 2011-09-29 20:13:09Z rouault $\") ";
+33616 2016-03-02 22:14:26Z rouault $\") ";
 
 %feature("docstring")  DumpReadable "void
 OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char
@@ -50,9 +50,9 @@ hGeom, OGRGeometryH hOtherGeom)
 
 Do these features intersect?
 
-Currently this is not implemented in a rigorous fashion, and generally
-just tests whether the envelopes of the two features intersect.
-Eventually this will be made rigorous.
+Determines whether two geometries intersect. If GEOS is enabled, then
+this is done in rigorous fashion otherwise TRUE is returned if the
+envelopes (bounding boxes) of the two geometries overlap.
 
 This function is the same as the CPP method OGRGeometry::Intersects.
 
@@ -173,9 +173,6 @@ OGR_G_GetCoordinateDimension(OGRGeometryH hGeom)
 
 Get the dimension of the coordinates in this geometry.
 
-This function corresponds to the SFCOM IGeometry::GetDimension()
-method.
-
 This function is the same as the CPP method
 OGRGeometry::getCoordinateDimension().
 
@@ -185,8 +182,57 @@ Parameters:
 hGeom:  handle on the geometry to get the dimension of the coordinates
 from.
 
-in practice this will return 2 or 3. It can also return 0 in the case
-of an empty point. ";
+Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or
+OGR_G_IsMeasured().
+
+this will return 2 or 3. ";
+
+%feature("docstring")  CoordinateDimension "int
+OGR_G_CoordinateDimension(OGRGeometryH hGeom)
+
+Get the dimension of the coordinates in this geometry.
+
+This function is the same as the CPP method
+OGRGeometry::CoordinateDimension().
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to get the dimension of the coordinates
+from.
+
+this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data. ";
+
+%feature("docstring")  Is3D "int OGR_G_Is3D(OGRGeometryH hGeom)
+
+See whether this geometry has Z coordinates.
+
+This function is the same as the CPP method OGRGeometry::Is3D().
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to check whether it has Z coordinates.
+
+TRUE if the geometry has Z coordinates.
+
+GDAL 2.1 ";
+
+%feature("docstring")  IsMeasured "int OGR_G_IsMeasured(OGRGeometryH
+hGeom)
+
+See whether this geometry is measured.
+
+This function is the same as the CPP method OGRGeometry::IsMeasured().
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to check whether it is measured.
+
+TRUE if the geometry has M coordinates.
+
+GDAL 2.1 ";
 
 %feature("docstring")  SetCoordinateDimension "void
 OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
@@ -195,8 +241,11 @@ Set the coordinate dimension.
 
 This method sets the explicit coordinate dimension. Setting the
 coordinate dimension of a geometry to 2 should zero out any existing Z
-values. Setting the dimension of a geometry collection will not
-necessarily affect the children geometries.
+values. Setting the dimension of a geometry collection, a compound
+curve, a polygon, etc. will affect the children geometries. This will
+also remove the M dimension if present before this call.
+
+Deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().
 
 Parameters:
 -----------
@@ -205,6 +254,46 @@ hGeom:  handle on the geometry to set the dimension of the
 coordinates.
 
 nNewDimension:  New coordinate dimension value, either 2 or 3. ";
+
+%feature("docstring")  Set3D "void OGR_G_Set3D(OGRGeometryH hGeom,
+int bIs3D)
+
+Add or remove the Z coordinate dimension.
+
+This method adds or removes the explicit Z coordinate dimension.
+Removing the Z coordinate dimension of a geometry will remove any
+existing Z values. Adding the Z dimension to a geometry collection, a
+compound curve, a polygon, etc. will affect the children geometries.
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to set or unset the Z dimension.
+
+bIs3D:  Should the geometry have a Z dimension, either TRUE or FALSE.
+
+GDAL 2.1 ";
+
+%feature("docstring")  SetMeasured "void
+OGR_G_SetMeasured(OGRGeometryH hGeom, int bIsMeasured)
+
+Set the coordinate dimension.
+
+Add or remove the M coordinate dimension. This method adds or removes
+the explicit M coordinate dimension. Removing the M coordinate
+dimension of a geometry will remove any existing M values. Adding the
+M dimension to a geometry collection, a compound curve, a polygon,
+etc. will affect the children geometries.
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to set or unset the M dimension.
+
+bIsMeasured:  Should the geometry have a M dimension, either TRUE or
+FALSE.
+
+GDAL 2.1 ";
 
 %feature("docstring")  Equals "int OGR_G_Equals(OGRGeometryH hGeom,
 OGRGeometryH hOther)
@@ -310,12 +399,18 @@ returned. ";
 OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
 char *pabyDstBuffer)
 
-Convert a geometry into well known binary format.
+Convert a geometry well known binary format.
 
 This function relates to the SFCOM IWks::ExportToWKB() method.
 
+For backward compatibility purposes, it exports the Old-style 99-402
+extended dimension (Z) WKB types for types Point, LineString, Polygon,
+MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
+other geometry types, it is equivalent to OGR_G_ExportToIsoWkb().
+
 This function is the same as the CPP method
-OGRGeometry::exportToWkb().
+OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,
+OGRwkbVariant) with eWkbVariant = wkbVariantOldOgc.
 
 Parameters:
 -----------
@@ -330,6 +425,37 @@ pabyDstBuffer:  a buffer into which the binary representation is
 written. This buffer must be at least OGR_G_WkbSize() byte in size.
 
 Currently OGRERR_NONE is always returned. ";
+
+%feature("docstring")  ExportToIsoWkb "OGRErr
+OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
+unsigned char *pabyDstBuffer)
+
+Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known
+binary format.
+
+This function relates to the SFCOM IWks::ExportToWKB() method. It
+exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)
+WKB types
+
+This function is the same as the CPP method
+OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,
+OGRwkbVariant) with eWkbVariant = wkbVariantIso.
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to convert to a well know binary data
+from.
+
+eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+respectively.
+
+pabyDstBuffer:  a buffer into which the binary representation is
+written. This buffer must be at least OGR_G_WkbSize() byte in size.
+
+Currently OGRERR_NONE is always returned.
+
+GDAL 2.0 ";
 
 %feature("docstring")  ImportFromWkt "OGRErr
 OGR_G_ImportFromWkt(OGRGeometryH hGeom, char **ppszSrcText)
@@ -363,6 +489,11 @@ Convert a geometry into well known text format.
 
 This function relates to the SFCOM IWks::ExportToWKT() method.
 
+For backward compatibility purposes, it exports the Old-style 99-402
+extended dimension (Z) WKB types for types Point, LineString, Polygon,
+MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
+other geometry types, it is equivalent to OGR_G_ExportToIsoWkt().
+
 This function is the same as the CPP method
 OGRGeometry::exportToWkt().
 
@@ -372,9 +503,36 @@ Parameters:
 hGeom:  handle on the geometry to convert to a text format from.
 
 ppszSrcText:  a text buffer is allocated by the program, and assigned
-to the passed pointer.
+to the passed pointer. After use, *ppszDstText should be freed with
+OGRFree().
 
 Currently OGRERR_NONE is always returned. ";
+
+%feature("docstring")  ExportToIsoWkt "OGRErr
+OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char **ppszSrcText)
+
+Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known text
+format.
+
+This function relates to the SFCOM IWks::ExportToWKT() method. It
+exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)
+WKB types
+
+This function is the same as the CPP method
+OGRGeometry::exportToWkt(,wkbVariantIso).
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to convert to a text format from.
+
+ppszSrcText:  a text buffer is allocated by the program, and assigned
+to the passed pointer. After use, *ppszDstText should be freed with
+OGRFree().
+
+Currently OGRERR_NONE is always returned.
+
+GDAL 2.0 ";
 
 %feature("docstring")  GetGeometryType "OGRwkbGeometryType
 OGR_G_GetGeometryType(OGRGeometryH hGeom)
@@ -449,8 +607,10 @@ a reference to the spatial reference geometry. ";
 
 %feature("docstring")  Empty "void OGR_G_Empty(OGRGeometryH hGeom)
 
-Clear geometry information. This restores the geometry to it's initial
-state after construction, and before assignment of actual geometry.
+Clear geometry information.
+
+This restores the geometry to it's initial state after construction,
+and before assignment of actual geometry.
 
 This function relates to the SFCOM IGeometry::Empty() method.
 
@@ -540,8 +700,10 @@ OGRToOGCGeomType(OGRwkbGeometryType eGeomType) ";
 %feature("docstring")  OGRGeometryTypeToName "const char*
 OGRGeometryTypeToName(OGRwkbGeometryType eType)
 
-Fetch a human readable name corresponding to an OGRwkBGeometryType
-value. The returned value should not be modified, or freed by the
+Fetch a human readable name corresponding to an OGRwkbGeometryType
+value.
+
+The returned value should not be modified, or freed by the
 application.
 
 This function is C callable.
@@ -566,8 +728,8 @@ the most specific geometry type that can be reported for the layer.
 NOTE: wkbUnknown is the \"worst case\" indicating a mixture of
 geometry types with nothing in common but the base geometry type.
 wkbNone should be used to indicate that no geometries have been
-encountered yet, and means the first geometry encountered will establish
-the preliminary type.
+encountered yet, and means the first geometry encountered will
+establish the preliminary type.
 
 Parameters:
 -----------
@@ -578,11 +740,48 @@ eExtra:  the second input geometry type.
 
 the merged geometry type. ";
 
+%feature("docstring")  OGRMergeGeometryTypesEx "OGRwkbGeometryType
+OGRMergeGeometryTypesEx(OGRwkbGeometryType eMain, OGRwkbGeometryType
+eExtra, int bAllowPromotingToCurves)
+
+Find common geometry type.
+
+Given two geometry types, find the most specific common type. Normally
+used repeatedly with the geometries in a layer to try and establish
+the most specific geometry type that can be reported for the layer.
+
+NOTE: wkbUnknown is the \"worst case\" indicating a mixture of
+geometry types with nothing in common but the base geometry type.
+wkbNone should be used to indicate that no geometries have been
+encountered yet, and means the first geometry encountered will
+establish the preliminary type.
+
+If bAllowPromotingToCurves is set to TRUE, mixing Polygon and
+CurvePolygon will return CurvePolygon. Mixing LineString,
+CircularString, CompoundCurve will return CompoundCurve. Mixing
+MultiPolygon and MultiSurface will return MultiSurface. Mixing
+MultiCurve and MultiLineString will return MultiCurve.
+
+Parameters:
+-----------
+
+eMain:  the first input geometry type.
+
+eExtra:  the second input geometry type.
+
+bAllowPromotingToCurves:  determine if promotion to curve type must be
+done.
+
+the merged geometry type.
+
+GDAL 2.0 ";
+
 %feature("docstring")  FlattenTo2D "void
 OGR_G_FlattenTo2D(OGRGeometryH hGeom)
 
-Convert geometry to strictly 2D. In a sense this converts all Z
-coordinates to 0.0.
+Convert geometry to strictly 2D.
+
+In a sense this converts all Z coordinates to 0.0.
 
 This function is the same as the CPP method
 OGRGeometry::flattenTo2D().
@@ -610,7 +809,8 @@ hFirst, OGRGeometryH hOther)
 
 Compute distance between two geometries.
 
-Returns the shortest distance between the two geometries.
+Returns the shortest distance between the two geometries. The distance
+is expressed into the same unit as the coordinates of the geometries.
 
 This function is the same as the C++ method OGRGeometry::Distance().
 
@@ -694,7 +894,7 @@ within the buffer distance of the original geometry.
 
 Some buffer sections are properly described as curves, but are
 converted to approximate polygons. The nQuadSegs parameter can be used
-to control how many segements should be used to define a 90 degree
+to control how many segments should be used to define a 90 degree
 curve - a quadrant of a circle. A value of 30 is a reasonable default.
 Large values result in large numbers of vertices in the resulting
 buffer geometry while small numbers reduce the accuracy of the result.
@@ -711,7 +911,8 @@ Parameters:
 
 hTarget:  the geometry.
 
-dfDist:  the buffer distance to be applied.
+dfDist:  the buffer distance to be applied. Should be expressed into
+the same unit as the coordinates of the geometry.
 
 nQuadSegs:  the number of segments used to approximate a 90 degree
 (quadrant) of curvature.
@@ -1026,6 +1227,29 @@ error.
 
 OGRERR_NONE on success or OGRERR_FAILURE on error. ";
 
+%feature("docstring")  PointOnSurface "OGRGeometryH
+OGR_G_PointOnSurface(OGRGeometryH hGeom)
+
+Returns a point guaranteed to lie on the surface.
+
+This method relates to the SFCOM ISurface::get_PointOnSurface() method
+however the current implementation based on GEOS can operate on other
+geometry types than the types that are supported by SQL/MM-Part 3 :
+surfaces (polygons) and multisurfaces (multipolygons).
+
+This method is built on the GEOS library, check it for the definition
+of the geometry operation. If OGR is built without the GEOS library,
+this method will always fail, issuing a CPLE_NotSupported error.
+
+Parameters:
+-----------
+
+hGeom:  the geometry to operate on.
+
+a point guaranteed to lie on the surface or NULL if an error occurred.
+
+OGR 1.10 ";
+
 %feature("docstring")  Simplify "OGRGeometryH
 OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
 
@@ -1052,7 +1276,7 @@ OGR 1.8.0 ";
 %feature("docstring")  SimplifyPreserveTopology "OGRGeometryH
 OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)
 
-Compute a simplified geometry.
+Simplify the geometry while preserving topology.
 
 This function is the same as the C++ method
 OGRGeometry::SimplifyPreserveTopology().
@@ -1072,5 +1296,321 @@ dTolerance:  the distance tolerance for the simplification.
 the simplified geometry or NULL if an error occurs.
 
 OGR 1.9.0 ";
+
+%feature("docstring")  DelaunayTriangulation "OGRGeometryH
+OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
+int bOnlyEdges)
+
+Return a Delaunay triangulation of the vertices of the geometry.
+
+This function is the same as the C++ method
+OGRGeometry::DelaunayTriangulation().
+
+This function is built on the GEOS library, v3.4 or above. If OGR is
+built without the GEOS library, this function will always fail,
+issuing a CPLE_NotSupported error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+dfTolerance:  optional snapping tolerance to use for improved
+robustness
+
+bOnlyEdges:  if TRUE, will return a MULTILINESTRING, otherwise it will
+return a GEOMETRYCOLLECTION containing triangular POLYGONs.
+
+the geometry resulting from the Delaunay triangulation or NULL if an
+error occurs.
+
+OGR 2.1 ";
+
+%feature("docstring")  Polygonize "OGRGeometryH
+OGR_G_Polygonize(OGRGeometryH hTarget)
+
+Polygonizes a set of sparse edges.
+
+A new geometry object is created and returned containing a collection
+of reassembled Polygons: NULL will be returned if the input collection
+doesn't corresponds to a MultiLinestring, or when reassembling Edges
+into Polygons is impossible due to topological inconsistencies.
+
+This function is the same as the C++ method OGRGeometry::Polygonize().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hTarget:  The Geometry to be polygonized.
+
+a handle to a newly allocated geometry now owned by the caller, or
+NULL on failure.
+
+OGR 1.9.0 ";
+
+%feature("docstring")  OGRHasPreparedGeometrySupport "int
+OGRHasPreparedGeometrySupport() ";
+
+%feature("docstring")  OGRCreatePreparedGeometry "OGRPreparedGeometry* OGRCreatePreparedGeometry(const OGRGeometry
+*poGeom) ";
+
+%feature("docstring")  OGRDestroyPreparedGeometry "void
+OGRDestroyPreparedGeometry(OGRPreparedGeometry *poPreparedGeom) ";
+
+%feature("docstring")  OGRPreparedGeometryIntersects "int
+OGRPreparedGeometryIntersects(const OGRPreparedGeometry
+*poPreparedGeom, const OGRGeometry *poOtherGeom) ";
+
+%feature("docstring")  OGRPreparedGeometryContains "int
+OGRPreparedGeometryContains(const OGRPreparedGeometry *poPreparedGeom,
+const OGRGeometry *poOtherGeom) ";
+
+%feature("docstring")  OGRGeometryFromEWKB "OGRGeometry*
+OGRGeometryFromEWKB(GByte *pabyWKB, int nLength, int *pnSRID, int
+bIsPostGIS1_EWKB) ";
+
+%feature("docstring")  OGRGeometryFromHexEWKB "OGRGeometry*
+OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID, int
+bIsPostGIS1_EWKB) ";
+
+%feature("docstring")  OGRGeometryToHexEWKB "char*
+OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId, int
+nPostGISMajor, int nPostGISMinor) ";
+
+%feature("docstring")  OGR_GT_Flatten "OGRwkbGeometryType
+OGR_GT_Flatten(OGRwkbGeometryType eType)
+
+Returns the 2D geometry type corresponding to the passed geometry
+type.
+
+This function is intended to work with geometry types as old-style
+99-402 extended dimension (Z) WKB types, as well as with newer SFSQL
+1.2 and ISO SQL/MM Part 3 extended dimension (Z&M) WKB types.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+2D geometry type corresponding to the passed geometry type.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_HasZ "int
+OGR_GT_HasZ(OGRwkbGeometryType eType)
+
+Return if the geometry type is a 3D geometry type.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+TRUE if the geometry type is a 3D geometry type.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_HasM "int
+OGR_GT_HasM(OGRwkbGeometryType eType)
+
+Return if the geometry type is a measured type.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+TRUE if the geometry type is a measured type.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_SetZ "OGRwkbGeometryType
+OGR_GT_SetZ(OGRwkbGeometryType eType)
+
+Returns the 3D geometry type corresponding to the passed geometry
+type.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+3D geometry type corresponding to the passed geometry type.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_SetM "OGRwkbGeometryType
+OGR_GT_SetM(OGRwkbGeometryType eType)
+
+Returns the measured geometry type corresponding to the passed
+geometry type.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+measured geometry type corresponding to the passed geometry type.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_SetModifier "OGRwkbGeometryType
+OGR_GT_SetModifier(OGRwkbGeometryType eType, int bHasZ, int bHasM)
+
+Returns a 2D or 3D geometry type depending on parameter.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+bHasZ:  TRUE if the output geometry type must be 3D.
+
+bHasM:  TRUE if the output geometry type must be measured.
+
+Output geometry type.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_IsSubClassOf "int
+OGR_GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType
+eSuperType)
+
+Returns if a type is a subclass of another one.
+
+Parameters:
+-----------
+
+eType:  Type.
+
+eSuperType:  Super type
+
+TRUE if eType is a subclass of eSuperType.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_GetCollection "OGRwkbGeometryType
+OGR_GT_GetCollection(OGRwkbGeometryType eType)
+
+Returns the collection type that can contain the passed geometry type.
+
+Handled conversions are : wkbNone->wkbNone, wkbPoint -> wkbMultiPoint,
+wkbLineString->wkbMultiLineString, wkbPolygon->wkbMultiPolygon,
+wkbCircularString->wkbMultiCurve, wkbCompoundCurve->wkbMultiCurve,
+wkbCurvePolygon->wkbMultiSurface. In other cases, wkbUnknown is
+returned
+
+Passed Z flag is preserved.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+the collection type that can contain the passed geometry type or
+wkbUnknown
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_GetCurve "OGRwkbGeometryType
+OGR_GT_GetCurve(OGRwkbGeometryType eType)
+
+Returns the curve geometry type that can contain the passed geometry
+type.
+
+Handled conversions are : wkbPolygon -> wkbCurvePolygon,
+wkbLineString->wkbCompoundCurve, wkbMultiPolygon->wkbMultiSurface and
+wkbMultiLineString->wkbMultiCurve. In other cases, the passed geometry
+is returned.
+
+Passed Z flag is preserved.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+the curve type that can contain the passed geometry type
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_GetLinear "OGRwkbGeometryType
+OGR_GT_GetLinear(OGRwkbGeometryType eType)
+
+Returns the non-curve geometry type that can contain the passed
+geometry type.
+
+Handled conversions are : wkbCurvePolygon -> wkbPolygon,
+wkbCircularString->wkbLineString, wkbCompoundCurve->wkbLineString,
+wkbMultiSurface->wkbMultiPolygon and
+wkbMultiCurve->wkbMultiLineString. In other cases, the passed geometry
+is returned.
+
+Passed Z flag is preserved.
+
+Parameters:
+-----------
+
+eType:  Input geometry type
+
+the non-curve type that can contain the passed geometry type
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_IsCurve "int
+OGR_GT_IsCurve(OGRwkbGeometryType eGeomType)
+
+Return if a geometry type is an instance of Curve.
+
+Such geometry type are wkbLineString, wkbCircularString,
+wkbCompoundCurve and their 3D variant.
+
+Parameters:
+-----------
+
+eGeomType:  the geometry type
+
+TRUE if the geometry type is an instance of Curve
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_IsSurface "int
+OGR_GT_IsSurface(OGRwkbGeometryType eGeomType)
+
+Return if a geometry type is an instance of Surface.
+
+Such geometry type are wkbCurvePolygon and wkbPolygon and their 3D
+variant.
+
+Parameters:
+-----------
+
+eGeomType:  the geometry type
+
+TRUE if the geometry type is an instance of Surface
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_GT_IsNonLinear "int
+OGR_GT_IsNonLinear(OGRwkbGeometryType eGeomType)
+
+Return if a geometry type is a non-linear geometry type.
+
+Such geometry type are wkbCircularString, wkbCompoundCurve,
+wkbCurvePolygon, wkbMultiCurve, wkbMultiSurface and their 3D variant.
+
+Parameters:
+-----------
+
+eGeomType:  the geometry type
+
+TRUE if the geometry type is a non-linear geometry type.
+
+GDAL 2.0 ";
 
 }

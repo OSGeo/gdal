@@ -1,7 +1,7 @@
 %extend OGRFeatureDefnShadow {
 // File: ogrfeaturedefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeaturedefn.cpp
-22900 2011-08-07 20:47:41Z rouault $\") ";
+32696 2016-01-03 10:48:58Z rouault $\") ";
 
 %feature("docstring")  Create "OGRFeatureDefnH OGR_FD_Create(const
 char *pszName)
@@ -148,8 +148,8 @@ OGRERR_NONE in case of success.
 
 OGR 1.9.0 ";
 
-%feature("docstring")  ReorderFieldDefn "OGRErr
-OGR_FD_ReorderFieldDefn(OGRFeatureDefnH hDefn, int *panMap)
+%feature("docstring")  ReorderFieldDefns "OGRErr
+OGR_FD_ReorderFieldDefns(OGRFeatureDefnH hDefn, int *panMap)
 
 Reorder the field definitions in the array of the feature definition.
 
@@ -174,7 +174,120 @@ reordering was panMap[i].
 
 OGRERR_NONE in case of success.
 
-OGR 1.9.0 ";
+OGR 2.1.0 ";
+
+%feature("docstring")  GetGeomFieldCount "int
+OGR_FD_GetGeomFieldCount(OGRFeatureDefnH hDefn)
+
+Fetch number of geometry fields on the passed feature definition.
+
+This function is the same as the C++
+OGRFeatureDefn::GetGeomFieldCount().
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition to get the fields count from.
+
+count of geometry fields.
+
+GDAL 1.11 ";
+
+%feature("docstring")  GetGeomFieldDefn "OGRGeomFieldDefnH
+OGR_FD_GetGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField)
+
+Fetch geometry field definition of the passed feature definition.
+
+This function is the same as the C++ method
+OGRFeatureDefn::GetGeomFieldDefn().
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition to get the field definition
+from.
+
+iGeomField:  the geometry field to fetch, between 0 and
+GetGeomFieldCount()-1.
+
+an handle to an internal field definition object or NULL if invalid
+index. This object should not be modified or freed by the application.
+
+GDAL 1.11 ";
+
+%feature("docstring")  AddGeomFieldDefn "void
+OGR_FD_AddGeomFieldDefn(OGRFeatureDefnH hDefn, OGRGeomFieldDefnH
+hNewGeomField)
+
+Add a new field definition to the passed feature definition.
+
+To add a new field definition to a layer definition, do not use this
+function directly, but use OGR_L_CreateGeomField() instead.
+
+This function should only be called while there are no OGRFeature
+objects in existence based on this OGRFeatureDefn. The
+OGRGeomFieldDefn passed in is copied, and remains the responsibility
+of the caller.
+
+This function is the same as the C++ method
+OGRFeatureDefn::AddGeomFieldDefn().
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition to add the geometry field
+definition to.
+
+hNewGeomField:  handle to the new field definition.
+
+GDAL 1.11 ";
+
+%feature("docstring")  DeleteGeomFieldDefn "OGRErr
+OGR_FD_DeleteGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField)
+
+Delete an existing geometry field definition.
+
+To delete an existing geometry field definition from a layer
+definition, do not use this function directly, but use
+OGR_L_DeleteGeomField() instead (*not implemented yet*).
+
+This method should only be called while there are no OGRFeature
+objects in existence based on this OGRFeatureDefn.
+
+This method is the same as the C++ method
+OGRFeatureDefn::DeleteGeomFieldDefn().
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition.
+
+iGeomField:  the index of the geometry field definition.
+
+OGRERR_NONE in case of success.
+
+GDAL 1.11 ";
+
+%feature("docstring")  GetGeomFieldIndex "int
+OGR_FD_GetGeomFieldIndex(OGRFeatureDefnH hDefn, const char
+*pszGeomFieldName)
+
+Find geometry field by name.
+
+The geometry field index of the first geometry field matching the
+passed field name (case insensitively) is returned.
+
+This function is the same as the C++ method
+OGRFeatureDefn::GetGeomFieldIndex.
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition to get field index from.
+
+pszGeomFieldName:  the geometry field name to search for.
+
+the geometry field index, or -1 if no match found. ";
 
 %feature("docstring")  GetGeomType "OGRwkbGeometryType
 OGR_FD_GetGeomType(OGRFeatureDefnH hDefn)
@@ -183,6 +296,9 @@ Fetch the geometry base type of the passed feature definition.
 
 This function is the same as the C++ method
 OGRFeatureDefn::GetGeomType().
+
+Starting with GDAL 1.11, this method returns
+GetGeomFieldDefn(0)->GetType().
 
 Parameters:
 -----------
@@ -205,6 +321,9 @@ after any OGRFeatures have been created against this definition.
 
 This function is the same as the C++ method
 OGRFeatureDefn::SetGeomType().
+
+Starting with GDAL 1.11, this method calls
+GetGeomFieldDefn(0)->SetType().
 
 Parameters:
 -----------
@@ -293,6 +412,9 @@ Determine whether the geometry can be omitted when fetching features.
 This function is the same as the C++ method
 OGRFeatureDefn::IsGeometryIgnored().
 
+Starting with GDAL 1.11, this method returns
+GetGeomFieldDefn(0)->IsIgnored().
+
 Parameters:
 -----------
 
@@ -308,6 +430,9 @@ Set whether the geometry can be omitted when fetching features.
 
 This function is the same as the C++ method
 OGRFeatureDefn::SetGeometryIgnored().
+
+Starting with GDAL 1.11, this method calls
+GetGeomFieldDefn(0)->SetIgnored().
 
 Parameters:
 -----------
@@ -348,5 +473,22 @@ hDefn:  handle to the feature definition on witch OGRFeature are based
 on.
 
 bIgnore:  ignore state ";
+
+%feature("docstring")  IsSame "int OGR_FD_IsSame(OGRFeatureDefnH
+hFDefn, OGRFeatureDefnH hOtherFDefn)
+
+Test if the feature definition is identical to the other one.
+
+Parameters:
+-----------
+
+hFDefn:  handle to the feature definition on witch OGRFeature are
+based on.
+
+hOtherFDefn:  handle to the other feature definition to compare to.
+
+TRUE if the feature definition is identical to the other one.
+
+OGR 1.11 ";
 
 }
