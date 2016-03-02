@@ -434,7 +434,7 @@ void OGR_G_AssignSpatialReference( OGRGeometryH hGeom,
  *
  * Determines whether two geometries intersect.  If GEOS is enabled, then
  * this is done in rigorous fashion otherwise TRUE is returned if the
- * envelopes (bounding boxes) of the two features overlap.
+ * envelopes (bounding boxes) of the two geometries overlap.
  *
  * The poOtherGeom argument may be safely NULL, but in this case the method
  * will always return TRUE.   That is, a NULL geometry is treated as being
@@ -508,9 +508,9 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
 /**
  * \brief Do these features intersect?
  *
- * Currently this is not implemented in a rigorous fashion, and generally
- * just tests whether the envelopes of the two features intersect.  Eventually
- * this will be made rigorous.
+ * Determines whether two geometries intersect.  If GEOS is enabled, then
+ * this is done in rigorous fashion otherwise TRUE is returned if the
+ * envelopes (bounding boxes) of the two geometries overlap.
  *
  * This function is the same as the CPP method OGRGeometry::Intersects.
  *
