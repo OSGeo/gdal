@@ -70,7 +70,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "   [-o out_type]          Output type { default, all, wkt_all,\n"
             "                                        proj4, epsg,\n"
             "                                        wkt, wkt_simple, wkt_noct, wkt_esri,\n"
-            "                                        mapinfo, xml }\n\n" ); 
+            "                                        mapinfo, xml }\n\n" );
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -314,26 +314,26 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
             }
         }
         GDALClose( (GDALDatasetH) poGDALDS );
-        if ( ! bGotSRS ) 
+        if ( ! bGotSRS )
             CPLDebug( "gdalsrsinfo", "did not open with GDAL" );
     }
 
     /* Try ESRI file */
     if ( ! bGotSRS && bIsFile && (strstr(pszInput,".prj") != NULL) ) {
-        CPLDebug( "gdalsrsinfo", 
+        CPLDebug( "gdalsrsinfo",
                   "trying to get SRS from ESRI .prj file [%s]", pszInput );
 
         char **pszTemp;
         if ( strstr(pszInput,"ESRI::") != NULL )
             pszTemp = CSLLoad( pszInput+6 );
-        else 
+        else
             pszTemp = CSLLoad( pszInput );
 
         if( pszTemp ) {
             eErr = oSRS.importFromESRI( pszTemp );
             CSLDestroy( pszTemp );
         }
-        else 
+        else
             eErr = OGRERR_UNSUPPORTED_SRS;
 
         if( eErr != OGRERR_NONE ) {
@@ -347,7 +347,7 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
 
     /* Last resort, try OSRSetFromUserInput() */
     if ( ! bGotSRS ) {
-        CPLDebug( "gdalsrsinfo", 
+        CPLDebug( "gdalsrsinfo",
                   "trying to get SRS from user input [%s]", pszInput );
 
         eErr = oSRS.SetFromUserInput( pszInput );
@@ -397,7 +397,7 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
 
     else if ( EQUAL("wkt", pszOutputType ) ) {
         if ( bPrintSep ) printf("OGC WKT :\n");
-        if ( bPretty ) 
+        if ( bPretty )
             oSRS.exportToPrettyWkt( &pszOutput, FALSE );
         else
             oSRS.exportToWkt( &pszOutput );
@@ -414,7 +414,7 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
         if (  bPrintSep ) printf("OGC WKT (no CT) :\n");
         OGRSpatialReference *poSRS = oSRS.Clone();
         poSRS->StripCTParms( );
-        if ( bPretty ) 
+        if ( bPretty )
             poSRS->exportToPrettyWkt( &pszOutput, FALSE );
         else
             poSRS->exportToWkt( &pszOutput );
@@ -426,7 +426,7 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
         if ( bPrintSep ) printf("ESRI WKT :\n");
         OGRSpatialReference *poSRS = oSRS.Clone();
         poSRS->morphToESRI( );
-        if ( bPretty ) 
+        if ( bPretty )
             poSRS->exportToPrettyWkt( &pszOutput, FALSE );
         else
             poSRS->exportToWkt( &pszOutput );
@@ -463,7 +463,7 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
 /*                                                                      */
 /*      Print spatial reference in specified formats.                   */
 /************************************************************************/
-void PrintSRSOutputTypes( const OGRSpatialReference &oSRS, 
+void PrintSRSOutputTypes( const OGRSpatialReference &oSRS,
                           const char ** papszOutputTypes )
 
 {
@@ -495,7 +495,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
     int nCode = 0;
     int nFound = -1;
 
-    CPLDebug( "gdalsrsinfo", 
+    CPLDebug( "gdalsrsinfo",
               "SearchCSVForWKT()\nfile=%s\nWKT=%s\n",
               pszFileCSV, pszTarget);
 
@@ -522,7 +522,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
               szTemp );
 
     fp = VSIFOpenL( szTemp, "r" );
-    if( fp == NULL ) 
+    if( fp == NULL )
     {
         CPLDebug( "gdalsrsinfo", "could not open support file %s",
                   pszFilename );
@@ -569,7 +569,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
 
             pszWKT = (char *) pszLine + nPos +1;
 
-            // CPLDebug( "gdalsrsinfo", 
+            // CPLDebug( "gdalsrsinfo",
             //           "code=%d\nWKT=\n[%s]\ntarget=\n[%s]\n",
             //           nCode,pszWKT, pszTarget );
 
@@ -590,8 +590,8 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
 
 }
 
-/* TODO 
-   - search for well-known values (AutoIdentifyEPSG()) 
+/* TODO
+   - search for well-known values (AutoIdentifyEPSG())
 
    - should we search .override.csv files?
 

@@ -367,7 +367,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         if( iBurnField == -1 )
         {
             printf( "Failed to find field %s on layer %s, skipping.\n",
-                    pszBurnAttribute, 
+                    pszBurnAttribute,
                     OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
             return CE_Failure;
         }
@@ -568,7 +568,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
         return NULL;
 
     if ( pszSQL != NULL )
-        poLyr = poDS->ExecuteSQL( pszSQL, NULL, NULL ); 
+        poLyr = poDS->ExecuteSQL( pszSQL, NULL, NULL );
     else if ( pszLyr != NULL )
         poLyr = poDS->GetLayerByName( pszLyr );
     else
@@ -779,7 +779,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     if( psOptions->pszSQL != NULL )
     {
         OGRLayer* poLayer = poSrcDS->ExecuteSQL(psOptions->pszSQL,
-                                                psOptions->poSpatialFilter, NULL ); 
+                                                psOptions->poSpatialFilter, NULL );
         if( poLayer != NULL )
         {
             // Custom layer will be rasterized in the first band.
@@ -806,7 +806,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
             GDALDatasetGetLayerByName( hSrcDataset, psOptions->papszLayers[i]);
         if( hLayer == NULL )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\", skipping.", 
+            CPLError(CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\", skipping.",
                      psOptions->papszLayers[i] ? psOptions->papszLayers[i] : "null" );
             continue;
         }
@@ -998,25 +998,25 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             psOptions->dfXMin = CPLAtof(papszArgv[++i]);
             psOptions->dfXMax = CPLAtof(papszArgv[++i]);
             psOptions->bIsXExtentSet = TRUE;
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-tye") && i+2 < argc )
         {
             psOptions->dfYMin = CPLAtof(papszArgv[++i]);
             psOptions->dfYMax = CPLAtof(papszArgv[++i]);
             psOptions->bIsYExtentSet = TRUE;
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-outsize") && i+2 < argc )
         {
             psOptions->nXSize = atoi(papszArgv[++i]);
             psOptions->nYSize = atoi(papszArgv[++i]);
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-co") && i+1 < argc )
         {
             psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, papszArgv[++i] );
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-zfield") && i+1 < argc )
         {
@@ -1048,7 +1048,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
         else if( EQUAL(papszArgv[i],"-sql") && i+1 < argc )
         {
             CPLFree(psOptions->pszSQL);
-            psOptions->pszSQL = CPLStrdup(papszArgv[++i]);   
+            psOptions->pszSQL = CPLStrdup(papszArgv[++i]);
         }
 
         else if( EQUAL(papszArgv[i],"-spat") && i+4 < argc )
@@ -1079,8 +1079,8 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             VSIStatBufL  sStat;
             psOptions->bClipSrc = TRUE;
             if ( IsNumber(papszArgv[i+1])
-                 && papszArgv[i+2] != NULL 
-                 && papszArgv[i+3] != NULL 
+                 && papszArgv[i+2] != NULL
+                 && papszArgv[i+3] != NULL
                  && papszArgv[i+4] != NULL)
             {
                 OGRLinearRing  oRing;
@@ -1149,7 +1149,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             if( oOutputSRS.SetFromUserInput( papszArgv[i+1] ) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to process SRS definition: %s", 
+                         "Failed to process SRS definition: %s",
                          papszArgv[i+1] );
                 GDALGridOptionsFree(psOptions);
                 return NULL;
@@ -1158,7 +1158,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             CPLFree(psOptions->pszOutputSRS);
             oOutputSRS.exportToWkt( &(psOptions->pszOutputSRS) );
             i++;
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-a") && i+1 < argc )
         {

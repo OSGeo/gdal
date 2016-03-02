@@ -326,7 +326,7 @@ int main( int nArgc, char ** papszArgv )
         else if ( EQUAL(papszArgv[iArg],"delete") )
         {
             stOper = op_delete;
-        }        
+        }
 
         else if( EQUAL(papszArgv[iArg],"change") )
         {
@@ -359,7 +359,7 @@ int main( int nArgc, char ** papszArgv )
             pszDataSource = papszArgv[iArg];
         else
             papszLayers = CSLAddString( papszLayers, papszArgv[iArg] );
-    }    
+    }
 
 // do the work ////////////////////////////////////////////////////////////////
 
@@ -596,7 +596,7 @@ int main( int nArgc, char ** papszArgv )
             else
                 fprintf(stderr, "\nFAILURE: Can not copy layer from %s\n",
                 pszInputDataset);
-            GDALClose(poSrcDS);            
+            GDALClose(poSrcDS);
 
             nRet = 1;
             goto exit;
@@ -919,4 +919,3 @@ exit:
 
     return nRet;
 }
-

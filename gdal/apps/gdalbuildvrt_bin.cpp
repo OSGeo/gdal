@@ -43,7 +43,7 @@ static void Usage(const char* pszErrorMsg = NULL) CPL_NO_RETURN;
 static void Usage(const char* pszErrorMsg)
 
 {
-    fprintf(stdout, "%s", 
+    fprintf(stdout, "%s",
             "Usage: gdalbuildvrt [-tileindex field_name]\n"
             "                    [-resolution {highest|lowest|average|user}]\n"
             "                    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]\n"

@@ -560,7 +560,7 @@ static double Project(OGRLineString* pLine, OGRPoint* pPoint)
     if(TestPoint.Equals(pPoint))
         return pLine->get_Length();
 
-    return pLine->Project(pPoint);    
+    return pLine->Project(pPoint);
 }
 #endif
 
@@ -617,7 +617,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
                     moRepers[dfReperPos] = pPt;
                 else
                     delete pPt;
-            }           
+            }
         }
         OGRFeature::DestroyFeature(pReperFeature);
     }
@@ -668,7 +668,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
         fprintf(stdout, "Create parts\n");
     }
 
-    //get first part 
+    //get first part
     //If first point is not at the beginning of the path
     //The first part should be from the beginning of the path to the first point. length == part.getLength
     OGRPoint *pPtBeg(NULL), *pPtEnd(NULL);
@@ -1283,7 +1283,7 @@ int main( int nArgc, char ** papszArgv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszLCO = CSLAddString(papszLCO, papszArgv[++iArg] );
-        }        
+        }
         else if( EQUAL(papszArgv[iArg],"-create") )
         {
             stOper = op_create;
@@ -1291,25 +1291,25 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-get_pos") )
         {
             stOper = op_get_pos;
-        }        
+        }
         else if( EQUAL(papszArgv[iArg],"-get_coord") )
         {
             stOper = op_get_coord;
-        }        
+        }
         else if( EQUAL(papszArgv[iArg],"-get_subline") )
         {
             stOper = op_get_subline;
-        }        
+        }
         else if( EQUAL(papszArgv[iArg],"-l") )
         {
              CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
            pszLineDataSource = papszArgv[++iArg];
-        }        
+        }
         else if( EQUAL(papszArgv[iArg],"-ln") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszLineLayerName = papszArgv[++iArg];
-        }    
+        }
         else if (EQUAL(papszArgv[iArg], "-lf"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -1324,7 +1324,7 @@ int main( int nArgc, char ** papszArgv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszPicketsDataSource = papszArgv[++iArg];
-        }        
+        }
         else if( EQUAL(papszArgv[iArg],"-pn") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -1334,7 +1334,7 @@ int main( int nArgc, char ** papszArgv )
             fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
             exit( 1 );
 #endif
-        }    
+        }
         else if( EQUAL(papszArgv[iArg],"-pm") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -1359,22 +1359,22 @@ int main( int nArgc, char ** papszArgv )
         {
              CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
            pszPartsDataSource = papszArgv[++iArg];
-        }        
+        }
         else if( EQUAL(papszArgv[iArg],"-rn") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszPartsLayerName = papszArgv[++iArg];
-        }         
+        }
         else if( EQUAL(papszArgv[iArg],"-o") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszOutputDataSource = papszArgv[++iArg];
-        }   
+        }
         else if( EQUAL(papszArgv[iArg],"-on") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszOutputLayerName = CPLStrdup(papszArgv[++iArg]);
-        }        
+        }
         else if (EQUAL(papszArgv[iArg], "-of"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -1394,7 +1394,7 @@ int main( int nArgc, char ** papszArgv )
             fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
             exit( 1 );
 #endif
-        } 
+        }
         else if( EQUAL(papszArgv[iArg],"-y") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -1404,22 +1404,22 @@ int main( int nArgc, char ** papszArgv )
             fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
             exit( 1 );
 #endif
-        } 
+        }
         else if( EQUAL(papszArgv[iArg],"-m") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfPos = CPLAtofM(papszArgv[++iArg]);
-        }  
+        }
         else if( EQUAL(papszArgv[iArg],"-mb") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfPosBeg = CPLAtofM(papszArgv[++iArg]);
-        }  
+        }
         else if( EQUAL(papszArgv[iArg],"-me") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfPosEnd = CPLAtofM(papszArgv[++iArg]);
-        }  
+        }
         else if( EQUAL(papszArgv[iArg],"-s") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -1429,7 +1429,7 @@ int main( int nArgc, char ** papszArgv )
             fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
             exit( 1 );
 #endif
-        }  
+        }
         else if( EQUAL(papszArgv[iArg],"-progress") )
         {
             bDisplayProgress = TRUE;
@@ -1541,7 +1541,7 @@ int main( int nArgc, char ** papszArgv )
         poODS = poDriver->Create( pszOutputDataSource, 0, 0, 0, GDT_Unknown, papszDSCO );
         if( poODS == NULL )
         {
-            fprintf( stderr,  "%s driver failed to create %s\n", 
+            fprintf( stderr,  "%s driver failed to create %s\n",
                     pszFormat, pszOutputDataSource );
             exit( 1 );
         }
@@ -1575,7 +1575,7 @@ int main( int nArgc, char ** papszArgv )
         if(poPkLayer == NULL)
         {
             fprintf( stderr, "Get repers layer failed.\n" );
-            exit( 1 );    
+            exit( 1 );
         }
 
         OGRFeatureDefn *poPkFDefn = poPkLayer->GetLayerDefn();
@@ -1587,7 +1587,7 @@ int main( int nArgc, char ** papszArgv )
             if(poOutLayer == NULL)
             {
                 fprintf( stderr, "Create output layer failed.\n" );
-                exit( 1 );    
+                exit( 1 );
             }
 
             //do the work
@@ -1599,7 +1599,7 @@ int main( int nArgc, char ** papszArgv )
             if(poOutLayer == NULL)
             {
                 fprintf( stderr, "Create output layer failed.\n" );
-                exit( 1 );    
+                exit( 1 );
             }
 
             //do the work
@@ -1615,12 +1615,12 @@ int main( int nArgc, char ** papszArgv )
             CPLFree(pszOutputLayerName);
 #else //HAVE_GEOS_PROJECT
         fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
-        exit( 1 );       
-#endif //HAVE_GEOS_PROJECT            
+        exit( 1 );
+#endif //HAVE_GEOS_PROJECT
     }
     else if(stOper == op_get_pos)
     {
-#ifdef HAVE_GEOS_PROJECT    
+#ifdef HAVE_GEOS_PROJECT
         GDALDataset *poPartsDS = NULL;
         OGRLayer *poPartsLayer = NULL;
 
@@ -1661,8 +1661,8 @@ int main( int nArgc, char ** papszArgv )
         if (poPartsLayer == NULL)
         {
             fprintf( stderr, "Get parts layer failed.\n" );
-            exit( 1 );    
-        }  
+            exit( 1 );
+        }
 
         //do the work
         eErr = GetPosition(poPartsLayer, dfX, dfY, bDisplayProgress, bQuiet);
@@ -1671,8 +1671,8 @@ int main( int nArgc, char ** papszArgv )
         GDALClose( (GDALDatasetH)poPartsDS);
 #else //HAVE_GEOS_PROJECT
         fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
-        exit( 1 );       
-#endif //HAVE_GEOS_PROJECT            
+        exit( 1 );
+#endif //HAVE_GEOS_PROJECT
     }
     else if(stOper == op_get_coord)
     {
@@ -1716,8 +1716,8 @@ int main( int nArgc, char ** papszArgv )
         if (poPartsLayer == NULL)
         {
             fprintf( stderr, "Get parts layer failed.\n" );
-            exit( 1 );    
-        }     
+            exit( 1 );
+        }
         //do the work
         eErr = GetCoordinates(poPartsLayer, dfPos, bDisplayProgress, bQuiet);
 
@@ -1831,7 +1831,7 @@ int main( int nArgc, char ** papszArgv )
         //do the work
         eErr = CreateSubline(poPartsLayer, dfPosBeg, dfPosEnd, poOutLayer, bDisplayProgress, bQuiet);
 
-        //clean up        
+        //clean up
         GDALClose( (GDALDatasetH) poPartsDS);
         GDALClose( (GDALDatasetH) poODS);
 

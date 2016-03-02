@@ -41,7 +41,7 @@ static void DumpBand( GDALDatasetH hBaseDS, GDALRasterBandH hBand,
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-static void Usage() 
+static void Usage()
 
 {
     printf( "Usage: dumpoverviews [-masks] <filename> [overview]*\n" );
@@ -131,7 +131,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
             if( nReqOverviewCount > 0 )
             {
-                int i; 
+                int i;
 
                 for( i = 0; i < nReqOverviewCount; i++ )
                 {
@@ -221,7 +221,7 @@ static void DumpBand( GDALDatasetH hBaseDS, GDALRasterBandH hSrcOver,
     {
         double adfOvGeoTransform[6];
 
-        memcpy( adfOvGeoTransform, adfGeoTransform, 
+        memcpy( adfOvGeoTransform, adfGeoTransform,
                 sizeof(double) * 6 );
 
         adfOvGeoTransform[1] *= (nOrigXSize / (double) nXSize);
@@ -241,10 +241,10 @@ static void DumpBand( GDALDatasetH hBaseDS, GDALRasterBandH hSrcOver,
 
     for( int iLine = 0; iLine < nYSize; iLine++ )
     {
-        GDALRasterIO( hSrcOver, GF_Read, 0, iLine, nXSize, 1, 
+        GDALRasterIO( hSrcOver, GF_Read, 0, iLine, nXSize, 1,
                       pData, nXSize, 1, eDT, 0, 0 );
-        GDALRasterIO( GDALGetRasterBand( hDstDS, 1 ), GF_Write, 
-                      0, iLine, nXSize, 1, 
+        GDALRasterIO( GDALGetRasterBand( hDstDS, 1 ), GF_Write,
+                      0, iLine, nXSize, 1,
                       pData, nXSize, 1, eDT, 0, 0 );
     }
     CPLFree( pData );

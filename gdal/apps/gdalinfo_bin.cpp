@@ -82,7 +82,7 @@ static void GDALInfoOptionsForBinaryFree( GDALInfoOptionsForBinary* psOptionsFor
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv ) 
+int main( int argc, char ** argv )
 
 {
     EarlySetConfigOptions(argc, argv);
@@ -143,16 +143,16 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      If argument is a VSIFILE, then print its contents               */
 /* -------------------------------------------------------------------- */
-        if ( STARTS_WITH(psOptionsForBinary->pszFilename, "/vsizip/") || 
-             STARTS_WITH(psOptionsForBinary->pszFilename, "/vsitar/") ) 
+        if ( STARTS_WITH(psOptionsForBinary->pszFilename, "/vsizip/") ||
+             STARTS_WITH(psOptionsForBinary->pszFilename, "/vsitar/") )
         {
             char** papszFileList = VSIReadDirRecursive( psOptionsForBinary->pszFilename );
             if ( papszFileList )
             {
                 int nCount = CSLCount( papszFileList );
-                fprintf( stdout, 
+                fprintf( stdout,
                          "Unable to open source `%s' directly.\n"
-                         "The archive contains %d files:\n", 
+                         "The archive contains %d files:\n",
                          psOptionsForBinary->pszFilename, nCount );
                 for ( int i = 0; i < nCount; i++ )
                 {

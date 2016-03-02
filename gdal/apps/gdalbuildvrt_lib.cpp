@@ -127,7 +127,7 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
     else
     {
         *pdfSrcXOff = 0.0;
-        *pdfDstXOff = 
+        *pdfDstXOff =
             ((psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
     }
     if ( maxY < psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y])
@@ -139,7 +139,7 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
     else
     {
         *pdfSrcYOff = 0.0;
-        *pdfDstYOff = 
+        *pdfDstYOff =
             ((maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     }
     *pdfDstXSize = (psDP->nRasterXSize *
@@ -162,7 +162,7 @@ class VRTBuilder
     char              **ppszInputFilenames;
     GDALDatasetH       *pahSrcDS;
     int                 nBands;
-    int                *panBandList;   
+    int                *panBandList;
     int                 nMaxBandNo;
     ResolutionStrategy  resolutionStrategy;
     double              we_res;
@@ -523,7 +523,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
 
     int _nBands = GDALGetRasterCount(hDS);
 
-    //if provided band list 
+    //if provided band list
     if(nBands != 0 && _nBands != 0 && nMaxBandNo != 0 && _nBands >= nMaxBandNo)
     {
         if(_nBands < nMaxBandNo)
@@ -957,9 +957,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             /* by the source, the value of the alpha band will be 255, otherwise it will be 0 */
             ((VRTSourcedRasterBand *) hVRTBand)->AddComplexSource(
                                             (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
-                                            dfSrcXOff, dfSrcYOff, 
-                                            dfSrcXSize, dfSrcYSize, 
-                                            dfDstXOff, dfDstYOff, 
+                                            dfSrcXOff, dfSrcYOff,
+                                            dfSrcXSize, dfSrcYSize,
+                                            dfDstXOff, dfDstYOff,
                                             dfDstXSize, dfDstYSize,
                                             255, 0, VRT_NODATA_UNSET);
         }
@@ -1085,7 +1085,7 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
             return NULL;
         }
 
-        GDALDatasetH hDS = 
+        GDALDatasetH hDS =
             (pahSrcDS) ? pahSrcDS[i] :
                          GDALOpen(ppszInputFilenames[i], GA_ReadOnly );
         pasDatasetProperties[i].isFileOK = FALSE;
@@ -1103,7 +1103,7 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
         }
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined, 
+            CPLError(CE_Warning, CPLE_AppDefined,
                      "Can't open %s. Skipping it", dsFileName);
         }
     }
@@ -1200,7 +1200,7 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
         if( hDS  == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to open shapefile `%s'.", 
+                      "Unable to open shapefile `%s'.",
                       filename );
             return false;
         }
@@ -1227,7 +1227,7 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
         if( ti_field == OGR_FD_GetFieldCount(hFDefn) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to find field `%s' in DBF file `%s'.", 
+                     "Unable to find field `%s' in DBF file `%s'.",
                      tile_index, filename );
             return false;
         }
@@ -1635,7 +1635,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
             }
 
             psOptions->nBandCount++;
-            psOptions->panBandList = (int *) 
+            psOptions->panBandList = (int *)
                 CPLRealloc(psOptions->panBandList, sizeof(int) * psOptions->nBandCount);
             psOptions->panBandList[psOptions->nBandCount-1] = nBand;
         }
@@ -1681,7 +1681,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
             GDALBuildVRTOptionsFree(psOptions);
             return NULL;
         }
-        else 
+        else
         {
             if( psOptionsForBinary )
             {
