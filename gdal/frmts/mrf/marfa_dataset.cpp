@@ -1712,9 +1712,9 @@ void GDALMRFDataset::Crystalize()
 
     CPLXMLNode *config = BuildConfig();
     WriteConfig(config);
+    CPLDestroyXMLNode(config);
     if (!IdxFP() || !DataFP())
 	throw CPLString().Printf("MRF: Can't create file %s", strerror(errno));
-    CPLDestroyXMLNode(config);
 
     bCrystalized = TRUE;
 }
