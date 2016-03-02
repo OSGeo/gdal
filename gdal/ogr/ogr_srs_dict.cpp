@@ -91,6 +91,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
             eErr = importFromDict( pszLine + 8, pszCode );
             if( eErr != OGRERR_UNSUPPORTED_SRS )
                 break;
+            continue;
         }
 
         if( strstr(pszLine,",") == NULL )
