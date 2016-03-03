@@ -74,12 +74,12 @@ class OGRPGDumpGeomFieldDefn : public OGRGeomFieldDefn
 {
     public:
         OGRPGDumpGeomFieldDefn( OGRGeomFieldDefn *poGeomField ) :
-            OGRGeomFieldDefn(poGeomField), nSRSId(-1), nCoordDimension(2)
+            OGRGeomFieldDefn(poGeomField), nSRSId(-1), GeometryTypeFlags(0)
             {
             }
             
         int nSRSId;
-        int nCoordDimension;
+        int GeometryTypeFlags;
 };
 
 /************************************************************************/
@@ -105,6 +105,7 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bCreateTable;
     int                 nUnknownSRSId;
     int                 nForcedSRSId;
+    int                 nForcedGeometryTypeFlags;
     int                 bCreateSpatialIndexFlag;
     int                 nPostGISMajor;
     int                 nPostGISMinor;
@@ -158,6 +159,8 @@ class OGRPGDumpLayer : public OGRLayer
                                 { nUnknownSRSId = nUnknownSRSIdIn; }
     void                SetForcedSRSId( int nForcedSRSIdIn )
                                 { nForcedSRSId = nForcedSRSIdIn; }
+    void                SetForcedGeometryTypeFlags( int GeometryTypeFlagsIn )
+                                { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
     void                SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)

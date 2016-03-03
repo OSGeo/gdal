@@ -165,8 +165,8 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     const char          *pszGeomType = NULL;
     char                *pszTableName = NULL;
     char                *pszSchemaName = NULL;
-    int                  nDimension = 3;
     int                  bHavePostGIS = TRUE;
+    int                 GeometryTypeFlags = 0;
 
     const char* pszFIDColumnNameIn = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName, osFIDColumnNameEscaped;
@@ -199,11 +199,43 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     int bCreateSchema = CSLFetchBoolean(papszOptions,"CREATE_SCHEMA", TRUE);
     const char* pszDropTable = CSLFetchNameValueDef(papszOptions,"DROP_TABLE", "IF_EXISTS");
 
-    if( wkbFlatten(eType) == eType )
-        nDimension = 2;
+    if( OGR_GT_HasZ((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
+    if( OGR_GT_HasM((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
 
-    if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
-        nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
+    int ForcedGeometryTypeFlags = -1;
+    const char* pszDim = CSLFetchNameValue( papszOptions, "DIM");
+    if( pszDim != NULL )
+    {
+        if( EQUAL(pszDim, "XY") || EQUAL(pszDim, "2") )
+        {
+            GeometryTypeFlags = 0;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else if( EQUAL(pszDim, "XYZ") || EQUAL(pszDim, "3") )
+        {
+            GeometryTypeFlags = OGRGeometry::OGR_G_3D;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else if( EQUAL(pszDim, "XYM") )
+        {
+            GeometryTypeFlags = OGRGeometry::OGR_G_MEASURED;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else if( EQUAL(pszDim, "XYZM") || EQUAL(pszDim, "4") )
+        {
+            GeometryTypeFlags = OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for DIM");
+        }
+    }
+
+    const int nDimension = 2 + ((GeometryTypeFlags & OGRGeometry::OGR_G_3D) ? 1 : 0)
+                       + ((GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) ? 1 : 0);
 
     /* Should we turn layers with None geometry type as Unknown/GEOMETRY */
     /* so they are still recorded in geometry_columns table ? (#4012) */
@@ -432,14 +464,28 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         else
             pszGFldName = "the_geog";
 
+        const char *suffix = "";
+        if( (GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) && (GeometryTypeFlags & OGRGeometry::OGR_G_3D) )
+        {
+            suffix = "ZM";
+        }
+        else if( (GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
+        {
+            suffix = "M";
+        }
+        else if( (GeometryTypeFlags & OGRGeometry::OGR_G_3D) )
+        {
+            suffix = "Z";
+        }
+
         if (nSRSId)
             osCommand.Printf(
                      "%s ( %s %s, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszSerialType, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName, osFIDColumnNameEscaped.c_str() );
+                     osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszSerialType, pszGFldName, pszGeometryType, suffix, nSRSId, pszTableName, osFIDColumnNameEscaped.c_str() );
         else
             osCommand.Printf(
                      "%s ( %s %s, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszSerialType, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName, osFIDColumnNameEscaped.c_str() );
+                     osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(), pszSerialType, pszGFldName, pszGeometryType, suffix, pszTableName, osFIDColumnNameEscaped.c_str() );
     }
     else
     {
@@ -458,10 +504,17 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if( bCreateTable && bHavePostGIS && !EQUAL(pszGeomType, "geography"))
     {
+        const char *suffix = "";
+        if( GeometryTypeFlags == static_cast<int>(OGRGeometry::OGR_G_MEASURED) &&
+            wkbFlatten(eType) != wkbUnknown )
+        {
+            suffix = "M";
+        }
+
         osCommand.Printf(
-                "SELECT AddGeometryColumn('%s',%s,'%s',%d,'%s',%d)",
+                "SELECT AddGeometryColumn('%s',%s,'%s',%d,'%s%s',%d)",
                 pszSchemaName, pszEscapedTableNameSingleQuote, pszGFldName,
-                nSRSId, pszGeometryType, nDimension );
+                nSRSId, pszGeometryType, suffix, nDimension );
         Log(osCommand);
     }
 
@@ -501,6 +554,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
     poLayer->SetPostGISVersion(nPostGISMajor, nPostGISMinor);
+    poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);
 
     if( bHavePostGIS )
     {
@@ -508,7 +562,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         OGRPGDumpGeomFieldDefn *poGeomField =
             new OGRPGDumpGeomFieldDefn(&oTmp);
         poGeomField->nSRSId = nSRSId;
-        poGeomField->nCoordDimension = nDimension;
+        poGeomField->GeometryTypeFlags = GeometryTypeFlags;
         poLayer->GetLayerDefn()->AddGeomFieldDefn(poGeomField, FALSE);
     }
     else if( pszGFldName )
@@ -540,6 +594,8 @@ int OGRPGDumpDataSource::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
     else
         return FALSE;
