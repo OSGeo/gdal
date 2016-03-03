@@ -620,6 +620,24 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
+    else if( EQUAL(pszProj,"ocea") )
+    {
+        if( CSLFetchNameValue( papszNV, "alpha" ) )
+            SetOCEA(                 
+                OSR_GDV( papszNV, "alpha", 0.0 ), 
+                OSR_GDV( papszNV, "lonc", 0.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+        else
+            SetOCEA2PT(                 
+                OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                OSR_GDV( papszNV, "lon_1", 0.0 ), 
+                OSR_GDV( papszNV, "lon_2", 0.0 ),
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
     else if( EQUAL(pszProj,"tmerc") )
     {
         const char *pszAxis = CSLFetchNameValue( papszNV, "axis" );
@@ -1515,6 +1533,28 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA) )
+    {
+        /* Test presence of Azimuth param called "alpha" = 0.0*/
+        if( GetNormProjParm(SRS_PP_AZIMUTH,0.0) == 0.0 )
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
+            "+proj=ocea +lat_1=%.16g +lat_2=%.16g +lon_1=%.16g +lon_2=%.16g +x_0=%.16g +y_0=%.16g ",
+            GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
+            GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,0.0),
+            GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0),
+            GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0),
+            GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+            GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        else
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
+            "+proj=ocea +alpha=%.16g +lonc=%.16g +x_0=%.16g +y_0=%.16g ",
+            GetNormProjParm(SRS_PP_AZIMUTH,0.0),
+            GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
+            GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+            GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        
     }
 
     else if( EQUAL(pszProjection,SRS_PT_BONNE) )

@@ -338,6 +338,15 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetCEA( double dfStdP1, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
 
+    /** Oblique Cylindrical Equal Area 1point+1azimuth*/
+    OGRErr      SetOCEA( double dfAzimuth, double dfCenterLong, 
+                        double dfFalseEasting, double dfFalseNorthing );
+
+    /** Oblique Cylindrical Equal Area 2 points*/
+    OGRErr      SetOCEA2PT( double dfLat1, double dfLat2,
+                        double dfLong1, double dfLong2,
+                        double dfFalseEasting, double dfFalseNorthing );
+
     /** Cassini-Soldner */
     OGRErr      SetCS( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );

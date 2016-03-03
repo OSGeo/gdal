@@ -99,6 +99,10 @@ typedef enum {
 #define SRS_PT_AZIMUTHAL_EQUIDISTANT "Azimuthal_Equidistant"
 #define SRS_PT_CASSINI_SOLDNER  "Cassini_Soldner"
 #define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
+#define SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA                           \
+                                "Oblique_Cylindrical_Equal_Area"
+#define SRS_PT_OBLIQUE_CYLINDRICAL_EQUAL_AREA_2_POINT                   \
+                                "Oblique_Cylindrical_Equal_Area_2_Point"
 #define SRS_PT_BONNE            "Bonne"
 #define SRS_PT_ECKERT_I         "Eckert_I"
 #define SRS_PT_ECKERT_II        "Eckert_II"
@@ -488,6 +492,17 @@ OGRErr CPL_DLL OSRSetBonne(OGRSpatialReferenceH hSRS,
 
 /** Cylindrical Equal Area */
 OGRErr CPL_DLL OSRSetCEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfCentralMeridian,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Oblique Cylindrical Equal Area 1point+1azimuth */
+OGRErr CPL_DLL OSRSetOCEA( OGRSpatialReferenceH hSRS,
+                        double dfAzimuth, double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Oblique Cylindrical Equal Area 2 points */
+OGRErr CPL_DLL OSRSetOCEA2PT( OGRSpatialReferenceH hSRS,
+                        double dfLat1, double dfLat2,
+                        double dfLong1, double dfLong2,
                         double dfFalseEasting, double dfFalseNorthing );
 
 /** Cassini-Soldner */
