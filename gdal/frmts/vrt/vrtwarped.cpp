@@ -397,7 +397,7 @@ CPLErr VRTWarpedDataset::SetMetadataItem( const char *pszName, const char *pszVa
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) && EQUAL(pszName, "SrcOvrLevel") )
     {
         const int nOldValue = m_nSrcOvrLevel;
-        if( EQUAL(pszValue, "AUTO") )
+        if( pszValue == NULL || EQUAL(pszValue, "AUTO") )
             m_nSrcOvrLevel = -2;
         else if( STARTS_WITH_CI(pszValue, "AUTO-") )
             m_nSrcOvrLevel = -2-atoi(pszValue + 5);
