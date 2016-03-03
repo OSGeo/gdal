@@ -26148,7 +26148,9 @@ if test "$with_odbc" = "no" ; then
   echo "ODBC support disabled."
 
 elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
+  ODBC_SETTING=no
 
+  echo "check for unixODBC"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLConnect in -lodbc" >&5
 $as_echo_n "checking for SQLConnect in -lodbc... " >&6; }
 if ${ac_cv_lib_odbc_SQLConnect+:} false; then :
@@ -26186,9 +26188,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc_SQLConnect" >&5
 $as_echo "$ac_cv_lib_odbc_SQLConnect" >&6; }
 if test "x$ac_cv_lib_odbc_SQLConnect" = xyes; then :
-  ODBC_SETTING=yes
-else
-  ODBC_SETTING=no
+  ODBC_LIBS="-lodbc -lodbcinst"
 fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLInstallDriverEx in -lodbcinst" >&5
@@ -26229,28 +26229,205 @@ fi
 $as_echo "$ac_cv_lib_odbcinst_SQLInstallDriverEx" >&6; }
 if test "x$ac_cv_lib_odbcinst_SQLInstallDriverEx" = xyes; then :
   ODBC_SETTING=yes
+fi
+
+
+  if test "$ODBC_SETTING" = "no" ; then
+    echo "check for windows ODBC"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lodbc32" >&5
+$as_echo_n "checking for main in -lodbc32... " >&6; }
+if ${ac_cv_lib_odbc32_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbc32  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbc32_main=yes
+else
+  ac_cv_lib_odbc32_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc32_main" >&5
+$as_echo "$ac_cv_lib_odbc32_main" >&6; }
+if test "x$ac_cv_lib_odbc32_main" = xyes; then :
+  ODBC_LIBS="-lodbc32 -lodbccp32"
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLInstallDriverEx in -lodbccp32" >&5
+$as_echo_n "checking for SQLInstallDriverEx in -lodbccp32... " >&6; }
+if ${ac_cv_lib_odbccp32_SQLInstallDriverEx+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbccp32  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SQLInstallDriverEx ();
+int
+main ()
+{
+return SQLInstallDriverEx ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbccp32_SQLInstallDriverEx=yes
+else
+  ac_cv_lib_odbccp32_SQLInstallDriverEx=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbccp32_SQLInstallDriverEx" >&5
+$as_echo "$ac_cv_lib_odbccp32_SQLInstallDriverEx" >&6; }
+if test "x$ac_cv_lib_odbccp32_SQLInstallDriverEx" = xyes; then :
+  ODBC_SETTING=yes
+fi
+
+  fi
+
+  if test "$ODBC_SETTING" = "yes" ; then
+    for ac_header in sql.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "sql.h" "ac_cv_header_sql_h" "#ifdef _WIN32
+# include <windows.h>
+#endif
+
+"
+if test "x$ac_cv_header_sql_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SQL_H 1
+_ACEOF
+
 else
   ODBC_SETTING=no
 fi
 
+done
 
-  if test "$ODBC_SETTING" = "yes" ; then
-    if test -f /usr/local/include/sql.h -o -f /usr/include/sql.h ; then
-      ODBC_SETTING=yes
-    else
-      echo "odbc library found, but sql.h missing, ODBC support disabled."
-      ODBC_SETTING=no
+    if test "$ODBC_SETTING" = "no" ; then
+      if test -f /usr/local/include/sql.h ; then
+        ODBC_SETTING=yes
+        echo "using sql.h from /usr/local/include"
+      elif test -f /usr/include/sql.h ; then
+        ODBC_SETTING=yes
+        echo "using sql.h from /usr/include"
+      else
+        echo "sql.h not found"
+      fi
     fi
   fi
 
   if test "$ODBC_SETTING" = "yes"  ; then
-    LIBS="-lodbc -lodbcinst $LIBS"
+    LIBS="$ODBC_LIBS $LIBS"
   fi
 
 else
 
   ODBC_SETTING=yes
-  LIBS="-L$with_odbc -L$with_odbc/lib -lodbc -lodbcinst $LIBS"
+  ODBC_LIBS=""
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLConnect in -lodbc" >&5
+$as_echo_n "checking for SQLConnect in -lodbc... " >&6; }
+if ${ac_cv_lib_odbc_SQLConnect+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbc  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SQLConnect ();
+int
+main ()
+{
+return SQLConnect ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbc_SQLConnect=yes
+else
+  ac_cv_lib_odbc_SQLConnect=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc_SQLConnect" >&5
+$as_echo "$ac_cv_lib_odbc_SQLConnect" >&6; }
+if test "x$ac_cv_lib_odbc_SQLConnect" = xyes; then :
+  ODBC_LIBS="-lodbc -lodbcinst"
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lodbc32" >&5
+$as_echo_n "checking for main in -lodbc32... " >&6; }
+if ${ac_cv_lib_odbc32_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbc32  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbc32_main=yes
+else
+  ac_cv_lib_odbc32_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc32_main" >&5
+$as_echo "$ac_cv_lib_odbc32_main" >&6; }
+if test "x$ac_cv_lib_odbc32_main" = xyes; then :
+  ODBC_LIBS="-lodbc32 -lodbccp32"
+fi
+
+  if test "$ODBC_LIBS" = ""; then
+    as_fn_error $? "Cannot find ODBC libs" "$LINENO" 5
+  fi
+  LIBS="-L$with_odbc -L$with_odbc/lib $ODBC_LIBS $LIBS"
   EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
 
   echo "using odbc library from $with_odbc."
