@@ -1479,16 +1479,33 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         GeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
 
     int ForcedGeometryTypeFlags = -1;
-    if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
+    const char* pszDim = CSLFetchNameValue(papszOptions, "DIM");
+    if( pszDim != NULL )
     {
-        int nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
-        if( nDimension == 2 )
-            GeometryTypeFlags &= ~OGRGeometry::OGR_G_3D;
-        else if( nDimension == 3 )
-            GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
-        else if( nDimension == 4 )
-            GeometryTypeFlags |= OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
-        ForcedGeometryTypeFlags = GeometryTypeFlags;
+        if( EQUAL(pszDim, "XY") || EQUAL(pszDim, "2") )
+        {
+            GeometryTypeFlags = 0;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else if( EQUAL(pszDim, "XYZ") || EQUAL(pszDim, "3") )
+        {
+            GeometryTypeFlags = OGRGeometry::OGR_G_3D;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else if( EQUAL(pszDim, "XYM") )
+        {
+            GeometryTypeFlags = OGRGeometry::OGR_G_MEASURED;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else if( EQUAL(pszDim, "XYZM") || EQUAL(pszDim, "4") )
+        {
+            GeometryTypeFlags = OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
+            ForcedGeometryTypeFlags = GeometryTypeFlags;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for DIM");
+        }
     }
 
     /* Should we turn layers with None geometry type as Unknown/GEOMETRY */
@@ -1689,7 +1706,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     const char *suffix;
     if( (GeometryTypeFlags & OGRGeometry::OGR_G_3D) && (GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
         suffix = "ZM";
-    else if( GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
+    else if( (GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) &&
+              (EQUAL(pszGeomType, "geography") || wkbFlatten(eType) != wkbUnknown ) )
         suffix = "M";
     else if( GeometryTypeFlags & OGRGeometry::OGR_G_3D )
         suffix = "Z";

@@ -2116,11 +2116,13 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
     const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
     const char *suffix = "";
     int dim = 2;
-    if( (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D) && (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
+    if( (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D) &&
+        (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
         dim = 4;
-    else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
+    else if( (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
     {
-        suffix = "M";
+        if( !(wkbFlatten(poGeomField->GetType()) == wkbUnknown) )
+            suffix = "M";
         dim = 3;
     }
     else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D )
