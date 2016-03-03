@@ -1426,12 +1426,12 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
         nResultCount = 0;
 
     if( nResultCount < 1 )
-        m_nColCount = 500; // Hopefully lots.
+        m_nColCount = 1024; // Hopefully lots.
     else
         m_nColCount = nResultCount;
 #endif
 
-    m_nColCount = 500;
+    m_nColCount = 1024;
     
     m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
