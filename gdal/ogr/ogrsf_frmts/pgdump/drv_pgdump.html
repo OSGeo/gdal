@@ -51,7 +51,7 @@ The default value is "YES".  If enabled the table (layer) name will also be laun
 layer to try and represent the width and precision information, if available
 using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
 FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
-<li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3. 
+<li> <b>DIM={2,3,XYM,XYZM}</b>: Control the dimension of the layer.
 Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 

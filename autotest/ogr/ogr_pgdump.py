@@ -804,7 +804,6 @@ def ogr_pgdump_12():
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_12.sql', options = [ 'LINEFORMAT=LF' ] )
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone, options = [ 'GEOMETRY_NAME=another_name' ])
     lyr.CreateGeomField(ogr.GeomFieldDefn('my_geom', ogr.wkbPoint))
-    f = None
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_12.sql', 'rb')
@@ -816,6 +815,79 @@ def ogr_pgdump_12():
     if sql.find('another_name') < 0:
         print(sql)
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test ZM support
+
+def ogr_pgdump_13():
+
+    tests = [ [ ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', [ "'GEOMETRY',2)", "0101000000000000000000F03F0000000000000040" ] ],
+              [ ogr.wkbUnknown, [ 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', [ "geography(GEOMETRY", "0101000000000000000000F03F0000000000000040" ] ],
+              [ ogr.wkbUnknown, [ 'DIM=XYZ' ], 'POINT ZM (1 2 3 4)', [ "'GEOMETRY',3)", "0101000080000000000000F03F00000000000000400000000000000840" ] ],
+              [ ogr.wkbUnknown, [ 'DIM=XYZ', 'GEOM_TYPE=geography' ], 'POINT ZM (1 2 3 4)', [ "geography(GEOMETRYZ,", "0101000080000000000000F03F00000000000000400000000000000840" ] ],
+              [ ogr.wkbPoint, [ 'DIM=XYZ' ], 'POINT ZM (1 2 3 4)', [ "'POINT',3)", "0101000080000000000000F03F00000000000000400000000000000840" ] ],
+              [ ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', [ "'POINT',3)", "0101000080000000000000F03F00000000000000400000000000000840" ] ],
+              [ ogr.wkbPoint, [ 'DIM=XYZ', 'GEOM_TYPE=geography' ], 'POINT ZM (1 2 3 4)', [ "geography(POINTZ,", "0101000080000000000000F03F00000000000000400000000000000840" ] ],
+              [ ogr.wkbUnknown, [ 'DIM=XYM' ], 'POINT ZM (1 2 3 4)', [ "'GEOMETRY',3)", "0101000040000000000000F03F00000000000000400000000000001040" ] ],
+              [ ogr.wkbUnknown, [ 'DIM=XYM', 'GEOM_TYPE=geography' ], 'POINT ZM (1 2 3 4)', [ "geography(GEOMETRYM,", "0101000040000000000000F03F00000000000000400000000000001040" ] ],
+              [ ogr.wkbPoint, [ 'DIM=XYM' ], 'POINT ZM (1 2 3 4)', [ "'POINTM',3)", "0101000040000000000000F03F00000000000000400000000000001040" ] ],
+              [ ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', [ "'POINTM',3)", "0101000040000000000000F03F00000000000000400000000000001040" ] ],
+              [ ogr.wkbPoint, [ 'DIM=XYM', 'GEOM_TYPE=geography' ], 'POINT ZM (1 2 3 4)', [ "geography(POINTM,", "0101000040000000000000F03F00000000000000400000000000001040" ] ],
+              [ ogr.wkbUnknown, [ 'DIM=XYZM' ], 'POINT ZM (1 2 3 4)', [ "'GEOMETRY',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
+              [ ogr.wkbUnknown, [ 'DIM=XYZM', 'GEOM_TYPE=geography' ], 'POINT ZM (1 2 3 4)', [ "geography(GEOMETRYZM,", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
+              [ ogr.wkbPoint, [ 'DIM=XYZM' ], 'POINT ZM (1 2 3 4)', [ "'POINT',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
+              [ ogr.wkbPointZM, [], 'POINT ZM (1 2 3 4)', [ "'POINT',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
+              [ ogr.wkbPoint, [ 'DIM=XYZM', 'GEOM_TYPE=geography' ], 'POINT ZM (1 2 3 4)', [ "geography(POINTZM,", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
+            ]
+
+    for (geom_type, options, wkt, expected_strings) in tests:
+        ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_13.sql', options = [ 'LINEFORMAT=LF' ] )
+        lyr = ds.CreateLayer('test', geom_type = geom_type, options = options )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+        f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_13.sql', 'rb')
+        sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+        gdal.VSIFCloseL(f)
+
+        gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
+
+        for expected_string in expected_strings:
+            if sql.find(expected_string) < 0:
+                gdaltest.post_reason('fail')
+                print(geom_type, options, wkt, expected_string)
+                print(sql)
+                return 'fail'
+
+        if 'GEOM_TYPE=geography' in options:
+            continue
+
+        ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_13.sql', options = [ 'LINEFORMAT=LF' ] )
+        lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone, options = options )
+        lyr.CreateGeomField( ogr.GeomFieldDefn("my_geom", geom_type) )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+        f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_13.sql', 'rb')
+        sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+        gdal.VSIFCloseL(f)
+
+        gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
+
+        for expected_string in expected_strings:
+            if sql.find(expected_string) < 0:
+                gdaltest.post_reason('fail')
+                print(geom_type, options, wkt, expected_string)
+                print(sql)
+                return 'fail'
 
     return 'success'
 
@@ -847,6 +919,7 @@ gdaltest_list = [
     ogr_pgdump_10,
     ogr_pgdump_11,
     ogr_pgdump_12,
+    ogr_pgdump_13,
     ogr_pgdump_cleanup ]
 
 

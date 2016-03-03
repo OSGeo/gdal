@@ -80,6 +80,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDSIn,
     papszOverrideColumnTypes = NULL;
     nUnknownSRSId = -1;
     nForcedSRSId = -2;
+    nForcedGeometryTypeFlags = -1;
     bCreateSpatialIndexFlag = TRUE;
     nPostGISMajor = 1;
     nPostGISMinor = 2;
@@ -123,7 +124,8 @@ int OGRPGDumpLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCSequentialWrite) ||
         EQUAL(pszCap,OLCCreateField) ||
         EQUAL(pszCap,OLCCreateGeomField) ||
-        EQUAL(pszCap,OLCCurveGeometries) )
+        EQUAL(pszCap,OLCCurveGeometries) ||
+        EQUAL(pszCap,OLCMeasuredGeometries) )
         return TRUE;
     else
         return FALSE;
@@ -165,7 +167,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-    if( !poFeature->Validate(OGR_F_VAL_ALL & ~OGR_F_VAL_WIDTH, TRUE ) )
+    if( !poFeature->Validate((OGR_F_VAL_ALL & ~OGR_F_VAL_WIDTH) | OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM, TRUE ) )
         return OGRERR_FAILURE;
 
     // We avoid testing the config option too often. 
@@ -318,7 +320,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 (OGRPGDumpGeomFieldDefn*) poFeature->GetGeomFieldDefnRef(i);
 
             poGeom->closeRings();
-            poGeom->setCoordinateDimension( poGFldDefn->nCoordDimension );
+            poGeom->set3D(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_3D);
+            poGeom->setMeasured(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
 
             if( bNeedComma )
                 osCommand += ", ";
@@ -416,7 +419,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                 (OGRPGDumpGeomFieldDefn*) poFeature->GetGeomFieldDefnRef(i);
 
             poGeometry->closeRings();
-            poGeometry->setCoordinateDimension( poGFldDefn->nCoordDimension );
+            poGeometry->set3D(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_3D);
+            poGeometry->setMeasured(poGFldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
 
             //CheckGeomTypeCompatibility(poGeometry);
     
@@ -1600,25 +1604,48 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                 nSRSId = 4326;
         }
     }
-    
-    int nDimension = 3;
-    if( wkbFlatten(eType) == eType )
-        nDimension = 2;
+
     poGeomField->nSRSId = nSRSId;
-    poGeomField->nCoordDimension = nDimension;
+
+    int GeometryTypeFlags = 0;
+    if( OGR_GT_HasZ((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
+    if( OGR_GT_HasM((OGRwkbGeometryType)eType) )
+        GeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
+    if( nForcedGeometryTypeFlags >= 0 )
+    {
+        GeometryTypeFlags = nForcedGeometryTypeFlags;
+        eType = OGR_GT_SetModifier(eType, 
+                                   GeometryTypeFlags & OGRGeometry::OGR_G_3D, 
+                                   GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
+    }
+    poGeomField->GeometryTypeFlags = GeometryTypeFlags;
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
     if (bCreateTable)
     {
+        const char *suffix = "";
+        int dim = 2;
+        if( (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D) && (poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
+            dim = 4;
+        else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED )
+        {
+            if( wkbFlatten(poGeomField->GetType()) != wkbUnknown )
+                suffix = "M";
+            dim = 3;
+        }
+        else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D )
+            dim = 3;
+
         const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
         osCommand.Printf(
-                "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
+                "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s%s',%d)",
                 OGRPGDumpEscapeString(pszSchemaName).c_str(),
                 OGRPGDumpEscapeString(poFeatureDefn->GetName()).c_str(),
                 OGRPGDumpEscapeString(poGeomField->GetNameRef()).c_str(),
-                nSRSId, pszGeometryType, nDimension );
+                nSRSId, pszGeometryType, suffix, dim );
         
         poDS->Log(osCommand);
 
