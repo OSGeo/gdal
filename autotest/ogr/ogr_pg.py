@@ -5030,6 +5030,72 @@ def ogr_pg_82():
     return 'success'
 
 ###############################################################################
+# Test ZM support
+
+def ogr_pg_83():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis or gdaltest.ogr_pg_second_run :
+        return 'skip'
+
+    tests = [ [ ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', 'POINT (1 2)' ],
+              [ ogr.wkbUnknown, [ 'DIM=XYZM' ], 'POINT ZM (1 2 3 4)', 'POINT ZM (1 2 3 4)' ],
+              [ ogr.wkbUnknown, [ 'DIM=XYZ' ], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)' ],
+              [ ogr.wkbUnknown, [ 'DIM=XYM' ], 'POINT M (1 2 4)', 'POINT M (1 2 4)' ],
+              [ ogr.wkbPointZM, [], 'POINT ZM (1 2 3 4)', 'POINT ZM (1 2 3 4)' ],
+              [ ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)' ],
+              [ ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)' ],
+              [ ogr.wkbUnknown, [ 'GEOM_TYPE=geography', 'DIM=XYM' ], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)' ],
+            ]
+
+    for (geom_type, options, wkt, expected_wkt) in tests:
+        lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_83', geom_type = geom_type, options = options + [ 'OVERWRITE=YES' ] )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+        f = None
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        got_wkt = ''
+        if f is not None:
+            geom = f.GetGeometryRef()
+            if geom is not None:
+                got_wkt = geom.ExportToIsoWkt()
+        if got_wkt != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(geom_type, options, wkt, expected_wkt, got_wkt)
+            return 'fail'
+
+        if 'GEOM_TYPE=geography' in options:
+            continue
+        # Cannot do AddGeometryColumn( 'GEOMETRYM', 3 ) with PostGIS 2, and doesn't accept inserting a XYM geometry
+        if gdaltest.pg_has_postgis_2 and geom_type == ogr.wkbUnknown and options == [ 'DIM=XYM' ]:
+            continue
+
+        lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_83', geom_type = ogr.wkbNone, options = options + [ 'OVERWRITE=YES' ] )
+        # To force table creation to happen now so that following
+        # CreateGeomField() is done through a AddGeometryColumn() call
+        lyr.ResetReading()
+        lyr.GetNextFeature()
+        lyr.CreateGeomField( ogr.GeomFieldDefn("my_geom", geom_type) )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+        f = None
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        got_wkt = ''
+        if f is not None:
+            geom = f.GetGeometryRef()
+            if geom is not None:
+                got_wkt = geom.ExportToIsoWkt()
+        if got_wkt != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(geom_type, options, wkt, expected_wkt, got_wkt)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_pg_table_cleanup():
@@ -5204,12 +5270,13 @@ gdaltest_list_internal = [
     ogr_pg_80,
     ogr_pg_81,
     ogr_pg_82,
+    ogr_pg_83,
     ogr_pg_cleanup
 ]
 
 disabled_gdaltest_list_internal = [
     ogr_pg_table_cleanup,
-    ogr_pg_81,
+    ogr_pg_83,
     ogr_pg_cleanup ]
 
 ###############################################################################
