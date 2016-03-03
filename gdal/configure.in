@@ -2739,27 +2739,51 @@ if test "$with_odbc" = "no" ; then
   echo "ODBC support disabled."
 
 elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
+  ODBC_SETTING=no
 
-  AC_CHECK_LIB(odbc,SQLConnect,ODBC_SETTING=yes,ODBC_SETTING=no,)
-  AC_CHECK_LIB(odbcinst,SQLInstallDriverEx,ODBC_SETTING=yes,ODBC_SETTING=no,)
+  echo "check for unixODBC"
+  AC_CHECK_LIB(odbc,SQLConnect,[ODBC_LIBS="-lodbc -lodbcinst"])
+  AC_CHECK_LIB(odbcinst,SQLInstallDriverEx,ODBC_SETTING=yes)
 
+  if test "$ODBC_SETTING" = "no" ; then
+    echo "check for windows ODBC"
+    AC_CHECK_LIB(odbc32,main,[ODBC_LIBS="-lodbc32 -lodbccp32"])
+    AC_CHECK_LIB(odbccp32,SQLInstallDriverEx,ODBC_SETTING=yes)
+  fi
+ 
   if test "$ODBC_SETTING" = "yes" ; then
-    if test -f /usr/local/include/sql.h -o -f /usr/include/sql.h ; then
-      ODBC_SETTING=yes
-    else
-      echo "odbc library found, but sql.h missing, ODBC support disabled." 
-      ODBC_SETTING=no
+    AC_CHECK_HEADERS(sql.h,,[ODBC_SETTING=no],
+[#ifdef _WIN32
+# include <windows.h>
+#endif
+])
+    if test "$ODBC_SETTING" = "no" ; then
+      if test -f /usr/local/include/sql.h ; then
+        ODBC_SETTING=yes
+        echo "using sql.h from /usr/local/include"
+      elif test -f /usr/include/sql.h ; then
+        ODBC_SETTING=yes
+        echo "using sql.h from /usr/include"
+      else
+        echo "sql.h not found"
+      fi
     fi
   fi
 
   if test "$ODBC_SETTING" = "yes"  ; then   
-    LIBS="-lodbc -lodbcinst $LIBS"
+    LIBS="$ODBC_LIBS $LIBS"
   fi
 
 else
 
   ODBC_SETTING=yes
-  LIBS="-L$with_odbc -L$with_odbc/lib -lodbc -lodbcinst $LIBS"
+  ODBC_LIBS=""
+  AC_CHECK_LIB(odbc,SQLConnect,ODBC_LIBS="-lodbc -lodbcinst")
+  AC_CHECK_LIB(odbc32,main,ODBC_LIBS="-lodbc32 -lodbccp32")
+  if test "$ODBC_LIBS" = ""; then
+    AC_MSG_ERROR([Cannot find ODBC libs])
+  fi
+  LIBS="-L$with_odbc -L$with_odbc/lib $ODBC_LIBS $LIBS"
   EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
 
   echo "using odbc library from $with_odbc."
