@@ -5414,7 +5414,8 @@ void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
  * This method is the same as the C function OGR_F_Validate().
  *
  * @param nValidateFlags OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,
- *                       OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT
+ *                       OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT,
+ *                       OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM
  *                       with '|' operator
  * @param bEmitError TRUE if a CPLError() must be emitted when a check fails
  * @return TRUE if all enabled validation tests pass.
@@ -5450,8 +5451,14 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             {
                 OGRwkbGeometryType eType = poDefn->GetGeomFieldDefn(i)->GetType();
                 OGRwkbGeometryType eFType = poGeom->getGeometryType();
-                if( (eType == wkbSetZ(wkbUnknown) && !wkbHasZ(eFType)) ||
-                    (eType != wkbSetZ(wkbUnknown) && eFType != eType) )
+                if( (nValidateFlags & OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM) &&
+                    (wkbFlatten(eFType) == wkbFlatten(eType) ||
+                     wkbFlatten(eType) == wkbUnknown) )
+                {
+                    /* ok */
+                }
+                else if( (eType == wkbSetZ(wkbUnknown) && !wkbHasZ(eFType)) ||
+                         (eType != wkbSetZ(wkbUnknown) && eFType != eType) )
                 {
                     bRet = FALSE;
                     if( bEmitError )

@@ -571,11 +571,19 @@ typedef enum
  */
 #define OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT       0x00000008
 
-/** Enable all validation tests.
+/** Allow geometry fields to have a different coordinate dimension that their
+ * geometry column type.
+ * This flag only makes sense if OGR_F_VAL_GEOM_TYPE is set too.
+ * Used by OGR_F_Validate().
+ * @since GDAL 2.1
+ */
+#define OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM       0x00000010
+
+/** Enable all validation tests (except OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM)
  * Used by OGR_F_Validate().
  * @since GDAL 2.0
  */
-#define OGR_F_VAL_ALL            0x7FFFFFFF
+#define OGR_F_VAL_ALL            (0x7FFFFFFF & ~OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM)
 
 /************************************************************************/
 /*                  ogr_feature.h related definitions.                  */
