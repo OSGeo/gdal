@@ -340,23 +340,11 @@ CPLErr GDALOverviewDataset::GetGeoTransform( double * padfTransform )
     double adfGeoTransform[6];
     if( poMainDS->GetGeoTransform(adfGeoTransform) == CE_None )
     {
-        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
-        {
-            adfGeoTransform[1] *= (double)poMainDS->GetRasterXSize() / nRasterXSize;
-            adfGeoTransform[5] *= (double)poMainDS->GetRasterYSize() / nRasterYSize;
-        }
-        else
-        {
-            /* If the x and y ratios are not equal, then we cannot really */
-            /* compute a geotransform */
-            double dfRatio = (double)poMainDS->GetRasterXSize() / nRasterXSize;
-            adfGeoTransform[1] *= dfRatio;
-            adfGeoTransform[2] *= dfRatio;
-            adfGeoTransform[4] *= dfRatio;
-            adfGeoTransform[5] *= dfRatio;
-        }
+        adfGeoTransform[1] *= (double)poMainDS->GetRasterXSize() / nRasterXSize;
+        adfGeoTransform[2] *= (double)poMainDS->GetRasterYSize() / nRasterYSize;
+        adfGeoTransform[4] *= (double)poMainDS->GetRasterXSize() / nRasterXSize;
+        adfGeoTransform[5] *= (double)poMainDS->GetRasterYSize() / nRasterYSize;
         memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-
         return CE_None;
     }
     else
