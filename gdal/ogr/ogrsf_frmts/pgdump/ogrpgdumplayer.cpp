@@ -1619,6 +1619,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                    GeometryTypeFlags & OGRGeometry::OGR_G_3D, 
                                    GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
     }
+    poGeomField->SetType(eType);
     poGeomField->GeometryTypeFlags = GeometryTypeFlags;
 
 /* -------------------------------------------------------------------- */
