@@ -1719,3 +1719,72 @@ void OGRPGDumpLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes 
     if( osCur.size() )
         papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
 }
+
+/************************************************************************/
+/*                              SetMetadata()                           */
+/************************************************************************/
+
+CPLErr OGRPGDumpLayer::SetMetadata(char** papszMD, const char* pszDomain)
+{
+    OGRLayer::SetMetadata(papszMD, pszDomain);
+    if( osForcedDescription.size() != 0 &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    {
+        OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
+    }
+
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        osForcedDescription.size() == 0 )
+    {
+        const char* l_pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
+        CPLString osCommand;
+
+        osCommand.Printf( "COMMENT ON TABLE %s IS %s",
+                           pszSqlTableName,
+                           l_pszDescription && l_pszDescription[0] != '\0' ?
+                              OGRPGDumpEscapeString(l_pszDescription).c_str() : "NULL" );
+        poDS->Log( osCommand );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            SetMetadataItem()                         */
+/************************************************************************/
+
+CPLErr OGRPGDumpLayer::SetMetadataItem(const char* pszName, const char* pszValue,
+                                       const char* pszDomain)
+{
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
+        EQUAL(pszName, "DESCRIPTION") && osForcedDescription.size() )
+    {
+        return CE_None;
+    }
+    OGRLayer::SetMetadataItem(pszName, pszValue, pszDomain);
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
+        EQUAL(pszName, "DESCRIPTION") )
+    {
+        SetMetadata( GetMetadata() );
+    }
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      SetForcedDescription()                          */
+/************************************************************************/
+
+void OGRPGDumpLayer::SetForcedDescription( const char* pszDescriptionIn )
+{
+    osForcedDescription = pszDescriptionIn;
+    OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
+
+    CPLString osCommand;
+
+    osCommand.Printf( "COMMENT ON TABLE %s IS %s",
+                        pszSqlTableName,
+                        pszDescriptionIn && pszDescriptionIn[0] != '\0' ?
+                          OGRPGDumpEscapeString(pszDescriptionIn).c_str() : "NULL" );
+    poDS->Log( osCommand );
+
+}

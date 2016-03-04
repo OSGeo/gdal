@@ -125,6 +125,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
                                   CPLString& osCurrentSchema,
                                   const char * pszTableNameIn,
                                   const char * pszSchemaNameIn,
+                                  const char * pszDescriptionIn,
                                   const char * pszGeomColForcedIn,
                                   int bUpdate )
 
@@ -202,6 +203,12 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     bDifferedCreation = FALSE;
     iFIDAsRegularColumnIndex = -1;
+
+    pszDescription = (pszDescriptionIn) ? CPLStrdup(pszDescriptionIn) : NULL;
+    if( pszDescriptionIn != NULL && !EQUAL(pszDescriptionIn, "") )
+    {
+        OGRLayer::SetMetadataItem("DESCRIPTION", pszDescriptionIn);
+    }
 }
 
 //************************************************************************/
@@ -217,8 +224,122 @@ OGRPGTableLayer::~OGRPGTableLayer()
     CPLFree( pszTableName );
     CPLFree( pszSqlGeomParentTableName );
     CPLFree( pszSchemaName );
+    CPLFree( pszDescription );
     CPLFree( pszGeomColForced );
     CSLDestroy( papszOverrideColumnTypes );
+}
+
+/************************************************************************/
+/*                              GetMetadata()                           */
+/************************************************************************/
+
+char ** OGRPGTableLayer::GetMetadata(const char* pszDomain)
+{
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        pszDescription == NULL )
+    {
+        PGconn              *hPGConn = poDS->GetPGConn();
+        CPLString osCommand;
+        osCommand.Printf(
+            "SELECT d.description FROM pg_class c "
+            "JOIN pg_namespace n ON c.relnamespace=n.oid "
+            "JOIN pg_description d "
+            "ON d.objoid = c.oid AND d.classoid = 'pg_class'::regclass::oid AND d.objsubid = 0 "
+            "WHERE c.relname = %s AND n.nspname = %s AND c.relkind in ('r', 'v') ",
+            OGRPGEscapeString(hPGConn, pszTableName).c_str(),
+            OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
+        PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
+
+        const char* pszDesc = NULL;
+        if ( hResult && PGRES_TUPLES_OK == PQresultStatus(hResult) &&
+             PQntuples( hResult ) == 1  )
+        {
+            pszDesc = PQgetvalue(hResult,0,0);
+            if( pszDesc )
+                OGRLayer::SetMetadataItem("DESCRIPTION", pszDesc);
+        }
+        pszDescription = CPLStrdup(pszDesc ? pszDesc : "");
+
+        OGRPGClearResult( hResult );
+    }
+
+    return OGRLayer::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                            GetMetadataItem()                         */
+/************************************************************************/
+
+const char *OGRPGTableLayer::GetMetadataItem(const char* pszName, const char* pszDomain)
+{
+    GetMetadata(pszDomain);
+    return OGRLayer::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
+/*                              SetMetadata()                           */
+/************************************************************************/
+
+CPLErr OGRPGTableLayer::SetMetadata(char** papszMD, const char* pszDomain)
+{
+    OGRLayer::SetMetadata(papszMD, pszDomain);
+    if( osForcedDescription.size() && (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    {
+        OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
+    }
+
+    if( !bDifferedCreation && (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    {
+        const char* l_pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
+        PGconn              *hPGConn = poDS->GetPGConn();
+        CPLString osCommand;
+
+        osCommand.Printf( "COMMENT ON TABLE %s IS %s",
+                           pszSqlTableName,
+                           l_pszDescription && l_pszDescription[0] != '\0' ?
+                              OGRPGEscapeString(hPGConn, l_pszDescription).c_str() : "NULL" );
+        PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
+        OGRPGClearResult( hResult );
+
+        CPLFree(pszDescription);
+        pszDescription = CPLStrdup(l_pszDescription ? l_pszDescription : "");
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            SetMetadataItem()                         */
+/************************************************************************/
+
+CPLErr OGRPGTableLayer::SetMetadataItem(const char* pszName, const char* pszValue,
+                                        const char* pszDomain)
+{
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
+        EQUAL(pszName, "DESCRIPTION") && osForcedDescription.size() )
+    {
+        pszValue = osForcedDescription;
+    }
+    OGRLayer::SetMetadataItem(pszName, pszValue, pszDomain);
+    if( !bDifferedCreation &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
+        EQUAL(pszName, "DESCRIPTION") )
+    {
+        SetMetadata( GetMetadata() );
+    }
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      SetForcedDescription()                          */
+/************************************************************************/
+
+void OGRPGTableLayer::SetForcedDescription( const char* pszDescriptionIn )
+{
+    osForcedDescription = pszDescriptionIn;
+    CPLFree(pszDescription);
+    pszDescription = CPLStrdup( pszDescriptionIn );
+    SetMetadataItem( "DESCRIPTION", osForcedDescription );
 }
 
 /************************************************************************/
@@ -3147,6 +3268,10 @@ OGRErr OGRPGTableLayer::RunDifferedCreationIfNecessary()
             }
         }
     }
+
+    char** papszMD = OGRLayer::GetMetadata();
+    if( papszMD != NULL )
+        SetMetadata( papszMD );
 
     return OGRERR_NONE;
 }

@@ -253,6 +253,8 @@ class OGRPGTableLayer : public OGRPGLayer
 
     char               *pszTableName;
     char               *pszSchemaName;
+    char               *pszDescription;
+    CPLString           osForcedDescription;
     char               *pszSqlTableName;
     int                 bTableDefinitionValid;
 
@@ -311,6 +313,7 @@ public:
                                          CPLString& osCurrentSchema,
                                          const char * pszTableName,
                                          const char * pszSchemaName,
+                                         const char * pszDescriptionIn,
                                          const char * pszGeomColForced,
                                          int bUpdate );
                         ~OGRPGTableLayer();
@@ -349,6 +352,11 @@ public:
 
     virtual const char *GetFIDColumn();
 
+    virtual char      **GetMetadata(const char* pszDomain = "");
+    virtual const char *GetMetadataItem(const char* pszName, const char* pszDomain = "");
+    virtual CPLErr      SetMetadata(char** papszMD, const char* pszDomain = "");
+    virtual CPLErr      SetMetadataItem(const char* pszName, const char* pszValue, const char* pszDomain = "");
+
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
@@ -375,6 +383,7 @@ public:
                                 { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
+    void                SetForcedDescription( const char* pszDescriptionIn );
     void                AllowAutoFIDOnCreateViaCopy() { bAutoFIDOnCreateViaCopy = TRUE; }
     void                SetUseCopy() { bUseCopy = TRUE; bUseCopyByDefault = TRUE; }
 
@@ -507,6 +516,7 @@ class OGRPGDataSource : public OGRDataSource
     OGRPGTableLayer*    OpenTable( CPLString& osCurrentSchema,
                                    const char * pszTableName,
                                    const char * pszSchemaName,
+                                   const char * pszDescription,
                                    const char * pszGeomColForced,
                                    int bUpdate, int bTestOpen );
 

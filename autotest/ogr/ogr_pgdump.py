@@ -892,6 +892,64 @@ def ogr_pgdump_13():
     return 'success'
 
 ###############################################################################
+# Test description
+
+def ogr_pgdump_14():
+
+    # Set with DESCRIPTION layer creation option
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options = [ 'LINEFORMAT=LF' ] )
+    lyr = ds.CreateLayer('ogr_pgdump_14', geom_type = ogr.wkbPoint, options = [ 'DESCRIPTION=foo' ] )
+    # Test that SetMetadata() and SetMetadataItem() are without effect
+    lyr.SetMetadata( { 'DESCRIPTION' : 'bar' } )
+    lyr.SetMetadataItem( 'DESCRIPTION', 'baz' )
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_14.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
+
+    if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'foo';""") < 0 or sql.find('bar') >= 0 or sql.find('baz') >= 0:
+        gdaltest.post_reason('fail')
+        print(sql)
+        return 'fail'
+
+    # Set with SetMetadataItem()
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options = [ 'LINEFORMAT=LF' ] )
+    lyr = ds.CreateLayer('ogr_pgdump_14', geom_type = ogr.wkbPoint )
+    lyr.SetMetadataItem( 'DESCRIPTION', 'bar' )
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_14.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
+    if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'bar';""") < 0:
+        gdaltest.post_reason('fail')
+        print(sql)
+        return 'fail'
+
+    # Set with SetMetadata()
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options = [ 'LINEFORMAT=LF' ] )
+    lyr = ds.CreateLayer('ogr_pgdump_14', geom_type = ogr.wkbPoint )
+    lyr.SetMetadata( { 'DESCRIPTION': 'baz' } )
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_14.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
+    if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""") < 0:
+        gdaltest.post_reason('fail')
+        print(sql)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_pgdump_cleanup():
@@ -920,6 +978,7 @@ gdaltest_list = [
     ogr_pgdump_11,
     ogr_pgdump_12,
     ogr_pgdump_13,
+    ogr_pgdump_14,
     ogr_pgdump_cleanup ]
 
 
