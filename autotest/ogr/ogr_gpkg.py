@@ -1993,6 +1993,31 @@ def ogr_gpkg_29():
     return 'success'
 
 
+###############################################################################
+# Tes non standard file extension (#6396)
+
+def ogr_gpkg_30():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_30.geopkg')
+    ds = None
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_gpkg_30.geopkg')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    with gdaltest.error_handler():
+        gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_30.geopkg')
+
+    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
@@ -2081,6 +2106,7 @@ gdaltest_list = [
     ogr_gpkg_27,
     ogr_gpkg_28,
     ogr_gpkg_29,
+    ogr_gpkg_30,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

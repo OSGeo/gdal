@@ -40,21 +40,11 @@ static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
 /*                       OGRGeoPackageDriverIdentify()                  */
 /************************************************************************/
 
-static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
+
+static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarning )
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
         return TRUE;
-
-#ifdef DEBUG
-    if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
-    {
-    }
-    else
-#endif
-    /* Requirement 3: File name has to end in "gpkg" */
-    /* http://opengis.github.io/geopackage/#_file_extension_name */
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") )
-        return FALSE;
 
     /* Check that the filename exists and is a file */
     if( poOpenInfo->fpL == NULL)
@@ -65,6 +55,13 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
     {
         return FALSE;
     }
+
+    /* Requirement 3: File name has to end in "gpkg" */
+    /* http://opengis.github.io/geopackage/#_file_extension_name */
+    /* But be tolerant, if the GPKG application id is found, because some */
+    /* producers don't necessarily honour that requirement (#6396) */
+    const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    const bool bIsRecognizedExtension = EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
 
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
     /* in the application id */
@@ -79,11 +76,35 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
             return FALSE;
         }
 #endif
-        CPLError( CE_Warning, CPLE_AppDefined, "GPKG: bad application_id on '%s'",
-                  poOpenInfo->pszFilename);
+        if( !bIsRecognizedExtension )
+            return FALSE;
+
+        if( bEmitWarning )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, "GPKG: bad application_id on '%s'",
+                      poOpenInfo->pszFilename);
+        }
+    }
+    else if( !bIsRecognizedExtension 
+#ifdef DEBUG
+              && !EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")
+#endif
+           )
+    {
+        if( bEmitWarning )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "File %s has GPKG application_id, but non conformant file extension",
+                      poOpenInfo->pszFilename);
+        }
     }
 
     return TRUE;
+}
+
+static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
+{
+    return OGRGeoPackageDriverIdentify(poOpenInfo, false);
 }
 
 /************************************************************************/
@@ -92,7 +113,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 static GDALDataset *OGRGeoPackageDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    if( !OGRGeoPackageDriverIdentify(poOpenInfo) )
+    if( !OGRGeoPackageDriverIdentify(poOpenInfo, true) )
         return NULL;
 
     GDALGeoPackageDataset   *poDS = new GDALGeoPackageDataset();
