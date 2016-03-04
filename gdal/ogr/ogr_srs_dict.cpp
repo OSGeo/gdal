@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "cpl_vsi.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -70,7 +71,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
     if( pszFilename == NULL )
         return OGRERR_UNSUPPORTED_SRS;
 
-    FILE *fp = VSIFOpen( pszFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
     if( fp == NULL )
         return OGRERR_UNSUPPORTED_SRS;
 
@@ -80,7 +81,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
     OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
     const char *pszLine = NULL;
 
-    while( (pszLine = CPLReadLine(fp)) != NULL )
+    while( (pszLine = CPLReadLineL(fp)) != NULL )
 
     {
         if( pszLine[0] == '#' )
@@ -110,7 +111,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     return eErr;
 }
