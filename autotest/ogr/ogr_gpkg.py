@@ -2001,7 +2001,14 @@ def ogr_gpkg_30():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_30.geopkg')
+    with gdaltest.error_handler():
+        ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_30.geopkg')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds = None
 
     with gdaltest.error_handler():
