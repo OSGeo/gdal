@@ -45,7 +45,7 @@
 #if !defined(GDAL_COMPILATION) && !defined(SUPPRESS_DEPRECATION_WARNINGS)
 #define OGR_DEPRECATED(x) CPL_WARN_DEPRECATED(x)
 #else
-#define OGR_DEPRECATED(x) 
+#define OGR_DEPRECATED(x)
 #endif
 
 class OGRLayerAttrIndex;
@@ -150,40 +150,40 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 
-    OGRErr              Intersection( OGRLayer *pLayerMethod, 
-                                      OGRLayer *pLayerResult, 
-                                      char** papszOptions = NULL, 
-                                      GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Intersection( OGRLayer *pLayerMethod,
+                                      OGRLayer *pLayerResult,
+                                      char** papszOptions = NULL,
+                                      GDALProgressFunc pfnProgress = NULL,
                                       void * pProgressArg = NULL );
-    OGRErr              Union( OGRLayer *pLayerMethod, 
-                               OGRLayer *pLayerResult, 
-                               char** papszOptions = NULL, 
-                               GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Union( OGRLayer *pLayerMethod,
+                               OGRLayer *pLayerResult,
+                               char** papszOptions = NULL,
+                               GDALProgressFunc pfnProgress = NULL,
                                void * pProgressArg = NULL );
-    OGRErr              SymDifference( OGRLayer *pLayerMethod, 
-                                       OGRLayer *pLayerResult, 
-                                       char** papszOptions, 
-                                       GDALProgressFunc pfnProgress, 
+    OGRErr              SymDifference( OGRLayer *pLayerMethod,
+                                       OGRLayer *pLayerResult,
+                                       char** papszOptions,
+                                       GDALProgressFunc pfnProgress,
                                        void * pProgressArg );
-    OGRErr              Identity( OGRLayer *pLayerMethod, 
-                                  OGRLayer *pLayerResult, 
-                                  char** papszOptions = NULL, 
-                                  GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Identity( OGRLayer *pLayerMethod,
+                                  OGRLayer *pLayerResult,
+                                  char** papszOptions = NULL,
+                                  GDALProgressFunc pfnProgress = NULL,
                                   void * pProgressArg = NULL );
-    OGRErr              Update( OGRLayer *pLayerMethod, 
-                                OGRLayer *pLayerResult, 
-                                char** papszOptions = NULL, 
-                                GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Update( OGRLayer *pLayerMethod,
+                                OGRLayer *pLayerResult,
+                                char** papszOptions = NULL,
+                                GDALProgressFunc pfnProgress = NULL,
                                 void * pProgressArg = NULL );
-    OGRErr              Clip( OGRLayer *pLayerMethod, 
-                              OGRLayer *pLayerResult, 
-                              char** papszOptions = NULL, 
-                              GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Clip( OGRLayer *pLayerMethod,
+                              OGRLayer *pLayerResult,
+                              char** papszOptions = NULL,
+                              GDALProgressFunc pfnProgress = NULL,
                               void * pProgressArg = NULL );
-    OGRErr              Erase( OGRLayer *pLayerMethod, 
-                               OGRLayer *pLayerResult, 
-                               char** papszOptions = NULL, 
-                               GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Erase( OGRLayer *pLayerMethod,
+                               OGRLayer *pLayerResult,
+                               char** papszOptions = NULL,
+                               GDALProgressFunc pfnProgress = NULL,
                                void * pProgressArg = NULL );
 
     int                 Reference();
@@ -219,7 +219,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 /**
  * LEGACY class. Use GDALDataset in your new code ! This class may be
  * removed in a later release.
- * 
+ *
  * This class represents a data source.  A data source potentially
  * consists of many layers (OGRLayer).  A data source normally consists
  * of one, or a related set of files, though the name doesn't have to be
@@ -233,7 +233,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
  * is needed, the handle should be cast to GDALDataset*.
  *
  * @deprecated
- */ 
+ */
 
 class CPL_DLL OGRDataSource : public GDALDataset
 {
@@ -293,7 +293,7 @@ class CPL_DLL OGRSFDriver : public GDALDriver
  * removed in a later release.
  *
  * Singleton manager for OGRSFDriver instances that will be used to try
- * and open datasources.  Normally the registrar is populated with 
+ * and open datasources.  Normally the registrar is populated with
  * standard drivers using the OGRRegisterAll() function and does not need
  * to be directly accessed.  The driver registrar and all registered drivers
  * may be cleaned up on shutdown using OGRCleanupAll().
@@ -423,6 +423,5 @@ void CPL_DLL RegisterOGRCSW();
 void CPL_DLL RegisterOGRMongoDB();
 void CPL_DLL RegisterOGRVDV();
 CPL_C_END
-
 
 #endif /* ndef OGRSF_FRMTS_H_INCLUDED */

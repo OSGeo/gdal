@@ -59,10 +59,10 @@ OGRMultiSurface::~OGRMultiSurface()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -77,10 +77,10 @@ OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& other ) :
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -281,9 +281,9 @@ OGRBoolean OGRMultiSurface::hasCurveGeometry(int bLookForNonLinear) const
  *
  * NOTE: Only implemented when GEOS included in build.
  *
- * @param poPoint point to be set with an internal point. 
+ * @param poPoint point to be set with an internal point.
  *
- * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise. 
+ * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
  */
 
 OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
@@ -302,10 +302,10 @@ OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
  * instances of OGRPolygon. This can be verified if hasCurveGeometry(TRUE)
  * returns FALSE. It is not intended to approximate curve polygons. For that
  * use getLinearGeometry().
- * 
+ *
  * The passed in geometry is consumed and a new one returned (or NULL in case
- * of failure). 
- * 
+ * of failure).
+ *
  * @param poMS the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

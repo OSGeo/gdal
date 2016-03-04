@@ -85,11 +85,11 @@ OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
                               int nBytes );
 
-OGRErr CPL_DLL OGRWriteToShapeBin( OGRGeometry *poGeom, 
+OGRErr CPL_DLL OGRWriteToShapeBin( OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 
-OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom, 
+OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 

@@ -73,7 +73,7 @@ typedef struct ogr_style_value
 } OGRStyleValue;
 
 
-// Every time a pszStyleString given in parameter is NULL, 
+// Every time a pszStyleString given in parameter is NULL,
 // the StyleString defined in the Mgr will be use.
 
 /**
@@ -125,8 +125,8 @@ class CPL_DLL OGRStyleMgr
 
     GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
                                 GBool bNoMatching = FALSE);
-    /* It will set in the given feature the pszStyleString with 
-            the style or will set the style name found in 
+    /* It will set in the given feature the pszStyleString with
+            the style or will set the style name found in
             dataset StyleTable (if bNoMatching == FALSE). */
 
     const char *InitFromFeature(OGRFeature *);
@@ -180,7 +180,7 @@ class CPL_DLL OGRStyleTool
     OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
 
-    GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen, 
+    GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
                            int &nBlue, int &nTransparence);
     int   GetSpecificId(const char *pszId, const char *pszWanted);
 
@@ -251,7 +251,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
   public:
 
     OGRStylePen();
-    virtual ~OGRStylePen(); 
+    virtual ~OGRStylePen();
 
     /**********************************************************************/
     /* Explicit fct for all parameters defined in the Drawing tools  Pen  */
@@ -368,7 +368,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     double Offset(GBool &bDefault){return GetParamDbl(OGRSTSymbolOffset,bDefault);}
     void SetOffset(double dfOffset){SetParamDbl(OGRSTSymbolOffset,dfOffset  );}
     double Perp(GBool &bDefault){return GetParamDbl(OGRSTSymbolPerp,bDefault);}
-    void SetPerp(double dfPerp){SetParamDbl(OGRSTSymbolPerp,dfPerp  );}  
+    void SetPerp(double dfPerp){SetParamDbl(OGRSTSymbolPerp,dfPerp  );}
     int  Priority(GBool &bDefault){return GetParamNum(OGRSTSymbolPriority,bDefault);}
     void SetPriority(int nPriority){SetParamNum(OGRSTSymbolPriority,nPriority);}
     const char *FontName(GBool &bDefault)
@@ -430,7 +430,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     double SpacingY(GBool &bDefault){return GetParamDbl(OGRSTLabelDy,bDefault);}
     void SetSpacingY(double dfY){SetParamDbl(OGRSTLabelDy,dfY);}
     double Perp(GBool &bDefault){return GetParamDbl(OGRSTLabelPerp,bDefault);}
-    void SetPerp(double dfPerp){SetParamDbl(OGRSTLabelPerp,dfPerp);}  
+    void SetPerp(double dfPerp){SetParamDbl(OGRSTLabelPerp,dfPerp);}
     GBool Bold(GBool &bDefault){return GetParamNum(OGRSTLabelBold,bDefault);}
     void SetBold(GBool bBold){SetParamNum(OGRSTLabelBold,bBold);}
     GBool Italic(GBool &bDefault){return GetParamNum(OGRSTLabelItalic,bDefault);}

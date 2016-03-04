@@ -54,10 +54,10 @@ OGRPolygon::OGRPolygon()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -81,10 +81,10 @@ OGRPolygon::~OGRPolygon()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -577,7 +577,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
 /* -------------------------------------------------------------------- */
-    if (getExteriorRing() == NULL || 
+    if (getExteriorRing() == NULL ||
         getExteriorRing()->IsEmpty() )
     {
         if( eWkbVariant == wkbVariantIso )
@@ -803,7 +803,7 @@ OGRGeometry* OGRPolygon::getCurveGeometry(const char* const* papszOptions) const
  * \brief Cast to curve polygon.
  *
  * The passed in geometry is consumed and a new one returned .
- * 
+ *
  * @param poPoly the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

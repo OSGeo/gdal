@@ -65,7 +65,7 @@ static CPLMutex *hPROJMutex = NULL;
 static projPJ       (*pfn_pj_init_plus)(const char *) = NULL;
 static projPJ       (*pfn_pj_init)(int, char**) = NULL;
 static void     (*pfn_pj_free)(projPJ) = NULL;
-static int      (*pfn_pj_transform)(projPJ, projPJ, long, int, 
+static int      (*pfn_pj_transform)(projPJ, projPJ, long, int,
                                     double *, double *, double * ) = NULL;
 static int         *(*pfn_pj_get_errno_ref)(void) = NULL;
 static char        *(*pfn_pj_strerrno)(int) = NULL;
@@ -146,7 +146,7 @@ class OGRProj4CT : public OGRCoordinateTransformation
 
     projCtx     pjctx;
 
-    int         InitializeNoLock( OGRSpatialReference *poSource, 
+    int         InitializeNoLock( OGRSpatialReference *poSource,
                                   OGRSpatialReference *poTarget );
 
     int         nMaxCount;
@@ -161,14 +161,14 @@ public:
                 OGRProj4CT();
     virtual     ~OGRProj4CT();
 
-    int         Initialize( OGRSpatialReference *poSource, 
+    int         Initialize( OGRSpatialReference *poSource,
                             OGRSpatialReference *poTarget );
 
     virtual OGRSpatialReference *GetSourceCS();
     virtual OGRSpatialReference *GetTargetCS();
-    virtual int Transform( int nCount, 
+    virtual int Transform( int nCount,
                            double *x, double *y, double *z = NULL );
-    virtual int TransformEx( int nCount, 
+    virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
                              int *panSuccess = NULL );
 };
@@ -230,9 +230,9 @@ static bool LoadProjLibrary_unlocked()
     if( pfn_pj_init == NULL )
        return false;
 
-    pfn_pj_init_plus = (projPJ (*)(const char *)) 
+    pfn_pj_init_plus = (projPJ (*)(const char *))
         CPLGetSymbol( pszLibName, "pj_init_plus" );
-    pfn_pj_free = (void (*)(projPJ)) 
+    pfn_pj_free = (void (*)(projPJ))
         CPLGetSymbol( pszLibName, "pj_free" );
     pfn_pj_transform = (int (*)(projPJ,projPJ,long,int,double*,
                                 double*,double*))
@@ -285,9 +285,9 @@ static bool LoadProjLibrary_unlocked()
 
     if( pfn_pj_transform == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to load %s, but couldn't find pj_transform.\n"
-                  "Please upgrade to PROJ 4.1.2 or later.", 
+                  "Please upgrade to PROJ 4.1.2 or later.",
                   pszLibName );
 
         return false;
@@ -358,7 +358,7 @@ char *OCTProj4Normalize( const char *pszProj4Src )
 /************************************************************************/
 
 /**
- * \brief OGRCoordinateTransformation destructor. 
+ * \brief OGRCoordinateTransformation destructor.
  *
  * This function is the same as OGRCoordinateTransformation::DestroyCT()
  *
@@ -377,7 +377,7 @@ OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 /************************************************************************/
 
 /**
- * \brief OGRCoordinateTransformation destructor. 
+ * \brief OGRCoordinateTransformation destructor.
  *
  * This function is the same as OGRCoordinateTransformation::~OGRCoordinateTransformation()
  * and OCTDestroyCoordinateTransformation()
@@ -385,7 +385,7 @@ OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
  * This static method will destroy a OGRCoordinateTransformation.  It is
  * equivalent to calling delete on the object, but it ensures that the
  * deallocation is properly executed within the OGR libraries heap on
- * platforms where this can matter (win32).  
+ * platforms where this can matter (win32).
  *
  * @param poCT the object to delete
  *
@@ -406,21 +406,21 @@ void OGRCoordinateTransformation::DestroyCT(OGRCoordinateTransformation* poCT)
  *
  * This is the same as the C function OCTNewCoordinateTransformation().
  *
- * Input spatial reference system objects are assigned 
+ * Input spatial reference system objects are assigned
  * by copy (calling clone() method) and no ownership transfer occurs.
  *
  * The delete operator, or OCTDestroyCoordinateTransformation() should
- * be used to destroy transformation objects. 
+ * be used to destroy transformation objects.
  *
  * The PROJ.4 library must be available at run-time.
  *
- * @param poSource source spatial reference system. 
- * @param poTarget target spatial reference system. 
+ * @param poSource source spatial reference system.
+ * @param poTarget target spatial reference system.
  * @return NULL on failure or a ready to use transformation object.
  */
 
-OGRCoordinateTransformation*  
-OGRCreateCoordinateTransformation( OGRSpatialReference *poSource, 
+OGRCoordinateTransformation*
+OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
                                    OGRSpatialReference *poTarget )
 
 {
@@ -428,7 +428,7 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
 
     if( pfn_pj_init == NULL && !LoadProjLibrary() )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to load PROJ.4 library (%s), creation of\n"
                   "OGRCoordinateTransformation failed.",
                   GetProjLibraryName() );
@@ -457,26 +457,26 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation().
  *
- * Input spatial reference system objects are assigned 
+ * Input spatial reference system objects are assigned
  * by copy (calling clone() method) and no ownership transfer occurs.
  *
  * OCTDestroyCoordinateTransformation() should
- * be used to destroy transformation objects. 
+ * be used to destroy transformation objects.
  *
  * The PROJ.4 library must be available at run-time.
  *
- * @param hSourceSRS source spatial reference system. 
- * @param hTargetSRS target spatial reference system. 
+ * @param hSourceSRS source spatial reference system.
+ * @param hTargetSRS target spatial reference system.
  * @return NULL on failure or a ready to use transformation object.
  */
 
-OGRCoordinateTransformationH CPL_STDCALL 
+OGRCoordinateTransformationH CPL_STDCALL
 OCTNewCoordinateTransformation(
     OGRSpatialReferenceH hSourceSRS, OGRSpatialReferenceH hTargetSRS )
 
 {
-    return (OGRCoordinateTransformationH) 
-        OGRCreateCoordinateTransformation( 
+    return (OGRCoordinateTransformationH)
+        OGRCreateCoordinateTransformation(
             (OGRSpatialReference *) hSourceSRS,
             (OGRSpatialReference *) hTargetSRS );
 }
@@ -551,7 +551,7 @@ OGRProj4CT::~OGRProj4CT()
 /*                             Initialize()                             */
 /************************************************************************/
 
-int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn, 
+int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
                             OGRSpatialReference * poTargetIn )
 
 {
@@ -574,7 +574,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /*                         InitializeNoLock()                           */
 /************************************************************************/
 
-int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn, 
+int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
                                   OGRSpatialReference * poTargetIn )
 
 {
@@ -629,7 +629,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     if( CPLGetConfigOption( "CENTER_LONG", NULL ) != NULL )
     {
         bSourceWrap = bTargetWrap = TRUE;
-        dfSourceWrapLong = dfTargetWrapLong = 
+        dfSourceWrapLong = dfTargetWrapLong =
             CPLAtof(CPLGetConfigOption( "CENTER_LONG", "" ));
         CPLDebug( "OGRCT", "Wrap at %g.", dfSourceWrapLong );
     }
@@ -676,7 +676,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     if( strlen(pszSrcProj4Defn) == 0 )
     {
         CPLFree( pszSrcProj4Defn );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "No PROJ.4 translation for source SRS, coordinate\n"
                   "transformation initialization has failed." );
         return FALSE;
@@ -695,7 +695,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     {
         CPLFree( pszSrcProj4Defn );
         CPLFree( pszDstProj4Defn );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "No PROJ.4 translation for destination SRS, coordinate\n"
                   "transformation initialization has failed." );
         return FALSE;
@@ -795,8 +795,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 
                 /* pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0 */
                 CPLMutexHolderD(&hPROJMutex);
-                CPLError( CE_Failure, CPLE_NotSupported, 
-                        "Failed to initialize PROJ.4 with `%s'.\n%s", 
+                CPLError( CE_Failure, CPLE_NotSupported,
+                        "Failed to initialize PROJ.4 with `%s'.\n%s",
                         pszSrcProj4Defn, pfn_pj_strerrno(pj_errno) );
             }
             else if( pfn_pj_get_errno_ref != NULL
@@ -804,14 +804,14 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
             {
                 int *p_pj_errno = pfn_pj_get_errno_ref();
 
-                CPLError( CE_Failure, CPLE_NotSupported, 
-                        "Failed to initialize PROJ.4 with `%s'.\n%s", 
+                CPLError( CE_Failure, CPLE_NotSupported,
+                        "Failed to initialize PROJ.4 with `%s'.\n%s",
                         pszSrcProj4Defn, pfn_pj_strerrno(*p_pj_errno) );
             }
             else
             {
-                CPLError( CE_Failure, CPLE_NotSupported, 
-                        "Failed to initialize PROJ.4 with `%s'.\n", 
+                CPLError( CE_Failure, CPLE_NotSupported,
+                        "Failed to initialize PROJ.4 with `%s'.\n",
                         pszSrcProj4Defn );
             }
         }
@@ -838,8 +838,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
             psPJTarget = pfn_pj_init_plus( pszDstProj4Defn );
 
         if( psPJTarget == NULL )
-            CPLError( CE_Failure, CPLE_NotSupported, 
-                    "Failed to initialize PROJ.4 with `%s'.", 
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "Failed to initialize PROJ.4 with `%s'.",
                     pszDstProj4Defn );
     }
     if( nDebugReportCount < 10 )
@@ -1001,7 +1001,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                         y0 = HUGE_VAL;
                         continue;
                     }
-                    else 
+                    else
                     {
                         do {
                             x[i] -= 2 * M_PI;
@@ -1125,8 +1125,8 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                 pszError = pfn_pj_strerrno( err );
 
             if( pszError == NULL )
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Reprojection failed, err = %d", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Reprojection failed, err = %d",
                           err );
             else
                 CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
@@ -1137,8 +1137,8 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         }
         else if( nErrorCount == 20 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Reprojection failed, err = %d, further errors will be suppressed on the transform object.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Reprojection failed, err = %d, further errors will be suppressed on the transform object.",
                       err );
         }
 

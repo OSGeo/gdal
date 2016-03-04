@@ -33,10 +33,10 @@
 
 /**
  * \file ogr_api.h
- * 
+ *
  * C API and defines for OGRFeature, OGRGeometry, and OGRDataSource
- * related classes. 
- * 
+ * related classes.
+ *
  * See also: ogr_geometry.h, ogr_feature.h, ogrsf_frmts.h, ogr_featurestyle.h
  */
 
@@ -62,7 +62,7 @@ typedef void *OGRGeometryH;
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
 typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
 #else
-typedef void *OGRSpatialReferenceH;                               
+typedef void *OGRSpatialReferenceH;
 typedef void *OGRCoordinateTransformationH;
 #endif
 
@@ -72,18 +72,18 @@ struct _CPLXMLNode;
 
 /* From base OGRGeometry class */
 
-OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *, OGRSpatialReferenceH, 
+OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *, OGRSpatialReferenceH,
                                     OGRGeometryH *, int );
-OGRErr CPL_DLL OGR_G_CreateFromWkt( char **, OGRSpatialReferenceH, 
+OGRErr CPL_DLL OGR_G_CreateFromWkt( char **, OGRSpatialReferenceH,
                                     OGRGeometryH * );
-OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *, OGRSpatialReferenceH, 
+OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *, OGRSpatialReferenceH,
                                     OGRGeometryH *, int, int * );
 void   CPL_DLL OGR_G_DestroyGeometry( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_CreateGeometry( OGRwkbGeometryType ) CPL_WARN_UNUSED_RESULT;
-OGRGeometryH CPL_DLL 
-OGR_G_ApproximateArcAngles( 
+OGRGeometryH CPL_DLL
+OGR_G_ApproximateArcAngles(
     double dfCenterX, double dfCenterY, double dfZ,
-    double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, 
+    double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation,
     double dfStartAngle, double dfEndAngle,
     double dfMaxAngleStepSizeDegrees ) CPL_WARN_UNUSED_RESULT;
 
@@ -134,7 +134,7 @@ char   CPL_DLL *OGR_G_ExportToJson( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 char   CPL_DLL *OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromJson( const char* ) CPL_WARN_UNUSED_RESULT;
 
-void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH, 
+void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH,
                                              OGRSpatialReferenceH );
 OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
 OGRErr CPL_DLL OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
@@ -205,18 +205,18 @@ double CPL_DLL OGR_G_GetX( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetY( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetZ( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetM( OGRGeometryH, int );
-void   CPL_DLL OGR_G_GetPoint( OGRGeometryH, int iPoint, 
+void   CPL_DLL OGR_G_GetPoint( OGRGeometryH, int iPoint,
                                double *, double *, double * );
-void   CPL_DLL OGR_G_GetPointZM( OGRGeometryH, int iPoint, 
+void   CPL_DLL OGR_G_GetPointZM( OGRGeometryH, int iPoint,
                                  double *, double *, double *, double * );
 void   CPL_DLL OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount );
-void   CPL_DLL OGR_G_SetPoint( OGRGeometryH, int iPoint, 
+void   CPL_DLL OGR_G_SetPoint( OGRGeometryH, int iPoint,
                                double, double, double );
-void   CPL_DLL OGR_G_SetPoint_2D( OGRGeometryH, int iPoint, 
+void   CPL_DLL OGR_G_SetPoint_2D( OGRGeometryH, int iPoint,
                                   double, double );
-void   CPL_DLL OGR_G_SetPointM( OGRGeometryH, int iPoint, 
+void   CPL_DLL OGR_G_SetPointM( OGRGeometryH, int iPoint,
                                 double, double, double );
-void   CPL_DLL OGR_G_SetPointZM( OGRGeometryH, int iPoint, 
+void   CPL_DLL OGR_G_SetPointZM( OGRGeometryH, int iPoint,
                                  double, double, double, double );
 void   CPL_DLL OGR_G_AddPoint( OGRGeometryH, double, double, double );
 void   CPL_DLL OGR_G_AddPoint_2D( OGRGeometryH, double, double );
@@ -248,12 +248,12 @@ OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry( OGRGeometryH hGeom,
                                              char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 
 OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
-                                       int bBestEffort, 
-                                       int bAutoClose, 
+                                       int bBestEffort,
+                                       int bAutoClose,
                                        double dfTolerance,
                                        OGRErr * peErr ) CPL_WARN_UNUSED_RESULT;
 
-OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER( 
+OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER(
     int bGenerate_DB2_V72_BYTE_ORDER );
 
 int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER(void);
@@ -295,7 +295,7 @@ int    CPL_DLL OGR_Fld_GetWidth( OGRFieldDefnH );
 void   CPL_DLL OGR_Fld_SetWidth( OGRFieldDefnH, int );
 int    CPL_DLL OGR_Fld_GetPrecision( OGRFieldDefnH );
 void   CPL_DLL OGR_Fld_SetPrecision( OGRFieldDefnH, int );
-void   CPL_DLL OGR_Fld_Set( OGRFieldDefnH, const char *, OGRFieldType, 
+void   CPL_DLL OGR_Fld_Set( OGRFieldDefnH, const char *, OGRFieldType,
                             int, int, OGRJustification );
 int    CPL_DLL OGR_Fld_IsIgnored( OGRFieldDefnH hDefn );
 void   CPL_DLL OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int );
@@ -412,9 +412,9 @@ void   CPL_DLL OGR_F_SetFieldDoubleList( OGRFeatureH, int, int, double * );
 void   CPL_DLL OGR_F_SetFieldStringList( OGRFeatureH, int, char ** );
 void   CPL_DLL OGR_F_SetFieldRaw( OGRFeatureH, int, OGRField * );
 void   CPL_DLL OGR_F_SetFieldBinary( OGRFeatureH, int, int, GByte * );
-void   CPL_DLL OGR_F_SetFieldDateTime( OGRFeatureH, int, 
+void   CPL_DLL OGR_F_SetFieldDateTime( OGRFeatureH, int,
                                        int, int, int, int, int, int, int );
-void   CPL_DLL OGR_F_SetFieldDateTimeEx( OGRFeatureH, int, 
+void   CPL_DLL OGR_F_SetFieldDateTimeEx( OGRFeatureH, int,
                                        int, int, int, int, int, float, int );
 
 int               CPL_DLL OGR_F_GetGeomFieldCount( OGRFeatureH hFeat );
@@ -474,7 +474,7 @@ const char CPL_DLL* OGR_L_GetName( OGRLayerH );
 OGRwkbGeometryType CPL_DLL OGR_L_GetGeomType( OGRLayerH );
 OGRGeometryH CPL_DLL OGR_L_GetSpatialFilter( OGRLayerH );
 void   CPL_DLL OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
-void   CPL_DLL OGR_L_SetSpatialFilterRect( OGRLayerH, 
+void   CPL_DLL OGR_L_SetSpatialFilterRect( OGRLayerH,
                                            double, double, double, double );
 void     CPL_DLL OGR_L_SetSpatialFilterEx( OGRLayerH, int iGeomField,
                                            OGRGeometryH hGeom );
@@ -535,7 +535,7 @@ OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
 OGRLayerH CPL_DLL OGR_DS_GetLayerByName( OGRDataSourceH, const char * );
 OGRErr    CPL_DLL OGR_DS_DeleteLayer( OGRDataSourceH, int );
 OGRSFDriverH CPL_DLL OGR_DS_GetDriver( OGRDataSourceH );
-OGRLayerH CPL_DLL OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
+OGRLayerH CPL_DLL OGR_DS_CreateLayer( OGRDataSourceH, const char *,
                                       OGRSpatialReferenceH, OGRwkbGeometryType,
                                       char ** );
 OGRLayerH CPL_DLL OGR_DS_CopyLayer( OGRDataSourceH, OGRLayerH, const char *,
@@ -560,7 +560,7 @@ OGRDataSourceH CPL_DLL OGR_Dr_Open( OGRSFDriverH, const char *, int ) CPL_WARN_U
 int CPL_DLL OGR_Dr_TestCapability( OGRSFDriverH, const char * );
 OGRDataSourceH CPL_DLL OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
                                                 char ** ) CPL_WARN_UNUSED_RESULT;
-OGRDataSourceH CPL_DLL OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH, 
+OGRDataSourceH CPL_DLL OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH,
                                               const char *, char ** ) CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 
@@ -599,16 +599,16 @@ typedef void *OGRStyleToolH;
 OGRStyleMgrH CPL_DLL OGR_SM_Create(OGRStyleTableH hStyleTable) CPL_WARN_UNUSED_RESULT;
 void    CPL_DLL OGR_SM_Destroy(OGRStyleMgrH hSM);
 
-const char CPL_DLL *OGR_SM_InitFromFeature(OGRStyleMgrH hSM, 
+const char CPL_DLL *OGR_SM_InitFromFeature(OGRStyleMgrH hSM,
                                            OGRFeatureH hFeat);
-int     CPL_DLL OGR_SM_InitStyleString(OGRStyleMgrH hSM, 
+int     CPL_DLL OGR_SM_InitStyleString(OGRStyleMgrH hSM,
                                        const char *pszStyleString);
-int     CPL_DLL OGR_SM_GetPartCount(OGRStyleMgrH hSM, 
+int     CPL_DLL OGR_SM_GetPartCount(OGRStyleMgrH hSM,
                                     const char *pszStyleString);
-OGRStyleToolH CPL_DLL OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId, 
+OGRStyleToolH CPL_DLL OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId,
                                      const char *pszStyleString);
 int     CPL_DLL OGR_SM_AddPart(OGRStyleMgrH hSM, OGRStyleToolH hST);
-int     CPL_DLL OGR_SM_AddStyle(OGRStyleMgrH hSM, const char *pszStyleName, 
+int     CPL_DLL OGR_SM_AddStyle(OGRStyleMgrH hSM, const char *pszStyleName,
                                const char *pszStyleString);
 
 /* OGRStyleTool */
@@ -619,7 +619,7 @@ void    CPL_DLL OGR_ST_Destroy(OGRStyleToolH hST);
 OGRSTClassId CPL_DLL OGR_ST_GetType(OGRStyleToolH hST);
 
 OGRSTUnitId CPL_DLL OGR_ST_GetUnit(OGRStyleToolH hST);
-void    CPL_DLL OGR_ST_SetUnit(OGRStyleToolH hST, OGRSTUnitId eUnit, 
+void    CPL_DLL OGR_ST_SetUnit(OGRStyleToolH hST, OGRSTUnitId eUnit,
                                double dfGroundPaperScale);
 
 const char CPL_DLL *OGR_ST_GetParamStr(OGRStyleToolH hST, int eParam, int *bValueIsNull);
@@ -630,14 +630,14 @@ void    CPL_DLL OGR_ST_SetParamNum(OGRStyleToolH hST, int eParam, int nValue);
 void    CPL_DLL OGR_ST_SetParamDbl(OGRStyleToolH hST, int eParam, double dfValue);
 const char CPL_DLL *OGR_ST_GetStyleString(OGRStyleToolH hST);
 
-int CPL_DLL OGR_ST_GetRGBFromString(OGRStyleToolH hST, const char *pszColor, 
-                                    int *pnRed, int *pnGreen, int *pnBlue, 
+int CPL_DLL OGR_ST_GetRGBFromString(OGRStyleToolH hST, const char *pszColor,
+                                    int *pnRed, int *pnGreen, int *pnBlue,
                                     int *pnAlpha);
 
 /* OGRStyleTable */
 
 OGRStyleTableH  CPL_DLL OGR_STBL_Create( void ) CPL_WARN_UNUSED_RESULT;
-void    CPL_DLL OGR_STBL_Destroy( OGRStyleTableH hSTBL ); 
+void    CPL_DLL OGR_STBL_Destroy( OGRStyleTableH hSTBL );
 int     CPL_DLL OGR_STBL_AddStyle( OGRStyleTableH hStyleTable,
                                    const char *pszName,
                                    const char *pszStyleString);

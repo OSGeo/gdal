@@ -52,10 +52,10 @@ OGRMultiPoint::OGRMultiPoint()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -78,10 +78,10 @@ OGRMultiPoint::~OGRMultiPoint()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -223,11 +223,11 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText,
         }
 
         OGRMakeWktCoordinateM( *ppszDstText + nRetLen,
-                               poPoint->getX(), 
+                               poPoint->getX(),
                                poPoint->getY(),
                                poPoint->getZ(),
                                poPoint->getM(),
-                               poPoint->Is3D(), 
+                               poPoint->Is3D(),
                                poPoint->IsMeasured() && (eWkbVariant == wkbVariantIso) );
 
         if( eWkbVariant == wkbVariantIso )
@@ -269,7 +269,7 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     const char* pszPreScan = OGRWktReadToken( pszInput, szToken );
     OGRWktReadToken( pszPreScan, szToken );
 
-    // Do we have an inner bracket? 
+    // Do we have an inner bracket?
     if (EQUAL(szToken,"(") || EQUAL(szToken, "EMPTY") )
     {
         *ppszInput = (char*) pszInputBefore;
@@ -416,7 +416,7 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput, int bHasM, int
         int nMaxPoint = 0;
         int nPointCount = 0;
         int flagsFromInput = flags;
-        pszInput = OGRWktReadPointsM( pszInput, &paoPoints, &padfZ, &padfM, &flagsFromInput, 
+        pszInput = OGRWktReadPointsM( pszInput, &paoPoints, &padfZ, &padfM, &flagsFromInput,
                                       &nMaxPoint, &nPointCount );
 
         if( pszInput == NULL || nPointCount != 1 )

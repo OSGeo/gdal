@@ -169,18 +169,18 @@ void OGRSimpleCurve::setCoordinateDimension( int nNewDimension )
 void OGRSimpleCurve::set3D( OGRBoolean bIs3D )
 
 {
-    if (bIs3D) 
+    if (bIs3D)
         Make3D();
-    else 
+    else
         Make2D();
 }
 
 void OGRSimpleCurve::setMeasured( OGRBoolean bIsMeasured )
 
 {
-    if (bIsMeasured) 
+    if (bIsMeasured)
         AddM();
-    else 
+    else
         RemoveM();
 }
 
@@ -309,7 +309,7 @@ void    OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
  *
  * \brief Fetch vertex count.
  *
- * Returns the number of vertices in the line string.  
+ * Returns the number of vertices in the line string.
  *
  * @return vertex count.
  */
@@ -322,7 +322,7 @@ void    OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
  * Returns the X value at the indicated vertex.   If iVertex is out of range a
  * crash may occur, no internal range checking is performed.
  *
- * @param iVertex the vertex to return, between 0 and getNumPoints()-1. 
+ * @param iVertex the vertex to return, between 0 and getNumPoints()-1.
  *
  * @return X value.
  */
@@ -335,7 +335,7 @@ void    OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
  * Returns the Y value at the indicated vertex.   If iVertex is out of range a
  * crash may occur, no internal range checking is performed.
  *
- * @param iVertex the vertex to return, between 0 and getNumPoints()-1. 
+ * @param iVertex the vertex to return, between 0 and getNumPoints()-1.
  *
  * @return X value.
  */
@@ -351,7 +351,7 @@ void    OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
  * value is available, 0.0 is returned.  If iVertex is out of range a
  * crash may occur, no internal range checking is performed.
  *
- * @param iVertex the vertex to return, between 0 and getNumPoints()-1. 
+ * @param iVertex the vertex to return, between 0 and getNumPoints()-1.
  *
  * @return Z value.
  */
@@ -359,7 +359,7 @@ void    OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
 double OGRSimpleCurve::getZ( int iVertex ) const
 
 {
-    if( padfZ != NULL && iVertex >= 0 && iVertex < nPointCount 
+    if( padfZ != NULL && iVertex >= 0 && iVertex < nPointCount
         && (flags & OGR_G_3D) )
         return( padfZ[iVertex] );
     else
@@ -377,7 +377,7 @@ double OGRSimpleCurve::getZ( int iVertex ) const
  * value is available, 0.0 is returned.  If iVertex is out of range a
  * crash may occur, no internal range checking is performed.
  *
- * @param iVertex the vertex to return, between 0 and getNumPoints()-1. 
+ * @param iVertex the vertex to return, between 0 and getNumPoints()-1.
  *
  * @return M value.
  */
@@ -385,7 +385,7 @@ double OGRSimpleCurve::getZ( int iVertex ) const
 double OGRSimpleCurve::getM( int iVertex ) const
 
 {
-    if( padfM != NULL && iVertex >= 0 && iVertex < nPointCount 
+    if( padfM != NULL && iVertex >= 0 && iVertex < nPointCount
         && (flags & OGR_G_MEASURED) )
         return( padfM[iVertex] );
     else
@@ -401,7 +401,7 @@ double OGRSimpleCurve::getM( int iVertex ) const
  *
  * This method primary exists to preset the number of points in a linestring
  * geometry before setPoint() is used to assign them to avoid reallocating
- * the array larger with each call to addPoint(). 
+ * the array larger with each call to addPoint().
  *
  * This method has no SFCOM analog.
  *
@@ -488,7 +488,7 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
  * accommodate the request.
  *
  * There is no SFCOM analog to this method.
- * 
+ *
  * @param iPoint the index of the vertex to assign (zero based).
  * @param poPoint the value to assign to the vertex.
  */
@@ -516,7 +516,7 @@ void OGRSimpleCurve::setPoint( int iPoint, OGRPoint * poPoint )
  * If iPoint is larger than the number of necessary the number of existing
  * points in the line string, the point count will be increased to
  * accommodate the request.
- * 
+ *
  * There is no SFCOM analog to this method.
  *
  * @param iPoint the index of the vertex to assign (zero based).
@@ -764,7 +764,7 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
 
 {
     setNumPoints( nPointsIn, FALSE );
-    if (nPointCount < nPointsIn 
+    if (nPointCount < nPointsIn
 #ifdef DEBUG
         || paoPoints == NULL
 #endif
@@ -813,7 +813,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 
 {
     setNumPoints( nPointsIn, FALSE );
-    if (nPointCount < nPointsIn 
+    if (nPointCount < nPointsIn
 #ifdef DEBUG
         || paoPoints == NULL
 #endif
@@ -875,7 +875,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 
 {
     setNumPoints( nPointsIn, FALSE );
-    if (nPointCount < nPointsIn 
+    if (nPointCount < nPointsIn
 #ifdef DEBUG
         || paoPoints == NULL
 #endif
@@ -1197,10 +1197,10 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
 /************************************************************************/
 
 /**
- * \brief Reverse point order. 
+ * \brief Reverse point order.
  *
- * This method updates the points in this line string in place 
- * reversing the point ordering (first for last, etc).  
+ * This method updates the points in this line string in place
+ * reversing the point ordering (first for last, etc).
  */
 
 void OGRSimpleCurve::reversePoints()
@@ -1234,16 +1234,16 @@ void OGRSimpleCurve::reversePoints()
  *
  * Adds the request range of vertices to the end of this line string
  * in an efficient manner.  If the nStartVertex is larger than the
- * nEndVertex then the vertices will be reversed as they are copied. 
+ * nEndVertex then the vertices will be reversed as they are copied.
  *
- * @param poOtherLine the other OGRLineString. 
+ * @param poOtherLine the other OGRLineString.
  * @param nStartVertex the first vertex to copy, defaults to 0 to start
- * with the first vertex in the other linestring. 
- * @param nEndVertex the last vertex to copy, defaults to -1 indicating 
- * the last vertex of the other line string. 
+ * with the first vertex in the other linestring.
+ * @param nEndVertex the last vertex to copy, defaults to -1 indicating
+ * the last vertex of the other line string.
  */
 
-void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine, 
+void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
                                       int nStartVertex, int nEndVertex )
 
 {
@@ -1257,8 +1257,8 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
     if( nEndVertex == -1 )
         nEndVertex = nOtherLineNumPoints - 1;
 
-    if( nStartVertex < 0 || nEndVertex < 0 
-        || nStartVertex >= nOtherLineNumPoints 
+    if( nStartVertex < 0 || nEndVertex < 0
+        || nStartVertex >= nOtherLineNumPoints
         || nEndVertex >= nOtherLineNumPoints )
     {
         CPLAssert( FALSE );
@@ -1284,8 +1284,8 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
 /* -------------------------------------------------------------------- */
     if( nEndVertex >= nStartVertex )
     {
-        memcpy( paoPoints + nOldPoints, 
-                poOtherLine->paoPoints + nStartVertex, 
+        memcpy( paoPoints + nOldPoints,
+                poOtherLine->paoPoints + nStartVertex,
                 sizeof(OGRRawPoint) * nPointsToAdd );
         if( poOtherLine->padfZ != NULL )
         {
@@ -1307,9 +1307,9 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
 
         for( i = 0; i < nPointsToAdd; i++ )
         {
-            paoPoints[i+nOldPoints].x = 
+            paoPoints[i+nOldPoints].x =
                 poOtherLine->paoPoints[nStartVertex-i].x;
-            paoPoints[i+nOldPoints].y = 
+            paoPoints[i+nOldPoints].y =
                 poOtherLine->paoPoints[nStartVertex-i].y;
         }
 
@@ -1701,7 +1701,7 @@ OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
             snprintf( *ppszDstText, nMaxString, "%s M (", getGeometryName() );
         else if( flags & OGR_G_3D )
             snprintf( *ppszDstText, nMaxString, "%s Z (", getGeometryName() );
-        else 
+        else
             snprintf( *ppszDstText, nMaxString, "%s (", getGeometryName() );
     }
     else
@@ -1716,10 +1716,10 @@ OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
     {
         if( nMaxString <= strlen(*ppszDstText+nRetLen) + 32 + nRetLen )
         {
-            CPLDebug( "OGR", 
+            CPLDebug( "OGR",
                       "OGRSimpleCurve::exportToWkt() ... buffer overflow.\n"
                       "nMaxString=%d, strlen(*ppszDstText) = %d, i=%d\n"
-                      "*ppszDstText = %s", 
+                      "*ppszDstText = %s",
                       static_cast<int>(nMaxString),
                       static_cast<int>(strlen(*ppszDstText)), i, *ppszDstText );
 
@@ -1819,7 +1819,7 @@ void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
 
         if (dfSegLength > 0)
         {
-            if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >= 
+            if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                              dfDistance) )
             {
                 double      dfRatio;
@@ -1921,7 +1921,7 @@ double OGRSimpleCurve::Project(const OGRPoint *
 /**
 * \brief Get the portion of linestring.
 *
-* The portion of the linestring extracted to new one. The input distances 
+* The portion of the linestring extracted to new one. The input distances
 * (maybe present as ratio of length of linestring) set begin and end of
 * extracted portion.
 *
@@ -2205,7 +2205,7 @@ OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
     for( int iPoint = 0; iPoint < getNumPoints(); iPoint++ )
     {
         if( getX(iPoint) != poOLine->getX(iPoint)
-            || getY(iPoint) != poOLine->getY(iPoint) 
+            || getY(iPoint) != poOLine->getY(iPoint)
             || getZ(iPoint) != poOLine->getZ(iPoint) )
             return FALSE;
     }
@@ -2500,10 +2500,10 @@ OGRLineString::OGRLineString()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -2527,10 +2527,10 @@ OGRLineString::~OGRLineString()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -2587,10 +2587,10 @@ OGRLineString* OGRLineString::CurveToLine(CPL_UNUSED double dfMaxAngleStepSizeDe
 /**
  * \brief Compute area of ring / closed linestring.
  *
- * The area is computed according to Green's Theorem:  
+ * The area is computed according to Green's Theorem:
  *
- * Area is "Sum(x(i)*(y(i+1) - y(i-1)))/2" for i = 0 to pointCount-1, 
- * assuming the last point is a duplicate of the first. 
+ * Area is "Sum(x(i)*(y(i+1) - y(i-1)))/2" for i = 0 to pointCount-1,
+ * assuming the last point is a duplicate of the first.
  *
  * @return computed area.
  */
@@ -2655,7 +2655,7 @@ OGRLineString* OGRLineString::TransferMembersAndDestroy(
  *
  * The passed in geometry is consumed and a new one returned (or NULL in case
  * of failure)
- * 
+ *
  * @param poLS the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

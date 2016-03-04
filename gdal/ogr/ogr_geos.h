@@ -32,7 +32,7 @@
 #ifndef OGR_GEOS_H_INCLUDED
 #define OGR_GEOS_H_INCLUDED
 
-#ifdef HAVE_GEOS 
+#ifdef HAVE_GEOS
 // To avoid accidental use of non reentrant GEOS API.
 // (check only effective in GEOS >= 3.5)
 #  define GEOS_USE_ONLY_R_API
@@ -40,7 +40,7 @@
 #  include <geos_c.h>
 #else
 
-namespace geos { 
+namespace geos {
     class Geometry;
 };
 

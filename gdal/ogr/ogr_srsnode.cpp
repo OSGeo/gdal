@@ -95,7 +95,7 @@ void OGR_SRSNode::ClearChildren()
  *
  * Get number of children nodes.
  *
- * @return 0 for leaf nodes, or the number of children nodes. 
+ * @return 0 for leaf nodes, or the number of children nodes.
  */
 
 /************************************************************************/
@@ -109,7 +109,7 @@ void OGR_SRSNode::ClearChildren()
  * GetChildCount() - 1.
  *
  * @return a pointer to the child OGR_SRSNode, or NULL if there is no such
- * child. 
+ * child.
  */
 
 OGR_SRSNode *OGR_SRSNode::GetChild( int iChild )
@@ -144,7 +144,7 @@ const OGR_SRSNode *OGR_SRSNode::GetChild( int iChild ) const
  *
  * If a node appears more than once in the tree (such as UNIT for instance),
  * the first encountered will be returned.  Use GetNode() on a subtree to be
- * more specific. 
+ * more specific.
  *
  * @param pszName the name of the node to search for.
  *
@@ -165,7 +165,7 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nChildren; i++ )
     {
-        if( EQUAL(papoChildNodes[i]->pszValue,pszName) 
+        if( EQUAL(papoChildNodes[i]->pszValue,pszName)
             && papoChildNodes[i]->nChildren > 0 )
             return papoChildNodes[i];
     }
@@ -217,15 +217,15 @@ void OGR_SRSNode::AddChild( OGR_SRSNode * poNew )
 
 /**
  * Insert the passed node as a child of target node, at the indicated
- * position. 
+ * position.
  *
  * Note that ownership of the passed node is assumed by the node on which
  * the method is invoked ... use the Clone() method if the original is to
  * be preserved.  All existing children at location iChild and beyond are
- * push down one space to make space for the new child. 
+ * push down one space to make space for the new child.
  *
  * @param poNew the node to add as a child.
- * @param iChild position to insert, use 0 to insert at the beginning. 
+ * @param iChild position to insert, use 0 to insert at the beginning.
  */
 
 void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
@@ -286,7 +286,7 @@ void OGR_SRSNode::DestroyChild( int iChild )
  *
  * @param pszValueIn the node value being searched for.
  *
- * @return the child index, or -1 on failure. 
+ * @return the child index, or -1 on failure.
  */
 
 int OGR_SRSNode::FindChild( const char * pszValueIn ) const
@@ -377,17 +377,17 @@ int OGR_SRSNode::NeedsQuoting() const
 
     // As per bugzilla bug 294, the OGC spec says the direction
     // values for the AXIS keywords should *not* be quoted.
-    if( poParent != NULL && EQUAL(poParent->GetValue(),"AXIS") 
+    if( poParent != NULL && EQUAL(poParent->GetValue(),"AXIS")
         && this != poParent->GetChild(0) )
         return FALSE;
 
     // Strings starting with e or E are not valid numeric values, so they
-    // need quoting, like in AXIS["E",EAST] 
+    // need quoting, like in AXIS["E",EAST]
     if( (pszValue[0] == 'e' || pszValue[0] == 'E') )
         return TRUE;
 
     // Non-numeric tokens are generally quoted while clean numeric values
-    // are generally not. 
+    // are generally not.
     for( int i = 0; pszValue[i] != '\0'; i++ )
     {
         if( (pszValue[i] < '0' || pszValue[i] > '9')
@@ -413,7 +413,7 @@ int OGR_SRSNode::NeedsQuoting() const
  * @param ppszResult the resulting string is returned in this pointer.
  *
  * @return currently OGRERR_NONE is always returned, but the future it
- * is possible error conditions will develop. 
+ * is possible error conditions will develop.
  */
 
 
@@ -618,12 +618,12 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
         {
             break;
         }
-        else if( !bInQuotedString 
-                 && (*pszInput == ' ' || *pszInput == '\t' 
+        else if( !bInQuotedString
+                 && (*pszInput == ' ' || *pszInput == '\t'
                      || *pszInput == 10 || *pszInput == 13) )
         {
             /* just skip over whitespace */
-        } 
+        }
         else
         {
             szToken[nTokenLen++] = *pszInput;
@@ -663,7 +663,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
             AddChild( poNewChild );
 
             // swallow whitespace
-            while( isspace(*pszInput) ) 
+            while( isspace(*pszInput) )
                 pszInput++;
 
         } while( *pszInput == ',' );
@@ -753,7 +753,7 @@ void OGR_SRSNode::MakeValueSafe()
  * parent node matches that value.  Even if a replacement occurs, searching
  * continues.
  *
- * @param pszNode Restrict remapping to children of this type of node 
+ * @param pszNode Restrict remapping to children of this type of node
  *                (e.g. "PROJECTION")
  * @param papszSrcValues a NULL terminated array of source string.  If the
  * node value matches one of these (case insensitive) then replacement occurs.
@@ -770,9 +770,9 @@ void OGR_SRSNode::MakeValueSafe()
  * indication returned about whether any replacement occurred.
  */
 
-OGRErr OGR_SRSNode::applyRemapper( const char *pszNode, 
-                                   char **papszSrcValues, 
-                                   char **papszDstValues, 
+OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
+                                   char **papszSrcValues,
+                                   char **papszDstValues,
                                    int nStepSize, int bChildOfHit )
 
 {
@@ -785,7 +785,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
     {
         for( i = 0; papszSrcValues[i] != NULL; i += nStepSize )
         {
-            if( EQUAL(papszSrcValues[i],pszValue) && 
+            if( EQUAL(papszSrcValues[i],pszValue) &&
                 ! EQUAL(papszDstValues[i],"") )
             {
                 SetValue( papszDstValues[i] );
@@ -805,7 +805,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < GetChildCount(); i++ )
     {
-        GetChild(i)->applyRemapper( pszNode, papszSrcValues, 
+        GetChild(i)->applyRemapper( pszNode, papszSrcValues,
                                     papszDstValues, nStepSize, bChildOfHit );
     }
 
@@ -846,20 +846,20 @@ void OGR_SRSNode::StripNodes( const char * pszName )
 /************************************************************************/
 
 /* EXTENSION ... being a OSR extension... is arbitrary placed before the AUTHORITY */
-static const char * const apszPROJCSRule[] = 
-{ "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", 
+static const char * const apszPROJCSRule[] =
+{ "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "EXTENSION", "AUTHORITY",
   NULL };
 
-static const char * const apszDATUMRule[] = 
+static const char * const apszDATUMRule[] =
 { "DATUM", "SPHEROID", "TOWGS84", "EXTENSION", "AUTHORITY", NULL };
 
-static const char * const apszGEOGCSRule[] = 
+static const char * const apszGEOGCSRule[] =
 { "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
 
-static const char * const apszGEOCCSRule[] = 
+static const char * const apszGEOCCSRule[] =
 { "GEOCCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
 
-static const char * const apszVERTCSRule[] = 
+static const char * const apszVERTCSRule[] =
 { "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
 
 static const char * const * const apszOrderingRules[] = {
@@ -876,8 +876,8 @@ static const char * const * const apszOrderingRules[] = {
  * This method will reorder the children of the node it is invoked on and
  * then recurse to all children to fix up their children.
  *
- * @return OGRERR_NONE on success or an error code if something goes 
- * wrong.  
+ * @return OGRERR_NONE on success or an error code if something goes
+ * wrong.
  */
 
 OGRErr OGR_SRSNode::FixupOrdering()
@@ -920,11 +920,11 @@ OGRErr OGR_SRSNode::FixupOrdering()
 
     for( i = 1; i < GetChildCount(); i++ )
     {
-        panChildKey[i] = CSLFindString( (char**) papszRule, 
+        panChildKey[i] = CSLFindString( (char**) papszRule,
                                         GetChild(i)->GetValue() );
         if( panChildKey[i] == -1 )
         {
-            CPLDebug( "OGRSpatialReference", 
+            CPLDebug( "OGRSpatialReference",
                       "Found unexpected key %s when trying to order SRS nodes.",
                       GetChild(i)->GetValue() );
         }

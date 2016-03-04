@@ -76,7 +76,7 @@
  * Purpose: expression and select parser grammar.
  *          Requires Bison 2.4.0 or newer to process.  Use "make parser" target.
  * Author: Frank Warmerdam <warmerdam@pobox.com>
- * 
+ *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -108,11 +108,11 @@
 
 #define YYSTYPE  swq_expr_node*
 
-/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */ 
-/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */ 
-/* increase YYINITDEPTH instead, but this will consume memory. */ 
-/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */ 
-/* it appears to be a non documented feature of Bison */ 
+/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
+/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */
+/* increase YYINITDEPTH instead, but this will consume memory. */
+/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
+/* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
 
 
@@ -1956,7 +1956,7 @@ yyreduce:
   case 44:
 #line 449 "swq_parser.y" /* yacc.c:1646  */
     {
-            const swq_operation *poOp = 
+            const swq_operation *poOp =
                     swq_op_registrar::GetOperator( (yyvsp[-3])->string_value );
 
             if( poOp == NULL )
@@ -1972,7 +1972,7 @@ yyreduce:
                 }
                 else
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                                     "Undefined function '%s' used.",
                                     (yyvsp[-3])->string_value );
                     delete (yyvsp[-3]);
@@ -2036,7 +2036,7 @@ yyreduce:
 #line 515 "swq_parser.y" /* yacc.c:1646  */
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType((yyvsp[-1])->string_value);
-        if( !EQUAL((yyvsp[-3])->string_value,"GEOMETRY") || 
+        if( !EQUAL((yyvsp[-3])->string_value,"GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI((yyvsp[-1])->string_value, "GEOMETRY")) )
         {
@@ -2056,7 +2056,7 @@ yyreduce:
 #line 533 "swq_parser.y" /* yacc.c:1646  */
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType((yyvsp[-3])->string_value);
-        if( !EQUAL((yyvsp[-5])->string_value,"GEOMETRY") || 
+        if( !EQUAL((yyvsp[-5])->string_value,"GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI((yyvsp[-3])->string_value, "GEOMETRY")) )
         {
@@ -2176,7 +2176,7 @@ yyreduce:
             if( !EQUAL((yyvsp[-3])->string_value,"COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Syntax Error with %s(*).", 
+                        "Syntax Error with %s(*).",
                         (yyvsp[-3])->string_value );
                 delete (yyvsp[-3]);
                 YYERROR;
@@ -2209,7 +2209,7 @@ yyreduce:
             if( !EQUAL((yyvsp[-4])->string_value,"COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Syntax Error with %s(*).", 
+                        "Syntax Error with %s(*).",
                         (yyvsp[-4])->string_value );
                 delete (yyvsp[-4]);
                 delete (yyvsp[0]);
@@ -2410,7 +2410,7 @@ yyreduce:
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( (yyvsp[-3])->string_value,
-                                                     (yyvsp[-1])->string_value, 
+                                                     (yyvsp[-1])->string_value,
                                                      (yyvsp[0])->string_value );
         delete (yyvsp[-3]);
         delete (yyvsp[-1]);
@@ -2440,7 +2440,7 @@ yyreduce:
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( (yyvsp[-3])->string_value,
-                                                     (yyvsp[-1])->string_value, 
+                                                     (yyvsp[-1])->string_value,
                                                      (yyvsp[0])->string_value );
         delete (yyvsp[-3]);
         delete (yyvsp[-1]);
