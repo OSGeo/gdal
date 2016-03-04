@@ -5136,12 +5136,18 @@ def ogr_pg_84():
     if lyr.GetMetadataItem('DESCRIPTION') != 'bar':
         gdaltest.post_reason('fail')
         return 'fail'
+    if lyr.GetMetadataDomainList() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     # Set with SetMetadataItem()
     lyr.SetMetadataItem( 'DESCRIPTION', 'baz' )
     ds = None
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     lyr = ds.GetLayerByName('ogr_pg_84')
+    if lyr.GetMetadataDomainList() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if lyr.GetMetadataItem('DESCRIPTION') != 'baz':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -5151,6 +5157,9 @@ def ogr_pg_84():
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string )
     lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    if lyr.GetMetadataDomainList() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if lyr.GetMetadataItem('DESCRIPTION') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
