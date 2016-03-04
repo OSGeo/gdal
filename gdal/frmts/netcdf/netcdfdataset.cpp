@@ -4708,9 +4708,16 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
     }
 #endif
 
+    /* Make a clone to workaround a bug in released MapServer versions */
+    /* that destroys the passed SRS instead of releasing it */
+    OGRSpatialReference* poSRS = poSpatialRef;
+    if( poSRS != NULL )
+        poSRS = poSRS->Clone();
     netCDFLayer* poLayer = new netCDFLayer( poLayerDataset ? poLayerDataset : this,
                                             nLayerCDFId,
-                                            osNetCDFLayerName, eGType, poSpatialRef );
+                                            osNetCDFLayerName, eGType, poSRS );
+    if( poSRS != NULL )
+        poSRS->Release();
 
     // Fetch layer creation options coming from config file
     char** papszNewOptions = CSLDuplicate(papszOptions);
