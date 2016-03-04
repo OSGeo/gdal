@@ -138,6 +138,16 @@ static GDALDataset* OGRGeoPackageDriverCreate( const char * pszFilename,
                                             GDALDataType eDT,
                                             char **papszOptions )
 {
+    const char* pszExt = CPLGetExtension(pszFilename);
+    const bool bIsRecognizedExtension = EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
+    if( !bIsRecognizedExtension )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "The '%s' extension is not allowed by the GPKG specification, "
+                 "which may cause compatibility problems",
+                 pszExt);
+    }
+
     GDALGeoPackageDataset   *poDS = new GDALGeoPackageDataset();
 
     if( !poDS->Create( pszFilename, nXSize, nYSize,
