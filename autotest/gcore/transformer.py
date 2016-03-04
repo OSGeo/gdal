@@ -164,10 +164,9 @@ def transformer_4():
 def transformer_5():
 
     ds = gdal.Open('data/rpc.vrt')
-    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_PIXEL_ERROR_THRESHOLD=0.05' ] )
 
     (success,pnt) = tr.TransformPoint( 0, 20.5, 10.5 )
-
     if not success \
        or abs(pnt[0]-125.64830100509131) > 0.000001 \
        or abs(pnt[1]-39.869433991997553) > 0.000001 \
@@ -177,10 +176,9 @@ def transformer_5():
         return 'fail'
 
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
-
     if not success \
-       or abs(pnt[0]-20.5) > 0.001 \
-       or abs(pnt[1]-10.5) > 0.001 \
+       or abs(pnt[0]-20.5) > 0.05 \
+       or abs(pnt[1]-10.5) > 0.05 \
        or pnt[2] != 0:
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
@@ -201,8 +199,8 @@ def transformer_5():
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
     if not success \
-       or abs(pnt[0]-20.5) > 0.001 \
-       or abs(pnt[1]-10.5) > 0.001 \
+       or abs(pnt[0]-20.5) > 0.05 \
+       or abs(pnt[1]-10.5) > 0.05 \
        or pnt[2] != 30:
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.(2)' )
@@ -223,8 +221,8 @@ def transformer_5():
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
     if not success \
-       or abs(pnt[0]-20.5) > 0.001 \
-       or abs(pnt[1]-10.5) > 0.001 :
+       or abs(pnt[0]-20.5) > 0.1 \
+       or abs(pnt[1]-10.5) > 0.1 :
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.(3)' )
         return 'fail'

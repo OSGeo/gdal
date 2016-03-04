@@ -1300,7 +1300,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
              && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
     {
         psInfo->pSrcRPCTransformArg = 
-            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0.1, papszOptions );
+            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
         if( psInfo->pSrcRPCTransformArg == NULL )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
@@ -1433,7 +1433,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
              && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
     {
         psInfo->pDstRPCTransformArg = 
-            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0.1, papszOptions );
+            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
         if( psInfo->pDstRPCTransformArg == NULL )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
