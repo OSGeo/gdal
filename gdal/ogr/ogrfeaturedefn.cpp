@@ -75,11 +75,11 @@ OGRFeatureDefn::OGRFeatureDefn( const char * pszName ) :
  * The OGRFeatureDefn maintains a reference count, but this starts at
  * zero, and should normally be incremented by the owner.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::OGRFeatureDefn().
  *
  * @param pszName the name to be assigned to this layer/class.  It does not
- * need to be unique. 
+ * need to be unique.
  * @return handle to the newly created feature definition.
  */
 
@@ -125,9 +125,9 @@ OGRFeatureDefn::~OGRFeatureDefn()
 /*                           OGR_FD_Destroy()                           */
 /************************************************************************/
 /**
- * \brief Destroy a feature definition object and release all memory associated with it. 
+ * \brief Destroy a feature definition object and release all memory associated with it.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::~OGRFeatureDefn().
  *
  * @param hDefn handle to the feature definition to be destroyed.
@@ -185,9 +185,9 @@ void OGR_FD_Release( OGRFeatureDefnH hDefn )
  *
  * \brief Create a copy of this feature definition.
  *
- * Creates a deep copy of the feature definition. 
+ * Creates a deep copy of the feature definition.
  *
- * @return the copy. 
+ * @return the copy.
  */
 
 OGRFeatureDefn *OGRFeatureDefn::Clone()
@@ -328,7 +328,7 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
 /**
  * \brief Fetch field definition of the passed feature definition.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::GetFieldDefn().
  *
  * Starting with GDAL 1.7.0, this method will also issue an error if the index
@@ -639,7 +639,7 @@ OGRGeomFieldDefn *OGRFeatureDefn::GetGeomFieldDefn( int iGeomField )
 /**
  * \brief Fetch geometry field definition of the passed feature definition.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::GetGeomFieldDefn().
  *
  * @param hDefn handle to the feature definition to get the field definition
@@ -851,7 +851,7 @@ int OGRFeatureDefn::GetGeomFieldIndex( const char * pszGeomFieldName )
  *
  * This function is the same as the C++ method OGRFeatureDefn::GetGeomFieldIndex.
  *
- * @param hDefn handle to the feature definition to get field index from. 
+ * @param hDefn handle to the feature definition to get field index from.
  * @param pszGeomFieldName the geometry field name to search for.
  *
  * @return the geometry field index, or -1 if no match found.
@@ -884,7 +884,7 @@ int OGR_FD_GetGeomFieldIndex( OGRFeatureDefnH hDefn,
  * wkbNone indicates no geometry is available for the layer at all.
  * Many drivers do not properly mark the geometry
  * type as 25D even if some or all geometries are in fact 25D.  A few (broken)
- * drivers return wkbPolygon for layers that also include wkbMultiPolygon.  
+ * drivers return wkbPolygon for layers that also include wkbMultiPolygon.
  *
  * Starting with GDAL 1.11, this method returns GetGeomFieldDefn(0)->GetType().
  *
@@ -945,7 +945,7 @@ OGRwkbGeometryType OGR_FD_GetGeomType( OGRFeatureDefnH hDefn )
  * All geometry objects using this type must be of the defined type or
  * a derived type.  The default upon creation is wkbUnknown which allows for
  * any geometry type.  The geometry type should generally not be changed
- * after any OGRFeatures have been created against this definition. 
+ * after any OGRFeatures have been created against this definition.
  *
  * This method is the same as the C function OGR_FD_SetGeomType().
  *
@@ -981,7 +981,7 @@ void OGRFeatureDefn::SetGeomType( OGRwkbGeometryType eNewType )
  * All geometry objects using this type must be of the defined type or
  * a derived type.  The default upon creation is wkbUnknown which allows for
  * any geometry type.  The geometry type should generally not be changed
- * after any OGRFeatures have been created against this definition. 
+ * after any OGRFeatures have been created against this definition.
  *
  * This function is the same as the C++ method OGRFeatureDefn::SetGeomType().
  *
@@ -1004,11 +1004,11 @@ void OGR_FD_SetGeomType( OGRFeatureDefnH hDefn, OGRwkbGeometryType eType )
 
 /**
  * \fn int OGRFeatureDefn::Reference();
- * 
+ *
  * \brief Increments the reference count by one.
  *
  * The reference count is used keep track of the number of OGRFeature
- * objects referencing this definition. 
+ * objects referencing this definition.
  *
  * This method is the same as the C function OGR_FD_Reference().
  *
@@ -1022,7 +1022,7 @@ void OGR_FD_SetGeomType( OGRFeatureDefnH hDefn, OGRwkbGeometryType eType )
  * \brief Increments the reference count by one.
  *
  * The reference count is used keep track of the number of OGRFeature
- * objects referencing this definition. 
+ * objects referencing this definition.
  *
  * This function is the same as the C++ method OGRFeatureDefn::Reference().
  *
@@ -1061,7 +1061,7 @@ int OGR_FD_Reference( OGRFeatureDefnH hDefn )
  * This function is the same as the C++ method OGRFeatureDefn::Dereference().
  *
  * @param hDefn handle to the feature definition on witch OGRFeature are
- * based on. 
+ * based on.
  * @return the updated reference count.
  */
 
@@ -1092,11 +1092,11 @@ int OGR_FD_Dereference( OGRFeatureDefnH hDefn )
 /**
  * \brief Fetch current reference count.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::GetReferenceCount().
  *
  * @param hDefn handle to the feature definition on witch OGRFeature are
- * based on. 
+ * based on.
  * @return the current reference count.
  */
 
@@ -1149,7 +1149,7 @@ int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName )
  *
  * This function is the same as the C++ method OGRFeatureDefn::GetFieldIndex.
  *
- * @param hDefn handle to the feature definition to get field index from. 
+ * @param hDefn handle to the feature definition to get field index from.
  * @param pszFieldName the field name to search for.
  *
  * @return the field index, or -1 if no match found.
@@ -1199,13 +1199,13 @@ int OGRFeatureDefn::IsGeometryIgnored()
 /**
  * \brief Determine whether the geometry can be omitted when fetching features
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::IsGeometryIgnored().
  *
  * Starting with GDAL 1.11, this method returns GetGeomFieldDefn(0)->IsIgnored().
  *
  * @param hDefn handle to the feature definition on witch OGRFeature are
- * based on. 
+ * based on.
  * @return ignore state
  */
 
@@ -1247,13 +1247,13 @@ void OGRFeatureDefn::SetGeometryIgnored( int bIgnore )
 /**
  * \brief Set whether the geometry can be omitted when fetching features
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::SetGeometryIgnored().
  *
  * Starting with GDAL 1.11, this method calls GetGeomFieldDefn(0)->SetIgnored().
  *
  * @param hDefn handle to the feature definition on witch OGRFeature are
- * based on. 
+ * based on.
  * @param bIgnore ignore state
  */
 
@@ -1283,11 +1283,11 @@ void OGR_FD_SetGeometryIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 /**
  * \brief Determine whether the style can be omitted when fetching features
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::IsStyleIgnored().
  *
  * @param hDefn handle to the feature definition on which OGRFeature are
- * based on. 
+ * based on.
  * @return ignore state
  */
 
@@ -1317,11 +1317,11 @@ int OGR_FD_IsStyleIgnored( OGRFeatureDefnH hDefn )
 /**
  * \brief Set whether the style can be omitted when fetching features
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeatureDefn::SetStyleIgnored().
  *
  * @param hDefn handle to the feature definition on witch OGRFeature are
- * based on. 
+ * based on.
  * @param bIgnore ignore state
  */
 
@@ -1400,7 +1400,7 @@ int OGRFeatureDefn::IsSame( OGRFeatureDefn * poOtherFeatureDefn )
  * \brief Test if the feature definition is identical to the other one.
  *
  * @param hFDefn handle to the feature definition on witch OGRFeature are
- * based on. 
+ * based on.
  * @param hOtherFDefn handle to the other feature definition to compare to.
  * @return TRUE if the feature definition is identical to the other one.
  *

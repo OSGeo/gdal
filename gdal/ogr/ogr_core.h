@@ -132,7 +132,7 @@ class CPL_DLL OGREnvelope
 
     int Intersects(OGREnvelope const& other) const
     {
-        return MinX <= other.MaxX && MaxX >= other.MinX && 
+        return MinX <= other.MaxX && MaxX >= other.MinX &&
                MinY <= other.MaxY && MaxY >= other.MinY;
     }
 
@@ -330,7 +330,7 @@ typedef int     OGRBoolean;
  * but are also returned from OGRGeometry::getGeometryType() to identify the
  * type of a geometry object.
  */
-typedef enum 
+typedef enum
 {
     wkbUnknown = 0,         /**< unknown type, non-standard */
 
@@ -421,7 +421,7 @@ typedef enum
 #define wkbSurfaceZM        ((OGRwkbGeometryType)3014)      /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
 /**
- * Output variants of WKB we support. 
+ * Output variants of WKB we support.
  *
  * 99-402 was a short-lived extension to SFSQL 1.1 that used a high-bit flag
  * to indicate the presence of Z coordinates in a WKB geometry.
@@ -434,7 +434,7 @@ typedef enum
  * The codes are also found in §8.2.3 of <a href="http://portal.opengeospatial.org/files/?artifact_id=25355">
  * OGC 06-103r4 "OpenGIS® Implementation Standard for Geographic information - Simple feature access - Part 1: Common architecture", v1.2.1</a>
  */
-typedef enum 
+typedef enum
 {
     wkbVariantOldOgc, /**< Old-style 99-402 extended dimension (Z) WKB types */
     wkbVariantIso,  /**< SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M) WKB types */
@@ -493,7 +493,7 @@ OGRwkbGeometryType CPL_DLL OGR_GT_GetCollection( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGR_GT_GetCurve( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGR_GT_GetLinear( OGRwkbGeometryType eType );
 
-typedef enum 
+typedef enum
 {
     wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
     wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
@@ -595,7 +595,7 @@ typedef enum
  * field types can be known.
  */
 
-typedef enum 
+typedef enum
 {
   /** Simple 32bit integer */                   OFTInteger = 0,
   /** List of 32bit integers */                 OFTIntegerList = 1,
@@ -639,7 +639,7 @@ typedef enum
  * Display justification for field values.
  */
 
-typedef enum 
+typedef enum
 {
     OJUndefined = 0,
     OJLeft = 1,
@@ -699,7 +699,7 @@ typedef union {
         GByte   Day;
         GByte   Hour;
         GByte   Minute;
-        GByte   TZFlag; /* 0=unknown, 1=localtime(ambiguous), 
+        GByte   TZFlag; /* 0=unknown, 1=localtime(ambiguous),
                            100=GMT, 104=GMT+1, 80=GMT-5, etc */
         GByte   Reserved; /* must be set to 0 */
         float   Second; /* with millisecond accuracy. at the end of the structure, so as to keep it 12 bytes on 32 bit */
@@ -708,7 +708,7 @@ typedef union {
 
 #define OGR_GET_MS(floatingpoint_sec)   (int)(((floatingpoint_sec) - (int)(floatingpoint_sec)) * 1000 + 0.5)
 
-int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput, 
+int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
                           int nOptions );
 
 /* -------------------------------------------------------------------- */
@@ -788,9 +788,9 @@ typedef enum ogr_style_tool_units_id
  * List of parameters for use with OGRStylePen.
  */
 typedef enum ogr_style_tool_param_pen_id
-{  
-    OGRSTPenColor       = 0,                   
-    OGRSTPenWidth       = 1,                   
+{
+    OGRSTPenColor       = 0,
+    OGRSTPenWidth       = 1,
     OGRSTPenPattern     = 2,
     OGRSTPenId          = 3,
     OGRSTPenPerOffset   = 4,
@@ -805,11 +805,11 @@ typedef enum ogr_style_tool_param_pen_id
  * List of parameters for use with OGRStyleBrush.
  */
 typedef enum ogr_style_tool_param_brush_id
-{  
-    OGRSTBrushFColor    = 0,                   
-    OGRSTBrushBColor    = 1,                   
+{
+    OGRSTBrushFColor    = 0,
+    OGRSTBrushBColor    = 1,
     OGRSTBrushId        = 2,
-    OGRSTBrushAngle     = 3,                   
+    OGRSTBrushAngle     = 3,
     OGRSTBrushSize      = 4,
     OGRSTBrushDx        = 5,
     OGRSTBrushDy        = 6,
@@ -823,7 +823,7 @@ typedef enum ogr_style_tool_param_brush_id
  * List of parameters for use with OGRStyleSymbol.
  */
 typedef enum ogr_style_tool_param_symbol_id
-{  
+{
     OGRSTSymbolId       = 0,
     OGRSTSymbolAngle    = 1,
     OGRSTSymbolColor    = 2,
@@ -844,7 +844,7 @@ typedef enum ogr_style_tool_param_symbol_id
  * List of parameters for use with OGRStyleLabel.
  */
 typedef enum ogr_style_tool_param_label_id
-{  
+{
     OGRSTLabelFontName  = 0,
     OGRSTLabelSize      = 1,
     OGRSTLabelTextString = 2,

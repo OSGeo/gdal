@@ -48,10 +48,10 @@ OGRLinearRing::OGRLinearRing()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -100,10 +100,10 @@ OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -120,7 +120,7 @@ OGRLinearRing& OGRLinearRing::operator=( const OGRLinearRing& other )
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRLinearRing::getGeometryName() const 
+const char * OGRLinearRing::getGeometryName() const
 
 {
     return "LINEARRING";
@@ -146,7 +146,7 @@ int OGRLinearRing::WkbSize() const
 
 OGRErr OGRLinearRing::importFromWkb( CPL_UNUSED unsigned char *pabyData,
                                      CPL_UNUSED  int nSize,
-                                     CPL_UNUSED OGRwkbVariant eWkbVariant ) 
+                                     CPL_UNUSED OGRwkbVariant eWkbVariant )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -158,7 +158,7 @@ OGRErr OGRLinearRing::importFromWkb( CPL_UNUSED unsigned char *pabyData,
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder, 
+OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
                                    CPL_UNUSED unsigned char * pabyData,
                                    CPL_UNUSED OGRwkbVariant eWkbVariant ) const
 
@@ -173,9 +173,9 @@ OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
 /*      method!                                                         */
 /************************************************************************/
 
-OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags, 
+OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
                                       unsigned char * pabyData,
-                                      int nBytesAvailable ) 
+                                      int nBytesAvailable )
 
 {
     if( nBytesAvailable < 4 && nBytesAvailable != -1 )
@@ -352,7 +352,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     }
     else
     {
-        nWords = 2 * nPointCount; 
+        nWords = 2 * nPointCount;
         memcpy( pabyData+4, paoPoints, 16 * nPointCount );
     }
 
@@ -420,7 +420,7 @@ OGRGeometry *OGRLinearRing::clone() const
 
 static const double EPSILON = 1E-5;
 
-static inline bool epsilonEqual(double a, double b, double eps) 
+static inline bool epsilonEqual(double a, double b, double eps)
 {
     return (::fabs(a - b) < eps);
 }
@@ -528,25 +528,25 @@ int OGRLinearRing::isClockwise() const
     return dfSum < 0;
 }
 
-/************************************************************************/ 
-/*                             reverseWindingOrder()                    */ 
-/************************************************************************/ 
+/************************************************************************/
+/*                             reverseWindingOrder()                    */
+/************************************************************************/
 
-void OGRLinearRing::reverseWindingOrder() 
+void OGRLinearRing::reverseWindingOrder()
 
-{ 
-    int pos = 0; 
-    OGRPoint pointA, pointB; 
+{
+    int pos = 0;
+    OGRPoint pointA, pointB;
 
-    for( int i = 0; i < nPointCount / 2; i++ ) 
-    { 
-        getPoint( i, &pointA ); 
+    for( int i = 0; i < nPointCount / 2; i++ )
+    {
+        getPoint( i, &pointA );
         pos = nPointCount - i - 1;
         getPoint( pos, &pointB );
         setPoint( i, &pointB );
         setPoint( pos, &pointA );
     }
-} 
+}
 
 /************************************************************************/
 /*                             closeRing()                              */
@@ -558,7 +558,7 @@ void OGRLinearRing::closeRings()
     if( nPointCount < 2 )
         return;
 
-    if( getX(0) != getX(nPointCount-1) 
+    if( getX(0) != getX(nPointCount-1)
         || getY(0) != getY(nPointCount-1)
         || getZ(0) != getZ(nPointCount-1) )
     {
@@ -608,7 +608,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
     double prev_diff_x = getX(0) - dfTestX;
     double prev_diff_y = getY(0) - dfTestY;
 
-    for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ ) 
+    for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ )
     {
         const double x1 = getX(iPoint) - dfTestX;
         const double y1 = getY(iPoint) - dfTestY;
@@ -710,7 +710,7 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
  * \brief Cast to line string.
  *
  * The passed in geometry is consumed and a new one returned .
- * 
+ *
  * @param poLR the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

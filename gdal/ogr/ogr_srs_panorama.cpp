@@ -204,7 +204,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  * </pre>
  *
  * @param iEllips Input spheroid.
- * 
+ *
  *      <h4>Supported Spheroids</h4>
  * <pre>
  *       1: Krassovsky, 1940
@@ -235,7 +235,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  * zero. If NULL supplied instead of array pointer default values will be used
  * (i.e., zeroes).
  *
- * @return OGRERR_NONE on success or an error code in case of failure. 
+ * @return OGRERR_NONE on success or an error code in case of failure.
  */
 
 OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
@@ -525,15 +525,15 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
  *
  * @param piEllips Pointer to variable, where the spheroid code will be
  * returned.
- * 
+ *
  * @param piZone Pointer to variable, where the zone for UTM projection
  * system will be returned.
  *
  * @param padfPrjParams an existing 7 double buffer into which the
  * projection parameters will be placed. See importFromPanorama()
  * for the list of parameters.
- * 
- * @return OGRERR_NONE on success or an error code on failure. 
+ *
+ * @return OGRERR_NONE on success or an error code on failure.
  */
 
 OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
@@ -576,7 +576,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_MERCAT;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[0] = 
+        padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[4] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
@@ -588,7 +588,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_PS;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[2] = 
+        padfPrjParams[2] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[4] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
@@ -600,7 +600,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_POLYC;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[2] = 
+        padfPrjParams[2] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -611,11 +611,11 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_EC;
         padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
-        padfPrjParams[1] = 
+        padfPrjParams[1] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 );
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[2] = 
+        padfPrjParams[2] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -626,11 +626,11 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_LCC;
         padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
-        padfPrjParams[1] = 
+        padfPrjParams[1] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 );
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[2] = 
+        padfPrjParams[2] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -647,13 +647,13 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
             *piProjSys = PAN_PROJ_UTM;
             if( !bNorth )
                 *piZone = - *piZone;
-        }            
+        }
         else
         {
             *piProjSys = PAN_PROJ_TM;
             padfPrjParams[3] =
                 TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-            padfPrjParams[2] = 
+            padfPrjParams[2] =
                 TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
             padfPrjParams[4] =
                 GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
@@ -676,7 +676,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_STEREO;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[2] = 
+        padfPrjParams[2] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[4] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
@@ -688,7 +688,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_AE;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 );
-        padfPrjParams[0] = 
+        padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -699,7 +699,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_GNOMON;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[2] = 
+        padfPrjParams[2] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -719,7 +719,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_LAEA;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[0] = 
+        padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -730,7 +730,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_EQC;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[0] = 
+        padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -741,7 +741,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_CEA;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[2] = 
+        padfPrjParams[2] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
@@ -752,9 +752,9 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piProjSys = PAN_PROJ_IMWP;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        padfPrjParams[0] = 
+        padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_1ST_POINT, 0.0 );
-        padfPrjParams[1] = 
+        padfPrjParams[1] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_2ND_POINT, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );

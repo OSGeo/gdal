@@ -136,7 +136,7 @@ static const char * const papszProjectionSupported[] =
     SRS_PT_GAUSSSCHREIBERTMERCATOR,
     SRS_PT_KROVAK,
     SRS_PT_CYLINDRICAL_EQUAL_AREA,
-    SRS_PT_GOODE_HOMOLOSINE, 
+    SRS_PT_GOODE_HOMOLOSINE,
     SRS_PT_IGH,
     NULL
 };
@@ -471,44 +471,44 @@ static const char * const papszProjWithParms[] = {
     SRS_PT_IMW_POLYCONIC,
     SRS_PP_LATITUDE_OF_1ST_POINT,
     SRS_PP_LATITUDE_OF_2ND_POINT,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
     SRS_PT_WAGNER_I,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
     SRS_PT_WAGNER_II,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
     SRS_PT_WAGNER_III,
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
     SRS_PT_WAGNER_IV,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
     SRS_PT_WAGNER_V,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
     SRS_PT_WAGNER_VI,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
     SRS_PT_WAGNER_VII,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
 
@@ -565,7 +565,7 @@ static const char * const papszAliasGroupList[] = {
  *
  * This method attempts to verify that the spatial reference system is
  * well formed, and consists of known tokens.  The validation is not
- * comprehensive. 
+ * comprehensive.
  *
  * This method is the same as the C function OSRValidate().
  *
@@ -666,7 +666,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(),"EXTENSION") )
             {
-                // We do not try to control the sub-organization of 
+                // We do not try to control the sub-organization of
                 // EXTENSION nodes.
             }
             else
@@ -784,7 +784,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             {
                 bGotPrimeM = true;
 
-                if( poNode->GetChildCount() < 2 
+                if( poNode->GetChildCount() < 2
                     || poNode->GetChildCount() > 3 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -966,7 +966,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(),"EXTENSION") )
             {
-                // We do not try to control the sub-organization of 
+                // We do not try to control the sub-organization of
                 // EXTENSION nodes.
             }
             else
@@ -1000,7 +1000,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(),"PRIMEM") )
             {
-                if( poNode->GetChildCount() < 2 
+                if( poNode->GetChildCount() < 2
                     || poNode->GetChildCount() > 3 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -1025,7 +1025,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(),"EXTENSION") )
             {
-                // We do not try to control the sub-organization of 
+                // We do not try to control the sub-organization of
                 // EXTENSION nodes.
             }
             else if( EQUAL(poNode->GetValue(),"AUTHORITY") )
@@ -1082,7 +1082,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                 poSPHEROID = poDATUM->GetChild(1);
                 bGotSpheroid = true;
 
-                if( poSPHEROID->GetChildCount() != 3 
+                if( poSPHEROID->GetChildCount() != 3
                     && poSPHEROID->GetChildCount() != 4 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -1108,7 +1108,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(),"TOWGS84") )
             {
-                if( poNode->GetChildCount() != 3 
+                if( poNode->GetChildCount() != 3
                     && poNode->GetChildCount() != 7)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -1119,7 +1119,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(),"EXTENSION") )
             {
-                // We do not try to control the sub-organization of 
+                // We do not try to control the sub-organization of
                 // EXTENSION nodes.
             }
             else
@@ -1157,7 +1157,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /************************************************************************/
 /*                            OSRValidate()                             */
 /************************************************************************/
-/** 
+/**
  * \brief Validate SRS tokens.
  *
  * This function is the same as the C++ method OGRSpatialReference::Validate().
@@ -1183,7 +1183,7 @@ OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
  *
  * @return TRUE if both strings are aliases according to the AliasGroupList, FALSE otherwise
  */
-int OGRSpatialReference::IsAliasFor( const char *pszParm1, 
+int OGRSpatialReference::IsAliasFor( const char *pszParm1,
                                      const char *pszParm2 )
 
 {
@@ -1239,7 +1239,7 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 
     if( poPROJCS->GetNode( "PROJECTION" ) == NULL )
     {
-        CPLDebug( "OGRSpatialReference::Validate", 
+        CPLDebug( "OGRSpatialReference::Validate",
                   "PROJCS does not have PROJECTION subnode." );
         return OGRERR_CORRUPT_DATA;
     }
@@ -1252,7 +1252,7 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 
     pszProjection = poPROJCS->GetNode("PROJECTION")->GetChild(0)->GetValue();
 
-    for( iOffset = 0; 
+    for( iOffset = 0;
          papszProjWithParms[iOffset] != NULL
              && !EQUAL(papszProjWithParms[iOffset],pszProjection); )
     {
@@ -1300,14 +1300,14 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 
             if( papszProjWithParms[i] == NULL )
             {
-                CPLDebug( "OGRSpatialReference::Validate", 
+                CPLDebug( "OGRSpatialReference::Validate",
                           "PARAMETER %s for PROJECTION %s is not permitted.",
                           pszParmName, pszProjection );
                 return OGRERR_CORRUPT_DATA;
             }
             else
             {
-                CPLDebug( "OGRSpatialReference::Validate", 
+                CPLDebug( "OGRSpatialReference::Validate",
                           "PARAMETER %s for PROJECTION %s is an alias for %s.",
                           pszParmName, pszProjection,
                           papszProjWithParms[i] );

@@ -55,10 +55,10 @@ OGRGeometryCollection::OGRGeometryCollection()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -262,7 +262,7 @@ int OGRGeometryCollection::getNumGeometries() const
  * @return pointer to requested geometry.
  */
 
-OGRGeometry * OGRGeometryCollection::getGeometryRef( int i ) 
+OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
 
 {
     if( i < 0 || i >= nGeomCount )
@@ -400,7 +400,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
  *
  * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
  * not.  The default is TRUE as the container is considered to own the
- * geometries in it. 
+ * geometries in it.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
  * out of range.
@@ -423,7 +423,7 @@ OGRErr OGRGeometryCollection::removeGeometry( int iGeom, int bDelete )
     if( bDelete )
         delete papoGeoms[iGeom];
 
-    memmove( papoGeoms + iGeom, papoGeoms + iGeom + 1, 
+    memmove( papoGeoms + iGeom, papoGeoms + iGeom + 1,
              sizeof(void*) * (nGeomCount-iGeom-1) );
 
     nGeomCount--;
@@ -805,7 +805,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
                 nSkip += 2;
             if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
                 nSkip += 2;
-            
+
             /* skip empty subgeoms */
             if( papszGeoms[iGeom][nSkip] != '(' )
             {
@@ -1019,7 +1019,7 @@ OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
         {
             if( iGeom != 0 )
             {
-                CPLDebug("OGR", 
+                CPLDebug("OGR",
                          "OGRGeometryCollection::transform() failed for a geometry other\n"
                          "than the first, meaning some geometries are transformed\n"
                          "and some are not!\n" );

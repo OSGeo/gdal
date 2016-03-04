@@ -106,10 +106,10 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn )
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -367,7 +367,7 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 
     GUInt32 nGType = getGeometryType();
-    
+
     if( eWkbVariant == wkbVariantPostGIS1 )
     {
         nGType = wkbFlatten(nGType);
@@ -375,7 +375,7 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
             nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse); /* yes we explicitly set wkb25DBit */
         if( IsMeasured() )
             nGType = (OGRwkbGeometryType)(nGType | 0x40000000);
-    } 
+    }
     else if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
 
@@ -609,7 +609,7 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
  *
  * Relates to the SFCOM IPoint::get_X() method.
  *
- * @return the X coordinate of this point. 
+ * @return the X coordinate of this point.
  */
 
 /**
@@ -619,7 +619,7 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
  *
  * Relates to the SFCOM IPoint::get_Y() method.
  *
- * @return the Y coordinate of this point. 
+ * @return the Y coordinate of this point.
  */
 
 /**
@@ -638,7 +638,7 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
  * \brief Assign point X coordinate.
  *
  * There is no corresponding SFCOM method.
- */ 
+ */
 
 /**
  * \fn void OGRPoint::setY( double yIn );
@@ -646,7 +646,7 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
  * \brief Assign point Y coordinate.
  *
  * There is no corresponding SFCOM method.
- */ 
+ */
 
 /**
  * \fn void OGRPoint::setZ( double zIn );
@@ -655,8 +655,8 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
  * Calling this method will force the geometry
  * coordinate dimension to 3D (wkbPoint|wkbZ).
  *
- * There is no corresponding SFCOM method.  
- */ 
+ * There is no corresponding SFCOM method.
+ */
 
 /************************************************************************/
 /*                               Equal()                                */

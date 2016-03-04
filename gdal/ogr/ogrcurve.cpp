@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  The OGRCurve geometry class. 
+ * Purpose:  The OGRCurve geometry class.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -169,7 +169,7 @@ int OGRCurve::get_IsClosed() const
  *
  * If the dfMaxAngleStepSizeDegrees is zero, then a default value will be
  * used.  This is currently 4 degrees unless the user has overridden the
- * value with the OGR_ARC_STEPSIZE configuration variable. 
+ * value with the OGR_ARC_STEPSIZE configuration variable.
  *
  * This method relates to the ISO SQL/MM Part 3 ICurve::CurveToLine() method.
  *
@@ -291,7 +291,7 @@ OGRBoolean OGRCurve::IsConvex() const
  *
  * The passed in geometry is consumed and a new one returned (or NULL in case
  * of failure)
- * 
+ *
  * @param poCurve the input geometry - ownership is passed to the method.
  * @return new geometry
  *
@@ -322,7 +322,7 @@ OGRCompoundCurve* OGRCurve::CastToCompoundCurve(OGRCurve* poCurve)
  *
  * The passed in geometry is consumed and a new one returned (or NULL in case
  * of failure)
- * 
+ *
  * @param poCurve the input geometry - ownership is passed to the method.
  * @return new geometry.
  *
@@ -344,7 +344,7 @@ OGRLineString* OGRCurve::CastToLineString(OGRCurve* poCurve)
  *
  * The passed in geometry is consumed and a new one returned (or NULL in case
  * of failure)
- * 
+ *
  * @param poCurve the input geometry - ownership is passed to the method.
  * @return new geometry.
  *
@@ -365,7 +365,7 @@ OGRLinearRing* OGRCurve::CastToLinearRing(OGRCurve* poCurve)
  * \brief Returns if a point is contained in a (closed) curve.
  *
  * Final users should use OGRGeometry::Contains() instead.
- * 
+ *
  * @param p the point to test
  * @return TRUE if it is inside the curve, FALSE otherwise or -1 if unknown.
  *

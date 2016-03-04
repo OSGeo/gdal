@@ -54,7 +54,7 @@
 /*                        MakeGMLCoordinate()                           */
 /************************************************************************/
 
-static void MakeGMLCoordinate( char *pszTarget, 
+static void MakeGMLCoordinate( char *pszTarget,
                                double x, double y, double z, bool b3D )
 
 {
@@ -84,7 +84,7 @@ static void MakeGMLCoordinate( char *pszTarget,
             sprintf( pszTarget, "%d,%d,%d", (int) x, (int) y, (int) z );
         else if( fabs(x) < 370 && fabs(y) < 370 )
             CPLsprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
-        else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0 
+        else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0
                  || fabs(z) > 100000000.0 )
             CPLsprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
         else
@@ -115,7 +115,7 @@ static void AppendString( char **ppszText, size_t *pnLength, size_t *pnMaxLength
                           const char *pszTextToAppend )
 
 {
-    _GrowBuffer( *pnLength + strlen(pszTextToAppend) + 1, 
+    _GrowBuffer( *pnLength + strlen(pszTextToAppend) + 1,
                  ppszText, pnMaxLength );
 
     strcat( *ppszText + *pnLength, pszTextToAppend );
@@ -127,8 +127,8 @@ static void AppendString( char **ppszText, size_t *pnLength, size_t *pnMaxLength
 /*                        AppendCoordinateList()                        */
 /************************************************************************/
 
-static void AppendCoordinateList( OGRLineString *poLine, 
-                                  char **ppszText, size_t *pnLength, 
+static void AppendCoordinateList( OGRLineString *poLine,
+                                  char **ppszText, size_t *pnLength,
                                   size_t *pnMaxLength )
 
 {
@@ -143,12 +143,12 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
-        MakeGMLCoordinate( szCoordinate, 
+        MakeGMLCoordinate( szCoordinate,
                            poLine->getX(iPoint),
                            poLine->getY(iPoint),
                            poLine->getZ(iPoint),
                            b3D );
-        _GrowBuffer( *pnLength + strlen(szCoordinate)+1, 
+        _GrowBuffer( *pnLength + strlen(szCoordinate)+1,
                      ppszText, pnMaxLength );
 
         if( iPoint != 0 )
@@ -239,13 +239,13 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         char    szCoordinate[256];
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-        MakeGMLCoordinate( szCoordinate, 
+        MakeGMLCoordinate( szCoordinate,
                            poPoint->getX(), poPoint->getY(), 0.0, false );
 
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength, 
+        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
                 "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
                  szAttributes, szCoordinate );
 
@@ -259,14 +259,14 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         char    szCoordinate[256];
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-        MakeGMLCoordinate( szCoordinate, 
-                           poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
+        MakeGMLCoordinate( szCoordinate,
+                           poPoint->getX(), poPoint->getY(), poPoint->getZ(),
                            true );
 
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength, 
+        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
                 "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
                  szAttributes, szCoordinate );
 
@@ -304,7 +304,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         // FREE TAG BUFFER
         CPLFree( pszLineTagName );
 
-        AppendCoordinateList( (OGRLineString *) poGeometry, 
+        AppendCoordinateList( (OGRLineString *) poGeometry,
                               ppszText, pnLength, pnMaxLength );
 
         if( bRing )
@@ -377,7 +377,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
 /*      MultiPolygon, MultiLineString, MultiPoint, MultiGeometry        */
 /* -------------------------------------------------------------------- */
-    else if( eFType == wkbMultiPolygon 
+    else if( eFType == wkbMultiPolygon
              || eFType == wkbMultiLineString
              || eFType == wkbMultiPoint
              || eFType == wkbGeometryCollection )
@@ -481,7 +481,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     memset( &sEnvelope, 0, sizeof(sEnvelope) );
     ((OGRGeometry *) hGeometry)->getEnvelope( &sEnvelope );
 
-    if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 
+    if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0
         && sEnvelope.MaxX == 0 && sEnvelope.MaxY == 0 )
     {
         /* there is apparently a special way of representing a null box
@@ -497,7 +497,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 /* -------------------------------------------------------------------- */
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
 
-    MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0, 
+    MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0,
                        false );
     pszY = strstr(szCoordinate,",") + 1;
     pszY[-1] = '\0';
@@ -510,7 +510,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 /* -------------------------------------------------------------------- */
     psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
 
-    MakeGMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0, 
+    MakeGMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0,
                        false );
     pszY = strstr(szCoordinate,",") + 1;
     pszY[-1] = '\0';
@@ -1119,7 +1119,7 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
  *      root node for GML < 3.2 or xmlns:gml="http://www.opengis.net/gml/3.2" for GML 3.2
  * </ul>
  *
- * Note that curve geometries like CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON, 
+ * Note that curve geometries like CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON,
  * MULTICURVE or MULTISURFACE are not supported in GML 2.
  *
  * This method is the same as the C++ method OGRGeometry::exportToGML().
