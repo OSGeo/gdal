@@ -230,6 +230,19 @@ OGRPGTableLayer::~OGRPGTableLayer()
 }
 
 /************************************************************************/
+/*                          GetMetadataDomainList()                     */
+/************************************************************************/
+
+char ** OGRPGTableLayer::GetMetadataDomainList()
+{
+    if( pszDescription == NULL )
+        GetMetadata();
+    if( pszDescription[0] != '\0' )
+        return CSLAddString(NULL, "");
+    return NULL;
+}
+
+/************************************************************************/
 /*                              GetMetadata()                           */
 /************************************************************************/
 
