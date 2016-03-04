@@ -221,6 +221,8 @@ typedef struct {
     GDALDataset *poDS;
 
     OGRCoordinateTransformation *poCT;
+    
+    int         nMaxIterations;
 
     double      adfDEMGeoTransform[6];
     double      adfDEMReverseGeoTransform[6];
@@ -386,11 +388,14 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
         papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT",
                                            (psInfo->bApplyDEMVDatumShift) ? "TRUE" : "FALSE") ;
     }
-    psInfo = (GDALRPCTransformInfo*) GDALCreateRPCTransformer( &sRPC,
+    papszOptions = CSLSetNameValue(papszOptions, "RPC_MAX_ITERATIONS",
+                                   CPLSPrintf("%d", psInfo->nMaxIterations));
+
+    GDALRPCTransformInfo* psNewInfo = (GDALRPCTransformInfo*) GDALCreateRPCTransformer( &sRPC,
            psInfo->bReversed, psInfo->dfPixErrThreshold, papszOptions );
     CSLDestroy(papszOptions);
 
-    return psInfo;
+    return psNewInfo;
 }
 
 /************************************************************************/
@@ -550,6 +555,15 @@ static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
  * option will be also set temporarily so as to get the vertical information from GeoTIFF
  * files. Defaults to TRUE. (GDAL >= 2.1.0)
  *
+ * <li> RPC_PIXEL_ERROR_THRESHOLD: overrides the dfPixErrThreshold parameter, ie
+  the error (measured in pixels) allowed in the
+ * iterative solution of pixel/line to lat/long computations (the other way
+ * is always exact given the equations).  (GDAL >= 2.1.0)
+ *
+ * <li> RPC_MAX_ITERATIONS: maximum number of iterations allowed in the iterative
+ * solution of pixel/line to lat/long computations. Default value is 10
+ * in the absence of a DEM, or 20 if there is a DEM.  (GDAL >= 2.1.0)
+ *
  * </ul>
  *
  * @param psRPCInfo Definition of the RPC parameters.
@@ -559,7 +573,8 @@ static bool GDALRPCGetHeightAtLongLat( const GDALRPCTransformInfo *psTransform,
  *
  * @param dfPixErrThreshold the error (measured in pixels) allowed in the
  * iterative solution of pixel/line to lat/long computations (the other way
- * is always exact given the equations).
+ * is always exact given the equations). Starting with GDAL 2.1, this may also
+ * be set through the RPC_PIXEL_ERROR_THRESHOLD transformer option.
  *
  * @param papszOptions Other transformer options (i.e. RPC_HEIGHT=<z>).
  *
@@ -581,7 +596,13 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 
     memcpy( &(psTransform->sRPC), psRPCInfo, sizeof(GDALRPCInfo) );
     psTransform->bReversed = bReversed;
-    psTransform->dfPixErrThreshold = dfPixErrThreshold;
+    const char* pszPixErrThreshold = CSLFetchNameValue( papszOptions, "RPC_PIXEL_ERROR_THRESHOLD" );
+    if( pszPixErrThreshold != NULL )
+        psTransform->dfPixErrThreshold = CPLAtof(pszPixErrThreshold);
+    else if( dfPixErrThreshold > 0 )
+        psTransform->dfPixErrThreshold = dfPixErrThreshold;
+    else
+        psTransform->dfPixErrThreshold = 0.1;
     psTransform->dfHeightOffset = 0.0;
     psTransform->dfHeightScale = 1.0;
 
@@ -654,6 +675,10 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /* -------------------------------------------------------------------- */
     psTransform->bApplyDEMVDatumShift = CSLFetchBoolean(
         papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT", TRUE );
+
+
+    psTransform->nMaxIterations = atoi( CSLFetchNameValueDef(
+        papszOptions, "RPC_MAX_ITERATIONS", "0" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Establish a reference point for calcualating an affine          */
@@ -799,9 +824,10 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
     double dfPrevError = 0.0;
     double dfDEMH = 0.0;
     bool bForceDEMHUpdate = false;
-    bool bFistTimeBelowThreshold = true;
+    const int nMaxIterations = (psTransform->nMaxIterations > 0) ? psTransform->nMaxIterations :
+                               (psTransform->poDS != NULL) ? 20 : 10;
 
-    for( iIter = 0; iIter < 20; iIter++ )
+    for( iIter = 0; iIter < nMaxIterations; iIter++ )
     {
         double dfBackPixel, dfBackLine;
         bool bHasJustAdjustedDEMH = false;
@@ -876,20 +902,29 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
         dfPixelDeltaX = dfBackPixel - dfPixel;
         dfPixelDeltaY = dfBackLine - dfLine;
 
-        dfResultX = dfResultX 
+        double dfNewResultX = dfResultX 
             - dfPixelDeltaX * psTransform->adfPLToLatLongGeoTransform[1]
             - dfPixelDeltaY * psTransform->adfPLToLatLongGeoTransform[2];
-        dfResultY = dfResultY 
+        double dfNewResultY = dfResultY 
             - dfPixelDeltaX * psTransform->adfPLToLatLongGeoTransform[4]
             - dfPixelDeltaY * psTransform->adfPLToLatLongGeoTransform[5];
+
+#if 0
+        CPLDebug( "RPC", "Iter %d: dfPixelDeltaX=%.02f, dfPixelDeltaY=%.02f, long=%f, lat=%f",
+                  iIter, dfPixelDeltaX, dfPixelDeltaY,
+                  dfResultX, dfResultY );
+#endif
 
         if( ABS(dfPixelDeltaX) < psTransform->dfPixErrThreshold
             && ABS(dfPixelDeltaY) < psTransform->dfPixErrThreshold )
         {
-            if( psTransform->poDS && bFistTimeBelowThreshold && (iIter % 5) != 0 )
+            // Do a DEM adjustment to be sure we are within the
+            // error threshold
+            if( psTransform->poDS && !bHasJustAdjustedDEMH )
             {
-                bFistTimeBelowThreshold = false;
                 bForceDEMHUpdate = true;
+                dfResultX = dfNewResultX;
+                dfResultY = dfNewResultY;
                 continue;
             }
             iIter = -1;
@@ -897,18 +932,20 @@ RPCInverseTransformPoint( const GDALRPCTransformInfo *psTransform,
             break;
         }
         double dfError = MAX(ABS(dfPixelDeltaX), ABS(dfPixelDeltaY));
-        // After 10 iterations, still allow for 10 more but only if the
+        // After 10 iterations, still allow for more but only if the
         // error decreases
         if( iIter >= 10 && dfError >= dfPrevError && !bHasJustAdjustedDEMH )
         {
             break;
         }
         dfPrevError = dfError;
+        dfResultX = dfNewResultX;
+        dfResultY = dfNewResultY;
     }
 
     if( iIter != -1 )
     {
-        CPLDebug( "RPC", "Failed Iterations %d: Got: %g,%g  Offset=%g,%g", 
+        CPLDebug( "RPC", "Failed Iterations %d: Got: %.16g,%.16g  Offset=%g,%g", 
                   iIter, 
                   dfResultX, dfResultY,
                   dfPixelDeltaX, dfPixelDeltaY );
