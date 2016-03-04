@@ -85,6 +85,9 @@ This can for example be used to create a column of type <a href="http://www.post
 <li> <b>POSTGIS_VERSION</b>: (From GDAL 1.9.0) Can be set to 2.0 for PostGIS 2.0 compatibility. Starting with GDAL 2.0,
 it is important to set it correctly when dealing with non-linear geometry types. Starting with GDAL 2.1, can be
 POSTGIS_VERSION=2.2 is specially dealt with to correctly export POINT EMPTY geometries<p>
+<li> <b>DESCRIPTION</b> (From GDAL 2.1) Description string to put in the pg_description system table. The description
+can also be written with SetMetadataItem("DESCRIPTION", description_string). Descriptions are preserved
+by default by ogr2ogr, unless the -nomd option is used.</p>
 </ul>
 
 <h3>Environment variables</h3>

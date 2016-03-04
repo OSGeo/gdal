@@ -5096,6 +5096,60 @@ def ogr_pg_83():
     return 'success'
 
 ###############################################################################
+# Test description
+
+def ogr_pg_84():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+        return 'skip'
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = ds.CreateLayer('ogr_pg_84', geom_type = ogr.wkbPoint, options = [ 'OVERWRITE=YES', 'DESCRIPTION=foo' ] )
+    # Test that SetMetadata() and SetMetadataItem() are without effect
+    lyr.SetMetadata( {'DESCRIPTION': 'bar' } )
+    lyr.SetMetadataItem( 'DESCRIPTION', 'baz' )
+    if lyr.GetMetadataItem('DESCRIPTION') != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetMetadata_List() != [ 'DESCRIPTION=foo' ]:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    ds.GetLayerCount() # load all layers
+    lyr = ds.GetLayerByName('ogr_pg_84')
+    if lyr.GetMetadataItem('DESCRIPTION') != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetMetadata_List() != [ 'DESCRIPTION=foo' ]:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    # Set with SetMetadata()
+    lyr.SetMetadata( [ 'DESCRIPTION=bar' ] )
+    ds = None
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    if lyr.GetMetadataItem('DESCRIPTION') != 'bar':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # Set with SetMetadataItem()
+    lyr.SetMetadataItem( 'DESCRIPTION', 'baz' )
+    ds = None
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = ds.GetLayerByName('ogr_pg_84')
+    if lyr.GetMetadataItem('DESCRIPTION') != 'baz':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_pg_table_cleanup():
@@ -5156,6 +5210,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_81_1' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_81_2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_82' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_83' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_84' )
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -5271,12 +5327,13 @@ gdaltest_list_internal = [
     ogr_pg_81,
     ogr_pg_82,
     ogr_pg_83,
+    ogr_pg_84,
     ogr_pg_cleanup
 ]
 
 disabled_gdaltest_list_internal = [
     ogr_pg_table_cleanup,
-    ogr_pg_83,
+    ogr_pg_84,
     ogr_pg_cleanup ]
 
 ###############################################################################

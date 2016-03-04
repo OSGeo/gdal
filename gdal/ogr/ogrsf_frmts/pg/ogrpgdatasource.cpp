@@ -240,6 +240,7 @@ typedef struct
 {
     char* pszTableName;
     char* pszSchemaName;
+    char* pszDescription;
     int   nGeomColumnCount;
     PGGeomColumnDesc* pasGeomColumns;   /* list of geometry columns */
     int   bDerivedInfoAdded;            /* set to TRUE if it derives from another table */
@@ -299,6 +300,7 @@ static void OGRPGFreeTableEntry(void * _psTableEntry)
     PGTableEntry* psTableEntry = (PGTableEntry*)_psTableEntry;
     CPLFree(psTableEntry->pszTableName);
     CPLFree(psTableEntry->pszSchemaName);
+    CPLFree(psTableEntry->pszDescription);
     int i;
     for(i=0;i<psTableEntry->nGeomColumnCount;i++)
     {
@@ -321,11 +323,13 @@ static PGTableEntry* OGRPGFindTableEntry(CPLHashSet* hSetTables,
 
 static PGTableEntry* OGRPGAddTableEntry(CPLHashSet* hSetTables,
                                         const char* pszTableName,
-                                        const char* pszSchemaName)
+                                        const char* pszSchemaName,
+                                        const char* pszDescription)
 {
     PGTableEntry* psEntry = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
     psEntry->pszTableName = CPLStrdup(pszTableName);
     psEntry->pszSchemaName = CPLStrdup(pszSchemaName);
+    psEntry->pszDescription = CPLStrdup( pszDescription ? pszDescription : "" );
 
     CPLHashSetInsert(hSetTables, psEntry);
 
@@ -919,7 +923,8 @@ void OGRPGDataSource::LoadTables()
               "postgis_typmod_dims(a.atttypmod) dim, "
               "postgis_typmod_srid(a.atttypmod) srid, "
               "postgis_typmod_type(a.atttypmod)::text geomtyp, "
-              "array_agg(s.consrc)::text att_constraints, a.attnotnull "
+              "array_agg(s.consrc)::text att_constraints, a.attnotnull, "
+              "d.description "
               "FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid "
               "JOIN pg_namespace n ON c.relnamespace = n.oid "
               "AND c.relkind in (%s) AND NOT ( n.nspname = 'public' AND c.relname = 'raster_columns' ) "
@@ -927,7 +932,8 @@ void OGRPGDataSource::LoadTables()
               "LEFT JOIN pg_constraint s ON s.connamespace = n.oid AND s.conrelid = c.oid "
               "AND a.attnum = ANY (s.conkey) "
               "AND (s.consrc LIKE '%%geometrytype(%% = %%' OR s.consrc LIKE '%%ndims(%% = %%' OR s.consrc LIKE '%%srid(%% = %%') "
-              "GROUP BY c.relname, n.nspname, c.relkind, a.attname, t.typname, dim, srid, geomtyp, a.attnotnull, c.oid, a.attnum "
+              "LEFT JOIN pg_description d ON d.objoid = c.oid AND d.classoid = 'pg_class'::regclass::oid AND d.objsubid = 0 "
+              "GROUP BY c.relname, n.nspname, c.relkind, a.attname, t.typname, dim, srid, geomtyp, a.attnotnull, c.oid, a.attnum, d.description "
               "ORDER BY c.oid, a.attnum",
               pszAllowedRelations);
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
@@ -954,6 +960,7 @@ void OGRPGDataSource::LoadTables()
             const char *pszGeomType = PQgetvalue(hResult, iRecord, 7);
             const char *pszConstraint = PQgetvalue(hResult, iRecord, 8);
             const char *pszNotNull = PQgetvalue(hResult, iRecord, 9);
+            const char *pszDescription = PQgetvalue(hResult, iRecord, 10);
             /*const char *pszRelkind = PQgetvalue(hResult, iRecord, 2);
             CPLDebug("PG", "%s %s %s %s %s %s %s %s %s %s",
                      pszTable, pszSchemaName, pszRelkind,
@@ -1035,6 +1042,7 @@ void OGRPGDataSource::LoadTables()
             papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
             papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
             papsTables[nTableCount]->pszSchemaName = CPLStrdup( pszSchemaName );
+            papsTables[nTableCount]->pszDescription = CPLStrdup( pszDescription ? pszDescription : "" );
 
             OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
                                             pszGeomColumnName,
@@ -1044,7 +1052,7 @@ void OGRPGDataSource::LoadTables()
 
             PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
             if (psEntry == NULL)
-                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
+                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName, pszDescription);
             OGRPGTableEntryAddGeomColumn(psEntry,
                                             pszGeomColumnName,
                                             pszGeomType,
@@ -1062,16 +1070,34 @@ void OGRPGDataSource::LoadTables()
         /* non-PostGIS case it has only 3 columns */
         if ( bHavePostGIS && !bListAllTables )
         {
-            osCommand.Printf(   "SELECT c.relname, n.nspname, c.relkind, g.f_geometry_column, g.type, g.coord_dimension, g.srid, %d, a.attnotnull, c.oid as oid, a.attnum as attnum FROM pg_class c, pg_namespace n, geometry_columns g, pg_attribute a "
-                                "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
-                                "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema AND a.attname = g.f_geometry_column AND a.attrelid = c.oid) ",
+            osCommand.Printf(   "SELECT c.relname, n.nspname, c.relkind, g.f_geometry_column, "
+                                "g.type, g.coord_dimension, g.srid, %d, a.attnotnull, "
+                                "d.description, c.oid as oid, a.attnum as attnum "
+                                "FROM pg_class c "
+                                "JOIN pg_namespace n ON c.relnamespace=n.oid "
+                                "JOIN geometry_columns g "
+                                "ON c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema "
+                                "JOIN pg_attribute a "
+                                "ON a.attname = g.f_geometry_column AND a.attrelid = c.oid "
+                                "LEFT JOIN pg_description d "
+                                "ON d.objoid = c.oid AND d.classoid = 'pg_class'::regclass::oid AND d.objsubid = 0 "
+                                "WHERE c.relkind in (%s) ",
                                 GEOM_TYPE_GEOMETRY, pszAllowedRelations);
 
             if (bHaveGeography)
                 osCommand += CPLString().Printf(
-                                    "UNION SELECT c.relname, n.nspname, c.relkind, g.f_geography_column, g.type, g.coord_dimension, g.srid, %d, a.attnotnull, c.oid as oid, a.attnum as attnum FROM pg_class c, pg_namespace n, geography_columns g, pg_attribute a "
-                                    "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
-                                    "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema AND a.attname = g.f_geography_column AND a.attrelid = c.oid)",
+                                    "UNION SELECT c.relname, n.nspname, c.relkind, g.f_geography_column, "
+                                    "g.type, g.coord_dimension, g.srid, %d, a.attnotnull, "
+                                    "d.description, c.oid as oid, a.attnum as attnum "
+                                    "FROM pg_class c "
+                                    "JOIN pg_namespace n ON c.relnamespace=n.oid "
+                                    "JOIN geography_columns g "
+                                    "ON c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema "
+                                    "JOIN pg_attribute a "
+                                    "ON a.attname = g.f_geography_column AND a.attrelid = c.oid "
+                                    "LEFT JOIN pg_description d "
+                                    "ON d.objoid = c.oid AND d.classoid = 'pg_class'::regclass::oid AND d.objsubid = 0 "
+                                    "WHERE c.relkind in (%s)",
                                     GEOM_TYPE_GEOGRAPHY, pszAllowedRelations);
             osCommand += " ORDER BY oid, attnum";
         }
@@ -1102,6 +1128,7 @@ void OGRPGDataSource::LoadTables()
             const char *pszRelkind = PQgetvalue(hResult, iRecord, 2);
             const char *pszGeomColumnName = NULL;
             const char *pszGeomType = NULL;
+            const char *pszDescription = NULL;
             int nGeomCoordDimension = 0;
             bool bHasM = false;
             int nSRID = 0;
@@ -1116,6 +1143,7 @@ void OGRPGDataSource::LoadTables()
                 nSRID = atoi(PQgetvalue(hResult, iRecord, 6));
                 ePostgisType = (PostgisType) atoi(PQgetvalue(hResult, iRecord, 7));
                 bNullable = EQUAL(PQgetvalue(hResult, iRecord, 8), "f");
+                pszDescription = PQgetvalue(hResult, iRecord, 9);
 
                 /* We cannot reliably find geometry columns of a view that is */
                 /* based on a table that inherits from another one, wit that */
@@ -1150,6 +1178,7 @@ void OGRPGDataSource::LoadTables()
             papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
             papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
             papsTables[nTableCount]->pszSchemaName = CPLStrdup( pszSchemaName );
+            papsTables[nTableCount]->pszDescription = CPLStrdup( pszDescription ? pszDescription : "" );
             if (pszGeomColumnName)
                 OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
                                              pszGeomColumnName,
@@ -1159,7 +1188,7 @@ void OGRPGDataSource::LoadTables()
 
             PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
             if (psEntry == NULL)
-                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
+                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName, pszDescription);
             if (pszGeomColumnName)
                 OGRPGTableEntryAddGeomColumn(psEntry,
                                              pszGeomColumnName,
@@ -1234,7 +1263,7 @@ void OGRPGDataSource::LoadTables()
                             bHasDoneSomething = TRUE;
 
                             if (psEntry == NULL)
-                                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
+                                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName, NULL);
 
                             int iGeomColumn;
                             for(iGeomColumn = 0; iGeomColumn < psParentEntry->nGeomColumnCount; iGeomColumn++)
@@ -1298,8 +1327,9 @@ void OGRPGDataSource::LoadTables()
 
         OGRPGTableLayer* poLayer;
         poLayer = OpenTable( osCurrentSchema, papsTables[iRecord]->pszTableName,
-            papsTables[iRecord]->pszSchemaName,
-            NULL, bDSUpdate, FALSE );
+                             papsTables[iRecord]->pszSchemaName,
+                             papsTables[iRecord]->pszDescription,
+                             NULL, bDSUpdate, FALSE );
         if( psEntry != NULL )
         {
             if( psEntry->nGeomColumnCount > 0 )
@@ -1334,6 +1364,7 @@ end:
 OGRPGTableLayer* OGRPGDataSource::OpenTable( CPLString& osCurrentSchemaIn,
                                 const char *pszNewName,
                                 const char *pszSchemaName,
+                                const char* pszDescription,
                                 const char * pszGeomColumnForced,
                                 int bUpdate,
                                 int bTestOpen)
@@ -1346,6 +1377,7 @@ OGRPGTableLayer* OGRPGDataSource::OpenTable( CPLString& osCurrentSchemaIn,
 
     poLayer = new OGRPGTableLayer( this, osCurrentSchemaIn,
                                    pszNewName, pszSchemaName,
+                                   pszDescription,
                                    pszGeomColumnForced, bUpdate );
     if( bTestOpen && !(poLayer->ReadTableDefinition()) )
     {
@@ -1911,7 +1943,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     OGRPGTableLayer     *poLayer;
 
     poLayer = new OGRPGTableLayer( this, osCurrentSchema, pszTableName,
-                                   pszSchemaName, NULL, TRUE );
+                                   pszSchemaName, "", NULL, TRUE );
     poLayer->SetTableDefinition(osFIDColumnName, pszGFldName, eType,
                                 pszGeomType, nSRSId, GeometryTypeFlags);
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
@@ -1921,6 +1953,9 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
     poLayer->SetDifferedCreation(bDifferedCreation, osCreateTable);
 
+    const char* pszDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");
+    if( pszDescription != NULL )
+        poLayer->SetForcedDescription( pszDescription );
 
     /* HSTORE_COLUMNS existed at a time during GDAL 1.10dev */
     const char* pszHSTOREColumns = CSLFetchNameValue( papszOptions, "HSTORE_COLUMNS" );
@@ -2078,6 +2113,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
             CPLPushErrorHandler(CPLQuietErrorHandler);
         poLayer = OpenTable( osCurrentSchema, pszTableName,
                              pszSchemaName,
+                             NULL,
                              pszGeomColumnName,
                              bDSUpdate, TRUE );
         if( osTableName != osTableNameLower )
@@ -2086,6 +2122,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
         {
             poLayer = OpenTable( osCurrentSchema, osTableNameLower,
                                 pszSchemaName,
+                                NULL,
                                 pszGeomColumnName,
                                 bDSUpdate, TRUE );
         }

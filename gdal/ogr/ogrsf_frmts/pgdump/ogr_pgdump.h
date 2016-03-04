@@ -93,6 +93,7 @@ class OGRPGDumpLayer : public OGRLayer
 {
     char                *pszSchemaName;
     char                *pszSqlTableName;
+    CPLString           osForcedDescription;
     char                *pszFIDColumn;
     OGRFeatureDefn      *poFeatureDefn;
     OGRPGDumpDataSource *poDS;
@@ -148,6 +149,9 @@ class OGRPGDumpLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature();
 
+    virtual CPLErr      SetMetadata(char** papszMD, const char* pszDomain = "");
+    virtual CPLErr      SetMetadataItem(const char* pszName, const char* pszValue, const char* pszDomain = "");
+
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
@@ -166,6 +170,7 @@ class OGRPGDumpLayer : public OGRLayer
     void                SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)
                                 { nPostGISMajor = nPostGISMajorIn; nPostGISMinor = nPostGISMinorIn; }
     void                SetGeometryFieldName( const char* pszGeomFieldName ) { m_osFirstGeometryFieldName = pszGeomFieldName; }
+    void                SetForcedDescription( const char* pszDescriptionIn );
     OGRErr              EndCopy();
 
     static char*        GByteArrayToBYTEA( const GByte* pabyData, int nLen);

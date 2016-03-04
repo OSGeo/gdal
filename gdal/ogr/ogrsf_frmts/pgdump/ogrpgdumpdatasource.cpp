@@ -556,6 +556,10 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetPostGISVersion(nPostGISMajor, nPostGISMinor);
     poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);
 
+    const char* pszDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");
+    if( pszDescription != NULL )
+        poLayer->SetForcedDescription( pszDescription );
+
     if( bHavePostGIS )
     {
         OGRGeomFieldDefn oTmp( pszGFldName, eType );
