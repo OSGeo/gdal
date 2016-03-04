@@ -5145,6 +5145,23 @@ def ogr_pg_84():
     if lyr.GetMetadataItem('DESCRIPTION') != 'baz':
         gdaltest.post_reason('fail')
         return 'fail'
+    # Unset with SetMetadataItem()
+    lyr.SetMetadataItem( 'DESCRIPTION', None )
+    ds = None
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string )
+    lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    if lyr.GetMetadataItem('DESCRIPTION') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string )
+    ds.GetLayerCount() # load all layers
+    lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    if lyr.GetMetadataItem('DESCRIPTION') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds = None
 
     return 'success'
