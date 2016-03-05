@@ -1469,11 +1469,25 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
     empty();
     *pbIsEmpty = false;
 
+    int bHasZ = FALSE, bHasM = FALSE;
+    bool bIsoWKT = true;
+
 /* -------------------------------------------------------------------- */
 /*      Read and verify the type keyword, and ensure it matches the     */
 /*      actual type of this container.                                  */
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
+    if( szToken[0] != '\0' )
+    {
+        // Postgis EWKT : POINTM instead of POINT M
+        const size_t nTokenLen = strlen(szToken);
+        if( szToken[nTokenLen-1] == 'M' )
+        {
+            szToken[nTokenLen-1] = '\0';
+            bHasM = TRUE;
+            bIsoWKT = false;
+        }
+    }
 
     if( !EQUAL(szToken,getGeometryName()) )
         return OGRERR_CORRUPT_DATA;
@@ -1482,13 +1496,17 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
 /*      Check for EMPTY ...                                             */
 /* -------------------------------------------------------------------- */
     const char *pszPreScan;
-    int bHasZ = FALSE, bHasM = FALSE;
 
     pszPreScan = OGRWktReadToken( pszInput, szToken );
-    if( EQUAL(szToken,"EMPTY") )
+    if( !bIsoWKT )
+    {
+        /* go on */
+    }
+    else if( EQUAL(szToken,"EMPTY") )
     {
         *ppszInput = (char *) pszPreScan;
         *pbIsEmpty = true;
+        *pbHasM = bHasM;
         empty();
         return OGRERR_NONE;
     }
@@ -1512,7 +1530,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
     *pbHasZ = bHasZ;
     *pbHasM = bHasM;
 
-    if (bHasZ || bHasM)
+    if ( bIsoWKT && (bHasZ || bHasM) )
     {
         pszInput = pszPreScan;
         pszPreScan = OGRWktReadToken( pszInput, szToken );

@@ -3404,6 +3404,25 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
     return 'success'
 
 ###############################################################################
+# Test PostGIS EWKT with XYM
+
+def ogr_geom_postgis_ewkt_xym():
+
+    list_wkt = [ [ 'POINTM(1 2 3)', 'POINT M (1 2 3)' ],
+                 [ 'GEOMETRYCOLLECTIONM(POINTM(1 2 3))', 'GEOMETRYCOLLECTION M (POINT M (1 2 3))' ],
+               ]
+    for (before, after) in list_wkt:
+        geom = ogr.CreateGeometryFromWkt(before)
+        if geom.ExportToIsoWkt() != after:
+            gdaltest.post_reason('fail')
+            print(before)
+            print(after)
+            print(geom.ExportToIsoWkt())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -3455,6 +3474,7 @@ gdaltest_list = [
     ogr_geom_api_limit_tests,
     ogr_geom_equals,
     ogr_geom_measured_geometries_to_2D_or_3D,
+    ogr_geom_postgis_ewkt_xym,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
