@@ -2188,7 +2188,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         {
             oField.SetType( OFTReal );
         }
-        else if( nTypeOID == NUMERICOID )
+        else if( nTypeOID == NUMERICOID || nTypeOID == NUMERICARRAYOID )
         {
             /* See http://www.mail-archive.com/pgsql-hackers@postgresql.org/msg57726.html */
             /* typmod = (width << 16) + precision + 4 */
@@ -2199,18 +2199,18 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
                 int nPrecision = (nTypmod - 4) & 0xFFFF;
                 if (nWidth <= 10 && nPrecision == 0)
                 {
-                    oField.SetType( OFTInteger );
+                    oField.SetType( (nTypeOID == NUMERICOID) ? OFTInteger : OFTIntegerList );
                     oField.SetWidth( nWidth );
                 }
                 else
                 {
-                    oField.SetType( OFTReal );
+                    oField.SetType( (nTypeOID == NUMERICOID) ? OFTReal : OFTRealList );
                     oField.SetWidth( nWidth );
                     oField.SetPrecision( nPrecision );
                 }
             }
             else
-                oField.SetType( OFTReal );
+                oField.SetType( (nTypeOID == NUMERICOID) ? OFTReal : OFTRealList );
         }
         else if ( nTypeOID == BOOLARRAYOID )
         {

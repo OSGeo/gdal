@@ -1162,6 +1162,9 @@ def ogr_pg_23(layer_name = 'datatypetest', include_timestamptz = True):
     fld.SetSubType(ogr.OFSTFloat32)
     lyr.CreateField(fld)
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_float8array float8[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_numericarray numeric[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric5array numeric(5)[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric5_3array numeric(5,3)[]' )
     fld = ogr.FieldDefn('my_boolarray', ogr.OFTIntegerList)
     fld.SetSubType(ogr.OFSTBoolean)
     lyr.CreateField(fld)
@@ -1180,7 +1183,7 @@ def ogr_pg_23(layer_name = 'datatypetest', include_timestamptz = True):
     if include_timestamptz:
         sql += "my_timestamptz, "
     sql += "my_chararray, my_textarray, my_varchararray, my_int2array, my_int4array, "
-    sql += "my_int8array, my_float4array, my_float8array, my_boolarray, wkb_geometry) "
+    sql += "my_int8array, my_float4array, my_float8array, my_numericarray, my_numeric5array, my_numeric5_3array, my_boolarray, wkb_geometry) "
     sql += "VALUES ( 1.2, 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, "
     sql += "0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', "
     sql += "'2000-01-01', '2000-01-01 00:00:00', "
@@ -1188,7 +1191,7 @@ def ogr_pg_23(layer_name = 'datatypetest', include_timestamptz = True):
         sql += "'2000-01-01 00:00:00+00', "
     sql += "'{a,b}', "
     sql += "'{aa,bb}', '{cc,dd}', '{100,200}', '{100,200}', '{1234567901234}', "
-    sql += "'{100.1,200.1}', '{100.12,200.12}', '{1,0}', " + geom_str + " )"
+    sql += "'{100.1,200.1}', '{100.12,200.12}', ARRAY[100.12,200.12], ARRAY[10,20], ARRAY[10.12,20.12], '{1,0}', " + geom_str + " )"
     gdaltest.pg_ds.ExecuteSQL( sql )
 
     return 'success'
@@ -1267,10 +1270,12 @@ def test_val_test_23(layer_defn, feat):
     feat.GetFieldAsString('my_int2array') != '(2:100,200)' or \
     feat.GetFieldAsString('my_int4array') != '(2:100,200)' or \
     feat.my_int8array != [ 1234567901234 ] or \
-    feat.GetFieldAsString('my_boolarray') != '(2:1,0)' :
-#    feat.my_float4array != '(2:100.1,200.1)'
-#    feat.my_float4array != '(2:100.12,200.12)'
-#    feat.my_int8 != 1234567901234
+    feat.GetFieldAsString('my_boolarray') != '(2:1,0)' or \
+    abs(feat.my_float4array[0] - 100.1) > 1e-6 or \
+    abs(feat.my_float8array[0] - 100.12) > 1e-8 or \
+    abs(feat.my_numericarray[0] - 100.12) > 1e-8 or \
+    abs(feat.my_numeric5array[0] - 10) > 1e-8 or \
+    abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8 :
         gdaltest.post_reason( 'Wrong values' )
         feat.DumpReadable()
         return 'fail'
