@@ -115,9 +115,13 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 #endif
     fp = fopen( (char *) pszFilename, (char *) pszAccess );
 
-    const int nError = errno;  // Save errno from VSIDebug possible errors.
+#ifdef VSI_DEBUG
+    // Capture the error from fopen to avoid being overwritten by errors
+    // from VSIDebug3.
+    const int nError = errno;
     VSIDebug3( "VSIFOpen(%s,%s) = %p", pszFilename, pszAccess, fp );
     errno = nError;
+#endif
 
     return fp;
 }
@@ -150,7 +154,9 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
     int nResult = fseek( fp, nOffset, nWhence );
 
 #ifdef VSI_DEBUG
-    const int nError = errno;  // Save errorno from VSIDebug possible errors.
+    // Capture the error from fseek to avoid being overwritten by errors
+    // from VSIDebug.
+    const int nError = errno;
 
     if( nWhence == SEEK_SET )
     {
@@ -186,10 +192,10 @@ long VSIFTell( FILE * fp )
     const long nOffset = ftell(fp);
 
 #ifdef VSI_DEBUG
+    // Capture the error from ftell to avoid being overwritten by errors
+    // from VSIDebug.
     const int nError = errno;
-
     VSIDebug2( "VSIFTell(%p) = %ld", fp, nOffset );
-
     errno = nError;
 #endif
 
@@ -205,6 +211,13 @@ void VSIRewind( FILE * fp )
 {
     VSIDebug1("VSIRewind(%p)", fp );
     rewind( fp );
+#ifdef VSI_DEBUG
+    // Capture the error rewind ftell to avoid being overwritten by errors
+    // from VSIDebug.
+    const int nError = errno;
+    VSIDebug2( "VSIRewind(%p) errno = %d", fp, nError );
+    errno = nError;
+#endif
 }
 
 /************************************************************************/
@@ -217,11 +230,12 @@ size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
     const size_t nResult = fread( pBuffer, nSize, nCount, fp );
 
 #ifdef VSI_DEBUG
+    // Capture the error from fread to avoid being overwritten by errors
+    // from VSIDebug.
     const int nError = errno;
-
     VSIDebug4( "VSIFRead(%p,%ld,%ld) = %ld",
-               fp, (long)nSize, (long)nCount, (long)nResult );
-
+               fp, static_cast<long>(nSize), static_cast<long>(nCount),
+               static_cast<long>(nResult) );
     errno = nError;
 #endif
 
@@ -238,11 +252,12 @@ size_t VSIFWrite( const void *pBuffer, size_t nSize, size_t nCount, FILE * fp )
     const size_t nResult = fwrite( pBuffer, nSize, nCount, fp );
 
 #ifdef VSI_DEBUG
+    // Capture the error from fwrite to avoid being overwritten by errors
+    // from VSIDebug.
     const int nError = errno;
-
     VSIDebug4( "VSIFWrite(%p,%ld,%ld) = %ld",
-               fp, (long)nSize, (long)nCount, (long)nResult );
-
+               fp, static_cast<long>(nSize), static_cast<long>(nCount),
+               static_cast<long>(nResult) );
     errno = nError;
 #endif
 
@@ -256,8 +271,24 @@ size_t VSIFWrite( const void *pBuffer, size_t nSize, size_t nCount, FILE * fp )
 void VSIFFlush( FILE * fp )
 
 {
+#ifdef VSI_DEBUG
     VSIDebug1( "VSIFFlush(%p)", fp );
-    fflush( fp );
+    const int result =
+#endif
+        fflush( fp );
+
+#ifdef VSI_DEBUG
+    // Capture the error rewind ftell to avoid being overwritten by errors
+    // from VSIDebug.
+    const int nError = errno;
+    VSIDebug2( "VSIRewind(%p) errno = %d", fp, nError );
+    if ( result != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, "Flush failed.  errno = %d",
+                  nError);
+    }
+    errno = nError;
+#endif
 }
 
 /************************************************************************/
@@ -1012,7 +1043,7 @@ unsigned long VSITime( unsigned long * pnTimeToSet )
     tTime = time( NULL );
 
     if( pnTimeToSet != NULL )
-      *pnTimeToSet = static_cast<unsigned long>( tTime );
+        *pnTimeToSet = static_cast<unsigned long>( tTime );
 
     return static_cast<unsigned long>( tTime );
 }
@@ -1102,7 +1133,7 @@ GIntBig CPLGetPhysicalRAM(void)
 
     int mib[2] = { CTL_HW, HW_MEMSIZE };
     size_t nLengthRes = sizeof(nPhysMem);
-    sysctl(mib, 2, &nPhysMem, &nLengthRes, NULL, 0);
+    sysctl(mib, CPL_ARRAYSIZE(mib), &nPhysMem, &nLengthRes, NULL, 0);
 
     return nPhysMem;
 }
