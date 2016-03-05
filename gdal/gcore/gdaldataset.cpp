@@ -61,10 +61,18 @@ GDALGetDefaultAsyncReader( GDALDataset *poDS,
                              int nBandSpace, char **papszOptions);
 CPL_C_END
 
+typedef enum
+{
+    RW_MUTEX_STATE_UNKNOW,
+    RW_MUTEX_STATE_ALLOWED,
+    RW_MUTEX_STATE_DISABLED
+} GDALAllowReadWriteMutexState;
+
 typedef struct
 {
     CPLMutex* hMutex;
     int       nMutexTakenCount;
+    GDALAllowReadWriteMutexState eStateReadWriteMutex;
 } GDALDatasetPrivate;
 
 typedef struct
@@ -207,6 +215,8 @@ void GDALDataset::Init(int bForceCachedIOIn)
 
     m_poStyleTable = NULL;
     m_hPrivateData = VSI_CALLOC_VERBOSE(1, sizeof(GDALDatasetPrivate));
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_UNKNOW;
 }
 
 /************************************************************************/
@@ -6046,17 +6056,35 @@ OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
 int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
-    if( psPrivate != NULL && eAccess == GA_Update && (eRWFlag == GF_Write || psPrivate->hMutex != NULL) )
+    if( psPrivate != NULL && eAccess == GA_Update )
     {
-        // There should be no race related to creating this mutex since
-        // it should be first created through IWriteBlock() / IRasterIO()
-        // and then GDALRasterBlock might call it from another thread
-        if( psPrivate->hMutex == NULL )
-            psPrivate->hMutex = CPLCreateMutex();
-        else
-            CPLAcquireMutex(psPrivate->hMutex, 1000.0);
-        psPrivate->nMutexTakenCount ++; /* not sure if we can have recursive calls, so ...*/
-        return TRUE;
+        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOW )
+        {
+            // In case dead-lock would occur, which is not impossible,
+            // this can be used to prevent it, but at the risk of other
+            // issues
+            if( CSLTestBoolean(CPLGetConfigOption( "GDAL_ENABLE_READ_WRITE_MUTEX", "YES") ) )
+            {
+                psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_ALLOWED;
+            }
+            else
+            {
+                psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
+            }
+        }
+        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_ALLOWED &&
+            (eRWFlag == GF_Write || psPrivate->hMutex != NULL) )
+        {
+            // There should be no race related to creating this mutex since
+            // it should be first created through IWriteBlock() / IRasterIO()
+            // and then GDALRasterBlock might call it from another thread
+            if( psPrivate->hMutex == NULL )
+                psPrivate->hMutex = CPLCreateMutex();
+            else
+                CPLAcquireMutex(psPrivate->hMutex, 1000.0);
+            psPrivate->nMutexTakenCount ++; /* not sure if we can have recursive calls, so ...*/
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -6072,6 +6100,23 @@ void GDALDataset::LeaveReadWrite()
     {
         psPrivate->nMutexTakenCount --;
         CPLReleaseMutex(psPrivate->hMutex);
+    }
+}
+
+/************************************************************************/
+/*                       DisableReadWriteMutex()                        */
+/************************************************************************/
+
+/* The mutex logic is broken in multi-threaded situations, for example */
+/* with 2 WarpedVRT datasets being read at the same time. In that */
+/* particular case, the mutex is not needed, so allow the VRTWarpedDataset code */
+/* to disable it. */
+void GDALDataset::DisableReadWriteMutex()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    if( psPrivate )
+    {
+        psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
     }
 }
 

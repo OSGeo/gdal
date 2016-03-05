@@ -296,6 +296,7 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize ) :
     m_nSrcOvrLevel(-2)
 {
     eAccess = GA_Update;
+    DisableReadWriteMutex();
 }
 
 /************************************************************************/
