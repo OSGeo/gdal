@@ -340,7 +340,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
             if (!bArchiveFileExists)
             {
-                VSIFilesystemHandler *poFSHandler = 
+                VSIFilesystemHandler *poFSHandler =
                     VSIFileManager::GetHandler( archiveFilename );
                 if (poFSHandler->Stat(archiveFilename, &statBuf,
                                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
@@ -401,7 +401,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 /*                           OpenArchiveFile()                          */
 /************************************************************************/
 
-VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archiveFilename, 
+VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archiveFilename,
                                                                const char* fileInArchiveName)
 {
     VSIArchiveReader* poReader = CreateReader(archiveFilename);

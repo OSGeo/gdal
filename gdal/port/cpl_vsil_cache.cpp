@@ -80,15 +80,15 @@ public:
 /************************************************************************/
 
 class VSICachedFile CPL_FINAL : public VSIVirtualHandle
-{ 
+{
   public:
-    VSICachedFile( VSIVirtualHandle *poBaseHandle, 
+    VSICachedFile( VSIVirtualHandle *poBaseHandle,
                    size_t nChunkSize,
                    size_t nCacheSize );
     ~VSICachedFile() { Close(); }
 
     void          FlushLRU();
-    int           LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount, 
+    int           LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
                               void *pBuffer, size_t nBufferSize );
     void          Demote( VSICacheChunk * );
 
@@ -131,7 +131,7 @@ VSICachedFile::VSICachedFile( VSIVirtualHandle *poBaseHandle, size_t nChunkSize,
 
     nCacheUsed = 0;
     if ( nCacheSize == 0 )
-        nCacheMax = CPLScanUIntBig( 
+        nCacheMax = CPLScanUIntBig(
              CPLGetConfigOption( "VSI_CACHE_SIZE", "25000000" ), 40 );
     else
         nCacheMax = nCacheSize;
@@ -313,7 +313,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
         poBlock->nDataFilled = poBase->Read( poBlock->pabyData, 1, m_nChunkSize );
         nCacheUsed += poBlock->nDataFilled;
 
-        // Merges into the LRU list. 
+        // Merges into the LRU list.
         Demote( poBlock );
 
         return 1;
@@ -379,7 +379,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 
         nCacheUsed += poBlock->nDataFilled;
 
-        // Merges into the LRU list. 
+        // Merges into the LRU list.
         Demote( poBlock );
     }
 
@@ -443,7 +443,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
         vsi_l_offset nStartOffset = (vsi_l_offset)iBlock * m_nChunkSize;
         nThisCopy = (size_t)
-            ((nStartOffset + poBlock->nDataFilled) 
+            ((nStartOffset + poBlock->nDataFilled)
              - nAmountCopied - nOffset);
 
         if( nThisCopy > nSize * nCount - nAmountCopied )
@@ -453,8 +453,8 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
             break;
 
         memcpy( ((GByte *) pBuffer) + nAmountCopied,
-                poBlock->pabyData 
-                + (nOffset + nAmountCopied) - nStartOffset, 
+                poBlock->pabyData
+                + (nOffset + nAmountCopied) - nStartOffset,
                 nThisCopy );
 
         nAmountCopied += nThisCopy;

@@ -173,8 +173,8 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
 
     char* pszDupedCommandLine = (pszCommandLine) ? CPLStrdup(pszCommandLine) : NULL;
 
-    if( !CreateProcess( pszApplicationName, 
-                        pszDupedCommandLine, 
+    if( !CreateProcess( pszApplicationName,
+                        pszDupedCommandLine,
                         NULL,
                         NULL,
                         FALSE,
@@ -343,7 +343,7 @@ CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_
 
     memset(&piProcInfo, 0, sizeof(PROCESS_INFORMATION));
     memset(&siStartInfo, 0, sizeof(STARTUPINFO));
-    siStartInfo.cb = sizeof(STARTUPINFO); 
+    siStartInfo.cb = sizeof(STARTUPINFO);
     siStartInfo.hStdInput = (bCreateInputPipe) ? pipe_in[IN_FOR_PARENT] : GetStdHandle(STD_INPUT_HANDLE);
     siStartInfo.hStdOutput = (bCreateOutputPipe) ? pipe_out[OUT_FOR_PARENT] : GetStdHandle(STD_OUTPUT_HANDLE);
     siStartInfo.hStdError = (bCreateErrorPipe) ? pipe_err[OUT_FOR_PARENT] : GetStdHandle(STD_ERROR_HANDLE);
@@ -365,14 +365,14 @@ CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_
             osCommandLine += papszArgv[i];
     }
 
-    if (!CreateProcess(NULL, 
+    if (!CreateProcess(NULL,
                        (CHAR*)osCommandLine.c_str(),
-                       NULL,          // process security attributes 
-                       NULL,          // primary thread security attributes 
-                       TRUE,          // handles are inherited 
-                       CREATE_NO_WINDOW|NORMAL_PRIORITY_CLASS,             // creation flags 
-                       NULL,          // use parent's environment 
-                       NULL,          // use parent's current directory 
+                       NULL,          // process security attributes
+                       NULL,          // primary thread security attributes
+                       TRUE,          // handles are inherited
+                       CREATE_NO_WINDOW|NORMAL_PRIORITY_CLASS,             // creation flags
+                       NULL,          // use parent's environment
+                       NULL,          // use parent's current directory
                        &siStartInfo,
                        &piProcInfo))
     {
@@ -502,7 +502,7 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
  *
  * @param pszApplicationName the lpApplicationName for Windows (might be NULL),
  *                           or ignored on other platforms.
- * @param pszCommandLine the command line, starting with the executable name 
+ * @param pszCommandLine the command line, starting with the executable name
  *
  * @return the exit code of the spawned process, or -1 in case of error.
  *

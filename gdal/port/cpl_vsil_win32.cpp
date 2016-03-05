@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -49,10 +49,10 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
+class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess);
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
@@ -95,7 +95,7 @@ class VSIWin32Handle CPL_FINAL : public VSIVirtualHandle
 /*                                                                      */
 /* TODO: If the function is going to be public CPL function, then       */
 /* replace the switch with array of (Win32 code, errno code) tuples and */
-/* complement it with missing codes.                                    */ 
+/* complement it with missing codes.                                    */
 /************************************************************************/
 
 static int ErrnoFromGetLastError(DWORD dwError = 0)
@@ -224,15 +224,15 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
 #ifdef notdef
         LPVOID      lpMsgBuf = NULL;
 
-        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER 
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
                        | FORMAT_MESSAGE_FROM_SYSTEM
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
-                       NULL, GetLastError(), 
-                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+                       NULL, GetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                        (LPTSTR) &lpMsgBuf, 0, NULL );
 
         printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );
-        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n", 
+        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",
                 (GUInt32) nOffset, nMoveLow, dwMoveHigh );
 #endif
         errno = ErrnoFromGetLastError();
@@ -252,7 +252,7 @@ vsi_l_offset VSIWin32Handle::Tell()
     LARGE_INTEGER   li;
 
     li.HighPart = 0;
-    li.LowPart = SetFilePointer( hFile, 0, (PLONG) &(li.HighPart), 
+    li.LowPart = SetFilePointer( hFile, 0, (PLONG) &(li.HighPart),
                                  FILE_CURRENT );
 
     return (static_cast<vsi_l_offset>(li.QuadPart));
@@ -467,7 +467,7 @@ static bool VSIWin32IsLongFilename( const wchar_t* pwszFilename )
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename, 
+VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                                                    const char *pszAccess )
 
 {
@@ -484,7 +484,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     // Append is read and write but not overwrite data (only append data)
     if (strchr(pszAccess, 'a') != NULL )
     {
-        dwDesiredAccess = 
+        dwDesiredAccess =
             FILE_GENERIC_READ | (FILE_GENERIC_WRITE ^ FILE_WRITE_DATA);
 
         // Wine < 1.7.4 doesn't work properly without FILE_WRITE_DATA bit
@@ -521,7 +521,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     else
         dwCreationDisposition = OPEN_EXISTING;
 
-    dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ? 
+    dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ?
         FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL;
 
 /* -------------------------------------------------------------------- */
@@ -532,11 +532,11 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        wchar_t *pwszFilename = 
+        wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        hFile = CreateFileW( pwszFilename, dwDesiredAccess, 
-                            FILE_SHARE_READ | FILE_SHARE_WRITE, 
+        hFile = CreateFileW( pwszFilename, dwDesiredAccess,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
         if ( hFile == INVALID_HANDLE_VALUE &&
@@ -562,8 +562,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
         {
             VSIWin32TryLongFilename(pwszFilename);
             nLastError = 0;
-            hFile = CreateFileW( pwszFilename, dwDesiredAccess, 
-                            FILE_SHARE_READ | FILE_SHARE_WRITE, 
+            hFile = CreateFileW( pwszFilename, dwDesiredAccess,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
         }
@@ -571,8 +571,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     }
     else
     {
-        hFile = CreateFile( pszFilename, dwDesiredAccess, 
-                            FILE_SHARE_READ | FILE_SHARE_WRITE, 
+        hFile = CreateFile( pszFilename, dwDesiredAccess,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
     }
@@ -613,7 +613,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 /*                                Stat()                                */
 /************************************************************************/
 
-int VSIWin32FilesystemHandler::Stat( const char * pszFilename, 
+int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
                                      VSIStatBufL * pStatBuf,
                                      int nFlags )
 
@@ -625,7 +625,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         int nResult;
-        wchar_t *pwszFilename = 
+        wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         bool bTryOtherStatImpl = false;
@@ -694,7 +694,7 @@ int VSIWin32FilesystemHandler::Unlink( const char * pszFilename )
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         int nResult;
-        wchar_t *pwszFilename = 
+        wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         nResult = _wunlink( pwszFilename );
@@ -721,9 +721,9 @@ int VSIWin32FilesystemHandler::Rename( const char *oldpath,
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         int nResult;
-        wchar_t *pwszOldPath = 
+        wchar_t *pwszOldPath =
             CPLRecodeToWChar( oldpath, CPL_ENC_UTF8, CPL_ENC_UCS2 );
-        wchar_t *pwszNewPath = 
+        wchar_t *pwszNewPath =
             CPLRecodeToWChar( newpath, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         nResult = _wrename( pwszOldPath, pwszNewPath );
@@ -752,7 +752,7 @@ int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         int nResult;
-        wchar_t *pwszFilename = 
+        wchar_t *pwszFilename =
             CPLRecodeToWChar( pszPathname, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         nResult = _wmkdir( pwszFilename );
@@ -778,7 +778,7 @@ int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         int nResult;
-        wchar_t *pwszFilename = 
+        wchar_t *pwszFilename =
             CPLRecodeToWChar( pszPathname, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         nResult = _wrmdir( pwszFilename );
@@ -813,7 +813,7 @@ char **VSIWin32FilesystemHandler::ReadDirEx( const char *pszPath,
             pszPath = ".";
 
         pszFileSpec = CPLStrdup(CPLSPrintf("%s\\*.*", pszPath));
-        wchar_t *pwszFileSpec = 
+        wchar_t *pwszFileSpec =
             CPLRecodeToWChar( pszFileSpec, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         if ( (hFile = _wfindfirst( pwszFileSpec, &c_file )) != -1L )
@@ -830,7 +830,7 @@ char **VSIWin32FilesystemHandler::ReadDirEx( const char *pszPath,
         }
         else
         {
-            /* Should we generate an error???  
+            /* Should we generate an error???
              * For now we'll just return NULL (at the end of the function)
              */
         }
@@ -866,7 +866,7 @@ char **VSIWin32FilesystemHandler::ReadDirEx( const char *pszPath,
         }
         else
         {
-            /* Should we generate an error???  
+            /* Should we generate an error???
              * For now we'll just return NULL (at the end of the function)
              */
         }

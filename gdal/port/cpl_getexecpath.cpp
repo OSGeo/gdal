@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -57,7 +57,7 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
         }
         else
         {
-            char *pszDecoded = 
+            char *pszDecoded =
                 CPLRecodeFromWChar(pwszPathBuf,CPL_ENC_UCS2,CPL_ENC_UTF8);
 
             strncpy( pszPathBuf, pszDecoded, nMaxLength );
@@ -109,10 +109,10 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 /************************************************************************/
 
 /**
- * Fetch path of executable. 
+ * Fetch path of executable.
  *
  * The path to the executable currently running is returned.  This path
- * includes the name of the executable.   Currently this only works on 
+ * includes the name of the executable.   Currently this only works on
  * win32 and linux platforms.  The returned path is UTF-8 encoded.
  *
  * @param pszPathBuf the buffer into which the path is placed.

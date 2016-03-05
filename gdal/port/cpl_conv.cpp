@@ -222,9 +222,9 @@ void * CPLRealloc( void * pData, size_t nNewSize )
             char szSmallMsg[60];
 
             snprintf( szSmallMsg, sizeof(szSmallMsg),
-                     "CPLRealloc(): Out of memory allocating %ld bytes.", 
+                     "CPLRealloc(): Out of memory allocating %ld bytes.",
                      (long) nNewSize );
-            CPLEmergencyError( szSmallMsg ); 
+            CPLEmergencyError( szSmallMsg );
         }
         else
             CPLError( CE_Fatal, CPLE_OutOfMemory,
@@ -523,8 +523,8 @@ static char *CPLReadLineBuffer( int nRequiredSize )
  * Note that CPLReadLine() uses VSIFGets(), so any hooking of VSI file
  * services should apply to CPLReadLine() as well.
  *
- * CPLReadLine() maintains an internal buffer, which will appear as a 
- * single block memory leak in some circumstances.  CPLReadLine() may 
+ * CPLReadLine() maintains an internal buffer, which will appear as a
+ * single block memory leak in some circumstances.  CPLReadLine() may
  * be called with a NULL FILE * at any time to free this working buffer.
  *
  * @param fp file pointer opened with VSIFOpen().
@@ -569,7 +569,7 @@ const char *CPLReadLine( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Do the actual read.                                             */
 /* -------------------------------------------------------------------- */
-        if( CPLFGets( pszRLBuffer+nReadSoFar, 128, fp ) == NULL 
+        if( CPLFGets( pszRLBuffer+nReadSoFar, 128, fp ) == NULL
             && nReadSoFar == 0 )
             return NULL;
 
@@ -646,7 +646,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
     size_t nChunkBytesRead = 0;
     int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
-    
+
     szChunk[0] = 0;
 
     while( true )
@@ -730,7 +730,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
 /*      consume it.  If it is a newline, but we are clearly at the      */
 /*      end of the file then consume it.                                */
 /* -------------------------------------------------------------------- */
-        if( nChunkBytesConsumed == nChunkBytesRead-1 
+        if( nChunkBytesConsumed == nChunkBytesRead-1
             && nChunkBytesRead < nChunkSize )
         {
             if( szChunk[nChunkBytesConsumed] == 10
@@ -919,7 +919,7 @@ unsigned long CPLScanULong( const char *pszString, int nMaxLength )
  * Extract big integer from string.
  *
  * Scan up to a maximum number of characters from a string and convert
- * the result to a GUIntBig. 
+ * the result to a GUIntBig.
  *
  * @param pszString String containing characters to be scanned. It may be
  * terminated with a null character.
@@ -1066,7 +1066,7 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
  * Extract pointer from string.
  *
  * Scan up to a maximum number of characters from a string and convert
- * the result to a pointer. 
+ * the result to a pointer.
  *
  * @param pszString String containing characters to be scanned. It may be
  * terminated with a null character.
@@ -1730,7 +1730,7 @@ CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
   *
   * @see http://trac.osgeo.org/gdal/wiki/ConfigOptions
   */
-void CPL_STDCALL 
+void CPL_STDCALL
 CPLSetConfigOption( const char *pszKey, const char *pszValue )
 
 {
@@ -1761,7 +1761,7 @@ static void CPLSetThreadLocalTLSFreeFunc( void* pData )
   * Set a configuration option for GDAL/OGR use.
   *
   * Those options are defined as a (key, value) couple. The value corresponding
-  * to a key can be got later with the CPLGetConfigOption() method.  
+  * to a key can be got later with the CPLGetConfigOption() method.
   *
   * This function sets the configuration option that only applies in the
   * current thread, as opposed to CPLSetConfigOption() which sets an option
@@ -1775,7 +1775,7 @@ static void CPLSetThreadLocalTLSFreeFunc( void* pData )
   * @param pszValue the value of the option, or NULL to clear a setting.
   */
 
-void CPL_STDCALL 
+void CPL_STDCALL
 CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
 
 {
@@ -1789,7 +1789,7 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
     if( bMemoryError )
         return;
 
-    papszTLConfigOptions = 
+    papszTLConfigOptions =
         CSLSetNameValue( papszTLConfigOptions, pszKey, pszValue );
 
     CPLSetTLSWithFreeFunc( CTLS_CONFIGOPTIONS, papszTLConfigOptions,
@@ -1958,7 +1958,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
 {
     VALIDATE_POINTER1( pszAxis, "CPLDecToDMS", "" );
-    
+
     if( CPLIsNan(dfAngle) )
         return "Invalid angle";
 
@@ -2134,28 +2134,28 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
 /************************************************************************/
 
 /**
- * Open a shared file handle. 
+ * Open a shared file handle.
  *
  * Some operating systems have limits on the number of file handles that can
  * be open at one time.  This function attempts to maintain a registry of
  * already open file handles, and reuse existing ones if the same file
- * is requested by another part of the application. 
+ * is requested by another part of the application.
  *
- * Note that access is only shared for access types "r", "rb", "r+" and 
+ * Note that access is only shared for access types "r", "rb", "r+" and
  * "rb+".  All others will just result in direct VSIOpen() calls.  Keep in
- * mind that a file is only reused if the file name is exactly the same. 
- * Different names referring to the same file will result in different 
- * handles.  
+ * mind that a file is only reused if the file name is exactly the same.
+ * Different names referring to the same file will result in different
+ * handles.
  *
- * The VSIFOpen() or VSIFOpenL() function is used to actually open the file, 
- * when an existing file handle can't be shared. 
+ * The VSIFOpen() or VSIFOpenL() function is used to actually open the file,
+ * when an existing file handle can't be shared.
  *
  * @param pszFilename the name of the file to open.
  * @param pszAccess the normal fopen()/VSIFOpen() style access string.
  * @param bLarge If TRUE VSIFOpenL() (for large files) will be used instead of
- * VSIFOpen(). 
+ * VSIFOpen().
  *
- * @return a file handle or NULL if opening fails. 
+ * @return a file handle or NULL if opening fails.
  */
 
 FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
@@ -2172,7 +2172,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 
     for( int i = 0; bReuse && i < nSharedFileCount; i++ )
     {
-        if( strcmp(pasSharedFileList[i].pszFilename,pszFilename) == 0 
+        if( strcmp(pasSharedFileList[i].pszFilename,pszFilename) == 0
             && !bLarge == !pasSharedFileList[i].bLarge
             && EQUAL(pasSharedFileList[i].pszAccess,pszAccess)
             && nPID == pasSharedFileListExtra[i].nPID)
@@ -2244,7 +2244,7 @@ void CPLCloseShared( FILE * fp )
 
     if( i == nSharedFileCount )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find file handle %p in CPLCloseShared().",
                   fp );
         return;
@@ -2274,11 +2274,11 @@ void CPLCloseShared( FILE * fp )
     CPLFree( pasSharedFileList[i].pszAccess );
 
     nSharedFileCount --;
-    memmove( (void *) (pasSharedFileList + i), 
-             (void *) (pasSharedFileList + nSharedFileCount), 
+    memmove( (void *) (pasSharedFileList + i),
+             (void *) (pasSharedFileList + nSharedFileCount),
              sizeof(CPLSharedFileInfo) );
-    memmove( (void *) (pasSharedFileListExtra + i), 
-             (void *) (pasSharedFileListExtra + nSharedFileCount), 
+    memmove( (void *) (pasSharedFileListExtra + i),
+             (void *) (pasSharedFileListExtra + nSharedFileCount),
              sizeof(CPLSharedFileInfoExtra) );
 
     if( nSharedFileCount == 0 )
@@ -2311,9 +2311,9 @@ void CPLCleanupSharedFileMutex()
 /**
  * Fetch list of open shared files.
  *
- * @param pnCount place to put the count of entries. 
+ * @param pnCount place to put the count of entries.
  *
- * @return the pointer to the first in the array of shared file info 
+ * @return the pointer to the first in the array of shared file info
  * structures.
  */
 
@@ -2334,7 +2334,7 @@ CPLSharedFileInfo *CPLGetSharedList( int *pnCount )
  * Report open shared files.
  *
  * Dumps all open shared files to the indicated file handle.  If the
- * file handle is NULL information is sent via the CPLDebug() call. 
+ * file handle is NULL information is sent via the CPLDebug() call.
  *
  * @param fp File handle to write to.
  */
@@ -2353,15 +2353,15 @@ void CPLDumpSharedList( FILE *fp )
     for( int i = 0; i < nSharedFileCount; i++ )
     {
         if( fp == NULL )
-            CPLDebug( "CPL", 
-                      "%2d %d %4s %s", 
-                      pasSharedFileList[i].nRefCount, 
+            CPLDebug( "CPL",
+                      "%2d %d %4s %s",
+                      pasSharedFileList[i].nRefCount,
                       pasSharedFileList[i].bLarge,
                       pasSharedFileList[i].pszAccess,
                       pasSharedFileList[i].pszFilename );
         else
-            fprintf( fp, "%2d %d %4s %s", 
-                     pasSharedFileList[i].nRefCount, 
+            fprintf( fp, "%2d %d %4s %s",
+                     pasSharedFileList[i].nRefCount,
                      pasSharedFileList[i].bLarge,
                      pasSharedFileList[i].pszAccess,
                      pasSharedFileList[i].pszFilename );
@@ -2386,7 +2386,7 @@ int CPLUnlinkTree( const char *pszPath )
 
     if( VSIStatL( pszPath, &sStatBuf ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "It seems no file system object called '%s' exists.",
                   pszPath );
 
@@ -2400,7 +2400,7 @@ int CPLUnlinkTree( const char *pszPath )
     {
         if( VSIUnlink( pszPath ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.", 
+            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.",
                       pszPath );
 
             return -1;
@@ -2450,7 +2450,7 @@ int CPLUnlinkTree( const char *pszPath )
 /* -------------------------------------------------------------------- */
 /*      otherwise report an error.                                      */
 /* -------------------------------------------------------------------- */
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "Failed to unlink %s.\nUnrecognised filesystem object.",
               pszPath );
     return 1000;
@@ -2528,7 +2528,7 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 
     if( VSIStatL( pszOldPath, &sStatBuf ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "It seems no file system object called '%s' exists.",
                   pszOldPath );
 
@@ -2536,7 +2536,7 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
     }
     if( VSIStatL( pszNewPath, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "It seems that a file system object called '%s' already exists.",
                   pszNewPath );
 
@@ -2547,7 +2547,7 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
     {
         if( VSIMkdir( pszNewPath, 0755 ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                     "Cannot create directory '%s'.",
                     pszNewPath );
 
@@ -2742,7 +2742,7 @@ CPLThreadLocaleC::~CPLThreadLocaleC()
 /**
  * Prevents parallel executions of setlocale().
  *
- * Calling setlocale() concurrently from two or more threads is a 
+ * Calling setlocale() concurrently from two or more threads is a
  * potential data race. A mutex is used to provide a critical region so
  * that only one thread at a time can be executing setlocale().
  *
@@ -2787,19 +2787,19 @@ void CPLCleanupSetlocaleMutex(void)
  * The function checks if a named file exists in the filesystem, hopefully
  * in an efficient fashion if a sibling file list is available.   It exists
  * primarily to do faster file checking for functions like GDAL open methods
- * that get a list of files from the target directory. 
+ * that get a list of files from the target directory.
  *
  * If the sibling file list exists (is not NULL) it is assumed to be a list
  * of files in the same directory as the target file, and it will be checked
  * (case insensitively) for a match.  If a match is found, pszFilename is
- * updated with the correct case and TRUE is returned. 
+ * updated with the correct case and TRUE is returned.
  *
  * If papszSiblingFiles is NULL, a VSIStatL() is used to test for the files
- * existence, and no case insensitive testing is done. 
+ * existence, and no case insensitive testing is done.
  *
  * @param pszFilename name of file to check for - filename case updated in
  * some cases.
- * @param papszSiblingFiles a list of files in the same directory as 
+ * @param papszSiblingFiles a list of files in the same directory as
  * pszFilename if available, or NULL. This list should have no path components.
  *
  * @return TRUE if a match is found, or FALSE if not.
