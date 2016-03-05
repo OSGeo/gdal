@@ -421,7 +421,7 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                                         int nFileOffset /* = 0*/)
 {
     /*-----------------------------------------------------------------
-     * Start with the default initialisation
+     * Start with the default initialization
      *----------------------------------------------------------------*/
     if ( TABRawBinBlock::InitNewBlock(fpSrc, nBlockSize, nFileOffset) != 0)
         return -1;

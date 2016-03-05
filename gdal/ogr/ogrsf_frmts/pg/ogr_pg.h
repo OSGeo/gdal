@@ -298,7 +298,7 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bAutoFIDOnCreateViaCopy;
     int                 bUseCopyByDefault;
 
-    int                 bDifferedCreation;
+    int                 bDeferredCreation;
     CPLString           osCreateTable;
 
     int                 iFIDAsRegularColumnIndex;
@@ -390,8 +390,8 @@ public:
     void                AllowAutoFIDOnCreateViaCopy() { bAutoFIDOnCreateViaCopy = TRUE; }
     void                SetUseCopy() { bUseCopy = TRUE; bUseCopyByDefault = TRUE; }
 
-    void                SetDifferedCreation(int bDifferedCreationIn, CPLString osCreateTable);
-    OGRErr              RunDifferedCreationIfNecessary();
+    void                SetDeferredCreation(int bDeferredCreationIn, CPLString osCreateTable);
+    OGRErr              RunDeferredCreationIfNecessary();
 
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn);
 };

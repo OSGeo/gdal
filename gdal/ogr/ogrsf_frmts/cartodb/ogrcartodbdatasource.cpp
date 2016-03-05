@@ -456,7 +456,7 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszNameIn,
     }
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable, bCartoDBify);
+    poLayer->SetDeferredCreation(eGType, poSpatialRef, bGeomNullable, bCartoDBify);
     papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -493,8 +493,8 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
 
     CPLDebug( "CARTODB", "DeleteLayer(%s)", osLayerName.c_str() );
 
-    int bDeferedCreation = papoLayers[iLayer]->GetDeferedCreation();
-    papoLayers[iLayer]->CancelDeferedCreation();
+    int bDeferredCreation = papoLayers[iLayer]->GetDeferredCreation();
+    papoLayers[iLayer]->CancelDeferredCreation();
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
@@ -503,7 +503,7 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
     if (osLayerName.size() == 0)
         return OGRERR_NONE;
 
-    if( !bDeferedCreation )
+    if( !bDeferredCreation )
     {
         CPLString osSQL;
         osSQL.Printf("DROP TABLE %s",
@@ -689,16 +689,16 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
 OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
                                                      OGRGeometry *poSpatialFilter,
                                                      const char *pszDialect,
-                                                     int bRunDeferedActions )
+                                                     int bRunDeferredActions )
 
 {
-    if( bRunDeferedActions )
+    if( bRunDeferredActions )
     {
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            papoLayers[iLayer]->RunDeferedCreationIfNecessary();
-            CPL_IGNORE_RET_VAL(papoLayers[iLayer]->FlushDeferedInsert());
-            papoLayers[iLayer]->RunDeferedCartoDBfy();
+            papoLayers[iLayer]->RunDeferredCreationIfNecessary();
+            CPL_IGNORE_RET_VAL(papoLayers[iLayer]->FlushDeferredInsert());
+            papoLayers[iLayer]->RunDeferredCartoDBfy();
         }
     }
 

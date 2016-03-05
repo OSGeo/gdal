@@ -708,7 +708,7 @@ void PostGISRasterDataset::BuildOverviews()
             poOvrDS->pszWhere = pszWhere ? CPLStrdup(pszWhere) : NULL;
             poOvrDS->poParentDS = this;
 
-            if (!CPLTestBool(CPLGetConfigOption("PG_DIFFERED_OVERVIEWS", "YES")) &&
+            if (!CPLTestBool(CPLGetConfigOption("PG_DEFERRED_OVERVIEWS", "YES")) &&
                 (!poOvrDS->SetRasterProperties(NULL) ||
                 poOvrDS->GetRasterCount() != GetRasterCount()))
             {

@@ -294,7 +294,7 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
 
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
-    poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable);
+    poLayer->SetDeferredCreation(eGType, poSpatialRef, bGeomNullable);
     papoLayers = (OGRAmigoCloudTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRAmigoCloudTableLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -331,8 +331,8 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 
     CPLDebug( "AMIGOCLOUD", "DeleteLayer(%s)", osDatasetId.c_str() );
 
-    int bDeferedCreation = papoLayers[iLayer]->GetDeferedCreation();
-    papoLayers[iLayer]->CancelDeferedCreation();
+    int bDeferredCreation = papoLayers[iLayer]->GetDeferredCreation();
+    papoLayers[iLayer]->CancelDeferredCreation();
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
@@ -341,7 +341,7 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
     if (osDatasetId.size() == 0)
         return OGRERR_NONE;
 
-    if( !bDeferedCreation )
+    if( !bDeferredCreation )
     {
         std::stringstream url;
         url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/datasets/"+ osDatasetId.c_str();
@@ -816,15 +816,15 @@ OGRLayer * OGRAmigoCloudDataSource::ExecuteSQL( const char *pszSQLCommand,
 OGRLayer * OGRAmigoCloudDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
                                                      OGRGeometry *poSpatialFilter,
                                                      const char *,
-                                                     int bRunDeferedActions )
+                                                     int bRunDeferredActions )
 
 {
-    if( bRunDeferedActions )
+    if( bRunDeferredActions )
     {
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            papoLayers[iLayer]->RunDeferedCreationIfNecessary();
-            papoLayers[iLayer]->FlushDeferedInsert();
+            papoLayers[iLayer]->RunDeferredCreationIfNecessary();
+            papoLayers[iLayer]->FlushDeferredInsert();
         }
     }
 

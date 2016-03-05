@@ -201,7 +201,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     bAutoFIDOnCreateViaCopy = FALSE;
 
-    bDifferedCreation = FALSE;
+    bDeferredCreation = FALSE;
     iFIDAsRegularColumnIndex = -1;
 
     pszDescription = (pszDescriptionIn) ? CPLStrdup(pszDescriptionIn) : NULL;
@@ -218,7 +218,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 OGRPGTableLayer::~OGRPGTableLayer()
 
 {
-    if( bDifferedCreation ) RunDifferedCreationIfNecessary();
+    if( bDeferredCreation ) RunDeferredCreationIfNecessary();
     if ( bCopyActive ) EndCopy();
     CPLFree( pszSqlTableName );
     CPLFree( pszTableName );
@@ -301,7 +301,7 @@ CPLErr OGRPGTableLayer::SetMetadata(char** papszMD, const char* pszDomain)
         OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
     }
 
-    if( !bDifferedCreation && (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    if( !bDeferredCreation && (pszDomain == NULL || EQUAL(pszDomain, "")) )
     {
         const char* l_pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
         PGconn              *hPGConn = poDS->GetPGConn();
@@ -334,7 +334,7 @@ CPLErr OGRPGTableLayer::SetMetadataItem(const char* pszName, const char* pszValu
         pszValue = osForcedDescription;
     }
     OGRLayer::SetMetadataItem(pszName, pszValue, pszDomain);
-    if( !bDifferedCreation &&
+    if( !bDeferredCreation &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
         EQUAL(pszName, "DESCRIPTION") )
     {
@@ -896,7 +896,7 @@ void OGRPGTableLayer::ResetReading()
         return;
     bInResetReading = TRUE;
 
-    if( bDifferedCreation ) RunDifferedCreationIfNecessary();
+    if( bDeferredCreation ) RunDeferredCreationIfNecessary();
     poDS->EndCopy();
     bUseCopyByDefault = FALSE;
 
@@ -914,7 +914,7 @@ void OGRPGTableLayer::ResetReading()
 OGRFeature *OGRPGTableLayer::GetNextFeature()
 
 {
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return NULL;
     poDS->EndCopy();
 
@@ -1144,7 +1144,7 @@ OGRErr OGRPGTableLayer::DeleteFeature( GIntBig nFID )
         return OGRERR_FAILURE;
     }
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     poDS->EndCopy();
     bAutoFIDOnCreateViaCopy = FALSE;
@@ -1223,7 +1223,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     poDS->EndCopy();
 
@@ -1455,7 +1455,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
     /* In case the FID column has also been created as a regular field */
@@ -2189,7 +2189,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
-    if( bDifferedCreation )
+    if( bDeferredCreation )
     {
         if( !(pszFIDColumn != NULL && EQUAL(pszFIDColumn,oField.GetNameRef())) )
         {
@@ -2405,7 +2405,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
-    if( !bDifferedCreation )
+    if( !bDeferredCreation )
     {
         poDS->EndCopy();
 
@@ -2459,7 +2459,7 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
         return OGRERR_FAILURE;
     }
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     poDS->EndCopy();
 
@@ -2511,7 +2511,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         return OGRERR_FAILURE;
     }
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     poDS->EndCopy();
 
@@ -2791,7 +2791,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( GIntBig nFeatureId )
 GIntBig OGRPGTableLayer::GetFeatureCount( int bForce )
 
 {
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return 0;
     poDS->EndCopy();
 
@@ -3141,7 +3141,7 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
         return OGRERR_FAILURE;
     }
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     poDS->EndCopy();
 
@@ -3184,24 +3184,24 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
 }
 
 /************************************************************************/
-/*                        SetDifferedCreation()                         */
+/*                        SetDeferredCreation()                         */
 /************************************************************************/
 
-void OGRPGTableLayer::SetDifferedCreation(int bDifferedCreationIn, CPLString osCreateTableIn)
+void OGRPGTableLayer::SetDeferredCreation(int bDeferredCreationIn, CPLString osCreateTableIn)
 {
-    bDifferedCreation = bDifferedCreationIn;
+    bDeferredCreation = bDeferredCreationIn;
     osCreateTable = osCreateTableIn;
 }
 
 /************************************************************************/
-/*                      RunDifferedCreationIfNecessary()                */
+/*                      RunDeferredCreationIfNecessary()                */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::RunDifferedCreationIfNecessary()
+OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
 {
-    if( !bDifferedCreation )
+    if( !bDeferredCreation )
         return OGRERR_NONE;
-    bDifferedCreation = FALSE;
+    bDeferredCreation = FALSE;
 
     poDS->EndCopy();
 

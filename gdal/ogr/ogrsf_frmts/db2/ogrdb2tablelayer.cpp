@@ -1381,7 +1381,7 @@ OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement *poStatement,
 
 void OGRDB2TableLayer::CreateSpatialIndexIfNecessary()
 {
-    if( bDeferedSpatialIndexCreation )
+    if( bDeferredSpatialIndexCreation )
     {
         CreateSpatialIndex();
     }

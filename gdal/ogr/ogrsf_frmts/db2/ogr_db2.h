@@ -414,7 +414,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
 
     int                         m_bInsertStatementWithFID;
 
-    int                         bDeferedSpatialIndexCreation;
+    int                         bDeferredSpatialIndexCreation;
     int                         m_bHasSpatialIndex;
     int                         bDropRTreeTable;
     int                         m_anHasGeometryExtension[wkbMultiSurface+1];

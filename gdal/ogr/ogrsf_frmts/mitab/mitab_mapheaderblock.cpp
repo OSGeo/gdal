@@ -965,7 +965,7 @@ int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                                         int nFileOffset /* = 0*/)
 {
     /*-----------------------------------------------------------------
-     * Start with the default initialisation
+     * Start with the default initialization
      *----------------------------------------------------------------*/
 
     /* .MAP files of Version 500 and up appear to have a 1024 bytes
