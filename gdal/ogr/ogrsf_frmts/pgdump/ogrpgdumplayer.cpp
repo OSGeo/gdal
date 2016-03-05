@@ -1296,6 +1296,33 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
         oField.SetSubType( OFSTBoolean );
         oField.SetWidth( 1 );
     }
+    else if( EQUAL(pszType,"_numeric") )
+    {
+        if( EQUAL(pszFormatType, "numeric[]") )
+            oField.SetType( OFTRealList );
+        else
+        {
+            const char *pszPrecision = strstr(pszFormatType,",");
+            int    nPrecision = 0;
+
+            nWidth = atoi(pszFormatType + 8);
+            if( pszPrecision != NULL )
+                nPrecision = atoi(pszPrecision+1);
+
+            if( nPrecision == 0 )
+            {
+                if( nWidth >= 10 )
+                    oField.SetType( OFTInteger64List );
+                else
+                    oField.SetType( OFTIntegerList );
+            }
+            else
+                oField.SetType( OFTRealList );
+
+            oField.SetWidth( nWidth );
+            oField.SetPrecision( nPrecision );
+        }
+    }
     else if( EQUAL(pszType,"numeric") )
     {
         if( EQUAL(pszFormatType, "numeric") )

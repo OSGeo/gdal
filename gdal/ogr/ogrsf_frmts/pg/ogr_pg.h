@@ -74,6 +74,7 @@
 #define TIMESTAMPOID	        1114
 #define TIMESTAMPTZOID	        1184
 #define NUMERICOID              1700
+#define NUMERICARRAYOID         1231
 
 CPLString OGRPGEscapeString(PGconn *hPGConn,
                             const char* pszStrValue, int nMaxLength = -1,
