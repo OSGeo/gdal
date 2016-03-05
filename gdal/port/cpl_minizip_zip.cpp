@@ -1264,7 +1264,7 @@ CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 
     CPLZip* psZip = (CPLZip*)hZip;
 
-    int nErr = cpl_zipWriteInFileInZip( psZip->hZip, pBuffer, 
+    int nErr = cpl_zipWriteInFileInZip( psZip->hZip, pBuffer,
                                     (unsigned int) nBufferSize );
 
     if( nErr != ZIP_OK )

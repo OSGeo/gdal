@@ -60,7 +60,7 @@ extern int CPLIsUTF8Stub( const char *, int );
  *  <li>CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1</li>
  * </ul>
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource a NULL terminated string.
  * @param pszSrcEncoding the source encoding.
@@ -82,8 +82,8 @@ char CPL_DLL *CPLRecode( const char *pszSource,
     if ( EQUAL(pszSrcEncoding, pszDstEncoding) )
         return CPLStrdup(pszSource);
 
-    if ( EQUAL(pszSrcEncoding, CPL_ENC_ASCII) 
-        && ( EQUAL(pszDstEncoding, CPL_ENC_UTF8) 
+    if ( EQUAL(pszSrcEncoding, CPL_ENC_ASCII)
+        && ( EQUAL(pszDstEncoding, CPL_ENC_UTF8)
              || EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1) ) )
         return CPLStrdup(pszSource);
 
@@ -116,7 +116,7 @@ char CPL_DLL *CPLRecode( const char *pszSource,
 /************************************************************************/
 
 /**
- * Convert wchar_t string to UTF-8. 
+ * Convert wchar_t string to UTF-8.
  *
  * Convert a wchar_t string into a multibyte utf-8 string.  The only
  * guaranteed supported source encoding is CPL_ENC_UCS2, and the only
@@ -127,14 +127,14 @@ char CPL_DLL *CPLRecode( const char *pszSource,
  * Note that the wchar_t type varies in size on different systems. On
  * win32 it is normally 2 bytes, and on UNIX 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pwszSource the source wchar_t string, terminated with a 0 wchar_t.
  * @param pszSrcEncoding the source encoding, typically CPL_ENC_UCS2.
  * @param pszDstEncoding the destination encoding, typically CPL_ENC_UTF8.
  *
- * @return a zero terminated multi-byte string which should be freed with 
- * CPLFree(), or NULL if an error occurs. 
+ * @return a zero terminated multi-byte string which should be freed with
+ * CPLFree(), or NULL if an error occurs.
  *
  * @since GDAL 1.6.0
  */
@@ -185,11 +185,11 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
  * Note that the wchar_t type varies in size on different systems. On
  * win32 it is normally 2 bytes, and on UNIX 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource input multi-byte character string.
  * @param pszSrcEncoding source encoding, typically CPL_ENC_UTF8.
- * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2. 
+ * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2.
  *
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
@@ -294,17 +294,17 @@ char CPL_DLL *CPLForceToASCII( const char* pabyData, int nLen,
  * in this encoding.  For fixed width encodings (ASCII, UCS-2, UCS-4) this
  * is straight forward.  For encodings like UTF8 and UTF16 which represent
  * some characters as a sequence of atomic character sizes the function
- * still returns the atomic character size (1 for UTF8, 2 for UTF16). 
+ * still returns the atomic character size (1 for UTF8, 2 for UTF16).
  *
  * This function will return the correct value for well known encodings
  * with corresponding CPL_ENC_ values.  It may not return the correct value
- * for other encodings even if they are supported by the underlying iconv 
+ * for other encodings even if they are supported by the underlying iconv
  * or windows transliteration services.  Hopefully it will improve over time.
  *
  * @param pszEncoding the name of the encoding.
  *
- * @return the size of a minimal character in bytes or -1 if the size is 
- * unknown. 
+ * @return the size of a minimal character in bytes or -1 if the size is
+ * unknown.
  */
 
 int CPLEncodingCharSize( const char *pszEncoding )
@@ -350,7 +350,7 @@ void CPLClearRecodeWarningFlags()
  *
  * @param pszUTF8Str a nul-terminated UTF-8 string
  *
- * @return the number of UTF-8 characters. 
+ * @return the number of UTF-8 characters.
  */
 
 int CPLStrlenUTF8(const char *pszUTF8Str) {
@@ -362,4 +362,3 @@ int CPLStrlenUTF8(const char *pszUTF8Str) {
     }
     return nCharacterCount;
 }
-

@@ -158,15 +158,15 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         /* Restore old error mode */
         SetErrorMode(uOldErrorMode);
 
-        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER 
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
                        | FORMAT_MESSAGE_FROM_SYSTEM
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
                        NULL, nLastError,
-                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                        (LPTSTR) &lpMsgBuf, 0, NULL );
 
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't load requested DLL: %s\n%d: %s", 
+                  "Can't load requested DLL: %s\n%d: %s",
                   pszLibrary, nLastError, (const char *) lpMsgBuf );
         return NULL;
     }
@@ -203,7 +203,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 void *CPLGetSymbol(const char *pszLibrary, const char *pszEntryPoint)
 
 {
-    CPLDebug( "CPL", 
+    CPLDebug( "CPL",
               "CPLGetSymbol(%s,%s) called.  Failed as this is stub"
               " implementation.", pszLibrary, pszEntryPoint );
     return NULL;

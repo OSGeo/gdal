@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2013, Frank Warmerdam 
+ * Copyright (c) 2013, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -93,24 +93,24 @@ static CPLStringList ParseSimpleJson(const char *pszJson)
 /************************************************************************/
 
 /**
- * Return authorization url for a given scope. 
+ * Return authorization url for a given scope.
  *
  * Returns the URL that a user should visit, and use for authentication
- * in order to get an "auth token" indicating their willingness to use a 
- * service. 
+ * in order to get an "auth token" indicating their willingness to use a
+ * service.
  *
  * Note that when the user visits this url they will be asked to login
- * (using a google/gmail/etc) account, and to authorize use of the 
- * requested scope for the application "GDAL/OGR".  Once they have done 
+ * (using a google/gmail/etc) account, and to authorize use of the
+ * requested scope for the application "GDAL/OGR".  Once they have done
  * so, they will be presented with a lengthy string they should "enter
  * into their application".  This is the "auth token" to be passed to
- * GOA2GetRefreshToken().  The "auth token" can only be used once. 
- * 
- * This function should never fail. 
+ * GOA2GetRefreshToken().  The "auth token" can only be used once.
  *
- * @param pszScope the service being requested, not yet URL encoded, such as 
- * "https://www.googleapis.com/auth/fusiontables". 
- * 
+ * This function should never fail.
+ *
+ * @param pszScope the service being requested, not yet URL encoded, such as
+ * "https://www.googleapis.com/auth/fusiontables".
+ *
  * @return the URL to visit - should be freed with CPLFree().
  */
 
@@ -123,7 +123,7 @@ char *GOA2GetAuthorizationURL(const char *pszScope)
     osScope.Seize(CPLEscapeString(pszScope, -1, CPLES_URL));
     osURL.Printf( "%s/auth?scope=%s&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&client_id=%s",
                   GOOGLE_AUTH_URL,
-                  osScope.c_str(), 
+                  osScope.c_str(),
                   CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID));
     return CPLStrdup(osURL);
 }
@@ -133,19 +133,19 @@ char *GOA2GetAuthorizationURL(const char *pszScope)
 /************************************************************************/
 
 /**
- * Turn Auth Token into a Refresh Token. 
- * 
- * A one time "auth token" provided by the user is turned into a 
+ * Turn Auth Token into a Refresh Token.
+ *
+ * A one time "auth token" provided by the user is turned into a
  * reusable "refresh token" using a google oauth2 web service.
  *
  * A CPLError will be reported if the translation fails for some reason.
  * Common reasons include the auth token already having been used before,
- * it not being appropriate for the passed scope and configured client api 
+ * it not being appropriate for the passed scope and configured client api
  * or http connection problems.  NULL is returned on error.
  *
- * @param pszAuthToken the authorization token from the user. 
- * @param pszScope the scope for which it is valid. 
- * 
+ * @param pszAuthToken the authorization token from the user.
+ * @param pszScope the scope for which it is valid.
+ *
  * @return refresh token, to be freed with CPLFree(), null on failure.
  */
 
@@ -168,16 +168,16 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         "&client_id=%s"
         "&client_secret=%s"
         "&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
-        "&grant_type=authorization_code", 
+        "&grant_type=authorization_code",
         pszAuthToken,
-        CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID), 
+        CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID),
         CPLGetConfigOption("GOA2_CLIENT_SECRET", GDAL_CLIENT_SECRET));
     oOptions.AddString(osItem);
 
 /* -------------------------------------------------------------------- */
 /*      Submit request by HTTP.                                         */
 /* -------------------------------------------------------------------- */
-    CPLHTTPResult * psResult = 
+    CPLHTTPResult * psResult =
         CPLHTTPFetch( GOOGLE_AUTH_URL "/token", oOptions);
 
     if (psResult == NULL)
@@ -188,7 +188,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
 /*      After the first use it will return invalid_grant.               */
 /* -------------------------------------------------------------------- */
     if( psResult->pabyData != NULL
-        && strstr((const char *) psResult->pabyData,"invalid_grant") != NULL) 
+        && strstr((const char *) psResult->pabyData,"invalid_grant") != NULL)
     {
         CPLString osURL;
         osURL.Seize( GOA2GetAuthorizationURL(pszScope) );
@@ -214,7 +214,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         return NULL;
     }
 
-    CPLDebug( "GOA2", "Access Token Response:\n%s", 
+    CPLDebug( "GOA2", "Access Token Response:\n%s",
               (const char *) psResult->pabyData );
 
 /* -------------------------------------------------------------------- */
@@ -237,13 +237,13 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
     CPLDebug("GOA2", "Access Token : '%s'", osAccessToken.c_str());
     CPLDebug("GOA2", "Refresh Token : '%s'", osRefreshToken.c_str());
 
-    if( osRefreshToken.size() == 0) 
+    if( osRefreshToken.size() == 0)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to identify a refresh token in the OAuth2 response.");
         return NULL;
     }
-    else 
+    else
     {
         // Currently we discard the access token and just return the refresh token
         return CPLStrdup(osRefreshToken);
@@ -256,17 +256,17 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
 
 /**
  * Fetch access token using refresh token.
- * 
+ *
  * The permanent refresh token is used to fetch a temporary (usually one
- * hour) access token using Google OAuth2 web services. 
+ * hour) access token using Google OAuth2 web services.
  *
  * A CPLError will be reported if the request fails for some reason.
  * Common reasons include the refresh token having been revoked by the
  * user or http connection problems.
  *
  * @param pszRefreshToken the refresh token from GOA2GetRefreshToken().
- * @param pszScope the scope for which it is valid. 
- * 
+ * @param pszScope the scope for which it is valid.
+ *
  * @return access token, to be freed with CPLFree(), null on failure.
  */
 
@@ -287,9 +287,9 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
         "refresh_token=%s"
         "&client_id=%s"
         "&client_secret=%s"
-        "&grant_type=refresh_token", 
+        "&grant_type=refresh_token",
         pszRefreshToken,
-        CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID), 
+        CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID),
         CPLGetConfigOption("GOA2_CLIENT_SECRET", GDAL_CLIENT_SECRET));
     oOptions.AddString(osItem);
 
@@ -315,7 +315,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
         return NULL;
     }
 
-    CPLDebug( "GOA2", "Refresh Token Response:\n%s", 
+    CPLDebug( "GOA2", "Refresh Token Response:\n%s",
               (const char *) psResult->pabyData );
 
 /* -------------------------------------------------------------------- */
@@ -336,12 +336,12 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
 
     CPLDebug("GOA2", "Access Token : '%s'", osAccessToken.c_str());
 
-    if (osAccessToken.size() == 0) 
+    if (osAccessToken.size() == 0)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to identify an access token in the OAuth2 response.");
         return NULL;
     }
-    else 
+    else
         return CPLStrdup(osAccessToken);
 }

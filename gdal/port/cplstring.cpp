@@ -107,11 +107,11 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
         wrk_args = args;
 #endif
         while( (nPR=CPLvsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
-               >= nWorkBufferSize-1 
+               >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer, 
+            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer,
                                                 nWorkBufferSize );
 #ifdef va_copy
             va_end( wrk_args );
@@ -143,15 +143,15 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 /**
  * Format double in C locale.
  *
- * The passed value is formatted using the C locale (period as decimal 
- * separator) and appended to the target CPLString. 
+ * The passed value is formatted using the C locale (period as decimal
+ * separator) and appended to the target CPLString.
  *
- * @param dfValue the value to format. 
+ * @param dfValue the value to format.
  * @param pszFormat the sprintf() style format to use or omit for default.
- * Note that this format string should only include one substitution argument 
- * and it must be for a double (%f or %g). 
+ * Note that this format string should only include one substitution argument
+ * and it must be for a double (%f or %g).
  *
- * @return a reference to the CPLString. 
+ * @return a reference to the CPLString.
  */
 
 CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
@@ -181,7 +181,7 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
  * Trims white space off the let and right of the string.  White space
  * is any of a space, a tab, a newline ('\n') or a carriage control ('\r').
  *
- * @return a reference to the CPLString. 
+ * @return a reference to the CPLString.
  */
 
 CPLString &CPLString::Trim()
@@ -219,7 +219,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
     if( strcmp(pszSrcEncoding,pszDstEncoding) == 0 )
         return *this;
 
-    char *pszRecoded = CPLRecode( c_str(), 
+    char *pszRecoded = CPLRecode( c_str(),
                                   pszSrcEncoding,
                                   pszDstEncoding );
 

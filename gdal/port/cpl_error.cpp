@@ -25,7 +25,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -41,7 +41,7 @@
 CPL_CVSID("$Id$");
 
 static CPLMutex *hErrorMutex = NULL;
-static void *pErrorHandlerUserData = NULL; 
+static void *pErrorHandlerUserData = NULL;
 static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
 
 static const int DEFAULT_LAST_ERR_MSG_SIZE =
@@ -138,9 +138,9 @@ static CPLErrorContext *CPLGetErrorContext()
 /**
  * Fetch the user data for the error context
  *
- * Fetches the user data for the current error context.  You can 
- * set the user data for the error context when you add your handler by 
- * issuing CPLSetErrorHandlerEx() and CPLPushErrorHandlerEx().  Note that 
+ * Fetches the user data for the current error context.  You can
+ * set the user data for the error context when you add your handler by
+ * issuing CPLSetErrorHandlerEx() and CPLPushErrorHandlerEx().  Note that
  * user data is primarily intended for providing context within error handlers
  * themselves, but they could potentially be abused in other useful ways with
  * the usual caveat emptor understanding.
@@ -346,7 +346,7 @@ void    CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 /* -------------------------------------------------------------------- */
     if( psCtx->psHandlerStack != NULL )
     {
-        psCtx->psHandlerStack->pfnHandler(eErrClass, err_no, 
+        psCtx->psHandlerStack->pfnHandler(eErrClass, err_no,
                                           psCtx->szLastErrMsg);
     }
     else
@@ -461,7 +461,7 @@ static int CPLGetProcessMemorySize()
  *
  * Categories are usually an identifier for the subsystem producing the
  * error.  For instance "GDAL" might be used for the GDAL core, and "TIFF"
- * for messages from the TIFF translator.  
+ * for messages from the TIFF translator.
  *
  * @param pszCategory name of the debugging message category.
  * @param pszFormat printf() style format string for message to display.
@@ -515,7 +515,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     {
         strcpy( pszMessage, VSICTime( VSITime(NULL) ) );
 
-        // On windows anyway, ctime puts a \n at the end, but I'm not 
+        // On windows anyway, ctime puts a \n at the end, but I'm not
         // convinced this is standard behaviour, so we'll get rid of it
         // carefully
 
@@ -550,7 +550,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     va_list     args;
     va_start(args, pszFormat);
 
-    CPLvsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
+    CPLvsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage),
               pszFormat, args);
 
     va_end(args);
@@ -746,7 +746,7 @@ const char* CPL_STDCALL CPLGetLastErrorMsg()
 /*                       CPLDefaultErrorHandler()                       */
 /************************************************************************/
 
-void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError, 
+void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
 {
@@ -792,13 +792,13 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
     else
         fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
 
-    if (eErrClass != CE_Debug 
-        && nMaxErrors > 0 
+    if (eErrClass != CE_Debug
+        && nMaxErrors > 0
         && nCount == nMaxErrors )
     {
-        fprintf( fpLog, 
+        fprintf( fpLog,
                  "More than %d errors or warnings have been reported. "
-                 "No more will be reported from now.\n", 
+                 "No more will be reported from now.\n",
                  nMaxErrors );
     }
 
@@ -809,7 +809,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
 /*                        CPLQuietErrorHandler()                        */
 /************************************************************************/
 
-void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , CPLErrorNum nError, 
+void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , CPLErrorNum nError,
                            const char * pszErrorMsg )
 
 {
@@ -821,7 +821,7 @@ void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , CPLErrorNum nError,
 /*                       CPLLoggingErrorHandler()                       */
 /************************************************************************/
 
-void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError, 
+void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
 {
@@ -917,9 +917,9 @@ void CPLTurnFailureIntoWarning( int bOn )
  **********************************************************************/
 
 /**
- * Install custom error handle with user's data. This method is 
- * essentially CPLSetErrorHandler with an added pointer to pUserData.  
- * The pUserData is not returned in the CPLErrorHandler, however, and 
+ * Install custom error handle with user's data. This method is
+ * essentially CPLSetErrorHandler with an added pointer to pUserData.
+ * The pUserData is not returned in the CPLErrorHandler, however, and
  * must be fetched via CPLGetLastErrorUserData
  *
  * @param pfnErrorHandlerNew new error handler function.
@@ -927,8 +927,8 @@ void CPLTurnFailureIntoWarning( int bOn )
  * @return returns the previously installed error handler.
  */
 
-CPLErrorHandler CPL_STDCALL 
-CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, 
+CPLErrorHandler CPL_STDCALL
+CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
                       void* pUserData )
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
@@ -979,7 +979,7 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
  * </pre>
  *
  * Pass NULL to come back to the default behavior.  The default behaviour
- * (CPLDefaultErrorHandler()) is to write the message to stderr. 
+ * (CPLDefaultErrorHandler()) is to write the message to stderr.
  *
  * The msg will be a partially formatted error message not containing the
  * "ERROR %d:" portion emitted by the default handler.  Message formatting
@@ -1001,12 +1001,12 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
  * Generally speaking CPLSetErrorHandler() would be used to set a desired
  * global error handler, while CPLPushErrorHandler() would be used to install
  * a temporary local error handler, such as CPLQuietErrorHandler() to suppress
- * error reporting in a limited segment of code. 
+ * error reporting in a limited segment of code.
  *
  * @param pfnErrorHandlerNew new error handler function.
  * @return returns the previously installed error handler.
  */
-CPLErrorHandler CPL_STDCALL 
+CPLErrorHandler CPL_STDCALL
 CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 {
     return CPLSetErrorHandlerEx(pfnErrorHandlerNew, NULL);
@@ -1022,7 +1022,7 @@ CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
  * This pushes a new error handler on the thread-local error handler
  * stack.  This handler will be used until removed with CPLPopErrorHandler().
  *
- * The CPLSetErrorHandler() docs have further information on how 
+ * The CPLSetErrorHandler() docs have further information on how
  * CPLError handlers work.
  *
  * @param pfnErrorHandlerNew new error handler function.
@@ -1043,16 +1043,16 @@ void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
  * Push a new CPLError handler with user data on the error context.
  *
  * This pushes a new error handler on the thread-local error handler
- * stack.  This handler will be used until removed with CPLPopErrorHandler(). 
+ * stack.  This handler will be used until removed with CPLPopErrorHandler().
  * Obtain the user data back by using CPLGetErrorContext().
  *
- * The CPLSetErrorHandler() docs have further information on how 
+ * The CPLSetErrorHandler() docs have further information on how
  * CPLError handlers work.
  *
  * @param pfnErrorHandlerNew new error handler function.
- * @param pUserData User data to put on the error context. 
+ * @param pUserData User data to put on the error context.
  */
-void CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, 
+void CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
                                         void* pUserData )
 
 {
@@ -1079,10 +1079,10 @@ void CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
 /**
  * Pop error handler off stack.
  *
- * Discards the current error handler on the error handler stack, and restores 
+ * Discards the current error handler on the error handler stack, and restores
  * the one in use before the last CPLPushErrorHandler() call.  This method
  * has no effect if there are no error handlers on the current threads error
- * handler stack. 
+ * handler stack.
  */
 
 void CPL_STDCALL CPLPopErrorHandler()

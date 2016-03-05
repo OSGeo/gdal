@@ -46,7 +46,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
 
 CPL_CVSID("$Id$");
 
-// list of named persistent http sessions 
+// list of named persistent http sessions
 
 #ifdef HAVE_CURL
 static std::map<CPLString,CURL*>* poSessionMap = NULL;
@@ -61,7 +61,7 @@ static CPLMutex *hSessionMapMutex = NULL;
 /************************************************************************/
 
 #ifdef HAVE_CURL
-static size_t 
+static size_t
 CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 
 {
@@ -108,7 +108,7 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
     psResult->papszHeaders = CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
     CPLFree(pszHdr);
     CPLFree(pszKey);
-    return nmemb; 
+    return nmemb;
 }
 
 #endif /* def HAVE_CURL */
@@ -152,12 +152,12 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  *
  * Alternatively, if not defined in the papszOptions arguments, the TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
- * MAX_RETRY and RETRY_DELAY values are searched in the configuration 
+ * MAX_RETRY and RETRY_DELAY values are searched in the configuration
  * options named GDAL_HTTP_TIMEOUT, GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT,
- * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH, 
+ * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY and GDAL_HTTP_RETRY_DELAY.
  *
- * @return a CPLHTTPResult* structure that must be freed by 
+ * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
 CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
@@ -295,7 +295,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
     char szCurlErrBuf[CURL_ERROR_SIZE+1];
     CPLHTTPResult *psResult;
-    struct curl_slist *headers=NULL; 
+    struct curl_slist *headers=NULL;
 
     const char* pszArobase = strchr(pszURL, '@');
     const char* pszSlash = strchr(pszURL, '/');
@@ -334,10 +334,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     const char* pszNoBody = NULL;
     if ((pszNoBody = CSLFetchNameValue( papszOptions, "NO_BODY" )) != NULL)
     {
-        if (CSLTestBoolean(pszNoBody)) 
+        if (CSLTestBoolean(pszNoBody))
         {
             CPLDebug ("HTTP", "HEAD Request: %s", pszURL);
-            curl_easy_setopt(http_handle, CURLOPT_NOBODY, 1L);           
+            curl_easy_setopt(http_handle, CURLOPT_NOBODY, 1L);
         }
     }
 
@@ -521,7 +521,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unsupported HTTPAUTH value '%s', ignored.", 
+                  "Unsupported HTTPAUTH value '%s', ignored.",
                   pszHttpAuth );
     }
 #else
@@ -578,7 +578,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unsupported PROXYAUTH value '%s', ignored.", 
+                  "Unsupported PROXYAUTH value '%s', ignored.",
                   pszProxyAuth );
     }
 #else
@@ -714,7 +714,7 @@ void CPLHTTPCleanup()
         }
     }
 
-    // not quite a safe sequence. 
+    // not quite a safe sequence.
     CPLDestroyMutex( hSessionMapMutex );
     hSessionMapMutex = NULL;
 #endif
@@ -788,7 +788,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 
     CPLString osBoundary;
     char **papszTokens =
-        CSLTokenizeStringComplex( pszBound + 9, "\n ;", 
+        CSLTokenizeStringComplex( pszBound + 9, "\n ;",
                                   TRUE, FALSE );
 
     if( CSLCount(papszTokens) == 0 || strlen(papszTokens[0]) == 0 )
@@ -877,11 +877,11 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
         psPart->pabyData = (GByte *) pszNext;
 
-        int nBytesAvail = psResult->nDataLen - 
+        int nBytesAvail = psResult->nDataLen -
             static_cast<int>(pszNext - (const char *) psResult->pabyData);
 
         while( nBytesAvail > 0
-               && (*pszNext != '-' 
+               && (*pszNext != '-'
                    || strncmp(pszNext,osBoundary,strlen(osBoundary)) != 0) )
         {
             pszNext++;

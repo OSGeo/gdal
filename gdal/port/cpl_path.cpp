@@ -475,7 +475,7 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
  * not.  May be NULL.
  *
  * @param pszBasename file basename.  May optionally have path and/or
- * extension.  Must *NOT* be NULL. 
+ * extension.  Must *NOT* be NULL.
  *
  * @param pszExtension file extension, optionally including the period.  May
  * be NULL.
@@ -592,7 +592,7 @@ const char *CPLFormFilename( const char * pszPath,
  * not.  May be NULL.
  *
  * @param pszBasename file basename.  May optionally have path and/or
- * extension.  May not be NULL. 
+ * extension.  May not be NULL.
  *
  * @param pszExtension file extension, optionally including the period.  May
  * be NULL.
@@ -627,7 +627,7 @@ const char *CPLFormCIFilename( const char * pszPath,
     else if( pszExtension[0] != '.' && strlen(pszExtension) > 0 )
         pszAddedExtSep = ".";
 
-    snprintf( pszFilename, nLen, "%s%s%s", 
+    snprintf( pszFilename, nLen, "%s%s%s",
              pszBasename, pszAddedExtSep, pszExtension );
 
     const char *pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
@@ -670,12 +670,12 @@ const char *CPLFormCIFilename( const char * pszPath,
 /************************************************************************/
 
 /**
- * Find a file relative to a project file. 
+ * Find a file relative to a project file.
  *
  * Given the path to a "project" directory, and a path to a secondary file
  * referenced from that project, build a path to the secondary file
  * that the current application can use.  If the secondary path is already
- * absolute, rather than relative, then it will be returned unaltered. 
+ * absolute, rather than relative, then it will be returned unaltered.
  *
  * Examples:
  * <pre>
@@ -686,17 +686,17 @@ const char *CPLFormCIFilename( const char * pszPath,
  * CPLProjectRelativeFilename("C:\WIN","abc.gif") == "C:\WIN\abc.gif"
  * </pre>
  *
- * @param pszProjectDir the directory relative to which the secondary files 
+ * @param pszProjectDir the directory relative to which the secondary files
  * path should be interpreted.
  * @param pszSecondaryFilename the filename (potentially with path) that
  * is to be interpreted relative to the project directory.
  *
  * @return a composed path to the secondary file.  The returned string is
  * internal and should not be altered, freed, or depending on past the next
- * CPL call. 
+ * CPL call.
  */
 
-const char *CPLProjectRelativeFilename( const char *pszProjectDir, 
+const char *CPLProjectRelativeFilename( const char *pszProjectDir,
                                         const char *pszSecondaryFilename )
 
 {
@@ -720,7 +720,7 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    if( pszProjectDir[strlen(pszProjectDir)-1] != '/' 
+    if( pszProjectDir[strlen(pszProjectDir)-1] != '/'
         && pszProjectDir[strlen(pszProjectDir)-1] != '\\' )
     {
         /* FIXME? would be better to ask the filesystems what they */
@@ -752,11 +752,11 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
  *
  * The test is filesystem convention agnostic.  That is it will test for
  * Unix style and windows style path conventions regardless of the actual
- * system in use.  
+ * system in use.
  *
  * @param pszFilename the filename with path to test.
  *
- * @return TRUE if the filename is relative or FALSE if it is absolute. 
+ * @return TRUE if the filename is relative or FALSE if it is absolute.
  */
 
 int CPLIsFilenameRelative( const char *pszFilename )
@@ -780,27 +780,27 @@ int CPLIsFilenameRelative( const char *pszFilename )
 /**
  * Get relative path from directory to target file.
  *
- * Computes a relative path for pszTarget relative to pszBaseDir. 
+ * Computes a relative path for pszTarget relative to pszBaseDir.
  * Currently this only works if they share a common base path.  The returned
  * path is normally into the pszTarget string.  It should only be considered
- * valid as long as pszTarget is valid or till the next call to 
- * this function, whichever comes first. 
+ * valid as long as pszTarget is valid or till the next call to
+ * this function, whichever comes first.
  *
- * @param pszBaseDir the name of the directory relative to which the path 
+ * @param pszBaseDir the name of the directory relative to which the path
  * should be computed.  pszBaseDir may be NULL in which case the original
  * target is returned without relativizing.
  *
  * @param pszTarget the filename to be changed to be relative to pszBaseDir.
  *
- * @param pbGotRelative Pointer to location in which a flag is placed 
+ * @param pbGotRelative Pointer to location in which a flag is placed
  * indicating that the returned path is relative to the basename (TRUE) or
  * not (FALSE).  This pointer may be NULL if flag is not desired.
  *
  * @return an adjusted path or the original if it could not be made relative
- * to the pszBaseFile's path. 
+ * to the pszBaseFile's path.
  **/
 
-const char *CPLExtractRelativePath( const char *pszBaseDir, 
+const char *CPLExtractRelativePath( const char *pszBaseDir,
                                     const char *pszTarget,
                                     int *pbGotRelative )
 
@@ -847,8 +847,8 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 /*      If we don't have a common path prefix, then we can't get a      */
 /*      relative path.                                                  */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszBaseDir,pszTarget,nBasePathLen) 
-        || (pszTarget[nBasePathLen] != '\\' 
+    if( !EQUALN(pszBaseDir,pszTarget,nBasePathLen)
+        || (pszTarget[nBasePathLen] != '\\'
             && pszTarget[nBasePathLen] != '/') )
     {
         if( pbGotRelative != NULL )
@@ -874,8 +874,8 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 /**
  * Remove trailing forward/backward slash from the path for UNIX/Windows resp.
  *
- * Returns a string containing the portion of the passed path string with 
- * trailing slash removed. If there is no path in the passed filename 
+ * Returns a string containing the portion of the passed path string with
+ * trailing slash removed. If there is no path in the passed filename
  * an empty string will be returned (not NULL).
  *
  * <pre>
@@ -908,7 +908,7 @@ const char *CPLCleanTrailingSlash( const char *pszPath )
     CPLStrlcpy( pszStaticResult, pszPath, iPathLength+1 );
 
     if( iPathLength > 0
-        && (pszStaticResult[iPathLength-1] == '\\' 
+        && (pszStaticResult[iPathLength-1] == '\\'
             || pszStaticResult[iPathLength-1] == '/'))
         pszStaticResult[iPathLength-1] = '\0';
 
@@ -925,21 +925,21 @@ const char *CPLCleanTrailingSlash( const char *pszPath )
  * Given a prototype old and new filename this function will attempt
  * to determine corresponding names for a set of other old filenames that
  * will rename them in a similar manner.  This correspondence assumes there
- * are two possibly kinds of renaming going on.  A change of path, and a 
- * change of filename stem. 
+ * are two possibly kinds of renaming going on.  A change of path, and a
+ * change of filename stem.
  *
  * If a consistent renaming cannot be established for all the files this
- * function will return indicating an error.  
+ * function will return indicating an error.
  *
  * The returned file list becomes owned by the caller and should be destroyed
- * with CSLDestroy(). 
+ * with CSLDestroy().
  *
- * @param pszOldFilename path to old prototype file. 
- * @param pszNewFilename path to new prototype file. 
- * @param papszFileList list of other files associated with pszOldFilename to 
+ * @param pszOldFilename path to old prototype file.
+ * @param pszNewFilename path to new prototype file.
+ * @param papszFileList list of other files associated with pszOldFilename to
  * rename similarly.
  *
- * @return a list of files corresponding to papszFileList but renamed to 
+ * @return a list of files corresponding to papszFileList but renamed to
  * correspond to pszNewFilename.
  */
 
@@ -983,7 +983,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
                 || !EQUAL(osFilePath,osOldPath)
                 || osFileName[osOldBasename.size()] != '.' )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Unable to rename fileset due irregular basenames.");
                 return NULL;
             }
@@ -1003,7 +1003,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
 
         if( osOldExtra != osNewExtra )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to rename fileset due to irregular filename "
                       "correspondence." );
             return NULL;
@@ -1022,11 +1022,11 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
         const CPLString osOldFilename = CPLGetFilename( papszFileList[i] );
 
         if( osOldBasename == osNewBasename )
-            osNewFilename = 
+            osNewFilename =
                 CPLFormFilename( osNewPath, osOldFilename, NULL );
         else
-            osNewFilename = 
-                CPLFormFilename( osNewPath, osNewBasename, 
+            osNewFilename =
+                CPLFormFilename( osNewPath, osNewBasename,
                                  osOldFilename.c_str()+strlen(osOldBasename));
 
         papszNewList = CSLAddString( papszNewList, osNewFilename );
@@ -1044,7 +1044,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
  *
  * Returns a filename that may be used for a temporary file.  The location
  * of the file tries to follow operating system semantics but may be
- * forced via the CPL_TMPDIR configuration option.  
+ * forced via the CPL_TMPDIR configuration option.
  *
  * @param pszStem if non-NULL this will be part of the filename.
  *

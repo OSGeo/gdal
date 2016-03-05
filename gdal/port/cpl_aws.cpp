@@ -492,7 +492,7 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb,
             osXAMZContentSHA256,
             osXAMZDate);
 
-    struct curl_slist *headers=NULL; 
+    struct curl_slist *headers=NULL;
     headers = curl_slist_append(headers,
                                 CPLSPrintf("x-amz-date: %s", osXAMZDate.c_str()));
     headers = curl_slist_append(headers,
@@ -577,7 +577,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg)
 
     if( !EQUAL(pszCode, "NoSuchKey") )
     {
-        const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", NULL); 
+        const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", NULL);
         if( pszMessage )
             CPLError(CE_Failure, CPLE_AppDefined, "%s", pszMessage);
         else

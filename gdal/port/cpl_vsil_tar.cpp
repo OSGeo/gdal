@@ -345,14 +345,14 @@ int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 /* ==================================================================== */
 /************************************************************************/
 
-class VSITarFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler 
+class VSITarFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
 {
 public:
     virtual const char* GetPrefix() { return "/vsitar"; }
     virtual std::vector<CPLString> GetExtensions();
     virtual VSIArchiveReader* CreateReader(const char* pszTarFileName);
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess);
 };
 
@@ -407,7 +407,7 @@ VSIArchiveReader* VSITarFilesystemHandler::CreateReader(const char* pszTarFileNa
 /*                                 Open()                               */
 /************************************************************************/
 
-VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename, 
+VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
                                                  const char *pszAccess)
 {
 

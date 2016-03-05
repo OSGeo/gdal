@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -49,7 +49,7 @@ struct _CPLHashSet
 #endif
 };
 
-static const int anPrimes[] = 
+static const int anPrimes[] =
 { 53, 97, 193, 389, 769, 1543, 3079, 6151,
   12289, 24593, 49157, 98317, 196613, 393241,
   786433, 1572869, 3145739, 6291469, 12582917,
@@ -62,7 +62,7 @@ static const int anPrimes[] =
 
 /**
  * Creates a new hash set
- * 
+ *
  * The hash function must return a hash value for the elements to insert.
  * If fnHashFunc is NULL, CPLHashSetHashPointer will be used.
  *
@@ -108,7 +108,7 @@ CPLHashSet* CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
 
 /**
  * Returns the number of elements inserted in the hash set
- * 
+ *
  * Note: this is not the internal size of the hash set
  *
  * @param set the hash set
@@ -193,7 +193,7 @@ static void CPLHashSetClearInternal(CPLHashSet* set, int bFinalize)
  *
  * This function also frees the elements if a free function was
  * provided at the creation of the hash set.
- * 
+ *
  * @param set the hash set
  */
 
@@ -214,7 +214,7 @@ void CPLHashSetDestroy(CPLHashSet* set)
  *
  * This function also frees the elements if a free function was
  * provided at the creation of the hash set.
- * 
+ *
  * @param set the hash set
  * @since GDAL 2.1
  */
@@ -246,7 +246,7 @@ void CPLHashSetClear(CPLHashSet* set)
  *
  * Note : the structure of the hash set must *NOT* be modified during the
  * walk.
- * 
+ *
  * @param set the hash set.
  * @param fnIterFunc the function called on each element.
  * @param user_data the user data provided to the function.
@@ -335,7 +335,7 @@ static void** CPLHashSetFindPtr(CPLHashSet* set, const void* elt)
  * If the element was already inserted in the hash set, the previous
  * element is replaced by the new element. If a free function was provided,
  * it is used to free the previously inserted element
- * 
+ *
  * @param set the hash set
  * @param elt the new element to insert in the hash set
  *
@@ -384,7 +384,7 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
 /**
  * Returns the element found in the hash set corresponding to the element to look up
  * The element must not be modified.
- * 
+ *
  * @param set the hash set
  * @param elt the element to look up in the hash set
  *
@@ -454,7 +454,7 @@ int CPLHashSetRemoveInternal(CPLHashSet* set, const void* elt, int bDeferRehash)
 
 /**
  * Removes an element from a hash set
- * 
+ *
  * @param set the hash set
  * @param elt the new element to remove from the hash set
  *
@@ -475,7 +475,7 @@ int CPLHashSetRemove(CPLHashSet* set, const void* elt)
  *
  * This will defer potential rehashing of the set to later calls to
  * CPLHashSetInsert() or CPLHashSetRemove().
- * 
+ *
  * @param set the hash set
  * @param elt the new element to remove from the hash set
  *
@@ -494,7 +494,7 @@ int CPLHashSetRemoveDeferRehash(CPLHashSet* set, const void* elt)
 
 /**
  * Hash function for an arbitrary pointer
- * 
+ *
  * @param elt the arbitrary pointer to hash
  *
  * @return the hash value of the pointer
@@ -511,7 +511,7 @@ unsigned long CPLHashSetHashPointer(const void* elt)
 
 /**
  * Equality function for arbitrary pointers
- * 
+ *
  * @param elt1 the first arbitrary pointer to compare
  * @param elt2 the second arbitrary pointer to compare
  *
@@ -529,7 +529,7 @@ int CPLHashSetEqualPointer(const void* elt1, const void* elt2)
 
 /**
  * Hash function for a zero-terminated string
- * 
+ *
  * @param elt the string to hash. May be NULL.
  *
  * @return the hash value of the string
@@ -556,7 +556,7 @@ unsigned long CPLHashSetHashStr(const void *elt)
 
 /**
  * Equality function for strings
- * 
+ *
  * @param elt1 the first string to compare. May be NULL.
  * @param elt2 the second string to compare. May be NULL.
  *

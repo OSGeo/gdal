@@ -188,7 +188,7 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
 };
 
 
-class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler 
+class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
     CPLMutex* hMutex;
     VSIGZipHandle* poHandleLastGZipFile;
@@ -197,9 +197,9 @@ public:
     VSIGZipFilesystemHandler();
     ~VSIGZipFilesystemHandler();
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess);
-    VSIGZipHandle *OpenGZipReadOnly( const char *pszFilename, 
+    VSIGZipHandle *OpenGZipReadOnly( const char *pszFilename,
                                      const char *pszAccess);
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
     virtual int      Unlink( const char *pszFilename );
@@ -223,7 +223,7 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
     CPLAssert (m_compressed_size != 0);
     CPLAssert (m_pszBaseFileName != NULL);
 
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( m_pszBaseFileName );
 
     VSIVirtualHandle* poNewBaseHandle =
@@ -362,7 +362,7 @@ void VSIGZipHandle::SaveInfo_unlocked()
 {
     if (m_pszBaseFileName && m_bCanSaveInfo)
     {
-        VSIFilesystemHandler *poFSHandler = 
+        VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
         ((VSIGZipFilesystemHandler*)poFSHandler)->SaveInfo_unlocked(this);
         m_bCanSaveInfo = FALSE;
@@ -377,7 +377,7 @@ VSIGZipHandle::~VSIGZipHandle()
 {
     if (m_pszBaseFileName && m_bCanSaveInfo)
     {
-        VSIFilesystemHandler *poFSHandler = 
+        VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
         ((VSIGZipFilesystemHandler*)poFSHandler)->SaveInfo(this);
     }
@@ -1168,7 +1168,7 @@ size_t VSIGZipWriteHandle::Read( CPL_UNUSED void *pBuffer,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIGZipWriteHandle::Write( const void * const pBuffer, 
+size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
                                   size_t const nSize, size_t const nMemb )
 
 {
@@ -1190,8 +1190,8 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
 
         int nNewBytesToWrite = MIN((int) (Z_BUFSIZE-sStream.avail_in),
                                    nBytesToWrite - nNextByte);
-        memcpy( pabyInBuf + sStream.avail_in, 
-                ((Byte *) pBuffer) + nNextByte, 
+        memcpy( pabyInBuf + sStream.avail_in,
+                ((Byte *) pBuffer) + nNextByte,
                 nNewBytesToWrite );
 
         sStream.next_in = pabyInBuf;
@@ -1346,10 +1346,10 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked(  VSIGZipHandle* poHandle )
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename, 
+VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess)
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename + strlen("/vsigzip/"));
 
 /* -------------------------------------------------------------------- */
@@ -1394,10 +1394,10 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
 /*                          OpenGZipReadOnly()                          */
 /************************************************************************/
 
-VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly( const char *pszFilename, 
+VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly( const char *pszFilename,
                                                       const char *pszAccess)
 {
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename + strlen("/vsigzip/"));
 
     CPLMutexHolder oHolder(&hMutex);
@@ -1485,7 +1485,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
                 if (STARTS_WITH_CI(pszLine, "compressed_size="))
                 {
                     const char* pszBuffer = pszLine + strlen("compressed_size=");
-                    nCompressedSize = 
+                    nCompressedSize =
                             CPLScanUIntBig(pszBuffer, static_cast<int>(strlen(pszBuffer)));
                 }
                 else if (STARTS_WITH_CI(pszLine, "uncompressed_size="))
@@ -1593,9 +1593,9 @@ char** VSIGZipFilesystemHandler::ReadDirEx( const char * /*pszDirname*/,
 
 
 /**
- * \brief Install GZip file system handler. 
+ * \brief Install GZip file system handler.
  *
- * A special file handler is installed that allows reading on-the-fly and 
+ * A special file handler is installed that allows reading on-the-fly and
  * writing in GZip (.gz) files.
  *
  * All portions of the file system underneath the base
@@ -1766,7 +1766,7 @@ int VSIZipReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 
 class VSIZipWriteHandle;
 
-class VSIZipFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler 
+class VSIZipFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
 {
     std::map<CPLString, VSIZipWriteHandle*> oMapZipWriteHandles;
     VSIVirtualHandle *OpenForWrite_unlocked( const char *pszFilename,
@@ -1779,7 +1779,7 @@ public:
     virtual std::vector<CPLString> GetExtensions();
     virtual VSIArchiveReader* CreateReader(const char* pszZipFileName);
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess);
 
     virtual VSIVirtualHandle *OpenForWrite( const char *pszFilename,
@@ -1903,7 +1903,7 @@ VSIArchiveReader* VSIZipFilesystemHandler::CreateReader(const char* pszZipFileNa
 /*                                 Open()                               */
 /************************************************************************/
 
-VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename, 
+VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                                                  const char *pszAccess)
 {
     CPLString osZipInFileName;
@@ -1943,7 +1943,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    VSIFilesystemHandler *poFSHandler = 
+    VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( zipFilename);
 
     VSIVirtualHandle* poVirtualHandle =
@@ -2371,7 +2371,7 @@ void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
 
 
 /**
- * \brief Install ZIP file system handler. 
+ * \brief Install ZIP file system handler.
  *
  * A special file handler is installed that allows reading on-the-fly in ZIP
  * (.zip) archives.
