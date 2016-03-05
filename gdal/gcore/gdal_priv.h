@@ -349,13 +349,17 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     char            **papszOpenOptions;
 
     friend class GDALRasterBand;
-    
+
+    // The below methods related to read write mutex are fragile logic, and
+    // should not be used by out-of-tree code if possible.
     int                 EnterReadWrite(GDALRWFlag eRWFlag);
     void                LeaveReadWrite();
 
     void                TemporarilyDropReadWriteLock();
     void                ReacquireReadWriteLock();
-    
+
+    void                DisableReadWriteMutex();
+
   public:
     virtual     ~GDALDataset();
 
