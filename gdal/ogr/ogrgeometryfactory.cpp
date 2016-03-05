@@ -268,62 +268,62 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /* -------------------------------------------------------------------- */
 /*      Instantiate a geometry of the appropriate type.                 */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(szToken,"POINT") )
+    if( STARTS_WITH_CI(szToken,"POINT") )
     {
         poGeom = new OGRPoint();
     }
 
-    else if( EQUAL(szToken,"LINESTRING") )
+    else if( STARTS_WITH_CI(szToken,"LINESTRING") )
     {
         poGeom = new OGRLineString();
     }
 
-    else if( EQUAL(szToken,"POLYGON") )
+    else if( STARTS_WITH_CI(szToken,"POLYGON") )
     {
         poGeom = new OGRPolygon();
     }
 
-    else if( EQUAL(szToken,"GEOMETRYCOLLECTION") )
+    else if( STARTS_WITH_CI(szToken,"GEOMETRYCOLLECTION") )
     {
         poGeom = new OGRGeometryCollection();
     }
 
-    else if( EQUAL(szToken,"MULTIPOLYGON") )
+    else if( STARTS_WITH_CI(szToken,"MULTIPOLYGON") )
     {
         poGeom = new OGRMultiPolygon();
     }
 
-    else if( EQUAL(szToken,"MULTIPOINT") )
+    else if( STARTS_WITH_CI(szToken,"MULTIPOINT") )
     {
         poGeom = new OGRMultiPoint();
     }
 
-    else if( EQUAL(szToken,"MULTILINESTRING") )
+    else if( STARTS_WITH_CI(szToken,"MULTILINESTRING") )
     {
         poGeom = new OGRMultiLineString();
     }
 
-    else if( EQUAL(szToken,"CIRCULARSTRING") )
+    else if( STARTS_WITH_CI(szToken,"CIRCULARSTRING") )
     {
         poGeom = new OGRCircularString();
     }
 
-    else if( EQUAL(szToken,"COMPOUNDCURVE") )
+    else if( STARTS_WITH_CI(szToken,"COMPOUNDCURVE") )
     {
         poGeom = new OGRCompoundCurve();
     }
 
-    else if( EQUAL(szToken,"CURVEPOLYGON") )
+    else if( STARTS_WITH_CI(szToken,"CURVEPOLYGON") )
     {
         poGeom = new OGRCurvePolygon();
     }
 
-    else if( EQUAL(szToken,"MULTICURVE") )
+    else if( STARTS_WITH_CI(szToken,"MULTICURVE") )
     {
         poGeom = new OGRMultiCurve();
     }
 
-    else if( EQUAL(szToken,"MULTISURFACE") )
+    else if( STARTS_WITH_CI(szToken,"MULTISURFACE") )
     {
         poGeom = new OGRMultiSurface();
     }
