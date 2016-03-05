@@ -994,9 +994,7 @@ CPLString OGRPGTableLayer::BuildFields()
             {
                 osFieldList += osEscapedGeom;
             }
-            else if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")) &&
-                     !(poGeomFieldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_3D && 
-                       poGeomFieldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) )
+            else if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")))
             {
                 if (poDS->sPostGISVersion.nMajor >= 2)
                     osFieldList += "encode(ST_AsEWKB(";
@@ -1008,9 +1006,6 @@ CPLString OGRPGTableLayer::BuildFields()
                     CPLSPrintf("EWKBBase64_%s", poGeomFieldDefn->GetNameRef()));
             }
             else if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) &&
-                      !(poGeomFieldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_3D && 
-                        poGeomFieldDefn->GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED)
-                      &&
                       /* perhaps works also for older version, but I didn't check */
                       (poDS->sPostGISVersion.nMajor > 1 ||
                       (poDS->sPostGISVersion.nMajor == 1 && poDS->sPostGISVersion.nMinor >= 1)) )
@@ -1041,6 +1036,7 @@ CPLString OGRPGTableLayer::BuildFields()
         }
         else if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
         {
+#if defined(BINARY_CURSOR_ENABLED)
             if ( poDS->bUseBinaryCursor )
             {
                 osFieldList += "ST_AsBinary(";
@@ -1049,13 +1045,15 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += OGRPGEscapeColumnName(
                     CPLSPrintf("AsBinary_%s", poGeomFieldDefn->GetNameRef()));
             }
-            else if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")))
+            else
+#endif
+            if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")))
             {
-                osFieldList += "encode(ST_AsBinary(";
+                osFieldList += "encode(ST_AsEWKB(";
                 osFieldList += osEscapedGeom;
-                osFieldList += "), 'base64') AS ";
+                osFieldList += "::geometry), 'base64') AS ";
                 osFieldList += OGRPGEscapeColumnName(
-                    CPLSPrintf("BinaryBase64_%s", poGeomFieldDefn->GetNameRef()));
+                    CPLSPrintf("EWKBBase64_%s", poGeomFieldDefn->GetNameRef()));
             }
             else if ( !CPLTestBool(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
@@ -1063,11 +1061,11 @@ CPLString OGRPGTableLayer::BuildFields()
             }
             else
             {
-                osFieldList += "ST_AsText(";
+                osFieldList += "ST_AsEWKT(";
                 osFieldList += osEscapedGeom;
-                osFieldList += ") AS ";
+                osFieldList += "::geometry) AS ";
                 osFieldList += OGRPGEscapeColumnName(
-                    CPLSPrintf("AsText_%s", poGeomFieldDefn->GetNameRef()));
+                    CPLSPrintf("AsEWKT_%s", poGeomFieldDefn->GetNameRef()));
             }
         }
         else
@@ -1083,6 +1081,7 @@ CPLString OGRPGTableLayer::BuildFields()
         if( osFieldList.size() > 0 )
             osFieldList += ", ";
 
+#if defined(BINARY_CURSOR_ENABLED)
         /* With a binary cursor, it is not possible to get the time zone */
         /* of a timestamptz column. So we fallback to asking it in text mode */
         if ( poDS->bUseBinaryCursor &&
@@ -1093,6 +1092,7 @@ CPLString OGRPGTableLayer::BuildFields()
             osFieldList += " AS text)";
         }
         else
+#endif
         {
             osFieldList += OGRPGEscapeColumnName(pszName);
         }

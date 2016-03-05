@@ -661,32 +661,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY) )
         {
-            if ( !poDS->bUseBinaryCursor &&
-                 STARTS_WITH_CI(pszFieldName, "BinaryBase64") )
-            {
-                GByte* pabyData = (GByte*)PQgetvalue( hResult,
-                                                        iRecord, iField);
-
-                int nLength = PQgetlength(hResult, iRecord, iField);
-
-                /* No geometry */
-                if (nLength == 0)
-                    continue;
-
-                nLength = CPLBase64DecodeInPlace(pabyData);
-                OGRGeometry * poGeom = NULL;
-                OGRGeometryFactory::createFromWkb( pabyData, NULL, &poGeom, nLength,
-                                                   (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
-
-                if( poGeom != NULL )
-                {
-                    poGeom->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
-                    poFeature->SetGeomFieldDirectly(iOGRGeomField,  poGeom );
-                }
-
-                continue;
-            }
-            else if ( STARTS_WITH_CI(pszFieldName, "ST_AsBinary") ||
+            if ( STARTS_WITH_CI(pszFieldName, "ST_AsBinary") ||
                       STARTS_WITH_CI(pszFieldName, "AsBinary") )
             {
                 GByte* pabyVal = (GByte*) PQgetvalue( hResult,
@@ -1405,7 +1380,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /************************************************************************/
 
 static const char* const apszKnownGeomFuncPrefixes[] = {
-    "ST_AsBinary", "BinaryBase64", "ST_AsEWKT", "ST_AsEWKB", "EWKBBase64",
+    "ST_AsBinary", "ST_AsEWKT", "ST_AsEWKB", "EWKBBase64",
     "ST_AsText", "AsBinary", "asEWKT", "asEWKB", "asText" };
 static int OGRPGIsKnownGeomFuncPrefix(const char* pszFieldName)
 {
