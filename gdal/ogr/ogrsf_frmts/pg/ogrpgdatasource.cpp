@@ -362,8 +362,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszNewName, "PGB:") )
     {
+#if defined(BINARY_CURSOR_ENABLED)
         bUseBinaryCursor = TRUE;
         CPLDebug("PG","BINARY cursor is used for geometry fetching");
+#endif
     }
     else
     if( !STARTS_WITH_CI(pszNewName, "PG:") )
@@ -499,7 +501,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    hPGConn = PQconnectdb( pszConnectionName + (bUseBinaryCursor ? 4 : 3) );
+    hPGConn = PQconnectdb( pszConnectionName + (STARTS_WITH_CI(pszNewName, "PGB:") ? 4 : 3) );
     CPLFree(pszConnectionName);
     pszConnectionName = NULL;
 
@@ -627,6 +629,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if( pszSpace != NULL && isdigit(pszSpace[1]) )
         {
             OGRPGDecodeVersionString(&sPostgreSQLVersion, pszSpace + 1);
+#if defined(BINARY_CURSOR_ENABLED)
             if (sPostgreSQLVersion.nMajor == 7 && sPostgreSQLVersion.nMinor < 4)
             {
                 /* We don't support BINARY CURSOR for PostgreSQL < 7.4. */
@@ -634,6 +637,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 CPLDebug("PG","BINARY cursor will finally NOT be used because version < 7.4");
                 bUseBinaryCursor = FALSE;
             }
+#endif
         }
     }
     OGRPGClearResult(hResult);
@@ -656,7 +660,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Test if time binary format is int8 or float8                    */
 /* -------------------------------------------------------------------- */
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
     if (bUseBinaryCursor)
     {
         SoftStartTransaction();

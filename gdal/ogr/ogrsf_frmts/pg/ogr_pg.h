@@ -59,6 +59,7 @@
 #define FLOAT4OID               700
 #define FLOAT8OID               701
 #define BOOLARRAYOID            1000
+#define INT2ARRAYOID            1005
 #define INT4ARRAYOID            1007
 #define TEXTARRAYOID            1009
 #define BPCHARARRAYOID          1014

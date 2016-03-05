@@ -187,6 +187,7 @@ void OGRPGLayer::ResetReading()
     bInvalidated = FALSE;
 }
 
+#if defined(BINARY_CURSOR_ENABLED)
 /************************************************************************/
 /*                    OGRPGGetStrFromBinaryNumeric()                    */
 /************************************************************************/
@@ -446,6 +447,7 @@ int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
         return 0;
 }
 
+#endif // defined(BINARY_CURSOR_ENABLED)
 
 /************************************************************************/
 /*                   TokenizeStringListFromText()                       */
@@ -601,7 +603,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
     {
         int     iOGRField;
 
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
         int nTypeOID = PQftype(hResult, iField);
 #endif
         const char* pszFieldName = PQfname(hResult,iField);
@@ -611,7 +613,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /* -------------------------------------------------------------------- */
         if( pszFIDColumn != NULL && EQUAL(pszFieldName,pszFIDColumn) )
         {
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 if ( nTypeOID == INT4OID)
@@ -843,6 +845,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             }
             else
             {
+#if defined(BINARY_CURSOR_ENABLED)
                 if (poDS->bUseBinaryCursor
 #if !defined(PG_PRE74)
                     && PQfformat( hResult, iField ) == 1 
@@ -853,6 +856,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                     poGeometry = OGRGeometryFromEWKB(pabyData, nLength, NULL,
                                                      poDS->sPostGISVersion.nMajor < 2 );
                 }
+#endif
                 if (poGeometry == NULL)
                 {
                     poGeometry = BYTEAToGeometry( (const char*)pabyData,
@@ -887,10 +891,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         {
             int *panList, nCount, i;
 
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
-                if (nTypeOID == INT4ARRAYOID)
+                if (nTypeOID == INT2ARRAYOID || nTypeOID == INT4ARRAYOID)
                 {
                     char * pData = PQgetvalue( hResult, iRecord, iField );
 
@@ -909,13 +913,22 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                         // get element size
                         int nSize = *(int *)(pData);
                         CPL_MSBPTR32( &nSize );
-
-                        CPLAssert( nSize == sizeof(int) );
-
                         pData += sizeof(int);
 
-                        memcpy( &panList[i], pData, nSize );
-                        CPL_MSBPTR32(&panList[i]);
+                        if (nTypeOID == INT4ARRAYOID  )
+                        {
+                            CPLAssert( nSize == sizeof(int) );
+                            memcpy( &panList[i], pData, nSize );
+                            CPL_MSBPTR32(&panList[i]);
+                        }
+                        else
+                        {
+                            CPLAssert( nSize == sizeof(GInt16) );
+                            GInt16 nVal;
+                            memcpy( &nVal, pData, nSize );
+                            CPL_MSBPTR16(&nVal);
+                            panList[i] = nVal;
+                        }
 
                         pData += nSize;
                     }
@@ -958,7 +971,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             GIntBig *panList;
             int nCount, i;
 
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 if (nTypeOID == INT8ARRAYOID)
@@ -1029,7 +1042,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             int nCount, i;
             double *padfList;
 
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 if (nTypeOID == FLOAT8ARRAYOID || nTypeOID == FLOAT4ARRAYOID)
@@ -1105,7 +1118,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         {
             char **papszTokens = NULL;
 
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 char * pData = PQgetvalue( hResult, iRecord, iField );
@@ -1164,7 +1177,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                  || eOGRType == OFTTime 
                  || eOGRType == OFTDateTime )
         {
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data
             {
                 if ( nTypeOID == DATEOID )
@@ -1245,7 +1258,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         }
         else if( eOGRType == OFTBinary )
         {
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1)
             {
                 int nLength = PQgetlength(hResult, iRecord, iField);
@@ -1264,7 +1277,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         }
         else
         {
-#if !defined(PG_PRE74)
+#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 &&
                  eOGRType != OFTString ) // Binary data
             {
@@ -1471,10 +1484,12 @@ void OGRPGLayer::SetInitialQueryCursor()
 
     poDS->SoftStartTransaction();
 
+#if defined(BINARY_CURSOR_ENABLED)
     if ( poDS->bUseBinaryCursor && bCanUseBinaryCursor )
         osCommand.Printf( "DECLARE %s BINARY CURSOR for %s",
                             pszCursorName, pszQueryStatement );
     else
+#endif
         osCommand.Printf( "DECLARE %s CURSOR for %s",
                             pszCursorName, pszQueryStatement );
 
@@ -2203,6 +2218,11 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             oField.SetSubType( OFSTBoolean );
             oField.SetWidth( 1 );
         }
+        else if ( nTypeOID == INT2ARRAYOID )
+        {
+            oField.SetType ( OFTIntegerList );
+            oField.SetSubType( OFSTInt16 );
+        }
         else if ( nTypeOID == INT4ARRAYOID )
         {
             oField.SetType ( OFTIntegerList );
@@ -2211,8 +2231,12 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         {
             oField.SetType ( OFTInteger64List );
         }
-        else if ( nTypeOID == FLOAT4ARRAYOID ||
-                  nTypeOID == FLOAT8ARRAYOID )
+        else if ( nTypeOID == FLOAT4ARRAYOID )
+        {
+          oField.SetType ( OFTRealList );
+          oField.SetSubType( OFSTFloat32 );
+        }
+        else if ( nTypeOID == FLOAT8ARRAYOID )
         {
             oField.SetType ( OFTRealList );
         }
@@ -2233,10 +2257,12 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         else if ( nTypeOID == TIMESTAMPOID ||
                   nTypeOID == TIMESTAMPTZOID )
         {
+#if defined(BINARY_CURSOR_ENABLED)
             /* We can't deserialize properly timestamp with time zone */
             /* with binary cursors */
             if (nTypeOID == TIMESTAMPTZOID)
                 bCanUseBinaryCursor = FALSE;
+#endif
 
             oField.SetType( OFTDateTime );
         }
