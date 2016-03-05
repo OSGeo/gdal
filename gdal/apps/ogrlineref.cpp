@@ -275,7 +275,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
     if (pszOutputSepFieldName != NULL)
     {
         OGRFieldDefn  oSepField(pszOutputSepFieldName, OFTString);
-        oSepField.SetWidth(255);
+        oSepField.SetWidth(254);
         if (poDstLayer->CreateField(&oSepField) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
@@ -1048,11 +1048,11 @@ static OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLine
     {
         //create select clause
         CPLString sLineWhere;
-        sLineWhere.Printf("%s = \"%s\"", pszLineSepFieldName, it->c_str());
+        sLineWhere.Printf("%s = '%s'", pszLineSepFieldName, it->c_str());
         poLnLayer->SetAttributeFilter(sLineWhere);
 
         CPLString sPkWhere;
-        sPkWhere.Printf("%s = \"%s\"", pszPicketsSepFieldName, it->c_str());
+        sPkWhere.Printf("%s = '%s'", pszPicketsSepFieldName, it->c_str());
         poPkLayer->SetAttributeFilter(sPkWhere);
 
         if (!bQuiet)
