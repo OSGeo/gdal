@@ -699,7 +699,7 @@ def tiff_write_18():
 
     ds = None
 
-    # Test differed loading with GetMetadataItem()
+    # Test deferred loading with GetMetadataItem()
     ds = gdal.Open( 'tmp/tw_18.tif' )
     if ds.GetMetadataItem('LINE_OFF', 'RPC') != '16201':
         gdaltest.post_reason("wrong value for GetMetadataItem('LINE_OFF', 'RPC')")

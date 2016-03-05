@@ -3592,7 +3592,7 @@ def ogr_pg_68():
     return 'success'
 
 ###############################################################################
-# Test differed loading of tables (#5450)
+# Test deferred loading of tables (#5450)
 
 def has_run_load_tables(ds):
     return int(ds.GetMetadataItem("bHasLoadTables", "_DEBUG_"))
@@ -3644,9 +3644,9 @@ def ogr_pg_70():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', 'NO')
+    gdal.SetConfigOption('OGR_PG_DEFERRED_CREATION', 'NO')
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_70')
-    gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', None)
+    gdal.SetConfigOption('OGR_PG_DEFERRED_CREATION', None)
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr2 = ds.GetLayerByName('ogr_pg_70')
@@ -3679,9 +3679,9 @@ def ogr_pg_70():
 
         gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_70')
 
-        gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', 'NO')
+        gdal.SetConfigOption('OGR_PG_DEFERRED_CREATION', 'NO')
         lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_70', options = [ 'GEOM_TYPE=geography', 'GEOMETRY_NAME=my_geog' ] )
-        gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', None)
+        gdal.SetConfigOption('OGR_PG_DEFERRED_CREATION', None)
 
         ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
         lyr2 = ds.GetLayerByName('ogr_pg_70')

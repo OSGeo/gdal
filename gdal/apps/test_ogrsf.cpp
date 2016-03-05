@@ -902,12 +902,12 @@ static int TestCreate( GDALDriver* poDriver, int bFromAllDrivers )
     CPLPopErrorHandler();
     if( poDS != NULL )
     {
-        /* Sometimes actual file creation is differed */
+        /* Sometimes actual file creation is deferred */
         CPLPushErrorHandler(CPLQuietErrorHandler);
         OGRLayer* poLayer = LOG_ACTION(poDS->CreateLayer("test", NULL, wkbPoint));
         CPLPopErrorHandler();
 
-        /* Or sometimes writing is differed at dataset closing */
+        /* Or sometimes writing is deferred at dataset closing */
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
         LOG_ACTION(GDALClose(poDS));

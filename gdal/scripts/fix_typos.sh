@@ -41,6 +41,8 @@ if ! test -d fix_typos; then
     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spelling.dat | sed "s/:/->/" | grep -v "colour->" | grep -v "colours->" > qgis.txt
     curl https://anonscm.debian.org/cgit/lintian/lintian.git/plain/data/spelling/corrections| grep "||" | grep -v "#" | sed "s/||/->/" > debian.txt
     cat codespell/data/dictionary.txt qgis.txt debian.txt | awk 'NF' > gdal_dict.txt
+    echo "difered->deferred" >> gdal_dict.txt
+    echo "differed->deferred" >> gdal_dict.txt
     cd ..
 fi
 

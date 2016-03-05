@@ -3430,7 +3430,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
     if( eGType != wkbNone && bCreateSpatialIndex )
     {
-        poLayer->SetDeferedSpatialIndexCreation(true);
+        poLayer->SetDeferredSpatialIndexCreation(true);
     }
 
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));

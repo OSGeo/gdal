@@ -858,7 +858,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_poInsertStatement = NULL;
     m_soColumns = "";
     m_soFilter = "";
-    m_bDeferedSpatialIndexCreation = false;
+    m_bDeferredSpatialIndexCreation = false;
     m_bHasSpatialIndex = -1;
     m_bDropRTreeTable = false;
     memset(m_abHasGeometryExtension, 0, sizeof(m_abHasGeometryExtension)); /* false */
@@ -1718,7 +1718,7 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
 
 void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 {
-    if( m_bDeferedSpatialIndexCreation )
+    if( m_bDeferredSpatialIndexCreation )
     {
         CreateSpatialIndex();
     }
@@ -1736,7 +1736,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return false;
 
-    m_bDeferedSpatialIndexCreation = false;
+    m_bDeferredSpatialIndexCreation = false;
 
     if( m_pszFidColumn == NULL )
         return false;

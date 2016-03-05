@@ -364,7 +364,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     sqlite3_stmt*               m_poUpdateStatement;
     bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
-    bool                        m_bDeferedSpatialIndexCreation;
+    bool                        m_bDeferredSpatialIndexCreation;
     // m_bHasSpatialIndex cannot be bool.  -1 is unset.
     int                         m_bHasSpatialIndex;
     bool                        m_bDropRTreeTable;
@@ -423,8 +423,8 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                                const char* pszFIDColumnName,
                                                const char* pszIdentifier,
                                                const char* pszDescription );
-    void                SetDeferedSpatialIndexCreation( bool bFlag )
-                                { m_bDeferedSpatialIndexCreation = bFlag; }
+    void                SetDeferredSpatialIndexCreation( bool bFlag )
+                                { m_bDeferredSpatialIndexCreation = bFlag; }
 
     void                CreateSpatialIndexIfNecessary();
     bool                CreateSpatialIndex();

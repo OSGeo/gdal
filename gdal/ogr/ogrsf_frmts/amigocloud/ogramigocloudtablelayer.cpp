@@ -105,7 +105,7 @@ OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(
     OGRAmigoCloudLayer(poDSIn),
     osDatasetId(CPLString(pszName)),
     nNextFID(-1),
-    bDeferedCreation(FALSE)
+    bDeferredCreation(FALSE)
 {
     osTableName = CPLString("dataset_") + osDatasetId;
     SetDescription( osDatasetId );
@@ -122,8 +122,8 @@ OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(
 OGRAmigoCloudTableLayer::~OGRAmigoCloudTableLayer()
 
 {
-    if( bDeferedCreation ) RunDeferedCreationIfNecessary();
-    FlushDeferedInsert();
+    if( bDeferredCreation ) RunDeferredCreationIfNecessary();
+    FlushDeferredInsert();
 }
 
 /************************************************************************/
@@ -245,9 +245,9 @@ json_object* OGRAmigoCloudTableLayer::FetchNewFeatures(GIntBig iNextIn)
 
 OGRFeature  *OGRAmigoCloudTableLayer::GetNextRawFeature()
 {
-    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return NULL;
-    FlushDeferedInsert();
+    FlushDeferredInsert();
     return OGRAmigoCloudLayer::GetNextRawFeature();
 }
 
@@ -304,13 +304,13 @@ void OGRAmigoCloudTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * po
 }
 
 /************************************************************************/
-/*                         FlushDeferedInsert()                          */
+/*                         FlushDeferredInsert()                          */
 /************************************************************************/
 
-void OGRAmigoCloudTableLayer::FlushDeferedInsert()
+void OGRAmigoCloudTableLayer::FlushDeferredInsert()
 
 {
-    if(vsDeferedInsertChangesets.size()==0)
+    if(vsDeferredInsertChangesets.size()==0)
         return;
 
     std::stringstream url;
@@ -322,11 +322,11 @@ void OGRAmigoCloudTableLayer::FlushDeferedInsert()
     query << "\"parent\":null,\"action\":\"INSERT\",\"data\":[";
 
     int counter=0;
-    for(size_t i=0; i < vsDeferedInsertChangesets.size(); i++)
+    for(size_t i=0; i < vsDeferredInsertChangesets.size(); i++)
     {
         if(counter>0)
             query << ",";
-        query << vsDeferedInsertChangesets[i].c_str();
+        query << vsDeferredInsertChangesets[i].c_str();
         counter++;
     }
     query << "]}";
@@ -338,7 +338,7 @@ void OGRAmigoCloudTableLayer::FlushDeferedInsert()
     if( poObj != NULL )
         json_object_put(poObj);
 
-    vsDeferedInsertChangesets.clear();
+    vsDeferredInsertChangesets.clear();
     nNextFID = -1;
 }
 
@@ -363,7 +363,7 @@ OGRErr OGRAmigoCloudTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
 
-    if( !bDeferedCreation )
+    if( !bDeferredCreation )
     {
         CPLString osSQL;
         osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
@@ -398,9 +398,9 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     int i;
 
-    if( bDeferedCreation )
+    if( bDeferredCreation )
     {
-        if( RunDeferedCreationIfNecessary() != OGRERR_NONE )
+        if( RunDeferredCreationIfNecessary() != OGRERR_NONE )
             return OGRERR_FAILURE;
     }
 
@@ -500,7 +500,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     record << "}";
 
-    vsDeferedInsertChangesets.push_back(record.str());
+    vsDeferredInsertChangesets.push_back(record.str());
 
     return OGRERR_NONE;
 }
@@ -515,9 +515,9 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
     int i;
     OGRErr eRet = OGRERR_FAILURE;
 
-    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
-    FlushDeferedInsert();
+    FlushDeferredInsert();
 
     GetLayerDefn();
 
@@ -648,9 +648,9 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
 {
     OGRErr eRet = OGRERR_FAILURE;
 
-    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
-    FlushDeferedInsert();
+    FlushDeferredInsert();
 
     GetLayerDefn();
 
@@ -768,9 +768,9 @@ void OGRAmigoCloudTableLayer::BuildWhere()
 OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
 {
 
-    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return NULL;
-    FlushDeferedInsert();
+    FlushDeferredInsert();
 
     GetLayerDefn();
 
@@ -805,9 +805,9 @@ OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
 GIntBig OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
 {
 
-    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return 0;
-    FlushDeferedInsert();
+    FlushDeferredInsert();
 
     GetLayerDefn();
 
@@ -853,9 +853,9 @@ OGRErr OGRAmigoCloudTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent
 {
     CPLString   osSQL;
 
-    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
-    FlushDeferedInsert();
+    FlushDeferredInsert();
 
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
         GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
@@ -976,14 +976,14 @@ int OGRAmigoCloudTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                        SetDeferedCreation()                          */
+/*                        SetDeferredCreation()                          */
 /************************************************************************/
 
-void OGRAmigoCloudTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
+void OGRAmigoCloudTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
                                      OGRSpatialReference *poSRS,
                                      int bGeomNullable)
 {
-    bDeferedCreation = TRUE;
+    bDeferredCreation = TRUE;
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
     poFeatureDefn = new OGRFeatureDefn(osTableName);
@@ -1089,14 +1089,14 @@ bool OGRAmigoCloudTableLayer::IsDatasetExists()
 }
 
 /************************************************************************/
-/*                      RunDeferedCreationIfNecessary()                 */
+/*                      RunDeferredCreationIfNecessary()                 */
 /************************************************************************/
 
-OGRErr OGRAmigoCloudTableLayer::RunDeferedCreationIfNecessary()
+OGRErr OGRAmigoCloudTableLayer::RunDeferredCreationIfNecessary()
 {
-    if( !bDeferedCreation )
+    if( !bDeferredCreation )
         return OGRERR_NONE;
-    bDeferedCreation = FALSE;
+    bDeferredCreation = FALSE;
 
     std::stringstream json;
 

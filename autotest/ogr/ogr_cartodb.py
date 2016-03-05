@@ -1070,7 +1070,7 @@ def ogr_cartodb_rw_1():
         lyr = ds.CreateLayer(lyr_name)
     ds.DeleteLayer(ds.GetLayerCount()-1)
 
-    # Differed table creation
+    # Deferred table creation
     with gdaltest.error_handler():
         lyr = ds.CreateLayer(lyr_name)
     lyr.CreateField(ogr.FieldDefn("STRFIELD", ogr.OFTString))
