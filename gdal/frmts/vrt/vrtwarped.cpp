@@ -298,6 +298,8 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize )
     nOverviewCount = 0;
     papoOverviews = NULL;
     nSrcOvrLevel = -2;
+
+    DisableReadWriteMutex();
 }
 
 /************************************************************************/
