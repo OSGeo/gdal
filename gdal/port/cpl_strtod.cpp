@@ -125,8 +125,8 @@ double CPLAtof(const char *nptr)
  * This function converts the initial portion of the string pointed to
  * by nptr to double floating point representation. This function does the
  * same as standard atof(), but it allows a variety of locale representations.
- * That is it supports numeric values with either a comma or a period for 
- * the decimal delimiter. 
+ * That is it supports numeric values with either a comma or a period for
+ * the decimal delimiter.
  *
  * PS. The M stands for Multi-lingual.
  *
@@ -138,13 +138,13 @@ double CPLAtof(const char *nptr)
 double CPLAtofM( const char *nptr )
 
 {
-    const static int nMaxSearch = 50;
+    const int nMaxSearch = 50;
 
     for( int i = 0; i < nMaxSearch; i++ )
     {
         if( nptr[i] == ',' )
             return CPLStrtodDelim( nptr, NULL, ',' );
-        else if( nptr[i] == '.' || nptr[i] == '\0' )
+        if( nptr[i] == '.' || nptr[i] == '\0' )
             return CPLStrtodDelim( nptr, NULL, '.' );
     }
 
@@ -181,7 +181,7 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
          && poLconv->decimal_point
          && poLconv->decimal_point[0] != '\0' )
     {
-        char    byPoint = poLconv->decimal_point[0];
+        char byPoint = poLconv->decimal_point[0];
 
         if (point != byPoint)
         {
@@ -199,7 +199,8 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
         }
     }
 #endif
-    return (char*) pszNumber;
+
+    return const_cast<char*>( pszNumber );
 }
 
 /************************************************************************/
@@ -348,19 +349,14 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 /*  with the one, taken from locale settings and use standard strtof()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
-
-    double      dfValue;
-    int         nError;
-
-    char*       pszNumber = CPLReplacePointByLocalePoint(nptr, point);
-
-    dfValue = strtof( pszNumber, endptr );
-    nError = errno;
+    char * const pszNumber = CPLReplacePointByLocalePoint(nptr, point);
+    double dfValue = strtof( pszNumber, endptr );
+    const int nError = errno;
 
     if ( endptr )
-        *endptr = (char *)nptr + (*endptr - pszNumber);
+        *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
 
-    if (pszNumber != (char*) nptr)
+    if (pszNumber != nptr)
         CPLFree( pszNumber );
 
     errno = nError;
@@ -368,7 +364,7 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 
 #else
 
-    return (float)CPLStrtodDelim(nptr, endptr, point);
+    return static_cast<float>( CPLStrtodDelim(nptr, endptr, point) );
 
 #endif /* HAVE_STRTOF */
 }
@@ -398,5 +394,3 @@ float CPLStrtof(const char *nptr, char **endptr)
 {
     return CPLStrtofDelim(nptr, endptr, '.');
 }
-
-/* END OF FILE */
