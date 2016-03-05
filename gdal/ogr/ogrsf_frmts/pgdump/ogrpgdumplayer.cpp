@@ -1201,6 +1201,8 @@ CPLString OGRPGCommonLayerGetType(OGRFieldDefn& oField,
     {
         if( oField.GetSubType() == OFSTBoolean )
             strcpy( szFieldType, "BOOLEAN[]" );
+        else if( oField.GetSubType() == OFSTInt16 )
+            strcpy( szFieldType, "INT2[]" );
         else
             strcpy( szFieldType, "INTEGER[]" );
     }
@@ -1210,7 +1212,10 @@ CPLString OGRPGCommonLayerGetType(OGRFieldDefn& oField,
     }
     else if( oField.GetType() == OFTRealList )
     {
-        strcpy( szFieldType, "FLOAT8[]" );
+        if( oField.GetSubType() == OFSTFloat32 )
+            strcpy( szFieldType, "REAL[]" );
+        else
+            strcpy( szFieldType, "FLOAT8[]" );
     }
     else if( oField.GetType() == OFTStringList )
     {
@@ -1321,6 +1326,11 @@ int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
     else if( EQUAL(pszFormatType,"integer[]") )
     {
         oField.SetType( OFTIntegerList );
+    }
+    else if( EQUAL(pszFormatType,"smallint[]") )
+    {
+        oField.SetType( OFTIntegerList );
+        oField.SetSubType( OFSTInt16 );
     }
     else if( EQUAL(pszFormatType,"boolean[]") )
     {

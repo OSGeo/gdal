@@ -1102,18 +1102,18 @@ def ogr_pg_22():
 ###############################################################################
 # Create table with all data types
 
-def ogr_pg_23():
+def ogr_pg_23(layer_name = 'datatypetest', include_timestamptz = True):
 
     if gdaltest.pg_ds is None:
         return 'skip'
 
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:' + layer_name )
     gdal.PopErrorHandler()
 
     ######################################################
     # Create Table
-    lyr = gdaltest.pg_ds.CreateLayer( 'datatypetest' )
+    lyr = gdaltest.pg_ds.CreateLayer( layer_name )
 
     ######################################################
     # Setup Schema
@@ -1121,40 +1121,47 @@ def ogr_pg_23():
 
     ######################################################
     # add some custom date fields.
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_numeric5 numeric(5)' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_numeric5_3 numeric(5,3)' )
-    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_bool bool' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric numeric' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric5 numeric(5)' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric5_3 numeric(5,3)' )
+    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_bool bool' )
     fld = ogr.FieldDefn('my_bool', ogr.OFTInteger)
     fld.SetSubType(ogr.OFSTBoolean)
     lyr.CreateField(fld)
-    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int2 int2' )
+    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_int2 int2' )
     fld = ogr.FieldDefn('my_int2', ogr.OFTInteger)
     fld.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld)
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4 int4' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_int4 int4' )
     lyr.CreateField(ogr.FieldDefn('my_int8', ogr.OFTInteger64))
-    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4 float4' )
+    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_float4 float4' )
     fld = ogr.FieldDefn('my_float4', ogr.OFTReal)
     fld.SetSubType(ogr.OFSTFloat32)
     lyr.CreateField(fld)
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float8 float8' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_real real' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_char char' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchar character varying' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchar10 character varying(10)' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_text text' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_bytea bytea' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_time time' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_date date' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_timestamp timestamp without time zone' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_timestamptz timestamp with time zone' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_chararray char(1)[]' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_textarray text[]' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchararray character varying[]' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4array int4[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_float8 float8' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_real real' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_char char' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_varchar character varying' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_varchar10 character varying(10)' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_text text' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_bytea bytea' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_time time' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_date date' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_timestamp timestamp without time zone' )
+    if include_timestamptz:
+        gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_timestamptz timestamp with time zone' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_chararray char(1)[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_textarray text[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_varchararray character varying[]' )
+    fld = ogr.FieldDefn('my_int2array', ogr.OFTIntegerList)
+    fld.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(fld)
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_int4array int4[]' )
     lyr.CreateField(ogr.FieldDefn('my_int8array', ogr.OFTInteger64List))
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4array float4[]' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float8array float8[]' )
+    fld = ogr.FieldDefn('my_float4array', ogr.OFTRealList)
+    fld.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fld)
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_float8array float8[]' )
     fld = ogr.FieldDefn('my_boolarray', ogr.OFTIntegerList)
     fld.SetSubType(ogr.OFSTBoolean)
     lyr.CreateField(fld)
@@ -1167,7 +1174,22 @@ def ogr_pg_23():
         geom_str = "'\\\\001\\\\001\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000$@\\\\000\\\\000\\\\000\\\\000\\\\000\\\\0004@'"
         if gdaltest.pg_quote_with_E:
             geom_str = "E" + geom_str
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_int8array, my_float4array, my_float8array, my_boolarray, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{1234567901234}', '{100.1,200.1}', '{100.12,200.12}', '{1,0}', " + geom_str + " )" )
+    sql = "INSERT INTO " + layer_name + " ( my_numeric, my_numeric5, my_numeric5_3, my_bool, my_int2, "
+    sql += "my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, "
+    sql += "my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, "
+    if include_timestamptz:
+        sql += "my_timestamptz, "
+    sql += "my_chararray, my_textarray, my_varchararray, my_int2array, my_int4array, "
+    sql += "my_int8array, my_float4array, my_float8array, my_boolarray, wkb_geometry) "
+    sql += "VALUES ( 1.2, 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, "
+    sql += "0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', "
+    sql += "'2000-01-01', '2000-01-01 00:00:00', "
+    if include_timestamptz:
+        sql += "'2000-01-01 00:00:00+00', "
+    sql += "'{a,b}', "
+    sql += "'{aa,bb}', '{cc,dd}', '{100,200}', '{100,200}', '{1234567901234}', "
+    sql += "'{100.1,200.1}', '{100.12,200.12}', '{1,0}', " + geom_str + " )"
+    gdaltest.pg_ds.ExecuteSQL( sql )
 
     return 'success'
 
@@ -1202,15 +1224,26 @@ def test_val_test_23(layer_defn, feat):
 
     field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_int2"))
     if field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTInt16:
-        gdaltest.post_reason('Wrong field defn for my_bool : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        gdaltest.post_reason('Wrong field defn for my_int2 : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
         return 'fail'
 
     field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_float4"))
     if field_defn.GetType() != ogr.OFTReal or field_defn.GetSubType() != ogr.OFSTFloat32:
-        gdaltest.post_reason('Wrong field defn for my_bool : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        gdaltest.post_reason('Wrong field defn for my_float4 : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
         return 'fail'
 
-    if feat.my_numeric5 != 12345 or \
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_int2array"))
+    if field_defn.GetType() != ogr.OFTIntegerList or field_defn.GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('Wrong field defn for my_int2array : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        return 'fail'
+
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_float4array"))
+    if field_defn.GetType() != ogr.OFTRealList or field_defn.GetSubType() != ogr.OFSTFloat32:
+        gdaltest.post_reason('Wrong field defn for my_float4array : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        return 'fail'
+
+    if abs(feat.my_numeric - 1.2) > 1e-8 or \
+    feat.my_numeric5 != 12345 or \
     feat.my_numeric5_3 != 0.123 or \
     feat.my_bool != 1 or \
     feat.my_int2 != 12345 or \
@@ -1227,10 +1260,11 @@ def test_val_test_23(layer_defn, feat):
     feat.GetFieldAsString('my_time') != '12:34:56' or \
     feat.GetFieldAsString('my_date') != '2000/01/01' or \
     (feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00' and feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00+00') or \
-    feat.GetFieldAsString('my_timestamptz') != '2000/01/01 00:00:00+00' or \
+    (layer_defn.GetFieldIndex('my_timestamptz') >= 0 and feat.GetFieldAsString('my_timestamptz') != '2000/01/01 00:00:00+00') or \
     feat.GetFieldAsString('my_chararray') != '(2:a,b)' or \
     feat.GetFieldAsString('my_textarray') != '(2:aa,bb)' or \
     feat.GetFieldAsString('my_varchararray') != '(2:cc,dd)' or \
+    feat.GetFieldAsString('my_int2array') != '(2:100,200)' or \
     feat.GetFieldAsString('my_int4array') != '(2:100,200)' or \
     feat.my_int8array != [ 1234567901234 ] or \
     feat.GetFieldAsString('my_boolarray') != '(2:1,0)' :
@@ -1306,10 +1340,14 @@ def ogr_pg_25():
 ###############################################################################
 # Test with PGB: connection
 
-def ogr_pg_26():
+def ogr_pg_26_DISABLED_AS_BINARY_CURSOR_NO_LONGER_SUPPORTED():
 
     if gdaltest.pg_ds is None:
         return 'skip'
+
+    # The presence of timestamptz field currently disables binary cursor
+    if ogr_pg_23(layer_name = 'datatypetest_withouttimestamptz', include_timestamptz = False) != 'success':
+        return 'fail'
 
     ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
 
@@ -1323,14 +1361,22 @@ def ogr_pg_26():
 
     feat = None
 
-    ds.Destroy()
+    lyr = ds.GetLayerByName( 'datatypetest_withouttimestamptz' )
+
+    feat = lyr.GetNextFeature()
+    if test_val_test_23(lyr.GetLayerDefn(), feat) != 'success':
+        return 'fail'
+
+    feat = None
+
+    ds = None
 
     return 'success'
 
 ###############################################################################
 # Test with PGB: connection and SELECT query
 
-def ogr_pg_27():
+def ogr_pg_27_DISABLED_AS_BINARY_CURSOR_NO_LONGER_SUPPORTED():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1349,7 +1395,17 @@ def ogr_pg_27():
 
     feat = None
 
-    ds.Destroy()
+    sql_lyr = ds.ExecuteSQL( 'select * from datatypetest_withouttimestamptz' )
+
+    feat = sql_lyr.GetNextFeature()
+    if test_val_test_23(sql_lyr.GetLayerDefn(), feat) != 'success':
+        return 'fail'
+
+    ds.ReleaseResultSet( sql_lyr )
+
+    feat = None
+
+    ds = None
 
     return 'success'
 
@@ -3812,17 +3868,17 @@ def ogr_pg_72():
         return 'fail'
     gdaltest.pg_ds = None
     # Test with binary protocol
-    gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
-    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetNextFeature()
-    if f.GetFID() != 123456789012345:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    gdaltest.pg_ds = None
+    #gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
+    #lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
+    #if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+    #    gdaltest.post_reason('fail')
+    #    return 'fail'
+    #f = lyr.GetNextFeature()
+    #if f.GetFID() != 123456789012345:
+    #    gdaltest.post_reason('fail')
+    #    f.DumpReadable()
+    #    return 'fail'
+    #gdaltest.pg_ds = None
     # Test with normal protocol
     gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
@@ -5190,6 +5246,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datetest' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testgeom' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest' )
+    #gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest_withouttimestamptz' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext2' )
@@ -5292,8 +5349,8 @@ gdaltest_list_internal = [
     ogr_pg_23,
     ogr_pg_24,
     ogr_pg_25,
-    ogr_pg_26,
-    ogr_pg_27,
+    #ogr_pg_26,
+    #ogr_pg_27,
     ogr_pg_28,
     ogr_pg_29,
     ogr_pg_30,
