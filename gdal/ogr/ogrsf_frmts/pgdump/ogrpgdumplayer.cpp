@@ -1779,12 +1779,12 @@ void OGRPGDumpLayer::SetForcedDescription( const char* pszDescriptionIn )
     osForcedDescription = pszDescriptionIn;
     OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
 
-    CPLString osCommand;
-
-    osCommand.Printf( "COMMENT ON TABLE %s IS %s",
-                        pszSqlTableName,
-                        pszDescriptionIn && pszDescriptionIn[0] != '\0' ?
-                          OGRPGDumpEscapeString(pszDescriptionIn).c_str() : "NULL" );
-    poDS->Log( osCommand );
-
+    if( pszDescriptionIn[0] != '\0' )
+    {
+        CPLString osCommand;
+        osCommand.Printf( "COMMENT ON TABLE %s IS %s",
+                            pszSqlTableName,
+                            OGRPGDumpEscapeString(pszDescriptionIn).c_str() );
+        poDS->Log( osCommand );
+    }
 }
