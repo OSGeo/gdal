@@ -3486,6 +3486,22 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
             print(geom.ExportToIsoWkt())
             return 'fail'
 
+    if ogr.CreateGeometryFromWkt('POINT (1 2)').CoordinateDimension() != 2 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogr.CreateGeometryFromWkt('POINT M (1 2 3)').CoordinateDimension() != 3 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogr.CreateGeometryFromWkt('POINT Z (1 2 3)').CoordinateDimension() != 3 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)').CoordinateDimension() != 4 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
