@@ -835,11 +835,11 @@ def ogr_gpkg_16():
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
     ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
-        "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_CURVE', 'some ext', 'write-only' ) ")
+        "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_XXXX', 'some ext', 'read-write' ) ")
     ds = None
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail : warning expected')
