@@ -2063,16 +2063,28 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryT
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
     const char *pszGeometryType = m_poDS->GetGeometryTypeString(eGType);
 
-    /* Register the table in gpkg_extensions */
+    // Check first if the extension isn't registered
     char* pszSQL = sqlite3_mprintf(
-                "INSERT INTO gpkg_extensions "
-                "(table_name,column_name,extension_name,definition,scope) "
-                "VALUES ('%q', '%q', 'gpkg_geom_%s', 'GeoPackage 1.0 Specification Annex J', 'read-write')",
-                pszT, pszC, pszGeometryType);
-    OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        "SELECT 1 FROM gpkg_extensions WHERE table_name = '%q' AND "
+        "column_name = '%q' AND extension_name = 'gpkg_geom_%s'",
+         pszT, pszC, pszGeometryType);
+    OGRErr err = OGRERR_NONE;
+    SQLGetInteger(m_poDS->GetDB(), pszSQL, &err);
     sqlite3_free(pszSQL);
-    if ( err != OGRERR_NONE )
-        return false;
+
+    if( err != OGRERR_NONE )
+    {
+        /* Register the table in gpkg_extensions */
+        pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_extensions "
+                    "(table_name,column_name,extension_name,definition,scope) "
+                    "VALUES ('%q', '%q', 'gpkg_geom_%s', 'GeoPackage 1.0 Specification Annex J', 'read-write')",
+                    pszT, pszC, pszGeometryType);
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if ( err != OGRERR_NONE )
+            return false;
+    }
 
     m_abHasGeometryExtension[eGType] = true;
     return true;
