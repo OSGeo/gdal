@@ -198,6 +198,10 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbTINM: /* not yet implemented */
             case wkbPolyhedralSurfaceZM: /* not yet implemented */
             case wkbTINZM: /* not yet implemented */
+            case wkbTriangle: /* not yet implemented */
+            case wkbTriangleZ: /* not yet implemented */
+            case wkbTriangleM: /* not yet implemented */
+            case wkbTriangleZM: /* not yet implemented */
                 fprintf( fp, "\n");
                 break;
             case wkbLineString:
