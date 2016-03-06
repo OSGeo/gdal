@@ -2428,14 +2428,14 @@ OGRMergeGeometryTypesEx( OGRwkbGeometryType eMain,
                          int bAllowPromotingToCurves )
 
 {
-    int bHasZ;
     OGRwkbGeometryType eFMain = wkbFlatten(eMain);
     OGRwkbGeometryType eFExtra = wkbFlatten(eExtra);
 
-    bHasZ = ( eFMain != eMain || eFExtra != eExtra );
+    const bool bHasZ = ( wkbHasZ(eMain) || wkbHasZ(eExtra) );
+    const bool bHasM = ( wkbHasM(eMain) || wkbHasM(eExtra) );
 
     if( eFMain == wkbUnknown || eFExtra == wkbUnknown )
-        return OGR_GT_SetModifier(wkbUnknown, bHasZ, FALSE);
+        return OGR_GT_SetModifier(wkbUnknown, bHasZ, bHasM);
 
     if( eFMain == wkbNone )
         return eExtra;
@@ -2445,30 +2445,40 @@ OGRMergeGeometryTypesEx( OGRwkbGeometryType eMain,
 
     if( eFMain == eFExtra )
     {
-        return OGR_GT_SetModifier(eFMain, bHasZ, FALSE);
+        return OGR_GT_SetModifier(eFMain, bHasZ, bHasM);
     }
 
     if( bAllowPromotingToCurves )
     {
         if( OGR_GT_IsCurve(eFMain) && OGR_GT_IsCurve(eFExtra) )
-            return OGR_GT_SetModifier(wkbCompoundCurve, bHasZ, FALSE);
+            return OGR_GT_SetModifier(wkbCompoundCurve, bHasZ, bHasM);
 
         if( OGR_GT_IsSubClassOf(eFMain, eFExtra) )
-            return OGR_GT_SetModifier(eFExtra, bHasZ, FALSE);
+            return OGR_GT_SetModifier(eFExtra, bHasZ, bHasM);
 
         if( OGR_GT_IsSubClassOf(eFExtra, eFMain) )
-            return OGR_GT_SetModifier(eFMain, bHasZ, FALSE);
+            return OGR_GT_SetModifier(eFMain, bHasZ, bHasM);
     }
 
     // Both are geometry collections.
     if( OGR_GT_IsSubClassOf(eFMain, wkbGeometryCollection) &&
         OGR_GT_IsSubClassOf(eFExtra, wkbGeometryCollection) )
     {
-        return OGR_GT_SetModifier(wkbGeometryCollection, bHasZ, FALSE);
+        return OGR_GT_SetModifier(wkbGeometryCollection, bHasZ, bHasM);
+    }
+
+    // One is subclass of the other one
+    if( OGR_GT_IsSubClassOf(eFMain, eFExtra) )
+    {
+        return OGR_GT_SetModifier(eFExtra, bHasZ, bHasM);
+    }
+    else if( OGR_GT_IsSubClassOf(eFExtra, eFMain) )
+    {
+        return OGR_GT_SetModifier(eFMain, bHasZ, bHasM);
     }
 
     // Nothing apparently in common.
-    return OGR_GT_SetModifier(wkbUnknown, bHasZ, FALSE);
+    return OGR_GT_SetModifier(wkbUnknown, bHasZ, bHasM);
 }
 
 /**
@@ -5546,7 +5556,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
 OGRwkbGeometryType OGR_GT_Flatten( OGRwkbGeometryType eType )
 {
     eType = (OGRwkbGeometryType) (eType & (~wkb25DBitInternalUse));
-    if( eType >= 1001 && eType < 2000 ) /* ISO Z */
+    if( eType >= 1000 && eType < 2000 ) /* ISO Z */
         return (OGRwkbGeometryType) (eType - 1000);
     if( eType >= 2000 && eType < 3000 ) /* ISO M */
         return (OGRwkbGeometryType) (eType - 2000);
@@ -5634,7 +5644,7 @@ OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType )
  *
  * @return measured geometry type corresponding to the passed geometry type.
  *
- * @since GDAL 2.0
+ * @since GDAL 2.1
  */
 
 OGRwkbGeometryType OGR_GT_SetM( OGRwkbGeometryType eType )
@@ -5653,7 +5663,7 @@ OGRwkbGeometryType OGR_GT_SetM( OGRwkbGeometryType eType )
 /*                        OGR_GT_SetModifier()                          */
 /************************************************************************/
 /**
- * \brief Returns a 2D or 3D geometry type depending on parameter.
+ * \brief Returns a XY, XYZ, XYM or XYZM geometry type depending on parameter.
  *
  * @param eType Input geometry type
  * @param bHasZ TRUE if the output geometry type must be 3D.
@@ -5736,7 +5746,8 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
  * wkbCurvePolygon->wkbMultiSurface.
  * In other cases, wkbUnknown is returned
  *
- * Passed Z flag is preserved.
+ * Passed Z, M, ZM flag is preserved.
+ *
  *
  * @param eType Input geometry type
  *
@@ -5747,6 +5758,8 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
 
 OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType )
 {
+    const bool bHasZ = wkbHasZ(eType);
+    const bool bHasM = wkbHasM(eType);
     if( eType == wkbNone )
         return wkbNone;
     OGRwkbGeometryType eFGType = wkbFlatten(eType);
@@ -5768,8 +5781,10 @@ OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType )
     else
         return wkbUnknown;
 
-    if( wkbHasZ(eType) )
+    if( bHasZ )
         eType = wkbSetZ(eType);
+    if( bHasM )
+        eType = wkbSetM(eType);
 
     return eType;
 }
@@ -5785,7 +5800,7 @@ OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType )
  * and wkbMultiLineString->wkbMultiCurve.
  * In other cases, the passed geometry is returned.
  *
- * Passed Z flag is preserved.
+ * Passed Z, M, ZM flag is preserved.
  *
  * @param eType Input geometry type
  *
@@ -5796,6 +5811,8 @@ OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType )
 
 OGRwkbGeometryType OGR_GT_GetCurve( OGRwkbGeometryType eType )
 {
+    const bool bHasZ = wkbHasZ(eType);
+    const bool bHasM = wkbHasM(eType);
     OGRwkbGeometryType eFGType = wkbFlatten(eType);
 
     if( eFGType == wkbLineString )
@@ -5810,8 +5827,10 @@ OGRwkbGeometryType OGR_GT_GetCurve( OGRwkbGeometryType eType )
     else if( eFGType == wkbMultiPolygon )
         eType = wkbMultiSurface;
 
-    if( wkbHasZ(eType) )
+    if( bHasZ )
         eType = wkbSetZ(eType);
+    if( bHasM )
+        eType = wkbSetM(eType);
 
     return eType;
 }
@@ -5827,7 +5846,7 @@ OGRwkbGeometryType OGR_GT_GetCurve( OGRwkbGeometryType eType )
  * wkbMultiSurface->wkbMultiPolygon and wkbMultiCurve->wkbMultiLineString.
  * In other cases, the passed geometry is returned.
  *
- * Passed Z flag is preserved.
+ * Passed Z, M, ZM flag is preserved.
  *
  * @param eType Input geometry type
  *
@@ -5838,6 +5857,8 @@ OGRwkbGeometryType OGR_GT_GetCurve( OGRwkbGeometryType eType )
 
 OGRwkbGeometryType OGR_GT_GetLinear( OGRwkbGeometryType eType )
 {
+    const bool bHasZ = wkbHasZ(eType);
+    const bool bHasM = wkbHasM(eType);
     OGRwkbGeometryType eFGType = wkbFlatten(eType);
 
     if( OGR_GT_IsCurve(eFGType) )
@@ -5852,8 +5873,10 @@ OGRwkbGeometryType OGR_GT_GetLinear( OGRwkbGeometryType eType )
     else if( eFGType == wkbMultiSurface )
         eType = wkbMultiPolygon;
 
-    if( wkbHasZ(eType) )
+    if( bHasZ )
         eType = wkbSetZ(eType);
+    if( bHasM )
+        eType = wkbSetM(eType);
 
     return eType;
 }
@@ -5866,7 +5889,7 @@ OGRwkbGeometryType OGR_GT_GetLinear( OGRwkbGeometryType eType )
  * \brief Return if a geometry type is an instance of Curve
  *
  * Such geometry type are wkbLineString, wkbCircularString, wkbCompoundCurve
- * and their 3D variant.
+ * and their Z/M/ZM variant.
  *
  * @param eGeomType the geometry type
  * @return TRUE if the geometry type is an instance of Curve
@@ -5887,7 +5910,7 @@ int OGR_GT_IsCurve( OGRwkbGeometryType eGeomType )
  * \brief Return if a geometry type is an instance of Surface
  *
  * Such geometry type are wkbCurvePolygon and wkbPolygon
- * and their 3D variant.
+ * and their Z/M/ZM variant.
  *
  * @param eGeomType the geometry type
  * @return TRUE if the geometry type is an instance of Surface
