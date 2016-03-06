@@ -2052,7 +2052,7 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
 bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType)
 {
     eGType = wkbFlatten(eGType);
-    CPLAssert(eGType <= wkbMultiSurface);
+    CPLAssert(eGType <= wkbTIN);
     if( m_abHasGeometryExtension[eGType] )
         return true;
 
@@ -2394,7 +2394,9 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
         return OGRERR_FAILURE;
 
     if( OGR_GT_IsNonLinear( eGType ) )
+    {
         CreateGeometryExtensionIfNecessary(eGType);
+    }
 
     return OGRERR_NONE;
 }
