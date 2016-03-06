@@ -81,8 +81,46 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
 
         if( bEmitWarning )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, "GPKG: bad application_id on '%s'",
-                      poOpenInfo->pszFilename);
+            char szSignature[4+1];
+            memcpy(szSignature, poOpenInfo->pabyHeader + 68, 4);
+            szSignature[4] = '\0';
+
+            /* Is this a GPxx version ? */
+            const bool bWarn = CPLTestBool(CPLGetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
+            if( szSignature[0] == 'G' && szSignature[1] == 'P' &&
+                szSignature[2] >= '0' && szSignature[2] <= '9' &&
+                szSignature[3] >= '0' && szSignature[3] <= '9' )
+            {
+                if( bWarn )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "GPKG: '%s' has version '%s' with may be partially supported by this driver",
+                              poOpenInfo->pszFilename, szSignature );
+                }
+                else
+                {
+                    CPLDebug( "GPKG",
+                              "'%s' has version '%s' with may be partially supported by this driver",
+                              poOpenInfo->pszFilename, szSignature );
+                }
+            }
+            else
+            {
+                if( bWarn )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "GPKG: bad application_id 0x%02X%02X%02X%02X on '%s'",
+                              szSignature[0], szSignature[1], szSignature[2], szSignature[3],
+                              poOpenInfo->pszFilename );
+                }
+                else
+                {
+                    CPLDebug( "GPKG",
+                              "bad application_id 0x%02X%02X%02X%02X on '%s'",
+                              szSignature[0], szSignature[1], szSignature[2], szSignature[3],
+                              poOpenInfo->pszFilename );
+                }
+            }
         }
     }
     else if( !bIsRecognizedExtension 
