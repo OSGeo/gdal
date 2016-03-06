@@ -818,12 +818,17 @@ int OGRGeometry::getCoordinateDimension() const
     return (flags & OGR_G_3D) ? 3 : 2;
 }
 
+/************************************************************************/
+/*                        CoordinateDimension()                         */
+/************************************************************************/
 /**
  * \brief Get the dimension of the coordinates in this object.
  *
  * This method is the same as the C function OGR_G_CoordinateDimension().
  *
  * @return this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
+ *
+ * @since GDAL 2.1
  */
 
 int OGRGeometry::CoordinateDimension() const
@@ -863,6 +868,9 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
     return ((OGRGeometry *) hGeom)->getCoordinateDimension();
 }
 
+/************************************************************************/
+/*                    OGR_G_CoordinateDimension()                       */
+/************************************************************************/
 /**
  *
  * \brief Get the dimension of the coordinates in this geometry.
@@ -874,6 +882,8 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
  * coordinates from.
  *
  * @return this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
+ *
+ * @since GDAL 2.1
  */
 
 int OGR_G_CoordinateDimension( OGRGeometryH hGeom )
