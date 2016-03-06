@@ -982,6 +982,17 @@ def ogr_gpkg_18():
 
     ds = None
 
+    ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
+    ret = lyr.CreateFeature(f)
+    if ret != 0 or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    ds = None
+
     gdal.Unlink('/vsimem/ogr_gpkg_18.gpkg')
 
     return 'success'
