@@ -5609,7 +5609,7 @@ int OGR_GT_HasZ( OGRwkbGeometryType eType )
  *
  * @return TRUE if the geometry type is a measured type.
  *
- * @since GDAL 2.0
+ * @since GDAL 2.1
  */
 
 int OGR_GT_HasM( OGRwkbGeometryType eType )
