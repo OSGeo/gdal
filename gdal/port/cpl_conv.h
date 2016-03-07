@@ -55,7 +55,7 @@ CPLGetConfigOption( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 const char CPL_DLL * CPL_STDCALL
 CPLGetThreadLocalConfigOption( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL CPLSetConfigOption( const char *, const char * );
-void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey, 
+void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey,
                                                         const char *pszValue );
 void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
 
@@ -147,13 +147,13 @@ const char CPL_DLL *CPLFormCIFilename( const char *pszPath,
                                        const char *pszBasename,
                                        const char *pszExtension ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLResetExtension( const char *, const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
-const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir, 
+const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir,
                                             const char *pszSecondaryFilename ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 int CPL_DLL CPLIsFilenameRelative( const char *pszFilename );
 const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLCleanTrailingSlash( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
-char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename, 
-                                           const char *pszNewFilename, 
+char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename,
+                                           const char *pszNewFilename,
                                            char **papszFileList ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
@@ -164,9 +164,9 @@ const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem ) CPL_WARN_UNUS
 /* -------------------------------------------------------------------- */
 typedef const char *(*CPLFileFinder)(const char *, const char *);
 
-const char    CPL_DLL *CPLFindFile(const char *pszClass, 
+const char    CPL_DLL *CPLFindFile(const char *pszClass,
                                    const char *pszBasename);
-const char    CPL_DLL *CPLDefaultFindFile(const char *pszClass, 
+const char    CPL_DLL *CPLDefaultFindFile(const char *pszClass,
                                           const char *pszBasename);
 void          CPL_DLL CPLPushFileFinder( CPLFileFinder pfnFinder );
 CPLFileFinder CPL_DLL CPLPopFileFinder(void);
@@ -206,7 +206,7 @@ const char CPL_DLL *CPLDecToDMS( double dfAngle, const char * pszAxis,
 double CPL_DLL CPLPackedDMSToDec( double );
 double CPL_DLL CPLDecToPackedDMS( double dfDec );
 
-void CPL_DLL CPLStringToComplex( const char *pszString, 
+void CPL_DLL CPLStringToComplex( const char *pszString,
                                  double *pdfReal, double *pdfImag );
 
 /* -------------------------------------------------------------------- */
@@ -223,7 +223,7 @@ int CPL_DLL CPLSymlink( const char* pszOldPath, const char* pszNewPath, char** p
 /* -------------------------------------------------------------------- */
 #define CPL_ZIP_API_OFFERED
 void CPL_DLL  *CPLCreateZip( const char *pszZipFilename, char **papszOptions );
-CPLErr CPL_DLL CPLCreateFileInZip( void *hZip, const char *pszFilename, 
+CPLErr CPL_DLL CPLCreateFileInZip( void *hZip, const char *pszFilename,
                                    char **papszOptions );
 CPLErr CPL_DLL CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize );
 CPLErr CPL_DLL CPLCloseFileInZip( void *hZip );
@@ -246,7 +246,7 @@ void CPL_DLL *CPLZLibInflate( const void* ptr, size_t nBytes,
 int CPL_DLL CPLValidateXML(const char* pszXMLFilename,
                            const char* pszXSDFilename,
                            char** papszOptions);
-						   
+
 /* -------------------------------------------------------------------- */
 /*      Locale handling. Prevents parallel executions of setlocale().   */
 /* -------------------------------------------------------------------- */
