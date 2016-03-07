@@ -842,28 +842,8 @@ char *CPLScanString( const char *pszString, int nMaxLength,
 
 long CPLScanLong( const char *pszString, int nMaxLength )
 {
-    char        szValue[32];
-    char        *pszValue;
-
-    if( nMaxLength + 1 < static_cast<int>( sizeof(szValue) ) )
-        pszValue = szValue;
-    else
-        pszValue = reinterpret_cast<char *>( CPLMalloc( nMaxLength + 1) );
-
-/* -------------------------------------------------------------------- */
-/*      Compute string into local buffer, and terminate it.             */
-/* -------------------------------------------------------------------- */
-    strncpy( pszValue, pszString, nMaxLength );
-    pszValue[nMaxLength] = '\0';
-
-/* -------------------------------------------------------------------- */
-/*      Use atol() to fetch out the result                              */
-/* -------------------------------------------------------------------- */
-    const long iValue = atol( pszValue );
-
-    if( pszValue != szValue )
-        CPLFree( pszValue );
-    return iValue;
+    const std::string osValue( pszString, nMaxLength );
+    return atol( osValue.c_str() );
 }
 
 
@@ -887,28 +867,8 @@ long CPLScanLong( const char *pszString, int nMaxLength )
 
 unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 {
-    char        szValue[32];
-    char        *pszValue;
-
-    if( nMaxLength + 1 < (int)sizeof(szValue) )
-        pszValue = szValue;
-    else
-        pszValue = (char *)CPLMalloc( nMaxLength + 1);
-
-/* -------------------------------------------------------------------- */
-/*      Compute string into local buffer, and terminate it.             */
-/* -------------------------------------------------------------------- */
-    strncpy( pszValue, pszString, nMaxLength );
-    pszValue[nMaxLength] = '\0';
-
-/* -------------------------------------------------------------------- */
-/*      Use strtoul() to fetch out the result                           */
-/* -------------------------------------------------------------------- */
-    const unsigned long uValue = strtoul( pszValue, NULL, 10 );
-
-    if( pszValue != szValue )
-        CPLFree( pszValue );
-    return uValue;
+    const std::string osValue( pszString, nMaxLength );
+    return strtoul( osValue.c_str(), NULL, 10 );
 }
 
 /************************************************************************/
