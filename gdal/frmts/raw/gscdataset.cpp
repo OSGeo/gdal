@@ -132,7 +132,7 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GSC driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -166,7 +166,7 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFSeekL( poDS->fpImage, nRecordLen + 12, SEEK_SET ) != 0
         || VSIFReadL( afHeaderInfo, sizeof(float), 8, poDS->fpImage ) != 8 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failure reading second record of GSC file with %d record length.",
                   nRecordLen );
         delete poDS;

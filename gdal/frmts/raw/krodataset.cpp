@@ -176,7 +176,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     const int nDataTypeSize = nDepth / 8;
-    
+
     if( nComp == 0 || nDataTypeSize == 0 ||
         poDS->nRasterXSize > INT_MAX / (nComp * nDataTypeSize) )
     {
@@ -192,8 +192,8 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     CPLErrorReset();
     for( int iBand = 0; iBand < nComp; iBand++ )
     {
-        RawRasterBand *poBand = 
-            new RawRasterBand( poDS, iBand+1, poDS->fpImage, 
+        RawRasterBand *poBand =
+            new RawRasterBand( poDS, iBand+1, poDS->fpImage,
                                20 + nDataTypeSize * iBand,
                                nComp * nDataTypeSize,
                                poDS->nRasterXSize * nComp * nDataTypeSize,

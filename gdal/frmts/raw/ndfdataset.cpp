@@ -204,12 +204,12 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     fp = NULL;
 
-    if( CSLFetchNameValue( papszHeader, "PIXELS_PER_LINE" ) == NULL 
-        || CSLFetchNameValue( papszHeader, "LINES_PER_DATA_FILE" ) == NULL 
-        || CSLFetchNameValue( papszHeader, "BITS_PER_PIXEL" ) == NULL 
+    if( CSLFetchNameValue( papszHeader, "PIXELS_PER_LINE" ) == NULL
+        || CSLFetchNameValue( papszHeader, "LINES_PER_DATA_FILE" ) == NULL
+        || CSLFetchNameValue( papszHeader, "BITS_PER_PIXEL" ) == NULL
         || CSLFetchNameValue( papszHeader, "PIXEL_FORMAT" ) == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
               "Dataset appears to be NDF but is missing a required field.");
         CSLDestroy( papszHeader );
         return NULL;
@@ -218,7 +218,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !EQUAL(CSLFetchNameValue( papszHeader, "PIXEL_FORMAT"), "BYTE" )
         || !EQUAL(CSLFetchNameValue( papszHeader, "BITS_PER_PIXEL"),"8") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Currently NDF driver supports only 8bit BYTE format." );
         CSLDestroy( papszHeader );
         return NULL;
@@ -230,7 +230,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CSLDestroy( papszHeader );
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The NDF driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -276,7 +276,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             char szBandExtension[15];
             snprintf( szBandExtension, sizeof(szBandExtension), "I%d", iBand+1 );
-            osFilename = CPLResetExtension( poOpenInfo->pszFilename, 
+            osFilename = CPLResetExtension( poOpenInfo->pszFilename,
                                             szBandExtension );
         }
         else
@@ -288,17 +288,17 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         VSILFILE *fpRaw = VSIFOpenL( osFilename, "rb" );
         if( fpRaw == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to open band file: %s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to open band file: %s",
                       osFilename.c_str() );
             delete poDS;
             return NULL;
         }
-        poDS->papszExtraFiles = 
-            CSLAddString( poDS->papszExtraFiles, 
+        poDS->papszExtraFiles =
+            CSLAddString( poDS->papszExtraFiles,
                           osFilename );
 
-        RawRasterBand *poBand = 
+        RawRasterBand *poBand =
             new RawRasterBand( poDS, iBand+1, fpRaw, 0, 1, poDS->nRasterXSize,
                                GDT_Byte, TRUE, TRUE );
 
@@ -309,7 +309,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poBand->SetMetadataItem( "WAVELENGTHS", poDS->Get(szKey,"") );
 
         snprintf( szKey, sizeof(szKey), "BAND%d_RADIOMETRIC_GAINS/BIAS", iBand+1 );
-        poBand->SetMetadataItem( "RADIOMETRIC_GAINS_BIAS", 
+        poBand->SetMetadataItem( "RADIOMETRIC_GAINS_BIAS",
                                  poDS->Get(szKey,"") );
 
         poDS->SetBand( iBand+1, poBand );
@@ -319,7 +319,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Fetch and parse USGS projection parameters.                     */
 /* -------------------------------------------------------------------- */
     double adfUSGSParms[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    char **papszParmTokens = 
+    char **papszParmTokens =
         CSLTokenizeStringComplex( poDS->Get( "USGS_PROJECTION_NUMBER", "" ),
                                   ",", FALSE, TRUE );
 
@@ -342,7 +342,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     oSRS.importFromUSGS( nUSGSProjection, nZone, adfUSGSParms, 12 );
 
     const CPLString osDatum = poDS->Get( "HORIZONTAL_DATUM", "" );
-    if( EQUAL(osDatum,"WGS84") || EQUAL(osDatum,"NAD83") 
+    if( EQUAL(osDatum,"WGS84") || EQUAL(osDatum,"NAD83")
         || EQUAL(osDatum,"NAD27") )
     {
         oSRS.SetWellKnownGeogCS( osDatum );
@@ -370,27 +370,27 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get geotransform.                                               */
 /* -------------------------------------------------------------------- */
-    char **papszUL = CSLTokenizeString2( 
+    char **papszUL = CSLTokenizeString2(
         poDS->Get("UPPER_LEFT_CORNER",""), ",", 0 );
-    char **papszUR = CSLTokenizeString2( 
+    char **papszUR = CSLTokenizeString2(
         poDS->Get("UPPER_RIGHT_CORNER",""), ",", 0 );
-    char **papszLL = CSLTokenizeString2( 
+    char **papszLL = CSLTokenizeString2(
         poDS->Get("LOWER_LEFT_CORNER",""), ",", 0 );
 
-    if( CSLCount(papszUL) == 4 
-        && CSLCount(papszUR) == 4 
+    if( CSLCount(papszUL) == 4
+        && CSLCount(papszUR) == 4
         && CSLCount(papszLL) == 4 )
     {
         poDS->adfGeoTransform[0] = CPLAtof(papszUL[2]);
-        poDS->adfGeoTransform[1] = 
+        poDS->adfGeoTransform[1] =
             (CPLAtof(papszUR[2]) - CPLAtof(papszUL[2])) / (poDS->nRasterXSize-1);
-        poDS->adfGeoTransform[2] = 
+        poDS->adfGeoTransform[2] =
             (CPLAtof(papszUR[3]) - CPLAtof(papszUL[3])) / (poDS->nRasterXSize-1);
 
         poDS->adfGeoTransform[3] = CPLAtof(papszUL[3]);
-        poDS->adfGeoTransform[4] = 
+        poDS->adfGeoTransform[4] =
             (CPLAtof(papszLL[2]) - CPLAtof(papszUL[2])) / (poDS->nRasterYSize-1);
-        poDS->adfGeoTransform[5] = 
+        poDS->adfGeoTransform[5] =
             (CPLAtof(papszLL[3]) - CPLAtof(papszUL[3])) / (poDS->nRasterYSize-1);
 
         // Move origin up-left half a pixel.

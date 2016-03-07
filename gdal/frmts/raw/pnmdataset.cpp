@@ -302,8 +302,8 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+    poDS->bGeoTransformValid =
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
                            poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */

@@ -142,7 +142,7 @@ public:
 
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual char **GetCategoryNames();
@@ -162,7 +162,7 @@ public:
     // this is deprecated.
     void	 StoreNoDataValue( double );
 
-    // Query methods for internal data. 
+    // Query methods for internal data.
     vsi_l_offset GetImgOffset() { return nImgOffset; }
     int          GetPixelOffset() { return nPixelOffset; }
     int          GetLineOffset() { return nLineOffset; }

@@ -59,7 +59,7 @@ Offset   Size    Type      Description
 90         2    Int16      Classes in coverage.
 92        14     char      Unknown.
 106        2    Int16      Area Unit (0=none, 1=Acre, 2=Hectare, 3=Other)
-108        4  Float32      Pixel area. 
+108        4  Float32      Pixel area.
 112        4  Float32      Upper Left corner X (center of pixel?)
 116        4  Float32      Upper Left corner Y (center of pixel?)
 120        4  Float32      Width of a pixel.
@@ -82,7 +82,7 @@ Offset   Size    Type      Description
 90         2    Int16      Classes in coverage.
 92        14     char      Unknown.
 106        2    Int16      Area Unit (0=none, 1=Acre, 2=Hectare, 3=Other)
-108        4  Float32      Pixel area. 
+108        4  Float32      Pixel area.
 112        4  Float32      Upper Left corner X (center of pixel?)
 116        4  Float32      Upper Left corner Y (center of pixel?)
 120        4  Float32      Width of a pixel.
@@ -91,7 +91,7 @@ Offset   Size    Type      Description
 All binary fields are in the same byte order but it may be big endian or
 little endian depending on what platform the file was written on.  Usually
 this can be checked against the number of bands though this test won't work
-if there are more than 255 bands. 
+if there are more than 255 bands.
 
 There is also some information on .STA and .TRL files at:
 
@@ -120,7 +120,7 @@ class LAN4BitRasterBand : public GDALPamRasterBand
 
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -218,7 +218,7 @@ CPLErr LAN4BitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( VSIFSeekL( poLAN_DS->fpImage, nOffset, SEEK_SET ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "LAN Seek failed:%s", VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -226,10 +226,10 @@ CPLErr LAN4BitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Read the profile.                                               */
 /* -------------------------------------------------------------------- */
-    if( VSIFReadL( pImage, 1, nRasterXSize/2, poLAN_DS->fpImage ) != 
+    if( VSIFReadL( pImage, 1, nRasterXSize/2, poLAN_DS->fpImage ) !=
         (size_t) nRasterXSize / 2 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "LAN Read failed:%s", VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -456,8 +456,8 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unsupported pixel type (%d).", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unsupported pixel type (%d).",
                   nTmp16 );
 
         delete poDS;
@@ -474,7 +474,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    
+
     if( nPixelOffset != -1 && poDS->nRasterXSize > INT_MAX / (nPixelOffset*nBandCount) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -490,15 +490,15 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     for( int iBand = 1; iBand <= nBandCount; iBand++ )
     {
         if( nPixelOffset == -1 ) /* 4 bit case */
-            poDS->SetBand( iBand, 
+            poDS->SetBand( iBand,
                            new LAN4BitRasterBand( poDS, iBand ) );
         else
-            poDS->SetBand( 
-                iBand, 
-                new RawRasterBand( poDS, iBand, poDS->fpImage, 
-                                   ERD_HEADER_SIZE + (iBand-1) 
+            poDS->SetBand(
+                iBand,
+                new RawRasterBand( poDS, iBand, poDS->fpImage,
+                                   ERD_HEADER_SIZE + (iBand-1)
                                    * nPixelOffset * poDS->nRasterXSize,
-                                   nPixelOffset, 
+                                   nPixelOffset,
                                    poDS->nRasterXSize*nPixelOffset*nBandCount,
                                    eDataType, !bNeedSwap, TRUE ));
         if( CPLGetLastErrorType() != CE_None )
@@ -550,9 +550,9 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->adfGeoTransform[1] == 0.0
         || poDS->adfGeoTransform[5] == 0.0 )
     {
-        if( !GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
+        if( !GDALReadWorldFile( poOpenInfo->pszFilename, NULL,
                                 poDS->adfGeoTransform ) )
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
                                poDS->adfGeoTransform );
     }
 
@@ -569,16 +569,16 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else if( nCoordSys == 1 )
     {
-        poDS->pszProjection = 
+        poDS->pszProjection =
             CPLStrdup("LOCAL_CS[\"UTM - Zone Unknown\",UNIT[\"Meter\",1]]");
     }
     else if( nCoordSys == 2 )
     {
         poDS->pszProjection = CPLStrdup("LOCAL_CS[\"State Plane - Zone Unknown\",UNIT[\"US survey foot\",0.3048006096012192]]");
     }
-    else 
+    else
     {
-        poDS->pszProjection = 
+        poDS->pszProjection =
             CPLStrdup("LOCAL_CS[\"Unknown\",UNIT[\"Meter\",1]]");
     }
 
@@ -673,7 +673,7 @@ CPLErr LANDataset::SetGeoTransform( double * padfTransform )
     f32Val = static_cast<float>( std::abs( adfGeoTransform[5] ) );
     memcpy( abyHeader + 124, &f32Val, 4 );
 
-    if( VSIFSeekL( fpImage, 0, SEEK_SET ) != 0 
+    if( VSIFSeekL( fpImage, 0, SEEK_SET ) != 0
         || VSIFWriteL( abyHeader, 128, 1, fpImage ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -724,9 +724,9 @@ CPLErr LANDataset::SetProjection( const char * pszWKT )
     else if( oSRS.GetUTMZone() != 0 )
         nProjCode = 1;
 
-    // Too bad we have no way of recognising state plane projections. 
+    // Too bad we have no way of recognising state plane projections.
 
-    else 
+    else
     {
         const char *l_pszProjection = oSRS.GetAttrValue("PROJECTION");
 
@@ -949,7 +949,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     n16Val = 0;
     memcpy( abyHeader + 88, &n16Val, 2 );
 
-    // Classes in coverage 
+    // Classes in coverage
     n16Val = 0;
     memcpy( abyHeader + 90, &n16Val, 2 );
 
@@ -998,7 +998,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
         const vsi_l_offset nWriteThisTime
             = std::min( static_cast<size_t>( nImageBytes ), sizeof(abyHeader) );
 
-        if( VSIFWriteL( abyHeader, 1, (size_t)nWriteThisTime, fp ) 
+        if( VSIFWriteL( abyHeader, 1, (size_t)nWriteThisTime, fp )
             != nWriteThisTime )
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
