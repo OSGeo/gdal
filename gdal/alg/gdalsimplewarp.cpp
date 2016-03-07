@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
-#include "gdal_alg.h"
 #include "cpl_string.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -131,16 +131,18 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     const int nSrcYSize = GDALGetRasterYSize(hSrcDS);
     GByte **papabySrcData = static_cast<GByte **>(
         CPLCalloc(nBandCount, sizeof(GByte*)) );
+
+    bool ok = true;
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
         papabySrcData[iBand] = static_cast<GByte *>(
             VSI_MALLOC2_VERBOSE(nSrcXSize, nSrcYSize) );
         if( papabySrcData[iBand] == NULL )
         {
-            for( int i=0;i<=iBand;i++)
-                VSIFree(papabySrcData[i]);
-            CPLFree(papabySrcData);
-            return FALSE;
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "GDALSimpleImageWarp out of memory.\n" );
+            ok = false;
+            break;
         }
 
         if( GDALRasterIO( GDALGetRasterBand(hSrcDS,panBandList[iBand]), GF_Read,
@@ -148,11 +150,20 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                       papabySrcData[iBand], nSrcXSize, nSrcYSize, GDT_Byte,
                       0, 0 ) != CE_None )
         {
-            for( int i=0;i<=iBand;i++)
-                VSIFree(papabySrcData[i]);
-            CPLFree(papabySrcData);
-            return FALSE;
+            CPLError( CE_Failure, CPLE_FileIO, "GDALSimpleImageWarp "
+                      "GDALRasterIO failure %s ",
+                      CPLGetLastErrorMsg() );
+            ok = false;
+            break;
         }
+    }
+    if( !ok ) {
+        for( int i=0; i <= nBandCount; i++ )
+        {
+            VSIFree(papabySrcData[i]);
+        }
+        CPLFree(papabySrcData);
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -167,10 +178,10 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     const int nDstXSize = GDALGetRasterXSize( hDstDS );
     const int nDstYSize = GDALGetRasterYSize( hDstDS );
     GByte **papabyDstLine = static_cast<GByte **>(
-        CPLCalloc(nBandCount,sizeof(GByte*)) );
+        CPLCalloc(nBandCount, sizeof(GByte*)) );
 
     for( int iBand = 0; iBand < nBandCount; iBand++ )
-        papabyDstLine[iBand] = (GByte *) CPLMalloc( nDstXSize );
+        papabyDstLine[iBand] = static_cast<GByte *>(CPLMalloc( nDstXSize ));
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -191,7 +202,8 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /*      overridden by passed                                            */
 /*      option(s).                                                      */
 /* -------------------------------------------------------------------- */
-    int *panBandInit = static_cast<int *>( CPLCalloc(sizeof(int), nBandCount) );
+    int * const panBandInit =
+        static_cast<int *>( CPLCalloc(sizeof(int), nBandCount) );
     if( CSLFetchNameValue( papszWarpOptions, "INIT" ) )
     {
         char **papszTokens =
