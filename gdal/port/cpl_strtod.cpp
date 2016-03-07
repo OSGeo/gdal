@@ -175,7 +175,7 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
             return pszNew;
         }
     }
-#else
+#else  // ndef __ANDROID__
     struct lconv *poLconv = localeconv();
     if ( poLconv
          && poLconv->decimal_point
@@ -198,7 +198,7 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
             }
         }
     }
-#endif
+#endif  // __ANDROID__
 
     return const_cast<char*>( pszNumber );
 }
@@ -366,7 +366,7 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 
     return static_cast<float>( CPLStrtodDelim(nptr, endptr, point) );
 
-#endif /* HAVE_STRTOF */
+#endif  // HAVE_STRTOF
 }
 
 /************************************************************************/
