@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_list.h"
 #include "cpl_conv.h"
+#include "cpl_list.h"
 
 CPL_CVSID("$Id$");
 
@@ -54,17 +54,19 @@ CPL_CVSID("$Id$");
 
 CPLList *CPLListAppend( CPLList *psList, void *pData )
 {
-    CPLList *psLast;
+    CPLList *psLast = NULL;
 
     /* Allocate room for the new object */
     if ( psList == NULL )
     {
-        psLast = psList = (CPLList *)CPLMalloc( sizeof(CPLList) );
+      psLast = static_cast<CPLList *>( CPLMalloc( sizeof(CPLList) ) );
+      psList = psLast;
     }
     else
     {
         psLast = CPLListGetLast( psList );
-        psLast = psLast->psNext = (CPLList *)CPLMalloc( sizeof(CPLList) );
+        psLast = psLast->psNext = static_cast<CPLList *>(
+            CPLMalloc( sizeof(CPLList) ) );
     }
 
     /* Append object to the end of list */
@@ -96,7 +98,7 @@ CPLList *CPLListInsert( CPLList *psList, void *pData, int nPosition )
 
     if ( nPosition == 0)
     {
-        CPLList *psNew = (CPLList *)CPLMalloc( sizeof(CPLList) );
+        CPLList *psNew = static_cast<CPLList *>( CPLMalloc( sizeof(CPLList) ) );
         psNew->pData = pData;
         psNew->psNext = psList;
         psList = psNew;
@@ -125,7 +127,7 @@ CPLList *CPLListInsert( CPLList *psList, void *pData, int nPosition )
         return psList;
     }
 
-    CPLList *psNew = (CPLList *)CPLMalloc( sizeof(CPLList) );
+    CPLList *psNew = static_cast<CPLList *>( CPLMalloc( sizeof(CPLList) ) );
     psNew->pData = pData;
 
     CPLList *psCurrent = psList;
@@ -149,12 +151,12 @@ CPLList *CPLListInsert( CPLList *psList, void *pData, int nPosition )
  * @return pointer to last element in a list.
  */
 
-CPLList *CPLListGetLast( CPLList *psList )
+CPLList *CPLListGetLast( CPLList * const psList )
 {
     if ( psList == NULL )
         return NULL;
 
-    CPLList *psCurrent = psList;
+    CPLList * psCurrent = psList;
     while ( psCurrent->psNext )
         psCurrent = psCurrent->psNext;
 
@@ -202,10 +204,10 @@ CPLList *CPLListGet( CPLList *psList, int nPosition )
  * @return number of elements in a list.
  */
 
-int CPLListCount( CPLList *psList )
+int CPLListCount( const CPLList *psList )
 {
-    int     nItems = 0;
-    CPLList *psCurrent = psList;
+    int nItems = 0;
+    const CPLList *psCurrent = psList;
 
     while ( psCurrent )
     {
@@ -239,16 +241,15 @@ CPLList *CPLListRemove( CPLList *psList, int nPosition )
     if ( nPosition < 0)
         return psList;      /* Nothing to do. */
 
-    CPLList *psCurrent, *psRemoved;
     if ( nPosition == 0 )
     {
-        psCurrent = psList->psNext;
+        CPLList *psCurrent = psList->psNext;
         CPLFree( psList );
         psList = psCurrent;
         return psList;
     }
 
-    psCurrent = psList;
+    CPLList *psCurrent = psList;
     for ( int i = 0; i < nPosition - 1; i++ )
     {
         psCurrent = psCurrent->psNext;
@@ -256,7 +257,7 @@ CPLList *CPLListRemove( CPLList *psList, int nPosition )
         if (psCurrent == NULL)
             return psList;
     }
-    psRemoved = psCurrent->psNext;
+    CPLList *psRemoved = psCurrent->psNext;
     /* psRemoved == NULL if nPosition >= CPLListCount(psList) */
     if (psRemoved == NULL)
         return psList;
@@ -280,12 +281,11 @@ CPLList *CPLListRemove( CPLList *psList, int nPosition )
 
 void CPLListDestroy( CPLList *psList )
 {
-    CPLList *psNext;
     CPLList *psCurrent = psList;
 
     while ( psCurrent )
     {
-        psNext = psCurrent->psNext;
+        CPLList * const psNext = psCurrent->psNext;
         CPLFree( psCurrent );
         psCurrent = psNext;
     }
@@ -303,7 +303,7 @@ void CPLListDestroy( CPLList *psList )
  * @return pointer to the list element preceded by the given element.
  */
 
-CPLList *CPLListGetNext( CPLList *psElement )
+CPLList *CPLListGetNext( const CPLList *psElement )
 {
     if ( psElement == NULL )
         return NULL;
@@ -323,7 +323,7 @@ CPLList *CPLListGetNext( CPLList *psElement )
  * @return pointer to the data object contained in given list element.
  */
 
-void *CPLListGetData( CPLList *psElement )
+void *CPLListGetData( const CPLList *psElement )
 {
     if ( psElement == NULL )
         return NULL;

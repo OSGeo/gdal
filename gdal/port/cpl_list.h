@@ -57,15 +57,15 @@ typedef struct _CPLList
     struct _CPLList    *psNext;
 } CPLList;
 
-CPLList CPL_DLL *CPLListAppend( CPLList *psList, void *pData );
-CPLList CPL_DLL *CPLListInsert( CPLList *psList, void *pData, int nPosition );
+CPLList CPL_DLL *CPLListAppend( CPLList *psList, void * pData );
+CPLList CPL_DLL *CPLListInsert( CPLList *psList, void * pData, int nPosition );
 CPLList CPL_DLL *CPLListGetLast( CPLList *psList );
-CPLList CPL_DLL *CPLListGet( CPLList *psList, int nPosition );
-int CPL_DLL CPLListCount( CPLList *psList );
+CPLList CPL_DLL *CPLListGet( CPLList * const psList, int nPosition );
+int CPL_DLL CPLListCount( const CPLList *psList );
 CPLList CPL_DLL *CPLListRemove( CPLList *psList, int nPosition );
 void CPL_DLL CPLListDestroy( CPLList *psList );
-CPLList CPL_DLL *CPLListGetNext( CPLList *psElement );
-void CPL_DLL *CPLListGetData( CPLList *psElement );
+CPLList CPL_DLL *CPLListGetNext( const CPLList *psElement );
+void CPL_DLL *CPLListGetData( const CPLList *psElement );
 
 CPL_C_END
 
