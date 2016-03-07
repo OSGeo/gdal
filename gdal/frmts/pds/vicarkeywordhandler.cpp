@@ -100,28 +100,32 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if( pszChunk == NULL )
         return FALSE;
     int nBytesRead = VSIFReadL( pszChunk, 1, LabelSize, fp );
-    pszChunk[LabelSize] = 0;
+    pszChunk[nBytesRead] = '\0';
 
     osHeaderText += pszChunk ;
     VSIFree(pszChunk);
     pszHeaderNext = osHeaderText.c_str();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Process name/value pairs, keeping track of a "path stack".      */
 /* -------------------------------------------------------------------- */
     if( !ReadGroup("") )
         return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Now check for the Vicar End-of-Dataset Label...                 */
 /* -------------------------------------------------------------------- */
     const char *pszResult;
 
     pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
-    
-    if( pszResult == NULL )
-        return FALSE;
 
-    if( !EQUAL(pszResult,"1") ) 
+    if( pszResult == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT DEFINED!");
+        return FALSE;
+    }
+
+    if( !EQUAL(pszResult,"1") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -151,42 +155,50 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 ) {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
         return FALSE;
-        }
-    char szChunk[100];
-    nBytesRead = VSIFReadL( szChunk, 1, 30, fp );
-    szChunk[nBytesRead] = '\0';
-    pszLBLSIZE=strstr(szChunk,"LBLSIZE");
-    nOffset=0;
-    
-    if (pszLBLSIZE)
-        nOffset = static_cast<int>(pszLBLSIZE - (const char *)szChunk);
-    pch1 = strstr( reinterpret_cast<char *>( szChunk + nOffset ), "=" );
-    if( pch1 == NULL )
+    }
+    char* pszEOLHeader = static_cast<char*>(VSIMalloc(32));
+    if( pszEOLHeader == NULL )
         return FALSE;
+    nBytesRead = VSIFReadL( pszEOLHeader, 1, 31, fp );
+    pszEOLHeader[nBytesRead] = '\0';
+    pszLBLSIZE=strstr(pszEOLHeader,"LBLSIZE");
+    nOffset=0;
+    if (pszLBLSIZE)
+        nOffset = static_cast<int>(pszLBLSIZE - (const char *)pszEOLHeader);
+    pch1 = strstr( reinterpret_cast<char *>( pszEOLHeader + nOffset ), "=" );
+    if( pch1 == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
+        VSIFree(pszEOLHeader);
+        return FALSE;
+    }
+    VSIFree(pszEOLHeader);
     pch1 ++;
     pch2 = strstr( pch1, " " );
     if( pch2 == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         return FALSE;
+    }
     strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
     keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
-
     int EOLabelSize = atoi( keyval );
-    if( EOLabelSize <= 0 )
+    if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
         return FALSE;
-    if( EOLabelSize > static_cast<int>(sizeof(szChunk) - 1) )
-        EOLabelSize = static_cast<int>(sizeof(szChunk) - 1);
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
+    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 ) 
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
         return FALSE;
-        }
-    nBytesRead = VSIFReadL( szChunk, 1, EOLabelSize, fp );
-    szChunk[nBytesRead] = '\0';
-    osHeaderText += szChunk ;
-    osHeaderText.append("END");
-    pszHeaderNext = osHeaderText.c_str();
+    }
+    char* pszChunkEOL = (char*) VSIMalloc(EOLabelSize+1);
+    if( pszChunkEOL == NULL )
+        return FALSE;
+    nBytesRead = static_cast<int>(VSIFReadL( pszChunkEOL, 1, EOLabelSize, fp ));
+    pszChunkEOL[nBytesRead] = '\0';
+    osHeaderText += pszChunkEOL ;
+    VSIFree(pszChunkEOL);
+    pszHeaderNext = osHeaderText.c_str();            
     return ReadGroup( "" );
-    
 }
 
 /************************************************************************/
@@ -197,19 +209,18 @@ int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
     CPLString osName, osValue, osProperty;
 
     for( ; TRUE; ) {
-        if( !ReadPair( osName, osValue ) ) {
-        //printf("Could not... \n");
-                return FALSE;
-                }
-            if( EQUAL(osName,"END") )
+        if( !ReadPair( osName, osValue ) )
+	    return FALSE;
+        if( EQUAL(osName,"END") )
             return TRUE;
-            else if( EQUAL(osName,"PROPERTY") || EQUAL(osName,"HISTORY") || EQUAL(osName,"TASK"))
-                osProperty = osValue;
+        else if( EQUAL(osName,"PROPERTY") || EQUAL(osName,"HISTORY") || EQUAL(osName,"TASK"))
+            osProperty = osValue;
         else {
             if ( !EQUAL(osProperty,"") )
                 osName = osProperty + "." + osName;
             papszKeywordList = CSLSetNameValue( papszKeywordList, osName, osValue );
         }
+
     }
 }
 
@@ -241,8 +252,6 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
     pszHeaderNext++;
     
     SkipWhite();
-    
-    osValue = "";
 
     if( *pszHeaderNext == '(' && pszHeaderNext[1] == '\'' )
     {
@@ -255,7 +264,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
         }
     }
 
-    else if( *pszHeaderNext == '(' && *pszHeaderNext-1 != '\'' )
+    else if( *pszHeaderNext == '(' && *(pszHeaderNext-1) != '\'' )
     {
         CPLString osWord;
 
@@ -270,12 +279,13 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
 
     else
     {
-        if( !ReadWord( osValue ) ) return FALSE;
+        if( !ReadWord( osValue ) )
+            return FALSE;
 
     }
         
     SkipWhite();
-    
+
     return TRUE;
 }
 
@@ -293,9 +303,8 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
 
     if( *pszHeaderNext == '\0') return TRUE;
     
-    if( !( *pszHeaderNext != '='  && !isspace((unsigned char)*pszHeaderNext)) ) {
-    return FALSE;
-    }
+    if( !( *pszHeaderNext != '='  && !isspace((unsigned char)*pszHeaderNext)) )
+        return FALSE;
 
     if( *pszHeaderNext == '\'' )
     {
