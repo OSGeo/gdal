@@ -77,30 +77,30 @@ typedef struct CPLXMLNode
      *
      * For CXT_Element this is the name of the element, without the angle
      * brackets.  Note there is a single CXT_Element even when the document
-     * contains a start and end element tag.  The node represents the pair. 
+     * contains a start and end element tag.  The node represents the pair.
      * All text or other elements between the start and end tag will appear
-     * as children nodes of this CXT_Element node. 
+     * as children nodes of this CXT_Element node.
      *
-     * For CXT_Attribute the pszValue is the attribute name.  The value of 
-     * the attribute will be a CXT_Text child. 
+     * For CXT_Attribute the pszValue is the attribute name.  The value of
+     * the attribute will be a CXT_Text child.
      *
-     * For CXT_Text this is the text itself (value of an attribute, or a 
-     * text fragment between an element start and end tags. 
+     * For CXT_Text this is the text itself (value of an attribute, or a
+     * text fragment between an element start and end tags.
      *
      * For CXT_Literal it is all the literal text.  Currently this is just
-     * used for !DOCTYPE lines, and the value would be the entire line. 
+     * used for !DOCTYPE lines, and the value would be the entire line.
      *
-     * For CXT_Comment the value is all the literal text within the comment, 
-     * but not including the comment start/end indicators ("<--" and "-->"). 
+     * For CXT_Comment the value is all the literal text within the comment,
+     * but not including the comment start/end indicators ("<--" and "-->").
      */
     char                *pszValue;
 
     /**
-     * \brief Next sibling. 
+     * \brief Next sibling.
      *
      * Pointer to next sibling, that is the next node appearing after this
      * one that has the same parent as this node.  NULL if this node is the
-     * last child of the parent element. 
+     * last child of the parent element.
      */
     struct CPLXMLNode  *psNext;
 
@@ -109,9 +109,9 @@ typedef struct CPLXMLNode
      *
      * Pointer to first child node, if any.  Only CXT_Element and CXT_Attribute
      * nodes should have children.  For CXT_Attribute it should be a single
-     * CXT_Text value node, while CXT_Element can have any kind of child. 
-     * The full list of children for a node are identified by walking the 
-     * psNext's starting with the psChild node. 
+     * CXT_Text value node, while CXT_Element can have any kind of child.
+     * The full list of children for a node are identified by walking the
+     * psNext's starting with the psChild node.
      */
 
     struct CPLXMLNode  *psChild;
@@ -120,14 +120,14 @@ typedef struct CPLXMLNode
 
 CPLXMLNode CPL_DLL *CPLParseXMLString( const char * );
 void       CPL_DLL  CPLDestroyXMLNode( CPLXMLNode * );
-CPLXMLNode CPL_DLL *CPLGetXMLNode( CPLXMLNode *poRoot, 
+CPLXMLNode CPL_DLL *CPLGetXMLNode( CPLXMLNode *poRoot,
                                    const char *pszPath );
-CPLXMLNode CPL_DLL *CPLSearchXMLNode( CPLXMLNode *poRoot, 
+CPLXMLNode CPL_DLL *CPLSearchXMLNode( CPLXMLNode *poRoot,
                                       const char *pszTarget );
-const char CPL_DLL *CPLGetXMLValue( CPLXMLNode *poRoot, 
-                                    const char *pszPath, 
+const char CPL_DLL *CPLGetXMLValue( CPLXMLNode *poRoot,
+                                    const char *pszPath,
                                     const char *pszDefault );
-CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent, 
+CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent,
                                       CPLXMLNodeType eType,
                                       const char *pszText );
 char       CPL_DLL *CPLSerializeXMLTree( const CPLXMLNode *psNode );
@@ -146,8 +146,8 @@ void       CPL_DLL CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
 CPLXMLNode CPL_DLL *CPLCloneXMLTree( CPLXMLNode *psTree );
 int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
                                    const char *pszValue );
-void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot, 
-                                         const char *pszNameSpace, 
+void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot,
+                                         const char *pszNameSpace,
                                          int bRecurse );
 void       CPL_DLL CPLCleanXMLElementName( char * );
 

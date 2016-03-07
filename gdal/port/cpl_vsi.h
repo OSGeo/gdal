@@ -4,7 +4,7 @@
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  * Purpose:  Include file defining Virtual File System (VSI) functions, a
- *           layer over POSIX file and other system services. 
+ *           layer over POSIX file and other system services.
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
@@ -261,11 +261,11 @@ void CPL_DLL VSISetCryptKey(const GByte* pabyKey, int nKeySize);
 void CPL_DLL VSICleanupFileManager(void);
 
 VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
-                                    GByte *pabyData, 
+                                    GByte *pabyData,
                                     vsi_l_offset nDataLength,
                                     int bTakeOwnership ) CPL_WARN_UNUSED_RESULT;
-GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
-                                    vsi_l_offset *pnDataLength, 
+GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename,
+                                    vsi_l_offset *pnDataLength,
                                     int bUnlinkAndSeize );
 
 typedef size_t (*VSIWriteFunction)(const void* ptr, size_t size, size_t nmemb, FILE* stream);

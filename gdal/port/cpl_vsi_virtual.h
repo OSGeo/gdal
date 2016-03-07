@@ -4,7 +4,7 @@
  * Project:  VSI Virtual File System
  * Purpose:  Declarations for classes related to the virtual filesystem.
  *           These would only be normally required by applications implementing
- *           their own virtual file system classes which should be rare.  
+ *           their own virtual file system classes which should be rare.
  *           The class interface may be fragile through versions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -46,7 +46,7 @@
 /*                           VSIVirtualHandle                           */
 /************************************************************************/
 
-class CPL_DLL VSIVirtualHandle { 
+class CPL_DLL VSIVirtualHandle {
   public:
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) = 0;
     virtual vsi_l_offset Tell() = 0;
@@ -71,18 +71,18 @@ public:
 
     virtual ~VSIFilesystemHandler() {}
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess) = 0;
     virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
                       { (void) pszFilename; errno=ENOENT; return -1; }
-    virtual int Mkdir( const char *pszDirname, long nMode ) 
+    virtual int Mkdir( const char *pszDirname, long nMode )
                       {(void)pszDirname; (void)nMode; errno=ENOENT; return -1;}
-    virtual int Rmdir( const char *pszDirname ) 
+    virtual int Rmdir( const char *pszDirname )
                       { (void) pszDirname; errno=ENOENT; return -1; }
-    virtual char **ReadDir( const char *pszDirname ) 
+    virtual char **ReadDir( const char *pszDirname )
                       { (void) pszDirname; return NULL; }
-    virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ ) 
+    virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )
                       { return ReadDir(pszDirname); }
     virtual int Rename( const char *oldpath, const char *newpath )
                       { (void) oldpath; (void)newpath; errno=ENOENT; return -1; }
@@ -95,7 +95,7 @@ public:
 /*                            VSIFileManager                            */
 /************************************************************************/
 
-class CPL_DLL VSIFileManager 
+class CPL_DLL VSIFileManager
 {
 private:
     VSIFilesystemHandler *poDefaultHandler;
@@ -109,7 +109,7 @@ public:
     ~VSIFileManager();
 
     static VSIFilesystemHandler *GetHandler( const char * );
-    static void InstallHandler( const std::string& osPrefix, 
+    static void InstallHandler( const std::string& osPrefix,
                                 VSIFilesystemHandler * );
     /* RemoveHandler is never defined. */
     /* static void RemoveHandler( const std::string& osPrefix ); */
@@ -163,7 +163,7 @@ class VSIArchiveReader
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) = 0;
 };
 
-class VSIArchiveFilesystemHandler : public VSIFilesystemHandler 
+class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 {
 protected:
     CPLMutex* hMutex;

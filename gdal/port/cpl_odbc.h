@@ -73,7 +73,7 @@ class CPL_DLL CPLODBCDriverInstaller
     /**
      * Installs ODBC driver or updates definition of already installed driver.
      * Interanally, it calls ODBC's SQLInstallDriverEx function.
-     * 
+     *
      * @param pszDriver - The driver definition as a list of keyword-value
      * pairs describing the driver (See ODBC API Reference).
      *
@@ -96,10 +96,10 @@ class CPL_DLL CPLODBCDriverInstaller
      *
      * @param pszDriverName - The name of the driver as registered in
      * the Odbcinst.ini key of the system information.
-     * 
-     * @param fRemoveDSN - TRUE: Remove DSNs associated with the driver 
+     *
+     * @param fRemoveDSN - TRUE: Remove DSNs associated with the driver
      * specified in lpszDriver. FALSE: Do not remove DSNs associated
-     * with the driver specified in lpszDriver. 
+     * with the driver specified in lpszDriver.
      *
      * @return The function returns TRUE if it is successful,
      * FALSE if it fails. If no entry exists in the system information
@@ -115,7 +115,7 @@ class CPL_DLL CPLODBCDriverInstaller
 
     // Path of the target directory where the driver should be installed.
     // For details, see ODBC API Reference and lpszPathOut
-    // parameter of SQLInstallDriverEx 
+    // parameter of SQLInstallDriverEx
     const char* GetPathOut() const { return m_szPathOut; }
 
 
@@ -152,7 +152,7 @@ class CPLODBCStatement;
 
 
 /**
- * A class representing an ODBC database session. 
+ * A class representing an ODBC database session.
  *
  * Includes error collection services.
  */
@@ -168,8 +168,8 @@ class CPL_DLL CPLODBCSession {
     CPLODBCSession();
     ~CPLODBCSession();
 
-    int         EstablishSession( const char *pszDSN, 
-                                  const char *pszUserid, 
+    int         EstablishSession( const char *pszDSN,
+                                  const char *pszUserid,
                                   const char *pszPassword );
     const char  *GetLastError();
 
@@ -181,7 +181,7 @@ class CPL_DLL CPLODBCSession {
     int         RollbackTransaction();
     int         IsInTransaction() { return m_bInTransaction; }
 
-    // Essentially internal. 
+    // Essentially internal.
 
     int         CloseSession();
 
@@ -240,7 +240,7 @@ class CPL_DLL CPLODBCStatement {
     int            ExecuteSQL( const char * = NULL );
 
     // Results fetching
-    int            Fetch( int nOrientation = SQL_FETCH_NEXT, 
+    int            Fetch( int nOrientation = SQL_FETCH_NEXT,
                           int nOffset = 0 );
     void           ClearColumnData();
 
@@ -260,10 +260,10 @@ class CPL_DLL CPLODBCStatement {
     int            GetRowCountAffected();
 
     // Fetch special metadata.
-    int            GetColumns( const char *pszTable, 
+    int            GetColumns( const char *pszTable,
                                const char *pszCatalog = NULL,
                                const char *pszSchema = NULL );
-    int            GetPrimaryKeys( const char *pszTable, 
+    int            GetPrimaryKeys( const char *pszTable,
                                    const char *pszCatalog = NULL,
                                    const char *pszSchema = NULL );
 
