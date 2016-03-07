@@ -130,7 +130,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
 
     snprintf( szTarget, sizeof(szTarget), "ChanDesc-%d", nBand );
     if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )
-        GDALRasterBand::SetDescription( 
+        GDALRasterBand::SetDescription(
             CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) );
 
 /* -------------------------------------------------------------------- */
@@ -153,7 +153,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
             int	nRed, nGreen, nBlue;
             if( pszLine != NULL
                 && STARTS_WITH_CI(pszLine, "(RGB:")
-                && sscanf( pszLine+5, "%d %d %d", 
+                && sscanf( pszLine+5, "%d %d %d",
                            &nRed, &nGreen, &nBlue ) == 3 )
             {
                 GDALColorEntry    oColor;
@@ -340,7 +340,7 @@ PAuxDataset::~PAuxDataset()
 /*      incomplete, but can be filled out in the future.                */
 /************************************************************************/
 
-char *PAuxDataset::PCI2WKT( const char *pszGeosys, 
+char *PAuxDataset::PCI2WKT( const char *pszGeosys,
                             const char *pszProjParms )
 
 {
@@ -507,9 +507,9 @@ const char *PAuxDataset::GetProjectionRef()
 CPLErr PAuxDataset::GetGeoTransform( double * padfGeoTransform )
 
 {
-    if( CSLFetchNameValue(papszAuxLines, "UpLeftX") != NULL 
-        && CSLFetchNameValue(papszAuxLines, "UpLeftY") != NULL 
-        && CSLFetchNameValue(papszAuxLines, "LoRightX") != NULL 
+    if( CSLFetchNameValue(papszAuxLines, "UpLeftX") != NULL
+        && CSLFetchNameValue(papszAuxLines, "UpLeftY") != NULL
+        && CSLFetchNameValue(papszAuxLines, "LoRightX") != NULL
         && CSLFetchNameValue(papszAuxLines, "LoRightY") != NULL )
     {
         const double dfUpLeftX = CPLAtof(CSLFetchNameValue(papszAuxLines, "UpLeftX" ));
@@ -631,7 +631,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if( papszSiblingFiles != NULL
-        && CSLFindString( papszSiblingFiles, 
+        && CSLFindString( papszSiblingFiles,
                           CPLGetFilename(osAuxFilename) ) == -1 )
     {
         return NULL;
@@ -802,7 +802,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
         }
 
-        poDS->SetBand( iBand+1, 
+        poDS->SetBand( iBand+1,
             new PAuxRasterBand( poDS, iBand+1, poDS->fpImage,
                                 nBandOffset,
                                 nPixelOffset,
@@ -992,7 +992,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         else
             pszTypeName = "8U";
 
-        CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "ChanDefinition-%d: %s " CPL_FRMT_GIB " %d %d %s\n", 
+        CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "ChanDefinition-%d: %s " CPL_FRMT_GIB " %d %d %s\n",
 					 iBand+1,
 					 pszTypeName, (GIntBig) nImgOffset,
 					 nPixelOffset, nLineOffset,
@@ -1025,7 +1025,7 @@ static CPLErr PAuxDelete( const char * pszBasename )
     VSILFILE *fp = VSIFOpenL( CPLResetExtension( pszBasename, "aux" ), "r" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be a PAux dataset, there is no .aux file.",
                   pszBasename );
         return CE_Failure;
@@ -1036,7 +1036,7 @@ static CPLErr PAuxDelete( const char * pszBasename )
 
     if( pszLine == NULL || !STARTS_WITH_CI(pszLine, "AuxilaryTarget") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be a PAux dataset,\n"
                   "the .aux file does not start with AuxilaryTarget",
                   pszBasename );
@@ -1045,7 +1045,7 @@ static CPLErr PAuxDelete( const char * pszBasename )
 
     if( VSIUnlink( pszBasename ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "OS unlinking file %s.", pszBasename );
         return CE_Failure;
     }

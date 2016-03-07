@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Horizontal Datum Formats
- * Purpose:  Implementation of NTv2 datum shift format used in Canada, France, 
+ * Purpose:  Implementation of NTv2 datum shift format used in Canada, France,
  *           Australia and elsewhere.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  * Financial Support: i-cubed (http://www.i-cubed.com)
@@ -554,8 +554,8 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffsetIn )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < 4; iBand++ )
     {
-        RawRasterBand *poBand = 
-            new RawRasterBand( this, iBand+1, fpImage, 
+        RawRasterBand *poBand =
+            new RawRasterBand( this, iBand+1, fpImage,
                                nGridOffset + 4*iBand + 11*16
                                + (nRasterXSize-1) * 16
                                + (nRasterYSize-1) * 16 * nRasterXSize,
@@ -618,14 +618,14 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
     if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
-                  "Unable to update geotransform on readonly file." ); 
+                  "Unable to update geotransform on readonly file." );
         return CE_Failure;
     }
 
     if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Rotated and sheared geotransforms not supported for NTv2."); 
+                  "Rotated and sheared geotransforms not supported for NTv2.");
         return CE_Failure;
     }
 

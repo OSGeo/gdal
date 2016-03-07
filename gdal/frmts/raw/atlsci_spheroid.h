@@ -37,7 +37,7 @@
 /* Maximum number of expected spheroids */
 # define MAX_RECOGNIZED_SPHEROIDS 256
 
-class SpheroidItem 
+class SpheroidItem
 {
 
 public:
@@ -53,7 +53,7 @@ public:
    void SetValuesByEqRadiusAndInvFlattening(const char *spheroidname, double eq_radius, double inverseflattening);
 };
 
-class SpheroidList 
+class SpheroidList
 {
 
 public:
@@ -72,6 +72,6 @@ public:
 
   int SpheroidInList( const char *spheroid_name );
   double GetSpheroidEqRadius( const char *spheroid_name );
-  double GetSpheroidPolarRadius( const char *spheroid_name ); 
+  double GetSpheroidPolarRadius( const char *spheroid_name );
   double GetSpheroidInverseFlattening( const char *spheroid_name );
 };

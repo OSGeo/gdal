@@ -50,7 +50,7 @@ class HKVRasterBand : public RawRasterBand
     friend class HKVDataset;
 
   public:
-    		HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw, 
+    		HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw,
                                unsigned int nImgOffset, int nPixelOffset,
                                int nLineOffset,
                                GDALDataType eDataType, int bNativeOrder );
@@ -208,10 +208,10 @@ class HKVDataset : public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-    static GDALDataset *CreateCopy( const char * pszFilename, 
-                                    GDALDataset *poSrcDS, 
-                                    int bStrict, char ** papszOptions, 
-                                    GDALProgressFunc pfnProgress, 
+    static GDALDataset *CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
     static CPLErr Delete( const char * pszName );
@@ -308,12 +308,12 @@ HKVDataset::~HKVDataset()
 
     if( bNoDataChanged )
     {
-        SaveHKVAttribFile(pszPath, 
+        SaveHKVAttribFile(pszPath,
                              this->nRasterXSize,
                              this->nRasterYSize,
                              this->nBands,
                              this->eRasterType,
-                             this->bNoDataSet, 
+                             this->bNoDataSet,
                              this->dfNoDataValue );
     }
 
@@ -386,7 +386,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
     FILE *fp = VSIFOpen( pszFilename, "wt" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Couldn't create %s.\n", pszFilename );
         return CE_Failure;
     }
@@ -465,7 +465,7 @@ const char *HKVDataset::GetProjectionRef()
 CPLErr HKVDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 ); 
+    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
     return( CE_None );
 }
 
@@ -575,11 +575,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     {
         char szValue[128];
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
-        papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude", 
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude",
                                        szValue );
 
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_long );
-        papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude", 
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude",
                                        szValue );
     }
 
@@ -619,11 +619,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     {
         char szValue[128];
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
-        papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude", 
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude",
                                        szValue );
 
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_long );
-        papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude", 
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude",
                                        szValue );
     }
 
@@ -680,18 +680,18 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (MFF2version > 1.0)
     {
-        temp_lat = padfTransform[3] + GetRasterXSize() * padfTransform[4] + 
+        temp_lat = padfTransform[3] + GetRasterXSize() * padfTransform[4] +
           GetRasterYSize() * padfTransform[5];
-        temp_long = padfTransform[0] + GetRasterXSize() * padfTransform[1] + 
+        temp_long = padfTransform[0] + GetRasterXSize() * padfTransform[1] +
           GetRasterYSize() * padfTransform[2];
         pasGCPList[nGCPCount].dfGCPPixel = GetRasterXSize();
         pasGCPList[nGCPCount].dfGCPLine = GetRasterYSize();
     }
     else
     {
-        temp_lat = padfTransform[3] + (GetRasterXSize()-0.5) * padfTransform[4] + 
+        temp_lat = padfTransform[3] + (GetRasterXSize()-0.5) * padfTransform[4] +
           (GetRasterYSize()-0.5) * padfTransform[5];
-        temp_long = padfTransform[0] + (GetRasterXSize()-0.5) * padfTransform[1] + 
+        temp_long = padfTransform[0] + (GetRasterXSize()-0.5) * padfTransform[1] +
           (GetRasterYSize()-0.5) * padfTransform[2];
         pasGCPList[nGCPCount].dfGCPPixel = GetRasterXSize()-0.5;
         pasGCPList[nGCPCount].dfGCPLine = GetRasterYSize()-0.5;
@@ -748,18 +748,18 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     {
         char szValue[128];
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
-        papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude", 
+        papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude",
                                        szValue );
 
         CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_long );
-        papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude", 
+        papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude",
                                        szValue );
     }
 
     if (!bSuccess)
     {
       CPLError(CE_Warning,CPLE_AppDefined,
-               "Warning- error setting header info in SetGeoTransform. Changes may not be saved properly.\n"); 
+               "Warning- error setting header info in SetGeoTransform. Changes may not be saved properly.\n");
     }
 
     if (poTransform != NULL)
@@ -816,7 +816,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
 
     OGRSpatialReference oSRS(pszNewProjection);
 
-    if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
+    if ((oSRS.GetAttrValue("PROJECTION") != NULL) &&
         (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
     {
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "utm" );
@@ -841,7 +841,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     OGRErr ogrerrorInvf = OGRERR_NONE;
     const double inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
 
-    if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE)) 
+    if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE))
     {
         HKVSpheroidList *hkvEllipsoids = new HKVSpheroidList;
         char *spheroid_name =
@@ -849,7 +849,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
                 eq_radius, inv_flattening);
         if (spheroid_name != NULL)
         {
-            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name",
                                            spheroid_name );
         }
         CPLFree(spheroid_name);
@@ -862,12 +862,12 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
 
         if( strstr(pszNewProjection,"Bessel") != NULL )
         {
-            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name",
                                        "ev-bessel" );
         }
         else
         {
-            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name",
                                        "ev-wgs-84" );
         }
     }
@@ -991,28 +991,28 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
 
     if (MFF2version > 1.0)
     {
-        ProcessGeorefGCP( papszGeoref, "top_left", 
+        ProcessGeorefGCP( papszGeoref, "top_left",
                           0, 0 );
-        ProcessGeorefGCP( papszGeoref, "top_right", 
+        ProcessGeorefGCP( papszGeoref, "top_right",
                           GetRasterXSize(), 0 );
-        ProcessGeorefGCP( papszGeoref, "bottom_left", 
+        ProcessGeorefGCP( papszGeoref, "bottom_left",
                           0, GetRasterYSize() );
-        ProcessGeorefGCP( papszGeoref, "bottom_right", 
+        ProcessGeorefGCP( papszGeoref, "bottom_right",
                           GetRasterXSize(), GetRasterYSize() );
-        ProcessGeorefGCP( papszGeoref, "centre", 
+        ProcessGeorefGCP( papszGeoref, "centre",
                           GetRasterXSize()/2.0, GetRasterYSize()/2.0 );
     }
     else
     {
-        ProcessGeorefGCP( papszGeoref, "top_left", 
+        ProcessGeorefGCP( papszGeoref, "top_left",
                           0.5, 0.5 );
-        ProcessGeorefGCP( papszGeoref, "top_right", 
+        ProcessGeorefGCP( papszGeoref, "top_right",
                           GetRasterXSize()-0.5, 0.5 );
-        ProcessGeorefGCP( papszGeoref, "bottom_left", 
+        ProcessGeorefGCP( papszGeoref, "bottom_left",
                           0.5, GetRasterYSize()-0.5 );
-        ProcessGeorefGCP( papszGeoref, "bottom_right", 
+        ProcessGeorefGCP( papszGeoref, "bottom_right",
                           GetRasterXSize()-0.5, GetRasterYSize()-0.5 );
-        ProcessGeorefGCP( papszGeoref, "centre", 
+        ProcessGeorefGCP( papszGeoref, "centre",
                           GetRasterXSize()/2.0, GetRasterYSize()/2.0 );
     }
 
@@ -1085,11 +1085,11 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
           if (hkvEllipsoids->SpheroidInList(pszSpheroidName))
           {
             oUTM.SetGeogCS( "unknown","unknown",pszSpheroidName,
-                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
                             hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
                           );
             oLL.SetGeogCS( "unknown","unknown",pszSpheroidName,
-                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
                             hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
                            );
           }
@@ -1177,7 +1177,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
           if (hkvEllipsoids->SpheroidInList(pszSpheroidName))
           {
             oLL.SetGeogCS( "","",pszSpheroidName,
-                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
                             hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
                            );
           }
@@ -1387,9 +1387,9 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         eType = GDT_Float64;
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unsupported pixel data type in %s.\n"
-                  "pixel.size=%d pixel.encoding=%s\n", 
+                  "pixel.size=%d pixel.encoding=%s\n",
                   poDS->pszPath, nSize, pszEncoding );
         delete poDS;
         return NULL;
@@ -1406,7 +1406,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->fpBlob = VSIFOpenL( pszFilename, "rb" );
         if( poDS->fpBlob == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Unable to open file %s for read access.\n",
                       pszFilename );
             delete poDS;
@@ -1418,7 +1418,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->fpBlob = VSIFOpenL( pszFilename, "rb+" );
         if( poDS->fpBlob == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Unable to open file %s for update access.\n",
                       pszFilename );
             delete poDS;
@@ -1446,7 +1446,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         HKVRasterBand *poBand
             = new HKVRasterBand( poDS, poDS->GetRasterCount()+1, poDS->fpBlob,
-                               nOffset, nPixelOffset, nLineOffset, 
+                               nOffset, nPixelOffset, nLineOffset,
                                eType, bNative );
         poDS->SetBand( poDS->GetRasterCount()+1, poBand );
         nOffset += GDALGetDataTypeSize( eType ) / 8;
@@ -1495,13 +1495,13 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
     if (nBands <= 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "HKV driver does not support %d bands.\n", nBands);
         return NULL;
     }
 
     if( eType != GDT_Byte
-        && eType != GDT_UInt16 && eType != GDT_Int16 
+        && eType != GDT_UInt16 && eType != GDT_Int16
         && eType != GDT_CInt16 && eType != GDT_Float32
         && eType != GDT_CFloat32 )
     {
@@ -1527,9 +1527,9 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     VSIStatBuf  sStat;
     if( CPLStat( pszBaseDir, &sStat ) != 0 || !VSI_ISDIR( sStat.st_mode ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create HKV dataset under %s,\n"
-                  "but this is not a valid directory.\n", 
+                  "but this is not a valid directory.\n",
                   pszBaseDir);
         CPLFree( pszBaseDir );
         return NULL;
@@ -1540,8 +1540,8 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 
     if( VSIMkdir( pszFilenameIn, 0755 ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to create directory %s.\n", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to create directory %s.\n",
                   pszFilenameIn );
         return NULL;
     }
@@ -1565,7 +1565,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     FILE *fp = VSIFOpen( pszFilename, "wb" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Couldn't create %s.\n", pszFilename );
         return NULL;
     }
@@ -1597,9 +1597,9 @@ CPLErr HKVDataset::Delete( const char * pszName )
     VSIStatBuf	sStat;
     if( CPLStat( pszName, &sStat ) != 0 || !VSI_ISDIR(sStat.st_mode) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be an HKV Dataset, as it is not\n"
-                  "a path to a directory.", 
+                  "a path to a directory.",
                   pszName );
         return CE_Failure;
     }
@@ -1613,10 +1613,10 @@ CPLErr HKVDataset::Delete( const char * pszName )
         const char *pszTarget = CPLFormFilename(pszName, papszFiles[i], NULL );
         if( VSIUnlink(pszTarget) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to delete file %s,\n"
-                      "HKVDataset Delete(%s) failed.\n", 
-                      pszTarget, 
+                      "HKVDataset Delete(%s) failed.\n",
+                      pszTarget,
                       pszName );
             CSLDestroy( papszFiles );
             return CE_Failure;
@@ -1627,9 +1627,9 @@ CPLErr HKVDataset::Delete( const char * pszName )
 
     if( VSIRmdir( pszName ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to delete directory %s,\n"
-                  "HKVDataset Delete() failed.\n", 
+                  "HKVDataset Delete() failed.\n",
                   pszName );
         return CE_Failure;
     }
@@ -1652,7 +1652,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "HKV driver does not support source dataset with zero band.\n");
         return NULL;
     }
@@ -1718,7 +1718,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
                        (nBlocksDone++) / static_cast<float>( nBlockTotal ),
                        NULL, pProgressData ) )
                 {
-                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                    CPLError( CE_Failure, CPLE_UserInterrupt,
                               "User terminated" );
                     delete poDS;
                     CPLFree(pData);
@@ -1733,8 +1733,8 @@ HKVDataset::CreateCopy( const char * pszFilename,
                 const int nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
                 const int nTBYSize = MIN(nBlockYSize,nYSize-iYOffset);
 
-                eErr = poSrcBand->RasterIO( GF_Read, 
-                                            iXOffset, iYOffset, 
+                eErr = poSrcBand->RasterIO( GF_Read,
+                                            iXOffset, iYOffset,
                                             nTBXSize, nTBYSize,
                                             pData, nTBXSize, nTBYSize,
                                             eType, 0, 0, NULL );
@@ -1745,8 +1745,8 @@ HKVDataset::CreateCopy( const char * pszFilename,
                     return NULL;
                 }
 
-                eErr = poDstBand->RasterIO( GF_Write, 
-                                            iXOffset, iYOffset, 
+                eErr = poDstBand->RasterIO( GF_Write,
+                                            iXOffset, iYOffset,
                                             nTBXSize, nTBYSize,
                                             pData, nTBXSize, nTBYSize,
                                             eType, 0, 0, NULL );

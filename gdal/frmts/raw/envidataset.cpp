@@ -485,7 +485,7 @@ void ENVIDataset::FlushCache()
 
     // only one map info type should be set
     //     - rpc
-    //     - pseudo/gcp 
+    //     - pseudo/gcp
     //     - standard
     if ( !WriteRpcInfo() ) // are rpcs in the metadata
     {
@@ -572,7 +572,7 @@ char **ENVIDataset::GetFileList()
     if (osStaFilename.size() != 0)
         papszFileList = CSLAddString( papszFileList, osStaFilename );
 
-    return papszFileList; 
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -615,14 +615,14 @@ static int ENVIGetEPSGGeogCS( OGRSpatialReference *poThis )
         || strstr(pszGEOGCS,"World Geodetic System")
         || strstr(pszGEOGCS,"World_Geodetic_System")
         || strstr(pszDatum, "World Geodetic System")
-        || strstr(pszDatum, "World_Geodetic_System"); 
+        || strstr(pszDatum, "World_Geodetic_System");
 
     const bool bNAD = strstr(pszGEOGCS,"NAD") != NULL
         || strstr(pszDatum, "NAD")
         || strstr(pszGEOGCS,"North American")
         || strstr(pszGEOGCS,"North_American")
         || strstr(pszDatum, "North American")
-        || strstr(pszDatum, "North_American"); 
+        || strstr(pszDatum, "North_American");
 
     if( bWGS && (strstr(pszGEOGCS,"84") || strstr(pszDatum,"84")) )
         return 4326;
@@ -642,8 +642,8 @@ static int ENVIGetEPSGGeogCS( OGRSpatialReference *poThis )
 /* -------------------------------------------------------------------- */
     pszAuthName = poThis->GetAuthorityName( "GEOGCS|DATUM" );
 
-    if( pszAuthName != NULL 
-        && EQUAL(pszAuthName,"epsg") 
+    if( pszAuthName != NULL
+        && EQUAL(pszAuthName,"epsg")
         && poThis->GetPrimeMeridian() == 0.0 )
     {
         const int nDatum = atoi(poThis->GetAuthorityCode("GEOGCS|DATUM"));
@@ -668,8 +668,8 @@ void ENVIDataset::WriteProjectionInfo()
 /* -------------------------------------------------------------------- */
     CPLString   osLocation;
 
-    osLocation.Printf( "1, 1, %.15g, %.15g, %.15g, %.15g", 
-                       adfGeoTransform[0], adfGeoTransform[3], 
+    osLocation.Printf( "1, 1, %.15g, %.15g, %.15g, %.15g",
+                       adfGeoTransform[0], adfGeoTransform[3],
                        adfGeoTransform[1], fabs(adfGeoTransform[5]) );
 
 /* -------------------------------------------------------------------- */
@@ -767,16 +767,16 @@ void ENVIDataset::WriteProjectionInfo()
     }
     else if( pszProjName == NULL )
     {
-        // what to do? 
+        // what to do?
     }
     else if( EQUAL(pszProjName,SRS_PT_NEW_ZEALAND_MAP_GRID) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {New Zealand Map Grid, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {39, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, New Zealand Map Grid}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -786,11 +786,11 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName,SRS_PT_TRANSVERSE_MERCATOR) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Transverse Mercator, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {3, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Transverse Mercator}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -802,11 +802,11 @@ void ENVIDataset::WriteProjectionInfo()
              || EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Lambert Conformal Conic, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {4, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Lambert Conformal Conic}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -819,11 +819,11 @@ void ENVIDataset::WriteProjectionInfo()
                    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Hotine Oblique Mercator A, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {5, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Hotine Oblique Mercator A}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
                      oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0),
@@ -837,11 +837,11 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Hotine Oblique Mercator B, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {6, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Hotine Oblique Mercator B}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_AZIMUTH,0.0),
@@ -850,15 +850,15 @@ void ENVIDataset::WriteProjectionInfo()
                      oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                      osCommaDatum.c_str() ) >= 0;
     }
-    else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC) 
+    else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC)
              || EQUAL(pszProjName,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Stereographic (ellipsoid), %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {7, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %s, Stereographic (ellipsoid)}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -869,11 +869,11 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Albers Conical Equal Area, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {9, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Albers Conical Equal Area}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -885,11 +885,11 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName,SRS_PT_POLYCONIC) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Polyconic, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {10, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Polyconic}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -899,11 +899,11 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Lambert Azimuthal Equal Area, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {11, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Lambert Azimuthal Equal Area}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -913,11 +913,11 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Azimuthal Equadistant, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {12, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Azimuthal Equadistant}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -927,11 +927,11 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName,SRS_PT_POLAR_STEREOGRAPHIC) )
     {
         bOK &= VSIFPrintfL( fp, "map info = {Polar Stereographic, %s%s%s}\n",
-                     osLocation.c_str(), 
+                     osLocation.c_str(),
                      osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
 
         bOK &= VSIFPrintfL( fp, "projection info = {31, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Polar Stereographic}\n",
-                     dfA, dfB, 
+                     dfA, dfB,
                      oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,90.0),
                      oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1282,7 +1282,7 @@ char **ENVIDataset::SplitList( const char *pszCleanInput )
 /*                            SetENVIDatum()                            */
 /************************************************************************/
 
-void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS, 
+void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS,
                                 const char *pszENVIDatumName )
 
 {
@@ -1293,8 +1293,8 @@ void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS,
         poSRS->SetWellKnownGeogCS( "WGS72" );
     else if( EQUAL(pszENVIDatumName, "North America 1983") )
         poSRS->SetWellKnownGeogCS( "NAD83" );
-    else if( EQUAL(pszENVIDatumName, "North America 1927") 
-             || strstr(pszENVIDatumName,"NAD27") 
+    else if( EQUAL(pszENVIDatumName, "North America 1927")
+             || strstr(pszENVIDatumName,"NAD27")
              || strstr(pszENVIDatumName,"NAD-27") )
         poSRS->SetWellKnownGeogCS( "NAD27" );
     else if( STARTS_WITH_CI(pszENVIDatumName, "European 1950") )
@@ -1347,7 +1347,7 @@ void ENVIDataset::SetENVIEllipse( OGRSpatialReference *poSRS,
     else
         dfInvF = dfA / (dfA - dfB);
 
-    poSRS->SetGeogCS( "Ellipse Based", "Ellipse Based", "Unnamed", 
+    poSRS->SetGeogCS( "Ellipse Based", "Ellipse Based", "Unnamed",
                       dfA, dfInvF );
 }
 
@@ -1377,7 +1377,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     if( CSLFetchNameValue( papszHeader, "coordinate_system_string" ) != NULL )
     {
         papszCSS = CSLTokenizeString2(
-            CSLFetchNameValue( papszHeader, "coordinate_system_string" ), 
+            CSLFetchNameValue( papszHeader, "coordinate_system_string" ),
             "{}", CSLT_PRESERVEQUOTES );
     }
 
@@ -1388,7 +1388,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     int         nPICount = 0;
     if( CSLFetchNameValue( papszHeader, "projection_info" ) != NULL )
     {
-        papszPI = SplitList( 
+        papszPI = SplitList(
             CSLFetchNameValue( papszHeader, "projection_info" ) );
         nPICount = CSLCount(papszPI);
     }
@@ -1415,7 +1415,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 
         if( STARTS_WITH_CI(papszFields[0], "UTM") && nCount >= 9 )
         {
-            oSRS.SetUTM( atoi(papszFields[7]), 
+            oSRS.SetUTM( atoi(papszFields[7]),
                          !EQUAL(papszFields[8],"South") );
             if( nCount >= 10 && strstr(papszFields[9],"=") == NULL )
                 SetENVIDatum( &oSRS, papszFields[9] );
@@ -1432,7 +1432,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         {
             oSRS.SetStatePlane( ITTVISToUSGSZone(atoi(papszFields[7])), TRUE );
         }
-        else if( STARTS_WITH_CI(papszFields[0], "Geographic Lat") 
+        else if( STARTS_WITH_CI(papszFields[0], "Geographic Lat")
                  && nCount >= 8 )
         {
             if( nCount >= 8 && strstr(papszFields[7],"=") == NULL )
@@ -1454,17 +1454,17 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         }
         else if( nPICount > 10 && atoi(papszPI[0]) == 5 ) // Oblique Merc (2 point)
         {
-            oSRS.SetHOM2PNO( CPLAtofM(papszPI[3]), 
-                             CPLAtofM(papszPI[4]), CPLAtofM(papszPI[5]), 
-                             CPLAtofM(papszPI[6]), CPLAtofM(papszPI[7]), 
-                             CPLAtofM(papszPI[10]), 
+            oSRS.SetHOM2PNO( CPLAtofM(papszPI[3]),
+                             CPLAtofM(papszPI[4]), CPLAtofM(papszPI[5]),
+                             CPLAtofM(papszPI[6]), CPLAtofM(papszPI[7]),
+                             CPLAtofM(papszPI[10]),
                              CPLAtofM(papszPI[8]), CPLAtofM(papszPI[9]) );
         }
-        else if( nPICount > 8 && atoi(papszPI[0]) == 6 ) // Oblique Merc 
+        else if( nPICount > 8 && atoi(papszPI[0]) == 6 ) // Oblique Merc
         {
-            oSRS.SetHOM(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 
+            oSRS.SetHOM(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
                         CPLAtofM(papszPI[5]), 0.0,
-                        CPLAtofM(papszPI[8]), 
+                        CPLAtofM(papszPI[8]),
                         CPLAtofM(papszPI[6]), CPLAtofM(papszPI[7]) );
         }
         else if( nPICount > 8 && atoi(papszPI[0]) == 7 ) // Stereographic
@@ -1481,22 +1481,22 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         }
         else if( nPICount > 6 && atoi(papszPI[0]) == 10 ) // Polyconic
         {
-            oSRS.SetPolyconic(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 
+            oSRS.SetPolyconic(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
                               CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
         }
         else if( nPICount > 6 && atoi(papszPI[0]) == 11 ) // LAEA
         {
-            oSRS.SetLAEA(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 
+            oSRS.SetLAEA(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
                          CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
         }
         else if( nPICount > 6 && atoi(papszPI[0]) == 12 ) // Azimuthal Equid.
         {
-            oSRS.SetAE(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 
+            oSRS.SetAE(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
                        CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
         }
         else if( nPICount > 6 && atoi(papszPI[0]) == 31 ) // Polar Stereographic
         {
-            oSRS.SetPS(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 
+            oSRS.SetPS(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
                        1.0,
                        CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
         }
@@ -1516,7 +1516,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 /*      Try to set datum from projection info line if we have a         */
 /*      projected coordinate system without a GEOGCS.                   */
 /* -------------------------------------------------------------------- */
-    if( oSRS.IsProjected() && oSRS.GetAttrNode("GEOGCS") == NULL 
+    if( oSRS.IsProjected() && oSRS.GetAttrNode("GEOGCS") == NULL
         && nPICount > 3 )
     {
         // Do we have a datum on the projection info line?
@@ -1526,12 +1526,12 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         if( strstr(papszPI[iDatum],"=") != NULL )
             iDatum--;
 
-        // Skip past the name. 
+        // Skip past the name.
         iDatum--;
 
         const CPLString osDatumName = papszPI[iDatum];
         if( osDatumName.find_first_of("abcdefghijklmnopqrstuvwxyz"
-                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ") 
+                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
             != CPLString::npos )
         {
             SetENVIDatum( &oSRS, osDatumName );
@@ -1562,7 +1562,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
             oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_NAUTICAL_MILE, CPLAtof(SRS_UL_NAUTICAL_MILE_CONV) );
 
         /* Only handle angular units if we know the projection is geographic. */
-        if (oSRS.IsGeographic()) 
+        if (oSRS.IsGeographic())
         {
             if (EQUAL(papszFields[nCount-1],"units=Radians") )
                 oSRS.SetAngularUnits( SRS_UA_RADIAN, 1. );
@@ -1846,7 +1846,7 @@ int ENVIDataset::ReadHeader( VSILFILE * fpHdr )
         char *pszWorkingLine = CPLStrdup(pszNewLine);
 
         // Collect additional lines if we have open sqiggly bracket.
-        if( strstr(pszWorkingLine,"{") != NULL 
+        if( strstr(pszWorkingLine,"{") != NULL
             && strstr(pszWorkingLine,"}") == NULL )
         {
             do {
@@ -1887,7 +1887,7 @@ int ENVIDataset::ReadHeader( VSILFILE * fpHdr )
                     pszWorkingLine[i] = '_';
             }
 
-            papszHeader = CSLSetNameValue( papszHeader, 
+            papszHeader = CSLSetNameValue( papszHeader,
                                            pszWorkingLine, pszValue );
         }
 
@@ -1938,14 +1938,14 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( fpHeader == NULL )
         {
-            osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+            osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename,
                                             "hdr" );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
 
         if( fpHeader == NULL && VSIIsCaseSensitiveFS(osHdrFilename) )
         {
-            osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+            osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename,
                                             "HDR" );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
@@ -1960,11 +1960,11 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
         CPLString osName = CPLGetFilename( poOpenInfo->pszFilename );
 
-        int iFile = CSLFindString(papszSiblingFiles, 
+        int iFile = CSLFindString(papszSiblingFiles,
                                   CPLResetExtension( osName, "hdr" ) );
         if( iFile >= 0 )
         {
-            osHdrFilename = CPLFormFilename( osPath, papszSiblingFiles[iFile], 
+            osHdrFilename = CPLFormFilename( osPath, papszSiblingFiles[iFile],
                                              NULL );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
@@ -1974,7 +1974,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                                   CPLFormFilename( NULL, osName, "hdr" ));
             if( iFile >= 0 )
             {
-                osHdrFilename = CPLFormFilename( osPath, papszSiblingFiles[iFile], 
+                osHdrFilename = CPLFormFilename( osPath, papszSiblingFiles[iFile],
                                                  NULL );
                 fpHeader = VSIFOpenL( osHdrFilename, pszMode );
             }
@@ -2022,12 +2022,12 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr") )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "The selected file is an ENVI header file, but to\n"
                   "open ENVI datasets, the data file should be selected\n"
                   "instead of the .hdr file.  Please try again selecting\n"
                   "the data file corresponding to the header file:\n"
-                  "  %s\n", 
+                  "  %s\n",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -2038,12 +2038,12 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sta") )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "The selected file is an ENVI statistics file.\n"
                   "To open ENVI datasets, the data file should be selected\n"
                   "instead of the .sta file.  Please try again selecting\n"
                   "the data file corresponding to the statistics file:\n"
-                  "  %s\n", 
+                  "  %s\n",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -2084,7 +2084,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!GDALCheckDatasetDimensions(nSamples, nLines) || !GDALCheckBandCount(nBands, FALSE))
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "The file appears to have an associated ENVI header, but\n"
                   "one or more of the samples, lines and bands\n"
                   "keywords appears to be missing or invalid." );
@@ -2144,7 +2144,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
           default:
             delete poDS;
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "The file does not have a value for the data_type\n"
                       "that is recognised by the GDAL ENVI driver.");
             return NULL;
@@ -2178,9 +2178,9 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             //'envi spectral library'
             //'envi fft result'
 
-        // when the file type is one of these we open it 
+        // when the file type is one of these we open it
             //'envi standard'
-            //'envi classification' 
+            //'envi classification'
 
         // when the file type is anything else we attempt to open it as a raster.
 
@@ -2193,7 +2193,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
            EQUAL(pszEnviFileType, "envi virtual mosaic") ||
            EQUAL(pszEnviFileType, "envi spectral library"))
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "File %s contains an invalid file type in the ENVI .hdr\n"
                       "GDAL does not support '%s' type files.",
                       poOpenInfo->pszFilename, pszEnviFileType );
@@ -2233,7 +2233,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         if (bIsCompressed)
         {
             delete poDS;
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                   "Cannot open compressed file in update mode.\n");
             return NULL;
         }
@@ -2245,8 +2245,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->fpImage == NULL )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to re-open %s within ENVI driver.\n", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to re-open %s within ENVI driver.\n",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -2333,11 +2333,11 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( CSLFetchNameValue( poDS->papszHeader, "band_names" ) != NULL ||
         CSLFetchNameValue( poDS->papszHeader, "wavelength" ) != NULL)
     {
-        char	**papszBandNames = 
-            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader, 
+        char	**papszBandNames =
+            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader,
                                                 "band_names" ) );
-        char	**papszWL = 
-            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader, 
+        char	**papszWL =
+            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader,
                                                 "wavelength" ) );
 
         const char *pszWLUnits = NULL;
@@ -2345,7 +2345,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         if (papszWL)
         {
             /* If WL information is present, process wavelength units */
-            pszWLUnits = CSLFetchNameValue( poDS->papszHeader, 
+            pszWLUnits = CSLFetchNameValue( poDS->papszHeader,
                                             "wavelength_units" );
             if (pszWLUnits)
             {
@@ -2366,10 +2366,10 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLString osBandId, osBandName, osWavelength;
 
             /* First set up the wavelength names and units if available */
-            if (papszWL && nWLCount > i) 
+            if (papszWL && nWLCount > i)
             {
                 osWavelength = papszWL[i];
-                if (pszWLUnits) 
+                if (pszWLUnits)
                 {
                     osWavelength += " ";
                     osWavelength += pszWLUnits;
@@ -2380,7 +2380,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             if (papszBandNames && CSLCount(papszBandNames) > i)
             {
                 osBandName = papszBandNames[i];
-                if (strlen(osWavelength) > 0) 
+                if (strlen(osWavelength) > 0)
                 {
                     osBandName += " (";
                     osBandName += osWavelength;
@@ -2419,8 +2419,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( poDS->papszHeader, "class_names" ) != NULL )
     {
-        char	**papszClassNames = 
-            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader, 
+        char	**papszClassNames =
+            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader,
                                                 "class_names" ) );
 
         poDS->GetRasterBand(1)->SetCategoryNames( papszClassNames );
@@ -2432,8 +2432,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( poDS->papszHeader, "class_lookup" ) != NULL )
     {
-        char	**papszClassColors = 
-            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader, 
+        char	**papszClassColors =
+            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader,
                                                 "class_lookup" ) );
         const int nColorValueCount = CSLCount(papszClassColors);
         GDALColorTable oCT;
@@ -2493,8 +2493,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( poDS->papszHeader, "map_info" ) != NULL )
     {
-        poDS->bFoundMapinfo = 
-            poDS->ProcessMapinfo( 
+        poDS->bFoundMapinfo =
+            poDS->ProcessMapinfo(
                 CSLFetchNameValue(poDS->papszHeader,"map_info") );
     }
 
@@ -2504,8 +2504,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poDS->bFoundMapinfo &&
         CSLFetchNameValue( poDS->papszHeader, "rpc_info" ) != NULL )
     {
-        poDS->ProcessRPCinfo( 
-            CSLFetchNameValue(poDS->papszHeader,"rpc_info"), 
+        poDS->ProcessRPCinfo(
+            CSLFetchNameValue(poDS->papszHeader,"rpc_info"),
             poDS->nRasterXSize, poDS->nRasterYSize);
     }
 
@@ -2520,9 +2520,9 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    // SetMetadata() calls in Open() makes the header dirty. 
-    // Don't re-write the header if nothing external has changed the metadata 
-    poDS->bHeaderDirty = FALSE; 
+    // SetMetadata() calls in Open() makes the header dirty.
+    // Don't re-write the header if nothing external has changed the metadata
+    poDS->bHeaderDirty = FALSE;
 
     return( poDS );
 }

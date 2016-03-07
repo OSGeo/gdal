@@ -99,10 +99,10 @@ static CPLString getRscFilename( GDALOpenInfo *poOpenInfo )
     char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if ( papszSiblingFiles == NULL )
     {
-        osRscFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+        osRscFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename,
                                         "rsc" );
         VSIStatBufL psRscStatBuf;
-        if ( VSIStatL( osRscFilename, &psRscStatBuf ) != 0 ) 
+        if ( VSIStatL( osRscFilename, &psRscStatBuf ) != 0 )
         {
             osRscFilename = "";
         }
@@ -226,7 +226,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                                                  | CSLT_STRIPENDSPACES
                                                  | CSLT_PRESERVEQUOTES
                                                  | CSLT_PRESERVEESCAPES );
-        if ( papszTokens == NULL 
+        if ( papszTokens == NULL
              || papszTokens[0] == NULL || papszTokens[1] == NULL )
         {
             CSLDestroy ( papszTokens );
@@ -322,10 +322,10 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         nBands = 2;
         eInterleave = PIXEL;
     }
-    else if ( strcmp( pszExtension, "cor" ) == 0 
-                || strcmp( pszExtension, "hgt" ) == 0 
-                || strcmp( pszExtension, "unw" ) == 0 
-                || strcmp( pszExtension, "msk" ) == 0 
+    else if ( strcmp( pszExtension, "cor" ) == 0
+                || strcmp( pszExtension, "hgt" ) == 0
+                || strcmp( pszExtension, "unw" ) == 0
+                || strcmp( pszExtension, "msk" ) == 0
                 || strcmp( pszExtension, "trans" ) == 0 )
     {
         eDataType = GDT_Float32;
@@ -379,13 +379,13 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         poDS->adfGeoTransform[0] = CPLAtof( CSLFetchNameValue( papszRsc,
                                                                "X_FIRST" ) );
-        poDS->adfGeoTransform[1] = CPLAtof( CSLFetchNameValue( papszRsc, 
+        poDS->adfGeoTransform[1] = CPLAtof( CSLFetchNameValue( papszRsc,
                                                                "X_STEP" ) );
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = CPLAtof( CSLFetchNameValue( papszRsc, 
+        poDS->adfGeoTransform[3] = CPLAtof( CSLFetchNameValue( papszRsc,
                                                                "Y_FIRST" ) );
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = CPLAtof( CSLFetchNameValue( papszRsc, 
+        poDS->adfGeoTransform[5] = CPLAtof( CSLFetchNameValue( papszRsc,
                                                                "Y_STEP" ) );
         poDS->bValidGeoTransform = true;
     }
@@ -403,7 +403,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             if ( CSLFetchNameValue( papszRsc, "DATUM" ) != NULL )
             {
-                oSRS.SetWellKnownGeogCS( CSLFetchNameValue( papszRsc, 
+                oSRS.SetWellKnownGeogCS( CSLFetchNameValue( papszRsc,
                                                             "DATUM" ) );
             }
             else {
@@ -412,12 +412,12 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         else if( STARTS_WITH(CSLFetchNameValue( papszRsc, "PROJECTION" ), "UTM") )
         {
-            const char *pszZone = CSLFetchNameValue( papszRsc, 
+            const char *pszZone = CSLFetchNameValue( papszRsc,
                                                      "PROJECTION" ) + 3;
             oSRS.SetUTM( atoi( pszZone ), TRUE ); /* FIXME: north/south? */
             if ( CSLFetchNameValue( papszRsc, "DATUM" ) != NULL )
             {
-                oSRS.SetWellKnownGeogCS( CSLFetchNameValue( papszRsc, 
+                oSRS.SetWellKnownGeogCS( CSLFetchNameValue( papszRsc,
                                                             "DATUM" ) );
             }
             else {
@@ -484,7 +484,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML(); 
+    poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -573,10 +573,10 @@ GDALDataset *ROIPACDataset::Create( const char *pszFilename,
             return NULL;
         }
     }
-    else if ( strcmp( pszExtension, "cor" ) == 0 
-                || strcmp( pszExtension, "hgt" ) == 0 
-                || strcmp( pszExtension, "unw" ) == 0 
-                || strcmp( pszExtension, "msk" ) == 0 
+    else if ( strcmp( pszExtension, "cor" ) == 0
+                || strcmp( pszExtension, "hgt" ) == 0
+                || strcmp( pszExtension, "unw" ) == 0
+                || strcmp( pszExtension, "msk" ) == 0
                 || strcmp( pszExtension, "trans" ) == 0 )
     {
         if ( nBands != 2 || eType != GDT_Float32 )

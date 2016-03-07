@@ -105,7 +105,7 @@ EIRDataset::~EIRDataset()
         const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
         if( bNoDataSet )
         {
-            ResetKeyValue( "NODATA", 
+            ResetKeyValue( "NODATA",
                            CPLString().Printf( "%.8g", dfNoData ) );
         }
     }
@@ -121,7 +121,7 @@ EIRDataset::~EIRDataset()
 /*                            GetKeyValue()                             */
 /************************************************************************/
 
-const char *EIRDataset::GetKeyValue( const char *pszKey, 
+const char *EIRDataset::GetKeyValue( const char *pszKey,
                                      const char *pszDefault )
 
 {
@@ -225,7 +225,7 @@ int EIRDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 100 )
         return FALSE;
 
-    if( strstr((const char *) poOpenInfo->pabyHeader, 
+    if( strstr((const char *) poOpenInfo->pabyHeader,
                "IMAGINE_RAW_FILE" ) == NULL )
         return FALSE;
 
@@ -265,12 +265,12 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     3 for a total of 24 bits per pixel.
 
     Note that the current version of ERDAS Raw Raster Reader/Writer does
-    not support the LAYER_SKIP_BYTES, RECORD_SKIP_BYTES, TILE_WIDTH and 
-    TILE_HEIGHT directives. Since the reader does not read the PIXEL_FILES 
-    directive, the reader always assumes that the raw binary file is the 
-    dataset, and the name of this file is the name of the header without the 
+    not support the LAYER_SKIP_BYTES, RECORD_SKIP_BYTES, TILE_WIDTH and
+    TILE_HEIGHT directives. Since the reader does not read the PIXEL_FILES
+    directive, the reader always assumes that the raw binary file is the
+    dataset, and the name of this file is the name of the header without the
     extension. Currently, the reader does not support multiple raw binary
-    files in one dataset or a single file with both the header and the raw 
+    files in one dataset or a single file with both the header and the raw
     binary data at the same time.
     */
 
@@ -336,12 +336,12 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
             strncpy( szLayout, papszTokens[1], sizeof(szLayout) );
             szLayout[sizeof(szLayout)-1] = '\0';
         }
-        else if( EQUAL(papszTokens[0],"DATATYPE") 
+        else if( EQUAL(papszTokens[0],"DATATYPE")
                  || EQUAL(papszTokens[0],"DATA_TYPE") )
         {
             if ( EQUAL(papszTokens[1], "U1")
-                 || EQUAL(papszTokens[1], "U2") 
-                 || EQUAL(papszTokens[1], "U4") 
+                 || EQUAL(papszTokens[1], "U2")
+                 || EQUAL(papszTokens[1], "U4")
                  || EQUAL(papszTokens[1], "U8") ) {
                 nBits = 8;
                 eDataType = GDT_Byte;
@@ -371,8 +371,8 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
                 eDataType = GDT_Float64;
             }
             else {
-                CPLError( CE_Failure, CPLE_NotSupported, 
-                  "EIR driver does not support DATATYPE %s.", 
+                CPLError( CE_Failure, CPLE_NotSupported,
+                  "EIR driver does not support DATATYPE %s.",
                   papszTokens[1] );
                 CSLDestroy( papszTokens );
                 CSLDestroy( papszHDR );
@@ -420,7 +420,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CSLDestroy( papszHDR );
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The EIR driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -443,14 +443,14 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fpImage = VSIFOpenL( osRasterFilename.c_str(), "rb" );
     if( poDS->fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open %s.\n%s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open %s.\n%s",
                   osRasterFilename.c_str(), VSIStrerror( errno ) );
         delete poDS;
         return NULL;
     }
-    poDS->papszExtraFiles = 
-            CSLAddString( poDS->papszExtraFiles, 
+    poDS->papszExtraFiles =
+            CSLAddString( poDS->papszExtraFiles,
                           osRasterFilename );
 
     poDS->eAccess = poOpenInfo->eAccess;
@@ -492,7 +492,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         RawRasterBand *poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage,
-                                nSkipBytes + nBandOffset * i, 
+                                nSkipBytes + nBandOffset * i,
                                 nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB
                                 chByteOrder == 'I' || chByteOrder == 'L',
@@ -509,13 +509,13 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
+        poDS->bGotTransform =
+            GDALReadWorldFile( poOpenInfo->pszFilename, NULL,
                                poDS->adfGeoTransform );
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "wld", 
+        poDS->bGotTransform =
+            GDALReadWorldFile( poOpenInfo->pszFilename, "wld",
                                poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */

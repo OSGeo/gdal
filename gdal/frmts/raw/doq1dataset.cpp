@@ -167,7 +167,6 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
     /*const int nBandStorage = static_cast<int>(dfBandStorage);*/
     const int nBandTypes = static_cast<int>(dfBandTypes);
 
-    
 /* -------------------------------------------------------------------- */
 /*      Check the configuration.  We don't currently handle all         */
 /*      variations, only the common ones.                               */
@@ -185,7 +184,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The DOQ1 driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -228,7 +227,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = nBytesPerPixel;
     for( int i = 0; i < poDS->nBands; i++ )
     {
-        poDS->SetBand( i+1, 
+        poDS->SetBand( i+1,
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes + i, nBytesPerPixel, nBytesPerLine,
                                GDT_Byte, TRUE, TRUE ) );
@@ -286,7 +285,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
             break;
         }
 
-        poDS->pszProjection = 
+        poDS->pszProjection =
             CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort, nZone,
                                   pszDatumLong, nZone * 6 - 183, pszUnits ));
     }
