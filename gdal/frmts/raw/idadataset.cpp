@@ -564,11 +564,11 @@ void IDADataset::ReadColorTable()
     if( strlen(osCLRFilename) == 0 )
         osCLRFilename = CPLResetExtension(GetDescription(), "clr" );
 
-    FILE *fp = VSIFOpen( osCLRFilename, "r" );
+    VSILFILE *fp = VSIFOpenL( osCLRFilename, "r" );
     if( fp == NULL )
     {
         osCLRFilename = CPLResetExtension(osCLRFilename, "CLR" );
-        fp = VSIFOpen( osCLRFilename, "r" );
+        fp = VSIFOpenL( osCLRFilename, "r" );
     }
 
     if( fp == NULL )
@@ -577,7 +577,7 @@ void IDADataset::ReadColorTable()
 /* -------------------------------------------------------------------- */
 /*      Skip first line, with the column titles.                        */
 /* -------------------------------------------------------------------- */
-    CPLReadLine( fp );
+    CPLReadLineL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create a RAT to populate.                                       */
@@ -594,7 +594,7 @@ void IDADataset::ReadColorTable()
 /* -------------------------------------------------------------------- */
 /*      Apply lines.                                                    */
 /* -------------------------------------------------------------------- */
-    const char *pszLine = CPLReadLine( fp );
+    const char *pszLine = CPLReadLineL( fp );
     int iRow = 0;
 
     while( pszLine != NULL )
@@ -653,10 +653,10 @@ void IDADataset::ReadColorTable()
         }
 
         CSLDestroy( papszTokens );
-        pszLine = CPLReadLine( fp );
+        pszLine = CPLReadLineL( fp );
     }
 
-    CPL_IGNORE_RET_VAL(VSIFClose( fp ));
+    VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Attach RAT to band.                                             */
