@@ -1459,6 +1459,14 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 /**
  * \brief Set the no data value for this band. 
  *
+ * Depending on drivers, changing the no data value may or may not have an
+ * effect on the pixel values of a raster that has just been created. It is
+ * thus advised to explictly called Fill() if the intent is to initialize
+ * the raster to the nodata value.
+ * In ay case, changing an existing no data value, when one already exists and
+ * the dataset exists or has been initialized, has no effect on the pixel whose
+ * value matched the previous nodata value.
+ *
  * To clear the nodata value, use DeleteNoDataValue().
  *
  * This method is the same as the C function GDALSetRasterNoDataValue().
@@ -1486,6 +1494,14 @@ CPLErr GDALRasterBand::SetNoDataValue( CPL_UNUSED double dfNoData )
 
 /**
  * \brief Set the no data value for this band. 
+ *
+ * Depending on drivers, changing the no data value may or may not have an
+ * effect on the pixel values of a raster that has just been created. It is
+ * thus advised to explictly called Fill() if the intent is to initialize
+ * the raster to the nodata value.
+ * In ay case, changing an existing no data value, when one already exists and
+ * the dataset exists or has been initialized, has no effect on the pixel whose
+ * value matched the previous nodata value.
  *
  * @see GDALRasterBand::SetNoDataValue()
  */
