@@ -93,7 +93,9 @@ typedef enum
                              *    ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
-   wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
+    wkbCurve = 13,          /**< Curve (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurface = 14,        /**< Surface (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
                                *   ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
                                *    ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -106,6 +108,8 @@ typedef enum
     wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCurveZ = 1013,           /**< wkbCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
@@ -121,6 +125,8 @@ typedef enum
     wkbCurvePolygonM = 2010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiCurveM = 2011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
@@ -136,6 +142,8 @@ typedef enum
     wkbCurvePolygonZM = 3010,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiCurveZM = 3011,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
 
@@ -264,6 +272,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygon = 10;
 %constant wkbMultiCurve = 11;
 %constant wkbMultiSurface = 12;
+%constant wkbCurve = 13;
+%constant wkbSurface = 14;
 %constant wkbPolyhedralSurface = 15;
 %constant wkbTIN = 16;
 
@@ -275,6 +285,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygonZ = 1010;
 %constant wkbMultiCurveZ = 1011;
 %constant wkbMultiSurfaceZ = 1012;
+%constant wkbCurveZ = 1013;
+%constant wkbSurfaceZ = 1014;
 %constant wkbPolyhedralSurfaceZ = 1015;
 %constant wkbTINZ = 1016;
 
@@ -290,6 +302,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygonM = 2010;
 %constant wkbMultiCurveM = 2011;
 %constant wkbMultiSurfaceM = 2012;
+%constant wkbCurveM = 2013;
+%constant wkbSurfaceM = 2014;
 %constant wkbPolyhedralSurfaceM = 2015;
 %constant wkbTINM = 2016;
 
@@ -305,6 +319,8 @@ typedef void retGetPoints;
 %constant wkbCurvePolygonZM = 3010;
 %constant wkbMultiCurveZM = 3011;
 %constant wkbMultiSurfaceZM = 3012;
+%constant wkbCurveZM = 3013;
+%constant wkbSurfaceZM = 3014;
 %constant wkbPolyhedralSurfaceZM = 3015;
 %constant wkbTINZM = 3016;
 

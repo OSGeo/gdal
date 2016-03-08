@@ -3524,6 +3524,30 @@ def ogr_geom_postgis_ewkt_xym():
     return 'success'
 
 ###############################################################################
+# Test ogr.wkbCurve / ogr.wkbSurface
+
+def ogr_geom_curve_surface():
+
+    tests = [ [ ogr.wkbCurve, "Curve" ],
+              [ ogr.wkbCurveZ, "3D Curve" ],
+              [ ogr.wkbCurveM, "Measured Curve" ],
+              [ ogr.wkbCurveZM, "3D Measured Curve" ],
+              [ ogr.wkbSurface, "Surface" ],
+              [ ogr.wkbSurfaceZ, "3D Surface" ],
+              [ ogr.wkbSurfaceM, "Measured Surface" ],
+              [ ogr.wkbSurfaceZM, "3D Measured Surface" ] ]
+
+    for (wkb_type, name) in tests:
+        if ogr.GeometryTypeToName(wkb_type) != name:
+            gdaltest.post_reason('fail')
+            print(wkb_type)
+            print(name)
+            print(ogr.GeometryTypeToName(wkb_type))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -3576,6 +3600,7 @@ gdaltest_list = [
     ogr_geom_equals,
     ogr_geom_measured_geometries_to_2D_or_3D,
     ogr_geom_postgis_ewkt_xym,
+    ogr_geom_curve_surface,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':

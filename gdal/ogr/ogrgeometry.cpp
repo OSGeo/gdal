@@ -321,6 +321,14 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
                 break;
             }
             case wkbLinearRing:
+            case wkbCurve:
+            case wkbSurface:
+            case wkbCurveZ:
+            case wkbSurfaceZ:
+            case wkbCurveM:
+            case wkbSurfaceM:
+            case wkbCurveZM:
+            case wkbSurfaceZM:
                 break;
         }
     }
@@ -2161,6 +2169,10 @@ OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
         eType = wkbMultiCurve;
     else if ( STARTS_WITH_CI(pszGeomType, "MULTISURFACE") )
         eType = wkbMultiSurface;
+    else if ( STARTS_WITH_CI(pszGeomType, "CURVE") )
+        eType = wkbCurve;
+    else if ( STARTS_WITH_CI(pszGeomType, "SURFACE") )
+        eType = wkbSurface;
     else
         eType = wkbUnknown;
 
@@ -2208,6 +2220,10 @@ const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType )
             return "MULTICURVE";
         case wkbMultiSurface:
             return "MULTISURFACE";
+        case wkbCurve:
+            return "CURVE";
+        case wkbSurface:
+            return "SURFACE";
         default:
             return "";
     }
@@ -2365,6 +2381,26 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
                 return "Measured Multi Surface";
             else
                 return "Multi Surface";
+
+        case wkbCurve:
+            if (b3D && bMeasured)
+                return "3D Measured Curve";
+            else if (b3D)
+                return "3D Curve";
+            else if (bMeasured)
+                return "Measured Curve";
+            else
+                return "Curve";
+
+        case wkbSurface:
+            if (b3D && bMeasured)
+                return "3D Measured Surface";
+            else if (b3D)
+                return "3D Surface";
+            else if (bMeasured)
+                return "Measured Surface";
+            else
+                return "Surface";
 
         case wkbNone:
             return "None";

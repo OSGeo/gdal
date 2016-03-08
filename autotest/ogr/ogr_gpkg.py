@@ -2003,9 +2003,8 @@ def ogr_gpkg_29():
 
     return 'success'
 
-
 ###############################################################################
-# Tes non standard file extension (#6396)
+# Test non standard file extension (#6396)
 
 def ogr_gpkg_30():
 
@@ -2034,6 +2033,46 @@ def ogr_gpkg_30():
 
     with gdaltest.error_handler():
         gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_30.geopkg')
+
+    return 'success'
+
+###############################################################################
+# Test CURVE and SURFACE types
+
+def ogr_gpkg_31():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_31.gpkg')
+    lyr = ds.CreateLayer('curve', geom_type = ogr.wkbCurve)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('COMPOUNDCURVE ((1 2,3 4))'))
+    lyr.CreateFeature(f)
+    lyr = ds.CreateLayer('surface', geom_type = ogr.wkbSurface)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_31.gpkg')
+    lyr = ds.GetLayerByName('curve')
+    if lyr.GetGeomType() != ogr.wkbCurve:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('surface')
+    if lyr.GetGeomType() != ogr.wkbSurface:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_31.gpkg')
 
     return 'success'
 
@@ -2125,6 +2164,7 @@ gdaltest_list = [
     ogr_gpkg_28,
     ogr_gpkg_29,
     ogr_gpkg_30,
+    ogr_gpkg_31,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

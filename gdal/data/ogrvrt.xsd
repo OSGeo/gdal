@@ -201,6 +201,8 @@
             <xs:enumeration value="wkbCurvePolygon"/> <!-- new in GDAL 2.0 -->
             <xs:enumeration value="wkbMultiCurve"/> <!-- new in GDAL 2.0 -->
             <xs:enumeration value="wkbMultiSurface"/> <!-- new in GDAL 2.0 -->
+            <xs:enumeration value="wkbCurve"/> <!-- new in GDAL 2.1 -->
+            <xs:enumeration value="wkbSurface"/> <!-- new in GDAL 2.1 -->
             <xs:enumeration value="wkbPoint25D"/>
             <xs:enumeration value="wkbLineString25D"/>
             <xs:enumeration value="wkbPolygon25D"/>
@@ -213,6 +215,8 @@
             <xs:enumeration value="wkbCurvePolygonZ"/> <!-- new in GDAL 2.0 -->
             <xs:enumeration value="wkbMultiCurveZ"/> <!-- new in GDAL 2.0 -->
             <xs:enumeration value="wkbMultiSurfaceZ"/> <!-- new in GDAL 2.0 -->
+            <xs:enumeration value="wkbCurveZ"/> <!-- new in GDAL 2.1 -->
+            <xs:enumeration value="wkbSurfaceZ"/> <!-- new in GDAL 2.1 -->
 
             <!-- below is new in GDAL 2.1 -->
             <xs:enumeration value="wkbPointM"/>
@@ -227,6 +231,8 @@
             <xs:enumeration value="wkbCurvePolygonM"/>
             <xs:enumeration value="wkbMultiCurveM"/>
             <xs:enumeration value="wkbMultiSurfaceM"/>
+            <xs:enumeration value="wkbCurveM"/>
+            <xs:enumeration value="wkbSurfaceM"/>
 
             <xs:enumeration value="wkbPointZM"/>
             <xs:enumeration value="wkbLineStringZM"/>
@@ -240,6 +246,8 @@
             <xs:enumeration value="wkbCurvePolygonZM"/>
             <xs:enumeration value="wkbMultiCurveZM"/>
             <xs:enumeration value="wkbMultiSurfaceZM"/>
+            <xs:enumeration value="wkbCurveZM"/>
+            <xs:enumeration value="wkbSurfaceZM"/>
 
         </xs:restriction>
     </xs:simpleType>
