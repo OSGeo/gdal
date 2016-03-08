@@ -2405,7 +2405,8 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
     if ( err != OGRERR_NONE )
         return OGRERR_FAILURE;
 
-    if( OGR_GT_IsNonLinear( eGType ) )
+    if( OGR_GT_IsNonLinear( eGType ) || wkbFlatten(eGType) == wkbCurve ||
+        wkbFlatten(eGType) == wkbSurface )
     {
         CreateGeometryExtensionIfNecessary(eGType);
     }

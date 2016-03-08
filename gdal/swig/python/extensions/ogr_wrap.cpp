@@ -32010,6 +32010,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "wkbCurvePolygon",SWIG_From_int(static_cast< int >(10)));
   SWIG_Python_SetConstant(d, "wkbMultiCurve",SWIG_From_int(static_cast< int >(11)));
   SWIG_Python_SetConstant(d, "wkbMultiSurface",SWIG_From_int(static_cast< int >(12)));
+  SWIG_Python_SetConstant(d, "wkbCurve",SWIG_From_int(static_cast< int >(13)));
+  SWIG_Python_SetConstant(d, "wkbSurface",SWIG_From_int(static_cast< int >(14)));
   SWIG_Python_SetConstant(d, "wkbPolyhedralSurface",SWIG_From_int(static_cast< int >(15)));
   SWIG_Python_SetConstant(d, "wkbTIN",SWIG_From_int(static_cast< int >(16)));
   SWIG_Python_SetConstant(d, "wkbNone",SWIG_From_int(static_cast< int >(100)));
@@ -32019,6 +32021,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "wkbCurvePolygonZ",SWIG_From_int(static_cast< int >(1010)));
   SWIG_Python_SetConstant(d, "wkbMultiCurveZ",SWIG_From_int(static_cast< int >(1011)));
   SWIG_Python_SetConstant(d, "wkbMultiSurfaceZ",SWIG_From_int(static_cast< int >(1012)));
+  SWIG_Python_SetConstant(d, "wkbCurveZ",SWIG_From_int(static_cast< int >(1013)));
+  SWIG_Python_SetConstant(d, "wkbSurfaceZ",SWIG_From_int(static_cast< int >(1014)));
   SWIG_Python_SetConstant(d, "wkbPolyhedralSurfaceZ",SWIG_From_int(static_cast< int >(1015)));
   SWIG_Python_SetConstant(d, "wkbTINZ",SWIG_From_int(static_cast< int >(1016)));
   SWIG_Python_SetConstant(d, "wkbPointM",SWIG_From_int(static_cast< int >(2001)));
@@ -32033,6 +32037,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "wkbCurvePolygonM",SWIG_From_int(static_cast< int >(2010)));
   SWIG_Python_SetConstant(d, "wkbMultiCurveM",SWIG_From_int(static_cast< int >(2011)));
   SWIG_Python_SetConstant(d, "wkbMultiSurfaceM",SWIG_From_int(static_cast< int >(2012)));
+  SWIG_Python_SetConstant(d, "wkbCurveM",SWIG_From_int(static_cast< int >(2013)));
+  SWIG_Python_SetConstant(d, "wkbSurfaceM",SWIG_From_int(static_cast< int >(2014)));
   SWIG_Python_SetConstant(d, "wkbPolyhedralSurfaceM",SWIG_From_int(static_cast< int >(2015)));
   SWIG_Python_SetConstant(d, "wkbTINM",SWIG_From_int(static_cast< int >(2016)));
   SWIG_Python_SetConstant(d, "wkbPointZM",SWIG_From_int(static_cast< int >(3001)));
@@ -32047,6 +32053,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "wkbCurvePolygonZM",SWIG_From_int(static_cast< int >(3010)));
   SWIG_Python_SetConstant(d, "wkbMultiCurveZM",SWIG_From_int(static_cast< int >(3011)));
   SWIG_Python_SetConstant(d, "wkbMultiSurfaceZM",SWIG_From_int(static_cast< int >(3012)));
+  SWIG_Python_SetConstant(d, "wkbCurveZM",SWIG_From_int(static_cast< int >(3013)));
+  SWIG_Python_SetConstant(d, "wkbSurfaceZM",SWIG_From_int(static_cast< int >(3014)));
   SWIG_Python_SetConstant(d, "wkbPolyhedralSurfaceZM",SWIG_From_int(static_cast< int >(3015)));
   SWIG_Python_SetConstant(d, "wkbTINZM",SWIG_From_int(static_cast< int >(3016)));
   SWIG_Python_SetConstant(d, "wkbPoint25D",SWIG_From_int(static_cast< int >(0x80000001)));

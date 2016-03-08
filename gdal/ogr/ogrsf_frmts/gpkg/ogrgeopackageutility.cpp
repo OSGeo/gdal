@@ -206,11 +206,6 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bo
     else if ( EQUAL("GeomCollection", pszGpkgType) ||
               EQUAL("GeometryCollection", pszGpkgType) )
         oType =  wkbGeometryCollection;
-    else if( EQUAL("CURVE", pszGpkgType) || EQUAL("SURFACE", pszGpkgType) )
-    {
-        // We map on unknown as those types are not in OGRwkbGeometryType
-        oType = wkbUnknown;
-    }
     else
     {
         oType = OGRFromOGCGeomType(pszGpkgType);
