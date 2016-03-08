@@ -120,20 +120,33 @@ OGRVRTDataSource::OGRVRTDataSource(GDALDriver* poDriver)
 OGRVRTDataSource::~OGRVRTDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
-        delete papoLayers[i];
-    
-    CPLFree( papoLayers );
+    CloseDependentDatasets();
+
     CPLFree( paeLayerType );
 
     if( psTree != NULL)
         CPLDestroyXMLNode( psTree );
 
     delete poLayerPool;
+}
+
+/************************************************************************/
+/*                        CloseDependentDatasets()                      */
+/************************************************************************/
+
+int OGRVRTDataSource::CloseDependentDatasets()
+{
+    int bHasClosedDependentDatasets = (nLayers > 0);
+    for( int i = 0; i < nLayers; i++ )
+    {
+        delete papoLayers[i];
+    }
+    CPLFree( papoLayers );
+    nLayers = 0;
+    papoLayers = NULL;
+    return bHasClosedDependentDatasets;
 }
 
 /************************************************************************/
