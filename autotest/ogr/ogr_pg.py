@@ -5067,6 +5067,7 @@ def ogr_pg_81():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+    lyr.ResetReading() # flushes implicit transaction
 
     return 'success'
 
@@ -5125,6 +5126,7 @@ def ogr_pg_83():
             gdaltest.post_reason('fail')
             print(geom_type, options, wkt, expected_wkt, got_wkt)
             return 'fail'
+        lyr.ResetReading() # flushes implicit transaction       
 
         if 'GEOM_TYPE=geography' in options:
             continue
@@ -5153,6 +5155,7 @@ def ogr_pg_83():
             gdaltest.post_reason('fail')
             print(geom_type, options, wkt, expected_wkt, got_wkt)
             return 'fail'
+        lyr.ResetReading() # flushes implicit transaction
 
     return 'success'
 
@@ -5237,6 +5240,66 @@ def ogr_pg_84():
     return 'success'
 
 ###############################################################################
+# Test append of several layers in PG_USE_COPY mode (#6411)
+
+def ogr_pg_85():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+        return 'skip'
+
+    gdaltest.pg_ds.CreateLayer('ogr_pg_85_1')
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_85_2')
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    gdaltest.pg_ds.ExecuteSQL('SELECT 1') # make sure the layers are well created
+
+    old_val = gdal.GetConfigOption('PG_USE_COPY')
+    gdal.SetConfigOption('PG_USE_COPY', 'YES')
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    ds.GetLayerCount()
+    ds.StartTransaction()
+    lyr = ds.GetLayerByName('ogr_pg_85_1')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    lyr = ds.GetLayerByName('ogr_pg_85_2')
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(feat_defn)
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.CommitTransaction()
+    ds = None
+
+    # Although test real ogr2ogr scenario
+    # 0755 = 493
+    gdal.Mkdir('/vsimem/ogr_pg_85', 493)
+    gdal.FileFromMemBuffer('/vsimem/ogr_pg_85/ogr_pg_85_1.csv',
+"""id,foo
+1,1""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_pg_85/ogr_pg_85_2.csv',
+"""id,foo
+1,1""")
+
+    gdal.VectorTranslate('PG:' + gdaltest.pg_connection_string, '/vsimem/ogr_pg_85', accessMode = 'append')
+
+    gdal.Unlink('/vsimem/ogr_pg_85/ogr_pg_85_1.csv')
+    gdal.Unlink('/vsimem/ogr_pg_85/ogr_pg_85_2.csv')
+    gdal.Unlink('/vsimem/ogr_pg_85')
+
+    gdal.SetConfigOption('PG_USE_COPY',old_val)
+
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_85_2')
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_pg_table_cleanup():
@@ -5300,6 +5363,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_82' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_83' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_84' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_85_1' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_85_2' )
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -5416,12 +5481,13 @@ gdaltest_list_internal = [
     ogr_pg_82,
     ogr_pg_83,
     ogr_pg_84,
+    ogr_pg_85,
     ogr_pg_cleanup
 ]
 
 disabled_gdaltest_list_internal = [
     ogr_pg_table_cleanup,
-    ogr_pg_84,
+    ogr_pg_85,
     ogr_pg_cleanup ]
 
 ###############################################################################
