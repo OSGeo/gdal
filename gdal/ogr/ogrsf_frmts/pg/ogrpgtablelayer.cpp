@@ -269,6 +269,8 @@ int OGRPGTableLayer::ReadTableDefinition()
         return bTableDefinitionValid;
     bTableDefinitionValid = FALSE;
 
+    poDS->EndCopy();
+
     CPLString osSchemaClause;
     osSchemaClause.Printf("AND n.nspname=%s",
                               OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
