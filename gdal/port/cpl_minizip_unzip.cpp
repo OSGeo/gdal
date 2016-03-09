@@ -1065,7 +1065,7 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
         file_info.size_filename<fileNameBufferSize )
     {
         const char* pszSrcEncoding = CPLGetConfigOption("CPL_ZIP_ENCODING",
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(HAVE_ICONV)
                                                         "CP_OEMCP"
 #else
                                                         "CP437"
