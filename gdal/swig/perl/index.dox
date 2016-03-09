@@ -28,6 +28,21 @@ emphasizes the recommended Perl API. Some methods and aliases to
 method names are left out since they may skip some built-in usability
 or other additions.
 
+\subsection usage Usage
+
+\code
+use Geo::GDAL;
+\endcode
+
+Makes all classes available in your Perl program. Some subroutines can be
+imported into the main namespace as usual.
+
+\code
+use Geo::GDAL qw/:all/;
+\endcode
+
+\subsection arguments Arguments
+
 Some arguments are optional and have a default value. This is
 illustrated like this:
 
