@@ -253,9 +253,11 @@
 # @return a list of the short names of all available GDAL raster drivers.
 
 ## @sub Geo::GDAL::Driver Driver($Name)
-# Access a raster format driver.
-# @param Name The short name of the driver. One of Geo::GDAL::DriverNames.
-# @note Use Geo::OGR::Driver to access a vector driver.
+# Access a format driver.
+# @param Name The short name of the driver. One of
+# Geo::GDAL::DriverNames or Geo::OGR::DriverNames.
+# @note This subroutine is imported into the main namespace if Geo::GDAL
+# is use'd with qw/:all/.
 # @return a Geo::GDAL::Driver object.
 
 ## @sub Geo::GDAL::Driver IdentifyDriver($path, $siblings)
@@ -274,16 +276,28 @@
 
 ## @ignore AccessTypes
 
-## @sub Geo::GDAL::Dataset Open($name, $access = 'ReadOnly')
-# Open a raster dataset.
-# An example
+## @sub Geo::GDAL::Dataset Open(%params)
+# Open a dataset.
+# An example, which opens an existing raster dataset for editing:
 # \code
-# use Geo::GDAL;
-# $ds = Geo::GDAL::Open('existing.tiff', 'Update');
+# use Geo::GDAL qw/:all/;
+# $ds = Open(Name => 'existing.tiff', Access => 'Update');
 # \endcode
-# @param name Raster dataset string (typically a filename).
-# @param access Access type, either 'ReadOnly' (the default) or 'Update'.
-# @return a new Geo::GDAL::Dataset object or undef.
+# @param params Named parameters:
+# - \a Name Dataset string (typically a filename). Default is '.'.
+# - \a Access Access type, either 'ReadOnly' or 'Update'. Default is 'ReadOnly'.
+# - \a Type Dataset type, either 'Raster', 'Vector', or 'Any'. Default is 'Any'.
+# - \a Options A hash of GDAL open options passed to candidate drivers. Default is {}.
+# - \a Files A list of names of files that are auxiliary to the main file. Default is [].
+#
+# @note This subroutine is imported into the main namespace if Geo::GDAL
+# is use'd with qw/:all/.
+#
+# @note Some datasets / dataset strings do not explicitly imply the
+# dataset type (for example a PostGIS database). If the type is not
+# specified in such a case the returned dataset may be of either type.
+#
+# @return a new Geo::GDAL::Dataset object if success.
 
 ## @sub Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
 # Open a raster dataset in shared mode.
@@ -841,8 +855,8 @@
 # complete list of options.
 # @return Dataset object
 #
-# @note This method can be called without the class name if Geo::GDAL
-# was use'd with qw/:all/.
+# @note This subroutine is imported into the main namespace if Geo::GDAL
+# is use'd with qw/:all/.
 
 ## @method $Info($Options)
 # Information about this dataset.
