@@ -217,8 +217,8 @@ use vars qw/
     %NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
     @error %stdout_redirection
     /;
-@EXPORT_OK = qw/BuildVRT/;
-%EXPORT_TAGS = (all => [qw(BuildVRT)]);
+@EXPORT_OK = qw/Driver Open BuildVRT/;
+%EXPORT_TAGS = (all => [qw(Driver Open BuildVRT)]);
 *BuildVRT = *Geo::GDAL::Dataset::BuildVRT;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
@@ -463,14 +463,20 @@ sub AccessTypes {
 }
 
 sub Open {
-    my @p = @_; # name, update
-    my @flags = qw/RASTER/;
-    $p[1] //= 'ReadOnly';
-    Geo::GDAL::error(1, $p[1], {ReadOnly => 1, Update => 1}) unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update'); 
-    push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
-    push @flags, qw/UPDATE/ if $p[1] eq 'Update';
-    my $dataset = OpenEx($p[0], \@flags);
-    error("Failed to open $p[0]. Is it a raster dataset?") unless $dataset;
+    my $p = Geo::GDAL::named_parameters(\@_, Name => '.', Access => 'ReadOnly', Type => 'Any', Options => {}, Files => []);
+    my @flags;
+    my %o = (READONLY => 1, UPDATE => 1);
+    Geo::GDAL::error(1, $p->{access}, \%o) unless $o{uc($p->{access})};
+    push @flags, uc($p->{access});
+    %o = (RASTER => 1, VECTOR => 1, ANY => 1);
+    Geo::GDAL::error(1, $p->{type}, \%o) unless $o{uc($p->{type})};
+    push @flags, uc($p->{type}) unless uc($p->{type}) eq 'ANY';
+    my $dataset = OpenEx(Name => $p->{name}, Flags => \@flags, Options => $p->{options}, Files => $p->{files});
+    unless ($dataset) {
+        my $t = "Failed to open $p->{name}.";
+        $t .= " Is it a ".lc($p->{type})." dataset?" unless uc($p->{type}) eq 'ANY';
+        error($t);
+    }
     return $dataset;
 }
 
