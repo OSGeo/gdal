@@ -114,6 +114,7 @@ for my $dox (@dox) {
         if ($w eq '@ignore') {
             $sub = $_;
             $sub =~ s/^(\S+)\s+//;
+            $sub =~ s/\s+$//;
             #delete $package{$package}{subs}{$sub};
             $package{$package}{dox}{$sub}{d} = $sub;
             $package{$package}{dox}{$sub}{at} = $w;
@@ -129,6 +130,7 @@ for my $dox (@dox) {
         if ($w eq '@cmethod' or $w eq '@method' or $w eq '@sub') {
             $sub = $_;
             $sub =~ s/^(\S+)\s+//;
+            $sub =~ s/\s+$//;
             my $d = $sub;
             if (/(\w+)\(/) {
                 $sub = $1;
@@ -236,7 +238,8 @@ for my $package (sort keys %package) {
         next if $sub =~ /^SRS_UA_/;
         next if $sub =~ /^SRS_DN_/;
         
-        next if $internal_methods{$sub}; # skip internal methods
+        my $at = $package{$package}{dox}{$sub}{at} // '';
+        next if $internal_methods{$sub} && !$at; # skip non-documented internal methods
 
         my $d = $package{$package}{dox}{$sub}{d};
         my $nxt = 0;
@@ -254,7 +257,6 @@ for my $package (sort keys %package) {
         my $dp = $d;
         $dp .= '()' unless $dp =~ /\(/;
         print "#** \@method $dp\n";
-        my $at = $package{$package}{dox}{$sub}{at} // '';
         if ($private_methods{$d} or $at eq '@ignore') {
             print "# Undocumented method, do not call unless you know what you're doing.\n";
             print "# \@todo Test and document this method.\n";

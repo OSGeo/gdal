@@ -112,6 +112,15 @@
 ## @ignore SerializeXMLTree
 
 
+## @sub UseExceptions 
+# Use the Perl exception mechanism for GDAL messages (failures are
+# confessed and warnings are warned) and collect the messages
+# into \@Geo::GDAL::error. This is the default.
+
+## @sub DontUseExceptions
+# Do not use the Perl exception mechanism for GDAL messages. Instead
+# the messages are printed to standard error.
+
 ## @sub $errstr
 # Clear the error stack and return all generated GDAL error messages in one (possibly multiline) string.
 # @return the chomped error stack joined with newlines.

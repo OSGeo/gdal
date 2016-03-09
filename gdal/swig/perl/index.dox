@@ -199,6 +199,35 @@ Produces:
 Warning: Driver GTiff does not support my_unknown_option creation option at site/lib/Geo/GDAL.pm line 771.
 \endcode
 
+\subsection cpl_debug Environment variable CPL_DEBUG
+
+Setting $ENV{CPL_DEBUG} to 'ON' makes GDAL verbose about many
+non-fatal things. It may be useful in trying to figure out what is
+going on internally. GDAL uses its normal error mechanism to report
+the debug messages. This means that the messages will end up in
+\@Geo::GDAL::error and can be accessed with Geo::GDAL::errstr. That
+can be changed by calling Geo::GDAL::DontUseExceptions, after which
+all error and debug messages are sent to standard error (STDERR). For
+example
+
+\code
+$ENV{CPL_DEBUG} = 'ON';
+Geo::GDAL::DontUseExceptions;
+my $mp = Geo::OGR::Geometry->new(GeometryType => 'MultiPoint', Points => [[1,1]]);
+$mp->AddGeometry(Geo::OGR::Geometry->new(GeometryType => 'Point'));
+say $mp->As(Format => 'ISO WKT');
+\endcode
+
+Prints
+
+OGR: OGRMultiPoint::exportToWkt() - skipping POINT EMPTY.
+
+to STDERR, and 
+
+MULTIPOINT ((1 1))
+
+to STDOUT.
+
 \section index_named_params Named parameters
 
 Quite many methods and subroutines in Geo::GDAL accept named
@@ -272,7 +301,7 @@ or
 \code
 my $geometry;
 {
-    my $feature = $lauer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'}});
+    my $feature = $layer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'}});
     $geometry = $feature->Geometry('geom');
 }
 say $geometry->AsText;
