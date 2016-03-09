@@ -127,6 +127,7 @@ use strict;
 use warnings;
 use Carp;
 use Encode;
+use Exporter 'import';
 use Geo::GDAL::Const;
 use Geo::OGR;
 use Geo::OSR;
@@ -207,6 +208,7 @@ L<https://trac.osgeo.org/gdal>
 
 use Scalar::Util 'blessed';
 use vars qw/
+    @EXPORT_OK %EXPORT_TAGS
     @DATA_TYPES @OPEN_FLAGS @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
     %TYPE_STRING2INT %TYPE_INT2STRING
     %OF_STRING2INT
@@ -215,6 +217,9 @@ use vars qw/
     %NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
     @error %stdout_redirection
     /;
+@EXPORT_OK = qw/BuildVRT/;
+%EXPORT_TAGS = (all => [qw(BuildVRT)]);
+*BuildVRT = *Geo::GDAL::Dataset::BuildVRT;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
     push(@DATA_TYPES, $1), next if /^GDT_(\w+)/;
@@ -728,8 +733,10 @@ use warnings;
 use POSIX qw/floor ceil/;
 use Scalar::Util 'blessed';
 use Carp;
+use Exporter 'import';
 
-use vars qw/@DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
+use vars qw/@EXPORT @DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
+@EXPORT = qw/BuildVRT/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
 
 sub RELEASE_PARENTS {
@@ -1136,6 +1143,32 @@ sub Rasterize {
             \&Geo::GDAL::wrapper_GDALRasterizeDestName,
             $options, $progress, $progress_data
         );
+    }
+}
+
+sub BuildVRT {
+    my ($dest, $sources, $options, $progress, $progress_data) = @_;
+    $options = Geo::GDAL::GDALBuildVRTOptions->new(Geo::GDAL::make_processing_options($options));
+    Geo::GDAL::error("Usage: Geo::GDAL::DataSet::BuildVRT(\$vrt_file_name, \\\@sources)") 
+        unless ref $sources eq 'ARRAY' && defined $sources->[0];
+    unless (blessed($dest)) {
+        if (blessed($sources->[0])) {
+            return Geo::GDAL::wrapper_GDALBuildVRT_objects($dest, $sources, $options, $progress, $progress_data);
+        } else {
+            return Geo::GDAL::wrapper_GDALBuildVRT_names($dest, $sources, $options, $progress, $progress_data);
+        }
+    } else {
+        if (blessed($sources->[0])) {
+            return stdout_redirection_wrapper(
+                $sources, $dest,
+                \&Geo::GDAL::wrapper_GDALBuildVRT_objects,
+                $options, $progress, $progress_data);
+        } else {
+            return stdout_redirection_wrapper(
+                $sources, $dest,
+                \&Geo::GDAL::wrapper_GDALBuildVRT_names,
+                $options, $progress, $progress_data);
+        }
     }
 }
 
@@ -2109,7 +2142,6 @@ sub serialize {
     my $self = shift;
     return Geo::GDAL::SerializeXMLTree($self);
 }
-
 
 %}
 

@@ -1332,19 +1332,24 @@ IF_UNDEF_NULL(const char *, target_key)
         do_confess(NEED_DEF, 1);
 }
 
-%typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow** poObjects)
+%typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow **poObjects)
 {
     /* %typemap(in, numinputs=1) (int object_list_count, GDALDatasetShadow** poObjects) */
-    $1 = 1;
-    void *argp = 0;
-    int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
-    if (!SWIG_IsOK(res)) {
-        do_confess(WRONG_CLASS, 1); 
-    }
-    GDALDatasetShadow* p = reinterpret_cast< GDALDatasetShadow * >(argp);
-    if (p == NULL)
-        do_confess(NEED_DEF, 1);
-    $2 = &p;
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+        do_confess(NEED_ARRAY_REF, 1);
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    /* get the pointers from the array */
+    $2 = (GDALDatasetShadow **)CPLMalloc($1*sizeof(GDALDatasetShadow *));
+    if ($2) {
+        for (int i = 0; i < $1; i++) {
+            SV **sv = av_fetch(av, i, 0);
+            int ret = SWIG_ConvertPtr(*sv, &($2[i]), SWIGTYPE_p_GDALDatasetShadow, 0);
+            if (!SWIG_IsOK(ret))
+                do_confess(WRONG_ITEM_IN_ARRAY, 1);
+        }
+    } else
+        do_confess(OUT_OF_MEMORY, 1);
 }
 
 

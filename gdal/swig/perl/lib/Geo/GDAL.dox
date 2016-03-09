@@ -91,6 +91,10 @@
 ## @ignore_class Geo::GDAL::GDALInfoOptions
 ## @ignore GDALInfo
 
+## @ignore_class Geo::GDAL::GDALBuildVRTOptions
+## @ignore wrapper_GDALBuildVRT_objects
+## @ignore wrapper_GDALBuildVRT_names
+
 ## @ignore ComputeMedianCutPCT
 ## @ignore DitherRGB2PCT
 ## @ignore ReprojectImage
@@ -821,6 +825,24 @@
 # otherwise a boolean for success/fail but the method croaks if there
 # was an error.
 #
+
+## @method Geo::GDAL::Dataset BuildVRT($Dest, arrayref Sources, $Options, coderef progress, $progress_data)
+# Build a virtual dataset from a set of datasets.
+# @param Dest Destination raster dataset definition string (typically
+# filename), or an object, which implements write and close.
+# @param Sources A list of filenames of input datasets or a list of
+# dataset objects.
+# @param Options A reference to a hash or list of options. For a hash
+# the keys are without the prefix '-' and the values must be
+# strings. For example give { r => 'cubic' } to select a resampling
+# algorithm. For a list the options are given as for the command line
+# utility. See <a
+# href="http://www.gdal.org/gdalbuildvrt.html">gdalbuildvrt</a> for a
+# complete list of options.
+# @return Dataset object
+#
+# @note This method can be called without the class name if Geo::GDAL
+# was use'd with qw/:all/.
 
 ## @method $Info($Options)
 # Information about this dataset.
