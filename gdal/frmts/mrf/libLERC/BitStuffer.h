@@ -25,12 +25,6 @@ Contributors:  Thomas Maurer
 #include "Defines.h"
 
 NAMESPACE_LERC_START
-// -------------------------------------------------------------------------- ;
-
-// ---- related classes ----------------------------------------------------- ;
-
-// -------------------------------------------------------------------------- ;
-
 /** Bit stuffer, for writing unsigned int arrays compressed lossless
  *
  */
@@ -46,16 +40,16 @@ public:
   bool read( Byte** ppByte, std::vector<unsigned int>& dataVec) const;
 
   static unsigned int computeNumBytesNeeded(unsigned int numElem, unsigned int maxElem);
-  static unsigned int numExtraBytesToAllocate()  { return 3; };
+  static unsigned int numExtraBytesToAllocate()  { return 3; }
 
 protected:
   unsigned int findMax(const std::vector<unsigned int>& dataVec) const;
 
   // numBytes = 1, 2, or 4
-  bool writeULong(Byte** ppByte, unsigned int k, int numBytes) const;
-  bool readULong( Byte** ppByte, unsigned int& k, int numBytes) const;
+  bool writeUInt(Byte** ppByte, unsigned int k, int numBytes) const;
+  bool readUInt( Byte** ppByte, unsigned int& k, int numBytes) const;
 
-  static int numBytesULong(unsigned int k)  { return (k < 256) ? 1 : (k < (1 << 16)) ? 2 : 4; }
+  static int numBytesUInt(unsigned int k)  { return (k < 256) ? 1 : (k < (1 << 16)) ? 2 : 4; }
   static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits);
 };
 
