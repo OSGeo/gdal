@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
  *           metadata from JP2Boxes
  * Author:   Even Rouault <even dot rouault at mines-paris dot org>
@@ -96,7 +96,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
         CPLFree(pszProjection);
         pszProjection = CPLStrdup(oJP2Geo.pszProjection);
         bGeoTransformValid = CPL_TO_BOOL( oJP2Geo.bHaveGeoTransform );
-        memcpy( adfGeoTransform, oJP2Geo.adfGeoTransform, 
+        memcpy( adfGeoTransform, oJP2Geo.adfGeoTransform,
                 sizeof(double) * 6 );
         nGCPCount = oJP2Geo.nGCPCount;
         pasGCPList =
@@ -126,14 +126,14 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
     int iBox;
 
-    for( iBox = 0; 
+    for( iBox = 0;
             oJP2Geo.papszGMLMetadata
-                && oJP2Geo.papszGMLMetadata[iBox] != NULL; 
+                && oJP2Geo.papszGMLMetadata[iBox] != NULL;
             iBox++ )
     {
         char *pszName = NULL;
-        const char *pszXML = 
-            CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox], 
+        const char *pszXML =
+            CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox],
                                 &pszName );
         CPLString osDomain;
         char *apszMDList[2];
@@ -360,7 +360,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                 if( pszSchemaLocation )
                 {
                     char **papszTokens = CSLTokenizeString2(
-                            pszSchemaLocation, " \t\n", 
+                            pszSchemaLocation, " \t\n",
                             CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
 
                     if( (CSLCount(papszTokens) % 2) == 0 )

@@ -262,14 +262,14 @@ int GDALOverviewDataset::CloseDependentDatasets()
 CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg)
 
 {
-    int iBandIndex; 
+    int iBandIndex;
     CPLErr eErr = CE_None;
 
     /* In case the overview bands are really linked to a dataset, then issue */
@@ -285,8 +285,8 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
     void             *pProgressDataGlobal = psExtraArg->pProgressData;
 
-    for( iBandIndex = 0; 
-         iBandIndex < nBandCount && eErr == CE_None; 
+    for( iBandIndex = 0;
+         iBandIndex < nBandCount && eErr == CE_None;
          iBandIndex++ )
     {
         GDALOverviewBand *poBand = (GDALOverviewBand*) GetRasterBand(panBandMap[iBandIndex]);
@@ -301,13 +301,13 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
         pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
 
         psExtraArg->pfnProgress = GDALScaledProgress;
-        psExtraArg->pProgressData = 
+        psExtraArg->pProgressData =
             GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
                                       1.0 * (iBandIndex + 1) / nBandCount,
                                       pfnProgressGlobal,
                                       pProgressDataGlobal );
 
-        eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+        eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                   (void *) pabyBandData, nBufXSize, nBufYSize,
                                   eBufType, nPixelSpace, nLineSpace, psExtraArg );
 

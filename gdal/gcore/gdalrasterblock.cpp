@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Implementation of GDALRasterBlock class and related global 
+ * Purpose:  Implementation of GDALRasterBlock class and related global
  *           raster block cache management.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -234,7 +234,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
             GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
             // For some reason, coverity pretends that this will overflow...
             // "Multiply operation overflows on operands static_cast<double>(nUsagePhysicalRAM)
-            // and CPLAtof(pszCacheMax). Example values for operands: CPLAtof(pszCacheMax) = 2251799813685248, 
+            // and CPLAtof(pszCacheMax). Example values for operands: CPLAtof(pszCacheMax) = 2251799813685248,
             // static_cast<double>(nUsagePhysicalRAM) = -9223372036854775808."
             /* coverity[overflow] */
             double dfCacheMax = static_cast<double>(nUsagePhysicalRAM) * CPLAtof(pszCacheMax) / 100.0;
@@ -280,7 +280,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
 /**
  * \brief Get cache memory used.
  *
- * @return the number of bytes of memory currently in use by the 
+ * @return the number of bytes of memory currently in use by the
  * GDALRasterBlock memory caching.
  */
 
@@ -354,16 +354,16 @@ int CPL_STDCALL GDALFlushCacheBlock()
  * some blocks of raster data for zero or more GDALRasterBand objects
  * across zero or more GDALDataset objects in a global raster cache with
  * a least recently used (LRU) list and an upper cache limit (see
- * GDALSetCacheMax()) under which the cache size is normally kept. 
+ * GDALSetCacheMax()) under which the cache size is normally kept.
  *
  * Some blocks in the cache may be modified relative to the state on disk
  * (they are marked "Dirty") and must be flushed to disk before they can
  * be discarded.  Other (Clean) blocks may just be discarded if their memory
- * needs to be recovered. 
+ * needs to be recovered.
  *
  * In normal situations applications do not interact directly with the
  * GDALRasterBlock - instead it it utilized by the RasterIO() interfaces
- * to implement caching. 
+ * to implement caching.
  *
  * Some driver classes are implemented in a fashion that completely avoids
  * use of the GDAL raster cache (and GDALRasterBlock) though this is not very
@@ -385,10 +385,10 @@ int CPL_STDCALL GDALFlushCacheBlock()
  *
  * This static method is normally used to recover memory when a request
  * for a new cache block would put cache memory use over the established
- * limit.   
+ * limit.
  *
  * C++ analog to the C function GDALFlushCacheBlock().
- * 
+ *
  * @param bDirtyBlocksOnly Only flushes dirty blocks.
  * @return TRUE if successful or FALSE if no flushable block is found.
  */
@@ -475,7 +475,7 @@ void GDALRasterBlock::FlushDirtyBlocks()
 /************************************************************************/
 
 /**
- * @brief GDALRasterBlock Constructor 
+ * @brief GDALRasterBlock Constructor
  *
  * Normally only called from GDALRasterBand::GetLockedBlockRef().
  *
@@ -483,13 +483,13 @@ void GDALRasterBlock::FlushDirtyBlocks()
  * being constructed.
  *
  * @param nXOffIn the horizontal block offset, with zero indicating
- * the left most block, 1 the next block and so forth. 
+ * the left most block, 1 the next block and so forth.
  *
  * @param nYOffIn the vertical block offset, with zero indicating
  * the top most block, 1 the next block and so forth.
  */
 
-GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn, 
+GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
                                   int nXOffIn, int nYOffIn )
 
 {
@@ -572,7 +572,7 @@ void GDALRasterBlock::RecycleFor( int nXOffIn, int nYOffIn )
 /************************************************************************/
 
 /**
- * Block destructor. 
+ * Block destructor.
  *
  * Normally called from GDALRasterBand::FlushBlock().
  */
@@ -690,7 +690,7 @@ void GDALRasterBlock::Verify() {}
 void GDALRasterBlock::CheckNonOrphanedBlocks(GDALRasterBand* poBand)
 {
     TAKE_LOCK;
-    for( GDALRasterBlock *poBlock = poNewest; 
+    for( GDALRasterBlock *poBlock = poNewest;
                           poBlock != NULL;
                           poBlock = poBlock->poNext )
     {
@@ -719,9 +719,9 @@ void GDALRasterBlock::CheckNonOrphanedBlocks(GDALRasterBand* poBand)
 /**
  * Force writing of the current block, if dirty.
  *
- * The block is written using GDALRasterBand::IWriteBlock() on it's 
- * corresponding band object.  Even if the write fails the block will 
- * be marked clean. 
+ * The block is written using GDALRasterBand::IWriteBlock() on it's
+ * corresponding band object.  Even if the write fails the block will
+ * be marked clean.
  *
  * @return CE_None otherwise the error returned by IWriteBlock().
  */
@@ -755,8 +755,8 @@ CPLErr GDALRasterBlock::Write()
 /**
  * Push block to top of LRU (least-recently used) list.
  *
- * This method is normally called when a block is used to keep track 
- * that it has been recently used. 
+ * This method is normally called when a block is used to keep track
+ * that it has been recently used.
  */
 
 void GDALRasterBlock::Touch()
@@ -822,9 +822,9 @@ void GDALRasterBlock::Touch_unlocked()
  * This method allocates memory for the block, and attempts to flush other
  * blocks, if necessary, to bring the total cache size back within the limits.
  * The newly allocated block is touched and will be considered most recently
- * used in the LRU list. 
- * 
- * @return CE_None on success or CE_Failure if memory allocation fails. 
+ * used in the LRU list.
+ *
+ * @return CE_None on success or CE_Failure if memory allocation fails.
  */
 
 CPLErr GDALRasterBlock::Internalize()
@@ -860,7 +860,7 @@ CPLErr GDALRasterBlock::Internalize()
             GDALRasterBlock *poTarget = poOldest;
             while( nCacheUsed > nCurCacheMax )
             {
-                while( poTarget != NULL ) 
+                while( poTarget != NULL )
                 {
                     if( CPLAtomicCompareAndExchange(&(poTarget->nLockCount), 0, -1) )
                         break;
@@ -1076,7 +1076,7 @@ int GDALRasterBlock::DropLockForRemovalFromStorage()
 void GDALRasterBlock::DumpAll()
 {
     int iBlock = 0;
-    for( GDALRasterBlock *poBlock = poNewest; 
+    for( GDALRasterBlock *poBlock = poNewest;
                             poBlock != NULL;
                             poBlock = poBlock->poNext )
     {

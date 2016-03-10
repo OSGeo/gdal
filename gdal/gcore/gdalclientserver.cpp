@@ -67,7 +67,7 @@
 #include "cpl_spawn.h"
 #include "cpl_multiproc.h"
 
-/*! 
+/*!
 \page gdal_api_proxy GDAL API Proxy
 
 \section gdal_api_proxy_intro Introduction
@@ -464,7 +464,7 @@ class GDALClientDataset: public GDALPamDataset
        virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg);
@@ -481,7 +481,7 @@ class GDALClientDataset: public GDALPamDataset
 
         virtual void        FlushCache();
 
-        virtual CPLErr        AddBand( GDALDataType eType, 
+        virtual CPLErr        AddBand( GDALDataType eType,
                                    char **papszOptions=NULL );
 
         //virtual void        SetDescription( const char * );
@@ -510,8 +510,8 @@ class GDALClientDataset: public GDALPamDataset
         virtual char      **GetFileList(void);
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize, 
-                                GDALDataType eDT, 
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eDT,
                                 int nBandCount, int *panBandList,
                                 char **papszOptions );
 
@@ -519,8 +519,8 @@ class GDALClientDataset: public GDALPamDataset
 
         static GDALDataset *Open( GDALOpenInfo * );
         static int          Identify( GDALOpenInfo * );
-        static GDALDataset *CreateCopy( const char * pszFilename, 
-                                        GDALDataset * poSrcDS, int bStrict, char ** papszOptions, 
+        static GDALDataset *CreateCopy( const char * pszFilename,
+                                        GDALDataset * poSrcDS, int bStrict, char ** papszOptions,
                                         GDALProgressFunc pfnProgress, void * pProgressData );
         static GDALDataset* Create( const char * pszName,
                                     int nXSize, int nYSize, int nBands,
@@ -621,7 +621,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
         virtual double GetScale( int *pbSuccess = NULL );
 
         virtual GDALColorTable *GetColorTable();
-        virtual CPLErr SetColorTable( GDALColorTable * ); 
+        virtual CPLErr SetColorTable( GDALColorTable * );
 
         virtual const char *GetUnitType();
         virtual CPLErr SetUnitType( const char * );
@@ -635,20 +635,20 @@ class GDALClientRasterBand : public GDALPamRasterBand
         virtual CPLErr SetScale( double );
 
         virtual CPLErr GetStatistics( int bApproxOK, int bForce,
-                                    double *pdfMin, double *pdfMax, 
+                                    double *pdfMin, double *pdfMax,
                                     double *pdfMean, double *padfStdDev );
-        virtual CPLErr ComputeStatistics( int bApproxOK, 
-                                        double *pdfMin, double *pdfMax, 
+        virtual CPLErr ComputeStatistics( int bApproxOK,
+                                        double *pdfMin, double *pdfMax,
                                         double *pdfMean, double *pdfStdDev,
                                         GDALProgressFunc, void *pProgressData );
-        virtual CPLErr SetStatistics( double dfMin, double dfMax, 
+        virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                       double dfMean, double dfStdDev );
         virtual CPLErr ComputeRasterMinMax( int, double* );
 
-        virtual CPLErr GetHistogram( double dfMin, double dfMax, 
-                                     int nBuckets, GUIntBig *panHistogram, 
+        virtual CPLErr GetHistogram( double dfMin, double dfMax,
+                                     int nBuckets, GUIntBig *panHistogram,
                                      int bIncludeOutOfRange, int bApproxOK,
-                                     GDALProgressFunc pfnProgress, 
+                                     GDALProgressFunc pfnProgress,
                                      void *pProgressData );
 
         virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
@@ -673,7 +673,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
         virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize, 
+                                int nBufXSize, int nBufYSize,
                                 GDALDataType eDT, char **papszOptions );
         /*
         virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig );
@@ -3324,8 +3324,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             GUIntBig* panHistogram = (GUIntBig*) VSIMalloc2(sizeof(GUIntBig), nBuckets);
             if( panHistogram == NULL )
                 break;
-            CPLErr eErr = poBand->GetHistogram(dfMin, dfMax, 
-                                     nBuckets, panHistogram, 
+            CPLErr eErr = poBand->GetHistogram(dfMin, dfMax,
+                                     nBuckets, panHistogram,
                                      bIncludeOutOfRange, bApproxOK, NULL, NULL);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
@@ -3688,10 +3688,10 @@ int GDALClientDataset::ProcessAsyncProgress()
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr GDALClientDataset::IBuildOverviews( const char *pszResampling, 
-                                           int nOverviews, int *panOverviewList, 
+CPLErr GDALClientDataset::IBuildOverviews( const char *pszResampling,
+                                           int nOverviews, int *panOverviewList,
                                            int nListBands, int *panBandList,
-                                           GDALProgressFunc pfnProgress, 
+                                           GDALProgressFunc pfnProgress,
                                            void * pProgressData )
 {
     if( !SupportsInstr(INSTR_IBuildOverviews) )
@@ -3743,7 +3743,7 @@ CPLErr GDALClientDataset::IBuildOverviews( const char *pszResampling,
 CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType, 
+                                 GDALDataType eBufType,
                                  int nBandCount, int *panBandMap,
                                  GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                                  GDALRasterIOExtraArg* psExtraArg)
@@ -3752,7 +3752,7 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamDataset::IRasterIO( eRWFlag,
                                           nXOff, nYOff, nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize,
-                                          eBufType, 
+                                          eBufType,
                                           nBandCount, panBandMap,
                                           nPixelSpace, nLineSpace, nBandSpace,
                                           psExtraArg );
@@ -4072,7 +4072,7 @@ const GDAL_GCP * GDALClientDataset::GetGCPs()
 /************************************************************************/
 
 CPLErr GDALClientDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPList,
-                                   const char *pszGCPProjection ) 
+                                   const char *pszGCPProjection )
 {
     if( !SupportsInstr(INSTR_SetGCPs) )
         return GDALPamDataset::SetGCPs(nGCPCountIn, pasGCPList, pszGCPProjection);
@@ -4274,7 +4274,7 @@ void GDALClientDataset::FlushCache()
 /*                              AddBand()                               */
 /************************************************************************/
 
-CPLErr GDALClientDataset::AddBand( GDALDataType eType, 
+CPLErr GDALClientDataset::AddBand( GDALDataType eType,
                                    char **papszOptions )
 {
     if( !SupportsInstr(INSTR_AddBand) )
@@ -4298,7 +4298,7 @@ CPLErr GDALClientDataset::AddBand( GDALDataType eType,
         SetBand(GetRasterCount() + 1, poBand);
     }
     GDALConsumeErrors(p);
-    return eRet;    
+    return eRet;
 }
 
 
@@ -4307,8 +4307,8 @@ CPLErr GDALClientDataset::AddBand( GDALDataType eType,
 /************************************************************************/
 
 CPLErr GDALClientDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                  int nBufXSize, int nBufYSize, 
-                                  GDALDataType eDT, 
+                                  int nBufXSize, int nBufYSize,
+                                  GDALDataType eDT,
                                   int nBandCount, int *panBandList,
                                   char **papszOptions )
 {
@@ -4355,7 +4355,7 @@ CPLErr GDALClientDataset::CreateMaskBand( int nFlagsIn )
 /*                       GDALClientRasterBand()                         */
 /************************************************************************/
 
-GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn, 
+GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn,
                                            GDALClientDataset* poDSIn,
                                            int nBandIn, GDALAccess eAccessIn,
                                            int nRasterXSizeIn, int nRasterYSizeIn,
@@ -4673,7 +4673,7 @@ CPLErr GDALClientRasterBand::SetColorInterpretation(GDALColorInterp eInterp)
 /************************************************************************/
 
 CPLErr GDALClientRasterBand::GetStatistics( int bApproxOK, int bForce,
-                                            double *pdfMin, double *pdfMax, 
+                                            double *pdfMin, double *pdfMax,
                                             double *pdfMean, double *pdfStdDev )
 {
     if( !SupportsInstr(INSTR_Band_GetStatistics) )
@@ -4725,9 +4725,9 @@ CPLErr GDALClientRasterBand::GetStatistics( int bApproxOK, int bForce,
 /*                         ComputeStatistics()                          */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::ComputeStatistics( int bApproxOK, 
+CPLErr GDALClientRasterBand::ComputeStatistics( int bApproxOK,
                                                 double *pdfMin,
-                                                double *pdfMax, 
+                                                double *pdfMax,
                                                 double *pdfMean,
                                                 double *pdfStdDev,
                                                 GDALProgressFunc pfnProgress,
@@ -4770,7 +4770,7 @@ CPLErr GDALClientRasterBand::ComputeStatistics( int bApproxOK,
 /*                           SetStatistics()                            */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::SetStatistics( double dfMin, double dfMax, 
+CPLErr GDALClientRasterBand::SetStatistics( double dfMin, double dfMax,
                                         double dfMean, double dfStdDev )
 {
     if( !SupportsInstr(INSTR_Band_SetStatistics) )
@@ -4822,11 +4822,11 @@ CPLErr GDALClientRasterBand::ComputeRasterMinMax( int bApproxOK,
 /*                            GetHistogram()                            */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax, 
-                                           int nBuckets, GUIntBig *panHistogram, 
+CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
+                                           int nBuckets, GUIntBig *panHistogram,
                                            int bIncludeOutOfRange,
                                            int bApproxOK,
-                                           GDALProgressFunc pfnProgress, 
+                                           GDALProgressFunc pfnProgress,
                                            void *pProgressData )
 {
     if( !SupportsInstr(INSTR_Band_GetHistogram) )
@@ -5097,7 +5097,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamRasterBand::IRasterIO( eRWFlag,
                                              nXOff, nYOff, nXSize, nYSize,
                                              pData, nBufXSize, nBufYSize,
-                                             eBufType, 
+                                             eBufType,
                                              nPixelSpace, nLineSpace, psExtraArg );
 
     CLIENT_ENTER();
@@ -5751,7 +5751,7 @@ CPLErr GDALClientRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poR
 /************************************************************************/
 
 CPLErr GDALClientRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                     int nBufXSize, int nBufYSize, 
+                                     int nBufXSize, int nBufYSize,
                                      GDALDataType eDT, char **papszOptions )
 {
     if( !SupportsInstr(INSTR_Band_AdviseRead) )
@@ -6108,7 +6108,7 @@ static int GDALClientDatasetQuietDelete(GDALPipe* p,
 
 int GDALClientDataset::mCreateCopy( const char* pszFilename,
                                     GDALDataset* poSrcDS,
-                                    int bStrict, char** papszOptions, 
+                                    int bStrict, char** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData )
 {
@@ -6182,9 +6182,9 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
 /*                          CreateCopy()                                */
 /************************************************************************/
 
-GDALDataset *GDALClientDataset::CreateCopy( const char * pszFilename, 
+GDALDataset *GDALClientDataset::CreateCopy( const char * pszFilename,
                                             GDALDataset * poSrcDS, int bStrict,
-                                            char ** papszOptions, 
+                                            char ** papszOptions,
                                             GDALProgressFunc pfnProgress,
                                             void * pProgressData )
 {
@@ -6374,7 +6374,7 @@ GDALDriver* GDALGetAPIPROXYDriver()
 
         poAPIPROXYDriver->SetDescription( "API_PROXY" );
         poAPIPROXYDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poAPIPROXYDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+        poAPIPROXYDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "API_PROXY" );
 
         poAPIPROXYDriver->pfnOpen = GDALClientDataset::Open;

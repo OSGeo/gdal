@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata (mainly the remote sensing imagery) from files of 
+ * Purpose:  Read metadata (mainly the remote sensing imagery) from files of
  *           different providers like DigitalGlobe, GeoEye etc.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
@@ -80,7 +80,7 @@ static const char * const apszRPCTXT20ValItems[] =
 
 /**
  * GDALMDReaderManager()
- */  
+ */
 GDALMDReaderManager::GDALMDReaderManager()
 {
     m_pReader = NULL;
@@ -177,16 +177,16 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
 
 /**
  * GDALMDReaderBase()
- */ 
+ */
 GDALMDReaderBase::GDALMDReaderBase(CPL_UNUSED const char *pszPath,
                                    CPL_UNUSED char **papszSiblingFiles)
 {
-    m_bIsMetadataLoad = false;    
+    m_bIsMetadataLoad = false;
     m_papszIMDMD = NULL;
     m_papszRPCMD = NULL;
     m_papszIMAGERYMD = NULL;
-    m_papszDEFAULTMD = NULL;    
-} 
+    m_papszDEFAULTMD = NULL;
+}
 
 /**
  * ~GDALMDReaderBase()
@@ -197,7 +197,7 @@ GDALMDReaderBase::~GDALMDReaderBase()
     CSLDestroy(m_papszRPCMD);
     CSLDestroy(m_papszIMAGERYMD);
     CSLDestroy(m_papszDEFAULTMD);
-} 
+}
 
 /**
  * GetMetadataItem()
@@ -208,12 +208,12 @@ char ** GDALMDReaderBase::GetMetadataDomain(const char *pszDomain)
     if(EQUAL(pszDomain, MD_DOMAIN_DEFAULT))
         return m_papszDEFAULTMD;
     else if(EQUAL(pszDomain, MD_DOMAIN_IMD))
-        return m_papszIMDMD;    
+        return m_papszIMDMD;
     else if(EQUAL(pszDomain, MD_DOMAIN_RPC))
-        return m_papszRPCMD;   
+        return m_papszRPCMD;
     else if(EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
-        return m_papszIMAGERYMD;             
-    return NULL;    
+        return m_papszIMAGERYMD;
+    return NULL;
 }
 
 /**

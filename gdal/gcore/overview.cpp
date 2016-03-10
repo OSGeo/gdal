@@ -455,7 +455,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         GDALDataType eWrkDataType,
                         void * pChunk,
                         GByte * pabyChunkNodataMask,
-                        int nChunkXOff, int nChunkXSize, 
+                        int nChunkXOff, int nChunkXSize,
                         int nChunkYOff, int nChunkYSize,
                         int nDstXOff, int nDstXOff2,
                         int nDstYOff, int nDstYOff2,
@@ -1739,7 +1739,7 @@ static CPLErr GDALResampleChunk32R_Convolution(
                         dfSrcXDelta, dfSrcYDelta,
                         (GByte *) pChunk, 1,
                         pabyChunkNodataMask,
-                        nChunkXOff, nChunkXSize, 
+                        nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
                         nDstXOff, nDstXOff2,
                         nDstYOff, nDstYOff2,
@@ -1755,7 +1755,7 @@ static CPLErr GDALResampleChunk32R_Convolution(
                         dfSrcXDelta, dfSrcYDelta,
                         (GUInt16 *) pChunk, 1,
                         pabyChunkNodataMask,
-                        nChunkXOff, nChunkXSize, 
+                        nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
                         nDstXOff, nDstXOff2,
                         nDstYOff, nDstYOff2,
@@ -1791,7 +1791,7 @@ static CPLErr GDALResampleChunk32R_Convolution(
 /************************************************************************/
 
 static CPLErr
-GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight, 
+GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                          float * pafChunk, int nChunkYOff, int nChunkYSize,
                          int nDstYOff, int nDstYOff2,
                          GDALRasterBand * poOverview,
@@ -1929,8 +1929,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
             }
         }
 
-        eErr = poOverview->RasterIO( GF_Write, 0, iDstLine, nOXSize, 1, 
-                                     pafDstScanline, nOXSize, 1, GDT_CFloat32, 
+        eErr = poOverview->RasterIO( GF_Write, 0, iDstLine, nOXSize, 1,
+                                     pafDstScanline, nOXSize, 1, GDT_CFloat32,
                                      0, 0, NULL );
     }
 
@@ -1947,9 +1947,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
 /************************************************************************/
 
 static CPLErr
-GDALRegenerateCascadingOverviews( 
-    GDALRasterBand *poSrcBand, int nOverviews, GDALRasterBand **papoOvrBands, 
-    const char * pszResampling, 
+GDALRegenerateCascadingOverviews(
+    GDALRasterBand *poSrcBand, int nOverviews, GDALRasterBand **papoOvrBands,
+    const char * pszResampling,
     GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
@@ -1961,7 +1961,7 @@ GDALRegenerateCascadingOverviews(
     {
         for( int j = 0; j < nOverviews - i - 1; j++ )
         {
-            if( papoOvrBands[j]->GetXSize() 
+            if( papoOvrBands[j]->GetXSize()
                 * (float) papoOvrBands[j]->GetYSize() <
                 papoOvrBands[j+1]->GetXSize()
                 * (float) papoOvrBands[j+1]->GetYSize() )
@@ -2006,7 +2006,7 @@ GDALRegenerateCascadingOverviews(
         void *pScaledProgressData
             = GDALCreateScaledProgress(
             dfPixelsProcessed / dfTotalPixels,
-            (dfPixelsProcessed + dfPixels) / dfTotalPixels, 
+            (dfPixelsProcessed + dfPixels) / dfTotalPixels,
             pfnProgress, pProgressData );
 
         CPLErr eErr
@@ -2143,7 +2143,7 @@ static CPLErr GDALResampleChunk32RMultiBands_Convolution(
                         dfSrcXDelta, dfSrcYDelta,
                         (GByte *) pChunk, nBands,
                         pabyChunkNodataMask,
-                        nChunkXOff, nChunkXSize, 
+                        nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
                         nDstXOff, nDstXOff2,
                         nDstYOff, nDstYOff2,
@@ -2159,7 +2159,7 @@ static CPLErr GDALResampleChunk32RMultiBands_Convolution(
                         dfSrcXDelta, dfSrcYDelta,
                         (GUInt16 *) pChunk, nBands,
                         pabyChunkNodataMask,
-                        nChunkXOff, nChunkXSize, 
+                        nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
                         nDstXOff, nDstXOff2,
                         nDstYOff, nDstYOff2,
@@ -2266,16 +2266,16 @@ GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
  * can also be used to generate downsampled images in one file from another
  * outside the overview architecture.
  *
- * The output bands need to exist in advance. 
+ * The output bands need to exist in advance.
  *
- * The full set of resampling algorithms is documented in 
+ * The full set of resampling algorithms is documented in
  * GDALDataset::BuildOverviews().
  *
  * This function will honour properly NODATA_VALUES tuples (special dataset metadata) so
  * that only a given RGB triplet (in case of a RGB image) will be considered as the
  * nodata value and not each value of the triplet independently per band.
  *
- * @param hSrcBand the source (base level) band. 
+ * @param hSrcBand the source (base level) band.
  * @param nOverviewCount the number of downsampled bands being generated.
  * @param pahOvrBands the list of downsampled bands to be generated.
  * @param pszResampling Resampling algorithm (e.g. "AVERAGE").
@@ -2285,8 +2285,8 @@ GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
  */
 CPLErr
 GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
-                         int nOverviewCount, GDALRasterBandH *pahOvrBands, 
-                         const char * pszResampling, 
+                         int nOverviewCount, GDALRasterBandH *pahOvrBands,
+                         const char * pszResampling,
                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
@@ -2350,7 +2350,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
 
     /* If we have a nodata mask and we are doing something more complicated */
-    /* than nearest neighbouring, we have to fetch to nodata mask */ 
+    /* than nearest neighbouring, we have to fetch to nodata mask */
 
     GDALRasterBand* poMaskBand = NULL;
     int nMaskFlags = 0;
@@ -2391,9 +2391,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
          EQUAL(pszResampling,"LANCZOS") ||
          EQUAL(pszResampling,"BILINEAR")) && nOverviewCount > 1
          && !(bUseNoDataMask && nMaskFlags != GMF_NODATA))
-        return GDALRegenerateCascadingOverviews( poSrcBand, 
+        return GDALRegenerateCascadingOverviews( poSrcBand,
                                                  nOverviewCount, papoOvrBands,
-                                                 pszResampling, 
+                                                 pszResampling,
                                                  pfnProgress,
                                                  pProgressData );
 
@@ -2453,11 +2453,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     int  nChunkYOff = 0;
     CPLErr eErr = CE_None;
 
-    for( nChunkYOff = 0; 
-         nChunkYOff < nHeight && eErr == CE_None; 
+    for( nChunkYOff = 0;
+         nChunkYOff < nHeight && eErr == CE_None;
          nChunkYOff += nFullResYChunk )
     {
-        if( !pfnProgress( nChunkYOff / (double) nHeight, 
+        if( !pfnProgress( nChunkYOff / (double) nHeight,
                           NULL, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -2479,11 +2479,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
         /* read chunk */
         if (eErr == CE_None)
-            eErr = poSrcBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried, 
+            eErr = poSrcBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
                                 pChunk, nWidth, nChunkYSizeQueried, eType,
                                 0, 0, NULL );
         if (eErr == CE_None && bUseNoDataMask)
-            eErr = poMaskBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried, 
+            eErr = poMaskBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
                                 pabyChunkNodataMask, nWidth, nChunkYSizeQueried, GDT_Byte,
                                 0, 0, NULL );
 
@@ -2597,7 +2597,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                                               bHasNoData, fNoDataValue, poColorTable,
                                               poSrcBand->GetRasterDataType());
             else
-                eErr = GDALResampleChunkC32R(nWidth, nHeight, 
+                eErr = GDALResampleChunkC32R(nWidth, nHeight,
                                                (float*)pChunk,
                                                nChunkYOffQueried, nChunkYSizeQueried,
                                                nDstYOff, nDstYOff2,
@@ -2613,8 +2613,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None && EQUAL(pszResampling,"AVERAGE_MP") )
     {
-        GDALOverviewMagnitudeCorrection( (GDALRasterBandH) poSrcBand, 
-                                         nOverviewCount, 
+        GDALOverviewMagnitudeCorrection( (GDALRasterBandH) poSrcBand,
+                                         nOverviewCount,
                                          (GDALRasterBandH *) papoOvrBands,
                                          GDALDummyProgress, NULL );
     }
@@ -2622,8 +2622,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      It can be important to flush out data to overviews.             */
 /* -------------------------------------------------------------------- */
-    for( int iOverview = 0; 
-         eErr == CE_None && iOverview < nOverviewCount; 
+    for( int iOverview = 0;
+         eErr == CE_None && iOverview < nOverviewCount;
          iOverview++ )
     {
         eErr = papoOvrBands[iOverview]->FlushCache();
@@ -2674,17 +2674,17 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * @param nOverviews the number of downsampled overview levels being generated.
  * @param papapoOverviewBands bidimension array of bands. First dimension is indexed
  *                            by nBands. Second dimension is indexed by nOverviews.
- * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE" or "GAUSS"). 
+ * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE" or "GAUSS").
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
  * @return CE_None on success or CE_Failure on failure.
  */
 
-CPLErr 
+CPLErr
 GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                                  int nOverviews,
                                  GDALRasterBand*** papapoOverviewBands,
-                                 const char * pszResampling, 
+                                 const char * pszResampling,
                                  GDALProgressFunc pfnProgress, void * pProgressData )
 {
     if( pfnProgress == NULL )
@@ -2780,7 +2780,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
     GDALDataType eWrkDataType = GDALGetOvrWorkDataType(pszResampling, eDataType);
 
     /* If we have a nodata mask and we are doing something more complicated */
-    /* than nearest neighbouring, we have to fetch to nodata mask */ 
+    /* than nearest neighbouring, we have to fetch to nodata mask */
     bool bUseNoDataMask = (!STARTS_WITH_CI(pszResampling, "NEAR") &&
                           (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
 
@@ -2900,7 +2900,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                 nChunkYSizeQueried = nSrcHeight - nChunkYOffQueried;
             CPLAssert(nChunkYSizeQueried <= nFullResYChunkQueried);
 
-            if( !pfnProgress( dfCurPixelCount / dfTotalPixelCount, 
+            if( !pfnProgress( dfCurPixelCount / dfTotalPixelCount,
                               NULL, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -2948,7 +2948,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                         poSrcBand = papapoOverviewBands[iBand][iSrcOverview];
                     eErr = poSrcBand->RasterIO( GF_Read,
                                                 nChunkXOffQueried, nChunkYOffQueried,
-                                                nChunkXSizeQueried, nChunkYSizeQueried, 
+                                                nChunkXSizeQueried, nChunkYSizeQueried,
                                                 papaChunk[iBand],
                                                 nChunkXSizeQueried, nChunkYSizeQueried,
                                                 eWrkDataType, 0, 0, NULL );
@@ -2963,7 +2963,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                         poSrcBand = papapoOverviewBands[0][iSrcOverview];
                     eErr = poSrcBand->GetMaskBand()->RasterIO( GF_Read,
                                                                nChunkXOffQueried, nChunkYOffQueried,
-                                                               nChunkXSizeQueried, nChunkYSizeQueried, 
+                                                               nChunkXSizeQueried, nChunkYSizeQueried,
                                                                pabyChunkNoDataMask,
                                                                nChunkXSizeQueried, nChunkYSizeQueried,
                                                                GDT_Byte, 0, 0, NULL );
@@ -3018,11 +3018,11 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 /*                        GDALComputeBandStats()                        */
 /************************************************************************/
 
-CPLErr CPL_STDCALL 
+CPLErr CPL_STDCALL
 GDALComputeBandStats( GDALRasterBandH hSrcBand,
                       int nSampleStep,
-                      double *pdfMean, double *pdfStdDev, 
-                      GDALProgressFunc pfnProgress, 
+                      double *pdfMean, double *pdfStdDev,
+                      GDALProgressFunc pfnProgress,
                       void *pProgressData )
 
 {
@@ -3145,10 +3145,10 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /************************************************************************/
 
 CPLErr
-GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand, 
+GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                                  int nOverviewCount,
                                  GDALRasterBandH *pahOverviews,
-                                 GDALProgressFunc pfnProgress, 
+                                 GDALProgressFunc pfnProgress,
                                  void *pProgressData )
 
 {
@@ -3173,8 +3173,8 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
         GDALRasterBand *poOverview = (GDALRasterBand *)pahOverviews[iOverview];
         double  dfOverviewMean, dfOverviewStdDev;
 
-        eErr = GDALComputeBandStats( pahOverviews[iOverview], 1, 
-                                     &dfOverviewMean, &dfOverviewStdDev, 
+        eErr = GDALComputeBandStats( pahOverviews[iOverview], 1,
+                                     &dfOverviewMean, &dfOverviewStdDev,
                                      pfnProgress, pProgressData );
 
         if( eErr != CE_None )
