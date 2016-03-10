@@ -1,17 +1,23 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 
@@ -100,12 +106,19 @@ private:
     void FreeTree(int& n)
     {
       if (child0)
+      {
         child0->FreeTree(n);
+        delete child0;
+        child0 = NULL;
+        n--;
+      } 
       if (child1)
+      {
         child1->FreeTree(n);
-
-      n--;
-      delete this;
+        delete child1;
+        child1 = NULL;
+        n--;
+      } 
     }
   };
 
@@ -115,6 +128,7 @@ private:
   std::vector<std::pair<short, unsigned int> > m_codeTable;
   std::vector<std::pair<short, short> > m_decodeLUT;
   int m_maxNumBitsLUT;
+  int m_numBitsToSkipInTree;
   Node* m_root;
 
   int GetIndexWrapAround(int i, int size) const  { return i - (i < size ? 0 : size); }
@@ -122,6 +136,7 @@ private:
   bool GetRange(int& i0, int& i1, int& maxCodeLength) const;
   bool BitStuffCodes(Byte** ppByte, int i0, int i1) const;
   bool BitUnStuffCodes(const Byte** ppByte, int i0, int i1);
+  bool ConvertCodesToCanonical();
 };
 
 // -------------------------------------------------------------------------- ;
@@ -154,6 +169,14 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
   if (!m_root)
     return false;
 
+  // skip leading 0 bits before entering the tree
+  bitPos += m_numBitsToSkipInTree;
+  if (bitPos >= 32)
+  {
+    bitPos -= 32;
+    (*ppSrc)++;
+  }
+
   const Node* node = m_root;
   value = -1;
   while (value < 0)
@@ -175,8 +198,6 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
 
   return true;
 }
-
-// -------------------------------------------------------------------------- ;
 
 NAMESPACE_LERC_END
 #endif
