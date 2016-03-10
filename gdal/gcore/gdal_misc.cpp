@@ -28,18 +28,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
-#include <ctype.h>
-#include <string>
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
+
+#include <cctype>
+
+#include <iostream>
 #include <limits>
+#include <string>
 
 CPL_CVSID("$Id$");
-
-#include "ogr_spatialref.h"
-#include "gdal_mdreader.h"
 
 /************************************************************************/
 /*                         GDALDataTypeUnion()                          */
@@ -2476,7 +2478,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         {
             if( iArg + 1 >= nArgc )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "--debug option given without debug level." );
                 CSLDestroy( papszReturn );
                 return -1;
@@ -2496,17 +2498,17 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         {
             if( iArg + 1 >= nArgc )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "--optfile option given without filename." );
                 CSLDestroy( papszReturn );
                 return -1;
             }
 
-            FILE *fpOptFile = VSIFOpen( papszArgv[iArg+1], "rb" );
+            VSILFILE *fpOptFile = VSIFOpenL( papszArgv[iArg+1], "rb" );
 
             if( fpOptFile == NULL )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Unable to open optfile '%s'.\n%s",
                           papszArgv[iArg+1], VSIStrerror( errno ) );
                 CSLDestroy( papszReturn );
@@ -2514,7 +2516,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             }
 
             const char *pszLine;
-            while( (pszLine = CPLReadLine( fpOptFile )) != NULL )
+            while( (pszLine = CPLReadLineL( fpOptFile )) != NULL )
             {
                 if( pszLine[0] == '#' || strlen(pszLine) == 0 )
                     continue;
@@ -2525,7 +2527,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 CSLDestroy( papszTokens );
             }
 
-            CPL_IGNORE_RET_VAL(VSIFClose( fpOptFile ));
+            VSIFCloseL( fpOptFile );
 
             iArg += 1;
         }
@@ -2759,8 +2761,9 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--pause") )
         {
-            printf( "Hit <ENTER> to Continue.\n" );
-            CPLReadLine( stdin );
+            std::cout << "Hit <ENTER> to Continue." << std::endl;
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
 
 /* -------------------------------------------------------------------- */
