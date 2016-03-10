@@ -1,32 +1,32 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 
 #ifndef RLE_H
 #define RLE_H
 
-// ---- includes ------------------------------------------------------------ ;
-
 #include "Defines.h"
 
 NAMESPACE_LERC_START
-
-// ---- related classes ----------------------------------------------------- ;
-
-// -------------------------------------------------------------------------- ;
 
 /** RLE:
  *  run length encode a byte array
@@ -35,7 +35,7 @@ NAMESPACE_LERC_START
  *    (n + 1) * 3 / 32767 + 2  ~= 0.00009
  *
  *  worst case resize factor (no stretch of same bytes):
- *    n + (n + 1) * 2 / 32767 + 2  ~= 1.00006
+ *    n + 4 + 2 * (n - 1) / 32767 ~= 1.00006
  */
 
 class RLE
