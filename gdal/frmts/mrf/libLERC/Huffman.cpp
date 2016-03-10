@@ -1,17 +1,23 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 
@@ -19,6 +25,7 @@ Contributors:  Thomas Maurer
 #include "BitStuffer2.h"
 #include <queue>
 #include <cstring>
+#include <algorithm>
 
 using namespace std;
 
@@ -59,10 +66,13 @@ bool Huffman::ComputeCodes(const vector<int>& histo)
   if (!pq.top().TreeToLUT(0, 0, m_codeTable))    // fill the LUT
     return false;
 
-  pq.top().child0->FreeTree(numNodes);    // free all the nodes
-  pq.top().child1->FreeTree(numNodes);
+  Node nodeNonConst = pq.top();
+  nodeNonConst.FreeTree(numNodes);
 
   if (numNodes != 0)    // check the ref count
+    return false;
+
+  if (!ConvertCodesToCanonical())
     return false;
 
   return true;
@@ -132,7 +142,7 @@ bool Huffman::WriteCodeTable(Byte** ppByte) const
 
   // header
   vector<int> intVec;
-  intVec.push_back(2);    // version
+  intVec.push_back(3);    // huffman version, 3 uses canonical huffman codes
   intVec.push_back(size);
   intVec.push_back(i0);   // code range
   intVec.push_back(i1);
@@ -168,7 +178,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte)
   int version = *((int*)ptr);    // version
   ptr += sizeof(int);
 
-  if (version != 2)
+  if (version < 2) // allow forward compatibility
     return false;
 
   vector<int> intVec(4, 0);
@@ -240,6 +250,22 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
   if (!bNeedTree)    // decode LUT covers it all, no tree needed
     return true;
 
+  // go over the codes too long for the LUT and count how many leading bits are 0 for all of them
+  m_numBitsToSkipInTree = 32;
+  for (int i = i0; i < i1; i++)
+  {
+    int k = GetIndexWrapAround(i, size);
+    int len = m_codeTable[k].first;
+
+    if (len > 0 && len > numBitsLUT)    // only codes not in the decode LUT
+    {
+      unsigned int code = m_codeTable[k].second;
+      int shift = 1;
+      while (code >> shift) shift++;
+      m_numBitsToSkipInTree = min(m_numBitsToSkipInTree, len - shift);
+    }
+  }
+  
   int numNodesCreated = 1;
   Node emptyNode((short)-1, 0);
 
@@ -250,11 +276,13 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
   {
     int k = GetIndexWrapAround(i, size);
     int len = m_codeTable[k].first;
+
     if (len > 0 && len > numBitsLUT)    // add only codes not in the decode LUT
     {
       unsigned int code = m_codeTable[k].second;
       Node* node = m_root;
-      int j = len;
+      int j = len - m_numBitsToSkipInTree; // reduce len by number of leading bits from above
+
       while (--j >= 0)    // go over the bits
       {
         if (code & (1 << j))
@@ -297,6 +325,8 @@ void Huffman::Clear()
   {
     int n = 0;
     m_root->FreeTree(n);
+    delete m_root;
+    m_root = NULL;
   }
 }
 
@@ -403,6 +433,7 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
     if (len > 0)
     {
       unsigned int val = m_codeTable[k].second;
+
       if (32 - bitPos >= len)
       {
         if (bitPos == 0)
@@ -475,5 +506,45 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, int i0, int i1)
 
 // -------------------------------------------------------------------------- ;
 
+struct MyLargerThanOp
+{
+  inline bool operator() (const pair<int, int>& p0, const pair<int, int>& p1)  { return p0.first > p1.first; }
+};
 
+// -------------------------------------------------------------------------- ;
+
+bool Huffman::ConvertCodesToCanonical()
+{
+  // from the non canonical code book, create an array to be sorted in descending order:
+  //   codeLength * tableSize - index
+
+  int tableSize = (int)m_codeTable.size();
+  vector<pair<int, int> > sortVec(tableSize);
+  memset(&sortVec[0], 0, tableSize * sizeof(pair<int, int>));
+
+  for (int i = 0; i < tableSize; i++)
+    if (m_codeTable[i].first > 0)
+      sortVec[i] = pair<int, int>(m_codeTable[i].first * tableSize - i, i);
+
+  // sort descending
+  std::sort(sortVec.begin(), sortVec.end(), MyLargerThanOp());
+
+  // create canonical codes and assign to orig code table
+  unsigned int codeCanonical = 0;
+  int index = sortVec[0].second;
+  short codeLen = m_codeTable[index].first;
+  int i = 0;
+  while (i < tableSize && sortVec[i].first > 0)
+  {
+    int index = sortVec[i++].second;
+    short delta = codeLen - m_codeTable[index].first;
+    codeCanonical >>= delta;
+    codeLen -= delta;
+    m_codeTable[index].second = codeCanonical++;
+  }
+
+  return true;
+}
+
+// -------------------------------------------------------------------------- ;
 NAMESPACE_LERC_END
