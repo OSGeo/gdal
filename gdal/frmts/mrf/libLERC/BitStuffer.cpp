@@ -1,17 +1,23 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 
@@ -31,8 +37,6 @@ NAMESPACE_LERC_START
 
 bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
 {
-//  const string fctName = "Error in BitStuffer::write(...): ";
-
   if (!ppByte || dataVec.empty())
     return false;
 
@@ -43,22 +47,22 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
     numBits++;
   Byte numBitsByte = (Byte)numBits;
   unsigned int numElements = (unsigned int)dataVec.size();
-  unsigned int numULongs = (numElements * numBits + 31) / 32;
+  unsigned int numUInts = (numElements * numBits + 31) / 32;
 
   // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
-  int n = numBytesULong(numElements);
+  int n = numBytesUInt(numElements);
   int bits67 = (n == 4) ? 0 : 3 - n;
   numBitsByte |= bits67 << 6;
 
   **ppByte = numBitsByte;
   (*ppByte)++;
 
-  if (!writeULong(ppByte, numElements, n))
+  if (!writeUInt(ppByte, numElements, n))
     return false;
 
-  if (numULongs > 0)    // numBits can be 0, then we only write the header
+  if (numUInts > 0)    // numBits can be 0, then we only write the header
   {
-    unsigned int numBytes = numULongs * sizeof(unsigned int);
+    unsigned int numBytes = numUInts * sizeof(unsigned int);
     unsigned int* arr = (unsigned int*)(*ppByte);
 
     memset(arr, 0, numBytes);
@@ -98,7 +102,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
       }
     }
 
-    // save the 0-3 bytes not used in the last ULong
+    // save the 0-3 bytes not used in the last UInt
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
     unsigned int n2 = numBytesNotNeeded;
     while (n2--)
@@ -110,7 +114,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
     }
 
     dstPtr = arr;
-    for (unsigned int i = 0; i < numULongs; i++)
+    for (unsigned int i = 0; i < numUInts; i++)
     {
       SWAP_4(*dstPtr);
       dstPtr++;
@@ -126,8 +130,6 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
 
 bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
 {
-//   const string fctName = "Error in BitStuffer::read(...): ";
-
   if (!ppByte)
     return false;
 
@@ -140,32 +142,32 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
   numBitsByte &= 63;    // bits 0-5;
 
   unsigned int numElements = 0;
-  if (!readULong(ppByte, numElements, n))
+  if (!readUInt(ppByte, numElements, n))
     return false;
 
   if (numBitsByte >= 32)
     return false;
 
   int numBits = numBitsByte;
-  unsigned int numULongs = (numElements * numBits + 31) / 32;
+  unsigned int numUInts = (numElements * numBits + 31) / 32;
   dataVec.resize(numElements, 0);    // init with 0
 
-  if (numULongs > 0)    // numBits can be 0
+  if (numUInts > 0)    // numBits can be 0
   {
-    unsigned int numBytes = numULongs * sizeof(unsigned int);
+    unsigned int numBytes = numUInts * sizeof(unsigned int);
     unsigned int* arr = (unsigned int*)(*ppByte);
 
     unsigned int* srcPtr = arr;
-    for (unsigned int i = 0; i < numULongs; i++)
+    for (unsigned int i = 0; i < numUInts; i++)
     {
       SWAP_4(*srcPtr);
       srcPtr++;
     }
 
-    // needed to save the 0-3 bytes not used in the last ULong
+    // needed to save the 0-3 bytes not used in the last UInt
     srcPtr--;
-    unsigned int lastULong;
-    memcpy(&lastULong, srcPtr, sizeof(unsigned int));
+    unsigned int lastUInt;
+    memcpy(&lastUInt, srcPtr, sizeof(unsigned int));
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
     unsigned int n2 = numBytesNotNeeded;
     while (n2--)
@@ -210,7 +212,7 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
     }
 
     if (numBytesNotNeeded > 0)
-      memcpy(srcPtr, &lastULong, sizeof(unsigned int)); // restore the last ULong
+      memcpy(srcPtr, &lastUInt, sizeof(unsigned int)); // restore the last UInt
 
     *ppByte += numBytes - numBytesNotNeeded;
   }
@@ -223,8 +225,8 @@ unsigned int BitStuffer::computeNumBytesNeeded(unsigned int numElem, unsigned in
   int numBits = 0;
   while (maxElem >> numBits)
     numBits++;
-  unsigned int numULongs = (numElem * numBits + 31) / 32;
-  unsigned int numBytes = 1 + numBytesULong(numElem) + numULongs * sizeof(unsigned int) -
+  unsigned int numUInts = (numElem * numBits + 31) / 32;
+  unsigned int numBytes = 1 + numBytesUInt(numElem) + numUInts * sizeof(unsigned int) -
     numTailBytesNotNeeded(numElem, numBits);
 
   return numBytes;
@@ -242,7 +244,7 @@ unsigned int BitStuffer::findMax(const vector<unsigned int>& dataVec) const
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::writeULong(Byte** ppByte, unsigned int k, int numBytes) const
+bool BitStuffer::writeUInt(Byte** ppByte, unsigned int k, int numBytes) const
 {
   Byte* ptr = *ppByte;
 
@@ -270,7 +272,7 @@ bool BitStuffer::writeULong(Byte** ppByte, unsigned int k, int numBytes) const
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::readULong(Byte** ppByte, unsigned int& k, int numBytes) const
+bool BitStuffer::readUInt(Byte** ppByte, unsigned int& k, int numBytes) const
 {
   Byte* ptr = *ppByte;
 
