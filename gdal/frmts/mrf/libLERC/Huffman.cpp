@@ -536,7 +536,7 @@ bool Huffman::ConvertCodesToCanonical()
   int i = 0;
   while (i < tableSize && sortVec[i].first > 0)
   {
-    int index = sortVec[i++].second;
+    index = sortVec[i++].second;
     short delta = codeLen - m_codeTable[index].first;
     codeCanonical >>= delta;
     codeLen -= delta;
