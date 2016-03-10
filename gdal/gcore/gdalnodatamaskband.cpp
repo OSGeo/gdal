@@ -75,7 +75,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Decide on a working type.                                       */
 /* -------------------------------------------------------------------- */
-    switch( poParent->GetRasterDataType() ) 
+    switch( poParent->GetRasterDataType() )
     {
       case GDT_Byte:
         eWrkDT = GDT_Byte;

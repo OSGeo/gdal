@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -405,7 +405,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
 
     if( nOffsetShift < nBytes )
     {
-        DoIOPixelInterleaved( eRWFlag, nOffsetRecompute, 
+        DoIOPixelInterleaved( eRWFlag, nOffsetRecompute,
                (char*) pPage + nOffsetShift, nBytes - nOffsetShift );
     }
 }
@@ -511,7 +511,7 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
 
     if( nOffsetShift < nBytes )
     {
-        DoIOBandSequential( eRWFlag, nOffsetRecompute, 
+        DoIOBandSequential( eRWFlag, nOffsetRecompute,
                (char*) pPage + nOffsetShift, nBytes - nOffsetShift );
     }
 }
@@ -520,7 +520,7 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
 /*                    FillCacheBandSequential()                        */
 /************************************************************************/
 
-void GDALVirtualMem::FillCacheBandSequential(CPLVirtualMem*, 
+void GDALVirtualMem::FillCacheBandSequential(CPLVirtualMem*,
                   size_t nOffset,
                   void* pPageToFill,
                   size_t nToFill,
@@ -534,7 +534,7 @@ void GDALVirtualMem::FillCacheBandSequential(CPLVirtualMem*,
 /*                    SaveFromCacheBandSequential()                    */
 /************************************************************************/
 
-void GDALVirtualMem::SaveFromCacheBandSequential(CPLVirtualMem*, 
+void GDALVirtualMem::SaveFromCacheBandSequential(CPLVirtualMem*,
                   size_t nOffset,
                   const void* pPageToBeEvicted,
                   size_t nToEvicted,
@@ -548,7 +548,7 @@ void GDALVirtualMem::SaveFromCacheBandSequential(CPLVirtualMem*,
 /*                     FillCachePixelInterleaved()                      */
 /************************************************************************/
 
-void GDALVirtualMem::FillCachePixelInterleaved(CPLVirtualMem*, 
+void GDALVirtualMem::FillCachePixelInterleaved(CPLVirtualMem*,
                   size_t nOffset,
                   void* pPageToFill,
                   size_t nToFill,
@@ -562,7 +562,7 @@ void GDALVirtualMem::FillCachePixelInterleaved(CPLVirtualMem*,
 /*                     SaveFromCachePixelInterleaved()                  */
 /************************************************************************/
 
-void GDALVirtualMem::SaveFromCachePixelInterleaved(CPLVirtualMem*, 
+void GDALVirtualMem::SaveFromCachePixelInterleaved(CPLVirtualMem*,
                   size_t nOffset,
                   const void* pPageToBeEvicted,
                   size_t nToEvicted,
@@ -660,7 +660,7 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
         return NULL;
     }
 
-    if( nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0) 
+    if( nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                 "nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0");
@@ -696,7 +696,7 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
         nLineSpace < (GIntBig)nBufXSize * nPixelSpace ||
         (nBandCount > 1 &&
         (nBandSpace == nPixelSpace ||
-        (nBandSpace < nPixelSpace && 
+        (nBandSpace < nPixelSpace &&
          (nBandSpace < nDataTypeSize || nPixelSpace < nBandCount * nBandSpace)) ||
         (nBandSpace > nPixelSpace &&
          (nPixelSpace < nDataTypeSize || nBandSpace < nBufYSize * nLineSpace)))) )
@@ -835,10 +835,10 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
  * pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
- * @param nBandCount the number of bands being read or written. 
+ * @param nBandCount the number of bands being read or written.
  *
  * @param panBandMap the list of nBandCount band numbers being read/written.
- * Note band numbers are 1 based. This may be NULL to select the first 
+ * Note band numbers are 1 based. This may be NULL to select the first
  * nBandCount bands.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
@@ -850,7 +850,7 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
  * eBufType * nBufXSize is used.
  *
  * @param nBandSpace the byte offset from the start of one bands data to the
- * start of the next. If defaulted (0) the value will be 
+ * start of the next. If defaulted (0) the value will be
  * nLineSpace * nBufYSize implying band sequential organization
  * of the data buffer.
  *
@@ -1400,10 +1400,10 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
  * pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
- * @param nBandCount the number of bands being read or written. 
+ * @param nBandCount the number of bands being read or written.
  *
  * @param panBandMap the list of nBandCount band numbers being read/written.
- * Note band numbers are 1 based. This may be NULL to select the first 
+ * Note band numbers are 1 based. This may be NULL to select the first
  * nBandCount bands.
  *
  * @param eTileOrganization tile organization.

@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  GDALJP2Metadata: metadata generator
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 /*                            GDALGMLJP2Expr                            */
 /************************************************************************/
 
-typedef enum 
+typedef enum
 {
     GDALGMLJP2Expr_Unknown,
     GDALGMLJP2Expr_XPATH,
@@ -759,7 +759,7 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
 /*                      GDALGMLJP2XPathErrorHandler()                   */
 /************************************************************************/
 
-static void GDALGMLJP2XPathErrorHandler(CPL_UNUSED void * userData, 
+static void GDALGMLJP2XPathErrorHandler(CPL_UNUSED void * userData,
                                         xmlErrorPtr error)
 {
     if( error->domain == XML_FROM_XPATH &&
@@ -904,7 +904,7 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
     xmlXPathContextPtr pXPathCtx = xmlXPathNewContext(pDoc);
     if( pXPathCtx == NULL )
     {
-        xmlFreeDoc(pDoc); 
+        xmlFreeDoc(pDoc);
         return NULL;
     }
 
@@ -917,8 +917,8 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
 
     CPLString osXMLRes = GDALGMLJP2EvalExpr(osTemplate, pXPathCtx, pDoc);
 
-    xmlXPathFreeContext(pXPathCtx); 
-    xmlFreeDoc(pDoc); 
+    xmlXPathFreeContext(pXPathCtx);
+    xmlFreeDoc(pDoc);
 
     return CPLParseXMLString(osXMLRes);
 #endif

@@ -58,7 +58,7 @@ class GDALPamProxyDB
     void        CheckLoadDB();
     void        LoadDB();
     void        SaveDB();
-}; 
+};
 
 static bool bProxyDBInitialized = FALSE;
 static GDALPamProxyDB *poProxyDB = NULL;
@@ -91,7 +91,7 @@ void GDALPamProxyDB::LoadDB()
 /*      Open the database relating original names to proxy .aux.xml     */
 /*      file names.                                                     */
 /* -------------------------------------------------------------------- */
-    CPLString osDBName = 
+    CPLString osDBName =
         CPLFormFilename( osProxyDBDir, "gdal_pam_proxy", "dat" );
     VSILFILE *fpDB = VSIFOpenL( osDBName, "r" );
 
@@ -104,11 +104,11 @@ void GDALPamProxyDB::LoadDB()
 /* -------------------------------------------------------------------- */
     GByte  abyHeader[100];
 
-    if( VSIFReadL( abyHeader, 1, 100, fpDB ) != 100 
+    if( VSIFReadL( abyHeader, 1, 100, fpDB ) != 100
         || !STARTS_WITH((const char *) abyHeader, "GDAL_PROXY") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Problem reading %s header - short or corrupt?", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Problem reading %s header - short or corrupt?",
                   osDBName.c_str() );
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
         return;
@@ -186,7 +186,7 @@ void GDALPamProxyDB::SaveDB()
 /*      Open the database relating original names to proxy .aux.xml     */
 /*      file names.                                                     */
 /* -------------------------------------------------------------------- */
-    CPLString osDBName = 
+    CPLString osDBName =
         CPLFormFilename( osProxyDBDir, "gdal_pam_proxy", "dat" );
 
     void *hLock = CPLLockFile( osDBName, 1.0 );
@@ -205,8 +205,8 @@ void GDALPamProxyDB::SaveDB()
         if( hLock )
             CPLUnlockFile( hLock );
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to save %s Pam Proxy DB.\n%s", 
-                  osDBName.c_str(), 
+                  "Failed to save %s Pam Proxy DB.\n%s",
+                  osDBName.c_str(),
                   VSIStrerror( errno ) );
         return;
     }
@@ -222,9 +222,9 @@ void GDALPamProxyDB::SaveDB()
 
     if( VSIFWriteL( abyHeader, 1, 100, fpDB ) != 100 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                     "Failed to write complete %s Pam Proxy DB.\n%s",
-                    osDBName.c_str(), 
+                    osDBName.c_str(),
                     VSIStrerror( errno ) );
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpDB ));
         VSIUnlink( osDBName );
@@ -240,18 +240,18 @@ void GDALPamProxyDB::SaveDB()
     {
         const char *pszProxyFile;
 
-        size_t nCount = VSIFWriteL( aosOriginalFiles[i].c_str(), 
+        size_t nCount = VSIFWriteL( aosOriginalFiles[i].c_str(),
                     strlen(aosOriginalFiles[i].c_str())+1, 1, fpDB );
 
         pszProxyFile = CPLGetFilename(aosProxyFiles[i]);
-        nCount += VSIFWriteL( pszProxyFile, 
+        nCount += VSIFWriteL( pszProxyFile,
                                     strlen(pszProxyFile)+1, 1, fpDB );
 
         if( nCount != 2 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to write complete %s Pam Proxy DB.\n%s",
-                      osDBName.c_str(), 
+                      osDBName.c_str(),
                       VSIStrerror( errno ) );
             CPL_IGNORE_RET_VAL(VSIFCloseL( fpDB ));
             VSIUnlink( osDBName );
@@ -286,7 +286,7 @@ static void InitProxyDB()
 
         if( !bProxyDBInitialized )
         {
-            const char *pszProxyDir = 
+            const char *pszProxyDir =
                 CPLGetConfigOption( "GDAL_PAM_PROXY_DIR", NULL );
 
             if( pszProxyDir )
@@ -381,13 +381,13 @@ const char *PamAllocateProxy( const char *pszOriginal )
             i -= 6;
 
         // make some effort to break long names at path delimiters.
-        if( (pszOriginal[i] == '/' || pszOriginal[i] == '\\') 
+        if( (pszOriginal[i] == '/' || pszOriginal[i] == '\\')
             && osRevProxyFile.size() > 200 )
             break;
 
-        if( (pszOriginal[i] >= 'A' && pszOriginal[i] <= 'Z') 
-            || (pszOriginal[i] >= 'a' && pszOriginal[i] <= 'z') 
-            || (pszOriginal[i] >= '0' && pszOriginal[i] <= '9') 
+        if( (pszOriginal[i] >= 'A' && pszOriginal[i] <= 'Z')
+            || (pszOriginal[i] >= 'a' && pszOriginal[i] <= 'z')
+            || (pszOriginal[i] >= '0' && pszOriginal[i] <= '9')
             || pszOriginal[i] == '.' )
             osRevProxyFile += pszOriginal[i];
         else

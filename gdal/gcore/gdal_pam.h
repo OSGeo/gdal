@@ -64,13 +64,13 @@ class GDALPamRasterBand;
                                  GCIF_COLORINTERP | GCIF_BAND_METADATA |   \
                                  GCIF_RAT | GCIF_MASK |                    \
                                  GCIF_ONLY_IF_MISSING | GCIF_PROCESS_BANDS|\
-                                 GCIF_BAND_DESCRIPTION) 
+                                 GCIF_BAND_DESCRIPTION)
 
 /* GDAL PAM Flags */
 /* ERO 2011/04/13 : GPF_AUXMODE seems to be unimplemented */
 #define GPF_DIRTY		0x01  // .pam file needs to be written on close
 #define GPF_TRIED_READ_FAILED   0x02  // no need to keep trying to read .pam.
-#define GPF_DISABLED            0x04  // do not try any PAM stuff. 
+#define GPF_DISABLED            0x04  // do not try any PAM stuff.
 #define GPF_AUXMODE             0x08  // store info in .aux (HFA) file.
 #define GPF_NOSAVE              0x10  // do not try to save pam info.
 
@@ -169,10 +169,10 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
 
-    virtual CPLErr IBuildOverviews( const char *pszResampling, 
-                                    int nOverviews, int *panOverviewList, 
+    virtual CPLErr IBuildOverviews( const char *pszResampling,
+                                    int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,
-                                    GDALProgressFunc pfnProgress, 
+                                    GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
 
@@ -252,14 +252,14 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr DeleteNoDataValue();
 
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
     virtual GDALColorTable *GetColorTable();
 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual GDALColorInterp GetColorInterpretation();
 
     virtual const char *GetUnitType();
-    CPLErr SetUnitType( const char * ); 
+    CPLErr SetUnitType( const char * );
 
     virtual char **GetCategoryNames();
     virtual CPLErr SetCategoryNames( char ** );
@@ -291,7 +291,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
-    // new in GDALPamRasterBand. 
+    // new in GDALPamRasterBand.
     virtual CPLErr CloneInfo( GDALRasterBand *poSrcBand, int nCloneInfoFlags );
 
     // "semi private" methods.
@@ -302,13 +302,13 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 };
 
 // These are mainly helper functions for internal use.
-int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem, 
-                               double *pdfMin, double *pdfMax, 
-                               int *pnBuckets, GUIntBig **ppanHistogram, 
+int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem,
+                               double *pdfMin, double *pdfMax,
+                               int *pnBuckets, GUIntBig **ppanHistogram,
                                int *pbIncludeOutOfRange, int *pbApproxOK );
 CPLXMLNode CPL_DLL *
 PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
-                          double dfMin, double dfMax, int nBuckets, 
+                          double dfMin, double dfMax, int nBuckets,
                           int bIncludeOutOfRange, int bApproxOK );
 CPLXMLNode CPL_DLL *
 PamHistogramToXMLTree( double dfMin, double dfMax,

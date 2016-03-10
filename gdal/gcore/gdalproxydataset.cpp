@@ -58,23 +58,23 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         ( GDALRWFlag eRWFlag,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         void * pData, int nBufXSize, int nBufYSize,
-                        GDALDataType eBufType, 
+                        GDALDataType eBufType,
                         int nBandCount, int *panBandMap,
                         GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                         GDALRasterIOExtraArg* psExtraArg),
-                        ( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                        ( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                         pData, nBufXSize, nBufYSize,
                         eBufType, nBandCount, panBandMap,
                         nPixelSpace, nLineSpace, nBandSpace, psExtraArg ))
 
 
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
-                        ( const char *pszResampling, 
-                          int nOverviews, int *panOverviewList, 
+                        ( const char *pszResampling,
+                          int nOverviews, int *panOverviewList,
                           int nListBands, int *panBandList,
-                          GDALProgressFunc pfnProgress, 
+                          GDALProgressFunc pfnProgress,
                           void * pProgressData ),
-                        ( pszResampling, nOverviews, panOverviewList, 
+                        ( pszResampling, nOverviews, panOverviewList,
                           nListBands, panBandList, pfnProgress, pProgressData ))
 
 void  GDALProxyDataset::FlushCache()
@@ -116,8 +116,8 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGCPs,
                         (nGCPCount, pasGCPList, pszGCPProjection))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         ( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize, 
-                                GDALDataType eDT, 
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eDT,
                                 int nBandCount, int *panBandList,
                                 char **papszOptions ),
                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, nBandCount, panBandList, papszOptions))
@@ -175,10 +175,10 @@ retType GDALProxyRasterBand::methodName argList \
 }
 
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IReadBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage), 
+                                ( int nXBlockOff, int nYBlockOff, void* pImage),
                                 (nXBlockOff, nYBlockOff, pImage) )
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IWriteBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage), 
+                                ( int nXBlockOff, int nYBlockOff, void* pImage),
                                 (nXBlockOff, nYBlockOff, pImage) )
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         ( GDALRWFlag eRWFlag,
@@ -187,7 +187,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                                 GDALDataType eBufType,
                                 GSpacing nPixelSpace,
                                 GSpacing nLineSpace,
-                                GDALRasterIOExtraArg* psExtraArg ), 
+                                GDALRasterIOExtraArg* psExtraArg ),
                         (eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize, eBufType,
                                 nPixelSpace, nLineSpace, psExtraArg ) )
@@ -230,17 +230,17 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetUnitType, ( const char * arg ), 
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetStatistics,
                         ( int bApproxOK, int bForce,
-                        double *pdfMin, double *pdfMax, 
+                        double *pdfMin, double *pdfMax,
                         double *pdfMean, double *padfStdDev ),
                         (bApproxOK, bForce, pdfMin, pdfMax, pdfMean, padfStdDev))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeStatistics,
-                        ( int bApproxOK, 
-                        double *pdfMin, double *pdfMax, 
+                        ( int bApproxOK,
+                        double *pdfMin, double *pdfMax,
                         double *pdfMean, double *pdfStdDev,
                         GDALProgressFunc pfn, void *pProgressData ),
                         ( bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfn, pProgressData))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetStatistics,
-                        ( double dfMin, double dfMax, 
+                        ( double dfMin, double dfMax,
                         double dfMean, double dfStdDev ),
                         (dfMin, dfMax, dfMean, dfStdDev))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeRasterMinMax,
@@ -259,7 +259,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         ( int nXOff, int nYOff, int nXSize, int nYSize,
-                        int nBufXSize, int nBufYSize, 
+                        int nBufXSize, int nBufYSize,
                         GDALDataType eDT, char **papszOptions ),
                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, papszOptions))
 

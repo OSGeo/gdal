@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALMultiDomainMetadata class.  This class
- *           manages metadata items for a variable list of domains. 
+ *           manages metadata items for a variable list of domains.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -100,7 +100,7 @@ char **GDALMultiDomainMetadata::GetMetadata( const char *pszDomain )
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata, 
+CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata,
                                              const char *pszDomain )
 
 {
@@ -116,7 +116,7 @@ CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata,
         papszDomainList = CSLAddString( papszDomainList, pszDomain );
         nDomainCount = CSLCount( papszDomainList );
 
-        papoMetadataLists = (CPLStringList **) 
+        papoMetadataLists = (CPLStringList **)
             CPLRealloc( papoMetadataLists, sizeof(void*)*(nDomainCount+1) );
         papoMetadataLists[nDomainCount] = NULL;
         papoMetadataLists[nDomainCount-1] = new CPLStringList();
@@ -137,7 +137,7 @@ CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata,
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char *GDALMultiDomainMetadata::GetMetadataItem( const char *pszName, 
+const char *GDALMultiDomainMetadata::GetMetadataItem( const char *pszName,
                                                       const char *pszDomain )
 
 {
@@ -197,7 +197,7 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, CPL_UNUSED int bMerge 
 /* ==================================================================== */
 /*      Process all <Metadata> elements, each for one domain.           */
 /* ==================================================================== */
-    for( psMetadata = psTree->psChild; 
+    for( psMetadata = psTree->psChild;
          psMetadata != NULL; psMetadata = psMetadata->psNext )
     {
         CPLXMLNode *psMDI;
@@ -210,9 +210,9 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, CPL_UNUSED int bMerge 
         pszDomain = CPLGetXMLValue( psMetadata, "domain", "" );
         pszFormat = CPLGetXMLValue( psMetadata, "format", "" );
 
-        // Make sure we have a CPLStringList for this domain, 
+        // Make sure we have a CPLStringList for this domain,
         // without wiping out an existing one.
-        if( GetMetadata( pszDomain ) == NULL )  
+        if( GetMetadata( pszDomain ) == NULL )
             SetMetadata( NULL, pszDomain );
 
         int iDomain = CSLFindString( papszDomainList, pszDomain );
@@ -275,8 +275,8 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
 {
     CPLXMLNode *psFirst = NULL;
 
-    for( int iDomain = 0; 
-         papszDomainList != NULL && papszDomainList[iDomain] != NULL; 
+    for( int iDomain = 0;
+         papszDomainList != NULL && papszDomainList[iDomain] != NULL;
          iDomain++)
     {
         char **papszMD = papoMetadataLists[iDomain]->List();
@@ -290,11 +290,11 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
         psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
 
         if( strlen( papszDomainList[iDomain] ) > 0 )
-            CPLCreateXMLNode( 
-                CPLCreateXMLNode( psMD, CXT_Attribute, "domain" ), 
+            CPLCreateXMLNode(
+                CPLCreateXMLNode( psMD, CXT_Attribute, "domain" ),
                 CXT_Text, papszDomainList[iDomain] );
 
-        if( STARTS_WITH_CI(papszDomainList[iDomain], "xml:") 
+        if( STARTS_WITH_CI(papszDomainList[iDomain], "xml:")
             && CSLCount(papszMD) == 1 )
         {
             CPLXMLNode *psValueAsXML = CPLParseXMLString( papszMD[0] );
@@ -303,7 +303,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
                 bFormatXML = true;
 
                 CPLCreateXMLNode(
-                    CPLCreateXMLNode( psMD, CXT_Attribute, "format" ), 
+                    CPLCreateXMLNode( psMD, CXT_Attribute, "format" ),
                     CXT_Text, "xml" );
 
                 CPLAddXMLChild( psMD, psValueAsXML );
@@ -318,7 +318,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
             {
                 psLastChild = psMD->psChild;
                 while( psLastChild->psNext != NULL )
-                    psLastChild = psLastChild->psNext; 
+                    psLastChild = psLastChild->psNext;
             }
             for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
             {

@@ -3235,7 +3235,7 @@ void CPL_STDCALL GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsyncRea
 {
     VALIDATE_POINTER0( hDS, "GDALDataset" );
     VALIDATE_POINTER0( hAsyncReaderH, "GDALAsyncReader" );
-    ((GDALDataset *) hDS) -> EndAsyncReader((GDALAsyncReader *)hAsyncReaderH);	
+    ((GDALDataset *) hDS) -> EndAsyncReader((GDALAsyncReader *)hAsyncReaderH);
 }
 
 /************************************************************************/

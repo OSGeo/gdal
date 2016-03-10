@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
  * This constructor is the same as the C GDALCreateColorTable() function.
  *
  * @param eInterpIn the interpretation to be applied to GDALColorEntry
- * values. 
+ * values.
  */
 
 GDALColorTable::GDALColorTable( GDALPaletteInterp eInterpIn ) :
@@ -125,7 +125,7 @@ const GDALColorEntry *GDALColorTable::GetColorEntry( int i ) const
  *
  * This function is the same as the C++ method GDALColorTable::GetColorEntry()
  */
-const GDALColorEntry * CPL_STDCALL 
+const GDALColorEntry * CPL_STDCALL
 GDALGetColorEntry( GDALColorTableH hTable, int i )
 
 {
@@ -175,7 +175,7 @@ int GDALColorTable::GetColorEntryAsRGB( int i, GDALColorEntry *poEntry ) const
  *
  * This function is the same as the C++ method GDALColorTable::GetColorEntryAsRGB()
  */
-int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i, 
+int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i,
                             GDALColorEntry *poEntry )
 
 {
@@ -197,7 +197,7 @@ int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i,
  * to it is maintained.  Also, the passed in entry must match the color
  * interpretation of the table to which it is being assigned.
  *
- * The table is grown as needed to hold the supplied offset.  
+ * The table is grown as needed to hold the supplied offset.
  *
  * This function is the same as the C function GDALSetColorEntry().
  *
@@ -237,7 +237,7 @@ void GDALColorTable::SetColorEntry( int i, const GDALColorEntry * poEntry )
  *
  * This function is the same as the C++ method GDALColorTable::SetColorEntry()
  */
-void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i, 
+void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i,
                         const GDALColorEntry * poEntry )
 
 {
@@ -348,7 +348,7 @@ GDALPaletteInterp GDALColorTable::GetPaletteInterpretation() const
  * This function is the same as the C++ method
  * GDALColorTable::GetPaletteInterpretation()
  */
-GDALPaletteInterp CPL_STDCALL 
+GDALPaletteInterp CPL_STDCALL
 GDALGetPaletteInterpretation( GDALColorTableH hTable )
 
 {
@@ -454,8 +454,8 @@ int GDALColorTable::CreateColorRamp(
  *
  * This function is the same as the C++ method GDALColorTable::CreateColorRamp()
  */
-void CPL_STDCALL 
-GDALCreateColorRamp( GDALColorTableH hTable, 
+void CPL_STDCALL
+GDALCreateColorRamp( GDALColorTableH hTable,
             int nStartIndex, const GDALColorEntry *psStartColor,
             int nEndIndex, const GDALColorEntry *psEndColor )
 {

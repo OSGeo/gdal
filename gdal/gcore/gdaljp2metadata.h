@@ -104,7 +104,7 @@ public:
     static GDALJP2Box *CreateLblBox( const char *pszLabel );
     static GDALJP2Box *CreateLabelledXMLAssoc( const char *pszLabel,
                                                const char *pszXML );
-    static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID, 
+    static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID,
                                       int nDataSize, const GByte *pabyData );
 };
 
@@ -170,7 +170,7 @@ public:
     int     ReadAndParse( VSILFILE * fpVSIL );
     int     ReadAndParse( const char *pszFilename );
 
-    // Write oriented. 
+    // Write oriented.
     void    SetProjection( const char *pszWKT );
     void    SetGeoTransform( double * );
     void    SetGCPs( int, const GDAL_GCP * );

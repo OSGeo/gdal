@@ -86,8 +86,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                                 const char *pszGCPProjection );
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize, 
-                                GDALDataType eDT, 
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eDT,
                                 int nBandCount, int *panBandList,
                                 char **papszOptions );
 
@@ -141,20 +141,20 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
         virtual CPLErr SetCategoryNames( char ** );
         virtual CPLErr SetNoDataValue( double );
         virtual CPLErr DeleteNoDataValue();
-        virtual CPLErr SetColorTable( GDALColorTable * ); 
+        virtual CPLErr SetColorTable( GDALColorTable * );
         virtual CPLErr SetColorInterpretation( GDALColorInterp );
         virtual CPLErr SetOffset( double );
         virtual CPLErr SetScale( double );
         virtual CPLErr SetUnitType( const char * );
 
         virtual CPLErr GetStatistics( int bApproxOK, int bForce,
-                                    double *pdfMin, double *pdfMax, 
+                                    double *pdfMin, double *pdfMax,
                                     double *pdfMean, double *padfStdDev );
-        virtual CPLErr ComputeStatistics( int bApproxOK, 
-                                        double *pdfMin, double *pdfMax, 
+        virtual CPLErr ComputeStatistics( int bApproxOK,
+                                        double *pdfMin, double *pdfMax,
                                         double *pdfMean, double *pdfStdDev,
                                         GDALProgressFunc, void *pProgressData );
-        virtual CPLErr SetStatistics( double dfMin, double dfMax, 
+        virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                     double dfMean, double dfStdDev );
         virtual CPLErr ComputeRasterMinMax( int, double* );
 
@@ -166,7 +166,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                                     GDALProgressFunc, void * );
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize, 
+                                int nBufXSize, int nBufYSize,
                                 GDALDataType eDT, char **papszOptions );
 
         virtual CPLErr  GetHistogram( double dfMin, double dfMax,
