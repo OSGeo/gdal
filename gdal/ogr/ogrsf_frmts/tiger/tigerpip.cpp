@@ -98,6 +98,6 @@ OGRFeature *TigerPIP::GetFeature( int nRecordId )
 
 OGRErr TigerPIP::CreateFeature( OGRFeature *poFeature )
 {
-  return TigerPoint::CreateFeature( poFeature, 
+  return TigerPoint::CreateFeature( poFeature,
                                     26 );
 }

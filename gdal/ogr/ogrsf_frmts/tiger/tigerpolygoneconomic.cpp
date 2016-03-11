@@ -35,7 +35,7 @@ CPL_CVSID("$Id$");
 #define FILE_CODE       "E"
 
 /* I think this was the expected RTE format, but was never deployed, leaving
-   it in the code in case I am missing something. 
+   it in the code in case I am missing something.
 
 static TigerFieldInfo rtE_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
