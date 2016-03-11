@@ -41,9 +41,9 @@
 #include <vld.h>
 #endif
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "cpl_multiproc.h"
 
 #include <cerrno>
 #include <clocale>
@@ -204,11 +204,11 @@ void * CPLRealloc( void * pData, size_t nNewSize )
         /* coverity[dead_error_begin] */
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLRealloc(%ld): Silly size requested.\n",
-                  (long) nNewSize );
+                  static_cast<long>( nNewSize ) );
         return NULL;
     }
 
-    void        *pReturn;
+    void *pReturn = NULL;
 
     if( pData == NULL )
         pReturn = VSIMalloc( nNewSize );
@@ -222,14 +222,14 @@ void * CPLRealloc( void * pData, size_t nNewSize )
             char szSmallMsg[60];
 
             snprintf( szSmallMsg, sizeof(szSmallMsg),
-                     "CPLRealloc(): Out of memory allocating %ld bytes.",
-                     (long) nNewSize );
+                      "CPLRealloc(): Out of memory allocating %ld bytes.",
+                      static_cast<long>( nNewSize ) );
             CPLEmergencyError( szSmallMsg );
         }
         else
             CPLError( CE_Fatal, CPLE_OutOfMemory,
                       "CPLRealloc(): Out of memory allocating %ld bytes.\n",
-                      (long) nNewSize );
+                      static_cast<long>( nNewSize ) );
     }
 
     return pReturn;
@@ -418,7 +418,9 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
             if( !bWarned )
             {
                 bWarned = true;
-                CPLDebug( "CPL", "CPLFGets() correcting for DOS text mode translation seek problem." );
+                CPLDebug( "CPL",
+                          "CPLFGets() correcting for DOS text mode translation "
+                          "seek problem." );
             }
             chCheck = fgetc( fp );
         }
@@ -549,8 +551,8 @@ const char *CPLReadLine( FILE * fp )
 /*      Loop reading chunks of the line till we get to the end of       */
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
-    size_t nBytesReadThisTime;
-    char* pszRLBuffer;
+    size_t nBytesReadThisTime = 0;
+    char* pszRLBuffer = NULL;
     size_t nReadSoFar = 0;
 
     do {
@@ -640,7 +642,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
 /*      Loop reading chunks of the line till we get to the end of       */
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
-    char *pszRLBuffer;
+    char *pszRLBuffer = NULL;
     const size_t nChunkSize = 40;
     char szChunk[nChunkSize];
     size_t nChunkBytesRead = 0;
@@ -654,7 +656,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
 /* -------------------------------------------------------------------- */
 /*      Read a chunk from the input file.                               */
 /* -------------------------------------------------------------------- */
-        if ( nBufLength > INT_MAX - (int)nChunkSize - 1 )
+        if ( nBufLength > INT_MAX - static_cast<int>(nChunkSize) - 1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Too big line : more than 2 billion characters!." );
@@ -716,7 +718,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
                 if (nMaxCars >= 0 && nBufLength == nMaxCars)
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-                             "Maximum number of characters allowed reached.");
+                              "Maximum number of characters allowed reached." );
                     return NULL;
                 }
             }
@@ -2374,7 +2376,7 @@ int CPLUnlinkTree( const char *pszPath )
 /* -------------------------------------------------------------------- */
     else if( VSI_ISDIR( sStatBuf.st_mode ) )
     {
-        char **papszItems = CPLReadDir( pszPath );
+        char **papszItems = VSIReadDir( pszPath );
 
         for( int i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
         {
@@ -2514,7 +2516,7 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
             return -1;
         }
 
-        char **papszItems = CPLReadDir( pszOldPath );
+        char **papszItems = VSIReadDir( pszOldPath );
 
         for( int i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
         {
