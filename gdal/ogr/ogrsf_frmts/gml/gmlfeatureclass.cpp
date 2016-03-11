@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -344,7 +344,7 @@ void GMLFeatureClass::SetExtraInfo( const char *pszExtraInfo )
 /*                             SetExtents()                             */
 /************************************************************************/
 
-void GMLFeatureClass::SetExtents( double dfXMin, double dfXMax, 
+void GMLFeatureClass::SetExtents( double dfXMin, double dfXMax,
                                   double dfYMin, double dfYMax )
 
 {
@@ -360,7 +360,7 @@ void GMLFeatureClass::SetExtents( double dfXMin, double dfXMax,
 /*                             GetExtents()                             */
 /************************************************************************/
 
-bool GMLFeatureClass::GetExtents( double *pdfXMin, double *pdfXMax, 
+bool GMLFeatureClass::GetExtents( double *pdfXMin, double *pdfXMax,
                                  double *pdfYMin, double *pdfYMax )
 
 {
@@ -425,11 +425,11 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 /*      Do some rudimentary checking that this is a well formed         */
 /*      node.                                                           */
 /* -------------------------------------------------------------------- */
-    if( psRoot == NULL 
-        || psRoot->eType != CXT_Element 
+    if( psRoot == NULL
+        || psRoot->eType != CXT_Element
         || !EQUAL(psRoot->pszValue,"GMLFeatureClass") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "GMLFeatureClass::InitializeFromXML() called on %s node!",
                   psRoot->pszValue );
         return false;
@@ -437,7 +437,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
     if( CPLGetXMLValue( psRoot, "Name", NULL ) == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "GMLFeatureClass has no <Name> element." );
         return false;
     }
@@ -595,7 +595,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
         if( pszValue != NULL )
             SetExtraInfo( pszValue );
 
-        if( CPLGetXMLValue( psDSI, "ExtentXMin", NULL ) != NULL 
+        if( CPLGetXMLValue( psDSI, "ExtentXMin", NULL ) != NULL
             && CPLGetXMLValue( psDSI, "ExtentXMax", NULL ) != NULL
             && CPLGetXMLValue( psDSI, "ExtentYMin", NULL ) != NULL
             && CPLGetXMLValue( psDSI, "ExtentYMax", NULL ) != NULL )
@@ -624,19 +624,19 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
             if( pszName == NULL )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "GMLFeatureClass %s has a PropertyDefn without a <Name>..",
                           m_pszName );
                 return false;
             }
 
-            poPDefn = new GMLPropertyDefn( 
+            poPDefn = new GMLPropertyDefn(
                 pszName, CPLGetXMLValue( psThis, "ElementPath", NULL ) );
 
             poPDefn->SetNullable(bNullable);
             if( EQUAL(pszType,"Untyped") )
                 poPDefn->SetType( GMLPT_Untyped );
-            else if( EQUAL(pszType,"String") ) 
+            else if( EQUAL(pszType,"String") )
             {
                 if( EQUAL(pszSubType, "Boolean") )
                 {
@@ -678,7 +678,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
                 poPDefn->SetPrecision( atoi( CPLGetXMLValue( psThis, "Precision", "0" ) ) );
             }
-            else if( EQUAL(pszType,"StringList") ) 
+            else if( EQUAL(pszType,"StringList") )
             {
                 if( EQUAL(pszSubType, "Boolean") )
                     poPDefn->SetType( GMLPT_BooleanList );
@@ -746,10 +746,10 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             CPLXMLNode *psPDefnNode;
             psPDefnNode = CPLCreateXMLNode( psRoot, CXT_Element, "GeomPropertyDefn" );
             if( strlen(poGeomFDefn->GetName()) > 0 )
-                CPLCreateXMLElementAndValue( psPDefnNode, "Name", 
+                CPLCreateXMLElementAndValue( psPDefnNode, "Name",
                                              poGeomFDefn->GetName() );
             if( poGeomFDefn->GetSrcElement() != NULL && strlen(poGeomFDefn->GetSrcElement()) > 0 )
-                CPLCreateXMLElementAndValue( psPDefnNode, "ElementPath", 
+                CPLCreateXMLElementAndValue( psPDefnNode, "ElementPath",
                                              poGeomFDefn->GetSrcElement() );
 
             if( poGeomFDefn->GetType() != 0 /* wkbUnknown */ )
@@ -772,11 +772,11 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         GMLGeometryPropertyDefn* poGeomFDefn = m_papoGeometryProperty[0];
 
         if( strlen(poGeomFDefn->GetName()) > 0 )
-            CPLCreateXMLElementAndValue( psRoot, "GeometryName", 
+            CPLCreateXMLElementAndValue( psRoot, "GeometryName",
                                          poGeomFDefn->GetName() );
 
         if( poGeomFDefn->GetSrcElement() != NULL && strlen(poGeomFDefn->GetSrcElement()) > 0 )
-            CPLCreateXMLElementAndValue( psRoot, "GeometryElementPath", 
+            CPLCreateXMLElementAndValue( psRoot, "GeometryElementPath",
                                          poGeomFDefn->GetSrcElement() );
 
         if( poGeomFDefn->GetType() != 0 /* wkbUnknown */ )
@@ -856,9 +856,9 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         const char *pszTypeName = "Unknown";
 
         psPDefnNode = CPLCreateXMLNode( psRoot, CXT_Element, "PropertyDefn" );
-        CPLCreateXMLElementAndValue( psPDefnNode, "Name", 
+        CPLCreateXMLElementAndValue( psPDefnNode, "Name",
                                      poPDefn->GetName() );
-        CPLCreateXMLElementAndValue( psPDefnNode, "ElementPath", 
+        CPLCreateXMLElementAndValue( psPDefnNode, "ElementPath",
                                      poPDefn->GetSrcElement() );
         switch( poPDefn->GetType() )
         {

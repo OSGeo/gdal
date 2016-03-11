@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -44,7 +44,7 @@ typedef enum {
     GMLPT_Real = 3,
     GMLPT_Complex = 4,
     GMLPT_StringList = 5,
-    GMLPT_IntegerList = 6, 
+    GMLPT_IntegerList = 6,
     GMLPT_RealList = 7,
     GMLPT_FeatureProperty = 8,
     GMLPT_FeaturePropertyList = 9,
@@ -83,9 +83,9 @@ public:
         GMLPropertyDefn( const char *pszName, const char *pszSrcElement=NULL );
        ~GMLPropertyDefn();
 
-    const char *GetName() const { return m_pszName; } 
+    const char *GetName() const { return m_pszName; }
 
-    GMLPropertyType GetType() const { return m_eType; } 
+    GMLPropertyType GetType() const { return m_eType; }
     void        SetType( GMLPropertyType eType ) { m_eType = eType; }
     void        SetWidth( int nWidth) { m_nWidth = nWidth; }
     int         GetWidth() const { return m_nWidth; }
@@ -126,7 +126,7 @@ public:
                                  bool bNullable );
        ~GMLGeometryPropertyDefn();
 
-        const char *GetName() const { return m_pszName; } 
+        const char *GetName() const { return m_pszName; }
 
         int GetType() const { return m_nGeometryType; }
         void SetType(int nType) { m_nGeometryType = nType; }
@@ -180,7 +180,7 @@ public:
     int         GetPropertyCount() const { return m_nPropertyCount; }
     GMLPropertyDefn *GetProperty( int iIndex ) const;
     int GetPropertyIndex( const char *pszName ) const;
-    GMLPropertyDefn *GetProperty( const char *pszName ) const 
+    GMLPropertyDefn *GetProperty( const char *pszName ) const
         { return GetProperty( GetPropertyIndex(pszName) ); }
     int         GetPropertyIndexBySrcElement( const char *pszElement, int nLen ) const;
     void        StealProperties();
@@ -206,9 +206,9 @@ public:
     void        SetFeatureCount( GIntBig );
 
     bool        HasExtents() const { return m_bHaveExtents; }
-    void        SetExtents( double dfXMin, double dfXMax, 
+    void        SetExtents( double dfXMin, double dfXMax,
                             double dFYMin, double dfYMax );
-    bool        GetExtents( double *pdfXMin, double *pdfXMax, 
+    bool        GetExtents( double *pdfXMin, double *pdfXMax,
                             double *pdFYMin, double *pdfYMax );
 
     void        SetSRSName( const char* pszSRSName );
