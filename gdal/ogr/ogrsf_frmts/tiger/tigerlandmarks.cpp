@@ -102,6 +102,6 @@ OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 
 OGRErr TigerLandmarks::CreateFeature( OGRFeature *poFeature )
 {
-  return TigerPoint::CreateFeature( poFeature, 
+  return TigerPoint::CreateFeature( poFeature,
                                     55 );
 }

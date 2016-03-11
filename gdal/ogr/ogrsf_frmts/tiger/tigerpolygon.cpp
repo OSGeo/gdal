@@ -559,7 +559,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 /*                           SetWriteModule()                           */
 /************************************************************************/
 
-int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen, 
+int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
                                   OGRFeature *poFeature )
 
 {

@@ -123,11 +123,9 @@ int main( int nArgc, char ** papszArgv )
         printf( "INFO: Open of `%s'\n"
                 "using driver `%s' successful.\n",
                 pszDataSource, poDriver->GetName() );
-        printf("Tiger Version: %s\n", 
+        printf("Tiger Version: %s\n",
                TigerVersionString(((OGRTigerDataSource*)poDS)->GetVersion()));
     }
-
-
 
     if( bVerbose && !EQUAL(pszDataSource,poDS->GetName()) )
     {
@@ -135,7 +133,6 @@ int main( int nArgc, char ** papszArgv )
                 "      different from user name `%s'.\n",
                 poDS->GetName(), pszDataSource );
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
