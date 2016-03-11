@@ -651,9 +651,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             if( VSIStatL( pszFilename, &sGMLStatBuf ) == 0 &&
                 sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
             {
-                CPLDebug( "GML", 
+                CPLDebug( "GML",
                           "Found %s but ignoring because it appears\n"
-                          "be older than the associated GML file.", 
+                          "be older than the associated GML file.",
                           pszXlinkResolvedFilename );
             }
             else
@@ -681,14 +681,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is some GML Feature Schema (.gfs) TEMPLATE required ?           */
 /* -------------------------------------------------------------------- */
-    const char *pszGFSTemplateName = 
+    const char *pszGFSTemplateName =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "GFS_TEMPLATE",
                 CPLGetConfigOption( "GML_GFS_TEMPLATE", NULL));
     if( pszGFSTemplateName != NULL )
     {
         /* attempting to load the GFS TEMPLATE */
         bHaveSchema = poReader->LoadClasses( pszGFSTemplateName );
-    }	
+    }
 
     if( bResolve )
     {
@@ -699,7 +699,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                 CPLTestBool(CPLGetConfigOption( "GML_HUGE_TEMPFILE", "YES"));
             int iSqliteCacheMB = atoi(CPLGetConfigOption( "OGR_SQLITE_CACHE", "0"));
             if( poReader->HugeFileResolver( pszXlinkResolvedFilename,
-                                            bSqliteIsTempFile, 
+                                            bSqliteIsTempFile,
                                             iSqliteCacheMB ) == false )
             {
                 // we assume an errors have been reported.
@@ -757,9 +757,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             if( VSIStatL( pszFilename, &sGMLStatBuf ) == 0 &&
                 sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
             {
-                CPLDebug( "GML", 
+                CPLDebug( "GML",
                           "Found %s but ignoring because it appears\n"
-                          "be older than the associated GML file.", 
+                          "be older than the associated GML file.",
                           osGFSFilename.c_str() );
             }
             else
@@ -844,7 +844,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             GMLRegistryFeatureType& oFeatureType =
                                         oNamespace.aoFeatureTypes[iTypename];
 
-                            if ( oFeatureType.osElementValue.size() ) 
+                            if ( oFeatureType.osElementValue.size() )
                                 pszElementToFind = CPLSPrintf("%s:%s>%s",
                                                               oNamespace.osPrefix.c_str(),
                                                               oFeatureType.osElementName.c_str(),
@@ -870,7 +870,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                         bHasFoundXSD = true;
                                         bHaveSchema = true;
                                         CPLDebug("GML", "Found %s for %s:%s in registry",
-                                                osXSDFilename.c_str(), 
+                                                osXSDFilename.c_str(),
                                                 oNamespace.osPrefix.c_str(),
                                                 oFeatureType.osElementName.c_str());
                                     }
@@ -886,7 +886,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                     if( bHaveSchema )
                                     {
                                         CPLDebug("GML", "Found %s for %s:%s in registry",
-                                                oFeatureType.osGFSSchemaLocation.c_str(), 
+                                                oFeatureType.osGFSSchemaLocation.c_str(),
                                                 oNamespace.osPrefix.c_str(),
                                                 oFeatureType.osElementName.c_str());
                                     }
@@ -901,7 +901,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         }
 
         /* For WFS, try to fetch the application schema */
-        if( bIsWFS && !bHaveSchema && pszSchemaLocation != NULL && 
+        if( bIsWFS && !bHaveSchema && pszSchemaLocation != NULL &&
             (pszSchemaLocation[0] == '\'' || pszSchemaLocation[0] == '"') &&
              strchr(pszSchemaLocation + 1, pszSchemaLocation[0]) != NULL )
         {
@@ -1156,7 +1156,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         }
         else
         {
-            CPLDebug("GML", 
+            CPLDebug("GML",
                      "Not saving %s files already exists or can't be created.",
                      osGFSFilename.c_str() );
         }
@@ -1316,7 +1316,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         size_t iPos = osPrefixClass.find('.');
         if( iPos != std::string::npos )
             osPrefixClass.resize(iPos);
-        aapoGeomProps.push_back( std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> > 
+        aapoGeomProps.push_back( std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> >
                 (osPrefixClass, std::vector<GMLGeometryPropertyDefn*>()) );
         for( int iField = 0; iField < (int)aapoProps[iSubClass].size(); iField ++ )
         {
@@ -1514,9 +1514,9 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         if( poProperty->GetType() == GMLPT_Boolean ||
             poProperty->GetType() == GMLPT_BooleanList )
             oField.SetSubType(OFSTBoolean);
-        else if( poProperty->GetType() == GMLPT_Short) 
+        else if( poProperty->GetType() == GMLPT_Short)
             oField.SetSubType(OFSTInt16);
-        else if( poProperty->GetType() == GMLPT_Float) 
+        else if( poProperty->GetType() == GMLPT_Float)
             oField.SetSubType(OFSTFloat32);
         if( !bEmptyAsNull )
             oField.SetNullable(poProperty->IsNullable() );
@@ -1546,7 +1546,7 @@ const char *OGRGMLDataSource::GetGlobalSRSName()
 /*                               Create()                               */
 /************************************************************************/
 
-bool OGRGMLDataSource::Create( const char *pszFilename, 
+bool OGRGMLDataSource::Create( const char *pszFilename,
                               char **papszOptions )
 
 {
@@ -1607,8 +1607,8 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
         fpOutput = VSIFOpenL( pszFilename, "wb+" );
     if( fpOutput == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create GML file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create GML file %s.",
                   pszFilename );
         return false;
     }
@@ -1616,7 +1616,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out "standard" header.                                    */
 /* -------------------------------------------------------------------- */
-    PrintLine( fpOutput, "%s", 
+    PrintLine( fpOutput, "%s",
                 "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" );
 
     if (!bFpOutputIsNonSeekable)
@@ -1646,19 +1646,19 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
 
     if( pszSchemaURI != NULL )
     {
-        PrintLine( fpOutput, 
+        PrintLine( fpOutput,
               "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-        PrintLine( fpOutput, 
-              "     xsi:schemaLocation=\"%s\"", 
+        PrintLine( fpOutput,
+              "     xsi:schemaLocation=\"%s\"",
                     pszSchemaURI );
     }
     else if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt,"EXTERNAL") )
     {
         char *pszBasename = CPLStrdup(CPLGetBasename( pszName ));
 
-        PrintLine( fpOutput, 
+        PrintLine( fpOutput,
               "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-        PrintLine( fpOutput, 
+        PrintLine( fpOutput,
               "     xsi:schemaLocation=\"%s %s\"",
                     pszTargetNameSpace,
                     CPLResetExtension( pszBasename, "xsd" ) );
@@ -1768,7 +1768,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
     CPLCleanXMLElementName( pszCleanLayerName );
     if( strcmp(pszCleanLayerName,pszLayerName) != 0 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Layer name '%s' adjusted to '%s' for XML validity.",
                   pszLayerName, pszCleanLayerName );
     }
@@ -1899,7 +1899,7 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
     const char *pszSchemaURI = CSLFetchNameValue(papszCreateOptions,
                                                  "XSISCHEMAURI");
-    const char *pszSchemaOpt = CSLFetchNameValue( papszCreateOptions, 
+    const char *pszSchemaOpt = CSLFetchNameValue( papszCreateOptions,
                                                   "XSISCHEMA" );
 
     if( pszSchemaURI != NULL )
@@ -1912,8 +1912,8 @@ void OGRGMLDataSource::InsertHeader()
         fpSchema = VSIFOpenL( pszXSDFilename, "wt" );
         if( fpSchema == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open file %.500s for schema output.", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open file %.500s for schema output.",
                       pszXSDFilename );
             return;
         }
@@ -1926,7 +1926,7 @@ void OGRGMLDataSource::InsertHeader()
         nSchemaStart = (int) VSIFTellL( fpOutput );
         fpSchema = fpOutput;
     }
-    else                                                               
+    else
         return;
 
 /* ==================================================================== */
@@ -2355,7 +2355,7 @@ void OGRGMLDataSource::InsertHeader()
             else if( poFieldDefn->GetType() == OFTString ||
                      poFieldDefn->GetType() == OFTStringList )
             {
-                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">", 
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">",
                            poFieldDefn->GetNameRef(),
                            nMinOccurs,
                            poFieldDefn->GetType() == OFTStringList ? "unbounded": "1" );
@@ -2371,7 +2371,7 @@ void OGRGMLDataSource::InsertHeader()
             }
             else if( poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime )
             {
-                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"1\">", 
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"1\">",
                            poFieldDefn->GetNameRef(),
                            nMinOccurs );
                 PrintLine( fpSchema, "          <xs:simpleType>");
@@ -2424,12 +2424,12 @@ void OGRGMLDataSource::InsertHeader()
         for( int nEndOfUnmovedData = nSchemaStart;
              nEndOfUnmovedData > nSchemaInsertLocation; )
         {
-            int nBytesToMove = 
+            int nBytesToMove =
                 MIN(nChunkSize, nEndOfUnmovedData - nSchemaInsertLocation );
 
             VSIFSeekL( fpOutput, nEndOfUnmovedData - nBytesToMove, SEEK_SET );
             VSIFReadL( pszChunk, 1, nBytesToMove, fpOutput );
-            VSIFSeekL( fpOutput, nEndOfUnmovedData - nBytesToMove + nSchemaSize, 
+            VSIFSeekL( fpOutput, nEndOfUnmovedData - nBytesToMove + nSchemaSize,
                       SEEK_SET );
             VSIFWriteL( pszChunk, 1, nBytesToMove, fpOutput );
 

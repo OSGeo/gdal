@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -178,7 +178,7 @@ CPL_UNUSED
     m_nFilteredClassIndex = -1;
 
     m_nHasSequentialLayers = -1;
-	
+
     /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
     m_bFaceHoleNegative = CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
 
@@ -320,7 +320,7 @@ bool GMLReader::SetupParserXerces()
         catch (const XMLException& toCatch)
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Exception initializing Xerces based GML reader.\n%s", 
+                      "Exception initializing Xerces based GML reader.\n%s",
                       tr_strdup(toCatch.getMessage()) );
             m_eXercesInitState = OGRGML_XERCES_INIT_FAILED;
             return false;
@@ -555,7 +555,7 @@ GMLFeature *GMLReader::NextFeatureXerces()
                 return NULL;
         }
 
-        while( m_poCompleteFeature == NULL 
+        while( m_poCompleteFeature == NULL
                && !m_bStopParsing
                && m_poSAXReader->parseNext( m_oToFill ) ) {}
 
@@ -569,8 +569,8 @@ GMLFeature *GMLReader::NextFeatureXerces()
     catch (const XMLException& toCatch)
     {
         char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
-        CPLDebug( "GML", 
-                  "Error during NextFeature()! Message:\n%s", 
+        CPLDebug( "GML",
+                  "Error during NextFeature()! Message:\n%s",
                   pszErrorMessage );
         CPLFree(pszErrorMessage);
         m_bStopParsing = true;
@@ -674,7 +674,7 @@ GMLFeature *GMLReader::NextFeature()
 /*      pushed onto the readstate stack.                                */
 /************************************************************************/
 
-void GMLReader::PushFeature( const char *pszElement, 
+void GMLReader::PushFeature( const char *pszElement,
                              const char *pszFID,
                              int nClassIndex )
 
@@ -831,7 +831,7 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
     }
 
     // If the class list isn't locked, any element that is a featureMember
-    // will do. 
+    // will do.
     if( !m_bClassListLocked )
         return INT_MAX;
 
@@ -1030,7 +1030,7 @@ int GMLReader::AddClass( GMLFeatureClass *poNewClass )
     CPLAssert( GetClass( poNewClass->GetName() ) == NULL );
 
     m_nClassCount++;
-    m_papoClass = (GMLFeatureClass **) 
+    m_papoClass = (GMLFeatureClass **)
         CPLRealloc( m_papoClass, sizeof(void*) * m_nClassCount );
     m_papoClass[m_nClassCount-1] = poNewClass;
 
@@ -1064,7 +1064,7 @@ void GMLReader::ClearClasses()
 /*      The pszValue ownership is passed to this function.              */
 /************************************************************************/
 
-void GMLReader::SetFeaturePropertyDirectly( const char *pszElement, 
+void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
                                             char *pszValue,
                                             int iPropertyIn,
                                             GMLPropertyType eType )
@@ -1185,7 +1185,7 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 bool GMLReader::LoadClasses( const char *pszFile )
 
 {
-    // Add logic later to determine reasonable default schema file. 
+    // Add logic later to determine reasonable default schema file.
     if( pszFile == NULL )
         return false;
 
@@ -1200,7 +1200,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
 
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open file %s.", pszFile );
         return false;
     }
@@ -1212,7 +1212,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
     pszWholeText = (char *) VSIMalloc(nLength+1);
     if( pszWholeText == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to allocate %d byte buffer for %s,\n"
                   "is this really a GMLFeatureClassList file?",
                   nLength, pszFile );
@@ -1224,7 +1224,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
     {
         VSIFree( pszWholeText );
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Read failed on %s.", pszFile );
         return false;
     }
@@ -1235,7 +1235,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
     if( strstr( pszWholeText, "<GMLFeatureClassList" ) == NULL )
     {
         VSIFree( pszWholeText );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s does not contain a GMLFeatureClassList tree.",
                   pszFile );
         return false;
@@ -1253,11 +1253,11 @@ bool GMLReader::LoadClasses( const char *pszFile )
     if( psRoot == NULL )
         return false;
 
-    if( psRoot->eType != CXT_Element 
+    if( psRoot->eType != CXT_Element
         || !EQUAL(psRoot->pszValue,"GMLFeatureClassList") )
     {
         CPLDestroyXMLNode(psRoot);
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s is not a GMLFeatureClassList document.",
                   pszFile );
         return false;
@@ -1274,7 +1274,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
 
     for( psThis = psRoot->psChild; psThis != NULL; psThis = psThis->psNext )
     {
-        if( psThis->eType == CXT_Element 
+        if( psThis->eType == CXT_Element
             && EQUAL(psThis->pszValue,"GMLFeatureClass") )
         {
             GMLFeatureClass   *poClass;
@@ -1308,7 +1308,7 @@ bool GMLReader::LoadClasses( const char *pszFile )
 bool GMLReader::SaveClasses( const char *pszFile )
 
 {
-    // Add logic later to determine reasonable default schema file. 
+    // Add logic later to determine reasonable default schema file.
     if( pszFile == NULL )
         return false;
 
@@ -1417,7 +1417,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
                 papsGeometry, true, m_bInvertAxisOrderIfLatLong,
-                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption, 
+                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption,
                 hCacheSRS, m_bFaceHoleNegative );
 
             if( poGeometry != NULL && poClass->GetGeometryPropertyCount() > 0 )
@@ -1425,7 +1425,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;
 
-                OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
+                OGRwkbGeometryType eGType = (OGRwkbGeometryType)
                     poClass->GetGeometryProperty(0)->GetType();
 
                 if( bAnalyzeSRSPerFeature )
@@ -1442,7 +1442,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
                     eGType = wkbNone;
 
-                poClass->GetGeometryProperty(0)->SetType( 
+                poClass->GetGeometryProperty(0)->SetType(
                     (int) OGRMergeGeometryTypesEx(
                         eGType, poGeometry->getGeometryType(), true ) );
 
