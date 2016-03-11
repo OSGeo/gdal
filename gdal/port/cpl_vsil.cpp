@@ -29,9 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 
 #include <cassert>
 #include <string>
@@ -143,7 +143,8 @@ char **VSIReadDirRecursive( const char *pszPathIn )
     CPLStringList oFiles = NULL;
     char **papszFiles = NULL;
     VSIStatBufL psStatBuf;
-    CPLString osTemp1, osTemp2;
+    CPLString osTemp1;
+    CPLString osTemp2;
     int i = 0;
     int nCount = -1;
 
@@ -216,7 +217,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 CPLFree(pszPath);
                 pszPath = CPLStrdup( osTemp1.c_str() );
 
-                char* pszDisplayedPathNew;
+                char* pszDisplayedPathNew = NULL;
                 if( pszDisplayedPath )
                     pszDisplayedPathNew = CPLStrdup( CPLSPrintf("%s/%s", pszDisplayedPath, papszFiles[i]) );
                 else
@@ -238,7 +239,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
             if( aoStack.size() )
             {
-                int iLast = (int)aoStack.size() - 1;
+                int iLast = static_cast<int>(aoStack.size()) - 1;
                 CPLFree(pszPath);
                 CPLFree(pszDisplayedPath);
                 nCount = aoStack[iLast].nCount;
@@ -275,7 +276,7 @@ CPL_C_END
 
 char **CPLReadDir( const char *pszPath )
 {
-    return VSIReadDir(pszPath);
+    return VSIReadDir( pszPath );
 }
 
 /************************************************************************/
@@ -309,7 +310,7 @@ int VSIMkdir( const char *pszPathname, long mode )
 
 /************************************************************************/
 /*                             VSIUnlink()                              */
-/*************************a***********************************************/
+/************************************************************************/
 
 /**
  * \brief Delete a file.
@@ -459,7 +460,7 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
 int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
 
 {
-    char    szAltPath[4];
+    char    szAltPath[4] = { '\0' };
     /* enable to work on "C:" as if it were "C:\" */
     if( strlen(pszFilename) == 2 && pszFilename[1] == ':' )
     {
@@ -475,7 +476,8 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
         VSIFileManager::GetHandler( pszFilename );
 
     if (nFlags == 0)
-        nFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG | VSI_STAT_SIZE_FLAG;
+        nFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG |
+            VSI_STAT_SIZE_FLAG;
 
     return poFSHandler->Stat( pszFilename, psStatBuf, nFlags );
 }
@@ -546,7 +548,8 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );
 
-    VSILFILE* fp = (VSILFILE *) poFSHandler->Open( pszFilename, pszAccess );
+    VSILFILE* fp = reinterpret_cast<VSILFILE *>(
+        poFSHandler->Open( pszFilename, pszAccess ) );
 
     VSIDebug3( "VSIFOpenL(%s,%s) = %p", pszFilename, pszAccess, fp );
 
@@ -576,11 +579,11 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 int VSIFCloseL( VSILFILE * fp )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     VSIDebug1( "VSIFCloseL(%p)", fp );
 
-    int nResult = poFileHandle->Close();
+    const int nResult = poFileHandle->Close();
 
     delete poFileHandle;
 
@@ -639,7 +642,7 @@ int VSIFSeekL( VSILFILE * fp, vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSIFTellL( VSILFILE * fp )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->Tell();
 }
@@ -687,7 +690,7 @@ void VSIRewindL( VSILFILE * fp )
 int VSIFFlushL( VSILFILE * fp )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->Flush();
 }
@@ -719,7 +722,7 @@ int VSIFFlushL( VSILFILE * fp )
 size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->Read( pBuffer, nSize, nCount );
 }
@@ -788,7 +791,7 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
 size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->Write( pBuffer, nSize, nCount );
 }
@@ -817,7 +820,7 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *f
 int VSIFEofL( VSILFILE * fp )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->Eof();
 }
@@ -844,7 +847,7 @@ int VSIFEofL( VSILFILE * fp )
 int VSIFTruncateL( VSILFILE * fp, vsi_l_offset nNewSize )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+  VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->Truncate(nNewSize);
 }
@@ -871,13 +874,14 @@ int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
 
 {
     va_list args;
-    CPLString osResult;
 
     va_start( args, pszFormat );
+    CPLString osResult;
     osResult.vPrintf( pszFormat, args );
     va_end( args );
 
-    return static_cast<int>(VSIFWriteL( osResult.c_str(), 1, osResult.length(), fp ));
+    return static_cast<int>(
+        VSIFWriteL( osResult.c_str(), 1, osResult.length(), fp ));
 }
 
 /************************************************************************/
@@ -905,7 +909,7 @@ int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
 int VSIFPutcL( int nChar, VSILFILE * fp )
 
 {
-    unsigned char cChar = (unsigned char)nChar;
+    unsigned char cChar = static_cast<unsigned char>(nChar);
     return static_cast<int>(VSIFWriteL(&cChar, 1, 1, fp));
 }
 
@@ -944,9 +948,6 @@ int VSIIngestFile( VSILFILE* fp,
                    vsi_l_offset* pnSize,
                    GIntBig nMaxSize)
 {
-    vsi_l_offset nDataLen = 0;
-    bool bFreeFP = false;
-
     if( fp == NULL && pszFilename == NULL )
         return FALSE;
     if( ppabyRet == NULL )
@@ -956,6 +957,7 @@ int VSIIngestFile( VSILFILE* fp,
     if( pnSize != NULL )
         *pnSize = 0;
 
+    bool bFreeFP = false;
     if( NULL == fp )
     {
         fp = VSIFOpenL( pszFilename, "rb" );
@@ -972,6 +974,8 @@ int VSIIngestFile( VSILFILE* fp,
         if( VSIFSeekL(fp, 0, SEEK_SET) != 0 )
             return FALSE;
     }
+
+    vsi_l_offset nDataLen = 0;
 
     if( pszFilename == NULL ||
         strcmp(pszFilename, "/vsistdin/") == 0 )
@@ -998,7 +1002,8 @@ int VSIIngestFile( VSILFILE* fp,
                         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                     return FALSE;
                 }
-                GByte* pabyNew = (GByte*)VSIRealloc(*ppabyRet, (size_t)nDataAlloc);
+                GByte* pabyNew = static_cast<GByte *>(
+                    VSIRealloc(*ppabyRet, (size_t)nDataAlloc) );
                 if( pabyNew == NULL )
                 {
                     CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -1012,7 +1017,8 @@ int VSIIngestFile( VSILFILE* fp,
                 }
                 *ppabyRet = pabyNew;
             }
-            int nRead = (int)VSIFReadL( *ppabyRet + nDataLen, 1, 8192, fp );
+            const int nRead = static_cast<int>(
+                VSIFReadL( *ppabyRet + nDataLen, 1, 8192, fp ) );
             nDataLen += nRead;
 
             if ( nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize )
@@ -1045,8 +1051,8 @@ int VSIIngestFile( VSILFILE* fp,
         }
         nDataLen = VSIFTellL( fp );
 
-        // With "large" VSI I/O API we can read data chunks larger than VSIMalloc
-        // could allocate. Catch it here.
+        // With "large" VSI I/O API we can read data chunks larger than
+        // VSIMalloc could allocate. Catch it here.
         if ( nDataLen > (vsi_l_offset)(size_t)nDataLen ||
              (nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize) )
         {
@@ -1064,7 +1070,8 @@ int VSIIngestFile( VSILFILE* fp,
             return FALSE;
         }
 
-        *ppabyRet = (GByte*)VSIMalloc((size_t)(nDataLen + 1));
+        *ppabyRet = static_cast<GByte *>(
+            VSIMalloc((size_t)(nDataLen + 1)) );
         if( NULL == *ppabyRet )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -1115,7 +1122,7 @@ int VSIIngestFile( VSILFILE* fp,
 
 void *VSIFGetNativeFileDescriptorL( VSILFILE* fp )
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->GetNativeFileDescriptor();
 }
@@ -1160,11 +1167,9 @@ GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
 /*                           VSIFileManager()                           */
 /************************************************************************/
 
-VSIFileManager::VSIFileManager()
-
-{
-    poDefaultHandler = NULL;
-}
+VSIFileManager::VSIFileManager() :
+    poDefaultHandler(NULL)
+{}
 
 /************************************************************************/
 /*                          ~VSIFileManager()                           */
@@ -1172,7 +1177,7 @@ VSIFileManager::VSIFileManager()
 
 VSIFileManager::~VSIFileManager()
 {
-    std::map<std::string,VSIFilesystemHandler*>::const_iterator iter;
+    std::map<std::string, VSIFilesystemHandler*>::const_iterator iter;
 
     for( iter = oHandlers.begin();
          iter != oHandlers.end();
@@ -1200,7 +1205,7 @@ VSIFileManager *VSIFileManager::Get()
     {
         if( nConstructerPID != 0 )
         {
-            GPtrDiff_t nCurrentPID = (GPtrDiff_t)CPLGetPID();
+            GPtrDiff_t nCurrentPID = static_cast<GPtrDiff_t>(CPLGetPID());
             if( nConstructerPID != nCurrentPID )
             {
                 {
@@ -1219,8 +1224,10 @@ VSIFileManager *VSIFileManager::Get()
     CPLMutexHolder oHolder2( &hVSIFileManagerMutex );
     if( poManager == NULL )
     {
-        nConstructerPID = (GPtrDiff_t)CPLGetPID();
-        //printf("Thread %d: VSIFileManager in construction\n", nConstructerPID);
+        nConstructerPID = static_cast<GPtrDiff_t>(CPLGetPID());
+#ifdef DEBUG_VERBOSE
+        printf("Thread %d: VSIFileManager in construction\n", nConstructerPID);
+#endif
         poManager = new VSIFileManager;
         VSIInstallLargeFileHandler();
         VSIInstallSubFileHandler();
@@ -1327,8 +1334,8 @@ int VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
                                       const size_t* panSizes )
 {
     int nRet = 0;
-    vsi_l_offset nCurOffset = Tell();
-    for(int i=0;i<nRanges;i++)
+    const vsi_l_offset nCurOffset = Tell();
+    for( int i=0; i<nRanges; i++ )
     {
         if (Seek(panOffsets[i], SEEK_SET) < 0)
         {
