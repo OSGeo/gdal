@@ -1331,9 +1331,10 @@ def ogr_libkml_write_model():
         gdaltest.post_reason('failure')
         return 'fail'
 
-    # This can only appear if HTTP resource is available
-    if data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
-       data.find('<sourceHref>cube.gif</sourceHref>') == -1:
+    # This can only appear if HTTP resource is available and GDAL is built with curl/http support 
+    if gdal.GetDriverByName('HTTP') is not None and \
+       (data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
+       data.find('<sourceHref>cube.gif</sourceHref>') == -1):
 
         if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:
             print(data)
