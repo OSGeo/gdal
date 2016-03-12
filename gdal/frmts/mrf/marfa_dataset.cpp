@@ -1504,6 +1504,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 	if (poSrcDS->GetGCPCount())
 	    poDS->SetGCPs(poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), poSrcDS->GetGCPProjection());
 
+
 	// Finally write the XML in the right file name
 	poDS->Crystalize();
     }
@@ -1519,6 +1520,10 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     char **meta = poSrcDS->GetMetadata();
     if (poDS && CSLCount(meta))
 	poDS->SetMetadata(meta);
+
+    meta = poSrcDS->GetMetadata("RPC");
+    if (poDS && CSLCount(meta))
+	poDS->SetMetadata(meta, "RPC");
 
     // If copy is disabled, we're done, we just created an empty MRF
     if (!poDS || on(CSLFetchNameValue(papszOptions, "NOCOPY")))
