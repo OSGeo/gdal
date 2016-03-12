@@ -1,9 +1,12 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -11,7 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 
@@ -23,21 +28,9 @@ Contributors:  Thomas Maurer
 #include <cfloat>
 #include <cstring>
 
-#if defined(LERC_DEBUG)
-#define PRINT(X) X
-#include <cstdio>
-#else
-#define PRINT(X)
-#endif
-
 using namespace std;
 
 NAMESPACE_LERC_START
-
-// -------------------------------------------------------------------------- ;
-
-
-// -------------------------------------------------------------------------- ;
 
 CntZImage::CntZImage()
 {
@@ -110,12 +103,11 @@ unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
   // cnt part
   cnt += 3 * sizeof(int);
   cnt += sizeof(float);
-//  cnt += zImg.numBytesCntTile(width * height, 0, 0, false);
 
   // z part
   cnt += 3 * sizeof(int);
   cnt += sizeof(float);
-  cnt += zImg.numBytesZTile(0, 0, 0, 0);    // = 1
+  cnt += 1;
 
   return cnt;
 }
@@ -126,8 +118,6 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
                                                       bool onlyZPart,
                                                       InfoFromComputeNumBytes& info) const
 {
-  const string fctName = "Error in CntZImage::computeNumBytesNeededToWrite(...): ";
-
   unsigned int cnt = 0;
 
   cnt += (unsigned int)getTypeString().length();
@@ -225,8 +215,6 @@ bool CntZImage::write(Byte** ppByte,
                       bool useInfoFromPrevComputeNumBytes,
                       bool onlyZPart) const
 {
-  const string fctName = "Error in CntZImage::write(...): ";
-
   const int version = 11;
 
   assert(ppByte && *ppByte);
@@ -356,9 +344,6 @@ bool CntZImage::read(Byte** ppByte,
                      bool onlyHeader,
                      bool onlyZPart)
 {
-  const string fctName = "Error in CntZImage::read(...): ";
-  PRINT(fprintf(stderr,"\nIn CntZImage::read\n"););
-
   assert(ppByte && *ppByte);
 
   size_t len = getTypeString().length();
@@ -369,7 +354,6 @@ bool CntZImage::read(Byte** ppByte,
 
   if (typeStr != getTypeString())
   {
-    PRINT(fprintf(stderr,"\nZImage: Wrong Sig\n"););
     return false;
   }
 
@@ -393,20 +377,14 @@ bool CntZImage::read(Byte** ppByte,
   SWAP_4(width);
   SWAP_8(maxZErrorInFile);
 
-  assert(version >= 11);
-  assert(type == type_);
+  if (version != 11 || type != type_)
+    return false;
 
   if (width > 20000 || height > 20000)
-  {
-    PRINT(fprintf(stderr,"\nZImage: Too big %d %d\n", width, height););
     return false;
-  }
 
   if (maxZErrorInFile > maxZError)
-  {
-    PRINT(fprintf(stderr,"\nZImage: Z too big\n"););
     return false;
-  }
 
   if (onlyHeader)
     return true;
@@ -465,7 +443,6 @@ bool CntZImage::read(Byte** ppByte,
     }
     else if (!readTiles(zPart, maxZErrorInFile, numTilesVert, numTilesHori, maxValInImg, bArr))
     {
-      PRINT(fprintf(stderr,"\nZImage: Can't read tiles \n"););
       return false;
     }
 
@@ -484,8 +461,6 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
                            int& numBytesOptA,
                            float& maxValInImgA) const
 {
-  const string fctName = "Error in CntZImage::findTiling(...): ";
-
   const int tileWidthArr[] = {8, 11, 15, 20, 32, 64};
   const int numConfigs = 6;
 
@@ -494,7 +469,6 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
   numTilesHoriA = 1;
   if (!writeTiles(zPart, maxZError, cntsNoIntIn, 1, 1, NULL, numBytesOptA, maxValInImgA))
   {
-//    cout << fctName << "write tiles failed" << endl;
     return false;
   }
 
@@ -613,7 +587,6 @@ bool CntZImage::readTiles(bool zPart, double maxZErrorInFile,
                           int numTilesVert, int numTilesHori, float maxValInImg,
                           Byte* bArr)
 {
-//  const string fctName = "Error in CntZImage::readTiles(...): ";
   Byte* ptr = bArr;
 
   for (int iTile = 0; iTile <= numTilesVert; iTile++)
@@ -670,7 +643,6 @@ bool CntZImage::cntsNoInt() const
 bool CntZImage::computeCntStats(int i0, int i1, int j0, int j1,
                                 float& cntMinA, float& cntMaxA) const
 {
-//  const string fctName = "Error in CntZImage::computeCntStats(...): ";
 
   if (i0 < 0 || j0 < 0 || i1 > height_ || j1 > width_)
     return false;
@@ -863,8 +835,6 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
                            int numValidPixel,
                            float zMin, float zMax, double maxZError) const
 {
-//  const string fctName = "Error in CntZImage::writeZTile(...): ";
-
   Byte* ptr = *ppByte;
   int cntPixel = 0;
 
@@ -1047,8 +1017,6 @@ bool CntZImage::readCntTile(Byte** ppByte, int i0, int i1, int j0, int j1)
 bool CntZImage::readZTile(Byte** ppByte, int i0, int i1, int j0, int j1,
                           double maxZErrorInFile, float maxZInImg)
 {
-//  const string fctName = "Error in CntZImage::readZTile(...): ";
-
   Byte* ptr = *ppByte;
   int numPixel = 0;
 
@@ -1154,7 +1122,7 @@ bool CntZImage::readZTile(Byte** ppByte, int i0, int i1, int j0, int j1,
 int CntZImage::numBytesFlt(float z) const
 {
   short s = (short)z;
-  signed char c = (signed char)s;
+  signed char c = static_cast<signed char>(s);
   return ((float)c == z) ? 1 : ((float)s == z) ? 2 : 4;
 }
 

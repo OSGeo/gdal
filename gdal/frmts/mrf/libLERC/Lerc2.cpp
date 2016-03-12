@@ -1,17 +1,23 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 
@@ -62,24 +68,48 @@ void Lerc2::Init()
 
 bool Lerc2::Set(int nCols, int nRows, const Byte* pMaskBits)
 {
-  if (!m_bitMask2.SetSize(nCols, nRows))
+  if (!m_bitMask.SetSize(nCols, nRows))
     return false;
 
   if (pMaskBits)
   {
-    memcpy(m_bitMask2.Bits(), pMaskBits, m_bitMask2.Size());
-    m_headerInfo.numValidPixel = m_bitMask2.CountValidBits();
+    memcpy(m_bitMask.Bits(), pMaskBits, m_bitMask.Size());
+    m_headerInfo.numValidPixel = m_bitMask.CountValidBits();
   }
   else
   {
     m_headerInfo.numValidPixel = nCols * nRows;
-    m_bitMask2.SetAllValid();
+    m_bitMask.SetAllValid();
   }
 
   m_headerInfo.nCols = nCols;
   m_headerInfo.nRows = nRows;
 
   return true;
+}
+
+// -------------------------------------------------------------------------- ;
+
+bool Lerc2::Set(const BitMask2& bitMask)
+{
+  m_bitMask = bitMask;
+
+  m_headerInfo.numValidPixel = m_bitMask.CountValidBits();
+  m_headerInfo.nCols = m_bitMask.GetWidth();
+  m_headerInfo.nRows = m_bitMask.GetHeight();
+
+  return true;
+}
+
+// -------------------------------------------------------------------------- ;
+
+unsigned int Lerc2::ComputeNumBytesHeader() const
+{
+  // header
+  unsigned int numBytes = (unsigned int)FileKey().length();
+  numBytes += 7 * sizeof(int);
+  numBytes += 3 * sizeof(double);
+  return numBytes;
 }
 
 // -------------------------------------------------------------------------- ;
@@ -199,7 +229,7 @@ bool Lerc2::WriteMask(Byte** ppByte) const
     Byte* pArrRLE;
     size_t numBytesRLE;
     RLE rle;
-    if (!rle.compress((const Byte*)m_bitMask2.Bits(), m_bitMask2.Size(), &pArrRLE, numBytesRLE, false))
+    if (!rle.compress((const Byte*)m_bitMask.Bits(), m_bitMask.Size(), &pArrRLE, numBytesRLE, false))
       return false;
 
     int numBytesMask = (int)numBytesRLE;
@@ -212,8 +242,7 @@ bool Lerc2::WriteMask(Byte** ppByte) const
   }
   else
   {
-    const int zero = 0;
-    memcpy(ptr, &zero, sizeof(int));   // indicates no mask stored
+    memset(ptr, 0, sizeof(int)); 
     ptr += sizeof(int);
   }
 
@@ -241,17 +270,17 @@ bool Lerc2::ReadMask(const Byte** ppByte)
   if ((numValid == 0 || numValid == w * h) && (numBytesMask != 0))
     return false;
 
-  if (!m_bitMask2.SetSize(w, h))
+  if (!m_bitMask.SetSize(w, h))
     return false;
 
   if (numValid == 0)
-    m_bitMask2.SetAllInvalid();
+    m_bitMask.SetAllInvalid();
   else if (numValid == w * h)
-    m_bitMask2.SetAllValid();
+    m_bitMask.SetAllValid();
   else if (numBytesMask > 0)    // read it in
   {
     RLE rle;
-    if (!rle.decompress(ptr, m_bitMask2.Bits()))
+    if (!rle.decompress(ptr, m_bitMask.Bits()))
       return false;
 
     ptr += numBytesMask;
