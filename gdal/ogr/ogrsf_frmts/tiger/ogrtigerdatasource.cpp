@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_tiger.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include <ctype.h>
+#include "ogr_tiger.h"
+
+#include <cctype>
 
 CPL_CVSID("$Id$");
 
@@ -162,7 +163,7 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
     if( fp == NULL )
         return nOldVersion;
 
-    char        szHeader[115];
+    char szHeader[115];
 
     if( VSIFReadL( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
     {
@@ -181,8 +182,8 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
         CPLDebug( "TIGER", "Forcing version back to UA2000 since RTC records are short." );
         return TIGER_UA2000;
     }
-    else
-        return nOldVersion;
+
+    return nOldVersion;
 }
 
 /************************************************************************/
@@ -237,8 +238,8 @@ void OGRTigerDataSource::AddLayer( OGRTigerLayer * poNewLayer )
 
 {
     poNewLayer->SetDescription( poNewLayer->GetName() );
-    papoLayers = (OGRTigerLayer **)
-        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
+    papoLayers = static_cast<OGRTigerLayer **>(
+        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers ) );
 
     papoLayers[nLayers-1] = poNewLayer;
 }
@@ -252,8 +253,8 @@ OGRLayer *OGRTigerDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -290,15 +291,15 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                               char ** papszLimitedFileList )
 
 {
-    VSIStatBufL     stat;
-    char            **papszFileList = NULL;
-
     pszName = CPLStrdup( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStatExL( pszFilename, &stat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0
+    VSIStatBufL stat;
+
+    if( VSIStatExL( pszFilename, &stat,
+                    VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
@@ -312,6 +313,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Build a list of filenames we figure are Tiger files.            */
 /* -------------------------------------------------------------------- */
+    char **papszFileList = NULL;
     if( VSI_ISREG(stat.st_mode) )
     {
         char       szModule[128];
@@ -334,7 +336,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     }
     else
     {
-        char      **candidateFileList = CPLReadDir( pszFilename );
+        char **candidateFileList = VSIReadDir( pszFilename );
 
         pszPath = CPLStrdup( pszFilename );
 
@@ -955,7 +957,7 @@ OGRLayer *OGRTigerDataSource::ICreateLayer( const char *pszLayerName,
 void OGRTigerDataSource::DeleteModuleFiles( const char *pszModule )
 
 {
-    char        **papszDirFiles = CPLReadDir( GetDirPath() );
+    char        **papszDirFiles = VSIReadDir( GetDirPath() );
     int         i, nCount = CSLCount(papszDirFiles);
 
     for( i = 0; i < nCount; i++ )
