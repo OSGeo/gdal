@@ -1604,7 +1604,7 @@ CPLErr HKVDataset::Delete( const char * pszName )
         return CE_Failure;
     }
 
-    char **papszFiles = CPLReadDir( pszName );
+    char **papszFiles = VSIReadDir( pszName );
     for( int i = 0; i < CSLCount(papszFiles); i++ )
     {
         if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )

@@ -271,7 +271,7 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
     /*-----------------------------------------------------------------
      * Read the coverage directory listing and try to establish the cover type
      *----------------------------------------------------------------*/
-    papszCoverDir = CPLReadDir(psInfo->pszCoverPath);
+    papszCoverDir = VSIReadDir(psInfo->pszCoverPath);
 
     psInfo->eCoverType = _AVCE00ReadFindCoverType(papszCoverDir);
 

@@ -230,7 +230,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
     }
     else if( VSI_ISDIR(sStatBuf.st_mode) )
     {
-        char **papszDirEntries = CPLReadDir( pszDataSource );
+        char **papszDirEntries = VSIReadDir( pszDataSource );
         int  iFile;
 
         for( iFile = 0; 

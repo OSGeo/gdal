@@ -684,7 +684,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to read a color table (.clr).  It seems it is legal to      */
 /*      have more than one so we just use the first one found.          */
 /* -------------------------------------------------------------------- */
-    char **papszFiles = CPLReadDir( psInfo->pszCoverName );
+    char **papszFiles = VSIReadDir( psInfo->pszCoverName );
     CPLString osClrFilename;
     CPLString osCleanPath = CPLCleanTrailingSlash( psInfo->pszCoverName );
 

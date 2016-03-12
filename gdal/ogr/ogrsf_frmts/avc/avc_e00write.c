@@ -176,7 +176,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          * otherwise we can't use it as a coverage directory.
          *------------------------------------------------------------*/
         char **papszFiles;
-        papszFiles = CPLReadDir(pszCoverPath);
+        papszFiles = VSIReadDir(pszCoverPath);
         for(i=0; papszFiles && papszFiles[i]; i++)
         {
             if (!EQUAL(".", papszFiles[i]) &&
@@ -929,7 +929,7 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
     /*-----------------------------------------------------------------
      * Delete files in cover directory.
      *----------------------------------------------------------------*/
-    papszFiles = CPLReadDir(pszCoverPath);
+    papszFiles = VSIReadDir(pszCoverPath);
     for(i=0; nStatus==0 && papszFiles && papszFiles[i]; i++)
     {
         if (!EQUAL(".", papszFiles[i]) &&
@@ -1017,4 +1017,3 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
 
     return nStatus;
 }
-

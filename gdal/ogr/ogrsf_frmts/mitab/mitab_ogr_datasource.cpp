@@ -38,9 +38,6 @@
  * Revision 1.11  2006/01/27 14:27:35  fwarmerdam
  * fixed ogr bounds setting problems (bug 1198)
  *
- * Revision 1.10  2005/09/20 04:40:02  fwarmerdam
- * fixed CPLReadDir memory leak
- *
  * Revision 1.9  2004/10/15 01:52:30  fwarmerdam
  * ModifiedICreateLayer() to use  -1000,-1000,1000,1000 bounds for GEOGCS
  * much like in mitab_bounds.cpp.  This ensures that geographic files in
@@ -268,7 +265,7 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
 /* -------------------------------------------------------------------- */
     else
     {
-        char    **papszFileList = CPLReadDir( m_pszName );
+        char    **papszFileList = VSIReadDir( m_pszName );
 
         m_pszDirectory = CPLStrdup( m_pszName );
 
@@ -505,7 +502,7 @@ char **OGRTABDataSource::GetFileList()
     {
         static const char * const apszExtensions[] = 
             { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
-        char **papszDirEntries = CPLReadDir( m_pszName );
+        char **papszDirEntries = VSIReadDir( m_pszName );
         int  iFile;
 
         for( iFile = 0; 

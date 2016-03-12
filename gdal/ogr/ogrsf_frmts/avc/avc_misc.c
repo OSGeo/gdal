@@ -353,7 +353,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
         int     iEntry, iLastPartStart;
 
         iLastPartStart = iTmpPtr;
-        papszDir = CPLReadDir(pszTmpPath);
+        papszDir = VSIReadDir(pszTmpPath);
 
         /*-------------------------------------------------------------
          * Add one component to the current path

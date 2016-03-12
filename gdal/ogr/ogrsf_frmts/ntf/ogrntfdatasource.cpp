@@ -201,7 +201,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     }
     else
     {
-        char      **candidateFileList = CPLReadDir( pszFilename );
+        char      **candidateFileList = VSIReadDir( pszFilename );
         int         i;
 
         for( i = 0; 

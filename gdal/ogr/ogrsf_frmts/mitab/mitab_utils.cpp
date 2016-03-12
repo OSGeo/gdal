@@ -273,7 +273,7 @@ static GBool TABAdjustCaseSensitiveFilename(char *
         int     iEntry, iLastPartStart;
 
         iLastPartStart = iTmpPtr;
-        papszDir = CPLReadDir(pszTmpPath);
+        papszDir = VSIReadDir(pszTmpPath);
 
         /*-------------------------------------------------------------
          * Add one component to the current path

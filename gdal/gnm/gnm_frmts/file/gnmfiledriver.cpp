@@ -40,7 +40,7 @@ static int GNMFileDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( (poOpenInfo->nOpenFlags & GDAL_OF_GNM) == 0 )
         return FALSE;
 
-    char **papszFiles = CPLReadDir( poOpenInfo->pszFilename );
+    char **papszFiles = VSIReadDir( poOpenInfo->pszFilename );
     if( CSLCount(papszFiles) == 0 )
     {
         return FALSE;
@@ -155,5 +155,3 @@ void RegisterGNMFile()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-
