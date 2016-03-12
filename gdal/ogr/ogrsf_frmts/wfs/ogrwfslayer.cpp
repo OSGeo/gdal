@@ -377,9 +377,9 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
         if( poProperty->GetType() == GMLPT_Boolean ||
             poProperty->GetType() == GMLPT_BooleanList )
             oField.SetSubType(OFSTBoolean);
-        else if( poProperty->GetType() == GMLPT_Short) 
+        else if( poProperty->GetType() == GMLPT_Short)
             oField.SetSubType(OFSTInt16);
-        else if( poProperty->GetType() == GMLPT_Float) 
+        else if( poProperty->GetType() == GMLPT_Float)
             oField.SetSubType(OFSTFloat32);
         if( !poDS->IsEmptyAsNull() )
             oField.SetNullable(poProperty->IsNullable());

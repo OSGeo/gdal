@@ -218,7 +218,7 @@ void OGRCloudantTableLayer::GetSpatialView()
         if (bHasStandardSpatial)
             pszSpatialView = "_design/SpatialView/_geo/spatial";
 
-        papszTokens = 
+        papszTokens =
             CSLTokenizeString2( pszSpatialView, "/", 0);
 
         if ((papszTokens[0] == NULL) || (papszTokens[1] == NULL))
@@ -233,8 +233,7 @@ void OGRCloudantTableLayer::GetSpatialView()
 
         snprintf(pszSpatialDDoc, nLen, "%s/%s", papszTokens[0], papszTokens[1]);
 
-        CSLDestroy(papszTokens);  
-
+        CSLDestroy(papszTokens);
     }
 }
 
@@ -304,7 +303,7 @@ void OGRCloudantTableLayer::WriteMetadata()
                 pszEpsg = poSRS->GetAuthorityCode("GEOGCS");
         }
 
-        if (pszEpsg != NULL) 
+        if (pszEpsg != NULL)
         {
             const char * pszUrn = "urn:ogc:def:crs:epsg::";
             CPLStrlcpy(szSrid, pszUrn, sizeof(szSrid));
@@ -313,7 +312,7 @@ void OGRCloudantTableLayer::WriteMetadata()
                 json_object_object_add(poDDocObj, "srsid",
                                    json_object_new_string(pszUrn));
 
-            } 
+            }
         }
     }
 
@@ -494,7 +493,7 @@ void OGRCloudantTableLayer::LoadMetadata()
         poFeatureDefn->Reference();
 
         poFeatureDefn->SetGeomType(eGeomType);
-        if( poFeatureDefn->GetGeomFieldCount() != 0 ) 
+        if( poFeatureDefn->GetGeomFieldCount() != 0 )
             poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
         OGRFieldDefn oFieldId("_id", OFTString);

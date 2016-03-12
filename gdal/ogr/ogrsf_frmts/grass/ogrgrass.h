@@ -87,7 +87,7 @@ class OGRGRASSLayer : public OGRLayer
 
     int			iNextId;
     int			nTotalCount;
-    int			iLayer;		// Layer number 
+    int			iLayer;		// Layer number
     int			iLayerIndex;	// Layer index (in GRASS category index)
     int			iCatField;	// Field where category (key) is stored
     int			nFields;
@@ -107,7 +107,7 @@ class OGRGRASSLayer : public OGRLayer
     bool		bCursorOpened;	// Sequential database cursor opened
     int 		iCurrentCat;	// Current category in select cursor
 
-    struct line_pnts	*poPoints; 
+    struct line_pnts	*poPoints;
     struct line_cats	*poCats;
 
     bool		StartDbDriver ();
@@ -146,7 +146,7 @@ class OGRGRASSDataSource : public OGRDataSource
     int                 TestCapability( const char * );
 
     // Not implemented (returns NULL):
-    virtual OGRLayer    *ICreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -182,7 +182,7 @@ class OGRGRASSDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 
     // Not implemented (return error/NULL):
-    virtual OGRDataSource *CreateDataSource( const char *pszName, 
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
 	    				     char ** = NULL );
     OGRErr              DeleteDataSource( const char *pszDataSource );
 };

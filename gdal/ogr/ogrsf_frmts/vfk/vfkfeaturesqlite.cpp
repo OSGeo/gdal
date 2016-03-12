@@ -52,7 +52,7 @@ VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poD
 }
 
 /*!
-  \brief VFKFeatureSQLite constructor 
+  \brief VFKFeatureSQLite constructor
 
   \param poDataBlock pointer to related IVFKDataBlock
   \param iRowId feature DB rowid (starts at 1)
@@ -122,7 +122,7 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
     rc = sqlite3_prepare(poDB, pszSQLCommand, -1,
                          &m_hStmt, NULL);
     if (rc != SQLITE_OK) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(poDB));
 
@@ -133,8 +133,8 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
     }
     rc = sqlite3_step(m_hStmt);
     if (rc != SQLITE_ROW) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "In ExecuteSQL(): sqlite3_step(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(poDB));
 
         if (m_hStmt) {

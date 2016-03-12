@@ -1279,7 +1279,7 @@ void kml2field (
 
         /***** special case for gx:Track ******/
         /* we set the first timestamp as begin and the last one as end */
-        if ( poKmlGeometry->Type (  )  == kmldom::Type_GxTrack && 
+        if ( poKmlGeometry->Type (  )  == kmldom::Type_GxTrack &&
              !poKmlFeature->has_timeprimitive (  ) ) {
             GxTrackPtr poKmlGxTrack = AsGxTrack ( poKmlGeometry );
             size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
@@ -1294,7 +1294,7 @@ void kml2field (
 
         /***** special case for gx:MultiTrack ******/
         /* we set the first timestamp as begin and the last one as end */
-        else if ( poKmlGeometry->Type (  )  == kmldom::Type_GxMultiTrack && 
+        else if ( poKmlGeometry->Type (  )  == kmldom::Type_GxMultiTrack &&
              !poKmlFeature->has_timeprimitive (  ) ) {
             GxMultiTrackPtr poKmlGxMultiTrack = AsGxMultiTrack ( poKmlGeometry );
             size_t nGeom = poKmlGxMultiTrack->get_gx_track_array_size (  );
@@ -1600,12 +1600,12 @@ SimpleFieldPtr FieldDef2kml (
     case OFTIntegerList:
         poKmlSimpleField->set_type ( "int" );
         return poKmlSimpleField;
-			
+
     case OFTReal:
     case OFTRealList:
         poKmlSimpleField->set_type ( "float" );
         return poKmlSimpleField;
-	
+
     case OFTString:
     case OFTStringList:
         poKmlSimpleField->set_type ( "string" );
@@ -1695,11 +1695,11 @@ void kml2FeatureDef (
 
 /*******************************************************************************
  * function to fetch the field config options
- * 
+ *
 *******************************************************************************/
 
 void get_fieldconfig( struct fieldconfig *oFC) {
-	
+
     oFC->namefield = CPLGetConfigOption ( "LIBKML_NAME_FIELD",
                                                   "Name" );
     oFC->descfield = CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD",

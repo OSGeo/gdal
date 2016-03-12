@@ -154,7 +154,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
 /*      Does it end in the extension .shp indicating the user likely    */
 /*      wants to create a single file set?                              */
 /* -------------------------------------------------------------------- */
-    else if( EQUAL(CPLGetExtension(pszName),"shp") 
+    else if( EQUAL(CPLGetExtension(pszName),"shp")
              || EQUAL(CPLGetExtension(pszName),"dbf") )
     {
         bSingleNewFile = TRUE;
@@ -202,8 +202,8 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 {
     int iExt;
     VSIStatBufL sStatBuf;
-    static const char * const apszExtensions[] = 
-        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", 
+    static const char * const apszExtensions[] =
+        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
           "qix", "cpg", NULL };
 
     if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
@@ -215,7 +215,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
         return CE_Failure;
     }
 
-    if( VSI_ISREG(sStatBuf.st_mode) 
+    if( VSI_ISREG(sStatBuf.st_mode)
         && (EQUAL(CPLGetExtension(pszDataSource),"shp")
             || EQUAL(CPLGetExtension(pszDataSource),"shx")
             || EQUAL(CPLGetExtension(pszDataSource),"dbf")) )
@@ -233,15 +233,15 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
         char **papszDirEntries = VSIReadDir( pszDataSource );
         int  iFile;
 
-        for( iFile = 0; 
+        for( iFile = 0;
              papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
              iFile++ )
         {
-            if( CSLFindString( (char **) apszExtensions, 
+            if( CSLFindString( (char **) apszExtensions,
                                CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
-                VSIUnlink( CPLFormFilename( pszDataSource, 
-                                            papszDirEntries[iFile], 
+                VSIUnlink( CPLFormFilename( pszDataSource,
+                                            papszDirEntries[iFile],
                                             NULL ) );
             }
         }

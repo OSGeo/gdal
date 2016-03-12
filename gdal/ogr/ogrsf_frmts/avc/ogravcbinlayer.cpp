@@ -131,9 +131,9 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
         AVCE00ReadPtr psInfo
             = static_cast<OGRAVCBinDataSource *>( poDS )->GetInfo();
 
-        hFile = AVCBinReadOpen(psInfo->pszCoverPath, 
-                               m_psSection->pszFilename, 
-                               psInfo->eCoverType, 
+        hFile = AVCBinReadOpen(psInfo->pszCoverPath,
+                               m_psSection->pszFilename,
+                               psInfo->eCoverType,
                                m_psSection->eType,
                                psInfo->psDBCSInfo);
     }
@@ -186,7 +186,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /*      If this is a polygon layer, try to assemble the arcs to form    */
 /*      the whole polygon geometry.                                     */
 /* -------------------------------------------------------------------- */
-    if( m_psSection->eType == AVCFilePAL 
+    if( m_psSection->eType == AVCFilePAL
         || m_psSection->eType == AVCFileRPL )
         FormPolygonGeometry( poFeature, (AVCPal *) pFeature );
 
@@ -211,14 +211,14 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
     OGRFeature *poFeature = GetFeature( -3 );
 
     // Skip universe polygon.
-    if( poFeature != NULL && poFeature->GetFID() == 1 
+    if( poFeature != NULL && poFeature->GetFID() == 1
         && m_psSection->eType == AVCFilePAL )
     {
         OGRFeature::DestroyFeature( poFeature );
         poFeature = GetFeature( -3 );
     }
 
-    while( poFeature != NULL 
+    while( poFeature != NULL
            && ((m_poAttrQuery != NULL
                 && !m_poAttrQuery->Evaluate( poFeature ) )
                || !FilterGeometry( poFeature->GetGeometryRef() ) ) )
@@ -253,7 +253,7 @@ int OGRAVCBinLayer::TestCapability( const char * pszCap )
 /*      them into the appropriate OGR geometry on the target feature.   */
 /************************************************************************/
 
-int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature, 
+int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
                                          AVCPal *psPAL )
 
 {
@@ -291,7 +291,7 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
         // arc is a "bridge" arc and can be discarded.  If we don't discard
         // it, then we should double it as bridge arcs seem to only appear
         // once.  But by discarding it we ensure a multi-ring polygon will be
-        // properly formed. 
+        // properly formed.
         if( psPAL->pasArcs[iArc].nAdjPoly == psPAL->nPolyId )
             continue;
 
@@ -436,7 +436,7 @@ int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Translate it.                                                   */
 /* -------------------------------------------------------------------- */
-    return TranslateTableFields( poFeature, nTableBaseField, 
-                                 hTable->hdr.psTableDef, 
+    return TranslateTableFields( poFeature, nTableBaseField,
+                                 hTable->hdr.psTableDef,
                                  (AVCField *) hRecord );
 }

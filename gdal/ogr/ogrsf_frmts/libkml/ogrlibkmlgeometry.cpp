@@ -161,7 +161,7 @@ ElementPtr geom2kml (
         numpoints = poOgrLineString->getNumPoints (  );
         if( extra >= 0 )
         {
-            if( numpoints < 4 && 
+            if( numpoints < 4 &&
                 CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "A linearring should have at least 4 points");
@@ -170,7 +170,7 @@ ElementPtr geom2kml (
         }
         else
         {
-            if( numpoints < 2 && 
+            if( numpoints < 2 &&
                 CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "A linestring should have at least 2 points");
@@ -238,7 +238,7 @@ ElementPtr geom2kml (
         numpoints = poOgrLineString->getNumPoints (  );
         if( extra >= 0 )
         {
-            if( numpoints < 4 && 
+            if( numpoints < 4 &&
                 CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "A linearring should have at least 4 points");
@@ -247,7 +247,7 @@ ElementPtr geom2kml (
         }
         else
         {
-            if( numpoints < 2 && 
+            if( numpoints < 2 &&
                 CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "A linestring should have at least 2 points");
@@ -373,7 +373,7 @@ ElementPtr geom2kml (
 
         nGeom = poOgrMultiGeom->getNumGeometries (  );
 
-        if( nGeom == 1 && 
+        if( nGeom == 1 &&
             CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
         {
             CPLDebug("LIBKML", "Turning multiple geometry into single geometry");
@@ -382,7 +382,7 @@ ElementPtr geom2kml (
         }
         else
         {
-            if( nGeom == 0 && 
+            if( nGeom == 0 &&
                 CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             {
                 CPLError(CE_Warning, CPLE_AppDefined, "Empty multi geometry are not recommended");
@@ -414,7 +414,7 @@ ElementPtr geom2kml (
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
-            poOgrSRS        pointer to the spatial ref to set on the geometry 
+            poOgrSRS        pointer to the spatial ref to set on the geometry
 
 Returns:
             pointer to the new ogr geometry object
@@ -739,7 +739,7 @@ OGRGeometry *kml2geom_latlonquad_int (
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
-            poOgrSRS        pointer to the spatial ref to set on the geometry 
+            poOgrSRS        pointer to the spatial ref to set on the geometry
 
 Returns:
             pointer to the new ogr geometry object
@@ -767,7 +767,7 @@ OGRGeometry *kml2geom (
 
         /***** transform *****/
 
-        OGRGeometry *poOgrDstGeometry = 
+        OGRGeometry *poOgrDstGeometry =
             OGRGeometryFactory::transformWithOptions(poOgrGeometry,
                                                         NULL,
                                                         papszTransformOptions);
@@ -806,7 +806,7 @@ OGRGeometry *kml2geom_latlonbox (
 
         /***** transform *****/
 
-        OGRGeometry *poOgrDstGeometry = 
+        OGRGeometry *poOgrDstGeometry =
             OGRGeometryFactory::transformWithOptions(poOgrGeometry,
                                                         NULL,
                                                         papszTransformOptions);
@@ -845,7 +845,7 @@ OGRGeometry *kml2geom_latlonquad (
 
         /***** transform *****/
 
-        OGRGeometry *poOgrDstGeometry = 
+        OGRGeometry *poOgrDstGeometry =
             OGRGeometryFactory::transformWithOptions(poOgrGeometry,
                                                         NULL,
                                                         papszTransformOptions);

@@ -111,7 +111,7 @@ VFKPropertyDefn::~VFKPropertyDefn()
 }
 
 /*!
-  \brief Get SQL data type 
+  \brief Get SQL data type
 
   \return string with data type ("text" by default)
 */

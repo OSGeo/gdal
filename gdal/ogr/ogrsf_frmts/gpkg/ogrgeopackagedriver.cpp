@@ -29,7 +29,7 @@
 
 #include "ogr_geopackage.h"
 
-// g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal 
+// g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
 
 
 /* "GP10" in ASCII bytes */
@@ -123,7 +123,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
             }
         }
     }
-    else if( !bIsRecognizedExtension 
+    else if( !bIsRecognizedExtension
 #ifdef DEBUG
               && !EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")
 #endif

@@ -60,7 +60,7 @@ OGRDB2Layer::~OGRDB2Layer()
              "m_nFeaturesRead: %d; poFeatureDefn: %p", m_nFeaturesRead,poFeatureDefn);
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
-        CPLDebug( "OGR_DB2Layer", 
+        CPLDebug( "OGR_DB2Layer",
                   "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
@@ -107,7 +107,7 @@ CPLErr OGRDB2Layer::BuildFeatureDefn( const char *pszLayerName,
 
     CPLFree(panFieldOrdinals);
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
-    
+
     /* -------------------------------------------------------------------- */
     /*      If we don't already have an FID, check if there is a special    */
     /*      FID named column available.                                     */
@@ -118,11 +118,11 @@ CPLErr OGRDB2Layer::BuildFeatureDefn( const char *pszLayerName,
                                  "OBJECTID");
         for( int iCol = 0; iCol < nRawColumns; iCol++ )
         {
-            if( EQUAL(poStmt->GetColName(iCol),pszOGR_FID) ) 
+            if( EQUAL(poStmt->GetColName(iCol),pszOGR_FID) )
             {
-                pszFIDColumn = CPLStrdup(pszOGR_FID); 
+                pszFIDColumn = CPLStrdup(pszOGR_FID);
                 break;
-            }        
+            }
         }
     }
 
@@ -134,7 +134,7 @@ CPLErr OGRDB2Layer::BuildFeatureDefn( const char *pszLayerName,
         CPLDebug( "OGR_DB2Layer::BuildFeatureDefn",
                   "Table %s has no identified FID column.",
                   poFeatureDefn->GetName() );
-                  
+
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
         if ( pszGeomColumn == NULL )

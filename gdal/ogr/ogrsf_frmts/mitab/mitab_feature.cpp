@@ -26,7 +26,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -294,13 +294,13 @@ TABFeature *TABFeature::CreateFromMapInfoType(int nMapInfoType,
       case TAB_GEOM_COLLECTION:
       case TAB_GEOM_V800_COLLECTION_C:
       case TAB_GEOM_V800_COLLECTION:
-        poFeature = new TABCollection(poDefn);  
+        poFeature = new TABCollection(poDefn);
         break;
       default:
         /*-------------------------------------------------------------
          * Unsupported feature type... we still return a valid feature
          * with NONE geometry after producing a Warning.
-         * Callers can trap that case by checking CPLGetLastErrorNo() 
+         * Callers can trap that case by checking CPLGetLastErrorNo()
          * against TAB_WarningFeatureTypeNotSupported
          *------------------------------------------------------------*/
 //        poFeature = new TABDebugFeature(poDefn);
@@ -373,7 +373,7 @@ void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
  * It is possible to create the clone with a different OGRFeatureDefn,
  * in this case, the fields won't be copied of course.
  *
- * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABFeature::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -398,7 +398,7 @@ TABFeature *TABFeature::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  *
  * Set the values for the MBR corners for this feature.
  **********************************************************************/
-void TABFeature::SetMBR(double dXMin, double dYMin, 
+void TABFeature::SetMBR(double dXMin, double dYMin,
                         double dXMax, double dYMax)
 {
     m_dXMin = MIN(dXMin, dXMax);
@@ -412,7 +412,7 @@ void TABFeature::SetMBR(double dXMin, double dYMin,
  *
  * Return the values for the MBR corners for this feature.
  **********************************************************************/
-void TABFeature::GetMBR(double &dXMin, double &dYMin, 
+void TABFeature::GetMBR(double &dXMin, double &dYMin,
                         double &dXMax, double &dYMax)
 {
     dXMin = m_dXMin;
@@ -426,7 +426,7 @@ void TABFeature::GetMBR(double &dXMin, double &dYMin,
  *
  * Set the integer coordinates values of the MBR of this feature.
  **********************************************************************/
-void TABFeature::SetIntMBR(GInt32 nXMin, GInt32 nYMin, 
+void TABFeature::SetIntMBR(GInt32 nXMin, GInt32 nYMin,
                            GInt32 nXMax, GInt32 nYMax)
 {
     m_nXMin = nXMin;
@@ -440,7 +440,7 @@ void TABFeature::SetIntMBR(GInt32 nXMin, GInt32 nYMin,
  *
  * Return the integer coordinates values of the MBR of this feature.
  **********************************************************************/
-void TABFeature::GetIntMBR(GInt32 &nXMin, GInt32 &nYMin, 
+void TABFeature::GetIntMBR(GInt32 &nXMin, GInt32 &nYMin,
                            GInt32 &nXMax, GInt32 &nYMax)
 {
     nXMin = m_nXMin;
@@ -452,11 +452,11 @@ void TABFeature::GetIntMBR(GInt32 &nXMin, GInt32 &nYMin,
 /**********************************************************************
  *                   TABFeature::ReadRecordFromDATFile()
  *
- * Fill the fields part of the feature from the contents of the 
+ * Fill the fields part of the feature from the contents of the
  * table record pointed to by poDATFile.
  *
  * It is assumed that poDATFile currently points to the beginning of
- * the table record and that this feature's OGRFeatureDefn has been 
+ * the table record and that this feature's OGRFeatureDefn has been
  * properly initialized for this table.
  **********************************************************************/
 int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
@@ -568,7 +568,7 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
  * Write the attribute part of the feature to the .DAT file.
  *
  * It is assumed that poDATFile currently points to the beginning of
- * the table record and that this feature's OGRFeatureDefn has been 
+ * the table record and that this feature's OGRFeatureDefn has been
  * properly initialized for this table.
  *
  * Returns 0 on success, -1 on error.
@@ -594,7 +594,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
         // Hack for "extra" introduced field.
         if( iField >= GetDefnRef()->GetFieldCount() )
         {
-            CPLAssert( poDATFile->GetFieldType(iField) == TABFInteger 
+            CPLAssert( poDATFile->GetFieldType(iField) == TABFInteger
                        && iField == 0 );
             nStatus = poDATFile->WriteIntegerField( (int)GetFID(), poINDFile, 0 );
             continue;
@@ -681,7 +681,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                  fSec = 0;
              }
 
-             nStatus = poDATFile->WriteDateTimeField(nYear, nMon, nDay, 
+             nStatus = poDATFile->WriteDateTimeField(nYear, nMon, nDay,
                                                      nHour, nMin, (int)fSec,
                                                      OGR_GET_MS(fSec),
                                                      poINDFile, panIndexNo[iField]);
@@ -716,7 +716,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
  *
  * bCoordBlockDataOnly=TRUE is used when this method is called to copy only
  * the CoordBlock data during splitting of object blocks. In this case we
- * need to process only the information related to the CoordBlock. One 
+ * need to process only the information related to the CoordBlock. One
  * important thing to avoid is reading/writing pen/brush/symbol definitions
  * as that would screw up their ref counters.
  *
@@ -726,13 +726,13 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
  *
  * The current implementation does nothing since instances of TABFeature
  * objects contain no geometry (i.e. TAB_GEOM_NONE).
- * 
+ *
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
 int TABFeature::ReadGeometryFromMAPFile(TABMAPFile * /*poMapFile*/,
                                         TABMAPObjHdr * /*poObjHdr*/,
-                                        GBool /*bCoordBlockDataOnly=FALSE*/, 
+                                        GBool /*bCoordBlockDataOnly=FALSE*/,
                                         TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /*-----------------------------------------------------------------
@@ -784,10 +784,10 @@ int TABFeature::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
  *
  * Checks the feature envelope to establish if the feature should be
  * written using Compressed coordinates or not and adjust m_nMapInfoType
- * accordingly. Calling this method also sets (initializes) m_nXMin, m_nYMin, 
+ * accordingly. Calling this method also sets (initializes) m_nXMin, m_nYMin,
  * m_nXMax, m_nYMax
  *
- * This function should be used only by the ValidateMapInfoType() 
+ * This function should be used only by the ValidateMapInfoType()
  * implementations.
  *
  * Returns TRUE if coord. should be compressed, FALSE otherwise
@@ -826,14 +826,14 @@ GBool TABFeature::ValidateCoordType(TABMAPFile * poMapFile)
 /**********************************************************************
  *                   TABFeature::ForceCoordTypeAndOrigin()
  *
- * This function is used by TABCollection::ValidateMapInfoType() to force 
- * the coord type and compressed origin of all members of a collection 
- * to be the same. (A replacement for ValidateCoordType() for this 
+ * This function is used by TABCollection::ValidateMapInfoType() to force
+ * the coord type and compressed origin of all members of a collection
+ * to be the same. (A replacement for ValidateCoordType() for this
  * specific case)
  **********************************************************************/
 void TABFeature::ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, GBool bCompr,
                                          GInt32 nComprOrgX, GInt32 nComprOrgY,
-                                         GInt32 nXMin, GInt32 nYMin, 
+                                         GInt32 nXMin, GInt32 nYMin,
                                          GInt32 nXMax, GInt32 nYMax)
 {
     /*-------------------------------------------------------------
@@ -868,7 +868,7 @@ void TABFeature::ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, GBool bCompr,
  *
  * bCoordBlockDataOnly=TRUE is used when this method is called to copy only
  * the CoordBlock data during splitting of object blocks. In this case we
- * need to process only the information related to the CoordBlock. One 
+ * need to process only the information related to the CoordBlock. One
  * important thing to avoid is reading/writing pen/brush/symbol definitions
  * as that would screw up their ref counters.
  *
@@ -878,13 +878,13 @@ void TABFeature::ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, GBool bCompr,
  *
  * The current implementation does nothing since instances of TABFeature
  * objects contain no geometry (i.e. TAB_GEOM_NONE).
- * 
+ *
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
  **********************************************************************/
 int TABFeature::WriteGeometryToMAPFile(TABMAPFile * /* poMapFile*/,
                                        TABMAPObjHdr * /*poObjHdr*/,
-                                       GBool /*bCoordBlockDataOnly=FALSE*/, 
+                                       GBool /*bCoordBlockDataOnly=FALSE*/,
                                        TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /*-----------------------------------------------------------------
@@ -967,7 +967,7 @@ TABPoint::~TABPoint()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CloneTABFeature() and 
+ * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
@@ -1004,8 +1004,8 @@ TABGeomType TABPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     OGRGeometry *poGeom;
 
     /*-----------------------------------------------------------------
-     * Fetch and validate geometry 
-     * __TODO__ For now we always write in uncompressed format (until we 
+     * Fetch and validate geometry
+     * __TODO__ For now we always write in uncompressed format (until we
      * find that this is not correct... note that at this point the
      * decision to use compressed/uncompressed will likely be based on
      * the distance between the point and the object block center in
@@ -1054,7 +1054,7 @@ TABGeomType TABPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                       TABMAPObjHdr *poObjHdr,
-                                      GBool bCoordBlockDataOnly /*=FALSE*/, 
+                                      GBool bCoordBlockDataOnly /*=FALSE*/,
                                       TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     double              dX, dY;
@@ -1096,7 +1096,7 @@ int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dX, dY, dX, dY);
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     return 0;
@@ -1115,7 +1115,7 @@ int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                      TABMAPObjHdr *poObjHdr,
-                                     GBool bCoordBlockDataOnly /*=FALSE*/, 
+                                     GBool bCoordBlockDataOnly /*=FALSE*/,
                                      TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     GInt32              nX, nY;
@@ -1276,7 +1276,7 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
     if (GetFeatureClass() == TABFCFontPoint)
     {
         TABFontPoint *poFeature = (TABFontPoint *)this;
-        fprintf(fpOut, "  m_nFontStyle     = 0x%2.2x (%d)\n", 
+        fprintf(fpOut, "  m_nFontStyle     = 0x%2.2x (%d)\n",
                 poFeature->GetFontStyleTABValue(),
                 poFeature->GetFontStyleTABValue());
 
@@ -1286,10 +1286,10 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
     {
         TABCustomPoint *poFeature = (TABCustomPoint *)this;
 
-        fprintf(fpOut, "  m_nUnknown_      = 0x%2.2x (%d)\n", 
+        fprintf(fpOut, "  m_nUnknown_      = 0x%2.2x (%d)\n",
                 poFeature->m_nUnknown_, poFeature->m_nUnknown_);
-        fprintf(fpOut, "  m_nCustomStyle   = 0x%2.2x (%d)\n", 
-                poFeature->GetCustomSymbolStyle(), 
+        fprintf(fpOut, "  m_nCustomStyle   = 0x%2.2x (%d)\n",
+                poFeature->GetCustomSymbolStyle(),
                 poFeature->GetCustomSymbolStyle());
 
         poFeature->DumpFontDef(fpOut);
@@ -1329,7 +1329,7 @@ TABFontPoint::~TABFontPoint()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CloneTABFeature() and 
+ * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABFontPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
@@ -1337,7 +1337,7 @@ TABFeature *TABFontPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
      *----------------------------------------------------------------*/
-    TABFontPoint *poNew = new TABFontPoint(poNewDefn ? poNewDefn : 
+    TABFontPoint *poNew = new TABFontPoint(poNewDefn ? poNewDefn :
                                                        GetDefnRef());
 
     CopyTABFeatureBase(poNew);
@@ -1436,7 +1436,7 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dX, dY, dX, dY);
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     return 0;
@@ -1455,7 +1455,7 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                          TABMAPObjHdr *poObjHdr,
-                                         GBool bCoordBlockDataOnly /*=FALSE*/, 
+                                         GBool bCoordBlockDataOnly /*=FALSE*/,
                                          TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     GInt32              nX, nY;
@@ -1554,7 +1554,7 @@ void TABFontPoint::ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStyleOn)
  * The reason why we have to differentiate between the TAB and the MIF font
  * style values is that in TAB, TABFSBox is included in the style value
  * as code 0x100, but in MIF it is not included, instead it is implied by
- * the presence of the BG color in the FONT() clause (the BG color is 
+ * the presence of the BG color in the FONT() clause (the BG color is
  * present only when TABFSBox or TABFSHalo is set).
  * This also has the effect of shifting all the other style values > 0x100
  * by 1 byte.
@@ -1600,7 +1600,7 @@ const char *TABFontPoint::GetStyleString()
 {
     if (m_pszStyleString == NULL)
     {
-        /* Get the SymbolStyleString, and add the outline Color 
+        /* Get the SymbolStyleString, and add the outline Color
            (halo/border in MapInfo Symbol terminology) */
         char *pszSymbolStyleString = CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
         int nStyleStringlen = static_cast<int>(strlen(pszSymbolStyleString));
@@ -1654,7 +1654,7 @@ TABCustomPoint::~TABCustomPoint()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CloneTABFeature() and 
+ * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABCustomPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -1662,7 +1662,7 @@ TABFeature *TABCustomPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
      *----------------------------------------------------------------*/
-    TABCustomPoint *poNew = new TABCustomPoint(poNewDefn ? poNewDefn : 
+    TABCustomPoint *poNew = new TABCustomPoint(poNewDefn ? poNewDefn :
                                                            GetDefnRef());
 
     CopyTABFeatureBase(poNew);
@@ -1724,7 +1724,7 @@ int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     TABMAPObjCustomPoint *poPointHdr = (TABMAPObjCustomPoint *)poObjHdr;
 
-    m_nUnknown_    = poPointHdr->m_nUnknown_;   // ??? 
+    m_nUnknown_    = poPointHdr->m_nUnknown_;   // ???
     m_nCustomStyle = poPointHdr->m_nCustomStyle;// 0x01=Show BG,
                                                 // 0x02=Apply Color
 
@@ -1743,7 +1743,7 @@ int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dX, dY, dX, dY);
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     return 0;
@@ -1870,7 +1870,7 @@ TABPolyline::~TABPolyline()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CloneTABFeature() and 
+ * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABPolyline::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -1934,7 +1934,7 @@ int TABPolyline::GetNumParts()
  * Returns a reference to the specified OGRLineString number, hiding the
  * complexity of dealing with OGRMultiLineString vs OGRLineString cases.
  *
- * Returns NULL if the geometry contained in the object is invalid or 
+ * Returns NULL if the geometry contained in the object is invalid or
  * missing or if the specified part index is invalid.
  **********************************************************************/
 OGRLineString *TABPolyline::GetPartRef(int nPartIndex)
@@ -2004,12 +2004,12 @@ TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
         {
             m_nMapInfoType = TAB_GEOM_PLINE;
         }
-        else if ( (poLine->getNumPoints() == 2) && 
+        else if ( (poLine->getNumPoints() == 2) &&
                   (m_bWriteTwoPointLineAsPolyline == TRUE) )
         {
            m_nMapInfoType = TAB_GEOM_PLINE;
         }
-        else if ( (poLine->getNumPoints() == 2) && 
+        else if ( (poLine->getNumPoints() == 2) &&
                   (m_bWriteTwoPointLineAsPolyline == FALSE) )
         {
             m_nMapInfoType = TAB_GEOM_LINE;
@@ -2125,7 +2125,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         poGeometry = poLine = new OGRLineString();
         poLine->setNumPoints(2);
 
-        poMapFile->Int2Coordsys(poLineHdr->m_nX1, poLineHdr->m_nY1, 
+        poMapFile->Int2Coordsys(poLineHdr->m_nX1, poLineHdr->m_nY1,
                                 dXMin, dYMin);
         poLine->setPoint(0, dXMin, dYMin);
 
@@ -2160,7 +2160,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         m_bSmooth       = poPLineHdr->m_bSmooth;
 
         // Centroid/label point
-        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY,
                                 dX, dY);
         SetCenter(dX, dY);
 
@@ -2169,9 +2169,9 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         m_nComprOrgY = poPLineHdr->m_nComprOrgY;
 
         // MBR
-        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY,
                                 dXMin, dYMin);
-        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY,
                                 dXMax, dYMax);
 
         if (!bCoordBlockDataOnly)
@@ -2192,7 +2192,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         if (poCoordBlock == NULL)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Can't access coordinate block at offset %d", 
+                     "Can't access coordinate block at offset %d",
                      nCoordBlockPtr);
             return -1;
         }
@@ -2217,7 +2217,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             // Failed ... error message has already been produced
             delete poGeometry;
             return nStatus;
-        }   
+        }
 
     }
     else if (m_nMapInfoType == TAB_GEOM_MULTIPLINE ||
@@ -2248,7 +2248,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         m_bSmooth       = poPLineHdr->m_bSmooth;
 
         // Centroid/label point
-        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY,
                                 dX, dY);
         SetCenter(dX, dY);
 
@@ -2257,9 +2257,9 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         m_nComprOrgY = poPLineHdr->m_nComprOrgY;
 
         // MBR
-        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY,
                                 dXMin, dYMin);
-        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY,
                                 dXMax, dYMax);
 
         if (!bCoordBlockDataOnly)
@@ -2282,12 +2282,12 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             poCoordBlock = poMapFile->GetCoordBlock(nCoordBlockPtr);
 
         if (poCoordBlock == NULL ||
-            poCoordBlock->ReadCoordSecHdrs(bComprCoord, nVersion, 
+            poCoordBlock->ReadCoordSecHdrs(bComprCoord, nVersion,
                                            numLineSections,
                                            pasSecHdrs, numPointsTotal) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed reading coordinate data at offset %d", 
+                     "Failed reading coordinate data at offset %d",
                      nCoordBlockPtr);
             CPLFree(pasSecHdrs);
             return -1;
@@ -2305,7 +2305,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         if (poCoordBlock->ReadIntCoords(bComprCoord,numPointsTotal,panXY) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed reading coordinate data at offset %d", 
+                     "Failed reading coordinate data at offset %d",
                      nCoordBlockPtr);
             CPLFree(pasSecHdrs);
             CPLFree(panXY);
@@ -2363,7 +2363,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     /* Return a ref to coord block so that caller can continue reading
@@ -2408,7 +2408,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
 
-    if ((m_nMapInfoType == TAB_GEOM_LINE || 
+    if ((m_nMapInfoType == TAB_GEOM_LINE ||
          m_nMapInfoType == TAB_GEOM_LINE_C ) &&
         poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString &&
         (poLine = (OGRLineString*)poGeom)->getNumPoints() == 2)
@@ -2418,9 +2418,9 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
          *============================================================*/
         TABMAPObjLine *poLineHdr = (TABMAPObjLine *)poObjHdr;
 
-        poMapFile->Coordsys2Int(poLine->getX(0), poLine->getY(0), 
+        poMapFile->Coordsys2Int(poLine->getX(0), poLine->getY(0),
                                 poLineHdr->m_nX1, poLineHdr->m_nY1);
-        poMapFile->Coordsys2Int(poLine->getX(1), poLine->getY(1), 
+        poMapFile->Coordsys2Int(poLine->getX(1), poLine->getY(1),
                                 poLineHdr->m_nX2, poLineHdr->m_nY2);
         poLineHdr->SetMBR(poLineHdr->m_nX1, poLineHdr->m_nY1,
                           poLineHdr->m_nX2, poLineHdr->m_nY2 );
@@ -2463,12 +2463,12 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         for(i=0; nStatus == 0 && i<numPoints; i++)
         {
             poMapFile->Coordsys2Int(poLine->getX(i), poLine->getY(i), nX, nY);
-            if ((nStatus = poCoordBlock->WriteIntCoord(nX, nY, 
+            if ((nStatus = poCoordBlock->WriteIntCoord(nX, nY,
                                                        bCompressed)) != 0)
             {
                 // Failed ... error message has already been produced
                 return nStatus;
-            }   
+            }
         }
 
         nCoordDataSize = poCoordBlock->GetFeatureDataSize();
@@ -2491,7 +2491,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         double dX, dY;
         if (GetCenter(dX, dY) != -1)
         {
-            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX, 
+            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX,
                                     poPLineHdr->m_nLabelY);
         }
         else
@@ -2569,7 +2569,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         {
             return -1;
         }
-        
+
         /*-------------------------------------------------------------
          * In calculation of nDataOffset, we have to take into account that
          * V450 header section uses int32 instead of int16 for numVertices
@@ -2620,7 +2620,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         }
 
         if (nStatus == 0)
-            nStatus = poCoordBlock->WriteCoordSecHdrs(nVersion, numLines, 
+            nStatus = poCoordBlock->WriteCoordSecHdrs(nVersion, numLines,
                                                       pasSecHdrs, bCompressed);
 
         CPLFree(pasSecHdrs);
@@ -2651,7 +2651,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                     {
                         // Failed ... error message has already been produced
                         return nStatus;
-                    }   
+                    }
                 }
             }
             else
@@ -2683,7 +2683,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         double dX, dY;
         if (GetCenter(dX, dY) != -1)
         {
-            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX, 
+            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX,
                                     poPLineHdr->m_nLabelY);
         }
         else
@@ -2818,14 +2818,14 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
 /**********************************************************************
  *                   TABPolyline::GetCenter()
  *
- * Returns the center point of the line.  Compute one if it was not 
+ * Returns the center point of the line.  Compute one if it was not
  * explicitly set:
  *
- * In MapInfo, for a simple or multiple polyline (pline), the center point 
- * in the object definition is supposed to be either the center point of 
- * the pline or the first section of a multiple pline (if an odd number of 
- * points in the pline or first section), or the midway point between the 
- * two central points (if an even number of points involved). 
+ * In MapInfo, for a simple or multiple polyline (pline), the center point
+ * in the object definition is supposed to be either the center point of
+ * the pline or the first section of a multiple pline (if an odd number of
+ * points in the pline or first section), or the midway point between the
+ * two central points (if an even number of points involved).
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
@@ -2940,7 +2940,7 @@ TABRegion::~TABRegion()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABRegion::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -3086,9 +3086,9 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         m_nComprOrgY = poPLineHdr->m_nComprOrgY;
 
         // MBR
-        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMinX, poPLineHdr->m_nMinY,
                                 dXMin, dYMin);
-        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nMaxX, poPLineHdr->m_nMaxY,
                                 dXMax, dYMax);
 
         if (!bCoordBlockDataOnly)
@@ -3121,7 +3121,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                            pasSecHdrs, numPointsTotal) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed reading coordinate data at offset %d", 
+                     "Failed reading coordinate data at offset %d",
                      nCoordBlockPtr);
             CPLFree(pasSecHdrs);
             return -1;
@@ -3137,7 +3137,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         if (poCoordBlock->ReadIntCoords(bComprCoord,numPointsTotal,panXY) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed reading coordinate data at offset %d", 
+                     "Failed reading coordinate data at offset %d",
                      nCoordBlockPtr);
             CPLFree(pasSecHdrs);
             CPLFree(panXY);
@@ -3149,7 +3149,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          * depending on the number of outer rings found in CoordSecHdr blocks.
          * The CoodSecHdr block for each outer ring in the region has a flag
          * indicating the number of inner rings that follow.
-         * In older versions of the format, the count of inner rings was 
+         * In older versions of the format, the count of inner rings was
          * always zero, so in this case we would always return MultiPolygons.
          *
          * Note: The current implementation assumes that there cannot be
@@ -3237,7 +3237,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     /* Return a ref to coord block so that caller can continue reading
@@ -3292,7 +3292,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         /*=============================================================
          * REGIONs are similar to PLINE MULTIPLE
          *
-         * We accept both OGRPolygons (with one or multiple rings) and 
+         * We accept both OGRPolygons (with one or multiple rings) and
          * OGRMultiPolygons as input.
          *============================================================*/
         int     nStatus=0, i, iRing;
@@ -3318,7 +3318,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
            m_nComprOrgX, m_nComprOrgY);
 #endif
         /*-------------------------------------------------------------
-         * Fetch total number of rings and build array of coord 
+         * Fetch total number of rings and build array of coord
          * sections headers.
          *------------------------------------------------------------*/
         numRingsTotal = ComputeNumRings(&pasSecHdrs, poMapFile);
@@ -3331,7 +3331,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
 
         if (nStatus == 0)
-            nStatus = poCoordBlock->WriteCoordSecHdrs(nVersion, numRingsTotal, 
+            nStatus = poCoordBlock->WriteCoordSecHdrs(nVersion, numRingsTotal,
                                                       pasSecHdrs, bCompressed);
 
         CPLFree(pasSecHdrs);
@@ -3368,7 +3368,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                 {
                     // Failed ... error message has already been produced
                     return nStatus;
-                }   
+                }
             }
         }/* for iRing*/
 
@@ -3392,7 +3392,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         double dX, dY;
         if (GetCenter(dX, dY) != -1)
         {
-            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX, 
+            poMapFile->Coordsys2Int(dX, dY, poPLineHdr->m_nLabelX,
                                     poPLineHdr->m_nLabelY);
         }
         else
@@ -3439,7 +3439,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
  *
  * Return the total number of rings in this object making it look like
  * all parts of the OGRMultiPolygon (or OGRPolygon) are a single collection
- * of rings... hides the complexity of handling OGRMultiPolygons vs 
+ * of rings... hides the complexity of handling OGRMultiPolygons vs
  * OGRPolygons, etc.
  *
  * Returns 0 if the geometry contained in the object is invalid or missing.
@@ -3482,7 +3482,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
 
                 if (ppasSecHdrs)
                 {
-                    if (AppendSecHdrs(poPolygon, *ppasSecHdrs, 
+                    if (AppendSecHdrs(poPolygon, *ppasSecHdrs,
                                       poMapFile, iLastSect) != 0)
                         return 0; // An error happened, return count=0
                 }
@@ -3496,7 +3496,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
 
             if (ppasSecHdrs)
             {
-                if (AppendSecHdrs(poPolygon, *ppasSecHdrs, 
+                if (AppendSecHdrs(poPolygon, *ppasSecHdrs,
                                   poMapFile, iLastSect) != 0)
                     return 0;  // An error happened, return count=0
             }
@@ -3504,7 +3504,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
     }
 
     /*-----------------------------------------------------------------
-     * If we're generating section header blocks, then init the 
+     * If we're generating section header blocks, then init the
      * coordinate offset values.
      *
      * In calculation of nDataOffset, we have to take into account that
@@ -3568,12 +3568,12 @@ int TABRegion::AppendSecHdrs(OGRPolygon *poPolygon,
 
         if (iRing == 0)
             poRing = poPolygon->getExteriorRing();
-        else 
+        else
             poRing = poPolygon->getInteriorRing(iRing-1);
 
         if (poRing == NULL)
         {
-            CPLError(CE_Failure, CPLE_AssertionFailed, 
+            CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Assertion Failed: Encountered NULL ring in OGRPolygon");
             return -1;
         }
@@ -3584,7 +3584,7 @@ int TABRegion::AppendSecHdrs(OGRPolygon *poPolygon,
 
         if (iRing == 0)
             pasSecHdrs[iLastRing].numHoles = numRingsInPolygon-1;
-        else 
+        else
             pasSecHdrs[iLastRing].numHoles = 0;
 
         poMapFile->Coordsys2Int(sEnvelope.MinX, sEnvelope.MinY,
@@ -3605,10 +3605,10 @@ int TABRegion::AppendSecHdrs(OGRPolygon *poPolygon,
  *
  * Returns a reference to the specified ring number making it look like
  * all parts of the OGRMultiPolygon (or OGRPolygon) are a single collection
- * of rings... hides the complexity of handling OGRMultiPolygons vs 
+ * of rings... hides the complexity of handling OGRMultiPolygons vs
  * OGRPolygons, etc.
  *
- * Returns NULL if the geometry contained in the object is invalid or 
+ * Returns NULL if the geometry contained in the object is invalid or
  * missing or if the specified ring index is invalid.
  **********************************************************************/
 OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
@@ -3742,7 +3742,7 @@ const char *TABRegion::GetStyleString()
 {
     if (m_pszStyleString == NULL)
     {
-        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need 
+        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need
         // to use temporary buffers
         char *pszPen = CPLStrdup(GetPenStyleString());
         char *pszBrush = CPLStrdup(GetBrushStyleString());
@@ -3827,8 +3827,8 @@ void TABRegion::DumpMIF(FILE *fpOut /*=NULL*/)
 /**********************************************************************
  *                   TABRegion::GetCenter()
  *
- * Returns the center/label point of the region.  
- * Compute one using OGRPolygonLabelPoint() if it was not explicitly set 
+ * Returns the center/label point of the region.
+ * Compute one using OGRPolygonLabelPoint() if it was not explicitly set
  * before.
  *
  * Returns 0 on success, -1 on error.
@@ -3838,7 +3838,7 @@ int TABRegion::GetCenter(double &dX, double &dY)
     if (!m_bCenterIsSet)
     {
         /*-------------------------------------------------------------
-         * Calculate label point.  If we have a multipolygon then we use 
+         * Calculate label point.  If we have a multipolygon then we use
          * the first OGRPolygon in the feature to calculate the point.
          *------------------------------------------------------------*/
         OGRPoint        oLabelPoint;
@@ -3928,7 +3928,7 @@ TABRectangle::~TABRectangle()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABRectangle::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -3936,7 +3936,7 @@ TABFeature *TABRectangle::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
      *----------------------------------------------------------------*/
-    TABRectangle *poNew = new TABRectangle(poNewDefn ? poNewDefn : 
+    TABRectangle *poNew = new TABRectangle(poNewDefn ? poNewDefn :
                                                        GetDefnRef());
 
     CopyTABFeatureBase(poNew);
@@ -3993,7 +3993,7 @@ TABGeomType TABRectangle::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
      * Decide if coordinates should be compressed or not.
      *----------------------------------------------------------------*/
     // __TODO__ For now we always write uncompressed for this class...
-    // ValidateCoordType(poMapFile);    
+    // ValidateCoordType(poMapFile);
     UpdateMBR(poMapFile);
 
     return m_nMapInfoType;
@@ -4025,8 +4025,8 @@ int TABRectangle::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
     }
 
     /*-----------------------------------------------------------------
-     * Note that we will simply use the rectangle's MBR and don't really 
-     * read the polygon geometry... this should be OK unless the 
+     * Note that we will simply use the rectangle's MBR and don't really
+     * read the polygon geometry... this should be OK unless the
      * polygon geometry was not really a rectangle.
      *----------------------------------------------------------------*/
     m_dXMin = sEnvelope.MinX;
@@ -4095,7 +4095,7 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         m_nMapInfoType == TAB_GEOM_ROUNDRECT_C)
     {
         // Read the corner's diameters
-        poMapFile->Int2CoordsysDist(poRectHdr->m_nCornerWidth, 
+        poMapFile->Int2CoordsysDist(poRectHdr->m_nCornerWidth,
                                     poRectHdr->m_nCornerHeight,
                                     m_dRoundXRadius, m_dRoundYRadius);
 
@@ -4113,9 +4113,9 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     // A rectangle is defined by its MBR
 
-    poMapFile->Int2Coordsys(poRectHdr->m_nMinX, poRectHdr->m_nMinY, 
+    poMapFile->Int2Coordsys(poRectHdr->m_nMinX, poRectHdr->m_nMinY,
                             dXMin, dYMin);
-    poMapFile->Int2Coordsys(poRectHdr->m_nMaxX, poRectHdr->m_nMaxY, 
+    poMapFile->Int2Coordsys(poRectHdr->m_nMaxX, poRectHdr->m_nMaxY,
                             dXMax, dYMax);
 
     m_nPenDefIndex = poRectHdr->m_nPenId;       // Pen index
@@ -4132,7 +4132,7 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     GetMBR(dXMin, dYMin, dXMax, dYMax);
 
     /* Copy int MBR to feature class members */
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     /*-----------------------------------------------------------------
@@ -4144,10 +4144,10 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     {
         /*-------------------------------------------------------------
          * For rounded rectangles, we generate arcs with 45 line
-         * segments for each corner.  We start with lower-left corner 
+         * segments for each corner.  We start with lower-left corner
          * and proceed counterclockwise
          * We also have to make sure that rounding radius is not too
-         * large for the MBR in the generated polygon... however, we 
+         * large for the MBR in the generated polygon... however, we
          * always return the true X/Y radius (not adjusted) since this
          * is the way MapInfo seems to do it when a radius bigger than
          * the MBR is passed from TBA to MIF.
@@ -4197,7 +4197,7 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                          TABMAPObjHdr *poObjHdr,
-                                         GBool bCoordBlockDataOnly /*=FALSE*/, 
+                                         GBool bCoordBlockDataOnly /*=FALSE*/,
                                          TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
 
@@ -4213,8 +4213,8 @@ int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry and update MBR
-     * Note that we will simply use the geometry's MBR and don't really 
-     * read the polygon geometry... this should be OK unless the 
+     * Note that we will simply use the geometry's MBR and don't really
+     * read the polygon geometry... this should be OK unless the
      * polygon geometry was not really a rectangle.
      *----------------------------------------------------------------*/
     if (UpdateMBR(poMapFile) != 0)
@@ -4225,7 +4225,7 @@ int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     TABMAPObjRectEllipse *poRectHdr = (TABMAPObjRectEllipse *)poObjHdr;
 
-    if (m_nMapInfoType == TAB_GEOM_ROUNDRECT || 
+    if (m_nMapInfoType == TAB_GEOM_ROUNDRECT ||
         m_nMapInfoType == TAB_GEOM_ROUNDRECT_C)
     {
         poMapFile->Coordsys2IntDist(m_dRoundXRadius*2.0, m_dRoundYRadius*2.0,
@@ -4266,7 +4266,7 @@ const char *TABRectangle::GetStyleString()
 {
     if (m_pszStyleString == NULL)
     {
-        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need 
+        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need
         // to use temporary buffers
         char *pszPen = CPLStrdup(GetPenStyleString());
         char *pszBrush = CPLStrdup(GetBrushStyleString());
@@ -4300,8 +4300,8 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
     double dXMin, dYMin, dXMax, dYMax;
     GetMBR(dXMin, dYMin, dXMax, dYMax);
     if (m_bRoundCorners)
-        fprintf(fpOut, "(ROUNDRECT %.15g %.15g %.15g %.15g    %.15g %.15g)\n", 
-                dXMin, dYMin, dXMax, dYMax, 
+        fprintf(fpOut, "(ROUNDRECT %.15g %.15g %.15g %.15g    %.15g %.15g)\n",
+                dXMin, dYMin, dXMax, dYMax,
                 m_dRoundXRadius, m_dRoundYRadius);
     else
         fprintf(fpOut, "(RECT %.15g %.15g %.15g %.15g)\n", dXMin, dYMin, dXMax, dYMax);
@@ -4390,7 +4390,7 @@ TABEllipse::~TABEllipse()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABEllipse::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -4398,7 +4398,7 @@ TABFeature *TABEllipse::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
     /*-----------------------------------------------------------------
      * Alloc new feature and copy the base stuff
      *----------------------------------------------------------------*/
-    TABEllipse *poNew = new TABEllipse(poNewDefn ? poNewDefn : 
+    TABEllipse *poNew = new TABEllipse(poNewDefn ? poNewDefn :
                                                    GetDefnRef());
 
     CopyTABFeatureBase(poNew);
@@ -4474,8 +4474,8 @@ int TABEllipse::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry... Polygon and point are accepted.
-     * Note that we will simply use the ellipse's MBR and don't really 
-     * read the polygon geometry... this should be OK unless the 
+     * Note that we will simply use the ellipse's MBR and don't really
+     * read the polygon geometry... this should be OK unless the
      * polygon geometry was not really an ellipse.
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
@@ -4490,7 +4490,7 @@ int TABEllipse::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
     }
 
     /*-----------------------------------------------------------------
-     * We use the center of the MBR as the ellipse center, and the 
+     * We use the center of the MBR as the ellipse center, and the
      * X/Y radius to define the MBR size.  If X/Y radius are null then
      * we'll try to use the MBR to recompute them.
      *----------------------------------------------------------------*/
@@ -4563,9 +4563,9 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     // An ellipse is defined by its MBR
 
-    poMapFile->Int2Coordsys(poRectHdr->m_nMinX, poRectHdr->m_nMinY, 
+    poMapFile->Int2Coordsys(poRectHdr->m_nMinX, poRectHdr->m_nMinY,
                             dXMin, dYMin);
-    poMapFile->Int2Coordsys(poRectHdr->m_nMaxX, poRectHdr->m_nMaxY, 
+    poMapFile->Int2Coordsys(poRectHdr->m_nMaxX, poRectHdr->m_nMaxY,
                             dXMax, dYMax);
 
     m_nPenDefIndex = poRectHdr->m_nPenId;       // Pen index
@@ -4584,7 +4584,7 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
 
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     /*-----------------------------------------------------------------
@@ -4598,7 +4598,7 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
      * For the OGR geometry, we generate an ellipse with 2 degrees line
      * segments.
      *----------------------------------------------------------------*/
-    TABGenerateArc(poRing, 180, 
+    TABGenerateArc(poRing, 180,
                    m_dCenterX, m_dCenterY,
                    m_dXRadius, m_dYRadius,
                    0.0, 2.0*M_PI);
@@ -4623,7 +4623,7 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                        TABMAPObjHdr *poObjHdr,
-                                       GBool bCoordBlockDataOnly /*=FALSE*/, 
+                                       GBool bCoordBlockDataOnly /*=FALSE*/,
                                        TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -4638,11 +4638,11 @@ int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry... Polygon and point are accepted.
-     * Note that we will simply use the ellipse's MBR and don't really 
-     * read the polygon geometry... this should be OK unless the 
+     * Note that we will simply use the ellipse's MBR and don't really
+     * read the polygon geometry... this should be OK unless the
      * polygon geometry was not really an ellipse.
      *
-     * We use the center of the MBR as the ellipse center, and the 
+     * We use the center of the MBR as the ellipse center, and the
      * X/Y radius to define the MBR size.  If X/Y radius are null then
      * we'll try to use the MBR to recompute them.
      *----------------------------------------------------------------*/
@@ -4686,7 +4686,7 @@ const char *TABEllipse::GetStyleString()
 {
     if (m_pszStyleString == NULL)
     {
-        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need 
+        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need
         // to use temporary buffers
         char *pszPen = CPLStrdup(GetPenStyleString());
         char *pszBrush = CPLStrdup(GetBrushStyleString());
@@ -4805,7 +4805,7 @@ TABArc::~TABArc()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABArc::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -4891,15 +4891,15 @@ int TABArc::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
     {
         /*-------------------------------------------------------------
          * POLYGON geometry:
-         * Note that we will simply use the ellipse's MBR and don't really 
-         * read the polygon geometry... this should be OK unless the 
+         * Note that we will simply use the ellipse's MBR and don't really
+         * read the polygon geometry... this should be OK unless the
          * polygon geometry was not really an ellipse.
          * In the case of a polygon geometry. the m_dCenterX/Y values MUST
          * have been set by the caller.
          *------------------------------------------------------------*/
         poGeom->getEnvelope(&sEnvelope);
     }
-    else if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint ) ) 
+    else if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint ) )
     {
         /*-------------------------------------------------------------
          * In the case of a POINT GEOMETRY, we will make sure the
@@ -4963,7 +4963,7 @@ int TABArc::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
  **********************************************************************/
 int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                     TABMAPObjHdr *poObjHdr,
-                                    GBool bCoordBlockDataOnly /*=FALSE*/, 
+                                    GBool bCoordBlockDataOnly /*=FALSE*/,
                                     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     double              dXMin, dYMin, dXMax, dYMax;
@@ -5008,7 +5008,7 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     /*-------------------------------------------------------------
      * OK, Arc angles again!!!!!!!!!!!!
      * After some tests in 1999-11, it appeared that the angle values
-     * ALWAYS had to be flipped (read order= end angle followed by 
+     * ALWAYS had to be flipped (read order= end angle followed by
      * start angle), no matter which quadrant the file is in.
      * This does not make any sense, so I suspect that there is something
      * that we are missing here!
@@ -5033,7 +5033,7 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     /*-------------------------------------------------------------
      * In version 100 .tab files (version 400 .map), it is possible
-     * to have a quadrant value of 0 and it should be treated the 
+     * to have a quadrant value of 0 and it should be treated the
      * same way as quadrant 3
      *------------------------------------------------------------*/
     if ( poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==1 ||
@@ -5078,9 +5078,9 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     // An arc is defined by its defining ellipse's MBR:
 
-    poMapFile->Int2Coordsys(poArcHdr->m_nArcEllipseMinX, 
+    poMapFile->Int2Coordsys(poArcHdr->m_nArcEllipseMinX,
                             poArcHdr->m_nArcEllipseMinY , dXMin, dYMin);
-    poMapFile->Int2Coordsys(poArcHdr->m_nArcEllipseMaxX, 
+    poMapFile->Int2Coordsys(poArcHdr->m_nArcEllipseMaxX,
                             poArcHdr->m_nArcEllipseMaxY , dXMax, dYMax);
 
     m_dCenterX = (dXMin + dXMax) / 2.0;
@@ -5089,9 +5089,9 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     m_dYRadius = ABS( (dYMax - dYMin) / 2.0 );
 
     // Read the Arc's MBR and use that as this feature's MBR
-    poMapFile->Int2Coordsys(poArcHdr->m_nMinX, poArcHdr->m_nMinY, 
+    poMapFile->Int2Coordsys(poArcHdr->m_nMinX, poArcHdr->m_nMinY,
                             dXMin, dYMin);
-    poMapFile->Int2Coordsys(poArcHdr->m_nMaxX, poArcHdr->m_nMaxY, 
+    poMapFile->Int2Coordsys(poArcHdr->m_nMaxX, poArcHdr->m_nMaxY,
                             dXMax, dYMax);
     SetMBR(dXMin, dYMin, dXMax, dYMax);
 
@@ -5135,7 +5135,7 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                    TABMAPObjHdr *poObjHdr,
-                                   GBool bCoordBlockDataOnly /*=FALSE*/, 
+                                   GBool bCoordBlockDataOnly /*=FALSE*/,
                                    TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -5174,10 +5174,10 @@ int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     // An arc is defined by its defining ellipse's MBR:
     poMapFile->Coordsys2Int(m_dCenterX-m_dXRadius, m_dCenterY-m_dYRadius,
-                            poArcHdr->m_nArcEllipseMinX, 
+                            poArcHdr->m_nArcEllipseMinX,
                             poArcHdr->m_nArcEllipseMinY);
     poMapFile->Coordsys2Int(m_dCenterX+m_dXRadius, m_dCenterY+m_dYRadius,
-                            poArcHdr->m_nArcEllipseMaxX, 
+                            poArcHdr->m_nArcEllipseMaxX,
                             poArcHdr->m_nArcEllipseMaxY);
 
     // Pass the Arc's actual MBR (values were set in UpdateMBR())
@@ -5331,7 +5331,7 @@ TABText::~TABText()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CopyTABFeatureBase() and 
+ * This method calls the generic TABFeature::CopyTABFeatureBase() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
@@ -5365,7 +5365,7 @@ TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
 
     poNew->SetTextJustification( GetTextJustification() );
     poNew->SetTextSpacing( GetTextSpacing() );
-    // Note: Text arrow/line coordinates are not transported... but 
+    // Note: Text arrow/line coordinates are not transported... but
     //       we ignore them most of the time anyways.
     poNew->SetTextLineType( TABTLNoLine );
 
@@ -5481,7 +5481,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     m_rgbShadow     = 0x808080;
 
     // arrow endpoint
-    poMapFile->Int2Coordsys(poTextHdr->m_nLineEndX, poTextHdr->m_nLineEndY, 
+    poMapFile->Int2Coordsys(poTextHdr->m_nLineEndX, poTextHdr->m_nLineEndY,
                             m_dfLineEndX, m_dfLineEndY);
     m_bLineEndSet = TRUE;
 
@@ -5495,9 +5495,9 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     }
 
     // MBR after rotation
-    poMapFile->Int2Coordsys(poTextHdr->m_nMinX, poTextHdr->m_nMinY, 
+    poMapFile->Int2Coordsys(poTextHdr->m_nMinX, poTextHdr->m_nMinY,
                             dXMin, dYMin);
-    poMapFile->Int2Coordsys(poTextHdr->m_nMaxX, poTextHdr->m_nMaxY, 
+    poMapFile->Int2Coordsys(poTextHdr->m_nMaxX, poTextHdr->m_nMaxY,
                             dXMax, dYMax);
 
     if (!bCoordBlockDataOnly)
@@ -5526,9 +5526,9 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             poCoordBlock->ReadBytes(nStringLen,(GByte*)pszTmpString) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed reading text string at offset %d", 
+                     "Failed reading text string at offset %d",
                      nCoordBlockPtr);
-            CPLFree(pszTmpString);                
+            CPLFree(pszTmpString);
             return -1;
         }
 
@@ -5551,11 +5551,11 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     GetMBR(dXMin, dYMin, dXMax, dYMax);
 
     /* Copy int MBR to feature class members */
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     /*-----------------------------------------------------------------
-     * Create an OGRPoint Geometry... 
+     * Create an OGRPoint Geometry...
      * The point X,Y values will be the coords of the lower-left corner before
      * rotation is applied.  (Note that the rotation in MapInfo is done around
      * the upper-left corner)
@@ -5581,7 +5581,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         dY = dYMax;
     }
     else  // dSin < 0 && dCos > 0
-    {   
+    {
         dX = dXMin;
         dY = dYMax - m_dHeight * dCos;
     }
@@ -5591,9 +5591,9 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetGeometryDirectly(poGeometry);
 
     /*-----------------------------------------------------------------
-     * Compute Text Width: the width of the Text MBR before rotation 
+     * Compute Text Width: the width of the Text MBR before rotation
      * in ground units... unfortunately this value is not stored in the
-     * file, so we have to compute it with the MBR after rotation and 
+     * file, so we have to compute it with the MBR after rotation and
      * the height of the MBR before rotation:
      * With  W = Width of MBR before rotation
      *       H = Height of MBR before rotation
@@ -5612,7 +5612,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     if (m_dHeight == 0.0)
         m_dWidth = 0.0;
     else if ( dCos > dSin )
-        m_dWidth = m_dHeight * ((dXMax-dXMin) - m_dHeight*dSin) / 
+        m_dWidth = m_dHeight * ((dXMax-dXMin) - m_dHeight*dSin) /
                                                         (m_dHeight*dCos);
     else
         m_dWidth = m_dHeight * ((dYMax-dYMin) - m_dHeight*dCos) /
@@ -5670,7 +5670,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      * Write string to a coord block first...
      * Note that the string may contain unescaped '\n' and '\\'
      * that we have to keep like that for the MAP file.
-     * See MapTools bug 1107 for more details. 
+     * See MapTools bug 1107 for more details.
      *----------------------------------------------------------------*/
     if (ppoCoordBlock != NULL && *ppoCoordBlock != NULL)
         poCoordBlock = *ppoCoordBlock;
@@ -5740,7 +5740,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     // Label line end point
     double dX, dY;
     GetTextLineEndPoint(dX, dY); // Make sure a default line end point is set
-    poMapFile->Coordsys2Int(m_dfLineEndX, m_dfLineEndY, 
+    poMapFile->Coordsys2Int(m_dfLineEndX, m_dfLineEndY,
                            poTextHdr->m_nLineEndX, poTextHdr->m_nLineEndY);
 
     // Text Height
@@ -5798,7 +5798,7 @@ const char *TABText::GetTextString()
  * Set new text string value.
  *
  * Note: The text string may contain "\n" chars or "\\" chars
- * and we expect to receive them in a 2 chars escaped form as 
+ * and we expect to receive them in a 2 chars escaped form as
  * described in the MIF format specs.
  **********************************************************************/
 void TABText::SetTextString(const char *pszNewStr)
@@ -6137,7 +6137,7 @@ void TABText::ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStyleOn)
  * The reason why we have to differentiate between the TAB and the MIF font
  * style values is that in TAB, TABFSBox is included in the style value
  * as code 0x100, but in MIF it is not included, instead it is implied by
- * the presence of the BG color in the FONT() clause (the BG color is 
+ * the presence of the BG color in the FONT() clause (the BG color is
  * present only when TABFSBox or TABFSHalo is set).
  * This also has the effect of shifting all the other style values > 0x100
  * by 1 byte.
@@ -6258,7 +6258,7 @@ const char *TABText::GetLabelStyleString()
 
     if (QueryFontStyle(TABFSAllCaps))
         for (int i=0; pszTextString[i];++i)
-            if (isalpha(pszTextString[i])) 
+            if (isalpha(pszTextString[i]))
                 pszTextString[i] = (char)toupper(pszTextString[i]);
 
     /* Escape the double quote chars and expand the text */
@@ -6272,7 +6272,7 @@ const char *TABText::GetLabelStyleString()
 
     for (int i =0; i < nStringLen; ++i,++j)
     {
-        if (pszTextString[i] == '"') 
+        if (pszTextString[i] == '"')
         {
             pszTmpTextString[j] = '\\';
             pszTmpTextString[j+1] = pszTextString[i];
@@ -6312,7 +6312,7 @@ const char *TABText::GetLabelStyleString()
     CPLFree(pszTextString);
     return pszStyle;
 
-}  
+}
 
 /**********************************************************************
  *                   TABText::GetStyleString()
@@ -6363,9 +6363,9 @@ void TABText::DumpMIF(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "  m_pszString = '%s'\n", m_pszString);
         fprintf(fpOut, "  m_dAngle    = %.15g\n",   m_dAngle);
         fprintf(fpOut, "  m_dHeight   = %.15g\n",   m_dHeight);
-        fprintf(fpOut, "  m_rgbForeground  = 0x%6.6x (%d)\n", 
+        fprintf(fpOut, "  m_rgbForeground  = 0x%6.6x (%d)\n",
                                              m_rgbForeground, m_rgbForeground);
-        fprintf(fpOut, "  m_rgbBackground  = 0x%6.6x (%d)\n", 
+        fprintf(fpOut, "  m_rgbBackground  = 0x%6.6x (%d)\n",
                                              m_rgbBackground, m_rgbBackground);
         fprintf(fpOut, "  m_nTextAlignment = 0x%4.4x\n",  m_nTextAlignment);
         fprintf(fpOut, "  m_nFontStyle     = 0x%4.4x\n",  m_nFontStyle);
@@ -6415,7 +6415,7 @@ TABMultiPoint::~TABMultiPoint()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CloneTABFeature() and 
+ * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABMultiPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
@@ -6456,7 +6456,7 @@ TABGeomType TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     OGRGeometry *poGeom;
 
     /*-----------------------------------------------------------------
-     * Fetch and validate geometry 
+     * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
@@ -6527,9 +6527,9 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         TABMAPObjMultiPoint *poMPointHdr = (TABMAPObjMultiPoint *)poObjHdr;
 
         // MBR
-        poMapFile->Int2Coordsys(poMPointHdr->m_nMinX, poMPointHdr->m_nMinY, 
+        poMapFile->Int2Coordsys(poMPointHdr->m_nMinX, poMPointHdr->m_nMinY,
                                 dXMin, dYMin);
-        poMapFile->Int2Coordsys(poMPointHdr->m_nMaxX, poMPointHdr->m_nMaxY, 
+        poMapFile->Int2Coordsys(poMPointHdr->m_nMaxX, poMPointHdr->m_nMaxY,
                                 dXMax, dYMax);
 
         if (!bCoordBlockDataOnly)
@@ -6562,7 +6562,7 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             delete poGeometry;
             return -1;
         }
-        poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, 
+        poCoordBlock->SetComprCoordOrigin(m_nComprOrgX,
                                           m_nComprOrgY);
 
         for(int iPoint=0; iPoint<poMPointHdr->m_nNumPoints; iPoint++)
@@ -6570,7 +6570,7 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             if (poCoordBlock->ReadIntCoord(bComprCoord, nX, nY) != 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Failed reading coordinate data at offset %d", 
+                         "Failed reading coordinate data at offset %d",
                          poMPointHdr->m_nCoordBlockPtr);
                 delete poGeometry;
                 return -1;
@@ -6599,7 +6599,7 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     SetMBR(dXMin, dYMin, dXMax, dYMax);
 
     /* Copy int MBR to feature class members */
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     /* Return a ref to coord block so that caller can continue reading
@@ -6670,7 +6670,7 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
 
-    for(iPoint=0, nStatus=0; 
+    for(iPoint=0, nStatus=0;
         nStatus == 0 && iPoint < poMPointHdr->m_nNumPoints; iPoint++)
     {
         poGeom = poMPoint->getGeometryRef(iPoint);
@@ -6687,12 +6687,12 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                 poMPointHdr->m_nLabelY = nY;
             }
 
-            if ((nStatus = poCoordBlock->WriteIntCoord(nX, nY, 
+            if ((nStatus = poCoordBlock->WriteIntCoord(nX, nY,
                                                        bCompressed)) != 0)
             {
                 // Failed ... error message has already been produced
                 return nStatus;
-            }   
+            }
 
         }
         else
@@ -6718,7 +6718,7 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     double dX, dY;
     if (GetCenter(dX, dY) != -1)
     {
-        poMapFile->Coordsys2Int(dX, dY, poMPointHdr->m_nLabelX, 
+        poMapFile->Coordsys2Int(dX, dY, poMPointHdr->m_nLabelX,
                                 poMPointHdr->m_nLabelY);
     }
 
@@ -6827,7 +6827,7 @@ const char *TABMultiPoint::GetStyleString()
 /**********************************************************************
  *                   TABMultiPoint::GetCenter()
  *
- * Returns the center point (or label point?) of the object.  Compute one 
+ * Returns the center point (or label point?) of the object.  Compute one
  * if it was not explicitly set:
  *
  * The default seems to be to use the first point in the collection as
@@ -6985,7 +6985,7 @@ void TABCollection::EmptyCollection()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * This method calls the generic TABFeature::CloneTABFeature() and 
+ * This method calls the generic TABFeature::CloneTABFeature() and
  * then copies any members specific to its own type.
  **********************************************************************/
 TABFeature *TABCollection::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
@@ -7027,11 +7027,11 @@ TABFeature *TABCollection::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
 TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
-    int nRegionType=TAB_GEOM_NONE, nPLineType=TAB_GEOM_NONE, 
+    int nRegionType=TAB_GEOM_NONE, nPLineType=TAB_GEOM_NONE,
         nMPointType=TAB_GEOM_NONE, nVersion = 650;
 
     /*-----------------------------------------------------------------
-     * Fetch and validate geometry 
+     * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
@@ -7053,7 +7053,7 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     /*-----------------------------------------------------------------
      * Since all members of the collection share the same compressed coord
      * origin, we should force the compressed origin in all components
-     * to be the same. 
+     * to be the same.
      * This also implies that ValidateMapInfoType() should *NOT* be called
      * again until the collection components are written by WriteGeom...()
      *----------------------------------------------------------------*/
@@ -7095,7 +7095,7 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     {
         GInt32 nXMin=0, nYMin=0, nXMax=0, nYMax=0;
         m_poRegion->GetIntMBR(nXMin, nYMin, nXMax, nYMax);
-        m_poRegion->ForceCoordTypeAndOrigin((nVersion == 800 ? 
+        m_poRegion->ForceCoordTypeAndOrigin((nVersion == 800 ?
                                              TAB_GEOM_V800_REGION:
                                              TAB_GEOM_V450_REGION),
                                             bComprCoord,
@@ -7108,7 +7108,7 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     {
         GInt32 nXMin, nYMin, nXMax, nYMax;
         m_poPline->GetIntMBR(nXMin, nYMin, nXMax, nYMax);
-        m_poPline->ForceCoordTypeAndOrigin((nVersion == 800 ? 
+        m_poPline->ForceCoordTypeAndOrigin((nVersion == 800 ?
                                             TAB_GEOM_V800_MULTIPLINE:
                                             TAB_GEOM_V450_MULTIPLINE),
                                            bComprCoord,
@@ -7120,7 +7120,7 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     {
         GInt32 nXMin, nYMin, nXMax, nYMax;
         m_poMpoint->GetIntMBR(nXMin, nYMin, nXMax, nYMax);
-        m_poMpoint->ForceCoordTypeAndOrigin((nVersion == 800 ? 
+        m_poMpoint->ForceCoordTypeAndOrigin((nVersion == 800 ?
                                              TAB_GEOM_V800_MULTIPOINT:
                                              TAB_GEOM_MULTIPOINT),
                                             bComprCoord,
@@ -7149,7 +7149,7 @@ int  TABCollection::ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
 {
     //
     // The sections in the collection's coord blocks start with center/label
-    // point + MBR that are normally found in the object data blocks 
+    // point + MBR that are normally found in the object data blocks
     // of regular region/pline/mulitpoint objects.
     //
 
@@ -7205,20 +7205,20 @@ int  TABCollection::WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
 
     //
     // The sections in the collection's coord blocks start with center/label
-    // point + MBR that are normally found in the object data blocks 
+    // point + MBR that are normally found in the object data blocks
     // of regular region/pline/mulitpoint objects.
     //
 
-    if ((nStatus = poCoordBlock->WriteIntCoord(nLabelX, nLabelY, 
+    if ((nStatus = poCoordBlock->WriteIntCoord(nLabelX, nLabelY,
                                                bComprCoord)) != 0 ||
-        (nStatus = poCoordBlock->WriteIntCoord(nMinX, nMinY, 
+        (nStatus = poCoordBlock->WriteIntCoord(nMinX, nMinY,
                                                bComprCoord)) != 0 ||
-        (nStatus = poCoordBlock->WriteIntCoord(nMaxX, nMaxY, 
+        (nStatus = poCoordBlock->WriteIntCoord(nMaxX, nMaxY,
                                                bComprCoord)) != 0   )
     {
         // Failed ... error message has already been produced
         return nStatus;
-    }   
+    }
 
     return 0;
 }
@@ -7273,14 +7273,14 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     TABMAPObjCollection *poCollHdr = (TABMAPObjCollection *)poObjHdr;
 
     // MBR
-    poMapFile->Int2Coordsys(poCollHdr->m_nMinX, poCollHdr->m_nMinY, 
+    poMapFile->Int2Coordsys(poCollHdr->m_nMinX, poCollHdr->m_nMinY,
                             dXMin, dYMin);
-    poMapFile->Int2Coordsys(poCollHdr->m_nMaxX, poCollHdr->m_nMaxY, 
+    poMapFile->Int2Coordsys(poCollHdr->m_nMaxX, poCollHdr->m_nMaxY,
                             dXMax, dYMax);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
 
-    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY, 
+    SetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
               poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
     nCurCoordBlockPtr = poCollHdr->m_nCoordBlockPtr;
@@ -7308,7 +7308,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         //
         // The region section in the coord block starts with center/label
-        // point + MBR that are normally found in the object data blocks 
+        // point + MBR that are normally found in the object data blocks
         // of regular region objects.
         //
 
@@ -7345,8 +7345,8 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         // Use a TABRegion to read/store the Region coord data
         //
         m_poRegion = new TABRegion(GetDefnRef());
-        if (m_poRegion->ReadGeometryFromMAPFile(poMapFile, &oRegionHdr, 
-                                                bCoordBlockDataOnly, 
+        if (m_poRegion->ReadGeometryFromMAPFile(poMapFile, &oRegionHdr,
+                                                bCoordBlockDataOnly,
                                                 &poCoordBlock) != 0)
             return -1;
 
@@ -7371,7 +7371,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         //
         // The pline section in the coord block starts with center/label
-        // point + MBR that are normally found in the object data blocks 
+        // point + MBR that are normally found in the object data blocks
         // of regular pline objects.
         //
 
@@ -7397,7 +7397,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         else
             oPLineHdr.m_nType = TAB_GEOM_V450_MULTIPLINE;
         if (nVersion == 800)
-            oPLineHdr.m_nType = (TABGeomType) (oPLineHdr.m_nType + (TAB_GEOM_V800_MULTIPLINE - 
+            oPLineHdr.m_nType = (TABGeomType) (oPLineHdr.m_nType + (TAB_GEOM_V800_MULTIPLINE -
                                   TAB_GEOM_V450_MULTIPLINE));
 
         oPLineHdr.m_numLineSections = poCollHdr->m_nNumPLineSections;
@@ -7408,7 +7408,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         // Use a TABPolyline to read/store the Polyline coord data
         //
         m_poPline = new TABPolyline(GetDefnRef());
-        if (m_poPline->ReadGeometryFromMAPFile(poMapFile, &oPLineHdr, 
+        if (m_poPline->ReadGeometryFromMAPFile(poMapFile, &oPLineHdr,
                                                bCoordBlockDataOnly,
                                                &poCoordBlock) != 0)
             return -1;
@@ -7433,7 +7433,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         //
         // The pline section in the coord block starts with center/label
-        // point + MBR that are normally found in the object data blocks 
+        // point + MBR that are normally found in the object data blocks
         // of regular pline objects.
         //
         ReadLabelAndMBR(poCoordBlock, bComprCoord,
@@ -7450,7 +7450,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         else
             oMPointHdr.m_nType = TAB_GEOM_MULTIPOINT;
         if (nVersion == 800)
-            oMPointHdr.m_nType = (TABGeomType) (oMPointHdr.m_nType + (TAB_GEOM_V800_MULTIPOINT - 
+            oMPointHdr.m_nType = (TABGeomType) (oMPointHdr.m_nType + (TAB_GEOM_V800_MULTIPOINT -
                                   TAB_GEOM_MULTIPOINT));
 
         oMPointHdr.m_nNumPoints = poCollHdr->m_nNumMultiPoints;
@@ -7460,7 +7460,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         // Use a TABMultiPoint to read/store the coord data
         //
         m_poMpoint = new TABMultiPoint(GetDefnRef());
-        if (m_poMpoint->ReadGeometryFromMAPFile(poMapFile, &oMPointHdr, 
+        if (m_poMpoint->ReadGeometryFromMAPFile(poMapFile, &oMPointHdr,
                                                 bCoordBlockDataOnly,
                                                 &poCoordBlock) != 0)
             return -1;
@@ -7471,7 +7471,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     }
 
     /*-----------------------------------------------------------------
-     * Set the main OGRFeature Geometry 
+     * Set the main OGRFeature Geometry
      * (this is actually duplicating geometries from each member)
      *----------------------------------------------------------------*/
     if (SyncOGRGeometryCollection(TRUE, TRUE, TRUE) != 0)
@@ -7505,12 +7505,12 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Note that the current implementation does not allow setting the
      * Geometry via OGRFeature::SetGeometry(). The geometries must be set
-     * via the SetRegion/Pline/MpointDirectly() methods which will take 
+     * via the SetRegion/Pline/MpointDirectly() methods which will take
      * care of keeping the OGRFeature's geometry in sync.
-     * 
+     *
      * TODO: If we ever want to support sync'ing changes from the OGRFeature's
      * geometry to the m_poRegion/Pline/Mpoint then a call should be added
-     * here, or perhaps in ValidateMapInfoType(), or even better in 
+     * here, or perhaps in ValidateMapInfoType(), or even better in
      * custom TABCollection::SetGeometry*()... but then this last option
      * won't work unless OGRFeature::SetGeometry*() are made virtual in OGR.
      *----------------------------------------------------------------*/
@@ -7527,7 +7527,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     /*-----------------------------------------------------------------
      * Write data to coordinate block for each component...
      *
-     * Note that at this point, the caller (TABFile) has called 
+     * Note that at this point, the caller (TABFile) has called
      * TABCollection::ValidateMapInfoType() which in turn has called
      * each component's respective ValidateMapInfoType() and
      * ForceCoordTypeAndCoordOrigin() so the objects are ready to have
@@ -7568,8 +7568,8 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
         //
-        // Note that the call to WriteGeometryToMAPFile() below will call 
-        // StartNewFeature() as well, so we need to track the current 
+        // Note that the call to WriteGeometryToMAPFile() below will call
+        // StartNewFeature() as well, so we need to track the current
         // value before calling it
 
         poCoordBlock->StartNewFeature();
@@ -7612,7 +7612,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             poCoordBlock->WriteInt32(poRegionHdr->m_numLineSections);
         }
         WriteLabelAndMBR(poCoordBlock, bCompressed,
-                         poRegionHdr->m_nMinX, poRegionHdr->m_nMinY, 
+                         poRegionHdr->m_nMinX, poRegionHdr->m_nMinY,
                          poRegionHdr->m_nMaxX, poRegionHdr->m_nMaxY,
                          poRegionHdr->m_nLabelX, poRegionHdr->m_nLabelY);
 
@@ -7668,8 +7668,8 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
         //
-        // Note that the call to WriteGeometryToMAPFile() below will call 
-        // StartNewFeature() as well, so we need to track the current 
+        // Note that the call to WriteGeometryToMAPFile() below will call
+        // StartNewFeature() as well, so we need to track the current
         // value before calling it
 
         poCoordBlock->StartNewFeature();
@@ -7712,7 +7712,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             poCoordBlock->WriteInt32(poPlineHdr->m_numLineSections);
         }
         WriteLabelAndMBR(poCoordBlock, bCompressed,
-                         poPlineHdr->m_nMinX, poPlineHdr->m_nMinY, 
+                         poPlineHdr->m_nMinX, poPlineHdr->m_nMinY,
                          poPlineHdr->m_nMaxX, poPlineHdr->m_nMaxY,
                          poPlineHdr->m_nLabelX, poPlineHdr->m_nLabelY);
 
@@ -7734,7 +7734,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             // TODO: Smooth flag           = poPlineHdr->m_bSmooth;
         }
 
-        delete poPlineHdr;        
+        delete poPlineHdr;
     }
     else
     {
@@ -7766,8 +7766,8 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
         //
-        // Note that the call to WriteGeometryToMAPFile() below will call 
-        // StartNewFeature() as well, so we need to track the current 
+        // Note that the call to WriteGeometryToMAPFile() below will call
+        // StartNewFeature() as well, so we need to track the current
         // value before calling it
 
         poCoordBlock->StartNewFeature();
@@ -7800,7 +7800,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         }
 
         WriteLabelAndMBR(poCoordBlock, bCompressed,
-                         poMpointHdr->m_nMinX, poMpointHdr->m_nMinY, 
+                         poMpointHdr->m_nMinX, poMpointHdr->m_nMinY,
                          poMpointHdr->m_nMaxX, poMpointHdr->m_nMaxY,
                          poMpointHdr->m_nLabelX, poMpointHdr->m_nLabelY);
 
@@ -7821,7 +7821,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             poCollHdr->m_nMultiPointSymbolId = poMpointHdr->m_nSymbolId;
         }
 
-        delete poMpointHdr;        
+        delete poMpointHdr;
     }
     else
     {
@@ -7890,7 +7890,7 @@ int    TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
 
     /*-----------------------------------------------------------------
      * Start by removing geometries that need to be replaced
-     * In theory there should be a single geometry of each type, but 
+     * In theory there should be a single geometry of each type, but
      * just in case, we'll loop over the whole collection and delete all
      * instances of each type if there are some.
      *----------------------------------------------------------------*/
@@ -7901,13 +7901,13 @@ int    TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
         if (!poGeom)
             continue;
 
-        if ( (bSyncRegion && 
+        if ( (bSyncRegion &&
               (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon) ) ||
-             (bSyncPline && 
+             (bSyncPline &&
               (wkbFlatten(poGeom->getGeometryType()) == wkbLineString ||
                wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)) ||
-             (bSyncMpoint && 
+             (bSyncMpoint &&
               (wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint) ) )
         {
             // Remove this geometry
@@ -8027,7 +8027,7 @@ const char *TABCollection::GetStyleString()
 /**********************************************************************
  *                   TABCollection::DumpMIF()
  *
- * Dump feature geometry 
+ * Dump feature geometry
  **********************************************************************/
 void TABCollection::DumpMIF(FILE *fpOut /*=NULL*/)
 {
@@ -8099,7 +8099,7 @@ TABDebugFeature::~TABDebugFeature()
  **********************************************************************/
 int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                              TABMAPObjHdr *poObjHdr,
-                                             GBool /*bCoordBlockDataOnly=FALSE*/, 
+                                             GBool /*bCoordBlockDataOnly=FALSE*/,
                                              TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     TABMAPObjectBlock   *poObjBlock;
@@ -8114,7 +8114,7 @@ int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     poHeader = poMapFile->GetHeaderBlock();
 
     /*-----------------------------------------------------------------
-     * If object type has coords in a type 3 block, then its position 
+     * If object type has coords in a type 3 block, then its position
      * follows
      *----------------------------------------------------------------*/
     if (poHeader->MapObjectUsesCoordBlock(m_nMapInfoType))
@@ -8151,7 +8151,7 @@ int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABDebugFeature::WriteGeometryToMAPFile(TABMAPFile * /*poMapFile*/,
                                             TABMAPObjHdr * /*poObjHdr*/,
-                                            GBool /*bCoordBlockDataOnly=FALSE*/, 
+                                            GBool /*bCoordBlockDataOnly=FALSE*/,
                                             TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     // Nothing to do here!
@@ -8216,13 +8216,13 @@ ITABFeaturePen::ITABFeaturePen()
  *                   ITABFeaturePen::GetPenWidthPoint()
  *                   ITABFeaturePen::SetPenWidthPoint()
  *
- * Pen width can be expressed in pixels (value from 1 to 7 pixels) or 
- * in points (value from 0.1 to 203.7 points). The default pen width 
+ * Pen width can be expressed in pixels (value from 1 to 7 pixels) or
+ * in points (value from 0.1 to 203.7 points). The default pen width
  * in MapInfo is 1 pixel.  Pen width in points exist only in file version 450.
  *
  * The following methods hide the way the pen width is stored in the files.
  *
- * In order to establish if a given pen def had its width specified in 
+ * In order to establish if a given pen def had its width specified in
  * pixels or in points, one should first call GetPenWidthPoint(), and if
  * it returns 0 then the Pixel width should be used instead:
  *    if (GetPenWidthPoint() == 0)
@@ -8230,7 +8230,7 @@ ITABFeaturePen::ITABFeaturePen()
  *    else
  *       ... use Pixel width from GetPenWidthPixel()
  *
- * Note that the reverse is not true: the default pixel width is always 1, 
+ * Note that the reverse is not true: the default pixel width is always 1,
  * even when the pen width was actually set in points.
  **********************************************************************/
 
@@ -8239,7 +8239,7 @@ GByte ITABFeaturePen::GetPenWidthPixel()
     return m_sPenDef.nPixelWidth;
 }
 
-void  ITABFeaturePen::SetPenWidthPixel(GByte val) 
+void  ITABFeaturePen::SetPenWidthPixel(GByte val)
 {
     m_sPenDef.nPixelWidth = MIN(MAX(val, 1), 7);
     m_sPenDef.nPointWidth = 0;
@@ -8251,7 +8251,7 @@ double ITABFeaturePen::GetPenWidthPoint()
     return m_sPenDef.nPointWidth/10.0;
 }
 
-void  ITABFeaturePen::SetPenWidthPoint(double val) 
+void  ITABFeaturePen::SetPenWidthPoint(double val)
 {
     m_sPenDef.nPointWidth = MIN(MAX(((int)(val*10)), 1), 2037);
     m_sPenDef.nPixelWidth = 1;
@@ -8271,7 +8271,7 @@ int     ITABFeaturePen::GetPenWidthMIF()
              (m_sPenDef.nPointWidth+10): m_sPenDef.nPixelWidth );
 }
 
-void  ITABFeaturePen::SetPenWidthMIF(int val) 
+void  ITABFeaturePen::SetPenWidthMIF(int val)
 {
     if (val > 10)
     {
@@ -8298,17 +8298,17 @@ const char *ITABFeaturePen::GetPenStyleString()
 
     szPattern[0] = '\0';
 
-    // For now, I only add the 25 first styles 
+    // For now, I only add the 25 first styles
     switch (GetPenPattern())
     {
       case 1:
-        nOGRStyle =1; 
+        nOGRStyle =1;
         break;
       case 2:
         nOGRStyle = 0;
         break;
       case 3:
-        nOGRStyle = 3; 
+        nOGRStyle = 3;
         strcpy(szPattern,"1 1");
         break;
       case 4:
@@ -8496,8 +8496,8 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     // so just use points).
     //
     // It's very important to set the output unit of the feature.
-    // The default value is meter. If we don't do it all numerical values 
-    // will be assumed to be converted from the input unit to meter when we 
+    // The default value is meter. If we don't do it all numerical values
+    // will be assumed to be converted from the input unit to meter when we
     // will get them via GetParam...() functions.
     // See OGRStyleTool::Parse() for more details.
     poPenStyle->SetUnit(OGRSTUPoints, 1);
@@ -8529,7 +8529,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     }
 
     // Set the Id of the Pen, use Pattern if necessary.
-    if(pszPenName && 
+    if(pszPenName &&
        (strstr(pszPenName, "mapinfo-pen-") || strstr(pszPenName, "ogr-pen-")) )
     {
         pszPenId = strstr(pszPenName, "mapinfo-pen-");
@@ -8755,8 +8755,8 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     pszBrushId = poBrushStyle->Id(bIsNull);
     if(bIsNull) pszBrushId = NULL;
 
-    if(pszBrushId && 
-       (strstr(pszBrushId, "mapinfo-brush-") || 
+    if(pszBrushId &&
+       (strstr(pszBrushId, "mapinfo-brush-") ||
         strstr(pszBrushId, "ogr-brush-")) )
     {
         if(strstr(pszBrushId, "mapinfo-brush-"))
@@ -8805,7 +8805,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     delete poStylePart;
 
     return;
-}  
+}
 
 /**********************************************************************
  *                   ITABFeatureBrush::DumpBrushDef()
@@ -8819,9 +8819,9 @@ void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
 
     fprintf(fpOut, "  m_nBrushDefIndex         = %d\n", m_nBrushDefIndex);
     fprintf(fpOut, "  m_sBrushDef.nRefCount    = %d\n", m_sBrushDef.nRefCount);
-    fprintf(fpOut, "  m_sBrushDef.nFillPattern = %d\n", 
+    fprintf(fpOut, "  m_sBrushDef.nFillPattern = %d\n",
                                                 (int)m_sBrushDef.nFillPattern);
-    fprintf(fpOut, "  m_sBrushDef.bTransparentFill = %d\n", 
+    fprintf(fpOut, "  m_sBrushDef.bTransparentFill = %d\n",
                                             (int)m_sBrushDef.bTransparentFill);
     fprintf(fpOut, "  m_sBrushDef.rgbFGColor   = 0x%6.6x (%d)\n",
                                m_sBrushDef.rgbFGColor, m_sBrushDef.rgbFGColor);
@@ -8853,9 +8853,9 @@ ITABFeatureFont::ITABFeatureFont()
  *                   ITABFeatureFont::SetFontName()
  **********************************************************************/
 void ITABFeatureFont::SetFontName(const char *pszName)
-{ 
+{
     strncpy( m_sFontDef.szFontName, pszName, 32);
-    m_sFontDef.szFontName[32] = '\0';  
+    m_sFontDef.szFontName[32] = '\0';
 }
 
 /**********************************************************************
@@ -9024,8 +9024,8 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     // With Symbol, we always want to output points
     //
     // It's very important to set the output unit of the feature.
-    // The default value is meter. If we don't do it all numerical values 
-    // will be assumed to be converted from the input unit to meter when we 
+    // The default value is meter. If we don't do it all numerical values
+    // will be assumed to be converted from the input unit to meter when we
     // will get them via GetParam...() functions.
     // See OGRStyleTool::Parse() for more details.
     poSymbolStyle->SetUnit(OGRSTUPoints, (72.0 * 39.37));
@@ -9034,8 +9034,8 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     pszSymbolId = poSymbolStyle->Id(bIsNull);
     if(bIsNull) pszSymbolId = NULL;
 
-    if(pszSymbolId &&  
-       (strstr(pszSymbolId, "mapinfo-sym-") || 
+    if(pszSymbolId &&
+       (strstr(pszSymbolId, "mapinfo-sym-") ||
         strstr(pszSymbolId, "ogr-sym-")) )
     {
         if(strstr(pszSymbolId, "mapinfo-sym-"))
@@ -9125,7 +9125,7 @@ void ITABFeatureSymbol::DumpSymbolDef(FILE *fpOut /*=NULL*/)
     fprintf(fpOut, "  m_sSymbolDef.nRefCount  = %d\n", m_sSymbolDef.nRefCount);
     fprintf(fpOut, "  m_sSymbolDef.nSymbolNo  = %d\n", m_sSymbolDef.nSymbolNo);
     fprintf(fpOut, "  m_sSymbolDef.nPointSize = %d\n",m_sSymbolDef.nPointSize);
-    fprintf(fpOut, "  m_sSymbolDef._unknown_  = %d\n", 
+    fprintf(fpOut, "  m_sSymbolDef._unknown_  = %d\n",
                                             (int)m_sSymbolDef._nUnknownValue_);
     fprintf(fpOut, "  m_sSymbolDef.rgbColor   = 0x%6.6x (%d)\n",
                                 m_sSymbolDef.rgbColor, m_sSymbolDef.rgbColor);

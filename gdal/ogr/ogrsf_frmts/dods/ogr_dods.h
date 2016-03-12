@@ -85,7 +85,7 @@ public:
     OGRDODSFieldDefn();
     ~OGRDODSFieldDefn();
 
-    int Initialize( AttrTable *, 
+    int Initialize( AttrTable *,
                     BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
     int Initialize( const char *, const char * = "das",
                     BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
@@ -140,7 +140,7 @@ class OGRDODSLayer : public OGRLayer
     OGREnvelope         sExtent;
 
   public:
-                        OGRDODSLayer( OGRDODSDataSource *poDS, 
+                        OGRDODSLayer( OGRDODSDataSource *poDS,
                                       const char *pszTarget,
                                       AttrTable *poAttrInfo );
     virtual             ~OGRDODSLayer();
@@ -178,7 +178,7 @@ private:
     int                 iLastSuperSeq;
 
     int                 nRecordCount; /* -1 if not yet known */
-    int                 nSuperSeqCount; 
+    int                 nSuperSeqCount;
     int                *panSubSeqSize;
 
     double              GetFieldValueAsDouble( OGRDODSFieldDefn *, int );
@@ -187,7 +187,7 @@ private:
 
     double              BaseTypeToDouble( BaseType * );
 
-    int                 BuildFields( BaseType *, const char *, 
+    int                 BuildFields( BaseType *, const char *,
                                      const char * );
 
     Sequence           *FindSuperSequence( BaseType * );
@@ -196,7 +196,7 @@ protected:
     virtual int         ProvideDataDDS();
 
 public:
-                        OGRDODSSequenceLayer( OGRDODSDataSource *poDS, 
+                        OGRDODSSequenceLayer( OGRDODSDataSource *poDS,
                                               const char *pszTarget,
                                               AttrTable *poAttrInfo );
     virtual             ~OGRDODSSequenceLayer();
@@ -213,7 +213,7 @@ public:
 class OGRDODSDim
 {
 public:
-    OGRDODSDim() { 
+    OGRDODSDim() {
         pszDimName = NULL;
         nDimStart = 0;
         nDimEnd = 0;
@@ -241,7 +241,7 @@ public:
 class OGRDODSArrayRef
 {
 public:
-    OGRDODSArrayRef() { 
+    OGRDODSArrayRef() {
         pszName = NULL;
         iFieldIndex = -1;
         poArray = NULL;
@@ -276,15 +276,15 @@ class OGRDODSGridLayer : public OGRDODSLayer
 
     void               *pRawData;
 
-    int                 ArrayEntryToField( Array *poArray, void *pRawData, 
+    int                 ArrayEntryToField( Array *poArray, void *pRawData,
                                            int iArrayIndex,
                                            OGRFeature *poFeature, int iField);
-								       
+
 protected:
     virtual int         ProvideDataDDS();
 
 public:
-                        OGRDODSGridLayer( OGRDODSDataSource *poDS, 
+                        OGRDODSGridLayer( OGRDODSDataSource *poDS,
                                          const char *pszTarget,
                                          AttrTable *poAttrInfo );
     virtual             ~OGRDODSGridLayer();
@@ -353,5 +353,3 @@ int  OGRDODSIsFloatInvalid( const float * );
 int  OGRDODSIsDoubleInvalid( const double * );
 
 #endif /* ndef OGR_DODS_H_INCLUDED */
-
-

@@ -16,16 +16,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -103,8 +103,8 @@
  *
  * Convert a portion of a string to an integer value.
  * The difference between this function and atoi() is that this version
- * takes only the specified number of characters... so it can handle the 
- * case of 2 numbers that are part of the same string but are not separated 
+ * takes only the specified number of characters... so it can handle the
+ * case of 2 numbers that are part of the same string but are not separated
  * by a space.
  **********************************************************************/
 static
@@ -150,7 +150,7 @@ AVCE00ParseInfo  *AVCE00ParseInfoAlloc(void)
     psInfo->eFileType = AVCFileUnknown;
     psInfo->eSuperSectionType = AVCFileUnknown;
 
-    /* Allocate output buffer.  
+    /* Allocate output buffer.
      * 2k should be enough... the biggest thing we'll need to store
      * in it will be 1 complete INFO table record.
      */
@@ -205,7 +205,7 @@ void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
     {
         CSLDestroy(psInfo->cur.papszPrj);
     }
-    else if (psInfo->eFileType == AVCFileTXT || 
+    else if (psInfo->eFileType == AVCFileTXT ||
              psInfo->eFileType == AVCFileTX6)
     {
         CPLFree(psInfo->cur.psTxt->pasVertices);
@@ -266,7 +266,7 @@ void    AVCE00ParseReset(AVCE00ParseInfo  *psInfo)
 /**********************************************************************
  *                          AVCE00ParseSuperSectionHeader()
  *
- * Check if pszLine is a valid "supersection" header line, if it is one 
+ * Check if pszLine is a valid "supersection" header line, if it is one
  * then store the supersection type in the ParseInfo structure.
  *
  * What I call a "supersection" is a section that contains several
@@ -313,7 +313,7 @@ AVCFileType  AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
     psInfo->nStartLineNum = psInfo->nCurLineNum;
 
     /*-----------------------------------------------------------------
-     * OK, we have a valid new section header. Set the precision and 
+     * OK, we have a valid new section header. Set the precision and
      * get ready to read objects from it.
      *----------------------------------------------------------------*/
     if (atoi(pszLine+4) == 2)
@@ -322,8 +322,8 @@ AVCFileType  AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
         psInfo->nPrecision = AVC_DOUBLE_PREC;
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "Parse Error: Invalid section header line (\"%s\")!", 
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Parse Error: Invalid section header line (\"%s\")!",
                  pszLine);
         psInfo->eSuperSectionType = AVCFileUnknown;
         /* psInfo->nStartLineNum = -1; */
@@ -337,7 +337,7 @@ AVCFileType  AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
  *
  * Check if pszLine marks the end of a supersection, and if it is the
  * case, then reset the supersection flag in the ParseInfo.
- * 
+ *
  * Supersections always end with the line "JABBERWOCKY", except for
  * the IFO section.
  **********************************************************************/
@@ -347,7 +347,7 @@ GBool  AVCE00ParseSuperSectionEnd(AVCE00ParseInfo  *psInfo,
     if (psInfo->eFileType == AVCFileUnknown &&
         psInfo->eSuperSectionType != AVCFileUnknown &&
         (STARTS_WITH_CI(pszLine, "JABBERWOCKY") ||
-         (psInfo->eSuperSectionType == AVCFileTABLE && 
+         (psInfo->eSuperSectionType == AVCFileTABLE &&
           STARTS_WITH_CI(pszLine, "EOI") )  ) )
     {
         psInfo->eSuperSectionType = AVCFileUnknown;
@@ -409,7 +409,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
         }
 
         /*-------------------------------------------------------------
-         * OK, we have a valid new section header. Set the precision and 
+         * OK, we have a valid new section header. Set the precision and
          * get ready to read objects from it.
          *------------------------------------------------------------*/
         if (atoi(pszLine+4) == 2)
@@ -418,8 +418,8 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
             psInfo->nPrecision = AVC_DOUBLE_PREC;
         else
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
-                     "Parse Error: Invalid section header line (\"%s\")!", 
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Parse Error: Invalid section header line (\"%s\")!",
                      pszLine);
             return AVCFileUnknown;
         }
@@ -448,7 +448,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
              */
             eNewType = psInfo->eSuperSectionType;
         }
-        else if (strlen(pszLine) > 0 && !isspace((unsigned char)pszLine[0]) && 
+        else if (strlen(pszLine) > 0 && !isspace((unsigned char)pszLine[0]) &&
                  !STARTS_WITH_CI(pszLine, "JABBERWOCKY") &&
                  !STARTS_WITH_CI(pszLine, "EOI") &&
                  ! ( psInfo->eSuperSectionType == AVCFileRPL &&
@@ -468,7 +468,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
     }
 
     /*-----------------------------------------------------------------
-     * nCurObjectId is used to keep track of sequential ids that are 
+     * nCurObjectId is used to keep track of sequential ids that are
      * not explicitly stored in E00.  e.g. polygon Id in a PAL section.
      *----------------------------------------------------------------*/
     psInfo->nCurObjectId = 0;
@@ -551,10 +551,10 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
 /**********************************************************************
  *                          AVCE00ParseSectionEnd()
  *
- * Check if pszLine marks the end of the current section.  
- * 
+ * Check if pszLine marks the end of the current section.
+ *
  * Passing bResetParseInfo=TRUE will reset the parser struct if an end of
- * section is found.  Passing FALSE simply tests for the end of section 
+ * section is found.  Passing FALSE simply tests for the end of section
  * without affecting the parse info struct.
  *
  * Return TRUE if this is the end of the section (and reset the
@@ -572,10 +572,10 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
            psInfo->eFileType == AVCFileTOL ||
            psInfo->eFileType == AVCFileTXT ||
            psInfo->eFileType == AVCFileTX6 ||
-           psInfo->eFileType == AVCFileRXP )  && 
+           psInfo->eFileType == AVCFileRXP )  &&
           STARTS_WITH_CI(pszLine, "        -1         0")  ) )
     {
-        /* Reset ParseInfo only if explicitly requested. 
+        /* Reset ParseInfo only if explicitly requested.
          */
         if (bResetParseInfo)
         {
@@ -703,7 +703,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
          *------------------------------------------------------------*/
         if (nLen < 70)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 ARC line: \"%s\"", pszLine);
             return NULL;
         }
@@ -717,7 +717,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psArc->nRPoly = AVCE00Str2Int(pszLine+50, 10);
             psArc->numVertices = AVCE00Str2Int(pszLine+60, 10);
 
-            /* Realloc the array of vertices 
+            /* Realloc the array of vertices
              */
             psArc->pasVertices = (AVCVertex*)CPLRealloc(psArc->pasVertices,
                                                         psArc->numVertices*
@@ -730,7 +730,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psInfo->numItems = psArc->numVertices;
         }
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->nPrecision == AVC_SINGLE_PREC &&
              ( (psInfo->iCurItem==psInfo->numItems-1 && nLen >= 28) ||
                nLen >= 56 )  )
@@ -747,7 +747,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psArc->pasVertices[psInfo->iCurItem++].y = CPLAtof(pszLine+42);
         }
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->nPrecision == AVC_DOUBLE_PREC &&
              nLen >= 42)
     {
@@ -759,7 +759,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 ARC line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -817,14 +817,14 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
          *------------------------------------------------------------*/
         if (nLen < 52)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 PAL line: \"%s\"", pszLine);
             return NULL;
         }
         else
         {
             /* Polygon Id is not stored in the E00 file.  Polygons are
-             * stored in increasing order, starting at 1... so we just 
+             * stored in increasing order, starting at 1... so we just
              * increment the previous value.
              */
             psPal->nPolyId = ++psInfo->nCurObjectId;
@@ -876,12 +876,12 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         psPal->sMax.y = CPLAtof(pszLine + 21);
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psPal->numArcs && 
+    else if (psInfo->iCurItem < psPal->numArcs &&
              (nLen >= 60 ||
               (psInfo->iCurItem == psPal->numArcs-1 && nLen >= 30)) )
     {
         /*-------------------------------------------------------------
-         * 2 PAL entries (ArcId, FNode, AdjPoly) per line, 
+         * 2 PAL entries (ArcId, FNode, AdjPoly) per line,
          * (Except on the last line with an odd number of vertices)
          *------------------------------------------------------------*/
         psPal->pasArcs[psInfo->iCurItem].nArcId = AVCE00Str2Int(pszLine, 10);
@@ -895,14 +895,14 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
                                                                     10);
             psPal->pasArcs[psInfo->iCurItem].nFNode = AVCE00Str2Int(pszLine+40,
                                                                     10);
-            psPal->pasArcs[psInfo->iCurItem++].nAdjPoly = 
+            psPal->pasArcs[psInfo->iCurItem++].nAdjPoly =
                                                 AVCE00Str2Int(pszLine+50, 10);
         }
- 
+
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 PAL line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -959,7 +959,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
          *------------------------------------------------------------*/
         if (nLen < 38)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 CNT line: \"%s\"", pszLine);
             return NULL;
         }
@@ -1009,7 +1009,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         size_t i=0;
         while(psInfo->iCurItem < psInfo->numItems && nLen >= (i+1)*10)
         {
-            psCnt->panLabelIds[psInfo->iCurItem++] = 
+            psCnt->panLabelIds[psInfo->iCurItem++] =
                                   AVCE00Str2Int(pszLine + i*10, 10);
             i++;
         }
@@ -1017,7 +1017,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 CNT line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -1127,7 +1127,7 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 LAB line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -1190,7 +1190,7 @@ AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 TOL line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -1273,14 +1273,14 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         nNewLen = (int)strlen(psInfo->cur.papszPrj[iLastLine])+(int)strlen(pszLine)-1+1;
         if (iLastLine >= 0)
         {
-            psInfo->cur.papszPrj[iLastLine] = 
+            psInfo->cur.papszPrj[iLastLine] =
                   (char*)CPLRealloc(psInfo->cur.papszPrj[iLastLine],
                                     nNewLen * sizeof(char));
 
             strcat(psInfo->cur.papszPrj[iLastLine], pszLine+1);
         }
     }
-    
+
     return NULL;
 }
 
@@ -1314,7 +1314,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     nLen = strlen(pszLine);
 
     /* numFixedLines is the number of lines to expect before the line(s)
-     * with the text string 
+     * with the text string
      */
     if (psInfo->nPrecision == AVC_SINGLE_PREC)
         numFixedLines = 4;
@@ -1328,7 +1328,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
          *------------------------------------------------------------*/
         if (nLen < 50)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 TXT line: \"%s\"", pszLine);
             return NULL;
         }
@@ -1354,7 +1354,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
             psTxt->nLevel          = AVCE00Str2Int(pszLine, 10);
 
-            /* Add 1 to numVerticesLine because the first vertex is 
+            /* Add 1 to numVerticesLine because the first vertex is
              * always duplicated in the TXT binary structure...
              */
             psTxt->numVerticesLine = AVCE00Str2Int(pszLine+10, 10) + 1;
@@ -1370,7 +1370,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psTxt->pszText = (GByte *)CPLRealloc(psTxt->pszText,
                                                  (psTxt->numChars+1)*
                                                      sizeof(GByte));
-            numVertices = ABS(psTxt->numVerticesLine) + 
+            numVertices = ABS(psTxt->numVerticesLine) +
                                  ABS(psTxt->numVerticesArrow);
             if (numVertices > 0)
                 psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
@@ -1423,7 +1423,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         for(i=0; i<numCoordPerLine; i++, iCurCoord++)
         {
-            if (iCurCoord < 4 && 
+            if (iCurCoord < 4 &&
                 (iVertex = iCurCoord % 4) < psTxt->numVerticesLine-1)
             {
                 psTxt->pasVertices[iVertex+1].x = CPLAtof(pszLine+i*nItemSize);
@@ -1484,7 +1484,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         if (iLine == numLines-1)
         {
-            strncpy((char*)psTxt->pszText+(iLine*80), pszLine, 
+            strncpy((char*)psTxt->pszText+(iLine*80), pszLine,
                     MIN( (int)nLen, (psTxt->numChars - (iLine*80)) ) );
         }
         else
@@ -1496,7 +1496,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 TXT line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -1553,7 +1553,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
          *------------------------------------------------------------*/
         if (nLen < 70)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
             return NULL;
         }
@@ -1582,7 +1582,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
                                                  (psTxt->numChars+1)*
                                                  sizeof(GByte));
 
-            numVertices = ABS(psTxt->numVerticesLine) + 
+            numVertices = ABS(psTxt->numVerticesLine) +
                                  ABS(psTxt->numVerticesArrow);
             if (numVertices > 0)
                 psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
@@ -1603,7 +1603,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
             psInfo->numItems = 8 + numVertices + ((psTxt->numChars-1)/80 + 1);
         }
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->iCurItem < 6 && nLen >=60)
     {
         /*-------------------------------------------------------------
@@ -1626,7 +1626,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->iCurItem == 6 && nLen >=14)
     {
         /*-------------------------------------------------------------
@@ -1635,7 +1635,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         psTxt->f_1e2 = (float)CPLAtof(pszLine);
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psInfo->numItems && 
+    else if (psInfo->iCurItem < psInfo->numItems &&
              psInfo->iCurItem == 7 && nLen >=42)
     {
         /*-------------------------------------------------------------
@@ -1655,7 +1655,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < (8 + ABS(psTxt->numVerticesLine) + 
+    else if (psInfo->iCurItem < (8 + ABS(psTxt->numVerticesLine) +
                                    ABS(psTxt->numVerticesArrow)) && nLen >= 28)
     {
         /*-------------------------------------------------------------
@@ -1683,7 +1683,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         if (iLine == numLines-1)
         {
-            strncpy((char*)psTxt->pszText+(iLine*80), pszLine, 
+            strncpy((char*)psTxt->pszText+(iLine*80), pszLine,
                     MIN( (int)nLen, (psTxt->numChars - (iLine*80)) ) );
         }
         else
@@ -1695,7 +1695,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -1756,7 +1756,7 @@ AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 RXP line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -1798,7 +1798,7 @@ AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  * will be generated.  CPLGetLastErrorNo() should be called to check
  * that the line was parsed successfully.
  **********************************************************************/
-AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo, 
+AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
                                            const char *pszLine)
 {
     AVCTableDef *psTableDef;
@@ -1819,7 +1819,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
         if (nLen < 56)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Error parsing E00 Table Definition line: \"%s\"", 
+                     "Error parsing E00 Table Definition line: \"%s\"",
                      pszLine);
             return NULL;
         }
@@ -1828,7 +1828,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             /*---------------------------------------------------------
              * Parse header line and alloc and init. a new psTableDef struct
              *--------------------------------------------------------*/
-            psTableDef = psInfo->hdr.psTableDef = 
+            psTableDef = psInfo->hdr.psTableDef =
                                (AVCTableDef*)CPLCalloc(1, sizeof(AVCTableDef));
             psInfo->bTableHdrComplete = FALSE;
 
@@ -1844,7 +1844,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             /*---------------------------------------------------------
              * Alloc array of fields defs, will be filled in further calls
              *--------------------------------------------------------*/
-            psTableDef->pasFieldDef = 
+            psTableDef->pasFieldDef =
                     (AVCFieldInfo*)CPLCalloc(psTableDef->numFields,
                                              sizeof(AVCFieldInfo));
 
@@ -1871,7 +1871,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
 
         if (nIndex > 0 && psInfo->nCurObjectId >= psTableDef->numFields)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 INFO Table Header: "
                      "number of fields is invalid "
                      "(expected %d, got at least %d)",
@@ -1886,7 +1886,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             psDef = &(psTableDef->pasFieldDef[psInfo->iCurItem]);
 
             psDef->nIndex   = (GInt16)nIndex;
-            
+
             strncpy(psDef->szName, pszLine, 16);
             psDef->szName[16] = '\0';
 
@@ -1915,7 +1915,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 Table Definition line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
         return NULL;
@@ -1955,7 +1955,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
  * Parse the record data present inside psInfo->pszBuf and fill and
  * return the psInfo->cur.pasFields[].
  *
- * This function should not be called directly... it is used by 
+ * This function should not be called directly... it is used by
  * AVCE00ParseNextTableRecLine().
  **********************************************************************/
 static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
@@ -2001,7 +2001,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
              * exponent format, but in this case the decimal point is shifted
              * one position to the right, resulting in a value 10 times bigger
              * than expected.  So if the value is not in exponent format then
-             * we should shift the decimal point to the left before we 
+             * we should shift the decimal point to the left before we
              * interpret it.  (bug 599)
              */
             if (!strchr(szTmp, 'E') && !strchr(szTmp, 'e'))
@@ -2021,7 +2021,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
             snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nSize, pasDef[i].nFmtPrec);
             pszTmpStr = CPLSPrintf(szFormat, CPLAtof(szTmp));
 
-            /* If value is bigger than size, then it's too bad... we 
+            /* If value is bigger than size, then it's too bad... we
              * truncate it... but this should never happen in clean datasets.
              */
             if ((int)strlen(pszTmpStr) > nSize)
@@ -2095,7 +2095,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
  * will be generated.  CPLGetLastErrorNo() should be called to check
  * that the line was parsed successfully.
  **********************************************************************/
-AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo, 
+AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
                                         const char *pszLine)
 {
     AVCField    *pasFields = NULL;
@@ -2126,8 +2126,8 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
         /*-------------------------------------------------------------
          * Realloc E00 buffer
          *------------------------------------------------------------*/
-        psInfo->nTableE00RecLength = 
-            _AVCE00ComputeRecSize(psTableDef->numFields, 
+        psInfo->nTableE00RecLength =
+            _AVCE00ComputeRecSize(psTableDef->numFields,
                                   psTableDef->pasFieldDef, FALSE);
         if( psInfo->nTableE00RecLength < 0 )
         {
@@ -2154,8 +2154,8 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
                 psTableDef->pasFieldDef[i].nType1*10 == AVC_FT_FIXINT ||
                 psTableDef->pasFieldDef[i].nType1*10 == AVC_FT_FIXNUM )
             {
-                psInfo->cur.pasFields[i].pszStr = 
-                    (GByte*)CPLCalloc(psTableDef->pasFieldDef[i].nSize+1, 
+                psInfo->cur.pasFields[i].pszStr =
+                    (GByte*)CPLCalloc(psTableDef->pasFieldDef[i].nSize+1,
                                       sizeof(GByte));
             }
         }
@@ -2166,7 +2166,7 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
     {
     /*-----------------------------------------------------------------
      * Begin processing a new record... we'll accumulate the 80
-     * chars lines until we have the whole record in our buffer 
+     * chars lines until we have the whole record in our buffer
      * and parse it only at the end.
      * Lines shorter than 80 chars are legal, and in this case
      * they will be padded with spaces up to 80 chars.
@@ -2192,7 +2192,7 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
     if (psInfo->iCurItem < psInfo->numItems)
     {
         /*-------------------------------------------------------------
-         * Continue to accumulate the 80 chars lines until we have 
+         * Continue to accumulate the 80 chars lines until we have
          * the whole record in our buffer.  We'll parse it only at the end.
          * Lines shorter than 80 chars are legal, and in this case
          * they padded with spaces up to 80 chars.
@@ -2217,8 +2217,8 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
 
         if (pasFields == NULL)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
-                     "Error parsing E00 Table Record: \"%s\"", 
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Error parsing E00 Table Record: \"%s\"",
                      psInfo->pszBuf);
             return NULL;
         }
@@ -2228,7 +2228,7 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
     }
 
     /*-----------------------------------------------------------------
-     * Since there is no explicit "end of table" line, we set the 
+     * Since there is no explicit "end of table" line, we set the
      * bForceEndOfSection flag when the last record is read.
      *----------------------------------------------------------------*/
     if (psInfo->nCurObjectId >= psTableDef->numRecords)

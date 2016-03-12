@@ -51,7 +51,7 @@ OGRKMLDataSource::OGRKMLDataSource()
     fpOutput_ = NULL;
 
     papszCreateOptions_ = NULL;
-	
+
 	bIssuedCTError_ = false;
 
 #ifdef HAVE_EXPAT
@@ -104,7 +104,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
 
     CPLFree( papoLayers_ );
 
-#ifdef HAVE_EXPAT    
+#ifdef HAVE_EXPAT
     delete poKMLFile_;
 #endif
 }
@@ -256,7 +256,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
     poSRS->Release();
 
-    return TRUE;	
+    return TRUE;
 }
 #endif /* HAVE_EXPAT */
 
@@ -284,28 +284,28 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
     else
         pszDescriptionField_ = CPLStrdup("Description");
 
-    pszAltitudeMode_ = CPLStrdup(CSLFetchNameValue(papszOptions, "AltitudeMode")); 
-    if( (NULL != pszAltitudeMode_) && strlen(pszAltitudeMode_) > 0) 
+    pszAltitudeMode_ = CPLStrdup(CSLFetchNameValue(papszOptions, "AltitudeMode"));
+    if( (NULL != pszAltitudeMode_) && strlen(pszAltitudeMode_) > 0)
     {
-        //Check to see that the specified AltitudeMode is valid 
+        //Check to see that the specified AltitudeMode is valid
         if ( EQUAL(pszAltitudeMode_, "clampToGround")
              || EQUAL(pszAltitudeMode_, "relativeToGround")
-             || EQUAL(pszAltitudeMode_, "absolute")) 
-        { 
-            CPLDebug("KML", "Using '%s' for AltitudeMode", pszAltitudeMode_); 
-        } 
-        else 
-        { 
-            CPLFree( pszAltitudeMode_ ); 
-            pszAltitudeMode_ = NULL; 
-            CPLError( CE_Warning, CPLE_AppDefined, "Invalide AltitideMode specified, ignoring" );  
-        } 
-    } 
-    else 
-    { 
-        CPLFree( pszAltitudeMode_ ); 
-        pszAltitudeMode_ = NULL; 
-    } 
+             || EQUAL(pszAltitudeMode_, "absolute"))
+        {
+            CPLDebug("KML", "Using '%s' for AltitudeMode", pszAltitudeMode_);
+        }
+        else
+        {
+            CPLFree( pszAltitudeMode_ );
+            pszAltitudeMode_ = NULL;
+            CPLError( CE_Warning, CPLE_AppDefined, "Invalide AltitideMode specified, ignoring" );
+        }
+    }
+    else
+    {
+        CPLFree( pszAltitudeMode_ );
+        pszAltitudeMode_ = NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
@@ -319,7 +319,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
     fpOutput_ = VSIFOpenL( pszName, "wb" );
     if( fpOutput_ == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create KML file %s.", pszName );
         return FALSE;
     }
@@ -327,7 +327,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Write out "standard" header.                                    */
 /* -------------------------------------------------------------------- */
-    VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
+    VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );
 
     VSIFPrintfL( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document id=\"root_doc\">\n" );
 
@@ -381,7 +381,7 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
     CPLCleanXMLElementName( pszCleanLayerName );
     if( strcmp(pszCleanLayerName, pszLayerName) != 0 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Layer name '%s' adjusted to '%s' for XML validity.",
                   pszLayerName, pszCleanLayerName );
     }

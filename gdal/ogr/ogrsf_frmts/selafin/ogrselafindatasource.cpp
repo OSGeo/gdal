@@ -89,7 +89,7 @@ void Range::setRange(const char *pszStr) {
         if (*pszc==':') {
             ++pszc;
             if (*pszc==',' || *pszc==']') {
-                nMax=-1; 
+                nMax=-1;
             } else {
                 nMax=(int)strtol(pszc,&psze,10);
                 if (*psze!=',' && *psze!=']') {
@@ -319,7 +319,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
     }
     CSLDestroy( papszNames );
 
-    // We presume that this is indeed intended to be a Selafin datasource if over half the files were Selafin files. 
+    // We presume that this is indeed intended to be a Selafin datasource if over half the files were Selafin files.
     return nNotSelafinCount < nLayers;
 #else
     return FALSE;
@@ -384,7 +384,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     if( fp == NULL ) {
         CPLError( CE_Warning, CPLE_OpenFailed, "Failed to open %s, %s.", pszFilename, VSIStrerror( errno ) );
         return FALSE;
-    } 
+    }
     if( !bUpdate && strstr(pszFilename, "/vsigzip/") == NULL && strstr(pszFilename, "/vsizip/") == NULL ) fp = (VSILFILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
 
     // Quickly check if the file is in Selafin format, before actually starting to read to make it faster
@@ -414,7 +414,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
         size_t nPos=std::string::npos;
         if (strlen(pszFilename)>3) nPos=osExt.find_last_of('.',strlen(pszFilename)-4);
         if (nPos!=std::string::npos) {
-            osExt=osExt.substr(nPos+1,strlen(pszFilename)-4-nPos); 
+            osExt=osExt.substr(nPos+1,strlen(pszFilename)-4-nPos);
             osBaseLayerName=osBaseLayerName.substr(0,nPos);
         } else {
             osExt="";
@@ -568,7 +568,7 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
     int nTemp;
     for (int i=nNum;i<poHeader->nSteps-1;++i) {
         if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+4,SEEK_SET)!=0 ||
-            Selafin::read_float(poHeader->fp,dfTime)==0 || 
+            Selafin::read_float(poHeader->fp,dfTime)==0 ||
             VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+4,SEEK_SET)!=0 ||
             Selafin::write_float(poHeader->fp,dfTime)==0) {
             CPLError( CE_Failure, CPLE_FileIO, "Could not update Selafin file %s.\n",pszName);

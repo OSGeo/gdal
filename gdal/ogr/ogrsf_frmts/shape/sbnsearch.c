@@ -236,7 +236,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         SBNCloseDiskTree(hSBN);
         return NULL;
     }
-    
+
     /* Empty spatial index */
     if( nShapeCount == 0 )
     {
@@ -722,7 +722,7 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
                     nShapeId = READ_MSB_INT(pabyBinShape + 4);
 
                     /* Caution : we count shape id starting from 0, and not 1 */
-                    nShapeId --; 
+                    nShapeId --;
 
                     /*printf("shape=%d, minx=%d, miny=%d, maxx=%d, maxy=%d\n",
                         nShapeId, bMinX, bMinY, bMaxX, bMaxY);*/

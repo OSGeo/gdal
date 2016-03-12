@@ -17,28 +17,28 @@ available at:
 Copyright (c) 2009, David F. Rogers
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice, 
+    * Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright notice,
       this list of conditions and the following disclaimer in the documentation
       and/or other materials provided with the distribution.
     * Neither the name of David F. Rogers nor the names of its contributors
-      may be used to endorse or promote products derived from this software 
+      may be used to endorse or promote products derived from this software
       without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -117,7 +117,7 @@ static void knot(int n,int c,int x[])
 	C code for An Introduction to NURBS
 	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
 	All rights reserved.
-	
+
 	Name: rbais
 	Language: C
 	Subroutines called: none
@@ -134,7 +134,7 @@ static void knot(int n,int c,int x[])
     t        = parameter value
     temp[]   = temporary array
     x[]      = knot vector
-*/	
+*/
 
 static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
 
@@ -206,7 +206,7 @@ static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
 	C code for An Introduction to NURBS
 	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
 	All rights reserved.
-	
+
 	Name: rbspline.c
 	Language: C
 	Subroutines called: knot.c, rbasis.c, fmtmul.c
@@ -216,7 +216,7 @@ static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors 
+	h[]			= array containing the homogeneous weighting factors
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values
@@ -284,7 +284,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
         }
 
         /* generate the basis function for this value of t */
-        rbasis(k,t,npts,&(x[0]),h,&(nbasis[0])); 
+        rbasis(k,t,npts,&(x[0]),h,&(nbasis[0]));
         for (j = 1; j <= 3; j++){      /* generate a point on the curve */
             jcount = j;
             p[icount+j] = 0.;
@@ -315,7 +315,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
 	C code for An Introduction to NURBS
 	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
 	All rights reserved.
-	
+
 	Name: rbsplinu.c
 	Language: C
 	Subroutines called: knotu.c, rbasis.c, fmtmul.c
@@ -325,7 +325,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors 
+	h[]			= array containing the homogeneous weighting factors
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values

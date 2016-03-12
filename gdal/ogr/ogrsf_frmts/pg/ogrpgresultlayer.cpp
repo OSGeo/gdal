@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 /*                          OGRPGResultLayer()                          */
 /************************************************************************/
 
-OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn, 
+OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
                                     const char * pszRawQueryIn,
                                     PGresult *hInitialResultIn )
 {
@@ -81,9 +81,9 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
             if( osRequest.size() )
                 osRequest += " OR ";
             osRequest += "(attrelid = ";
-            osRequest += CPLSPrintf("%d", tableOID); 
+            osRequest += CPLSPrintf("%d", tableOID);
             osRequest += " AND attnum = ";
-            osRequest += CPLSPrintf("%d)", tableCol); 
+            osRequest += CPLSPrintf("%d)", tableCol);
             oMapAttributeToFieldIndex[std::pair<int,int>(tableOID,tableCol)] = iRawField;
         }
     }
@@ -234,7 +234,7 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
         return (m_poFilterGeom == NULL ||
                 poGeomFieldDefn == NULL ||
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
-                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY ) 
+                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                && m_poAttrQuery == NULL;
     }
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
@@ -244,7 +244,7 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
             poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
         return (poGeomFieldDefn == NULL ||
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
-                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY ) 
+                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                && m_poAttrQuery == NULL;
     }
 
@@ -254,7 +254,7 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
         if( poFeatureDefn->GetGeomFieldCount() > 0 )
             poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(0);
         return (poGeomFieldDefn == NULL ||
-                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ) 
+                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY )
                && m_poAttrQuery == NULL;
     }
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )

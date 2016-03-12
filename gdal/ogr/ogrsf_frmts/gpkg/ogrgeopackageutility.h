@@ -33,7 +33,7 @@
 #ifndef OGR_GEOPACKAGEUTILITY_H_INCLUDED
 #define OGR_GEOPACKAGEUTILITY_H_INCLUDED
 
-typedef struct 
+typedef struct
 {
     char** papszResult;
     int nRowCount;
@@ -42,7 +42,7 @@ typedef struct
     int rc;
 } SQLResult;
 
-typedef struct 
+typedef struct
 {
     OGRBoolean bEmpty;
     OGRBoolean bExtended;

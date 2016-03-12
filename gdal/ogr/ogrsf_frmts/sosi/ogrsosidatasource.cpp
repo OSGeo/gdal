@@ -171,9 +171,9 @@ OGRSOSIDataSource::~OGRSOSIDataSource() {
     }
 
     if (poPolyHeaders  != NULL) delete poPolyHeaders;
-    if (poTextHeaders  != NULL) delete poTextHeaders; 
+    if (poTextHeaders  != NULL) delete poTextHeaders;
     if (poPointHeaders != NULL) delete poPointHeaders;
-    if (poCurveHeaders != NULL) delete poCurveHeaders; 
+    if (poCurveHeaders != NULL) delete poCurveHeaders;
 
     if (nMode == MODE_WRITING) {
         if (poFileadm != NULL) LC_CloseSos  (poFileadm, RESET_IDX );
@@ -314,7 +314,6 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
 
             char *pszUTFLine = CPLRecode(pszLine, pszEncoding, CPL_ENC_UTF8); /* switch to UTF encoding here, if it is known. */
             char *pszUTFLineIter = pszUTFLine;
-			
             while (pszUTFLineIter[0] == '.') pszUTFLineIter++; /* Skipping the dots at the beginning of a SOSI line */
             char *pszPos2 = strstr(pszUTFLineIter, " "); /* Split header and value */
             if (pszPos2 != NULL) {
@@ -388,7 +387,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             unsigned short nMask = LC_TR_ALLT;
             LC_TRANSPAR oTrans;
             if (LC_GetTransEx(&nMask,&oTrans) == UT_FALSE) {
-                CPLError( CE_Failure, CPLE_OpenFailed, 
+                CPLError( CE_Failure, CPLE_OpenFailed,
                           "TRANSPAR section not found - No reference system information available.");
                 return FALSE;
             }
@@ -397,7 +396,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             /* Get coordinate system from SOSI header. */
             int nEPSG = sosi2epsg(oTrans.sKoordsys);
             if (poSRS->importFromEPSG(nEPSG) != OGRERR_NONE) {
-				CPLError( CE_Failure, CPLE_OpenFailed, 
+				CPLError( CE_Failure, CPLE_OpenFailed,
                           "OGR could not load coordinate system definition EPSG:%i.", nEPSG);
                 return FALSE;
             }
@@ -486,7 +485,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
 int  OGRSOSIDataSource::Create( const char *pszFilename ) {
 	short nStatus;
 	short nDetStatus;
-	
+
     poBaseadm = LC_OpenBase(LC_KLADD);
     nStatus   = LC_OpenSos(pszFilename, LC_SEKV_SKRIV, LC_NY_IDX, LC_INGEN_STATUS,
                            &poFileadm, &nDetStatus);
@@ -496,7 +495,7 @@ int  OGRSOSIDataSource::Create( const char *pszFilename ) {
         return FALSE;
     }
 
-    LC_NyttHode(); /* Create new file header, will be written to file when all 
+    LC_NyttHode(); /* Create new file header, will be written to file when all
                       header information elements are set. */
 
     return TRUE;
@@ -542,7 +541,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
                     return NULL;
                 }
             }
-        } 
+        }
         LC_WsGr(poFileadm); /* Writing the header here! */
 
     } else {
@@ -616,7 +615,7 @@ void OGRSOSIDataSource::buildOGRPoint(long iSerial) {
 
 int OGRSOSIDataSource::TestCapability( const char * pszCap ) {
     if (strcmp("CreateLayer",pszCap) == 0) {
-        return TRUE; 
+        return TRUE;
     } else {
         CPLDebug( "[TestCapability]","Capability %s not supported by SOSI data source", pszCap);
     }

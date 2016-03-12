@@ -96,7 +96,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
     if( poTransfer->GetLayerType(iLayer) != SLTAttr )
         papszATIDRefs = poReader->ScanModuleReferences();
     else
-        papszATIDRefs = CSLAddString( papszATIDRefs, 
+        papszATIDRefs = CSLAddString( papszATIDRefs,
                                       poTransfer->GetCATD()->GetEntryModule(iCATDEntry) );
 
     for( int iTable = 0;
@@ -199,7 +199,7 @@ OGRSDTSLayer::~OGRSDTSLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "SDTS", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -386,8 +386,8 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     int         iAttrRecord;
 
-    for( iAttrRecord = 0; 
-         iAttrRecord < poSDTSFeature->nAttributes; 
+    for( iAttrRecord = 0;
+         iAttrRecord < poSDTSFeature->nAttributes;
          iAttrRecord++)
     {
         DDFField        *poSR;
@@ -403,7 +403,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     if( poTransfer->GetLayerType(iLayer) == SLTAttr )
     {
-        AssignAttrRecordToFeature( poFeature, poTransfer, 
+        AssignAttrRecordToFeature( poFeature, poTransfer,
                                    ((SDTSAttrRecord *) poSDTSFeature)->poATTR);
     }
 
@@ -464,7 +464,7 @@ int OGRSDTSLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
         return FALSE;
 
@@ -474,6 +474,6 @@ int OGRSDTSLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
-    else 
+    else
         return FALSE;
 }

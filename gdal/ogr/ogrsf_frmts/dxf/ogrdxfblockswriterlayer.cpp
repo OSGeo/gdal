@@ -2,7 +2,7 @@
  * $Id: ogrdxfwriterlayer.cpp 20670 2010-09-22 00:21:17Z warmerdam $
  *
  * Project:  DXF Translator
- * Purpose:  Implements OGRDXFBlocksWriterLayer used for capturing block 
+ * Purpose:  Implements OGRDXFBlocksWriterLayer used for capturing block
  *           definitions for writing to a DXF file.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -90,7 +90,7 @@ int OGRDXFBlocksWriterLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCSequentialWrite) )
         return TRUE;
-    else 
+    else
         return FALSE;
 }
 

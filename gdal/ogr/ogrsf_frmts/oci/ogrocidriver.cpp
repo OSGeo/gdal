@@ -85,7 +85,7 @@ static GDALDataset *OGROCIDriverCreate( const char * pszName,
     if( !poDS->Open( pszName, NULL, TRUE, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
          "Oracle driver doesn't currently support database creation.\n"
                   "Please create database with Oracle tools before loading tables." );
         return NULL;
@@ -154,4 +154,3 @@ void RegisterOGROCI()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

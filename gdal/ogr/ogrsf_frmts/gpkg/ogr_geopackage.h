@@ -260,10 +260,10 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
         static GDALDataset* CreateCopy( const char *pszFilename,
-                                                   GDALDataset *poSrcDS, 
+                                                   GDALDataset *poSrcDS,
                                                    int bStrict,
                                                    char ** papszOptions,
-                                                   GDALProgressFunc pfnProgress, 
+                                                   GDALProgressFunc pfnProgress,
                                                    void * pProgressData );
     private:
 
@@ -483,7 +483,7 @@ class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOG
     virtual OGRErr      ResetStatement();
 
   public:
-                        OGRGeoPackageSelectLayer( GDALGeoPackageDataset *, 
+                        OGRGeoPackageSelectLayer( GDALGeoPackageDataset *,
                                               CPLString osSQL,
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,

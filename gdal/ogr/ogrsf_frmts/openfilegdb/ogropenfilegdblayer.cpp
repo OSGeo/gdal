@@ -410,7 +410,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         m_eGeomType = eGeomType;
         if( poGDBGeomField->Has3D() )
             m_eGeomType = wkbSetZ(m_eGeomType);
-        
+
         // Check that the first feature has actually a M value before advertizing
         // it.
         if( poGDBGeomField->HasM() && m_poLyrTable->GetAndSelectNextNonEmptyRow(0) >= 0 )

@@ -16,16 +16,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -78,7 +78,7 @@ int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
 {
     int i, nType, nBufSize=0;
 
-    /*------------------------------------------------------------- 
+    /*-------------------------------------------------------------
      * Add up the nbr of chars used by each field
      *------------------------------------------------------------*/
     for(i=0; i < numFields; i++)
@@ -93,7 +93,7 @@ int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
             nBufSize += 11;
         else if (nType == AVC_FT_BININT && pasDef[i].nSize == 2)
             nBufSize += 6;
-        else if (bMapType40ToDouble && 
+        else if (bMapType40ToDouble &&
                  nType == AVC_FT_FIXNUM && pasDef[i].nSize > 8)
         {
             /* See explanation in AVCE00GenTableHdr() about this hack to remap
@@ -186,7 +186,7 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef)
     psNewDef->pasFieldDef = (AVCFieldInfo*)CPLMalloc(psSrcDef->numFields*
                                                      sizeof(AVCFieldInfo));
 
-    memcpy(psNewDef->pasFieldDef, psSrcDef->pasFieldDef, 
+    memcpy(psNewDef->pasFieldDef, psSrcDef->pasFieldDef,
            psSrcDef->numFields*sizeof(AVCFieldInfo));
 
    return psNewDef;
@@ -235,7 +235,7 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
  * It does nothing on Windows systems where filenames are not case sensitive.
  *
  * NFW: It seems like this could be made somewhat more efficient by
- * getting a directory listing and doing a case insensitive search in 
+ * getting a directory listing and doing a case insensitive search in
  * that list rather than all this stating that can be very expensive
  * in some circumstances.  However, at least with Carl's fix this is
  * somewhat faster.
@@ -343,7 +343,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
 
     /*-----------------------------------------------------------------
      * OK, now that we have a valid base, reconstruct the whole path
-     * by scanning all the sub-directories.  
+     * by scanning all the sub-directories.
      * If we get to a point where a path component does not exist then
      * we simply return the rest of the path as is.
      *----------------------------------------------------------------*/
@@ -413,7 +413,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
  *                          AVCPrintRealValue()
  *
  * Format a floating point value according to the specified coverage
- * precision (AVC_SINGLE/DOUBLE_PREC),  and append the formatted value 
+ * precision (AVC_SINGLE/DOUBLE_PREC),  and append the formatted value
  * to the end of the pszBuf buffer.
  *
  * The function returns the number of characters added to the buffer.
@@ -459,8 +459,8 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
         *pszBuf = ' ';
 
 
-    /* Just to make things more complicated, double values are 
-     * output in a different format in attribute tables than in 
+    /* Just to make things more complicated, double values are
+     * output in a different format in attribute tables than in
      * the other files!
      */
     if (nPrecision == AVC_FORMAT_DBF_FLOAT)
@@ -479,7 +479,7 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
         CPLsnprintf(pszBuf+1, nBufLen-1,"%17.14E", dValue);
         nLen = 21;
     }
-    else 
+    else
     {
         CPLsnprintf(pszBuf+1, nBufLen-1,"%10.7E", dValue);
         nLen = 14;

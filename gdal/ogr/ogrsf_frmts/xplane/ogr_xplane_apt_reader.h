@@ -142,7 +142,7 @@ static const sEnumerationElement runwayREILType[] =
     { 2, "Unidirectional" }
 };
 
-static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] = 
+static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] =
 {
     { 1, "None" },
     { 2, "VASI" },
@@ -290,7 +290,7 @@ class OGRXPlaneWaterRunwayLayer : public OGRXPlaneLayer
 static const sEnumerationElement helipadEdgeLigthingType[] =
 {
     { 0, "None" },
-    { 1, "Yellow" }, 
+    { 1, "Yellow" },
     { 2, "White" }, /* proposed for V90x */
     { 3, "Red" } /* proposed for V90x */
 };

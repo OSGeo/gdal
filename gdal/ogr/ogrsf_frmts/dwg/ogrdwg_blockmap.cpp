@@ -2,7 +2,7 @@
  * $Id: ogrdwg_blockmap.cpp 22011 2011-03-22 20:13:38Z warmerdam $
  *
  * Project:  DWG Translator
- * Purpose:  Implements BlockMap reading and management portion of 
+ * Purpose:  Implements BlockMap reading and management portion of
  *           OGRDWGDataSource class
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -99,7 +99,7 @@ void OGRDWGDataSource::ReadBlocksSection()
             oBlockMap[osBlockName].apoFeatures = apoFeatures;
     }
 
-    CPLDebug( "DWG", "Read %d blocks with meaningful geometry.", 
+    CPLDebug( "DWG", "Read %d blocks with meaningful geometry.",
               (int) oBlockMap.size() );
 
     poReaderLayer->SetBlockTable( poModelSpace );
@@ -109,7 +109,7 @@ void OGRDWGDataSource::ReadBlocksSection()
 /*                       SimplifyBlockGeometry()                        */
 /************************************************************************/
 
-OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry( 
+OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry(
     OGRGeometryCollection *poCollection )
 
 {

@@ -3,7 +3,7 @@
  *
  * Project:  DXF Translator
  * Purpose:  Implements translation support for HATCH elements as part
- *           of the OGRDXFLayer class.  
+ *           of the OGRDXFLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -129,7 +129,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
 
-    // Use layer color? 
+    // Use layer color?
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
@@ -309,11 +309,11 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
                 dfEndAngle += 360.0;
             if( bCounterClockwise )
             {
-                dfStartAngle *= -1; 
-                dfEndAngle *= -1; 
+                dfStartAngle *= -1;
+                dfEndAngle *= -1;
             }
 
-            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles( 
+            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
                 dfCenterX, dfCenterY, 0.0,
                 dfRadius, dfRadius, 0.0,
                 dfStartAngle, dfEndAngle, 0.0 );
@@ -384,8 +384,8 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
                 dfEndAngle += 360.0;
             if( bCounterClockwise )
             {
-                dfStartAngle *= -1; 
-                dfEndAngle *= -1; 
+                dfStartAngle *= -1;
+                dfEndAngle *= -1;
             }
 
             dfMajorRadius = sqrt( dfMajorX * dfMajorX + dfMajorY * dfMajorY );
@@ -393,7 +393,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 
             dfRotation = -1 * atan2( dfMajorY, dfMajorX ) * 180 / M_PI;
 
-            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles( 
+            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
                 dfCenterX, dfCenterY, 0.0,
                 dfMajorRadius, dfMinorRadius, dfRotation,
                 dfStartAngle, dfEndAngle, 0.0 );
@@ -540,7 +540,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
     {
         return OGRERR_FAILURE;
     }
-    
+
     poGC->addGeometryDirectly( oSmoothPolyline.Tesselate() );
 
 /* -------------------------------------------------------------------- */

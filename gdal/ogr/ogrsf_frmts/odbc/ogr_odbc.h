@@ -107,7 +107,7 @@ class OGRODBCTableLayer : public OGRODBCLayer
                         OGRODBCTableLayer( OGRODBCDataSource * );
                         ~OGRODBCTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol );
 
     virtual void        ResetReading();
@@ -120,7 +120,7 @@ class OGRODBCTableLayer : public OGRODBCLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-#endif    
+#endif
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual OGRSpatialReference *GetSpatialRef();
@@ -129,9 +129,9 @@ class OGRODBCTableLayer : public OGRODBCLayer
 
 #ifdef notdef
     // follow methods are not base class overrides
-    void                SetLaunderFlag( int bFlag ) 
+    void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
-    void                SetPrecisionFlag( int bFlag ) 
+    void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
 #endif
 };
@@ -150,7 +150,7 @@ class OGRODBCSelectLayer : public OGRODBCLayer
     virtual CPLODBCStatement *  GetStatement();
 
   public:
-                        OGRODBCSelectLayer( OGRODBCDataSource *, 
+                        OGRODBCSelectLayer( OGRODBCDataSource *,
                                            CPLODBCStatement * );
                         ~OGRODBCSelectLayer();
 
@@ -181,7 +181,7 @@ class OGRODBCDataSource : public OGRDataSource
     CPLODBCSession      oSession;
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
@@ -193,7 +193,7 @@ class OGRODBCDataSource : public OGRDataSource
                         ~OGRODBCDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 
@@ -233,5 +233,3 @@ class OGRODBCDriver : public OGRSFDriver
 
 
 #endif /* ndef OGR_ODBC_H_INCLUDED */
-
-

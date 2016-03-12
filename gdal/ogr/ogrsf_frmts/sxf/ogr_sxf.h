@@ -112,7 +112,7 @@ class OGRSXFDataSource : public OGRDataSource
     OGRLayer**          papoLayers;
     size_t              nLayers;
 
-    VSILFILE* fpSXF;    
+    VSILFILE* fpSXF;
     CPLMutex  *hIOMutex;
     void FillLayers(void);
     void CreateLayers();
@@ -135,7 +135,7 @@ public:
     virtual OGRLayer*       GetLayer( int );
 
     virtual int             TestCapability( const char * );
-    void                    CloseFile(); 
+    void                    CloseFile();
 };
 
 /************************************************************************/
@@ -153,4 +153,4 @@ class OGRSXFDriver : public OGRSFDriver
     int             TestCapability(const char *);
 };
 
-#endif 
+#endif

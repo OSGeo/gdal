@@ -224,7 +224,7 @@ namespace Selafin {
             for (int j=0;j<nPointsPerElement;++j) bReferencing |= (panTemp[j]==nIndex+1);
             if (bReferencing) {
                 nElements--;
-                for (int j=i;j<nElements;++j) 
+                for (int j=i;j<nElements;++j)
                     for (int k=0;k<nPointsPerElement;++k) panConnectivity[j*nPointsPerElement+k]=panConnectivity[(j+1)*nPointsPerElement+k];
                 --i;
             }

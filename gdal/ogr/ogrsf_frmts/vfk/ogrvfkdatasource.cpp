@@ -81,14 +81,14 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     fp = VSIFOpen(pszNewName, "r");
     if (fp == NULL) {
         if (!bTestOpen)
-            CPLError(CE_Failure, CPLE_OpenFailed, 
+            CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to open VFK file `%s'",
                      pszNewName);
 
         return FALSE;
     }
 
-   /* If we aren't sure it is VFK, load a header chunk and check    
+   /* If we aren't sure it is VFK, load a header chunk and check
       for signs it is VFK */
     if (bTestOpen) {
         size_t nRead = VSIFRead(szHeader, 1, sizeof(szHeader), fp);
@@ -113,7 +113,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 
     poReader = CreateVFKReader(pszNewName);
     if (poReader == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "File %s appears to be VFK but the VFK reader can't"
                  "be instantiated",
                  pszNewName);

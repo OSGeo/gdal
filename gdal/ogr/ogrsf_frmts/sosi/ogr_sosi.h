@@ -84,7 +84,7 @@ class OGRSOSIDataSource : public OGRDataSource {
     int                 nLayers;
 
 #define MODE_READING 0
-#define MODE_WRITING 1    
+#define MODE_WRITING 1
     int                 nMode;
 
     void                buildOGRPoint(long nSerial);

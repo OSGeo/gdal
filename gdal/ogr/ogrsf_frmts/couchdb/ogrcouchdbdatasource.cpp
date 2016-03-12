@@ -1059,7 +1059,7 @@ char* OGRCouchDBDataSource::GetETag(const char* pszURI)
 
     if (CSLFetchNameValue(psResult->papszHeaders, "Etag") != NULL)
     {
-        papszTokens = 
+        papszTokens =
             CSLTokenizeString2( CSLFetchNameValue(psResult->papszHeaders, "Etag"), "\"\r\n", 0 );
 
         pszEtag = CPLStrdup(papszTokens[0]);

@@ -18,16 +18,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -109,7 +109,7 @@ OGRTABDataSource::OGRTABDataSource()
 OGRTABDataSource::~OGRTABDataSource()
 
 {
-    CPLFree( m_pszName ); 
+    CPLFree( m_pszName );
     CPLFree( m_pszDirectory );
 
     for( int i = 0; i < m_nLayerCount; i++ )
@@ -137,7 +137,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
     m_papszOptions = CSLDuplicate( papszOptions );
     m_bUpdate = TRUE;
 
-    if( (pszOpt=CSLFetchNameValue(papszOptions,"FORMAT")) != NULL 
+    if( (pszOpt=CSLFetchNameValue(papszOptions,"FORMAT")) != NULL
         && EQUAL(pszOpt, "MIF") )
         m_bCreateMIF = TRUE;
     else if( EQUAL(CPLGetExtension(pszName),"mif")
@@ -358,7 +358,7 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
 
     if( !m_bUpdate )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                     "Cannot create layer on read-only dataset.");
         return NULL;
     }
@@ -372,7 +372,7 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
     {
         if( m_bSingleLayerAlreadyCreated )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to create new layers in this single file dataset.");
             return NULL;
         }
@@ -438,9 +438,9 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
     // Pull out the bounds if supplied
     if( (pszOpt=CSLFetchNameValue(papszOptions, "BOUNDS")) != NULL ) {
         double dfBounds[4];
-        if( CPLsscanf(pszOpt, "%lf,%lf,%lf,%lf", &dfBounds[0], 
-                                          &dfBounds[1], 
-                                          &dfBounds[2], 
+        if( CPLsscanf(pszOpt, "%lf,%lf,%lf,%lf", &dfBounds[0],
+                                          &dfBounds[1],
+                                          &dfBounds[2],
                                           &dfBounds[3]) != 4 )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
@@ -463,12 +463,12 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
 
     if (m_bQuickSpatialIndexMode == TRUE && poFile->SetQuickSpatialIndexMode(TRUE) != 0)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Setting Quick Spatial Index Mode failed.");
     }
     else if (m_bQuickSpatialIndexMode == FALSE && poFile->SetQuickSpatialIndexMode(FALSE) != 0)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Setting Normal Spatial Index Mode failed.");
     }
 
@@ -500,20 +500,20 @@ char **OGRTABDataSource::GetFileList()
     if( VSIStatL( m_pszName, &sStatBuf ) == 0 &&
         VSI_ISDIR(sStatBuf.st_mode) )
     {
-        static const char * const apszExtensions[] = 
+        static const char * const apszExtensions[] =
             { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
         char **papszDirEntries = VSIReadDir( m_pszName );
         int  iFile;
 
-        for( iFile = 0; 
+        for( iFile = 0;
              papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
              iFile++ )
         {
-            if( CSLFindString( (char **) apszExtensions, 
+            if( CSLFindString( (char **) apszExtensions,
                                CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
-                osList.AddString( CPLFormFilename( m_pszName, 
-                                            papszDirEntries[iFile], 
+                osList.AddString( CPLFormFilename( m_pszName,
+                                            papszDirEntries[iFile],
                                             NULL ) );
             }
         }
