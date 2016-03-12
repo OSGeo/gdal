@@ -2348,7 +2348,7 @@ OGRErr OGRShapeLayer::Repack()
     CPLString osBasename(CPLGetBasename(pszFullName));
 
     CPLString osDBFName, osSHPName, osSHXName, osCPGName;
-    char **papszCandidates = CPLReadDir( osDirname );
+    char **papszCandidates = VSIReadDir( osDirname );
     int i = 0;
     while(papszCandidates != NULL && papszCandidates[i] != NULL)
     {

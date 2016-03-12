@@ -47,7 +47,7 @@ void OGRWFSRecursiveUnlink( const char *pszName )
     char **papszFileList;
     int i;
 
-    papszFileList = CPLReadDir( pszName );
+    papszFileList = VSIReadDir( pszName );
 
     for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
     {
@@ -1470,7 +1470,7 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 
         CPLString osZipTmpFileName("/vsizip/" + osTmpFileName);
 
-        char** papszDirContent = CPLReadDir(osZipTmpFileName);
+        char** papszDirContent = VSIReadDir(osZipTmpFileName);
         if (CSLCount(papszDirContent) != 1)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

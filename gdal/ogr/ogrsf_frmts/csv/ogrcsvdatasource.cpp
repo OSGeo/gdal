@@ -562,7 +562,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /*      Scan through for entries ending in .csv.                        */
 /* -------------------------------------------------------------------- */
     int nNotCSVCount = 0;
-    char **papszNames = CPLReadDir( osFilename );
+    char **papszNames = VSIReadDir( osFilename );
 
     for( int i = 0; papszNames != NULL && papszNames[i] != NULL; i++ )
     {

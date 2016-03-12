@@ -303,7 +303,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
 
     // Scan through for entries which look like Selafin files
     int nNotSelafinCount = 0, i;
-    char **papszNames = CPLReadDir( osFilename );
+    char **papszNames = VSIReadDir( osFilename );
     for( i = 0; papszNames != NULL && papszNames[i] != NULL; i++ ) {
         CPLString oSubFilename = CPLFormFilename( osFilename, papszNames[i], NULL );
         if( EQUAL(papszNames[i],".") || EQUAL(papszNames[i],"..") ) continue;

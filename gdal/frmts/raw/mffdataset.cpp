@@ -783,7 +783,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char *pszTargetPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     char *pszTargetBase = CPLStrdup(CPLGetBasename( poOpenInfo->pszFilename ));
-    char **papszDirFiles = CPLReadDir( CPLGetPath( poOpenInfo->pszFilename ) );
+    char **papszDirFiles = VSIReadDir( CPLGetPath( poOpenInfo->pszFilename ) );
     if( papszDirFiles == NULL )
     {
         CPLFree(pszTargetPath);

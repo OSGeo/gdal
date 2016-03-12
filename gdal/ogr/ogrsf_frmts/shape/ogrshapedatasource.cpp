@@ -168,7 +168,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
     }
     else
     {
-        char      **papszCandidates = CPLReadDir( pszNewName );
+        char      **papszCandidates = VSIReadDir( pszNewName );
         int       iCan, nCandidateCount = CSLCount( papszCandidates );
         int       bMightBeOldCoverage = FALSE;
         std::set<CPLString> osLayerNameSet;

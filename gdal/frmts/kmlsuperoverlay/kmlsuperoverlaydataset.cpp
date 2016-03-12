@@ -2284,7 +2284,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
     {
         if( !STARTS_WITH(pszFilename, "/vsizip/") )
             osFilename = CPLSPrintf("/vsizip/%s", pszFilename);
-        char** papszFiles = CPLReadDir(osFilename);
+        char** papszFiles = VSIReadDir(osFilename);
         if( papszFiles == NULL )
             return NULL;
         char** papszIter = papszFiles;
