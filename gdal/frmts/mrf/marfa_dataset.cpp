@@ -1500,6 +1500,10 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 	if (1 == nBands && GCI_PaletteIndex == poSrcBand1->GetColorInterpretation())
 	    poDS->SetColorTable(poSrcBand1->GetColorTable()->Clone());
 
+	// Copy input GCPs, PAM handles it
+	if (poSrcDS->GetGCPCount())
+	    poDS->SetGCPs(poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), poSrcDS->GetGCPProjection());
+
 	// Finally write the XML in the right file name
 	poDS->Crystalize();
     }
