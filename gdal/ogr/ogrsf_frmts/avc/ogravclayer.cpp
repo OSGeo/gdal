@@ -4,7 +4,7 @@
  * Project:  OGR
  * Purpose:  Implements OGRAVCLayer class.  This is the base class for E00
  *           and binary coverage layer implementations.  It provides some base
- *           layer operations, and methods for transforming between OGR 
+ *           layer operations, and methods for transforming between OGR
  *           features, and the in memory structures of the AVC library.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -227,8 +227,8 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 
           poLine->setNumPoints( psArc->numVertices );
           for( int iVert = 0; iVert < psArc->numVertices; iVert++ )
-              poLine->setPoint( iVert, 
-                                psArc->pasVertices[iVert].x, 
+              poLine->setPoint( iVert,
+                                psArc->pasVertices[iVert].x,
                                 psArc->pasVertices[iVert].y );
 
           poOGRFeature->SetGeometryDirectly( poLine );
@@ -289,7 +289,7 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /* -------------------------------------------------------------------- */
 /*      Apply Geometry                                                  */
 /* -------------------------------------------------------------------- */
-          poOGRFeature->SetGeometryDirectly( 
+          poOGRFeature->SetGeometryDirectly(
               new OGRPoint( psCNT->sCoord.x, psCNT->sCoord.y ) );
 
 /* -------------------------------------------------------------------- */
@@ -346,8 +346,8 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /*      Apply Geometry                                                  */
 /* -------------------------------------------------------------------- */
           if( psTXT->numVerticesLine > 0 )
-              poOGRFeature->SetGeometryDirectly( 
-                  new OGRPoint( psTXT->pasVertices[0].x, 
+              poOGRFeature->SetGeometryDirectly(
+                  new OGRPoint( psTXT->pasVertices[0].x,
                                 psTXT->pasVertices[0].y ) );
 
 /* -------------------------------------------------------------------- */
@@ -517,15 +517,15 @@ int OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
 
         oFDefn.SetWidth( psFInfo->nFmtWidth );
 
-        if( psFInfo->nType1 * 10 == AVC_FT_DATE 
+        if( psFInfo->nType1 * 10 == AVC_FT_DATE
             || psFInfo->nType1 * 10 == AVC_FT_CHAR )
             oFDefn.SetType( OFTString );
 
-        else if( psFInfo->nType1 * 10 == AVC_FT_FIXINT 
+        else if( psFInfo->nType1 * 10 == AVC_FT_FIXINT
                  || psFInfo->nType1 * 10 == AVC_FT_BININT )
             oFDefn.SetType( OFTInteger );
 
-        else if( psFInfo->nType1 * 10 == AVC_FT_FIXNUM 
+        else if( psFInfo->nType1 * 10 == AVC_FT_FIXNUM
                  || psFInfo->nType1 * 10 == AVC_FT_BINFLOAT )
         {
             oFDefn.SetType( OFTReal );
@@ -542,8 +542,8 @@ int OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
 /*                        TranslateTableFields()                        */
 /************************************************************************/
 
-int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature, 
-                                       int nFieldBase, 
+int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
+                                       int nFieldBase,
                                        AVCTableDef *psTableDef,
                                        AVCField *pasFields )
 

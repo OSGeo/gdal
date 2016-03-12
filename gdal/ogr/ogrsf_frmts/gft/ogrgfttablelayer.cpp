@@ -1022,8 +1022,8 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
         !STARTS_WITH(pszLine, "affected_rows\n1\n") ||
         psResult->pszErrBuf != NULL)
     {
-        CPLDebug( "GFT", "%s/%s", 
-                  pszLine ? pszLine : "null", 
+        CPLDebug( "GFT", "%s/%s",
+                  pszLine ? pszLine : "null",
                   psResult->pszErrBuf ? psResult->pszErrBuf : "null");
         CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed (2)");
         CPLHTTPDestroyResult(psResult);
@@ -1089,8 +1089,8 @@ OGRErr OGRGFTTableLayer::DeleteFeature( GIntBig nFID )
         !STARTS_WITH(pszLine, "affected_rows\n1\n") ||
         psResult->pszErrBuf != NULL)
     {
-        CPLDebug( "GFT", "%s/%s", 
-                  pszLine ? pszLine : "null", 
+        CPLDebug( "GFT", "%s/%s",
+                  pszLine ? pszLine : "null",
                   psResult->pszErrBuf ? psResult->pszErrBuf : "null");
         CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed (2)");
         CPLHTTPDestroyResult(psResult);

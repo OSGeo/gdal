@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Oracle Spatial Driver
- * Purpose:  Oracle Spatial OGR Driver Declarations. 
+ * Purpose:  Oracle Spatial OGR Driver Declarations.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
@@ -40,7 +40,7 @@
 #define TYPE_OWNER                 "MDSYS"
 #define SDO_GEOMETRY               "MDSYS.SDO_GEOMETRY"
 
-typedef struct 
+typedef struct
 {
    OCINumber x;
    OCINumber y;
@@ -83,7 +83,7 @@ typedef struct
 #define ORA_GTYPE_LINESTRING      2    // or curve
 #define ORA_GTYPE_POLYGON         3    // or surface
 #define ORA_GTYPE_COLLECTION      4
-#define ORA_GTYPE_MULTIPOINT      5 
+#define ORA_GTYPE_MULTIPOINT      5
 #define ORA_GTYPE_MULTILINESTRING 6    // or multicurve
 #define ORA_GTYPE_MULTIPOLYGON    7    // or multisurface
 #define ORA_GTYPE_SOLID           8
@@ -144,7 +144,7 @@ class CPL_DLL OGROCIStatement {
     virtual     ~OGROCIStatement();
 
     OCIStmt     *GetStatement() { return hStatement; }
-    CPLErr       BindScalar( const char *pszPlaceName, 
+    CPLErr       BindScalar( const char *pszPlaceName,
                              void *pData, int nDataLen, int nSQLType,
                              sb2 *paeInd = NULL );
     CPLErr       BindObject( const char *pszPlaceName, void *pahObject,
@@ -163,7 +163,7 @@ class CPL_DLL OGROCIStatement {
 
     int          GetAffectedRows() const { return nAffectedRows; }
 
-  private:    
+  private:
     OGROCISession *poSession;
     OCIStmt       *hStatement;
 
@@ -181,7 +181,7 @@ class CPL_DLL OGROCIStatement {
 /************************************************************************/
 /*                           OGROCIStringBuf                            */
 /************************************************************************/
-class OGROCIStringBuf 
+class OGROCIStringBuf
 {
   char *pszString;
   int  nLen;
@@ -246,7 +246,7 @@ class OGROCILayer : public OGRLayer
                                                   int nStartOrdinal,
                                                   int nOrdCount);
     int      LoadElementInfo( int iElement, int nElemCount, int nTotalOrdCount,
-                              int *pnEType, int *pnInterpretation, 
+                              int *pnEType, int *pnInterpretation,
                               int *pnStartOrdinal, int *pnElemOrdCount );
     int                 GetOrdinalPoint( int iOrdinal, int nDimension,
                                          double *pdfX, double *pdfY,
@@ -322,9 +322,9 @@ public:
     void                SetOptions( char ** );
 
     void                SetDimension( int );
-    void                SetLaunderFlag( int bFlag ) 
+    void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
-    void                SetPrecisionFlag( int bFlag ) 
+    void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
 };
 
@@ -361,8 +361,8 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
   public:
                         OGROCILoaderLayer( OGROCIDataSource *,
                                            const char * pszName,
-                                           const char *pszGeomCol, 
-                                           int nSRID, 
+                                           const char *pszGeomCol,
+                                           int nSRID,
                                            const char *pszLoaderFile );
                         ~OGROCILoaderLayer();
 
@@ -373,7 +373,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-    virtual OGRErr      SetAttributeFilter( const char * ) 
+    virtual OGRErr      SetAttributeFilter( const char * )
                                 { return OGRERR_UNSUPPORTED_OPERATION; }
 
     virtual OGRFeature *GetNextFeature();
@@ -422,7 +422,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     void                TestForSpatialIndex( const char * );
 
-    OGROCIStatement   *poBoundStatement; 
+    OGROCIStatement   *poBoundStatement;
 
     int                 nWriteCacheMax;
     int                 nWriteCacheUsed;
@@ -510,7 +510,7 @@ class OGROCIDataSource : public OGRDataSource
     OGROCISession      *poSession;
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
@@ -523,7 +523,7 @@ class OGROCIDataSource : public OGRDataSource
 
     int                 Open( const char *, char** papszOpenOptions,
                               int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    int nSRID, int bUpdate, int bTestOpen );
 
     const char          *GetName() { return pszName; }
@@ -532,7 +532,7 @@ class OGROCIDataSource : public OGRDataSource
     OGRLayer            *GetLayerByName(const char * pszName);
 
     virtual OGRErr      DeleteLayer(int);
-    virtual OGRLayer    *ICreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -556,7 +556,7 @@ class OGROCIDataSource : public OGRDataSource
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
 /* -------------------------------------------------------------------- */
-int 
+int
 OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                      double dfAlongX, double dfAlongY,
                                      double dfEndX, double dfEndY,

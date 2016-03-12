@@ -215,7 +215,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
             CPLFree( pszFilename );
         }
 
-        // Try and .dbf files without apparent associated shapefiles. 
+        // Try and .dbf files without apparent associated shapefiles.
         for( iCan = 0; iCan < nCandidateCount; iCan++ )
         {
             char        *pszFilename;
@@ -228,7 +228,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 
             // We don't consume .dbf files in a directory that looks like
             // an old style Arc/Info (for PC?) that unless we found at least
-            // some shapefiles.  See Bug 493. 
+            // some shapefiles.  See Bug 493.
             if( bMightBeOldCoverage && osLayerNameSet.size() == 0 )
                 continue;
 
@@ -326,8 +326,8 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
         hSHP = DS_SHPOpen( pszNewName, "r" );
     CPLPopErrorHandler();
 
-    if( hSHP == NULL 
-        && (!EQUAL(CPLGetExtension(pszNewName),"dbf") 
+    if( hSHP == NULL
+        && (!EQUAL(CPLGetExtension(pszNewName),"dbf")
             || strstr(CPLGetLastErrorMsg(),".shp") == NULL) )
     {
         CPLString osMsg = CPLGetLastErrorMsg();
@@ -734,7 +734,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         poSRS = poSRS->Clone();
         poSRS->morphToESRI();
 
-        if( poSRS->exportToWkt( &pszWKT ) == OGRERR_NONE 
+        if( poSRS->exportToWkt( &pszWKT ) == OGRERR_NONE
             && (fp = VSIFOpenL( osPrjFile, "wt" )) != NULL )
         {
             VSIFWriteL( pszWKT, strlen(pszWKT), 1, fp );
@@ -928,7 +928,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
     if( STARTS_WITH_CI(pszStatement, "REPACK ") )
     {
-        OGRShapeLayer *poLayer = (OGRShapeLayer *) 
+        OGRShapeLayer *poLayer = (OGRShapeLayer *)
             GetLayerByName( pszStatement + 7 );
 
         if( poLayer != NULL )
@@ -942,8 +942,8 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "No such layer as '%s' in REPACK.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "No such layer as '%s' in REPACK.",
                       pszStatement + 7 );
         }
         return NULL;
@@ -973,15 +973,15 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
     if( STARTS_WITH_CI(pszStatement, "RECOMPUTE EXTENT ON ") )
     {
-        OGRShapeLayer *poLayer = (OGRShapeLayer *) 
+        OGRShapeLayer *poLayer = (OGRShapeLayer *)
             GetLayerByName( pszStatement + 20 );
 
         if( poLayer != NULL )
             poLayer->RecomputeExtent();
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "No such layer as '%s' in RECOMPUTE EXTENT.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "No such layer as '%s' in RECOMPUTE EXTENT.",
                       pszStatement + 20 );
         }
         return NULL;
@@ -992,15 +992,15 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
     if( STARTS_WITH_CI(pszStatement, "DROP SPATIAL INDEX ON ") )
     {
-        OGRShapeLayer *poLayer = (OGRShapeLayer *) 
+        OGRShapeLayer *poLayer = (OGRShapeLayer *)
             GetLayerByName( pszStatement + 22 );
 
         if( poLayer != NULL )
             poLayer->DropSpatialIndex();
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "No such layer as '%s' in DROP SPATIAL INDEX.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "No such layer as '%s' in DROP SPATIAL INDEX.",
                       pszStatement + 22 );
         }
         return NULL;
@@ -1023,7 +1023,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
         }
         CSLDestroy( papszTokens );
 
-        return OGRDataSource::ExecuteSQL( pszStatement, poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszStatement, poSpatialFilter,
                                           pszDialect );
     }
 
@@ -1035,9 +1035,9 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
     if( CSLCount(papszTokens) < 5
         || !EQUAL(papszTokens[0],"CREATE")
         || !EQUAL(papszTokens[1],"SPATIAL")
-        || !EQUAL(papszTokens[2],"INDEX") 
-        || !EQUAL(papszTokens[3],"ON") 
-        || CSLCount(papszTokens) > 7 
+        || !EQUAL(papszTokens[2],"INDEX")
+        || !EQUAL(papszTokens[3],"ON")
+        || CSLCount(papszTokens) > 7
         || (CSLCount(papszTokens) == 7 && !EQUAL(papszTokens[5],"DEPTH")) )
     {
         CSLDestroy( papszTokens );

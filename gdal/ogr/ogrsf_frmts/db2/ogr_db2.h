@@ -132,7 +132,7 @@ typedef enum
 
 
 /**
- * A class representing an ODBC database session. 
+ * A class representing an ODBC database session.
  *
  * Includes error collection services.
  *
@@ -153,13 +153,13 @@ protected:
     HDBC      m_hDBC;
     int       m_bInTransaction;
     int       m_bAutoCommit;
-    
+
 public:
     OGRDB2Session( );
     ~OGRDB2Session();
 // From CPLODBCSession
-    int         EstablishSession( const char *pszDSN, 
-                                  const char *pszUserid, 
+    int         EstablishSession( const char *pszDSN,
+                                  const char *pszUserid,
                                   const char *pszPassword );
     const char  *GetLastError();
 
@@ -171,13 +171,13 @@ public:
     virtual int RollbackTransaction();
     int         IsInTransaction() { return m_bInTransaction; }
 
-    // Essentially internal. 
+    // Essentially internal.
 
     int         CloseSession();
 
     int         Failed( int, HSTMT = NULL );
     HDBC        GetConnection() { return m_hDBC; }
-    HENV        GetEnvironment()  { return m_hEnv; }    
+    HENV        GetEnvironment()  { return m_hEnv; }
 };
 
 /**
@@ -189,7 +189,7 @@ public:
  * requests.
  *
  * Copied from cpl_odbc.h - to resolve issue with needing to include
- * different header files for ODBC and CLI 
+ * different header files for ODBC and CLI
  */
 
 /************************************************************************/
@@ -221,7 +221,7 @@ protected:
 
     char          *m_pszStatement;
     size_t         m_nStatementMax;
-    size_t         m_nStatementLen;    
+    size_t         m_nStatementLen;
 public:
     OGRDB2Statement( OGRDB2Session * );
     OGRDB2Statement( );
@@ -237,7 +237,7 @@ public:
                                             int nParameterType,
                                             int nLen,
                                             void * pValuePointer);
-                                            
+
 // From CPLODBCStatement
     HSTMT          GetStatement() { return m_hStmt; }
     int            Failed( int );
@@ -253,7 +253,7 @@ public:
     int            ExecuteSQL( const char * = NULL );
 
     // Results fetching
-    int            Fetch( int nOrientation = SQL_FETCH_NEXT, 
+    int            Fetch( int nOrientation = SQL_FETCH_NEXT,
                           int nOffset = 0 );
     void           ClearColumnData();
 
@@ -273,10 +273,10 @@ public:
     int            GetRowCountAffected();
 
     // Fetch special metadata.
-    int            GetColumns( const char *pszTable, 
+    int            GetColumns( const char *pszTable,
                                const char *pszCatalog = NULL,
                                const char *pszSchema = NULL );
-    int            GetPrimaryKeys( const char *pszTable, 
+    int            GetPrimaryKeys( const char *pszTable,
                                    const char *pszCatalog = NULL,
                                    const char *pszSchema = NULL );
 
@@ -288,7 +288,7 @@ public:
     static CPLString GetTypeName( int );
     static SQLSMALLINT GetTypeMapping( SQLSMALLINT );
 
-    int            CollectResultsInfo();                                            
+    int            CollectResultsInfo();
 };
 
 /************************************************************************/
@@ -733,7 +733,7 @@ class OGRDB2DataSource : public GDALPamDataset
     int                     m_bInWriteTile;
     CPLErr                  WriteTile();
 
-    CPLErr                  WriteTileInternal(); 
+    CPLErr                  WriteTileInternal();
     CPLErr                  FlushRemainingShiftedTiles();
     CPLErr                  WriteShiftedTile(int nRow, int nCol, int iBand,
             int nDstXOffset, int nDstYOffset,
@@ -746,7 +746,7 @@ class OGRDB2DataSource : public GDALPamDataset
     int                     HasMetadataTables();
     int                     CreateMetadataTables();
     const char*             CheckMetadataDomain( const char* pszDomain );
-    void                    WriteMetadata(CPLXMLNode* psXMLNode, 
+    void                    WriteMetadata(CPLXMLNode* psXMLNode,
                                           const char* pszTableName);
     CPLErr                  FlushMetadata();
 
@@ -778,7 +778,7 @@ public:
 
 
     virtual CPLErr      IBuildOverviews( const char *, int, int *,
-                                         int, int *, 
+                                         int, int *,
                                          GDALProgressFunc, void * );
 
     OGRErr              CreateGDALAspatialExtension();

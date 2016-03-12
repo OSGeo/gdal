@@ -36,7 +36,7 @@ class OGRRECDataSource;
 
 CPL_C_START
 int CPL_DLL RECGetFieldCount( FILE *fp);
-int CPL_DLL RECGetFieldDefinition( FILE *fp, char *pszFieldName, int *pnType, 
+int CPL_DLL RECGetFieldDefinition( FILE *fp, char *pszFieldName, int *pnType,
                                    int *pnWidth, int *pnPrecision );
 int CPL_DLL RECReadRecord( FILE *fp, char *pszRecBuf, int nRecordLength  );
 const char CPL_DLL *RECGetField( const char *pszSrc, int nStart, int nWidth );
@@ -65,7 +65,7 @@ class OGRRECLayer : public OGRLayer
     OGRFeature *        GetNextUnfilteredFeature();
 
   public:
-                        OGRRECLayer( const char *pszName, FILE *fp, 
+                        OGRRECLayer( const char *pszName, FILE *fp,
                                      int nFieldCount );
                         ~OGRRECLayer();
 

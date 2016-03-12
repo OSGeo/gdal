@@ -1171,7 +1171,7 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
     char    *pszWKT = NULL;
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int nBindNum = 0;
-    void** papBindBuffer = (void**)CPLMalloc(sizeof(void*) 
+    void** papBindBuffer = (void**)CPLMalloc(sizeof(void*)
                                                 * (nFieldCount + 1));
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
@@ -1453,8 +1453,8 @@ OGRErr OGRDB2TableLayer::RunDeferredCreationIfNecessary()
         const char* pszDefault = poFieldDefn->GetDefault();
         if( pszDefault != NULL &&
                 (!poFieldDefn->IsDefaultDriverSpecific() ||
-                 (pszDefault[0] == '(' 
-                 && pszDefault[strlen(pszDefault)-1] == ')' 
+                 (pszDefault[0] == '('
+                 && pszDefault[strlen(pszDefault)-1] == ')'
                  && (STARTS_WITH_CI(pszDefault+1, "strftime")
                  || STARTS_WITH_CI(pszDefault+1, " strftime")))) )
         {
@@ -1510,7 +1510,7 @@ OGRErr OGRDB2TableLayer::RunDeferredCreationIfNecessary()
                  " VALUES "
                  "('%q','%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',"
                  "CURRENT_TIMESTAMP),%d)",
-                 pszLayerName, (bIsSpatial ? "features": "aspatial"), 
+                 pszLayerName, (bIsSpatial ? "features": "aspatial"),
                  pszIdentifier, pszDescription, m_iSrs);
 
     err = SQLCommand(m_poDS->GetDB(), pszSQL);

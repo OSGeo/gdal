@@ -113,7 +113,7 @@ class OGRGmtDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *ICreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -140,4 +140,3 @@ class OGRGmtDriver : public OGRSFDriver
 
 
 #endif /* ndef OGRGMT_H_INCLUDED */
-

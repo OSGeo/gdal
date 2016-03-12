@@ -1878,7 +1878,7 @@ void OGRCouchDBTableLayer::LoadMetadata()
         poFeatureDefn->Reference();
 
         poFeatureDefn->SetGeomType(eGeomType);
-        if( poFeatureDefn->GetGeomFieldCount() != 0 ) 
+        if( poFeatureDefn->GetGeomFieldCount() != 0 )
             poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
         OGRFieldDefn oFieldId("_id", OFTString);

@@ -90,7 +90,7 @@ int OGRDB2GeometryValidator::ValidateLineString(OGRLineString * poGeom)
             continue;
         }
 
-        if (poPoint0->getX() == poGeom->getX(i) 
+        if (poPoint0->getX() == poGeom->getX(i)
             && poPoint0->getY() == poGeom->getY(i))
             continue;
 
@@ -152,7 +152,7 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
             continue;
         }
 
-        if (poPoint0->getX() == poGeom->getX(i) 
+        if (poPoint0->getX() == poGeom->getX(i)
             && poPoint0->getY() == poGeom->getY(i))
             continue;
 
@@ -163,7 +163,7 @@ int OGRDB2GeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
             continue;
         }
 
-        if (poPoint1->getX() == poGeom->getX(i) 
+        if (poPoint1->getX() == poGeom->getX(i)
             && poPoint1->getY() == poGeom->getY(i))
             continue;
 
@@ -232,7 +232,7 @@ int OGRDB2GeometryValidator::ValidateMultiLineString(
     for (i = 0; i < poGeom->getNumGeometries(); i++)
     {
         poLineString = poGeom->getGeometryRef(i);
-        if (poLineString->getGeometryType() != wkbLineString 
+        if (poLineString->getGeometryType() != wkbLineString
             && poLineString->getGeometryType() != wkbLineString25D)
         {
             // non linestring geometry
@@ -348,7 +348,7 @@ int OGRDB2GeometryValidator::ValidateMultiPolygon(OGRMultiPolygon* poGeom)
     for (i = 0; i < poGeom->getNumGeometries(); i++)
     {
         poPolygon = poGeom->getGeometryRef(i);
-        if (poPolygon->getGeometryType() != wkbPolygon 
+        if (poPolygon->getGeometryType() != wkbPolygon
             && poPolygon->getGeometryType() != wkbPolygon25D)
         {
             // non polygon geometry

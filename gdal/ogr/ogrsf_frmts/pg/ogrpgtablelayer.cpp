@@ -106,7 +106,7 @@ void OGRPGTableFeatureDefn::SolveFields()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRPGTableLayer::GetFIDColumn() 
+const char *OGRPGTableLayer::GetFIDColumn()
 
 {
     ReadTableDefinition();
@@ -1348,7 +1348,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                     OGRFree( pszHexEWKB );
                 }
                 else
-                    osCommand += "NULL";    
+                    osCommand += "NULL";
             }
             else
             {
@@ -1369,7 +1369,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                             CPLString().Printf(
                                 "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
                     else
-                        osCommand += 
+                        osCommand +=
                             CPLString().Printf(
                                 "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
                     OGRFree( pszWKT );
@@ -1390,7 +1390,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
         else
             bNeedComma = TRUE;
 
-        osCommand = osCommand 
+        osCommand = osCommand
             + OGRPGEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + " = ";
 
         if( !poFeature->IsFieldSet( i ) )
@@ -1528,7 +1528,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-    // We avoid testing the config option too often. 
+    // We avoid testing the config option too often.
     if( bUseCopy == USE_COPY_UNSET )
         bUseCopy = CPLTestBool( CPLGetConfigOption( "PG_USE_COPY", "NO") );
 
@@ -1675,7 +1675,7 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
     if (nError == 0)
         osCommand += pszDestStr;
     else
-        CPLError(CE_Warning, CPLE_AppDefined, 
+        CPLError(CE_Warning, CPLE_AppDefined,
                  "PQescapeString(): %s\n"
                  "  input: '%s'\n"
                  "    got: '%s'\n",
@@ -1751,7 +1751,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         else
             osCommand += ", ";
 
-        osCommand = osCommand 
+        osCommand = osCommand
             + OGRPGEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
     }
 
@@ -1797,7 +1797,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 OGRFree( pszHexEWKB );
             }
             else
-            { 
+            {
                 char    *pszWKT = NULL;
                 poGeom->exportToWkt( &pszWKT );
 
@@ -1812,7 +1812,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                             CPLString().Printf(
                                 "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
                     else
-                        osCommand += 
+                        osCommand +=
                             CPLString().Printf(
                                 "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
                     OGRFree( pszWKT );
@@ -1943,7 +1943,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     int                  i;
 
     /* Tell the datasource we are now planning to copy data */
-    poDS->StartCopy( this ); 
+    poDS->StartCopy( this );
 
     /* First process geometry */
     for( i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
@@ -2028,7 +2028,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
       result = OGRERR_FAILURE;
-    }  
+    }
 #endif /* end of defined(PG_PRE74) */
 
     return result;
@@ -2215,8 +2215,8 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s\n%s", 
-                    osCommand.c_str(), 
+                    "%s\n%s",
+                    osCommand.c_str(),
                     PQerrorMessage(hPGConn) );
 
             OGRPGClearResult( hResult );
@@ -2350,7 +2350,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 
     // Check if GEOMETRY_NAME layer creation option was set, but no initial
     // column was created in ICreateLayer()
-    CPLString osGeomFieldName = 
+    CPLString osGeomFieldName =
         ( m_osFirstGeometryFieldName.size() ) ? m_osFirstGeometryFieldName :
                                                 CPLString(poGeomFieldIn->GetNameRef());
     m_osFirstGeometryFieldName = ""; // reset for potential next geom columns
@@ -2394,8 +2394,8 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     if( nForcedGeometryTypeFlags >= 0 )
     {
         GeometryTypeFlags = nForcedGeometryTypeFlags;
-        eType = OGR_GT_SetModifier(eType, 
-                                   GeometryTypeFlags & OGRGeometry::OGR_G_3D, 
+        eType = OGR_GT_SetModifier(eType,
+                                   GeometryTypeFlags & OGRGeometry::OGR_G_3D,
                                    GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED);
     }
     poGeomField->SetType(eType);
@@ -3072,7 +3072,7 @@ void OGRPGTableLayer::CheckGeomTypeCompatibility(int iGeomField,
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Geometry to be inserted is of type %s, whereas the layer geometry type is %s.\n"
                  "Insertion is likely to fail",
-                 OGRGeometryTypeToName(poGeom->getGeometryType()), 
+                 OGRGeometryTypeToName(poGeom->getGeometryType()),
                  OGRGeometryTypeToName(eExpectedGeomType));
     }
 }
@@ -3151,10 +3151,10 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
         poFeatureDefn->myGetGeomFieldDefn(iGeomField);
 
     const char* pszExtentFct;
-    // if bForce is 0 and ePostgisType is not GEOM_TYPE_GEOGRAPHY we can use 
+    // if bForce is 0 and ePostgisType is not GEOM_TYPE_GEOGRAPHY we can use
     // the ST_EstimatedExtent function which is quicker
     // ST_EstimatedExtent was called ST_Estimated_Extent up to PostGIS 2.0.x
-    // ST_EstimatedExtent returns NULL in absence of statistics (an exception before 
+    // ST_EstimatedExtent returns NULL in absence of statistics (an exception before
     //   PostGIS 1.5.4)
     if ( bForce == 0 && TestCapability(OLCFastGetExtent) )
     {

@@ -213,7 +213,7 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
               || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
-        {   
+        {
                 return poFeature->Clone();
         }
     }

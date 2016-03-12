@@ -920,7 +920,7 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
         {
             // We need to emit polygon @P and @H items while we still
             // know this is a polygon and which is the outer and inner
-            // ring. 
+            // ring.
             if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPolygon )
             {
                 if( !bHaveAngle )
@@ -934,7 +934,7 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
                     VSIFPrintfL( fp, "# @H\n" );
             }
 
-            eErr = WriteGeometry( OGR_G_GetGeometryRef( hGeom, iGeom ), 
+            eErr = WriteGeometry( OGR_G_GetGeometryRef( hGeom, iGeom ),
                                   bHaveAngle );
             bHaveAngle = FALSE;
         }
@@ -945,7 +945,7 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 /*      If this is not a point we need to have an angle bracket to      */
 /*      mark the vertex list.                                           */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) != wkbPoint 
+    if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) != wkbPoint
         && !bHaveAngle )
         VSIFPrintfL( fp, ">\n" );
 

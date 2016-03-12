@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Oracle Spatial Driver
- * Purpose:  Simple string buffer used to accumulate text of commands 
+ * Purpose:  Simple string buffer used to accumulate text of commands
  *           efficiently.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

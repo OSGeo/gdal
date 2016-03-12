@@ -220,17 +220,17 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         switch( poFieldDefn->GetType() )
         {
             case OFTInteger:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_int( hStmt, iRawField ) );
                 break;
 
             case OFTInteger64:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_int64( hStmt, iRawField ) );
                 break;
 
             case OFTReal:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_double( hStmt, iRawField ) );
                 break;
 
@@ -262,7 +262,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             }
 
             case OFTString:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                         (const char *) sqlite3_column_text( hStmt, iRawField ) );
                 break;
 
@@ -293,7 +293,7 @@ const char* OGRGeoPackageLayer::GetFIDColumn()
 int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCIgnoreFields) )
-        return TRUE; 
+        return TRUE;
     else if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return m_poDS->GetUTF8();
     else

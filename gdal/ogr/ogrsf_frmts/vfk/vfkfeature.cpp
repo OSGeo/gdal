@@ -399,7 +399,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
     iIndex = nLength = 0;
     inString = FALSE;
     while(*poChar != '\0') {
-        if (*poChar == '"' && 
+        if (*poChar == '"' &&
             (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\0')) {
             poChar++; /* skip '"' */
             inString = inString ? FALSE : TRUE;
@@ -693,7 +693,7 @@ OGRErr VFKFeature::LoadProperties(OGRFeature *poFeature)
         if (GetProperty(iField)->IsNull())
             continue;
         OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-        if (fType == OFTInteger) 
+        if (fType == OFTInteger)
             poFeature->SetField(iField,
                                 GetProperty(iField)->GetValueI());
         else if (fType == OFTReal)

@@ -226,8 +226,8 @@ static GDALDataset *OGRCSVDriverCreate( const char * pszName,
         else if( !EQUAL(pszName, "/vsistdout/") &&
             VSIMkdir( pszName, 0755 ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to create directory %s:\n%s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to create directory %s:\n%s",
                       pszName, VSIStrerror( errno ) );
             return NULL;
         }

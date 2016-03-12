@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  DXF Translator
- * Purpose:  Implements BlockMap reading and management portion of 
+ * Purpose:  Implements BlockMap reading and management portion of
  *           OGRDXFDataSource class
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -50,14 +50,14 @@ bool OGRDXFDataSource::ReadBlocksSection()
 
     iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
 
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
            && !EQUAL(szLineBuf,"ENDSEC") )
     {
         // We are only interested in extracting blocks.
         if( nCode != 0 || !EQUAL(szLineBuf,"BLOCK") )
             continue;
 
-        // Process contents of BLOCK definition till we find the 
+        // Process contents of BLOCK definition till we find the
         // first entity.
         CPLString osBlockName;
 
@@ -66,7 +66,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
             if( nCode == 2 )
                 osBlockName = szLineBuf;
 
-            // anything else we want? 
+            // anything else we want?
         }
         if( nCode < 0 )
         {
@@ -117,7 +117,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
         return false;
     }
 
-    CPLDebug( "DXF", "Read %d blocks with meaningful geometry.", 
+    CPLDebug( "DXF", "Read %d blocks with meaningful geometry.",
               (int) oBlockMap.size() );
     return true;
 }
@@ -126,7 +126,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
 /*                       SimplifyBlockGeometry()                        */
 /************************************************************************/
 
-OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry( 
+OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry(
     OGRGeometryCollection *poCollection )
 
 {

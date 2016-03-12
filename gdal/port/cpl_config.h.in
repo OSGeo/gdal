@@ -233,7 +233,7 @@
 #undef HAVE_SC_PHYS_PAGES
 
 /* Use this file to override settings in instances where you're doing FAT compiles
-   on Apple.  It is currently off by default because it doesn't seem to work with 
+   on Apple.  It is currently off by default because it doesn't seem to work with
    XCode >= 3/28/11 */
 /* #include "cpl_config_extras.h" */
 

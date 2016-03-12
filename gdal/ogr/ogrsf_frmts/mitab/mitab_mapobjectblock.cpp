@@ -18,16 +18,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -81,8 +81,8 @@
  * Handle the case of TAB_GEOM_NONE with the new TABMAPObjHdr classes.
  *
  * Revision 1.9  2001/11/17 21:54:06  daniel
- * Made several changes in order to support writing objects in 16 bits 
- * coordinate format. New TABMAPObjHdr-derived classes are used to hold 
+ * Made several changes in order to support writing objects in 16 bits
+ * coordinate format. New TABMAPObjHdr-derived classes are used to hold
  * object info in mem until block is full.
  *
  * Revision 1.8  2001/09/19 19:19:11  warmerda
@@ -168,9 +168,9 @@ TABMAPObjectBlock::~TABMAPObjectBlock()
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
-                                             int nBlockSize, int nSizeUsed, 
+                                             int nBlockSize, int nSizeUsed,
                                              GBool bMakeCopy /* = TRUE */,
-                                             VSILFILE *fpSrc /* = NULL */, 
+                                             VSILFILE *fpSrc /* = NULL */,
                                              int nOffset /* = 0 */)
 {
     int nStatus;
@@ -178,11 +178,11 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, 
-                                                nBlockSize, nSizeUsed, 
+    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf,
+                                                nBlockSize, nSizeUsed,
                                                 bMakeCopy,
                                                 fpSrc, nOffset);
-    if (nStatus != 0)   
+    if (nStatus != 0)
         return nStatus;
 
     /*-----------------------------------------------------------------
@@ -212,7 +212,7 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
         m_pabyBuf = NULL;
         return -1;
     }
-    
+
     m_nCenterX = ReadInt32();
     m_nCenterY = ReadInt32();
 
@@ -297,7 +297,7 @@ void TABMAPObjectBlock::Rewind( )
 int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
 
 {
-    if( m_nCurObjectId == -1 ) 
+    if( m_nCurObjectId == -1 )
     {
         m_nCurObjectOffset = 20;
     }
@@ -342,7 +342,7 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
 /**********************************************************************
  *                   TABMAPObjectBlock::CommitToFile()
  *
- * Commit the current state of the binary block to the file to which 
+ * Commit the current state of the binary block to the file to which
  * it has been previously attached.
  *
  * This method makes sure all values are properly set in the map object
@@ -358,7 +358,7 @@ int     TABMAPObjectBlock::CommitToFile()
 
     if ( m_pabyBuf == NULL )
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
      "TABMAPObjectBlock::CommitToFile(): Block has not been initialized yet!");
         return -1;
     }
@@ -406,8 +406,8 @@ int     TABMAPObjectBlock::CommitToFile()
  *                   TABMAPObjectBlock::InitNewBlock()
  *
  * Initialize a newly created block so that it knows to which file it
- * is attached, its block size, etc . and then perform any specific 
- * initialization for this block type, including writing a default 
+ * is attached, its block size, etc . and then perform any specific
+ * initialization for this block type, including writing a default
  * block header, etc. and leave the block ready to receive data.
  *
  * This is an alternative to calling ReadFromFile() or InitBlockFromData()
@@ -417,7 +417,7 @@ int     TABMAPObjectBlock::CommitToFile()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
+int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                                         int nFileOffset /* = 0*/)
 {
     /*-----------------------------------------------------------------
@@ -481,11 +481,11 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed, 
+int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
                                         GInt32 &nX, GInt32 &nY)
 {
     if (bCompressed)
-    {   
+    {
         nX = ReadInt16();
         nY = ReadInt16();
         TABSaturatedAdd(nX, m_nCenterX);
@@ -510,7 +510,7 @@ int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
  * the block.  If bCompr=TRUE then the coordinates are written relative to
  * the object block center... otherwise they're written as 32 bits int.
  *
- * This function does not maintain the block's MBR and center... it is 
+ * This function does not maintain the block's MBR and center... it is
  * assumed to have been set before the first call to WriteIntCoord()
  *
  * Returns 0 if successful or -1 if an error happened, in which case
@@ -543,10 +543,10 @@ int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
  * If bCompr=TRUE then the coordinates are written relative to
  * the object block center... otherwise they're written as 32 bits int.
  *
- * This function does not maintain the block's MBR and center... it is 
+ * This function does not maintain the block's MBR and center... it is
  * assumed to have been set before the first call to WriteIntCoord()
  *
- * Returns 0 if successful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
@@ -555,7 +555,7 @@ int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
 {
     if (WriteIntCoord(MIN(nXMin, nXMax), MIN(nYMin, nYMax),
                       bCompressed) != 0 ||
-        WriteIntCoord(MAX(nXMin, nXMax), MAX(nYMin, nYMax), 
+        WriteIntCoord(MAX(nXMin, nXMax), MAX(nYMin, nYMax),
                       bCompressed) != 0 )
     {
         return -1;
@@ -605,7 +605,7 @@ void     TABMAPObjectBlock::AddCoordBlockRef(GInt32 nNewBlockAddress)
 {
     /*-----------------------------------------------------------------
      * Normally, new blocks are added to the end of the list, except
-     * the first one which is the beginning and the end of the list at 
+     * the first one which is the beginning and the end of the list at
      * the same time.
      *----------------------------------------------------------------*/
     if (m_nFirstCoordBlock == 0)
@@ -620,13 +620,13 @@ void     TABMAPObjectBlock::AddCoordBlockRef(GInt32 nNewBlockAddress)
  *
  * Set the MBR for the current block.
  **********************************************************************/
-void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin, 
+void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin,
                                GInt32 nXMax, GInt32 nYMax)
 {
     m_nMinX = nXMin;
     m_nMinY = nYMin;
     m_nMaxX = nXMax;
-    m_nMaxY = nYMax; 
+    m_nMaxY = nYMax;
 
     if( !m_bLockCenter )
     {
@@ -640,13 +640,13 @@ void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin,
  *
  * Return the MBR for the current block.
  **********************************************************************/
-void TABMAPObjectBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin, 
+void TABMAPObjectBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin,
                                GInt32 &nXMax, GInt32 &nYMax)
 {
     nXMin = m_nMinX;
     nYMin = m_nMinY;
     nXMax = m_nMaxX;
-    nYMax = m_nMaxY; 
+    nYMax = m_nMaxY;
 }
 
 
@@ -698,7 +698,7 @@ int     TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
 /**********************************************************************
  *                   TABMAPObjectBlock::CommitCurObjData()
  *
- * Write the ObjHdr to this block. This is usually called after 
+ * Write the ObjHdr to this block. This is usually called after
  * PrepareNewObject() once all members of the ObjHdr have
  * been set.
  *
@@ -749,7 +749,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
     }
     else
     {
-        fprintf(fpOut,"Object Data Block (type %d) at offset %d.\n", 
+        fprintf(fpOut,"Object Data Block (type %d) at offset %d.\n",
                                                 m_nBlockType, m_nFileOffset);
         fprintf(fpOut,"  m_numDataBytes        = %d\n", m_numDataBytes);
         fprintf(fpOut,"  m_nCenterX            = %d\n", m_nCenterX);
@@ -768,7 +768,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         poBlock = TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
         if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
         {
-            CPLError(CE_Failure, CPLE_AssertionFailed, 
+            CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Failed reading header block.");
             return;
         }
@@ -777,7 +777,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         Rewind();
         while((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) != NULL)
         {
-            fprintf(fpOut, 
+            fprintf(fpOut,
                     "   object id=%d, type=%d, offset=%d (%d), size=%d\n"
                     "          MBR=(%d, %d, %d, %d)\n",
                     m_nCurObjectId, m_nCurObjectType, m_nCurObjectOffset,
@@ -814,7 +814,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
 /**********************************************************************
  *                    TABMAPObjHdr::NewObj()
  *
- * Alloc a new object of specified type or NULL for NONE types or if type 
+ * Alloc a new object of specified type or NULL for NONE types or if type
  * is not supported.
  **********************************************************************/
 TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
@@ -887,7 +887,7 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
         poObj = new TABMAPObjCollection();
     break;
       default:
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "TABMAPObjHdr::NewObj(): Unsupported object type %d",
                  nNewObjType);
     }
@@ -961,7 +961,7 @@ int TABMAPObjHdr::WriteObjTypeAndId(TABMAPObjectBlock *poObjBlock)
  *                   TABMAPObjHdr::SetMBR()
  *
  **********************************************************************/
-void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY, 
+void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY,
                           GInt32 nMaxX, GInt32 nMaxY)
 {
     m_nMinX = MIN(nMinX, nMaxX);
@@ -980,7 +980,7 @@ void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY,
 /**********************************************************************
  *                   TABMAPObjLine::ReadObj()
  *
- * Read Object information starting after the object id which should 
+ * Read Object information starting after the object id which should
  * have been read by TABMAPObjHdr::ReadNextObj() already.
  * This function should be called only by TABMAPObjHdr::ReadNextObj().
  *
@@ -1055,7 +1055,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     }
 
 #ifdef TABDUMP
-    printf("TABMAPObjPLine::ReadObj: m_nCoordDataSize = %d @ %d\n", 
+    printf("TABMAPObjPLine::ReadObj: m_nCoordDataSize = %d @ %d\n",
            m_nCoordDataSize, m_nCoordBlockPtr);
 #endif
 
@@ -1099,7 +1099,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
 #ifdef TABDUMP
     printf("PLINE/REGION: id=%d, type=%d, "
            "CoordBlockPtr=%d, CoordDataSize=%d, numLineSect=%d, bSmooth=%d\n",
-           m_nId, m_nType, m_nCoordBlockPtr, m_nCoordDataSize, 
+           m_nId, m_nType, m_nCoordBlockPtr, m_nCoordDataSize,
            m_numLineSections, m_bSmooth);
 #endif
 
@@ -1396,7 +1396,7 @@ int TABMAPObjFontPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjCustomPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    m_nUnknown_ = poObjBlock->ReadByte();       // ??? 
+    m_nUnknown_ = poObjBlock->ReadByte();       // ???
     m_nCustomStyle = poObjBlock->ReadByte(); // 0x01=Show BG, 0x02=Apply Color
 
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nX, m_nY);
@@ -1424,7 +1424,7 @@ int TABMAPObjCustomPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    poObjBlock->WriteByte(m_nUnknown_);  // ??? 
+    poObjBlock->WriteByte(m_nUnknown_);  // ???
     poObjBlock->WriteByte(m_nCustomStyle); // 0x01=Show BG, 0x02=Apply Color
     poObjBlock->WriteIntCoord(m_nX, m_nY, IsCompressedType());
 
@@ -1449,7 +1449,7 @@ int TABMAPObjCustomPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjRectEllipse::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    if (m_nType == TAB_GEOM_ROUNDRECT || 
+    if (m_nType == TAB_GEOM_ROUNDRECT ||
         m_nType == TAB_GEOM_ROUNDRECT_C)
     {
         if (IsCompressedType())
@@ -1488,7 +1488,7 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    if (m_nType == TAB_GEOM_ROUNDRECT || 
+    if (m_nType == TAB_GEOM_ROUNDRECT ||
         m_nType == TAB_GEOM_ROUNDRECT_C)
     {
         if (IsCompressedType())
@@ -1503,7 +1503,7 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
         }
     }
 
-    poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY, 
+    poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                  IsCompressedType());
 
     poObjBlock->WriteByte(m_nPenId);      // Pen index
@@ -1532,9 +1532,9 @@ int TABMAPObjArc::ReadObj(TABMAPObjectBlock *poObjBlock)
     m_nEndAngle   = poObjBlock->ReadInt16();
 
     // An arc is defined by its defining ellipse's MBR:
-    poObjBlock->ReadIntCoord(IsCompressedType(), 
+    poObjBlock->ReadIntCoord(IsCompressedType(),
                              m_nArcEllipseMinX, m_nArcEllipseMinY);
-    poObjBlock->ReadIntCoord(IsCompressedType(), 
+    poObjBlock->ReadIntCoord(IsCompressedType(),
                              m_nArcEllipseMaxX, m_nArcEllipseMaxY);
 
     // Read the Arc's actual MBR
@@ -1565,12 +1565,12 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteInt16((GInt16)m_nEndAngle);
 
     // An arc is defined by its defining ellipse's MBR:
-    poObjBlock->WriteIntMBRCoord(m_nArcEllipseMinX, m_nArcEllipseMinY, 
-                                 m_nArcEllipseMaxX, m_nArcEllipseMaxY, 
+    poObjBlock->WriteIntMBRCoord(m_nArcEllipseMinX, m_nArcEllipseMinY,
+                                 m_nArcEllipseMaxX, m_nArcEllipseMaxY,
                                  IsCompressedType());
 
     // Write the Arc's actual MBR
-    poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY, 
+    poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                  IsCompressedType());
 
     poObjBlock->WriteByte(m_nPenId);      // Pen index
@@ -1681,7 +1681,7 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteByte(m_nFontId);      // Font name index
 
     // MBR after rotation
-    poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY, 
+    poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                  IsCompressedType());
 
     poObjBlock->WriteByte(m_nPenId);      // Pen index
@@ -1701,7 +1701,7 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
 /**********************************************************************
  *                   TABMAPObjMultiPoint::ReadObj()
  *
- * Read Object information starting after the object id which should 
+ * Read Object information starting after the object id which should
  * have been read by TABMAPObjHdr::ReadNextObj() already.
  * This function should be called only by TABMAPObjHdr::ReadNextObj().
  *
@@ -1877,7 +1877,7 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
 /**********************************************************************
  *                   TABMAPObjCollection::ReadObj()
  *
- * Read Object information starting after the object id which should 
+ * Read Object information starting after the object id which should
  * have been read by TABMAPObjHdr::ReadNextObj() already.
  * This function should be called only by TABMAPObjHdr::ReadNextObj().
  *
@@ -1894,7 +1894,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         /* 6 * int16 */
-        SIZE_OF_REGION_PLINE_MINI_HDR = SIZE_OF_MPOINT_MINI_HDR = 12; 
+        SIZE_OF_REGION_PLINE_MINI_HDR = SIZE_OF_MPOINT_MINI_HDR = 12;
     }
     else
     {
@@ -1905,7 +1905,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (nVersion >= 800)
     {
         /* extra 4 bytes for num_segments in Region/Pline mini-headers */
-        SIZE_OF_REGION_PLINE_MINI_HDR += 4;  
+        SIZE_OF_REGION_PLINE_MINI_HDR += 4;
     }
 
     m_nCoordBlockPtr = poObjBlock->ReadInt32();    // pointer into coord block
@@ -1930,13 +1930,13 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (nVersion < 800)
     {
         // Num Region/Pline section headers (int16 in V650)
-        m_nNumRegSections = poObjBlock->ReadInt16();   
+        m_nNumRegSections = poObjBlock->ReadInt16();
         m_nNumPLineSections = poObjBlock->ReadInt16();
     }
     else
     {
         // Num Region/Pline section headers (int32 in V800)
-        m_nNumRegSections = poObjBlock->ReadInt32();   
+        m_nNumRegSections = poObjBlock->ReadInt32();
         m_nNumPLineSections = poObjBlock->ReadInt32();
     }
 
@@ -1951,10 +1951,10 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     m_nMPointDataSize = m_nNumMultiPoints * nPointSize;
 
     /* NB. MapInfo counts 2 extra bytes per Region and Pline section header
-     * in the RegionDataSize and PolylineDataSize values but those 2 extra 
+     * in the RegionDataSize and PolylineDataSize values but those 2 extra
      * bytes are not present in the section hdr (possibly due to an alignment
-     * to a 4 byte boundary in memory in MapInfo?). The real data size in 
-     * the CoordBlock is actually 2 bytes shorter per section header than 
+     * to a 4 byte boundary in memory in MapInfo?). The real data size in
+     * the CoordBlock is actually 2 bytes shorter per section header than
      * what is written in RegionDataSize and PolylineDataSize values.
      *
      * We'll adjust the values in memory to be the corrected values.
@@ -2019,7 +2019,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     printf("COLLECTION: id=%d, type=%d (0x%x), "
            "CoordBlockPtr=%d, numRegionSections=%d (size=%d+%d), "
            "numPlineSections=%d (size=%d+%d), numPoints=%d (size=%d+%d)\n",
-           m_nId, m_nType, m_nType, m_nCoordBlockPtr, 
+           m_nId, m_nType, m_nType, m_nCoordBlockPtr,
            m_nNumRegSections, m_nRegionDataSize, SIZE_OF_REGION_PLINE_MINI_HDR,
            m_nNumPLineSections, m_nPolylineDataSize, SIZE_OF_REGION_PLINE_MINI_HDR,
            m_nNumMultiPoints, m_nMPointDataSize, SIZE_OF_MPOINT_MINI_HDR);
@@ -2031,7 +2031,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         int nValue = poObjBlock->ReadByte();
         if (nValue != 4)
         {
-            CPLError(CE_Failure, CPLE_AssertionFailed, 
+            CPLError(CE_Failure, CPLE_AssertionFailed,
                      "TABMAPObjCollection::ReadObj(): Byte 29 in Collection "
                      "object header not equal to 4 as expected. Value is %d. "
                      "Please report this error to the MITAB list so that "
@@ -2114,14 +2114,14 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     int nVersion = TAB_GEOM_GET_VERSION(m_nType);
 
     /* NB. MapInfo counts 2 extra bytes per Region and Pline section header
-     * in the RegionDataSize and PolylineDataSize values but those 2 extra 
+     * in the RegionDataSize and PolylineDataSize values but those 2 extra
      * bytes are not present in the section hdr (possibly due to an alignment
-     * to a 4 byte boundary in memory in MapInfo?). The real data size in 
-     * the CoordBlock is actually 2 bytes shorter per section header than 
+     * to a 4 byte boundary in memory in MapInfo?). The real data size in
+     * the CoordBlock is actually 2 bytes shorter per section header than
      * what is written in RegionDataSize and PolylineDataSize values.
      *
      * The values in memory are the corrected values so we need to add 2 bytes
-     * per section header in the values that we write on disk to emulate 
+     * per section header in the values that we write on disk to emulate
      * MapInfo's behavior.
      */
     GInt32 nRegionDataSizeMI = m_nRegionDataSize + (2*m_nNumRegSections);

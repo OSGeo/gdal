@@ -44,7 +44,7 @@
 #include <kml/base/file.h>
 
 #ifdef _MSC_VER
-#pragma warning( pop ) 
+#pragma warning( pop )
 #endif
 
 #endif

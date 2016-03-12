@@ -64,7 +64,7 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
         {
             if( papszFrm[i][strlen("decimal")] == '(' )
             {
-                if( strchr(papszFrm[i], ',') && 
+                if( strchr(papszFrm[i], ',') &&
                     atoi(strchr(papszFrm[i], ',')+1) > 0 )
                 {
                     eType = OFTReal;
@@ -85,7 +85,7 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
         {
             if( papszFrm[i][strlen("num")] == '[' )
             {
-                if( strchr(papszFrm[i], '.') && 
+                if( strchr(papszFrm[i], '.') &&
                     atoi(strchr(papszFrm[i], '.')+1) > 0 )
                 {
                     eType = OFTReal;
@@ -1781,8 +1781,8 @@ GDALDataset* OGRVDVDataSource::Create( const char * pszName,
     {
         if( VSIMkdir( pszName, 0755 ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to create directory %s:\n%s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to create directory %s:\n%s",
                       pszName, VSIStrerror( errno ) );
             return NULL;
         }

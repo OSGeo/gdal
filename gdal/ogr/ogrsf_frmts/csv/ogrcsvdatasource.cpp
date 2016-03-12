@@ -76,7 +76,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
                                                            OGRLayer** ppoDecoratedLayer)
 {
     CPLAssert( m_poCSVLayer == *ppoDecoratedLayer );
-    
+
     CPLString osLayerName(m_poCSVLayer->GetName());
     CPLString osFilename(m_poCSVLayer->GetFilename());
     const bool bCreateCSVT = m_poCSVLayer->GetCreateCSVT() != FALSE;
@@ -95,10 +95,10 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
                                                   osTmpFilename,
                                                   TRUE, TRUE, chDelimiter );
     poCSVTmpLayer->BuildFeatureDefn(NULL, NULL, m_papszOpenOptions);
-    poCSVTmpLayer->SetCRLF( m_poCSVLayer->GetCRLF() );  
+    poCSVTmpLayer->SetCRLF( m_poCSVLayer->GetCRLF() );
     poCSVTmpLayer->SetCreateCSVT( bCreateCSVT || bHasCSVT );
     poCSVTmpLayer->SetWriteBOM( m_poCSVLayer->GetWriteBOM() );
-    
+
     if( m_poCSVLayer->GetGeometryFormat() == OGR_CSV_GEOM_AS_WKT )
         poCSVTmpLayer->SetWriteGeometry( wkbNone, OGR_CSV_GEOM_AS_WKT, NULL );
 
@@ -169,7 +169,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
             eErr = poCSVTmpLayer->CreateGeomField( &oGeomFieldDefn );
         }
     }
-    
+
     OGRFeature* poFeature;
     poEditableLayer->ResetReading();
     while( eErr == OGRERR_NONE &&
@@ -198,7 +198,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         delete poNewFeature;
     }
     delete poCSVTmpLayer;
-    
+
     if( eErr != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error while creating %s",
@@ -207,9 +207,9 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         VSIUnlink( CPLResetExtension(osTmpFilename, "csvt") );
         return eErr;
     }
-    
+
     delete m_poCSVLayer;
-    
+
     if( osFilename != osTmpFilename )
     {
         CPLString osTmpOriFilename(osFilename + ".ogr_bak");
@@ -227,7 +227,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         if( bHasCSVT )
             VSIUnlink( osTmpOriCSVTFilename );
     }
-    
+
     VSILFILE* fp = VSIFOpenL( osFilename, "rb+" );
     if( fp == NULL )
     {
@@ -236,7 +236,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         *ppoDecoratedLayer = m_poCSVLayer = NULL;
         return OGRERR_FAILURE;
     }
-    
+
     m_poCSVLayer = new OGRCSVLayer( osLayerName, fp,
                                     osFilename,
                                     FALSE, /* new */
@@ -795,7 +795,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
     }
     if (EQUAL(pszFilename, "/vsistdin/"))
         osLayerName = "layer";
-    
+
     OGRCSVLayer* poCSVLayer = new OGRCSVLayer( osLayerName, fp, pszFilename, FALSE, bUpdate,
                                             chDelimiter  );
     poCSVLayer->BuildFeatureDefn( pszNfdcRunwaysGeomField,
@@ -873,7 +873,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     if( VSIStatL( osFilename, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create layer %s, but %s already exists.",
                   pszLayerName, osFilename.c_str() );
         return NULL;
@@ -910,7 +910,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 
     OGRCSVLayer* poCSVLayer = new OGRCSVLayer( pszLayerName, NULL, osFilename,
                                              TRUE, TRUE, chDelimiter );
-    
+
     poCSVLayer->BuildFeatureDefn();
 
 /* -------------------------------------------------------------------- */

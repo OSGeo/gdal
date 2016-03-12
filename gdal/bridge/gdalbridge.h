@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL Bridge 
+ * Project:  GDAL Bridge
  * Purpose:  Declarations for GDAL Bridge support.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
@@ -125,7 +125,7 @@ typedef enum
 } GDALColorInterp;
 
 /*! Types of color interpretations for a GDALColorTable. */
-typedef enum 
+typedef enum
 {
   /*! Grayscale (in GDALColorEntry.c1) */                      GPI_Gray=0,
   /*! Red, Green, Blue and Alpha in (in c1, c2, c3 and c4) */  GPI_RGB=1,
@@ -185,7 +185,7 @@ GDAL_ENTRY CPLErr (*pfnCPLGetLastErrorType)() GDAL_NULL;
 #define CPLGetLastErrorType pfnCPLGetLastErrorType
 
 GDAL_ENTRY const char *(*pfnCPLGetLastErrorMsg)() GDAL_NULL;
-#define CPLGetLastErrorMsg pfnCPLGetLastErrorMsg 
+#define CPLGetLastErrorMsg pfnCPLGetLastErrorMsg
 
 GDAL_ENTRY void (*pfnCPLPushErrorHandler)( CPLErrorHandler ) GDAL_NULL;
 #define CPLPushErrorHandler pfnCPLPushErrorHandler
@@ -213,7 +213,7 @@ typedef void *OGRCoordinateTransformationH;
 typedef struct
 {
     /** Unique identifier, often numeric */
-    char	*pszId; 
+    char	*pszId;
 
     /** Informational message or "" */
     char	*pszInfo;
@@ -265,7 +265,7 @@ GDAL_ENTRY GDALDriverH (*pfnGDALIdentifyDriver)( const char *, char ** ) GDAL_NU
 /*      GDALMajorObject                                                 */
 /* ==================================================================== */
 
-GDAL_ENTRY char **(*pfnGDALGetMetadata)( GDALMajorObjectH, 
+GDAL_ENTRY char **(*pfnGDALGetMetadata)( GDALMajorObjectH,
                                          const char * ) GDAL_NULL;
 #define GDALGetMetadata pfnGDALGetMetadata
 
@@ -273,9 +273,9 @@ GDAL_ENTRY CPLErr (*pfnGDALSetMetadata)( GDALMajorObjectH, char **,
                                          const char * ) GDAL_NULL;
 #define GDALSetMetadata pfnGDALSetMetadata
 
-GDAL_ENTRY const char *(*pfnGDALGetMetadataItem)( GDALMajorObjectH, 
+GDAL_ENTRY const char *(*pfnGDALGetMetadataItem)( GDALMajorObjectH,
                                       const char *, const char * ) GDAL_NULL;
-#define GDALGetMetadataItem pfnGDALGetMetadataItem 
+#define GDALGetMetadataItem pfnGDALGetMetadataItem
 
 GDAL_ENTRY CPLErr (*pfnGDALSetMetadataItem)( GDALMajorObjectH,
                                              const char *, const char *,
@@ -367,11 +367,11 @@ GDAL_ENTRY int (*pGDALGetOverviewCount)( GDALRasterBandH ) GDAL_NULL;
 GDAL_ENTRY GDALRasterBandH (*pGDALGetOverview)( GDALRasterBandH, int ) GDAL_NULL;
 #define GDALGetOverview pGDALGetOverview
 
-GDAL_ENTRY double (*pGDALGetRasterNoDataValue)( GDALRasterBandH, int * ) 
+GDAL_ENTRY double (*pGDALGetRasterNoDataValue)( GDALRasterBandH, int * )
     GDAL_NULL;
 #define GDALGetRasterNoDataValue pGDALGetRasterNoDataValue
 
-GDAL_ENTRY CPLErr (*pGDALSetRasterNoDataValue)( GDALRasterBandH, double ) 
+GDAL_ENTRY CPLErr (*pGDALSetRasterNoDataValue)( GDALRasterBandH, double )
     GDAL_NULL;
 #define GDALSetRasterNoDataValue pGDALSetRasterNoDataValue
 
@@ -385,7 +385,7 @@ GDAL_ENTRY double (*pGDALGetRasterMinimum)( GDALRasterBandH, int * ) GDAL_NULL;
 GDAL_ENTRY double (*pGDALGetRasterMaximum)( GDALRasterBandH, int * ) GDAL_NULL;
 #define GDALGetRasterMaximum pGDALGetRasterMaximum
 
-GDAL_ENTRY void (*pGDALComputeRasterMinMax)( GDALRasterBandH, int, 
+GDAL_ENTRY void (*pGDALComputeRasterMinMax)( GDALRasterBandH, int,
                                              double * ) GDAL_NULL;
 #define GDALComputeRasterMinMax pGDALComputeRasterMinMax
 
@@ -412,16 +412,16 @@ GDAL_ENTRY int (*pfnGDALGetRasterBandYSize)( GDALRasterBandH ) GDAL_NULL;
 typedef struct
 {
     /*! gray, red, cyan or hue */
-    short      c1;      
+    short      c1;
 
-    /*! green, magenta, or lightness */    
-    short      c2;      
+    /*! green, magenta, or lightness */
+    short      c2;
 
     /*! blue, yellow, or saturation */
-    short      c3;      
+    short      c3;
 
     /*! alpha or blackband */
-    short      c4;      
+    short      c4;
 } GDALColorEntry;
 
 GDAL_ENTRY GDALPaletteInterp (*pGDALGetPaletteInterpretation)( GDALColorTableH ) GDAL_NULL;
@@ -436,11 +436,11 @@ GDAL_ENTRY int (*pGDALGetColorEntryCount)( GDALColorTableH ) GDAL_NULL;
 GDAL_ENTRY const GDALColorEntry *(*pGDALGetColorEntry)( GDALColorTableH, int ) GDAL_NULL;
 #define GDALGetColorEntry pGDALGetColorEntry
 
-GDAL_ENTRY int (*pGDALGetColorEntryAsRGB)( GDALColorTableH, int, 
+GDAL_ENTRY int (*pGDALGetColorEntryAsRGB)( GDALColorTableH, int,
                                            GDALColorEntry *) GDAL_NULL;
 #define GDALGetColorEntryAsRGB pGDALGetColorEntryAsRGB
 
-GDAL_ENTRY void (*pGDALSetColorEntry)( GDALColorTableH, int, 
+GDAL_ENTRY void (*pGDALSetColorEntry)( GDALColorTableH, int,
                                        const GDALColorEntry * ) GDAL_NULL;
 #define GDALSetColorEntry pGDALSetColorEntry
 
@@ -455,15 +455,15 @@ GDAL_ENTRY const char *(*pGDALDecToDMS)( double, const char *, int ) GDAL_NULL;
 /*      ogr_srs_api.h services.                                         */
 /* -------------------------------------------------------------------- */
 
-GDAL_ENTRY OGRSpatialReferenceH 
+GDAL_ENTRY OGRSpatialReferenceH
 	(*pOSRNewSpatialReference)( const char * ) GDAL_NULL;
 #define OSRNewSpatialReference pOSRNewSpatialReference
 
-GDAL_ENTRY OGRSpatialReferenceH 
+GDAL_ENTRY OGRSpatialReferenceH
 	(*pOSRCloneGeogCS)( OGRSpatialReferenceH ) GDAL_NULL;
 #define OSRCloneGeogCS pOSRCloneGeogCS
 
-GDAL_ENTRY void 
+GDAL_ENTRY void
 	(*pOSRDestroySpatialReference)( OGRSpatialReferenceH ) GDAL_NULL;
 #define OSRDestroySpatialReference pOSRDestroySpatialReference
 
@@ -476,27 +476,27 @@ GDAL_ENTRY int (*pOSRDereference)( OGRSpatialReferenceH ) GDAL_NULL;
 GDAL_ENTRY OGRErr (*pOSRImportFromEPSG)( OGRSpatialReferenceH, int ) GDAL_NULL;
 #define OSRImportFromEPSG pOSRImportFromEPSG
 
-GDAL_ENTRY OGRErr 
+GDAL_ENTRY OGRErr
 	(*pOSRImportFromWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
 #define OSRImportFromWkt pOSRImportFromWkt
 
-GDAL_ENTRY OGRErr 
+GDAL_ENTRY OGRErr
 	(*pOSRImportFromProj4)( OGRSpatialReferenceH, const char *) GDAL_NULL;
 #define OSRImportFromProj4 pOSRImportFromProj4
 
-GDAL_ENTRY OGRErr 
+GDAL_ENTRY OGRErr
 	(*pOSRExportToWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
 #define OSRExportToWkt pOSRExportToWkt
 
-GDAL_ENTRY OGRErr 
+GDAL_ENTRY OGRErr
        (*pOSRExportToPrettyWkt)( OGRSpatialReferenceH, char **, int) GDAL_NULL;
 #define OSRExportToPrettyWkt pOSRExportToPrettyWkt
 
-GDAL_ENTRY OGRErr 
+GDAL_ENTRY OGRErr
 	(*pOSRExportToProj4)( OGRSpatialReferenceH, char **) GDAL_NULL;
 #define OSRExportToProj4 pOSRExportToProj4
 
-GDAL_ENTRY OGRErr 
+GDAL_ENTRY OGRErr
 	(*pOSRSetAttrValue)( OGRSpatialReferenceH hSRS,
                              const char * pszNodePath,
                              const char * pszNewNodeValue ) GDAL_NULL;
@@ -506,11 +506,11 @@ GDAL_ENTRY const char * (*pOSRGetAttrValue)( OGRSpatialReferenceH hSRS,
                            const char * pszName, int iChild ) GDAL_NULL;
 #define OSRGetAttrValue pOSRGetAttrValue
 
-GDAL_ENTRY OGRErr (*pOSRSetLinearUnits)( OGRSpatialReferenceH, const char *, 
+GDAL_ENTRY OGRErr (*pOSRSetLinearUnits)( OGRSpatialReferenceH, const char *,
                                          double ) GDAL_NULL;
 #define OSRSetLinearUnits pOSRSetLinearUnits
 
-GDAL_ENTRY double (*pOSRGetLinearUnits)( OGRSpatialReferenceH, 
+GDAL_ENTRY double (*pOSRGetLinearUnits)( OGRSpatialReferenceH,
                                          char ** ) GDAL_NULL;
 #define OSRGetLinearUnits pOSRGetLinearUnits
 
@@ -520,15 +520,15 @@ GDAL_ENTRY int (*pOSRIsGeographic)( OGRSpatialReferenceH ) GDAL_NULL;
 GDAL_ENTRY int (*pOSRIsProjected)( OGRSpatialReferenceH ) GDAL_NULL;
 #define OSRIsProjected pOSRIsProjected
 
-GDAL_ENTRY int (*pOSRIsSameGeogCS)( OGRSpatialReferenceH, 
+GDAL_ENTRY int (*pOSRIsSameGeogCS)( OGRSpatialReferenceH,
                                     OGRSpatialReferenceH ) GDAL_NULL;
 #define OSRIsSameGeogCS pOSRIsSameGeogCS
 
-GDAL_ENTRY int (*pOSRIsSame)( OGRSpatialReferenceH, 
+GDAL_ENTRY int (*pOSRIsSame)( OGRSpatialReferenceH,
                               OGRSpatialReferenceH ) GDAL_NULL;
 #define OSRIsSame pOSRIsSame
 
-GDAL_ENTRY OGRErr (*pOSRSetProjCS)( OGRSpatialReferenceH hSRS, 
+GDAL_ENTRY OGRErr (*pOSRSetProjCS)( OGRSpatialReferenceH hSRS,
                                     const char * pszName ) GDAL_NULL;
 #define OSRSetProjCS pOSRSetProjCS
 
@@ -547,15 +547,15 @@ GDAL_ENTRY OGRErr (*pOSRSetGeogCS)( OGRSpatialReferenceH hSRS,
                       double dfConvertToRadians /* = 0.0 */ ) GDAL_NULL;
 #define OSRSetGeogCS pOSRSetGeogCS
 
-GDAL_ENTRY double (*pOSRGetSemiMajor)( OGRSpatialReferenceH, 
+GDAL_ENTRY double (*pOSRGetSemiMajor)( OGRSpatialReferenceH,
                                        OGRErr * /* = NULL */ ) GDAL_NULL;
 #define OSRGetSemiMajor pOSRGetSemiMajor
 
-GDAL_ENTRY double (*pOSRGetSemiMinor)( OGRSpatialReferenceH, 
+GDAL_ENTRY double (*pOSRGetSemiMinor)( OGRSpatialReferenceH,
                                        OGRErr * /* = NULL */ ) GDAL_NULL;
 #define OSRGetSemiMinor pOSRGetSemiMinor
 
-GDAL_ENTRY double (*pOSRGetInvFlattening)( OGRSpatialReferenceH, 
+GDAL_ENTRY double (*pOSRGetInvFlattening)( OGRSpatialReferenceH,
                                            OGRErr * /*=NULL*/) GDAL_NULL;
 #define OSRGetInvFlattening pOSRGetInvFlattening
 
@@ -565,21 +565,21 @@ GDAL_ENTRY OGRErr (*pOSRSetAuthority)( OGRSpatialReferenceH hSRS,
                                        int nCode ) GDAL_NULL;
 #define OSRSetAuthority pOSRSetAuthority
 
-GDAL_ENTRY OGRErr (*pOSRSetProjParm)( OGRSpatialReferenceH, 
+GDAL_ENTRY OGRErr (*pOSRSetProjParm)( OGRSpatialReferenceH,
                                       const char *, double ) GDAL_NULL;
 #define OSRSetProjParm pOSRSetProjParm
 
 GDAL_ENTRY double (*pOSRGetProjParm)( OGRSpatialReferenceH hSRS,
-                                      const char * pszParmName, 
+                                      const char * pszParmName,
                                       double dfDefault /* = 0.0 */,
                                       OGRErr * /* = NULL */ ) GDAL_NULL;
 #define OSRGetProjParm pOSRGetProjParm
 
-GDAL_ENTRY OGRErr (*pOSRSetUTM)( OGRSpatialReferenceH hSRS, 
+GDAL_ENTRY OGRErr (*pOSRSetUTM)( OGRSpatialReferenceH hSRS,
                                  int nZone, int bNorth ) GDAL_NULL;
 #define OSRSetUTM pOSRSetUTM
 
-GDAL_ENTRY int (*pOSRGetUTMZone)( OGRSpatialReferenceH hSRS, 
+GDAL_ENTRY int (*pOSRGetUTMZone)( OGRSpatialReferenceH hSRS,
                                   int *pbNorth ) GDAL_NULL;
 #define OSRGetUTMZone pOSRGetUTMZone
 
@@ -593,9 +593,9 @@ GDAL_ENTRY void (*pOCTDestroyCoordinateTransformation)
 #define OCTDestroyCoordinateTransformation pOCTDestroyCoordinateTransformation
 
 GDAL_ENTRY int (*pOCTTransform)( OGRCoordinateTransformationH hCT,
-                                 int nCount, double *x, double *y, 
+                                 int nCount, double *x, double *y,
                                  double *z ) GDAL_NULL;
-#define OCTTransform pOCTTransform 
+#define OCTTransform pOCTTransform
 
 /* ==================================================================== */
 /*      Some "standard" strings.                                        */
@@ -698,7 +698,7 @@ GDAL_ENTRY int (*pOCTTransform)( OGRCoordinateTransformationH hCT,
 #define SRS_DN_NAD83            "North American Datum 1983"
 #define SRS_DN_WGS84            "World Geodetic System 1984"
 
-#define SRS_WGS84_SEMIMAJOR     6378137.0                                
+#define SRS_WGS84_SEMIMAJOR     6378137.0
 #define SRS_WGS84_INVFLATTENING 298.257223563
 
 #endif

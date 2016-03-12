@@ -142,7 +142,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     CPLString                 osEscapedName;
     int                       bMustWriteMetadata;
     int                       bMustRunSpatialFilter;
-    std::vector<CPLString>    aosIdsToFetch;   
+    std::vector<CPLString>    aosIdsToFetch;
     int                       bServerSideSpatialFilteringWorks;
     int                       bHasLoadedMetadata;
     CPLString                 osMetadataRev;

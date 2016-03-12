@@ -100,7 +100,7 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName,
         const char *pszc=pszTemp;
         pnDate[0]=atoi(pszTemp);
         if (pnDate[0]<=0) CPLError(CE_Warning, CPLE_AppDefined,"%s",pszErrorMessage); else {
-            if (pnDate[0]<100) pnDate[0]+=2000; 
+            if (pnDate[0]<100) pnDate[0]+=2000;
         }
         while (*pszc!=0 && *pszc!='-') ++pszc;
         pnDate[1]=atoi(pszc);

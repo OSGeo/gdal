@@ -3,7 +3,7 @@
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSFieldDefn class.  This is a small class used
- *           to encapsulate information about a referenced field. 
+ *           to encapsulate information about a referenced field.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -71,7 +71,7 @@ OGRDODSFieldDefn::~OGRDODSFieldDefn()
 /************************************************************************/
 
 int OGRDODSFieldDefn::Initialize( AttrTable *poEntry,
-                                  BaseType *poTarget, 
+                                  BaseType *poTarget,
                                   BaseType *poSuperSeq )
 
 {
@@ -87,9 +87,9 @@ int OGRDODSFieldDefn::Initialize( AttrTable *poEntry,
 /*                             Initialize()                             */
 /************************************************************************/
 
-int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn, 
+int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
                                   const char *pszFieldScopeIn,
-                                  BaseType *poTarget, 
+                                  BaseType *poTarget,
                                   BaseType *poSuperSeq )
 
 {
@@ -101,14 +101,14 @@ int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
         string oTargPath = OGRDODSGetVarPath( poTarget );
         int    nTargPathLen = strlen(oTargPath.c_str());
 
-        if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen) 
+        if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen)
             && pszFieldNameIn[nTargPathLen] == '.' )
         {
             CPLFree( pszFieldName );
             pszFieldName = CPLStrdup( pszFieldNameIn + nTargPathLen + 1 );
 
             bRelativeToSequence = TRUE;
-            iFieldIndex = OGRDODSGetVarIndex( 
+            iFieldIndex = OGRDODSGetVarIndex(
                 dynamic_cast<Sequence *>( poTarget ), pszFieldName );
         }
         else if( poSuperSeq != NULL  )
@@ -116,14 +116,14 @@ int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
             string oTargPath = OGRDODSGetVarPath( poSuperSeq );
             int    nTargPathLen = strlen(oTargPath.c_str());
 
-            if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen) 
+            if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen)
                 && pszFieldNameIn[nTargPathLen] == '.' )
             {
                 CPLFree( pszFieldName );
                 pszFieldName = CPLStrdup( pszFieldNameIn + nTargPathLen + 1 );
 
                 bRelativeToSuperSequence = TRUE;
-                iFieldIndex = OGRDODSGetVarIndex( 
+                iFieldIndex = OGRDODSGetVarIndex(
                     dynamic_cast<Sequence *>( poSuperSeq ), pszFieldName );
             }
         }
@@ -165,8 +165,8 @@ int  OGRDODSGetVarIndex( Sequence *poParent, string oVarName )
     Sequence::Vars_iter v_i;
     int                 i;
 
-    for( v_i = poParent->var_begin(), i=0; 
-         v_i != poParent->var_end(); 
+    for( v_i = poParent->var_begin(), i=0;
+         v_i != poParent->var_end();
          v_i++, i++ )
     {
         if( EQUAL((*v_i)->name().c_str(),oVarName.c_str()) )

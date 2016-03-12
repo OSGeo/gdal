@@ -83,7 +83,7 @@ void OGROCIWritableLayer::PushOrdinal( double dfOrd )
     if( nOrdinalCount == nOrdinalMax )
     {
         nOrdinalMax = nOrdinalMax * 2 + 100;
-        padfOrdinals = (double *) CPLRealloc(padfOrdinals, 
+        padfOrdinals = (double *) CPLRealloc(padfOrdinals,
                                              sizeof(double) * nOrdinalMax);
     }
 
@@ -115,7 +115,7 @@ void OGROCIWritableLayer::PushElemInfo( int nOffset, int nEType, int nInterp )
 /*      info and ordinates lists for the passed geometry.               */
 /************************************************************************/
 
-OGRErr 
+OGRErr
 OGROCIWritableLayer::TranslateElementGroup( OGRGeometry *poGeometry )
 
 {
@@ -218,7 +218,7 @@ void OGROCIWritableLayer::ReportTruncation( OGRFieldDefn * psFldDefn )
     CPLError( CE_Warning, CPLE_AppDefined,
               "The value for the field %s is being truncated to fit the\n"
               "declared width/precision of the field.  No more truncations\n"
-              "for table %s will be reported.", 
+              "for table %s will be reported.",
               psFldDefn->GetNameRef(), poFeatureDefn->GetName() );
 
     bTruncationReported = TRUE;
@@ -282,7 +282,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     else if( oField.GetType() == OFTReal )
     {
         if( bPreservePrecision && oField.GetWidth() != 0 )
-            snprintf( szFieldType, sizeof(szFieldType), "NUMBER(%d,%d)", 
+            snprintf( szFieldType, sizeof(szFieldType), "NUMBER(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
         else
             strcpy( szFieldType, "FLOAT(126)" );
@@ -338,12 +338,12 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     if ( strlen(oField.GetNameRef()) > sizeof ( szFieldName ) )
     {
         szFieldName[sizeof( szFieldName ) - 1] = '_';
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Column %s is too long (at most 30 characters). Using %s.", 
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Column %s is too long (at most 30 characters). Using %s.",
                   oField.GetNameRef(), szFieldName );
         oField.SetName(szFieldName);
     }
-    snprintf( oCommand.GetString(), nCommandSize, "ALTER TABLE %s ADD \"%s\" %s", 
+    snprintf( oCommand.GetString(), nCommandSize, "ALTER TABLE %s ADD \"%s\" %s",
              poFeatureDefn->GetName(), szFieldName, szFieldType);
     if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
     {
@@ -376,8 +376,8 @@ void OGROCIWritableLayer::SetDimension( int nNewDim )
 /*                            ParseDIMINFO()                            */
 /************************************************************************/
 
-void OGROCIWritableLayer::ParseDIMINFO( const char *pszOptionName, 
-                                        double *pdfMin, 
+void OGROCIWritableLayer::ParseDIMINFO( const char *pszOptionName,
+                                        double *pdfMin,
                                         double *pdfMax,
                                         double *pdfRes )
 
@@ -389,13 +389,13 @@ void OGROCIWritableLayer::ParseDIMINFO( const char *pszOptionName,
     if( pszUserDIMINFO == NULL )
         return;
 
-    papszTokens = 
+    papszTokens =
         CSLTokenizeStringComplex( pszUserDIMINFO, ",", FALSE, FALSE );
     if( CSLCount(papszTokens) != 3 )
     {
         CSLDestroy( papszTokens );
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Ignoring %s, it does not contain three comma separated values.", 
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Ignoring %s, it does not contain three comma separated values.",
                   pszOptionName );
         return;
     }
@@ -431,14 +431,14 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
         if( nDimension == 2 )
-            CPLsprintf( szResult, 
+            CPLsprintf( szResult,
                      "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,0.0),NULL,NULL)",
-                     SDO_GEOMETRY, 2001, szSRID, 
+                     SDO_GEOMETRY, 2001, szSRID,
                      poPoint->getX(), poPoint->getY() );
         else
-            CPLsprintf( szResult, 
+            CPLsprintf( szResult,
                      "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
-                     SDO_GEOMETRY, 3001, szSRID, 
+                     SDO_GEOMETRY, 3001, szSRID,
                      poPoint->getX(), poPoint->getY(), poPoint->getZ() );
 
         return CPLStrdup(szResult );
@@ -501,15 +501,15 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
             *pnGType = nDimension * 1000 + 6;
         else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon )
             *pnGType = nDimension * 1000 + 7;
-        else if( wkbFlatten(poGeometry->getGeometryType()) 
+        else if( wkbFlatten(poGeometry->getGeometryType())
                  == wkbGeometryCollection )
             *pnGType = nDimension * 1000 + 4;
-        else 
+        else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unexpected geometry type (%d/%s) in "
                       "OGROCIWritableLayer::TranslateToSDOGeometry()",
-                      poGeometry->getGeometryType(), 
+                      poGeometry->getGeometryType(),
                       poGeometry->getGeometryName() );
             return OGRERR_FAILURE;
         }
@@ -548,4 +548,3 @@ int OGROCIWritableLayer::FindFieldIndex( const char *pszFieldName, int bExactMat
 
   return iField;
 }
-

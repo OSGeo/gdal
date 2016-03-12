@@ -130,7 +130,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
     if( ReadValue( szLineBuf ) != 0 || !EQUAL(szLineBuf,"SECTION") )
         return FALSE;
 
-    if( ReadValue( szLineBuf ) != 2 
+    if( ReadValue( szLineBuf ) != 2
         || (!EQUAL(szLineBuf,"HEADER") && !EQUAL(szLineBuf,"ENTITIES") && !EQUAL(szLineBuf,"TABLES")) )
         return FALSE;
 
@@ -189,7 +189,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
         if( EQUAL(szLineBuf,"CLASSES") )
         {
-            while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1 
+            while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1
                    && !EQUAL(szLineBuf,"ENDSEC") )
             {
                 //printf("C:%d/%s\n", nCode, szLineBuf );
@@ -313,7 +313,7 @@ bool OGRDXFDataSource::ReadTablesSection()
     char szLineBuf[257];
     int  nCode;
 
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
            && !EQUAL(szLineBuf,"ENDSEC") )
     {
         // We are only interested in extracting tables.
@@ -515,7 +515,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
     char szLineBuf[257];
     int  nCode;
 
-    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1 
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
            && !EQUAL(szLineBuf,"ENDSEC") )
     {
         if( nCode != 9 )
@@ -577,7 +577,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
         }
     }
 
-    CPLDebug( "DXF", "Read %d header variables.", 
+    CPLDebug( "DXF", "Read %d header variables.",
               (int) oHeaderVariables.size() );
 
 /* -------------------------------------------------------------------- */
@@ -588,7 +588,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
 
     // not strictly accurate but works even without iconv.
     if( osCodepage == "ANSI_1252" )
-        osEncoding = CPL_ENC_ISO8859_1; 
+        osEncoding = CPL_ENC_ISO8859_1;
     else if( STARTS_WITH_CI(osCodepage, "ANSI_") )
     {
         osEncoding = "CP";
@@ -596,7 +596,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
     }
     else
     {
-        // fallback to the default 
+        // fallback to the default
         osEncoding = CPL_ENC_ISO8859_1;
     }
 
@@ -604,7 +604,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
         osEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
 
     if( osEncoding != CPL_ENC_ISO8859_1 )
-        CPLDebug( "DXF", "Treating DXF as encoding '%s', $DWGCODEPAGE='%s'", 
+        CPLDebug( "DXF", "Treating DXF as encoding '%s', $DWGCODEPAGE='%s'",
                   osEncoding.c_str(), osCodepage.c_str() );
     return true;
 }
@@ -615,13 +615,13 @@ bool OGRDXFDataSource::ReadHeaderSection()
 /*      Fetch a variable that came from the HEADER section.             */
 /************************************************************************/
 
-const char *OGRDXFDataSource::GetVariable( const char *pszName, 
+const char *OGRDXFDataSource::GetVariable( const char *pszName,
                                            const char *pszDefault )
 
 {
     if( oHeaderVariables.count(pszName) == 0 )
         return pszDefault;
-    else 
+    else
         return oHeaderVariables[pszName];
 }
 

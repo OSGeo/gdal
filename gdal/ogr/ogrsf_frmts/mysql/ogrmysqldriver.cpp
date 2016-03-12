@@ -121,7 +121,7 @@ static GDALDataset *OGRMySQLDriverCreate( const char * pszName,
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
          "MySQL driver doesn't currently support database creation.\n"
                   "Please create database before using." );
         return NULL;

@@ -39,7 +39,7 @@ using kmldom::GxLatLonQuadPtr;
 
 /*******************************************************************************
 	function to write out a ogr geometry to km
-	
+
 args:
 						poOgrGeom		the ogr geometry
 						extra		used in recursion, just pass -1
@@ -61,7 +61,7 @@ ElementPtr geom2kml (
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
-            poOgrSRS        pointer to the spatial ref to set on the geometry 
+            poOgrSRS        pointer to the spatial ref to set on the geometry
 
 Returns:
             pointer to the new ogr geometry object

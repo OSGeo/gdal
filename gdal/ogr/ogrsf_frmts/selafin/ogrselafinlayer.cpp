@@ -76,8 +76,8 @@ OGRSelafinLayer::OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpa
 OGRSelafinLayer::~OGRSelafinLayer() {
     //CPLDebug("Selafin","Closing layer %s",GetName());
     poFeatureDefn->Release();
-    //poHeader->nRefCount--;  
-    //if (poHeader->nRefCount==0) delete poHeader; 
+    //poHeader->nRefCount--;
+    //if (poHeader->nRefCount==0) delete poHeader;
 }
 
 /************************************************************************/
@@ -365,7 +365,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
-    } 
+    }
     if (Selafin::write_header(fpNew,poHeader)==0) {
         VSIFCloseL(fpNew);
         VSIUnlink(pszTempfile);
@@ -405,7 +405,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
             }
-            CPLFree(padfValues);   
+            CPLFree(padfValues);
         }
     }
 
@@ -451,7 +451,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
-    } 
+    }
     if (Selafin::write_header(fpNew,poHeader)==0) {
         VSIFCloseL(fpNew);
         VSIUnlink(pszTempfile);
@@ -483,7 +483,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
             }
-            CPLFree(padfValues);   
+            CPLFree(padfValues);
         }
         padfValues=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
         for (int k=0;k<poHeader->nPoints;++k) padfValues[k]=0;
@@ -493,7 +493,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
             VSIUnlink(pszTempfile);
             return OGRERR_FAILURE;
         }
-        CPLFree(padfValues);   
+        CPLFree(padfValues);
     }
     MoveOverwrite(poHeader->fp,fpNew);
     VSIUnlink(pszTempfile);
@@ -521,7 +521,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
-    } 
+    }
     if (Selafin::write_header(fpNew,poHeader)==0) {
         VSIFCloseL(fpNew);
         VSIUnlink(pszTempfile);
@@ -555,7 +555,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
                     return OGRERR_FAILURE;
                 }
             }
-            CPLFree(padfValues);   
+            CPLFree(padfValues);
         }
     }
     MoveOverwrite(poHeader->fp,fpNew);
@@ -583,7 +583,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
-    } 
+    }
     if (Selafin::write_header(fpNew,poHeader)==0) {
         VSIFCloseL(fpNew);
         VSIUnlink(pszTempfile);
@@ -671,7 +671,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
-    } 
+    }
     if (Selafin::write_header(fpNew,poHeader)==0) {
         VSIFCloseL(fpNew);
         VSIUnlink(pszTempfile);
@@ -706,7 +706,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
             }
-            CPLFree(padfValues);   
+            CPLFree(padfValues);
         }
     }
 

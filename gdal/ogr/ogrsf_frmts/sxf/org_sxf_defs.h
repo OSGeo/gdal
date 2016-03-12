@@ -2,7 +2,7 @@
  * $Id: org_sxf_defs.h  $
  *
  * Project:  SXF Translator
- * Purpose:  Include file defining Records Structures for file reading and 
+ * Purpose:  Include file defining Records Structures for file reading and
  *           basic constants.
  * Author:   Ben Ahmed Daho Ali, bidandou(at)yahoo(dot)fr
  *           Dmitry Baryshnikov, polimax@mail.ru
@@ -31,48 +31,48 @@
  * DEALINGS IN THE SOFTWARE.
  *
  ******************************************************************************
- * Structure of the SXF file : 
+ * Structure of the SXF file :
  * ----------------------
- *    - Header 
+ *    - Header
  *    - Passport
  *    - Descriptor of data
- *    - Records 
- *         - Title of the record 
+ *    - Records
+ *         - Title of the record
  *         - The certificate of the object (the geometry)
  *             - sub-objects
  *             - The graphic description of object
  *             - The description of the vector of the tying of the 3d- model of object
  *         - Semantics of object
  *
- * Notes  : 
+ * Notes  :
  * -------
  * Note 1.  Flag of the state of data (2 bits):
  * xxxxxx11- given in the state e (size of the exchange of data).
  *
  * Note 2.  Flag of the correspondence to projection (1 bit):
- * xxxxx0xx - do not correspond to the projection (i.e. map it can have turning 
+ * xxxxx0xx - do not correspond to the projection (i.e. map it can have turning
  *                 relative to true position and certain deformation);
  * xxxxx1xx - correspond to projection.
  *
  * Note 3.  Flag of the presence of real coordinates (2 bits):
- * xxx00xxx - entire certificate of objects is represented in the conditional 
+ * xxx00xxx - entire certificate of objects is represented in the conditional
  *                                 system of coordinates (in the samples);
- * xxx11xxx - entire certificate of objects is represented in the real coordinates 
- *            in the locality in accordance with the specifications of sheet 
- *            (projection, the coordinate system, unit of measurement), 
- *            the data about the scale and the discretion of digitization bear 
+ * xxx11xxx - entire certificate of objects is represented in the real coordinates
+ *            in the locality in accordance with the specifications of sheet
+ *            (projection, the coordinate system, unit of measurement),
+ *            the data about the scale and the discretion of digitization bear
  *            reference nature.
  *
  * Note 4. Flag of the method of coding (2 bits):
- * x00xxxxx - the classification codes of objects and semantic characteristics 
- *          are represented by the decimal numbers, recorded in the binary 
- *          form (for example: the code of the object "32100000" will be written 
+ * x00xxxxx - the classification codes of objects and semantic characteristics
+ *          are represented by the decimal numbers, recorded in the binary
+ *          form (for example: the code of the object "32100000" will be written
  *          down in the form 0x01E9CEA0, the code of semantics "253" - in the form 0x00FD).
  *
  * Note 5. Table of generalization (1 bit):
- * 0xxxxxxx - the level of generalization is assigned according to the table of the 
+ * 0xxxxxxx - the level of generalization is assigned according to the table of the
  *           general maps (it is described in Table 2.4);
- * 1xxxxxxx - noload condition the level of generalization is assigned according to 
+ * 1xxxxxxx - noload condition the level of generalization is assigned according to
  *           the table of the large-scale maps (it is described in Table 2.5).
  *
  * Note 6.  Flag of coding the texts of the Texts objects (1 bytes):
@@ -103,21 +103,21 @@
  * 0001xxxx - western framework.
  *
  * Note 10. Size of the element of certificate (1 bit):
- * xxxxx0xx - 2 bytes (for the integer value); 
- *            4 bytes (for the floating point); 
- * xxxxx1xx - 4 bytes (for the integer value); 
+ * xxxxx0xx - 2 bytes (for the integer value);
+ *            4 bytes (for the floating point);
+ * xxxxx1xx - 4 bytes (for the integer value);
  *            8 bytes (for the floating point).
  *
- * Note 11. Sign of certificate with the text (1 bit): 
- * xxxx0xxx - certificate contains only the coordinates of points; 
- * xxxx1xxx - no-load condition certificate contains the text of signature, 
- *         is allowed only for the objects of the type "signature" or 
+ * Note 11. Sign of certificate with the text (1 bit):
+ * xxxx0xxx - certificate contains only the coordinates of points;
+ * xxxx1xxx - no-load condition certificate contains the text of signature,
+ *         is allowed only for the objects of the type "signature" or
  *         "the template of signature".
  *
  * Note 12. [Masshtabiruemost] of drawing (sign) (1 bit):
  * xx0xxxxx - arbitrary symbol of object not scaled;
  * xx1xxxxx - the arbitrary symbol of object is scaled during the mapping.
- * 
+ *
  * Note 13. Sign of the construction of spline on the certificate (2 bits):
  * 00xxxxxx - the construction of spline with the visualization is not carried out;
  * 01xxxxxx - smoothing out spline (cutting angles);
@@ -302,7 +302,7 @@ struct SXFPassport
 {
     GUInt32 version;
     SXFDate dtCrateDate;
-    CPLString sMapSheet;   
+    CPLString sMapSheet;
     GUInt32 nScale;
     CPLString sMapSheetName;
     SXFInformationFlags informationFlags;

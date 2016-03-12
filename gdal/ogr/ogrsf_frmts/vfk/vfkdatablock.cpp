@@ -465,7 +465,7 @@ int IVFKDataBlock::LoadGeometry()
 #endif
 
     if (nInvalid > 0) {
-        CPLError(CE_Warning, CPLE_AppDefined, 
+        CPLError(CE_Warning, CPLE_AppDefined,
                  "%s: %d features with invalid or empty geometry", m_pszName, nInvalid);
     }
 
@@ -481,7 +481,7 @@ int IVFKDataBlock::LoadGeometry()
   \brief Add linestring to a ring (private)
 
   \param[in,out] papoRing list of rings
-  \param poLine pointer to linestring to be added to a ring 
+  \param poLine pointer to linestring to be added to a ring
   \param bNewRing  create new ring
   \param bBackword allow backward direction
 
@@ -739,7 +739,7 @@ int VFKDataBlock::LoadGeometryPoint()
     int i_idxY = GetPropertyIndex("SOURADNICE_Y");
     int i_idxX = GetPropertyIndex("SOURADNICE_X");
     if (i_idxY < 0 || i_idxX < 0) {
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "Corrupted data (%s).\n", m_pszName);
         return nInvalid;
     }

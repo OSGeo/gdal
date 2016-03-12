@@ -955,7 +955,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     }
 
     /* Compute origin of tile in GDAL raster space */
-    int nXOff = (nCol - m_nShiftXTiles) * nBlockXSize - m_nShiftXPixelsMod; 
+    int nXOff = (nCol - m_nShiftXTiles) * nBlockXSize - m_nShiftXPixelsMod;
     int nYOff = (nRow - m_nShiftYTiles) * nBlockYSize - m_nShiftYPixelsMod;
 
     /* Assert that the tile at least intersects some of the GDAL raster space */
@@ -1264,7 +1264,7 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             GDALDitherRGB2PCTInternal( poMEM_RGB_DS->GetRasterBand(1),
                                poMEM_RGB_DS->GetRasterBand(2),
                                poMEM_RGB_DS->GetRasterBand(3),
-                               poMEMDS->GetRasterBand(1), 
+                               poMEMDS->GetRasterBand(1),
                                poCT,
                                8, /* bit depth */
                                (GInt16*)m_pabyHugeColorArray, /* pasDynamicColorMap */

@@ -123,7 +123,7 @@ class OGRDWGLayer : public OGRLayer
 
     std::map<CPLString,CPLString> oStyleProperties;
 
-    void                TranslateGenericProperties( OGRFeature *poFeature, 
+    void                TranslateGenericProperties( OGRFeature *poFeature,
                                                     OdDbEntityPtr poEntity );
     void                PrepareLineStyle( OGRFeature *poFeature );
 //    void                ApplyOCSTransformer( OGRGeometry * );
@@ -187,7 +187,7 @@ class OGRDWGDataSource : public OGRDataSource
     CPLString           osEncoding;
 
     // indexed by layer name, then by property name.
-    std::map< CPLString, std::map<CPLString,CPLString> > 
+    std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
 
     std::map<CPLString,CPLString> oLineTypeTable;
@@ -227,13 +227,13 @@ class OGRDWGDataSource : public OGRDataSource
     // Layer and other Table Handling (ogrdatasource.cpp)
     void                ReadLayerDefinitions();
     void                ReadLineTypeDefinitions();
-    const char         *LookupLayerProperty( const char *pszLayer, 
+    const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
     const char         *LookupLineType( const char *pszName );
 
-    // Header variables. 
+    // Header variables.
     void                ReadHeaderSection();
-    const char         *GetVariable(const char *pszName, 
+    const char         *GetVariable(const char *pszName,
                                     const char *pszDefault=NULL );
 
     const char         *GetEncoding() { return osEncoding; }

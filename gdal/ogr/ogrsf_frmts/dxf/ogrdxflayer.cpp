@@ -71,7 +71,7 @@ OGRDXFLayer::~OGRDXFLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "DXF", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -112,17 +112,17 @@ void OGRDXFLayer::ResetReading()
 /*      or all entity types.                                            */
 /************************************************************************/
 
-void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature, 
+void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
                                             int nCode, char *pszValue )
 
 {
     switch( nCode )
     {
-      case 8: 
+      case 8:
         poFeature->SetField( "Layer", TextUnescape(pszValue) );
         break;
 
-      case 100: 
+      case 100:
       {
           CPLString osSubClass = poFeature->GetFieldAsString("SubClasses");
           if( osSubClass.size() > 0 )
@@ -200,7 +200,7 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Is the layer disabled/hidden/frozen/off?                        */
 /* -------------------------------------------------------------------- */
-    int bHidden = 
+    int bHidden =
         EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
 
 /* -------------------------------------------------------------------- */
@@ -211,7 +211,7 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
 
-    // Use layer color? 
+    // Use layer color?
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
@@ -249,13 +249,13 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
     CPLString osStyle;
     const unsigned char *pabyDXFColors = ACGetColorTable();
 
-    osStyle.Printf( "PEN(c:#%02x%02x%02x", 
+    osStyle.Printf( "PEN(c:#%02x%02x%02x",
                     pabyDXFColors[nColor*3+0],
                     pabyDXFColors[nColor*3+1],
                     pabyDXFColors[nColor*3+2] );
 
     if( bHidden )
-        osStyle += "00"; 
+        osStyle += "00";
 
     if( dfWeight > 0.0 )
     {
@@ -322,11 +322,11 @@ public:
     }
     OGRSpatialReference *GetSourceCS() { return NULL; }
     OGRSpatialReference *GetTargetCS() { return NULL; }
-    int Transform( int nCount, 
+    int Transform( int nCount,
                    double *x, double *y, double *z )
         { return TransformEx( nCount, x, y, z, NULL ); }
 
-    int TransformEx( int nCount, 
+    int TransformEx( int nCount,
                      double *adfX, double *adfY, double *adfZ = NULL,
                      int *pabSuccess = NULL )
         {
@@ -510,7 +510,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
 
-    // Use layer color? 
+    // Use layer color?
     if( nColor < 1 || nColor > 255 )
     {
         CPLString osLayer = poFeature->GetFieldAsString("Layer");
@@ -541,18 +541,18 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
     if( nAttachmentPoint >= 0 && nAttachmentPoint <= 9 )
     {
-        const static int anAttachmentMap[10] = 
+        const static int anAttachmentMap[10] =
             { -1, 7, 8, 9, 4, 5, 6, 1, 2, 3 };
 
-        osStyle += 
+        osStyle +=
             CPLString().Printf(",p:%d", anAttachmentMap[nAttachmentPoint]);
     }
 
     if( nColor > 0 && nColor < 256 )
     {
         const unsigned char *pabyDXFColors = ACGetColorTable();
-        osStyle += 
-            CPLString().Printf( ",c:#%02x%02x%02x", 
+        osStyle +=
+            CPLString().Printf( ",c:#%02x%02x%02x",
                                 pabyDXFColors[nColor*3+0],
                                 pabyDXFColors[nColor*3+1],
                                 pabyDXFColors[nColor*3+2] );
@@ -666,7 +666,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 /* -------------------------------------------------------------------- */
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
-    int bHidden = 
+    int bHidden =
         EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
 
 /* -------------------------------------------------------------------- */
@@ -677,7 +677,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
 
-    // Use layer color? 
+    // Use layer color?
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
@@ -710,14 +710,14 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
     const unsigned char *pabyDWGColors = ACGetColorTable();
 
-    snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x", 
+    snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x",
               pabyDWGColors[nColor*3+0],
               pabyDWGColors[nColor*3+1],
               pabyDWGColors[nColor*3+2] );
     osStyle += szBuffer;
 
     if( bHidden )
-        osStyle += "00"; 
+        osStyle += "00";
 
     osStyle += ")";
 
@@ -1180,10 +1180,10 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    OGRGeometry *poCircle = 
-        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
+    OGRGeometry *poCircle =
+        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                   dfRadius, dfRadius, 0.0,
-                                                  0.0, 360.0, 
+                                                  0.0, 360.0,
                                                   0.0 );
 
     if( !bHaveZ )
@@ -1282,7 +1282,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
-    dfPrimaryRadius = sqrt( dfAxisX * dfAxisX 
+    dfPrimaryRadius = sqrt( dfAxisX * dfAxisX
                             + dfAxisY * dfAxisY
                             + dfAxisZ * dfAxisZ );
 
@@ -1293,11 +1293,11 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    OGRGeometry *poEllipse = 
-        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
-                                                  dfPrimaryRadius, 
+    OGRGeometry *poEllipse =
+        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
+                                                  dfPrimaryRadius,
                                                   dfSecondaryRadius,
-                                                  dfRotation, 
+                                                  dfRotation,
                                                   dfStartAngle, dfEndAngle,
                                                   0.0 );
 
@@ -1381,8 +1381,8 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
-    OGRGeometry *poArc = 
-        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1, 
+    OGRGeometry *poArc =
+        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                   dfRadius, dfRadius, 0.0,
                                                   dfStartAngle, dfEndAngle,
                                                   0.0 );
@@ -1486,10 +1486,10 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
         p.push_back( 0.0 );
 
     if( bClosed )
-        rbsplinu( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]), 
+        rbsplinu( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]),
                   &(h[0]), &(p[0]) );
     else
-        rbspline( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]), 
+        rbspline( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]),
                   &(h[0]), &(p[0]) );
 
 /* -------------------------------------------------------------------- */
@@ -1789,7 +1789,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
 class GeometryInsertTransformer : public OGRCoordinateTransformation
 {
 public:
-    GeometryInsertTransformer() : 
+    GeometryInsertTransformer() :
             dfXOffset(0),dfYOffset(0),dfZOffset(0),
             dfXScale(1.0),dfYScale(1.0),dfZScale(1.0),
             dfAngle(0.0) {}
@@ -1804,11 +1804,11 @@ public:
 
     OGRSpatialReference *GetSourceCS() { return NULL; }
     OGRSpatialReference *GetTargetCS() { return NULL; }
-    int Transform( int nCount, 
+    int Transform( int nCount,
                    double *x, double *y, double *z )
         { return TransformEx( nCount, x, y, z, NULL ); }
 
-    int TransformEx( int nCount, 
+    int TransformEx( int nCount,
                      double *x, double *y, double *z = NULL,
                      int *pabSuccess = NULL )
         {
@@ -1885,12 +1885,12 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
 
           case 50:
             dfAngle = CPLAtof(szLineBuf);
-            // We want to transform this to radians. 
+            // We want to transform this to radians.
             // It is apparently always in degrees regardless of $AUNITS
             oTransformer.dfAngle = dfAngle * M_PI / 180.0;
             break;
 
-          case 2: 
+          case 2:
             osBlockName = szLineBuf;
             break;
 
@@ -1917,7 +1917,7 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
     {
         // ApplyOCSTransformer( poGeom ); ?
         poFeature->SetGeometryDirectly(
-            new OGRPoint( oTransformer.dfXOffset, 
+            new OGRPoint( oTransformer.dfXOffset,
                           oTransformer.dfYOffset,
                           oTransformer.dfZOffset ) );
 
@@ -2065,7 +2065,7 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateMTEXT();
         }
-        else if( EQUAL(szLineBuf,"TEXT") 
+        else if( EQUAL(szLineBuf,"TEXT")
                  || EQUAL(szLineBuf,"ATTDEF") )
         {
             poFeature = TranslateTEXT();
@@ -2123,7 +2123,7 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
             if( oIgnoredEntities.count(szLineBuf) == 0 )
             {
                 oIgnoredEntities.insert( szLineBuf );
-                CPLDebug( "DWG", "Ignoring one or more of entity '%s'.", 
+                CPLDebug( "DWG", "Ignoring one or more of entity '%s'.",
                           szLineBuf );
             }
         }

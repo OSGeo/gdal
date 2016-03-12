@@ -806,7 +806,7 @@ int OGRLIBKMLDataSource::ParseLayers (
 
     if ( !poKmlContainer )
         return nResult;
-	
+
     size_t nKmlFeatures = poKmlContainer->get_feature_array_size (  );
 
     /***** loop over the container to separate the style, layers, etc *****/
@@ -820,7 +820,7 @@ int OGRLIBKMLDataSource::ParseLayers (
         /***** container *****/
 
         if ( poKmlFeat->IsA ( kmldom::Type_Container ) ) {
-	  
+
             /***** see if the container has a name *****/
 
             std::string oKmlFeatName;
@@ -897,7 +897,7 @@ static ContainerPtr GetContainerFromRoot (
                 if ( poKmlFeat->IsA ( kmldom::Type_Container ) )
                     poKmlContainer = AsContainer ( poKmlFeat );
                 else if ( poKmlFeat->IsA ( kmldom::Type_Placemark ) ||
-                          (bReadGroundOverlay && poKmlFeat->IsA ( kmldom::Type_GroundOverlay )) ) 
+                          (bReadGroundOverlay && poKmlFeat->IsA ( kmldom::Type_GroundOverlay )) )
                 {
                     poKmlContainer = m_poKmlFactory->CreateDocument (  );
                     poKmlContainer->add_feature ( kmldom::AsFeature(kmlengine::Clone(poKmlFeat)) );
@@ -1036,15 +1036,15 @@ int OGRLIBKMLDataSource::OpenKml (
     if ( nPlacemarks && !nLayers ) {
 
       std::string layername_default( CPLGetBasename ( pszFilename ) );
-      
+
       if( m_poKmlDSContainer->has_name ( ) ) {
 	  layername_default = m_poKmlDSContainer->get_name ( );
 	}
-      
+
       AddLayer ( layername_default.c_str(),
                    poOgrSRS, wkbUnknown,
                    this, poKmlRoot, m_poKmlDSContainer, pszFilename, FALSE, bUpdateIn, 1 );
-	
+
     }
 
     delete poOgrSRS;
@@ -1262,13 +1262,13 @@ int OGRLIBKMLDataSource::OpenKmz (
         /***** if there is placemarks in the root its a layer *****/
 
         if ( nPlacemarks && !nLayers ) {
- 
+
 	  std::string layername_default( CPLGetBasename ( pszFilename ) );
-	  
+
 	  if( poKmlContainer->has_name ( ) ) {
 	      layername_default = poKmlContainer->get_name ( );
 	    }
-	  
+
 	  AddLayer ( layername_default.c_str(),
 		     poOgrSRS, wkbUnknown,
 		     this, poKmlDocKmlRoot, poKmlContainer,
