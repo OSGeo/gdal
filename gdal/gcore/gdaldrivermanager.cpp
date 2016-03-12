@@ -750,7 +750,7 @@ void GDALDriverManager::AutoLoadDrivers()
         if( VSIStatL( osABISpecificDir, &sStatBuf ) != 0 )
             osABISpecificDir = papszSearchPath[iDir];
 
-        char **papszFiles = CPLReadDir( osABISpecificDir );
+        char **papszFiles = VSIReadDir( osABISpecificDir );
         const int nFileCount = CSLCount(papszFiles);
 
         for( int iFile = 0; iFile < nFileCount; iFile++ )

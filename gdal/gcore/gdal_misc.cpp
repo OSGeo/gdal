@@ -2426,7 +2426,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 return -1;
             }
 
-            char **papszFiles = CPLReadDir( papszArgv[iArg+1] );
+            char **papszFiles = VSIReadDir( papszArgv[iArg+1] );
             if( CSLCount(papszFiles) == 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
