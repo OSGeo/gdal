@@ -188,7 +188,7 @@ public:
 
 };
 
-typedef enum 
+typedef enum
 {
     MDB_Boolean = 0x01,
     MDB_Byte = 0x02,
@@ -314,7 +314,7 @@ class OGRMDBDataSource : public OGRDataSource
                         ~OGRMDBDataSource();
 
     int                 Open( const char * );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 

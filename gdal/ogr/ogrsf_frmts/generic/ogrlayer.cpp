@@ -282,13 +282,13 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
         else
         {
             poGeom->getEnvelope(&oEnv);
-            if (oEnv.MinX < psExtent->MinX) 
+            if (oEnv.MinX < psExtent->MinX)
                 psExtent->MinX = oEnv.MinX;
-            if (oEnv.MinY < psExtent->MinY) 
+            if (oEnv.MinY < psExtent->MinY)
                 psExtent->MinY = oEnv.MinY;
-            if (oEnv.MaxX > psExtent->MaxX) 
+            if (oEnv.MaxX > psExtent->MaxX)
                 psExtent->MaxX = oEnv.MaxX;
-            if (oEnv.MaxY > psExtent->MaxY) 
+            if (oEnv.MaxY > psExtent->MaxY)
                 psExtent->MaxY = oEnv.MaxY;
         }
         delete poFeature;
@@ -676,7 +676,7 @@ OGRErr OGRLayer::CreateField( OGRFieldDefn * poField, int bApproxOK )
 /*                         OGR_L_CreateField()                          */
 /************************************************************************/
 
-OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField, 
+OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField,
                           int bApproxOK )
 
 {
@@ -688,7 +688,7 @@ OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField,
         OGRAPISpy_L_CreateField(hLayer, hField, bApproxOK);
 #endif
 
-    return ((OGRLayer *) hLayer)->CreateField( (OGRFieldDefn *) hField, 
+    return ((OGRLayer *) hLayer)->CreateField( (OGRFieldDefn *) hField,
                                                bApproxOK );
 }
 
@@ -885,7 +885,7 @@ OGRErr OGRLayer::CreateGeomField( OGRGeomFieldDefn * poField, int bApproxOK )
 /*                        OGR_L_CreateGeomField()                       */
 /************************************************************************/
 
-OGRErr OGR_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField, 
+OGRErr OGR_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField,
                               int bApproxOK )
 
 {
@@ -897,7 +897,7 @@ OGRErr OGR_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField,
         OGRAPISpy_L_CreateGeomField(hLayer, hField, bApproxOK);
 #endif
 
-    return ((OGRLayer *) hLayer)->CreateGeomField( (OGRGeomFieldDefn *) hField, 
+    return ((OGRLayer *) hLayer)->CreateGeomField( (OGRGeomFieldDefn *) hField,
                                                    bApproxOK );
 }
 
@@ -1030,7 +1030,7 @@ int OGRLayer::FindFieldIndex( const char *pszFieldName, CPL_UNUSED int bExactMat
 /************************************************************************/
 
 OGRSpatialReference *OGRLayer::GetSpatialRef()
-{ 
+{
     if( GetLayerDefn()->GetGeomFieldCount() > 0 )
         return GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
     else
@@ -1156,7 +1156,7 @@ void OGR_L_SetSpatialFilter( OGRLayerH hLayer, OGRGeometryH hGeom )
 /*                      OGR_L_SetSpatialFilterEx()                      */
 /************************************************************************/
 
-void OGR_L_SetSpatialFilterEx( OGRLayerH hLayer, int iGeomField, 
+void OGR_L_SetSpatialFilterEx( OGRLayerH hLayer, int iGeomField,
                                OGRGeometryH hGeom )
 
 {
@@ -1173,7 +1173,7 @@ void OGR_L_SetSpatialFilterEx( OGRLayerH hLayer, int iGeomField,
 /*                        SetSpatialFilterRect()                        */
 /************************************************************************/
 
-void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY, 
+void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
                                      double dfMaxX, double dfMaxY )
 
 {
@@ -1181,8 +1181,8 @@ void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
 }
 
 
-void OGRLayer::SetSpatialFilterRect( int iGeomField, 
-                                     double dfMinX, double dfMinY, 
+void OGRLayer::SetSpatialFilterRect( int iGeomField,
+                                     double dfMinX, double dfMinY,
                                      double dfMaxX, double dfMaxY )
 
 {
@@ -1208,8 +1208,8 @@ void OGRLayer::SetSpatialFilterRect( int iGeomField,
 /*                     OGR_L_SetSpatialFilterRect()                     */
 /************************************************************************/
 
-void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer, 
-                                 double dfMinX, double dfMinY, 
+void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer,
+                                 double dfMinX, double dfMinY,
                                  double dfMaxX, double dfMaxY )
 
 {
@@ -1220,7 +1220,7 @@ void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer,
         OGRAPISpy_L_SetSpatialFilterRect(hLayer, dfMinX, dfMinY, dfMaxX, dfMaxY);
 #endif
 
-    ((OGRLayer *) hLayer)->SetSpatialFilterRect( dfMinX, dfMinY, 
+    ((OGRLayer *) hLayer)->SetSpatialFilterRect( dfMinX, dfMinY,
                                                  dfMaxX, dfMaxY );
 }
 
@@ -1230,7 +1230,7 @@ void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer,
 
 void OGR_L_SetSpatialFilterRectEx( OGRLayerH hLayer,
                                    int iGeomField,
-                                   double dfMinX, double dfMinY, 
+                                   double dfMinX, double dfMinY,
                                    double dfMaxX, double dfMaxY )
 
 {
@@ -1242,7 +1242,7 @@ void OGR_L_SetSpatialFilterRectEx( OGRLayerH hLayer,
 #endif
 
     ((OGRLayer *) hLayer)->SetSpatialFilterRect( iGeomField,
-                                                 dfMinX, dfMinY, 
+                                                 dfMinX, dfMinY,
                                                  dfMaxX, dfMaxY );
 }
 
@@ -1313,20 +1313,20 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
     if( poRing->getNumPoints() > 5 || poRing->getNumPoints() < 4 )
         return TRUE;
 
-    // If the ring has 5 points, the last should be the first. 
-    if( poRing->getNumPoints() == 5 
+    // If the ring has 5 points, the last should be the first.
+    if( poRing->getNumPoints() == 5
         && ( poRing->getX(0) != poRing->getX(4)
              || poRing->getY(0) != poRing->getY(4) ) )
         return TRUE;
 
-    // Polygon with first segment in "y" direction. 
+    // Polygon with first segment in "y" direction.
     if( poRing->getX(0) == poRing->getX(1)
         && poRing->getY(1) == poRing->getY(2)
         && poRing->getX(2) == poRing->getX(3)
         && poRing->getY(3) == poRing->getY(0) )
         m_bFilterIsEnvelope = TRUE;
 
-    // Polygon with first segment in "x" direction. 
+    // Polygon with first segment in "x" direction.
     if( poRing->getY(0) == poRing->getY(1)
         && poRing->getX(1) == poRing->getX(2)
         && poRing->getY(2) == poRing->getY(3)
@@ -1869,7 +1869,7 @@ OGRErr create_field_map(OGRFeatureDefn *poDefn, int **map)
 
 static
 OGRErr set_result_schema(OGRLayer *pLayerResult,
-                         OGRFeatureDefn *poDefnInput, 
+                         OGRFeatureDefn *poDefnInput,
                          OGRFeatureDefn *poDefnMethod,
                          int *mapInput,
                          int *mapMethod,
@@ -1905,7 +1905,7 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
                 oFieldDefn.SetName(CPLSPrintf("%s%s", pszInputPrefix, oFieldDefn.GetNameRef()));
             ret = pLayerResult->CreateField(&oFieldDefn);
             if (ret != OGRERR_NONE) {
-                if (!bSkipFailures) 
+                if (!bSkipFailures)
                     return ret;
                 else {
                     CPLErrorReset();
@@ -1922,7 +1922,7 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
                 oFieldDefn.SetName(CPLSPrintf("%s%s", pszMethodPrefix, oFieldDefn.GetNameRef()));
             ret = pLayerResult->CreateField(&oFieldDefn);
             if (ret != OGRERR_NONE) {
-                if (!bSkipFailures) 
+                if (!bSkipFailures)
                     return ret;
                 else {
                     CPLErrorReset();
@@ -2028,10 +2028,10 @@ static OGRGeometry* promote_to_multi(OGRGeometry* poGeom)
  * @since OGR 1.10
  */
 
-OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod, 
-                               OGRLayer *pLayerResult, 
-                               char** papszOptions, 
-                               GDALProgressFunc pfnProgress, 
+OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
+                               OGRLayer *pLayerResult,
+                               char** papszOptions,
+                               GDALProgressFunc pfnProgress,
                                void * pProgressArg )
 {
     OGRErr ret = OGRERR_NONE;
@@ -2090,7 +2090,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
             if (x_geom) {
                 OGREnvelope x_env;
                 x_geom->getEnvelope(&x_env);
-                if (x_env.MaxX < sEnvelopeMethod.MinX 
+                if (x_env.MaxX < sEnvelopeMethod.MinX
                     || x_env.MaxY < sEnvelopeMethod.MinY
                     || sEnvelopeMethod.MaxX < x_env.MinX
                     || sEnvelopeMethod.MaxY < x_env.MinY) {
@@ -2120,7 +2120,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
             OGRGeometry *z_geom = NULL;
 
             if (x_prepared_geom) {
-                if (bPretestContainment && OGRPreparedGeometryContains(x_prepared_geom, y_geom)) 
+                if (bPretestContainment && OGRPreparedGeometryContains(x_prepared_geom, y_geom))
                 {
                     z_geom = y_geom->clone();
                 }
@@ -2154,7 +2154,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
                     OGRDestroyPreparedGeometry(x_prepared_geom);
-                    delete x; 
+                    delete x;
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -2224,7 +2224,7 @@ done:
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Intersection().
- * 
+ *
  * @param pLayerInput the input layer. Should not be NULL.
  *
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -2248,11 +2248,11 @@ done:
  * @since OGR 1.10
  */
 
-OGRErr OGR_L_Intersection( OGRLayerH pLayerInput, 
-                           OGRLayerH pLayerMethod, 
-                           OGRLayerH pLayerResult, 
-                           char** papszOptions, 
-                           GDALProgressFunc pfnProgress, 
+OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
+                           OGRLayerH pLayerMethod,
+                           OGRLayerH pLayerResult,
+                           char** papszOptions,
+                           GDALProgressFunc pfnProgress,
                            void * pProgressArg )
 
 {
@@ -2306,7 +2306,7 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  * </ul>
  *
  * This method is the same as the C function OGR_L_Union().
- * 
+ *
  * @param pLayerMethod the method layer. Should not be NULL.
  *
  * @param pLayerResult the layer where the features resulting from the
@@ -2328,10 +2328,10 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  * @since OGR 1.10
  */
 
-OGRErr OGRLayer::Union( OGRLayer *pLayerMethod, 
-                        OGRLayer *pLayerResult, 
-                        char** papszOptions, 
-                        GDALProgressFunc pfnProgress, 
+OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
+                        OGRLayer *pLayerResult,
+                        char** papszOptions,
+                        GDALProgressFunc pfnProgress,
                         void * pProgressArg )
 {
     OGRErr ret = OGRERR_NONE;
@@ -2387,7 +2387,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
         // set up the filter on method layer
         OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
@@ -2492,7 +2492,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
         // set up the filter on input layer
         OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
@@ -2591,7 +2591,7 @@ done:
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Union().
- * 
+ *
  * @param pLayerInput the input layer. Should not be NULL.
  *
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -2612,14 +2612,14 @@ done:
  *
  * @note The first geometry field is always used.
  *
- * @since OGR 1.10 
+ * @since OGR 1.10
  */
 
-OGRErr OGR_L_Union( OGRLayerH pLayerInput, 
-                    OGRLayerH pLayerMethod, 
-                    OGRLayerH pLayerResult, 
-                    char** papszOptions, 
-                    GDALProgressFunc pfnProgress, 
+OGRErr OGR_L_Union( OGRLayerH pLayerInput,
+                    OGRLayerH pLayerMethod,
+                    OGRLayerH pLayerResult,
+                    char** papszOptions,
+                    GDALProgressFunc pfnProgress,
                     void * pProgressArg )
 
 {
@@ -2670,7 +2670,7 @@ OGRErr OGR_L_Union( OGRLayerH pLayerInput,
  * </ul>
  *
  * This method is the same as the C function OGR_L_SymDifference().
- * 
+ *
  * @param pLayerMethod the method layer. Should not be NULL.
  *
  * @param pLayerResult the layer where the features resulting from the
@@ -2692,10 +2692,10 @@ OGRErr OGR_L_Union( OGRLayerH pLayerInput,
  * @since OGR 1.10
  */
 
-OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod, 
-                                OGRLayer *pLayerResult, 
-                                char** papszOptions, 
-                                GDALProgressFunc pfnProgress, 
+OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
+                                OGRLayer *pLayerResult,
+                                char** papszOptions,
+                                GDALProgressFunc pfnProgress,
                                 void * pProgressArg )
 {
     OGRErr ret = OGRERR_NONE;
@@ -2750,7 +2750,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         // set up the filter on method layer
         OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
@@ -2812,7 +2812,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         // set up the filter on input layer
         OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
@@ -2932,11 +2932,11 @@ done:
  * @since OGR 1.10
  */
 
-OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput, 
-                            OGRLayerH pLayerMethod, 
-                            OGRLayerH pLayerResult, 
-                            char** papszOptions, 
-                            GDALProgressFunc pfnProgress, 
+OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
+                            OGRLayerH pLayerMethod,
+                            OGRLayerH pLayerResult,
+                            char** papszOptions,
+                            GDALProgressFunc pfnProgress,
                             void * pProgressArg )
 
 {
@@ -2988,7 +2988,7 @@ OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
  * </ul>
  *
  * This method is the same as the C function OGR_L_Identity().
- * 
+ *
  * @param pLayerMethod the method layer. Should not be NULL.
  *
  * @param pLayerResult the layer where the features resulting from the
@@ -3010,10 +3010,10 @@ OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
  * @since OGR 1.10
  */
 
-OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod, 
-                           OGRLayer *pLayerResult, 
-                           char** papszOptions, 
-                           GDALProgressFunc pfnProgress, 
+OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
+                           OGRLayer *pLayerResult,
+                           char** papszOptions,
+                           GDALProgressFunc pfnProgress,
                            void * pProgressArg )
 {
     OGRErr ret = OGRERR_NONE;
@@ -3066,7 +3066,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
         // set up the filter on method layer
         OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
@@ -3203,7 +3203,7 @@ done:
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Identity().
- * 
+ *
  * @param pLayerInput the input layer. Should not be NULL.
  *
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -3227,11 +3227,11 @@ done:
  * @since OGR 1.10
  */
 
-OGRErr OGR_L_Identity( OGRLayerH pLayerInput, 
-                       OGRLayerH pLayerMethod, 
-                       OGRLayerH pLayerResult, 
-                       char** papszOptions, 
-                       GDALProgressFunc pfnProgress, 
+OGRErr OGR_L_Identity( OGRLayerH pLayerInput,
+                       OGRLayerH pLayerMethod,
+                       OGRLayerH pLayerResult,
+                       char** papszOptions,
+                       GDALProgressFunc pfnProgress,
                        void * pProgressArg )
 
 {
@@ -3282,7 +3282,7 @@ OGRErr OGR_L_Identity( OGRLayerH pLayerInput,
  * </ul>
  *
  * This method is the same as the C function OGR_L_Update().
- * 
+ *
  * @param pLayerMethod the method layer. Should not be NULL.
  *
  * @param pLayerResult the layer where the features resulting from the
@@ -3304,10 +3304,10 @@ OGRErr OGR_L_Identity( OGRLayerH pLayerInput,
  * @since OGR 1.10
  */
 
-OGRErr OGRLayer::Update( OGRLayer *pLayerMethod, 
-                         OGRLayer *pLayerResult, 
-                         char** papszOptions, 
-                         GDALProgressFunc pfnProgress, 
+OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
+                         OGRLayer *pLayerResult,
+                         char** papszOptions,
+                         GDALProgressFunc pfnProgress,
                          void * pProgressArg )
 {
     OGRErr ret = OGRERR_NONE;
@@ -3359,7 +3359,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
         // set up the filter on method layer
         OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
@@ -3489,7 +3489,7 @@ done:
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Update().
- * 
+ *
  * @param pLayerInput the input layer. Should not be NULL.
  *
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -3513,11 +3513,11 @@ done:
  * @since OGR 1.10
  */
 
-OGRErr OGR_L_Update( OGRLayerH pLayerInput, 
-                     OGRLayerH pLayerMethod, 
-                     OGRLayerH pLayerResult, 
-                     char** papszOptions, 
-                     GDALProgressFunc pfnProgress, 
+OGRErr OGR_L_Update( OGRLayerH pLayerInput,
+                     OGRLayerH pLayerMethod,
+                     OGRLayerH pLayerResult,
+                     char** papszOptions,
+                     GDALProgressFunc pfnProgress,
                      void * pProgressArg )
 
 {
@@ -3561,7 +3561,7 @@ OGRErr OGR_L_Update( OGRLayerH pLayerInput,
  * </ul>
  *
  * This method is the same as the C function OGR_L_Clip().
- * 
+ *
  * @param pLayerMethod the method layer. Should not be NULL.
  *
  * @param pLayerResult the layer where the features resulting from the
@@ -3583,10 +3583,10 @@ OGRErr OGR_L_Update( OGRLayerH pLayerInput,
  * @since OGR 1.10
  */
 
-OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod, 
-                       OGRLayer *pLayerResult, 
-                       char** papszOptions, 
-                       GDALProgressFunc pfnProgress, 
+OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
+                       OGRLayer *pLayerResult,
+                       char** papszOptions,
+                       GDALProgressFunc pfnProgress,
                        void * pProgressArg )
 {
     OGRErr ret = OGRERR_NONE;
@@ -3632,11 +3632,11 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
         // set up the filter on method layer
         OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
-        OGRGeometry *geom = NULL; // this will be the geometry of the result feature 
+        OGRGeometry *geom = NULL; // this will be the geometry of the result feature
         pLayerMethod->ResetReading();
         // incrementally add area from y to geom
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
@@ -3729,7 +3729,7 @@ done:
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Clip().
- * 
+ *
  * @param pLayerInput the input layer. Should not be NULL.
  *
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -3753,11 +3753,11 @@ done:
  * @since OGR 1.10
  */
 
-OGRErr OGR_L_Clip( OGRLayerH pLayerInput, 
-                   OGRLayerH pLayerMethod, 
-                   OGRLayerH pLayerResult, 
-                   char** papszOptions, 
-                   GDALProgressFunc pfnProgress, 
+OGRErr OGR_L_Clip( OGRLayerH pLayerInput,
+                   OGRLayerH pLayerMethod,
+                   OGRLayerH pLayerResult,
+                   char** papszOptions,
+                   GDALProgressFunc pfnProgress,
                    void * pProgressArg )
 
 {
@@ -3823,10 +3823,10 @@ OGRErr OGR_L_Clip( OGRLayerH pLayerInput,
  * @since OGR 1.10
  */
 
-OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod, 
-                        OGRLayer *pLayerResult, 
-                        char** papszOptions, 
-                        GDALProgressFunc pfnProgress, 
+OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
+                        OGRLayer *pLayerResult,
+                        char** papszOptions,
+                        GDALProgressFunc pfnProgress,
                         void * pProgressArg )
 {
     OGRErr ret = OGRERR_NONE;
@@ -3873,7 +3873,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
         // set up the filter on the method layer
         OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
         if (!x_geom) {
-            delete x; 
+            delete x;
             continue;
         }
 
@@ -3979,7 +3979,7 @@ done:
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Erase().
- * 
+ *
  * @param pLayerInput the input layer. Should not be NULL.
  *
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -4003,11 +4003,11 @@ done:
  * @since OGR 1.10
  */
 
-OGRErr OGR_L_Erase( OGRLayerH pLayerInput, 
-                    OGRLayerH pLayerMethod, 
-                    OGRLayerH pLayerResult, 
-                    char** papszOptions, 
-                    GDALProgressFunc pfnProgress, 
+OGRErr OGR_L_Erase( OGRLayerH pLayerInput,
+                    OGRLayerH pLayerMethod,
+                    OGRLayerH pLayerResult,
+                    char** papszOptions,
+                    GDALProgressFunc pfnProgress,
                     void * pProgressArg )
 
 {

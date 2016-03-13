@@ -115,7 +115,7 @@ SAOffset VSI_SHP_Read( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 
 {
     OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
-    SAOffset ret = (SAOffset) VSIFReadL( p, (size_t) size, (size_t) nmemb, 
+    SAOffset ret = (SAOffset) VSIFReadL( p, (size_t) size, (size_t) nmemb,
                                  pFile->fp );
     pFile->nCurOffset += ret * size;
     return ret;
@@ -160,7 +160,7 @@ SAOffset VSI_SHP_Write( void *p, SAOffset size, SAOffset nmemb, SAFile file )
     SAOffset ret;
     if( !VSI_SHP_WriteMoreDataOK( file, size * nmemb ) )
         return 0;
-    ret = (SAOffset) VSIFWriteL( p, (size_t) size, (size_t) nmemb, 
+    ret = (SAOffset) VSIFWriteL( p, (size_t) size, (size_t) nmemb,
                                   pFile->fp );
     pFile->nCurOffset += ret * size;
     return ret;

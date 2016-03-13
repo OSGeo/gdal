@@ -69,7 +69,7 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
 int OGRWAsPDriver::TestCapability( const char * pszCap )
 
 {
-    return EQUAL(pszCap,ODrCCreateDataSource) 
+    return EQUAL(pszCap,ODrCCreateDataSource)
         || EQUAL(pszCap,ODrCDeleteDataSource);
 }
 
@@ -96,7 +96,7 @@ OGRDataSource * OGRWAsPDriver::CreateDataSource( const char *pszName, char ** )
 OGRErr OGRWAsPDriver::DeleteDataSource (const char *pszName)
 
 {
-    return VSIUnlink( pszName ) == 0 ? OGRERR_NONE : OGRERR_FAILURE;  	
+    return VSIUnlink( pszName ) == 0 ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -115,4 +115,3 @@ void RegisterOGRWAsP()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

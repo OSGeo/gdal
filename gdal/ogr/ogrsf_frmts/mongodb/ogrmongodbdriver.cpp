@@ -191,7 +191,7 @@ public:
             virtual int GetLayerCount() { return (int)m_apoLayers.size(); }
             virtual OGRLayer* GetLayer(int nIdx);
             virtual int         TestCapability(const char* pszCap);
-            virtual OGRLayer   *ICreateLayer( const char *pszName, 
+            virtual OGRLayer   *ICreateLayer( const char *pszName,
                                              OGRSpatialReference *poSpatialRef = NULL,
                                              OGRwkbGeometryType eGType = wkbUnknown,
                                              char ** papszOptions = NULL );
@@ -330,7 +330,7 @@ void OGRMongoDBLayer::WriteOGRMetadata()
 
         m_poDS->GetConn()->findAndRemove(
             CPLSPrintf("%s._ogr_metadata", m_osDatabase.c_str()),
-            BSON("layer" << m_osCollection.c_str()), 
+            BSON("layer" << m_osCollection.c_str()),
             BSONObj(),
             BSONObj());
         m_poDS->GetConn()->insert( CPLSPrintf("%s._ogr_metadata", m_osDatabase.c_str()), b.obj() );
@@ -1186,7 +1186,7 @@ OGRFeature* OGRMongoDBLayer::GetNextFeature()
         if( !m_bCursorValid )
         {
             m_poCursor = m_poDS->GetConn()->query(m_osQualifiedCollection,
-                                              BuildQuery(), 
+                                              BuildQuery(),
                                               0, /* nToReturn */
                                               0, /* nToSkip */
                                               NULL, /* fieldsToReturn */
@@ -1248,7 +1248,7 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
     {
         UNIQUE_PTR<DBClientCursor> cursor = m_poDS->GetConn()->query(
             m_osQualifiedCollection,
-            BSON(m_osFID.c_str() << nFID), 
+            BSON(m_osFID.c_str() << nFID),
             1);
         if( !cursor->more() )
             return NULL;
@@ -1256,7 +1256,7 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
 
         OGRFeature* poFeature = Translate(obj);
         poFeature->SetFID(nFID);
-        return poFeature;        
+        return poFeature;
     }
     catch( const DBException &e )
     {
@@ -1289,7 +1289,7 @@ OGRErr OGRMongoDBLayer::DeleteFeature(GIntBig nFID)
     {
         BSONObj obj = m_poDS->GetConn()->findAndRemove(
             m_osQualifiedCollection,
-            BSON(m_osFID.c_str() << nFID), 
+            BSON(m_osFID.c_str() << nFID),
             BSONObj(),
             BSONObj());
         return (obj.isEmpty()) ? OGRERR_NON_EXISTING_FEATURE : OGRERR_NONE;
@@ -1732,7 +1732,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
 
     SerializeRecursive(b, poFeature, *(rootMap->u.poMap));
     delete rootMap->u.poMap;
-    delete rootMap;       
+    delete rootMap;
 
     return b.obj();
 }
@@ -1968,7 +1968,7 @@ void OGRMongoDBLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "%s: %s", "SetSpatialFilter()", e.what());
-        }        
+        }
     }
 }
 /************************************************************************/
@@ -2434,12 +2434,13 @@ int OGRMongoDBDataSource::ListLayers(const char* pszDatabase)
         CPLError(CE_Failure, CPLE_AppDefined, "Command failed: %s", e.what());
         return FALSE;
     }
-}      
+}
+
 /************************************************************************/
 /*                            ICreateLayer()                            */
 /************************************************************************/
 
-OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName, 
+OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName,
                                               OGRSpatialReference *poSpatialRef,
                                               OGRwkbGeometryType eGType,
                                               char ** papszOptions )
@@ -2532,7 +2533,7 @@ OGRErr OGRMongoDBDataSource::DeleteLayer( int iLayer )
     {
         m_poConn->findAndRemove(
                 CPLSPrintf("%s._ogr_metadata", l_osDatabase.c_str()),
-                BSON("layer" << l_osCollection.c_str()), 
+                BSON("layer" << l_osCollection.c_str()),
                 BSONObj(),
                 BSONObj());
 
@@ -2552,7 +2553,7 @@ OGRErr OGRMongoDBDataSource::DeleteLayer( int iLayer )
 int OGRMongoDBDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) 
+    if( EQUAL(pszCap,ODsCCreateLayer)
         || EQUAL(pszCap,ODsCDeleteLayer)
         || EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return eAccess == GA_Update;
@@ -2633,7 +2634,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         for( int iLayer = 0; iLayer < (int)m_apoLayers.size(); iLayer++ )
         {
-            if( EQUAL(m_apoLayers[iLayer]->GetName(), 
+            if( EQUAL(m_apoLayers[iLayer]->GetName(),
                       pszLayerName ))
             {
                 DeleteLayer( iLayer );
@@ -2704,7 +2705,7 @@ extern "C" int GDALIsInGlobalDestructor();
 
 static void OGRMongoDBDriverUnload( CPL_UNUSED GDALDriver* poDriver )
 {
-    if( bMongoInitialized != -1 && !GDALIsInGlobalDestructor() ) 
+    if( bMongoInitialized != -1 && !GDALIsInGlobalDestructor() )
     {
         client::shutdown();
     }

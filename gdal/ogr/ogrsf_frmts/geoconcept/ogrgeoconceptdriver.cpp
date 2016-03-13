@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgeoconceptdriver.cpp 
+ * $Id: ogrgeoconceptdriver.cpp
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeoconceptDriver class.
@@ -174,7 +174,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
         return OGRERR_FAILURE;
     }
 
-    if( VSI_ISREG(sStatBuf.st_mode) 
+    if( VSI_ISREG(sStatBuf.st_mode)
         && (
             EQUAL(CPLGetExtension(pszDataSource),"gxt") ||
             EQUAL(CPLGetExtension(pszDataSource),"txt")

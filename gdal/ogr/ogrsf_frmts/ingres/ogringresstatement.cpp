@@ -156,10 +156,10 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     while( queryParm.qy_genParm.gp_completed == FALSE )
 	IIapi_wait( &waitParm );
 
-    if( queryParm.qy_genParm.gp_status != IIAPI_ST_SUCCESS 
+    if( queryParm.qy_genParm.gp_status != IIAPI_ST_SUCCESS
         || hConn == NULL )
     {
-        ReportError( &(queryParm.qy_genParm), 
+        ReportError( &(queryParm.qy_genParm),
                      CPLString().Printf( "IIapi_query(%s)", pszStatement ) );
         return FALSE;
     }
@@ -167,7 +167,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     hTransaction = queryParm.qy_tranHandle;
     hStmt = queryParm.qy_stmtHandle;
 
-    if( hStmt == NULL )						
+    if( hStmt == NULL )
     {
         CPLDebug( "INGRES", "No resulting statement." );
         return TRUE;
@@ -227,13 +227,13 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     while( queryInfo.gq_genParm.gp_completed == FALSE )
         IIapi_wait( &waitParm );
 
-    CPLDebug( "INGRES", 
-              "gq_flags=%x, gq_mask=%x, gq_rowCount=%d, gq_rowStatus=%d, rowPosition=%d", 
-              queryInfo.gq_flags, 
-              queryInfo.gq_mask, 
-              queryInfo.gq_rowCount, 
-              queryInfo.gq_rowStatus, 
-              queryInfo.gq_rowPosition ); 
+    CPLDebug( "INGRES",
+              "gq_flags=%x, gq_mask=%x, gq_rowCount=%d, gq_rowStatus=%d, rowPosition=%d",
+              queryInfo.gq_flags,
+              queryInfo.gq_mask,
+              queryInfo.gq_rowCount,
+              queryInfo.gq_rowStatus,
+              queryInfo.gq_rowPosition );
 
     if( queryInfo.gq_genParm.gp_status != IIAPI_ST_SUCCESS )
     {
@@ -252,20 +252,20 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
 
     pabyWrkBuffer = (GByte *) CPLCalloc(1,nBufWidth);
 
-    papszFields = (char **) CPLCalloc(sizeof(char *), 
+    papszFields = (char **) CPLCalloc(sizeof(char *),
                                      getDescrParm.gd_descriptorCount+1);
 
     nBufWidth = 0;
     for( i = 0; i < getDescrParm.gd_descriptorCount; i++ )
     {
-        papszFields[i] = (char *) (pabyWrkBuffer + nBufWidth); 
+        papszFields[i] = (char *) (pabyWrkBuffer + nBufWidth);
         nBufWidth += getDescrParm.gd_descriptor[i].ds_length + 1;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Setup the getColumns() argument.                                */
 /* -------------------------------------------------------------------- */
-    pasDataBuffer = (IIAPI_DATAVALUE *) 
+    pasDataBuffer = (IIAPI_DATAVALUE *)
         CPLCalloc(sizeof(IIAPI_DATAVALUE),getDescrParm.gd_descriptorCount);
 
     getColParm.gc_genParm.gp_callback = NULL;
@@ -405,16 +405,16 @@ void OGRIngresStatement::ClearDynamicColumns()
 
 void OGRIngresStatement::DumpRow( FILE *fp )
 
-{									
+{
     int   i;
 
     fprintf( fp, "---------------\n" );
     for( i = 0; i < getDescrParm.gd_descriptorCount; i++ )
     {
-        fprintf( fp, "  %s = %s\n", 
-                 getDescrParm.gd_descriptor[i].ds_columnName, 
+        fprintf( fp, "  %s = %s\n",
+                 getDescrParm.gd_descriptor[i].ds_columnName,
                  papszFields[i] );
-    }                 
+    }
 }
 
 /************************************************************************/
@@ -451,23 +451,23 @@ void OGRIngresStatement::ReportError( IIAPI_GENPARM *genParm,
                                       const char *pszDescription )
 
 {
-    IIAPI_GETEINFOPARM  getErrParm; 
+    IIAPI_GETEINFOPARM  getErrParm;
 
     /*
     ** Check API call status.
     */
-    const char *pszCode = 
-        (genParm->gp_status == IIAPI_ST_SUCCESS) ?  
+    const char *pszCode =
+        (genParm->gp_status == IIAPI_ST_SUCCESS) ?
         "IIAPI_ST_SUCCESS" :
-        (genParm->gp_status == IIAPI_ST_MESSAGE) ?  
+        (genParm->gp_status == IIAPI_ST_MESSAGE) ?
         "IIAPI_ST_MESSAGE" :
-        (genParm->gp_status == IIAPI_ST_WARNING) ?  
+        (genParm->gp_status == IIAPI_ST_WARNING) ?
         "IIAPI_ST_WARNING" :
-        (genParm->gp_status == IIAPI_ST_NO_DATA) ?  
+        (genParm->gp_status == IIAPI_ST_NO_DATA) ?
         "IIAPI_ST_NO_DATA" :
-        (genParm->gp_status == IIAPI_ST_ERROR)   ?  
+        (genParm->gp_status == IIAPI_ST_ERROR)   ?
         "IIAPI_ST_ERROR"   :
-        (genParm->gp_status == IIAPI_ST_FAILURE) ? 
+        (genParm->gp_status == IIAPI_ST_FAILURE) ?
         "IIAPI_ST_FAILURE" :
         (genParm->gp_status == IIAPI_ST_NOT_INITIALIZED) ?
         "IIAPI_ST_NOT_INITIALIZED" :
@@ -481,8 +481,8 @@ void OGRIngresStatement::ReportError( IIAPI_GENPARM *genParm,
     ** Check for error information.
     */
     if ( ! genParm->gp_errorHandle )
-    { 
-        CPLDebug( "INGRES", "No gp_errorHandle in ReportError(%s)", 
+    {
+        CPLDebug( "INGRES", "No gp_errorHandle in ReportError(%s)",
                   pszDescription );
         return;
     }
@@ -513,8 +513,8 @@ void OGRIngresStatement::ReportError( IIAPI_GENPARM *genParm,
 
 	switch( getErrParm.ge_type )
 	{
-           case IIAPI_GE_ERROR		: 
-            eType = CE_Failure; 
+           case IIAPI_GE_ERROR		:
+            eType = CE_Failure;
             break;
 
           case IIAPI_GE_WARNING	:
@@ -634,12 +634,12 @@ int OGRIngresStatement::SendParms()
 /*      but we might change that in the future.                         */
 /************************************************************************/
 
-void OGRIngresStatement::addInputParameter( 
+void OGRIngresStatement::addInputParameter(
     IIAPI_DT_ID eDType, int nLength, GByte *pabyData )
 
 {
     CPLAssert( !bHaveParm );
-    CPLAssert( eDType == IIAPI_LVCH_TYPE || eDType == IIAPI_LBYTE_TYPE ); 
+    CPLAssert( eDType == IIAPI_LVCH_TYPE || eDType == IIAPI_LBYTE_TYPE );
     // support long varchar and long byte
 
     bHaveParm = TRUE;

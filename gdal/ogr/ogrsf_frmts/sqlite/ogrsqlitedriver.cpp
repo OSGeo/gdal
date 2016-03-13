@@ -9,7 +9,7 @@
  *
  * Contributor: Alessandro Furieri, a.furieri@lqt.it
  * Portions of this module properly supporting SpatiaLite DB creation
- * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from
  * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
  *
  ******************************************************************************
@@ -182,7 +182,7 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
 
     if( VSIStatL( pszName, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "It seems a file system object called '%s' already exists.",
                   pszName );
 

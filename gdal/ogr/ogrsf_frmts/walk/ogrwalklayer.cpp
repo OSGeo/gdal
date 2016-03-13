@@ -61,7 +61,7 @@ OGRWalkLayer::~OGRWalkLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "Walk", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -82,7 +82,7 @@ OGRWalkLayer::~OGRWalkLayer()
 /*      set on a statement.  Sift out geometry and FID fields.          */
 /************************************************************************/
 
-CPLErr OGRWalkLayer::BuildFeatureDefn( const char *pszLayerName, 
+CPLErr OGRWalkLayer::BuildFeatureDefn( const char *pszLayerName,
                                     CPLODBCStatement *poStmtIn )
 
 {
@@ -101,7 +101,7 @@ CPLErr OGRWalkLayer::BuildFeatureDefn( const char *pszLayerName,
 
         oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
 
-        if( pszGeomColumn != NULL 
+        if( pszGeomColumn != NULL
             && EQUAL(poStmtIn->GetColName(iCol),pszGeomColumn) )    //If Geometry Column, continue to next field
             continue;
 
@@ -233,7 +233,7 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     if( pszFIDColumn != NULL && poStmt->GetColId(pszFIDColumn) > -1 )
-        poFeature->SetFID( 
+        poFeature->SetFID(
             atoi(poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) );
     else
         poFeature->SetFID( iNextShapeId );
@@ -252,7 +252,7 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
         if( pszValue == NULL )
             /* no value */;
         else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
-            poFeature->SetField( iField, 
+            poFeature->SetField( iField,
                                  poStmt->GetColDataLength(iSrcField),
                                  (GByte *) pszValue );
         else
@@ -273,7 +273,7 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
         if( pszGeomBin != NULL && bGeomColumnWKB )
         {
             WKBGeometry *WalkGeom = (WKBGeometry *)CPLMalloc(sizeof(WKBGeometry));
-            if( Binary2WkbGeom((unsigned char *)pszGeomBin, WalkGeom, nGeomLength) 
+            if( Binary2WkbGeom((unsigned char *)pszGeomBin, WalkGeom, nGeomLength)
                 != OGRERR_NONE )
             {
                 CPLFree(WalkGeom);
@@ -359,7 +359,7 @@ void OGRWalkLayer::LookupSpatialRef( const char * pszMemo )
 
         if( poSRS->importFromProj4( pszProj4 ) != OGRERR_NONE )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "importFromProj4() failed on SRS '%s'.",
                       pszProj4);
             delete poSRS;

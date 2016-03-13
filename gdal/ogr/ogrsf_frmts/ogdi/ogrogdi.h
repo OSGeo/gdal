@@ -62,7 +62,7 @@ class OGROGDILayer : public OGRLayer
     OGRFeature *        GetNextRawFeature();
 
   public:
-                        OGROGDILayer(OGROGDIDataSource *, const char *, 
+                        OGROGDILayer(OGROGDIDataSource *, const char *,
                                      ecs_Family);
                         ~OGROGDILayer();
 
@@ -106,7 +106,7 @@ class OGROGDIDataSource : public OGRDataSource
 
     int                 m_bLaunderLayerNames;
 
-    void                IAddLayer( const char *pszLayerName, 
+    void                IAddLayer( const char *pszLayerName,
                                    ecs_Family eFamily );
 
   public:

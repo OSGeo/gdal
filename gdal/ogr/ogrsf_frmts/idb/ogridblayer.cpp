@@ -53,7 +53,7 @@ OGRIDBLayer::OGRIDBLayer()
     iNextShapeId = 0;
 
     poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet. 
+    nSRSId = -2; // we haven't even queried the database for it yet.
 }
 
 /************************************************************************/
@@ -93,7 +93,7 @@ OGRIDBLayer::~OGRIDBLayer()
 /*      set on a statement.  Sift out geometry and FID fields.          */
 /************************************************************************/
 
-CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName, 
+CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
                                     ITCursor *poCurr )
 
 {

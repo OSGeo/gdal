@@ -333,7 +333,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGeoRSSDataSource::Create( const char *pszFilename, 
+int OGRGeoRSSDataSource::Create( const char *pszFilename,
                                  char **papszOptions )
 {
     if( fpOutput != NULL)
@@ -366,8 +366,8 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     fpOutput = VSIFOpenL( pszFilename, "w" );
     if( fpOutput == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create GeoRSS file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create GeoRSS file %s.",
                   pszFilename );
         return FALSE;
     }

@@ -94,7 +94,7 @@ OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
     if( !poDS->Open( pszName, TRUE, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
          "IDB driver doesn't currently support database creation.");
         return NULL;
     }
@@ -126,4 +126,3 @@ void RegisterOGRIDB()
         return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRIDBDriver );
 }
-

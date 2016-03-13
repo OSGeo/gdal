@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cpl_string.h" 
+#include "cpl_string.h"
 
 #if HAVE_STDARG_H
 # include <stdarg.h>
@@ -114,20 +114,20 @@ int sprintbuf(struct printbuf *p, const char *msg, ...)
 {
   va_list ap;
   char *t;
-  int size, ret; 
+  int size, ret;
 
   /* user stack buffer first */
   va_start(ap, msg);
-  if((size = CPLVASPrintf(&t, msg, ap)) == -1) return -1; 
+  if((size = CPLVASPrintf(&t, msg, ap)) == -1) return -1;
   va_end(ap);
-  
+
   if (strcmp(msg, "%f") == 0)
   {
       char* pszComma = strchr(t, ',');
       if (pszComma)
           *pszComma = '.';
   }
-  
+
   ret = printbuf_memappend(p, t, size);
   CPLFree(t);
   return ret;

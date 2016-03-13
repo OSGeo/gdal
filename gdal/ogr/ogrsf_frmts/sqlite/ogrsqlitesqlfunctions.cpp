@@ -266,7 +266,7 @@ static
 void OGR2SQLITE_ogr_inflate(sqlite3_context* pContext,
                             int argc, sqlite3_value** argv)
 {
-    if( argc != 1 || 
+    if( argc != 1 ||
         sqlite3_value_type (argv[0]) != SQLITE_BLOB )
     {
         sqlite3_result_null (pContext);
@@ -492,7 +492,7 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
     {
         iAfterGeomIdx = 2;
     }
-    else if( argc >= 2 && 
+    else if( argc >= 2 &&
              sqlite3_value_type (argv[0]) == SQLITE_BLOB &&
              sqlite3_value_type (argv[1]) == SQLITE_TEXT )
     {

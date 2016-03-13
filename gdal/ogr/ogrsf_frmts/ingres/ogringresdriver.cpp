@@ -117,7 +117,7 @@ OGRDataSource *OGRIngresDriver::CreateDataSource( const char * pszName,
         {
             delete poDS;
             poDS = NULL;
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Ingres driver doesn't currently support database creation.\n"
                       "Please create database before using." );
         }
@@ -157,4 +157,3 @@ void RegisterOGRIngres()
         return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(new OGRIngresDriver);
 }
-

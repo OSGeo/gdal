@@ -105,8 +105,8 @@ struct json_tokener
  */
 const char *json_tokener_error_desc(enum json_tokener_error jerr);
 
-/** 
- * @b XXX do not use json_tokener_errors directly.  
+/**
+ * @b XXX do not use json_tokener_errors directly.
  * After v0.10 this will be removed.
  *
  * See json_tokener_error_desc() instead.
@@ -136,16 +136,16 @@ extern struct json_object* json_tokener_parse_verbose(const char *str, enum json
  */
 extern void json_tokener_set_flags(struct json_tokener *tok, int flags);
 
-/** 
+/**
  * Parse a string and return a non-NULL json_object if a valid JSON value
  * is found.  The string does not need to be a JSON object or array;
  * it can also be a string, number or boolean value.
  *
  * A partial JSON string can be parsed.  If the parsing is incomplete,
- * NULL will be returned and json_tokener_get_error() will be return 
+ * NULL will be returned and json_tokener_get_error() will be return
  * json_tokener_continue.
  * json_tokener_parse_ex() can then be called with additional bytes in str
- * to continue the parsing.  
+ * to continue the parsing.
  *
  * If json_tokener_parse_ex() returns NULL and the error anything other than
  * json_tokener_continue, a fatal error has occurred and parsing must be
@@ -158,7 +158,7 @@ extern void json_tokener_set_flags(struct json_tokener *tok, int flags);
  * json_object_get_type() before using the object.
  *
  * @b XXX this should not use internal fields:
- * Trailing characters after the parsed value do not automatically cause an 
+ * Trailing characters after the parsed value do not automatically cause an
  * error.  It is up to the caller to decide whether to treat this as an
  * error or to handle the additional characters, perhaps by parsing another
  * JSON value starting from that point.

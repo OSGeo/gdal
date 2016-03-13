@@ -842,7 +842,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
     CPLXMLNode *psVRTDSXML = CPLGetXMLNode( psTree, "=OGRVRTDataSource" );
     if( psVRTDSXML == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Did not find the <OGRVRTDataSource> node in the root of the document,\n"
                   "this is not really an OGR VRT." );
         return FALSE;

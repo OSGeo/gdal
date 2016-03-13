@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgeoconceptlayer.cpp 
+ * $Id: ogrgeoconceptlayer.cpp
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeoconceptLayer class.
@@ -167,7 +167,7 @@ OGRFeature *OGRGeoconceptLayer::GetNextFeature()
          * the reader would allow reading other features :
          * ogrinfo -ro export.gxt FT1 FT2 ...
          * will be all features for all features types !
-         */ 
+         */
         Rewind_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature),NULL);
         break;
       }

@@ -267,7 +267,7 @@ int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
     papoLayers = (OGRGTMLayer **) CPLMalloc(sizeof(void*) * 2);
 
     /* Create a spatial reference for WGS8*/
-    OGRSpatialReference* poSRS = new OGRSpatialReference(NULL);   
+    OGRSpatialReference* poSRS = new OGRSpatialReference(NULL);
     poSRS->SetWellKnownGeogCS( "WGS84" );
 
 
@@ -347,8 +347,8 @@ int OGRGTMDataSource::Create( const char* pszFilename,
     fpOutput = VSIFOpenL( pszFilename, "w" );
     if( fpOutput == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create GTM file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create GTM file %s.",
                   pszFilename );
         return FALSE;
     }
@@ -359,8 +359,8 @@ int OGRGTMDataSource::Create( const char* pszFilename,
     fpTmpTrackpoints = VSIFOpenL(pszTmpName , "w" );
     if( fpTmpTrackpoints == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create temporary file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create temporary file %s.",
                   pszTmpName );
         return FALSE;
     }
@@ -370,8 +370,8 @@ int OGRGTMDataSource::Create( const char* pszFilename,
     fpTmpTracks = VSIFOpenL(pszTmpName , "w" );
     if( fpTmpTracks == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create temporary file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create temporary file %s.",
                   pszTmpName );
         return FALSE;
     }
@@ -455,7 +455,7 @@ OGRLayer * OGRGTMDataSource::ICreateLayer( const char * pszLayerName,
         return papoLayers[nLayers-1];
 
     }
-    else if (eType == wkbLineString || eType == wkbLineString25D || 
+    else if (eType == wkbLineString || eType == wkbLineString25D ||
              eType == wkbMultiLineString || eType == wkbMultiLineString25D)
     {
         // Tracks
@@ -463,7 +463,7 @@ OGRLayer * OGRGTMDataSource::ICreateLayer( const char * pszLayerName,
         papoLayers = (OGRGTMLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGTMLayer*));
         papoLayers[nLayers-1] = new GTMTrackLayer( pszName, poSRS, TRUE, this );
         return papoLayers[nLayers-1];
-    } 
+    }
     else if (eType == wkbUnknown)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -500,7 +500,7 @@ int OGRGTMDataSource::TestCapability( const char * pszCap )
 void OGRGTMDataSource::checkBounds(float newLat,
                                    float newLon)
 {
-    if (minlat == 0 && maxlat == 0 && 
+    if (minlat == 0 && maxlat == 0 &&
         minlon == 0 && maxlon == 0)
     {
         minlat = newLat;

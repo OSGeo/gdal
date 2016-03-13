@@ -213,10 +213,10 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
                          OGRSQLiteEscapeName(pszFIDColumn).c_str(),
                          pszEscapedTableName );
 
-    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL ); 
+    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to query table %s for column definitions : %s.",
                   pszViewName, sqlite3_errmsg(hDB) );
 
@@ -226,8 +226,8 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     rc = sqlite3_step( hColStmt );
     if ( rc != SQLITE_DONE && rc != SQLITE_ROW )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In Initialize(): sqlite3_step(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In Initialize(): sqlite3_step(%s):\n  %s",
                   pszSQL, sqlite3_errmsg(hDB) );
         sqlite3_finalize( hColStmt );
         return CE_Failure;
@@ -277,7 +277,7 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
 
     osSQL.Printf( "SELECT \"%s\", * FROM '%s' %s",
                   OGRSQLiteEscapeName(pszFIDColumn).c_str(),
-                  pszEscapedTableName, 
+                  pszEscapedTableName,
                   osWHERE.c_str() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
@@ -289,8 +289,8 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
         return OGRERR_FAILURE;
@@ -339,18 +339,18 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 
     osSQL.Printf( "SELECT \"%s\", * FROM '%s' WHERE \"%s\" = %d",
                   OGRSQLiteEscapeName(pszFIDColumn).c_str(),
-                  pszEscapedTableName, 
+                  pszEscapedTableName,
                   OGRSQLiteEscapeName(pszFIDColumn).c_str(),
                   (int) nFeatureId );
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()), 
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
                           &hStmt, NULL );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In GetFeature(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In GetFeature(): sqlite3_prepare(%s):\n  %s",
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
 
         return NULL;
@@ -532,7 +532,7 @@ int OGRSQLiteViewLayer::TestCapability( const char * pszCap )
     else if (EQUAL(pszCap,OLCFastSpatialFilter))
         return bHasSpatialIndex;
 
-    else 
+    else
         return OGRSQLiteLayer::TestCapability( pszCap );
 }
 
@@ -569,7 +569,7 @@ GIntBig OGRSQLiteViewLayer::GetFeatureCount( int bForce )
     int nRowCount, nColCount;
     int nResult = -1;
 
-    if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult, 
+    if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult,
                            &nColCount, &nRowCount, &pszErrMsg ) != SQLITE_OK )
         return -1;
 

@@ -118,7 +118,7 @@ class OGRPDSDataSource : public OGRDataSource
     NASAKeywordHandler  oKeywords;
 
     CPLString           osTempResult;
-    const char         *GetKeywordSub( const char *pszPath, 
+    const char         *GetKeywordSub( const char *pszPath,
                                        int iSubscript,
                                        const char *pszDefault );
 
