@@ -87,7 +87,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                                         double *pdfValue,
                                         void* hExtraParamsIn );
 #endif
-#if defined(__GNUC__) 
+#if defined(__GNUC__)
 #if defined(__x86_64)
 #define GCC_CPUID(level, a, b, c, d)            \
   __asm__ ("xchgq %%rbx, %q1\n"                 \

@@ -45,49 +45,49 @@
 
 CPL_C_START
 
-int CPL_DLL CPL_STDCALL GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
-                             GDALRasterBandH hGreen, 
-                             GDALRasterBandH hBlue, 
+int CPL_DLL CPL_STDCALL GDALComputeMedianCutPCT( GDALRasterBandH hRed,
+                             GDALRasterBandH hGreen,
+                             GDALRasterBandH hBlue,
                              int (*pfnIncludePixel)(int,int,void*),
-                             int nColors, 
+                             int nColors,
                              GDALColorTableH hColorTable,
-                             GDALProgressFunc pfnProgress, 
+                             GDALProgressFunc pfnProgress,
                              void * pProgressArg );
 
-int CPL_DLL CPL_STDCALL GDALDitherRGB2PCT( GDALRasterBandH hRed, 
-                       GDALRasterBandH hGreen, 
-                       GDALRasterBandH hBlue, 
-                       GDALRasterBandH hTarget, 
-                       GDALColorTableH hColorTable, 
-                       GDALProgressFunc pfnProgress, 
+int CPL_DLL CPL_STDCALL GDALDitherRGB2PCT( GDALRasterBandH hRed,
+                       GDALRasterBandH hGreen,
+                       GDALRasterBandH hBlue,
+                       GDALRasterBandH hTarget,
+                       GDALColorTableH hColorTable,
+                       GDALProgressFunc pfnProgress,
                        void * pProgressArg );
 
-int CPL_DLL CPL_STDCALL GDALChecksumImage( GDALRasterBandH hBand, 
+int CPL_DLL CPL_STDCALL GDALChecksumImage( GDALRasterBandH hBand,
                                int nXOff, int nYOff, int nXSize, int nYSize );
-                               
-CPLErr CPL_DLL CPL_STDCALL 
-GDALComputeProximity( GDALRasterBandH hSrcBand, 
+
+CPLErr CPL_DLL CPL_STDCALL
+GDALComputeProximity( GDALRasterBandH hSrcBand,
                       GDALRasterBandH hProximityBand,
                       char **papszOptions,
-                      GDALProgressFunc pfnProgress, 
+                      GDALProgressFunc pfnProgress,
                       void * pProgressArg );
 
 CPLErr CPL_DLL CPL_STDCALL
-GDALFillNodata( GDALRasterBandH hTargetBand, 
+GDALFillNodata( GDALRasterBandH hTargetBand,
                 GDALRasterBandH hMaskBand,
-                double dfMaxSearchDist, 
+                double dfMaxSearchDist,
                 int bDeprecatedOption,
                 int nSmoothingIterations,
                 char **papszOptions,
-                GDALProgressFunc pfnProgress, 
+                GDALProgressFunc pfnProgress,
                 void * pProgressArg );
 
 CPLErr CPL_DLL CPL_STDCALL
-GDALPolygonize( GDALRasterBandH hSrcBand, 
+GDALPolygonize( GDALRasterBandH hSrcBand,
                 GDALRasterBandH hMaskBand,
-                OGRLayerH hOutLayer, int iPixValField, 
+                OGRLayerH hOutLayer, int iPixValField,
                 char **papszOptions,
-                GDALProgressFunc pfnProgress, 
+                GDALProgressFunc pfnProgress,
                 void * pProgressArg );
 
 CPLErr CPL_DLL CPL_STDCALL
@@ -103,16 +103,16 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
                  GDALRasterBandH hDstBand,
                  int nSizeThreshold, int nConnectedness,
                  char **papszOptions,
-                 GDALProgressFunc pfnProgress, 
+                 GDALProgressFunc pfnProgress,
                  void * pProgressArg );
 
 /*
  * Warp Related.
  */
 
-typedef int 
-(*GDALTransformerFunc)( void *pTransformerArg, 
-                        int bDstToSrc, int nPointCount, 
+typedef int
+(*GDALTransformerFunc)( void *pTransformerArg,
+                        int bDstToSrc, int nPointCount,
                         double *x, double *y, double *z, int *panSuccess );
 
 #define GDAL_GTI2_SIGNATURE     "GTI2"
@@ -127,15 +127,15 @@ typedef struct {
 } GDALTransformerInfo;
 
 void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
-int  CPL_DLL GDALUseTransformer( void *pTransformerArg, 
-                                 int bDstToSrc, int nPointCount, 
-                                 double *x, double *y, double *z, 
+int  CPL_DLL GDALUseTransformer( void *pTransformerArg,
+                                 int bDstToSrc, int nPointCount,
+                                 double *x, double *y, double *z,
                                  int *panSuccess );
 void* GDALCreateSimilarTransformer( void* psTransformerArg, double dfSrcRatioX, double dfSrcRatioY );
 
 
 /* High level transformer for going from image coordinates on one file
-   to image coordinates on another, potentially doing reprojection, 
+   to image coordinates on another, potentially doing reprojection,
    utilizing GCPs or using the geotransform. */
 
 void CPL_DLL *
@@ -144,17 +144,17 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                  int bGCPUseOK, double dfGCPErrorThreshold,
                                  int nOrder );
 void CPL_DLL *
-GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, 
+GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                   char **papszOptions );
 void CPL_DLL *
 GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
                                   const double *padfSrcGeoTransform,
                                   const char *pszDstWKT,
                                   const double *padfDstGeoTransform );
-void CPL_DLL GDALSetGenImgProjTransformerDstGeoTransform( void *, 
+void CPL_DLL GDALSetGenImgProjTransformerDstGeoTransform( void *,
                                                           const double * );
 void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
-int CPL_DLL GDALGenImgProjTransform( 
+int CPL_DLL GDALGenImgProjTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
@@ -162,35 +162,35 @@ void GDALSetTransformerDstGeoTransform( void *, const double * );
 
 /* Geo to geo reprojection transformer. */
 void CPL_DLL *
-GDALCreateReprojectionTransformer( const char *pszSrcWKT, 
+GDALCreateReprojectionTransformer( const char *pszSrcWKT,
                                    const char *pszDstWKT );
 void CPL_DLL GDALDestroyReprojectionTransformer( void * );
-int CPL_DLL GDALReprojectionTransform( 
+int CPL_DLL GDALReprojectionTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
 /* GCP based transformer ... forward is to georef coordinates */
 void CPL_DLL *
-GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                           int nReqOrder, int bReversed );
 
 /* GCP based transformer with refinement of the GCPs ... forward is to georef coordinates */
 void CPL_DLL *
-GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed, double tolerance, int minimumGcps);
 
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
-int CPL_DLL GDALGCPTransform( 
+int CPL_DLL GDALGCPTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
 /* Thin Plate Spine transformer ... forward is to georef coordinates */
 
 void CPL_DLL *
-GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                           int bReversed );
 void CPL_DLL GDALDestroyTPSTransformer( void *pTransformArg );
-int CPL_DLL GDALTPSTransform( 
+int CPL_DLL GDALTPSTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
@@ -199,77 +199,75 @@ char CPL_DLL ** RPCInfoToMD( GDALRPCInfo *psRPCInfo );
 /* RPC based transformer ... src is pixel/line/elev, dst is long/lat/elev */
 
 void CPL_DLL *
-GDALCreateRPCTransformer( GDALRPCInfo *psRPC, int bReversed, 
+GDALCreateRPCTransformer( GDALRPCInfo *psRPC, int bReversed,
                           double dfPixErrThreshold,
                           char **papszOptions );
 void CPL_DLL GDALDestroyRPCTransformer( void *pTransformArg );
-int CPL_DLL GDALRPCTransform( 
+int CPL_DLL GDALRPCTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
 /* Geolocation transformer */
 
 void CPL_DLL *
-GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS, 
+GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
                              char **papszGeolocationInfo,
                              int bReversed );
 void CPL_DLL GDALDestroyGeoLocTransformer( void *pTransformArg );
-int CPL_DLL GDALGeoLocTransform( 
+int CPL_DLL GDALGeoLocTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
 /* Approximate transformer */
 void CPL_DLL *
-GDALCreateApproxTransformer( GDALTransformerFunc pfnRawTransformer, 
+GDALCreateApproxTransformer( GDALTransformerFunc pfnRawTransformer,
                              void *pRawTransformerArg, double dfMaxError );
-void CPL_DLL GDALApproxTransformerOwnsSubtransformer( void *pCBData, 
+void CPL_DLL GDALApproxTransformerOwnsSubtransformer( void *pCBData,
                                                       int bOwnFlag );
 void CPL_DLL GDALDestroyApproxTransformer( void *pApproxArg );
 int  CPL_DLL GDALApproxTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
-                      
-
 
 int CPL_DLL CPL_STDCALL
-GDALSimpleImageWarp( GDALDatasetH hSrcDS, 
-                     GDALDatasetH hDstDS, 
+GDALSimpleImageWarp( GDALDatasetH hSrcDS,
+                     GDALDatasetH hDstDS,
                      int nBandCount, int *panBandList,
                      GDALTransformerFunc pfnTransform,
                      void *pTransformArg,
-                     GDALProgressFunc pfnProgress, 
-                     void *pProgressArg, 
+                     GDALProgressFunc pfnProgress,
+                     void *pProgressArg,
                      char **papszWarpOptions );
 
 CPLErr CPL_DLL CPL_STDCALL
-GDALSuggestedWarpOutput( GDALDatasetH hSrcDS, 
+GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          GDALTransformerFunc pfnTransformer,
                          void *pTransformArg,
-                         double *padfGeoTransformOut, 
+                         double *padfGeoTransformOut,
                          int *pnPixels, int *pnLines );
 CPLErr CPL_DLL CPL_STDCALL
-GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS, 
+GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                           GDALTransformerFunc pfnTransformer,
                           void *pTransformArg,
-                          double *padfGeoTransformOut, 
+                          double *padfGeoTransformOut,
                           int *pnPixels, int *pnLines,
-                          double *padfExtents, 
+                          double *padfExtents,
                           int nOptions );
 
 CPLXMLNode CPL_DLL *
 GDALSerializeTransformer( GDALTransformerFunc pfnFunc, void *pTransformArg );
-CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree, 
-                                           GDALTransformerFunc *ppfnFunc, 
+CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree,
+                                           GDALTransformerFunc *ppfnFunc,
                                            void **ppTransformArg );
 
 CPLErr CPL_DLL
-GDALTransformGeolocations( GDALRasterBandH hXBand, 
-                           GDALRasterBandH hYBand, 
+GDALTransformGeolocations( GDALRasterBandH hXBand,
+                           GDALRasterBandH hYBand,
                            GDALRasterBandH hZBand,
-                           GDALTransformerFunc pfnTransformer, 
-                           void *pTransformArg, 
-                           GDALProgressFunc pfnProgress, 
+                           GDALTransformerFunc pfnTransformer,
+                           void *pTransformArg,
+                           GDALProgressFunc pfnProgress,
                            void *pProgressArg,
                            char **papszOptions );
 
@@ -283,33 +281,33 @@ typedef CPLErr (*GDALContourWriter)( double dfLevel, int nPoints,
 typedef void *GDALContourGeneratorH;
 
 GDALContourGeneratorH CPL_DLL
-GDAL_CG_Create( int nWidth, int nHeight, 
+GDAL_CG_Create( int nWidth, int nHeight,
                 int bNoDataSet, double dfNoDataValue,
                 double dfContourInterval, double dfContourBase,
                 GDALContourWriter pfnWriter, void *pCBData );
-CPLErr CPL_DLL GDAL_CG_FeedLine( GDALContourGeneratorH hCG, 
+CPLErr CPL_DLL GDAL_CG_FeedLine( GDALContourGeneratorH hCG,
                                  double *padfScanline );
 void CPL_DLL GDAL_CG_Destroy( GDALContourGeneratorH hCG );
 
-typedef struct 
+typedef struct
 {
     void   *hLayer;
 
     double adfGeoTransform[6];
-    
+
     int    nElevField;
     int    nIDField;
     int    nNextID;
 } OGRContourWriterInfo;
 
-CPLErr CPL_DLL 
+CPLErr CPL_DLL
 OGRContourWriter( double, int, double *, double *, void *pInfo );
 
 CPLErr CPL_DLL
-GDALContourGenerate( GDALRasterBandH hBand, 
+GDALContourGenerate( GDALRasterBandH hBand,
                             double dfContourInterval, double dfContourBase,
                             int nFixedLevelCount, double *padfFixedLevels,
-                            int bUseNoData, double dfNoDataValue, 
+                            int bUseNoData, double dfNoDataValue,
                             void *hLayer, int iIDField, int iElevField,
                             GDALProgressFunc pfnProgress, void *pProgressArg );
 
@@ -317,36 +315,36 @@ GDALContourGenerate( GDALRasterBandH hBand,
 /*      Rasterizer API - geometries burned into GDAL raster.            */
 /************************************************************************/
 
-CPLErr CPL_DLL 
-GDALRasterizeGeometries( GDALDatasetH hDS, 
-                         int nBandCount, int *panBandList, 
+CPLErr CPL_DLL
+GDALRasterizeGeometries( GDALDatasetH hDS,
+                         int nBandCount, int *panBandList,
                          int nGeomCount, OGRGeometryH *pahGeometries,
-                         GDALTransformerFunc pfnTransformer, 
-                         void *pTransformArg, 
+                         GDALTransformerFunc pfnTransformer,
+                         void *pTransformArg,
                          double *padfGeomBurnValue,
                          char **papszOptions,
-                         GDALProgressFunc pfnProgress, 
+                         GDALProgressFunc pfnProgress,
                          void * pProgressArg );
 CPLErr CPL_DLL
-GDALRasterizeLayers( GDALDatasetH hDS, 
+GDALRasterizeLayers( GDALDatasetH hDS,
                      int nBandCount, int *panBandList,
                      int nLayerCount, OGRLayerH *pahLayers,
-                     GDALTransformerFunc pfnTransformer, 
-                     void *pTransformArg, 
+                     GDALTransformerFunc pfnTransformer,
+                     void *pTransformArg,
                      double *padfLayerBurnValues,
                      char **papszOptions,
-                     GDALProgressFunc pfnProgress, 
+                     GDALProgressFunc pfnProgress,
                      void *pProgressArg );
 
-CPLErr CPL_DLL 
+CPLErr CPL_DLL
 GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                         GDALDataType eBufType, int nPixelSpace, int nLineSpace,
                         int nLayerCount, OGRLayerH *pahLayers,
                         const char *pszDstProjection,
                         double *padfDstGeoTransform,
-                        GDALTransformerFunc pfnTransformer, 
+                        GDALTransformerFunc pfnTransformer,
                         void *pTransformArg, double dfBurnValue,
-                        char **papszOptions, GDALProgressFunc pfnProgress, 
+                        char **papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressArg );
 
 
@@ -601,5 +599,5 @@ void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 void GDALTriangulationTerminate(void);
 
 CPL_C_END
-                            
+
 #endif /* ndef GDAL_ALG_H_INCLUDED */

@@ -1,6 +1,6 @@
 /******************************************************************************
  * Project:  GDAL
- * Purpose:  Correlator - GDALSimpleSURF and GDALFeaturePoint classes. 
+ * Purpose:  Correlator - GDALSimpleSURF and GDALFeaturePoint classes.
  * Author:   Andrew Migal, migal.drew@gmail.com
  *
  ******************************************************************************
@@ -214,7 +214,7 @@ std::vector<GDALFeaturePoint>*
 GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
                                      double dfThreshold)
 {
-    std::vector<GDALFeaturePoint>* poCollection = 
+    std::vector<GDALFeaturePoint>* poCollection =
         new std::vector<GDALFeaturePoint>();
 
     //Calc Hessian values for layers

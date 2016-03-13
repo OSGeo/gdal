@@ -522,7 +522,7 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
     const XMMReg4Double zero = XMMReg4Double::Zero();
     double dfMaxValue = nMaxValue;
     const XMMReg4Double maxValue = XMMReg4Double::Load1ValHighAndLow(&dfMaxValue);
-    
+
     int j;
     for(j=0;j<nValues-3;j+=4)
     {
@@ -650,7 +650,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->nOutPansharpenedBands == 3 &&
         psOptions->panOutPansharpenedBands[0] == 0 &&
         psOptions->panOutPansharpenedBands[1] == 1 &&
-        psOptions->panOutPansharpenedBands[2] == 2 ) 
+        psOptions->panOutPansharpenedBands[2] == 2 )
     {
         j = WeightedBroveyPositiveWeightsInternal<3,3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
@@ -660,7 +660,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[0] == 0 &&
         psOptions->panOutPansharpenedBands[1] == 1 &&
         psOptions->panOutPansharpenedBands[2] == 2 &&
-        psOptions->panOutPansharpenedBands[3] == 3 ) 
+        psOptions->panOutPansharpenedBands[3] == 3 )
     {
         j = WeightedBroveyPositiveWeightsInternal<4,4>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
@@ -669,7 +669,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->nOutPansharpenedBands == 3 &&
         psOptions->panOutPansharpenedBands[0] == 0 &&
         psOptions->panOutPansharpenedBands[1] == 1 &&
-        psOptions->panOutPansharpenedBands[2] == 2 ) 
+        psOptions->panOutPansharpenedBands[2] == 2 )
     {
         j = WeightedBroveyPositiveWeightsInternal<4,3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
@@ -789,7 +789,7 @@ void GDALPansharpenOperation::WeightedBrovey<GUInt16,GUInt16>(
 template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
-                                                     void *pDataBuf, 
+                                                     void *pDataBuf,
                                                      GDALDataType eBufDataType,
                                                      int nValues,
                                                      int nBandValues,
@@ -846,7 +846,7 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
 template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
-                                                     void *pDataBuf, 
+                                                     void *pDataBuf,
                                                      GDALDataType eBufDataType,
                                                      int nValues, int nBandValues) const
 {
@@ -929,7 +929,7 @@ static void ClampValues(T* panBuffer, int nValues, T nMaxVal)
  * @param nYOff pixel offset.
  * @param nXSize width of the pansharpened region to compute.
  * @param nYSize height of the pansharpened region to compute.
- * @param pDataBuf output buffer. Must be nXSize * nYSize * 
+ * @param pDataBuf output buffer. Must be nXSize * nYSize *
  *                 (GDALGetDataTypeSize(eBufDataType) / 8) * psOptions->nOutPansharpenedBands large.
  *                 It begins with all values of the first output band, followed
  *                 by values of the second output band, etc...
@@ -941,7 +941,7 @@ static void ClampValues(T* panBuffer, int nValues, T nMaxVal)
  */
 CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                                               int nXSize, int nYSize,
-                                              void *pDataBuf, 
+                                              void *pDataBuf,
                                               GDALDataType eBufDataType)
 {
     if( psOptions == NULL )
@@ -964,8 +964,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         VSIFree(pPanBuffer);
         return CE_Failure;
     }
-    
-    CPLErr eErr = 
+
+    CPLErr eErr =
         poPanchroBand->RasterIO(GF_Read,
                 nXOff, nYOff, nXSize, nYSize, pPanBuffer, nXSize, nYSize,
                 eWorkDataType, 0, 0, NULL);
@@ -983,7 +983,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         if( nTasks > nYSize )
             nTasks = nYSize;
     }
-    
+
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     const GDALRIOResampleAlg eResampleAlg = psOptions->eResampleAlg;
@@ -1073,7 +1073,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             VSIFree(pPanBuffer);
             return CE_Failure;
         }
-    
+
         /* Create a MEM dataset that wraps the input buffer */
         GDALDataset* poMEMDS = MEMDataset::Create("", nXSizeExtract, nYSizeExtract, 0,
                                                   eWorkDataType, NULL);
@@ -1094,15 +1094,15 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             int nRet = CPLPrintPointer(szBuffer,
                        pSpectralBuffer + (size_t)i * nDataTypeSize * nXSizeExtract * nYSizeExtract, sizeof(szBuffer));
             szBuffer[nRet] = 0;
-            
+
             snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-            
+
             poMEMDS->AddBand(eWorkDataType, apszOptions);
 
             const char* pszNBITS = aMSBands[i]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
             if( pszNBITS )
                 poMEMDS->GetRasterBand(i+1)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
-            
+
             if( psOptions->bHasNoData )
                 poMEMDS->GetRasterBand(i+1)->SetNoDataValue(psOptions->dfNoData);
         }
@@ -1139,7 +1139,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                     poMEMDS->GetRasterBand(i+1)->GetMaskFlags();
                 }
             }
-            
+
             std::vector<GDALPansharpenResampleJob> asJobs;
             asJobs.resize( nTasks );
             GDALPansharpenResampleJob* pasJobs = &(asJobs[0]);
@@ -1192,7 +1192,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         }
 
         GDALClose(poMEMDS);
-        
+
         VSIFree(pSpectralBuffer);
     }
     else
@@ -1292,7 +1292,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         pDataBuf = padfTempBuffer;
         eBufDataType = GDT_Float64;
     }
-    
+
     if( nTasks > 1 )
     {
         std::vector<GDALPansharpenJob> asJobs;
@@ -1358,7 +1358,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
 
     VSIFree(pUpsampledSpectralBuffer);
     VSIFree(pPanBuffer);
-    
+
     return eErr;
 }
 
@@ -1367,18 +1367,18 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
 /************************************************************************/
 
 //static int acc=0;
-    
+
 void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
 {
     GDALPansharpenResampleJob* psJob = (GDALPansharpenResampleJob*) pUserData;
-    
+
 #ifdef DEBUG_TIMING
     struct timeval tv;
     gettimeofday(&tv, NULL);
     GIntBig launch_time = (GIntBig)psJob->ptv->tv_sec * 1000000 + (GIntBig)psJob->ptv->tv_usec;
     GIntBig start_job = (GIntBig)tv.tv_sec * 1000000 + (GIntBig)tv.tv_usec;
 #endif
-    
+
 #if 0
     for(int i=0;i<1000000;i++)
         acc += i * i;
@@ -1431,7 +1431,7 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
     GIntBig launch_time = (GIntBig)psJob->ptv->tv_sec * 1000000 + (GIntBig)psJob->ptv->tv_usec;
     GIntBig start_job = (GIntBig)tv.tv_sec * 1000000 + (GIntBig)tv.tv_usec;
 #endif
-    
+
 #if 0
     for(int i=0;i<1000000;i++)
         acc += i * i;
@@ -1460,7 +1460,7 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
 /************************************************************************/
 /*                           PansharpenChunk()                          */
 /************************************************************************/
-        
+
 CPLErr GDALPansharpenOperation::PansharpenChunk( GDALDataType eWorkDataType,
                                                  GDALDataType eBufDataType,
                                                  const void* pPanBuffer,
@@ -1603,7 +1603,7 @@ void GDALDestroyPansharpenOperation( GDALPansharpenOperationH hOperation )
  * @param nYOff pixel offset.
  * @param nXSize width of the pansharpened region to compute.
  * @param nYSize height of the pansharpened region to compute.
- * @param pDataBuf output buffer. Must be nXSize * nYSize * 
+ * @param pDataBuf output buffer. Must be nXSize * nYSize *
  *                 (GDALGetDataTypeSize(eBufDataType) / 8) * psOptions->nOutPansharpenedBands large.
  *                 It begins with all values of the first output band, followed
  *                 by values of the second output band, etc...
@@ -1616,7 +1616,7 @@ void GDALDestroyPansharpenOperation( GDALPansharpenOperationH hOperation )
 CPLErr GDALPansharpenProcessRegion( GDALPansharpenOperationH hOperation,
                                     int nXOff, int nYOff,
                                     int nXSize, int nYSize,
-                                    void *pDataBuf, 
+                                    void *pDataBuf,
                                     GDALDataType eBufDataType)
 {
     return ((GDALPansharpenOperation*)hOperation)->ProcessRegion(nXOff, nYOff,

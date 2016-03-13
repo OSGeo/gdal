@@ -211,7 +211,7 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
         anBandMap1[2] = 3;
     }
     else
-    { 
+    {
         anBandMap1[0] = anBandMap1[1] = anBandMap1[2] = 1;
     }
 
@@ -222,7 +222,7 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
         anBandMap2[2] = 3;
     }
     else
-    { 
+    {
         anBandMap2[0] = anBandMap2[1] = anBandMap2[2] = 1;
     }
 

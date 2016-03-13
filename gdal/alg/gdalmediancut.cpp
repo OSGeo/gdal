@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  CIETMap Phase 2
- * Purpose:  Use median cut algorithm to generate an near-optimal PCT for a 
+ * Purpose:  Use median cut algorithm to generate an near-optimal PCT for a
  *           given RGB image.  Implemented as function GDALComputeMedianCutPCT.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -34,7 +34,7 @@
  *
  *      "Color  Image Quantization for Frame Buffer Display", Paul
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
- * 
+ *
  */
 
 #include "gdal_priv.h"
@@ -94,7 +94,7 @@ static Colorbox* largest_box(Colorbox *usedboxes);
  * This function implements a median cut algorithm to compute an "optimal"
  * pseudocolor table for representing an input RGB image.  This PCT could
  * then be used with GDALDitherRGB2PCT() to convert a 24bit RGB image into
- * an eightbit pseudo-colored image. 
+ * an eightbit pseudo-colored image.
  *
  * This code was based on the tiffmedian.c code from libtiff (www.libtiff.org)
  * which was based on a paper by Paul Heckbert:
@@ -107,11 +107,11 @@ static Colorbox* largest_box(Colorbox *usedboxes);
  * The red, green and blue input bands do not necessarily need to come
  * from the same file, but they must be the same width and height.  They will
  * be clipped to 8bit during reading, so non-eight bit bands are generally
- * inappropriate. 
+ * inappropriate.
  *
- * @param hRed Red input band. 
- * @param hGreen Green input band. 
- * @param hBlue Blue input band. 
+ * @param hRed Red input band.
+ * @param hGreen Green input band.
+ * @param hBlue Blue input band.
  * @param pfnIncludePixel function used to test which pixels should be included
  * in the analysis.  At this time this argument is ignored and all pixels are
  * utilized.  This should normally be NULL.
@@ -121,17 +121,17 @@ static Colorbox* largest_box(Colorbox *usedboxes);
  * GDALProgressFunc() semantics.  May be NULL.
  * @param pProgressArg callback argument passed to pfnProgress.
  *
- * @return returns CE_None on success or CE_Failure if an error occurs. 
+ * @return returns CE_None on success or CE_Failure if an error occurs.
  */
 
 extern "C" int CPL_STDCALL
-GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
-                         GDALRasterBandH hGreen, 
-                         GDALRasterBandH hBlue, 
+GDALComputeMedianCutPCT( GDALRasterBandH hRed,
+                         GDALRasterBandH hGreen,
+                         GDALRasterBandH hBlue,
                          int (*pfnIncludePixel)(int,int,void*),
-                         int nColors, 
+                         int nColors,
                          GDALColorTableH hColorTable,
-                         GDALProgressFunc pfnProgress, 
+                         GDALProgressFunc pfnProgress,
                          void * pProgressArg )
 
 {
@@ -279,18 +279,18 @@ static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
 }
 
 template<class T> int
-GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed, 
-                           GDALRasterBandH hGreen, 
-                           GDALRasterBandH hBlue, 
+GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
+                           GDALRasterBandH hGreen,
+                           GDALRasterBandH hBlue,
                            GByte* pabyRedBand,
                            GByte* pabyGreenBand,
                            GByte* pabyBlueBand,
                            int (*pfnIncludePixel)(int,int,void*),
-                           int nColors, 
+                           int nColors,
                            int nBits,
                            T* panHistogram, /* NULL, or at least of size (1<<nBits)^3 * sizeof(T) bytes */
                            GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress, 
+                           GDALProgressFunc pfnProgress,
                            void * pProgressArg )
 
 {
@@ -307,9 +307,9 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     nXSize = GDALGetRasterBandXSize( hRed );
     nYSize = GDALGetRasterBandYSize( hRed );
 
-    if( GDALGetRasterBandXSize( hGreen ) != nXSize 
-        || GDALGetRasterBandYSize( hGreen ) != nYSize 
-        || GDALGetRasterBandXSize( hBlue ) != nXSize 
+    if( GDALGetRasterBandXSize( hGreen ) != nXSize
+        || GDALGetRasterBandYSize( hGreen ) != nYSize
+        || GDALGetRasterBandXSize( hBlue ) != nXSize
         || GDALGetRasterBandYSize( hBlue ) != nYSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -360,7 +360,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     GByte anRed[256], anGreen[256], anBlue[256];
     T nPixels = 0;
     HashHistogram* psHashHistogram = NULL;
-    
+
     if( (GUInt32)nXSize > std::numeric_limits<T>::max() / (GUInt32)nYSize )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -437,7 +437,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     pabyRedLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
     pabyGreenLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
     pabyBlueLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
-    
+
     if (pabyRedLine == NULL ||
         pabyGreenLine == NULL ||
         pabyBlueLine == NULL)
@@ -448,7 +448,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 
     for( iLine = 0; iLine < nYSize; iLine++ )
     {
-        if( !pfnProgress( iLine / (double) nYSize, 
+        if( !pfnProgress( iLine / (double) nYSize,
                           "Generating Histogram", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User Terminated" );
@@ -456,13 +456,13 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
             goto end_and_cleanup;
         }
 
-        err = GDALRasterIO( hRed, GF_Read, 0, iLine, nXSize, 1, 
+        err = GDALRasterIO( hRed, GF_Read, 0, iLine, nXSize, 1,
                       pabyRedLine, nXSize, 1, GDT_Byte, 0, 0 );
         if( err == CE_None )
-            err = GDALRasterIO( hGreen, GF_Read, 0, iLine, nXSize, 1, 
+            err = GDALRasterIO( hGreen, GF_Read, 0, iLine, nXSize, 1,
                       pabyGreenLine, nXSize, 1, GDT_Byte, 0, 0 );
         if( err == CE_None )
-            err = GDALRasterIO( hBlue, GF_Read, 0, iLine, nXSize, 1, 
+            err = GDALRasterIO( hBlue, GF_Read, 0, iLine, nXSize, 1,
                       pabyBlueLine, nXSize, 1, GDT_Byte, 0, 0 );
         if( err != CE_None )
             goto end_and_cleanup;
@@ -470,7 +470,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
         for( iPixel = 0; iPixel < nXSize; iPixel++ )
         {
             int	nRed, nGreen, nBlue;
-            
+
             nRed = pabyRedLine[iPixel] >> nColorShift;
             nGreen = pabyGreenLine[iPixel] >> nColorShift;
             nBlue = pabyBlueLine[iPixel] >> nColorShift;
@@ -496,7 +496,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
                 bFirstOccurrence = ( *pnColor == 0 );
                 (*pnColor) ++;
             }
-            if( bFirstOccurrence) 
+            if( bFirstOccurrence)
             {
                 if( nColorShift == 0 && nColorCounter < nColors )
                 {
@@ -547,7 +547,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      STEP 4: assign colors to all boxes                              */
 /* ==================================================================== */
-    for (i = 0, ptr = usedboxes; ptr != NULL; ++i, ptr = ptr->next) 
+    for (i = 0, ptr = usedboxes; ptr != NULL; ++i, ptr = ptr->next)
     {
         GDALColorEntry	sEntry;
 
@@ -569,7 +569,7 @@ end_and_cleanup:
 
     if( panHistogram == NULL )
         CPLFree( histogram );
-    
+
     return err;
 }
 
@@ -725,7 +725,7 @@ static void shrinkboxFromHashHistogram(Colorbox* box,
             }
         }
     }
-    
+
     have_bmin:
     if (box->bmax > box->bmin) {
         //count_iter = 0;
@@ -1135,7 +1135,7 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
             }
         }
     }
-    
+
     have_bmin:
     if (box->bmax > box->bmin) {
         //count_iter = 0;
@@ -1162,30 +1162,30 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
 
 /* Explicitly instantiate template functions */
 template int
-GDALComputeMedianCutPCTInternal<GUInt32>( GDALRasterBandH hRed, 
-                           GDALRasterBandH hGreen, 
-                           GDALRasterBandH hBlue, 
+GDALComputeMedianCutPCTInternal<GUInt32>( GDALRasterBandH hRed,
+                           GDALRasterBandH hGreen,
+                           GDALRasterBandH hBlue,
                            GByte* pabyRedBand,
                            GByte* pabyGreenBand,
                            GByte* pabyBlueBand,
                            int (*pfnIncludePixel)(int,int,void*),
-                           int nColors, 
+                           int nColors,
                            int nBits,
                            GUInt32* panHistogram,
                            GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress, 
+                           GDALProgressFunc pfnProgress,
                            void * pProgressArg );
 template int
-GDALComputeMedianCutPCTInternal<GUIntBig>( GDALRasterBandH hRed, 
-                           GDALRasterBandH hGreen, 
-                           GDALRasterBandH hBlue, 
+GDALComputeMedianCutPCTInternal<GUIntBig>( GDALRasterBandH hRed,
+                           GDALRasterBandH hGreen,
+                           GDALRasterBandH hBlue,
                            GByte* pabyRedBand,
                            GByte* pabyGreenBand,
                            GByte* pabyBlueBand,
                            int (*pfnIncludePixel)(int,int,void*),
-                           int nColors, 
+                           int nColors,
                            int nBits,
                            GUIntBig* panHistogram,
                            GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress, 
+                           GDALProgressFunc pfnProgress,
                            void * pProgressArg );

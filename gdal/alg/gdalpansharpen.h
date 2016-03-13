@@ -119,12 +119,12 @@ void CPL_DLL GDALDestroyPansharpenOperation( GDALPansharpenOperationH );
 CPLErr CPL_DLL GDALPansharpenProcessRegion( GDALPansharpenOperationH hOperation,
                                             int nXOff, int nYOff,
                                             int nXSize, int nYSize,
-                                            void *pDataBuf, 
+                                            void *pDataBuf,
                                             GDALDataType eBufDataType);
 
 CPL_C_END
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 
 #include <vector>
 #include "gdal_priv.h"
@@ -147,11 +147,11 @@ typedef struct
     int nValues;
     int nBandValues;
     GUInt32 nMaxValue;
-    
+
 #ifdef DEBUG_TIMING
     struct timeval* ptv;
 #endif
-    
+
     CPLErr eErr;
 } GDALPansharpenJob;
 
@@ -173,7 +173,7 @@ typedef struct
     int          nBandCount;
     GDALRIOResampleAlg eResampleAlg;
     GSpacing     nBandSpace;
-        
+
 #ifdef DEBUG_TIMING
     struct timeval* ptv;
 #endif
@@ -218,7 +218,7 @@ class GDALPansharpenOperation
         template<class WorkDataType> CPLErr WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
-                                                     void *pDataBuf, 
+                                                     void *pDataBuf,
                                                      GDALDataType eBufDataType,
                                                      int nValues,
                                                      int nBandValues,
@@ -226,7 +226,7 @@ class GDALPansharpenOperation
         template<class WorkDataType> CPLErr WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
-                                                     void *pDataBuf, 
+                                                     void *pDataBuf,
                                                      GDALDataType eBufDataType,
                                                      int nValues,
                                                      int nBandValues) const;
@@ -245,7 +245,7 @@ class GDALPansharpenOperation
                                                      int nValues,
                                                      int nBandValues,
                                                      GUInt16 nMaxValue) const;
-        
+
         CPLErr PansharpenChunk( GDALDataType eWorkDataType, GDALDataType eBufDataType,
                                                      const void* pPanBuffer,
                                                      const void* pUpsampledSpectralBuffer,
@@ -260,7 +260,7 @@ class GDALPansharpenOperation
         CPLErr               Initialize(const GDALPansharpenOptions* psOptions);
         CPLErr               ProcessRegion(int nXOff, int nYOff,
                                            int nXSize, int nYSize,
-                                           void *pDataBuf, 
+                                           void *pDataBuf,
                                            GDALDataType eBufDataType);
         GDALPansharpenOptions* GetOptions();
 };

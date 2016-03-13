@@ -71,18 +71,18 @@ void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
                         double *padfX, double *padfY, double *padfVariant,
                         llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageLine( int nRasterXSize, int nRasterYSize, 
+void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                        int nPartCount, int *panPartSize,
                        double *padfX, double *padfY, double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize, 
+void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                                 int nPartCount, int *panPartSize,
                                 double *padfX, double *padfY,
                                 double *padfVariant,
                                 llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
+void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                int nPartCount, int *panPartSize,
                                double *padfX, double *padfY,
                                double *padfVariant,
@@ -118,7 +118,7 @@ public:
             ~GDALRasterPolygonEnumeratorT();
 
     void     ProcessLine( DataType *panLastLineVal, DataType *panThisLineVal,
-                          GInt32 *panLastLineId,  GInt32 *panThisLineId, 
+                          GInt32 *panLastLineId,  GInt32 *panThisLineId,
                           int nXSize );
 
     void     CompleteMerges();
@@ -144,7 +144,7 @@ void GDALCleanupTransformDeserializerMutex();
 
 /* Transformer cloning */
 
-void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
                                    int bReversed, char** papszOptions );
 
 void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
@@ -155,29 +155,29 @@ void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
 
 /* definitions exists for T = GUInt32 and T = GUIntBig */
 template<class T> int
-GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed, 
-                           GDALRasterBandH hGreen, 
-                           GDALRasterBandH hBlue, 
+GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
+                           GDALRasterBandH hGreen,
+                           GDALRasterBandH hBlue,
                            GByte* pabyRedBand,
                            GByte* pabyGreenBand,
                            GByte* pabyBlueBand,
                            int (*pfnIncludePixel)(int,int,void*),
-                           int nColors, 
+                           int nColors,
                            int nBits,
                            T* panHistogram,
                            GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress, 
+                           GDALProgressFunc pfnProgress,
                            void * pProgressArg );
 
-int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed, 
-                               GDALRasterBandH hGreen, 
-                               GDALRasterBandH hBlue, 
-                               GDALRasterBandH hTarget, 
+int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
+                               GDALRasterBandH hGreen,
+                               GDALRasterBandH hBlue,
+                               GDALRasterBandH hTarget,
                                GDALColorTableH hColorTable,
                                int nBits,
                                GInt16* pasDynamicColorMap,
                                int bDither,
-                               GDALProgressFunc pfnProgress, 
+                               GDALProgressFunc pfnProgress,
                                void * pProgressArg );
 
 #define PRIME_FOR_65536                                 98317
@@ -197,7 +197,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
  * Units in the Last Place. This specifies how big an error we are willing to
  * accept in terms of the value of the least significant digit of the floating
  * point number’s representation. MAX_ULPS can also be interpreted in terms of
- * how many representable floats we are willing to accept between A and B. 
+ * how many representable floats we are willing to accept between A and B.
  */
 #define MAX_ULPS 10
 

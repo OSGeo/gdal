@@ -3,7 +3,7 @@
  *
  * Project:  CIETMap Phase 2
  * Purpose:  Convert RGB (24bit) to a pseudo-colored approximation using
- *           Floyd-Steinberg dithering (error diffusion). 
+ *           Floyd-Steinberg dithering (error diffusion).
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -43,7 +43,7 @@
  *  3/8-3/8-1/4 distribution, at the cost of greater processing.  I have
  *  seen the 3/8-3/8-1/4 distribution described as "our" algorithm before,
  *  but I have no idea who the credit really belongs to.
- *  -- 
+ *  --
  *					    Lou Steinberg
  *
  */
@@ -98,37 +98,37 @@ typedef struct
 /**
  * 24bit to 8bit conversion with dithering.
  *
- * This functions utilizes Floyd-Steinberg dithering in the process of 
+ * This functions utilizes Floyd-Steinberg dithering in the process of
  * converting a 24bit RGB image into a pseudocolored 8bit image using a
- * provided color table.  
+ * provided color table.
  *
  * The red, green and blue input bands do not necessarily need to come
  * from the same file, but they must be the same width and height.  They will
  * be clipped to 8bit during reading, so non-eight bit bands are generally
  * inappropriate.  Likewise the hTarget band will be written with 8bit values
- * and must match the width and height of the source bands. 
+ * and must match the width and height of the source bands.
  *
  * The color table cannot have more than 256 entries.
  *
- * @param hRed Red input band. 
- * @param hGreen Green input band. 
- * @param hBlue Blue input band. 
- * @param hTarget Output band. 
- * @param hColorTable the color table to use with the output band. 
+ * @param hRed Red input band.
+ * @param hGreen Green input band.
+ * @param hBlue Blue input band.
+ * @param hTarget Output band.
+ * @param hColorTable the color table to use with the output band.
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
  * @param pProgressArg callback argument passed to pfnProgress.
  *
- * @return CE_None on success or CE_Failure if an error occurs. 
+ * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-int CPL_STDCALL 
-GDALDitherRGB2PCT( GDALRasterBandH hRed, 
-                   GDALRasterBandH hGreen, 
-                   GDALRasterBandH hBlue, 
-                   GDALRasterBandH hTarget, 
+int CPL_STDCALL
+GDALDitherRGB2PCT( GDALRasterBandH hRed,
+                   GDALRasterBandH hGreen,
+                   GDALRasterBandH hBlue,
+                   GDALRasterBandH hTarget,
                    GDALColorTableH hColorTable,
-                   GDALProgressFunc pfnProgress, 
+                   GDALProgressFunc pfnProgress,
                    void * pProgressArg )
 
 {
@@ -137,15 +137,15 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
                                 pfnProgress, pProgressArg );
 }
 
-int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed, 
-                         GDALRasterBandH hGreen, 
-                         GDALRasterBandH hBlue, 
-                         GDALRasterBandH hTarget, 
+int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
+                         GDALRasterBandH hGreen,
+                         GDALRasterBandH hBlue,
+                         GDALRasterBandH hTarget,
                          GDALColorTableH hColorTable,
                          int nBits,
                          GInt16* pasDynamicColorMap, /* NULL or at least 256 * 256 * 256 * sizeof(GInt16) bytes */
                          int bDither,
-                         GDALProgressFunc pfnProgress, 
+                         GDALProgressFunc pfnProgress,
                          void * pProgressArg )
 {
     VALIDATE_POINTER1( hRed, "GDALDitherRGB2PCT", CE_Failure );
@@ -156,16 +156,16 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 
     int		nXSize, nYSize;
     CPLErr err = CE_None;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
 /* -------------------------------------------------------------------- */
     nXSize = GDALGetRasterBandXSize( hRed );
     nYSize = GDALGetRasterBandYSize( hRed );
 
-    if( GDALGetRasterBandXSize( hGreen ) != nXSize 
-        || GDALGetRasterBandYSize( hGreen ) != nYSize 
-        || GDALGetRasterBandXSize( hBlue ) != nXSize 
+    if( GDALGetRasterBandXSize( hGreen ) != nXSize
+        || GDALGetRasterBandYSize( hGreen ) != nYSize
+        || GDALGetRasterBandXSize( hBlue ) != nXSize
         || GDALGetRasterBandYSize( hBlue ) != nYSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -174,7 +174,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         return CE_Failure;
     }
 
-    if( GDALGetRasterBandXSize( hTarget ) != nXSize 
+    if( GDALGetRasterBandXSize( hTarget ) != nXSize
         || GDALGetRasterBandYSize( hTarget ) != nYSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -198,7 +198,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
     int anPCT[256*4];
 #endif
     nColors = GDALGetColorEntryCount( hColorTable );
-    
+
     if (nColors == 0 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -215,7 +215,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 
         return CE_Failure;
     }
-    
+
     iColor = 0;
     do
     {
@@ -258,7 +258,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
     pabyIndex = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
 
     panError = (int *) VSI_CALLOC_VERBOSE(sizeof(int),(nXSize+2) * 3);
-    
+
     if (pabyRed == NULL ||
         pabyGreen == NULL ||
         pabyBlue == NULL ||
@@ -275,7 +275,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /*      Build a 24bit to 8 bit color mapping.                           */
 /* -------------------------------------------------------------------- */
 
-        pabyColorMap = (GByte *) VSI_MALLOC_VERBOSE(nCLevels * nCLevels * nCLevels 
+        pabyColorMap = (GByte *) VSI_MALLOC_VERBOSE(nCLevels * nCLevels * nCLevels
                                         * sizeof(GByte));
         if( pabyColorMap == NULL )
         {
@@ -324,13 +324,13 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
 /*      Read source data.                                               */
 /* -------------------------------------------------------------------- */
-        err = GDALRasterIO( hRed, GF_Read, 0, iScanline, nXSize, 1, 
+        err = GDALRasterIO( hRed, GF_Read, 0, iScanline, nXSize, 1,
                       pabyRed, nXSize, 1, GDT_Byte, 0, 0 );
         if( err == CE_None )
-            err = GDALRasterIO( hGreen, GF_Read, 0, iScanline, nXSize, 1, 
+            err = GDALRasterIO( hGreen, GF_Read, 0, iScanline, nXSize, 1,
                       pabyGreen, nXSize, 1, GDT_Byte, 0, 0 );
         if( err == CE_None )
-            err = GDALRasterIO( hBlue, GF_Read, 0, iScanline, nXSize, 1, 
+            err = GDALRasterIO( hBlue, GF_Read, 0, iScanline, nXSize, 1,
                       pabyBlue, nXSize, 1, GDT_Byte, 0, 0 );
         if( err != CE_None )
             goto end_and_cleanup;
@@ -444,7 +444,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                 int iGreen = nGreenValue * nCLevels / 256;
                 int iBlue  = nBlueValue *  nCLevels  / 256;
 
-                iIndex = pabyColorMap[iRed + iGreen * nCLevels 
+                iIndex = pabyColorMap[iRed + iGreen * nCLevels
                                     + iBlue * nCLevels * nCLevels];
             }
             else
@@ -469,11 +469,11 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
             nError = nRedValue - CAST_PCT(anPCT)[4*iIndex+0];
             nSixth = nError / 6;
-            
+
             panError[i*3    ] += nSixth;
             panError[i*3+6  ] = nSixth;
             panError[i*3+3  ] += nError - 5 * nSixth;
-            
+
             nLastRedError = 2 * nSixth;
 
 /* -------------------------------------------------------------------- */
@@ -485,7 +485,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
             panError[i*3  +1] += nSixth;
             panError[i*3+6+1] = nSixth;
             panError[i*3+3+1] += nError - 5 * nSixth;
-            
+
             nLastGreenError = 2 * nSixth;
 
 /* -------------------------------------------------------------------- */
@@ -493,18 +493,18 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
             nError = nBlueValue - CAST_PCT(anPCT)[4*iIndex+2];
             nSixth = nError / 6;
-            
+
             panError[i*3  +2] += nSixth;
             panError[i*3+6+2] = nSixth;
             panError[i*3+3+2] += nError - 5 * nSixth;
-            
+
             nLastBlueError = 2 * nSixth;
         }
 
 /* -------------------------------------------------------------------- */
 /*      Write results.                                                  */
 /* -------------------------------------------------------------------- */
-        err = GDALRasterIO( hTarget, GF_Write, 0, iScanline, nXSize, 1, 
+        err = GDALRasterIO( hTarget, GF_Write, 0, iScanline, nXSize, 1,
                       pabyIndex, nXSize, 1, GDT_Byte, 0, 0 );
         if( err != CE_None )
             break;
@@ -612,7 +612,7 @@ static int FindNearestColor( int nColors, int *panPCT,
     {
         int     nThisDist;
 
-        nThisDist = ABS(nRedValue   - panPCT[4*iColor+0]) 
+        nThisDist = ABS(nRedValue   - panPCT[4*iColor+0])
                   + ABS(nGreenValue - panPCT[4*iColor+1])
                   + ABS(nBlueValue  - panPCT[4*iColor+2]);
 
@@ -656,7 +656,7 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap,
 
                 int nBestIndex = FindNearestColor( nColors, panPCT,
                                         nRedValue, nGreenValue, nBlueValue );
-                pabyColorMap[iRed + iGreen*nCLevels 
+                pabyColorMap[iRed + iGreen*nCLevels
                                     + iBlue*nCLevels*nCLevels] = (GByte)nBestIndex;
             }
         }

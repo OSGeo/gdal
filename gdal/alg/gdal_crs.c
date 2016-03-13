@@ -3,7 +3,7 @@
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Implementation of the GDALTransformer wrapper around CRS.C functions
- *           to build a polynomial transformation based on ground control 
+ *           to build a polynomial transformation based on ground control
  *           points.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -28,27 +28,26 @@
       Fixed bug so that only the active control points were used.
     Last Update:  6/29/2011 C. F. Stallmann & R. van den Dool (South African National Space Agency)
       GCP refinement added
-      
 
     Copyright (c) 1992, Michigan State University
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-   
+
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
     to deal in the Software without restriction, including without limitation
     the rights to use, copy, modify, merge, publish, distribute, sublicense,
     and/or sell copies of the Software, and to permit persons to whom the
     Software is furnished to do so, subject to the following conditions:
-    
+
     The above copyright notice and this permission notice shall be included
     in all copies or substantial portions of the Software.
-    
+
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
     DEALINGS IN THE SOFTWARE.
 
  ****************************************************************************/
@@ -93,7 +92,7 @@ typedef struct
 
     double adfToGeoX[20];
     double adfToGeoY[20];
-    
+
     double adfFromGeoX[20];
     double adfFromGeoY[20];
 
@@ -105,9 +104,9 @@ typedef struct
     int    bRefine;
     int    nMinimumGcps;
     double dfTolerance;
-    
+
     volatile int nRefCount;
-    
+
 } GCPTransformInfo;
 
 CPL_C_START
@@ -116,7 +115,7 @@ void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree );
 CPL_C_END
 
 /* crs.c */
-static int CRS_georef(double, double, double *, double *, 
+static int CRS_georef(double, double, double *, double *,
                               double [], double [], int);
 static int CRS_compute_georef_equations(struct Control_Points *,
     double [], double [], double [], double [], int);
@@ -142,7 +141,7 @@ void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, dou
     GCPTransformInfo *psInfo = (GCPTransformInfo *) hTransformArg;
 
     VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarGCPTransformer", NULL );
-    
+
     if( dfRatioX == 1.0 && dfRatioY == 1.0 )
     {
         /* We can just use a ref count, since using the source transformation */
@@ -172,7 +171,7 @@ void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, dou
 /************************************************************************/
 
 static
-void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed, int bRefine, double dfTolerance, int nMinimumGcps)
 
 {
@@ -191,14 +190,14 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
         else
             nReqOrder = 1;
     }
-    
+
     psInfo = (GCPTransformInfo *) CPLCalloc(sizeof(GCPTransformInfo),1);
     psInfo->bReversed = bReversed;
     psInfo->nOrder = nReqOrder;
     psInfo->bRefine = bRefine;
     psInfo->dfTolerance = dfTolerance;
     psInfo->nMinimumGcps = nMinimumGcps;
-    
+
     psInfo->nRefCount = 1;
 
     psInfo->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
@@ -210,7 +209,7 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     psInfo->sTI.pfnCleanup = GDALDestroyGCPTransformer;
     psInfo->sTI.pfnSerialize = GDALSerializeGCPTransformer;
     psInfo->sTI.pfnCreateSimilar = GDALCreateSimilarGCPTransformer;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Compute the forward and reverse polynomials.                    */
 /* -------------------------------------------------------------------- */
@@ -229,7 +228,7 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
         padfRasterX = (double *) CPLCalloc(sizeof(double),nGCPCount);
         padfRasterY = (double *) CPLCalloc(sizeof(double),nGCPCount);
         panStatus = (int *) CPLCalloc(sizeof(int),nGCPCount);
-    
+
         for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
         {
             panStatus[iGCP] = 1;
@@ -273,16 +272,16 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
  *
  * Computes least squares fit polynomials from a provided set of GCPs,
  * and stores the coefficients for later transformation of points between
- * pixel/line and georeferenced coordinates. 
+ * pixel/line and georeferenced coordinates.
  *
  * The return value should be used as a TransformArg in combination with
- * the transformation function GDALGCPTransform which fits the 
+ * the transformation function GDALGCPTransform which fits the
  * GDALTransformerFunc signature.  The returned transform argument should
  * be deallocated with GDALDestroyGCPTransformer when no longer needed.
  *
  * This function may fail (returning NULL) if the provided set of GCPs
  * are inadequate for the requested order, the determinate is zero or they
- * are otherwise "ill conditioned".  
+ * are otherwise "ill conditioned".
  *
  * Note that 2nd order requires at least 6 GCPs, and 3rd order requires at
  * least 10 gcps.  If nReqOrder is 0 the highest order possible with the
@@ -291,17 +290,17 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
  * @param nReqOrder the requested polynomial order.  It should be 1, 2 or 3.
- * 
- * @return the transform argument or NULL if creation fails. 
+ *
+ * @return the transform argument or NULL if creation fails.
  */
-void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed )
 
 {
     return GDALCreateGCPTransformerEx(nGCPCount, pasGCPList, nReqOrder, bReversed, FALSE, -1, -1);
 }
 
-void *GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void *GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed, double dfTolerance, int nMinimumGcps)
 
 {
@@ -322,10 +321,10 @@ void *GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
  * Destroy GCP transformer.
  *
  * This function is used to destroy information about a GCP based
- * polynomial transformation created with GDALCreateGCPTransformer(). 
+ * polynomial transformation created with GDALCreateGCPTransformer().
  *
- * @param pTransformArg the transform arg previously returned by 
- * GDALCreateGCPTransformer(). 
+ * @param pTransformArg the transform arg previously returned by
+ * GDALCreateGCPTransformer().
  */
 
 void GDALDestroyGCPTransformer( void *pTransformArg )
@@ -356,10 +355,10 @@ void GDALDestroyGCPTransformer( void *pTransformArg )
  *
  * This function matches the GDALTransformerFunc signature, and can be
  * used to transform one or more points from pixel/line coordinates to
- * georeferenced coordinates (SrcToDst) or vice versa (DstToSrc). 
+ * georeferenced coordinates (SrcToDst) or vice versa (DstToSrc).
  *
- * @param pTransformArg return value from GDALCreateGCPTransformer(). 
- * @param bDstToSrc TRUE if transformation is from the destination 
+ * @param pTransformArg return value from GDALCreateGCPTransformer().
+ * @param bDstToSrc TRUE if transformation is from the destination
  * (georeferenced) coordinates to pixel/line or FALSE when transforming
  * from pixel/line to georeferenced coordinates.
  * @param nPointCount the number of values in the x, y and z arrays.
@@ -383,7 +382,7 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 
     if( psInfo->bReversed )
         bDstToSrc = !bDstToSrc;
-    
+
     for( i = 0; i < nPointCount; i++ )
     {
         if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
@@ -394,14 +393,14 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 
         if( bDstToSrc )
         {
-            CRS_georef( x[i], y[i], x + i, y + i, 
-                        psInfo->adfFromGeoX, psInfo->adfFromGeoY, 
+            CRS_georef( x[i], y[i], x + i, y + i,
+                        psInfo->adfFromGeoX, psInfo->adfFromGeoY,
                         psInfo->nOrder );
         }
         else
         {
-            CRS_georef( x[i], y[i], x + i, y + i, 
-                        psInfo->adfToGeoX, psInfo->adfToGeoY, 
+            CRS_georef( x[i], y[i], x + i, y + i,
+                        psInfo->adfToGeoX, psInfo->adfToGeoY,
                         psInfo->nOrder );
         }
         panSuccess[i] = TRUE;
@@ -427,12 +426,12 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
 /*      Serialize Order and bReversed.                                  */
 /* -------------------------------------------------------------------- */
-    CPLCreateXMLElementAndValue( 
-        psTree, "Order", 
+    CPLCreateXMLElementAndValue(
+        psTree, "Order",
         CPLSPrintf( "%d", psInfo->nOrder ) );
-                         
-    CPLCreateXMLElementAndValue( 
-        psTree, "Reversed", 
+
+    CPLCreateXMLElementAndValue(
+        psTree, "Reversed",
         CPLSPrintf( "%d", psInfo->bReversed ) );
 
     if( psInfo->bRefine )
@@ -449,7 +448,7 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
             psTree, "Tolerance",
             CPLSPrintf( "%f", psInfo->dfTolerance ) );
     }
-                                 
+
 /* -------------------------------------------------------------------- */
 /*	Attach GCP List. 						*/
 /* -------------------------------------------------------------------- */
@@ -512,15 +511,15 @@ void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
     if(bRefine)
     {
-        pResult = GDALCreateGCPRefineTransformer( nGCPCount, pasGCPList, nReqOrder, 
+        pResult = GDALCreateGCPRefineTransformer( nGCPCount, pasGCPList, nReqOrder,
                                         bReversed, dfTolerance, nMinimumGcps );
     }
     else
     {
-        pResult = GDALCreateGCPTransformer( nGCPCount, pasGCPList, nReqOrder, 
+        pResult = GDALCreateGCPTransformer( nGCPCount, pasGCPList, nReqOrder,
                                         bReversed );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup GCP copy.                                               */
 /* -------------------------------------------------------------------- */
@@ -578,7 +577,7 @@ static double term(int,double,double);
 */
 /***************************************************************************/
 
-static int 
+static int
 CRS_georef (
     double e1,  /* EASTINGS TO BE TRANSFORMED */
     double n1,  /* NORTHINGS TO BE TRANSFORMED */
@@ -646,10 +645,10 @@ CRS_georef (
 */
 /***************************************************************************/
 
-static int 
-CRS_compute_georef_equations (struct Control_Points *cp, 
-                                      double E12[], double N12[], 
-                                      double E21[], double N21[], 
+static int
+CRS_compute_georef_equations (struct Control_Points *cp,
+                                      double E12[], double N12[],
+                                      double E21[], double N21[],
                                       int order)
 {
     double *tempptr;
@@ -695,7 +694,7 @@ CRS_compute_georef_equations (struct Control_Points *cp,
 */
 /***************************************************************************/
 
-static int 
+static int
 calccoef (struct Control_Points *cp, double E[], double N[], int order)
 {
     struct MATRIX m;
@@ -940,7 +939,7 @@ static int solvemat (struct MATRIX *m,
             return(MUNSOLVABLE);
 
         /* if row with highest pivot is not the current row, switch them */
- 
+
         if(imark != i)
         {
             for(j2 = 1 ; j2 <= m->n ; j2++)
@@ -991,26 +990,26 @@ static int solvemat (struct MATRIX *m,
 /*
   DETECTS THE WORST OUTLIER IN THE GCP LIST AND RETURNS THE INDEX OF THE
   OUTLIER.
-  
+
   THE WORST OUTLIER IS CALCULATED BASED ON THE CONTROL POINTS, COEFFICIENTS
   AND THE ALLOWED TOLERANCE:
-  
+
   sampleAdj = a0 + a1*sample + a2*line + a3*line*sample
   lineAdj = b0 + b1*sample + b2*line + b3*line*sample
-  
+
   WHERE sampleAdj AND lineAdj ARE CORRELATED GCPS
-  
+
   [residualSample] = [A1][sampleCoefficients] - [b1]
   [residualLine] = [A2][lineCoefficients] - [b2]
-  
+
   sampleResidual^2 = sum( [residualSample]^2 )
   lineResidual^2 = sum( [lineSample]^2 )
-  
+
   residuals(i) = squareRoot( residualSample(i)^2 + residualLine(i)^2 )
-  
+
   THE GCP WITH THE GREATEST DISTANCE residual(i) GREATER THAN THE TOLERANCE WILL
   CONSIDERED THE WORST OUTLIER.
-  
+
   IF NO OUTLIER CAN BE FOUND, -1 WILL BE RETURNED.
 */
 /***************************************************************************/
@@ -1020,11 +1019,11 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
     int nI, nIndex;
     double dfDifference, dfSampleResidual, dfLineResidual, dfSampleRes, dfLineRes, dfCurrentDifference;
     double dfE1, dfN1, dfE2, dfN2, dfEn;
-  
+
     padfResiduals = (double *) CPLCalloc(sizeof(double),cp->count);
     dfSampleResidual = 0.0;
     dfLineResidual = 0.0;
-  
+
     for(nI = 0; nI < cp->count; nI++)
     {
         dfE1 = cp->e1[nI];
@@ -1035,13 +1034,13 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
 
         dfSampleRes = E[0] + E[1] * dfE1 + E[2] * dfN1 + E[3] * dfE2 + E[4] * dfEn + E[5] * dfN2 - cp->e2[nI];
         dfLineRes = N[0] + N[1] * dfE1 + N[2] * dfN1 + N[3] * dfE2 + N[4] * dfEn + N[5] * dfN2 - cp->n2[nI];
-    
+
         dfSampleResidual += dfSampleRes*dfSampleRes;
         dfLineResidual += dfLineRes*dfLineRes;
-    
+
         padfResiduals[nI] = sqrt(dfSampleRes*dfSampleRes + dfLineRes*dfLineRes);
     }
-  
+
     nIndex = -1;
     dfDifference = -1.0;
     for(nI = 0; nI < cp->count; nI++)
@@ -1065,7 +1064,7 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
 /*
   REMOVES THE WORST OUTLIERS ITERATIVELY UNTIL THE MINIMUM NUMBER OF GCPS
   ARE REACHED OR NO OUTLIERS CAN BE DETECTED.
-  
+
   1. WE CALCULATE THE COEFFICIENTS FOR ALL THE GCPS.
   2. THE GCP LIST WILL BE SCANNED TO DETERMINE THE WORST OUTLIER USING
      THE CALCULATED COEFFICIENTS.
@@ -1082,18 +1081,18 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     int nI, nCRSresult, nGCPCount, nMinimumGcps, nReqOrder;
     double dfTolerance;
     struct Control_Points sPoints;
-    
+
     nGCPCount = psInfo->nGCPCount;
     nMinimumGcps = psInfo->nMinimumGcps;
     nReqOrder = psInfo->nOrder;
     dfTolerance = psInfo->dfTolerance;
-    
+
     padfGeoX = (double *) CPLCalloc(sizeof(double),nGCPCount);
     padfGeoY = (double *) CPLCalloc(sizeof(double),nGCPCount);
     padfRasterX = (double *) CPLCalloc(sizeof(double),nGCPCount);
     padfRasterY = (double *) CPLCalloc(sizeof(double),nGCPCount);
     panStatus = (int *) CPLCalloc(sizeof(int),nGCPCount);
-    
+
     for( nI = 0; nI < nGCPCount; nI++ )
     {
         panStatus[nI] = 1;
@@ -1109,7 +1108,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     sPoints.e2 = padfGeoX;
     sPoints.n2 = padfGeoY;
     sPoints.status = panStatus;
-  
+
     nCRSresult = CRS_compute_georef_equations( &sPoints,
                                       psInfo->adfToGeoX, psInfo->adfToGeoY,
                                       psInfo->adfFromGeoX, psInfo->adfFromGeoY,
@@ -1156,7 +1155,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
         psInfo->pasGCPList[nI].dfGCPLine = sPoints.n1[nI];
     }
     psInfo->nGCPCount = sPoints.count;
-    
+
     CPLFree( sPoints.e1 );
     CPLFree( sPoints.n1 );
     CPLFree( sPoints.e2 );
