@@ -80,7 +80,7 @@ static CPLMutex* hMutex = NULL;
 /************************************************************************/
 
 /** Returns if GDAL is built with Delaunay triangulation support.
- * 
+ *
  * @return TRUE if GDAL is built with Delaunay triangulation support.
  *
  * @since GDAL 2.1
@@ -99,7 +99,7 @@ int GDALHasTriangulation()
 /************************************************************************/
 
 /** Computes a Delaunay triangulation of the passed points
- * 
+ *
  * @param nPoints number of points
  * @param padfX x coordinates of the points.
  * @param padfY y coordinates of the points.
@@ -288,7 +288,7 @@ int  GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation* psDT,
                                                      const double* padfY)
 {
     int i;
-    
+
     if( psDT->pasFacetCoefficients != NULL )
     {
         return TRUE;
@@ -496,7 +496,7 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation* psDT,
         return FALSE;
     }
     CPLAssert(nFacetIdx >= 0 && nFacetIdx < psDT->nFacets);
-    
+
     nIterMax = 2 + psDT->nFacets / 4;
     for(k=0;k<nIterMax;k++)
     {

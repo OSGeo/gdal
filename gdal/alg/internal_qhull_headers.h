@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  Includes internal qhull headers
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
@@ -991,7 +991,7 @@ static gdal_realT qh_stddev();
 #include "merge.c"
 
 #ifdef _MSC_VER
-#pragma warning( pop ) 
+#pragma warning( pop )
 #endif
 
 /* Replaces userprintf.c implementation */

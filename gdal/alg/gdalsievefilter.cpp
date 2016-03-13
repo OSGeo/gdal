@@ -64,13 +64,13 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static CPLErr
-GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine, int iY, int nXSize, 
+GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine, int iY, int nXSize,
                  GInt32 *panImageLine )
 
 {
     CPLErr eErr;
 
-    eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1, 
+    eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1,
                          pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
     if( eErr == CE_None )
     {
@@ -140,43 +140,43 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
 /*                          GDALSieveFilter()                           */
 /************************************************************************/
 
-/** 
- * Removes small raster polygons. 
+/**
+ * Removes small raster polygons.
  *
  * The function removes raster polygons smaller than a provided
- * threshold size (in pixels) and replaces replaces them with the pixel value 
- * of the largest neighbour polygon.  
+ * threshold size (in pixels) and replaces replaces them with the pixel value
+ * of the largest neighbour polygon.
  *
  * Polygon are determined (per GDALRasterPolygonEnumerator) as regions of
  * the raster where the pixels all have the same value, and that are contiguous
- * (connected).  
+ * (connected).
  *
  * Pixels determined to be "nodata" per hMaskBand will not be treated as part
  * of a polygon regardless of their pixel values.  Nodata areas will never be
- * changed nor affect polygon sizes. 
+ * changed nor affect polygon sizes.
  *
  * Polygons smaller than the threshold with no neighbours that are as large
  * as the threshold will not be altered.  Polygons surrounded by nodata areas
- * will therefore not be altered.  
+ * will therefore not be altered.
  *
  * The algorithm makes three passes over the input file to enumerate the
- * polygons and collect limited information about them.  Memory use is 
+ * polygons and collect limited information about them.  Memory use is
  * proportional to the number of polygons (roughly 24 bytes per polygon), but
  * is not directly related to the size of the raster.  So very large raster
  * files can be processed effectively if there aren't too many polygons.  But
- * extremely noisy rasters with many one pixel polygons will end up being 
+ * extremely noisy rasters with many one pixel polygons will end up being
  * expensive (in memory) to process.
- * 
+ *
  * @param hSrcBand the source raster band to be processed.
- * @param hMaskBand an optional mask band.  All pixels in the mask band with a 
+ * @param hMaskBand an optional mask band.  All pixels in the mask band with a
  * value other than zero will be considered suitable for inclusion in polygons.
  * @param hDstBand the output raster band.  It may be the same as hSrcBand
- * to update the source in place. 
+ * to update the source in place.
  * @param nSizeThreshold raster polygons with sizes smaller than this will
  * be merged into their largest neighbour.
  * @param nConnectedness either 4 indicating that diagonal pixels are not
  * considered directly adjacent for polygon membership purposes or 8
- * indicating they are. 
+ * indicating they are.
  * @param papszOptions algorithm options in name=value list form.  None currently
  * supported.
  * @param pfnProgress callback for reporting algorithm progress matching the
@@ -237,21 +237,21 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 
     for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
-        eErr = GDALRasterIO( 
+        eErr = GDALRasterIO(
             hSrcBand,
-            GF_Read, 0, iY, nXSize, 1, 
+            GF_Read, 0, iY, nXSize, 1,
             panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
-        
+
         if( eErr == CE_None && hMaskBand != NULL )
             eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
 
         if( iY == 0 )
-            oFirstEnum.ProcessLine( 
+            oFirstEnum.ProcessLine(
                 NULL, panThisLineVal, NULL, panThisLineId, nXSize );
         else
             oFirstEnum.ProcessLine(
-                panLastLineVal, panThisLineVal, 
-                panLastLineId,  panThisLineId, 
+                panLastLineVal, panThisLineVal,
+                panLastLineId,  panThisLineId,
                 nXSize );
 
 /* -------------------------------------------------------------------- */
@@ -262,7 +262,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 
         for( iX = 0; iX < nXSize; iX++ )
         {
-            iPoly = panThisLineId[iX]; 
+            iPoly = panThisLineId[iX];
 
             if( iPoly >= 0 && anPolySizes[iPoly] < MY_MAX_INT )
                 anPolySizes[iPoly] += 1;
@@ -282,8 +282,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None 
-            && !pfnProgress( 0.25 * ((iY+1) / (double) nYSize), 
+        if( eErr == CE_None
+            && !pfnProgress( 0.25 * ((iY+1) / (double) nYSize),
                              "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -339,7 +339,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
 /*      Read the image data.                                            */
 /* -------------------------------------------------------------------- */
-        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1, 
+        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
                              panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
 
         if( eErr == CE_None && hMaskBand != NULL )
@@ -353,12 +353,12 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      the same thing done in the first pass above).                   */
 /* -------------------------------------------------------------------- */
         if( iY == 0 )
-            oSecondEnum.ProcessLine( 
+            oSecondEnum.ProcessLine(
                 NULL, panThisLineVal, NULL, panThisLineId, nXSize );
         else
             oSecondEnum.ProcessLine(
-                panLastLineVal, panThisLineVal, 
-                panLastLineId,  panThisLineId, 
+                panLastLineVal, panThisLineVal,
+                panLastLineId,  panThisLineId,
                 nXSize );
 
 /* -------------------------------------------------------------------- */
@@ -369,30 +369,29 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         {
             if( iY > 0 )
             {
-                CompareNeighbour( panThisLineId[iX], 
+                CompareNeighbour( panThisLineId[iX],
                                   panLastLineId[iX],
                                   oFirstEnum.panPolyIdMap,
                                   oFirstEnum.panPolyValue,
                                   anPolySizes, anBigNeighbour );
 
                 if( iX > 0 && nConnectedness == 8 )
-                    CompareNeighbour( panThisLineId[iX], 
+                    CompareNeighbour( panThisLineId[iX],
                                       panLastLineId[iX-1],
                                       oFirstEnum.panPolyIdMap,
                                       oFirstEnum.panPolyValue,
                                       anPolySizes, anBigNeighbour );
-                    
+
                 if( iX < nXSize-1 && nConnectedness == 8 )
-                    CompareNeighbour( panThisLineId[iX], 
+                    CompareNeighbour( panThisLineId[iX],
                                       panLastLineId[iX+1],
                                       oFirstEnum.panPolyIdMap,
                                       oFirstEnum.panPolyValue,
                                       anPolySizes, anBigNeighbour );
-                    
             }
-            
+
             if( iX > 0 )
-                CompareNeighbour( panThisLineId[iX], 
+                CompareNeighbour( panThisLineId[iX],
                                   panThisLineId[iX-1],
                                   oFirstEnum.panPolyIdMap,
                                   oFirstEnum.panPolyValue,
@@ -400,7 +399,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 
             // We don't need to compare to next pixel or next line
             // since they will be compared to us.
-        }                     
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Swap pixel value, and polygon id lines to be ready for the      */
@@ -417,8 +416,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None 
-            && !pfnProgress( 0.25 + 0.25 * ((iY+1) / (double) nYSize), 
+        if( eErr == CE_None
+            && !pfnProgress( 0.25 + 0.25 * ((iY+1) / (double) nYSize),
                              "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -440,7 +439,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
             continue;
 
-        // Ignore nodata polygons. 
+        // Ignore nodata polygons.
         if( oFirstEnum.panPolyValue[iPoly] == GP_NODATA_MARKER )
             continue;
 
@@ -474,7 +473,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
                 break;
             }
             // If the biggest neighbour is larger than the threshold
-            // then we are golden. 
+            // then we are golden.
             if( anPolySizes[iFinalId] >= nSizeThreshold )
             {
                 bFoundBigEnoughPoly = true;
@@ -503,7 +502,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         }
     }
 
-    CPLDebug( "GDALSieveFilter", 
+    CPLDebug( "GDALSieveFilter",
               "Small Polygons: %d, Isolated: %d, Unmergable: %d",
               nSieveTargets, nIsolatedSmall, nFailedMerges );
 
@@ -513,14 +512,13 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      "final maps" from the first.                                    */
 /* ==================================================================== */
     oSecondEnum.Clear();
-    
 
     for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
 /* -------------------------------------------------------------------- */
 /*      Read the image data.                                            */
 /* -------------------------------------------------------------------- */
-        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1, 
+        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
                              panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
 
         memcpy( panThisLineWriteVal, panThisLineVal, 4 * nXSize );
@@ -536,12 +534,12 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      the same thing done in the first pass above).                   */
 /* -------------------------------------------------------------------- */
         if( iY == 0 )
-            oSecondEnum.ProcessLine( 
+            oSecondEnum.ProcessLine(
                 NULL, panThisLineVal, NULL, panThisLineId, nXSize );
         else
             oSecondEnum.ProcessLine(
-                panLastLineVal, panThisLineVal, 
-                panLastLineId,  panThisLineId, 
+                panLastLineVal, panThisLineVal,
+                panLastLineId,  panThisLineId,
                 nXSize );
 
 /* -------------------------------------------------------------------- */
@@ -557,7 +555,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 
                 if( anBigNeighbour[iThisPoly] != -1 )
                 {
-                    panThisLineWriteVal[iX] = 
+                    panThisLineWriteVal[iX] =
                         oFirstEnum.panPolyValue[
                             anBigNeighbour[iThisPoly]];
                 }
@@ -567,7 +565,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
 /*      Write the update data out.                                      */
 /* -------------------------------------------------------------------- */
-        eErr = GDALRasterIO( hDstBand, GF_Write, 0, iY, nXSize, 1, 
+        eErr = GDALRasterIO( hDstBand, GF_Write, 0, iY, nXSize, 1,
                              panThisLineWriteVal, nXSize, 1, GDT_Int32, 0, 0 );
 
 /* -------------------------------------------------------------------- */
@@ -585,8 +583,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None 
-            && !pfnProgress( 0.5 + 0.5 * ((iY+1) / (double) nYSize), 
+        if( eErr == CE_None
+            && !pfnProgress( 0.5 + 0.5 * ((iY+1) / (double) nYSize),
                              "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
