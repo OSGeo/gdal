@@ -93,7 +93,7 @@ class CPL_DLL IOGRTransactionBehaviour
 
 
 /** Returns a new datasource object that adds transactional behaviour to an existing datasource.
- * 
+ *
  * The provided poTransactionBehaviour object should implement driver-specific
  * behaviour for transactions.
  *

@@ -133,7 +133,7 @@ class OGRWAsPLayer : public OGRLayer
   public:
                         /* For writing */
                         /* Takes ownership of poTolerance */
-                        OGRWAsPLayer( const char * pszName, 
+                        OGRWAsPLayer( const char * pszName,
                                       VSILFILE * hFile,
                                       OGRSpatialReference * poSpatialRef,
                                       const CPLString & sFirstField,
@@ -145,7 +145,7 @@ class OGRWAsPLayer : public OGRLayer
                                       double * pdfPointToCircleRadius );
 
                         /* For reading */
-                        OGRWAsPLayer( const char * pszName, 
+                        OGRWAsPLayer( const char * pszName,
                                       VSILFILE * hFile,
                                       OGRSpatialReference * poSpatialRef );
 
@@ -180,13 +180,13 @@ class OGRWAsPDataSource : public OGRDataSource
     VSILFILE *                    hFile;
     UNIQUEPTR<OGRWAsPLayer>   oLayer;
 
-    void               GetOptions(CPLString & sFirstField, 
+    void               GetOptions(CPLString & sFirstField,
                                   CPLString & sSecondField,
                                   CPLString & sGeomField,
                                   bool &      bMerge) const;
   public:
                         /** @note takes ownership of hFile (i.e. responsibility for closing) */
-                        OGRWAsPDataSource( const char * pszName, 
+                        OGRWAsPDataSource( const char * pszName,
                                            VSILFILE * hFile );
                         ~OGRWAsPDataSource();
 
@@ -195,7 +195,7 @@ class OGRWAsPDataSource : public OGRDataSource
     virtual OGRLayer   *GetLayer( int );
     virtual OGRLayer   *GetLayerByName( const char * );
 
-    virtual OGRLayer   *ICreateLayer( const char *pszName, 
+    virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );

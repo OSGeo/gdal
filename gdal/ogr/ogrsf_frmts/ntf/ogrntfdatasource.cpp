@@ -60,7 +60,7 @@ OGRNTFDataSource::OGRNTFDataSource() :
 /* -------------------------------------------------------------------- */
     if( getenv("OGR_NTF_OPTIONS") != NULL )
     {
-        papszOptions = 
+        papszOptions =
             CSLTokenizeStringComplex( getenv("OGR_NTF_OPTIONS"), ",",
                                       FALSE, FALSE );
     }
@@ -181,7 +181,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszFilename, &stat ) != 0 
+    if( CPLStat( pszFilename, &stat ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
@@ -204,9 +204,9 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
         char      **candidateFileList = VSIReadDir( pszFilename );
         int         i;
 
-        for( i = 0; 
-             candidateFileList != NULL && candidateFileList[i] != NULL; 
-             i++ ) 
+        for( i = 0;
+             candidateFileList != NULL && candidateFileList[i] != NULL;
+             i++ )
         {
             if( papszLimitedFileList != NULL
                 && CSLFindString(papszLimitedFileList,
@@ -220,7 +220,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             {
                 char       fullFilename[2048];
 
-                snprintf( fullFilename, sizeof(fullFilename), "%s%c%s", 
+                snprintf( fullFilename, sizeof(fullFilename), "%s%c%s",
                          pszFilename,
 #ifdef WIN32
                          '\\',
@@ -393,7 +393,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
 
 /* -------------------------------------------------------------------- */
 /*      If we have already read all the conventional features, we       */
-/*      should try and return feature class features.                   */    
+/*      should try and return feature class features.                   */
 /* -------------------------------------------------------------------- */
     if( iCurrentReader == nNTFFileCount )
     {
@@ -526,7 +526,7 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
 
         for( int iReader = 0; iReader < nNTFFileCount && bIsUnique; iReader++ )
         {
-            if( strcmp( szCandidateName, 
+            if( strcmp( szCandidateName,
                         GetFileReader( iReader )->GetTileName() ) == 0 )
                 bIsUnique = FALSE;
         }
@@ -535,7 +535,7 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
     if( iSequenceNumber > 0 )
     {
         poNewReader->OverrideTileName( szCandidateName );
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Forcing TILE_REF to `%s' on file %s\n"
                   "to avoid conflict with other tiles in this data source.",
                   szCandidateName, poNewReader->GetFilename() );

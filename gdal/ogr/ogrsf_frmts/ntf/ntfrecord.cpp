@@ -71,7 +71,7 @@ NTFRecord::NTFRecord( FILE * fp )
 
         if( nNewLength < 2 || szLine[nNewLength-1] != '%' )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt NTF record, missing end '%%'." );
             CPLFree( pszData );
             pszData = NULL;
@@ -188,7 +188,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /* -------------------------------------------------------------------- */
     if( i == MAX_RECORD_LEN+2 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%d byte record too long for NTF format.\n"
                   "No line may be longer than 80 characters though up to %d tolerated.\n",
                   nBytesRead, MAX_RECORD_LEN );
@@ -258,6 +258,3 @@ const char * NTFRecord::GetField( int nStart, int nEnd )
 
     return pszFieldBuf;
 }
-
-
-

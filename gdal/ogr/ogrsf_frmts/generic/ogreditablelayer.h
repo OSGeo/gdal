@@ -35,9 +35,9 @@
 
 class CPL_DLL IOGREditableLayerSynchronizer
 {
-    public: 
+    public:
         virtual ~IOGREditableLayerSynchronizer();
-        
+
         virtual OGRErr EditableSyncToDisk(OGRLayer* poEditableLayer,
                                           OGRLayer** ppoDecoratedLayer) = 0;
 };
@@ -59,7 +59,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
     bool                           m_bStructureModified;
     bool                           m_bSupportsCreateGeomField;
     bool                           m_bSupportsCurveGeometries;
-    
+
     OGRFeature                    *Translate(OGRFeatureDefn* poTargetDefn,
                                              OGRFeature* poSrcFeature,
                                              bool bCanStealSrcFeature,
@@ -74,11 +74,11 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
                                         IOGREditableLayerSynchronizer* poSynchronizer,
                                         bool bTakeOwnershipSynchronizer);
     virtual           ~OGREditableLayer();
-    
+
     void                SetNextFID(GIntBig nNextFID);
     void                SetSupportsCreateGeomField(bool SupportsCreateGeomField);
     void                SetSupportsCurveGeometries(bool bSupportsCurveGeometries);
-    
+
     virtual OGRGeometry *GetSpatialFilter();
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual void        SetSpatialFilterRect( double dfMinX, double dfMinY,
@@ -86,7 +86,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
     virtual void        SetSpatialFilterRect( int iGeomField, double dfMinX, double dfMinY,
                                               double dfMaxX, double dfMaxY );
-    
+
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual void        ResetReading();
@@ -96,7 +96,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( GIntBig nFID );
-    
+
     virtual OGRwkbGeometryType GetGeomType();
     virtual OGRFeatureDefn *GetLayerDefn();
 

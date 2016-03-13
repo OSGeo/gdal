@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008, Shawn Gervais <project10@project10.net> 
+ * Copyright (c) 2008, Shawn Gervais <project10@project10.net>
  * Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -71,7 +71,7 @@ OGRSDEDataSource::~OGRSDEDataSource()
 
     // Commit our transactions if we were opened for update
     if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID )  ) {
-        CPLDebug("OGR_SDE", "Moving states from %ld to %ld", 
+        CPLDebug("OGR_SDE", "Moving states from %ld to %ld",
                  (long) nState, (long) nNextState);
 
         SE_connection_commit_transaction(hConnection);
@@ -84,12 +84,12 @@ OGRSDEDataSource::~OGRSDEDataSource()
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_versioninfo_get_name" );
-        }  
+        }
         nSDEErr = SE_version_free_lock(hConnection, pszVersionName);
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_version_free_lock" );
-        }  
+        }
         nSDEErr = SE_version_change_state(hConnection, hVersion, nNextState);
         if( nSDEErr != SE_SUCCESS )
         {
@@ -102,8 +102,7 @@ OGRSDEDataSource::~OGRSDEDataSource()
             IssueSDEError( nSDEErr, "SE_state_trim_tree" );
         }
 
-        bDSVersionLocked = TRUE;      
-
+        bDSVersionLocked = TRUE;
     }
 
     CPLFree( pszName );
@@ -113,9 +112,9 @@ OGRSDEDataSource::~OGRSDEDataSource()
 
     CPLFree( papoLayers );
 
-    if (hVersion != NULL) 
+    if (hVersion != NULL)
     {
-        SE_versioninfo_free(hVersion); 
+        SE_versioninfo_free(hVersion);
     }
 
     if( hConnection != NULL )
@@ -128,7 +127,7 @@ OGRSDEDataSource::~OGRSDEDataSource()
 /*                           IssueSDEError()                            */
 /************************************************************************/
 
-void OGRSDEDataSource::IssueSDEError( int nErrorCode, 
+void OGRSDEDataSource::IssueSDEError( int nErrorCode,
                                       const char *pszFunction )
 
 {
@@ -144,39 +143,39 @@ void OGRSDEDataSource::IssueSDEError( int nErrorCode,
         nSDEErr = SE_state_delete(hConnection, nNextState);
         if (nSDEErr && nSDEErr != SE_STATE_INUSE) {
             SE_error_get_string( nSDEErr, szErrorMsg );
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "SE_state_delete could not complete in IssueSDEError %d/%s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "SE_state_delete could not complete in IssueSDEError %d/%s",
                       nErrorCode, szErrorMsg );
         }
         nSDEErr = SE_versioninfo_get_name(hVersion, pszVersionName);
         if( nSDEErr != SE_SUCCESS )
         {
             SE_error_get_string( nSDEErr, szErrorMsg );
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "SE_versioninfo_get_name could not complete in IssueSDEError %d/%s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "SE_versioninfo_get_name could not complete in IssueSDEError %d/%s",
                       nErrorCode, szErrorMsg );
-        }  
+        }
         nSDEErr = SE_version_free_lock(hConnection, pszVersionName);
         if( nSDEErr != SE_SUCCESS )
         {
             SE_error_get_string( nSDEErr, szErrorMsg );
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "SE_version_free_lock could not complete in IssueSDEError %d/%s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "SE_version_free_lock could not complete in IssueSDEError %d/%s",
                       nErrorCode, szErrorMsg );
-        }  
+        }
         nSDEErr = SE_connection_rollback_transaction(hConnection);
         if (nSDEErr) {
             SE_error_get_string( nSDEErr, szErrorMsg );
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "SE_connection_rollback_transaction could not complete in IssueSDEError %d/%s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "SE_connection_rollback_transaction could not complete in IssueSDEError %d/%s",
                       nErrorCode, szErrorMsg );
         }
     }
     bDSVersionLocked = TRUE;
     SE_error_get_string( nErrorCode, szErrorMsg );
 
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "%s: %d/%s", 
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "%s: %d/%s",
               pszFunction, nErrorCode, szErrorMsg );
 }
 
@@ -207,11 +206,11 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 
     if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 8 )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "SDE connect string had wrong number of arguments.\n"
                   "Expected 'SDE:server,instance,database,username,password,layer'\n"
 		          "The layer name value is optional.\n"
-                  "Got '%s'", 
+                  "Got '%s'",
                   pszNewName );
         return FALSE;
     }
@@ -222,9 +221,9 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     int 	nSDEErr;
     SE_ERROR    sSDEErrorInfo;
 
-    nSDEErr = SE_connection_create( papszTokens[0], 
-                                    papszTokens[1], 
-                                    papszTokens[2], 
+    nSDEErr = SE_connection_create( papszTokens[0],
+                                    papszTokens[1],
+                                    papszTokens[2],
                                     papszTokens[3],
                                     papszTokens[4],
                                     &sSDEErrorInfo, &hConnection );
@@ -290,7 +289,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
             // We've already set the error
             CSLDestroy( papszTokens );
             return FALSE;
-        }        
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -309,12 +308,12 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
             // We've already set the error
             CSLDestroy( papszTokens );
             return FALSE;
-        }        
+        }
     }
     else if ( CSLCount( papszTokens ) == 8 && *papszTokens[7] != '\0' )
     {
         // For user-specified version names, the input is not fully qualified
-        // We have to append the connection's username to the version name for 
+        // We have to append the connection's username to the version name for
         // SDE to be able to find it.
         char username[SE_MAX_OWNER_LEN];
         nSDEErr = SE_connection_get_user_name(hConnection, username);
@@ -404,7 +403,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
     } else {
         SE_versioninfo_free(hParentVersion);
         SE_versioninfo_free(hChildVersion);
-        return TRUE; 
+        return TRUE;
     }
 
     if (!bDSUpdate) {
@@ -427,7 +426,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
             SE_versioninfo_free(hParentVersion);
             hParentVersion = NULL;
             IssueSDEError( nSDEErr, "SE_INVALID_RELEASE."
-                           "  Your client/server versions must not match or " 
+                           "  Your client/server versions must not match or "
                            "you have some other major configuration problem");
             return FALSE;
 
@@ -452,7 +451,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
     {
         IssueSDEError( nSDEErr, "SE_versioninfo_set_access" );
         return FALSE;
-    }    
+    }
 
     const char* pszDescription =  CPLGetConfigOption( "SDE_DESCRIPTION", "Created by OGR" );
     nSDEErr = SE_versioninfo_set_description(hChildVersion, pszDescription);
@@ -460,7 +459,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
     {
         IssueSDEError( nSDEErr, "SE_versioninfo_set_description" );
         return FALSE;
-    }    
+    }
 
     nSDEErr = SE_versioninfo_set_parent_name(hChildVersion, pszParentVersion);
     if( nSDEErr != SE_SUCCESS )
@@ -510,7 +509,7 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
 
     int nSDEErr;
     SE_STATEINFO hCurrentStateInfo= NULL;
-    SE_STATEINFO hNextStateInfo= NULL;    
+    SE_STATEINFO hNextStateInfo= NULL;
     SE_STATEINFO hDummyStateInfo = NULL;
 
     nSDEErr = SE_versioninfo_create(&hVersion);
@@ -531,7 +530,7 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
             SE_versioninfo_free(hVersion);
             hVersion = NULL;
             IssueSDEError( nSDEErr, "SE_INVALID_RELEASE."
-                           "  Your client/server versions must not match or " 
+                           "  Your client/server versions must not match or "
                            "you have some other major configuration problem");
             return FALSE;
         } else {
@@ -558,41 +557,41 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
             return FALSE;
         }
 
-        if (nLockCount > 0) 
+        if (nLockCount > 0)
         {
-            // This version is already locked for edit.  We can't edit this 
+            // This version is already locked for edit.  We can't edit this
             // version right now until the lock is released.  All we can do is issue
             // an error.
 
             SE_version_free_locks(pahLocks, nLockCount);
             bDSVersionLocked = TRUE;
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "The %s version is already locked and open for edit", pszVersionName);            
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "The %s version is already locked and open for edit", pszVersionName);
             return FALSE;
         }
 
-        // So we're in update mode.  We need to get the state id 
-        // of the active version, create a child state of it to 
-        // push our edits onto, and close the state and move the 
-        // version to it when we're done. 
+        // So we're in update mode.  We need to get the state id
+        // of the active version, create a child state of it to
+        // push our edits onto, and close the state and move the
+        // version to it when we're done.
 
         nSDEErr = SE_connection_start_transaction(hConnection);
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_connection_start_transaction" );
             return FALSE;
-        } 
+        }
 
-        // Lock the version we're editing on so no one can change the state 
+        // Lock the version we're editing on so no one can change the state
         // of it underneath us.  SHARED_LOCK is the same lock mode that ArcGIS uses,
-        // and it means the state of the version cannot be moved until until we 
+        // and it means the state of the version cannot be moved until until we
         // release the lock and move it.
         nSDEErr = SE_version_lock(hConnection, pszVersionName, SE_VERSION_SHARED_LOCK);
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_version_lock" );
             return FALSE;
-        } 
+        }
         nSDEErr = SE_stateinfo_create(&hCurrentStateInfo);
         if( nSDEErr != SE_SUCCESS )
         {
@@ -606,10 +605,10 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
             return FALSE;
         }
         if (SE_stateinfo_is_open(hCurrentStateInfo)) {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "The editing state for this version is currently open.  "
                           "It must be closed for edits before it can be opened by OGR for update. ");
-                return FALSE;            
+                return FALSE;
         }
         nSDEErr = SE_stateinfo_create(&hNextStateInfo);
         if( nSDEErr != SE_SUCCESS )
@@ -648,7 +647,7 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
         SE_stateinfo_free(hNextStateInfo);
 
     }
-    return TRUE; 
+    return TRUE;
 
 
 }
@@ -656,7 +655,7 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGRSDEDataSource::OpenTable( const char *pszTableName, 
+int OGRSDEDataSource::OpenTable( const char *pszTableName,
                                  const char *pszFIDColumn,
                                  const char *pszShapeColumn,
                                  LONG nFIDColType )
@@ -707,13 +706,13 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
     CPLString osGeometryName = poLayer->osShapeColumnName;
     CPLString osLayerName = poLayer->GetLayerDefn()->GetName();
 
-    CPLDebug( "OGR_SDE", 
-              "DeleteLayer(%s,%s)", 
+    CPLDebug( "OGR_SDE",
+              "DeleteLayer(%s,%s)",
               osLayerName.c_str(),
               osGeometryName.c_str() );
 
     delete papoLayers[iLayer];
-    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
@@ -743,9 +742,9 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
         CPLDebug("OGR_SDE", "Dependent multiversion table: %s", paszTables[i]);
     }
 
-    // if we still have dependent tables after deleting the layer, it is because the 
-    // table is multiversion.  We need to smash the table to single version before 
-    // deleting its registration.  If the user deletes the table from this version, 
+    // if we still have dependent tables after deleting the layer, it is because the
+    // table is multiversion.  We need to smash the table to single version before
+    // deleting its registration.  If the user deletes the table from this version,
     // all other versions are gone too.
     if (nCount) {
         nSDEErr = SE_versioninfo_get_name(hVersion, pszVersionName);
@@ -753,7 +752,7 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
         {
             IssueSDEError( nSDEErr, "SE_versioninfo_get_name" );
             return OGRERR_FAILURE;
-        }        
+        }
         nSDEErr = SE_registration_make_single_version(hConnection, pszVersionName, osLayerName.c_str());
         if( nSDEErr != SE_SUCCESS )
         {
@@ -837,10 +836,10 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         // We look for an exact match or for SDE.layername which is how
-        // the layer will be known after reading back. 
+        // the layer will be known after reading back.
         if( EQUAL(osFullName,
                   papoLayers[iLayer]->GetLayerDefn()->GetName())
-            || EQUAL(pszLayerName, 
+            || EQUAL(pszLayerName,
                      papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
             if( CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
@@ -849,7 +848,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
             }
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
@@ -881,7 +880,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         szTableName[0] = '\0';
 
         SE_reginfo_get_table_name( ahTableList[iTable], szTableName );
-        if( EQUAL(szTableName,pszLayerName) 
+        if( EQUAL(szTableName,pszLayerName)
             || EQUAL(szTableName,osFullName) )
         {
             if( !CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
@@ -930,7 +929,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
     // Set layer description
     pszLayerDescription = CSLFetchNameValue( papszOptions, "SDE_DESCRIPTION" );
     if( pszLayerDescription == NULL )
-        pszLayerDescription = CPLSPrintf( "Created by GDAL/OGR %s", 
+        pszLayerDescription = CPLSPrintf( "Created by GDAL/OGR %s",
                                       GDALVersionInfo( "RELEASE_NAME" ) );
 
 /* -------------------------------------------------------------------- */
@@ -949,7 +948,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
     sColumnDef.decimal_digits = 0;
     sColumnDef.nulls_allowed  = FALSE;
 
-    nSDEErr = SE_table_create( hConnection, pszLayerName, 1, &sColumnDef, 
+    nSDEErr = SE_table_create( hConnection, pszLayerName, 1, &sColumnDef,
                                pszDbtuneKeyword );
 
     if( nSDEErr != SE_SUCCESS )
@@ -1013,7 +1012,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
     else if( eType == wkbUnknown )
     {
         nLayerShapeTypes |= (  SE_POINT_TYPE_MASK
-                             | SE_LINE_TYPE_MASK 
+                             | SE_LINE_TYPE_MASK
                              | SE_SIMPLE_LINE_TYPE_MASK
                              | SE_AREA_TYPE_MASK );
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -1024,7 +1023,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
 
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Cannot create SDE layer %s with geometry type %d.",
                    pszLayerName, eType );
 
@@ -1252,7 +1251,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     poLayer->SetFIDColType( SE_REGISTRATION_ROW_ID_COLUMN_TYPE_SDE );
 
-    poLayer->SetUseNSTRING( 
+    poLayer->SetUseNSTRING(
         CSLFetchBoolean( papszOptions, "USE_NSTRING", FALSE ) );
 
 /* -------------------------------------------------------------------- */
@@ -1314,8 +1313,8 @@ void OGRSDEDataSource::EnumerateSpatialTables()
         return;
     }
 
-    CPLDebug( "OGR_SDE", 
-              "SDE::EnumerateSpatialTables() found %d tables.", 
+    CPLDebug( "OGR_SDE",
+              "SDE::EnumerateSpatialTables() found %d tables.",
               (int) nTableListCount );
 
 /* -------------------------------------------------------------------- */
@@ -1375,17 +1374,17 @@ void OGRSDEDataSource::CreateLayerFromRegInfo( SE_REGINFO& reginfo )
     nSDEErr = SE_reginfo_get_table_name( reginfo, szTableName );
     if( nSDEErr != SE_SUCCESS )
     {
-        CPLDebug( "SDE", 
+        CPLDebug( "SDE",
                   "Ignoring reginfo '%p', no table name.",
                   reginfo );
         return;
     }
 
-    // Ignore non-spatial, or hidden tables. 
+    // Ignore non-spatial, or hidden tables.
     if( !SE_reginfo_has_layer( reginfo ) || SE_reginfo_is_hidden( reginfo ) )
     {
-        CPLDebug( "SDE", 
-                  "Ignoring layer '%s' as it is hidden or does not have a reginfo layer.", 
+        CPLDebug( "SDE",
+                  "Ignoring layer '%s' as it is hidden or does not have a reginfo layer.",
                   szTableName );
         return;
     }
@@ -1397,7 +1396,7 @@ void OGRSDEDataSource::CreateLayerFromRegInfo( SE_REGINFO& reginfo )
     if( nFIDColType == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE
         || strlen(szIDColName) == 0 )
     {
-        CPLDebug( "OGR_SDE", "Unable to determine FID column for %s.", 
+        CPLDebug( "OGR_SDE", "Unable to determine FID column for %s.",
                   szTableName );
         OpenTable( szTableName, NULL, NULL, nFIDColType );
     }
@@ -1471,7 +1470,7 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
         SE_ENVELOPE     sGenericEnvelope;
         SE_coordref_get_xy_envelope( *psCoordRef, &sGenericEnvelope );
 
-        CPLDebug( "SDE", 
+        CPLDebug( "SDE",
                   "Created coordref '%s' with envelope (%g,%g) to (%g,%g)",
                   pszWkt,
                   sGenericEnvelope.minx,
@@ -1485,10 +1484,10 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
         LONG nSDEErr;
 
         // Reset the offset and precision to match the ordinary values
-        // for SDE geographic coordinate systems. 
+        // for SDE geographic coordinate systems.
         nSDEErr = SE_coordref_set_xy( *psCoordRef, -400, -400, 1.11195e9 );
 
-        if( nSDEErr != SE_SUCCESS ) 
+        if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_coordref_set_xy()" );
         }

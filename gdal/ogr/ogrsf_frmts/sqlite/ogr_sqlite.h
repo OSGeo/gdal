@@ -42,8 +42,8 @@
     /*
     / using an AMALGAMATED version of SpatiaLite
     / a private internal copy of SQLite is included:
-    / so we are required including the SpatiaLite's 
-    / own header 
+    / so we are required including the SpatiaLite's
+    / own header
     /
     / IMPORTANT NOTICE: using AMALAGATION is only
     / useful on Windows (to skip DLL hell related oddities)
@@ -104,7 +104,7 @@ enum OGRSpatialiteGeomType
     OGRSpliteMultiLineStringXYZ          = 1005,
     OGRSpliteMultiPolygonXYZ             = 1006,
     OGRSpliteGeometryCollectionXYZ       = 1007,
-// 2D with Measure [XYM] 
+// 2D with Measure [XYM]
     OGRSplitePointXYM                    = 2001,
     OGRSpliteLineStringXYM               = 2002,
     OGRSplitePolygonXYM                  = 2003,
@@ -391,7 +391,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     int bIsVirtualShapeIn,
                                     int bDeferredCreation);
     void                SetCreationParameters( const char *pszFIDColumnName,
@@ -434,7 +434,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                          const char * pszDomain = "" );
 
     // follow methods are not base class overrides
-    void                SetLaunderFlag( int bFlag ) 
+    void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetUseCompressGeom( int bFlag )
                                 { bUseComprGeom = bFlag; }
@@ -603,7 +603,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
     virtual OGRErr      ResetStatement();
 
   public:
-                        OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
+                        OGRSQLiteSelectLayer( OGRSQLiteDataSource *,
                                               CPLString osSQL,
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,
@@ -742,7 +742,7 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     int                 nLayers;
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
@@ -779,7 +779,7 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     int                 Open( const char *, int bUpdateIn, char** papszOpenOptions );
     int                 Create( const char *, char **papszOptions );
 
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    int bIsVirtualShapeIn = FALSE );
     int                  OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
@@ -792,9 +792,9 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     virtual OGRLayer   *GetLayerByName( const char* );
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName );
 
-    virtual OGRLayer    *ICreateLayer( const char *pszLayerName, 
-                                      OGRSpatialReference *poSRS, 
-                                      OGRwkbGeometryType eType, 
+    virtual OGRLayer    *ICreateLayer( const char *pszLayerName,
+                                      OGRSpatialReference *poSRS,
+                                      OGRwkbGeometryType eType,
                                       char **papszOptions );
     virtual OGRErr      DeleteLayer(int);
 

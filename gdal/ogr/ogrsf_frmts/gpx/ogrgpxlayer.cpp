@@ -1225,7 +1225,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
     /* Begin with standard GPX fields */
     int i = iFirstGPXField;
     for( ; i < nGPXFields; i++ )
-    { 
+    {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
         if( poFeatureIn->IsFieldSet( i ) )
         {
@@ -1431,14 +1431,14 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         if ( poGeom == NULL || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Features without geometry or with non-ponctual geometries not supported by GPX writer in waypoints layer." );
             return OGRERR_FAILURE;
         }
 
         if ( poGeom->getCoordinateDimension() == 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "POINT EMPTY geometries not supported by GPX writer." );
             return OGRERR_FAILURE;
         }
@@ -1665,27 +1665,27 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         if ( poGeom == NULL || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Features without geometry or with non-ponctual geometries not supported by GPX writer in route_points layer." );
             return OGRERR_FAILURE;
         }
 
         if ( poGeom->getCoordinateDimension() == 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "POINT EMPTY geometries not supported by GPX writer." );
             return OGRERR_FAILURE;
         }
 
         if ( !poFeatureIn->IsFieldSet(FLD_ROUTE_FID) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_ROUTE_FID)->GetNameRef() );
             return OGRERR_FAILURE;
         }
         if ( poFeatureIn->GetFieldAsInteger(FLD_ROUTE_FID) < 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Invalid value for field %s.", poFeatureDefn->GetFieldDefn(FLD_ROUTE_FID)->GetNameRef() );
             return OGRERR_FAILURE;
         }
@@ -1734,39 +1734,39 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         if ( poGeom == NULL || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Features without geometry or with non-ponctual geometries not supported by GPX writer in track_points layer." );
             return OGRERR_FAILURE;
         }
 
         if ( poGeom->getCoordinateDimension() == 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "POINT EMPTY geometries not supported by GPX writer." );
             return OGRERR_FAILURE;
         }
 
         if ( !poFeatureIn->IsFieldSet(FLD_TRACK_FID) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_TRACK_FID)->GetNameRef() );
             return OGRERR_FAILURE;
         }
         if ( poFeatureIn->GetFieldAsInteger(FLD_TRACK_FID) < 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Invalid value for field %s.", poFeatureDefn->GetFieldDefn(FLD_TRACK_FID)->GetNameRef() );
             return OGRERR_FAILURE;
         }
         if ( !poFeatureIn->IsFieldSet(FLD_TRACK_SEG_ID) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_TRACK_SEG_ID)->GetNameRef() );
             return OGRERR_FAILURE;
         }
         if ( poFeatureIn->GetFieldAsInteger(FLD_TRACK_SEG_ID) < 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Invalid value for field %s.", poFeatureDefn->GetFieldDefn(FLD_TRACK_SEG_ID)->GetNameRef() );
             return OGRERR_FAILURE;
         }

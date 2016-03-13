@@ -46,7 +46,7 @@ OGRIngresLayer::OGRIngresLayer()
     nResultOffset = 0;
 
     poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet. 
+    nSRSId = -2; // we haven't even queried the database for it yet.
 
     poFeatureDefn = NULL;
 
@@ -63,7 +63,7 @@ OGRIngresLayer::~OGRIngresLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "Ingres", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -209,13 +209,13 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
         if( nVertCount == nVertMax )
         {
             nVertMax = nVertMax * 2 + 1;
-            padfXY = (double *) 
+            padfXY = (double *)
                 CPLRealloc(padfXY, sizeof(double) * nVertMax * 2 );
         }
 
         if( !ParseXY( &pszNext, padfXY + nVertCount*2 ) )
         {
-            CPLDebug( "INGRES", "Error parsing geometry: %s", 
+            CPLDebug( "INGRES", "Error parsing geometry: %s",
                       pszGeom );
             CPLFree( padfXY );
             return NULL;
@@ -332,28 +332,28 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
 /* ==================================================================== */
 /*      Transfer all result fields we can.                              */
 /* ==================================================================== */
-    for( iField = 0; 
+    for( iField = 0;
          iField < (int) poResultSet->getDescrParm.gd_descriptorCount;
          iField++ )
     {
-        IIAPI_DATAVALUE *psDV = 
+        IIAPI_DATAVALUE *psDV =
             poResultSet->pasDataBuffer + iField;
-        IIAPI_DESCRIPTOR *psFDesc = 
+        IIAPI_DESCRIPTOR *psFDesc =
             poResultSet->getDescrParm.gd_descriptor + iField;
         int     iOGRField;
 
 /* -------------------------------------------------------------------- */
 /*      Ignore NULL fields.                                             */
 /* -------------------------------------------------------------------- */
-        if( psDV->dv_null ) 
+        if( psDV->dv_null )
             continue;
 
 /* -------------------------------------------------------------------- */
 /*      Handle FID.                                                     */
 /* -------------------------------------------------------------------- */
-        if( osFIDColumn.size() 
-            && EQUAL(psFDesc->ds_columnName,osFIDColumn) 
-            && psFDesc->ds_dataType == IIAPI_INT_TYPE 
+        if( osFIDColumn.size()
+            && EQUAL(psFDesc->ds_columnName,osFIDColumn)
+            && psFDesc->ds_dataType == IIAPI_INT_TYPE
             && psDV->dv_length == 4 )
         {
             if( papszRow[iField] == NULL )
@@ -371,7 +371,7 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
 /* -------------------------------------------------------------------- */
 /*      Handle Ingres geometry                                           */
 /* -------------------------------------------------------------------- */
-        if( osGeomColumn.size() 
+        if( osGeomColumn.size()
             && EQUAL(psFDesc->ds_columnName,osGeomColumn))
         {
         	if( poDS->IsNewIngres() )
@@ -466,9 +466,9 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
 
               memset( &sCParm, 0, sizeof(sCParm) );
 
-              memcpy( &(sCParm.cv_srcDesc), psFDesc, 
+              memcpy( &(sCParm.cv_srcDesc), psFDesc,
                       sizeof(IIAPI_DESCRIPTOR) );
-              memcpy( &(sCParm.cv_srcValue), psDV, 
+              memcpy( &(sCParm.cv_srcValue), psDV,
                       sizeof(IIAPI_DATAVALUE) );
 
               sCParm.cv_dstDesc.ds_dataType = IIAPI_CHA_TYPE;
@@ -573,7 +573,7 @@ int OGRIngresLayer::TestCapability( const char * pszCap )
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRIngresLayer::GetFIDColumn() 
+const char *OGRIngresLayer::GetFIDColumn()
 
 {
     return osFIDColumn;
@@ -583,7 +583,7 @@ const char *OGRIngresLayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRIngresLayer::GetGeometryColumn() 
+const char *OGRIngresLayer::GetGeometryColumn()
 
 {
     return osGeomColumn;
@@ -613,7 +613,7 @@ int OGRIngresLayer::FetchSRSId(OGRFeatureDefn *poDefn)
         char           **papszRow;
         OGRIngresStatement oStatement(poDS->GetConn());
 
-        sprintf( szCommand, 
+        sprintf( szCommand,
                  "SELECT srid FROM geometry_columns "
                  "WHERE f_table_name = '%s' AND f_geometry_column = '%s'",
                  poDefn->GetName(),

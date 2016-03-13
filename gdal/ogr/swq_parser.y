@@ -5,7 +5,7 @@
  * Purpose: expression and select parser grammar.
  *          Requires Bison 2.4.0 or newer to process.  Use "make parser" target.
  * Author: Frank Warmerdam <warmerdam@pobox.com>
- * 
+ *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -36,11 +36,11 @@
 
 #define YYSTYPE  swq_expr_node*
 
-/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */ 
-/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */ 
-/* increase YYINITDEPTH instead, but this will consume memory. */ 
-/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */ 
-/* it appears to be a non documented feature of Bison */ 
+/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
+/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */
+/* increase YYINITDEPTH instead, but this will consume memory. */
+/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
+/* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
 
 %}
@@ -109,7 +109,7 @@
 
 %%
 
-input:  
+input:
     | SWQT_VALUE_START value_expr
         {
             context->poRoot = $2;
@@ -121,12 +121,12 @@ input:
         }
 
 value_expr:
-    value_expr_non_logical 
+    value_expr_non_logical
         {
             $$ = $1;
         }
 
-    | value_expr SWQT_AND value_expr 
+    | value_expr SWQT_AND value_expr
         {
             $$ = new swq_expr_node( SWQ_AND );
             $$->field_type = SWQ_BOOLEAN;
@@ -283,7 +283,7 @@ value_expr:
             in->nOperation = SWQ_IN;
             in->PushSubExpression( $1 );
             in->ReverseSubExpressions();
-            
+
             $$ = new swq_expr_node( SWQ_NOT );
             $$->field_type = SWQ_BOOLEAN;
             $$->PushSubExpression( in );
@@ -365,12 +365,12 @@ field_value:
         }
 
 value_expr_non_logical:
-    SWQT_INTEGER_NUMBER 
+    SWQT_INTEGER_NUMBER
         {
             $$ = $1;
         }
 
-    | SWQT_FLOAT_NUMBER 
+    | SWQT_FLOAT_NUMBER
         {
             $$ = $1;
         }
@@ -447,7 +447,7 @@ value_expr_non_logical:
 
     | SWQT_IDENTIFIER '(' value_expr_list ')'
         {
-            const swq_operation *poOp = 
+            const swq_operation *poOp =
                     swq_op_registrar::GetOperator( $1->string_value );
 
             if( poOp == NULL )
@@ -463,7 +463,7 @@ value_expr_non_logical:
                 }
                 else
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                                     "Undefined function '%s' used.",
                                     $1->string_value );
                     delete $1;
@@ -495,14 +495,14 @@ type_def:
         $$->PushSubExpression( $1 );
     }
 
-    | SWQT_IDENTIFIER '(' SWQT_INTEGER_NUMBER ')' 
+    | SWQT_IDENTIFIER '(' SWQT_INTEGER_NUMBER ')'
     {
         $$ = new swq_expr_node( SWQ_CAST );
         $$->PushSubExpression( $3 );
         $$->PushSubExpression( $1 );
     }
 
-    | SWQT_IDENTIFIER '(' SWQT_INTEGER_NUMBER ',' SWQT_INTEGER_NUMBER ')' 
+    | SWQT_IDENTIFIER '(' SWQT_INTEGER_NUMBER ',' SWQT_INTEGER_NUMBER ')'
     {
         $$ = new swq_expr_node( SWQ_CAST );
         $$->PushSubExpression( $5 );
@@ -511,10 +511,10 @@ type_def:
     }
 
     /* e.g. GEOMETRY(POINT) */
-    | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ')' 
+    | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ')'
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
-        if( !EQUAL($1->string_value,"GEOMETRY") || 
+        if( !EQUAL($1->string_value,"GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
@@ -529,10 +529,10 @@ type_def:
     }
 
     /* e.g. GEOMETRY(POINT,4326) */
-    | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ',' SWQT_INTEGER_NUMBER ')' 
+    | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ',' SWQT_INTEGER_NUMBER ')'
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
-        if( !EQUAL($1->string_value,"GEOMETRY") || 
+        if( !EQUAL($1->string_value,"GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
@@ -548,7 +548,7 @@ type_def:
         $$->PushSubExpression( $1 );
     }
 
-select_statement: 
+select_statement:
     select_core opt_union_all
     | '(' select_core ')' opt_union_all
 
@@ -578,7 +578,7 @@ select_field_list:
     column_spec
     | column_spec ',' select_field_list
 
-column_spec: 
+column_spec:
     value_expr
         {
             if( !context->poCurSelect->PushField( $1 ) )
@@ -641,7 +641,7 @@ column_spec:
             if( !EQUAL($1->string_value,"COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Syntax Error with %s(*).", 
+                        "Syntax Error with %s(*).",
                         $1->string_value );
                 delete $1;
                 YYERROR;
@@ -649,7 +649,7 @@ column_spec:
 
             delete $1;
             $1 = NULL;
-                    
+
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
@@ -671,7 +671,7 @@ column_spec:
             if( !EQUAL($1->string_value,"COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Syntax Error with %s(*).", 
+                        "Syntax Error with %s(*).",
                         $1->string_value );
                 delete $1;
                 delete $5;
@@ -712,10 +712,10 @@ column_spec:
             }
 
             delete $1;
-            
+
             swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( $4 );
-                
+
             if( !context->poCurSelect->PushField( count, NULL, TRUE ) )
             {
                 delete count;
@@ -761,7 +761,7 @@ as_clause:
     | SWQT_IDENTIFIER
 
 
-opt_where:  
+opt_where:
     | SWQT_WHERE value_expr
         {
             context->poCurSelect->where_expr = $2;
@@ -786,7 +786,7 @@ opt_order_by:
 
 sort_spec_list:
     sort_spec ',' sort_spec_list
-    | sort_spec 
+    | sort_spec
 
 sort_spec:
     field_value
@@ -845,7 +845,7 @@ table_def:
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value, 
+                                                     $3->string_value,
                                                      $4->string_value );
         delete $1;
         delete $3;
@@ -869,7 +869,7 @@ table_def:
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value, 
+                                                     $3->string_value,
                                                      $4->string_value );
         delete $1;
         delete $3;

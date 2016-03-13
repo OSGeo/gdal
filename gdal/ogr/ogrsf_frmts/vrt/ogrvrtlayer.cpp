@@ -104,7 +104,7 @@ OGRVRTLayer::~OGRVRTLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "VRT", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -169,7 +169,7 @@ int OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn, const char *pszVRTDirect
 
     if( pszLayerName == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing name attribute on OGRVRTLayer" );
         return FALSE;
     }
@@ -317,9 +317,9 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
     else if( EQUAL(pszEncoding,"PointFromColumns") )
     {
         poProps->eGeometryStyle = VGS_PointFromColumns;
-        poProps->bUseSpatialSubquery = 
+        poProps->bUseSpatialSubquery =
             CPLTestBool(
-                CPLGetXMLValue(psNode, 
+                CPLGetXMLValue(psNode,
                             "GeometryField.useSpatialSubquery",
                             "TRUE"));
 
@@ -332,7 +332,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
 
         if( poProps->iGeomXField == -1 || poProps->iGeomYField == -1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to identify source X or Y field for PointFromColumns encoding." );
             return FALSE;
         }
@@ -347,7 +347,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                 "encoding=\"%s\" not recognised.", pszEncoding );
         return FALSE;
     }
@@ -356,14 +356,14 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
         || poProps->eGeometryStyle == VGS_WKB
         || poProps->eGeometryStyle == VGS_Shape )
     {
-        const char *pszFieldName = 
+        const char *pszFieldName =
             CPLGetXMLValue( psNode, "field", "missing" );
 
         poProps->iGeomField = GetSrcLayerDefn()->GetFieldIndex(pszFieldName);
 
         if( poProps->iGeomField == -1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to identify source field '%s' for geometry.",
                     pszFieldName );
             return FALSE;
@@ -371,7 +371,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
     }
     else if( poProps->eGeometryStyle == VGS_Direct )
     {
-        const char *pszFieldName = 
+        const char *pszFieldName =
             CPLGetXMLValue( psNode, "field", NULL );
 
         if( pszFieldName != NULL || GetSrcLayerDefn()->GetGeomFieldCount() > 1 )
@@ -382,7 +382,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
 
             if( poProps->iGeomField == -1 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                         "Unable to identify source geometry field '%s' for geometry.",
                         pszFieldName );
                 return FALSE;
@@ -394,7 +394,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
         }
         else if( psNode != NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to identify source geometry field." );
             return FALSE;
         }
@@ -530,12 +530,12 @@ int OGRVRTLayer::FullInitialize()
 
     if( pszSrcDSName == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing SrcDataSource for layer %s.", osName.c_str() );
         goto error;
     }
 
-    if( CPLTestBool(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT", 
+    if( CPLTestBool(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT",
                                        "0")) )
     {
         static const char* const apszPrefixes[] = { "CSV:", "GPSBABEL:" };
@@ -663,7 +663,7 @@ try_again:
         }
     }
 
-    if( poSrcDS == NULL ) 
+    if( poSrcDS == NULL )
     {
         if (bUpdate)
         {
@@ -674,8 +674,8 @@ try_again:
             goto try_again;
         }
         if( strlen(CPLGetLastErrorMsg()) == 0 )
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to open datasource `%s'.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to open datasource `%s'.",
                       pszSrcDSName );
         goto error;
     }
@@ -711,14 +711,14 @@ try_again:
 /* -------------------------------------------------------------------- */
     if( poSrcLayer == NULL )
     {
-        const char *pszSrcLayerName = CPLGetXMLValue( psLTree, "SrcLayer", 
+        const char *pszSrcLayerName = CPLGetXMLValue( psLTree, "SrcLayer",
                                                       osName );
 
         poSrcLayer = poSrcDS->GetLayerByName( pszSrcLayerName );
         if( poSrcLayer == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to find layer '%s' on datasource '%s'.", 
+                  "Failed to find layer '%s' on datasource '%s'.",
                       pszSrcLayerName, pszSrcDSName );
             goto error;
         }
@@ -817,7 +817,7 @@ try_again:
              GetSrcLayerDefn()->GetFieldIndex( pszSrcFIDFieldName );
          if( iFIDField == -1 )
          {
-             CPLError( CE_Failure, CPLE_AppDefined, 
+             CPLError( CE_Failure, CPLE_AppDefined,
                        "Unable to identify FID field '%s'.",
                        pszSrcFIDFieldName );
              goto error;
@@ -839,7 +839,7 @@ try_again:
              GetSrcLayerDefn()->GetFieldIndex( pszStyleFieldName );
          if( iStyleField == -1 )
          {
-             CPLError( CE_Failure, CPLE_AppDefined, 
+             CPLError( CE_Failure, CPLE_AppDefined,
                        "Unable to identify Style field '%s'.",
                        pszStyleFieldName );
              goto error;
@@ -860,7 +860,7 @@ try_again:
              const char *pszName = CPLGetXMLValue( psChild, "name", NULL );
              if( pszName == NULL )
              {
-                 CPLError( CE_Failure, CPLE_AppDefined, 
+                 CPLError( CE_Failure, CPLE_AppDefined,
                            "Unable to identify Field name." );
                  goto error;
              }
@@ -888,7 +888,7 @@ try_again:
 
                  if( iType > (int) OFTMaxType )
                  {
-                     CPLError( CE_Failure, CPLE_AppDefined, 
+                     CPLError( CE_Failure, CPLE_AppDefined,
                                "Unable to identify Field type '%s'.",
                                pszArg );
                      goto error;
@@ -916,7 +916,7 @@ try_again:
 
                  if( iType > (int) OFSTMaxSubType )
                  {
-                     CPLError( CE_Failure, CPLE_AppDefined, 
+                     CPLError( CE_Failure, CPLE_AppDefined,
                                "Unable to identify Field subtype '%s'.",
                                pszArg );
                      goto error;
@@ -924,7 +924,7 @@ try_again:
 
                  if( !OGR_AreTypeSubTypeCompatible(oFieldDefn.GetType(), eSubType) )
                  {
-                     CPLError( CE_Failure, CPLE_AppDefined, 
+                     CPLError( CE_Failure, CPLE_AppDefined,
                                "Invalid subtype '%s' for type '%s'.",
                                pszArg, OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()) );
                      goto error;
@@ -984,7 +984,7 @@ try_again:
 
              if( pszArg != NULL )
              {
-                 iSrcField = 
+                 iSrcField =
                      GetSrcLayerDefn()->GetFieldIndex( pszArg );
                  if( iSrcField == -1 )
                  {
@@ -1423,7 +1423,7 @@ retry:
     if( iStyleField != -1 )
     {
         if( poSrcFeat->IsFieldSet(iStyleField) )
-            poDstFeat->SetStyleString( 
+            poDstFeat->SetStyleString(
                 poSrcFeat->GetFieldAsString(iStyleField) );
     }
     else
@@ -1582,7 +1582,7 @@ retry:
         if( !poSrcFeat->IsFieldSet( anSrcField[iVRTField] ) || poDstDefn->IsIgnored() )
             continue;
 
-        if( abDirectCopy[iVRTField] 
+        if( abDirectCopy[iVRTField]
             && poDstDefn->GetType() == poSrcDefn->GetType() )
         {
             poDstFeat->SetField( iVRTField,
@@ -1593,10 +1593,10 @@ retry:
             /* Eventually we need to offer some more sophisticated translation
                options here for more esoteric types. */
             if (poDstDefn->GetType() == OFTReal)
-                poDstFeat->SetField( iVRTField, 
+                poDstFeat->SetField( iVRTField,
                                  poSrcFeat->GetFieldAsDouble(anSrcField[iVRTField]));
             else
-                poDstFeat->SetField( iVRTField, 
+                poDstFeat->SetField( iVRTField,
                                  poSrcFeat->GetFieldAsString(anSrcField[iVRTField]));
         }
     }
@@ -1828,7 +1828,7 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
         OGRFieldDefn *poVRTDefn = poFeatureDefn->GetFieldDefn( iVRTField );
         OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( anSrcField[iVRTField] );
 
-        if( abDirectCopy[iVRTField] 
+        if( abDirectCopy[iVRTField]
             && poVRTDefn->GetType() == poSrcDefn->GetType() )
         {
             poSrcFeat->SetField( anSrcField[iVRTField],
@@ -1838,7 +1838,7 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
         {
             /* Eventually we need to offer some more sophisticated translation
                options here for more esoteric types. */
-            poSrcFeat->SetField( anSrcField[iVRTField], 
+            poSrcFeat->SetField( anSrcField[iVRTField],
                                  poVRTFeature->GetFieldAsString(iVRTField));
         }
     }
@@ -1865,7 +1865,7 @@ OGRErr OGRVRTLayer::ICreateFeature( OGRFeature* poVRTFeature )
 
     if( iFIDField != -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "The CreateFeature() operation is not supported if the FID option is specified." );
         return OGRERR_FAILURE;
     }
@@ -1903,7 +1903,7 @@ OGRErr OGRVRTLayer::ISetFeature( OGRFeature* poVRTFeature )
 
     if( iFIDField != -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "The SetFeature() operation is not supported if the FID option is specified." );
         return OGRERR_FAILURE;
     }
@@ -1937,7 +1937,7 @@ OGRErr OGRVRTLayer::DeleteFeature( GIntBig nFID )
 
     if( iFIDField != -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "The DeleteFeature() operation is not supported if the FID option is specified." );
         return OGRERR_FAILURE;
     }
@@ -2033,7 +2033,7 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCRandomRead) )
         return iFIDField == -1 && poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite)
              || EQUAL(pszCap,OLCDeleteFeature) )
         return bUpdate && iFIDField == -1 && poSrcLayer->TestCapability(pszCap);

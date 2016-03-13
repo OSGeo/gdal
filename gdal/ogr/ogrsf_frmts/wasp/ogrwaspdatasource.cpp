@@ -38,7 +38,7 @@
 /*                          OGRWAsPDataSource()                          */
 /************************************************************************/
 
-OGRWAsPDataSource::OGRWAsPDataSource( const char * pszName, 
+OGRWAsPDataSource::OGRWAsPDataSource( const char * pszName,
                                       VSILFILE * hFileHandle )
     : sFilename( pszName )
     , hFile( hFileHandle )
@@ -74,8 +74,8 @@ int OGRWAsPDataSource::TestCapability( const char * pszCap )
 OGRLayer *OGRWAsPDataSource::GetLayerByName( const char * pszName )
 
 {
-    return ( oLayer.get() && EQUAL( pszName, oLayer->GetName() ) ) 
-        ? oLayer.get() 
+    return ( oLayer.get() && EQUAL( pszName, oLayer->GetName() ) )
+        ? oLayer.get()
         : NULL;
 }
 
@@ -114,14 +114,14 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
     CPLReadLineL( hFile );
     CPLReadLineL( hFile );
 
-    oLayer.reset( new OGRWAsPLayer( CPLGetBasename(sFilename.c_str()), 
-                                    hFile, 
+    oLayer.reset( new OGRWAsPLayer( CPLGetBasename(sFilename.c_str()),
+                                    hFile,
                                     poSpatialRef ) );
     if (poSpatialRef) poSpatialRef->Release();
 
     const vsi_l_offset iOffset = VSIFTellL( hFile );
     pszLine = CPLReadLineL( hFile );
-    if ( !pszLine ) 
+    if ( !pszLine )
     {
         if (!bSilent) CPLError( CE_Failure, CPLE_FileIO, "no feature in file");
         oLayer.reset();
@@ -136,9 +136,9 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
 
         if ( iNumValues < 2 )
         {
-            if (!bSilent && iNumValues) 
+            if (!bSilent && iNumValues)
                 CPLError(CE_Failure, CPLE_FileIO, "no enough values" );
-            else if (!bSilent) 
+            else if (!bSilent)
                 CPLError(CE_Failure, CPLE_FileIO, "no feature in file" );
 
             oLayer.reset();
@@ -159,7 +159,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
         oLayer->CreateField( &height );
     }
 
-    VSIFSeekL( hFile, iOffset, SEEK_SET );	
+    VSIFSeekL( hFile, iOffset, SEEK_SET );
     return OGRERR_NONE;
 }
 
@@ -179,7 +179,7 @@ OGRLayer *OGRWAsPDataSource::GetLayer( int iLayer )
 /*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName, 
+OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
                                      OGRSpatialReference *poSpatialRef,
                                      OGRwkbGeometryType eGType,
                                      char ** papszOptions)
@@ -195,28 +195,28 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
       && eGType != wkbMultiPolygon
       && eGType != wkbMultiPolygon25D )
     {
-        CPLError( CE_Failure, 
-                CPLE_NotSupported, 
+        CPLError( CE_Failure,
+                CPLE_NotSupported,
                 "unsupported geometry type %s", OGRGeometryTypeToName( eGType ) );
         return NULL;
     }
 
-    if ( !OGRGeometryFactory::haveGEOS() 
+    if ( !OGRGeometryFactory::haveGEOS()
             && ( eGType == wkbPolygon
               || eGType == wkbPolygon25D
               || eGType == wkbMultiPolygon
               || eGType == wkbMultiPolygon25D ))
     {
-        CPLError( CE_Failure, 
-                CPLE_NotSupported, 
+        CPLError( CE_Failure,
+                CPLE_NotSupported,
                 "unsupported geometry type %s without GEOS support", OGRGeometryTypeToName( eGType ) );
         return NULL;
     }
 
     if ( oLayer.get() )
     {
-        CPLError( CE_Failure, 
-                CPLE_NotSupported, 
+        CPLError( CE_Failure,
+                CPLE_NotSupported,
                 "this data source does not support more than one layer" );
         return NULL;
     }
@@ -253,8 +253,8 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
         {
             if ( !OGRGeometryFactory::haveGEOS() )
             {
-                CPLError( CE_Warning, 
-                        CPLE_IllegalArg, 
+                CPLError( CE_Warning,
+                        CPLE_IllegalArg,
                         "GEOS support not enabled, ignoring option WASP_TOLERANCE" );
             }
             else
@@ -262,8 +262,8 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
                 pdfTolerance.reset( new double );
                 if (!(std::istringstream( pszToler ) >> *pdfTolerance ))
                 {
-                    CPLError( CE_Failure, 
-                            CPLE_IllegalArg, 
+                    CPLError( CE_Failure,
+                            CPLE_IllegalArg,
                             "cannot set tolerance from %s", pszToler );
                     return NULL;
                 }
@@ -279,8 +279,8 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
             pdfAdjacentPointTolerance.reset( new double );
             if (!(std::istringstream( pszAdjToler ) >> *pdfAdjacentPointTolerance ))
             {
-                CPLError( CE_Failure, 
-                        CPLE_IllegalArg, 
+                CPLError( CE_Failure,
+                        CPLE_IllegalArg,
                         "cannot set tolerance from %s", pszAdjToler );
                 return NULL;
             }
@@ -295,18 +295,18 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
             pdfPointToCircleRadius.reset( new double );
             if (!(std::istringstream( pszPtToCircRad ) >> *pdfPointToCircleRadius ))
             {
-                CPLError( CE_Failure, 
-                        CPLE_IllegalArg, 
+                CPLError( CE_Failure,
+                        CPLE_IllegalArg,
                         "cannot set tolerance from %s", pszPtToCircRad );
                 return NULL;
             }
         }
     }
 
-    oLayer.reset( new OGRWAsPLayer( CPLGetBasename(pszName), 
-                                    hFile, 
+    oLayer.reset( new OGRWAsPLayer( CPLGetBasename(pszName),
+                                    hFile,
                                     poSpatialRef,
-                                    sFirstField, 
+                                    sFirstField,
                                     sSecondField,
                                     sGeomField,
                                     bMerge,

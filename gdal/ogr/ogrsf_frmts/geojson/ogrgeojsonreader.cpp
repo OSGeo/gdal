@@ -718,7 +718,7 @@ bool OGRGeoJSONReader::AddFeature( OGRGeoJSONLayer* poLayer, OGRGeometry* poGeom
 {
     bool bAdded = false;
 
-    // TODO: Should we check if geometry is of type of 
+    // TODO: Should we check if geometry is of type of
     //       wkbGeometryCollection ?
 
     if( NULL != poGeometry )
@@ -766,7 +766,7 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
 /* -------------------------------------------------------------------- */
     if( NULL != poGeometry )
     {
-        if( !bGeometryPreserve_ 
+        if( !bGeometryPreserve_
             && wkbGeometryCollection != poGeometry->getGeometryType() )
         {
             OGRGeometryCollection* poMetaGeometry = NULL;
@@ -827,7 +827,7 @@ void OGRGeoJSONReaderSetField(OGRLayer* poLayer,
                               bool bFlattenNestedAttributes,
                               char chNestedAttributeSeparator)
 {
-    if( bFlattenNestedAttributes && 
+    if( bFlattenNestedAttributes &&
         poVal != NULL && json_object_get_type(poVal) == json_type_object )
     {
         OGRGeoJSONReaderSetFieldNestedAttribute(poLayer,
@@ -1054,7 +1054,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     json_object_iter it;
     it.key = NULL;
     it.val = NULL;
-    it.entry = NULL;    
+    it.entry = NULL;
     json_object_object_foreachC(poTmp, it)
     {
         if( EQUAL( it.key, "geometry" ) ) {
@@ -1263,7 +1263,7 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
                   "Unsupported geometry type detected. "
                   "Feature gets NULL geometry assigned." );
     }
-    // If we have a crs object in the current object, let's try and 
+    // If we have a crs object in the current object, let's try and
     // set it too.
 
     json_object* poObjSrs = OGRGeoJSONFindMemberByName( poObj, "crs" );
@@ -1285,7 +1285,7 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
 {
     CPLAssert( NULL != poObj );
 
-    if( json_type_array == json_object_get_type( poObj ) ) 
+    if( json_type_array == json_object_get_type( poObj ) )
     {
         const int nSize = json_object_array_length( poObj );
 
@@ -1343,7 +1343,7 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
         // Read Z coordinate
         if( nSize >= GeoJSONObject::eMaxCoordinateDimension )
         {
-            // Don't *expect* mixed-dimension geometries, although the 
+            // Don't *expect* mixed-dimension geometries, although the
             // spec doesn't explicitly forbid this.
             poObjCoord = json_object_array_get_idx( poObj, 2 );
             if (poObjCoord == NULL)

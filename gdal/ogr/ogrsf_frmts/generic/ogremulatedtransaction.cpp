@@ -106,12 +106,12 @@ class OGRDataSourceWithTransaction : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    virtual OGRLayer   *ICreateLayer( const char *pszName, 
+    virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );
-    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
-                                   const char *pszNewName, 
+    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
+                                   const char *pszNewName,
                                    char **papszOptions = NULL );
 
     virtual OGRStyleTable *GetStyleTable();
@@ -286,7 +286,7 @@ int         OGRDataSourceWithTransaction::TestCapability( const char * pszCap )
     return m_poBaseDataSource->TestCapability(pszCap);
 }
 
-OGRLayer   *OGRDataSourceWithTransaction::ICreateLayer( const char *pszName, 
+OGRLayer   *OGRDataSourceWithTransaction::ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef,
                                      OGRwkbGeometryType eGType,
                                      char ** papszOptions)
@@ -295,8 +295,8 @@ OGRLayer   *OGRDataSourceWithTransaction::ICreateLayer( const char *pszName,
     return WrapLayer(m_poBaseDataSource->CreateLayer(pszName, poSpatialRef, eGType, papszOptions));
 }
 
-OGRLayer   *OGRDataSourceWithTransaction::CopyLayer( OGRLayer *poSrcLayer, 
-                                   const char *pszNewName, 
+OGRLayer   *OGRDataSourceWithTransaction::CopyLayer( OGRLayer *poSrcLayer,
+                                   const char *pszNewName,
                                    char **papszOptions )
 {
     if( !m_poBaseDataSource ) return NULL;
@@ -608,4 +608,3 @@ OGRErr       OGRLayerWithTransaction::ICreateFeature( OGRFeature *poFeature )
     delete poSrcFeature;
     return eErr;
 }
-

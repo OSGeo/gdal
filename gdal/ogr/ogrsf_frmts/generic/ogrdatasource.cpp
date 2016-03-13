@@ -126,7 +126,7 @@ int OGR_DS_GetSummaryRefCount( OGRDataSourceH hDataSource )
 /*                         OGR_DS_CreateLayer()                         */
 /************************************************************************/
 
-OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS, 
+OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
                               const char * pszName,
                               OGRSpatialReferenceH hSpatialRef,
                               OGRwkbGeometryType eType,
@@ -140,7 +140,7 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
         CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in OGR_DS_CreateLayer");
         return NULL;
     }
-    OGRLayerH hLayer = (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer( 
+    OGRLayerH hLayer = (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer(
         pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
 
 #ifdef OGRAPISPY_ENABLED
@@ -155,7 +155,7 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
 /*                          OGR_DS_CopyLayer()                          */
 /************************************************************************/
 
-OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS, 
+OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS,
                             OGRLayerH hSrcLayer, const char *pszNewName,
                             char **papszOptions )
 
@@ -164,8 +164,8 @@ OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS,
     VALIDATE_POINTER1( hSrcLayer, "OGR_DS_CopyLayer", NULL );
     VALIDATE_POINTER1( pszNewName, "OGR_DS_CopyLayer", NULL );
 
-    return (OGRLayerH) 
-        ((GDALDataset *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer, 
+    return (OGRLayerH)
+        ((GDALDataset *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer,
                                             pszNewName, papszOptions );
 }
 
@@ -211,7 +211,7 @@ OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszName )
 /*                         OGR_DS_ExecuteSQL()                          */
 /************************************************************************/
 
-OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS, 
+OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
                              const char *pszStatement,
                              OGRGeometryH hSpatialFilter,
                              const char *pszDialect )
@@ -219,7 +219,7 @@ OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_ExecuteSQL", NULL );
 
-    OGRLayerH hLayer = (OGRLayerH) 
+    OGRLayerH hLayer = (OGRLayerH)
         ((GDALDataset *)hDS)->ExecuteSQL( pszStatement,
                                             (OGRGeometry *) hSpatialFilter,
                                             pszDialect );

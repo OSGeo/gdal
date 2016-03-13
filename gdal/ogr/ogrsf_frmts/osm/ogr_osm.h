@@ -362,7 +362,7 @@ class OGROSMDataSource : public OGRDataSource
     /* values >= 0 are indexes of panReqIds. */
     /*        == -1 for unoccupied */
     /*        < -1 are expressed as -nIndexToCollisonBuckets-2 where nIndexToCollisonBuckets point to psCollisionBuckets */
-    int                *panHashedIndexes; 
+    int                *panHashedIndexes;
     CollisionBucket    *psCollisionBuckets;
     bool                bHashedIndexValid;
 #endif
@@ -492,4 +492,3 @@ class OGROSMDataSource : public OGRDataSource
 };
 
 #endif /* ndef OGR_OSM_H_INCLUDED */
-

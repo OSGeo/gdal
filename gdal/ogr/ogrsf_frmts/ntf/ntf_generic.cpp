@@ -218,10 +218,10 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                                                  static_cast<int>(strlen(papszValues[iAtt])) );
                       }
 
-                      if( CSLFindString( papszFullAttList, 
+                      if( CSLFindString( papszFullAttList,
                                          papszTypes[iAtt] ) == -1 )
-                          papszFullAttList = 
-                              CSLAddString( papszFullAttList, 
+                          papszFullAttList =
+                              CSLAddString( papszFullAttList,
                                             papszTypes[iAtt] );
                       else if( poAttDesc != NULL )
                           poClass->SetMultiple( poAttDesc->val_type );
@@ -324,7 +324,7 @@ static void AddGenericAttributes( NTFFileReader * poReader,
         char  szListName[128];
         int   iListField;
 
-        snprintf( szListName, sizeof(szListName), "%s_LIST", 
+        snprintf( szListName, sizeof(szListName), "%s_LIST",
                  poFeature->GetFieldDefnRef(iField)->GetNameRef() );
         iListField = poFeature->GetFieldIndex( szListName );
 
@@ -337,14 +337,14 @@ static void AddGenericAttributes( NTFFileReader * poReader,
             char        *pszAttLongName, *pszAttValue, *pszCodeDesc;
 
             poReader->ProcessAttValue( papszTypes[iAtt], papszValues[iAtt],
-                                       &pszAttLongName, &pszAttValue, 
+                                       &pszAttLongName, &pszAttValue,
                                        &pszCodeDesc );
 
             if( poFeature->IsFieldSet( iListField ) )
             {
-                poFeature->SetField( iListField, 
-                    CPLSPrintf( "%s,%s", 
-                                poFeature->GetFieldAsString( iListField ), 
+                poFeature->SetField( iListField,
+                    CPLSPrintf( "%s,%s",
+                                poFeature->GetFieldAsString( iListField ),
                                 pszAttValue ) );
             }
             else
@@ -427,7 +427,7 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
                                                NTFRecord **papoGroup )
 
 {
-    if( CSLCount((char **) papoGroup) < 1 
+    if( CSLCount((char **) papoGroup) < 1
         || papoGroup[0]->GetType() != NRT_COLLECT )
         return NULL;
 
@@ -717,7 +717,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 /* ==================================================================== */
 /*      Traditional POLYGON record groups.                              */
 /* ==================================================================== */
-    if( CSLCount((char **) papoGroup) >= 2 
+    if( CSLCount((char **) papoGroup) >= 2
         && papoGroup[0]->GetType() == NRT_POLYGON
         && papoGroup[1]->GetType() == NRT_CHAIN )
     {
@@ -731,7 +731,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 
         if( nNumLinks > MAX_LINK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "MAX_LINK exceeded in ntf_generic.cpp." );
             return poFeature;
         }
@@ -790,12 +790,12 @@ static OGRFeature *TranslateGenericCPoly( NTFFileReader *poReader,
     if( papoGroup[0]->GetType() != NRT_CPOLY )
         return NULL;
 
-    if( papoGroup[1] == NULL || 
-        (papoGroup[1]->GetType() != NRT_GEOMETRY 
-         && papoGroup[1]->GetType() != NRT_GEOMETRY3D) ) 
+    if( papoGroup[1] == NULL ||
+        (papoGroup[1]->GetType() != NRT_GEOMETRY
+         && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
         return NULL;
 
-    if( papoGroup[1] != NULL 
+    if( papoGroup[1] != NULL
         && papoGroup[2]->GetType() != NRT_ATTREC )
         return NULL;
 
@@ -811,13 +811,13 @@ static OGRFeature *TranslateGenericCPoly( NTFFileReader *poReader,
     AddGenericAttributes( poReader, papoGroup, poFeature );
 
     // Read point geometry
-    if( papoGroup[1] != NULL 
+    if( papoGroup[1] != NULL
         && (papoGroup[1]->GetType() == NRT_GEOMETRY
             || papoGroup[1]->GetType() == NRT_GEOMETRY3D) )
     {
         poFeature->SetGeometryDirectly(
             poReader->ProcessGeometry(papoGroup[1]));
-        poFeature->SetField( "GEOM_ID", 
+        poFeature->SetField( "GEOM_ID",
                              atoi(papoGroup[1]->GetField(3,8)) );
     }
 
@@ -892,7 +892,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             if( iType == NRT_POINTREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_POINT", 
+                    EstablishLayer( "GENERIC_POINT",
                                     OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericPoint,
                                     NRT_POINTREC, poClass,
@@ -902,7 +902,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_LINEREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_LINE", 
+                    EstablishLayer( "GENERIC_LINE",
                                     OGR_GT_SetModifier(wkbLineString, bHasZ, FALSE),
                                     TranslateGenericLine,
                                     NRT_LINEREC, poClass,
@@ -912,7 +912,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_TEXTREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_TEXT", 
+                    EstablishLayer( "GENERIC_TEXT",
                                     OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericText,
                                     NRT_TEXTREC, poClass,
@@ -922,7 +922,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_NAMEREC )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_NAME", 
+                    EstablishLayer( "GENERIC_NAME",
                                     OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericName,
                                     NRT_NAMEREC, poClass,
@@ -957,12 +957,12 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_POLYGON )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_POLY", 
+                    EstablishLayer( "GENERIC_POLY",
                                     OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericPoly,
                                     NRT_POLYGON, poClass,
                                     "POLY_ID", OFTInteger, 6, 0,
-                                    "NUM_PARTS", OFTInteger, 4, 0, 
+                                    "NUM_PARTS", OFTInteger, 4, 0,
                                     "DIR", OFTIntegerList, 1, 0,
                                     "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
                                     "RingStart", OFTIntegerList, 6, 0,
@@ -971,16 +971,15 @@ void OGRNTFDataSource::EstablishGenericLayers()
             else if( iType == NRT_CPOLY )
             {
                 poPReader->
-                    EstablishLayer( "GENERIC_CPOLY", 
+                    EstablishLayer( "GENERIC_CPOLY",
                                     OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericCPoly,
                                     NRT_CPOLY, poClass,
                                     "CPOLY_ID", OFTInteger, 6, 0,
-                                    "NUM_PARTS", OFTInteger, 4, 0, 
+                                    "NUM_PARTS", OFTInteger, 4, 0,
                                     "POLY_ID", OFTIntegerList, 1, 0,
                                     NULL );
             }
         }
     }
 }
-

@@ -184,7 +184,7 @@ struct WKBMultiLineString {
 /*    3. A MultiPolygon is defined as topologically closed.               */
 /*    4. A MultiPolygon may not have cut lines, spikes or punctures,      */
 /*       a MultiPolygon is a Regular, Closed point set:                   */
-/*    5. The interior of a MultiPolygon with more than 1 Polygon is not   */ 
+/*    5. The interior of a MultiPolygon with more than 1 Polygon is not   */
 /*       connected, the number of connected components of the interior    */
 /*       of a MultiPolygon is equal to the number of Polygons in the      */
 /*       MultiPolygon.                                                    */
@@ -192,7 +192,7 @@ struct WKBMultiLineString {
 /*       (LineStrings) corresponding to the boundaries of its element     */
 /*       Polygons. Each curve in the boundary of the MultiPolygon is in   */
 /*       the boundary of exactly 1 element Polygon, and every curve in    */
-/*       the boundary of an element Polygon is in the boundary of the     */ 
+/*       the boundary of an element Polygon is in the boundary of the     */
 /*       MultiPolygon.                                                    */
 /**************************************************************************/
 struct WKBMultiPolygon {
@@ -230,5 +230,3 @@ public:
 };
 
 #endif /* ndef OGIS_GEOMETRY_WKB_STRUCT_H */
-
-

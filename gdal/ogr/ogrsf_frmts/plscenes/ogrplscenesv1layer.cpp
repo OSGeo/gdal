@@ -288,7 +288,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         json_object_put(poSpec);
         return;
     }
-    
+
     json_object* poItems = json_ex_get_object_by_path(poProperties, "features.items");
     if( poItems == NULL || json_object_get_type(poItems) != json_type_object )
     {
@@ -419,8 +419,8 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         json_object_object_add(poId, "src_field", json_object_new_string("id") );
         json_object_object_add(poId, "server_queryable", json_object_new_boolean(TRUE) );
 
-        osPropertiesDesc += "\"id\""; 
-        osPropertiesDesc += ":"; 
+        osPropertiesDesc += "\"id\"";
+        osPropertiesDesc += ":";
         osPropertiesDesc += json_object_to_json_string(poId);
 
         OGRFieldDefn oFieldDefn("id", OFTString);
@@ -611,8 +611,8 @@ void OGRPLScenesV1Layer::ParseProperties(json_object* poProperties,
             const char* pszKeySerialized = json_object_to_json_string(poKey);
             if( osPropertiesDesc != "{" )
                 osPropertiesDesc += ",";
-            osPropertiesDesc += pszKeySerialized; 
-            osPropertiesDesc += ":"; 
+            osPropertiesDesc += pszKeySerialized;
+            osPropertiesDesc += ":";
             json_object_put(poKey);
 
             json_object_object_add( it.val, "src_field",
@@ -722,8 +722,8 @@ void OGRPLScenesV1Layer::ParseEmbeds(json_object* poProperties,
                 const char* pszKeySerialized = json_object_to_json_string(poKey);
                 if( osPropertiesDesc != "{" )
                     osPropertiesDesc += ",";
-                osPropertiesDesc += pszKeySerialized; 
-                osPropertiesDesc += ":"; 
+                osPropertiesDesc += pszKeySerialized;
+                osPropertiesDesc += ":";
                 json_object_put(poKey);
 
                 if( EQUAL(pszJSonFieldName, "_links") && bFoundLinks )

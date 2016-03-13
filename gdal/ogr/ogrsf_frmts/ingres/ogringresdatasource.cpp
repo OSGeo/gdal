@@ -53,15 +53,15 @@ SetConnParam(II_PTR *connHandle,
     setconnParm.sc_connHandle = *connHandle;
     setconnParm.sc_paramID = paramID;
     setconnParm.sc_paramValue = paramValue;
-	
+
     IIapi_setConnectParam(&setconnParm);
-	
+
     while( setconnParm.sc_genParm.gp_completed == FALSE )
         IIapi_wait( &waitParm );
 
     if (setconnParm.sc_genParm.gp_errorHandle)
     {
-        OGRIngresStatement::ReportError( &(setconnParm.sc_genParm), 
+        OGRIngresStatement::ReportError( &(setconnParm.sc_genParm),
                                          "Failed to set OpenAPI connection para." );
         return IIAPI_ST_FAILURE;
     }
@@ -126,7 +126,7 @@ OGRIngresDataSource::~OGRIngresDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRIngresDataSource::Open( const char *pszFullName, 
+int OGRIngresDataSource::Open( const char *pszFullName,
                                char **papszOptions, int bUpdate )
 
 
@@ -194,11 +194,11 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 
         /*
         ** construct the vnode string, like:
-        ** @host,protocol,port[;attribute=value{;attribute=value}][[user,password]], 
+        ** @host,protocol,port[;attribute=value{;attribute=value}][[user,password]],
         ** visit for detail
         ** http://docs.actian.com/ingres/10.0/command-reference-guide/1207-dynamic-vnode-specificationconnect-to-remote-node
         */
-        sprintf(pszDBTarget, "@%s,%s,%s;%s[%s,%s]::%s ", 
+        sprintf(pszDBTarget, "@%s,%s,%s;%s[%s,%s]::%s ",
             pszHost,        /* host, compute name or IP address */
             "TCP_IP",       /* protocol, default with TCP/IP */
             pszInstance,    /* instance Name */
@@ -223,7 +223,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 /* -------------------------------------------------------------------- */
     IIAPI_INITPARM  initParm;
 
-    initParm.in_version = IIAPI_VERSION_1; 
+    initParm.in_version = IIAPI_VERSION_1;
     initParm.in_timeout = -1;
     IIapi_initialize( &initParm );
 
@@ -233,13 +233,13 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     hConn = NULL;
     const char *pszEffuser = CSLFetchNameValue(papszOptions,"effuser");
     const char *pszDBpwd = CSLFetchNameValue(papszOptions,"dbpwd");
-    if ( pszEffuser 
-        && strlen(pszEffuser) > 0 
-        && pszDBpwd 
+    if ( pszEffuser
+        && strlen(pszEffuser) > 0
+        && pszDBpwd
         && strlen(pszDBpwd) > 0 )
-    { 
+    {
         if (SetConnParam(&hConn, IIAPI_CP_EFFECTIVE_USER,
-			(II_PTR)pszEffuser) != IIAPI_ST_SUCCESS 
+			(II_PTR)pszEffuser) != IIAPI_ST_SUCCESS
             || SetConnParam(&hConn, IIAPI_CP_DBMS_PASSWORD,
 			(II_PTR)pszDBpwd) != IIAPI_ST_SUCCESS )
         {
@@ -259,9 +259,9 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     connParm.co_target = (II_CHAR *) pszDBTarget;
     connParm.co_connHandle = hConn;
     connParm.co_tranHandle = NULL;
-    connParm.co_username = 
+    connParm.co_username =
         (II_CHAR*) CSLFetchNameValue(papszOptions,"username");
-    connParm.co_password = 
+    connParm.co_password =
         (II_CHAR*)CSLFetchNameValue(papszOptions,"password");
     connParm.co_timeout = -1;
 
@@ -275,10 +275,10 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 
     hConn = connParm.co_connHandle;
 
-    if( connParm.co_genParm.gp_status != IIAPI_ST_SUCCESS 
+    if( connParm.co_genParm.gp_status != IIAPI_ST_SUCCESS
         || hConn == NULL )
     {
-        OGRIngresStatement::ReportError( &(connParm.co_genParm), 
+        OGRIngresStatement::ReportError( &(connParm.co_genParm),
                                     "Failed to connect to Ingres database." );
         return FALSE;
     }
@@ -323,7 +323,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
             {
                 CPLString osTableName = papszFields[0];
                 osTableName.Trim();
-                papszTableNames = CSLAddString( papszTableNames, 
+                papszTableNames = CSLAddString( papszTableNames,
                                                 osTableName );
             }
         }
@@ -334,7 +334,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 /* -------------------------------------------------------------------- */
     int iRecord;
 
-    for( iRecord = 0; 
+    for( iRecord = 0;
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
          iRecord++ )
     {
@@ -381,7 +381,6 @@ int OGRIngresDataSource::OpenTable( const char *pszNewName, int bUpdate )
 int OGRIngresDataSource::TestCapability( const char * pszCap )
 
 {
-	
     if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
     else if( EQUAL(pszCap, ODsCDeleteLayer))
@@ -427,7 +426,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
                 "CREATE TABLE geometry_columns "
                 "( F_TABLE_CATALOG VARCHAR(256), "
                 "F_TABLE_SCHEMA VARCHAR(256), "
-                "F_TABLE_NAME VARCHAR(256) NOT NULL," 
+                "F_TABLE_NAME VARCHAR(256) NOT NULL,"
                 "F_GEOMETRY_COLUMN VARCHAR(256) NOT NULL, "
                 "COORD_DIMENSION INT, "
                 "SRID INT,"
@@ -446,7 +445,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
     if( hResult != NULL )
     {
         ingres_free_result( hResult );
-        hResult = NULL;   
+        hResult = NULL;
     }
 
     sprintf( szCommand, "DESCRIBE spatial_ref_sys" );
@@ -548,7 +547,7 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
 /*      Add to the cache.                                               */
 /* -------------------------------------------------------------------- */
     panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
-    papoSRS = (OGRSpatialReference **) 
+    papoSRS = (OGRSpatialReference **)
         CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
     panSRID[nKnownSRID] = nId;
     papoSRS[nKnownSRID] = poSRS;
@@ -587,7 +586,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
     if (pszAuthName && pszAuthID && EQUAL(pszAuthName, "EPSG"))
     {
-         sprintf( szCommand, 
+         sprintf( szCommand,
              "SELECT srid FROM spatial_ref_sys WHERE auth_name = 'EPSG' and auth_srid= %s",
              pszAuthID );
 
@@ -624,7 +623,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
 /* -------------------------------------------------------------------- */
-    sprintf( szCommand, 
+    sprintf( szCommand,
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
              pszWKT );
 
@@ -647,8 +646,8 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Get the current maximum srid in the srs table.                  */
 /* -------------------------------------------------------------------- */
-    sprintf( szCommand, 
-             "SELECT MAX(srid) FROM spatial_ref_sys");    
+    sprintf( szCommand,
+             "SELECT MAX(srid) FROM spatial_ref_sys");
 
     {
         OGRIngresStatement  oStateMaxSRID(GetConn());
@@ -660,12 +659,12 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 #define USER_DEFINED_SR_START   10000
         if( papszRow != NULL && papszRow[0] != NULL )
         {
-            // if there is no row in spatial reference, a random value 
+            // if there is no row in spatial reference, a random value
             // will be return, how to judge?
             nSRSId = *((II_INT4 *)papszRow[0]) ;
             if (nSRSId <= 0)
             {
-                nSRSId = USER_DEFINED_SR_START+1; 
+                nSRSId = USER_DEFINED_SR_START+1;
             }
             else
             {
@@ -736,13 +735,13 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
     if( poSpatialFilter != NULL )
     {
-        CPLDebug( "OGR_INGRES", 
+        CPLDebug( "OGR_INGRES",
           "Spatial filter ignored for now in OGRIngresDataSource::ExecuteSQL()" );
     }
 
@@ -862,8 +861,8 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
 {
     const char          *pszGeometryType = NULL;
     const char		*pszGeomColumnName;
-    const char 		*pszExpectedFIDName; 
-	
+    const char 		*pszExpectedFIDName;
+
     char                *pszLayerName;
     int                 nDimension = 3; // Ingres only supports 2d currently
 
@@ -888,7 +887,7 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
     {
         if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
-			
+
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
@@ -1012,9 +1011,9 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
         if(nSRSId != -1)
         {
             osCommand.Printf( "CREATE TABLE %s ("
-                              " %s INTEGER NOT NULL PRIMARY KEY GENERATED BY DEFAULT AS seq_%s IDENTITY (START WITH 1 INCREMENT BY 1),"  
+                              " %s INTEGER NOT NULL PRIMARY KEY GENERATED BY DEFAULT AS seq_%s IDENTITY (START WITH 1 INCREMENT BY 1),"
                               " %s %s SRID %d ) ",
-                              pszLayerName,                              
+                              pszLayerName,
                               pszExpectedFIDName,
                               pszLayerName,
                               pszGeomColumnName,
@@ -1026,7 +1025,7 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
             osCommand.Printf( "CREATE TABLE %s ("
                               " %s INTEGER NOT NULL PRIMARY KEY GENERATED BY DEFAULT AS seq_%s IDENTITY (START WITH 1 INCREMENT BY 1),"
                               " %s %s )",
-                              pszLayerName,                              
+                              pszLayerName,
                               pszExpectedFIDName,
                               pszLayerName,
                               pszGeomColumnName,

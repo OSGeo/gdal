@@ -245,7 +245,7 @@ class NTFFileReader
 
     long              nSavedFeatureId;
     long              nBaseFeatureId;
-    long              nFeatureCount; 
+    long              nFeatureCount;
 
     NTFRecord         *apoCGroup[MAX_REC_GROUP+1];
 
@@ -307,9 +307,9 @@ class NTFFileReader
     int               ApplyAttributeValue( OGRFeature *, int, const char *,
                                            char **, char ** );
 
-    int               ProcessAttValue( const char *pszValType, 
+    int               ProcessAttValue( const char *pszValType,
                                        const char *pszRawValue,
-                                       char **ppszAttName, 
+                                       char **ppszAttName,
                                        char **ppszAttValue,
                                        char **ppszCodeDesc );
 
@@ -395,7 +395,7 @@ class OGRNTFLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-#ifdef notdef    
+#ifdef notdef
     OGRFeature         *GetFeature( GIntBig nFeatureId );
     OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              ICreateFeature( OGRFeature *poFeature );
@@ -403,7 +403,7 @@ class OGRNTFLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-#ifdef notdef    
+#ifdef notdef
     GIntBig             GetFeatureCount( int );
 #endif
 
@@ -566,8 +566,8 @@ class OGRNTFDataSource : public OGRDataSource
 /*                          Support functions.                          */
 /************************************************************************/
 int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
-                                double x_c1, double y_c1, 
-                                double x_c2, double y_c2, 
+                                double x_c1, double y_c1,
+                                double x_c2, double y_c2,
                                 double *x_center, double *y_center );
 OGRGeometry *
 NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
@@ -575,8 +575,8 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                   double dfEndX, double dfEndY,
                                   int nVertexCount );
 OGRGeometry *
-NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY, 
-                                  double dfRadius, 
+NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
+                                  double dfRadius,
                                   double dfStartAngle, double dfEndAngle,
                                   int nVertexCount );
 

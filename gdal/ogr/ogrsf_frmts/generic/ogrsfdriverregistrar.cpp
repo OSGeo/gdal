@@ -80,7 +80,7 @@ int OGRwillNeverBeTrue = FALSE;
 #endif
 
 /**
- * \brief Cleanup all OGR related resources. 
+ * \brief Cleanup all OGR related resources.
  *
  * FIXME
  */
@@ -408,6 +408,6 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
 {
     VALIDATE_POINTER1( pszName, "OGRGetDriverByName", NULL );
 
-    return (OGRSFDriverH) 
+    return (OGRSFDriverH)
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }

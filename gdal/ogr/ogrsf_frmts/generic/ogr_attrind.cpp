@@ -70,7 +70,7 @@ OGRLayerAttrIndex::~OGRLayerAttrIndex()
 /*                            OGRAttrIndex()                            */
 /************************************************************************/
 
-OGRAttrIndex::OGRAttrIndex() 
+OGRAttrIndex::OGRAttrIndex()
 
 {
 }
