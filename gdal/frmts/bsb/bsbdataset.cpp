@@ -194,14 +194,14 @@ BSBDataset::BSBDataset() :
     psInfo = NULL;
 
 
-    osGCPProjection = 
+    osGCPProjection =
         "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4326]]";
 
     adfGeoTransform[0] = 0.0;     /* X Origin (top left corner) */
     adfGeoTransform[1] = 1.0;     /* X Pixel size */
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;     /* Y Origin (top left corner) */
-    adfGeoTransform[4] = 0.0;     
+    adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;     /* Y Pixel Size */
 
 }
@@ -255,7 +255,7 @@ const char *BSBDataset::GetProjectionRef()
 /*                     GDALHeuristicDatelineWrap()                      */
 /************************************************************************/
 
-static void 
+static void
 GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
 
 {
@@ -399,7 +399,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
         if( STARTS_WITH_CI(psInfo->papszHeader[i], "KNQ/") )
         {
-            pszKNQ = psInfo->papszHeader[i]; 
+            pszKNQ = psInfo->papszHeader[i];
             SetMetadataItem( "BSB_KNQ", pszKNQ + 4 );
         }
     }
@@ -442,9 +442,9 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
         else if( STARTS_WITH_CI(pszPR, "PR=MERCATOR") )
         {
-            // We somewhat arbitrarily select our first GCPX as our 
-            // central meridian.  This is mostly helpful to ensure 
-            // that regions crossing the dateline will be contiguous 
+            // We somewhat arbitrarily select our first GCPX as our
+            // central meridian.  This is mostly helpful to ensure
+            // that regions crossing the dateline will be contiguous
             // in mercator.
             osUnderlyingSRS.Printf( "PROJCS[\"Global Mercator\",%s,PROJECTION[\"Mercator_2SP\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%d],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1]]",
                 pszGEOGCS, (int) pasGCPList[0].dfGCPX );
@@ -454,7 +454,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                  && osPP.size() > 0 )
         {
 
-            osUnderlyingSRS.Printf( 
+            osUnderlyingSRS.Printf(
                 "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]",
                 pszGEOGCS, osPP.c_str() );
         }
@@ -462,21 +462,21 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         else if( STARTS_WITH_CI(pszPR, "PR=UNIVERSAL TRANSVERSE MERCATOR")
                  && osPP.size() > 0 )
         {
-            // This is not *really* UTM unless the central meridian 
-            // matches a zone which it does not in some (most?) maps. 
-            osUnderlyingSRS.Printf( 
-                "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0]]", 
+            // This is not *really* UTM unless the central meridian
+            // matches a zone which it does not in some (most?) maps.
+            osUnderlyingSRS.Printf(
+                "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0]]",
                 pszGEOGCS, osPP.c_str() );
         }
 
         else if( STARTS_WITH_CI(pszPR, "PR=POLYCONIC") && osPP.size() > 0 )
         {
-            osUnderlyingSRS.Printf( 
-                "PROJCS[\"unnamed\",%s,PROJECTION[\"Polyconic\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]", 
+            osUnderlyingSRS.Printf(
+                "PROJCS[\"unnamed\",%s,PROJECTION[\"Polyconic\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]",
                 pszGEOGCS, osPP.c_str() );
         }
 
-        else if( STARTS_WITH_CI(pszPR, "PR=LAMBERT CONFORMAL CONIC") 
+        else if( STARTS_WITH_CI(pszPR, "PR=LAMBERT CONFORMAL CONIC")
                  && osPP.size() > 0 && pszKNQ != NULL )
         {
             CPLString osP2, osP3;
@@ -501,7 +501,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
             }
 
             if( osP2.size() > 0 && osP3.size() > 0 )
-                osUnderlyingSRS.Printf( 
+                osUnderlyingSRS.Printf(
                     "PROJCS[\"unnamed\",%s,PROJECTION[\"Lambert_Conformal_Conic_2SP\"],PARAMETER[\"standard_parallel_1\",%s],PARAMETER[\"standard_parallel_2\",%s],PARAMETER[\"latitude_of_origin\",0.0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0]]",
                     pszGEOGCS, osP2.c_str(), osP3.c_str(), osPP.c_str() );
 
@@ -526,9 +526,9 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         {
             for( int i = 0; i < nGCPCount; i++ )
             {
-                poCT->Transform( 1, 
-                                 &(pasGCPList[i].dfGCPX), 
-                                 &(pasGCPList[i].dfGCPY), 
+                poCT->Transform( 1,
+                                 &(pasGCPList[i].dfGCPX),
+                                 &(pasGCPList[i].dfGCPY),
                                  &(pasGCPList[i].dfGCPZ) );
             }
 
@@ -543,7 +543,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Attempt to prepare a geotransform from the GCPs.                */
 /* -------------------------------------------------------------------- */
-    if( GDALGCPsToGeoTransform( nGCPCount, pasGCPList, adfGeoTransform, 
+    if( GDALGCPsToGeoTransform( nGCPCount, pasGCPList, adfGeoTransform,
                                 FALSE ) )
     {
         bGeoTransformSet = TRUE;
@@ -761,7 +761,7 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The BSB driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -872,8 +872,8 @@ static int BSBIsSRSOK(const char *pszWKT)
 /************************************************************************/
 
 static GDALDataset *
-BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-               int bStrict, char ** papszOptions, 
+BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+               int bStrict, char ** papszOptions,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
@@ -883,19 +883,19 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "BSB driver only supports one band images.\n" );
 
         return NULL;
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte
         && bStrict )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "BSB driver doesn't support data type %s. "
-                  "Only eight bit bands supported.\n", 
-                  GDALGetDataTypeName( 
+                  "Only eight bit bands supported.\n",
+                  GDALGetDataTypeName(
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         return NULL;
@@ -970,8 +970,8 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         for( int j = i+1; j < nPCTSize; j++ )
         {
-            if( abyPCT[i*3+0] == abyPCT[j*3+0] 
-                && abyPCT[i*3+1] == abyPCT[j*3+1] 
+            if( abyPCT[i*3+0] == abyPCT[j*3+0]
+                && abyPCT[i*3+1] == abyPCT[j*3+1]
                 && abyPCT[i*3+2] == abyPCT[j*3+2] )
             {
                 nPCTSize--;
@@ -1000,7 +1000,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Having to merge color table entries to reduce %d real\n"
-                  "color table entries down to 127 values.", 
+                  "color table entries down to 127 values.",
                   nPCTSize );
     }
 
@@ -1028,7 +1028,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
         }
 
-        // Merge the second entry into the first. 
+        // Merge the second entry into the first.
         nPCTSize--;
         abyPCT[iBestMatch2*3+0] = abyPCT[nPCTSize*3+0];
         abyPCT[iBestMatch2*3+1] = abyPCT[nPCTSize*3+1];
@@ -1068,8 +1068,8 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             const GDAL_GCP * pasGCPList = poSrcDS->GetGCPs();
             for( int i = 0; i < nGCPCount; i++ )
             {
-                VSIFPrintfL( psBSB->fp, 
-                            "REF/%d,%f,%f,%f,%f\n", 
+                VSIFPrintfL( psBSB->fp,
+                            "REF/%d,%f,%f,%f,%f\n",
                             i+1,
                             pasGCPList[i].dfGCPPixel, pasGCPList[i].dfGCPLine,
                             pasGCPList[i].dfGCPY, pasGCPList[i].dfGCPX);
@@ -1081,25 +1081,25 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         const char* pszProjection = poSrcDS->GetProjectionRef();
         if ( BSBIsSRSOK(pszProjection) )
         {
-            VSIFPrintfL( psBSB->fp, 
+            VSIFPrintfL( psBSB->fp,
                         "REF/%d,%d,%d,%f,%f\n",
                         1,
                         0, 0,
                         adfGeoTransform[3] + 0 * adfGeoTransform[4] + 0 * adfGeoTransform[5],
                         adfGeoTransform[0] + 0 * adfGeoTransform[1] + 0 * adfGeoTransform[2]);
-            VSIFPrintfL( psBSB->fp, 
+            VSIFPrintfL( psBSB->fp,
                         "REF/%d,%d,%d,%f,%f\n",
                         2,
                         nXSize, 0,
                         adfGeoTransform[3] + nXSize * adfGeoTransform[4] + 0 * adfGeoTransform[5],
                         adfGeoTransform[0] + nXSize * adfGeoTransform[1] + 0 * adfGeoTransform[2]);
-            VSIFPrintfL( psBSB->fp, 
+            VSIFPrintfL( psBSB->fp,
                         "REF/%d,%d,%d,%f,%f\n",
                         3,
                         nXSize, nYSize,
                         adfGeoTransform[3] + nXSize * adfGeoTransform[4] + nYSize * adfGeoTransform[5],
                         adfGeoTransform[0] + nXSize * adfGeoTransform[1] + nYSize * adfGeoTransform[2]);
-            VSIFPrintfL( psBSB->fp, 
+            VSIFPrintfL( psBSB->fp,
                         "REF/%d,%d,%d,%f,%f\n",
                         4,
                         0, nYSize,
@@ -1117,7 +1117,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
-        eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+        eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                  pabyScanline, nXSize, 1, GDT_Byte,
                                  nBands, nBands * nXSize );
         if( eErr == CE_None )

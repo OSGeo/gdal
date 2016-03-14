@@ -369,22 +369,22 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn )
 /* -------------------------------------------------------------------- */
     if( psImage->nBitsPerSample <= 8 )
         eDataType = GDT_Byte;
-    else if( psImage->nBitsPerSample == 16 
+    else if( psImage->nBitsPerSample == 16
              && EQUAL(psImage->szPVType,"SI") )
         eDataType = GDT_Int16;
     else if( psImage->nBitsPerSample == 16 )
         eDataType = GDT_UInt16;
     else if( psImage->nBitsPerSample == 12 )
         eDataType = GDT_UInt16;
-    else if( psImage->nBitsPerSample == 32 
+    else if( psImage->nBitsPerSample == 32
              && EQUAL(psImage->szPVType,"SI") )
         eDataType = GDT_Int32;
-    else if( psImage->nBitsPerSample == 32 
+    else if( psImage->nBitsPerSample == 32
              && EQUAL(psImage->szPVType,"R") )
         eDataType = GDT_Float32;
     else if( psImage->nBitsPerSample == 32 )
         eDataType = GDT_UInt32;
-    else if( psImage->nBitsPerSample == 64 
+    else if( psImage->nBitsPerSample == 64
              && EQUAL(psImage->szPVType,"R") )
         eDataType = GDT_Float64;
     else if( psImage->nBitsPerSample == 64
@@ -415,7 +415,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn )
 /*      Work out block size. If the image is all one big block we       */
 /*      handle via the scanline access API.                             */
 /* -------------------------------------------------------------------- */
-    if( psImage->nBlocksPerRow == 1 
+    if( psImage->nBlocksPerRow == 1
         && psImage->nBlocksPerColumn == 1
         && psImage->nBitsPerSample >= 8
         && EQUAL(psImage->szIC,"NC") )
@@ -437,7 +437,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn )
     poColorTable = NITFMakeColorTable(psImage,
                                       psBandInfo);
 
-    if( psImage->nBitsPerSample == 1 
+    if( psImage->nBitsPerSample == 1
     ||  psImage->nBitsPerSample == 3
     ||  psImage->nBitsPerSample == 5
     ||  psImage->nBitsPerSample == 6
@@ -499,8 +499,8 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( eErr != CE_None )
             return eErr;
 
-        memcpy( pImage, 
-                poGDS->pabyJPEGBlock + (nBand - 1) * nBlockBandSize, 
+        memcpy( pImage,
+                poGDS->pabyJPEGBlock + (nBand - 1) * nBlockBandSize,
                 nBlockBandSize );
 
         return eErr;
@@ -513,12 +513,12 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( bScanlineAccess )
     {
-        nBlockResult = 
+        nBlockResult =
             NITFReadImageLine(psImage, nBlockYOff, nBand, pImage);
     }
     else
     {
-        nBlockResult = 
+        nBlockResult =
             NITFReadImageBlock(psImage, nBlockXOff, nBlockYOff, nBand, pImage);
     }
 
@@ -539,10 +539,10 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      8bit.                                                           */
 /* -------------------------------------------------------------------- */
     if( psImage->bNoDataSet )
-        memset( pImage, psImage->nNoDataValue, 
+        memset( pImage, psImage->nNoDataValue,
                 psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
     else
-        memset( pImage, 0, 
+        memset( pImage, 0,
                 psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
 
     return CE_None;
@@ -563,12 +563,12 @@ CPLErr NITFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if( bScanlineAccess )
     {
-        nBlockResult = 
+        nBlockResult =
             NITFWriteImageLine(psImage, nBlockYOff, nBand, pImage);
     }
     else
     {
-        nBlockResult = 
+        nBlockResult =
             NITFWriteImageBlock(psImage, nBlockXOff, nBlockYOff, nBand,pImage);
     }
 
@@ -628,7 +628,7 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
 /*                     NITFSetColorInterpretation()                     */
 /************************************************************************/
 
-CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
+CPLErr NITFSetColorInterpretation( NITFImage *psImage,
                                    int nBand,
                                    GDALColorInterp eInterp )
 
@@ -654,7 +654,7 @@ CPLErr NITFSetColorInterpretation( NITFImage *psImage,
 
     if( pszREP == NULL )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Requested color interpretation (%s) not supported in NITF.",
                   GDALGetColorInterpretationName( eInterp ) );
         return CE_Failure;
@@ -683,7 +683,7 @@ CPLErr NITFSetColorInterpretation( NITFImage *psImage,
             || VSIFWriteL( reinterpret_cast<void *>( szPadded ), 1, 2,
                            psImage->psFile->fp ) != 2 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "IO failure writing new IREPBAND value to NITF file." );
             return CE_Failure;
         }

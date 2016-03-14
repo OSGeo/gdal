@@ -580,7 +580,7 @@ SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
  * lines for other layers.
  */
 
-void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer, 
+void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
                                        int iPolyLayer )
 
 {

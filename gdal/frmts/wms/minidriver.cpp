@@ -107,7 +107,7 @@ GDALWMSMiniDriverManager::GDALWMSMiniDriverManager() {
 }
 
 GDALWMSMiniDriverManager::~GDALWMSMiniDriverManager() {
-    for (std::list<GDALWMSMiniDriverFactory *>::iterator it = m_mdfs.begin(); 
+    for (std::list<GDALWMSMiniDriverFactory *>::iterator it = m_mdfs.begin();
          it != m_mdfs.end(); ++it) {
         GDALWMSMiniDriverFactory *mdf = *it;
         delete mdf;

@@ -123,8 +123,8 @@ const double Conversions::altitude      =   42164;          // from origin
 const double Conversions::req           =   6378.1690;       // earthequatorial radius
 const double Conversions::rpol          =   6356.5838;       // earth polar radius
 const double Conversions::oblate        =   1.0/298.257;    // oblateness of earth
-const double Conversions::deg_to_rad    =   M_PI/180.0; 
-const double Conversions::rad_to_deg    =   180.0/M_PI; 
+const double Conversions::deg_to_rad    =   M_PI/180.0;
+const double Conversions::rad_to_deg    =   180.0/M_PI;
 const double Conversions::nlines        =   3712;           // number of lines in an image
 const double Conversions::step          =   17.83/nlines;    // pixel / line step in degrees
 
@@ -139,7 +139,7 @@ void Conversions::convert_pixel_to_geo(double line, double column, double&longit
     double x = (column - COFF - 0.0) / double(CFAC >> 16);
     double y = (line - LOFF - 0.0) / double(LFAC >> 16);
 
-    double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*1737121856); 
+    double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*1737121856);
     double sn = (altitude*cos(x)*cos(y) - sd)/(SQR(cos(y)) + 1.006803*SQR(sin(y)));
     double s1 = altitude - sn*cos(x)*cos(y);
     double s2 = sn*sin(x)*cos(y);

@@ -314,7 +314,7 @@ public:
 
     int                 nDstXOff;
     int                 nDstYOff;
-    
+
     GDALTransformerFunc pfnTransformer;
     void                *pTransformerArg;
 

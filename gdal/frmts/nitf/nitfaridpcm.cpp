@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
- * Copyright (c) 2007, Frank Warmerdam 
+ * Copyright (c) 2007, Frank Warmerdam
  * Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 static const int neighbourhood_size_75[4] = { 23, 47, 74, 173 };
-static const int bits_per_level_by_busycode_75[4/*busy code*/][4/*level*/] = { 
+static const int bits_per_level_by_busycode_75[4/*busy code*/][4/*level*/] = {
     { 8, 5, 0, 0 }, // BC = 00
     { 8, 5, 2, 0 }, // BC = 01
     { 8, 6, 4, 0 }, // BC = 10
@@ -44,10 +44,10 @@ static const int bits_per_level_by_busycode_75[4/*busy code*/][4/*level*/] = {
 static const int CR075 = 1;
 
 // Level for each index value.
-static const int level_index_table[64] = 
+static const int level_index_table[64] =
 { 0,
   1, 1, 1,
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
@@ -132,19 +132,19 @@ static const int ij_index[64] = {
     62, // 6, 7
     64};// 7, 7
 
-static const int delta_075_level_2_bc_0[32] = 
+static const int delta_075_level_2_bc_0[32] =
 {-71, -49, -38, -32, -27, -23, -20, -17, -14, -12, -10, -8, -6, -4, -3, -1,
  1, 2, 4, 6, 8, 12, 14, 16, 19, 22, 26, 31, 37, 46, 72 };
-static const int delta_075_level_2_bc_1[32] = 
+static const int delta_075_level_2_bc_1[32] =
 {-71, -49, -38, -32, -27, -23, -20, -17, -14, -12, -10, -8, -6, -4, -3, -1,
  1, 2, 4, 6, 8, 12, 14, 16, 19, 22, 26, 31, 37, 46, 72 };
-static const int delta_075_level_2_bc_2[64] = 
+static const int delta_075_level_2_bc_2[64] =
 { -109, -82, -68, -59, -52, -46, -41, -37, -33, -30, -27, -25, -22, -20,
   -18, -16, -15, -13, -11, -10, -9, -8, -7, -6, -5,
   -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,
   13,14,15,16,17,18,19,20,21,24,26,28,31,35,38,
   42,47,52,60,69,85,118};
-static const int delta_075_level_2_bc_3[128] = 
+static const int delta_075_level_2_bc_3[128] =
 {-159,-134,-122,-113,-106,-100,-94,-88,-83,-79,-76,-72,-69,-66,-63,-61,
  -58,-56,-54,-52,-50,-48,-47,-45,-43,-42,-40,-39,-37,-36,-35,-33,-32,-31,
  -30,-29,-28,-27,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,
@@ -152,30 +152,30 @@ static const int delta_075_level_2_bc_3[128] =
  12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,
  35,36,37,38,39,40,41,42,43,45,48,52,56,60,64,68,73,79,85,92,100,109,
  118,130,144,159,177,196,217,236};
-static const int * const delta_075_level_2[4] = 
-{ delta_075_level_2_bc_0, delta_075_level_2_bc_1, 
+static const int * const delta_075_level_2[4] =
+{ delta_075_level_2_bc_0, delta_075_level_2_bc_1,
   delta_075_level_2_bc_2, delta_075_level_2_bc_3 };
 
 static const int delta_075_level_3_bc_1[4] = { -24, -6, 6, 24 };
-static const int delta_075_level_3_bc_2[16] = 
+static const int delta_075_level_3_bc_2[16] =
 {-68,-37,-23,-15, -9, -6, -3, -1, 1, 4, 7,10,16,24,37,70 };
-static const int delta_075_level_3_bc_3[16] = 
+static const int delta_075_level_3_bc_3[16] =
 {-117,-72, -50, -36, -25, -17, -10, -5,-1, 3, 7,14,25,45,82,166};
-static const int *const delta_075_level_3[4] = 
-{ NULL, delta_075_level_3_bc_1, 
+static const int *const delta_075_level_3[4] =
+{ NULL, delta_075_level_3_bc_1,
   delta_075_level_3_bc_2, delta_075_level_3_bc_3 };
 
 static const int delta_075_level_4_bc_3[4] = {-47,-8,4,43};
 static const int *const delta_075_level_4[4] = { NULL, NULL, NULL, delta_075_level_4_bc_3 };
 
-static const int *const * const delta_075_by_level_by_bc[4] = 
+static const int *const * const delta_075_by_level_by_bc[4] =
 { NULL, delta_075_level_2, delta_075_level_3, delta_075_level_4 };
 
 /************************************************************************/
 /*                              get_bits()                              */
 /************************************************************************/
 
-static int 
+static int
 get_bits( unsigned char *buffer, int first_bit, int num_bits )
 
 {
@@ -221,10 +221,10 @@ get_delta( unsigned char *srcdata,
         return 0;
 
     if( level_index == 3 )
-        delta_offset = bits_per_level[0] + bits_per_level[1] * 3 
+        delta_offset = bits_per_level[0] + bits_per_level[1] * 3
             + bits_per_level[2] * 12 + (pixel_index - 16) * bits_per_level[3];
     else if( level_index == 2 )
-        delta_offset = bits_per_level[0] + bits_per_level[1] * 3 
+        delta_offset = bits_per_level[0] + bits_per_level[1] * 3
             + (pixel_index - 4) * bits_per_level[2];
     else if( level_index == 1 )
         delta_offset = bits_per_level[0] + (pixel_index-1)*bits_per_level[1];
@@ -258,23 +258,23 @@ get_delta( unsigned char *srcdata,
 /*      Decode one 8x8 block.  The 9x9 L buffer is pre-loaded with      */
 /*      the left and top values from previous blocks.                   */
 /************************************************************************/
-static int 
+static int
 decode_block( unsigned char *srcdata, int nInputBytes,
               int busy_code, int comrat,
-              int block_offset, int block_size, 
+              int block_offset, int block_size,
               int left_side, int top_side, int L[9][9] )
 
 {
     int bError;
 
     // Level 2
-    L[0][4] = (L[0][0] + L[0][8])/2 
+    L[0][4] = (L[0][0] + L[0][8])/2
         + get_delta(srcdata,nInputBytes,busy_code,comrat,block_offset,block_size,0,4,&bError);
     if (bError) return FALSE;
-    L[4][0] = (L[0][0] + L[8][0])/2 
+    L[4][0] = (L[0][0] + L[8][0])/2
         + get_delta(srcdata,nInputBytes,busy_code,comrat,block_offset,block_size,4,0,&bError);
     if (bError) return FALSE;
-    L[4][4] = (L[0][0] + L[8][0] + L[0][8] + L[8][8])/4 
+    L[4][4] = (L[0][0] + L[8][0] + L[0][8] + L[8][8])/4
         + get_delta(srcdata,nInputBytes,busy_code,comrat,block_offset,block_size,4,4,&bError);
     if (bError) return FALSE;
 
@@ -289,17 +289,17 @@ decode_block( unsigned char *srcdata, int nInputBytes,
         for( int j = 0; j < 8; j += 4 )
         {
             // above
-            L[i+2][j] = (L[i][j]+L[i+4][j])/2 
+            L[i+2][j] = (L[i][j]+L[i+4][j])/2
                 + get_delta(srcdata,nInputBytes,busy_code,comrat,
                             block_offset,block_size,i+2,j,&bError);
             if (bError) return FALSE;
             // left
-            L[i][j+2] = (L[i][j]+L[i][j+4])/2 
+            L[i][j+2] = (L[i][j]+L[i][j+4])/2
                 + get_delta(srcdata,nInputBytes,busy_code,comrat,
                             block_offset,block_size,i,j+2,&bError);
             if (bError) return FALSE;
             // up-left
-            L[i+2][j+2] = (L[i][j]+L[i][j+4]+L[i+4][j]+L[i+4][j+4])/4 
+            L[i+2][j+2] = (L[i][j]+L[i][j+4]+L[i+4][j]+L[i+4][j+4])/4
                 + get_delta(srcdata,nInputBytes,busy_code,comrat,
                             block_offset,block_size,i+2,j+2,&bError);
             if (bError) return FALSE;
@@ -323,17 +323,17 @@ decode_block( unsigned char *srcdata, int nInputBytes,
         for( int j = 0; j < 8; j += 2 )
         {
             // above
-            L[i+1][j] = (L[i][j]+L[i+2][j])/2 
+            L[i+1][j] = (L[i][j]+L[i+2][j])/2
                 + get_delta(srcdata,nInputBytes,busy_code,comrat,
                             block_offset,block_size,i+1,j,&bError);
             if (bError) return FALSE;
             // left
-            L[i][j+1] = (L[i][j]+L[i][j+2])/2 
+            L[i][j+1] = (L[i][j]+L[i][j+2])/2
                 + get_delta(srcdata,nInputBytes,busy_code,comrat,
                             block_offset,block_size,i,j+1,&bError);
             if (bError) return FALSE;
             // up-left
-            L[i+1][j+1] = (L[i][j]+L[i][j+2]+L[i+2][j]+L[i+2][j+2])/4 
+            L[i+1][j+1] = (L[i][j]+L[i][j+2]+L[i+2][j]+L[i+2][j+2])/4
                 + get_delta(srcdata,nInputBytes,busy_code,comrat,
                             block_offset,block_size,i+1,j+1,&bError);
             if (bError) return FALSE;
@@ -347,7 +347,7 @@ decode_block( unsigned char *srcdata, int nInputBytes,
 /*                       NITFUncompressARIDPCM()                        */
 /************************************************************************/
 
-int NITFUncompressARIDPCM( NITFImage *psImage, 
+int NITFUncompressARIDPCM( NITFImage *psImage,
                            GByte *pabyInputData,
                            int nInputBytes,
                            GByte *pabyOutputImage )
@@ -359,9 +359,9 @@ int NITFUncompressARIDPCM( NITFImage *psImage,
 /* -------------------------------------------------------------------- */
     if( !EQUAL(psImage->szCOMRAT,"0.75") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "COMRAT=%s ARIDPCM is not supported.\n"
-                  "Currently only 0.75 is supported.", 
+                  "Currently only 0.75 is supported.",
                   psImage->szCOMRAT );
         return FALSE;
     }

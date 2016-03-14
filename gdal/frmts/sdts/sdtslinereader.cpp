@@ -139,19 +139,19 @@ void SDTSRawLine::Dump( FILE * fp )
     fprintf( fp, "  Module=%s, Record#=%d\n",
              oModId.szModule, oModId.nRecord );
     if( oLeftPoly.nRecord != -1 )
-        fprintf( fp, "  LeftPoly (Module=%s, Record=%d)\n", 
+        fprintf( fp, "  LeftPoly (Module=%s, Record=%d)\n",
                  oLeftPoly.szModule, oLeftPoly.nRecord );
     if( oRightPoly.nRecord != -1 )
-        fprintf( fp, "  RightPoly (Module=%s, Record=%d)\n", 
+        fprintf( fp, "  RightPoly (Module=%s, Record=%d)\n",
                  oRightPoly.szModule, oRightPoly.nRecord );
     if( oStartNode.nRecord != -1 )
-        fprintf( fp, "  StartNode (Module=%s, Record=%d)\n", 
+        fprintf( fp, "  StartNode (Module=%s, Record=%d)\n",
                  oStartNode.szModule, oStartNode.nRecord );
     if( oEndNode.nRecord != -1 )
-        fprintf( fp, "  EndNode (Module=%s, Record=%d)\n", 
+        fprintf( fp, "  EndNode (Module=%s, Record=%d)\n",
                  oEndNode.szModule, oEndNode.nRecord );
     for( int i = 0; i < nAttributes; i++ )
-        fprintf( fp, "  Attribute (Module=%s, Record=%d)\n", 
+        fprintf( fp, "  Attribute (Module=%s, Record=%d)\n",
                  paoATID[i].szModule, paoATID[i].nRecord );
 
     for( int i = 0; i < nVertices; i++ )
@@ -263,12 +263,12 @@ SDTSRawLine *SDTSLineReader::GetNextLine()
 
   @param poTransfer the SDTSTransfer of this SDTSLineReader, and from
   which the related SDTSPolygonReader will be instantiated.
-  @param iTargetPolyLayer the polygon reader instance number, used to avoid 
+  @param iTargetPolyLayer the polygon reader instance number, used to avoid
   processing lines for other layers.
 
 */
 
-void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer, 
+void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
                                        int iTargetPolyLayer )
 
 {

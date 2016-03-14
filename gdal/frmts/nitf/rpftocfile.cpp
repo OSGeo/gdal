@@ -36,8 +36,8 @@
  * its documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies, that
  * both the copyright notice and this permission notice appear in
- * supporting documentation, and that the name of L.A.S. Inc not be used 
- * in advertising or publicity pertaining to distribution of the software 
+ * supporting documentation, and that the name of L.A.S. Inc not be used
+ * in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission. L.A.S. Inc. makes no
  * representations about the suitability of this software for any purpose.
  * It is provided "as is" without express or implied warranty.
@@ -85,18 +85,18 @@ static void RPFTOCTrim(char* str)
 RPFToc* RPFTOCRead(const char* pszFilename, NITFFile* psFile)
 {
     int nTRESize;
-    const char* pachTRE = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes, 
+    const char* pachTRE = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes,
                            "RPFHDR", &nTRESize );
     if (pachTRE == NULL)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Can't find RPFHDR." );
         return NULL;
     }
 
     if (nTRESize != 48)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "RPFHDR TRE wrong size." );
         return NULL;
     }
@@ -125,7 +125,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
     if( VSIFSeekL( fp, locationSectionPhysicalLocation, SEEK_SET ) != 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Unable to seek to locationSectionPhysicalLocation at offset %d.",
                    locationSectionPhysicalLocation );
         return NULL;
@@ -163,32 +163,32 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
     if (boundaryRectangleSectionSubHeaderPhysIndex == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Can't find LID_BoundaryRectangleSectionSubheader." );
         return NULL;
     }
     if (boundaryRectangleTablePhysIndex == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Can't find LID_BoundaryRectangleTable." );
         return NULL;
     }
     if (frameFileIndexSectionSubHeaderPhysIndex == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Can't find LID_FrameFileIndexSectionSubHeader." );
         return NULL;
     }
     if (frameFileIndexSubsectionPhysIndex == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Can't find LID_FrameFileIndexSubsection." );
         return NULL;
     }
 
     if( VSIFSeekL( fp, boundaryRectangleSectionSubHeaderPhysIndex, SEEK_SET ) != 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Unable to seek to boundaryRectangleSectionSubHeaderPhysIndex at offset %d.",
                    boundaryRectangleSectionSubHeaderPhysIndex );
         return NULL;
@@ -204,7 +204,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
     if( !bOK || VSIFSeekL( fp, boundaryRectangleTablePhysIndex, SEEK_SET ) != 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Unable to seek to boundaryRectangleTablePhysIndex at offset %d.",
                    boundaryRectangleTablePhysIndex );
         return NULL;
@@ -325,7 +325,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
     if( VSIFSeekL( fp, frameFileIndexSectionSubHeaderPhysIndex, SEEK_SET ) != 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid TOC file. Unable to seek to frameFileIndexSectionSubHeaderPhysIndex at offset %d.",
                    frameFileIndexSectionSubHeaderPhysIndex );
         RPFTOCFree(toc);
@@ -350,7 +350,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
     unsigned short frameFileIndexRecordLength;
     bOK &= VSIFReadL( &frameFileIndexRecordLength, sizeof(frameFileIndexRecordLength), 1, fp) == 1;
     CPL_MSBPTR16( &frameFileIndexRecordLength );
-    
+
     if( !bOK )
     {
         CPLError(CE_Failure, CPLE_FileIO, "I/O error");
@@ -364,7 +364,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
     {
         if( VSIFSeekL( fp, frameFileIndexSubsectionPhysIndex + frameFileIndexRecordLength * i, SEEK_SET ) != 0)
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                     "Invalid TOC file. Unable to seek to frameFileIndexSubsectionPhysIndex(%d) at offset %d.",
                      i, frameFileIndexSubsectionPhysIndex + frameFileIndexRecordLength * i);
             RPFTOCFree(toc);
@@ -387,7 +387,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
         if (boundaryId >= toc->nEntries)
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                     "Invalid TOC file. Bad boundary id (%d) for frame file index %d.",
                      boundaryId, i);
             RPFTOCFree(toc);
@@ -424,7 +424,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
         if (frameRow >= entry->nVertFrames)
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                         "Invalid TOC file. Bad row num (%d) for frame file index %d.",
                         frameRow, i);
             RPFTOCFree(toc);
@@ -433,7 +433,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
         if (frameCol >= entry->nHorizFrames)
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                         "Invalid TOC file. Bad col num (%d) for frame file index %d.",
                         frameCol, i);
             RPFTOCFree(toc);
@@ -447,7 +447,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
         if (frameEntry->exists)
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                       "Frame entry(%d,%d) for frame file index %d was already found.",
                       frameRow, frameCol, i);
             CPLFree(frameEntry->directory);
@@ -503,7 +503,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         /* Add pathoffset wrt frame file index table subsection (loc[3]) */
         if( !bOK || VSIFSeekL( fp, frameFileIndexSubsectionPhysIndex + offsetFrameFilePathName, SEEK_SET ) != 0)
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                       "Invalid TOC file. Unable to seek to "
                       "frameFileIndexSubsectionPhysIndex + "
                       "offsetFrameFilePathName(%d) at offset %d.",
@@ -593,7 +593,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 #endif
                 {
                     frameEntry->fileExists = 0;
-                    CPLError( CE_Warning, CPLE_AppDefined, 
+                    CPLError( CE_Warning, CPLE_AppDefined,
                         "File %s does not exist.", frameEntry->fullFilePath );
                 }
 #if !defined(_WIN32) && !defined(_WIN32_CE)

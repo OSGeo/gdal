@@ -113,10 +113,10 @@ CNCSError JP2UserBox::Parse( CPL_UNUSED class CNCSJP2File &JP2File,
 /************************************************************************/
 
 #if ECWSDK_VERSION >= 40
-CNCSError JP2UserBox::UnParse( NCS::SDK::CFileBase &JP2File, 
+CNCSError JP2UserBox::UnParse( NCS::SDK::CFileBase &JP2File,
                                NCS::CIOStream &Stream )
 #else
-CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File, 
+CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File,
                                CNCSJPCIOStream &Stream )
 #endif
 {
@@ -125,13 +125,13 @@ CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File,
     if( m_nTBox == 0 )
     {
         Error = GetCNCSError(NCS_UNKNOWN_ERROR);
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "No box type set in JP2UserBox::UnParse()" );
         return Error;
     }
 #if ECWSDK_VERSION<50
     Error = CNCSJP2Box::UnParse(JP2File, Stream);
-#else 
+#else
     Error = CNCSSDKBox::UnParse(JP2File, Stream);
 #endif
 //    NCSJP2_CHECKIO_BEGIN(Error, Stream);

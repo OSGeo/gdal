@@ -778,7 +778,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         // Read data.
         eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
                              pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
-       
+
         if( eErr != CE_None )
             return eErr;
 
@@ -799,7 +799,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
     {
         for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
             pafMask[iPixel] = (float)(int) ( pafMask[iPixel] * 255.1 );
-       
+
         // Write data.
 
         /* The VRT warper will pass destination sizes that may exceed */
@@ -839,7 +839,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * destination image to be initialized to the indicated value (for all bands)
  * or indicates that it should be initialized to the NO_DATA value in
  * padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
- * destination image will be read and overlaid. 
+ * destination image will be read and overlaid.
  *
  * - WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
  * each chunk is processed.  In some cases this helps ensure a serial
@@ -1040,7 +1040,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /*      Create root.                                                    */
 /* -------------------------------------------------------------------- */
     psTree = CPLCreateXMLNode( NULL, CXT_Element, "GDALWarpOptions" );
-   
+
 /* -------------------------------------------------------------------- */
 /*      WarpMemoryLimit                                                 */
 /* -------------------------------------------------------------------- */
@@ -1102,7 +1102,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         char *pszName = NULL;
         const char *pszValue =
             CPLParseNameValue( psWO->papszWarpOptions[iWO], &pszName );
-           
+
         /* EXTRA_ELTS is an internal detail that we will recover */
         /* no need to serialize it */
         if( !EQUAL(pszName, "EXTRA_ELTS") )
@@ -1127,18 +1127,18 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         CPLCreateXMLElementAndValue(
             psTree, "SourceDataset",
             GDALGetDescription( psWO->hSrcDS ) );
-       
+
         char** papszOpenOptions = ((GDALDataset*)psWO->hSrcDS)->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
-   
+
     if( psWO->hDstDS != NULL && strlen(GDALGetDescription(psWO->hDstDS)) != 0 )
     {
         CPLCreateXMLElementAndValue(
             psTree, "DestinationDataset",
             GDALGetDescription( psWO->hDstDS ) );
     }
-   
+
 /* -------------------------------------------------------------------- */
 /*      Serialize transformer.                                          */
 /* -------------------------------------------------------------------- */
@@ -1180,7 +1180,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
             CPLCreateXMLNode(
                 CPLCreateXMLNode( psBand, CXT_Attribute, "dst" ),
                 CXT_Text, CPLString().Printf( "%d", psWO->panDstBands[i] ) );
-       
+
         if( psWO->padfSrcNoDataReal != NULL )
         {
             if (CPLIsNan(psWO->padfSrcNoDataReal[i]))
@@ -1355,7 +1355,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
             }
         }
     }
-   
+
 /* -------------------------------------------------------------------- */
 /*      Source Dataset.                                                 */
 /* -------------------------------------------------------------------- */
@@ -1385,7 +1385,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     CPLXMLNode *psBand = NULL;
 
     psWO->nBandCount = 0;
-   
+
     if (psBandTree)
         psBand = psBandTree->psChild;
     else
@@ -1421,13 +1421,13 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
         if( psWO->panSrcBands == NULL )
             psWO->panSrcBands = (int *)CPLMalloc(sizeof(int)*psWO->nBandCount);
-       
+
         pszValue = CPLGetXMLValue(psBand,"src",NULL);
         if( pszValue == NULL )
             psWO->panSrcBands[iBand] = iBand+1;
         else
             psWO->panSrcBands[iBand] = atoi(pszValue);
-       
+
 /* -------------------------------------------------------------------- */
 /*      Destination band.                                               */
 /* -------------------------------------------------------------------- */
@@ -1440,7 +1440,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
             psWO->panDstBands[iBand] = atoi(pszValue);
         }
-       
+
 /* -------------------------------------------------------------------- */
 /*      Source nodata.                                                  */
 /* -------------------------------------------------------------------- */
@@ -1453,7 +1453,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
             psWO->padfSrcNoDataReal[iBand] = CPLAtof(pszValue);
         }
-       
+
         pszValue = CPLGetXMLValue(psBand,"SrcNoDataImag",NULL);
         if( pszValue != NULL )
         {
@@ -1463,7 +1463,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
             psWO->padfSrcNoDataImag[iBand] = CPLAtof(pszValue);
         }
-       
+
 /* -------------------------------------------------------------------- */
 /*      Destination nodata.                                             */
 /* -------------------------------------------------------------------- */
@@ -1476,7 +1476,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
             psWO->padfDstNoDataReal[iBand] = CPLAtof(pszValue);
         }
-       
+
         pszValue = CPLGetXMLValue(psBand,"DstNoDataImag",NULL);
         if( pszValue != NULL )
         {
@@ -1486,7 +1486,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
             psWO->padfDstNoDataImag[iBand] = CPLAtof(pszValue);
         }
-       
+
         iBand++;
     }
 

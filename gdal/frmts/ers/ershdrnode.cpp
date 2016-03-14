@@ -80,11 +80,11 @@ void ERSHdrNode::MakeSpace()
     if( nItemCount == nItemMax )
     {
         nItemMax = (int) (nItemMax * 1.3) + 10;
-        papszItemName = (char **) 
+        papszItemName = (char **)
             CPLRealloc(papszItemName,sizeof(char *) * nItemMax);
-        papszItemValue = (char **) 
+        papszItemValue = (char **)
             CPLRealloc(papszItemValue,sizeof(char *) * nItemMax);
-        papoItemChild = (ERSHdrNode **) 
+        papoItemChild = (ERSHdrNode **)
             CPLRealloc(papoItemChild,sizeof(void *) * nItemMax);
     }
 }
@@ -215,8 +215,8 @@ int ERSHdrNode::ParseChildren( VSILFILE * fp )
 /* -------------------------------------------------------------------- */
         else if( osLine.Trim().length() > 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unexpected line parsing .ecw:\n%s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unexpected line parsing .ecw:\n%s",
                       osLine.c_str() );
             return FALSE;
         }
@@ -240,19 +240,19 @@ int ERSHdrNode::WriteSelf( VSILFILE * fp, int nIndent )
     {
         if( papszItemValue[i] != NULL )
         {
-            if( VSIFPrintfL( fp, "%s%s\t= %s\n", 
-                             oIndent.c_str(), 
-                             papszItemName[i], 
+            if( VSIFPrintfL( fp, "%s%s\t= %s\n",
+                             oIndent.c_str(),
+                             papszItemName[i],
                              papszItemValue[i] ) < 1 )
                 return FALSE;
         }
         else
         {
-            VSIFPrintfL( fp, "%s%s Begin\n", 
+            VSIFPrintfL( fp, "%s%s Begin\n",
                          oIndent.c_str(), papszItemName[i] );
             if( !papoItemChild[i]->WriteSelf( fp, nIndent+1 ) )
                 return FALSE;
-            if( VSIFPrintfL( fp, "%s%s End\n", 
+            if( VSIFPrintfL( fp, "%s%s End\n",
                              oIndent.c_str(), papszItemName[i] ) < 1 )
                 return FALSE;
         }
@@ -285,9 +285,9 @@ const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
                 {
                     if( papszItemValue[i][0] == '"' )
                     {
-                        // strip off quotes. 
+                        // strip off quotes.
                         osTempReturn = papszItemValue[i];
-                        osTempReturn = 
+                        osTempReturn =
                             osTempReturn.substr( 1, osTempReturn.length()-2 );
                         return osTempReturn;
                     }
@@ -331,7 +331,7 @@ const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
 /*      Find a particular element from an array valued item.            */
 /************************************************************************/
 
-const char *ERSHdrNode::FindElem( const char *pszPath, int iElem, 
+const char *ERSHdrNode::FindElem( const char *pszPath, int iElem,
                                   const char *pszDefault )
 
 {
@@ -439,7 +439,7 @@ void ERSHdrNode::Set( const char *pszPath, const char *pszValue )
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < nItemCount; i++ )
     {
-        if( EQUAL(osPath,papszItemName[i]) 
+        if( EQUAL(osPath,papszItemName[i])
             && papszItemValue[i] != NULL )
         {
             CPLFree( papszItemValue[i] );

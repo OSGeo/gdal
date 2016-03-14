@@ -84,12 +84,12 @@ class CPL_DLL MEMDataset : public GDALDataset
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
 
-    virtual CPLErr        AddBand( GDALDataType eType, 
+    virtual CPLErr        AddBand( GDALDataType eType,
                                    char **papszOptions=NULL );
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpaceBuf,
                                GSpacing nLineSpaceBuf,
@@ -152,12 +152,12 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual const char *GetUnitType();
-    CPLErr SetUnitType( const char * ); 
+    CPLErr SetUnitType( const char * );
 
     virtual char **GetCategoryNames();
     virtual CPLErr SetCategoryNames( char ** );

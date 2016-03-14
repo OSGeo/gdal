@@ -46,7 +46,7 @@ LT_USE_NAMESPACE(LizardTech)
 /* ==================================================================== */
 /************************************************************************/
 
-LTIVSIStream::LTIVSIStream() : poFileHandle(NULL), nError(0), pnRefCount(NULL), 
+LTIVSIStream::LTIVSIStream() : poFileHandle(NULL), nError(0), pnRefCount(NULL),
 bIsOpen(FALSE)
 {
 }
@@ -280,4 +280,3 @@ const char *LTIVSIStream::getID() const
 {
     return "LTIVSIStream:";
 }
-

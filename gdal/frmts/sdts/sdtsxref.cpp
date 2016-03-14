@@ -82,11 +82,11 @@ int SDTS_XREF::Read( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 
     CPLFree( pszSystemName );
-    pszSystemName = 
+    pszSystemName =
         CPLStrdup( poRecord->GetStringSubfield( "XREF", 0, "RSNM", 0 ) );
 
     CPLFree( pszDatum );
-    pszDatum = 
+    pszDatum =
         CPLStrdup( poRecord->GetStringSubfield( "XREF", 0, "HDAT", 0 ) );
 
     nZone = poRecord->GetIntSubfield( "XREF", 0, "ZONE", 0 );

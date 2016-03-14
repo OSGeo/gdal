@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  BIGGIF Driver
- * Purpose:  Implement GDAL support for reading large GIF files in a 
+ * Purpose:  Implement GDAL support for reading large GIF files in a
  *           streaming fashion rather than the slurp-into-memory approach
  *           of the normal GIF driver.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -113,8 +113,8 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if( poGDS->poWorkDS != NULL && nBlockYOff <= poGDS->nLastLineRead )
     {
         return poGDS->poWorkDS->
-            RasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
-                      pImage, nBlockXSize, 1, GDT_Byte, 
+            RasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1,
+                      pImage, nBlockXSize, 1, GDT_Byte,
                       1, NULL, 0, 0, 0, NULL );
     }
 
@@ -133,7 +133,7 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     CPLErr eErr = CE_None;
     while( poGDS->nLastLineRead < nBlockYOff && eErr == CE_None )
     {
-        if( DGifGetLine( poGDS->hGifFile, (GifPixelType*)pImage, 
+        if( DGifGetLine( poGDS->hGifFile, (GifPixelType*)pImage,
                          nBlockXSize ) == GIF_ERROR )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -145,9 +145,9 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         if( poGDS->poWorkDS != NULL )
         {
-            eErr = poGDS->poWorkDS->RasterIO( GF_Write, 
-                                       0, poGDS->nLastLineRead, nBlockXSize, 1, 
-                                       pImage, nBlockXSize, 1, GDT_Byte, 
+            eErr = poGDS->poWorkDS->RasterIO( GF_Write,
+                                       0, poGDS->nLastLineRead, nBlockXSize, 1,
+                                       pImage, nBlockXSize, 1, GDT_Byte,
                                        1, NULL, 0, 0, 0, NULL );
         }
     }
@@ -247,8 +247,8 @@ CPLErr BIGGIFDataset::ReOpen()
 
             osTempFilename += ".tif";
 
-            poWorkDS = poGTiffDriver->Create( osTempFilename, 
-                                              nRasterXSize, nRasterYSize, 1, 
+            poWorkDS = poGTiffDriver->Create( osTempFilename,
+                                              nRasterXSize, nRasterYSize, 1,
                                               GDT_Byte, const_cast<char**>(apszOptions));
         }
     }
@@ -262,7 +262,7 @@ CPLErr BIGGIFDataset::ReOpen()
     hGifFile = GIFAbstractDataset::myDGifOpen( fp, GIFAbstractDataset::ReadFunc );
     if( hGifFile == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "DGifOpen() failed.  Perhaps the gif file is corrupt?\n" );
 
         return CE_Failure;
@@ -277,7 +277,7 @@ CPLErr BIGGIFDataset::ReOpen()
         GIFAbstractDataset::myDGifCloseFile( hGifFile );
         hGifFile = NULL;
 
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to find image description record in GIF file." );
         return CE_Failure;
     }
@@ -287,7 +287,7 @@ CPLErr BIGGIFDataset::ReOpen()
         GIFAbstractDataset::myDGifCloseFile( hGifFile );
         hGifFile = NULL;
 
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Image description reading failed in GIF file." );
         return CE_Failure;
     }
@@ -308,7 +308,7 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GIF driver does not support update access to existing"
                   " files.\n" );
         return NULL;
@@ -345,8 +345,8 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 1, 
-                   new BIGGifRasterBand( poDS, 
+    poDS->SetBand( 1,
+                   new BIGGifRasterBand( poDS,
                                          poDS->hGifFile->SBackGroundColor ));
 
 /* -------------------------------------------------------------------- */

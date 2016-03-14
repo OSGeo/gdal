@@ -4,7 +4,7 @@
  * Purpose:  Main header file for PostGIS Raster Driver
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  * 							jorgearevalo@libregis.org
- * 
+ *
  * Author:	 David Zwarg, dzwarg@azavea.com
  *
  * Last changes: $Id: $
@@ -13,24 +13,24 @@
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg
  * Copyright (c) 2013, Even Rouault
  *
- * Permission is hereby granted, free of charge, to any person obtaining 
- * a copy of this software and associated documentation files (the 
- * "Software"),to deal in the Software without restriction, including 
- * without limitation the rights to use, copy, modify, merge, publish, 
- * distribute, sublicense, and/or sell copies of the Software, and to 
- * permit persons to whom the Software is furnished to do so, subject to 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"),to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * The above copyright notice and this permission notice shall be 
+ * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
- * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
- * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  **********************************************************************/
 
@@ -129,7 +129,7 @@ typedef enum
  * 		schema names, the driver will yell of the schema's raster tables
  * 		as possible datasets.
  * - BROWSE_DATABASE: If no table name is specified, just database name,
- * 		the driver will yell of the database's raster tables as possible 
+ * 		the driver will yell of the database's raster tables as possible
  * 		datasets.
  **/
 typedef enum
@@ -172,7 +172,7 @@ class PostGISRasterRasterBand;
 class PostGISRasterTileDataset;
 
 /***********************************************************************
- * PostGISRasterDriver: extends GDALDriver to support PostGIS Raster 
+ * PostGISRasterDriver: extends GDALDriver to support PostGIS Raster
  * connect.
  **********************************************************************/
 class PostGISRasterDriver : public GDALDriver {
@@ -189,7 +189,7 @@ public:
 
 
 /***********************************************************************
- * PostGISRasterDataset: extends VRTDataset to support PostGIS Raster 
+ * PostGISRasterDataset: extends VRTDataset to support PostGIS Raster
  * datasets
  **********************************************************************/
 class PostGISRasterDataset : public VRTDataset {
@@ -248,7 +248,7 @@ private:
     GBool SetRasterProperties(const char *);
     GBool BrowseDatabase(const char *, const char *);
     GBool AddComplexSource(PostGISRasterTileDataset* poRTDS);
-    GBool GetDstWin(PostGISRasterTileDataset *, int *, int *, int *, 
+    GBool GetDstWin(PostGISRasterTileDataset *, int *, int *, int *,
 		int *);
     BandMetadata * GetBandsMetadata(int *);
     PROverview * GetOverviewTables(int *);
@@ -273,9 +273,9 @@ public:
     virtual ~PostGISRasterDataset();
     static GDALDataset* Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
-    static GDALDataset* CreateCopy(const char *, GDALDataset *, 
+    static GDALDataset* CreateCopy(const char *, GDALDataset *,
         int, char **, GDALProgressFunc, void *);
-    static GBool InsertRaster(PGconn *, PostGISRasterDataset *, 
+    static GBool InsertRaster(PGconn *, PostGISRasterDataset *,
         const char *, const char *, const char *);
     static CPLErr Delete(const char*);
     virtual char      **GetMetadataDomainList();
@@ -292,13 +292,13 @@ public:
     const char * GetPrimaryKeyRef();
     GBool HasSpatialIndex();
     GBool LoadSources(int nXOff, int nYOff, int nXSize, int nYSize, int nBand);
-    GBool PolygonFromCoords(int nXOff, int nYOff, int nXEndOff, 
+    GBool PolygonFromCoords(int nXOff, int nYOff, int nXEndOff,
         int nYEndOff,double adfProjWin[8]);
     void CacheTile(const char* pszMetadata, const char* pszRaster, const char *pszPKID, int nBand, int bAllBandCaching);
 };
 
 /***********************************************************************
- * PostGISRasterRasterBand: extends VRTSourcedRasterBand to support 
+ * PostGISRasterRasterBand: extends VRTSourcedRasterBand to support
  * PostGIS Raster bands
  **********************************************************************/
 class PostGISRasterTileRasterBand;
@@ -319,7 +319,7 @@ protected:
     void                      NullBuffer(void* pData,
                                          int nBufXSize,
                                          int nBufYSize,
-                                         GDALDataType eBufType, 
+                                         GDALDataType eBufType,
                                          int nPixelSpace,
                                          int nLineSpace);
 public:
@@ -331,7 +331,7 @@ public:
 
     virtual double GetNoDataValue(int *pbSuccess = NULL);
     virtual CPLErr SetNoDataValue(double);
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, 
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *,
 		int, int, GDALDataType,
         GSpacing nPixelSpace, GSpacing nLineSpace,
         GDALRasterIOExtraArg* psExtraArg);
@@ -365,7 +365,7 @@ private:
 
 public:
 	PostGISRasterTileDataset(PostGISRasterDataset* poRDS,
-                             int nXSize, 
+                             int nXSize,
                              int nYSize);
 	~PostGISRasterTileDataset();
     CPLErr GetGeoTransform(double *);
@@ -374,7 +374,7 @@ public:
 };
 
 /***********************************************************************
- * PostGISRasterTileRasterBand: it holds a raster tile band, that will 
+ * PostGISRasterTileRasterBand: it holds a raster tile band, that will
  * be used as a source for PostGISRasterRasterBand
  **********************************************************************/
 class PostGISRasterTileRasterBand : public GDALRasterBand {
@@ -386,7 +386,7 @@ private:
     GBool IsCached();
 
     VRTSource* poSource;
-	
+
 public:
 	PostGISRasterTileRasterBand(
         PostGISRasterTileDataset * poRTDS, int nBand,

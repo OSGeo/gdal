@@ -70,14 +70,14 @@ static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
  *
  * Searches only the next siblings of the node passed in for the named element or attribute.
  * If the first character of the pszElement is '=', the search includes the psRoot node
- * 
+ *
  * @param psRoot the root node to search.  This should be a node of type
  * CXT_Element.  NULL is safe.
  *
  * @param pszElement the name of the element or attribute to search for.
  *
  *
- * @return The first matching node or NULL on failure. 
+ * @return The first matching node or NULL on failure.
  */
 
 static CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
@@ -179,7 +179,7 @@ static GDALColorInterp BandInterp(int nbands, int band) {
 /************************************************************************/
 
 /*
- * \brief Utility function to find the position of the bbox parameter value 
+ * \brief Utility function to find the position of the bbox parameter value
  * within a request string.  The search for the bbox is case insensitive
  *
  * @param in, the string to search into

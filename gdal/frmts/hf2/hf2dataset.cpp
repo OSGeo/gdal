@@ -66,8 +66,8 @@ class HF2Dataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
-    static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                                    int bStrict, char ** papszOptions, 
+    static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
 };
 
@@ -590,7 +590,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         bool bHasSRS = false;
         OGRSpatialReference oSRS;
-        oSRS.SetGeogCS("unknown", "unknown", "unknown", SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING); 
+        oSRS.SetGeogCS("unknown", "unknown", "unknown", SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING);
         if (bHasEPSGDatumCode)
         {
             if (nEPSGDatumCode == 23 || nEPSGDatumCode == 6326)
@@ -687,8 +687,8 @@ static void WriteDouble(VSILFILE* fp, double val)
 /************************************************************************/
 
 GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
-                                     GDALDataset *poSrcDS, 
-                                     int bStrict, char ** papszOptions, 
+                                     GDALDataset *poSrcDS,
+                                     int bStrict, char ** papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData )
 {
@@ -698,14 +698,14 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "HF2 driver does not support source dataset with zero band.\n");
         return NULL;
     }
 
     if (nBands != 1)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "HF2 driver only uses the first band of the dataset.\n");
         if (bStrict)
             return NULL;
@@ -730,7 +730,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                              adfGeoTransform[5] == 1);
     if (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "HF2 driver does not support CreateCopy() from skewed or rotated dataset.\n");
         return NULL;
     }
@@ -854,7 +854,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "wb");
     if (fp == NULL)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Cannot create %s", pszFilename );
         return NULL;
     }

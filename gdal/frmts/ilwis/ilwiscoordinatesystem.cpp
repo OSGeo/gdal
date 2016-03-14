@@ -32,19 +32,19 @@
 
 using std::string;
 
-typedef struct 
+typedef struct
 {
     const char  *pszIlwisDatum;
-		const char  *pszWKTDatum; 
+		const char  *pszWKTDatum;
     int   nEPSGCode;
 } IlwisDatums;
 
-typedef struct 
+typedef struct
 {
     const char  *pszIlwisEllips;
     int   nEPSGCode;
 		double semiMajor;
-		double invFlattening; 
+		double invFlattening;
 } IlwisEllips;
 
 string ReadElement(string section, string entry, string filename);
@@ -58,9 +58,9 @@ static const IlwisDatums iwDatums[] =
     { "Afgooye", "Afgooye", 4205 },
 		//AGREF --- skipped
     { "Ain el Abd 1970", "Ain_el_Abd_1970", 4204 },
-		{ "American Samoa 1962", "American_Samoa_1962", 4169 },    
+		{ "American Samoa 1962", "American_Samoa_1962", 4169 },
 		//Anna 1 Astro 1965 --- skipped
-		{ "Antigua Island Astro 1943", "Antigua_1943", 4601 },    
+		{ "Antigua Island Astro 1943", "Antigua_1943", 4601 },
 		{ "Arc 1950", "Arc_1950", 4209 },    //Arc 1950
 		{ "Arc 1960", "Arc_1960", 4210 },    //Arc 1960
 		//Ascension Island 1958
@@ -68,7 +68,7 @@ static const IlwisDatums iwDatums[] =
 		//Astro DOS 71/4
 		//Astro Tern Island (FRIG) 1961
 		//Astronomical Station 1952
-		{ "Australian Geodetic 1966", "Australian_Geodetic_Datum_1966", 4202 },    
+		{ "Australian Geodetic 1966", "Australian_Geodetic_Datum_1966", 4202 },
 		{ "Australian Geodetic 1984", "Australian_Geodetic_Datum_1984", 4203 },
 		//Ayabelle Lighthouse
 		//Bellevue (IGN)
@@ -316,7 +316,7 @@ static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, doubl
     {
         //Zone number must be in the range 1 to 3
         dfCentralMeridian = 6.0 + (dfZone - 1) * 3;
-        dfFalseEasting = 2500000 + (dfZone - 1) * 1000000; 
+        dfFalseEasting = 2500000 + (dfZone - 1) * 1000000;
     }
     else if( STARTS_WITH_CI(sProj.c_str(), "Gauss-Boaga Italy") )
     {
@@ -350,7 +350,7 @@ static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, doubl
 **/
 static void scaleFromLATTS( string sEllips, double phits, double &scale )
 {
-    if( STARTS_WITH_CI(sEllips.c_str(), "Sphere") ) 
+    if( STARTS_WITH_CI(sEllips.c_str(), "Sphere") )
     {
         scale = cos(phits);
     }
@@ -380,9 +380,9 @@ static void scaleFromLATTS( string sEllips, double phits, double &scale )
 /**
  * Import coordinate system from ILWIS projection definition.
  *
- * The method will import projection definition in ILWIS, 
+ * The method will import projection definition in ILWIS,
  * It uses 13 parameters to define the coordinate system
- * and datum/ellipsoid specified in the padfPrjParams array. 
+ * and datum/ellipsoid specified in the padfPrjParams array.
  *
  * @param csyFileName Name of .csy file
 **/
@@ -394,7 +394,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     string pszProj;
 
     //translate ILWIS pre-defined coordinate systems
-    if( STARTS_WITH_CI(csyFileName.c_str(), "latlon.csy")) 
+    if( STARTS_WITH_CI(csyFileName.c_str(), "latlon.csy"))
     {
         pszProj = "LatLon";
         pszDatum = "";
@@ -448,28 +448,28 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         //padfPrjParams[5] is always to zero
         oSRS.SetProjCS("Central Cylindrical");
         oSRS.SetCEA( padfPrjParams[5], padfPrjParams[6],
-                     padfPrjParams[3], padfPrjParams[4] ); 
+                     padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Cassini") )
     {
-        //Use Latitude_Of_True_Scale for dfCenterLat 
+        //Use Latitude_Of_True_Scale for dfCenterLat
         //Scale Factor 1.0 should always be defined
         oSRS.SetProjCS("Cassini");
-        oSRS.SetCS(  padfPrjParams[10], padfPrjParams[6],  
+        oSRS.SetCS(  padfPrjParams[10], padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "DutchRD") )
     {
         oSRS.SetProjCS("DutchRD");
         oSRS.SetStereographic  (  52.156160556,  5.387638889,
-                                  0.9999079,  
+                                  0.9999079,
                                   155000,  463000);
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Equidistant Conic") )
     {
         oSRS.SetProjCS("Equidistant Conic");
         oSRS.SetEC(  padfPrjParams[7], padfPrjParams[8],
-                     padfPrjParams[5], padfPrjParams[6],	
+                     padfPrjParams[5], padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Gauss-Krueger Germany") )
@@ -477,11 +477,11 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         //FalseNorthing and CenterLat are always set to 0
         //Scale 1.0 is defined
         //FalseEasting and CentralMeridian are defined by the selected zone
-        mapTMParms("Gauss-Krueger Germany", padfPrjParams[11], 
+        mapTMParms("Gauss-Krueger Germany", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
         oSRS.SetProjCS("Gauss-Krueger Germany");
         oSRS.SetTM(  0, padfPrjParams[6],
-                     1.0, 	
+                     1.0,
                      padfPrjParams[3], 0 );
     }
     else if ( STARTS_WITH_CI(pszProj.c_str(), "Gauss-Boaga Italy") )
@@ -489,24 +489,24 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         //FalseNorthing and CenterLat are always set to 0
         //Scale 0.9996 is defined
         //FalseEasting and CentralMeridian are defined by the selected zone
-        mapTMParms("Gauss-Boaga Italy", padfPrjParams[11], 
+        mapTMParms("Gauss-Boaga Italy", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
         oSRS.SetProjCS("Gauss-Boaga Italy");
         oSRS.SetTM(  0, padfPrjParams[6],
-                     0.9996, 	
+                     0.9996,
                      padfPrjParams[3], 0 );
     }
     else if ( STARTS_WITH_CI(pszProj.c_str(), "Gauss Colombia"))
     {
         // 1000000 used for FalseNorthing and FalseEasting
-        // 1.0 used for scale 
-        // CenterLat is defined 45.1609259259259 
+        // 1.0 used for scale
+        // CenterLat is defined 45.1609259259259
         // CentralMeridian is defined by the selected zone
-        mapTMParms("Gauss Colombia", padfPrjParams[11], 
+        mapTMParms("Gauss Colombia", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
         oSRS.SetProjCS("Gauss Colombia");
         oSRS.SetTM(  45.1609259259259, padfPrjParams[6],
-                     1.0, 	
+                     1.0,
                      1000000, 1000000 );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Gnomonic") )
@@ -517,7 +517,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Lambert Conformal Conic") )
     {
-        // should use 1.0 for scale factor in Ilwis definition 
+        // should use 1.0 for scale factor in Ilwis definition
         oSRS.SetProjCS("Lambert Conformal Conic");
         oSRS.SetLCC(	padfPrjParams[7], padfPrjParams[8],
                         padfPrjParams[5], padfPrjParams[6],
@@ -527,37 +527,37 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     {
         // Latitude_Of_True_Scale used for dfStdP1 ?
         oSRS.SetProjCS("Lambert Conformal Conic");
-        oSRS.SetCEA(	padfPrjParams[10], 
-                        padfPrjParams[6], 
+        oSRS.SetCEA(	padfPrjParams[10],
+                        padfPrjParams[6],
                         padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Mercator") )
     {
-        // use 0 for CenterLat, scale is computed from the 
+        // use 0 for CenterLat, scale is computed from the
         // Latitude_Of_True_Scale
         scaleFromLATTS( pszEllips, padfPrjParams[10], padfPrjParams[9] );
         oSRS.SetProjCS("Mercator");
-        oSRS.SetMercator(	0, padfPrjParams[6], 
-                                padfPrjParams[9], 
+        oSRS.SetMercator(	0, padfPrjParams[6],
+                                padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Miller") )
     {
         // use 0 for CenterLat
         oSRS.SetProjCS("Miller");
-        oSRS.SetMC(	0, padfPrjParams[6], 
+        oSRS.SetMC(	0, padfPrjParams[6],
                         padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Mollweide") )
     {
         oSRS.SetProjCS("Mollweide");
-        oSRS.SetMollweide(	padfPrjParams[6], 
+        oSRS.SetMollweide(	padfPrjParams[6],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Orthographic") )
     {
         oSRS.SetProjCS("Orthographic");
-        oSRS.SetOrthographic (	padfPrjParams[5], padfPrjParams[6], 
+        oSRS.SetOrthographic (	padfPrjParams[5], padfPrjParams[6],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Plate Carree") ||
@@ -566,14 +566,14 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         // set 0.0 for CenterLat for Plate Carree projection
         // skipp Latitude_Of_True_Scale for Plate Rectangle projection definition
         oSRS.SetProjCS(pszProj.c_str());
-        oSRS.SetEquirectangular(	padfPrjParams[5], padfPrjParams[6], 
+        oSRS.SetEquirectangular(	padfPrjParams[5], padfPrjParams[6],
                                         padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "PolyConic") )
     {
         // skipp scale factor
         oSRS.SetProjCS("PolyConic");
-        oSRS.SetPolyconic(	padfPrjParams[5], padfPrjParams[6], 
+        oSRS.SetPolyconic(	padfPrjParams[5], padfPrjParams[6],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Robinson") )
@@ -584,20 +584,20 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Sinusoidal") )
     {
-        oSRS.SetProjCS("Sinusoidal");	
-        oSRS.SetSinusoidal(	padfPrjParams[6], 
+        oSRS.SetProjCS("Sinusoidal");
+        oSRS.SetSinusoidal(	padfPrjParams[6],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Stereographic") )
     {
-        oSRS.SetProjCS("Stereographic");	
+        oSRS.SetProjCS("Stereographic");
         oSRS.SetStereographic(	padfPrjParams[5], padfPrjParams[6],
                                 padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Transverse Mercator") )
     {
-        oSRS.SetProjCS("Transverse Mercator");	
+        oSRS.SetProjCS("Transverse Mercator");
         oSRS.SetStereographic(	padfPrjParams[5], padfPrjParams[6],
                                 padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
@@ -607,9 +607,9 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         string pszNH = ReadElement("Projection", "Northern Hemisphere", csyFileName);
         oSRS.SetProjCS("UTM");
         if( STARTS_WITH_CI(pszNH.c_str(), "Yes") )
-            oSRS.SetUTM( (int) padfPrjParams[11], 1);  
+            oSRS.SetUTM( (int) padfPrjParams[11], 1);
         else
-            oSRS.SetUTM( (int) padfPrjParams[11], 0);  
+            oSRS.SetUTM( (int) padfPrjParams[11], 0);
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "VanderGrinten") )
     {
@@ -618,16 +618,16 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "GeoStationary Satellite") )
     {
-        oSRS.SetGEOS( padfPrjParams[6], 
-                      padfPrjParams[12], 
-                      padfPrjParams[3], 
+        oSRS.SetGEOS( padfPrjParams[6],
+                      padfPrjParams[12],
+                      padfPrjParams[3],
                       padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "MSG Perspective") )
     {
-        oSRS.SetGEOS( padfPrjParams[6], 
-                      padfPrjParams[12], 
-                      padfPrjParams[3], 
+        oSRS.SetGEOS( padfPrjParams[6],
+                      padfPrjParams[12],
+                      padfPrjParams[3],
                       padfPrjParams[4] );
     }
     else
@@ -680,7 +680,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                                     CPLSPrintf(
                                         "Not specified (based on %s spheroid)",
                                         piwEllips->pszIlwisEllips ),
-                                    piwEllips->pszIlwisEllips, 
+                                    piwEllips->pszIlwisEllips,
                                     dfSemiMajor,
                                     piwEllips->invFlattening,
                                     NULL, 0.0, NULL, 0.0 );
@@ -696,7 +696,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
 /*      If no matching for ellipsoid definition, fetch info about an    */
 /*			user defined ellipsoid. If cannot find, default to WGS 84       */
 /* -------------------------------------------------------------------- */
-        if ( !piwEllips->pszIlwisEllips )      
+        if ( !piwEllips->pszIlwisEllips )
         {
 
             if( STARTS_WITH_CI(pszEllips.c_str(), "User Defined") )
@@ -762,13 +762,13 @@ static void WriteAlbersConicEqualArea(string csFileName, OGRSpatialReference oSR
 {
     WriteProjectionName(csFileName, "Albers EqualArea Conic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Standard_Parallel_1, csFileName, 
+    WriteElement("Projection", ILW_Standard_Parallel_1, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
-    WriteElement("Projection", ILW_Standard_Parallel_2, csFileName, 
+    WriteElement("Projection", ILW_Standard_Parallel_2, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
@@ -776,18 +776,18 @@ static void WriteAzimuthalEquidistant(string csFileName, OGRSpatialReference oSR
 {
     WriteProjectionName(csFileName, "Azimuthal Equidistant");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
 static void WriteCylindricalEqualArea(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Central Cylindrical");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
@@ -795,36 +795,36 @@ static void WriteCassiniSoldner(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Cassini");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Latitude_True_Scale, csFileName, 
+    WriteElement("Projection", ILW_Latitude_True_Scale, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
 static void WriteStereographic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Stereographic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, 
-                 oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)); 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName,
+                 oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0));
 }
 
 static void WriteEquidistantConic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Equidistant Conic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Standard_Parallel_1, csFileName, 
-                 oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0)); 
-    WriteElement("Projection", ILW_Standard_Parallel_2, csFileName, 
+    WriteElement("Projection", ILW_Standard_Parallel_1, csFileName,
+                 oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+    WriteElement("Projection", ILW_Standard_Parallel_2, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
@@ -832,21 +832,21 @@ static void WriteTransverseMercator(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Transverse Mercator");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, 
-                 oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)); 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName,
+                 oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0));
 }
 
 static void WriteGnomonic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Gnomonic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
@@ -854,25 +854,25 @@ static void WriteLambertConformalConic(string csFileName, OGRSpatialReference oS
 {
     WriteProjectionName(csFileName, "Lambert Conformal Conic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
 static void WriteLambertConformalConic2SP(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Lambert Conformal Conic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
-    WriteElement("Projection", ILW_Standard_Parallel_1, csFileName, 
-                 oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0)); 
-    WriteElement("Projection", ILW_Standard_Parallel_2, csFileName, 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
+    WriteElement("Projection", ILW_Standard_Parallel_1, csFileName,
+                 oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+    WriteElement("Projection", ILW_Standard_Parallel_2, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
@@ -880,9 +880,9 @@ static void WriteLambertAzimuthalEqualArea(string csFileName, OGRSpatialReferenc
 {
     WriteProjectionName(csFileName, "Lambert Azimuthal EqualArea");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
@@ -890,9 +890,9 @@ static void WriteMercator_1SP(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Mercator");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Latitude_True_Scale, csFileName, 
+    WriteElement("Projection", ILW_Latitude_True_Scale, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
@@ -900,7 +900,7 @@ static void WriteMillerCylindrical(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Miller");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
@@ -908,7 +908,7 @@ static void WriteMolleweide(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Mollweide");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
@@ -916,9 +916,9 @@ static void WriteOrthographic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Orthographic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
@@ -926,29 +926,29 @@ static void WritePlateRectangle(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Plate Rectangle");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Latitude_True_Scale, csFileName, "0.0000000000"); 
+    WriteElement("Projection", ILW_Latitude_True_Scale, csFileName, "0.0000000000");
 }
 
 static void WritePolyConic(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "PolyConic");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+    WriteElement("Projection", ILW_Central_Parallel, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
 static void WriteRobinson(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Robinson");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
@@ -956,7 +956,7 @@ static void WriteSinusoidal(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "Sinusoidal");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
@@ -964,7 +964,7 @@ static void WriteVanderGrinten(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "VanderGrinten");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
@@ -972,10 +972,10 @@ static void WriteGeoStatSat(string csFileName, OGRSpatialReference oSRS)
 {
     WriteProjectionName(csFileName, "GeoStationary Satellite");
     WriteFalseEastNorth(csFileName, oSRS);
-    WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+    WriteElement("Projection", ILW_Central_Meridian, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
-    WriteElement("Projection", ILW_Height_Persp_Center, csFileName, 
+    WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
+    WriteElement("Projection", ILW_Height_Persp_Center, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_SATELLITE_HEIGHT, 35785831.0));
 }
 
@@ -986,9 +986,9 @@ static void WriteGeoStatSat(string csFileName, OGRSpatialReference oSRS)
  * Export coordinate system in ILWIS projection definition.
  *
  * Converts the loaded coordinate reference system into ILWIS projection
- * definition to the extent possible.	
+ * definition to the extent possible.
  */
-CPLErr ILWISDataset::WriteProjection() 
+CPLErr ILWISDataset::WriteProjection()
 
 {
     OGRSpatialReference oSRS;
@@ -1096,7 +1096,7 @@ CPLErr ILWISDataset::WriteProjection()
     }
     else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC) )
     {
-        WriteStereographic(csFileName, oSRS);		
+        WriteStereographic(csFileName, oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_EQUIDISTANT_CONIC) )
     {
@@ -1160,11 +1160,11 @@ CPLErr ILWISDataset::WriteProjection()
     }
     else if( EQUAL(pszProjName,SRS_PT_VANDERGRINTEN) )
     {
-        WriteVanderGrinten(csFileName, oSRS);  
+        WriteVanderGrinten(csFileName, oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_GEOSTATIONARY_SATELLITE) )
     {
-        WriteGeoStatSat(csFileName, oSRS);  
+        WriteGeoStatSat(csFileName, oSRS);
     }
     else
     {
