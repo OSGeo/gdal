@@ -68,7 +68,7 @@ DDFFieldDefn::~DDFFieldDefn()
 /*                            AddSubfield()                             */
 /************************************************************************/
 
-void DDFFieldDefn::AddSubfield( const char *pszName, 
+void DDFFieldDefn::AddSubfield( const char *pszName,
                                 const char *pszFormat )
 
 {
@@ -107,7 +107,7 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
 
     int nOldLen = static_cast<int>(strlen(_formatControls));
 
-    char *pszNewFormatControls = (char *) 
+    char *pszNewFormatControls = (char *)
         CPLMalloc(nOldLen+3+strlen(poNewSFDefn->GetFormat()));
 
     strcpy( pszNewFormatControls, _formatControls );
@@ -127,10 +127,10 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
     if( _arrayDescr == NULL )
         _arrayDescr = CPLStrdup("");
 
-    _arrayDescr = (char *) 
-        CPLRealloc(_arrayDescr, 
+    _arrayDescr = (char *)
+        CPLRealloc(_arrayDescr,
                    strlen(_arrayDescr)+strlen(poNewSFDefn->GetName())+2);
-    if( strlen(_arrayDescr) > 0 && 
+    if( strlen(_arrayDescr) > 0 &&
        (_arrayDescr[0] != '*' || strlen(_arrayDescr) > 1) )
         strcat( _arrayDescr, "!" );
     strcat( _arrayDescr, poNewSFDefn->GetName() );
@@ -143,8 +143,8 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
 /*      of from an existing file.                                       */
 /************************************************************************/
 
-int DDFFieldDefn::Create( const char *pszTagIn, const char *pszFieldName, 
-                          const char *pszDescription, 
+int DDFFieldDefn::Create( const char *pszTagIn, const char *pszFieldName,
+                          const char *pszDescription,
                           DDF_data_struct_code eDataStructCode,
                           DDF_data_type_code   eDataTypeCode,
                           const char *pszFormat )
@@ -184,13 +184,13 @@ void DDFFieldDefn::SetFormatControls(const char* pszVal)
 /*                          GenerateDDREntry()                          */
 /************************************************************************/
 
-int DDFFieldDefn::GenerateDDREntry( DDFModule * poModuleIn, char **ppachData, 
+int DDFFieldDefn::GenerateDDREntry( DDFModule * poModuleIn, char **ppachData,
                                     int *pnLength )
 
 {
     const int         iFDOffset = poModuleIn->GetFieldControlLength();
     CPLAssert(iFDOffset >= 6 && iFDOffset <= 9);
-    *pnLength = static_cast<int>(iFDOffset + strlen(_fieldName) + 1 
+    *pnLength = static_cast<int>(iFDOffset + strlen(_fieldName) + 1
         + strlen(_arrayDescr) + 1
         + strlen(_formatControls) + 1);
 
@@ -238,7 +238,7 @@ int DDFFieldDefn::GenerateDDREntry( DDFModule * poModuleIn, char **ppachData,
         (*ppachData)[7] = ' ';
     if( iFDOffset > 8 )
         (*ppachData)[8] = ' ';
-    snprintf( *ppachData + iFDOffset, *pnLength+1 - iFDOffset, "%s", 
+    snprintf( *ppachData + iFDOffset, *pnLength+1 - iFDOffset, "%s",
              _fieldName );
     if( strlen(_arrayDescr) > 0 )
         snprintf( *ppachData + strlen(*ppachData),
@@ -262,7 +262,7 @@ int DDFFieldDefn::GenerateDDREntry( DDFModule * poModuleIn, char **ppachData,
 /************************************************************************/
 
 int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
-                              const char * pszTagIn, 
+                              const char * pszTagIn,
                               int nFieldEntrySize,
                               const char * pachFieldArea )
 
@@ -358,14 +358,14 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
     _arrayDescr =
         DDFFetchVariable( pachFieldArea + iFDOffset,
                           nFieldEntrySize - iFDOffset,
-                          DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR, 
+                          DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR,
                           &nCharsConsumed );
     iFDOffset += nCharsConsumed;
 
     _formatControls =
         DDFFetchVariable( pachFieldArea + iFDOffset,
                           nFieldEntrySize - iFDOffset,
-                          DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR, 
+                          DDF_UNIT_TERMINATOR, DDF_FIELD_TERMINATOR,
                           &nCharsConsumed );
 
 /* -------------------------------------------------------------------- */
@@ -638,7 +638,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
             {
                 if( strlen(pszExpandedContents) + strlen(pszDest) + 1 + 1 > nDestMax )
                 {
-                    nDestMax = 
+                    nDestMax =
                         2 * (strlen(pszExpandedContents) + strlen(pszDest) + 1);
                     pszDest = (char *) CPLRealloc(pszDest,nDestMax+1);
                 }
@@ -789,7 +789,7 @@ int DDFFieldDefn::ApplyFormats()
 /************************************************************************/
 
 /**
- * Find a subfield definition by it's mnemonic tag.  
+ * Find a subfield definition by it's mnemonic tag.
  *
  * @param pszMnemonic The name of the field.
  *
@@ -856,7 +856,7 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
     {
         int nSubfieldSize;
 
-        if( !papoSubfields[iSubfield]->GetDefaultValue( NULL, 0, 
+        if( !papoSubfields[iSubfield]->GetDefaultValue( NULL, 0,
                                                         &nSubfieldSize ) )
             return NULL;
         nTotalSize += nSubfieldSize;
@@ -878,7 +878,7 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
     {
         int nSubfieldSize;
 
-        if( !papoSubfields[iSubfield]->GetDefaultValue( 
+        if( !papoSubfields[iSubfield]->GetDefaultValue(
                 pachData + nOffset, nTotalSize - nOffset, &nSubfieldSize ) )
         {
             CPLAssert( FALSE );

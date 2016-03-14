@@ -101,7 +101,7 @@ class GRASSRasterBand : public GDALRasterBand
 
   public:
 
-                   GRASSRasterBand( GRASSDataset *, int, 
+                   GRASSRasterBand( GRASSDataset *, int,
                                     const char *, const char * );
     virtual        ~GRASSRasterBand();
 
@@ -136,7 +136,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
 /* -------------------------------------------------------------------- */
     struct FPRange sRange;
 
-    if( G_read_fp_range( (char *) pszCellName, (char *) pszMapset, 
+    if( G_read_fp_range( (char *) pszCellName, (char *) pszMapset,
                          &sRange ) == -1 )
     {
         bHaveMinMax = FALSE;
@@ -199,7 +199,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     struct Colors sGrassColors;
 
     poCT = NULL;
-    if( G_read_colors( (char *) pszCellName, (char *) pszMapset, 
+    if( G_read_colors( (char *) pszCellName, (char *) pszMapset,
                        &sGrassColors ) == 1 )
     {
         poCT = new GDALColorTable();
@@ -264,7 +264,7 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     pachNullBuf = (char *) CPLMalloc(nBlockXSize);
     G_get_null_value_row( hCell, pachNullBuf, nBlockYOff );
 
-    if( eDataType == GDT_Float32 || eDataType == GDT_Float64 
+    if( eDataType == GDT_Float32 || eDataType == GDT_Float64
         || eDataType == GDT_UInt32 )
     {
         G_get_raster_row( hCell, pImage, nBlockYOff, nGRSType  );
@@ -277,7 +277,7 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     ((GUInt32 *) pImage)[i] = (GUInt32) dfNoData;
                 else if( eDataType == GDT_Float32 )
                     ((float *) pImage)[i] = dfNoData;
-                else 
+                else
                     ((double *) pImage)[i] = dfNoData;
             }
         }
@@ -294,7 +294,7 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 panRow[i] = (GUInt32) dfNoData;
         }
 
-        GDALCopyWords( panRow, GDT_UInt32, 4, 
+        GDALCopyWords( panRow, GDT_UInt32, 4,
                        pImage, eDataType, GDALGetDataTypeSize(eDataType)/8,
                        nBlockXSize );
 
@@ -367,7 +367,7 @@ double GRASSRasterBand::GetMaximum( int *pbSuccess )
         return 4294967295.0;
     else if( eDataType == GDT_UInt16 )
         return 65535;
-    else 
+    else
         return 255;
 }
 
@@ -422,7 +422,7 @@ GRASSDataset::~GRASSDataset()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *GRASSDataset::GetProjectionRef() 
+const char *GRASSDataset::GetProjectionRef()
 {
     if( pszProjection == NULL )
         return "";
@@ -434,7 +434,7 @@ const char *GRASSDataset::GetProjectionRef()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform ) 
+CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform )
 {
     memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
 
@@ -554,9 +554,9 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; papszCells[iBand] != NULL; iBand++ )
     {
-        poDS->SetBand( iBand+1, 
-                       new GRASSRasterBand( poDS, iBand+1, 
-                                            papszMapsets[iBand], 
+        poDS->SetBand( iBand+1,
+                       new GRASSRasterBand( poDS, iBand+1,
+                                            papszMapsets[iBand],
                                             papszCells[iBand] ) );
     }
 
@@ -566,7 +566,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GRASS driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -599,4 +599,3 @@ void GDALRegister_GRASS()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

@@ -14,24 +14,24 @@
  *
  * ABSTRACT
  *
- *    This component converts between geodetic coordinates (latitude and 
- *    longitude) and Military Grid Reference System (MGRS) coordinates. 
+ *    This component converts between geodetic coordinates (latitude and
+ *    longitude) and Military Grid Reference System (MGRS) coordinates.
  *
  * ERROR HANDLING
  *
  *    This component checks parameters for valid values.  If an invalid value
- *    is found, the error code is combined with the current error code using 
+ *    is found, the error code is combined with the current error code using
  *    the bitwise or.  This combining allows multiple error codes to be
  *    returned. The possible error codes are:
  *
  *          MGRS_NO_ERROR          : No errors occurred in function
- *          MGRS_LAT_ERROR         : Latitude outside of valid range 
+ *          MGRS_LAT_ERROR         : Latitude outside of valid range
  *                                    (-90 to 90 degrees)
  *          MGRS_LON_ERROR         : Longitude outside of valid range
  *                                    (-180 to 360 degrees)
  *          MGRS_STR_ERROR         : An MGRS string error: string too long,
  *                                    too short, or badly formed
- *          MGRS_PRECISION_ERROR   : The precision must be between 0 and 5 
+ *          MGRS_PRECISION_ERROR   : The precision must be between 0 and 5
  *                                    inclusive.
  *          MGRS_A_ERROR           : Semi-major axis less than or equal to zero
  *          MGRS_INV_F_ERROR       : Inverse flattening outside of valid range
@@ -146,15 +146,15 @@ extern "C" {
                                  char *MGRS);
 /*
  * The function Convert_Geodetic_To_MGRS converts geodetic (latitude and
- * longitude) coordinates to an MGRS coordinate string, according to the 
- * current ellipsoid parameters.  If any errors occur, the error code(s) 
+ * longitude) coordinates to an MGRS coordinate string, according to the
+ * current ellipsoid parameters.  If any errors occur, the error code(s)
  * are returned by the  function, otherwise MGRS_NO_ERROR is returned.
  *
  *    Latitude   : Latitude in radians              (input)
  *    Longitude  : Longitude in radians             (input)
  *    Precision  : Precision level of MGRS string   (input)
  *    MGRS       : MGRS coordinate string           (output)
- *  
+ *
  */
 
 
@@ -163,13 +163,13 @@ extern "C" {
                                  double *Longitude);
 /*
  * This function converts an MGRS coordinate string to Geodetic (latitude
- * and longitude in radians) coordinates.  If any errors occur, the error 
- * code(s) are returned by the  function, otherwise MGRS_NO_ERROR is returned.  
+ * and longitude in radians) coordinates.  If any errors occur, the error
+ * code(s) are returned by the  function, otherwise MGRS_NO_ERROR is returned.
  *
  *    MGRS       : MGRS coordinate string           (input)
  *    Latitude   : Latitude in radians              (output)
  *    Longitude  : Longitude in radians             (output)
- *  
+ *
  */
 
 
@@ -181,8 +181,8 @@ extern "C" {
                             char *MGRS);
 /*
  * The function Convert_UTM_To_MGRS converts UTM (zone, easting, and
- * northing) coordinates to an MGRS coordinate string, according to the 
- * current ellipsoid parameters.  If any errors occur, the error code(s) 
+ * northing) coordinates to an MGRS coordinate string, according to the
+ * current ellipsoid parameters.  If any errors occur, the error code(s)
  * are returned by the  function, otherwise MGRS_NO_ERROR is returned.
  *
  *    Zone       : UTM zone                         (input)
@@ -198,12 +198,12 @@ extern "C" {
                             long   *Zone,
                             char   *Hemisphere,
                             double *Easting,
-                            double *Northing); 
+                            double *Northing);
 /*
  * The function Convert_MGRS_To_UTM converts an MGRS coordinate string
- * to UTM projection (zone, hemisphere, easting and northing) coordinates 
- * according to the current ellipsoid parameters.  If any errors occur, 
- * the error code(s) are returned by the function, otherwise UTM_NO_ERROR 
+ * to UTM projection (zone, hemisphere, easting and northing) coordinates
+ * according to the current ellipsoid parameters.  If any errors occur,
+ * the error code(s) are returned by the function, otherwise UTM_NO_ERROR
  * is returned.
  *
  *    MGRS       : MGRS coordinate string           (input)
@@ -222,10 +222,10 @@ extern "C" {
                              char *MGRS);
 
 /*
- *  The function Convert_UPS_To_MGRS converts UPS (hemisphere, easting, 
- *  and northing) coordinates to an MGRS coordinate string according to 
+ *  The function Convert_UPS_To_MGRS converts UPS (hemisphere, easting,
+ *  and northing) coordinates to an MGRS coordinate string according to
  *  the current ellipsoid parameters.  If any errors occur, the error
- *  code(s) are returned by the function, otherwise UPS_NO_ERROR is 
+ *  code(s) are returned by the function, otherwise UPS_NO_ERROR is
  *  returned.
  *
  *    Hemisphere    : Hemisphere either 'N' or 'S'     (input)
@@ -242,8 +242,8 @@ extern "C" {
                              double *Northing);
 /*
  *  The function Convert_MGRS_To_UPS converts an MGRS coordinate string
- *  to UPS (hemisphere, easting, and northing) coordinates, according 
- *  to the current ellipsoid parameters. If any errors occur, the error 
+ *  to UPS (hemisphere, easting, and northing) coordinates, according
+ *  to the current ellipsoid parameters. If any errors occur, the error
  *  code(s) are returned by the function, otherwise UPS_NO_ERROR is returned.
  *
  *    MGRS          : MGRS coordinate string           (input)

@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
 /*                       NITFUncompressBILEVEL()                        */
 /************************************************************************/
 
-int NITFUncompressBILEVEL( NITFImage *psImage, 
+int NITFUncompressBILEVEL( NITFImage *psImage,
                            GByte *pabyInputData, int nInputBytes,
                            GByte *pabyOutputImage )
 

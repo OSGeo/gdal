@@ -180,7 +180,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         dXSize = ((dfMaxX - dfMinX) / dfMinResolution + 0.5);
         dYSize = ((dfMaxY - dfMinY) / dfMinResolution + 0.5);
 
-        while (dXSize > (std::numeric_limits<int>::max)() || 
+        while (dXSize > (std::numeric_limits<int>::max)() ||
                dYSize > (std::numeric_limits<int>::max)())
         {
             dfMinResolution *= 2;
@@ -210,7 +210,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         dYSize = dYSize * (1 << nOverviewCount);
 
         // Determine a suitable size that doesn't overflow max int.
-        while (dXSize > (std::numeric_limits<int>::max)() || 
+        while (dXSize > (std::numeric_limits<int>::max)() ||
                dYSize > (std::numeric_limits<int>::max)())
         {
             dXSize /= 2;
@@ -903,7 +903,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLDestroyXMLNode(config);
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The WMS poDriver does not support update access to existing"
                   " datasets.\n" );
         return NULL;

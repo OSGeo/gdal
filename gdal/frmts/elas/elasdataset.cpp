@@ -161,7 +161,7 @@ class ELASRasterBand : public GDALPamRasterBand
     // should override RasterIO eventually.
 
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * ); 
+    virtual CPLErr IWriteBlock( int, int, void * );
 };
 
 
@@ -501,7 +501,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if (nBands <= 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "ELAS driver does not support %d bands.\n", nBands);
         return NULL;
     }

@@ -126,7 +126,7 @@ typedef enum
 
 class GDALWMSMiniDriverCapabilities {
 public:
-  GDALWMSMiniDriverCapabilities() : 
+  GDALWMSMiniDriverCapabilities() :
       m_capabilities_version(0),
       m_has_image_request(0),
       m_has_tiled_image_requeset(0),

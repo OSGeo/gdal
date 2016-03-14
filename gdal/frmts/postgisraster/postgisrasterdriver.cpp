@@ -1,9 +1,9 @@
 /******************************************************************************
  * File :    PostGISRasterDriver.cpp
  * Project:  PostGIS Raster driver
- * Purpose:  Implements PostGIS Raster driver class methods 
+ * Purpose:  Implements PostGIS Raster driver class methods
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
- * 
+ *
  * Last changes: $Id: $
  *
  ******************************************************************************
@@ -55,13 +55,13 @@ PostGISRasterDriver::~PostGISRasterDriver() {
  * \brief Create a PQconn object and store it in a list
  *
  * The PostGIS Raster driver keeps the connection with the PostgreSQL database
- * server for as long it leaves. Following PostGISRasterDataset instance 
- * can re-use the existing connection as long it used the same database, 
+ * server for as long it leaves. Following PostGISRasterDataset instance
+ * can re-use the existing connection as long it used the same database,
  * same host, port and user name.
  *
- * The PostGIS Raster driver will keep a list of all the successful 
+ * The PostGIS Raster driver will keep a list of all the successful
  * connections so, when connection is requested and it does not exist
- * on the list a new one will be instantiated, added to the list and 
+ * on the list a new one will be instantiated, added to the list and
  * returned to the caller.
  *
  * All connection will be destroyed when the PostGISRasterDriver is destroyed.
@@ -112,6 +112,3 @@ PGconn* PostGISRasterDriver::GetConnection(const char* pszConnectionString,
     oMapConnection[osKey] = poConn;
     return poConn;
 }
-
-
-

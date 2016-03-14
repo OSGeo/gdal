@@ -165,8 +165,8 @@ void GDALWMSMiniDriver_WMS::BuildURL(CPLString *url, const GDALWMSImageRequestIn
     URLAppendF(url, "&format=%s", m_image_format.c_str());
     URLAppendF(url, "&width=%d", iri.m_sx);
     URLAppendF(url, "&height=%d", iri.m_sy);
-    URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f", 
-        GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
+    URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f",
+        GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
         GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
 }
 

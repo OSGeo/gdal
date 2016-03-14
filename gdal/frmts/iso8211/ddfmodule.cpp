@@ -152,7 +152,7 @@ void DDFModule::Close()
  * read, and all the field and subfield definitions will be available.
  *
  * @param pszFilename   The name of the file to open.
- * @param bFailQuietly If FALSE a CPL Error is issued for non-8211 files, 
+ * @param bFailQuietly If FALSE a CPL Error is issued for non-8211 files,
  * otherwise quietly return NULL.
  *
  * @return FALSE if the open fails or TRUE if it succeeds.  Errors messages
@@ -357,7 +357,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /************************************************************************/
 
 int DDFModule::Initialize( char chInterchangeLevel,
-                           char chLeaderIden, 
+                           char chLeaderIden,
                            char chCodeExtensionIndicator,
                            char chVersionNumber,
                            char chAppIndicator,
@@ -395,7 +395,7 @@ int DDFModule::Create( const char *pszFilename )
     fpDDF = VSIFOpenL( pszFilename, "wb+" );
     if( fpDDF == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create file %s, check path and permissions.",
                   pszFilename );
         return FALSE;
@@ -408,8 +408,8 @@ int DDFModule::Create( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     int iField;
 
-    _recLength = 24 
-        + nFieldDefnCount * (_sizeFieldLength+_sizeFieldPos+_sizeFieldTag) 
+    _recLength = 24
+        + nFieldDefnCount * (_sizeFieldLength+_sizeFieldPos+_sizeFieldTag)
         + 1;
 
     _fieldAreaStart = _recLength;
@@ -613,18 +613,18 @@ DDFRecord *DDFModule::ReadRecord()
 /**
  * Add new field definition.
  *
- * Field definitions may only be added to DDFModules being used for 
- * writing, not those being used for reading.  Ownership of the 
+ * Field definitions may only be added to DDFModules being used for
+ * writing, not those being used for reading.  Ownership of the
  * DDFFieldDefn object is taken by the DDFModule.
  *
- * @param poNewFDefn definition to be added to the module. 
+ * @param poNewFDefn definition to be added to the module.
  */
 
 void DDFModule::AddField( DDFFieldDefn *poNewFDefn )
 
 {
     nFieldDefnCount++;
-    papoFieldDefns = (DDFFieldDefn **) 
+    papoFieldDefns = (DDFFieldDefn **)
         CPLRealloc(papoFieldDefns, sizeof(void*)*nFieldDefnCount);
     papoFieldDefns[nFieldDefnCount-1] = poNewFDefn;
 }

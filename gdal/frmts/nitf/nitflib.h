@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  NITF Read/Write Library
- * Purpose:  Main GDAL independent include file for NITF support.  
+ * Purpose:  Main GDAL independent include file for NITF support.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
@@ -38,7 +38,7 @@
 
 CPL_C_START
 
-typedef struct { 
+typedef struct {
     char szSegmentType[3]; /* one of "IM", ... */
 
     GUIntBig nSegmentHeaderStart;
@@ -83,12 +83,12 @@ NITFFile CPL_DLL *NITFOpen( const char *pszFilename, int bUpdatable );
 NITFFile *NITFOpenEx( VSILFILE *fp, const char *pszFilename );
 void     CPL_DLL  NITFClose( NITFFile * );
 
-int      CPL_DLL  NITFCreate( const char *pszFilename, 
-                              int nPixels, int nLines, int nBands, 
+int      CPL_DLL  NITFCreate( const char *pszFilename,
+                              int nPixels, int nLines, int nBands,
                               int nBitsPerSample, const char *pszPVType,
                               char **papszOptions );
 
-const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes, 
+const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes,
                                  const char *pszTag, int *pnFoundTRESize );
 const char CPL_DLL *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
                                 const char *pszTag, int nTreIndex,
@@ -110,7 +110,7 @@ typedef struct {
 
 } NITFBandInfo;
 
-typedef struct { 
+typedef struct {
     GUInt16 nLocId;
     GUInt32 nLocOffset;
     GUInt32 nLocSize;
@@ -205,13 +205,13 @@ void      CPL_DLL  NITFImageDeaccess( NITFImage * );
 
 int       CPL_DLL  NITFReadImageBlock( NITFImage *, int nBlockX, int nBlockY,
                                        int nBand, void *pData );
-int       CPL_DLL  NITFReadImageLine( NITFImage *, int nLine, int nBand, 
+int       CPL_DLL  NITFReadImageLine( NITFImage *, int nLine, int nBand,
                                       void *pData );
 int       CPL_DLL  NITFWriteImageBlock( NITFImage *, int nBlockX, int nBlockY,
                                         int nBand, void *pData );
-int       CPL_DLL  NITFWriteImageLine( NITFImage *, int nLine, int nBand, 
+int       CPL_DLL  NITFWriteImageLine( NITFImage *, int nLine, int nBand,
                                        void *pData );
-int       CPL_DLL  NITFWriteLUT( NITFImage *psImage, int nBand, int nColors, 
+int       CPL_DLL  NITFWriteLUT( NITFImage *psImage, int nBand, int nColors,
                                  unsigned char *pabyLUT );
 int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
                                     int nZone,
@@ -225,7 +225,7 @@ char      CPL_DLL **NITFReadUSE00A( NITFImage *psImage );
 char      CPL_DLL **NITFReadSTDIDC( NITFImage *psImage );
 char      CPL_DLL **NITFReadBLOCKA( NITFImage *psImage );
 
-GUIntBig  CPL_DLL NITFIHFieldOffset( NITFImage *psImage, 
+GUIntBig  CPL_DLL NITFIHFieldOffset( NITFImage *psImage,
                                      const char *pszFieldName );
 
 #define BLKREAD_OK    0
@@ -235,7 +235,7 @@ GUIntBig  CPL_DLL NITFIHFieldOffset( NITFImage *psImage,
 int NITFUncompressARIDPCM( NITFImage *psImage,
                            GByte *pabyInputData, int nInputBytes,
                            GByte *pabyOutputImage );
-int NITFUncompressBILEVEL( NITFImage *psImage, 
+int NITFUncompressBILEVEL( NITFImage *psImage,
                            GByte *pabyInputData, int nInputBytes,
                            GByte *pabyOutputImage );
 
@@ -268,7 +268,7 @@ int       CPL_DLL  NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixF
 /*      These are really intended to be private helper stuff for the    */
 /*      library.                                                        */
 /* -------------------------------------------------------------------- */
-char *NITFGetField( char *pszTarget, const char *pszSource, 
+char *NITFGetField( char *pszTarget, const char *pszSource,
                     int nStart, int nLength );
 void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
                           int nStart, int nLength, const char *pszName );
@@ -376,7 +376,7 @@ typedef struct {
 
 int CPL_DLL NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo * );
 
-double CPL_DLL 
+double CPL_DLL
         NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat );
 
 
@@ -411,4 +411,3 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
 CPL_C_END
 
 #endif /* ndef NITFLIB_H_INCLUDED */
-

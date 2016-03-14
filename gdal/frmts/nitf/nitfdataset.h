@@ -37,7 +37,7 @@
 #include "gdal_proxy.h"
 #include <map>
 
-CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
+CPLErr NITFSetColorInterpretation( NITFImage *psImage,
                                    int nBand,
                                    GDALColorInterp eInterp );
 
@@ -128,8 +128,8 @@ class NITFDataset : public GDALPamDataset
                  ~NITFDataset();
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                               int nBufXSize, int nBufYSize, 
-                               GDALDataType eDT, 
+                               int nBufXSize, int nBufYSize,
+                               GDALDataType eDT,
                                int nBandCount, int *panBandList,
                                char **papszOptions );
 
@@ -166,7 +166,7 @@ class NITFDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *
     NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
-                    int bStrict, char **papszOptions, 
+                    int bStrict, char **papszOptions,
                     GDALProgressFunc pfnProgress, void * pProgressData );
     static GDALDataset *
              NITFDatasetCreate( const char *pszFilename,
@@ -203,7 +203,7 @@ class NITFRasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual GDALColorTable *GetColorTable();
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 
     void Unpack(GByte* pData);
@@ -352,5 +352,5 @@ class NITFWrapperRasterBand : public NITFProxyPamRasterBand
     virtual GDALRasterBand *GetOverview(int);
 
     /* Specific method */
-    void                    SetColorTableFromNITFBandInfo(); 
+    void                    SetColorTableFromNITFBandInfo();
 };

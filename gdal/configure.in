@@ -141,7 +141,7 @@ AC_SUBST(HAVE_LIBTOOL,$with_libtool)
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
 
-dnl Needed on Solaris. 
+dnl Needed on Solaris.
 AC_CHECK_LIB(rt,nanosleep,,,)
 
 dnl We don't need to add math library to all targets
@@ -210,7 +210,7 @@ AC_CHECK_FUNCS(vfork)
 AC_CHECK_FUNCS(mmap)
 AC_CHECK_FUNCS(statvfs)
 
-dnl Make sure at least these are checked under C++.  Prototypes missing on 
+dnl Make sure at least these are checked under C++.  Prototypes missing on
 dnl some platforms.
 
 AC_LANG_PUSH(C++)
@@ -262,15 +262,15 @@ if test "x$enable_debug" = "xyes" ; then
 
   dnl Try to strip out optimization.
 
-  CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-O2 //"` 
-  CFLAGS=`echo "$CFLAGS " | sed "s/-O2 //"` 
-  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-O //"` 
-  CFLAGS=`echo "$CFLAGS" | sed "s/-O //"` 
+  CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-O2 //"`
+  CFLAGS=`echo "$CFLAGS " | sed "s/-O2 //"`
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-O //"`
+  CFLAGS=`echo "$CFLAGS" | sed "s/-O //"`
 
-  dnl remove existing -g to avoid duplicates. 
+  dnl remove existing -g to avoid duplicates.
 
-  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"` 
-  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"` 
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"`
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"`
 
   dnl add -g and -DDEBUG
 
@@ -479,8 +479,8 @@ if test "x$enable_lto" = "xyes" ; then
 
   dnl remove existing -g.
 
-  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"` 
-  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"` 
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"`
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"`
 
   dnl add -flto
 
@@ -567,7 +567,7 @@ else
 fi
 
 if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
-  AC_DEFINE_UNQUOTED(USE_GCC_VISIBILITY_FLAG,1, [Define to 1 if you want to use the -fvisibility GCC flag]) 
+  AC_DEFINE_UNQUOTED(USE_GCC_VISIBILITY_FLAG,1, [Define to 1 if you want to use the -fvisibility GCC flag])
 fi
 
 AC_SUBST(HAVE_HIDE_INTERNAL_SYMBOLS,$HAVE_HIDE_INTERNAL_SYMBOLS)
@@ -602,7 +602,7 @@ AC_MSG_CHECKING([for local include/lib path])
 AC_ARG_WITH(local,[  --with-local[=dir]      Include /usr/local or other local tree for INCLUDE/LIBS],,)
 
 if test "$with_local" != "no" -a "$with_local" != "" ; then
-  
+
   if test "$with_local" = "yes" ; then
     ADD_PREFIX=/usr/local
   else
@@ -697,7 +697,7 @@ if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
 elif test "$with_threads" != "no" ; then
 
   THREAD_FLAG=CPL_MULTIPROC_PTHREAD
-  THREAD_LIB="$with_threads"  
+  THREAD_LIB="$with_threads"
 
   AC_CHECKING(whether we should include thread/mutex support...)
   AC_MSG_RESULT([        using threads with link options "$THREAD_LIB".])
@@ -712,7 +712,7 @@ if test "$THREAD_FLAG" = "CPL_MULTIPROC_PTHREAD" ; then
   PTHREAD_ENABLED="yes"
 fi
 
-LIBS="$THREAD_LIB $LIBS" 
+LIBS="$THREAD_LIB $LIBS"
 
 dnl ---------------------------------------------------------------------------
 dnl Check if mremap() with 5 args is available
@@ -869,7 +869,7 @@ AC_ARG_WITH(pg,
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
   AC_PATH_PROG(PG_CONFIG, pg_config, no)
-else 
+else
   PG_CONFIG=$with_pg
 fi
 
@@ -897,7 +897,7 @@ else
   AC_MSG_RESULT([yes])
 
   AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,-L`$PG_CONFIG --libdir`)
-  
+
   if test "${HAVE_PG}" = "yes" ; then
     LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
     PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
@@ -952,9 +952,9 @@ if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
   if test "$GRASS_SETTING" = "no" ; then
     AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
   fi
-   
-  if test "$GRASS_SETTING" != "no" ; then   
-    if test "$GRASS_SETTING" = "grass70+" ; then   
+
+  if test "$GRASS_SETTING" != "no" ; then
+    if test "$GRASS_SETTING" = "grass70+" ; then
       G_RASTLIBS="-lgrass_raster -lgrass_imagery"
       G_VECTLIBS="-lgrass_vector -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
       LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
@@ -979,7 +979,7 @@ elif test "$with_libgrass" = "yes" -o "$with_libgrass" = "" ; then
 
   AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,)
 
-  if test "$GRASS_SETTING" = "libgrass" ; then   
+  if test "$GRASS_SETTING" = "libgrass" ; then
     LIBS="-lgrass5 $LIBS"
   fi
 
@@ -987,7 +987,7 @@ else
 
   AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,-L$with_libgrass/lib)
 
-  if test "$GRASS_SETTING" = "libgrass" ; then   
+  if test "$GRASS_SETTING" = "libgrass" ; then
     LIBS="-L$with_libgrass -L$with_libgrass/lib -lgrass5 $LIBS"
     GRASS_INCLUDE="-I$with_libgrass -I$with_libgrass/include $EXTRA_INCLUDES"
   else
@@ -1020,7 +1020,7 @@ elif test "$with_cfitsio" = "yes" -o "$with_cfitsio" = "" ; then
 
   AC_CHECK_LIB(cfitsio,ffopen,FITS_SETTING=external,FITS_SETTING=no,)
 
-  if test "$FITS_SETTING" = "external" ; then   
+  if test "$FITS_SETTING" = "external" ; then
     LIBS="-lcfitsio $LIBS"
     echo "using pre-installed libcfitsio."
   else
@@ -1116,10 +1116,10 @@ elif test "$with_png" = "yes" -o "$with_png" = "" ; then
   AC_CHECK_LIB([png], [png_set_IHDR], [PNG_SETTING=external], [PNG_SETTING=internal], [$LIBS])
   AC_CHECK_HEADERS([png.h])
 
-  if test "$PNG_SETTING" = "external" -a "$ac_cv_header_png_h" = "no" ; then   
+  if test "$PNG_SETTING" = "external" -a "$ac_cv_header_png_h" = "no" ; then
     PNG_SETTING=internal
   fi
-  if test "$PNG_SETTING" = "external" ; then   
+  if test "$PNG_SETTING" = "external" ; then
     LIBS="-lpng $LIBS"
     echo "using pre-installed libpng."
   else
@@ -1278,7 +1278,7 @@ if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
     AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
   fi
 
-  if test "$TIFF_SETTING" = "external" ; then   
+  if test "$TIFF_SETTING" = "external" ; then
     LIBS="-ltiff $LIBS"
     AC_MSG_RESULT([using pre-installed libtiff.])
   else
@@ -1331,12 +1331,12 @@ if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
   if test "$TIFF_SETTING" = "internal" ; then
     GEOTIFF_SETTING=internal
   else
-    dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen). 
+    dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen).
     AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_SETTING=external,GEOTIFF_SETTING=internal)
 
   fi
 
-  if test "$GEOTIFF_SETTING" = "external" ; then   
+  if test "$GEOTIFF_SETTING" = "external" ; then
 
     dnl Now search for headers
     if test -r /usr/include/geotiff.h ; then
@@ -1373,7 +1373,7 @@ else
 
   GEOTIFF_SETTING=external
 
-  dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen). 
+  dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen).
   dnl first check if $with_geotiff/lib has the library:
   AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_SETTING=external,GEOTIFF_SETTING=not_found,-L$with_geotiff/lib)
 
@@ -1434,7 +1434,7 @@ elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
     rm -f conftest*
   fi
 
-  if test "$JPEG_SETTING" = "external" ; then   
+  if test "$JPEG_SETTING" = "external" ; then
     LIBS="-ljpeg $LIBS"
     echo "using pre-installed libjpeg."
   else
@@ -1527,7 +1527,7 @@ elif test "$with_gif" = "yes" -o "$with_gif" = "" ; then
   AC_CHECK_LIB(gif,DGifOpenFileName,GIF_SETTING=external,GIF_SETTING=internal,)
   AC_CHECK_HEADERS(gif_lib.h)
 
-  if test "$GIF_SETTING" = "external" ; then   
+  if test "$GIF_SETTING" = "external" ; then
     LIBS="-lgif $LIBS"
     echo "using pre-installed libgif."
   else
@@ -1589,12 +1589,12 @@ elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
   if test "$OGDI_INCLUDE" != "" -o "$ac_cv_header_ecs_h" = "yes"; then
     AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
-    if test "$HAVE_OGDI" = "yes" ; then   
+    if test "$HAVE_OGDI" = "yes" ; then
       LIBS="-logdi $LIBS"
     else
       dnl For backward compatibility. Retry with ogdi31 as a name
       AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
-      if test "$HAVE_OGDI" = "yes" ; then   
+      if test "$HAVE_OGDI" = "yes" ; then
         LIBS="-logdi31 $LIBS"
       fi
     fi
@@ -1661,33 +1661,33 @@ elif test "$with_fme" = "yes" ; then
 
   if test "$FME_HOME" = "" ; then
     AC_MSG_ERROR([no, FME_HOME not defined!])
-  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then 
+  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then
     AC_MSG_RESULT([yes])
     X_FME_HOME=$FME_HOME
   else
     AC_MSG_ERROR([FME_HOME defined, but $FME_HOME/fmeobjects/cpp/issesion.h not found.])
   fi
-    
+
 elif test "$with_fme" = "" ; then
 
   if test "$FME_HOME" = "" ; then
     AC_MSG_RESULT([no])
-  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then 
+  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then
     AC_MSG_RESULT([yes])
     X_FME_HOME=$FME_HOME
   else
     AC_MSG_RESULT([no, FME_HOME defined, but $FME_HOME/fmeobjects/cpp/issesion.h not found.])
   fi
-    
+
 else
 
-  if test -f $with_fme/fmeobjects/cpp/isession.h ; then 
+  if test -f $with_fme/fmeobjects/cpp/isession.h ; then
     AC_MSG_RESULT([yes])
     X_FME_HOME=$with_fme
   else
     AC_MSG_ERROR([$with_fme/fmeobjects/cpp/issesion.h not found!])
   fi
-  
+
 fi
 
 AC_SUBST(X_FME_HOME,$X_FME_HOME)
@@ -1809,7 +1809,7 @@ else
   fi
 
   AC_MSG_CHECKING([for mongo/client/dbclient.h in $with_mongocxx/include])
-  if test -r $with_mongocxx/include/mongo/client/dbclient.h ; then  
+  if test -r $with_mongocxx/include/mongo/client/dbclient.h ; then
     AC_MSG_RESULT([found.])
     MONGODB_INC="-I$with_mongocxx/include"
   else
@@ -1826,7 +1826,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select an HDF4 Library to use, or disable driver.
 dnl
 dnl We assume the user will have libjpeg and libz from other sources when
-dnl linking against static HDF4 libraries. 
+dnl linking against static HDF4 libraries.
 dnl ---------------------------------------------------------------------------
 
 HDF4_INCLUDE=""
@@ -1961,11 +1961,11 @@ elif test "$with_hdf5" = "yes" -o "$with_hdf5" = "" ; then
 
   AC_CHECK_LIB(hdf5,H5Fopen,HAVE_HDF5=yes,HAVE_HDF5=no,)
 
-  if test "$HAVE_HDF5" = "yes" ; then   
+  if test "$HAVE_HDF5" = "yes" ; then
     LIBS="-lhdf5 $LIBS"
   fi
 
-dnl Some Linux distros install hdf include files here. 
+dnl Some Linux distros install hdf include files here.
   if test "$HAVE_HDF5" = "yes" -a -r /usr/include/hdf5.h ; then
     HDF5_INCLUDE="-I/usr/include"
   fi
@@ -2047,7 +2047,7 @@ else
   HAVE_KEA=yes
   KEA_LIB="`$KEA_CONFIG --libs --hdflibs`"
   KEA_INC="`$KEA_CONFIG --cflags --hdfcflags`"
-  AC_MSG_RESULT([yes]) 
+  AC_MSG_RESULT([yes])
 fi
 
 AC_SUBST(HAVE_KEA,$HAVE_KEA)
@@ -2096,7 +2096,7 @@ else
     echo "did not get netCDF version from $NETCDF_NCCONFIG ... using fallback"
     NETCDF_NCCONFIG=
   fi
-  
+
   dnl test linking using flags from nc-config
   if test "$NETCDF_NCCONFIG" != "" ; then
 
@@ -2104,9 +2104,9 @@ else
     NETCDF_VERSION=`$NETCDF_NCCONFIG --version`
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
-    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs` 
+    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
     echo ""
-    AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX", 
+    AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX",
  libs="$NETCDF_LIBS", includedir="$NETCDF_INCLUDEDIR"])
 
     AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no], $NETCDF_LIBS)
@@ -2246,7 +2246,7 @@ elif test "$with_jasper" = "yes" -o "$with_jasper" = "" ; then
   AC_CHECK_LIB(jasper,jp2_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
   AC_CHECK_LIB(jasper,pgx_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
 
-  if test "$HAVE_JASPER" = "yes" ; then   
+  if test "$HAVE_JASPER" = "yes" ; then
     LIBS="-ljasper $LIBS"
   fi
 else
@@ -2260,7 +2260,7 @@ fi
 
 if test "$HAVE_JASPER" != "no" ; then
   OPT_GDAL_FORMATS="jpeg2000 $OPT_GDAL_FORMATS"
-  
+
   dnl Test whether we have UUID JasPer hack
 
   AC_CHECK_LIB(jasper,jp2_encode_uuid,HAVE_JASPER_UUID=yes,HAVE_JASPER_UUID=no,)
@@ -2384,7 +2384,7 @@ else
   fi
 
   AC_MSG_CHECKING([for FileGDBAPI.h in $with_fgdb/include])
-  if test -r $with_fgdb/include/FileGDBAPI.h ; then  
+  if test -r $with_fgdb/include/FileGDBAPI.h ; then
     AC_MSG_RESULT([found.])
     FGDB_INC="-I$with_fgdb/include"
   else
@@ -2422,13 +2422,13 @@ elif test "$with_ecw" = "yes" -o "$with_ecw" = "" ; then
 
   AC_CHECK_LIB(NCSEcw,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,-lNCSCnet -lNCSUtil)
 
-  if test "$ECW_SETTING" = "yes" ; then   
+  if test "$ECW_SETTING" = "yes" ; then
     ECW_LIBS="-lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
   fi
 
   if test "$ECW_SETTING" = "no" ; then
     AC_CHECK_LIB(ecwj2,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,$CARBON_FRAMEWORK)
-    if test "$ECW_SETTING" = "yes" ; then   
+    if test "$ECW_SETTING" = "yes" ; then
       ECW_LIBS="-lecwj2 $CARBON_FRAMEWORK"
     fi
   fi
@@ -2439,7 +2439,7 @@ else
   ECW_CONF="release"
   ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DHAVE_COMPRESS -DECW_COMPRESS_RW_SDK_VERSION"
   ECW_FRAMEWORK_COCOA=""
-  if test "`arch`" = "x86_64" ; then 
+  if test "`arch`" = "x86_64" ; then
     ECW_ARCH="x64"
   fi
   if test ! -z "`uname | grep Darwin`" ; then
@@ -2448,7 +2448,7 @@ else
     ECW_FLAGS=""
     ECW_FRAMEWORK_COCOA=" -framework Cocoa "
   fi
-  
+
   ECW_SETTING=yes
   if test -r $with_ecw/lib/libNCSCnet.so -o -r $with_ecw/lib/libNCSCnet.dylib ; then
     ECW_LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
@@ -2485,14 +2485,14 @@ else
   fi
 
   AC_MSG_CHECKING([for NCSECWClient.h in $with_ecw/include])
-  if test -r $with_ecw/include/NCSECWClient.h ; then  
+  if test -r $with_ecw/include/NCSECWClient.h ; then
     AC_MSG_RESULT([found.])
     ECW_INCLUDE="-I$with_ecw/include"
   else
     AC_MSG_ERROR([not found.])
   fi
   AC_MSG_CHECKING([for ECWJP2BuildNumber.h in $with_ecw/include])
-  if test -r $with_ecw/include/ECWJP2BuildNumber.h ; then  
+  if test -r $with_ecw/include/ECWJP2BuildNumber.h ; then
     AC_MSG_RESULT([found.])
     ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
   else
@@ -2523,7 +2523,7 @@ if test "$with_kakadu" = "no" -o "$with_kakadu" = "" ; then
   HAVE_KAKADU=no
 elif test "$with_kakadu" = "yes" ; then
   AC_MSG_ERROR([
-For JPEG2000 support using Kakadu you need provide the path to the Kakadu 
+For JPEG2000 support using Kakadu you need provide the path to the Kakadu
 build directory.  Note that Kakadu is *not* free software.])
 else
   KAKDIR=$with_kakadu
@@ -2625,10 +2625,10 @@ else
     MRSID_KAKADU_LIB=""
     if test "$HAVE_KAKADU" = "no" ; then
       if test x"$with_jp2mrsid" = x"" -o x"$with_jp2mrsid" = x"yes" ; then
-        if test -r "$with_mrsid/3rd-party/$_LIBPART/libltikdu.a" ; then 
+        if test -r "$with_mrsid/3rd-party/$_LIBPART/libltikdu.a" ; then
           with_jp2mrsid=yes
           MRSID_KAKADU_LIB=-lltikdu
-        elif test -r "$with_mrsid/3rd-party/$_LIBPART/liblt_kakadu.a" ; then 
+        elif test -r "$with_mrsid/3rd-party/$_LIBPART/liblt_kakadu.a" ; then
           with_jp2mrsid=yes
           MRSID_KAKADU_LIB=-llt_kakadu
         elif test -e "$with_mrsid/lib/libltidsdk.so" \
@@ -2724,7 +2724,7 @@ AC_ARG_WITH([msg],
 HAVE_MSG=no
 HAVE_EUMETSATWT=no
 
-if test "x$with_msg" = "xyes" ; then 
+if test "x$with_msg" = "xyes" ; then
     AC_MSG_CHECKING([for EUMETSAT Wavelet Transformation Software])
 
     if test -d "frmts/msg/PublicDecompWT" -a \
@@ -2739,7 +2739,7 @@ fi
 AC_MSG_CHECKING([for MSG])
 
 if test "x$with_msg" = "xyes" -o "x$with_msg" = "x" \
-    -a "x$HAVE_EUMETSATWT" = "xyes"; then 
+    -a "x$HAVE_EUMETSATWT" = "xyes"; then
     OPT_GDAL_FORMATS="msg $OPT_GDAL_FORMATS"
     HAVE_MSG=yes
     AC_MSG_RESULT([enabled])
@@ -2880,7 +2880,7 @@ else
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
-      AC_MSG_RESULT([yes]) 
+      AC_MSG_RESULT([yes])
   fi
 fi
 
@@ -2908,7 +2908,7 @@ else
   HAVE_INGRES=yes
   II_SYSTEM=$with_ingres
   INGRES_LIB="-L$II_SYSTEM/ingres/lib \
-	-liiapi.1 -lcompat.1 -lq.1 -lframe.1" 
+	-liiapi.1 -lcompat.1 -lq.1 -lframe.1"
   INGRES_INC=-I$II_SYSTEM/ingres/files
 fi
 
@@ -2930,7 +2930,7 @@ fi
 
 AC_SUBST([HAVE_XERCES], $HAVE_XERCES)
 AC_SUBST([XERCES_INCLUDE], $XERCES_CFLAGS)
-  
+
 dnl ---------------------------------------------------------------------------
 dnl Enable NAS if we have Xerces.
 dnl ---------------------------------------------------------------------------
@@ -2970,7 +2970,7 @@ fi
 
 AC_SUBST([HAVE_LIBKML], $HAVE_LIBKML)
 AC_SUBST([LIBKML_INCLUDE], $LIBKML_CFLAGS)
-  
+
 dnl ---------------------------------------------------------------------------
 dnl Check for ODBC support.
 dnl ---------------------------------------------------------------------------
@@ -2995,7 +2995,7 @@ elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
     AC_CHECK_LIB(odbc32,main,[ODBC_LIBS="-lodbc32 -lodbccp32"])
     AC_CHECK_LIB(odbccp32,SQLInstallDriverEx,ODBC_SETTING=yes)
   fi
- 
+
   if test "$ODBC_SETTING" = "yes" ; then
     AC_CHECK_HEADERS(sql.h,,[ODBC_SETTING=no],
 [#ifdef _WIN32
@@ -3015,7 +3015,7 @@ elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
     fi
   fi
 
-  if test "$ODBC_SETTING" = "yes"  ; then   
+  if test "$ODBC_SETTING" = "yes"  ; then
     LIBS="$ODBC_LIBS $LIBS"
   fi
 
@@ -3080,7 +3080,7 @@ else
         dnl libs from dap-config gets added further down
         AC_MSG_RESULT([libdap $LIBDAP_VER])
     else
-        dnl Check the version by compiling test programs 
+        dnl Check the version by compiling test programs
 
         dnl Test if we have libdap >= 3.10
         dnl From libdap 3.10, AISConnect.h has been renamed as Connect.h
@@ -3117,16 +3117,16 @@ else
 
 
     dnl Add the DODS libraries to LIBS
-    if test -x $DODS_BIN/opendap-config ; then 
+    if test -x $DODS_BIN/opendap-config ; then
       dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
       LIBS="$LIBS `$DODS_BIN/opendap-config --libs`"
-    elif test -x $DODS_BIN/dap-config ; then 
+    elif test -x $DODS_BIN/dap-config ; then
       dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
       LIBS="$LIBS `$DODS_BIN/dap-config --libs`"
     else
       dnl Otherwise try to put things together in a more primitive way.
       LIBS="$LIBS -L$DODS_LIB -ldap++ -lpthread -lrx"
-    
+
       dnl Add curl to LIBS; it might be local to DODS or generally installed
       if test -x $DODS_BIN/curl-config; then
           LIBS="$LIBS  `$DODS_BIN/curl-config --libs`"
@@ -3142,7 +3142,7 @@ else
           LIBS="$LIBS  `xml2-config --libs`"
       else
           AC_MSG_ERROR([You gave a dods root, but I can't find xml2!])
-      fi 
+      fi
     fi
 
     OPT_GDAL_FORMATS="dods $OPT_GDAL_FORMATS"
@@ -3181,13 +3181,13 @@ if test "$LIBCURL_CONFIG" != "no" ; then
   CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
 
   AC_MSG_RESULT([        found libcurl version $CURL_VER])
-  
+
   AC_CHECK_LIB(curl,curl_global_init,CURL_SETTING=yes,CURL_SETTING=no,`$LIBCURL_CONFIG --libs`)
 
 fi
 
 if test "$CURL_SETTING" = "yes" ; then
-  
+
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
   OPT_GDAL_FORMATS="wcs wms plmosaic wmts $OPT_GDAL_FORMATS"
@@ -3394,7 +3394,7 @@ AC_MSG_CHECKING(Checking for DWGdirect)
 AC_ARG_WITH(dwgdirect,
     [  --with-dwgdirect[=path] Include DWG direct support],
     ,,)
-    
+
 if test -z "$with_dwgdirect" -o "$with_dwgdirect" = "no"; then
     AC_MSG_RESULT(disabled)
     HAVE_DWGDIRECT=no
@@ -3547,7 +3547,7 @@ if test "$with_epsilon" = "yes" ; then
 
   AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,)
 
-  if test "$EPSILON_SETTING" = "yes" ; then   
+  if test "$EPSILON_SETTING" = "yes" ; then
     LIBS="-lepsilon $LIBS"
   else
     echo "libepsilon not found - EPSILON support disabled"
@@ -3557,7 +3557,7 @@ elif test "$with_epsilon" != "no" -a "$with_epsilon" != ""; then
 
   AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,-L$with_epsilon/lib -lepsilon)
 
-  if test "$EPSILON_SETTING" = "yes" ; then   
+  if test "$EPSILON_SETTING" = "yes" ; then
     LIBS="-L$with_epsilon/lib -lepsilon $LIBS"
     EXTRA_INCLUDES="-I$with_epsilon/include $EXTRA_INCLUDES"
   else
@@ -3691,10 +3691,10 @@ if test "$with_opencl" = "yes" ; then
   else
     OPENCL_FLAGS="-I$with_opencl_include -DHAVE_OPENCL"
   fi
-    
+
   AC_ARG_WITH(opencl-lib,
       [  --with-opencl-lib=ARG   OpenCL Link Flags (i.e. -L/xxx -lOpenCL)],,,)
-     
+
   if test "x$with_opencl_lib" = "x" ; then
     if test ! -z "`uname | grep Darwin`" ; then
       OPENCL_LIB="-framework OpenCL"
@@ -4252,7 +4252,7 @@ else
     LIBS="$PROJ_LIB $ORIG_LIBS"
     AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
   else
-  
+
     LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
     AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
 
@@ -4301,7 +4301,7 @@ else
   elif test -r "$with_static_proj4/proj_api.h" ; then
     PROJ_INCLUDE="-I$with_static_proj4"
   fi
-  
+
 fi
 
 AC_SUBST(PROJ_STATIC)
@@ -4387,7 +4387,7 @@ AC_SUBST(EXE_EXT)
 AC_SUBST(SO_EXT)
 
 dnl ---------------------------------------------------------------------------
-dnl Which "true" program should we use? 
+dnl Which "true" program should we use?
 dnl ---------------------------------------------------------------------------
 BINTRUE=/bin/true
 
@@ -4403,7 +4403,7 @@ export BINTRUE
 AC_SUBST(BINTRUE,$BINTRUE)
 
 dnl ---------------------------------------------------------------------------
-dnl If datadir is set to @prefix@/share, the modify it to be 
+dnl If datadir is set to @prefix@/share, the modify it to be
 dnl @prefix@/share/gdal.  I wish we could default this.
 dnl ---------------------------------------------------------------------------
 if test "$datadir" = '${prefix}/share' ; then
@@ -4417,15 +4417,15 @@ fi
 
 dnl ---------------------------------------------------------------------------
 dnl By default mandir is $datarootdir/man which would be
-dnl /usr/local/share/gdal/man but we want man pages in /usr/local/man. 
+dnl /usr/local/share/gdal/man but we want man pages in /usr/local/man.
 dnl ---------------------------------------------------------------------------
 mandir='${prefix}/man'
 
 dnl ---------------------------------------------------------------------------
-dnl Capture GDAL_PREFIX for the cpl_config.h include file. 
+dnl Capture GDAL_PREFIX for the cpl_config.h include file.
 dnl ---------------------------------------------------------------------------
 
-if test "$prefix" = "NONE" ; then 
+if test "$prefix" = "NONE" ; then
   GDAL_PREFIX=/usr/local
 else
   GDAL_PREFIX=${prefix}
@@ -5049,7 +5049,7 @@ LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
 LOC_MSG([  DDS support:               ${DDS_SETTING}])
-LOC_MSG([  GTA support:               ${GTA_SETTING}]) 
+LOC_MSG([  GTA support:               ${GTA_SETTING}])
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
 LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])

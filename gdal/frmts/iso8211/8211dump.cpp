@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  SDTS Translator
- * Purpose:  Dump 8211 file in verbose form - just a junk program. 
+ * Purpose:  Dump 8211 file in verbose form - just a junk program.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -83,7 +83,7 @@ int main( int nArgc, char ** papszArgv )
         DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
 
         if( poFSPT == NULL )
-            fprintf( stderr, 
+            fprintf( stderr,
                      "unable to find FSPT field to set repeating flag.\n" );
         else
             poFSPT->SetRepeatingFlag( TRUE );
@@ -322,6 +322,3 @@ int main( int nArgc, char ** papszArgv )
 #endif
 
 }
-
-
-
