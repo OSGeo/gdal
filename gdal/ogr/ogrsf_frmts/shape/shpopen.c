@@ -510,12 +510,15 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     int			i;
     double		dValue;
     int         bLazySHXLoading = FALSE;
+    int         bSHXRestoring = TRUE; //CSLTestBoolean(CPLGetConfigOption("SHP_RESTORE_SHX", NULL));
+    
     size_t nFullnameLen;
     
 /* -------------------------------------------------------------------- */
 /*      Ensure the access string is one of the legal ones.  We          */
 /*      ensure the result string indicates binary to avoid common       */
-/*      problems on Windows.                                            */
+/*      problems on Windows. Also, if SHP_RESTORE_SHX option was passed,*/
+/*      set access string to "wb+"                                      */
 /* -------------------------------------------------------------------- */
     if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0
         || strcmp(pszAccess,"r+") == 0 )
@@ -589,6 +592,99 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*  Read the file size from the SHP file.				*/
+/* -------------------------------------------------------------------- */
+    pabyBuf = (uchar *) malloc(100);
+    psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
+    
+    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
+                        + (unsigned int)pabyBuf[25] * 256 * 256
+                        + (unsigned int)pabyBuf[26] * 256
+                        + (unsigned int)pabyBuf[27]);
+    if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
+        psSHP->nFileSize *= 2;
+    else
+        psSHP->nFileSize = 0xFFFFFFFEU;
+    
+/* -------------------------------------------------------------------- */
+/*	Create the .shx file for existing .shp, if SHP_RESTORE_SHX parameter*/
+/*	was passed.                                                         */
+/* -------------------------------------------------------------------- */
+    if(bSHXRestoring)
+        pszAccess = "wb+";
+    
+    pszFullname = (char *) malloc(nFullnameLen);
+    snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
+    SAFile fpSHX = psHooks->FOpen(pszFullname, pszAccess);
+    if( bSHXRestoring && psSHP->fpSHX == NULL )
+    {
+        size_t nMessageLen = strlen(pszBasename)*2+256;
+        char *pszMessage = (char *) malloc(nMessageLen);
+        snprintf( pszMessage, nMessageLen, "Creating %s.shx file for %s.shp",
+                 pszBasename, pszBasename );
+        psHooks->Error( pszMessage );
+        free( pszMessage );
+        
+            // pabyBuf stores the .shp header, isnt it?
+        char *pabySHXContent = (char *) malloc (psSHP->nFileSize); // buffer size equal to SHP (maximum case) 100 bytes for header
+        memcpy(pabySHXContent, pabyBuf, 100);
+        int nCurrentRecordPointer = 0;
+        int nRealSHXContentSize = 0;
+        int niRecord = 0;
+        int nRecordLength = 0;
+        size_t iByte = 100; // current byte, should be < psSHP->nFileSize
+        int nRecordOffset = 50; // offset in 16-bit words (!) to the first record
+        while( iByte <= psSHP->nFileSize )
+        {
+            if(psSHP->sHooks.FRead( &niRecord, 4, 1, psSHP->fpSHP ) == 4 &&
+               psSHP->sHooks.FRead( &nRecordLength, 4, 1, psSHP->fpSHP ) == 4)
+            {
+                memcpy(100 + pabySHXContent + nCurrentRecordPointer, &nRecordOffset, 4);
+                memcpy(100 + pabySHXContent + nCurrentRecordPointer + 4, &nRecordLength, 4);
+                
+                if( !bBigEndian ) SwapWord(4, &nRecordOffset);
+                if( !bBigEndian ) SwapWord(4, &nRecordLength);
+                
+                nRecordOffset += nRecordLength;
+                nCurrentRecordPointer += 4;
+                
+                if( !bBigEndian ) SwapWord(4, &nRecordOffset);
+                if( !bBigEndian ) SwapWord(4, &nRecordLength);
+                
+                nRealSHXContentSize += 8;
+                iByte += 8;
+            }
+            else
+            {
+                nMessageLen = strlen(pszBasename)*2+256;
+                char *pszMessage = (char *) malloc(nMessageLen);
+                snprintf( pszMessage, nMessageLen, "Error parsing .shp to restore .shx",
+                         pszBasename, pszBasename );
+                psHooks->Error( pszMessage );
+        
+                psHooks->FClose( fpSHX );
+                psHooks->FClose( psSHP->fpSHP );
+                free( pszMessage );
+                free( psSHP );
+                free( pszFullname );
+                free( pszBasename );
+                free( pszAccess );
+                return( NULL );
+            }
+        }
+        
+            // write the total file size to the header
+        if( !bBigEndian ) SwapWord( 4, &nRealSHXContentSize );
+        pabySHXContent[24] = nRealSHXContentSize;
+        
+        psHooks->FWrite( pabySHXContent, nRealSHXContentSize, 1, fpSHX );
+        psHooks->FClose( fpSHX );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*	After .shx was successfully restored, work with it in a classic way.*/
+/* -------------------------------------------------------------------- */
     snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
     psSHP->fpSHX =  psSHP->sHooks.FOpen(pszFullname, pszAccess );
     if( psSHP->fpSHX == NULL )
@@ -615,21 +711,6 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     free( pszFullname );
     free( pszBasename );
-
-/* -------------------------------------------------------------------- */
-/*  Read the file size from the SHP file.				*/
-/* -------------------------------------------------------------------- */
-    pabyBuf = (uchar *) malloc(100);
-    psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
-
-    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
-                        + (unsigned int)pabyBuf[25] * 256 * 256
-                        + (unsigned int)pabyBuf[26] * 256
-                        + (unsigned int)pabyBuf[27]);
-    if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
-        psSHP->nFileSize *= 2;
-    else
-        psSHP->nFileSize = 0xFFFFFFFEU;
 
 /* -------------------------------------------------------------------- */
 /*  Read SHX file Header info                                           */
