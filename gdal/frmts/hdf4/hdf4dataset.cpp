@@ -384,6 +384,7 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
             if ( *pszString == '"' )
             {
                 bInString = !bInString;
+                continue;
             }
             else if ( *pszString == '(' )
             {
