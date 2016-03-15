@@ -20,7 +20,7 @@ sub DESTROY {
         Geo::GDAL::VSIStdoutUnsetRedirection();
         $code->close;
     }
-    
+
 }
 %}
 %enddef

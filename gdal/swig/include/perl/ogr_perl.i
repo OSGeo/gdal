@@ -1462,7 +1462,7 @@ sub ApproximateArcAngles {
                     Rotation => 0,
                     StartAngle => 0,
                     EndAngle => 360,
-                    MaxAngleStepSizeDegrees => 4 
+                    MaxAngleStepSizeDegrees => 4
         );
     for my $p (keys %p) {
         if (exists $default{$p}) {
@@ -1578,11 +1578,11 @@ sub AddPoint {
     my $t = $self->GetGeometryType;
     my $has_z = Geo::OGR::GT_HasZ($t);
     my $has_m = Geo::OGR::GT_HasM($t);
-    if (!$has_z && !$has_m) { 
+    if (!$has_z && !$has_m) {
         $self->AddPoint_2D(@_[0..1]);
-    } elsif ($has_z && !$has_m) { 
+    } elsif ($has_z && !$has_m) {
         $self->AddPoint_3D(@_[0..2]);
-    } elsif (!$has_z && $has_m) { 
+    } elsif (!$has_z && $has_m) {
         $self->AddPointM(@_[0..2]);
     } else {
         $self->AddPointZM(@_[0..3]);
@@ -1596,9 +1596,9 @@ sub SetPoint {
     my $has_m = Geo::OGR::GT_HasM($t);
     if (!$has_z && !$has_m) {
         $self->SetPoint_2D(@_[0..2]);
-    } elsif ($has_z && !$has_m) { 
+    } elsif ($has_z && !$has_m) {
         $self->SetPoint_3D(@_[0..3]);
-    } elsif (!$has_z && $has_m) { 
+    } elsif (!$has_z && $has_m) {
         $self->SetPointM(@_[0..3]);
     } else {
         $self->SetPointZM(@_[0..4]);
@@ -1612,11 +1612,11 @@ sub GetPoint {
     my $has_z = Geo::OGR::GT_HasZ($t);
     my $has_m = Geo::OGR::GT_HasM($t);
     my $point;
-    if (!$has_z && !$has_m) { 
+    if (!$has_z && !$has_m) {
         $point = $self->GetPoint_2D($i);
-    } elsif ($has_z && !$has_m) { 
+    } elsif ($has_z && !$has_m) {
         $point = $self->GetPoint_3D($i);
-    } elsif (!$has_z && $has_m) { 
+    } elsif (!$has_z && $has_m) {
         $point = $self->GetPointZM($i);
         @$point = ($point->[0], $point->[1], $point->[3]);
     } else {
@@ -1634,10 +1634,10 @@ sub Point {
         if (Geo::OGR::GT_Flatten($t) == $Geo::OGR::wkbPoint) {
             my $has_z = Geo::OGR::GT_HasZ($t);
             my $has_m = Geo::OGR::GT_HasM($t);
-            if (!$has_z && !$has_m) { 
+            if (!$has_z && !$has_m) {
                 shift if @_ > 2;
                 $i = 0;
-            } elsif ($has_z || $has_m) { 
+            } elsif ($has_z || $has_m) {
                 shift if @_ > 3;
                 $i = 0;
             } else {
