@@ -269,7 +269,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     return CE_None;
 }
 
-CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src) 
+CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
 {
     if (version == 2)
 	return CompressLERC2(dst, src, img, precision);
@@ -277,8 +277,8 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
 	return CompressLERC(dst, src, img, precision);
 }
 
-LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level): 
-    GDALMRFRasterBand(pDS, image, b, level) 
+LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level):
+    GDALMRFRasterBand(pDS, image, b, level)
 {
     // Pick 1/1000 for floats and 0.5 losless for integers
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64 )

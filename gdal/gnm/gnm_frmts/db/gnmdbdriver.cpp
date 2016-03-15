@@ -35,7 +35,7 @@
 
 static int GNMDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 
-{    
+{
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "PGB:") &&
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "PG:") )
         return FALSE;
@@ -134,5 +134,3 @@ void RegisterGNMDatabase()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

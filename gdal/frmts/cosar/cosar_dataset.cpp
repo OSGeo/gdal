@@ -1,4 +1,4 @@
-/* TerraSAR-X COSAR Format Driver 
+/* TerraSAR-X COSAR Format Driver
  * (C)2007 Philippe P. Vachon <philippe@cowpig.ca>
  * ---------------------------------------------------------------------------
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -108,7 +108,7 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     {
         /* throw an error */
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "RSLV/RSFV values are not sane... oh dear.\n");	
+                 "RSLV/RSFV values are not sane... oh dear.\n");
         return CE_Failure;
     }
 
@@ -118,7 +118,7 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
         ((GUInt32 *)pImage)[i] = 0;
     }
 
-    /* properly account for validity mask */ 
+    /* properly account for validity mask */
     if (nRSFV > 1)
     {
         VSIFSeekL(pCDS->fp,(this->nRTNB*(nBlockYOff+4)+(nRSFV+1)*4), SEEK_SET);
@@ -146,7 +146,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     if( pOpenInfo->nHeaderBytes < 4 )
         return NULL;
 
-    if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR")) 
+    if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR"))
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -154,7 +154,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 /* -------------------------------------------------------------------- */
     if( pOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The COSAR driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -168,7 +168,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     pOpenInfo->fpL = NULL;
 
     VSIFSeekL(pDS->fp, RS_OFFSET, SEEK_SET);
-    VSIFReadL(&pDS->nRasterXSize, 1, 4, pDS->fp);  
+    VSIFReadL(&pDS->nRasterXSize, 1, 4, pDS->fp);
 #ifdef CPL_LSB
     pDS->nRasterXSize = CPL_SWAP32(pDS->nRasterXSize);
 #endif
@@ -186,7 +186,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 
     /* Add raster band */
     pDS->SetBand(1, new COSARRasterBand(pDS, nRTNB));
-    return pDS;	
+    return pDS;
 }
 
 

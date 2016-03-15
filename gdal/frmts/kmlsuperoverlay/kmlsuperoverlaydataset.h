@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: kmlsuperoverlaydataset.h 
+ * $Id: kmlsuperoverlaydataset.h
  *
  * Project:  KmlSuperOverlay
  * Purpose:  Implements write support for KML superoverlay - KMZ.
@@ -94,7 +94,7 @@ class KmlSuperOverlayReadDataset : public GDALDataset
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -123,4 +123,3 @@ class KmlSuperOverlayRasterBand: public GDALRasterBand
 };
 
 #endif /* ndef KMLSUPEROVERLAYDATASET_H_INCLUDED */
-

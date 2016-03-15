@@ -40,11 +40,11 @@ public:
   Huffman() : m_maxHistoSize(1 << 15), m_maxNumBitsLUT(12), m_numBitsToSkipInTree(0), m_root(NULL) {};
   ~Huffman() { Clear(); };
 
-  // Limitation: We limit the max Huffman code length to 32 bit. If this happens, the function ComputeCodes() 
-  // returns false. In that case don't use Huffman coding but Lerc only instead. 
-  // This won't happen easily. For the worst case input maximizing the Huffman code length the counts in the 
+  // Limitation: We limit the max Huffman code length to 32 bit. If this happens, the function ComputeCodes()
+  // returns false. In that case don't use Huffman coding but Lerc only instead.
+  // This won't happen easily. For the worst case input maximizing the Huffman code length the counts in the
   // histogram have to follow the Fibonacci sequence. Even then, for < 9,227,465 data values, 32 bit is
-  // the max Huffman code length possible. 
+  // the max Huffman code length possible.
 
   bool ComputeCodes(const std::vector<int>& histo);    // input histogram, size < 2^15
 
@@ -111,14 +111,14 @@ private:
         delete child0;
         child0 = NULL;
         n--;
-      } 
+      }
       if (child1)
       {
         child1->FreeTree(n);
         delete child1;
         child1 = NULL;
         n--;
-      } 
+      }
     }
   };
 

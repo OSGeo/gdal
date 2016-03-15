@@ -59,7 +59,7 @@ XRITHeaderParser::XRITHeaderParser(std::ifstream & ifile)
     {
       unsigned char * buf = (unsigned char*)std::malloc(totalHeaderLength);
       std::memcpy(buf, probeBuf, probeSize); // save what we have already read when probing
-      ifile.read((char*)buf + probeSize, totalHeaderLength - probeSize); // read the rest of the header section  
+      ifile.read((char*)buf + probeSize, totalHeaderLength - probeSize); // read the rest of the header section
       parseHeader(buf, totalHeaderLength);
       std::free(buf);
 
@@ -69,7 +69,7 @@ XRITHeaderParser::XRITHeaderParser(std::ifstream & ifile)
 
   if (!m_isValid) // seek back to original position
   {
-#if _MSC_VER > 1000 && _MSC_VER < 1300  
+#if _MSC_VER > 1000 && _MSC_VER < 1300
     ifile.seekg(-probeSize, std::ios_base::seekdir::cur);
 #else
     ifile.seekg(-probeSize, std::ios_base::cur);

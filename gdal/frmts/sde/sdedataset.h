@@ -28,7 +28,7 @@ class SDEDataset : public GDALDataset
 
         static GDALDataset *Open( GDALOpenInfo * );
 
-    protected:        
+    protected:
         // SDE-specific stuff
         SE_CONNECTION      hConnection;
         SE_RASTERATTR      hAttributes;

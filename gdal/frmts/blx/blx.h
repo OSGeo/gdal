@@ -47,7 +47,7 @@
 typedef short int blxdata;
 
 struct cellindex_s {
-    int offset;	
+    int offset;
     unsigned int datasize;       /* Uncompressed size */
     unsigned int compdatasize;   /* Compressed data size */
 };
@@ -70,8 +70,8 @@ struct blxcontext_s {
     int debug;
 
     int fillundef;     /* If non-zero, fillundefval will be used instead of -32768 for undefined values in non-empty cells when
-			a cell is written */ 
-    int fillundefval; 
+			a cell is written */
+    int fillundefval;
 
 #ifdef GDALDRIVER
     VSILFILE* fh;

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Virtual GDAL Datasets
- * Purpose:  Implementation of VRTSimpleSource, VRTFuncSource and 
+ * Purpose:  Implementation of VRTSimpleSource, VRTFuncSource and
  *           VRTAveragedSource.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -183,7 +183,7 @@ void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
 /*                            SetSrcWindow()                            */
 /************************************************************************/
 
-void VRTSimpleSource::SetSrcWindow( double dfNewXOff, double dfNewYOff, 
+void VRTSimpleSource::SetSrcWindow( double dfNewXOff, double dfNewYOff,
                                     double dfNewXSize, double dfNewYSize )
 
 {
@@ -197,7 +197,7 @@ void VRTSimpleSource::SetSrcWindow( double dfNewXOff, double dfNewYOff,
 /*                            SetDstWindow()                            */
 /************************************************************************/
 
-void VRTSimpleSource::SetDstWindow( double dfNewXOff, double dfNewYOff, 
+void VRTSimpleSource::SetDstWindow( double dfNewXOff, double dfNewYOff,
                                     double dfNewXSize, double dfNewYSize )
 
 {
@@ -268,8 +268,8 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
     if( m_osResampling.size() )
     {
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psSrc, CXT_Attribute, "resampling" ), 
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psSrc, CXT_Attribute, "resampling" ),
                 CXT_Text, m_osResampling.c_str() );
     }
 
@@ -353,16 +353,16 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
     CPLSetXMLValue( psSrc, "SourceFilename", pszRelativePath );
 
-    CPLCreateXMLNode( 
-        CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ), 
-                          CXT_Attribute, "relativeToVRT" ), 
+    CPLCreateXMLNode(
+        CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ),
+                          CXT_Attribute, "relativeToVRT" ),
         CXT_Text, bRelativeToVRT ? "1" : "0" );
 
     if( !CPLTestBool(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE")) )
     {
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ), 
-                              CXT_Attribute, "shared" ), 
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ),
+                              CXT_Attribute, "shared" ),
                               CXT_Text, "0" );
     }
 
@@ -379,36 +379,36 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     /* Write a few additional useful properties of the dataset */
     /* so that we can use a proxy dataset when re-opening. See XMLInit() */
     /* below */
-    CPLSetXMLValue( psSrc, "SourceProperties.#RasterXSize", 
+    CPLSetXMLValue( psSrc, "SourceProperties.#RasterXSize",
                     CPLSPrintf("%d",m_poRasterBand->GetXSize()) );
-    CPLSetXMLValue( psSrc, "SourceProperties.#RasterYSize", 
+    CPLSetXMLValue( psSrc, "SourceProperties.#RasterYSize",
                     CPLSPrintf("%d",m_poRasterBand->GetYSize()) );
-    CPLSetXMLValue( psSrc, "SourceProperties.#DataType", 
+    CPLSetXMLValue( psSrc, "SourceProperties.#DataType",
                 GDALGetDataTypeName( m_poRasterBand->GetRasterDataType() ) );
     m_poRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    CPLSetXMLValue( psSrc, "SourceProperties.#BlockXSize", 
+    CPLSetXMLValue( psSrc, "SourceProperties.#BlockXSize",
                     CPLSPrintf("%d",nBlockXSize) );
-    CPLSetXMLValue( psSrc, "SourceProperties.#BlockYSize", 
+    CPLSetXMLValue( psSrc, "SourceProperties.#BlockYSize",
                     CPLSPrintf("%d",nBlockYSize) );
 
-    if( m_dfSrcXOff != -1 
-        || m_dfSrcYOff != -1 
-        || m_dfSrcXSize != -1 
+    if( m_dfSrcXOff != -1
+        || m_dfSrcYOff != -1
+        || m_dfSrcXSize != -1
         || m_dfSrcYSize != -1 )
     {
-        CPLSetXMLValue( psSrc, "SrcRect.#xOff", 
+        CPLSetXMLValue( psSrc, "SrcRect.#xOff",
                         CPLSPrintf( "%g", m_dfSrcXOff ) );
-        CPLSetXMLValue( psSrc, "SrcRect.#yOff", 
+        CPLSetXMLValue( psSrc, "SrcRect.#yOff",
                         CPLSPrintf( "%g", m_dfSrcYOff ) );
-        CPLSetXMLValue( psSrc, "SrcRect.#xSize", 
+        CPLSetXMLValue( psSrc, "SrcRect.#xSize",
                         CPLSPrintf( "%g", m_dfSrcXSize ) );
-        CPLSetXMLValue( psSrc, "SrcRect.#ySize", 
+        CPLSetXMLValue( psSrc, "SrcRect.#ySize",
                         CPLSPrintf( "%g", m_dfSrcYSize ) );
     }
 
-    if( m_dfDstXOff != -1 
-        || m_dfDstYOff != -1 
-        || m_dfDstXSize != -1 
+    if( m_dfDstXOff != -1
+        || m_dfDstYOff != -1
+        || m_dfDstXSize != -1
         || m_dfDstYSize != -1 )
     {
         CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%g", m_dfDstXOff ) );
@@ -434,12 +434,12 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
     char *pszSrcDSName = NULL;
     CPLXMLNode* psSourceFileNameNode = CPLGetXMLNode(psSrc,"SourceFilename");
-    const char *pszFilename = 
+    const char *pszFilename =
         psSourceFileNameNode ? CPLGetXMLValue(psSourceFileNameNode,NULL, NULL) : NULL;
 
     if( pszFilename == NULL )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Missing <SourceFilename> element in VRTRasterBand." );
         return CE_Failure;
     }
@@ -781,14 +781,14 @@ void VRTSimpleSource::DstToSrc( double dfX, double dfY,
 /*                          GetSrcDstWindow()                           */
 /************************************************************************/
 
-int 
+int
 VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
                                   int nBufXSize, int nBufYSize,
                                   double *pdfReqXOff, double *pdfReqYOff,
                                   double *pdfReqXSize, double *pdfReqYSize,
                                   int *pnReqXOff, int *pnReqYOff,
                                   int *pnReqXSize, int *pnReqYSize,
-                                  int *pnOutXOff, int *pnOutYOff, 
+                                  int *pnOutXOff, int *pnOutYOff,
                                   int *pnOutXSize, int *pnOutYSize )
 
 {
@@ -798,11 +798,11 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         return FALSE;
     }
 
-    const bool bDstWinSet = m_dfDstXOff != -1 || m_dfDstXSize != -1 
+    const bool bDstWinSet = m_dfDstXOff != -1 || m_dfDstXSize != -1
         || m_dfDstYOff != -1 || m_dfDstYSize != -1;
 
 #ifdef DEBUG
-    const bool bSrcWinSet = m_dfSrcXOff != -1 || m_dfSrcXSize != -1 
+    const bool bSrcWinSet = m_dfSrcXOff != -1 || m_dfSrcXSize != -1
         || m_dfSrcYOff != -1 || m_dfSrcYSize != -1;
 
     if( bSrcWinSet != bDstWinSet )
@@ -884,7 +884,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     *pdfReqYOff = (dfRYOff - m_dfDstYOff) * dfScaleY + m_dfSrcYOff;
     *pdfReqXSize = dfRXSize * dfScaleX;
     *pdfReqYSize = dfRYSize * dfScaleY;
-    
+
     if( !CPLIsFinite(*pdfReqXOff) ||
         !CPLIsFinite(*pdfReqYOff) ||
         !CPLIsFinite(*pdfReqXSize) ||
@@ -915,12 +915,12 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 
     *pnReqXOff = (int) floor(*pdfReqXOff);
     *pnReqYOff = (int) floor(*pdfReqYOff);
-    
+
     if( *pdfReqXSize > INT_MAX )
         *pnReqXSize = INT_MAX;
     else
         *pnReqXSize = (int) floor(*pdfReqXSize + 0.5);
-    
+
     if( *pdfReqYSize > INT_MAX )
         *pnReqYSize = INT_MAX;
     else
@@ -986,7 +986,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     double dfScaleWinToBufX, dfScaleWinToBufY;
 
     SrcToDst( *pdfReqXOff, *pdfReqYOff, dfDstULX, dfDstULY );
-    SrcToDst( *pdfReqXOff + *pdfReqXSize, *pdfReqYOff + *pdfReqYSize, 
+    SrcToDst( *pdfReqXOff + *pdfReqXSize, *pdfReqYOff + *pdfReqYSize,
               dfDstLRX, dfDstLRY );
     //CPLDebug("VRT", "dfDstULX=%g dfDstULY=%g dfDstLRX=%g dfDstLRY=%g",
     //         dfDstULX, dfDstULY, dfDstLRX, dfDstLRY);
@@ -1069,10 +1069,10 @@ int VRTSimpleSource::NeedMaxValAdjustment() const
 /*                              RasterIO()                              */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                           void *pData, int nBufXSize, int nBufYSize, 
-                           GDALDataType eBufType, 
+                           void *pData, int nBufXSize, int nBufYSize,
+                           GDALDataType eBufType,
                            GSpacing nPixelSpace,
                            GSpacing nLineSpace,
                            GDALRasterIOExtraArg* psExtraArgIn )
@@ -1091,7 +1091,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
 
     if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize,
-                          nBufXSize, nBufYSize, 
+                          nBufXSize, nBufYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
@@ -1102,7 +1102,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                     "dfReqXOff=%g, dfReqYOff=%g, dfReqXSize=%g, dfReqYSize=%g, "
                     "nOutXOff=%d, nOutYOff=%d, nOutXSize=%d, nOutYSize=%d",
                     nXOff, nYOff, nXSize, nYSize,
-                    nBufXSize, nBufYSize, 
+                    nBufXSize, nBufYSize,
                     dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize,
                     nOutXOff, nOutYOff, nOutXSize, nOutYSize);*/
 
@@ -1125,14 +1125,14 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
 
-    GByte* pabyOut = ((unsigned char *) pData) 
+    GByte* pabyOut = ((unsigned char *) pData)
                                 + nOutXOff * nPixelSpace
                                 + (GPtrDiff_t)nOutYOff * nLineSpace;
-    eErr = 
-        m_poRasterBand->RasterIO( GF_Read, 
+    eErr =
+        m_poRasterBand->RasterIO( GF_Read,
                                 nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                 pabyOut,
-                                nOutXSize, nOutYSize, 
+                                nOutXSize, nOutYSize,
                                 eBufType, nPixelSpace, nLineSpace, psExtraArg );
 
     if( NeedMaxValAdjustment() )
@@ -1264,8 +1264,8 @@ CPLErr VRTSimpleSource::ComputeRasterMinMax( int nXSize, int nYSize, int bApprox
 /************************************************************************/
 
 CPLErr VRTSimpleSource::ComputeStatistics( int nXSize, int nYSize,
-                                      int bApproxOK, 
-                                      double *pdfMin, double *pdfMax, 
+                                      int bApproxOK,
+                                      double *pdfMin, double *pdfMax,
                                       double *pdfMean, double *pdfStdDev,
                                       GDALProgressFunc pfnProgress, void *pProgressData )
 {
@@ -1471,10 +1471,10 @@ CPLXMLNode *VRTAveragedSource::SerializeToXML( const char *pszVRTPath )
 /*                              RasterIO()                              */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                           void *pData, int nBufXSize, int nBufYSize, 
-                           GDALDataType eBufType, 
+                           void *pData, int nBufXSize, int nBufYSize,
+                           GDALDataType eBufType,
                            GSpacing nPixelSpace,
                            GSpacing nLineSpace,
                            GDALRasterIOExtraArg* psExtraArgIn )
@@ -1492,7 +1492,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     // The window we will actual set _within_ the pData buffer.
     int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
 
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, 
+    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
@@ -1530,9 +1530,9 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
 
-    eErr = m_poRasterBand->RasterIO( GF_Read, 
+    eErr = m_poRasterBand->RasterIO( GF_Read,
                                    nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                                   pafSrc, nReqXSize, nReqYSize, GDT_Float32, 
+                                   pafSrc, nReqXSize, nReqYSize, GDT_Float32,
                                    0, 0, psExtraArg );
 
     if( eErr != CE_None )
@@ -1550,8 +1550,8 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
         dfYDst = (iBufLine / (double) nBufYSize) * nYSize + nYOff;
 
-        for( int iBufPixel = nOutXOff; 
-             iBufPixel < nOutXOff + nOutXSize; 
+        for( int iBufPixel = nOutXOff;
+             iBufPixel < nOutXOff + nOutXSize;
              iBufPixel++ )
         {
             double dfXDst;
@@ -1630,14 +1630,14 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
             // Put it in the output buffer.
             GByte *pDstLocation;
 
-            pDstLocation = ((GByte *)pData) 
+            pDstLocation = ((GByte *)pData)
                 + nPixelSpace * iBufPixel
                 + (GPtrDiff_t)nLineSpace * iBufLine;
 
             if( eBufType == GDT_Byte )
                 *pDstLocation = (GByte) MIN(255,MAX(0,dfOutputValue + 0.5));
             else
-                GDALCopyWords( &dfOutputValue, GDT_Float32, 4, 
+                GDALCopyWords( &dfOutputValue, GDT_Float32, 4,
                                pDstLocation, eBufType, 8, 1 );
         }
     }
@@ -1807,7 +1807,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
         if (CPLIsNan(m_dfNoDataValue))
             CPLSetXMLValue( psSrc, "NODATA", "nan");
         else
-            CPLSetXMLValue( psSrc, "NODATA", 
+            CPLSetXMLValue( psSrc, "NODATA",
                             CPLSPrintf("%.16g", m_dfNoDataValue) );
     }
 
@@ -1818,24 +1818,24 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
         case VRT_SCALING_LINEAR:
         {
-            CPLSetXMLValue( psSrc, "ScaleOffset", 
+            CPLSetXMLValue( psSrc, "ScaleOffset",
                             CPLSPrintf("%g", m_dfScaleOff) );
-            CPLSetXMLValue( psSrc, "ScaleRatio", 
+            CPLSetXMLValue( psSrc, "ScaleRatio",
                             CPLSPrintf("%g", m_dfScaleRatio) );
             break;
         }
 
         case VRT_SCALING_EXPONENTIAL:
         {
-            CPLSetXMLValue( psSrc, "Exponent", 
+            CPLSetXMLValue( psSrc, "Exponent",
                             CPLSPrintf("%g", m_dfExponent) );
-            CPLSetXMLValue( psSrc, "SrcMin", 
+            CPLSetXMLValue( psSrc, "SrcMin",
                             CPLSPrintf("%g", m_dfSrcMin) );
-            CPLSetXMLValue( psSrc, "SrcMax", 
+            CPLSetXMLValue( psSrc, "SrcMax",
                             CPLSPrintf("%g", m_dfSrcMax) );
-            CPLSetXMLValue( psSrc, "DstMin", 
+            CPLSetXMLValue( psSrc, "DstMin",
                             CPLSPrintf("%g", m_dfDstMin) );
-            CPLSetXMLValue( psSrc, "DstMax", 
+            CPLSetXMLValue( psSrc, "DstMax",
                             CPLSPrintf("%g", m_dfDstMax) );
             break;
         }
@@ -1852,7 +1852,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
     if ( m_nColorTableComponent )
     {
-        CPLSetXMLValue( psSrc, "ColorTableComponent", 
+        CPLSetXMLValue( psSrc, "ColorTableComponent",
                         CPLSPrintf("%d", m_nColorTableComponent) );
     }
 
@@ -1878,7 +1878,7 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Complex parameters.                                             */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue(psSrc, "ScaleOffset", NULL) != NULL 
+    if( CPLGetXMLValue(psSrc, "ScaleOffset", NULL) != NULL
         || CPLGetXMLValue(psSrc, "ScaleRatio", NULL) != NULL )
     {
         m_eScalingType = VRT_SCALING_LINEAR;
@@ -1886,13 +1886,13 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         m_dfScaleRatio = CPLAtof(CPLGetXMLValue(psSrc, "ScaleRatio", "1") );
     }
     else if( CPLGetXMLValue(psSrc, "Exponent", NULL) != NULL &&
-             CPLGetXMLValue(psSrc, "DstMin", NULL) != NULL && 
+             CPLGetXMLValue(psSrc, "DstMin", NULL) != NULL &&
              CPLGetXMLValue(psSrc, "DstMax", NULL) != NULL )
     {
         m_eScalingType = VRT_SCALING_EXPONENTIAL;
         m_dfExponent = CPLAtof(CPLGetXMLValue(psSrc, "Exponent", "1.0") );
 
-        if( CPLGetXMLValue(psSrc, "SrcMin", NULL) != NULL 
+        if( CPLGetXMLValue(psSrc, "SrcMin", NULL) != NULL
          && CPLGetXMLValue(psSrc, "SrcMax", NULL) != NULL )
         {
             m_dfSrcMin = CPLAtof(CPLGetXMLValue(psSrc, "SrcMin", "0.0") );
@@ -2049,10 +2049,10 @@ void VRTComplexSource::SetColorTableComponent(int nComponent)
 /*                              RasterIO()                              */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                            void *pData, int nBufXSize, int nBufYSize, 
-                            GDALDataType eBufType, 
+                            void *pData, int nBufXSize, int nBufYSize,
+                            GDALDataType eBufType,
                             GSpacing nPixelSpace,
                             GSpacing nLineSpace,
                             GDALRasterIOExtraArg* psExtraArgIn)
@@ -2070,7 +2070,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     // The window we will actual set _within_ the pData buffer.
     int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
 
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, 
+    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
@@ -2150,7 +2150,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
         }
 
-        eErr = m_poRasterBand->RasterIO( GF_Read, 
+        eErr = m_poRasterBand->RasterIO( GF_Read,
                                        nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                        pafData, nOutXSize, nOutYSize, eWrkDataType,
                                        nWordSize, nWordSize * (GSpacing)nOutXSize, psExtraArg );
@@ -2395,8 +2395,8 @@ CPLErr VRTComplexSource::GetHistogram( int nXSize, int nYSize,
 /************************************************************************/
 
 CPLErr VRTComplexSource::ComputeStatistics( int nXSize, int nYSize,
-                                      int bApproxOK, 
-                                      double *pdfMin, double *pdfMax, 
+                                      int bApproxOK,
+                                      double *pdfMin, double *pdfMax,
                                       double *pdfMean, double *pdfStdDev,
                                       GDALProgressFunc pfnProgress, void *pProgressData )
 {
@@ -2563,7 +2563,7 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
 {
     VRTSource * poSource;
 
-    if( EQUAL(psChild->pszValue,"AveragedSource") 
+    if( EQUAL(psChild->pszValue,"AveragedSource")
         || (EQUAL(psChild->pszValue,"SimpleSource")
             && STARTS_WITH_CI(CPLGetXMLValue(psChild, "Resampling", "Nearest"), "Aver")) )
     {
@@ -2579,7 +2579,7 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "VRTParseCoreSources() - Unknown source : %s", psChild->pszValue );
         return NULL;
     }

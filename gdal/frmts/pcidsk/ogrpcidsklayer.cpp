@@ -109,7 +109,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
 
             // If the last field is named RingStart we treat it specially.
             if( EQUAL(oField.GetNameRef(),"RingStart")
-                && oField.GetType() == OFTIntegerList 
+                && oField.GetType() == OFTIntegerList
                 && iField == poVecSeg->GetFieldCount()-1 )
                 iRingStartField = iField;
             else
@@ -140,7 +140,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
 
         poSRS = new OGRSpatialReference();
 
-        if( poSRS->importFromPCI( osGeosys, pszUnits, 
+        if( poSRS->importFromPCI( osGeosys, pszUnits,
                                   &(adfParameters[0]) ) != OGRERR_NONE )
         {
             delete poSRS;
@@ -158,7 +158,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
     }
     catch(...)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped while initializing layer, operation likely impaired." );
     }
 
@@ -322,15 +322,15 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      Point                                                           */
 /* -------------------------------------------------------------------- */
-        if( poFeatureDefn->GetGeomType() == wkbPoint25D 
-            || (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbUnknown 
+        if( poFeatureDefn->GetGeomType() == wkbPoint25D
+            || (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbUnknown
                 && aoVertices.size() == 1) )
         {
             if( aoVertices.size() == 1 )
             {
                 OGRPoint* poPoint =
                     new OGRPoint( aoVertices[0].x,
-                                  aoVertices[0].y, 
+                                  aoVertices[0].y,
                                   aoVertices[0].z );
                 if (poSRS)
                     poPoint->assignSpatialReference(poSRS);
@@ -345,11 +345,11 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      LineString                                                      */
 /* -------------------------------------------------------------------- */
-        else if( poFeatureDefn->GetGeomType() == wkbLineString25D 
-                 || (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbUnknown 
+        else if( poFeatureDefn->GetGeomType() == wkbLineString25D
+                 || (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbUnknown
                      && aoVertices.size() > 1) )
         {
-            // We should likely be applying ringstart to break things into 
+            // We should likely be applying ringstart to break things into
             // a multilinestring in some cases.
             if( aoVertices.size() > 1 )
             {
@@ -359,8 +359,8 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
 
                 for( unsigned int i = 0; i < aoVertices.size(); i++ )
                     poLS->setPoint( i,
-                                    aoVertices[i].x, 
-                                    aoVertices[i].y, 
+                                    aoVertices[i].x,
+                                    aoVertices[i].y,
                                     aoVertices[i].z );
                 if (poSRS)
                     poLS->assignSpatialReference(poSRS);
@@ -408,8 +408,8 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
                 for( iVertex = iStartVertex; iVertex <= iEndVertex; iVertex++ )
                 {
                     poRing->setPoint( iVertex - iStartVertex,
-                                      aoVertices[iVertex].x, 
-                                      aoVertices[iVertex].y, 
+                                      aoVertices[iVertex].x,
+                                      aoVertices[iVertex].y,
                                       aoVertices[iVertex].z );
                 }
 
@@ -429,14 +429,14 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
     catch( PCIDSK::PCIDSKException ex )
     {
         delete poFeature;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
         return NULL;
     }
     catch(...)
     {
         delete poFeature;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped." );
         return NULL;
     }
@@ -459,7 +459,7 @@ int OGRPCIDSKLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
         return bUpdateAccess;
 
@@ -511,7 +511,7 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 
         std::vector<PCIDSK::ShapeVertex> asVertices;
 
-        for( PCIDSK::ShapeIterator oIt = poVecSeg->begin(); 
+        for( PCIDSK::ShapeIterator oIt = poVecSeg->begin();
              oIt != poVecSeg->end();
              oIt++ )
         {
@@ -552,7 +552,7 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
     }
     catch(...)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped while initializing layer, operation likely impaired." );
         return OGRERR_FAILURE;
     }
@@ -576,13 +576,13 @@ OGRErr OGRPCIDSKLayer::DeleteFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     catch( PCIDSK::PCIDSKException ex )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
         return OGRERR_FAILURE;
     }
     catch(...)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped." );
         return OGRERR_FAILURE;
     }
@@ -596,7 +596,7 @@ OGRErr OGRPCIDSKLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     try {
-        PCIDSK::ShapeId id = poVecSeg->CreateShape( 
+        PCIDSK::ShapeId id = poVecSeg->CreateShape(
             (PCIDSK::ShapeId) poFeature->GetFID() );
 
         poFeature->SetFID( (long) id );
@@ -608,13 +608,13 @@ OGRErr OGRPCIDSKLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     catch( PCIDSK::PCIDSKException ex )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
         return OGRERR_FAILURE;
     }
     catch(...)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped." );
         return OGRERR_FAILURE;
     }
@@ -670,7 +670,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
               case PCIDSK::FieldTypeCountedInt:
               {
                   int nCount;
-                  const int *panList = 
+                  const int *panList =
                       poFeature->GetFieldAsIntegerList( iOGR, &nCount );
                   std::vector<PCIDSK::int32> anList;
 
@@ -740,13 +740,13 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     catch( PCIDSK::PCIDSKException ex )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
         return OGRERR_FAILURE;
     }
     catch(...)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped." );
         return OGRERR_FAILURE;
     }
@@ -765,29 +765,29 @@ OGRErr OGRPCIDSKLayer::CreateField( OGRFieldDefn *poFieldDefn,
     try {
         if( poFieldDefn->GetType() == OFTInteger )
         {
-            poVecSeg->AddField( poFieldDefn->GetNameRef(), 
-                                PCIDSK::FieldTypeInteger, 
+            poVecSeg->AddField( poFieldDefn->GetNameRef(),
+                                PCIDSK::FieldTypeInteger,
                                 "", "" );
             poFeatureDefn->AddFieldDefn( poFieldDefn );
         }
         else if( poFieldDefn->GetType() == OFTReal )
         {
-            poVecSeg->AddField( poFieldDefn->GetNameRef(), 
-                                PCIDSK::FieldTypeDouble, 
+            poVecSeg->AddField( poFieldDefn->GetNameRef(),
+                                PCIDSK::FieldTypeDouble,
                                 "", "" );
             poFeatureDefn->AddFieldDefn( poFieldDefn );
         }
         else if( poFieldDefn->GetType() == OFTString )
         {
-            poVecSeg->AddField( poFieldDefn->GetNameRef(), 
-                                PCIDSK::FieldTypeString, 
+            poVecSeg->AddField( poFieldDefn->GetNameRef(),
+                                PCIDSK::FieldTypeString,
                                 "", "" );
             poFeatureDefn->AddFieldDefn( poFieldDefn );
         }
         else if( poFieldDefn->GetType() == OFTIntegerList )
         {
-            poVecSeg->AddField( poFieldDefn->GetNameRef(), 
-                                PCIDSK::FieldTypeCountedInt, 
+            poVecSeg->AddField( poFieldDefn->GetNameRef(),
+                                PCIDSK::FieldTypeCountedInt,
                                 "", "" );
             poFeatureDefn->AddFieldDefn( poFieldDefn );
         }
@@ -796,8 +796,8 @@ OGRErr OGRPCIDSKLayer::CreateField( OGRFieldDefn *poFieldDefn,
             // Fallback to treating everything else as a string field.
             OGRFieldDefn oModFieldDefn(poFieldDefn);
             oModFieldDefn.SetType( OFTString );
-            poVecSeg->AddField( poFieldDefn->GetNameRef(), 
-                                PCIDSK::FieldTypeString, 
+            poVecSeg->AddField( poFieldDefn->GetNameRef(),
+                                PCIDSK::FieldTypeString,
                                 "", "" );
             poFeatureDefn->AddFieldDefn( &oModFieldDefn );
         }
@@ -814,13 +814,13 @@ OGRErr OGRPCIDSKLayer::CreateField( OGRFieldDefn *poFieldDefn,
 /* -------------------------------------------------------------------- */
     catch( PCIDSK::PCIDSKException ex )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
         return OGRERR_FAILURE;
     }
     catch(...)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped." );
         return OGRERR_FAILURE;
     }

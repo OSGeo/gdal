@@ -32,7 +32,7 @@
 
 #include <string>
 
-class MSGCommand  
+class MSGCommand
 {
 public:
   MSGCommand();
@@ -65,4 +65,3 @@ private:
 };
 
 #endif // GDAL_MSG_MSGCOMMAND_H_INCLUDED
-

@@ -39,7 +39,7 @@ CPL_C_START
 #define TBool int
 #define uchar unsigned char
 
-typedef struct Link_t_struct 
+typedef struct Link_t_struct
 {
   struct Link_t_struct	*next;
   void		*object;
@@ -207,7 +207,7 @@ typedef struct
     Link_t *       RecordList;
 } CeosSARVolume_t;
 
-typedef struct 
+typedef struct
 {
     int            ImageDescValue;
     int            Override;

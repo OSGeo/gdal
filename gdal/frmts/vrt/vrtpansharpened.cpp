@@ -58,7 +58,7 @@ CPL_CVSID("$Id$");
  * The returned dataset will have no associated filename for itself.  If you
  * want to write the virtual dataset description to a file, use the
  * GDALSetDescription() function (or SetDescription() method) on the dataset
- * to assign a filename before it is closed.  
+ * to assign a filename before it is closed.
  *
  * @param pszXML Pansharpened VRT XML where &lt;SpectralBand&gt; elements have
  * no explicit SourceFilename and SourceBand. The spectral bands in the XML will be assigned
@@ -89,7 +89,7 @@ GDALDatasetH GDALCreatePansharpenedVRT( const char* pszXML,
     if( psTree == NULL )
         return NULL;
     VRTPansharpenedDataset* poDS = new VRTPansharpenedDataset(0,0);
-    CPLErr eErr = poDS->XMLInit(psTree, NULL, hPanchroBand, 
+    CPLErr eErr = poDS->XMLInit(psTree, NULL, hPanchroBand,
                                   nInputSpectralBands, pahInputSpectralBands);
     CPLDestroyXMLNode(psTree);
     if( eErr != CE_None )
@@ -377,7 +377,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
             nThreads = atoi(pszNumThreads);
     }
 
-    const char* pszAlgorithm = CPLGetXMLValue(psOptions, 
+    const char* pszAlgorithm = CPLGetXMLValue(psOptions,
                                               "Algorithm", "WeightedBrovey");
     if( !EQUAL(pszAlgorithm, "WeightedBrovey") )
     {
@@ -732,7 +732,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         }
     }
 
-    if( nRasterXSize == 0 && nRasterYSize == 0 ) 
+    if( nRasterXSize == 0 && nRasterYSize == 0 )
     {
         nRasterXSize = nPanXSize;
         nRasterYSize = nPanYSize;
@@ -1091,8 +1091,8 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
 /* -------------------------------------------------------------------- */
 /*      Set subclass.                                                   */
 /* -------------------------------------------------------------------- */
-    CPLCreateXMLNode( 
-        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ), 
+    CPLCreateXMLNode(
+        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ),
         CXT_Text, "VRTPansharpenedDataset" );
 
 /* -------------------------------------------------------------------- */
@@ -1201,7 +1201,7 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
              psOptions->hPanchroBand );
          if( poBand->GetDataset() )
          {
-             std::map<CPLString,CPLString>::iterator oIter = 
+             std::map<CPLString,CPLString>::iterator oIter =
                 m_oMapToRelativeFilenames.find(poBand->GetDataset()->GetDescription());
              if( oIter == m_oMapToRelativeFilenames.end() )
              {
@@ -1211,8 +1211,8 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
              {
                  CPLXMLNode* psSourceFilename =
                     CPLCreateXMLElementAndValue( psBand, "SourceFilename", oIter->second );
-                 CPLCreateXMLNode( 
-                    CPLCreateXMLNode( psSourceFilename, 
+                 CPLCreateXMLNode(
+                    CPLCreateXMLNode( psSourceFilename,
                                       CXT_Attribute, "relativeToVRT" ),
                     CXT_Text, "1" );
              }
@@ -1235,8 +1235,8 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
                         if( reinterpret_cast<VRTPansharpenedRasterBand *>(
                                GetRasterBand(k+1) )->GetIndexAsPansharpenedBand() == j )
                         {
-                            CPLCreateXMLNode( 
-                                CPLCreateXMLNode( psBand, 
+                            CPLCreateXMLNode(
+                                CPLCreateXMLNode( psBand,
                                                   CXT_Attribute, "dstBand" ),
                                 CXT_Text, CPLSPrintf("%d", k+1) );
                             break;
@@ -1251,7 +1251,7 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
             psOptions->pahInputSpectralBands[i] );
         if( poBand->GetDataset() )
         {
-            std::map<CPLString,CPLString>::iterator oIter = 
+            std::map<CPLString,CPLString>::iterator oIter =
                 m_oMapToRelativeFilenames.find(poBand->GetDataset()->GetDescription());
             if( oIter == m_oMapToRelativeFilenames.end() )
             {
@@ -1261,9 +1261,9 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
             {
                 CPLXMLNode* psSourceFilename =
                     CPLCreateXMLElementAndValue( psBand, "SourceFilename", oIter->second );
-                CPLCreateXMLNode( 
-                    CPLCreateXMLNode( psSourceFilename, 
-                                      CXT_Attribute, "relativeToVRT" ), 
+                CPLCreateXMLNode(
+                    CPLCreateXMLNode( psSourceFilename,
+                                      CXT_Attribute, "relativeToVRT" ),
                     CXT_Text, "1" );
             }
             CPLCreateXMLElementAndValue( psBand, "SourceBand", CPLSPrintf("%d", poBand->GetBand()) );
@@ -1615,7 +1615,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTPansharpenedRasterBand::XMLInit( CPLXMLNode * psTree, 
+CPLErr VRTPansharpenedRasterBand::XMLInit( CPLXMLNode * psTree,
                                   const char *pszVRTPathIn )
 
 {
@@ -1634,8 +1634,8 @@ CPLXMLNode *VRTPansharpenedRasterBand::SerializeToXML( const char *pszVRTPathIn 
 /* -------------------------------------------------------------------- */
 /*      Set subclass.                                                   */
 /* -------------------------------------------------------------------- */
-    CPLCreateXMLNode( 
-        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ), 
+    CPLCreateXMLNode(
+        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ),
         CXT_Text, "VRTPansharpenedRasterBand" );
 
     return psTree;

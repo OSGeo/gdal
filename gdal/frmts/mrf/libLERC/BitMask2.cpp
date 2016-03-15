@@ -81,7 +81,7 @@ bool BitMask2::SetSize(int nCols, int nRows)
 // Count of set bits in a byte, done in 7 32bit instructions
 // Adds every two bits sideways, makes four copies, masks each of the four results
 // the last multiplication adds the four results together in the top nibble
-// This is potentially slower for input data 
+// This is potentially slower for input data
 //
 static inline int csb(unsigned int v) {
     return ((((v - ((v >> 1) & 0x55)) * 0x1010101) & 0x30c00c03) * 0x10040041) >> 0x1c;

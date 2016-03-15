@@ -189,7 +189,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     int EOLabelSize = atoi( keyval );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
         return FALSE;
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 ) 
+    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
         return FALSE;
@@ -201,7 +201,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     pszChunkEOL[nBytesRead] = '\0';
     osHeaderText += pszChunkEOL ;
     VSIFree(pszChunkEOL);
-    pszHeaderNext = osHeaderText.c_str();            
+    pszHeaderNext = osHeaderText.c_str();
     return ReadGroup( "" );
 }
 

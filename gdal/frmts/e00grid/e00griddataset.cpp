@@ -501,7 +501,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The E00GRID driver does not support update access to existing"
                   " datasets.\n" );
         VSIFCloseL(fp);

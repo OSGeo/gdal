@@ -197,7 +197,7 @@ int TILDataset::CloseDependentDatasets()
 int TILDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if( poOpenInfo->nHeaderBytes < 200 
+    if( poOpenInfo->nHeaderBytes < 200
         || !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"TIL") )
         return FALSE;
 
@@ -222,7 +222,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The TIL driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -233,7 +233,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 // get metadata reader
 
     GDALMDReaderManager mdreadermanager;
-    GDALMDReaderBase* mdreader = mdreadermanager.GetReader(poOpenInfo->pszFilename, 
+    GDALMDReaderBase* mdreader = mdreadermanager.GetReader(poOpenInfo->pszFilename,
                                          poOpenInfo->GetSiblingFiles(), MDR_DG);
 
     if(NULL == mdreader)
@@ -312,7 +312,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    // trim double quotes. 
+    // trim double quotes.
     if( pszFilename[0] == '"' )
         pszFilename++;
     if( pszFilename[strlen(pszFilename)-1] == '"' )
@@ -342,7 +342,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     double      adfGeoTransform[6];
     if( poTemplateDS->GetGeoTransform( adfGeoTransform ) == CE_None )
     {
-        // According to https://www.digitalglobe.com/sites/default/files/ISD_External.pdf, ulx=originX and 
+        // According to https://www.digitalglobe.com/sites/default/files/ISD_External.pdf, ulx=originX and
         // is "Easting of the center of the upper left pixel of the image."
         adfGeoTransform[0] = CPLAtof(CSLFetchNameValueDef(papszIMD,"MAP_PROJECTED_PRODUCT.ULX","0")) - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = CPLAtof(CSLFetchNameValueDef(papszIMD,"MAP_PROJECTED_PRODUCT.ULY","0")) - adfGeoTransform[5] / 2;
@@ -395,7 +395,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        // trim double quotes. 
+        // trim double quotes.
         if( pszFilename[0] == '"' )
             pszFilename++;
         if( pszFilename[strlen(pszFilename)-1] == '"' )
@@ -415,7 +415,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
         const int nLRY = atoi(CSLFetchNameValueDef(papszTIL, osKey, "0"));
 
         GDALDataset *poTileDS =
-            new GDALProxyPoolDataset( osFilename, 
+            new GDALProxyPoolDataset( osFilename,
                                       nLRX - nULX + 1, nLRY - nULY + 1 );
         if( poTileDS == NULL )
             continue;
@@ -434,9 +434,9 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->poVRTDS->GetRasterBand(iBand) );
 
             poVRTBand->AddSimpleSource( poSrcBand,
-                                        0, 0, 
-                                        nLRX - nULX + 1, nLRY - nULY + 1, 
-                                        nULX, nULY, 
+                                        0, 0,
+                                        nLRX - nULX + 1, nLRY - nULY + 1,
+                                        nULX, nULY,
                                         nLRX - nULX + 1, nLRY - nULY + 1 );
         }
     }

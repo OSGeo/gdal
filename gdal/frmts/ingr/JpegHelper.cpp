@@ -124,7 +124,7 @@ static const GByte JPGHLP_DQT_chrominance[64] = {
      59, 59, 59, 59, 59, 59, 59, 59
 };
 
-static const GByte ZIGZAG[64] = { 
+static const GByte ZIGZAG[64] = {
       0,  1,  5,  6, 14, 15, 27, 28,
       2,  4,  7, 13, 16, 26, 29, 42,
       3,  8, 12, 17, 25, 30, 41, 43,
@@ -161,7 +161,7 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
     // Application Segment
     // ------------------------------------------------------------------------
 
-    *( pabNext++ )      = 0xFF;         // Tag Mark      
+    *( pabNext++ )      = 0xFF;         // Tag Mark
     *( pabNext++ )      = 0xE0;         // APP0
     *( pabNext++ )      = 0x00;         // Segment Length (msb)
     *( pabNext++ )      = 0x10;         // Segment Length (lsb)
@@ -210,21 +210,21 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
     // ------------------------------------------------------------------------
 
     *( pabNext++ )      = 0xFF;
-    *( pabNext++ )      = 0xC0;         // SOF 
-    *( pabNext++ )      = 0;            // Segment Length (msb) 
+    *( pabNext++ )      = 0xC0;         // SOF
+    *( pabNext++ )      = 0;            // Segment Length (msb)
     if ( nComponents > 1 )
-        *( pabNext++ )  = 17;           // Segment Length (lsb) 
+        *( pabNext++ )  = 17;           // Segment Length (lsb)
     else
         *( pabNext++ )  = 11;           // Segment Length (lsb)
-    *( pabNext++ )      = 8;            // 8-bit Precision 
-    *( pabNext++ )      = (GByte) (nRows >> 8); // Height in rows (msb) 
-    *( pabNext++ )      = (GByte) nRows;// Height in rows (lsb) 
+    *( pabNext++ )      = 8;            // 8-bit Precision
+    *( pabNext++ )      = (GByte) (nRows >> 8); // Height in rows (msb)
+    *( pabNext++ )      = (GByte) nRows;// Height in rows (lsb)
     *( pabNext++ )      = (GByte) (nCols >> 8); // Width in columns (msb)
     *( pabNext++ )      = (GByte) nCols;// Width in columns (lsb)
-    *( pabNext++ )      = (GByte) nComponents;// Number of components 
+    *( pabNext++ )      = (GByte) nComponents;// Number of components
     *( pabNext++ )      = 0;            // Component ID
     *( pabNext++ )      = 0x21;         // Hozontal/Vertical Sampling
-    *( pabNext++ )      = 0;            // Quantization table ID 
+    *( pabNext++ )      = 0;            // Quantization table ID
     if ( nComponents > 1 )
     {
         *( pabNext++ )  = 1;            // Component ID
@@ -269,7 +269,7 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
             const int nCodes  = pnHTs[i][j];
             const int nSymbols = pnHTs[i][k];
             *( pabNext++ ) = 0xFF;                  // Tag Mark
-            *( pabNext++ ) = 0xc4;                  // DHT 
+            *( pabNext++ ) = 0xc4;                  // DHT
             *( pabNext++ ) = 0;                     // Segment Length (msb)
             *( pabNext++ ) = (GByte) (3 + nCodes + nSymbols); // Segment Length (lsb)
             *( pabNext++ ) = (GByte) ((j << 4) | i);          // Table ID
@@ -285,29 +285,29 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
     // ------------------------------------------------------------------------
 
     *( pabNext++ )      = 0xFF;         // Tag Mark
-    *( pabNext++ )      = 0xDA;         // SOS 
+    *( pabNext++ )      = 0xDA;         // SOS
     if (nComponents > 1 )
     {
-        *( pabNext++ )  = 0;            // Segment Length (msb) 
+        *( pabNext++ )  = 0;            // Segment Length (msb)
         *( pabNext++ )  = 12;           // Segment Length (lsb)
-        *( pabNext++ )  = 3;            // Number of components 
-        *( pabNext++ )  = 0;            // Components 0 
-        *( pabNext++ )  = 0;            // Huffman table ID 
-        *( pabNext++ )  = 1;            // Components 1 
+        *( pabNext++ )  = 3;            // Number of components
+        *( pabNext++ )  = 0;            // Components 0
+        *( pabNext++ )  = 0;            // Huffman table ID
+        *( pabNext++ )  = 1;            // Components 1
         *( pabNext++ )  = 0x11;         // Huffman table ID
-        *( pabNext++ )  = 2;            // Components 2 
+        *( pabNext++ )  = 2;            // Components 2
         *( pabNext++ )  = 0x11;         // Huffman table ID
     }
     else
     {
         *( pabNext++ )  = 0;            // Segment Length (msb)
         *( pabNext++ )  = 8;            // Segment Length (lsb)
-        *( pabNext++ )  = 1;            // Number of components 
+        *( pabNext++ )  = 1;            // Number of components
         *( pabNext++ )  = 0;            // Components 0
         *( pabNext++ )  = 0;            // Huffman table ID
     }
     *( pabNext++ )      = 0;            // First DCT coefficient
-    *( pabNext++ )      = 63;           // Last DCT coefficient 
+    *( pabNext++ )      = 63;           // Last DCT coefficient
     *( pabNext++ )      = 0;            // Spectral selection
 
     return static_cast<int>(pabNext - pabyBuffer);

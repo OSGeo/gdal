@@ -31,7 +31,7 @@ Contributors:  Thomas Maurer
 NAMESPACE_LERC_START
 
 /**	Base class for all image classes
- *	
+ *
  */
 
 class Image

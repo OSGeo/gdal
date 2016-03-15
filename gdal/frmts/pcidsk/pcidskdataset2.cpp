@@ -48,7 +48,7 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
 /*      This constructor is used for main file channels.                */
 /************************************************************************/
 
-PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDSIn, 
+PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDSIn,
                           PCIDSKFile *poFileIn,
                           int nBandIn )
 
@@ -263,21 +263,21 @@ bool PCIDSK2Band::CheckForColorTable()
 
         // If there is no metadata, assume a single PCT in a file with only
         // one raster band must be intended for it.
-        if( osDefaultPCT.size() == 0 
-            && poDS != NULL 
+        if( osDefaultPCT.size() == 0
+            && poDS != NULL
             && poDS->GetRasterCount() == 1 )
         {
             poPCTSeg = poFile->GetSegment( SEG_PCT, "" );
-            if( poPCTSeg != NULL 
-                && poFile->GetSegment( SEG_PCT, "", 
+            if( poPCTSeg != NULL
+                && poFile->GetSegment( SEG_PCT, "",
                                        poPCTSeg->GetSegmentNumber() ) != NULL )
                 poPCTSeg = NULL;
         }
         // Parse default PCT ref assuming an in file reference.
-        else if( osDefaultPCT.size() != 0 
+        else if( osDefaultPCT.size() != 0
                  && strstr(osDefaultPCT.c_str(),"PCT:") != NULL )
         {
-            poPCTSeg = poFile->GetSegment( 
+            poPCTSeg = poFile->GetSegment(
                 atoi(strstr(osDefaultPCT.c_str(),"PCT:") + 4) );
         }
 
@@ -337,7 +337,7 @@ bool PCIDSK2Band::CheckForColorTable()
                 continue;
 
             int nRed, nGreen, nBlue;
-            if( sscanf( osRGB.c_str() + 5, "%d %d %d", 
+            if( sscanf( osRGB.c_str() + 5, "%d %d %d",
                         &nRed, &nGreen, &nBlue ) != 3 )
                 continue;
 
@@ -421,8 +421,8 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
 /* -------------------------------------------------------------------- */
         if( nPCTSegNumber == -1 )
         {
-            nPCTSegNumber = poFile->CreateSegment( "PCTTable", 
-                                                   "Default Pseudo-Color Table", 
+            nPCTSegNumber = poFile->CreateSegment( "PCTTable",
+                                                   "Default Pseudo-Color Table",
                                                    SEG_PCT, 0 );
 
             CPLString osRef;
@@ -448,7 +448,7 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
             abyPCT[256 * 2 + i] = (unsigned char) sEntry.c3;
         }
 
-        PCIDSK_PCT *poPCT = dynamic_cast<PCIDSK_PCT*>( 
+        PCIDSK_PCT *poPCT = dynamic_cast<PCIDSK_PCT*>(
             poFile->GetSegment( nPCTSegNumber ) );
         if( poPCT )
             poPCT->WritePCT( abyPCT );
@@ -506,7 +506,7 @@ void PCIDSK2Band::RefreshOverviewList()
 /* -------------------------------------------------------------------- */
     for( int iOver = 0; iOver < poChannel->GetOverviewCount(); iOver++ )
     {
-        apoOverviews.push_back( 
+        apoOverviews.push_back(
             new PCIDSK2Band( poChannel->GetOverview(iOver) ) );
     }
 }
@@ -599,7 +599,7 @@ GDALRasterBand *PCIDSK2Band::GetOverview(int iOverview)
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr PCIDSK2Band::SetMetadata( char **papszMD, 
+CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
                                  const char *pszDomain )
 
 {
@@ -644,8 +644,8 @@ CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
 /*                          SetMetadataItem()                           */
 /************************************************************************/
 
-CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName, 
-                                     const char *pszValue, 
+CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
+                                     const char *pszValue,
                                      const char *pszDomain )
 
 {
@@ -692,7 +692,7 @@ char **PCIDSK2Band::GetMetadataDomainList()
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char *PCIDSK2Band::GetMetadataItem( const char *pszName, 
+const char *PCIDSK2Band::GetMetadataItem( const char *pszName,
                                           const char *pszDomain )
 
 {
@@ -755,7 +755,7 @@ char **PCIDSK2Band::GetMetadata( const char *pszDomain )
 
             papszLastMDListValue =
                 CSLSetNameValue( papszLastMDListValue,
-                                 aosKeys[i].c_str(), 
+                                 aosKeys[i].c_str(),
                                  poChannel->GetMetadataValue(aosKeys[i]).c_str() );
         }
     }
@@ -818,7 +818,7 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
     }
     catch( ... )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK SDK Failure in Close(), unexpected exception." );
     }
 
@@ -847,14 +847,14 @@ char **PCIDSK2Dataset::GetFileList()
             uint64 image_offset, pixel_offset, line_offset;
             bool little_endian;
 
-            poChannel->GetChanInfo( osChanFilename, image_offset, 
+            poChannel->GetChanInfo( osChanFilename, image_offset,
                                     pixel_offset, line_offset, little_endian );
 
             if( osChanFilename != "" )
             {
-                papszFileList = 
-                    CSLAddString( papszFileList, 
-                                  CPLProjectRelativeFilename( osBaseDir, 
+                papszFileList =
+                    CSLAddString( papszFileList,
+                                  CPLProjectRelativeFilename( osBaseDir,
                                                               osChanFilename ) );
             }
         }
@@ -882,11 +882,11 @@ void PCIDSK2Dataset::ProcessRPC()
     PCIDSKSegment *poSeg = poFile->GetSegment( SEG_BIN, "" );
     PCIDSKRPCSegment *poRPCSeg = NULL;
 
-    while( poSeg != NULL 
+    while( poSeg != NULL
            && (poRPCSeg = dynamic_cast<PCIDSKRPCSegment*>( poSeg )) == NULL )
 
     {
-        poSeg = poFile->GetSegment( SEG_BIN, "", 
+        poSeg = poFile->GetSegment( SEG_BIN, "",
                                     poSeg->GetSegmentNumber() );
     }
 
@@ -904,8 +904,8 @@ void PCIDSK2Dataset::ProcessRPC()
             dfLongOffset, dfLongScale,
             dfHeightOffset, dfHeightScale;
 
-        poRPCSeg->GetRPCTranslationCoeffs( 
-            dfLongOffset, dfLongScale, 
+        poRPCSeg->GetRPCTranslationCoeffs(
+            dfLongOffset, dfLongScale,
             dfLatOffset, dfLatScale,
             dfHeightOffset, dfHeightScale,
             dfSampOffset, dfSampScale,
@@ -941,9 +941,9 @@ void PCIDSK2Dataset::ProcessRPC()
         osValue.Printf( "%.16g", dfHeightScale );
         GDALPamDataset::SetMetadataItem( "HEIGHT_SCALE", osValue, "RPC" );
 
-        if( poRPCSeg->GetXNumerator().size() != 20 
-            || poRPCSeg->GetXDenominator().size() != 20 
-            || poRPCSeg->GetYNumerator().size() != 20 
+        if( poRPCSeg->GetXNumerator().size() != 20
+            || poRPCSeg->GetXDenominator().size() != 20
+            || poRPCSeg->GetYNumerator().size() != 20
             || poRPCSeg->GetYDenominator().size() != 20 )
         {
             GDALPamDataset::SetMetadata( NULL, "RPC" );
@@ -1022,7 +1022,7 @@ void PCIDSK2Dataset::FlushCache()
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD, 
+CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
                                     const char *pszDomain )
 
 {
@@ -1066,8 +1066,8 @@ CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
 /*                          SetMetadataItem()                           */
 /************************************************************************/
 
-CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName, 
-                                        const char *pszValue, 
+CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName,
+                                        const char *pszValue,
                                         const char *pszDomain )
 
 {
@@ -1112,7 +1112,7 @@ char **PCIDSK2Dataset::GetMetadataDomainList()
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName, 
+const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName,
                                              const char *pszDomain )
 
 {
@@ -1176,7 +1176,7 @@ char **PCIDSK2Dataset::GetMetadata( const char *pszDomain )
 
             papszLastMDListValue =
                 CSLSetNameValue( papszLastMDListValue,
-                                 aosKeys[i].c_str(), 
+                                 aosKeys[i].c_str(),
                                  poFile->GetMetadataValue(aosKeys[i]).c_str() );
         }
     }
@@ -1251,7 +1251,7 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
     {
         try
         {
-            poGeoref->GetTransform( padfTransform[0], 
+            poGeoref->GetTransform( padfTransform[0],
                                     padfTransform[1],
                                     padfTransform[2],
                                     padfTransform[3],
@@ -1278,7 +1278,7 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
 /* -------------------------------------------------------------------- */
 /*      Check for worldfile if we have no other georeferencing.         */
 /* -------------------------------------------------------------------- */
-    if( GDALReadWorldFile( GetDescription(), "pxw", 
+    if( GDALReadWorldFile( GetDescription(), "pxw",
                            padfTransform ) )
         return CE_None;
 
@@ -1428,7 +1428,7 @@ const char *PCIDSK2Dataset::GetProjectionRef()
     }
 
     OGRSpatialReference oSRS;
-    if( oSRS.importFromPCI( osGeosys, pszUnits, 
+    if( oSRS.importFromPCI( osGeosys, pszUnits,
                             &(adfParameters[0]) ) == OGRERR_NONE )
     {
         char *pszWKT = NULL;
@@ -1448,10 +1448,10 @@ const char *PCIDSK2Dataset::GetProjectionRef()
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling, 
+CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                                         int nOverviews, int *panOverviewList,
-                                        int nListBands, int *panBandList, 
-                                        GDALProgressFunc pfnProgress, 
+                                        int nListBands, int *panBandList,
+                                        GDALProgressFunc pfnProgress,
                                         void *pProgressData )
 
 {
@@ -1490,9 +1490,9 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                                                 poOverview->GetYSize(),
                                                 poBand->GetYSize());
 
-            if( nOvFactor == panOverviewList[i] 
-                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i], 
-                                                    poBand->GetXSize(), 
+            if( nOvFactor == panOverviewList[i]
+                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                    poBand->GetXSize(),
                                                     poBand->GetYSize() ) )
                 panOverviewList[i] *= -1;
         }
@@ -1511,7 +1511,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
         try
         {
             // conveniently our resampling values mostly match PCIDSK.
-            poFile->CreateOverviews( nListBands, panBandList, 
+            poFile->CreateOverviews( nListBands, panBandList,
                                      panNewOverviewList[i], pszResampling );
         }
         catch( const PCIDSKException& ex )
@@ -1560,9 +1560,9 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                                                     poOverview->GetYSize(),
                                                     poBand->GetYSize());
 
-                if( nOvFactor == panOverviewList[i] 
-                    || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i], 
-                                                       poBand->GetXSize(), 
+                if( nOvFactor == panOverviewList[i]
+                    || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                       poBand->GetXSize(),
                                                        poBand->GetYSize() ) )
                 {
                     papoOverviewBands[nNewOverviews++] = poOverview;
@@ -1574,15 +1574,15 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 
         if( nNewOverviews > 0 )
         {
-            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand, 
-                                            nNewOverviews, 
+            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+                                            nNewOverviews,
                                             reinterpret_cast<GDALRasterBandH*>( papoOverviewBands ),
-                                            pszResampling, 
+                                            pszResampling,
                                             pfnProgress, pProgressData );
 
             // Mark the regenerated overviews as valid.
             for( int i = 0; i < static_cast<int>( anRegenLevels.size() ); i++ )
-                poBand->poChannel->SetOverviewValidity( anRegenLevels[i], 
+                poBand->poChannel->SetOverviewValidity( anRegenLevels[i],
                                                         true );
         }
     }
@@ -1635,7 +1635,7 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL( eChanType eType )
 
 int PCIDSK2Dataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    if( poOpenInfo->nHeaderBytes < 512 
+    if( poOpenInfo->nHeaderBytes < 512
         || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "PCIDSK  ") )
         return FALSE;
 
@@ -1655,8 +1655,8 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the file.                                           */
 /* -------------------------------------------------------------------- */
     try {
-        PCIDSKFile *poFile = 
-            PCIDSK::Open( poOpenInfo->pszFilename, 
+        PCIDSKFile *poFile =
+            PCIDSK::Open( poOpenInfo->pszFilename,
                           poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
                           PCIDSK2GetInterfaces() );
         if( poFile == NULL )
@@ -1720,7 +1720,7 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      PCIDSKFile.                                                     */
 /************************************************************************/
 
-GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename, 
+GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
                                      PCIDSK::PCIDSKFile *poFile,
                                      GDALAccess eAccess,
                                      char** papszSiblingFiles )
@@ -1744,10 +1744,10 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /*      this is tiled or what the on disk interleaving is.              */
 /* -------------------------------------------------------------------- */
         if( EQUAL(poFile->GetInterleaving().c_str(),"PIXEL") )
-            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "PIXEL", 
+            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "PIXEL",
                                    "IMAGE_STRUCTURE" );
         else if( EQUAL(poFile->GetInterleaving().c_str(),"BAND") )
-            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "BAND", 
+            poDS->SetMetadataItem( "IMAGE_STRUCTURE", "BAND",
                                    "IMAGE_STRUCTURE" );
 
 /* -------------------------------------------------------------------- */
@@ -1772,10 +1772,10 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         int nLastBitmapSegment = 0;
         PCIDSKSegment *poBitSeg;
 
-        while( (poBitSeg = poFile->GetSegment( SEG_BIT, "", 
+        while( (poBitSeg = poFile->GetSegment( SEG_BIT, "",
                                                nLastBitmapSegment)) != NULL )
         {
-            PCIDSKChannel *poChannel = 
+            PCIDSKChannel *poChannel =
                 dynamic_cast<PCIDSKChannel*>( poBitSeg );
             if (poChannel == NULL ||
                 poChannel->GetBlockWidth() <= 0 ||
@@ -1785,7 +1785,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
                 return NULL;
             }
 
-            poDS->SetBand( poDS->GetRasterCount()+1, 
+            poDS->SetBand( poDS->GetRasterCount()+1,
                            new PCIDSK2Band( poChannel ) );
 
             nLastBitmapSegment = poBitSeg->GetSegmentNumber();
@@ -1835,7 +1835,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
     }
     catch( ... )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK SDK Failure in Open(), unexpected exception." );
     }
 
@@ -1872,7 +1872,7 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
         aeChanTypes.resize( MAX(1, nBands), CHN_C16S );
     else if( eType == GDT_CFloat32 )
         aeChanTypes.resize( MAX(1, nBands), CHN_C32R );
-    else 
+    else
         aeChanTypes.resize( MAX(1,nBands), CHN_8U );
 
 /* -------------------------------------------------------------------- */
@@ -2026,10 +2026,10 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the segment.                                             */
 /* -------------------------------------------------------------------- */
-    const int nSegNum = poFile->CreateSegment( pszLayerName, "", 
+    const int nSegNum = poFile->CreateSegment( pszLayerName, "",
                                              PCIDSK::SEG_VEC, 0L );
     PCIDSK::PCIDSKSegment *poSeg = poFile->GetSegment( nSegNum );
-    PCIDSK::PCIDSKVectorSegment *poVecSeg = 
+    PCIDSK::PCIDSKVectorSegment *poVecSeg =
         dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );
     if( poVecSeg == NULL )
         return NULL;

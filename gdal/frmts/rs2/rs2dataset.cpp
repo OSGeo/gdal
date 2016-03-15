@@ -112,9 +112,9 @@ class RS2RasterBand : public GDALPamRasterBand
     GDALDataset     *poBandFile;
 
   public:
-            RS2RasterBand( RS2Dataset *poDSIn, 
+            RS2RasterBand( RS2Dataset *poDSIn,
                                GDALDataType eDataTypeIn,
-                               const char *pszPole, 
+                               const char *pszPole,
                                GDALDataset *poBandFile );
     virtual     ~RS2RasterBand();
 
@@ -174,7 +174,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( (nBlockYOff + 1) * nBlockYSize > nRasterYSize )
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * 
+        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) *
             nBlockXSize * nBlockYSize );
     }
     else
@@ -190,7 +190,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( (nBlockXOff + 1) * nBlockXSize > nRasterXSize )
     {
         nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * 
+        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) *
             nBlockXSize * nBlockYSize );
     }
     else
@@ -198,12 +198,12 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nRequestXSize = nBlockXSize;
     }
     if( eDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 2 )
-        return 
-            poBandFile->RasterIO( GF_Read, 
-                                  nBlockXOff * nBlockXSize, 
+        return
+            poBandFile->RasterIO( GF_Read,
+                                  nBlockXOff * nBlockXSize,
                                   nBlockYOff * nBlockYSize,
                                   nRequestXSize, nRequestYSize,
-                                  pImage, nRequestXSize, nRequestYSize, 
+                                  pImage, nRequestXSize, nRequestYSize,
                                   GDT_Int16,
                                   2, NULL, 4, nBlockXSize * 4, 2, NULL );
 
@@ -213,11 +213,11 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else if( eDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 1 )
     {
         CPLErr eErr =
-            poBandFile->RasterIO( GF_Read, 
-                                  nBlockXOff * nBlockXSize, 
+            poBandFile->RasterIO( GF_Read,
+                                  nBlockXOff * nBlockXSize,
                                   nBlockYOff * nBlockYSize,
-                                  nRequestXSize, nRequestYSize, 
-                                  pImage, nRequestXSize, nRequestYSize, 
+                                  nRequestXSize, nRequestYSize,
+                                  pImage, nRequestXSize, nRequestYSize,
                                   GDT_UInt32,
                                   1, NULL, 4, nBlockXSize * 4, 0, NULL );
 
@@ -237,15 +237,15 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      looks like a 16bit unsigned data too.                           */
 /* -------------------------------------------------------------------- */
     else if( eDataType == GDT_UInt16 )
-        return 
-            poBandFile->RasterIO( GF_Read, 
-                                  nBlockXOff * nBlockXSize, 
+        return
+            poBandFile->RasterIO( GF_Read,
+                                  nBlockXOff * nBlockXSize,
                                   nBlockYOff * nBlockYSize,
-                                  nRequestXSize, nRequestYSize, 
+                                  nRequestXSize, nRequestYSize,
                                   pImage, nRequestXSize, nRequestYSize,
                                   GDT_UInt16,
                                   1, NULL, 2, nBlockXSize * 2, 0, NULL );
-    else if ( eDataType == GDT_Byte ) 
+    else if ( eDataType == GDT_Byte )
         /* Ticket #2104: Support for ScanSAR products */
         return
             poBandFile->RasterIO( GF_Read,
@@ -376,7 +376,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( (nBlockYOff + 1) * nBlockYSize > nRasterYSize )
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * 
+        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) *
             nBlockXSize * nBlockYSize );
     }
     else
@@ -392,27 +392,27 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLMalloc( 2 * nBlockXSize * nBlockYSize
                            * GDALGetDataTypeSize( GDT_Int16 ) / 8 ) );
         if (m_poBandDataset->GetRasterCount() == 2) {
-            eErr = m_poBandDataset->RasterIO( GF_Read, 
-                                  nBlockXOff * nBlockXSize, 
+            eErr = m_poBandDataset->RasterIO( GF_Read,
+                                  nBlockXOff * nBlockXSize,
                                   nBlockYOff * nBlockYSize,
                                   nBlockXSize, nRequestYSize,
-                                  pnImageTmp, nBlockXSize, nRequestYSize, 
+                                  pnImageTmp, nBlockXSize, nRequestYSize,
                                   GDT_Int16,
                                   2, NULL, 4, nBlockXSize * 4, 2, NULL );
 
         }
         else {
-            eErr = 
-                m_poBandDataset->RasterIO( GF_Read, 
-                                      nBlockXOff * nBlockXSize, 
+            eErr =
+                m_poBandDataset->RasterIO( GF_Read,
+                                      nBlockXOff * nBlockXSize,
                                       nBlockYOff * nBlockYSize,
-                                      nBlockXSize, nRequestYSize, 
-                                      pnImageTmp, nBlockXSize, nRequestYSize, 
+                                      nBlockXSize, nRequestYSize,
+                                      pnImageTmp, nBlockXSize, nRequestYSize,
                                       GDT_UInt32,
                                       1, NULL, 4, nBlockXSize * 4, 0, NULL );
 
 #ifdef CPL_LSB
-            /* First, undo the 32bit swap. */ 
+            /* First, undo the 32bit swap. */
             GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
 
             /* Then apply 16 bit swap. */
@@ -441,10 +441,10 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         GUInt16 *pnImageTmp = reinterpret_cast<GUInt16 *>(
             CPLMalloc(nBlockXSize * nBlockYSize
                       * GDALGetDataTypeSize( GDT_UInt16 ) / 8) );
-        eErr = m_poBandDataset->RasterIO( GF_Read, 
-                              nBlockXOff * nBlockXSize, 
+        eErr = m_poBandDataset->RasterIO( GF_Read,
+                              nBlockXOff * nBlockXSize,
                               nBlockYOff * nBlockYSize,
-                              nBlockXSize, nRequestYSize, 
+                              nBlockXSize, nRequestYSize,
                               pnImageTmp, nBlockXSize, nRequestYSize,
                               GDT_UInt16,
                               1, NULL, 2, nBlockXSize * 2, 0, NULL );
@@ -587,7 +587,7 @@ char **RS2Dataset::GetFileList()
 /*                             Identify()                               */
 /************************************************************************/
 
-int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo ) 
+int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo )
 {
    /* Check for the case where we're trying to read the calibrated data: */
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "RADARSAT_2_CALIB:")) {
@@ -598,7 +598,7 @@ int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo )
        directory. */
     if( poOpenInfo->bIsDirectory )
     {
-        CPLString osMDFilename = 
+        CPLString osMDFilename =
             CPLFormCIFilename( poOpenInfo->pszFilename, "product.xml", NULL );
 
         VSIStatBufL sStat;
@@ -660,7 +660,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             eCalib = None;
 
         /* advance the pointer to the actual filename */
-        while ( *pszFilename != '\0' && *pszFilename != ':' ) 
+        while ( *pszFilename != '\0' && *pszFilename != ':' )
             pszFilename++;
 
         if (*pszFilename == ':')
@@ -676,7 +676,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osMDFilename;
     if( poOpenInfo->bIsDirectory )
     {
-        osMDFilename = 
+        osMDFilename =
             CPLFormCIFilename( pszFilename, "product.xml", NULL );
     }
     else
@@ -695,7 +695,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLDestroyXMLNode( psProduct );
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The RS2 driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -705,12 +705,12 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( psImageAttributes == NULL )
     {
         CPLDestroyXMLNode( psProduct );
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to find <imageAttributes> in document." );
         return NULL;
     }
 
-    CPLXMLNode *psImageGenerationParameters = CPLGetXMLNode( psProduct, 
+    CPLXMLNode *psImageGenerationParameters = CPLGetXMLNode( psProduct,
                                                  "=product.imageGenerationParameters" );
     if (psImageGenerationParameters == NULL) {
         CPLDestroyXMLNode( psProduct );
@@ -729,13 +729,13 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get overall image information.                                  */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = 
-        atoi(CPLGetXMLValue( psImageAttributes, 
-                             "rasterAttributes.numberOfSamplesPerLine", 
+    poDS->nRasterXSize =
+        atoi(CPLGetXMLValue( psImageAttributes,
+                             "rasterAttributes.numberOfSamplesPerLine",
                              "-1" ));
-    poDS->nRasterYSize = 
-        atoi(CPLGetXMLValue( psImageAttributes, 
-                             "rasterAttributes.numberofLines", 
+    poDS->nRasterYSize =
+        atoi(CPLGetXMLValue( psImageAttributes,
+                             "rasterAttributes.numberofLines",
                              "-1" ));
     if (poDS->nRasterXSize <= 1 || poDS->nRasterYSize <= 1) {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -757,11 +757,11 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadataItem("PRODUCT_TYPE", pszProductType);
 
-    /* the following cases can be assumed to have no LUTs, as per 
+    /* the following cases can be assumed to have no LUTs, as per
      * RN-RP-51-2713, but also common sense
      */
     bool bCanCalib = false;
-    if (!(STARTS_WITH_CI(pszProductType, "UNK") || 
+    if (!(STARTS_WITH_CI(pszProductType, "UNK") ||
           STARTS_WITH_CI(pszProductType, "SSG") ||
           STARTS_WITH_CI(pszProductType, "SPG")))
     {
@@ -772,11 +772,11 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Get dataType (so we can recognise complex data), and the        */
 /*      bitsPerSample.                                                  */
 /* -------------------------------------------------------------------- */
-    const char *pszDataType = 
-        CPLGetXMLValue( psImageAttributes, "rasterAttributes.dataType", 
+    const char *pszDataType =
+        CPLGetXMLValue( psImageAttributes, "rasterAttributes.dataType",
                         "" );
-    const int nBitsPerSample = 
-        atoi( CPLGetXMLValue( psImageAttributes, 
+    const int nBitsPerSample =
+        atoi( CPLGetXMLValue( psImageAttributes,
                               "rasterAttributes.bitsPerSample", "" ) );
 
     GDALDataType eDataType;
@@ -789,7 +789,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "dataType=%s, bitsPerSample=%d: not a supported configuration.",
                   pszDataType, nBitsPerSample );
         return NULL;
@@ -820,8 +820,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
          psNode = psNode->psNext )
     {
         const char *pszBasename;
-        if( psNode->eType != CXT_Element 
-            || !(EQUAL(psNode->pszValue,"fullResolutionImageData") 
+        if( psNode->eType != CXT_Element
+            || !(EQUAL(psNode->pszValue,"fullResolutionImageData")
                  || EQUAL(psNode->pszValue,"lookupTable")) )
             continue;
 
@@ -830,15 +830,15 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             const char *pszLUTType = CPLGetXMLValue( psNode,
                                                      "incidenceAngleCorrection", "" );
             const char *pszLUTFile = CPLGetXMLValue( psNode, "", "" );
-            CPLString osLUTFilePath = CPLFormFilename( pszPath, pszLUTFile, 
+            CPLString osLUTFilePath = CPLFormFilename( pszPath, pszLUTFile,
                                                        NULL );
 
-            if (EQUAL(pszLUTType, "")) 
+            if (EQUAL(pszLUTType, ""))
                 continue;
-            else if (EQUAL(pszLUTType, "Beta Nought") && 
-                     IsValidXMLFile(pszPath,pszLUTFile)) 
+            else if (EQUAL(pszLUTType, "Beta Nought") &&
+                     IsValidXMLFile(pszPath,pszLUTFile))
             {
-                poDS->papszExtraFiles = 
+                poDS->papszExtraFiles =
                     CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
 
                 const size_t nBufLen = nFLen + 27;
@@ -846,19 +846,19 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 pszBeta0LUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "BETA_NOUGHT_LUT", pszLUTFile );
 
-                snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:BETA0:%s", 
+                snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:BETA0:%s",
                         osMDFilename.c_str() );
-                poDS->papszSubDatasets = CSLSetNameValue( 
+                poDS->papszSubDatasets = CSLSetNameValue(
                     poDS->papszSubDatasets, "SUBDATASET_3_NAME", pszBuf );
-                poDS->papszSubDatasets = CSLSetNameValue( 
-                    poDS->papszSubDatasets, "SUBDATASET_3_DESC", 
+                poDS->papszSubDatasets = CSLSetNameValue(
+                    poDS->papszSubDatasets, "SUBDATASET_3_DESC",
                     "Beta Nought calibrated" );
                 CPLFree(pszBuf);
             }
-            else if (EQUAL(pszLUTType, "Sigma Nought") && 
-                     IsValidXMLFile(pszPath,pszLUTFile)) 
+            else if (EQUAL(pszLUTType, "Sigma Nought") &&
+                     IsValidXMLFile(pszPath,pszLUTFile))
             {
-                poDS->papszExtraFiles = 
+                poDS->papszExtraFiles =
                     CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
 
                 const size_t nBufLen = nFLen + 27;
@@ -866,31 +866,31 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 pszSigma0LUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "SIGMA_NOUGHT_LUT", pszLUTFile );
 
-                snprintf(pszBuf, nBufLen,"RADARSAT_2_CALIB:SIGMA0:%s", 
+                snprintf(pszBuf, nBufLen,"RADARSAT_2_CALIB:SIGMA0:%s",
                         osMDFilename.c_str() );
-                poDS->papszSubDatasets = CSLSetNameValue( 
+                poDS->papszSubDatasets = CSLSetNameValue(
                     poDS->papszSubDatasets, "SUBDATASET_2_NAME", pszBuf );
-                poDS->papszSubDatasets = CSLSetNameValue( 
-                    poDS->papszSubDatasets, "SUBDATASET_2_DESC", 
+                poDS->papszSubDatasets = CSLSetNameValue(
+                    poDS->papszSubDatasets, "SUBDATASET_2_DESC",
                     "Sigma Nought calibrated" );
                 CPLFree(pszBuf);
             }
-            else if (EQUAL(pszLUTType, "Gamma") && 
-                     IsValidXMLFile(pszPath,pszLUTFile)) 
+            else if (EQUAL(pszLUTType, "Gamma") &&
+                     IsValidXMLFile(pszPath,pszLUTFile))
             {
-                poDS->papszExtraFiles = 
+                poDS->papszExtraFiles =
                     CSLAddString( poDS->papszExtraFiles, osLUTFilePath );
 
                 const size_t nBufLen = nFLen + 27;
                 char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nBufLen) );
                 pszGammaLUT = VSIStrdup( pszLUTFile );
                 poDS->SetMetadataItem( "GAMMA_LUT", pszLUTFile );
-                snprintf(pszBuf, nBufLen,"RADARSAT_2_CALIB:GAMMA:%s", 
+                snprintf(pszBuf, nBufLen,"RADARSAT_2_CALIB:GAMMA:%s",
                         osMDFilename.c_str());
-                poDS->papszSubDatasets = CSLSetNameValue( 
+                poDS->papszSubDatasets = CSLSetNameValue(
                     poDS->papszSubDatasets, "SUBDATASET_4_NAME", pszBuf );
-                poDS->papszSubDatasets = CSLSetNameValue( 
-                    poDS->papszSubDatasets, "SUBDATASET_4_DESC", 
+                poDS->papszSubDatasets = CSLSetNameValue(
+                    poDS->papszSubDatasets, "SUBDATASET_4_DESC",
                     "Gamma calibrated" );
                 CPLFree(pszBuf);
             }
@@ -907,7 +907,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Form full filename (path of product.xml + basename).            */
 /* -------------------------------------------------------------------- */
-        char *pszFullname = 
+        char *pszFullname =
             CPLStrdup(CPLFormFilename( pszPath, pszBasename, NULL ));
 
 /* -------------------------------------------------------------------- */
@@ -970,7 +970,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if (poDS->papszSubDatasets != NULL && eCalib == None) {
         const size_t nBufLen = nFLen + 28;
         char *pszBuf = reinterpret_cast<char *>( CPLMalloc(nBufLen) );
-        snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:UNCALIB:%s", 
+        snprintf(pszBuf, nBufLen, "RADARSAT_2_CALIB:UNCALIB:%s",
                 osMDFilename.c_str() );
         poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets,
                                                   "SUBDATASET_1_NAME", pszBuf );
@@ -988,7 +988,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     if ( poDS->GetRasterCount() == 4 && (eDataType == GDT_CInt16 ||
-                                         eDataType == GDT_CFloat32) ) 
+                                         eDataType == GDT_CFloat32) )
     {
         poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
     }
@@ -1034,7 +1034,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (psSarProcessingInformation != NULL) {
         /* Get incidence angle information */
-        pszItem = CPLGetXMLValue( psSarProcessingInformation, 
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
                                   "sarProcessingInformation.incidenceAngleNearRange", "UNK" );
         poDS->SetMetadataItem( "NEAR_RANGE_INCIDENCE_ANGLE", pszItem );
 
@@ -1073,12 +1073,12 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*--------------------------------------------------------------------- */
 /*      Collect Map projection/Geotransform information, if present     */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psMapProjection = 
+    CPLXMLNode *psMapProjection =
         CPLGetXMLNode( psImageAttributes,
                        "geographicInformation.mapProjection" );
 
     if ( psMapProjection != NULL ) {
-        CPLXMLNode *psPos = 
+        CPLXMLNode *psPos =
             CPLGetXMLNode( psMapProjection, "positioningInformation" );
 
         pszItem = CPLGetXMLValue( psMapProjection,
@@ -1114,9 +1114,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[4] = (tr_y - tl_y)/(poDS->nRasterXSize - 1);
             poDS->adfGeoTransform[2] = (bl_x - tl_x)/(poDS->nRasterYSize - 1);
             poDS->adfGeoTransform[5] = (bl_y - tl_y)/(poDS->nRasterYSize - 1);
-            poDS->adfGeoTransform[0] = (tl_x - 0.5*poDS->adfGeoTransform[1] 
+            poDS->adfGeoTransform[0] = (tl_x - 0.5*poDS->adfGeoTransform[1]
                                         - 0.5*poDS->adfGeoTransform[2]);
-            poDS->adfGeoTransform[3] = (tl_y - 0.5*poDS->adfGeoTransform[4] 
+            poDS->adfGeoTransform[3] = (tl_y - 0.5*poDS->adfGeoTransform[4]
                                         - 0.5*poDS->adfGeoTransform[5]);
 
             /* Use bottom right pixel to test geotransform */
@@ -1131,14 +1131,14 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 (poDS->nRasterXSize - 0.5) + poDS->adfGeoTransform[5] *
                 (poDS->nRasterYSize - 0.5);
 
-            /* Give 1/4 pixel numerical error leeway in calculating location 
+            /* Give 1/4 pixel numerical error leeway in calculating location
                based on affine transform */
-            if ( (fabs(testx - br_x) > 
-                  fabs(0.25*(poDS->adfGeoTransform[1]+poDS->adfGeoTransform[2]))) 
-                 || (fabs(testy - br_y) > fabs(0.25*(poDS->adfGeoTransform[4] + 
+            if ( (fabs(testx - br_x) >
+                  fabs(0.25*(poDS->adfGeoTransform[1]+poDS->adfGeoTransform[2])))
+                 || (fabs(testy - br_y) > fabs(0.25*(poDS->adfGeoTransform[4] +
                                                      poDS->adfGeoTransform[5]))) )
             {
-                CPLError( CE_Warning, CPLE_AppDefined, 
+                CPLError( CE_Warning, CPLE_AppDefined,
                           "Unexpected error in calculating affine transform: "
                           "corner coordinates inconsistent.");
             }
@@ -1151,7 +1151,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Collect Projection String Information                           */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psEllipsoid = 
+    CPLXMLNode *psEllipsoid =
         CPLGetXMLNode( psImageAttributes,
                        "geographicInformation.referenceEllipsoidParameters" );
 
@@ -1165,7 +1165,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         double major_axis
             = CPLAtof(CPLGetXMLValue( psEllipsoid, "semiMajorAxis", "0.0" ));
 
-        if ( EQUAL(pszEllipsoidName, "") || ( minor_axis == 0.0 ) || 
+        if ( EQUAL(pszEllipsoidName, "") || ( minor_axis == 0.0 ) ||
              ( major_axis == 0.0 ) )
         {
             CPLError(CE_Warning,CPLE_AppDefined,"Warning- incomplete"
@@ -1179,9 +1179,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else {
             const double inv_flattening = major_axis/(major_axis - minor_axis);
-            oLL.SetGeogCS( "","",pszEllipsoidName, major_axis, 
+            oLL.SetGeogCS( "","",pszEllipsoidName, major_axis,
                            inv_flattening);
-            oPrj.SetGeogCS( "","",pszEllipsoidName, major_axis, 
+            oPrj.SetGeogCS( "","",pszEllipsoidName, major_axis,
                             inv_flattening);
         }
 
@@ -1235,20 +1235,20 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
                 if (STARTS_WITH_CI(pszProj, "ARC")) {
                     /* Albers Conical Equal Area */
-                    oPrj.SetACEA(sP1, sP2, copLat, copLong, origEasting, 
+                    oPrj.SetACEA(sP1, sP2, copLat, copLong, origEasting,
                                  origNorthing);
                     bUseProjInfo = true;
                 }
                 else if (STARTS_WITH_CI(pszProj, "LCC")) {
                     /* Lambert Conformal Conic */
-                    oPrj.SetLCC(sP1, sP2, copLat, copLong, origEasting, 
+                    oPrj.SetLCC(sP1, sP2, copLat, copLong, origEasting,
                                 origNorthing);
                     bUseProjInfo = true;
                 }
                 else if (STARTS_WITH_CI(pszProj,"STPL")) {
                     /* State Plate
-                       ASSUMPTIONS: "zone" in product.xml matches USGS 
-                       definition as expected by ogr spatial reference; NAD83 
+                       ASSUMPTIONS: "zone" in product.xml matches USGS
+                       definition as expected by ogr spatial reference; NAD83
                        zones (versus NAD27) are assumed. */
 
                     const int nSPZone = atoi(CPLGetXMLValue( psNspParams,
@@ -1279,8 +1279,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Collect GCPs.                                                   */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psGeoGrid = 
-        CPLGetXMLNode( psImageAttributes, 
+    CPLXMLNode *psGeoGrid =
+        CPLGetXMLNode( psImageAttributes,
                        "geographicInformation.geolocationGrid" );
 
     if( psGeoGrid != NULL ) {
@@ -1313,15 +1313,15 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             snprintf( szID, sizeof(szID), "%d", poDS->nGCPCount );
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
-            psGCP->dfGCPPixel = 
+            psGCP->dfGCPPixel =
                 CPLAtof(CPLGetXMLValue(psNode,"imageCoordinate.pixel","0"));
-            psGCP->dfGCPLine = 
+            psGCP->dfGCPLine =
                 CPLAtof(CPLGetXMLValue(psNode,"imageCoordinate.line","0"));
-            psGCP->dfGCPX = 
+            psGCP->dfGCPX =
                 CPLAtof(CPLGetXMLValue(psNode,"geodeticCoordinate.longitude",""));
-            psGCP->dfGCPY = 
+            psGCP->dfGCPY =
                 CPLAtof(CPLGetXMLValue(psNode,"geodeticCoordinate.latitude",""));
-            psGCP->dfGCPZ = 
+            psGCP->dfGCPZ =
                 CPLAtof(CPLGetXMLValue(psNode,"geodeticCoordinate.height",""));
         }
     }
@@ -1338,11 +1338,11 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     switch (eCalib) {
       case Sigma0:
-        osDescription.Printf( "RADARSAT_2_CALIB:SIGMA0:%s", 
+        osDescription.Printf( "RADARSAT_2_CALIB:SIGMA0:%s",
                               osMDFilename.c_str() );
         break;
       case Beta0:
-        osDescription.Printf( "RADARSAT_2_CALIB:BETA0:%s", 
+        osDescription.Printf( "RADARSAT_2_CALIB:BETA0:%s",
                               osMDFilename.c_str());
         break;
       case Gamma:
@@ -1350,7 +1350,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                               osMDFilename.c_str() );
         break;
       case Uncalib:
-        osDescription.Printf( "RADARSAT_2_CALIB:UNCALIB:%s", 
+        osDescription.Printf( "RADARSAT_2_CALIB:UNCALIB:%s",
                               osMDFilename.c_str() );
         break;
       default:
@@ -1358,7 +1358,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if( eCalib != None )
-        poDS->papszExtraFiles = 
+        poDS->papszExtraFiles =
             CSLAddString( poDS->papszExtraFiles, osMDFilename );
 
 /* -------------------------------------------------------------------- */
@@ -1427,7 +1427,7 @@ const char *RS2Dataset::GetProjectionRef()
 CPLErr RS2Dataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 ); 
+    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
 
     if (bHaveGeoTransform)
         return( CE_None );

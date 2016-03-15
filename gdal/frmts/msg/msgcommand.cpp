@@ -434,7 +434,7 @@ std::string MSGCommand::sCycle(int iCycle)
   char sRet [100];
   snprintf(sRet, sizeof(sRet), "%.4d%.2d%.2d%.2d%.2d", iYear, iMonth, iDay, iHours, iMins);
 
-  return sRet;  
+  return sRet;
 }
 
 std::string MSGCommand::sFileName(int iSatellite, int iSequence, int iStrip)
@@ -462,4 +462,3 @@ std::string MSGCommand::sPrologueFileName(int iSatellite, int iSequence)
     snprintf(sRet, sizeof(sRet), "%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), iSatellite, iSatellite, siThCycle.c_str());
   return sRet;
 }
-

@@ -36,8 +36,8 @@
 CPL_CVSID("$Id$");
 
 GDALDataset *
-RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-             int bStrict, char ** papszOptions, 
+RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+             int bStrict, char ** papszOptions,
              GDALProgressFunc pfnProgress, void * pProgressData );
 
 #define R_NILSXP        0
@@ -102,7 +102,7 @@ class RRasterBand : public GDALPamRasterBand
 /*                            RRasterBand()                             */
 /************************************************************************/
 
-RRasterBand::RRasterBand( RDataset *poDSIn, int nBandIn, 
+RRasterBand::RRasterBand( RDataset *poDSIn, int nBandIn,
                           const double *padfMatrixValuesIn )
 {
     this->poDS = poDSIn;
@@ -179,7 +179,7 @@ const char *RDataset::ASCIIFGets()
 
     osLastStringRead.resize(0);
 
-    do 
+    do
     {
         chNextChar = '\n';
         VSIFReadL( &chNextChar, 1, 1, fp );
@@ -295,7 +295,7 @@ int RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
 
     if( (nObjCode % 256) != R_LISTSXP )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Did not find expected object pair object." );
         return FALSE;
     }
@@ -303,7 +303,7 @@ int RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
     int nPairCount = ReadInteger();
     if( nPairCount != 1 )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Did not find expected pair count of 1." );
         return FALSE;
     }
@@ -338,14 +338,14 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*      If the extension is .rda and the file type is gzip              */
 /*      compressed we assume it is a gzipped R binary file.              */
 /* -------------------------------------------------------------------- */
-    if( memcmp(poOpenInfo->pabyHeader,"\037\213\b",3) == 0 
+    if( memcmp(poOpenInfo->pabyHeader,"\037\213\b",3) == 0
         && EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"rda") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Is this an ASCII or XDR binary R file?                          */
 /* -------------------------------------------------------------------- */
-    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n") 
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n")
         && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDX2\nX\n") )
         return FALSE;
 
@@ -366,7 +366,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The R driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -404,7 +404,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->ReadInteger() != R_LISTSXP )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "It appears %s is not a version 2 R object file after all!",
                   poOpenInfo->pszFilename );
         return NULL;
@@ -510,13 +510,13 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
             while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
                 poDS->ReadInteger();
         }
-        else if( nObjCode % 256 == R_STRSXP )			
+        else if( nObjCode % 256 == R_STRSXP )
         {
             int nCount = poDS->ReadInteger();
             while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
                 poDS->ReadString();
         }
-        else if( nObjCode % 256 == R_CHARSXP )			
+        else if( nObjCode % 256 == R_CHARSXP )
         {
             poDS->ReadString();
         }
@@ -537,7 +537,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( nValueCount 
+    if( nValueCount
         < ((GIntBig) nBandCount) * poDS->nRasterXSize * poDS->nRasterYSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -554,12 +554,12 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         GDALRasterBand *poBand;
 
         if( poDS->bASCII )
-            poBand = new RRasterBand( poDS, iBand+1, 
+            poBand = new RRasterBand( poDS, iBand+1,
                                       poDS->padfMatrixValues + iBand * poDS->nRasterXSize * poDS->nRasterYSize );
         else
             poBand = new RawRasterBand( poDS, iBand+1, poDS->fp,
-                                        poDS->nStartOfData 
-                                        + poDS->nRasterXSize*poDS->nRasterYSize*8*iBand, 
+                                        poDS->nStartOfData
+                                        + poDS->nRasterXSize*poDS->nRasterYSize*8*iBand,
                                         8, poDS->nRasterXSize * 8,
                                         GDT_Float64, !CPL_IS_LSB,
                                         TRUE, FALSE );

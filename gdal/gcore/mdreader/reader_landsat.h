@@ -38,7 +38,7 @@
 
 TIFF filename:      xxxxxx_aaa.tif
 Metadata filename:  xxxxxx_MTL.txt
-RPC filename:           
+RPC filename:
 
 Common metadata (from metadata filename):
     SatelliteId:         SPACECRAFT_ID

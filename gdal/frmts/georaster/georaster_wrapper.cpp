@@ -603,10 +603,10 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     //  Apply ULTCoordinate
     //  -------------------------------------------------------------------
 
-    poGRW->dfXCoefficient[2] += 
+    poGRW->dfXCoefficient[2] +=
                 ( poGRW->anULTCoordinate[0] * poGRW->dfXCoefficient[0] );
 
-    poGRW->dfYCoefficient[2] += 
+    poGRW->dfYCoefficient[2] +=
                 ( poGRW->anULTCoordinate[1] * poGRW->dfYCoefficient[1] );
 
     //  -------------------------------------------------------------------
@@ -765,17 +765,17 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         if( nRasterBands == 1 )
         {
-            sBlocking = CPLSPrintf( 
-                "blockSize=(%d, %d)", 
-                nRowBlockSize, 
+            sBlocking = CPLSPrintf(
+                "blockSize=(%d, %d)",
+                nRowBlockSize,
                 nColumnBlockSize );
         }
         else
         {
-            sBlocking = CPLSPrintf( 
-                "blockSize=(%d, %d, %d)", 
-                nRowBlockSize, 
-                nColumnBlockSize, 
+            sBlocking = CPLSPrintf(
+                "blockSize=(%d, %d, %d)",
+                nRowBlockSize,
+                nColumnBlockSize,
                 nBandBlockSize );
         }
     }
@@ -796,22 +796,22 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     {
         if( nRasterBands == 1 )
         {
-            sFormat = CPLSPrintf( 
+            sFormat = CPLSPrintf(
                 "20001, '"
-                "dimSize=(%d,%d) ", 
+                "dimSize=(%d,%d) ",
                 nRasterRows, nRasterColumns );
         }
         else
         {
-            sFormat = CPLSPrintf( 
+            sFormat = CPLSPrintf(
                 "21001, '"
-                "dimSize=(%d,%d,%d) ", 
+                "dimSize=(%d,%d,%d) ",
                 nRasterRows, nRasterColumns, nRasterBands );
         }
 
         if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
         {
-            sFormat.append( CPLSPrintf( 
+            sFormat.append( CPLSPrintf(
                     "%s "
                     "cellDepth=%s "
                     "interleaving=%s "
@@ -825,7 +825,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         }
         else
         {
-            sFormat.append( CPLSPrintf( 
+            sFormat.append( CPLSPrintf(
                     "%s "
                     "cellDepth=%s "
                     "interleaving=%s "
@@ -1163,7 +1163,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             sColumn.c_str(), sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(), sColumn.c_str(),
             szCreateBlank,
-            sFormat.c_str(), 
+            sFormat.c_str(),
             sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(), sColumn.c_str(), sColumn.c_str(),
             sSchema.c_str(), sSchema.c_str(), sSchema.c_str(),
@@ -1337,7 +1337,7 @@ void GeoRasterWrapper::GetRasterInfo( void )
     }
 
     //  -------------------------------------------------------------------
-    //  Load NoData Values 
+    //  Load NoData Values
     //  -------------------------------------------------------------------
 
     LoadNoDataValues();
@@ -1346,13 +1346,13 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Get ULTCoordinate values
     //  -------------------------------------------------------------------
 
-    anULTCoordinate[0] = atoi(CPLGetXMLValue( 
+    anULTCoordinate[0] = atoi(CPLGetXMLValue(
             phMetadata, "rasterInfo.ULTCoordinate.column", "0"));
 
-    anULTCoordinate[1] = atoi(CPLGetXMLValue( 
+    anULTCoordinate[1] = atoi(CPLGetXMLValue(
             phMetadata, "rasterInfo.ULTCoordinate.row", "0"));
 
-    anULTCoordinate[2] = atoi(CPLGetXMLValue( 
+    anULTCoordinate[2] = atoi(CPLGetXMLValue(
             phMetadata, "rasterInfo.ULTCoordinate.band", "0"));
 
     //  -------------------------------------------------------------------
@@ -1494,9 +1494,9 @@ bool GeoRasterWrapper::GetStatistics( int nBand,
     {
         if( n == nBand && CPLGetXMLNode( phSubLayer, "statisticDataset" ) )
         {
-            strncpy( pszSampling, CPLGetXMLValue( phSubLayer, 
+            strncpy( pszSampling, CPLGetXMLValue( phSubLayer,
                 "statisticDataset.samplingFactor",  "0.0" ), MAX_DOUBLE_STR_REP );
-            strncpy( pszMin, CPLGetXMLValue( phSubLayer, 
+            strncpy( pszMin, CPLGetXMLValue( phSubLayer,
                 "statisticDataset.MIN",  "0.0" ), MAX_DOUBLE_STR_REP );
             strncpy( pszMax, CPLGetXMLValue( phSubLayer,
                 "statisticDataset.MAX",  "0.0" ), MAX_DOUBLE_STR_REP );
@@ -1959,13 +1959,13 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 
     long nBlock = GetBlockNumber( nBand, nXOffset, nYOffset );
 
-    CPLDebug( "Read  ", 
-              "Block = %4ld Size = %7ld Band = %d Level = %d X = %d Y = %d", 
+    CPLDebug( "Read  ",
+              "Block = %4ld Size = %7ld Band = %d Level = %d X = %d Y = %d",
               nBlock, nBlockBytes, nBand, nLevel, nXOffset, nYOffset );
 
     if( nCacheBlockId != nBlock )
     {
-        if ( bFlushBlock )       
+        if ( bFlushBlock )
         {
             if( ! FlushBlock( nCacheBlockId ) )
             {
@@ -1989,11 +1989,11 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
             return true;
         }
 
-        if( nBytesRead < nBlockBytes && 
+        if( nBytesRead < nBlockBytes &&
             EQUAL( sCompressionType.c_str(), "NONE") )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                "BLOB size (%ld) is smaller than expected (%ld) !", 
+            CPLError( CE_Warning, CPLE_AppDefined,
+                "BLOB size (%ld) is smaller than expected (%ld) !",
                 nBytesRead,  nBlockBytes );
             memset( pData, 0, nGDALBlockBytes );
             return true;
@@ -2001,7 +2001,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 
         if( nBytesRead > nBlockBytes )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined,
                 "BLOB size (%ld) is bigger than expected (%ld) !",
                 nBytesRead,  nBlockBytes );
             memset( pData, 0, nGDALBlockBytes );
@@ -2112,8 +2112,8 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
     long nBlock = GetBlockNumber( nBand, nXOffset, nYOffset );
 
-    CPLDebug( "Write ", 
-              "Block = %4ld Size = %7ld Band = %d Level = %d X = %d Y = %d", 
+    CPLDebug( "Write ",
+              "Block = %4ld Size = %7ld Band = %d Level = %d X = %d Y = %d",
               nBlock, nBlockBytes, nBand, nLevel, nXOffset, nYOffset );
 
     //  --------------------------------------------------------------------
@@ -2259,7 +2259,7 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
     //  Write BLOB
     //  --------------------------------------------------------------------
 
-    CPLDebug( "Flush ", "Block = %4ld Size = %7ld", nCacheBlock, 
+    CPLDebug( "Flush ", "Block = %4ld Size = %7ld", nCacheBlock,
               nFlushBlockSize );
 
     if( ! poBlockStmt->WriteBlob( pahLocator[nCacheBlock],
@@ -2367,7 +2367,7 @@ void GeoRasterWrapper::GetRPC()
 {
     int i;
 
-    CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, 
+    CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata,
                                            "spatialReferenceInfo" );
 
     if( phSRSInfo == NULL )
@@ -2569,12 +2569,12 @@ void GeoRasterWrapper::SetRPC()
     CPLString osField, osMultiField;
     CPLXMLNode* phPolynomial = NULL;
 
-    CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, 
+    CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata,
                                            "spatialReferenceInfo" );
 
     if( ! phSRSInfo )
     {
-        phSRSInfo = CPLCreateXMLNode( phMetadata, CXT_Element, 
+        phSRSInfo = CPLCreateXMLNode( phMetadata, CXT_Element,
                                       "spatialReferenceInfo" );
     }
     else
@@ -2614,28 +2614,28 @@ void GeoRasterWrapper::SetRPC()
 
     CPLCreateXMLElementAndValue( phSRSInfo, "isReferenced", "true" );
     CPLCreateXMLElementAndValue( phSRSInfo, "SRID", "4327" );
-    CPLCreateXMLElementAndValue( phSRSInfo, "modelCoordinateLocation", 
+    CPLCreateXMLElementAndValue( phSRSInfo, "modelCoordinateLocation",
                                             "CENTER" );
     CPLCreateXMLElementAndValue( phSRSInfo, "modelType", "FunctionalFitting" );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#rowOff",      
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#rowOff",
                                     CPLSPrintf( "%.15g", phRPC->dfLINE_OFF ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#columnOff",   
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#columnOff",
                                     CPLSPrintf( "%.15g", phRPC->dfSAMP_OFF ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#xOff",        
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#xOff",
                                     CPLSPrintf( "%.15g", phRPC->dfLONG_OFF ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#yOff",        
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#yOff",
                                     CPLSPrintf( "%.15g", phRPC->dfLAT_OFF ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#zOff",        
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#zOff",
                                     CPLSPrintf( "%.15g", phRPC->dfHEIGHT_OFF ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#rowScale",    
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#rowScale",
                                     CPLSPrintf( "%.15g", phRPC->dfLINE_SCALE ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#columnScale", 
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#columnScale",
                                     CPLSPrintf( "%.15g", phRPC->dfSAMP_SCALE ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#xScale",      
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#xScale",
                                     CPLSPrintf( "%.15g", phRPC->dfLONG_SCALE ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#yScale",      
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#yScale",
                                     CPLSPrintf( "%.15g", phRPC->dfLAT_SCALE ) );
-    CPLSetXMLValue( phSRSInfo, "polynomialModel.#zScale",      
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#zScale",
                                     CPLSPrintf( "%.15g", phRPC->dfHEIGHT_SCALE ) );
     CPLXMLNode*     phPloyModel = CPLGetXMLNode( phSRSInfo, "polynomialModel" );
 
@@ -2655,7 +2655,7 @@ void GeoRasterWrapper::SetRPC()
         osMultiField += osField;
     }
     phPolynomial = CPLGetXMLNode( phPloyModel, "pPolynomial" );
-    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients",
                                  osMultiField );
 
     // qPolynomial refers to LINE_DEN
@@ -2674,7 +2674,7 @@ void GeoRasterWrapper::SetRPC()
         osMultiField += osField;
     }
     phPolynomial = CPLGetXMLNode( phPloyModel, "qPolynomial" );
-    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients",
                                  osMultiField );
 
     // rPolynomial refers to SAMP_NUM
@@ -2693,7 +2693,7 @@ void GeoRasterWrapper::SetRPC()
         osMultiField += osField;
     }
     phPolynomial = CPLGetXMLNode( phPloyModel, "rPolynomial" );
-    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients",
                                  osMultiField );
 
     // sPolynomial refers to SAMP_DEN
@@ -2712,7 +2712,7 @@ void GeoRasterWrapper::SetRPC()
         osMultiField += osField;
     }
     phPolynomial = CPLGetXMLNode( phPloyModel, "sPolynomial" );
-    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients",
                                  osMultiField );
 
     //  -------------------------------------------------------------------
@@ -2765,7 +2765,7 @@ bool GeoRasterWrapper::GetNoData( int nLayer, double* pdfNoDataValue )
     }
 
     //  -------------------------------------------------------------------
-    //  Values from the Object Layer override values from the layers 
+    //  Values from the Object Layer override values from the layers
     //  -------------------------------------------------------------------
 
     if( nCount == 1 )
@@ -2897,7 +2897,7 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
     poStmt->BindName( ":rdt", szRDT );
     poStmt->BindName( ":rid", &nRID );
 
-    CPLFree( pszMetadata );    
+    CPLFree( pszMetadata );
 
     if( ! poStmt->Execute() )
     {
@@ -3261,11 +3261,11 @@ bool GeoRasterWrapper::FlushMetadata()
 
     if( nException )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
             "Cannot generate spatialExtent! (ORA-%d) ", nException );
     }
 
-    if (bGenPyramid) 
+    if (bGenPyramid)
     {
         if (GeneratePyramid( nPyramidLevels, sPyramidResampling.c_str(), true ))
         {

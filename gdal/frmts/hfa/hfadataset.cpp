@@ -320,10 +320,10 @@ class HFADataset CPL_FINAL : public GDALPamDataset
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 
     virtual void   FlushCache( void );
-    virtual CPLErr IBuildOverviews( const char *pszResampling, 
-                                    int nOverviews, int *panOverviewList, 
+    virtual CPLErr IBuildOverviews( const char *pszResampling,
+                                    int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,
-                                    GDALProgressFunc pfnProgress, 
+                                    GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 };
 
@@ -352,7 +352,7 @@ class HFARasterBand CPL_FINAL : public GDALPamRasterBand
 
     int         bMetadataDirty;
 
-    GDALRasterAttributeTable *poDefaultRAT; 
+    GDALRasterAttributeTable *poDefaultRAT;
 
     void        ReadAuxMetadata();
     void        ReadHistogramMetadata();
@@ -428,7 +428,7 @@ private:
 
     CPLString osWorkingResult;
 
-    void AddColumn(const char *pszName, GDALRATFieldType eType, GDALRATFieldUsage eUsage, 
+    void AddColumn(const char *pszName, GDALRATFieldType eType, GDALRATFieldUsage eUsage,
                 int nDataOffset, int nElementSize, HFAEntry *poColumn, int bIsBinValues=FALSE,
                 int bConvertColors=FALSE)
     {
@@ -447,7 +447,7 @@ private:
 
     void CreateDT()
     {
-        poDT = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo, 
+        poDT = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                               osName, "Edsc_Table",
                               hHFA->papoBand[nBand-1]->poNode );
         poDT->SetIntField( "numrows", nRows );
@@ -487,8 +487,8 @@ public:
     virtual int           GetRowOfValue( double dfValue ) const;
     virtual int           GetRowOfValue( int nValue ) const;
 
-    virtual CPLErr        CreateColumn( const char *pszFieldName, 
-                                GDALRATFieldType eFieldType, 
+    virtual CPLErr        CreateColumn( const char *pszFieldName,
+                                GDALRATFieldType eFieldType,
                                 GDALRATFieldUsage eFieldUsage );
     virtual CPLErr        SetLinearBinning( double dfRow0Min, double dfBinSize );
     virtual int           GetLinearBinning( double *pdfRow0Min, double *pdfBinSize ) const;
@@ -626,7 +626,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
                 int nSize = sizeof(GInt32);
                 if( bConvertColors )
                     nSize = sizeof(double);
-                AddColumn(poDTChild->GetName(), GFT_Integer, eUsage, nOffset, nSize, poDTChild, 
+                AddColumn(poDTChild->GetName(), GFT_Integer, eUsage, nOffset, nSize, poDTChild,
                                         FALSE, bConvertColors);
             }
         }
@@ -674,7 +674,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
 
             for( int iRow = 0; iRow < this->nRows; iRow++ )
             {
-                poRAT->SetValue(iRow, iCol, panColData[iRow]);            
+                poRAT->SetValue(iRow, iCol, panColData[iRow]);
             }
             CPLFree(panColData);
         }
@@ -697,7 +697,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
 
             for( int iRow = 0; iRow < this->nRows; iRow++ )
             {
-                poRAT->SetValue(iRow, iCol, padfColData[iRow]);            
+                poRAT->SetValue(iRow, iCol, padfColData[iRow]);
             }
             CPLFree(padfColData);
         }
@@ -1513,7 +1513,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 /*                               ColorsIO()                              */
 /************************************************************************/
 
-// Handle the fact that HFA stores colours as floats, but we need to 
+// Handle the fact that HFA stores colours as floats, but we need to
 // read them in as ints 0...255
 CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, int *pnData)
 {
@@ -1527,7 +1527,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
     if( eRWFlag == GF_Write )
     {
         // copy the application supplied ints to doubles
-        // and convert 0..255 to 0..1 in the same manner 
+        // and convert 0..255 to 0..1 in the same manner
         // as the color table
         for( int i = 0; i < iLength; i++ )
             padfData[i] = pnData[i] / 255.0;
@@ -1570,7 +1570,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
     if( eRWFlag == GF_Read )
     {
         // copy them back to ints converting 0..1 to 0..255 in
-        // the same manner as the color table 
+        // the same manner as the color table
         for( int i = 0; i < iLength; i++ )
             pnData[i] = MIN(255,(int) (padfData[i] * 256));
     }
@@ -1608,7 +1608,7 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
         // We need to re-allocate space on disc
         for( int iCol = 0; iCol < (int)this->aoFields.size(); iCol++ )
         {
-            // new space 
+            // new space
             const int nNewOffset = HFAAllocateSpace( this->hHFA->papoBand[this->nBand-1]->psInfo,
                                             iCount * aoFields[iCol].nElementSize);
 
@@ -1706,7 +1706,7 @@ int HFARasterAttributeTable::GetRowOfValue( double dfValue ) const
     {
         if( nMinCol != -1 )
         {
-            while( iRow < this->nRows && dfValue < GetValueAsDouble(iRow, nMinCol) ) 
+            while( iRow < this->nRows && dfValue < GetValueAsDouble(iRow, nMinCol) )
                     iRow++;
 
             if( iRow == this->nRows )
@@ -1741,8 +1741,8 @@ int HFARasterAttributeTable::GetRowOfValue( int nValue ) const
 /*                          CreateColumn()                              */
 /************************************************************************/
 
-CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName, 
-                                GDALRATFieldType eFieldType, 
+CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
+                                GDALRATFieldType eFieldType,
                                 GDALRATFieldUsage eFieldUsage )
 {
     if( eAccess == GA_ReadOnly )
@@ -1843,7 +1843,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     poColumn->SetIntField( "columnDataPtr", nOffset );
 
     if( bConvertColors )
-        // GDAL Int column 
+        // GDAL Int column
         eFieldType = GFT_Integer;
 
     AddColumn(pszFieldName, eFieldType, eFieldUsage, nOffset, nElementSize, poColumn, FALSE, bConvertColors);
@@ -1879,7 +1879,7 @@ CPLErr HFARasterAttributeTable::SetLinearBinning( double dfRow0MinIn, double dfB
                                        "#Bin_Function#", "Edsc_BinFunction",
                                        poDT );
 
-    // Because of the BaseData we have to hardcode the size. 
+    // Because of the BaseData we have to hardcode the size.
     poBinFunction->MakeData( 30 );
 
     poBinFunction->SetStringField("binFunction", "direct");
@@ -1937,7 +1937,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
     this->papoOverviewBands = NULL;
     this->bMetadataDirty = FALSE;
     this->poDefaultRAT = NULL;
-    this->nOverviews = -1; 
+    this->nOverviews = -1;
 
     int nCompression;
     HFAGetBandInfo( hHFA, nBand, &eHFADataType,
@@ -1966,7 +1966,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
 /* -------------------------------------------------------------------- */
         if( eHFADataType == EPT_u1 && eHFADataTypeO == EPT_u8 )
         {
-            GDALMajorObject::SetMetadataItem( "RESAMPLING", 
+            GDALMajorObject::SetMetadataItem( "RESAMPLING",
                                               "AVERAGE_BIT2GRAYSCALE" );
             GDALMajorObject::SetMetadataItem( "NBITS", "8" );
         }
@@ -1977,7 +1977,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
 /*      Set some other information.                                     */
 /* -------------------------------------------------------------------- */
     if( nCompression != 0 )
-        GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLE", 
+        GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLE",
                                           "IMAGE_STRUCTURE" );
 
     switch( eHFADataType )
@@ -2033,14 +2033,14 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
 
     if( HFAGetDataTypeBits( eHFADataType ) < 8 )
     {
-        GDALMajorObject::SetMetadataItem( 
-            "NBITS", 
+        GDALMajorObject::SetMetadataItem(
+            "NBITS",
             CPLString().Printf( "%d", HFAGetDataTypeBits( eHFADataType ) ), "IMAGE_STRUCTURE" );
     }
 
     if( eHFADataType == EPT_s8 )
     {
-        GDALMajorObject::SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", 
+        GDALMajorObject::SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE",
                                           "IMAGE_STRUCTURE" );
     }
 
@@ -2061,7 +2061,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
         {
             GDALColorEntry   sEntry;
 
-            // The following mapping assigns "equal sized" section of 
+            // The following mapping assigns "equal sized" section of
             // the [0...1] range to each possible output value and avoid
             // rounding issues for the "normal" values generated using n/255.
             // See bug #1732 for some discussion.
@@ -2210,7 +2210,7 @@ void HFARasterBand::ReadHistogramMetadata()
 
     HFABand *poBand = hHFA->papoBand[nBand-1];
 
-    HFAEntry *poEntry = 
+    HFAEntry *poEntry =
         poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
     if ( poEntry == NULL )
         return;
@@ -2243,7 +2243,7 @@ void HFARasterBand::ReadHistogramMetadata()
     if( VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) != 0 ||
         (int)VSIFReadL( pabyWorkBuf, nBinSize, nNumBins, hHFA->fp ) != nNumBins)
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Cannot read histogram values." );
         CPLFree( panHistValues );
         CPLFree( pabyWorkBuf );
@@ -2316,9 +2316,9 @@ void HFARasterBand::ReadHistogramMetadata()
         nNumBins = nNewBins;
 
         SetMetadataItem( "STATISTICS_HISTOMIN", "0" );
-        SetMetadataItem( "STATISTICS_HISTOMAX", 
+        SetMetadataItem( "STATISTICS_HISTOMAX",
                          CPLString().Printf("%d", nMaxValue ) );
-        SetMetadataItem( "STATISTICS_HISTONUMBINS", 
+        SetMetadataItem( "STATISTICS_HISTONUMBINS",
                          CPLString().Printf("%d", nMaxValue+1 ) );
 
         CPLFree(padfBinValues);
@@ -2380,9 +2380,9 @@ double HFARasterBand::GetNoDataValue( int *pbSuccess )
 /*                             SetNoDataValue()                         */
 /************************************************************************/
 
-CPLErr HFARasterBand::SetNoDataValue( double dfValue ) 
+CPLErr HFARasterBand::SetNoDataValue( double dfValue )
 {
-    return HFASetBandNoData( hHFA, nBand, dfValue ); 
+    return HFASetBandNoData( hHFA, nBand, dfValue );
 }
 
 /************************************************************************/
@@ -2561,7 +2561,7 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Do we need to pack 1/2/4 bit data?                              */
 /* -------------------------------------------------------------------- */
-    if( eHFADataType == EPT_u1 
+    if( eHFADataType == EPT_u1
         || eHFADataType == EPT_u2
         || eHFADataType == EPT_u4 )
     {
@@ -2575,7 +2575,7 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             for( int ii = 0; ii < nPixCount - 7; ii += 8 )
             {
                 int k = ii>>3;
-                pabyOutBuf[k] = 
+                pabyOutBuf[k] =
                     (((GByte *) pImage)[ii] & 0x1)
                     | ((((GByte *) pImage)[ii+1]&0x1) << 1)
                     | ((((GByte *) pImage)[ii+2]&0x1) << 2)
@@ -2591,7 +2591,7 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             for( int ii = 0; ii < nPixCount - 3; ii += 4 )
             {
                 int k = ii>>2;
-                pabyOutBuf[k] = 
+                pabyOutBuf[k] =
                     (((GByte *) pImage)[ii] & 0x3)
                     | ((((GByte *) pImage)[ii+1]&0x3) << 2)
                     | ((((GByte *) pImage)[ii+2]&0x3) << 4)
@@ -2603,8 +2603,8 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             for( int ii = 0; ii < nPixCount - 1; ii += 2 )
             {
                 int k = ii>>1;
-                pabyOutBuf[k] = 
-                    (((GByte *) pImage)[ii] & 0xf) 
+                pabyOutBuf[k] =
+                    (((GByte *) pImage)[ii] & 0xf)
                     | ((((GByte *) pImage)[ii+1]&0xf) << 4);
             }
         }
@@ -2684,7 +2684,7 @@ CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
 {
     if( GetAccess() == GA_ReadOnly )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, 
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Unable to set color table on read-only file." );
         return CE_Failure;
     }
@@ -2818,8 +2818,8 @@ CPLErr HFARasterBand::CleanOverviews()
 /* -------------------------------------------------------------------- */
     if( hHFA->psDependent != hHFA && hHFA->psDependent != NULL )
     {
-        CPLString osFilename = 
-            CPLFormFilename( hHFA->psDependent->pszPath, 
+        CPLString osFilename =
+            CPLFormFilename( hHFA->psDependent->pszPath,
                              hHFA->psDependent->pszFilename, NULL );
 
         CPL_IGNORE_RET_VAL(HFAClose( hHFA->psDependent ));
@@ -2836,9 +2836,9 @@ CPLErr HFARasterBand::CleanOverviews()
 /*                           BuildOverviews()                           */
 /************************************************************************/
 
-CPLErr HFARasterBand::BuildOverviews( const char *pszResampling, 
-                                      int nReqOverviews, int *panOverviewList, 
-                                      GDALProgressFunc pfnProgress, 
+CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
+                                      int nReqOverviews, int *panOverviewList,
+                                      GDALProgressFunc pfnProgress,
                                       void *pProgressData )
 
 {
@@ -2846,7 +2846,7 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 
     if( nThisOverview != -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to build overviews on an overview layer." );
 
         return CE_Failure;
@@ -2915,9 +2915,9 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
             }
 
             nOverviews = iResult + 1;
-            papoOverviewBands = (HFARasterBand **) 
+            papoOverviewBands = (HFARasterBand **)
                 CPLRealloc( papoOverviewBands, sizeof(void*) * nOverviews);
-            papoOverviewBands[iResult] = new HFARasterBand( 
+            papoOverviewBands[iResult] = new HFARasterBand(
                 (HFADataset *) poDS, nBand, iResult );
 
             papoOvBands[iOverview] = papoOverviewBands[iResult];
@@ -2931,10 +2931,10 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     CPLErr eErr = CE_None;
 
     if( !bNoRegen )
-        eErr = GDALRegenerateOverviews( (GDALRasterBandH) this, 
-                                        nReqOverviews, 
+        eErr = GDALRegenerateOverviews( (GDALRasterBandH) this,
+                                        nReqOverviews,
                                         (GDALRasterBandH *) papoOvBands,
-                                        pszResampling, 
+                                        pszResampling,
                                         pfnProgress, pProgressData );
 
     CPLFree( papoOvBands );
@@ -2946,20 +2946,20 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 /*                        GetDefaultHistogram()                         */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                     int *pnBuckets, GUIntBig ** ppanHistogram,
                                     int bForce,
-                                    GDALProgressFunc pfnProgress, 
+                                    GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
 {
-    if( GetMetadataItem( "STATISTICS_HISTOBINVALUES" ) != NULL 
-        && GetMetadataItem( "STATISTICS_HISTOMIN" ) != NULL 
+    if( GetMetadataItem( "STATISTICS_HISTOBINVALUES" ) != NULL
+        && GetMetadataItem( "STATISTICS_HISTOMIN" ) != NULL
         && GetMetadataItem( "STATISTICS_HISTOMAX" ) != NULL )
     {
         const char *pszNextBin;
-        const char *pszBinValues = 
+        const char *pszBinValues =
             GetMetadataItem( "STATISTICS_HISTOBINVALUES" );
 
         *pdfMin = CPLAtof(GetMetadataItem("STATISTICS_HISTOMIN"));
@@ -2993,9 +2993,9 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
         return CE_None;
     }
     else
-        return GDALPamRasterBand::GetDefaultHistogram( pdfMin, pdfMax, 
+        return GDALPamRasterBand::GetDefaultHistogram( pdfMin, pdfMax,
                                                        pnBuckets,ppanHistogram,
-                                                       bForce, 
+                                                       bForce,
                                                        pfnProgress,
                                                        pProgressData );
 }
@@ -3045,9 +3045,9 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
     const int nRowCount = poRAT->GetRowCount();
 
     poDT->SetIntField( "numrows", nRowCount );
-    /* Check if binning is set on this RAT */    
+    /* Check if binning is set on this RAT */
     double dfBinSize, dfRow0Min;
-    if(poRAT->GetLinearBinning( &dfRow0Min, &dfBinSize)) 
+    if(poRAT->GetLinearBinning( &dfRow0Min, &dfBinSize))
     {
         /* then it should have an Edsc_BinFunction */
         HFAEntry *poBinFunction = poDT->GetNamedChild( "#Bin_Function#" );
@@ -3215,7 +3215,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         }
     }
 
-    return CE_None;  
+    return CE_None;
 }
 
 
@@ -3490,7 +3490,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
-    else if( EQUAL(pszProjName,SRS_PT_MERCATOR_1SP) 
+    else if( EQUAL(pszProjName,SRS_PT_MERCATOR_1SP)
              && oSRS.GetProjParm(SRS_PP_SCALE_FACTOR) == 1.0 )
     {
         sPro.proNumber = EPRJ_MERCATOR;
@@ -3954,8 +3954,8 @@ CPLErr HFADataset::WriteProjection()
         sPro.proExeName = (char*) EPRJ_EXTERNAL_NZMG;
         sPro.proName = (char*) "New Zealand Map Grid";
         sPro.proZone = 0;
-        sPro.proParams[0] = 0;  // false easting etc not stored in .img it seems 
-        sPro.proParams[1] = 0;  // always fixed by definition. 
+        sPro.proParams[0] = 0;  // false easting etc not stored in .img it seems
+        sPro.proParams[1] = 0;  // always fixed by definition.
         sPro.proParams[2] = 0;
         sPro.proParams[3] = 0;
         sPro.proParams[4] = 0;
@@ -3963,7 +3963,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = 0;
         sPro.proParams[7] = 0;
     }
-    // Anything we can't map, we store as an ESRI PE_STRING 
+    // Anything we can't map, we store as an ESRI PE_STRING
     else if( oSRS.IsProjected() || oSRS.IsGeographic() )
     {
         if(!bPEStringStored)
@@ -4034,9 +4034,9 @@ CPLErr HFADataset::WriteProjection()
 
         if( iClosest == -1 ||  fabs(dfClosestDiff/dfActualSize) > 0.0001 )
         {
-            CPLError( CE_Warning, CPLE_NotSupported, 
+            CPLError( CE_Warning, CPLE_NotSupported,
                       "Unable to identify Erdas units matching %s/%gm,\n"
-                      "output units will be wrong.", 
+                      "output units will be wrong.",
                       pszUnitName, dfActualSize );
         }
         else
@@ -4056,7 +4056,7 @@ CPLErr HFADataset::WriteProjection()
     }
     else
     {
-        HFASetGeoTransform( hHFA, 
+        HFASetGeoTransform( hHFA,
                             sMapInfo.proName, sMapInfo.units,
                             adfGeoTransform );
     }
@@ -4217,9 +4217,9 @@ void ClearSR(HFAHandle hHFA)
             }
             poMIEntry->FlushToDisk();
             char* peStr = HFAGetPEString( hHFA );
-            if( peStr != NULL && strlen(peStr) > 0 )           
+            if( peStr != NULL && strlen(peStr) > 0 )
                 HFASetPEString( hHFA, "" );
-        }  
+        }
     }
     return;
 }
@@ -4325,14 +4325,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         const char  *pszUnits = NULL;
 
         if( psMapInfo )
-            pszUnits = psMapInfo->units; 
+            pszUnits = psMapInfo->units;
         else if( poMapInformation != NULL )
             pszUnits = poMapInformation->GetStringField( "units.string" );
 
         if( pszUnits != NULL )
         {
-            for( iUnitIndex = 0; 
-                 apszUnitMap[iUnitIndex] != NULL; 
+            for( iUnitIndex = 0;
+                 apszUnitMap[iUnitIndex] != NULL;
                  iUnitIndex += 2 )
             {
                 if( EQUAL(apszUnitMap[iUnitIndex], pszUnits ) )
@@ -4342,7 +4342,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
             if( apszUnitMap[iUnitIndex] == NULL )
                 iUnitIndex = 0;
 
-            oSRS.SetLinearUnits( pszUnits, 
+            oSRS.SetLinearUnits( pszUnits,
                                  CPLAtof(apszUnitMap[iUnitIndex+1]) );
         }
         else
@@ -4408,12 +4408,12 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         oSRS.SetProjCS( "unnamed" );
         oSRS.SetUTM( psPro->proZone, psPro->proParams[3] >= 0.0 );
 
-        // The PCS name from the above function may be different with the input name. 
-        // If there is a PCS name in psMapInfo that is different with 
-        // the one in psPro, just use it as the PCS name. This case happens 
-        // if the dataset's SR was written by the new GDAL. 
-        if( psMapInfo && strlen(psMapInfo->proName) > 0 
-            && strlen(psPro->proName) > 0 
+        // The PCS name from the above function may be different with the input name.
+        // If there is a PCS name in psMapInfo that is different with
+        // the one in psPro, just use it as the PCS name. This case happens
+        // if the dataset's SR was written by the new GDAL.
+        if( psMapInfo && strlen(psMapInfo->proName) > 0
+            && strlen(psPro->proName) > 0
             && !EQUAL(psMapInfo->proName, psPro->proName) )
             oSRS.SetProjCS( psMapInfo->proName );
         break;
@@ -4425,7 +4425,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
           pszUnitsName = CPLStrdup( pszUnitsName );
 
-          /* Historically, hfa used esri state plane zone code. Try esri pe string first. */ 
+          /* Historically, hfa used esri state plane zone code. Try esri pe string first. */
           int zoneCode = ESRIToUSGSZone(psPro->proZone);
           const char* pszDatum;
           if(psDatum)
@@ -4455,15 +4455,15 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           }
 
           /* Set state plane zone.  Set NAD83/27 on basis of spheroid */
-          oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone), 
+          oSRS.SetStatePlane( ESRIToUSGSZone(psPro->proZone),
                               fabs(psPro->proSpheroid.a - 6378137.0)< 1.0,
                               pszUnitsName, dfLinearUnits );
 
           CPLFree( pszUnitsName );
 
           // Same as the UTM, The following is needed.
-          if( psMapInfo && strlen(psMapInfo->proName) > 0 
-              && strlen(psPro->proName) > 0 
+          if( psMapInfo && strlen(psMapInfo->proName) > 0
+              && strlen(psPro->proName) > 0
               && !EQUAL(psMapInfo->proName, psPro->proName) )
               oSRS.SetProjCS( psMapInfo->proName );
       }
@@ -4574,9 +4574,9 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
       case EPRJ_PLATE_CARREE:
       case EPRJ_EQUIRECTANGULAR:
-        oSRS.SetEquirectangular2( 0.0, 
+        oSRS.SetEquirectangular2( 0.0,
                                   psPro->proParams[4]*R2D,
-                                  psPro->proParams[5]*R2D, 
+                                  psPro->proParams[5]*R2D,
                                   psPro->proParams[6], psPro->proParams[7] );
         break;
 
@@ -4684,9 +4684,9 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_LOXIMUTHAL:
       {
           oSRS.SetProjection( "Loximuthal" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
-          oSRS.SetNormProjParm( "central_parallel", 
+          oSRS.SetNormProjParm( "central_parallel",
                            psPro->proParams[5] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4696,7 +4696,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_QUARTIC_AUTHALIC:
       {
           oSRS.SetProjection( "Quartic_Authalic" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4706,9 +4706,9 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_WINKEL_I:
       {
           oSRS.SetProjection( "Winkel_I" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
-          oSRS.SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 
+          oSRS.SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1,
                            psPro->proParams[2] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4718,9 +4718,9 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_WINKEL_II:
       {
           oSRS.SetProjection( "Winkel_II" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
-          oSRS.SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 
+          oSRS.SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1,
                            psPro->proParams[2] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4730,7 +4730,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_BEHRMANN:
       {
           oSRS.SetProjection( "Behrmann" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4747,9 +4747,9 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_DOUBLE_STEREOGRAPHIC:
       {
           oSRS.SetProjection( "Double_Stereographic" );
-          oSRS.SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 
+          oSRS.SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN,
                            psPro->proParams[5] * R2D );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_SCALE_FACTOR, psPro->proParams[2] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
@@ -4760,7 +4760,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_AITOFF:
       {
           oSRS.SetProjection( "Aitoff" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4770,7 +4770,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_CRASTER_PARABOLIC:
       {
           oSRS.SetProjection( "Craster_Parabolic" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4778,14 +4778,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       break;
 
       case EPRJ_CYLINDRICAL_EQUAL_AREA:
-          oSRS.SetCEA(psPro->proParams[2] * R2D, psPro->proParams[4] * R2D, 
+          oSRS.SetCEA(psPro->proParams[2] * R2D, psPro->proParams[4] * R2D,
                       psPro->proParams[6], psPro->proParams[7]);
       break;
 
       case EPRJ_FLAT_POLAR_QUARTIC:
       {
           oSRS.SetProjection( "Flat_Polar_Quartic" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4795,7 +4795,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_TIMES:
       {
           oSRS.SetProjection( "Times" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4807,7 +4807,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           oSRS.SetProjection( "Winkel_Tripel" );
           oSRS.SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1,
                            psPro->proParams[2] * R2D );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4817,7 +4817,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_HAMMER_AITOFF:
       {
           oSRS.SetProjection( "Hammer_Aitoff" );
-          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 
+          oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
@@ -4859,7 +4859,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       break;
 
       case EPRJ_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN:
-        oSRS.SetHOM2PNO( psPro->proParams[5] * R2D, 
+        oSRS.SetHOM2PNO( psPro->proParams[5] * R2D,
                          psPro->proParams[8] * R2D,
                          psPro->proParams[9] * R2D,
                          psPro->proParams[10] * R2D,
@@ -4903,10 +4903,10 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         if( pszDatumName == NULL)
             oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName,
                             psPro->proSpheroid.a, dfInvFlattening );
-        else if( EQUAL(pszDatumName,"WGS 84") 
+        else if( EQUAL(pszDatumName,"WGS 84")
             ||  EQUAL(pszDatumName,"WGS_1984") )
             oSRS.SetWellKnownGeogCS( "WGS84" );
-        else if( strstr(pszDatumName,"NAD27") != NULL 
+        else if( strstr(pszDatumName,"NAD27") != NULL
                  || EQUAL(pszDatumName,"North_American_Datum_1927") )
             oSRS.SetWellKnownGeogCS( "NAD27" );
         else if( strstr(pszDatumName,"NAD83") != NULL
@@ -4966,7 +4966,7 @@ CPLErr HFADataset::ReadProjection()
     const Eprj_MapInfo *psMapInfo = HFAGetMapInfo( hHFA );
 
     HFAEntry *poMapInformation = NULL;
-    if( psMapInfo == NULL ) 
+    if( psMapInfo == NULL )
     {
         HFABand *poBand = hHFA->papoBand[0];
         poMapInformation = poBand->poNode->GetNamedChild("MapInformation");
@@ -4984,7 +4984,7 @@ CPLErr HFADataset::ReadProjection()
         return CE_None;
     }
 
-    pszProjection = HFAPCSStructToWKT( psDatum, psPro, psMapInfo, 
+    pszProjection = HFAPCSStructToWKT( psDatum, psPro, psMapInfo,
                                        poMapInformation );
 
     // If we got a valid projection and managed to identify a EPSG code,
@@ -5002,7 +5002,7 @@ CPLErr HFADataset::ReadProjection()
     if( bTryReadingPEString )
         pszPE_COORDSYS = HFAGetPEString( hHFA );
     if( pszPE_COORDSYS != NULL
-        && strlen(pszPE_COORDSYS) > 0 
+        && strlen(pszPE_COORDSYS) > 0
         && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
     {
         CPLFree( pszPE_COORDSYS );
@@ -5051,10 +5051,10 @@ CPLErr HFADataset::ReadProjection()
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr HFADataset::IBuildOverviews( const char *pszResampling, 
-                                    int nOverviews, int *panOverviewList, 
+CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
+                                    int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,
-                                    GDALProgressFunc pfnProgress, 
+                                    GDALProgressFunc pfnProgress,
                                     void * pProgressData )
 
 {
@@ -5070,9 +5070,9 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
             }
         }
 
-        return GDALDataset::IBuildOverviews( pszResampling, 
-                                             nOverviews, panOverviewList, 
-                                             nListBands, panBandList, 
+        return GDALDataset::IBuildOverviews( pszResampling,
+                                             nOverviews, panOverviewList,
+                                             nListBands, panBandList,
                                              pfnProgress, pProgressData );
     }
 
@@ -5166,7 +5166,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->nBands == 0 )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to open %s, it has zero usable bands.",
                   poOpenInfo->pszFilename );
         return NULL;
@@ -5175,7 +5175,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->nRasterXSize == 0 || poDS->nRasterYSize == 0 )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to open %s, it has no pixels.",
                   poOpenInfo->pszFilename );
         return NULL;
@@ -5189,14 +5189,14 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     {
         Efga_Polynomial *pasPolyListForward = NULL;
         Efga_Polynomial *pasPolyListReverse = NULL;
-        int nStepCount = 
-            HFAReadXFormStack( hHFA, &pasPolyListForward, 
+        int nStepCount =
+            HFAReadXFormStack( hHFA, &pasPolyListForward,
                                &pasPolyListReverse );
 
         if( nStepCount > 0 )
         {
-            poDS->UseXFormStack( nStepCount, 
-                                 pasPolyListForward, 
+            poDS->UseXFormStack( nStepCount,
+                                 pasPolyListForward,
                                  pasPolyListReverse );
             CPLFree( pasPolyListForward );
             CPLFree( pasPolyListReverse );
@@ -5265,7 +5265,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     HFAEntry  *poEntry = psInfo->poRoot->GetNamedChild("DependentFile");
     if( poEntry != NULL )
     {
-        poDS->SetMetadataItem( "HFA_DEPENDENT_FILE", 
+        poDS->SetMetadataItem( "HFA_DEPENDENT_FILE",
                                poEntry->GetStringField( "dependent.string" ),
                                "HFA" );
     }
@@ -5387,26 +5387,26 @@ CPLErr HFADataset::SetGeoTransform( double * padfTransform )
 /*      seeks.                                                          */
 /************************************************************************/
 
-CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag, 
+CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
-                              void *pData, int nBufXSize, int nBufYSize, 
+                              void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
-                              int nBandCount, int *panBandMap, 
+                              int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
 
 {
-    if( hHFA->papoBand[panBandMap[0]-1]->fpExternal != NULL 
+    if( hHFA->papoBand[panBandMap[0]-1]->fpExternal != NULL
         && nBandCount > 1 )
-        return GDALDataset::BlockBasedRasterIO( 
+        return GDALDataset::BlockBasedRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType, 
+            pData, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 
     return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize, eBufType, 
-                                    nBandCount, panBandMap, 
+                                    pData, nBufXSize, nBufYSize, eBufType,
+                                    nBandCount, panBandMap,
                                     nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
@@ -5450,14 +5450,14 @@ void HFADataset::UseXFormStack( int nStepCount,
 /* -------------------------------------------------------------------- */
 /*      Store the transform as metadata.                                */
 /* -------------------------------------------------------------------- */
-    GDALMajorObject::SetMetadataItem( 
-        "XFORM_STEPS", 
+    GDALMajorObject::SetMetadataItem(
+        "XFORM_STEPS",
         CPLString().Printf("%d",nStepCount),
         "XFORMS" );
 
     for( int iStep = 0; iStep < nStepCount; iStep++ )
     {
-        GDALMajorObject::SetMetadataItem( 
+        GDALMajorObject::SetMetadataItem(
             CPLString().Printf("XFORM%d_ORDER", iStep),
             CPLString().Printf("%d",pasPLForward[iStep].order),
             "XFORMS" );
@@ -5465,14 +5465,14 @@ void HFADataset::UseXFormStack( int nStepCount,
         if( pasPLForward[iStep].order == 1 )
         {
             for( int i = 0; i < 4; i++ )
-                GDALMajorObject::SetMetadataItem( 
+                GDALMajorObject::SetMetadataItem(
                     CPLString().Printf("XFORM%d_POLYCOEFMTX[%d]", iStep, i),
                     CPLString().Printf("%.15g",
                                        pasPLForward[iStep].polycoefmtx[i]),
                     "XFORMS" );
 
             for( int i = 0; i < 2; i++ )
-                GDALMajorObject::SetMetadataItem( 
+                GDALMajorObject::SetMetadataItem(
                     CPLString().Printf("XFORM%d_POLYCOEFVECTOR[%d]", iStep, i),
                     CPLString().Printf("%.15g",
                                        pasPLForward[iStep].polycoefvector[i]),
@@ -5492,28 +5492,28 @@ void HFADataset::UseXFormStack( int nStepCount,
         }
 
         for( int i = 0; i < nCoefCount; i++ )
-            GDALMajorObject::SetMetadataItem( 
+            GDALMajorObject::SetMetadataItem(
                 CPLString().Printf("XFORM%d_FWD_POLYCOEFMTX[%d]", iStep, i),
                 CPLString().Printf("%.15g",
                                    pasPLForward[iStep].polycoefmtx[i]),
                 "XFORMS" );
 
         for( int i = 0; i < 2; i++ )
-            GDALMajorObject::SetMetadataItem( 
+            GDALMajorObject::SetMetadataItem(
                 CPLString().Printf("XFORM%d_FWD_POLYCOEFVECTOR[%d]", iStep, i),
                 CPLString().Printf("%.15g",
                                    pasPLForward[iStep].polycoefvector[i]),
                 "XFORMS" );
 
         for( int i = 0; i < nCoefCount; i++ )
-            GDALMajorObject::SetMetadataItem( 
+            GDALMajorObject::SetMetadataItem(
                 CPLString().Printf("XFORM%d_REV_POLYCOEFMTX[%d]", iStep, i),
                 CPLString().Printf("%.15g",
                                    pasPLReverse[iStep].polycoefmtx[i]),
                 "XFORMS" );
 
         for( int i = 0; i < 2; i++ )
-            GDALMajorObject::SetMetadataItem( 
+            GDALMajorObject::SetMetadataItem(
                 CPLString().Printf("XFORM%d_REV_POLYCOEFVECTOR[%d]", iStep, i),
                 CPLString().Printf("%.15g",
                                    pasPLReverse[iStep].polycoefvector[i]),
@@ -5565,13 +5565,13 @@ char **HFADataset::GetFileList()
 
     if( HFAGetIGEFilename( hHFA ) != NULL )
     {
-        papszFileList = CSLAddString( papszFileList, 
+        papszFileList = CSLAddString( papszFileList,
                                       HFAGetIGEFilename( hHFA ) );
     }
 
     // Request an overview to force opening of dependent overview
-    // files. 
-    if( nBands > 0 
+    // files.
+    if( nBands > 0
         && GetRasterBand(1)->GetOverviewCount() > 0 )
         GetRasterBand(1)->GetOverview(0);
 
@@ -5579,13 +5579,13 @@ char **HFADataset::GetFileList()
     {
         HFAInfo_t *psDep = hHFA->psDependent;
 
-        papszFileList = 
-            CSLAddString( papszFileList, 
-                          CPLFormFilename( psDep->pszPath, 
+        papszFileList =
+            CSLAddString( papszFileList,
+                          CPLFormFilename( psDep->pszPath,
                                            psDep->pszFilename, NULL ));
 
         if( HFAGetIGEFilename( psDep ) != NULL )
-            papszFileList = CSLAddString( papszFileList, 
+            papszFileList = CSLAddString( papszFileList,
                                           HFAGetIGEFilename( psDep ) );
     }
 
@@ -5707,7 +5707,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
     if( poDS != NULL )
     {
-        poDS->bForceToPEString = 
+        poDS->bForceToPEString =
             CSLFetchBoolean( papszParmList, "FORCETOPESTRING", FALSE );
     }
 
@@ -5752,7 +5752,7 @@ CPLErr HFADataset::Rename( const char *pszNewName, const char *pszOldName )
             HFAGetOverviewCount( hHFA, 1 );
 
             if( hHFA->psDependent != NULL )
-                HFARenameReferences( hHFA->psDependent, 
+                HFARenameReferences( hHFA->psDependent,
                                      osNewBasename, osOldBasename );
 
             if( HFAClose( hHFA ) != 0 )
@@ -5801,7 +5801,7 @@ CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
             HFAGetOverviewCount( hHFA, 1 );
 
             if( hHFA->psDependent != NULL )
-                HFARenameReferences( hHFA->psDependent, 
+                HFARenameReferences( hHFA->psDependent,
                                      osNewBasename, osOldBasename );
 
             if( HFAClose( hHFA ) != 0 )
@@ -5851,14 +5851,14 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      through as a creation option.                                   */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( papszOptions, "PIXELTYPE" ) == NULL
-        && nBandCount > 0 
+        && nBandCount > 0
         && eType == GDT_Byte
-        && poSrcDS->GetRasterBand(1)->GetMetadataItem( "PIXELTYPE", 
+        && poSrcDS->GetRasterBand(1)->GetMetadataItem( "PIXELTYPE",
                                                        "IMAGE_STRUCTURE" ) )
     {
-        papszModOptions = 
-            CSLSetNameValue( papszModOptions, "PIXELTYPE", 
-                             poSrcDS->GetRasterBand(1)->GetMetadataItem( 
+        papszModOptions =
+            CSLSetNameValue( papszModOptions, "PIXELTYPE",
+                             poSrcDS->GetRasterBand(1)->GetMetadataItem(
                                  "PIXELTYPE", "IMAGE_STRUCTURE" ) );
     }
 
@@ -5962,26 +5962,26 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // Statistics
             // -----------------------------------------------------------
 
-            if( poSrcBand->GetStatistics( TRUE, FALSE, &dfMin, &dfMax, 
+            if( poSrcBand->GetStatistics( TRUE, FALSE, &dfMin, &dfMax,
                                           &dfMean, &dfStdDev ) == CE_None
-                || poSrcBand->ComputeStatistics( TRUE, &dfMin, &dfMax, 
-                                                 &dfMean, &dfStdDev, 
+                || poSrcBand->ComputeStatistics( TRUE, &dfMin, &dfMax,
+                                                 &dfMean, &dfStdDev,
                                                  pfnProgress, pProgressData )
                 == CE_None )
             {
                 CPLString osValue;
 
-                papszStatsMD = 
-                    CSLSetNameValue( papszStatsMD, "STATISTICS_MINIMUM", 
+                papszStatsMD =
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_MINIMUM",
                                      osValue.Printf( "%.15g", dfMin ) );
-                papszStatsMD = 
-                    CSLSetNameValue( papszStatsMD, "STATISTICS_MAXIMUM", 
+                papszStatsMD =
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_MAXIMUM",
                                      osValue.Printf( "%.15g", dfMax ) );
-                papszStatsMD = 
-                    CSLSetNameValue( papszStatsMD, "STATISTICS_MEAN", 
+                papszStatsMD =
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_MEAN",
                                      osValue.Printf( "%.15g", dfMean ) );
-                papszStatsMD = 
-                    CSLSetNameValue( papszStatsMD, "STATISTICS_STDDEV", 
+                papszStatsMD =
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_STDDEV",
                                      osValue.Printf( "%.15g", dfStdDev ) );
             }
 
@@ -5992,23 +5992,23 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             int nBuckets;
             GUIntBig *panHistogram = NULL;
 
-            if( poSrcBand->GetDefaultHistogram( &dfMin, &dfMax, 
-                                                &nBuckets, &panHistogram, 
-                                                TRUE, 
+            if( poSrcBand->GetDefaultHistogram( &dfMin, &dfMax,
+                                                &nBuckets, &panHistogram,
+                                                TRUE,
                                                 pfnProgress, pProgressData )
                 == CE_None )
             {
                 CPLString osValue;
                 double dfBinWidth = (dfMax - dfMin) / nBuckets;
 
-                papszStatsMD = CSLSetNameValue( 
-                    papszStatsMD, "STATISTICS_HISTOMIN", 
+                papszStatsMD = CSLSetNameValue(
+                    papszStatsMD, "STATISTICS_HISTOMIN",
                     osValue.Printf( "%.15g", dfMin+dfBinWidth*0.5 ) );
-                papszStatsMD = CSLSetNameValue( 
-                    papszStatsMD, "STATISTICS_HISTOMAX", 
+                papszStatsMD = CSLSetNameValue(
+                    papszStatsMD, "STATISTICS_HISTOMAX",
                     osValue.Printf( "%.15g", dfMax-dfBinWidth*0.5 ) );
-                papszStatsMD = 
-                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTONUMBINS", 
+                papszStatsMD =
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTONUMBINS",
                                      osValue.Printf( "%d", nBuckets ) );
 
                 int nBinValuesLen = 0;
@@ -6016,12 +6016,12 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 for( int iBin = 0; iBin < nBuckets; iBin++ )
                 {
 
-                    strcat( pszBinValues+nBinValuesLen, 
+                    strcat( pszBinValues+nBinValuesLen,
                             osValue.Printf( CPL_FRMT_GUIB, panHistogram[iBin]) );
                     strcat( pszBinValues+nBinValuesLen, "|" );
                     nBinValuesLen += static_cast<int>(strlen(pszBinValues+nBinValuesLen));
                 }
-                papszStatsMD = 
+                papszStatsMD =
                     CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOBINVALUES",
                                      pszBinValues );
                 CPLFree( pszBinValues );

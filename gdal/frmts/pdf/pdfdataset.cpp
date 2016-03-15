@@ -1430,7 +1430,7 @@ public:
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
             return TRUE;
-        return m_poParent->SetClip_PathStroke(pPathData, pObject2Device, pGraphState); 
+        return m_poParent->SetClip_PathStroke(pPathData, pObject2Device, pGraphState);
     }
 
     virtual FX_BOOL     DrawPath(const CFX_PathData* pPathData,
@@ -1604,7 +1604,7 @@ public:
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page, 
+void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
                                         int start_x, int start_y,
                                         int size_x, int size_y,
                                         const char* pszRenderingOptions)
@@ -2460,7 +2460,7 @@ PDFDataset::~PDFDataset()
 CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, 
+                              GDALDataType eBufType,
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
@@ -2492,7 +2492,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
     return GDALPamDataset::IRasterIO( eRWFlag,
                                         nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize,
-                                        eBufType, 
+                                        eBufType,
                                         nBandCount, panBandMap,
                                         nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
@@ -2505,7 +2505,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
 CPLErr PDFRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, 
+                              GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GDALRasterIOExtraArg* psExtraArg)
 {
@@ -2539,7 +2539,7 @@ CPLErr PDFRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     return GDALPamRasterBand::IRasterIO( eRWFlag,
                                         nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize,
-                                        eBufType, 
+                                        eBufType,
                                         nPixelSpace, nLineSpace, psExtraArg );
 }
 #endif
@@ -3161,8 +3161,8 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                             if( *pszContentToParse == 13 || *pszContentToParse == 10 ||
                                 *pszContentToParse == ' ' ||
                                 (*pszContentToParse >= '0' && *pszContentToParse <= '9') ||
-                                *pszContentToParse == '.' || 
-                                *pszContentToParse == '-' || 
+                                *pszContentToParse == '.' ||
+                                *pszContentToParse == '-' ||
                                 *pszContentToParse == 'l' ||
                                 *pszContentToParse == 'm' ||
                                 *pszContentToParse == 'n' ||
@@ -3711,7 +3711,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         for(i=0;i<nLength;i++)
         {
             GDALPDFObject* poOCG = poOCGsArray->Get(i);
-            oMapOCGNumGenToVisibilityStatePdfium[ std::pair<int,int>(poOCG->GetRefNum(), poOCG->GetRefGen()) ] = 
+            oMapOCGNumGenToVisibilityStatePdfium[ std::pair<int,int>(poOCG->GetRefNum(), poOCG->GetRefGen()) ] =
                 (bAll) ? VISIBILITY_ON : VISIBILITY_OFF;
         }
 

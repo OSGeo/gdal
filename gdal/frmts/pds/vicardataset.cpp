@@ -445,7 +445,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRS.SetBonne ( first_std_parallel, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "GNOMONIC" )) {
         oSRS.SetGnomonic ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) { 
+    } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) {
         // hope Swiss Oblique Cylindrical is the same
         oSRS.SetSOC ( center_lat, center_lon, 0, 0 );
     } else {
@@ -485,31 +485,31 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             if (bIsGeographic) {
                 //Geograpraphic, so set an ellipse
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, iflattening, 
+                                semi_major, iflattening,
                                 "Reference_Meridian", 0.0 );
             } else {
                 //Geocentric, so force a sphere using the semi-minor axis. I hope...
                 sphere_name += "_polarRadius";
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_minor, 0.0, 
+                                semi_minor, 0.0,
                                 "Reference_Meridian", 0.0 );
             }
         }
-        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) || 
-                  (EQUAL( map_proj_name, "EQUIDISTANT" )) || 
-                  (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) || 
-                  (EQUAL( map_proj_name, "STEREOGRAPHIC" )) || 
+        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
+                  (EQUAL( map_proj_name, "EQUIDISTANT" )) ||
+                  (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) ||
+                  (EQUAL( map_proj_name, "STEREOGRAPHIC" )) ||
                   (EQUAL( map_proj_name, "SINUSOIDAL" )) ) {
             //isis uses the spherical equation for these projections so force a sphere
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                            semi_major, 0.0, 
+                            semi_major, 0.0,
                             "Reference_Meridian", 0.0 );
         }
         else if (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) {
             //isis uses local radius as a sphere, which is pre-calculated in the PDS label as the semi-major
             sphere_name += "_localRadius";
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                            semi_major, 0.0, 
+                            semi_major, 0.0,
                             "Reference_Meridian", 0.0 );
         }
         else
@@ -653,7 +653,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                         "M94_ORBIT.IMAGE_TIME",
                         "FILE.EVENT_TYPE",
                         "FILE.PROCESSING_LEVEL_ID",
-                        "M94_INSTRUMENT.DETECTOR_ID", 
+                        "M94_INSTRUMENT.DETECTOR_ID",
                         "M94_CAMERAS.EXPOSURE_DURATION",
                         "HRCONVER.INSTRUMENT_TEMPERATURE", NULL
                     };
@@ -690,7 +690,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "MARS_EXPRESS" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
         static const char * const apszKeywords[] = {
-            "DTM.DTM_MISSING_DN", "DTM.DTM_OFFSET", "DTM.DTM_SCALING_FACTOR", "DTM.DTM_A_AXIS_RADIUS", 
+            "DTM.DTM_MISSING_DN", "DTM.DTM_OFFSET", "DTM.DTM_SCALING_FACTOR", "DTM.DTM_A_AXIS_RADIUS",
             "DTM.DTM_B_AXIS_RADIUS", "DTM.DTM_C_AXIS_RADIUS", "DTM.DTM_DESC", "DTM.DTM_MINIMUM_DN",
             "DTM.DTM_MAXIMUM_DN", NULL };
         for( int i = 0; apszKeywords[i] != NULL; i++ ) {
@@ -731,7 +731,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
         static const char * const apszKeywords[] = {
-            "DTM_MISSING_DN", "DTM_OFFSET", "DTM_SCALING_FACTOR", "DTM_A_AXIS_RADIUS", 
+            "DTM_MISSING_DN", "DTM_OFFSET", "DTM_SCALING_FACTOR", "DTM_A_AXIS_RADIUS",
             "DTM_B_AXIS_RADIUS", "DTM_C_AXIS_RADIUS", "DTM_MINIMUM_DN",
             "DTM_MAXIMUM_DN", "MAP_PROJECTION_TYPE", "COORDINATE_SYSTEM_NAME",
             "POSITIVE_LONGITUDE_DIRECTION", "MAP_SCALE",
@@ -771,7 +771,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *VICARDataset::GetKeyword( const char *pszPath, 
+const char *VICARDataset::GetKeyword( const char *pszPath,
                                       const char *pszDefault )
 
 {

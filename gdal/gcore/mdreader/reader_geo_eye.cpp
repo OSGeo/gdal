@@ -35,7 +35,7 @@ CPL_CVSID("$Id$");
 /**
  * GDALMDReaderGeoEye()
  */
-GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath, 
+GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
         char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
 
@@ -107,7 +107,7 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
 
 /**
  * ~GDALMDReaderGeoEye()
- */ 
+ */
 GDALMDReaderGeoEye::~GDALMDReaderGeoEye()
 {
 }
@@ -146,7 +146,7 @@ char** GDALMDReaderGeoEye::GetMetadataFiles() const
 void GDALMDReaderGeoEye::LoadMetadata()
 {
     if(m_bIsMetadataLoad)
-        return;        
+        return;
 
     if (!m_osIMDSourceFilename.empty())
     {
@@ -160,7 +160,7 @@ void GDALMDReaderGeoEye::LoadMetadata()
 
     m_papszDEFAULTMD = CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "GE");
 
-    m_bIsMetadataLoad = true;      
+    m_bIsMetadataLoad = true;
 
     if(NULL == m_papszIMDMD)
     {
@@ -194,7 +194,7 @@ void GDALMDReaderGeoEye::LoadMetadata()
         time_t timeMid = GetAcquisitionTimeFromString(pszDateTime);
 
         strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, 
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }
 }
@@ -239,7 +239,7 @@ time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
  * LoadWKTIMDFile()
  */
 char** GDALMDReaderGeoEye::LoadIMDWktFile() const
-{	
+{
     char** papszResultList = NULL;
     char** papszLines = CSLLoad( m_osIMDSourceFilename );
     bool bBeginSection = false;

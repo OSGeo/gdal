@@ -34,7 +34,7 @@
 
 static int GNMFileDriverIdentify( GDALOpenInfo* poOpenInfo )
 
-{    
+{
     if( !poOpenInfo->bIsDirectory )
         return FALSE;
     if( (poOpenInfo->nOpenFlags & GDAL_OF_GNM) == 0 )

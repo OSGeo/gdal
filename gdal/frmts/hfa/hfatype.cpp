@@ -193,7 +193,7 @@ void HFAType::Dump( FILE * fp )
 /*                            SetInstValue()                            */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 HFAType::SetInstValue( const char * pszFieldPath,
                        GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                        char chReqType, void *pValue )

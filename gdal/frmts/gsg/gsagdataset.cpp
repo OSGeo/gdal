@@ -378,15 +378,15 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             bool bOnlySign = false;
 	    if ( (*szStart == '-' || *szStart == '+') && *(szStart+1) == '\0' )
 	    {
-	    	if( VSIFSeekL( poGDS->fp, 
-                               VSIFTellL( poGDS->fp)-1, 
+	    	if( VSIFSeekL( poGDS->fp,
+                               VSIFTellL( poGDS->fp)-1,
                                SEEK_SET ) != 0 )
 	    	{
 		    VSIFree( szLineBuf );
 		    CPLError( CE_Failure, CPLE_FileIO,
 			      "Unable to seek in grid row %d "
 			      "(offset %ld, seek %d).\n",
-			      nBlockYOff, 
+			      nBlockYOff,
                               (long) VSIFTellL(poGDS->fp),
 			      -1 );
 
@@ -419,8 +419,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    {
 		CPLError( CE_Warning, CPLE_FileIO,
 			  "Unexpected ASCII null-character in grid row %d at "
-			  "offset %ld.\n", 
-                          nBlockYOff, 
+			  "offset %ld.\n",
+                          nBlockYOff,
                           (long) (szStart - szLineBuf) );
 
 		while( *szStart == '\0' &&
@@ -464,8 +464,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    {
 		CPLError( CE_Warning, CPLE_FileIO,
 			  "Unexpected ASCII null-character in grid row %d at "
-			  "offset %ld.\n", 
-                          nBlockYOff, 
+			  "offset %ld.\n",
+                          nBlockYOff,
                           (long) (szStart - szLineBuf) );
 
 		while( *szEnd == '\0' &&
@@ -481,7 +481,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		VSIFree( szLineBuf );
 		CPLError( CE_Failure, CPLE_FileIO,
 			  "Unable to seek in grid row %d (offset %ld, seek %d)"
-			  ".\n", nBlockYOff, 
+			  ".\n", nBlockYOff,
                           (long) VSIFTellL(poGDS->fp),
 			  (int) (szStart - szEnd) );
 
@@ -534,7 +534,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	nMaxLineSize = nCharsExamined + 1;
 
     if( nBlockYOff > 0 )
-        panLineOffset[nBlockYOff - 1] = 
+        panLineOffset[nBlockYOff - 1] =
             panLineOffset[nBlockYOff] + nCharsExamined;
 
     nLastReadLine = nBlockYOff;
@@ -852,8 +852,8 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "VSIFOpenL(%s) failed unexpectedly.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "VSIFOpenL(%s) failed unexpectedly.",
                   poOpenInfo->pszFilename );
 	delete poDS;
         return NULL;
@@ -1323,7 +1323,7 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
 
         if( VSIFEofL( fp ) )
             bEOF = true;
-        else 
+        else
             bEOF = false;
 
 	if( nRead == 0 && !bEOF )
@@ -1506,7 +1506,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GSAG driver does not support source dataset with zero band.\n");
         return NULL;
     }

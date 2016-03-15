@@ -2,22 +2,22 @@
  * $Id: jpipkakdataset.cpp 2008-10-01 nbarker $
  *
  * Project:  jpip read driver
- * Purpose:  GDAL bindings for JPIP.  
+ * Purpose:  GDAL bindings for JPIP.
  * Author:   Norman Barker, ITT VIS, norman.barker@gmail.com
  *
  ******************************************************************************
  * ITT Visual Information Systems grants you use of this code, under the following license:
- * 
- * Copyright (c) 2000-2007, ITT Visual Information Solutions 
+ *
+ * Copyright (c) 2000-2007, ITT Visual Information Solutions
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions: 
+ * Software is furnished to do so, subject to the following conditions:
  * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software. 
+ * in all copies or substantial portions of the Software.
 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -155,7 +155,7 @@ public:
 
     // progressive methods
     virtual GDALAsyncReader* BeginAsyncReader(int xOff, int yOff,
-                                              int xSize, int ySize, 
+                                              int xSize, int ySize,
                                               void *pBuf,
                                               int bufXSize, int bufYSize,
                                               GDALDataType bufType,
@@ -172,7 +172,7 @@ public:
     int ReadFromInput(GByte* pabyData, int nLen, int& bError );
 
     int TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                        int nBufXSize, int nBufYSize, GDALDataType eDataType, 
+                        int nBufXSize, int nBufYSize, GDALDataType eDataType,
                         int nBandCount, int *panBandList );
 
     //gdaldataset methods
@@ -184,7 +184,7 @@ public:
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, 
+                              GDALDataType eBufType,
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
@@ -198,7 +198,7 @@ public:
     static const GByte PRECINCT_DATA_BIN_CLASS = 0;
     static const GByte TILE_HEADER_DATA_BIN_CLASS = 2;
     static const GByte TILE_DATA_BIN_CLASS = 4;
-	
+
     friend class JPIPKAKAsyncReader;
     friend class JPIPKAKRasterBand;
     friend void JPIPWorkerFunc(void*);
@@ -216,9 +216,9 @@ class JPIPKAKRasterBand : public GDALPamRasterBand
 
     JPIPKAKDataset *poBaseDS;
 
-    int         nDiscardLevels; 
+    int         nDiscardLevels;
 
-    kdu_dims 	band_dims; 
+    kdu_dims 	band_dims;
 
     int		nOverviewCount;
     JPIPKAKRasterBand **papoOverviewBand;
