@@ -215,18 +215,18 @@ void CPLErrorReset();
 %inline %{
 retStringAndCPLFree* EscapeString(int len, unsigned char *bin_string , int scheme) {
     return CPLEscapeString((const char*)bin_string, len, scheme);
-} 
+}
 
 retStringAndCPLFree* EscapeString(const char* str, int scheme) {
     return CPLEscapeString(str, (str) ? strlen(str) : 0, scheme);
-} 
+}
 %}
 %clear (int len, unsigned char *bin_string);
 #elif defined(SWIGCSHARP)
 %inline %{
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
     return CPLEscapeString((const char*)bin_string, len, scheme);
-} 
+}
 %}
 
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
@@ -237,7 +237,7 @@ retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_S
 %inline %{
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
-} 
+}
 %}
 %clear (int len, char *bin_string);
 #else
@@ -245,7 +245,7 @@ retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_S
 %inline %{
 char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
-} 
+}
 %}
 %clear (int len, char *bin_string);
 #endif
@@ -401,11 +401,11 @@ VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
 %clear (const char* pszOld);
 %clear (const char* pszNew);
 
-/* Added for GDAL 1.8 
+/* Added for GDAL 1.8
 
    We do not bother renaming the VSI*L api as this wrapping is not
-   considered "official", or available for use by application code. 
-   It is just for some testing stuff. 
+   considered "official", or available for use by application code.
+   It is just for some testing stuff.
 */
 
 #if !defined(SWIGJAVA)

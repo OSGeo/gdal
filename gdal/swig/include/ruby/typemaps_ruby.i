@@ -60,7 +60,7 @@
 
 /* !NOTE! - The Ruby bindings require SWIG-1.3.26 or above.  Earlier versions
    do not work because they did not include support for the WWIGTYPE *DISOWN
-	typemap which is crucial for supporting the AddGeometryDirectly and 
+	typemap which is crucial for supporting the AddGeometryDirectly and
 	SetGeometryDirectly methods.
 
 	These typemaps  were ported from typemaps_python.i.  For more information
@@ -89,14 +89,14 @@
 %typemap(argout) (double *val, int *hasval) {
   /* %typemap(argout) (double *val, int *hasval) */
 	VALUE argOut;
-	
+
   if ( !*$2 ) {
     argOut = Qnil;
   }
   else {
     argOut = rb_float_new(*$1);
   }
-  
+
   $result = SWIG_AppendOutput($result, argOut);
 }
 
@@ -149,7 +149,7 @@
 
   /* Get the length */
   int seq_size = RARRAY_LEN($input);
-  
+
   if ( seq_size != $dim0 ) {
     rb_raise(rb_eRangeError, "sequence must have length %i.", seq_size);
   }
@@ -157,11 +157,11 @@
   for( int i = 0; i<$dim0; i++ ) {
     /* Get the Ruby Object */
     VALUE item = rb_ary_entry($input,i);
-    
+
     /* Convert to double and store in array*/
     temp[i] = NUM2DBL(item);
   }
-  
+
   /* Set argument $1 equal to the temp array */
 	$1 = temp;
 }
@@ -183,9 +183,9 @@
     VALUE value = rb_float_new(($1)[i]);
     rb_ary_push(outArr, value);
   }
-  
+
   /* Add the output to the result */
-  $result = SWIG_AppendOutput($result, outArr);	
+  $result = SWIG_AppendOutput($result, outArr);
 }
 
 %typemap(in,numinputs=0) (double *argout[ANY]) (double *argout)
@@ -206,9 +206,9 @@
     VALUE value = rb_float_new((*$1)[i]);
     rb_ary_push(outArr, value);
   }
-  
+
   /* Add the output to the result */
-  $result = SWIG_AppendOutput($result, outArr);	
+  $result = SWIG_AppendOutput($result, outArr);
 }
 
 %typemap(freearg) (double *argout[ANY])
@@ -227,10 +227,10 @@
 
   /* Get the length */
   $1 = RARRAY_LEN($input);
-  
+
   /* Allocate space for the C array. */
   $2 = (int*) malloc($1*sizeof(int));
-  
+
   for( int i = 0; i<$1; i++ ) {
     /* Get the Ruby Object */
     VALUE item = rb_ary_entry($input,i);
@@ -303,8 +303,8 @@
                                 (*$2)[i].dfGCPLine,
                                 (*$2)[i].pszInfo,
                                 (*$2)[i].pszId );
-	
-	 rb_ary_store($result, i, 
+
+	 rb_ary_store($result, i,
 					  SWIG_NewPointerObj((void*)o, SWIGTYPE_p_GDAL_GCP,1));
   }*/
 }
@@ -383,24 +383,24 @@
   /* %typemap(in) char **dict */
 
   $1 = NULL;
-  
+
   /* is the provided object an array or a hash? */
   if ( TYPE($input) == T_ARRAY) {
     /* get the size of the array */
     int size = RARRAY_LEN($input);
-    
+
     for (int i = 0; i < size; i++) {
       /* get the ruby object */
       VALUE value = rb_ary_entry($input, i);
-      
-      /* Convert the value to a string via ruby duck typing 
+
+      /* Convert the value to a string via ruby duck typing
        * (i.e., the object might not actually be a string)
        */
       char *pszItem = StringValuePtr(value);
       $1 = CSLAddString( $1, pszItem );
     }
   }
-  
+
   else if ( TYPE($input) == T_HASH) {
     /* This is a hash - get the size by calling via the ruby method */
     int size = NUM2INT(rb_funcall($input, rb_intern("size"), 0, NULL));
@@ -413,13 +413,13 @@
       	/* Get the key and value as ruby objects */
         VALUE key = rb_ary_entry(keys_arr, i);
         VALUE value = rb_hash_aref($input, key);
-		
-        /* Convert the key and value to strings via ruby duck typing 
+
+        /* Convert the key and value to strings via ruby duck typing
          * (i.e., the objects might not actually be strings)
          */
        char *nm = StringValuePtr(key);
        char *val = StringValuePtr(value);
-		
+
        /* Add the value */
        $1 = CSLAddNameValue( $1, nm, val );
       }
@@ -555,7 +555,7 @@
   else {
     outArg = Qnil;
   }
-  
+
   $result = SWIG_AppendOutput($result, outArg);
 }
 
@@ -670,7 +670,7 @@
 %apply char* {tostring argin}
 %apply int* {int* optional_int};
 
-%typemap(in) GDALDataType, CPLErr, GDALPaletteInterp, GDALAccess, 
+%typemap(in) GDALDataType, CPLErr, GDALPaletteInterp, GDALAccess,
 	GDALResampleAlg, GDALColorInterp, OGRwkbGeometryType, OGRFieldType,
 	OGRJustification, OGRwkbByteOrder
 {
@@ -703,17 +703,17 @@
 /* -----------  GByte --------------- */
 /* Tread byte arrays as char arrays */
 
-%typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (int nBytes, const GByte *pabyData) 
+%typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (int nBytes, const GByte *pabyData)
   (int res, GByte *buf = 0, size_t size = 0, int alloc = 0)  {
 
 	/*%typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (int nBytes, const GByte *pabyData) */
-  
+
   res = SWIG_AsCharPtrAndSize($input, (char**)&buf, &size, &alloc);
   if (!SWIG_IsOK(res)) {
     %argument_fail(res, "(GByte*, int)", $symname, $argnum);
   }
-  $1 = ($1_ltype) size - 1;				       
-  $2 = ($2_ltype) buf;					       
+  $1 = ($1_ltype) size - 1;
+  $2 = ($2_ltype) buf;
 }
 
 %typemap(freearg) (int nBytes, const GByte *pabyData) {
@@ -724,7 +724,7 @@
 
 %typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (const char *pszHex, int *pnBytes)
   (int res, char *buf = 0, int size = 0, int alloc = 0)  {
-	
+
 	/*% typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (const char *pszHex, int *pnBytes) */
   $2 = &size;
   res = SWIG_AsCharPtr($input, &buf, &alloc);
@@ -732,9 +732,9 @@
     %argument_fail(res,"$type",$symname, $argnum);
   }
   $1 = buf;
-}    
+}
 
-  
+
 %typemap(argout) (const char *pszHex, int *pnBytes) {
 	/* %typemap(argout) (const char *pszHex, int *pnBytes) */
   $result = SWIG_FromCharPtrAndSize((char*)result, (size_t)*$2);
@@ -743,6 +743,6 @@
 
 %typemap(out) GByte*  {
 	/* %typemap(out) GByte* */
-	
+
 	/* Stops insertion of default type map. */
 }

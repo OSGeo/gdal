@@ -216,7 +216,7 @@ typedef unsigned long      GUIntBig;
  *
  *    The function assumes that vector points to three consecutive doubles.
  *    This can be wrapped using:
- * 
+ *
  *    %apply (double_3 argin) { (double *vector) };
  *    FunctionOfDouble3( double *vector );
  *    %clear (double *vector);
@@ -239,7 +239,7 @@ typedef unsigned long      GUIntBig;
  *    %apply (double_17 *argoug) { (double **vector) };
  *    ReturnVector17( double **vector );
  *    %clear ( double **vector );
- *   
+ *
  *    Example:  SpatialReference.ExportToPCI().
  *
  */
@@ -339,7 +339,7 @@ typedef unsigned long      GUIntBig;
     /* %typemap(check) (int len, int *output) */
     if ($1 < 1) $1 = 1; /* stop idiocy */
     $2 = (int *)CPLMalloc( $1 * sizeof(int) );
-    
+
 }
 %typemap(argout,fragment="CreateArrayFromIntArray") (int len, int *output)
 {
@@ -373,7 +373,7 @@ typedef unsigned long      GUIntBig;
     /* %typemap(check) (int len, GUIntBig *output) */
     if ($1 < 1) $1 = 1; /* stop idiocy */
     $2 = (GUIntBig*)CPLMalloc( $1 * sizeof(GUIntBig) );
-    
+
 }
 %typemap(argout,fragment="CreateArrayFromGUIntBigArray") (int len, GUIntBig *output)
 {
@@ -442,7 +442,7 @@ typedef unsigned long      GUIntBig;
     } else {
         $result = CreateArrayFromDoubleArray( $1, $dim0 );
         argvi++;
-    }  
+    }
 }
 
 %typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
@@ -657,7 +657,7 @@ typedef unsigned long      GUIntBig;
  ***************************************************/
 
 %typemap(out) (retStringAndCPLFree*)
-%{ 
+%{
     /* %typemap(out) (retStringAndCPLFree*) */
     if($1)
     {
@@ -791,7 +791,7 @@ typedef unsigned long      GUIntBig;
     AV *av;
     if (ok)
         av = (AV*)(SvRV($input));
-    else 
+    else
         do_confess(NEED_ARRAY_REF, 1);
     SV **sv = av_fetch(av, 0, 0);
     if (sv)
@@ -894,7 +894,7 @@ typedef unsigned long      GUIntBig;
             } else
                 do_confess(NEED_REF, 1);
         } else
-            do_confess(NEED_REF, 1);   
+            do_confess(NEED_REF, 1);
     }
 }
 %typemap(freearg) char **options
@@ -1053,7 +1053,7 @@ typedef unsigned long      GUIntBig;
         int      nChildCount = 0, iChild, nType;
         CPLXMLNode *psThisNode;
         char       *pszText = NULL;
-    
+
         nChildCount = av_len(av) - 1; /* There are two non-children in the array */
         if (nChildCount < 0) {
             /* the input XML is empty */
@@ -1066,7 +1066,7 @@ typedef unsigned long      GUIntBig;
         char *tmp = sv_to_utf8_string(sv, NULL);
         psThisNode = CPLCreateXMLNode(NULL, (CPLXMLNodeType)nType, tmp);
         free(tmp);
-    
+
         for( iChild = 0; iChild < nChildCount; iChild++ )
         {
             SV **s = av_fetch(av, iChild+2, 0);
@@ -1122,8 +1122,8 @@ typedef unsigned long      GUIntBig;
         int      nChildCount = 0, iChild;
         CPLXMLNode *psChild;
 
-        for( psChild = psTree->psChild; 
-             psChild != NULL; 
+        for( psChild = psTree->psChild;
+             psChild != NULL;
              psChild = psChild->psNext )
             nChildCount++;
 
@@ -1133,9 +1133,9 @@ typedef unsigned long      GUIntBig;
         SV *sv = newSVpv(psTree->pszValue, strlen(psTree->pszValue));
         SvUTF8_on(sv); /* expecting UTF-8 from GDAL */
         av_store(av,1,sv);
-    
-        for( psChild = psTree->psChild, iChild = 2; 
-             psChild != NULL; 
+
+        for( psChild = psTree->psChild, iChild = 2;
+             psChild != NULL;
              psChild = psChild->psNext, iChild++ )
         {
             SV *s = newRV((SV*)XMLTreeToAV(psChild));
@@ -1325,7 +1325,7 @@ IF_UNDEF_NULL(const char *, target_key)
     void *argp = 0;
     int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
     if (!SWIG_IsOK(res)) {
-        do_confess(WRONG_CLASS, 1); 
+        do_confess(WRONG_CLASS, 1);
     }
     $1 = reinterpret_cast< GDALDatasetShadow * >(argp);
     if ($1 == NULL)
@@ -1496,7 +1496,7 @@ IF_UNDEF_NULL(const char *, target_key)
         }
     } else
         do_confess(OUT_OF_MEMORY, 1);
-        
+
 }
 %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)
 {

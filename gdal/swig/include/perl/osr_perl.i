@@ -296,7 +296,7 @@ sub Set {
 sub GetUTMZone {
     my $self = shift;
     my $zone = _GetUTMZone($self);
-    if (wantarray) {            
+    if (wantarray) {
         my $north = 1;
         if ($zone < 0) {
             $zone *= -1;
