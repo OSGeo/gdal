@@ -4479,7 +4479,54 @@ def ogr_shape_97():
     return 'success'
 
 ###############################################################################
-#
+# Test restore function when .shx file is missing
+
+def ogr_shape_98():
+    
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    gdal.SetConfigOption('SHAPE_RESTORE_SHX', 'TRUE')
+    shutil.copy( 'data/can_caps.shp', 'tmp/can_caps.shp' )
+
+    shp_ds = ogr.Open( 'tmp/can_caps.shp', update = 1 )
+    shp_lyr = shp_ds.GetLayer(0)
+    
+    if shp_lyr.GetLayerDefn().GetFieldCount() != 0:
+        gdaltest.post_reason( 'Unexpectedly got attribute fields.' )
+        return 'fail'
+    
+    count = 0
+    while 1:
+        feat = shp_lyr.GetNextFeature()
+        if feat is None:
+            break
+    
+        # Re-write feature to test that we can use SetFeature() without
+        # a DBF
+        shp_lyr.SetFeature(feat)
+
+    count += 1
+
+    if count != 13:
+        gdaltest.post_reason( 'Got wrong number of features.' )
+        return 'fail'
+    
+    # Create new feature without a DBF
+    feat = ogr.Feature(shp_lyr.GetLayerDefn())
+    shp_lyr.CreateFeature(feat)
+    if feat.GetFID() != 13:
+        print(feat.GetFID())
+        gdaltest.post_reason( 'Got wrong FID.' )
+        return 'fail'
+
+    shp_lyr = None
+    shp_ds = None
+
+    os.remove( 'tmp/can_caps.shp' )
+    os.remove( 'tmp/can_caps.shx' )
+    
+    return 'success'
 
 def ogr_shape_cleanup():
 
@@ -4619,9 +4666,10 @@ gdaltest_list = [
     ogr_shape_95,
     ogr_shape_96,
     ogr_shape_97,
+    ogr_shape_98,
     ogr_shape_cleanup ]
 
-#gdaltest_list = [ ogr_shape_94 ]
+# gdaltest_list = [ ogr_shape_98 ]
 
 if __name__ == '__main__':
 
