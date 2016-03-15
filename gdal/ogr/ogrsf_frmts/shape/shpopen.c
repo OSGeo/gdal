@@ -35,7 +35,7 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
- * Revision 1.73 2016-03-15 13:16:37   sandyre
+ * Revision 1.74 2016-03-15 13:16:37   sandyre
  * added restore option when .shx file is missing
  * (modified SHPOpen(), added SHAPE_RESTORE_SHX config option) 
  * (gdal #5035)
