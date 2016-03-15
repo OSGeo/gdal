@@ -253,7 +253,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
     if (poGDS->nBands == 1)
     {
         unsigned char ** pTempData =
-            (unsigned char **) CPLMalloc(h * sizeof(unsigned char*));        
+            (unsigned char **) CPLMalloc(h * sizeof(unsigned char*));
         for(i=0;i<h;i++)
             pTempData[i] = ((GByte*)pImage) + i * nBlockXSize;
 
@@ -596,7 +596,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             //if (!bRegularTiling)
             //    CPLDebug("EPSILON", "not regular tiling!");
         }
-    } 
+    }
 
     return bRet;
 }
@@ -636,7 +636,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The EPSILON driver does not support update access to existing"
                   " files.\n" );
         return NULL;
@@ -667,7 +667,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     if (!poDS->bRegularTiling)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The EPSILON driver does not support reading "
                   "not regularly blocked files.\n" );
         delete poDS;
@@ -690,8 +690,8 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 /************************************************************************/
 
 static GDALDataset *
-EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                       CPL_UNUSED int bStrict, char ** papszOptions, 
+EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                       CPL_UNUSED int bStrict, char ** papszOptions,
                        GDALProgressFunc pfnProgress, void * pProgressData )
 {
     int nBands = poSrcDS->GetRasterCount();
@@ -720,7 +720,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError(CE_Failure, CPLE_NotSupported,
                 "Block size must be a power of 2 between 32 et 1024");
         return NULL;
-    }         
+    }
 
     const char* pszFilter =
         CSLFetchNameValueDef(papszOptions, "FILTER", "daub97lift");

@@ -82,7 +82,7 @@ VSI_IOInterface::Open( std::string filename, std::string access ) const
     VSILFILE *fp = VSIFOpenL( filename.c_str(), access.c_str() );
 
     if( fp == NULL )
-        ThrowPCIDSKException( "Failed to open %s: %s", 
+        ThrowPCIDSKException( "Failed to open %s: %s",
                               filename.c_str(), LastError() );
 
     return fp;
@@ -92,7 +92,7 @@ VSI_IOInterface::Open( std::string filename, std::string access ) const
 /*                                Seek()                                */
 /************************************************************************/
 
-uint64 
+uint64
 VSI_IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
 {
@@ -101,7 +101,7 @@ VSI_IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
     uint64 result = VSIFSeekL( fp, offset, whence );
 
     if( result == static_cast<uint64>( -1 ) )
-        ThrowPCIDSKException( "Seek(%d,%d): %s", 
+        ThrowPCIDSKException( "Seek(%d,%d): %s",
                               static_cast<int>( offset ), whence,
                               LastError() );
 
@@ -124,7 +124,7 @@ uint64 VSI_IOInterface::Tell( void *io_handle ) const
 /*                                Read()                                */
 /************************************************************************/
 
-uint64 VSI_IOInterface::Read( void *buffer, uint64 size, uint64 nmemb, 
+uint64 VSI_IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
                                void *io_handle ) const
 
 {
@@ -135,7 +135,7 @@ uint64 VSI_IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
     uint64 result = VSIFReadL( buffer, (size_t) size, (size_t) nmemb, fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Read(%d): %s", 
+        ThrowPCIDSKException( "Read(%d): %s",
                               static_cast<int>( size * nmemb ),
                               LastError() );
 
@@ -146,7 +146,7 @@ uint64 VSI_IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
 /*                               Write()                                */
 /************************************************************************/
 
-uint64 VSI_IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb, 
+uint64 VSI_IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
                                 void *io_handle ) const
 
 {
@@ -158,7 +158,7 @@ uint64 VSI_IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
                                 static_cast<size_t>( nmemb ), fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Write(%d): %s", 
+        ThrowPCIDSKException( "Write(%d): %s",
                               static_cast<int>( size * nmemb ),
                               LastError() );
 

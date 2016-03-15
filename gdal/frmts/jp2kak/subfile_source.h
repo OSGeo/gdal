@@ -45,7 +45,7 @@
 
 class subfile_source : public kdu_compressed_source {
 
-  public: 
+  public:
     subfile_source() { file = NULL; }
     ~subfile_source() { close(); }
 
@@ -93,14 +93,14 @@ class subfile_source : public kdu_compressed_source {
           {
               real_filename = fname;
               subfile_offset = 0;
-              subfile_size = 0; 
+              subfile_size = 0;
           }
 
           file = VSIFOpenL( real_filename, "r");
           if( file == NULL )
           {
               kdu_error e;
-              e << "Unable to open compressed data file, \"" << 
+              e << "Unable to open compressed data file, \"" <<
                   real_filename << "\"!";
               return;
           }
@@ -111,13 +111,13 @@ class subfile_source : public kdu_compressed_source {
               if( file == NULL )
               {
                   kdu_error e;
-                  e << "Unable to open compressed data file, \"" << 
+                  e << "Unable to open compressed data file, \"" <<
                       real_filename << "\"!";
                   return;
               }
           }
 
-          if( bSequential ) 
+          if( bSequential )
             capabilities = KDU_SOURCE_CAP_SEQUENTIAL;
           else
             capabilities = KDU_SOURCE_CAP_SEQUENTIAL | KDU_SOURCE_CAP_SEEKABLE;
@@ -128,7 +128,7 @@ class subfile_source : public kdu_compressed_source {
     int get_capabilities() { return capabilities; }
 
     bool seek(kdu_long offset)
-      { 
+      {
           assert(file != NULL);
           if( file == NULL )
               return false;
@@ -143,7 +143,7 @@ class subfile_source : public kdu_compressed_source {
       }
 
     kdu_long get_pos()
-      { 
+      {
         if (file == NULL) return -1;
         kdu_long result = VSIFTellL( file );
         result -= subfile_offset;
@@ -151,7 +151,7 @@ class subfile_source : public kdu_compressed_source {
       }
 
     int read(kdu_byte *buf, int num_bytes)
-      { 
+      {
         assert(file != NULL);
 
         num_bytes = static_cast<int>(VSIFReadL(buf,1,(size_t) num_bytes,file));

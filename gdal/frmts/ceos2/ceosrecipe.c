@@ -33,12 +33,12 @@ CPL_CVSID("$Id$");
 
 /* Array of Datatypes and their names/values */
 
-typedef struct { 
+typedef struct {
     const char *String;
     int Type;
 } CeosStringType_t;
 
-typedef struct { 
+typedef struct {
     int (*function)(CeosSARVolume_t *volume, const void *token);
     const void *token;
     const char *name;
@@ -364,7 +364,7 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
 		    break;
 		case CEOS_REC_IDS:
 		    DoExtractInt( ImageDesc->ImageDataStart );
-                    /* 
+                    /*
                     ** This is really reading the quantity of prefix data
                     ** per data record.  We want the offset from the very
                     ** beginning of the record to the data, so we add another
@@ -408,7 +408,6 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
 		    ImageDesc->DataType = GetCeosStringType( CeosDataType, temp_str );
 		    break;
 		}
-		
 	    }
 	}
     }
@@ -418,13 +417,13 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
      * bytes of pixel data if necessary.
      */
 
-    if( ImageDesc->PixelsPerLine == 0 
-        && ImageDesc->PixelDataBytesPerRecord != 0 
+    if( ImageDesc->PixelsPerLine == 0
+        && ImageDesc->PixelDataBytesPerRecord != 0
         && ImageDesc->BytesPerPixel != 0 )
     {
-        ImageDesc->PixelsPerLine = 
+        ImageDesc->PixelsPerLine =
             ImageDesc->PixelDataBytesPerRecord / ImageDesc->BytesPerPixel;
-        CPLDebug( "SAR_CEOS", "Guessing PixelPerLine to be %d\n", 
+        CPLDebug( "SAR_CEOS", "Guessing PixelPerLine to be %d\n",
                   ImageDesc->PixelsPerLine );
     }
 
@@ -443,27 +442,27 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
         TypeCode.UCharCode.Type = 0xed;
         TypeCode.UCharCode.Subtype2 = 0x12;
         TypeCode.UCharCode.Subtype3 = 0x12;
-        
-        img_rec = FindCeosRecord( volume->RecordList, TypeCode, 
+
+        img_rec = FindCeosRecord( volume->RecordList, TypeCode,
                                   CEOS_IMAGRY_OPT_FILE, -1, -1 );
         if( img_rec == NULL )
         {
-            CPLDebug( "SAR_CEOS", 
+            CPLDebug( "SAR_CEOS",
                       "Unable to find imagery rec to check record length." );
             return 0;
         }
 
         if( img_rec->Length != ImageDesc->BytesPerRecord )
         {
-            CPLDebug( "SAR_CEOS", 
+            CPLDebug( "SAR_CEOS",
                       "Guessed record length (%d) did not match\n"
-                      "actual imagery record length (%d), recipe fails.", 
+                      "actual imagery record length (%d), recipe fails.",
                       ImageDesc->BytesPerRecord, img_rec->Length );
             return 0;
         }
     }
-    
-    if( ImageDesc->PixelsPerRecord == 0 && 
+
+    if( ImageDesc->PixelsPerRecord == 0 &&
 	ImageDesc->BytesPerRecord != 0 && ImageDesc->BytesPerPixel != 0 )
     {
 	ImageDesc->PixelsPerRecord = ( ( ImageDesc->BytesPerRecord -
@@ -489,7 +488,7 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
     }
 
     /* Sanity checking */
-    
+
     if( ImageDesc->PixelsPerLine == 0 || ImageDesc->Lines == 0 ||
 	ImageDesc->RecordsPerLine == 0 || ImageDesc->ImageDataStart == 0 ||
 	ImageDesc->FileDescriptorLength == 0 || ImageDesc->DataType == 0 ||
@@ -498,7 +497,7 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
     {
 	return 0;
     } else {
-	
+
 	ImageDesc->ImageDescValid = TRUE;
 	return 1;
     }
@@ -517,7 +516,7 @@ int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
     }
 
     return 0;
-}    
+}
 
 static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
@@ -540,7 +539,7 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token )
     TypeCode.UCharCode.Subtype2 = 18;
     TypeCode.UCharCode.Subtype3 = 18;
 
-    record = FindCeosRecord( volume->RecordList, TypeCode, 
+    record = FindCeosRecord( volume->RecordList, TypeCode,
                              CEOS_IMAGRY_OPT_FILE, -1, -1 );
     if( record == NULL )
         return 0;
@@ -564,9 +563,9 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token )
 /*      Then fix up a few values.                                       */
 /* -------------------------------------------------------------------- */
     /* It seems the bytes of pixel data per record is just wrong.  Fix. */
-    ImageDesc->PixelDataBytesPerRecord = 
+    ImageDesc->PixelDataBytesPerRecord =
         ImageDesc->BytesPerPixel * ImageDesc->PixelsPerLine;
-    
+
     ImageDesc->DataType = CEOS_TYP_CCP_COMPLEX_FLOAT;
 
 /* -------------------------------------------------------------------- */
@@ -580,11 +579,11 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token )
     {
 	return 0;
     } else {
-	
+
 	ImageDesc->ImageDescValid = TRUE;
 	return 1;
     }
-}    
+}
 
 static int PALSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
@@ -607,7 +606,7 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
     TypeCode.UCharCode.Subtype2 = 18;
     TypeCode.UCharCode.Subtype3 = 18;
 
-    record = FindCeosRecord( volume->RecordList, TypeCode, 
+    record = FindCeosRecord( volume->RecordList, TypeCode,
                              CEOS_IMAGRY_OPT_FILE, -1, -1 );
     if( record == NULL )
         return 0;
@@ -648,11 +647,11 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
     {
 	return 0;
     } else {
-	
+
 	ImageDesc->ImageDescValid = TRUE;
 	return 1;
     }
-}    
+}
 
 void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 {
@@ -678,7 +677,7 @@ void GetCeosSARImageDesc( CeosSARVolume_t *volume )
             function = rec_data->function;
 	    if(( *function )( volume, rec_data->token ) )
             {
-                CPLDebug( "CEOS", "Using recipe '%s'.", 
+                CPLDebug( "CEOS", "Using recipe '%s'.",
                           rec_data->name );
 		return;
             }

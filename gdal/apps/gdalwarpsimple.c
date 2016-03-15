@@ -7,7 +7,7 @@
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
- * Copyright (c) 2002, i3 - information integration and imaging 
+ * Copyright (c) 2002, i3 - information integration and imaging
  *                          Fort Collin, CO
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -35,10 +35,10 @@
 
 CPL_CVSID("$Id$");
 
-static GDALDatasetH 
-GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
-                      const char *pszFormat, const char *pszSourceSRS, 
-                      const char *pszTargetSRS, int nOrder, 
+static GDALDatasetH
+GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
+                      const char *pszFormat, const char *pszSourceSRS,
+                      const char *pszTargetSRS, int nOrder,
                       char **papszCreateOptions );
 
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
@@ -52,7 +52,7 @@ static int             nForcePixels=0, nForceLines=0;
 static void Usage()
 
 {
-    printf( 
+    printf(
         "Usage: gdalwarpsimple [--version] [--formats]\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
@@ -71,7 +71,7 @@ char *SanitizeSRS( const char *pszUserInput )
     char *pszResult = NULL;
 
     CPLErrorReset();
-    
+
     hSRS = OSRNewSpatialReference( NULL );
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
         OSRExportToWkt( hSRS, &pszResult );
@@ -82,7 +82,7 @@ char *SanitizeSRS( const char *pszUserInput )
                   pszUserInput );
         exit( 1 );
     }
-    
+
     OSRDestroySpatialReference( hSRS );
 
     return pszResult;
@@ -127,7 +127,7 @@ int main( int argc, char ** argv )
             for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
-                
+
                 printf( "  %s: %s\n",
                         GDALGetDriverShortName( hDriver ),
                         GDALGetDriverLongName( hDriver ) );
@@ -139,7 +139,7 @@ int main( int argc, char ** argv )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
             bCreateOutput = TRUE;
-        }   
+        }
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
@@ -198,7 +198,7 @@ int main( int argc, char ** argv )
 /*      Open source dataset.                                            */
 /* -------------------------------------------------------------------- */
     hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
-    
+
     if( hSrcDS == NULL )
         exit( 2 );
 
@@ -213,12 +213,12 @@ int main( int argc, char ** argv )
 
     if( pszSourceSRS == NULL )
     {
-        if( GDALGetProjectionRef( hSrcDS ) != NULL 
+        if( GDALGetProjectionRef( hSrcDS ) != NULL
             && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
             pszSourceSRS = CPLStrdup(GDALGetProjectionRef( hSrcDS ));
 
         else if( GDALGetGCPProjection( hSrcDS ) != NULL
-                 && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
+                 && strlen(GDALGetGCPProjection(hSrcDS)) > 0
                  && GDALGetGCPCount( hSrcDS ) > 1 )
             pszSourceSRS = CPLStrdup(GDALGetGCPProjection( hSrcDS ));
         else
@@ -237,7 +237,7 @@ int main( int argc, char ** argv )
 
     if( hDstDS != NULL && bCreateOutput )
     {
-        fprintf( stderr, 
+        fprintf( stderr,
                  "Output dataset %s exists,\n"
                  "but some commandline options were provided indicating a new dataset\n"
                  "should be created.  Please delete existing dataset and run again.",
@@ -250,7 +250,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( hDstDS == NULL )
     {
-        hDstDS = GDALWarpCreateOutput( hSrcDS, pszDstFilename, pszFormat, 
+        hDstDS = GDALWarpCreateOutput( hSrcDS, pszDstFilename, pszFormat,
                                        pszSourceSRS, pszTargetSRS, nOrder,
                                        papszCreateOptions );
         papszWarpOptions = CSLSetNameValue( papszWarpOptions, "INIT", "0" );
@@ -265,9 +265,9 @@ int main( int argc, char ** argv )
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-    hTransformArg = hGenImgProjArg = 
-        GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
-                                         hDstDS, pszTargetSRS, 
+    hTransformArg = hGenImgProjArg =
+        GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS,
+                                         hDstDS, pszTargetSRS,
                                          TRUE, 1000.0, nOrder );
 
     if( hTransformArg == NULL )
@@ -281,8 +281,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( dfErrorThreshold != 0.0 )
     {
-        hTransformArg = hApproxArg = 
-            GDALCreateApproxTransformer( GDALGenImgProjTransform, 
+        hTransformArg = hApproxArg =
+            GDALCreateApproxTransformer( GDALGenImgProjTransform,
                                          hGenImgProjArg, dfErrorThreshold );
         pfnTransformer = GDALApproxTransform;
     }
@@ -290,7 +290,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Now actually invoke the warper to do the work.                  */
 /* -------------------------------------------------------------------- */
-    GDALSimpleImageWarp( hSrcDS, hDstDS, 0, NULL, 
+    GDALSimpleImageWarp( hSrcDS, hDstDS, 0, NULL,
                          pfnTransformer, hTransformArg,
                          GDALTermProgress, NULL, papszWarpOptions );
 
@@ -311,7 +311,7 @@ int main( int argc, char ** argv )
     GDALDumpOpenDatasets( stderr );
 
     GDALDestroyDriverManager();
-    
+
     exit( 0 );
 }
 
@@ -322,9 +322,9 @@ int main( int argc, char ** argv )
 /*      and the input file.                                             */
 /************************************************************************/
 
-static GDALDatasetH 
-GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
-                      const char *pszFormat, const char *pszSourceSRS, 
+static GDALDatasetH
+GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
+                      const char *pszFormat, const char *pszSourceSRS,
                       const char *pszTargetSRS, int nOrder,
                       char **papszCreateOptions )
 
@@ -340,12 +340,12 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
     hDriver = GDALGetDriverByName( pszFormat );
-    if( hDriver == NULL 
+    if( hDriver == NULL
         || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL )
     {
         int	iDr;
-        
-        printf( "Output driver `%s' not recognised or does not support\n", 
+
+        printf( "Output driver `%s' not recognised or does not support\n",
                 pszFormat );
         printf( "direct output file creation.  The following format drivers are configured\n"
                 "and support direct output:\n" );
@@ -369,9 +369,9 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-    hTransformArg = 
-        GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
-                                         NULL, pszTargetSRS, 
+    hTransformArg =
+        GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS,
+                                         NULL, pszTargetSRS,
                                          TRUE, 1000.0, nOrder );
 
     if( hTransformArg == NULL )
@@ -380,8 +380,8 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Get approximate output definition.                              */
 /* -------------------------------------------------------------------- */
-    if( GDALSuggestedWarpOutput( hSrcDS, 
-                                 GDALGenImgProjTransform, hTransformArg, 
+    if( GDALSuggestedWarpOutput( hSrcDS,
+                                 GDALGenImgProjTransform, hTransformArg,
                                  adfDstGeoTransform, &nPixels, &nLines )
         != CE_None )
         return NULL;
@@ -449,7 +449,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
     printf( "Creating output file is that %dP x %dL.\n", nPixels, nLines );
 
-    hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
+    hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines,
                          GDALGetRasterCount(hSrcDS),
                          GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1)),
                          papszCreateOptions );
@@ -472,4 +472,3 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 
     return hDstDS;
 }
-    

@@ -173,7 +173,7 @@ static void WKTMassageDatum( char ** ppszDatum )
         pszDatum[j] = '\0';
     else
         pszDatum[j+1] = '\0';
-    
+
 /* -------------------------------------------------------------------- */
 /*      Search for datum equivalences.  Specific massaged names get     */
 /*      mapped to OpenGIS specified names.                              */
@@ -197,11 +197,11 @@ static void OGCWKTSetProj( char * pszProjection,
                            size_t nProjectionSize,
                            char ** papszMethods,
                            const char * pszTransformName,
-                           const char * pszParm1, 
-                           const char * pszParm2, 
-                           const char * pszParm3, 
-                           const char * pszParm4, 
-                           const char * pszParm5, 
+                           const char * pszParm1,
+                           const char * pszParm2,
+                           const char * pszParm3,
+                           const char * pszParm4,
+                           const char * pszParm5,
                            const char * pszParm6,
                            const char * pszParm7 )
 
@@ -255,7 +255,7 @@ static void OGCWKTSetProj( char * pszProjection,
  *
  * For example, the following GXF definitions:
  * <pre>
- * #UNIT_LENGTH                        
+ * #UNIT_LENGTH
  * m,1
  * #MAP_PROJECTION
  * "NAD83 / UTM zone 19N"
@@ -319,13 +319,13 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
 
 #ifdef DBMALLOC
     malloc_chain_check(1);
-#endif    
-    
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Create the PROJCS.                                              */
 /* -------------------------------------------------------------------- */
     if( papszMethods == NULL
-        || papszMethods[0] == NULL 
+        || papszMethods[0] == NULL
         || EQUAL(papszMethods[0],"Geographic") )
     {
         /* do nothing */
@@ -343,7 +343,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        NULL,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Lambert Conic Conformal (2SP)") )
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -356,7 +356,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        SRS_PP_FALSE_NORTHING,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Lambert Conformal (2SP Belgium)") )
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -369,7 +369,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        SRS_PP_FALSE_NORTHING,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Mercator (1SP)"))
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -382,7 +382,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        NULL,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Mercator (2SP)"))
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -395,7 +395,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        NULL,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Laborde Oblique Mercator") )
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -436,7 +436,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        NULL,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Oblique Stereographic") )
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -449,7 +449,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        NULL,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Polar Stereographic") )
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -462,7 +462,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        NULL,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Swiss Oblique Cylindrical") )
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -475,7 +475,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                        NULL,
                        NULL );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Transverse Mercator") )
     {
         OGCWKTSetProj( szProjection, sizeof(szProjection), papszMethods,
@@ -544,7 +544,6 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
 
     CSLDestroy( papszMethods );
 
-    
 /* -------------------------------------------------------------------- */
 /*      Extract the linear Units specification.                         */
 /* -------------------------------------------------------------------- */
@@ -558,7 +557,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                  ",UNIT[\"%s\",%.15g]",
                  psGXF->pszUnitName, psGXF->dfUnitToMeter );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build GEOGCS.  There are still "issues" with the generation     */
 /*      of the GEOGCS/Datum and Spheroid names.  Of these, only the     */
@@ -567,10 +566,10 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
     if( CSLCount(psGXF->papszMapProjection) > 1 )
     {
         char	**papszTokens;
-        
+
         if( strlen(psGXF->papszMapProjection[1]) > 80 )
             return CPLStrdup("");
-        
+
         papszTokens = CSLTokenizeStringComplex(psGXF->papszMapProjection[1],
                                                ",", TRUE, TRUE );
 
@@ -593,7 +592,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
 
             pszOGCDatum = CPLStrdup(papszTokens[0]);
             WKTMassageDatum( &pszOGCDatum );
-            
+
             CPLsnprintf( szGCS,
                         sizeof(szGCS),
                      "GEOGCS[\"%s\","
@@ -612,15 +611,15 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                          sizeof(szGCS) - strlen(szGCS),
                      "PRIMEM[\"unnamed\",%s],",
                      papszTokens[3] );
-        
+
         CPLsnprintf( szGCS + strlen(szGCS),
                      sizeof(szGCS) - strlen(szGCS),
                      "%s",
                      "UNIT[\"degree\",0.0174532925199433]]" );
-        
+
         CSLDestroy( papszTokens );
     }
-    
+
     CPLAssert(strlen(szProjection) < sizeof(szProjection));
     CPLAssert(strlen(szGCS) < sizeof(szGCS));
 
@@ -644,7 +643,6 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                      psGXF->papszMapProjection[0],
                      szGCS,
                      szProjection );
-            
     }
     else
     {
@@ -653,4 +651,3 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
 
     return( CPLStrdup( szWKT ) );
 }
-

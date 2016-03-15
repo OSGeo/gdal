@@ -242,7 +242,7 @@ const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex )
 //                                                              INGR_GetFormat()
 // -----------------------------------------------------------------------------
 
-INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
+INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
                                         const char *pszCompression )
 {
     if( EQUAL( pszCompression, "None" ) ||
@@ -276,7 +276,7 @@ INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
 //                                                         INGR_GetTransMatrix()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne, 
+void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
                                       double *padfGeoTransform )
 {
     // -------------------------------------------------------------
@@ -292,7 +292,7 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
     {
         padfGeoTransform[0] = 0.0;
         padfGeoTransform[1] = 1.0;
-        padfGeoTransform[2] = 0.0; 
+        padfGeoTransform[2] = 0.0;
         padfGeoTransform[3] = 0.0;
         padfGeoTransform[4] = 0.0;
         padfGeoTransform[5] = 1.0;
@@ -316,30 +316,30 @@ void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne,
             }
             break;
         case UpperRightVertical:
-            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URV_Flip ); 
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URV_Flip );
             break;
         case LowerLeftVertical:
-            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LLV_Flip ); 
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LLV_Flip );
             break;
         case LowerRightVertical:
-            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LRV_Flip ); 
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LRV_Flip );
             break;
         case UpperLeftHorizontal:
-            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_ULH_Flip ); 
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_ULH_Flip );
             break;
         case UpperRightHorizontal:
-            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URH_Flip ); 
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URH_Flip );
             break;
         case LowerLeftHorizontal:
-            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LLH_Flip ); 
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LLH_Flip );
             break;
         case LowerRightHorizontal:
-            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LRH_Flip ); 
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LRH_Flip );
             break;
         default:
             padfGeoTransform[0] = 0.0;
             padfGeoTransform[1] = 1.0;
-            padfGeoTransform[2] = 0.0; 
+            padfGeoTransform[2] = 0.0;
             padfGeoTransform[3] = 0.0;
             padfGeoTransform[4] = 0.0;
             padfGeoTransform[5] = 1.0;
@@ -487,7 +487,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
 
     for( unsigned int i = 1; i < nTiles; i++ )
     {
-        INGR_TileItemDiskToMem( &((*pahTiles)[i]), 
+        INGR_TileItemDiskToMem( &((*pahTiles)[i]),
                                 &pabyBuf[ (i - 1) * SIZEOF_TILE] );
     }
 
@@ -896,7 +896,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
         }
 
         INGR_JPEGAppDataDiskToMem(&hJpegData, abyBuf);
-        
+
         if( hJpegData.RemainingLength == 0 ||
             hJpegData.RemainingLength > INT_MAX ||
             nNext > INT_MAX - hJpegData.RemainingLength )
@@ -939,7 +939,7 @@ INGR_Decode( INGR_Format eFormat, GByte *pabySrcData, GByte *pabyDstData,
 
       case RunLengthEncodedC:
         return INGR_DecodeRunLengthPaletted( pabySrcData,  pabyDstData,
-                                             nSrcBytes, nBlockSize, 
+                                             nSrcBytes, nBlockSize,
                                              pnBytesConsumed );
 
       default:
@@ -1016,7 +1016,7 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
 
 int CPL_STDCALL
 INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
-                              uint32 nSrcBytes, uint32 nBlockSize, 
+                              uint32 nSrcBytes, uint32 nBlockSize,
                               uint32 *pnBytesConsumed )
 {
     unsigned int nSrcShorts = nSrcBytes / 2;
@@ -1148,7 +1148,7 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
                 (CPL_LSBWORD16(pauiSrc[nWordsInScanline+1]) < 3) ||
                 ((CPL_LSBWORD16(pauiSrc[nWordsInScanline+1]) & 1) == 0) ||
                 (CPL_LSBWORD16(pauiSrc[nWordsInScanline+3]) != 0) ||
-                (((((unsigned int)CPL_LSBWORD16(pauiSrc[2])) + 1) & 0x0000FFFF) != 
+                (((((unsigned int)CPL_LSBWORD16(pauiSrc[2])) + 1) & 0x0000FFFF) !=
                    ((unsigned int)CPL_LSBWORD16(pauiSrc[nWordsInScanline+2]))))
             {
                 bHeader = false;
@@ -1216,9 +1216,9 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
 
         // Should never be pairs of consecutive empty spans,
         // except at end and start of two scanlines.
-        // We must adjust to start at the correct location in the 
+        // We must adjust to start at the correct location in the
         // next scanline, otherwise the colours will be inverted.
-        // iInput should be odd since scanline is 
+        // iInput should be odd since scanline is
         // supposed to start and end with OFF span.
         if ((iInput&1) == 0)
             iInput--;
@@ -1269,7 +1269,7 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
 
             if( nRun == 0 && previous == 0 ) // new line
             {
-                nValue = 0; 
+                nValue = 0;
             }
 
             for( unsigned short i = 0; i < nRun && iOutput < nBlockSize; i++ )
@@ -1357,45 +1357,45 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
     CPL_LSBPTR16(&pHeaderOne->DataTypeModifier);
     switch (INGR_GetDataType(pHeaderOne->DataTypeCode))
     {
-    case GDT_Byte:    
+    case GDT_Byte:
         pHeaderOne->Minimum.AsUint8 = *(uint8*)&(pHeaderOne->Minimum);
-        pHeaderOne->Maximum.AsUint8 = *(uint8*)&(pHeaderOne->Maximum); 
+        pHeaderOne->Maximum.AsUint8 = *(uint8*)&(pHeaderOne->Maximum);
         break;
-    case GDT_Int16:   
+    case GDT_Int16:
         pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); 
+        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum));
         break;
-    case GDT_UInt16:  
+    case GDT_UInt16:
         pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); 
+        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum));
         break;
-    case GDT_Int32:   
+    case GDT_Int32:
         pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); 
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum));
         break;
-    case GDT_UInt32:  
+    case GDT_UInt32:
         pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); 
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum));
         break;
         /* FIXME ? I'm not sure this is correct for floats */
-    case GDT_Float32: 
+    case GDT_Float32:
         pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); 
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum));
         break;
-    case GDT_Float64: 
-        CPL_LSBPTR64(&pHeaderOne->Minimum.AsReal64); CPL_LSBPTR64(&pHeaderOne->Maximum.AsReal64); 
+    case GDT_Float64:
+        CPL_LSBPTR64(&pHeaderOne->Minimum.AsReal64); CPL_LSBPTR64(&pHeaderOne->Maximum.AsReal64);
         break;
     default: break;
     }
 #endif
 
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
     // Convert WAX REAL*8 to IEEE double
-    // -------------------------------------------------------------------- 
+    // --------------------------------------------------------------------
 
     if( pHeaderOne->GridFileVersion == 1 ||
-      ( pHeaderOne->GridFileVersion == 2 && 
-        ( pHeaderOne->TransformationMatrix[10] != 1.0 && 
+      ( pHeaderOne->GridFileVersion == 2 &&
+        ( pHeaderOne->TransformationMatrix[10] != 1.0 &&
           pHeaderOne->TransformationMatrix[15] != 1.0 ) ) )
     {
         INGR_DGN2IEEEDouble( &pHeaderOne->XViewOrigin );
@@ -1524,21 +1524,21 @@ void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, const GBy
 {
     unsigned int n = 0;
 
-    BUF2STRC( pabyBuf, n, pHeaderTwo->Gain );                    
-    BUF2STRC( pabyBuf, n, pHeaderTwo->OffsetThreshold );         
-    BUF2STRC( pabyBuf, n, pHeaderTwo->View1 );                   
-    BUF2STRC( pabyBuf, n, pHeaderTwo->View2 );                   
-    BUF2STRC( pabyBuf, n, pHeaderTwo->ViewNumber );              
-    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved2 );               
-    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved3 );               
-    BUF2STRC( pabyBuf, n, pHeaderTwo->AspectRatio );             
-    BUF2STRC( pabyBuf, n, pHeaderTwo->CatenatedFilePointer );    
-    BUF2STRC( pabyBuf, n, pHeaderTwo->ColorTableType );          
-    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved8 );               
-    BUF2STRC( pabyBuf, n, pHeaderTwo->NumberOfCTEntries );       
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Gain );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->OffsetThreshold );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->View1 );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->View2 );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->ViewNumber );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved2 );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved3 );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->AspectRatio );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->CatenatedFilePointer );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->ColorTableType );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved8 );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->NumberOfCTEntries );
     BUF2STRC( pabyBuf, n, pHeaderTwo->ApplicationPacketPointer );
-    BUF2STRC( pabyBuf, n, pHeaderTwo->ApplicationPacketLength ); 
-    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved );           
+    BUF2STRC( pabyBuf, n, pHeaderTwo->ApplicationPacketLength );
+    BUF2STRC( pabyBuf, n, pHeaderTwo->Reserved );
 
 #if defined(CPL_MSB)
     CPL_LSBPTR64(&pHeaderTwo->AspectRatio);
@@ -1568,21 +1568,21 @@ void CPL_STDCALL INGR_HeaderTwoAMemToDisk(const INGR_HeaderTwoA* pHeaderTwo, GBy
     pLSBHeaderTwo = (INGR_HeaderTwoA* )pHeaderTwo;
 #endif
 
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Gain );                    
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->OffsetThreshold );         
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->View1 );                   
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->View2 );                   
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ViewNumber );              
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved2 );               
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved3 );               
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->AspectRatio );             
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->CatenatedFilePointer );    
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ColorTableType );          
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved8 );               
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->NumberOfCTEntries );       
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Gain );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->OffsetThreshold );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->View1 );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->View2 );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ViewNumber );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved2 );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved3 );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->AspectRatio );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->CatenatedFilePointer );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ColorTableType );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved8 );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->NumberOfCTEntries );
     STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ApplicationPacketPointer );
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ApplicationPacketLength ); 
-    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved );           
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->ApplicationPacketLength );
+    STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Reserved );
 
 #if defined(CPL_MSB)
     CPLFree(pLSBHeaderTwo);
@@ -1602,7 +1602,7 @@ void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader, const GB
     BUF2STRC( pabyBuf, n, pTileHeader->Properties );
     BUF2STRC( pabyBuf, n, pTileHeader->DataTypeCode );
     BUF2STRC( pabyBuf, n, pTileHeader->Reserved2 );
-    BUF2STRC( pabyBuf, n, pTileHeader->TileSize ); 
+    BUF2STRC( pabyBuf, n, pTileHeader->TileSize );
     BUF2STRC( pabyBuf, n, pTileHeader->Reserved3 );
     BUF2STRC( pabyBuf, n, pTileHeader->First.Start );
     BUF2STRC( pabyBuf, n, pTileHeader->First.Allocated );

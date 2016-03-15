@@ -264,7 +264,7 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         }
     //VIL2 (VIL products)
     //See point 3.3.41 at page 3.54 of the manual
-    } else if(poGDS->nDataTypeCode == 33){ 
+    } else if(poGDS->nDataTypeCode == 33){
         float fVal;
         for (i=0;i<nBlockXSize;i++){
             fVal = (float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength);
@@ -277,7 +277,7 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         }
     //HEIGHT (TOPS products)
     //See point 3.3.14 at page 3.46 of the manual
-    } else if(poGDS->nDataTypeCode == 32){ 
+    } else if(poGDS->nDataTypeCode == 32){
         unsigned char nVal;
         for (i=0;i<nBlockXSize;i++){
             nVal =  *(pszRecord+i*nDataLength) ;
@@ -287,7 +287,7 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 ((float *) pImage)[i] = -1.0f;
             else
                 ((float *) pImage)[i] = ((float) nVal - 1) / 10.0f;
-        }		
+        }
     //VEL (Velocity 1-Byte in PPI & others)
     //See point 3.3.37 at page 3.53 of the manual
     } else if(poGDS->nDataTypeCode == 3){
@@ -295,15 +295,15 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         for (i=0;i<nBlockXSize;i++){
             fVal = (float) *(pszRecord+i*nDataLength);
             if (fVal == 0.0f)
-                fVal = -9997.0f; 
+                fVal = -9997.0f;
             else if(fVal == 1.0f)
-                fVal = -9998.0f; 
+                fVal = -9998.0f;
             else if(fVal == 255.0f)
-                fVal = -9999.0f; 
+                fVal = -9999.0f;
             else
                 fVal = poGDS->fNyquistVelocity * (fVal - 128.0f)/127.0f;
-            ((float *) pImage)[i] = fVal;     
-        }       
+            ((float *) pImage)[i] = fVal;
+        }
     //SHEAR (1-Byte Shear)
     //See point 3.3.23 at page 3.39 of the manual
     } else if(poGDS->nDataTypeCode == 35){
@@ -322,7 +322,7 @@ CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     return CE_None;
-} 
+}
 
 /************************************************************************/
 /*                           SetNoDataValue()                           */
@@ -430,7 +430,7 @@ void IRISDataset::LoadProjection()
     float fCenterLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+108+320+12))) / 4294967295LL;
 
     float fProjRefLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+244+320+12))) / 4294967295LL;
-    float fProjRefLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+240+320+12))) / 4294967295LL; 
+    float fProjRefLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+240+320+12))) / 4294967295LL;
 
     float fRadarLocX, fRadarLocY, fScaleX, fScaleY;
 
@@ -448,10 +448,10 @@ void IRISDataset::LoadProjection()
         OGRSpatialReference oSRSLatLon;
 
         oSRSOut.SetGeogCS("unnamed ellipse",
-                        "unknown", 
-                        "unnamed", 
-                        fEquatorialRadius, fInvFlattening, 
-                        "Greenwich", 0.0, 
+                        "unknown",
+                        "unnamed",
+                        fEquatorialRadius, fInvFlattening,
+                        "Greenwich", 0.0,
                         "degree", 0.0174532925199433);
 
         oSRSOut.SetMercator(fProjRefLat,fProjRefLon,1,0,0);
@@ -460,10 +460,10 @@ void IRISDataset::LoadProjection()
         //The center coordinates are given in LatLon on the defined ellipsoid. Necessary to calculate geotransform.
 
         oSRSLatLon.SetGeogCS("unnamed ellipse",
-                        "unknown", 
-                        "unnamed", 
-                        fEquatorialRadius, fInvFlattening, 
-                        "Greenwich", 0.0, 
+                        "unknown",
+                        "unnamed",
+                        fEquatorialRadius, fInvFlattening,
+                        "Greenwich", 0.0,
                         "degree", 0.0174532925199433);
 
         poTransform = OGRCreateCoordinateTransformation( &oSRSLatLon,
@@ -498,10 +498,10 @@ void IRISDataset::LoadProjection()
     }else if(EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant")){
 
         oSRSOut.SetGeogCS("unnamed ellipse",
-                        "unknown", 
-                        "unnamed", 
-                        fEquatorialRadius, fInvFlattening, 
-                        "Greenwich", 0.0, 
+                        "unknown",
+                        "unnamed",
+                        fEquatorialRadius, fInvFlattening,
+                        "Greenwich", 0.0,
                         "degree", 0.0174532925199433);
         oSRSOut.SetAE(fProjRefLat,fProjRefLon,0,0);
         oSRSOut.exportToWkt(&pszSRS_WKT) ;
@@ -612,7 +612,7 @@ CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
 
 const char *IRISDataset::GetProjectionRef(){
     if (!bHasLoadedProjection)
-        LoadProjection(); 
+        LoadProjection();
     return pszSRS_WKT;
 }
 
@@ -669,7 +669,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The IRIS driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -834,8 +834,8 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     //Wave values
-    poDS->SetMetadataItem( "PRF",CPLString().Printf("%d Hz",CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12))); 
-    poDS->SetMetadataItem( "WAVELENGTH",CPLString().Printf("%4.2f cm",(float) CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)/100)); 
+    poDS->SetMetadataItem( "PRF",CPLString().Printf("%d Hz",CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12)));
+    poDS->SetMetadataItem( "WAVELENGTH",CPLString().Printf("%4.2f cm",(float) CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)/100));
     const unsigned short nPolarizationType = CPL_LSBUINT16PTR (poDS->abyHeader+172+320+12);
     float fNyquist = (CPL_LSBSINT32PTR(poDS->abyHeader+120+320+12))*((float) CPL_LSBSINT32PTR(poDS->abyHeader+148+320+12)/10000)/4; //See section 3.3.37 & 3.2.54
     if (nPolarizationType == 1)
@@ -845,7 +845,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     else if(nPolarizationType == 3)
         fNyquist = fNyquist * 4;
     poDS->fNyquistVelocity = fNyquist;
-    poDS->SetMetadataItem( "NYQUIST_VELOCITY",CPLString().Printf("%.2f m/s",fNyquist)); 
+    poDS->SetMetadataItem( "NYQUIST_VELOCITY",CPLString().Printf("%.2f m/s",fNyquist));
 
     // Product dependent metadata (stored in 80 bytes from 162 bytes
     // at the product header) See point 3.2.30 at page 3.19 of the

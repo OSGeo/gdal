@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 
 static unsigned char *ParseXPM( const char *pszInput,
                                 unsigned int nFileSize,
-                                int *pnXSize, int *pnYSize, 
+                                int *pnXSize, int *pnYSize,
                                 GDALColorTable **ppoRetTable );
 
 /************************************************************************/
@@ -98,7 +98,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The XPM driver does not support update access to existing"
                   " files." );
         return NULL;
@@ -130,7 +130,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL( pszFileContents, 1, nFileSize, fp ) != nFileSize)
     {
         CPLFree( pszFileContents );
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read all %d bytes from file %s.",
                   nFileSize, poOpenInfo->pszFilename );
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
@@ -211,19 +211,19 @@ XPMCreateCopy( const char * pszFilename,
     const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "XPM driver only supports one band images.\n" );
 
         return NULL;
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte
         && bStrict )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "XPM driver doesn't support data type %s. "
-                  "Only eight bit bands supported.\n", 
-                  GDALGetDataTypeName( 
+                  "Only eight bit bands supported.\n",
+                  GDALGetDataTypeName(
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         return NULL;
@@ -267,7 +267,7 @@ XPMCreateCopy( const char * pszFilename,
     GDALColorEntry asPixelColor[256];
     int nActiveColors = MIN(poCT->GetColorEntryCount(),256);
 
-    // Setup initial colortable and pixel value mapping. 
+    // Setup initial colortable and pixel value mapping.
     memset( anPixelMapping+0, 0, sizeof(int) * 256 );
     for( int i = 0; i < nActiveColors; i++ )
     {
@@ -284,18 +284,18 @@ XPMCreateCopy( const char * pszFilename,
         int iClose1 = -1;
         int iClose2 = -1;
 
-        // Find the closest pair of colors. 
+        // Find the closest pair of colors.
         for( int iColor1 = 0; iColor1 < nActiveColors; iColor1++ )
         {
             for( int iColor2 = iColor1+1; iColor2 < nActiveColors; iColor2++ )
             {
                 int nDistance;
 
-                if( asPixelColor[iColor1].c4 < 128 
+                if( asPixelColor[iColor1].c4 < 128
                     && asPixelColor[iColor2].c4 < 128 )
                     nDistance = 0;
                 else
-                    nDistance = 
+                    nDistance =
                         ABS(asPixelColor[iColor1].c1-asPixelColor[iColor2].c1)
                       + ABS(asPixelColor[iColor1].c2-asPixelColor[iColor2].c2)
                       + ABS(asPixelColor[iColor1].c3-asPixelColor[iColor2].c3);
@@ -317,7 +317,7 @@ XPMCreateCopy( const char * pszFilename,
             break;
 
         // Merge two selected colors - shift icolor2 into icolor1 and
-        // move the last active color into icolor2's slot. 
+        // move the last active color into icolor2's slot.
         for( int i = 0; i < 256; i++ )
         {
             if( anPixelMapping[i] == iClose2 )
@@ -336,8 +336,8 @@ XPMCreateCopy( const char * pszFilename,
     VSILFILE *fpPBM = VSIFOpenL( pszFilename, "wb+" );
     if( fpPBM == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create file `%s'.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to create file `%s'.",
                   pszFilename );
 
         return NULL;
@@ -347,7 +347,7 @@ XPMCreateCopy( const char * pszFilename,
 /*      Write the header lines.                                         */
 /* -------------------------------------------------------------------- */
     bool bOK = VSIFPrintfL( fpPBM, "/* XPM */\n" ) >= 0;
-    bOK &= VSIFPrintfL( fpPBM, "static char *%s[] = {\n", 
+    bOK &= VSIFPrintfL( fpPBM, "static char *%s[] = {\n",
              CPLGetBasename( pszFilename ) ) >= 0;
     bOK &= VSIFPrintfL( fpPBM, "/* width height num_colors chars_per_pixel */\n" ) >= 0;
 
@@ -367,11 +367,11 @@ XPMCreateCopy( const char * pszFilename,
         if( asPixelColor[i].c4 < 128 )
             bOK &= VSIFPrintfL( fpPBM, "\"%c c None\",\n", pszColorCodes[i] ) >= 0;
         else
-            bOK &= VSIFPrintfL( fpPBM, 
+            bOK &= VSIFPrintfL( fpPBM,
                      "\"%c c #%02x%02x%02x\",\n",
                      pszColorCodes[i],
-                     asPixelColor[i].c1, 
-                     asPixelColor[i].c2, 
+                     asPixelColor[i].c1,
+                     asPixelColor[i].c2,
                      asPixelColor[i].c3 ) >= 0;
     }
 
@@ -394,7 +394,7 @@ XPMCreateCopy( const char * pszFilename,
 
         bOK &= VSIFPutcL( '"', fpPBM ) >= 0;
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )
-            bOK &= VSIFPutcL( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]], 
+            bOK &= VSIFPutcL( pszColorCodes[anPixelMapping[pabyScanline[iPixel]]],
                    fpPBM) >= 0;
         bOK &= VSIFPrintfL( fpPBM, "\",\n" ) >= 0;
     }
@@ -458,7 +458,7 @@ void GDALRegister_XPM()
 static unsigned char *
 ParseXPM( const char *pszInput,
           unsigned int nFileSize,
-          int *pnXSize, int *pnYSize, 
+          int *pnXSize, int *pnYSize,
           GDALColorTable **ppoRetTable )
 
 {
@@ -484,7 +484,7 @@ ParseXPM( const char *pszInput,
 
     while( *pszNext != '\0' && *pszNext != '}' )
     {
-        // skip whole comment. 
+        // skip whole comment.
         if( STARTS_WITH_CI(pszNext, "/*") )
         {
             pszNext += 2;
@@ -532,7 +532,7 @@ ParseXPM( const char *pszInput,
 /* -------------------------------------------------------------------- */
     int nColorCount, nCharsPerPixel;
 
-    if( sscanf( papszXPMList[0], "%d %d %d %d", 
+    if( sscanf( papszXPMList[0], "%d %d %d %d",
                 pnXSize, pnYSize, &nColorCount, &nCharsPerPixel ) != 4 ||
         *pnXSize <= 0 || *pnYSize <= 0 || nColorCount <= 0 || nColorCount > 256 ||
         static_cast<GUIntBig>(*pnXSize) * static_cast<GUIntBig>(*pnYSize) > nFileSize )
@@ -565,8 +565,8 @@ ParseXPM( const char *pszInput,
     {
         if( papszXPMList[iColor+1] == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Missing color definition for %d in XPM header.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Missing color definition for %d in XPM header.",
                       iColor+1 );
             CSLDestroy( papszXPMList );
             return NULL;
@@ -576,8 +576,8 @@ ParseXPM( const char *pszInput,
 
         if( CSLCount(papszTokens) != 2 || !EQUAL(papszTokens[0],"c") )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Ill formed color definition (%s) in XPM header.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Ill formed color definition (%s) in XPM header.",
                       papszXPMList[iColor+1] );
             CSLDestroy( papszXPMList );
             CSLDestroy( papszTokens );
@@ -596,11 +596,11 @@ ParseXPM( const char *pszInput,
             sColor.c3 = 0;
             sColor.c4 = 0;
         }
-        else if( sscanf( papszTokens[1], "#%02x%02x%02x", 
+        else if( sscanf( papszTokens[1], "#%02x%02x%02x",
                          &nRed, &nGreen, &nBlue ) != 3 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Ill formed color definition (%s) in XPM header.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Ill formed color definition (%s) in XPM header.",
                       papszXPMList[iColor+1] );
             CSLDestroy( papszXPMList );
             CSLDestroy( papszTokens );
@@ -642,7 +642,7 @@ ParseXPM( const char *pszInput,
         {
             CPLFree( pabyImage );
             CSLDestroy( papszXPMList );
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Insufficient imagery lines in XPM image." );
             return NULL;
         }

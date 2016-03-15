@@ -705,7 +705,7 @@ void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime,
     GUInt32 lTemp;
 
     lTemp = ((piRecordHeader[2] >> 1) & 0x7F);
-    psTime->SetYear((lTemp > 77) ? 
+    psTime->SetYear((lTemp > 77) ?
         (lTemp + 1900) : (lTemp + 2000)); // Avoid `Year 2000' problem
     psTime->SetDay((GUInt32)(piRecordHeader[2] & 0x01) << 8
                    | (GUInt32)piRecordHeader[3]);
@@ -961,7 +961,7 @@ void L1BDataset::ProcessRecordHeaders()
 
     if( nGCPCount < nTargetLines * nGCPsPerLine )
     {
-        GDALDeinitGCPs( nTargetLines * nGCPsPerLine - nGCPCount, 
+        GDALDeinitGCPs( nTargetLines * nGCPsPerLine - nGCPCount,
                         pasGCPList + nGCPCount );
     }
 
@@ -1332,7 +1332,7 @@ static const GByte EBCDICToASCII[] =
 0x00, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x7E, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x7B, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x7D, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x5C, 0x00, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1425,7 +1425,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
             iDataFormat = UNPACKED8BIT;
         else if ( STARTS_WITH_CI((const char *)abyTBMHeader + L1B_NOAA9_HDR_WORD_OFF, "  ")
                   || abyTBMHeader[L1B_NOAA9_HDR_WORD_OFF] == '\0' )
-            /* Empty string can be found in the following samples : 
+            /* Empty string can be found in the following samples :
                 http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/franh.1b (10 bit)
                 http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/frang.1b (10 bit)
                 http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/calfilel.1b (16 bit)
@@ -3039,7 +3039,7 @@ L1BFileFormat L1BDataset::DetectFormat( const char* pszFilename,
          && *(pabyHeader + 8 + 61) == 'K' )
         return L1B_NOAA9;
 
-    // Finally try the AAPP formats 
+    // Finally try the AAPP formats
     if ( *(pabyHeader + 25) == '.'
          && *(pabyHeader + 30) == '.'
          && *(pabyHeader + 33) == '.'
@@ -3179,7 +3179,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The L1B driver does not support update access to existing"
                   " datasets.\n" );
         if( fp != NULL )
@@ -3443,7 +3443,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
                         poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[7] );
                     else
                         poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[6] );
-                else    
+                else
                     poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[2] );
                 i |= 0x04;
                 continue;

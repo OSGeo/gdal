@@ -230,9 +230,9 @@ public:
     virtual CPLErr AddFeatureGlobalFID(GNMGFID nFID, const char* pszLayerName);
 
     /**
-     * @brief Connects two features via third feature (may be virtual, so the 
-     *        identificator should be -1). The features may be at the same layer 
-     *        or different layers. 
+     * @brief Connects two features via third feature (may be virtual, so the
+     *        identificator should be -1). The features may be at the same layer
+     *        or different layers.
      * @param nSrcFID - source feature identificator
      * @param nTgtFID - target feature identificator
      * @param nConFID - connection feature identificator (-1 for virtual connection)
@@ -269,7 +269,7 @@ public:
     virtual CPLErr DisconnectFeaturesWithId(GNMGFID nFID);
 
     /**
-     * @brief Change connection attributes. Search the connection by source 
+     * @brief Change connection attributes. Search the connection by source
      *        feature identificator, target feature identificator and connection
      *        identificator.
      * @param nSrcFID - source feature identificator
@@ -367,7 +367,7 @@ public:
      * @param dfTolerance Snapping tolerance.
      * @return CE_None on success
      */
-    virtual CPLErr ConnectPointsByLines (char **papszLayerList, 
+    virtual CPLErr ConnectPointsByLines (char **papszLayerList,
                                          double dfTolerance,
                                          double dfCost,
                                          double dfInvCost,
@@ -429,12 +429,12 @@ protected:
                                   const std::vector<OGRLayer *> &paPointLayers,
                                   double dfTolerance, double dfCost,
                                   double dfInvCost, GNMDirection eDir);
-    virtual void ConnectPointsByLine(GIntBig nFID, 
-                                     const OGRLineString *poLineString, 
-                                     const std::vector<OGRLayer *> &paPointLayers, 
+    virtual void ConnectPointsByLine(GIntBig nFID,
+                                     const OGRLineString *poLineString,
+                                     const std::vector<OGRLayer *> &paPointLayers,
                                      double dfTolerance, double dfCost,
                                      double dfInvCost, GNMDirection eDir);
-    virtual GNMGFID FindNearestPoint(const OGRPoint* poPoint, 
+    virtual GNMGFID FindNearestPoint(const OGRPoint* poPoint,
                                      const std::vector<OGRLayer*>& paPointLayers,
                                      double dfTolerance);
     virtual OGRFeature* FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
@@ -446,7 +446,7 @@ protected:
                                  bool bReturnVertices, bool bReturnEdges);
 protected:
     int m_nVersion;
-    GNMGFID m_nGID;    
+    GNMGFID m_nGID;
     GNMGFID m_nVirtualConnectionGID;
     OGRLayer* m_poMetadataLayer;
     OGRLayer* m_poGraphLayer;

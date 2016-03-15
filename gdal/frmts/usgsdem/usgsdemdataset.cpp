@@ -47,7 +47,7 @@ typedef struct {
 static const int USGSDEM_NODATA = -32767;
 
 GDALDataset *USGSDEMCreateCopy( const char *, GDALDataset *, int, char **,
-                                GDALProgressFunc pfnProgress, 
+                                GDALProgressFunc pfnProgress,
                                 void * pProgressData );
 
 /************************************************************************/
@@ -266,11 +266,11 @@ class USGSDEMDataset : public GDALPamDataset
     GDALDataType eNaturalDataFormat;
 
     double      adfGeoTransform[6];
-    char        *pszProjection; 
+    char        *pszProjection;
 
     double      fVRes;
 
-    const char  *pszUnits; 
+    const char  *pszUnits;
 
     int         LoadFromFile( VSILFILE * );
 
@@ -772,12 +772,12 @@ int USGSDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
 
     if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     0")
         && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     1")
-        && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     2") 
+        && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     2")
         && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, "     3")
         && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+156, " -9999") )
         return FALSE;
 
-    if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+150, "     1") 
+    if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+150, "     1")
         && !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader+150, "     4"))
         return FALSE;
 
@@ -820,7 +820,7 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The USGSDEM driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;

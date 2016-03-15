@@ -53,11 +53,11 @@ int main( int nArgc, char ** papszArgv )
         exit( 1 );
     }
 
-    while( !VSIFEofL(fp) 
+    while( !VSIFEofL(fp)
            && (psRecord = CEOSReadRecord( fp )) != NULL )
     {
-        printf( "%9d:%4d:%8x:%d\n", 
-                nPosition, psRecord->nRecordNum, 
+        printf( "%9d:%4d:%8x:%d\n",
+                nPosition, psRecord->nRecordNum,
                 psRecord->nRecordType, psRecord->nLength );
         CEOSDestroyRecord( psRecord );
 

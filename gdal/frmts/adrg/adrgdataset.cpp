@@ -679,11 +679,11 @@ void ADRGDataset::AddSubDataset( const char* pszGENFileName, const char* pszIMGF
     osSubDatasetName += pszIMGFileName;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, osSubDatasetName);
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, osSubDatasetName);
 }
 
@@ -1001,7 +1001,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
 
     NFC = record->GetIntSubfield("SPR", 0, "NFC", 0);
     CPLDebug("ADRG", "NFC=%d", NFC);
-    
+
     if( NFL <= 0 || NFC <= 0 ||
         NFL > INT_MAX / 128 ||
         NFC > INT_MAX / 128 ||
@@ -1331,7 +1331,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
 
     DDFModule module;
     if (!module.Open(pszFileName, TRUE))
-        return NULL;    
+        return NULL;
 
     while (true)
     {
@@ -1526,7 +1526,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if( poOpenInfo->eAccess == GA_Update )
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                       "The ADRG driver does not support update access to existing"
                       " datasets.\n" );
             return NULL;
@@ -2255,12 +2255,12 @@ void GDALRegister_ADRG()
 
     poDriver->SetDescription( "ADRG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "ARC Digitized Raster Graphics" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_various.html#ADRG" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

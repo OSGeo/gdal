@@ -40,7 +40,7 @@
 
 CPL_CVSID("$Id$");
 
-static CPLString OSR_GDS( char **papszNV, const char * pszField, 
+static CPLString OSR_GDS( char **papszNV, const char * pszField,
                            const char *pszDefaultValue );
 
 
@@ -362,10 +362,10 @@ char **AIGDataset::GetFileList()
             || EQUAL(papszCoverFiles[i],"..") )
             continue;
 
-        papszFileList = 
-            CSLAddString( papszFileList, 
-                          CPLFormFilename( GetDescription(), 
-                                           papszCoverFiles[i], 
+        papszFileList =
+            CSLAddString( papszFileList,
+                          CPLFormFilename( GetDescription(),
+                                           papszCoverFiles[i],
                                            NULL ) );
     }
     CSLDestroy(papszCoverFiles);
@@ -440,7 +440,7 @@ void AIGDataset::ReadRAT()
     std::vector<AIGErrorDescription> aoErrors;
     CPLPushErrorHandlerEx(AIGErrorHandlerVATOpen, &aoErrors );
 
-    AVCBinFile *psFile = 
+    AVCBinFile *psFile =
         AVCBinReadOpen( osInfoPath, osTableName,
                         AVCCoverTypeUnknown, AVCFileTABLE, NULL );
     CPLPopErrorHandler();
@@ -514,19 +514,19 @@ void AIGDataset::ReadRAT()
 
               case AVC_FT_BININT:
                 if( psTableDef->pasFieldDef[iField].nSize == 4 )
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].nInt32 );
                 else
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].nInt16 );
                 break;
 
               case AVC_FT_BINFLOAT:
                 if( psTableDef->pasFieldDef[iField].nSize == 4 )
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].fFloat );
                 else
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].dDouble );
                 break;
             }
@@ -563,7 +563,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osCoverName;
 
     osCoverName = poOpenInfo->pszFilename;
-    if( osCoverName.size() > 4 
+    if( osCoverName.size() > 4
         && EQUAL(osCoverName.c_str()+osCoverName.size()-4,".adf") )
     {
         osCoverName = CPLGetDirname( poOpenInfo->pszFilename );
@@ -668,7 +668,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         AIGClose(psInfo);
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The AIG driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -750,9 +750,9 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
         {
-            // If geographic values are in seconds, we must transform. 
-            // Is there a code for minutes too? 
-            if( oSRS.IsGeographic() 
+            // If geographic values are in seconds, we must transform.
+            // Is there a code for minutes too?
+            if( oSRS.IsGeographic()
                 && EQUAL(OSR_GDS( poDS->papszPrj, "Units", ""), "DS") )
             {
                 psInfo->dfLLX /= 3600.0;
@@ -836,13 +836,13 @@ void AIGDataset::TranslateColorTable( const char *pszClrFilename )
             sEntry.c3 = (short) atoi(papszTokens[3]);
             sEntry.c4 = 255;
 
-            if( (nIndex < 0 || nIndex > 33000) 
+            if( (nIndex < 0 || nIndex > 33000)
                 || (sEntry.c1 < 0 || sEntry.c1 > 255)
                 || (sEntry.c2 < 0 || sEntry.c2 > 255)
                 || (sEntry.c3 < 0 || sEntry.c3 > 255) )
             {
                 CSLDestroy( papszTokens );
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Color table entry appears to be corrupt, skipping the rest. " );
                 break;
             }
@@ -860,7 +860,7 @@ void AIGDataset::TranslateColorTable( const char *pszClrFilename )
 /*                              OSR_GDS()                               */
 /************************************************************************/
 
-static CPLString OSR_GDS( char **papszNV, const char * pszField, 
+static CPLString OSR_GDS( char **papszNV, const char * pszField,
                            const char *pszDefaultValue )
 
 {
@@ -869,7 +869,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
 
     int iLine = 0;
     for( ;
-         papszNV[iLine] != NULL && 
+         papszNV[iLine] != NULL &&
              !EQUALN(papszNV[iLine],pszField,strlen(pszField));
          iLine++ ) {}
 
@@ -956,7 +956,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
     {
         if( VSIMkdir( osNewPath, 0777 ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to create directory %s:\n%s",
                       osNewPath.c_str(),
                       VSIStrerror(errno) );
@@ -1029,13 +1029,13 @@ static CPLErr AIGDelete( const char *pszDatasetname )
     for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         VSIStatBufL sStatBuf;
-        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0
             && VSI_ISREG( sStatBuf.st_mode ) )
         {
             if( VSIUnlink( papszFileList[i] ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Unable to delete '%s':\n%s", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to delete '%s':\n%s",
                           papszFileList[i], VSIStrerror( errno ) );
                 return CE_Failure;
             }
@@ -1048,7 +1048,7 @@ static CPLErr AIGDelete( const char *pszDatasetname )
     for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         VSIStatBufL sStatBuf;
-        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0
             && VSI_ISDIR( sStatBuf.st_mode ) )
         {
             if( CPLUnlinkTree( papszFileList[i] ) != 0 )

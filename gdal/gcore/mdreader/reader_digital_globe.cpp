@@ -35,14 +35,14 @@ CPL_CVSID("$Id$");
 /**
  * GDALMDReaderDigitalGlobe()
  */
-GDALMDReaderDigitalGlobe::GDALMDReaderDigitalGlobe(const char *pszPath, 
+GDALMDReaderDigitalGlobe::GDALMDReaderDigitalGlobe(const char *pszPath,
         char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    m_osIMDSourceFilename = GDALFindAssociatedFile( pszPath, "IMD", 
+    m_osIMDSourceFilename = GDALFindAssociatedFile( pszPath, "IMD",
                                                          papszSiblingFiles, 0 );
-    m_osRPBSourceFilename = GDALFindAssociatedFile( pszPath, "RPB", 
-                                                         papszSiblingFiles, 0 );    
-    m_osXMLSourceFilename = GDALFindAssociatedFile( pszPath, "XML", 
+    m_osRPBSourceFilename = GDALFindAssociatedFile( pszPath, "RPB",
+                                                         papszSiblingFiles, 0 );
+    m_osXMLSourceFilename = GDALFindAssociatedFile( pszPath, "XML",
                                                          papszSiblingFiles, 0 );
 
     if( m_osIMDSourceFilename.size() )
@@ -119,7 +119,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
 
     m_papszDEFAULTMD = CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "DG");
 
-    m_bIsMetadataLoad = true;      
+    m_bIsMetadataLoad = true;
 
     if(NULL == m_papszIMDMD)
     {
@@ -129,7 +129,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
     const char* pszSatId = CSLFetchNameValue(m_papszIMDMD, "IMAGE.SATID");
     if(NULL != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, 
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_SATELLITE,
                                            CPLStripQuotes(pszSatId));
     }
@@ -144,7 +144,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         }
     }
 
-    const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD, 
+    const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                                                   "IMAGE.CLOUDCOVER");
     if(NULL != pszCloudCover)
     {
@@ -213,11 +213,11 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
 char** GDALMDReaderDigitalGlobe::GetMetadataFiles() const
 {
     char **papszFileList = NULL;
-    if(!m_osIMDSourceFilename.empty()) 
+    if(!m_osIMDSourceFilename.empty())
         papszFileList = CSLAddString( papszFileList, m_osIMDSourceFilename );
-    if(!m_osRPBSourceFilename.empty()) 
+    if(!m_osRPBSourceFilename.empty())
         papszFileList = CSLAddString( papszFileList, m_osRPBSourceFilename );
-    if(!m_osXMLSourceFilename.empty()) 
+    if(!m_osXMLSourceFilename.empty())
         papszFileList = CSLAddString( papszFileList, m_osXMLSourceFilename );
 
     return papszFileList;
@@ -229,7 +229,7 @@ char** GDALMDReaderDigitalGlobe::GetMetadataFiles() const
 char** GDALMDReaderDigitalGlobe::LoadIMDXmlNode(CPLXMLNode* psNode)
 {
     if(NULL == psNode)
-        return NULL;    
+        return NULL;
     char** papszList = NULL;
     return ReadXMLToList(psNode->psChild, papszList);
 }

@@ -74,8 +74,8 @@ class XYZDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
-    static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                                    int bStrict, char ** papszOptions, 
+    static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
 };
 
@@ -418,13 +418,13 @@ double XYZRasterBand::GetMaximum(int *pbSuccess)
 double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 {
     XYZDataset *poGDS = reinterpret_cast<XYZDataset *>( poDS );
-    if( !poGDS->bSameNumberOfValuesPerLine && 
+    if( !poGDS->bSameNumberOfValuesPerLine &&
         poGDS->dfMinZ > -32768 && eDataType != GDT_Byte )
     {
         if( pbSuccess ) *pbSuccess = TRUE;
         return (poGDS->dfMinZ > 0) ? 0 : -32768;
     }
-    else if ( !poGDS->bSameNumberOfValuesPerLine && 
+    else if ( !poGDS->bSameNumberOfValuesPerLine &&
               poGDS->dfMinZ > 0 && eDataType == GDT_Byte )
     {
         if( pbSuccess ) *pbSuccess = TRUE;
@@ -988,7 +988,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The XYZ driver does not support update access to existing"
                   " datasets.\n" );
         VSIFCloseL(fp);
@@ -1053,8 +1053,8 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
-                                     GDALDataset *poSrcDS, 
-                                     int bStrict, char ** papszOptions, 
+                                     GDALDataset *poSrcDS,
+                                     int bStrict, char ** papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData )
 {
@@ -1064,14 +1064,14 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "XYZ driver does not support source dataset with zero band.\n");
         return NULL;
     }
 
     if (nBands != 1)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "XYZ driver only uses the first band of the dataset.\n");
         if (bStrict)
             return NULL;
@@ -1090,7 +1090,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     poSrcDS->GetGeoTransform(adfGeoTransform);
     if (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "XYZ driver does not support CreateCopy() from skewed or rotated dataset.\n");
         return NULL;
     }
@@ -1110,7 +1110,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if (fp == NULL)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Cannot create %s", pszFilename );
         return NULL;
     }
@@ -1176,18 +1176,18 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
             if( (i & 1023) == 0 || i == nXSize - 1 )
             {
                 if ( VSIFWriteL( osBuf,
-                                 static_cast<int>( osBuf.size() ), 1, fp ) 
+                                 static_cast<int>( osBuf.size() ), 1, fp )
                      != 1 )
                 {
                     eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                               "Write failed, disk full?\n" );
                     break;
                 }
                 osBuf = "";
             }
         }
-        if ( pfnProgress 
+        if ( pfnProgress
              && !pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData ) )
         {
             eErr = CE_Failure;

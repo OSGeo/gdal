@@ -51,12 +51,12 @@
 	can indicate something other than 30.
 	Note that uniform scaling should be used.
 
-	The offset (base height) in the ALTW chunk 
+	The offset (base height) in the ALTW chunk
 	is in terrain units, and the scale (height scale)
 	is a normalized value using unsigned 16-bit notation.
 	The physical terrain value for a read pixel is
 		hv' = hv * scale / 65536 + offset.
-		It still needs to be scaled by SCAL to 
+		It still needs to be scaled by SCAL to
 		get to meters.
 
 	For writing:
@@ -71,20 +71,20 @@
 
 	We tell callers that:
 
-		Elevations are Int16 when reading, 
-		and Float32 when writing. We need logical 
-		elevations when writing so that we can 
-		encode them with as much precision as possible 
+		Elevations are Int16 when reading,
+		and Float32 when writing. We need logical
+		elevations when writing so that we can
+		encode them with as much precision as possible
 		when going down to physical 16-bit ints.
-		Implementing band::SetScale/SetOffset won't work because 
+		Implementing band::SetScale/SetOffset won't work because
 		it requires callers to know format write details.
-		So we've added two Create() options that let the 
-		caller tell us the span's logical extent, and with 
+		So we've added two Create() options that let the
+		caller tell us the span's logical extent, and with
 		those two values we can convert to physical pixels.
 
 		band::GetUnitType() returns meters.
 		band::GetScale() returns SCAL * (scale/65536)
-		band::GetOffset() returns SCAL * offset 
+		band::GetOffset() returns SCAL * offset
 		ds::GetProjectionRef() returns a local CS
 			using meters.
 		ds::GetGeoTransform() returns a scale matrix
@@ -93,7 +93,7 @@
 		ds::SetGeoTransform() lets us establish the
 			size of ground pixels.
 		ds::SetProjection() lets us establish what
-			units ground measures are in (also needed 
+			units ground measures are in (also needed
 			to calc the size of ground pixels).
 		band::SetUnitType() tells us what units
 			the given Float32 elevations are in.
@@ -275,12 +275,12 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     const size_t rowbytes = nBlockXSize * sizeof(GInt16);
 
     if(0 != VSIFSeekL(
-           ds.m_fp, 
-           ds.m_nDataOffset + 
-			  (ds.GetRasterYSize() -1 - nBlockYOff) * rowbytes, 
+           ds.m_fp,
+           ds.m_nDataOffset +
+			  (ds.GetRasterYSize() -1 - nBlockYOff) * rowbytes,
            SEEK_SET))
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Terragen Seek failed:%s", VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -292,7 +292,7 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( VSIFReadL( pImage, rowbytes, 1, ds.m_fp ) != 1 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Terragen read failed:%s", VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -379,10 +379,10 @@ CPLErr TerragenRasterBand::IWriteBlock
     GInt16* pLine = reinterpret_cast<GInt16 *>( m_pvLine );
 
 	if(0 == VSIFSeekL(
-       ds.m_fp, 
-       ds.m_nDataOffset + 
+       ds.m_fp,
+       ds.m_nDataOffset +
 		// Terragen is Y inverted.
-		(ds.GetRasterYSize()-1-nBlockYOff) * rowbytes, 
+		(ds.GetRasterYSize()-1-nBlockYOff) * rowbytes,
        SEEK_SET))
     {
         // Convert each float32 to int16.
@@ -476,7 +476,7 @@ bool TerragenDataset::write_header()
 
     if(1 != VSIFWriteL( reinterpret_cast<void *>( szHeader ), sizeof(szHeader), 1, m_fp ))
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Couldn't write to Terragen file %s.\n"
                   "Is file system full?",
                   m_pszFilename );
@@ -515,26 +515,26 @@ bool TerragenDataset::write_header()
 			So we're going to estimate a m_dMetersPerGroundUnit
 			value here (i.e., meters per degree).
 
-			We figure out the degree size of one 
-			pixel, and then the latitude degrees 
+			We figure out the degree size of one
+			pixel, and then the latitude degrees
 			of the heightfield's center. The circumference of
 			the latitude's great circle lets us know how
-			wide the pixel is in meters, and we 
+			wide the pixel is in meters, and we
 			average that with the pixel's meter breadth,
 			which is based on the polar circumference.
 		*/
 
-		/*const double m_dDegLongPerPixel = 
+		/*const double m_dDegLongPerPixel =
 			fabs(m_adfTransform[1]);*/
 
         const double m_dDegLatPerPixel = std::abs(m_adfTransform[5]);
 
 		/*const double m_dCenterLongitude =
-			m_adfTransform[0] + 
+			m_adfTransform[0] +
 			(0.5 * m_dDegLongPerPixel * (nXSize-1));*/
 
 		const double m_dCenterLatitude =
-			m_adfTransform[3] + 
+			m_adfTransform[3] +
 			(0.5 * m_dDegLatPerPixel * (nYSize-1));
 
 
@@ -542,15 +542,15 @@ bool TerragenDataset::write_header()
             * std::sin( degrees_to_radians( 90.0 - m_dCenterLatitude ) );
 
 		const double dMetersPerDegLongitude = dLatCircum / 360;
-		/*const double dMetersPerPixelX = 
+		/*const double dMetersPerPixelX =
 			(m_dDegLongPerPixel / 360) * dLatCircum;*/
 
-		const double dMetersPerDegLatitude = 
+		const double dMetersPerDegLatitude =
 			kdEarthCircumPolar / 360;
-		/*const double dMetersPerPixelY = 
+		/*const double dMetersPerPixelY =
 			(m_dDegLatPerPixel / 360) * kdEarthCircumPolar;*/
 
-		m_dMetersPerGroundUnit = 
+		m_dMetersPerGroundUnit =
 			average(dMetersPerDegLongitude, dMetersPerDegLatitude);
     }
 
@@ -567,7 +567,7 @@ bool TerragenDataset::write_header()
 
     if( !write_next_tag( "ALTW" ) )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Couldn't write to Terragen file %s.\n"
                   "Is file system full?",
                   m_pszFilename );
@@ -626,7 +626,7 @@ bool TerragenDataset::write_header()
     }
     if(hs == 32768)
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Couldn't write to Terragen file %s.\n"
                   "Cannot find adequate heightscale/baseheight combination.",
                   m_pszFilename );
@@ -639,7 +639,7 @@ bool TerragenDataset::write_header()
     m_nBaseHeight = static_cast<GInt16>( bh );
 
 
-	// m_nHeightScale is the one that gives us the 
+	// m_nHeightScale is the one that gives us the
 	// widest use of the 16-bit space. However, there
 	// might be larger heightscales that, even though
 	// the reduce the space usage, give us a better fit
@@ -750,7 +750,7 @@ int TerragenDataset::LoadFromFile()
     if( !get(nSize) || !skip(2) )
         return FALSE;
 
-    // Set dimensions to SIZE chunk. If we don't 
+    // Set dimensions to SIZE chunk. If we don't
     // encounter XPTS/YPTS chunks, we can assume
     // the terrain to be square.
     GUInt16 xpts = nSize+1;
@@ -858,8 +858,8 @@ int TerragenDataset::LoadFromFile()
 
 CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
 {
-    // Terragen files aren't really georeferenced, but 
-    // we should get the projection's linear units so 
+    // Terragen files aren't really georeferenced, but
+    // we should get the projection's linear units so
     // that we can scale elevations correctly.
 
     //m_dSCAL = 30.0; // default
@@ -872,7 +872,7 @@ CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
     m_bIsGeo = oSRS.IsGeographic() != FALSE;
     if(m_bIsGeo)
     {
-        // The caller is using degrees. We need to convert 
+        // The caller is using degrees. We need to convert
         // to meters, otherwise we can't derive a SCAL
         // value to scale elevations with.
         m_bIsGeo = true;
@@ -910,11 +910,11 @@ const char*	TerragenDataset::GetProjectionRef(void)
 
 CPLErr TerragenDataset::SetGeoTransform( double *padfGeoTransform )
 {
-	memcpy(m_adfTransform, padfGeoTransform, 
+	memcpy(m_adfTransform, padfGeoTransform,
 		sizeof(m_adfTransform));
 
 	// Average the projection scales.
-	m_dGroundScale = 
+	m_dGroundScale =
 		average(fabs(m_adfTransform[1]), fabs(m_adfTransform[5]));
 	return CE_None;
 }
@@ -939,7 +939,7 @@ GDALDataset* TerragenDataset::Create
 (
     const char* pszFilename,
     int nXSize, int nYSize, int nBands,
-    GDALDataType eType, char** papszOptions 
+    GDALDataType eType, char** papszOptions
 )
 {
     TerragenDataset* poDS = new TerragenDataset();
@@ -1008,8 +1008,8 @@ GDALDataset* TerragenDataset::Create
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
-    // Don't bother writing the header here; the first 
-	// call to IWriteBlock will do that instead, since 
+    // Don't bother writing the header here; the first
+	// call to IWriteBlock will do that instead, since
 	// the elevation data's location depends on the
 	// header size.
 

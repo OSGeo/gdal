@@ -61,7 +61,7 @@ static double JDEMGetAngle( char *pszField )
 
     // Note, this isn't very general purpose, but it would appear
     // from the field widths that angles are never negative.  Nice
-    // to be a country in the "first quadrant". 
+    // to be a country in the "first quadrant".
 
     const int nDegree = nAngle / 10000;
     const int nMin = (nAngle / 100) % 100;
@@ -178,7 +178,7 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( !EQUALN((char *) poGDS->abyHeader,pszRecord,6) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "JDEM Scanline corrupt.  Perhaps file was not transferred\n"
                   "in binary mode?" );
         return CE_Failure;
@@ -186,7 +186,7 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( JDEMGetField( pszRecord + 6, 3 ) != nBlockYOff + 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "JDEM scanline out of order, JDEM driver does not\n"
                   "currently support partial datasets." );
         return CE_Failure;
@@ -304,7 +304,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The JDEM driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -334,9 +334,9 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
     if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Invalid dimensions : %d x %d", 
-                  poDS->nRasterXSize, poDS->nRasterYSize); 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid dimensions : %d x %d",
+                  poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
         return NULL;
     }

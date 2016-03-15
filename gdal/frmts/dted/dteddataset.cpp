@@ -451,8 +451,8 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DTED_OriginLongitude", pszValue );
     CPLFree( pszValue );
 
-    pszValue = DTEDGetMetadata( psDTED, DTEDMD_NIMA_DESIGNATOR ); 
-    poDS->SetMetadataItem( "DTED_NimaDesignator", pszValue ); 
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_NIMA_DESIGNATOR );
+    poDS->SetMetadataItem( "DTED_NimaDesignator", pszValue );
     CPLFree( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_PARTIALCELL_DSI );
@@ -552,7 +552,7 @@ const char *DTEDDataset::GetProjectionRef()
                       "fix the DTED file.\n"
                       "No more warnings will be issued in this session about this operation.", GetFileName() );
         }
-        return "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4322\"]]"; 
+        return "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4322\"]]";
     }
     else
     {
@@ -588,14 +588,14 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "DTED driver does not support source dataset with zero band.\n");
         return NULL;
     }
 
     if (nBands != 1)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "DTED driver only uses the first band of the dataset.\n");
         if (bStrict)
             return NULL;
@@ -617,7 +617,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         nLevel = 2;
     else
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                "The source does not appear to be a properly formatted cell." );
         nLevel = 1;
     }
@@ -632,7 +632,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     ogrsr_wgs84.SetWellKnownGeogCS( "WGS84" );
     if ( ogrsr_input.IsSameGeogCS(&ogrsr_wgs84) == FALSE)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "The source projection coordinate system is %s. Only WGS 84 is supported.\n"
                   "The DTED driver will generate a file as if the source was WGS 84 projection coordinate system.",
                   poSrcDS->GetProjectionRef() );
@@ -646,16 +646,16 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
     int nLLOriginLat = (int)
-        floor(adfGeoTransform[3] 
+        floor(adfGeoTransform[3]
               + poSrcDS->GetRasterYSize() * adfGeoTransform[5] + 0.5);
 
     int nLLOriginLong = (int) floor(adfGeoTransform[0] + 0.5);
 
-    if (fabs(nLLOriginLat - (adfGeoTransform[3] 
+    if (fabs(nLLOriginLat - (adfGeoTransform[3]
               + (poSrcDS->GetRasterYSize() - 0.5) * adfGeoTransform[5])) > 1e-10 ||
         fabs(nLLOriginLong - (adfGeoTransform[0] + 0.5 * adfGeoTransform[1])) > 1e-10)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                "The corner coordinates of the source are not properly "
                "aligned on plain latitude/longitude boundaries.");
     }
@@ -677,7 +677,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if (poSrcDS->GetRasterXSize() != expectedXSize)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                "The horizontal source size is not conformant with the one "
                "expected by DTED Level %d at this latitude (%d pixels found instead of %d).", nLevel,
                 poSrcDS->GetRasterXSize(), expectedXSize);
@@ -691,7 +691,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( pszError != NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", pszError );
         return NULL;
     }
@@ -718,8 +718,8 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     for( int iY = 0; iY < psDTED->nYSize; iY++ )
     {
-        if( poSrcBand->RasterIO( GF_Read, 0, iY, psDTED->nXSize, 1, 
-                            (void *) (panData + iY * psDTED->nXSize), psDTED->nXSize, 1, 
+        if( poSrcBand->RasterIO( GF_Read, 0, iY, psDTED->nXSize, 1,
+                            (void *) (panData + iY * psDTED->nXSize), psDTED->nXSize, 1,
                             GDT_Int16, 0, 0, NULL ) != CE_None )
         {
             DTEDClose( psDTED );
@@ -729,7 +729,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( pfnProgress && !pfnProgress(0.5 * (iY+1) / (double) psDTED->nYSize, NULL, pProgressData ) )
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, 
+            CPLError( CE_Failure, CPLE_UserInterrupt,
                         "User terminated CreateCopy()" );
             DTEDClose( psDTED );
             CPLFree( panData );
@@ -766,7 +766,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             && !pfnProgress( 0.5 + 0.5 * (iProfile+1) / (double) psDTED->nXSize,
                              NULL, pProgressData ) )
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, 
+            CPLError( CE_Failure, CPLE_UserInterrupt,
                       "User terminated CreateCopy()" );
             DTEDClose( psDTED );
             CPLFree( panData );
@@ -784,91 +784,91 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         iPartialCell = 0;
     else
     {
-      iPartialCell = (GByte)int(floor(100.0 - 
+      iPartialCell = (GByte)int(floor(100.0 -
            (dfNodataCount*100.0/(psDTED->nXSize * psDTED->nYSize))));
         if (iPartialCell < 1)
            iPartialCell=1;
     }
     snprintf( szPartialCell, sizeof(szPartialCell), "%02d",iPartialCell);
-    DTEDSetMetadata(psDTED, DTEDMD_PARTIALCELL_DSI, szPartialCell); 
+    DTEDSetMetadata(psDTED, DTEDMD_PARTIALCELL_DSI, szPartialCell);
 
 /* -------------------------------------------------------------------- */
 /*      Try to copy any matching available metadata.                    */
 /* -------------------------------------------------------------------- */
     if( poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_UHL" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL, 
+        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL,
                      poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_UHL" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_ACC" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY_ACC, 
+        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY_ACC,
                     poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_ACC" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_SecurityCode_UHL" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE_UHL, 
+        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE_UHL,
                     poSrcDS->GetMetadataItem( "DTED_SecurityCode_UHL" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_SecurityCode_DSI" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE_DSI, 
+        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE_DSI,
                     poSrcDS->GetMetadataItem( "DTED_SecurityCode_DSI" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_UniqueRef_UHL" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_UNIQUEREF_UHL, 
+        DTEDSetMetadata( psDTED, DTEDMD_UNIQUEREF_UHL,
                          poSrcDS->GetMetadataItem( "DTED_UniqueRef_UHL" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_UniqueRef_DSI" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_UNIQUEREF_DSI, 
+        DTEDSetMetadata( psDTED, DTEDMD_UNIQUEREF_DSI,
                          poSrcDS->GetMetadataItem( "DTED_UniqueRef_DSI" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_DataEdition" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_DATA_EDITION, 
+        DTEDSetMetadata( psDTED, DTEDMD_DATA_EDITION,
                          poSrcDS->GetMetadataItem( "DTED_DataEdition" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_MatchMergeVersion" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_MATCHMERGE_VERSION, 
+        DTEDSetMetadata( psDTED, DTEDMD_MATCHMERGE_VERSION,
                      poSrcDS->GetMetadataItem( "DTED_MatchMergeVersion" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_MaintenanceDate" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_MAINT_DATE, 
+        DTEDSetMetadata( psDTED, DTEDMD_MAINT_DATE,
                          poSrcDS->GetMetadataItem( "DTED_MaintenanceDate" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_MatchMergeDate" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_MATCHMERGE_DATE, 
+        DTEDSetMetadata( psDTED, DTEDMD_MATCHMERGE_DATE,
                          poSrcDS->GetMetadataItem( "DTED_MatchMergeDate" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_MaintenanceDescription" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_MAINT_DESCRIPTION, 
+        DTEDSetMetadata( psDTED, DTEDMD_MAINT_DESCRIPTION,
                  poSrcDS->GetMetadataItem( "DTED_MaintenanceDescription" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_Producer" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_PRODUCER, 
+        DTEDSetMetadata( psDTED, DTEDMD_PRODUCER,
                          poSrcDS->GetMetadataItem( "DTED_Producer" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_VerticalDatum" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_VERTDATUM, 
+        DTEDSetMetadata( psDTED, DTEDMD_VERTDATUM,
                          poSrcDS->GetMetadataItem( "DTED_VerticalDatum" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_HorizontalDatum" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_HORIZDATUM, 
+        DTEDSetMetadata( psDTED, DTEDMD_HORIZDATUM,
                          poSrcDS->GetMetadataItem( "DTED_HorizontalDatum" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_DigitizingSystem" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_DIGITIZING_SYS, 
+        DTEDSetMetadata( psDTED, DTEDMD_DIGITIZING_SYS,
                          poSrcDS->GetMetadataItem( "DTED_DigitizingSystem" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_CompilationDate" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_COMPILATION_DATE, 
+        DTEDSetMetadata( psDTED, DTEDMD_COMPILATION_DATE,
                          poSrcDS->GetMetadataItem( "DTED_CompilationDate" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_HorizontalAccuracy" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_HORIZACCURACY, 
+        DTEDSetMetadata( psDTED, DTEDMD_HORIZACCURACY,
                      poSrcDS->GetMetadataItem( "DTED_HorizontalAccuracy" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_RelHorizontalAccuracy" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_REL_HORIZACCURACY, 
+        DTEDSetMetadata( psDTED, DTEDMD_REL_HORIZACCURACY,
                    poSrcDS->GetMetadataItem( "DTED_RelHorizontalAccuracy" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_RelVerticalAccuracy" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_REL_VERTACCURACY, 
+        DTEDSetMetadata( psDTED, DTEDMD_REL_VERTACCURACY,
                      poSrcDS->GetMetadataItem( "DTED_RelVerticalAccuracy" ) );
 
 /* -------------------------------------------------------------------- */
@@ -879,7 +879,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Reopen and copy missing information into a PAM file.            */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *) 
+    GDALPamDataset *poDS = (GDALPamDataset *)
         GDALOpen( pszFilename, GA_ReadOnly );
 
     if( poDS )

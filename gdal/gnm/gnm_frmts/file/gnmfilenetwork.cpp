@@ -220,7 +220,7 @@ CPLErr GNMFileNetwork::Delete()
     CSLDestroy( papszFiles );
 
     if( !bIsEmpty )
-    {        
+    {
         return eResult;
     }
     return VSIRmdir(m_soNetworkFullName) == 0 ? CE_None : CE_Failure;

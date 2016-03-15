@@ -179,17 +179,17 @@ public:
      */
     virtual std::vector<GNMPATH> KShortestPaths(GNMGFID nStartFID,
                                                 GNMGFID nEndFID, size_t nK);
-    
+
     /**
-     * @brief Search connected components of the network 
-     * 
-     * Returns the resource distribution in the network. Method search starting 
-     * from the features identificators from input array. Uses the recursive 
-     * Breadth-first search algorithm to find the connected to the given vector 
-     * of GFIDs components. Method takes in account the blocking state of 
-     * features, i.e. the blocked features are the barriers during the routing 
+     * @brief Search connected components of the network
+     *
+     * Returns the resource distribution in the network. Method search starting
+     * from the features identificators from input array. Uses the recursive
+     * Breadth-first search algorithm to find the connected to the given vector
+     * of GFIDs components. Method takes in account the blocking state of
+     * features, i.e. the blocked features are the barriers during the routing
      * process.
-     *  
+     *
      * @param anEmittersIDs - array of emitters identificators
      * @return an array of connected identificators
      */
@@ -220,8 +220,8 @@ protected:
 
     virtual LPGNMCONSTVECTOR GetOutEdges(GNMGFID nFID) const;
     virtual GNMGFID GetOppositVertex(GNMGFID nEdgeFID, GNMGFID nVertexFID) const;
-    virtual void TraceTargets(std::queue<GNMGFID> &vertexQueue, 
-                                std::set<GNMGFID> &markedVertIds, 
+    virtual void TraceTargets(std::queue<GNMGFID> &vertexQueue,
+                                std::set<GNMGFID> &markedVertIds,
                                 GNMPATH &connectedIds);
 protected:
     std::map<GNMGFID, GNMStdVertex> m_mstVertices;

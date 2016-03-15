@@ -164,7 +164,7 @@ private:
   DataType GetDataTypeUsed(int typeCode) const;
 
   bool WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed) const;
-  
+
   double ReadVariableDataType(const Byte** ppByte, DataType dtUsed) const;
 
   template<class T>
@@ -272,7 +272,7 @@ unsigned int Lerc2::ComputeNumBytesNeededToWrite(const T* arr, double maxZError,
         m_huffmanCodes.resize(0);    // if huffman lost on first run, reset it
     }
   }
-  
+
   if (nBytesOneSweep <= nBytes)
   {
     m_writeDataOneSweep = true;    // fallback: write data binary uncompressed in one sweep
@@ -482,7 +482,7 @@ bool Lerc2::WriteTiles(const T* data, Byte** ppByte, int& numBytes, double& zMin
     }
     else    // encode Lerc2, not Huffman
     {
-      **ppByte = 0;    // write out flag Lerc2, proceed below with Lerc2 ... 
+      **ppByte = 0;    // write out flag Lerc2, proceed below with Lerc2 ...
       (*ppByte)++;
     }
   }
@@ -1336,7 +1336,7 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
         T val = data[k];
         T delta = val;
 
-        if (val < zMinA) 
+        if (val < zMinA)
 	    zMinA = val;
         if (val > zMaxA)
 	    zMaxA = val;

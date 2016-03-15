@@ -44,7 +44,7 @@ static const char * const apszUnitMap[] = {
     "m", "1.0",
     "centimeters", "0.01",
     "centimeter", "0.01",
-    "cm", "0.01", 
+    "cm", "0.01",
     "millimeters", "0.001",
     "millimeter", "0.001",
     "mm", "0.001",
@@ -53,7 +53,7 @@ static const char * const apszUnitMap[] = {
     "km", "1000.0",
     "us_survey_feet", "0.3048006096012192",
     "us_survey_foot", "0.3048006096012192",
-    "feet", "0.3048006096012192", 
+    "feet", "0.3048006096012192",
     "foot", "0.3048006096012192",
     "ft", "0.3048006096012192",
     "international_feet", "0.3048",
@@ -73,13 +73,13 @@ static const char * const apszUnitMap[] = {
     "clarke_foot", "0.3047972651",
     "indian_feet", "0.3047995142",
     "indian_foot", "0.3047995142",
-    "Yard_Indian", "0.9143985307444408", 
+    "Yard_Indian", "0.9143985307444408",
     "Foot_Clarke", "0.30479726540",
     "Foot_Gold_Coast", "0.3047997101815088",
-    "Link_Clarke", "0.2011661951640", 
-    "Yard_Sears", "0.9143984146160287", 
-    "50_Kilometers", "50000.0", 
-    "150_Kilometers", "150000.0", 
+    "Link_Clarke", "0.2011661951640",
+    "Yard_Sears", "0.9143984146160287",
+    "50_Kilometers", "50000.0",
+    "150_Kilometers", "150000.0",
     NULL, NULL
 };
 
@@ -231,7 +231,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     if(!psCitation)
         return ret;
 
-    ret = (char **) CPLCalloc(sizeof(char*), nCitationNameTypes); 
+    ret = (char **) CPLCalloc(sizeof(char*), nCitationNameTypes);
     char* pDelimit = NULL;
     char* pStr = psCitation;
     char name[512];
@@ -285,7 +285,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
         }
         if(strstr(name, "Primem = "))
         {
-            ret[CitPrimemName] = CPLStrdup(name+strlen("Primem = "));    
+            ret[CitPrimemName] = CPLStrdup(name+strlen("Primem = "));
             nameFound = TRUE;
         }
         if(strstr(name, "AUnits = "))
@@ -398,9 +398,9 @@ void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitN
             double aUnit = poSRS->GetAngularUnits(NULL);
             primemValue *= aUnit;
         }
-        GTIFKeySet( psGTIF, GeogPrimeMeridianLongGeoKey, TYPE_DOUBLE, 1, 
+        GTIFKeySet( psGTIF, GeogPrimeMeridianLongGeoKey, TYPE_DOUBLE, 1,
                     primemValue );
-    } 
+    }
     if(angUnitName && strlen(angUnitName) > 0 && !EQUAL(angUnitName, "Degree"))
     {
         osCitation += "|AUnits = ";
@@ -473,7 +473,7 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
             poSRS->SetLinearUnits( ctNames[CitLUnitsName], unitSize);
             *linearUnitIsSet = TRUE;
         }
-        for(int i= 0; i<nCitationNameTypes; i++) 
+        for(int i= 0; i<nCitationNameTypes; i++)
             CPLFree( ctNames[i] );
         CPLFree( ctNames );
     }
@@ -500,14 +500,14 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
 /*      Parse and get geogcs names from a Citation string               */
 /************************************************************************/
 void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
-                           geokey_t geoKey, 
+                           geokey_t geoKey,
                            char	**ppszGeogName,
                            char	**ppszDatumName,
                            char	**ppszPMName,
                            char	**ppszSpheroidName,
                            char	**ppszAngularUnits)
 {
-    *ppszGeogName = *ppszDatumName = *ppszPMName = 
+    *ppszGeogName = *ppszDatumName = *ppszPMName =
         *ppszSpheroidName = *ppszAngularUnits = NULL;
 
     char* imgCTName = ImagineCitationTranslation(szGCSName, geoKey);
@@ -580,8 +580,8 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
         if( strstr(osLCCT,"us") && strstr(osLCCT,"survey")
             && (strstr(osLCCT,"feet") || strstr(osLCCT,"foot")) )
             strcpy(units, "us_survey_feet");
-        else if(strstr(osLCCT, "linear_feet")  
-                || strstr(osLCCT, "linear_foot") 
+        else if(strstr(osLCCT, "linear_feet")
+                || strstr(osLCCT, "linear_foot")
                 || strstr(osLCCT, "international"))
             strcpy(units, "international_feet");
         else if( strstr(osLCCT,"meter") )
@@ -611,7 +611,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
                         unitName.tolower();
 
                         if (strstr(units, "us_survey_feet"))
-                        {              
+                        {
                             if (strstr(unitName, "us_survey_feet") || strstr(unitName, "foot_us") )
                                 done = TRUE;
                         }
@@ -658,7 +658,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
 
     /* check PCSCitationGeoKey if it exists */
     szCTString[0] = '\0';
-    if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString, 0, sizeof(szCTString)) )  
+    if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString, 0, sizeof(szCTString)) )
     {
         /* For tif created by LEICA(ERDAS), ESRI state plane pe string was used and */
         /* the state plane zone is given in PCSCitation. Therefore try Esri pe string first. */

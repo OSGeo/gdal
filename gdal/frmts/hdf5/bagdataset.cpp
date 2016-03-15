@@ -38,7 +38,7 @@
 
 CPL_CVSID("$Id$");
 
-OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis, 
+OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
                                    const char *pszISOXML );
 
 /************************************************************************/

@@ -72,7 +72,7 @@ typedef struct
     GUInt32     nClrTblOffset;                  // Position and size
     GUInt32     nClrTblSize;                    // of the colour table
     GUInt32     nTileTblOffset;                 // Position and size of the
-    GUInt32     nTileTblSize;                   // tile offsets/sizes table 
+    GUInt32     nTileTblSize;                   // tile offsets/sizes table
     GInt32      iMapType;
     GInt32      iProjection;
     double      dfScale;

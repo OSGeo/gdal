@@ -115,7 +115,7 @@ protected:
     InfoFromComputeNumBytes& info) const;
 
 
-  bool findTiling(bool zPart, double maxZError, bool cntsNoInt, 
+  bool findTiling(bool zPart, double maxZError, bool cntsNoInt,
     int& numTilesVert, int& numTilesHori, int& numBytesOpt, float& maxValInImg) const;
 
   bool writeTiles(bool zPart, double maxZError, bool cntsNoInt,

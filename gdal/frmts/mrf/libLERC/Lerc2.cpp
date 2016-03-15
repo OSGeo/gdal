@@ -242,7 +242,7 @@ bool Lerc2::WriteMask(Byte** ppByte) const
   }
   else
   {
-    memset(ptr, 0, sizeof(int)); 
+    memset(ptr, 0, sizeof(int));
     ptr += sizeof(int);
   }
 

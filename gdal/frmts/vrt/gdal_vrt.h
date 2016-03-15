@@ -91,7 +91,7 @@ CPLErr CPL_DLL CPL_STDCALL VRTAddSimpleSource( VRTSourcedRasterBandH,
                                                int, int, int, int,
                                                const char *, double );
 CPLErr CPL_DLL CPL_STDCALL VRTAddComplexSource( VRTSourcedRasterBandH,
-                                                GDALRasterBandH, 
+                                                GDALRasterBandH,
                                                 int, int, int, int,
                                                 int, int, int, int,
                                                 double, double, double );

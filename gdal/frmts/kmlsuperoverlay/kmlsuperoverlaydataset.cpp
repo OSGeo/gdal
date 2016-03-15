@@ -189,12 +189,12 @@ static void GenerateTiles(std::string filename,
 /************************************************************************/
 
 static
-int  GenerateRootKml(const char* filename, 
+int  GenerateRootKml(const char* filename,
                      const char* kmlfilename,
-                     double north, 
-                     double south, 
-                     double east, 
-                     double west, 
+                     double north,
+                     double south,
+                     double east,
+                     double west,
                      int tilesize,
                      const char* pszOverlayName,
                      const char* pszOverlayDescription)
@@ -274,11 +274,11 @@ int  GenerateRootKml(const char* filename,
 /************************************************************************/
 
 static
-int  GenerateChildKml(std::string filename, 
-                      int zoom, int ix, int iy, 
-                      double zoomxpixel, double zoomypixel, int dxsize, int dysize, 
-                      double south, double west, int xsize, 
-                      int ysize, int maxzoom, 
+int  GenerateChildKml(std::string filename,
+                      int zoom, int ix, int iy,
+                      double zoomxpixel, double zoomypixel, int dxsize, int dysize,
+                      double south, double west, int xsize,
+                      int ysize, int maxzoom,
                       OGRCoordinateTransformation * poTransform,
                       std::string fileExt,
                       bool fixAntiMeridian,
@@ -347,7 +347,7 @@ int  GenerateChildKml(std::string filename,
         if (tmp < tmp1)
         {
             ychildern.push_back(iy*2+1);
-        }     
+        }
         maxLodPix = 2048;
     }
 
@@ -665,7 +665,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
         zoomypixels.push_back(fabs(adfGeoTransform[5]) * pow(2.0, (maxzoom - zoom)));
     }
 
-    std::string tmpFileName; 
+    std::string tmpFileName;
     std::vector<std::string> fileVector;
     int nRet;
 
@@ -797,7 +797,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
                     fileVector.push_back(filename);
                 }
 
-                GenerateTiles(filename, zoom, rxsize, rysize, ix, iy, rx, ry, dxsize, 
+                GenerateTiles(filename, zoom, rxsize, rysize, ix, iy, rx, ry, dxsize,
                               dysize, bands, poSrcDS, poOutputTileDriver, poMemDriver, isJpegDriver);
                 std::string childKmlfile = zoomDir + "/" + iyStr.str() + ".kml";
                 if (isKmz)
@@ -818,7 +818,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
                     zoomypix = 1;
                 }
 
-                GenerateChildKml(childKmlfile, zoom, ix, iy, zoomxpix, zoomypix, 
+                GenerateChildKml(childKmlfile, zoom, ix, iy, zoomxpix, zoomypix,
                                  dxsize, dysize, tmpSouth, adfGeoTransform[0],
                                  xsize, ysize, maxzoom, poTransform, fileExt, fixAntiMeridian,
                                  pszAltitude, pszAltitudeMode);
@@ -1117,7 +1117,7 @@ class SubImageDesc
 CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -1144,7 +1144,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     nXSize * nOvrFactor,
                                     nYSize * nOvrFactor,
                                     pData, nBufXSize, nBufYSize,
-                                    eBufType, 
+                                    eBufType,
                                     nBandCount, panBandMap,
                                     nPixelSpace, nLineSpace, nBandSpace, &sExtraArgs);
     }
@@ -1446,7 +1446,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
         INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
         sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;
         sExtraArgs.pfnProgress = GDALScaledProgress;
-        sExtraArgs.pProgressData = 
+        sExtraArgs.pProgressData =
             GDALCreateScaledProgress( 1.0 * iBandIdx / nBandCount,
                                       1.0 * (iBandIdx + 1) / nBandCount,
                                       pfnProgressGlobal,
@@ -1956,7 +1956,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     KmlSingleDocRasterDataset* poGDS = (KmlSingleDocRasterDataset*) poDS;
     const char* pszImageFilename = CPLFormFilename( poGDS->osDirname,
         CPLSPrintf("kml_image_L%d_%d_%d", poGDS->nLevel, nBlockYOff, nBlockXOff), poGDS->osNominalExt );
-    if( poGDS->poCurTileDS == NULL || 
+    if( poGDS->poCurTileDS == NULL ||
         strcmp(CPLGetFilename(poGDS->poCurTileDS->GetDescription()),
                CPLGetFilename(pszImageFilename)) != 0 )
     {

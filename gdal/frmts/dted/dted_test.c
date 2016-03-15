@@ -79,7 +79,7 @@ int main( int argc, char ** argv )
                 Usage();
             pszFilename = argv[iArg];
         }
-    }		
+    }
 
     if( pszFilename == NULL )
         Usage();
@@ -116,7 +116,7 @@ int main( int argc, char ** argv )
 
     for( iY = 0; iY < nYSize; iY++ )
     {
-        GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1, 
+        GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
                       panData, nXSize, 1, GDT_Int16, 0, 0 );
 
         if (bHasNoData)
@@ -130,11 +130,11 @@ int main( int argc, char ** argv )
 
         for( iX = 0; iX < nXSize; iX++ )
         {
-            DTEDWritePt( pStream, 
-                         adfGeoTransform[0] 
+            DTEDWritePt( pStream,
+                         adfGeoTransform[0]
                          + adfGeoTransform[1] * (iX + 0.5)
                          + adfGeoTransform[2] * (iY + 0.5),
-                         adfGeoTransform[3] 
+                         adfGeoTransform[3]
                          + adfGeoTransform[4] * (iX + 0.5)
                          + adfGeoTransform[5] * (iY + 0.5),
                          panData[iX] );

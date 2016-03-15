@@ -48,7 +48,7 @@ static GInt16 CastToGInt16(float val)
     return static_cast<GInt16>(val);
 }
 
-static const char * const CeosExtension[][6] = { 
+static const char * const CeosExtension[][6] = {
 { "vol", "led", "img", "trl", "nul", "ext" },
 { "vol", "lea", "img", "trl", "nul", "ext" },
 { "vol", "led", "img", "tra", "nul", "ext" },
@@ -77,10 +77,10 @@ static const char * const CeosExtension[][6] = {
 { "vol", "sarl", "sard", "sart", "nvol", "ext" },
 
 /* end marker */
-{ NULL, NULL, NULL, NULL, NULL, NULL } 
+{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
-static int 
+static int
 ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
              vsi_l_offset max_bytes );
 
@@ -262,8 +262,8 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
             nPixelsToRead = ImageDesc->PixelsPerRecord;
 
         CPL_IGNORE_RET_VAL(VSIFSeekL( poGDS->fpImage, offset, SEEK_SET ));
-        CPL_IGNORE_RET_VAL(VSIFReadL( pabyRecord + nPixelsRead * ImageDesc->BytesPerPixel, 
-                   1, nPixelsToRead * ImageDesc->BytesPerPixel, 
+        CPL_IGNORE_RET_VAL(VSIFReadL( pabyRecord + nPixelsRead * ImageDesc->BytesPerPixel,
+                   1, nPixelsToRead * ImageDesc->BytesPerPixel,
                    poGDS->fpImage ));
 
         nPixelsRead += nPixelsToRead;
@@ -278,16 +278,16 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
     if( ImageDesc->ChannelInterleaving == CEOS_IL_PIXEL )
     {
-        GDALCopyWords( pabyRecord + (nBand-1) * nBytesPerSample, 
-                       eDataType, ImageDesc->BytesPerPixel, 
-                       pImage, eDataType, nBytesPerSample, 
+        GDALCopyWords( pabyRecord + (nBand-1) * nBytesPerSample,
+                       eDataType, ImageDesc->BytesPerPixel,
+                       pImage, eDataType, nBytesPerSample,
                        nBlockXSize );
     }
     else if( ImageDesc->ChannelInterleaving == CEOS_IL_LINE )
     {
-        GDALCopyWords( pabyRecord + (nBand-1) * nBytesPerSample * nBlockXSize, 
-                       eDataType, nBytesPerSample, 
-                       pImage, eDataType, nBytesPerSample, 
+        GDALCopyWords( pabyRecord + (nBand-1) * nBytesPerSample * nBlockXSize,
+                       eDataType, nBytesPerSample,
+                       pImage, eDataType, nBytesPerSample,
                        nBlockXSize );
     }
     else if( ImageDesc->ChannelInterleaving == CEOS_IL_BAND )
@@ -371,7 +371,7 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
     int offset = ImageDesc->FileDescriptorLength
-        + ImageDesc->BytesPerRecord * nBlockYOff 
+        + ImageDesc->BytesPerRecord * nBlockYOff
         + ImageDesc->ImageDataStart;
 
 /* -------------------------------------------------------------------- */
@@ -381,13 +381,13 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     GByte *pabyRecord = (GByte *) CPLMalloc( nBytesToRead );
 
-    if( VSIFSeekL( poGDS->fpImage, offset, SEEK_SET ) != 0 
-        || (int) VSIFReadL( pabyRecord, 1, nBytesToRead, 
+    if( VSIFSeekL( poGDS->fpImage, offset, SEEK_SET ) != 0
+        || (int) VSIFReadL( pabyRecord, 1, nBytesToRead,
                            poGDS->fpImage ) != nBytesToRead )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Error reading %d bytes of CEOS record data at offset %d.\n"
-                  "Reading file %s failed.", 
+                  "Reading file %s failed.",
                   nBytesToRead, offset, poGDS->GetDescription() );
         CPLFree( pabyRecord );
         return CE_Failure;
@@ -512,7 +512,7 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
     int offset = ImageDesc->FileDescriptorLength
-        + ImageDesc->BytesPerRecord * nBlockYOff 
+        + ImageDesc->BytesPerRecord * nBlockYOff
         + ImageDesc->ImageDataStart;
 
 /* -------------------------------------------------------------------- */
@@ -522,13 +522,13 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
 
     GByte  *pabyRecord = (GByte *) CPLMalloc( nBytesToRead );
 
-    if( VSIFSeekL( poGDS->fpImage, offset, SEEK_SET ) != 0 
-        || (int) VSIFReadL( pabyRecord, 1, nBytesToRead, 
+    if( VSIFSeekL( poGDS->fpImage, offset, SEEK_SET ) != 0
+        || (int) VSIFReadL( pabyRecord, 1, nBytesToRead,
                            poGDS->fpImage ) != nBytesToRead )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Error reading %d bytes of CEOS record data at offset %d.\n"
-                  "Reading file %s failed.", 
+                  "Reading file %s failed.",
                   nBytesToRead, offset, poGDS->GetDescription() );
         CPLFree( pabyRecord );
         return CE_Failure;
@@ -543,8 +543,8 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
         // we need to pre-initialize things to set the imaginary component to 0
         memset( pImage, 0, nBlockXSize * 4 );
 
-        GDALCopyWords( pabyRecord + 4*(nBand - 1), GDT_Int16, 18, 
-                       pImage, GDT_Int16, 4, 
+        GDALCopyWords( pabyRecord + 4*(nBand - 1), GDT_Int16, 18,
+                       pImage, GDT_Int16, 4,
                        nBlockXSize );
 #ifdef CPL_LSB
         GDALSwapWords( pImage, 2, nBlockXSize, 4 );
@@ -552,8 +552,8 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
     }
     else
     {
-        GDALCopyWords( pabyRecord + 6 + 4*(nBand - 4), GDT_CInt16, 18, 
-                       pImage, GDT_CInt16, 4, 
+        GDALCopyWords( pabyRecord + 6 + 4*(nBand - 4), GDT_CInt16, 18,
+                       pImage, GDT_CInt16, 4,
                        nBlockXSize );
 #ifdef CPL_LSB
         GDALSwapWords( pImage, 2, nBlockXSize*2, 2 );
@@ -565,15 +565,15 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
 /*      Convert the values into covariance form as per:                 */
 /* -------------------------------------------------------------------- */
 /*
-** 1) PALSAR- adjust so that it reads bands as a covariance matrix, and 
+** 1) PALSAR- adjust so that it reads bands as a covariance matrix, and
 ** set polarimetric interpretation accordingly:
 **
 ** Covariance_11=HH*conj(HH): already there
 ** Covariance_22=2*HV*conj(HV): need a factor of 2
-** Covariance_33=VV*conj(VV): already there 
+** Covariance_33=VV*conj(VV): already there
 ** Covariance_12=sqrt(2)*HH*conj(HV): need the sqrt(2) factor
 ** Covariance_13=HH*conj(VV): already there
-** Covariance_23=sqrt(2)*HV*conj(VV): need to take the conjugate, then 
+** Covariance_23=sqrt(2)*HV*conj(VV): need to take the conjugate, then
 **               multiply by sqrt(2)
 **
 */
@@ -810,9 +810,9 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 /* -------------------------------------------------------------------- */
     int  a, b, c, d, nRecordIndex = -1;
 
-    if( sscanf( pszDomain, "-%d-%d-%d-%d:%d", 
-                &a, &b, &c, &d, &nRecordIndex ) != 5 
-        && sscanf( pszDomain, "-%d-%d-%d-%d", 
+    if( sscanf( pszDomain, "-%d-%d-%d-%d:%d",
+                &a, &b, &c, &d, &nRecordIndex ) != 5
+        && sscanf( pszDomain, "-%d-%d-%d-%d",
                    &a, &b, &c, &d ) != 4 )
     {
         return NULL;
@@ -825,7 +825,7 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 /* -------------------------------------------------------------------- */
     CeosRecord_t *record;
 
-    record = FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId, 
+    record = FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId,
                              -1, nRecordIndex );
 
     if( record == NULL )
@@ -869,7 +869,7 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 /*                          ScanForMetadata()                           */
 /************************************************************************/
 
-void SAR_CEOSDataset::ScanForMetadata() 
+void SAR_CEOSDataset::ScanForMetadata()
 
 {
 /* -------------------------------------------------------------------- */
@@ -964,7 +964,7 @@ void SAR_CEOSDataset::ScanForMetadata()
                                  CEOS_TRAILER_FILE, -1, -1 );
 
     if( record == NULL )
-        record = FindCeosRecord( sVolume.RecordList, 
+        record = FindCeosRecord( sVolume.RecordList,
                                  LEADER_DATASET_SUMMARY_ERS2_TC,
                                  CEOS_LEADER_FILE, -1, -1 );
 
@@ -986,7 +986,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 101, "A16", szField );
         szField[16] = '\0';
 
-        if( strstr(szVolId,"RSAT") != NULL 
+        if( strstr(szVolId,"RSAT") != NULL
             && !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_ASC_DES", szField );
 
@@ -1146,7 +1146,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 /* -------------------------------------------------------------------- */
 /*      Get the beam mode, for radarsat.                                */
 /* -------------------------------------------------------------------- */
-    record = FindCeosRecord( sVolume.RecordList, 
+    record = FindCeosRecord( sVolume.RecordList,
                              LEADER_RADIOMETRIC_COMPENSATION_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
@@ -1166,7 +1166,7 @@ void SAR_CEOSDataset::ScanForMetadata()
                              CEOS_LEADER_FILE, -1, -1 );
 
     if( record == NULL )
-        record = FindCeosRecord( sVolume.RecordList, 
+        record = FindCeosRecord( sVolume.RecordList,
                                  ERS_GENERAL_FACILITY_DATA_ALT_TC,
                                  CEOS_LEADER_FILE, -1, -1 );
 
@@ -1350,7 +1350,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 /*	Get process-to-raw data coordinate translation values.  These	*/
 /*	are likely specific to Atlantis APP products.			*/
 /* -------------------------------------------------------------------- */
-    record = FindCeosRecord( sVolume.RecordList, 
+    record = FindCeosRecord( sVolume.RecordList,
                              IMAGE_HEADER_RECORD_TC,
                              CEOS_IMAGRY_OPT_FILE, -1, -1 );
 
@@ -1424,12 +1424,12 @@ void SAR_CEOSDataset::ScanForMetadata()
 /*      Try to find calibration information from Radiometric Data       */
 /*      Record.                                                         */
 /* -------------------------------------------------------------------- */
-    record = FindCeosRecord( sVolume.RecordList, 
+    record = FindCeosRecord( sVolume.RecordList,
                              LEADER_RADIOMETRIC_DATA_RECORD_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
     if( record == NULL )
-        record = FindCeosRecord( sVolume.RecordList, 
+        record = FindCeosRecord( sVolume.RecordList,
                              LEADER_RADIOMETRIC_DATA_RECORD_TC,
                              CEOS_TRAILER_FILE, -1, -1 );
 
@@ -1447,7 +1447,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 /*      calibration offset and gain from the Radiometric Ancillary      */
 /*      Record.                                                         */
 /* -------------------------------------------------------------------- */
-    record = FindCeosRecord( sVolume.RecordList, 
+    record = FindCeosRecord( sVolume.RecordList,
                              QuadToTC( 0x3f, 0x24, 0x12, 0x09 ),
                              CEOS_LEADER_FILE, -1, -1 );
     if( record != NULL )
@@ -1469,7 +1469,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 /*      For ERS Standard Format Landsat scenes we pick up the           */
 /*      gain setting from the Scene Header Record.			*/
 /* -------------------------------------------------------------------- */
-    record = FindCeosRecord( sVolume.RecordList, 
+    record = FindCeosRecord( sVolume.RecordList,
                              QuadToTC( 0x12, 0x12, 0x12, 0x09 ),
                              CEOS_LEADER_FILE, -1, -1 );
     if( record != NULL )
@@ -1502,7 +1502,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
 
     /* JERS from Japan */
     if( record == NULL )
-        record = FindCeosRecord( sVolume.RecordList, 
+        record = FindCeosRecord( sVolume.RecordList,
                              LEADER_MAP_PROJ_RECORD_JERS_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
@@ -1513,7 +1513,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
     memset( szField, 0, 17 );
     GetCeosField( record, 29, "A16", szField );
 
-    if( !STARTS_WITH_CI(szField, "Slant Range") && !STARTS_WITH_CI(szField, "Ground Range") 
+    if( !STARTS_WITH_CI(szField, "Slant Range") && !STARTS_WITH_CI(szField, "Ground Range")
         && !STARTS_WITH_CI(szField, "GEOCODED") )
         return FALSE;
 
@@ -1593,11 +1593,11 @@ void SAR_CEOSDataset::ScanForGCPs()
             break;
 
         int nFileOffset;
-        CalcCeosSARImageFilePosition( &sVolume, 1, iScanline+1, NULL, 
+        CalcCeosSARImageFilePosition( &sVolume, 1, iScanline+1, NULL,
                                       &nFileOffset );
 
         GInt32 anRecord[192/4];
-        if( VSIFSeekL( fpImage, nFileOffset, SEEK_SET ) != 0 
+        if( VSIFSeekL( fpImage, nFileOffset, SEEK_SET ) != 0
             || VSIFReadL( anRecord, 1, 192, fpImage ) != 192 )
             break;
 
@@ -1627,10 +1627,10 @@ void SAR_CEOSDataset::ScanForGCPs()
                 if( iGCP == 0 )
                     pasGCPList[nGCPCount].dfGCPPixel = 0.5;
                 else if( iGCP == 1 )
-                    pasGCPList[nGCPCount].dfGCPPixel = 
+                    pasGCPList[nGCPCount].dfGCPPixel =
                         GetRasterXSize() / 2.0;
-                else 
-                    pasGCPList[nGCPCount].dfGCPPixel = 
+                else
+                    pasGCPList[nGCPCount].dfGCPPixel =
                         GetRasterXSize() - 0.5;
 
                 nGCPCount++;
@@ -1676,7 +1676,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The SAR_CEOS driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -1761,11 +1761,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 char szThisExtension[32];
 
                 if( strlen(pszExtension) > 3 )
-                    snprintf( szThisExtension, sizeof(szThisExtension), "%s%s", 
-                             CeosExtension[e][iFile], 
+                    snprintf( szThisExtension, sizeof(szThisExtension), "%s%s",
+                             CeosExtension[e][iFile],
                              pszExtension+3 );
                 else
-                    snprintf( szThisExtension, sizeof(szThisExtension), "%s", 
+                    snprintf( szThisExtension, sizeof(szThisExtension), "%s",
                              CeosExtension[e][iFile] );
 
                 pszFilename = CPLStrdup(
@@ -1773,7 +1773,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             CPLAssert( pszFilename != NULL );
-            if( pszFilename == NULL ) 
+            if( pszFilename == NULL )
                 return NULL;
 
             /* try to open */
@@ -1798,7 +1798,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLDebug( "CEOS", "Opened %s.\n", pszFilename );
 
                 CPL_IGNORE_RET_VAL(VSIFSeekL( process_fp, 0, SEEK_END ));
-                if( ProcessData( process_fp, iFile, psVolume, -1, 
+                if( ProcessData( process_fp, iFile, psVolume, -1,
                                  VSIFTellL( process_fp ) ) == 0 )
                 {
                     switch( iFile )
@@ -1840,9 +1840,9 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
 
-        CPLDebug( "CEOS", 
+        CPLDebug( "CEOS",
                   "Unable to extract CEOS image description\n"
-                  "from %s.", 
+                  "from %s.",
                   poOpenInfo->pszFilename );
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
@@ -1898,7 +1898,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
       default:
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unsupported CEOS image data type %d.\n", 
+                  "Unsupported CEOS image data type %d.\n",
                   psImageDesc->DataType );
         delete poDS;
         return NULL;
@@ -1925,7 +1925,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         for( int iBand = 0; iBand < psImageDesc->NumChannels; iBand++ )
         {
-            poDS->SetBand( poDS->nBands+1, 
+            poDS->SetBand( poDS->nBands+1,
                            new CCPRasterBand( poDS, poDS->nBands+1, eType ) );
         }
 
@@ -1942,15 +1942,15 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         for( int iBand = 0; iBand < psImageDesc->NumChannels; iBand++ )
         {
-            poDS->SetBand( poDS->nBands+1, 
+            poDS->SetBand( poDS->nBands+1,
                            new PALSARRasterBand( poDS, poDS->nBands+1 ) );
         }
 
         /* mark this as a Symmetrized Covariance product if appropriate */
         if ( poDS->GetRasterCount() == 6 ) {
-            poDS->SetMetadataItem( "MATRIX_REPRESENTATION", 
+            poDS->SetMetadataItem( "MATRIX_REPRESENTATION",
                 "SYMMETRIZED_COVARIANCE" );
-        } 
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1964,8 +1964,8 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         for( int iBand = 0; iBand < psImageDesc->NumChannels; iBand++ )
         {
-            poDS->SetBand( poDS->nBands+1, 
-                           new SAR_CEOSRasterBand( poDS, poDS->nBands+1, 
+            poDS->SetBand( poDS->nBands+1,
+                           new SAR_CEOSRasterBand( poDS, poDS->nBands+1,
                                                    eType ) );
         }
     }
@@ -1997,7 +1997,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 nStartData += psImageDesc->ImageDataStart;
                 nStartData += psImageDesc->BytesPerPixel * iBand;
 
-                nPixelOffset = 
+                nPixelOffset =
                     psImageDesc->BytesPerPixel * psImageDesc->NumChannels;
                 nLineOffset = nLineSize;
             }
@@ -2025,10 +2025,10 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 return NULL;
             }
 
-            poDS->SetBand( poDS->nBands+1, 
-                    new RawRasterBand( 
-                        poDS, poDS->nBands+1, fp, 
-                        nStartData, nPixelOffset, nLineOffset, 
+            poDS->SetBand( poDS->nBands+1,
+                    new RawRasterBand(
+                        poDS, poDS->nBands+1, fp,
+                        nStartData, nPixelOffset, nLineOffset,
                         eType, bNative, TRUE ) );
         }
     }
@@ -2065,7 +2065,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 /*                            ProcessData()                             */
 /************************************************************************/
-static int 
+static int
 ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
              vsi_l_offset max_bytes )
 
@@ -2087,7 +2087,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
         if( VSIFSeekL( fp, start, SEEK_SET ) != 0 ||
             VSIFReadL( temp_buffer, 1, CEOS_HEADER_LENGTH, fp ) != CEOS_HEADER_LENGTH )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt CEOS File - cannot read record %d.",
                       iThisRecord );
             CPLFree(temp_body);
@@ -2109,7 +2109,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             }
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Corrupt CEOS File - got record seq# %d instead of the expected %d.",
                           record->Sequence, iThisRecord );
                 CPLFree(record);
@@ -2120,7 +2120,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
         if( record->Length <= CEOS_HEADER_LENGTH )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt CEOS File - cannot read record %d.",
                       iThisRecord );
             CPLFree(record);
@@ -2130,7 +2130,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
         if( record->Length > CurrentBodyLength )
         {
-            unsigned char* temp_body_new = (unsigned char *) 
+            unsigned char* temp_body_new = (unsigned char *)
                     VSI_REALLOC_VERBOSE( temp_body, record->Length );
             if( temp_body_new == NULL )
             {
@@ -2145,7 +2145,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
         int nToRead = record->Length-CEOS_HEADER_LENGTH;
         if( (int)VSIFReadL( temp_body, 1, nToRead,fp) != nToRead )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt CEOS File - cannot read record %d.",
                       iThisRecord );
             CPLFree(record);
@@ -2156,7 +2156,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
         InitCeosRecordWithHeader( record, temp_buffer, temp_body );
         if( record->Length == 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt CEOS File - invalid record %d.",
                       iThisRecord );
             CPLFree(record);

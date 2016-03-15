@@ -160,7 +160,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( psCEOS->nBitsPerPixel != 8 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The CEOS driver cannot handle nBitsPerPixel = %d",
                   psCEOS->nBitsPerPixel );
         CEOSClose(psCEOS);
@@ -180,7 +180,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CEOSClose(psCEOS);
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The CEOS driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;

@@ -206,7 +206,7 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
 }
 
 // -------------------------------------------------------------------------- ;
-// if you change the file format, don't forget to update not only write and 
+// if you change the file format, don't forget to update not only write and
 // read functions, and the file version number, but also the computeNumBytes...
 // and numBytes... functions
 
@@ -323,7 +323,7 @@ bool CntZImage::write(Byte** ppByte,
     {
       // encode tiles to buffer
       float maxVal;
-      if (!writeTiles(zPart, maxZError, bCntsNoInt, numTilesVert, numTilesHori, 
+      if (!writeTiles(zPart, maxZError, bCntsNoInt, numTilesVert, numTilesHori,
 	  bArr, numBytesWritten, maxVal))
         return false;
     }
@@ -830,7 +830,7 @@ bool CntZImage::writeCntTile(Byte** ppByte, int& numBytes,
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::writeZTile(Byte** ppByte, int& numBytes, 
+bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
                            int i0, int i1, int j0, int j1,
                            int numValidPixel,
                            float zMin, float zMax, double maxZError) const
@@ -1205,7 +1205,7 @@ int CntZImage::writeVal(Byte **ppByte, float z, int numBytes) const
 
     short s = (short)z;
     // Calculate numBytes if needed
-    if (0 == numBytes) 
+    if (0 == numBytes)
 	numBytes = (z != (float)s) ? 4 : (s != (signed char)s) ? 2 : 1;
 
     if (4 == numBytes) {

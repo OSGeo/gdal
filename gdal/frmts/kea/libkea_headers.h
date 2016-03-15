@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  Includes libkea headers
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
@@ -50,7 +50,7 @@
 #include "libkea/KEAAttributeTableInMem.h"
 
 #ifdef _MSC_VER
-#pragma warning( pop ) 
+#pragma warning( pop )
 #endif
 
 

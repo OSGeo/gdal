@@ -4,7 +4,7 @@
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Public (C callable) interface for the Erdas Imagine reading
  *           code.  This include files, and it's implementing code depends
- *           on CPL, but not GDAL. 
+ *           on CPL, but not GDAL.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -105,7 +105,7 @@ typedef struct {
 
 typedef struct {
 	Eprj_ProType proType;		/* projection type */
-	int proNumber;			/* projection number for internal 
+	int proNumber;			/* projection number for internal
 					   projections */
 	char * proExeName;	/* projection executable name for
 					   EXTERNal projections */
@@ -156,7 +156,7 @@ CPLErr HFADelete( const char *pszFilename );
 CPLErr HFARenameReferences( HFAHandle, const char *, const char * );
 
 HFAHandle CPL_DLL HFACreateLL( const char *pszFilename );
-HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize, 
+HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize,
                              int nBands, EPTType eDataType, char ** papszOptions );
 const char CPL_DLL *HFAGetIGEFilename( HFAHandle );
 CPLErr  CPL_DLL HFAFlush( HFAHandle );
@@ -177,36 +177,36 @@ CPLErr CPL_DLL HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
 CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
                                  int *pnBands );
 CPLErr CPL_DLL HFAGetBandInfo( HFAHandle hHFA, int nBand, EPTType* peDataType,
-                               int * pnBlockXSize, int * pnBlockYSize, 
+                               int * pnBlockXSize, int * pnBlockYSize,
                                int *pnCompressionType );
 int    CPL_DLL HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfValue );
 CPLErr CPL_DLL HFASetBandNoData( HFAHandle hHFA, int nBand, double dfValue );
 int    CPL_DLL HFAGetOverviewCount( HFAHandle hHFA, int nBand );
-CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
+CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview,
                                    int * pnXSize, int * pnYSize,
                                    int * pnBlockXSize, int * pnBlockYSize,
                                    EPTType * peHFADataType );
-CPLErr CPL_DLL HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, 
+CPLErr CPL_DLL HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock,
                                   int nYBlock, void * pData );
-CPLErr CPL_DLL HFAGetRasterBlockEx( HFAHandle hHFA, int nBand, int nXBlock, 
+CPLErr CPL_DLL HFAGetRasterBlockEx( HFAHandle hHFA, int nBand, int nXBlock,
                                     int nYBlock, void * pData, int nDataSize );
-CPLErr CPL_DLL HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, 
+CPLErr CPL_DLL HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand,
                                           int iOverview,
                                    int nXBlock, int nYBlock, void * pData );
-CPLErr CPL_DLL HFAGetOverviewRasterBlockEx( HFAHandle hHFA, int nBand, 
+CPLErr CPL_DLL HFAGetOverviewRasterBlockEx( HFAHandle hHFA, int nBand,
                                           int iOverview,
                                    int nXBlock, int nYBlock, void * pData, int nDataSize );
-CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand, 
+CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand,
                                   int nXBlock, int nYBlock,
                                   void * pData );
-CPLErr CPL_DLL HFASetOverviewRasterBlock( 
-    HFAHandle hHFA, int nBand, int iOverview,int nXBlock, int nYBlock, 
+CPLErr CPL_DLL HFASetOverviewRasterBlock(
+    HFAHandle hHFA, int nBand, int iOverview,int nXBlock, int nYBlock,
     void * pData );
 const char * HFAGetBandName( HFAHandle hHFA, int nBand );
 void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName );
 int     CPL_DLL HFAGetDataTypeBits( EPTType eDataType );
 const char CPL_DLL *HFAGetDataTypeName( EPTType eDataType );
-CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
+CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *,
                            double **, double **, double ** , double **,
                            double **);
 CPLErr  CPL_DLL HFASetPCT( HFAHandle, int, int, double *, double *, double *, double * );
@@ -218,14 +218,14 @@ CPLErr  CPL_DLL HFASetMetadata( HFAHandle hHFA, int nBand, char ** );
 char  CPL_DLL **HFAGetClassNames( HFAHandle hHFA, int nBand );
 
 int CPL_DLL
-HFAReadXFormStack( HFAHandle psInfo, 
+HFAReadXFormStack( HFAHandle psInfo,
                    Efga_Polynomial **ppasPolyListForward,
                    Efga_Polynomial **ppasPolyListReverse );
 CPLErr CPL_DLL
 HFAWriteXFormStack( HFAHandle psInfo, int nBand, int nXFormCount,
                     Efga_Polynomial **ppasPolyListForward,
                     Efga_Polynomial **ppasPolyListReverse );
-int CPL_DLL 
+int CPL_DLL
 HFAEvaluateXFormStack( int nStepCount, int bForward,
                        Efga_Polynomial *pasPolyList,
                        double *pdfX, double *pdfY );

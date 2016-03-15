@@ -33,13 +33,13 @@
 
 CPL_CVSID("$Id$");
 
-CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename, 
+CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
                              GDALDataset *poParentDS,
                              GDALDataset **ppoODS,
                              int nBands, int *panBandList,
-                             int nNewOverviews, int *panNewOverviewList, 
-                             const char *pszResampling, 
-                             GDALProgressFunc pfnProgress, 
+                             int nNewOverviews, int *panNewOverviewList,
+                             const char *pszResampling,
+                             GDALProgressFunc pfnProgress,
                              void *pProgressData )
 
 {
@@ -57,7 +57,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
 
         for( iBand = 0; iBand < nBands; iBand++ )
         {
-            GDALRasterBand *poBand = 
+            GDALRasterBand *poBand =
                 poParentDS->GetRasterBand( panBandList[iBand] );
 
             if( iBand == 0 )
@@ -66,7 +66,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
             {
                 if( eDT != poBand->GetRasterDataType() )
                 {
-                    CPLError( CE_Failure, CPLE_NotSupported, 
+                    CPLError( CE_Failure, CPLE_NotSupported,
                               "HFAAuxBuildOverviews() doesn't support a mixture of band"
                               " data types." );
                     return CE_Failure;
@@ -82,22 +82,22 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
         GDALDriver *poHFADriver = (GDALDriver *) GDALGetDriverByName("HFA");
         if (poHFADriver == NULL)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "HFA driver is unavailable." );
             return CE_Failure;
         }
 
-        const char *apszOptions[4] = { "COMPRESSED=YES", "AUX=YES", 
+        const char *apszOptions[4] = { "COMPRESSED=YES", "AUX=YES",
                                        NULL, NULL };
 
         CPLString osDepFileOpt = "DEPENDENT_FILE=";
         osDepFileOpt += CPLGetFilename(poParentDS->GetDescription());
         apszOptions[2] = osDepFileOpt.c_str();
 
-        *ppoODS = 
-            poHFADriver->Create( pszOvrFilename, 
-                                 poParentDS->GetRasterXSize(), 
-                                 poParentDS->GetRasterYSize(), 
+        *ppoODS =
+            poHFADriver->Create( pszOvrFilename,
+                                 poParentDS->GetRasterXSize(),
+                                 poParentDS->GetRasterYSize(),
                                  poParentDS->GetRasterCount(), eDT, (char **)apszOptions );
 
         if( *ppoODS == NULL )
@@ -116,7 +116,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
     CPLString oAdjustedResampling = "NO_REGEN:";
     oAdjustedResampling += pszResampling;
 
-    CPLErr eErr = 
+    CPLErr eErr =
         (*ppoODS)->BuildOverviews( oAdjustedResampling,
                                    nNewOverviews, panNewOverviewList,
                                    nBands, panBandList,
@@ -124,4 +124,3 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
 
     return eErr;
 }
-

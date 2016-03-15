@@ -122,7 +122,7 @@ class PLMosaicDataset : public GDALPamDataset
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -219,18 +219,18 @@ CPLErr PLMosaicRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GDALDataset *poMetaTileDS = poMOSDS->GetMetaTile(meta_tile_x, meta_tile_y);
     if( poMetaTileDS == NULL )
     {
-        memset(pImage, 0, 
+        memset(pImage, 0,
                nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType)/8));
         return CE_None;
     }
 
     return poMetaTileDS->GetRasterBand(nBand)->
-                RasterIO( GF_Read, 
+                RasterIO( GF_Read,
                         sub_tile_x * nBlockXSize,
                         sub_tile_y * nBlockYSize,
                         nBlockXSize,
                         nBlockYSize,
-                        pImage, nBlockXSize, nBlockYSize, 
+                        pImage, nBlockXSize, nBlockYSize,
                         eDataType, 0, 0, NULL);
 }
 
@@ -463,7 +463,7 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
         CPLString osURL(pszURL);
         if( osURL[osURL.size()-1 ] == '/' )
             osURL.resize(osURL.size()-1);
-        GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE); 
+        GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE);
         if( pabyBuf )
         {
             psResult->pabyData = reinterpret_cast<GByte *>(
@@ -684,7 +684,7 @@ static void ReplaceSubString(CPLString &osTarget,
     if( pos == CPLString::npos )
         return;
 
-    osTarget.replace(pos, osPattern.size(), osReplacement); 
+    osTarget.replace(pos, osPattern.size(), osReplacement);
 }
 
 /************************************************************************/
@@ -1178,7 +1178,7 @@ GDALDataset* PLMosaicDataset::OpenAndInsertNewDataset(CPLString osTmpFilename,
 GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 {
     const CPLString osTilename = formatTileName(tile_x, tile_y);
-    std::map<CPLString,PLLinkedDataset*>::const_iterator it = 
+    std::map<CPLString,PLLinkedDataset*>::const_iterator it =
                                                     oMapLinkedDatasets.find(osTilename);
     if( it == oMapLinkedDatasets.end() )
     {
@@ -1474,20 +1474,20 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 CPLErr  PLMosaicDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg)
 {
     if( bUseTMSForMain && poTMSDS )
-        return poTMSDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+        return poTMSDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                   pData, nBufXSize, nBufYSize,
                                   eBufType, nBandCount, panBandMap,
                                   nPixelSpace, nLineSpace, nBandSpace,
                                   psExtraArg );
 
-    return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+    return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                pData, nBufXSize, nBufYSize,
                                eBufType, nBandCount, panBandMap,
                                nPixelSpace, nLineSpace, nBandSpace,

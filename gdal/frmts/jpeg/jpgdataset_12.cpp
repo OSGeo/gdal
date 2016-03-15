@@ -31,7 +31,7 @@
 
 #undef ENABLE_LIBJPEG_NO_RETURN
 
-#define LIBJPEG_12_PATH   "libjpeg12/jpeglib.h" 
+#define LIBJPEG_12_PATH   "libjpeg12/jpeglib.h"
 #define JPGDataset        JPGDataset12
 #define GDALJPEGErrorStruct     GDALJPEGErrorStruct12
 #define jpeg_vsiio_src    jpeg_vsiio_src_12

@@ -20,7 +20,7 @@ if test $# -eq 0; then
 	usage 1 1>&2
 fi
 
-case $1 in 
+case $1 in
   --libs)
     echo $CONFIG_LIBS
     ;;
@@ -52,7 +52,7 @@ case $1 in
   --gnm-enabled)
     echo $CONFIG_GNM_ENABLED
     ;;
-    
+
   --formats)
     echo $CONFIG_FORMATS
     ;;

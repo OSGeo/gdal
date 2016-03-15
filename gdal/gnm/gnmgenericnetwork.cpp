@@ -223,8 +223,8 @@ CPLErr GNMGenericNetwork::AddFeatureGlobalFID(GNMGFID nFID,
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID, 
-                                          GNMGFID nConGFID, double dfCost, 
+CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
+                                          GNMGFID nConGFID, double dfCost,
                                           double dfInvCost, GNMDirection eDir)
 {
     if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
@@ -295,7 +295,7 @@ CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID, 
+CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
                                              GNMGFID nConGFID)
 {
     if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
@@ -344,7 +344,7 @@ CPLErr GNMGenericNetwork::DisconnectFeaturesWithId(GNMGFID nFID)
     m_poGraphLayer->ResetReading();
     OGRFeature* poFeature;
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
-    {       
+    {
         if(m_poGraphLayer->DeleteFeature(poFeature->GetFID()) != CE_None)
         {
             OGRFeature::DestroyFeature( poFeature );
@@ -534,7 +534,7 @@ char **GNMGenericNetwork::GetRules() const
 }
 
 CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
-                                               double dfTolerance, double dfCost, 
+                                               double dfTolerance, double dfCost,
                                                double dfInvCost, GNMDirection eDir)
 {
     if( CSLCount(papszLayerList) < 2 )
@@ -591,7 +591,7 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
                     const OGRLineString* poLineString =
                                                   (const OGRLineString*) poGeom;
                     ConnectPointsByLine(poFeature->GetFID(), poLineString,
-                                        paPointLayers, dfTolerance, dfCost, 
+                                        paPointLayers, dfTolerance, dfCost,
                                         dfInvCost, eDir);
                 }
                 else if( eType == wkbMultiLineString)
@@ -861,7 +861,7 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
 void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
                                     const OGRMultiLineString* poMultiLineString,
                                     const std::vector<OGRLayer*>& paPointLayers,
-                                    double dfTolerance, double dfCost, 
+                                    double dfTolerance, double dfCost,
                                     double dfInvCost, GNMDirection eDir)
 {
     VALIDATE_POINTER0(poMultiLineString,
@@ -870,7 +870,7 @@ void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
     {
         const OGRLineString* poLinestring =
                 (OGRLineString*)poMultiLineString->getGeometryRef(i);
-        ConnectPointsByLine(nFID, poLinestring, paPointLayers, dfTolerance, 
+        ConnectPointsByLine(nFID, poLinestring, paPointLayers, dfTolerance,
                             dfCost, dfInvCost, eDir);
     }
 }
@@ -878,7 +878,7 @@ void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
 void GNMGenericNetwork::ConnectPointsByLine(GIntBig nFID,
                                     const OGRLineString* poLineString,
                                     const std::vector<OGRLayer*>& paPointLayers,
-                                    double dfTolerance, double dfCost, 
+                                    double dfTolerance, double dfCost,
                                     double dfInvCost, GNMDirection eDir)
 {
     VALIDATE_POINTER0(poLineString, "GNMGenericNetwork::ConnectPointsByLine");
@@ -889,15 +889,15 @@ void GNMGenericNetwork::ConnectPointsByLine(GIntBig nFID,
 
     GNMGFID nSrcFID = FindNearestPoint(&oStartPoint, paPointLayers, dfHalfTolerance);
     GNMGFID nTgtFID = FindNearestPoint(&oEndPoint, paPointLayers, dfHalfTolerance);
-    
+
     if(nSrcFID == -1 || nTgtFID == -1)
         return;
-    
+
     // connect nSrcFID with nTgtFID via nFID
     ConnectFeatures(nSrcFID, nTgtFID, (GNMGFID)nFID, dfCost, dfInvCost, eDir);
 }
 
-GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint, 
+GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
                                     const std::vector<OGRLayer*>& paPointLayers,
                                     double dfTolerance)
 {
@@ -908,11 +908,11 @@ GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
     double dfMaxY = poPoint->getY() + dfTolerance;
 
     OGRFeature *poFeature;
-    
+
     for(size_t i = 0; i < paPointLayers.size(); ++i)
     {
         OGRLayer *poLayer = paPointLayers[i];
-    
+
         poLayer->SetSpatialFilterRect(dfMinX, dfMinY,
                                       dfMaxX, dfMaxY);
         poLayer->ResetReading();
@@ -923,7 +923,7 @@ GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
             return nRetFID;
         }
     }
-    
+
     return -1;
 }
 
@@ -1135,8 +1135,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
             }
             OGRFeature::DestroyFeature(poFeature);
         }
-    }    
-
+    }
 
     m_poMetadataLayer = pMetadataLayer;
 

@@ -6,7 +6,7 @@
 /* from ogrsdedatasource.cpp                                            */
 /************************************************************************/
 
-void IssueSDEError( int nErrorCode, 
+void IssueSDEError( int nErrorCode,
                     const char *pszFunction )
 
 {
@@ -17,8 +17,8 @@ void IssueSDEError( int nErrorCode,
 
     SE_error_get_string( nErrorCode, szErrorMsg );
 
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "%s: %d/%s", 
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "%s: %d/%s",
               pszFunction, nErrorCode, szErrorMsg );
 }
 
@@ -46,13 +46,13 @@ void IssueSDEExtendedError ( int nErrorCode,
     if (connection || stream) {
         CPLError ( CE_Failure, CPLE_AppDefined,
                    "%s: %d/%s ---- %s ---- %s ---- %s ---- %s",
-                   pszFunction, nErrorCode, szErrorMsg, 
+                   pszFunction, nErrorCode, szErrorMsg,
                    err.sde_error, err.ext_error,
-                   err.err_msg1, err.err_msg2 );           
+                   err.err_msg1, err.err_msg2 );
 
     } else {
         CPLError ( CE_Failure, CPLE_AppDefined,
            "%s: %d/%s",
            pszFunction, nErrorCode, szErrorMsg );
-    } 
+    }
 }
