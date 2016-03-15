@@ -86,7 +86,7 @@ template<typename T> void NearByFour(T *buff, int xsz, int ysz, T ndv) {
 
 // Scales by 2x2 using averaging
 // There are lots of these AverageByFour templates, because some types have to be treated
-// slightly different than others.  Some could be folded by using is_integral(), 
+// slightly different than others.  Some could be folded by using is_integral(),
 // but support is not universal
 // There are two categories, depending on NoData presence
 //
@@ -243,12 +243,12 @@ template<> void AverageByFour<double>(double *buff, int xsz, int ysz, double ndv
 /*
  *\brief Patches an overview for the selected area
  * arguments are in blocks in the source level, if toTheTop is false it only does the next level
- * It will read adjacent blocks if they are needed, so actual area read might be padded by one block in 
+ * It will read adjacent blocks if they are needed, so actual area read might be padded by one block in
  * either side
  */
 
 CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
-				      int Width,int Height, 
+				      int Width,int Height,
 				      int srcLevel, int recursive,
 				      int sampling_mode)
 {
@@ -437,13 +437,13 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
 
 	    // Mark the input data as no longer needed, saves RAM
 	    for (int band=0; band<bands; band++)
-		src_b[band]->FlushCache(); 
+		src_b[band]->FlushCache();
 	}
     }
 
     CPLFree(buffer);
 
-    for (int band=0; band<bands; band++) 
+    for (int band=0; band<bands; band++)
 	dst_b[band]->FlushCache(); // Commit the output to disk
 
     if (!recursive)
@@ -452,4 +452,3 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
 }
 
 NAMESPACE_MRF_END
-

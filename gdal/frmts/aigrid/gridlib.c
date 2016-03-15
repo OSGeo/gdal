@@ -40,7 +40,7 @@ CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 /*      Process a block using ``00'' (32 bit) raw format.               */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
                                      int nBlockXSize, int nBlockYSize,
                                      float * pafData )
@@ -54,7 +54,7 @@ CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect raw data.                                               */
 /* -------------------------------------------------------------------- */
@@ -73,7 +73,7 @@ CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
         ((GByte *) &fWork)[2] = *(pabyCur++);
         ((GByte *) &fWork)[3] = *(pabyCur++);
 #endif
-        
+
         pafData[i] = fWork;
     }
 
@@ -86,7 +86,7 @@ CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*      Process a block using ``00'' constant 32bit integer format.     */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
                                 int nBlockXSize, int nBlockYSize,
                                 GInt32 * panData )
@@ -96,7 +96,7 @@ CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
 
     (void) pabyCur;
     (void) nDataSize;
-    
+
 /* -------------------------------------------------------------------- */
 /*	Apply constant min value.					*/
 /* -------------------------------------------------------------------- */
@@ -129,7 +129,7 @@ static GInt32 AIGSaturatedAdd(GInt32 nVal, GInt32 nAdd)
 /*      Process a block using ``20'' (thirty two bit) raw format.        */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                                 int nBlockXSize, int nBlockYSize,
                                 GInt32 * panData )
@@ -142,7 +142,7 @@ CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect raw data.                                               */
 /* -------------------------------------------------------------------- */
@@ -163,7 +163,7 @@ CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*      Process a block using ``10'' (sixteen bit) raw format.          */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                                 int nBlockXSize, int nBlockYSize,
                                 GInt32 * panData )
@@ -176,7 +176,7 @@ CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect raw data.                                               */
 /* -------------------------------------------------------------------- */
@@ -195,7 +195,7 @@ CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*      Process a block using ``08'' raw format.                        */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                                int nBlockXSize, int nBlockYSize,
                                GInt32 * panData )
@@ -207,8 +207,8 @@ CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
-    } 
-    
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect raw data.                                               */
 /* -------------------------------------------------------------------- */
@@ -229,7 +229,7 @@ CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*      Process a block using ``0x01'' raw format.                      */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
                                int nBlockXSize, int nBlockYSize,
                                GInt32 * panData )
@@ -242,7 +242,7 @@ CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect raw data.                                               */
 /* -------------------------------------------------------------------- */
@@ -263,7 +263,7 @@ CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*      Process a block using ``08'' raw format.                        */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
                         int nBlockXSize, int nBlockYSize, GInt32 * panData )
 
@@ -275,7 +275,7 @@ CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect raw data.                                               */
 /* -------------------------------------------------------------------- */
@@ -293,7 +293,7 @@ CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*      Process a type 0xFF (CCITT RLE) compressed block.               */
 /************************************************************************/
 
-static 
+static
 CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
                           int nBlockXSize, int nBlockYSize,
                           GInt32 * panData )
@@ -311,8 +311,8 @@ CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
     {
         return CE_Failure;
     }
-    
-    eErr = DecompressCCITTRLETile( pabyCur, nDataSize, 
+
+    eErr = DecompressCCITTRLETile( pabyCur, nDataSize,
                                    pabyIntermediate, nDstBytes,
                                    nBlockXSize, nBlockYSize );
     if( eErr != CE_None )
@@ -346,8 +346,8 @@ CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*      Process a block using ``D7'', ``E0'' or ``DF'' compression.     */
 /************************************************************************/
 
-static 
-CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic, 
+static
+CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
                         int nBlockXSize, int nBlockYSize, GInt32 * panData )
 
 {
@@ -365,22 +365,22 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         int	nMarker = *(pabyCur++);
 
         nDataSize--;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Repeat data - four byte data block (0xE0)                       */
 /* -------------------------------------------------------------------- */
         if( nMagic == 0xE0 )
         {
             GInt32	nValue;
-            
+
             if( nMarker + nPixels > nTotPixels )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.",
                           nTotPixels - nPixels, nMarker );
                 return CE_Failure;
             }
-        
+
             if( nDataSize < 4 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
@@ -398,18 +398,18 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
             for( i = 0; i < nMarker; i++ )
                 panData[nPixels++] = nValue;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Repeat data - two byte data block (0xF0)                        */
 /* -------------------------------------------------------------------- */
         else if( nMagic == 0xF0 )
         {
             GInt32	nValue;
-            
+
             if( nMarker + nPixels > nTotPixels )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.",
                           nTotPixels - nPixels, nMarker );
                 return CE_Failure;
             }
@@ -427,7 +427,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
             for( i = 0; i < nMarker; i++ )
                 panData[nPixels++] = nValue;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Repeat data - one byte data block (0xFC)                        */
 /* -------------------------------------------------------------------- */
@@ -437,25 +437,25 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
             if( nMarker + nPixels > nTotPixels )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.",
                           nTotPixels - nPixels, nMarker );
                 return CE_Failure;
             }
-            
+
             if( nDataSize < 1 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
                 return CE_Failure;
             }
-        
+
             nValue = *(pabyCur++) + nMin;
             nDataSize--;
-            
+
             for( i = 0; i < nMarker; i++ )
                 panData[nPixels++] = nValue;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Repeat data - no actual data, just assign minimum (0xDF)        */
 /* -------------------------------------------------------------------- */
@@ -463,16 +463,16 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         {
             if( nMarker + nPixels > nTotPixels )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.",
                           nTotPixels - nPixels, nMarker );
                 return CE_Failure;
             }
-        
+
             for( i = 0; i < nMarker; i++ )
                 panData[nPixels++] = nMin;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Literal data (0xD7): 8bit values.                               */
 /* -------------------------------------------------------------------- */
@@ -480,12 +480,12 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         {
             if( nMarker + nPixels > nTotPixels )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.",
                           nTotPixels - nPixels, nMarker );
                 return CE_Failure;
             }
-        
+
             while( nMarker > 0 && nDataSize > 0 )
             {
                 panData[nPixels++] = *(pabyCur++) + nMin;
@@ -500,15 +500,15 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
         else if( nMagic == 0xCF && nMarker < 128 )
         {
             GInt32	nValue;
-            
+
             if( nMarker + nPixels > nTotPixels )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.",
                           nTotPixels - nPixels, nMarker );
                 return CE_Failure;
             }
-        
+
             while( nMarker > 0 && nDataSize >= 2 )
             {
                 nValue = pabyCur[0] * 256 + pabyCur[1] + nMin;
@@ -529,12 +529,12 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
             if( nMarker + nPixels > nTotPixels )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Run too long in AIGProcessBlock, needed %d values, got %d.", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Run too long in AIGProcessBlock, needed %d values, got %d.",
                           nTotPixels - nPixels, nMarker );
                 return CE_Failure;
             }
-        
+
             while( nMarker > 0 )
             {
                 panData[nPixels++] = ESRI_GRID_NO_DATA;
@@ -551,12 +551,12 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
     if( nPixels < nTotPixels || nDataSize < 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Ran out of data processing block with nMagic=%d.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Ran out of data processing block with nMagic=%d.",
                   nMagic );
         return CE_Failure;
     }
-    
+
     return CE_None;
 }
 
@@ -586,7 +586,7 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
 
         return( CE_None );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the block into memory.                                     */
 /* -------------------------------------------------------------------- */
@@ -603,12 +603,12 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
         return CE_Failure;
     }
 
-    if( VSIFSeekL( fp, nBlockOffset, SEEK_SET ) != 0 
+    if( VSIFSeekL( fp, nBlockOffset, SEEK_SET ) != 0
         || VSIFReadL( pabyRaw, nBlockSize+2, 1, fp ) != 1 )
     {
         memset( panData, 0, nBlockXSize*nBlockYSize*4 );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Read of %d bytes from offset %d for grid block failed.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Read of %d bytes from offset %d for grid block failed.",
                   nBlockSize+2, nBlockOffset );
         CPLFree( pabyRaw );
         return CE_Failure;
@@ -620,22 +620,22 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
     if( nBlockSize != (pabyRaw[0]*256 + pabyRaw[1])*2 )
     {
         memset( panData, 0, nBlockXSize*nBlockYSize*4 );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Block is corrupt, block size was %d, but expected to be %d.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Block is corrupt, block size was %d, but expected to be %d.",
                   (pabyRaw[0]*256 + pabyRaw[1])*2, nBlockSize );
         CPLFree( pabyRaw );
         return CE_Failure;
     }
 
     nDataSize = nBlockSize;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle float files and uncompressed integer files directly.     */
 /* -------------------------------------------------------------------- */
     if( nCellType == AIG_CELLTYPE_FLOAT )
     {
-        AIGProcessRaw32BitFloatBlock( pabyRaw + 2, nDataSize, 0, 
-                                      nBlockXSize, nBlockYSize, 
+        AIGProcessRaw32BitFloatBlock( pabyRaw + 2, nDataSize, 0,
+                                      nBlockXSize, nBlockYSize,
                                       (float *) panData );
         CPLFree( pabyRaw );
 
@@ -686,8 +686,8 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
     if( nMinSize > 4 )
     {
         memset( panData, 0, nBlockXSize*nBlockYSize*4 );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Corrupt 'minsize' of %d in block header.  Read aborted.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Corrupt 'minsize' of %d in block header.  Read aborted.",
                   nMinSize );
         CPLFree( pabyRaw );
         return CE_Failure;
@@ -720,9 +720,9 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
                 nMin = nMin - 256*256*256;
         }
     }
-    
+
     nDataSize -= nMinSize;
-    
+
 /* -------------------------------------------------------------------- */
 /*	Call an appropriate handler depending on magic code.		*/
 /* -------------------------------------------------------------------- */
@@ -772,11 +772,11 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
     {
         eErr = AIGProcessBlock( pabyCur, nDataSize, nMin, nMagic,
                                 nBlockXSize, nBlockYSize, panData );
-        
+
         if( eErr == CE_Failure )
         {
             static int	bHasWarned = FALSE;
-            
+
             for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
                 panData[i] = ESRI_GRID_NO_DATA;
 
@@ -820,7 +820,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
     snprintf( pszHDRFilename, nHDRFilenameLen, "%s/hdr.adf", pszCoverName );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
-    
+
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -844,7 +844,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
     }
 
     CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the block size information.                                */
 /* -------------------------------------------------------------------- */
@@ -856,7 +856,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
     memcpy( &(psInfo->nBlockYSize), abyData+304, 4 );
     memcpy( &(psInfo->dfCellSizeX), abyData+256, 8 );
     memcpy( &(psInfo->dfCellSizeY), abyData+264, 8 );
-    
+
 #ifdef CPL_LSB
     psInfo->nCellType = CPL_SWAP32( psInfo->nCellType );
     psInfo->bCompressed = CPL_SWAP32( psInfo->bCompressed );
@@ -880,7 +880,7 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
 /*      structure with the block offsets, and sizes.                    */
 /************************************************************************/
 
-CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo, 
+CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
                           const char *pszBasename )
 
 {
@@ -899,7 +899,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     snprintf( pszHDRFilename, nHDRFilenameLen, "%s/%sx.adf", psInfo->pszCoverName, pszBasename );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
-    
+
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -923,20 +923,20 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     }
     if( abyHeader[3] == 0x0D && abyHeader[4] == 0x0A )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "w001001x.adf file header has been corrupted by unix to dos text conversion." );
         CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
     }
 
     if( abyHeader[0] != 0x00
-        || abyHeader[1] != 0x00 
+        || abyHeader[1] != 0x00
         || abyHeader[2] != 0x27
         || abyHeader[3] != 0x0A
         || abyHeader[4] != 0xFF
         || abyHeader[5] != 0xFF )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "w001001x.adf file header magic number is corrupt." );
         CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return CE_Failure;
@@ -961,7 +961,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
         return CE_Failure;
     }
     nLength = nValue * 2;
-    if( nLength <= 100 ) 
+    if( nLength <= 100 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AIGReadBlockIndex: Bad length");
@@ -997,7 +997,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /* -------------------------------------------------------------------- */
     psTInfo->panBlockOffset = (GUInt32 *) VSI_MALLOC2_VERBOSE(4, psTInfo->nBlocks);
     psTInfo->panBlockSize = (int *) VSI_MALLOC2_VERBOSE(4, psTInfo->nBlocks);
-    if (psTInfo->panBlockOffset == NULL || 
+    if (psTInfo->panBlockOffset == NULL ||
         psTInfo->panBlockSize == NULL)
     {
         CPLFree( psTInfo->panBlockOffset );
@@ -1070,7 +1070,7 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
     snprintf( pszHDRFilename, nHDRFilenameLen, "%s/dblbnd.adf", pszCoverName );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
-    
+
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -1099,8 +1099,8 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
     CPL_SWAPDOUBLE(adfBound+1);
     CPL_SWAPDOUBLE(adfBound+2);
     CPL_SWAPDOUBLE(adfBound+3);
-#endif    
-    
+#endif
+
     psInfo->dfLLX = adfBound[0];
     psInfo->dfLLY = adfBound[1];
     psInfo->dfURX = adfBound[2];
@@ -1135,7 +1135,7 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
     snprintf( pszHDRFilename, nHDRFilenameLen, "%s/sta.adf", pszCoverName );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
-    
+
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -1164,8 +1164,8 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
     CPL_SWAPDOUBLE(adfStats+1);
     CPL_SWAPDOUBLE(adfStats+2);
     CPL_SWAPDOUBLE(adfStats+3);
-#endif    
-    
+#endif
+
     psInfo->dfMin = adfStats[0];
     psInfo->dfMax = adfStats[1];
     psInfo->dfMean = adfStats[2];
@@ -1173,4 +1173,3 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
 
     return( CE_None );
 }
-

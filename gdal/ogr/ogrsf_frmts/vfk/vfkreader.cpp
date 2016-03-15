@@ -76,7 +76,7 @@ VFKReader::VFKReader(const char *pszFilename)
     m_pszFilename = CPLStrdup(pszFilename);
     m_poFD = VSIFOpen(m_pszFilename, "rb");
     if (m_poFD == NULL) {
-        CPLError(CE_Failure, CPLE_OpenFailed, 
+        CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open file %s.", m_pszFilename);
     }
 }
@@ -173,8 +173,8 @@ int VFKReader::ReadDataBlocks()
                 bInHeader = FALSE; /* 'B' record closes the header section */
 
             pszBlockName = GetDataBlockName(pszLine);
-            if (pszBlockName == NULL) { 
-                CPLError(CE_Failure, CPLE_NotSupported, 
+            if (pszBlockName == NULL) {
+                CPLError(CE_Failure, CPLE_NotSupported,
                          "Corrupted data - line\n%s\n", pszLine);
                 CPLFree(pszLine);
                 return -1;
@@ -325,7 +325,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     delete poNewFeature;
                 }
                 else {
-                    CPLDebug("OGR-VFK", 
+                    CPLDebug("OGR-VFK",
                              "Invalid VFK data record skipped (line %d).\n%s\n", iLine, pszLine);
                     poDataBlockCurrent->SetIncRecordCount(RecordSkipped);
                     delete poNewFeature;
@@ -351,11 +351,11 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
         nSkipped = poDataBlockCurrent->GetRecordCount(RecordSkipped);
         nDupl    = poDataBlockCurrent->GetRecordCount(RecordDuplicated);
         if (nSkipped > 0)
-            CPLError(CE_Warning, CPLE_AppDefined, 
+            CPLError(CE_Warning, CPLE_AppDefined,
                      "%s: %d invalid VFK data records skipped",
                      poDataBlockCurrent->GetName(), nSkipped);
         if (nDupl > 0)
-            CPLError(CE_Warning, CPLE_AppDefined, 
+            CPLError(CE_Warning, CPLE_AppDefined,
                      "%s: %d duplicated VFK data records skipped",
                      poDataBlockCurrent->GetName(), nDupl);
 

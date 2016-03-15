@@ -59,7 +59,7 @@ class AirSARDataset : public GDALPamDataset
 
     CPLErr      LoadLine(int iLine);
 
-    static char  **ReadHeader( VSILFILE * fp, int nFileOffset, 
+    static char  **ReadHeader( VSILFILE * fp, int nFileOffset,
                                const char *pszPrefix, int nMaxLines );
 
   public:
@@ -325,11 +325,11 @@ CPLErr AirSARDataset::LoadLine( int iLine )
 /* -------------------------------------------------------------------- */
 /*      Load raw compressed data.                                       */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL( fp, nDataStart + iLine * nRecordLength, SEEK_SET ) != 0 
+    if( VSIFSeekL( fp, nDataStart + iLine * nRecordLength, SEEK_SET ) != 0
         || ((int) VSIFReadL( pabyCompressedLine, 10, nRasterXSize, fp ))
                  != nRasterXSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Error reading %d bytes for line %d at offset %d.\n%s",
                   nRasterXSize * 10, iLine, nDataStart + iLine * nRecordLength,
                   VSIStrerror( errno ) );
@@ -372,7 +372,7 @@ CPLErr AirSARDataset::LoadLine( int iLine )
 /*      blank record or some zero bytes.                                */
 /************************************************************************/
 
-char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset, 
+char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
                                    const char *pszPrefix, int nMaxLines )
 
 {
@@ -413,7 +413,7 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
             if( szLine[i] != ' ' )
                 bAllSpaces = false;
 
-            if( ((unsigned char *) szLine)[i] > 127 
+            if( ((unsigned char *) szLine)[i] > 127
                 || ((unsigned char *) szLine)[i] < 10 )
                 bHasIllegalChars = true;
         }
@@ -450,7 +450,7 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
 
         if( iPivot == -1 ) // Yikes!
         {
-            CPLDebug( "AIRSAR", "No pivot in line `%s'.", 
+            CPLDebug( "AIRSAR", "No pivot in line `%s'.",
                       szLine );
             CPLAssert( iPivot != -1 );
             break;
@@ -490,7 +490,7 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
 
         snprintf( szPrefixedKeyName, sizeof(szPrefixedKeyName), "%s_%s", pszPrefix, szLine );
 
-        papszHeadInfo = 
+        papszHeadInfo =
             CSLSetNameValue( papszHeadInfo, szPrefixedKeyName, szLine+iValue );
 
     }
@@ -515,7 +515,7 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "RECORD LENGTH IN BYTES") )
         return NULL;
 
-    if( strstr((char *) poOpenInfo->pabyHeader, "COMPRESSED") == NULL 
+    if( strstr((char *) poOpenInfo->pabyHeader, "COMPRESSED") == NULL
         || strstr((char *) poOpenInfo->pabyHeader, "JPL AIRCRAFT") == NULL )
         return NULL;
 
@@ -549,9 +549,9 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Extract some key information.                                   */
 /* -------------------------------------------------------------------- */
 
-    poDS->nRasterXSize = 
+    poDS->nRasterXSize =
         atoi(CSLFetchNameValue(papszMD,"MH_NUMBER_OF_SAMPLES_PER_RECORD"));
-    poDS->nRasterYSize = 
+    poDS->nRasterYSize =
         atoi(CSLFetchNameValue(papszMD,"MH_NUMBER_OF_LINES_IN_IMAGE"));
 
     poDS->nRecordLength = atoi(
@@ -572,10 +572,10 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int nPHOffset = 0;
 
-    if( CSLFetchNameValue( papszMD, 
+    if( CSLFetchNameValue( papszMD,
                            "MH_BYTE_OFFSET_OF_PARAMETER_HEADER" ) != NULL )
     {
-        nPHOffset = atoi(CSLFetchNameValue( 
+        nPHOffset = atoi(CSLFetchNameValue(
                         papszMD, "MH_BYTE_OFFSET_OF_PARAMETER_HEADER"));
         char **papszPHInfo = ReadHeader( poDS->fp, nPHOffset, "PH", 100 );
 
@@ -590,8 +590,8 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( nPHOffset != 0 )
     {
-        char **papszCHInfo = ReadHeader( poDS->fp, 
-                                         nPHOffset+poDS->nRecordLength, 
+        char **papszCHInfo = ReadHeader( poDS->fp,
+                                         nPHOffset+poDS->nRecordLength,
                                          "CH", 18 );
 
         papszMD = CSLInsertStrings( papszMD, CSLCount(papszMD), papszCHInfo );

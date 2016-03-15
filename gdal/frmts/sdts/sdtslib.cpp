@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Various utility functions that apply to all SDTS profiles.
- *           SDTSModId, and SDTSFeature methods. 
+ *           SDTSModId, and SDTSFeature methods.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -110,7 +110,7 @@ int SDTSModId::Set( DDFField *poField )
     const char  *pachData = poField->GetData();
     DDFFieldDefn *poDefn = poField->GetFieldDefn();
 
-    if( poDefn->GetSubfieldCount() >= 2 
+    if( poDefn->GetSubfieldCount() >= 2
         && poDefn->GetSubfield(0)->GetWidth() == 4 )
     {
         memcpy( szModule, pachData, 4 );
@@ -148,7 +148,7 @@ int SDTSModId::Set( DDFField *poField )
                 = poField->GetSubfieldData(poSF, &nBytesRemaining);
             if( pachData != NULL )
             {
-                strncpy( szOBRP, 
+                strncpy( szOBRP,
                         poSF->ExtractStringData( pachData, nBytesRemaining, NULL),
                         sizeof(szOBRP) );
 

@@ -46,31 +46,31 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
     CPLErr ret = CE_None;
     int i;
 
-    if (ret == CE_None) 
+    if (ret == CE_None)
     {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') 
+        if (base_url[0] != '\0')
         {
             /* Try the old name */
             base_url = CPLGetXMLValue(config, "ServerUrl", "");
         }
 
-        if (base_url[0] != '\0') 
+        if (base_url[0] != '\0')
         {
             m_base_url = base_url;
         }
-        else 
+        else
         {
             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, ArcGIS Server mini-driver: ServerURL missing.");
             ret = CE_Failure;
         }
     }
 
-	if (ret == CE_None) 
+	if (ret == CE_None)
 	{
         m_image_format = CPLGetXMLValue(config, "ImageFormat", "png");
         m_transparent = CPLGetXMLValue(config, "Transparent","");
-		// the transparent flag needs to be "true" or "false" 
+		// the transparent flag needs to be "true" or "false"
 		// in lower case according to the ArcGIS Server REST API
         for(i = 0; i < (int)m_transparent.size(); i++)
         {
@@ -80,10 +80,10 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
 		m_layers = CPLGetXMLValue(config, "Layers", "");
     }
 
-	if (ret == CE_None) 
+	if (ret == CE_None)
 	{
 		const char* irs = CPLGetXMLValue(config, "SRS", "102100");
-		
+
 		if (irs != NULL)
 		{
 	        if(STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
@@ -96,7 +96,7 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
 		        m_irs = irs;
 		        m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
 		    }
-		    // TODO: if we have AGS JSON    
+		    // TODO: if we have AGS JSON
 		}
 		m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
 	}
@@ -104,36 +104,36 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
 	if (ret == CE_None)
 	{
         const char *bbox_order = CPLGetXMLValue(config, "BBoxOrder", "xyXY");
-        if (bbox_order[0] != '\0') 
+        if (bbox_order[0] != '\0')
         {
-            for (i = 0; i < 4; ++i) 
+            for (i = 0; i < 4; ++i)
             {
-                if ((bbox_order[i] != 'x') && (bbox_order[i] != 'y') && 
-                    (bbox_order[i] != 'X') && (bbox_order[i] != 'Y')) 
+                if ((bbox_order[i] != 'x') && (bbox_order[i] != 'y') &&
+                    (bbox_order[i] != 'X') && (bbox_order[i] != 'Y'))
                     break;
             }
 
-            if (i == 4) 
+            if (i == 4)
             {
                 m_bbox_order = bbox_order;
-            } 
-            else 
+            }
+            else
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, ArcGIS Server mini-driver: Incorrect BBoxOrder.");
                 ret = CE_Failure;
             }
-        } 
+        }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, ArcGIS Server mini-driver: BBoxOrder missing.");
             ret = CE_Failure;
         }
     }
-	
+
     return ret;
 }
 
-void GDALWMSMiniDriver_AGS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) 
+void GDALWMSMiniDriver_AGS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
 {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 1;
@@ -142,7 +142,7 @@ void GDALWMSMiniDriver_AGS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) 
+void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri)
 {
     *url = m_base_url;
 
@@ -150,8 +150,8 @@ void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageReque
         URLAppend(url, "/export?");
 
     URLAppendF(url, "&f=image");
-    URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f", 
-            GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
+    URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f",
+            GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
     GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
     URLAppendF(url, "&size=%d,%d", iri.m_sx,iri.m_sy);
     URLAppendF(url, "&dpi=");
@@ -174,9 +174,9 @@ void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageReque
     CPLDebug("AGS", "URL = %s\n", url->c_str());
 }
 
-void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url, 
-                                      const GDALWMSImageRequestInfo &iri, 
-                                      CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) 
+void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
+                                      const GDALWMSImageRequestInfo &iri,
+                                      CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
 {
 	ImageRequest(url, iri);
 }
@@ -195,11 +195,11 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
 
     URLAppendF(url, "&f=json");
 
-    double fX = GetBBoxCoord(iri, 'x') + nXInBlock * (GetBBoxCoord(iri, 'X') - 
+    double fX = GetBBoxCoord(iri, 'x') + nXInBlock * (GetBBoxCoord(iri, 'X') -
                 GetBBoxCoord(iri, 'x')) / iri.m_sx;
-    double fY = GetBBoxCoord(iri, 'y') + (iri.m_sy - nYInBlock) * (GetBBoxCoord(iri, 'Y') - 
+    double fY = GetBBoxCoord(iri, 'y') + (iri.m_sy - nYInBlock) * (GetBBoxCoord(iri, 'Y') -
                 GetBBoxCoord(iri, 'y')) / iri.m_sy;
-                
+
     URLAppendF(url, "&geometry=%8f,%8f", fX, fY);
     URLAppendF(url, "&geometryType=esriGeometryPoint");
 
@@ -214,17 +214,17 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
             layers = m_layers;
             layers.replace( layers.find("show"), 4, "all" );
     }
-    
+
     if ( m_layers.find("hide") != std::string::npos )
     {
             layers = "top";
     }
-    
+
     if ( m_layers.find("include") != std::string::npos )
     {
             layers = "top";
     }
-    
+
     if ( m_layers.find("exclude") != std::string::npos )
     {
             layers = "top";
@@ -233,8 +233,8 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
     URLAppendF(url, "&layers=%s", layers.c_str());
 
     URLAppendF(url, "&tolerance=%s", m_identification_tolerance.c_str());
-    URLAppendF(url, "&mapExtent=%.8f,%.8f,%.8f,%.8f", 
-            GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
+    URLAppendF(url, "&mapExtent=%.8f,%.8f,%.8f,%.8f",
+            GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
     GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
     URLAppendF(url, "&imageDisplay=%d,%d,96", iri.m_sx,iri.m_sy);
     URLAppendF(url, "&returnGeometry=false");
@@ -244,14 +244,14 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
 }
 
 
-const char *GDALWMSMiniDriver_AGS::GetProjectionInWKT() 
+const char *GDALWMSMiniDriver_AGS::GetProjectionInWKT()
 {
     return m_projection_wkt.c_str();
 }
 
-double GDALWMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what) 
+double GDALWMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
 {
-    switch (what) 
+    switch (what)
     {
         case 'x': return MIN(iri.m_x0, iri.m_x1);
         case 'y': return MIN(iri.m_y0, iri.m_y1);
@@ -260,4 +260,3 @@ double GDALWMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, c
     }
     return 0.0;
 }
-

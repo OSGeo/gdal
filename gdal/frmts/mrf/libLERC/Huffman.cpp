@@ -161,7 +161,7 @@ bool Huffman::WriteCodeTable(Byte** ppByte) const
 
   if (!BitStuffCodes(&ptr, i0, i1))    // variable length codes, bit stuffed
     return false;
-  
+
   *ppByte = ptr;
   return true;
 }
@@ -265,7 +265,7 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
       m_numBitsToSkipInTree = min(m_numBitsToSkipInTree, len - shift);
     }
   }
-  
+
   int numNodesCreated = 1;
   Node emptyNode((short)-1, 0);
 

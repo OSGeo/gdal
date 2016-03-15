@@ -33,8 +33,8 @@
 #include "cpl_port.h"
 
 int JPGHLP_HeaderMaker( GByte *pabyBuffer,
-                        const int nCols, 
-                        const int nRows, 
-                        const int nComponents, 
+                        const int nCols,
+                        const int nRows,
+                        const int nComponents,
                         const int nRestart,
                         const int nQuality );

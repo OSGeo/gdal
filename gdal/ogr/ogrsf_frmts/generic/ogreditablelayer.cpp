@@ -259,7 +259,7 @@ OGRFeature *OGREditableLayer::GetNextFeature()
         OGRFeature* poRet = Translate(m_poEditableFeatureDefn, poSrcFeature,
                                       true, bHideDeletedFields);
         delete poSrcFeature;
-        
+
         if( (m_poFilterGeom == NULL
              || FilterGeometry( poRet->GetGeomFieldRef(m_iGeomFieldFilter) ) )
             && (m_poAttrQuery == NULL
@@ -284,7 +284,7 @@ OGRErr      OGREditableLayer::SetNextByIndex( GIntBig nIndex )
     {
         return m_poDecoratedLayer->SetNextByIndex(nIndex);
     }
-        
+
     return OGRLayer::SetNextByIndex(nIndex);
 }
 
@@ -295,7 +295,7 @@ OGRErr      OGREditableLayer::SetNextByIndex( GIntBig nIndex )
 OGRFeature *OGREditableLayer::GetFeature( GIntBig nFID )
 {
     if( !m_poDecoratedLayer ) return NULL;
-    
+
     OGRFeature* poSrcFeature;
     bool bHideDeletedFields = true;
     if( m_oSetCreated.find(nFID) != m_oSetCreated.end() ||
@@ -325,7 +325,7 @@ OGRFeature *OGREditableLayer::GetFeature( GIntBig nFID )
 OGRErr      OGREditableLayer::ISetFeature( OGRFeature *poFeature )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    
+
     OGRFeature* poMemFeature = Translate(m_poMemLayer->GetLayerDefn(),
                                          poFeature, false, false);
     OGRErr eErr = m_poMemLayer->SetFeature(poMemFeature);
@@ -341,7 +341,7 @@ OGRErr      OGREditableLayer::ISetFeature( OGRFeature *poFeature )
         poFeature->SetFID(nFID);
     }
     delete poMemFeature;
-    
+
     ResetReading();
 
     return eErr;
@@ -354,7 +354,7 @@ OGRErr      OGREditableLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr      OGREditableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    
+
     if( !m_bStructureModified &&
         m_poDecoratedLayer->TestCapability(OLCSequentialWrite) )
     {
@@ -380,7 +380,7 @@ OGRErr      OGREditableLayer::ICreateFeature( OGRFeature *poFeature )
         poFeature->SetFID(nFID);
     }
     delete poMemFeature;
-    
+
     ResetReading();
 
     return eErr;
@@ -393,7 +393,7 @@ OGRErr      OGREditableLayer::ICreateFeature( OGRFeature *poFeature )
 OGRErr      OGREditableLayer::DeleteFeature( GIntBig nFID )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    
+
     OGRErr eErr;
     if( m_oSetDeleted.find(nFID) != m_oSetDeleted.end() )
     {
@@ -424,9 +424,9 @@ OGRErr      OGREditableLayer::DeleteFeature( GIntBig nFID )
             eErr = OGRERR_NON_EXISTING_FEATURE;
         }
     }
-    
+
     ResetReading();
-    
+
     return eErr;
 }
 
@@ -624,7 +624,7 @@ OGRErr      OGREditableLayer::CreateField( OGRFieldDefn *poField,
                                             int bApproxOK )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-        
+
     // workarounds a bug in certain QGIS versions (2.0 for example)
     SetIgnoredFields(NULL);
 
@@ -642,7 +642,7 @@ OGRErr      OGREditableLayer::CreateField( OGRFieldDefn *poField,
         }
         return eErr;
     }
-    
+
     OGRErr eErr = m_poMemLayer->CreateField(poField, bApproxOK);
     if( eErr == OGRERR_NONE )
     {
@@ -659,10 +659,10 @@ OGRErr      OGREditableLayer::CreateField( OGRFieldDefn *poField,
 OGRErr      OGREditableLayer::DeleteField( int iField )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-        
+
     // workarounds a bug in certain QGIS versions (2.0 for example)
     SetIgnoredFields(NULL);
-    
+
     CPLString osDeletedField;
     if( iField >= 0 && iField < m_poEditableFeatureDefn->GetFieldCount() )
     {
@@ -726,7 +726,7 @@ OGRErr      OGREditableLayer::CreateGeomField( OGRGeomFieldDefn *poField,
                                             int bApproxOK )
 {
     if( !m_poDecoratedLayer || !m_bSupportsCreateGeomField ) return OGRERR_FAILURE;
-        
+
     if( !m_bStructureModified && m_poDecoratedLayer->TestCapability(OLCCreateGeomField) )
     {
         OGRErr eErr = m_poDecoratedLayer->CreateGeomField(poField, bApproxOK);
@@ -740,7 +740,7 @@ OGRErr      OGREditableLayer::CreateGeomField( OGRGeomFieldDefn *poField,
         }
         return eErr;
     }
-    
+
     OGRErr eErr = m_poMemLayer->CreateGeomField(poField, bApproxOK);
     if( eErr == OGRERR_NONE )
     {

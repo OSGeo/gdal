@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL Bridge 
+ * Project:  GDAL Bridge
  * Purpose:  Implementation of GDALBridgeInitialize()
  * Author:   Frank Warmerdam, warmerda@home.com
  *
@@ -68,7 +68,7 @@ static const char *papszSOFilenames[] = {
 /*      list of missing entry points.                                   */
 /************************************************************************/
 
-static void *GBGetSymbolCheck( const char *pszLibrary, 
+static void *GBGetSymbolCheck( const char *pszLibrary,
                                const char *pszSymbolName,
                                char **papszErrorList )
 
@@ -153,9 +153,9 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
             return FALSE;
 
 
-        fprintf( fpReportFailure, 
+        fprintf( fpReportFailure,
                  "GBBridgeInitialize() failed to find an suitable GDAL .DLL/.so file.\n" );
-        fprintf( fpReportFailure, 
+        fprintf( fpReportFailure,
                  "The following filenames were searched for:\n" );
 
         for( iSOFile = 0; papszSOFilenames[iSOFile] != NULL; iSOFile++ )
@@ -174,20 +174,20 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
         fprintf( fpReportFailure, "\n" );
 
         fprintf( fpReportFailure, "\n" );
-#ifdef __unix__        
+#ifdef __unix__
         if( getenv("LD_LIBRARY_PATH") != NULL )
         {
-            fprintf( fpReportFailure, 
+            fprintf( fpReportFailure,
                      "System default locations may be influenced by:\n" );
-            fprintf( fpReportFailure, 
+            fprintf( fpReportFailure,
                      "LD_LIBRARY_PATH = %s\n", getenv("LD_LIBRARY_PATH") );
         }
 #else
         if( getenv("PATH") != NULL )
         {
-            fprintf( fpReportFailure, 
+            fprintf( fpReportFailure,
                      "System default locations may be influenced by:\n" );
-            fprintf( fpReportFailure, 
+            fprintf( fpReportFailure,
                      "PATH = %s\n", getenv("PATH") );
         }
 #endif
@@ -203,7 +203,7 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     GDALGetDataTypeSize = (int (*)(GDALDataType))
         GBGetSymbolCheck( szPath, "GDALGetDataTypeSize", apszFailed );
 
-    GDALAllRegister = (void (*)(void)) 
+    GDALAllRegister = (void (*)(void))
         GBGetSymbolCheck( szPath, "GDALAllRegister", apszFailed );
 
     GDALCreate = (GDALDatasetH (*)(GDALDriverH, const char *, int, int, int,
@@ -354,7 +354,7 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
                                            const char *))
         GBGetSymbolCheck( szPath, "GDALGetMetadataItem", apszFailed );
 
-    GDALSetMetadataItem = (CPLErr (*)(GDALMajorObjectH, const char *, 
+    GDALSetMetadataItem = (CPLErr (*)(GDALMajorObjectH, const char *,
                                       const char *, const char *))
         GBGetSymbolCheck( szPath, "GDALSetMetadataItem", apszFailed );
 
@@ -415,7 +415,7 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     OSRExportToProj4 = (OGRErr (*)(OGRSpatialReferenceH, char **))
         GBGetSymbolCheck( szPath, "OSRExportToProj4", apszFailed );
 
-    OSRSetAttrValue = (OGRErr (*)(OGRSpatialReferenceH, const char *, 
+    OSRSetAttrValue = (OGRErr (*)(OGRSpatialReferenceH, const char *,
                                   const char *))
         GBGetSymbolCheck( szPath, "OSRSetAttrValue", apszFailed );
 
@@ -466,14 +466,14 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     OSRGetInvFlattening = (double (*)(OGRSpatialReferenceH, OGRErr *))
         GBGetSymbolCheck( szPath, "OSRGetInvFlattening", apszFailed );
 
-    OSRSetAuthority = (OGRErr (*)(OGRSpatialReferenceH, const char *, 
+    OSRSetAuthority = (OGRErr (*)(OGRSpatialReferenceH, const char *,
                                   const char *, int))
         GBGetSymbolCheck( szPath, "OSRSetAuthority", apszFailed );
 
     OSRSetProjParm = (OGRErr (*)(OGRSpatialReferenceH, const char *, double))
         GBGetSymbolCheck( szPath, "OSRSetProjParm", apszFailed );
 
-    OSRGetProjParm = (double (*)(OGRSpatialReferenceH, const char *, 
+    OSRGetProjParm = (double (*)(OGRSpatialReferenceH, const char *,
                                  double, OGRErr *))
         GBGetSymbolCheck( szPath, "OSRGetProjParm", apszFailed );
 
@@ -483,16 +483,16 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     OSRGetUTMZone = (int (*)(OGRSpatialReferenceH, int *))
         GBGetSymbolCheck( szPath, "OSRGetUTMZone", apszFailed );
 
-    OCTNewCoordinateTransformation = (OGRCoordinateTransformationH 
+    OCTNewCoordinateTransformation = (OGRCoordinateTransformationH
                      (*)(OGRSpatialReferenceH, OGRSpatialReferenceH))
         GBGetSymbolCheck( szPath, "OCTNewCoordinateTransformation",apszFailed);
 
-    OCTDestroyCoordinateTransformation = 
+    OCTDestroyCoordinateTransformation =
         (void (*)(OGRCoordinateTransformationH))
         GBGetSymbolCheck( szPath, "OCTDestroyCoordinateTransformation",
                           apszFailed );
 
-    OCTTransform = (int (*)(OGRCoordinateTransformationH, int, 
+    OCTTransform = (int (*)(OGRCoordinateTransformationH, int,
                             double *, double *, double *))
         GBGetSymbolCheck( szPath, "OCTTransform", apszFailed );
 
@@ -503,7 +503,7 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     {
         int	iError;
 
-        fprintf( fpReportFailure, 
+        fprintf( fpReportFailure,
                  "While a GDAL .DLL/.so was found at `%s'\n"
                  "it appears to be missing the following entry points.\n"
                  "Consider upgrading to a more recent GDAL library.\n",
@@ -518,5 +518,3 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
 
     return apszFailed[0] == NULL;
 }
-
-

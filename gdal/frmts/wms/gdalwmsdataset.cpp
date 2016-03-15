@@ -373,7 +373,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         }
     }
 
-    // UserPwd 
+    // UserPwd
     const char *pszUserPwd = CPLGetXMLValue(config, "UserPwd", "");
     if (pszUserPwd[0] != '\0')
         m_osUserPwd = pszUserPwd;

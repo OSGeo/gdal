@@ -98,7 +98,7 @@ void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header, uchar *buffer
 int DetermineCeosRecordBodyLength(const uchar *header)
 {
     int i;
-    
+
     if(header)
     {
 	CeosToNative(&i,header+LENGTH_OFF,sizeof( i ), sizeof( i ) );
@@ -259,7 +259,7 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
 	    memcpy(value,temp_buf,field_size);
 	}
 	break;
-	
+
     case 'i':
     case 'I':
 	/* Integer data type */

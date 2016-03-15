@@ -1322,7 +1322,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     OGRSpatialReference *poSRS;
     int		nPCS = KvUserDefined;
     OGRErr      eErr;
-    OGRBoolean peStrStored = FALSE;   
+    OGRBoolean peStrStored = FALSE;
 
     GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
                RasterPixelIsArea);

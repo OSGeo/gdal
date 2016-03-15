@@ -196,7 +196,7 @@ namespace Selafin {
      *   - an integer \a n (therefore on 4 bytes) with the length of the string
      *   - the \a n bytes of the string, preferably in ASCII format
      *   - once again the integer \a n (on 4 bytes)
-     * The function does not check if the last integer is the same as the first one. 
+     * The function does not check if the last integer is the same as the first one.
      * \param fp Pointer to an open file
      * \param pszData After the execution, contains the value read. The structure is allocated by the function.
      * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.

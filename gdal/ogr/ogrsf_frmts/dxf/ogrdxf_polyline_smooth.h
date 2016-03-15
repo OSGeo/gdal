@@ -137,10 +137,10 @@ public:
 
 private:
     void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
-                 double radius, double len, double saggita, 
+                 double radius, double len, double saggita,
                  OGRLineString*, double dfZ = 0.0) const;
 
-    void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&, 
+    void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
                   OGRLineString*, bool bConstantZ, double dfZ) const;
 };
 

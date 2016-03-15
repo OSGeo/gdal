@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  Includes JP2KAK SDK headers
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
@@ -55,12 +55,12 @@
 #include "kdu_image.h"
 #include "roi_sources.h"
 
-// I don't think JPIP support currently works due to changes in 
+// I don't think JPIP support currently works due to changes in
 // classes like kdu_window ... some fixing required if someone wants it.
 // #define USE_JPIP
 
 #ifdef USE_JPIP
-#  include "kdu_client.h" 
+#  include "kdu_client.h"
 #else
 #  define kdu_client void
 #endif

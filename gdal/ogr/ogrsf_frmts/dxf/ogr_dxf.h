@@ -103,7 +103,7 @@ class OGRDXFLayer : public OGRLayer
 
     std::map<CPLString,CPLString> oStyleProperties;
 
-    void                TranslateGenericProperty( OGRFeature *poFeature, 
+    void                TranslateGenericProperty( OGRFeature *poFeature,
                                                   int nCode, char *pszValue );
     void                PrepareLineStyle( OGRFeature *poFeature );
     void                ApplyOCSTransformer( OGRGeometry * );
@@ -175,7 +175,7 @@ public:
     int                 nLastValueSize;
     int                 nLineNumber;
 
-    int                 ReadValue( char *pszValueBuffer, 
+    int                 ReadValue( char *pszValueBuffer,
                                    int nValueBufferSize = 81 );
     void                UnreadValue();
     void                LoadDiskChunk();
@@ -202,7 +202,7 @@ class OGRDXFDataSource : public OGRDataSource
     CPLString           osEncoding;
 
     // indexed by layer name, then by property name.
-    std::map< CPLString, std::map<CPLString,CPLString> > 
+    std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
 
     std::map<CPLString,CPLString> oLineTypeTable;
@@ -239,13 +239,13 @@ class OGRDXFDataSource : public OGRDataSource
     bool                ReadTablesSection();
     bool                ReadLayerDefinition();
     bool                ReadLineTypeDefinition();
-    const char         *LookupLayerProperty( const char *pszLayer, 
+    const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
     const char         *LookupLineType( const char *pszName );
 
-    // Header variables. 
+    // Header variables.
     bool               ReadHeaderSection();
-    const char         *GetVariable(const char *pszName, 
+    const char         *GetVariable(const char *pszName,
                                     const char *pszDefault=NULL );
 
     const char         *GetEncoding() { return osEncoding; }
@@ -254,7 +254,7 @@ class OGRDXFDataSource : public OGRDataSource
     int  GetLineNumber() { return oReader.nLineNumber; }
     int  ReadValue( char *pszValueBuffer, int nValueBufferSize = 81 )
         { return oReader.ReadValue( pszValueBuffer, nValueBufferSize ); }
-    void RestartEntities() 
+    void RestartEntities()
         { oReader.ResetReadPointer(iEntitiesSectionOffset); }
     void UnreadValue()
         { oReader.UnreadValue(); }
@@ -385,7 +385,7 @@ class OGRDXFWriterDS : public OGRDataSource
                         OGRDXFWriterDS();
                         ~OGRDXFWriterDS();
 
-    int                 Open( const char * pszFilename, 
+    int                 Open( const char * pszFilename,
                               char **papszOptions );
 
     const char          *GetName() { return osName; }
@@ -395,7 +395,7 @@ class OGRDXFWriterDS : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    OGRLayer           *ICreateLayer( const char *pszName, 
+    OGRLayer           *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );

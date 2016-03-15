@@ -176,7 +176,7 @@ class OGRXPlaneDMELayer : public OGRXPlaneLayer
 
 enum
 {
-    NAVAID_NDB            = 2, 
+    NAVAID_NDB            = 2,
     NAVAID_VOR            = 3, /* VOR, VORTAC or VOR-DME.*/
     NAVAID_LOC_ILS        = 4, /* Localizer that is part of a full ILS */
     NAVAID_LOC_STANDALONE = 5, /* Stand-alone Localizer (LOC), also including a LDA (Landing Directional Aid) or SDF (Simplified Directional Facility) */

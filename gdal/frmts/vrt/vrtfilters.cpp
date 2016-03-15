@@ -71,7 +71,7 @@ void VRTFilteredSource::SetExtraEdgePixels( int nEdgePixels )
 /*                   SetFilteringDataTypesSupported()                   */
 /************************************************************************/
 
-void VRTFilteredSource::SetFilteringDataTypesSupported( int nTypeCount, 
+void VRTFilteredSource::SetFilteringDataTypesSupported( int nTypeCount,
                                                         GDALDataType *paeTypes)
 
 {
@@ -108,9 +108,9 @@ int VRTFilteredSource::IsTypeSupported( GDALDataType eTestType )
 /************************************************************************/
 
 CPLErr
-VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
-                             void *pData, int nBufXSize, int nBufYSize, 
-                             GDALDataType eBufType, 
+VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+                             void *pData, int nBufXSize, int nBufYSize,
+                             GDALDataType eBufType,
                              GSpacing nPixelSpace,
                              GSpacing nLineSpace,
                              GDALRasterIOExtraArg* psExtraArg )
@@ -123,8 +123,8 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( nBufXSize != nXSize || nBufYSize != nYSize )
     {
-        return VRTComplexSource::RasterIO( nXOff, nYOff, nXSize, nYSize, 
-                                           pData, nBufXSize, nBufYSize, 
+        return VRTComplexSource::RasterIO( nXOff, nYOff, nXSize, nYSize,
+                                           pData, nBufXSize, nBufYSize,
                                            eBufType, nPixelSpace, nLineSpace, psExtraArg );
     }
 
@@ -156,7 +156,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     if( IsTypeSupported( eBufType ) )
         eOperDataType = eBufType;
 
-    if( eOperDataType == GDT_Unknown 
+    if( eOperDataType == GDT_Unknown
         && IsTypeSupported( m_poRasterBand->GetRasterDataType() ) )
         eOperDataType = m_poRasterBand->GetRasterDataType();
 
@@ -164,7 +164,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         for( int i = 0; i < m_nSupportedTypesCount; i++ )
         {
-            if( GDALDataTypeUnion( m_aeSupportedTypes[i], eBufType ) 
+            if( GDALDataTypeUnion( m_aeSupportedTypes[i], eBufType )
                 == m_aeSupportedTypes[i] )
             {
                 eOperDataType = m_aeSupportedTypes[i];
@@ -178,7 +178,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
         for( int i = 1; i < m_nSupportedTypesCount; i++ )
         {
-            if( GDALGetDataTypeSize( m_aeSupportedTypes[i] ) 
+            if( GDALGetDataTypeSize( m_aeSupportedTypes[i] )
                 > GDALGetDataTypeSize( eOperDataType ) )
             {
                 eOperDataType = m_aeSupportedTypes[i];
@@ -303,14 +303,14 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         {
             if( nLeftFill != 0 )
                 GDALCopyWords( pabyWorkData + nPixelOffset * nLeftFill
-                               + i * nLineOffset, eOperDataType, 0, 
-                               pabyWorkData + i * nLineOffset, eOperDataType, 
+                               + i * nLineOffset, eOperDataType, 0,
+                               pabyWorkData + i * nLineOffset, eOperDataType,
                                nPixelOffset, nLeftFill );
 
             if( nRightFill != 0 )
                 GDALCopyWords( pabyWorkData + i * nLineOffset
                                + nPixelOffset * (nExtraXSize - nRightFill - 1),
-                               eOperDataType, 0, 
+                               eOperDataType, 0,
                                pabyWorkData + i * nLineOffset
                                + nPixelOffset * (nExtraXSize - nRightFill),
                                eOperDataType, nPixelOffset, nRightFill );
@@ -319,15 +319,15 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
     for( int i = 0; i < nTopFill; i++ )
     {
-        memcpy( pabyWorkData + i * nLineOffset, 
-                pabyWorkData + nTopFill * nLineOffset, 
+        memcpy( pabyWorkData + i * nLineOffset,
+                pabyWorkData + nTopFill * nLineOffset,
                 nLineOffset );
     }
 
     for( int i = nExtraYSize - nBottomFill; i < nExtraYSize; i++ )
     {
-        memcpy( pabyWorkData + i * nLineOffset, 
-                pabyWorkData + (nExtraYSize - nBottomFill - 1) * nLineOffset, 
+        memcpy( pabyWorkData + i * nLineOffset,
+                pabyWorkData + (nExtraYSize - nBottomFill - 1) * nLineOffset,
                 nLineOffset );
     }
 
@@ -408,14 +408,14 @@ void VRTKernelFilteredSource::SetNormalized( int bNormalizedIn )
 /*                             SetKernel()                              */
 /************************************************************************/
 
-CPLErr VRTKernelFilteredSource::SetKernel( int nNewKernelSize, 
+CPLErr VRTKernelFilteredSource::SetKernel( int nNewKernelSize,
                                            double *padfNewCoefs )
 
 {
     if( nNewKernelSize < 1 || (nNewKernelSize % 2) != 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Illegal filtering kernel size %d, must be odd positive number.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal filtering kernel size %d, must be odd positive number.",
                   nNewKernelSize );
         return CE_Failure;
     }
@@ -438,7 +438,7 @@ CPLErr VRTKernelFilteredSource::SetKernel( int nNewKernelSize,
 /************************************************************************/
 
 CPLErr VRTKernelFilteredSource::
-FilterData( int nXSize, int nYSize, GDALDataType eType, 
+FilterData( int nXSize, int nYSize, GDALDataType eType,
             GByte *pabySrcData, GByte *pabyDstData )
 
 {
@@ -451,7 +451,7 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
                   "Unsupported data type (%s) in "
                   "VRTKernelFilteredSource::FilterData()",
                   GDALGetDataTypeName( eType ) );
-        return CE_Failure; 
+        return CE_Failure;
     }
 
     CPLAssert( m_nExtraEdgePixels*2 + 1 == m_nKernelSize ||
@@ -526,7 +526,7 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree, 
+CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
                                          const char *pszVRTPath )
 
 {
@@ -539,7 +539,7 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
     if( nNewKernelSize == 0 )
         return CE_None;
 
-    char **papszCoefItems = 
+    char **papszCoefItems =
         CSLTokenizeString( CPLGetXMLValue(psTree,"Kernel.Coefs","") );
 
     const int nCoefs = CSLCount(papszCoefItems);
@@ -547,9 +547,9 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
     if( nCoefs != nNewKernelSize * nNewKernelSize )
     {
         CSLDestroy( papszCoefItems );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Got wrong number of filter kernel coefficients (%s).\n"
-                  "Expected %d, got %d.", 
+                  "Expected %d, got %d.",
                   CPLGetXMLValue(psTree,"Kernel.Coefs",""),
                   nNewKernelSize * nNewKernelSize, nCoefs );
         return CE_Failure;
@@ -592,12 +592,12 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
     CPLXMLNode *psKernel = CPLCreateXMLNode( psSrc, CXT_Element, "Kernel" );
 
     if( m_bNormalized )
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psKernel, CXT_Attribute, "normalized" ), 
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psKernel, CXT_Attribute, "normalized" ),
             CXT_Text, "1" );
     else
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psKernel, CXT_Attribute, "normalized" ), 
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psKernel, CXT_Attribute, "normalized" ),
             CXT_Text, "0" );
 
     const int nCoefCount = m_nKernelSize * m_nKernelSize;

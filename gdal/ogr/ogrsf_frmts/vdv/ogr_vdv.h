@@ -135,7 +135,7 @@ class OGRVDVWriterLayer: public OGRLayer
 {
     OGRVDVDataSource*   m_poDS;
     OGRFeatureDefn*     m_poFeatureDefn;
-    bool                m_bWritePossible; 
+    bool                m_bWritePossible;
     VSILFILE*           m_fpL;
     bool                m_bOwnFP;
     GIntBig             m_nFeatureCount;

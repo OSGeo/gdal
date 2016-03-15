@@ -162,7 +162,7 @@ int DTEDWriteProfile( DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData);
 
 void DTEDClose( DTEDInfo * );
 
-const char *DTEDCreate( const char *pszFilename, 
+const char *DTEDCreate( const char *pszFilename,
                         int nLevel, int nLLOriginLat, int nLLOriginLong );
 
 /* -------------------------------------------------------------------- */
@@ -170,11 +170,11 @@ const char *DTEDCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 typedef enum {
     DTEDMD_VERTACCURACY_UHL = 1,            /* UHL 29+4, ACC 8+4 */
-    DTEDMD_VERTACCURACY_ACC = 2,           
+    DTEDMD_VERTACCURACY_ACC = 2,
     DTEDMD_SECURITYCODE_UHL = 3,            /* UHL 33+3, DSI 4+1 */
-    DTEDMD_SECURITYCODE_DSI = 4,           
+    DTEDMD_SECURITYCODE_DSI = 4,
     DTEDMD_UNIQUEREF_UHL = 5,               /* UHL 36+12, DSI 65+15*/
-    DTEDMD_UNIQUEREF_DSI = 6,              
+    DTEDMD_UNIQUEREF_DSI = 6,
     DTEDMD_DATA_EDITION = 7,            /* DSI 88+2 */
     DTEDMD_MATCHMERGE_VERSION = 8,      /* DSI 90+1 */
     DTEDMD_MAINT_DATE = 9,              /* DSI 91+4 */
@@ -187,11 +187,11 @@ typedef enum {
     DTEDMD_HORIZACCURACY = 16,          /* ACC 4+4 */
     DTEDMD_REL_HORIZACCURACY = 17,      /* ACC 12+4 */
     DTEDMD_REL_VERTACCURACY = 18,       /* ACC 16+4 */
-    DTEDMD_HORIZDATUM = 19,             /* DSI 145+5 */ 
+    DTEDMD_HORIZDATUM = 19,             /* DSI 145+5 */
     DTEDMD_ORIGINLONG = 20,             /* UHL 5+7 */
     DTEDMD_ORIGINLAT = 21,              /* UHL 13+7 */
     DTEDMD_NIMA_DESIGNATOR = 22,        /* DSI 60 + 5 */
-    DTEDMD_PARTIALCELL_DSI = 23,        /* DSI 289 + 2 */ 
+    DTEDMD_PARTIALCELL_DSI = 23,        /* DSI 289 + 2 */
     DTEDMD_MAX = 23
 } DTEDMetaDataCode;
 
@@ -211,5 +211,3 @@ void  DTEDPtStreamTrimEdgeOnlyTiles( void *hStream );
 CPL_C_END
 
 #endif /* ndef DTED_API_H_INCLUDED */
-
-

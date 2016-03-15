@@ -71,7 +71,7 @@ public:
     }
 
     OGRFeatureDefn* GetGeomTableDefnRef() const { return geomTable; }
-    void            SetGeomTableDefn(OGRFeatureDefn* geomTableIn) 
+    void            SetGeomTableDefn(OGRFeatureDefn* geomTableIn)
     {
         CPLAssert(geomTable == NULL);
         geomTable = geomTableIn;
@@ -120,7 +120,7 @@ public:
     }
 
     OGRFeatureDefn* GetTableDefnRef() const { return poTableDefn; }
-    void            SetTableDefn(OGRFeatureDefn* poTableDefnIn) 
+    void            SetTableDefn(OGRFeatureDefn* poTableDefnIn)
     {
         CPLAssert(poTableDefn == NULL);
         poTableDefn= poTableDefnIn;

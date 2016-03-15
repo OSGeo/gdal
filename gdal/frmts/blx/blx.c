@@ -54,70 +54,70 @@ static const int table1[] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 			,255,255,255,255,255,255,255,255,255,255};
 
 /* { byte, n of bits when compressed, bit pattern << (13-n of bits) } */
-static const int table2[][3] = {{0,2,0}, {255,3,2048}, {1,3,3072}, {2,4,4096}, 
-			  {3,4,4608}, {254,5,5120}, {4,5,5376}, {5,5,5632}, 
-			  {253,6,5888}, {6,6,6016}, {252,6,6144}, {7,6,6272}, 
-			  {251,6,6400}, {8,6,6528}, {9,7,6656}, {250,7,6720}, 
-			  {10,7,6784}, {249,7,6848}, {11,7,6912}, {248,7,6976}, 
-			  {12,8,7040}, {247,8,7072}, {16,8,7104}, {246,8,7136}, 
-			  {13,8,7168}, {245,8,7200}, {14,8,7232}, {244,8,7264}, 
-			  {15,8,7296}, {243,8,7328}, {242,8,7360}, {241,8,7392}, 
-			  {17,9,7424}, {18,9,7440}, {240,9,7456}, {239,9,7472}, 
-			  {19,9,7488}, {238,9,7504}, {20,9,7520}, {237,9,7536}, 
-			  {21,9,7552}, {236,9,7568}, {22,9,7584}, {235,9,7600}, 
-			  {234,9,7616}, {23,9,7632}, {233,9,7648}, {24,10,7664}, 
-			  {232,10,7672}, {231,10,7680}, {25,10,7688}, {230,10,7696}, 
-			  {229,10,7704}, {26,10,7712}, {228,10,7720}, {27,10,7728}, 
-			  {227,10,7736}, {225,10,7744}, {226,10,7752}, {28,10,7760}, 
-			  {29,10,7768}, {224,10,7776}, {30,10,7784}, {31,10,7792}, 
-			  {223,10,7800}, {32,10,7808}, {222,10,7816}, {33,10,7824}, 
-			  {221,11,7832}, {220,11,7836}, {34,11,7840}, {219,11,7844}, 
-			  {35,11,7848}, {218,11,7852}, {256,11,7856}, {36,11,7860}, 
-			  {217,11,7864}, {216,11,7868}, {37,11,7872}, {215,11,7876}, 
-			  {38,11,7880}, {214,11,7884}, {193,11,7888}, {213,11,7892}, 
-			  {39,11,7896}, {128,11,7900}, {212,11,7904}, {40,11,7908}, 
-			  {194,11,7912}, {211,11,7916}, {210,11,7920}, {41,11,7924}, 
-			  {209,11,7928}, {208,11,7932}, {42,11,7936}, {207,11,7940}, 
-			  {43,11,7944}, {195,11,7948}, {206,11,7952}, {205,11,7956}, 
-			  {204,11,7960}, {44,11,7964}, {203,11,7968}, {192,11,7972}, 
-			  {196,11,7976}, {45,11,7980}, {201,11,7984}, {200,11,7988}, 
-			  {197,11,7992}, {202,11,7996}, {127,11,8000}, {199,11,8004}, 
-			  {198,11,8008}, {46,12,8012}, {47,12,8014}, {48,12,8016}, 
-			  {49,12,8018}, {50,12,8020}, {51,12,8022}, {191,12,8024}, 
-			  {52,12,8026}, {183,12,8028}, {53,12,8030}, {54,12,8032}, 
-			  {55,12,8034}, {190,12,8036}, {56,12,8038}, {57,12,8040}, 
-			  {189,12,8042}, {58,12,8044}, {176,12,8046}, {59,12,8048}, 
-			  {126,12,8050}, {60,12,8052}, {188,12,8054}, {61,12,8056}, 
-			  {63,12,8058}, {62,12,8060}, {64,12,8062}, {129,12,8064}, 
-			  {187,12,8066}, {186,12,8068}, {65,12,8070}, {66,12,8072}, 
-			  {185,12,8074}, {184,12,8076}, {68,12,8078}, {174,12,8080}, 
-			  {67,12,8082}, {182,13,8084}, {69,13,8085}, {180,13,8086}, 
-			  {181,13,8087}, {71,13,8088}, {70,13,8089}, {179,13,8090}, 
-			  {125,13,8091}, {72,13,8092}, {130,13,8093}, {178,13,8094}, 
-			  {177,13,8095}, {73,13,8096}, {74,13,8097}, {124,13,8098}, 
-			  {76,13,8099}, {175,13,8100}, {75,13,8101}, {131,13,8102}, 
-			  {132,13,8103}, {79,13,8104}, {77,13,8105}, {123,13,8106}, 
-			  {80,13,8107}, {172,13,8108}, {171,13,8109}, {78,13,8110}, 
-			  {173,13,8111}, {81,13,8112}, {169,13,8113}, {122,13,8114}, 
-			  {82,13,8115}, {133,13,8116}, {168,13,8117}, {84,13,8118}, 
-			  {164,13,8119}, {167,13,8120}, {85,13,8121}, {170,13,8122}, 
-			  {166,13,8123}, {165,13,8124}, {121,13,8125}, {160,13,8126}, 
-			  {134,13,8127}, {136,13,8128}, {161,13,8129}, {120,13,8130}, 
-			  {88,13,8131}, {83,13,8132}, {119,13,8133}, {163,13,8134}, 
-			  {162,13,8135}, {159,13,8136}, {91,13,8137}, {135,13,8138}, 
-			  {90,13,8139}, {86,13,8140}, {137,13,8141}, {87,13,8142}, 
-			  {89,13,8143}, {158,13,8144}, {152,13,8145}, {138,13,8146}, 
-			  {139,13,8147}, {116,13,8148}, {140,13,8149}, {92,13,8150}, 
-			  {96,13,8151}, {157,13,8152}, {153,13,8153}, {97,13,8154}, 
-			  {94,13,8155}, {93,13,8156}, {117,13,8157}, {156,13,8158}, 
-			  {155,13,8159}, {95,13,8160}, {118,13,8161}, {143,13,8162}, 
-			  {151,13,8163}, {142,13,8164}, {104,13,8165}, {100,13,8166}, 
-			  {148,13,8167}, {144,13,8168}, {154,13,8169}, {115,13,8170}, 
-			  {113,13,8171}, {98,13,8172}, {146,13,8173}, {112,13,8174}, 
-			  {145,13,8175}, {149,13,8176}, {141,13,8177}, {150,13,8178}, 
-			  {103,13,8179}, {147,13,8180}, {99,13,8181}, {108,13,8182}, 
-			  {101,13,8183}, {114,13,8184}, {105,13,8185}, {102,13,8186}, 
-			  {107,13,8187}, {109,13,8188}, {110,13,8189}, {111,13,8190}, 
+static const int table2[][3] = {{0,2,0}, {255,3,2048}, {1,3,3072}, {2,4,4096},
+			  {3,4,4608}, {254,5,5120}, {4,5,5376}, {5,5,5632},
+			  {253,6,5888}, {6,6,6016}, {252,6,6144}, {7,6,6272},
+			  {251,6,6400}, {8,6,6528}, {9,7,6656}, {250,7,6720},
+			  {10,7,6784}, {249,7,6848}, {11,7,6912}, {248,7,6976},
+			  {12,8,7040}, {247,8,7072}, {16,8,7104}, {246,8,7136},
+			  {13,8,7168}, {245,8,7200}, {14,8,7232}, {244,8,7264},
+			  {15,8,7296}, {243,8,7328}, {242,8,7360}, {241,8,7392},
+			  {17,9,7424}, {18,9,7440}, {240,9,7456}, {239,9,7472},
+			  {19,9,7488}, {238,9,7504}, {20,9,7520}, {237,9,7536},
+			  {21,9,7552}, {236,9,7568}, {22,9,7584}, {235,9,7600},
+			  {234,9,7616}, {23,9,7632}, {233,9,7648}, {24,10,7664},
+			  {232,10,7672}, {231,10,7680}, {25,10,7688}, {230,10,7696},
+			  {229,10,7704}, {26,10,7712}, {228,10,7720}, {27,10,7728},
+			  {227,10,7736}, {225,10,7744}, {226,10,7752}, {28,10,7760},
+			  {29,10,7768}, {224,10,7776}, {30,10,7784}, {31,10,7792},
+			  {223,10,7800}, {32,10,7808}, {222,10,7816}, {33,10,7824},
+			  {221,11,7832}, {220,11,7836}, {34,11,7840}, {219,11,7844},
+			  {35,11,7848}, {218,11,7852}, {256,11,7856}, {36,11,7860},
+			  {217,11,7864}, {216,11,7868}, {37,11,7872}, {215,11,7876},
+			  {38,11,7880}, {214,11,7884}, {193,11,7888}, {213,11,7892},
+			  {39,11,7896}, {128,11,7900}, {212,11,7904}, {40,11,7908},
+			  {194,11,7912}, {211,11,7916}, {210,11,7920}, {41,11,7924},
+			  {209,11,7928}, {208,11,7932}, {42,11,7936}, {207,11,7940},
+			  {43,11,7944}, {195,11,7948}, {206,11,7952}, {205,11,7956},
+			  {204,11,7960}, {44,11,7964}, {203,11,7968}, {192,11,7972},
+			  {196,11,7976}, {45,11,7980}, {201,11,7984}, {200,11,7988},
+			  {197,11,7992}, {202,11,7996}, {127,11,8000}, {199,11,8004},
+			  {198,11,8008}, {46,12,8012}, {47,12,8014}, {48,12,8016},
+			  {49,12,8018}, {50,12,8020}, {51,12,8022}, {191,12,8024},
+			  {52,12,8026}, {183,12,8028}, {53,12,8030}, {54,12,8032},
+			  {55,12,8034}, {190,12,8036}, {56,12,8038}, {57,12,8040},
+			  {189,12,8042}, {58,12,8044}, {176,12,8046}, {59,12,8048},
+			  {126,12,8050}, {60,12,8052}, {188,12,8054}, {61,12,8056},
+			  {63,12,8058}, {62,12,8060}, {64,12,8062}, {129,12,8064},
+			  {187,12,8066}, {186,12,8068}, {65,12,8070}, {66,12,8072},
+			  {185,12,8074}, {184,12,8076}, {68,12,8078}, {174,12,8080},
+			  {67,12,8082}, {182,13,8084}, {69,13,8085}, {180,13,8086},
+			  {181,13,8087}, {71,13,8088}, {70,13,8089}, {179,13,8090},
+			  {125,13,8091}, {72,13,8092}, {130,13,8093}, {178,13,8094},
+			  {177,13,8095}, {73,13,8096}, {74,13,8097}, {124,13,8098},
+			  {76,13,8099}, {175,13,8100}, {75,13,8101}, {131,13,8102},
+			  {132,13,8103}, {79,13,8104}, {77,13,8105}, {123,13,8106},
+			  {80,13,8107}, {172,13,8108}, {171,13,8109}, {78,13,8110},
+			  {173,13,8111}, {81,13,8112}, {169,13,8113}, {122,13,8114},
+			  {82,13,8115}, {133,13,8116}, {168,13,8117}, {84,13,8118},
+			  {164,13,8119}, {167,13,8120}, {85,13,8121}, {170,13,8122},
+			  {166,13,8123}, {165,13,8124}, {121,13,8125}, {160,13,8126},
+			  {134,13,8127}, {136,13,8128}, {161,13,8129}, {120,13,8130},
+			  {88,13,8131}, {83,13,8132}, {119,13,8133}, {163,13,8134},
+			  {162,13,8135}, {159,13,8136}, {91,13,8137}, {135,13,8138},
+			  {90,13,8139}, {86,13,8140}, {137,13,8141}, {87,13,8142},
+			  {89,13,8143}, {158,13,8144}, {152,13,8145}, {138,13,8146},
+			  {139,13,8147}, {116,13,8148}, {140,13,8149}, {92,13,8150},
+			  {96,13,8151}, {157,13,8152}, {153,13,8153}, {97,13,8154},
+			  {94,13,8155}, {93,13,8156}, {117,13,8157}, {156,13,8158},
+			  {155,13,8159}, {95,13,8160}, {118,13,8161}, {143,13,8162},
+			  {151,13,8163}, {142,13,8164}, {104,13,8165}, {100,13,8166},
+			  {148,13,8167}, {144,13,8168}, {154,13,8169}, {115,13,8170},
+			  {113,13,8171}, {98,13,8172}, {146,13,8173}, {112,13,8174},
+			  {145,13,8175}, {149,13,8176}, {141,13,8177}, {150,13,8178},
+			  {103,13,8179}, {147,13,8180}, {99,13,8181}, {108,13,8182},
+			  {101,13,8183}, {114,13,8184}, {105,13,8185}, {102,13,8186},
+			  {107,13,8187}, {109,13,8188}, {110,13,8189}, {111,13,8190},
 			  {106,13,8191}, {0,0,8192}};
 
 static const int table3[] = {0x20, 0x2f, 0x44, 0x71, 0x95, 0x101};
@@ -131,7 +131,7 @@ STATIC int compress_chunk(unsigned char *inbuf, int inlen, unsigned char *outbuf
     while(next>=0) {
 	/* Find index of input byte in table2 and put it in j */
 	j=0;
-	while(next != table2[j][0]) j++; 
+	while(next != table2[j][0]) j++;
 
 	if(inlen) {
 	    next = *inbuf++;
@@ -182,7 +182,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 
             k = j + ((newdata-table2[j][2]) >> (13-table2[j][1]));
 
-	    if(table2[k][0] == 0x100) 
+	    if(table2[k][0] == 0x100)
 		break;
 	    else {
 		if(outlen>=outbuflen) return -1;
@@ -199,12 +199,12 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 	m += table2[j][1];
 
 	if(m>=19) {
-	    if(m>=8) {	
+	    if(m>=8) {
 		for(i=m>>3; i; i--) {
 		    if(inlen) {
 			reg = (reg << 8) | *inbuf++;
 			inlen--;
-		    } else 
+		    } else
 			reg = reg << 8;
 		}
 	    }
@@ -216,24 +216,24 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
 }
 
 /*
-  Reconstruct a new detail level with double resolution in the horizontal direction 
-  from data from the previous detail level and plus new differential data. 
+  Reconstruct a new detail level with double resolution in the horizontal direction
+  from data from the previous detail level and plus new differential data.
 */
 STATIC blxdata *reconstruct_horiz(blxdata *base, blxdata *diff, unsigned rows, unsigned cols, blxdata *out) {
     unsigned int i,j;
     blxdata tmp;
 
     /* Last column */
-    for(i=0; i<rows; i++)	
+    for(i=0; i<rows; i++)
 	out[2*(cols*i+cols-1)] = diff[cols*i+cols-1] + (((short)(base[cols*i+cols-2]-base[cols*i+cols-1]-1))>>2);
 
     /* Intermediate columns */
-    for(i=0; i<rows; i++)	
+    for(i=0; i<rows; i++)
 	for(j=cols-2; j>0; j--)
 	    out[2*(cols*i+j)] = diff[cols*i+j] + (((short)(base[cols*i+j] + 2*(base[cols*i+j-1]-out[2*(cols*i+j+1)])-3*base[cols*i+j+1]+1))>>3);
 
     /* First column */
-    for(i=0; i<rows; i++)	
+    for(i=0; i<rows; i++)
 	out[2*cols*i] = diff[cols*i] + (((short)(base[cols*i]-base[cols*i+1]+1))>>2);
 
     for(i=0; i<rows; i++)
@@ -247,24 +247,24 @@ STATIC blxdata *reconstruct_horiz(blxdata *base, blxdata *diff, unsigned rows, u
 }
 
 /*
-  Reconstruct a new detail level with double resolution in the vertical direction 
-  from data from the previous detail level and plus new differential data. 
+  Reconstruct a new detail level with double resolution in the vertical direction
+  from data from the previous detail level and plus new differential data.
 */
 STATIC blxdata *reconstruct_vert(blxdata *base, blxdata *diff, unsigned rows, unsigned cols, blxdata *out) {
     unsigned int i,j;
     blxdata tmp;
 
     /* Last row */
-    for(i=0; i<cols; i++)	
+    for(i=0; i<cols; i++)
 	out[2*cols*(rows-1)+i] = diff[cols*(rows-1)+i] + (((short)(base[cols*(rows-2)+i]-base[cols*(rows-1)+i]-1))>>2);
 
     /* Intermediate rows */
-    for(i=0; i<cols; i++)	
+    for(i=0; i<cols; i++)
 	for(j=rows-2; j>0; j--)
 	    out[2*cols*j+i] = diff[cols*j+i] + ((short)((base[cols*j+i] + 2*(base[cols*(j-1)+i]-out[2*cols*(j+1)+i])-3*base[cols*(j+1)+i]+1))>>3);
 
     /* First row */
-    for(i=0; i<cols; i++)	
+    for(i=0; i<cols; i++)
 	out[i] = diff[i] + (((short)(base[i]-base[i+cols]+1))>>2);
 
     for(i=0; i<cols; i++)
@@ -297,12 +297,12 @@ STATIC void decimate_horiz(blxdata *in, unsigned int rows, unsigned int cols, bl
     }
 
     /* Intermediate columns */
-    for(i=0; i<rows; i++) 
-	for(j=1; j<cols/2-1; j++) 
+    for(i=0; i<rows; i++)
+	for(j=1; j<cols/2-1; j++)
 	    diff[cols/2*i+j] -= ((short)(base[cols/2*i+j] + 2*(base[cols/2*i+j-1]-diff[cols/2*i+j+1])-3*base[cols/2*i+j+1]+1))>>3;
 
     /* Last column */
-    for(i=0; i<rows; i++)	
+    for(i=0; i<rows; i++)
 	diff[cols/2*i+cols/2-1] -= ((short)(base[i*cols/2+cols/2-2]-base[i*cols/2+cols/2-1]-1))>>2;
 }
 
@@ -387,7 +387,7 @@ static int get_unsigned_short_be(unsigned char **data) {
 
     result = *(*data+1) | (*(*data)<<8);
     *data+=2;
-    return result; 
+    return result;
 }
 
 static void put_unsigned_short_le(unsigned short data, unsigned char **bufptr) {
@@ -404,7 +404,7 @@ static int get_short(blxcontext_t *ctx, unsigned char **data) {
 
     if(ctx->endian == LITTLEENDIAN)
 	return get_short_le(data);
-    else 
+    else
 	return get_short_be(data);
 }
 
@@ -412,21 +412,21 @@ static int get_unsigned_short(blxcontext_t *ctx, unsigned char **data) {
 
     if(ctx->endian == LITTLEENDIAN)
 	return get_unsigned_short_le(data);
-    else 
+    else
 	return get_unsigned_short_be(data);
 }
 
 static void put_short(blxcontext_t *ctx, short data, unsigned char **bufptr) {
     if(ctx->endian == LITTLEENDIAN)
 	put_short_le(data, bufptr);
-    else 
+    else
 	put_short_be(data, bufptr);
 }
 
 static void put_unsigned_short(blxcontext_t *ctx, unsigned short data, unsigned char **bufptr) {
     if(ctx->endian == LITTLEENDIAN)
 	put_unsigned_short_le(data, bufptr);
-    else 
+    else
 	put_unsigned_short_be(data, bufptr);
 }
 
@@ -442,7 +442,7 @@ static int get_int32(blxcontext_t *ctx, unsigned char **data) {
 
     if(ctx->endian == LITTLEENDIAN)
 	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
-    else 
+    else
 	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
     *data+=4;
     return result.i;
@@ -470,7 +470,7 @@ static int get_unsigned32(blxcontext_t *ctx, unsigned char **data) {
 
     if(ctx->endian == LITTLEENDIAN)
 	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
-    else 
+    else
 	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
     *data+=4;
     return result;
@@ -534,7 +534,7 @@ static void transpose(blxdata *data, int rows, int cols) {
     int i,j;
     blxdata tmp;
 
-    for(i=0; i<rows; i++)	
+    for(i=0; i<rows; i++)
 	for(j=i+1; j<cols; j++) {
 	    tmp=data[i*cols+j];
 	    data[i*cols+j]=data[j*cols+i];
@@ -545,7 +545,7 @@ static void transpose(blxdata *data, int rows, int cols) {
 struct lutentry_s {
     blxdata value;
     int frequency;
-};	
+};
 
 static int lutcmp(const void *aa, const void *bb) {
     const struct lutentry_s *a=aa, *b=bb;
@@ -567,7 +567,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
     int lutsize=0;
 
     int i, j;
-    
+
     lut[0].value = 0;
 
     *p++ = (unsigned char)(side/32-4); /* Resolution */
@@ -576,10 +576,10 @@ int blx_encode_celldata(blxcontext_t *ctx,
     indata_scaled = BLXmalloc(sizeof(blxdata)*side*side);
     vdec = BLXmalloc(sizeof(blxdata)*side*side/2);
     vdiff = BLXmalloc(sizeof(blxdata)*side*side/2);
-    for(cn=0; cn<4; cn++) 
+    for(cn=0; cn<4; cn++)
 	c[cn] = BLXmalloc(sizeof(blxdata)*side*side/4);
     tc1 = BLXmalloc(sizeof(blxdata)*side*side/4);
-    tmpdata = BLXmalloc(5*4*side*side/4); 
+    tmpdata = BLXmalloc(5*4*side*side/4);
 
     /* Scale indata and process undefined values*/
     for(i=0; i<side*side; i++) {
@@ -601,7 +601,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
 	decimate_horiz(vdiff, side/2, side, c[2], c[3]);
 
 	/* For some reason the matrix is transposed if the lut is used for vdec_hdiff */
-	for(i=0; i<side/2; i++)	
+	for(i=0; i<side/2; i++)
 	    for(j=0; j<side/2; j++) {
 		tc1[j*side/2+i] = c[1][i*side/2+j];
 		tc1[i*side/2+j] = c[1][j*side/2+i];
@@ -621,11 +621,11 @@ int blx_encode_celldata(blxcontext_t *ctx,
 		for(j=0; (j<lutsize) && (lut[j].value != clut[i]); j++);
 
 		if(clut[i] != 0) {
-		    if(j==lutsize) {	
-			lut[lutsize].value=clut[i];	
+		    if(j==lutsize) {
+			lut[lutsize].value=clut[i];
 			lut[lutsize].frequency=1;
 			lutsize++;
-			if(lutsize >= 255) 
+			if(lutsize >= 255)
 			    break;
 		    } else
 			lut[j].frequency++;
@@ -638,10 +638,10 @@ int blx_encode_celldata(blxcontext_t *ctx,
 
 		zeros = 0;
 		for(i=0; i<side*side/4; i++) {
-		    if(clut[i] == 0) 
+		    if(clut[i] == 0)
 			zeros++;
 		    if(((zeros>0) && (clut[i]!=0)) || (zeros >= 0x100-lutsize)) {
-			*cout++ = (unsigned char)(0x100-zeros);	
+			*cout++ = (unsigned char)(0x100-zeros);
 			zeros=0;
 		    }
 		    if(clut[i] != 0) {
@@ -649,7 +649,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
 			*cout++ = (unsigned char)j;
 		    }
 		}
-		if(zeros>0) 
+		if(zeros>0)
 		    *cout++ = (unsigned char)(0x100-zeros);
 	    }
 	    /* Use the lookuptable only when it pays off to do do.
@@ -658,14 +658,14 @@ int blx_encode_celldata(blxcontext_t *ctx,
 	    coutsize = (int)(cout-coutstart);
 	    if((lutsize < 255) && (coutsize+2*lutsize+1 < 2*side*side/4) && (level < 4)) {
 		*p++ = (unsigned char)(lutsize+1);
-		for(j=0; j<lutsize; j++) 
+		for(j=0; j<lutsize; j++)
 		    put_short_le(lut[j].value, &p);
 		put_short_le((short)coutsize, &p);
 
 		if(ctx->debug) {
 		    BLXdebug2("n=%d dlen=%d\n", lutsize+1, coutsize);
 		    BLXdebug0("lut={");
-		    for(i=0; i<lutsize; i++) 
+		    for(i=0; i<lutsize; i++)
 			BLXdebug1("%d, ",lut[i].value);
 		    BLXdebug0("}\n");
 		}
@@ -690,8 +690,8 @@ int blx_encode_celldata(blxcontext_t *ctx,
     *p++=0;
 
     BLXfree(indata_scaled);
-    BLXfree(vdec); BLXfree(vdiff); 
-    for(cn=0; cn<4; cn++) 
+    BLXfree(vdec); BLXfree(vdiff);
+    for(cn=0; cn<4; cn++)
 	BLXfree(c[cn]);
     BLXfree(tc1);
     BLXfree(tmpdata);
@@ -715,7 +715,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
     len --;
 
     tmp = (resolution+4)*32;
-    for(l_div=1; l_div<12; l_div++) 
+    for(l_div=1; l_div<12; l_div++)
 	baseside[l_div-1] = tmp >> l_div;
 
     if(side != NULL)
@@ -761,14 +761,14 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
             len --;
 	    linfo[level][c].n = n;
 	    if(n>0) {
-		linfo[level][c].lut = BLXmalloc(sizeof(blxdata)*(n-1));	
+		linfo[level][c].lut = BLXmalloc(sizeof(blxdata)*(n-1));
                 if (len < (int)sizeof(short) * n)
                 {
                     BLXerror0("Cell corrupt");
                     outbuf = NULL;
                     goto error;
                 }
-		for(i=0; i<n-1; i++) 
+		for(i=0; i<n-1; i++)
 		    linfo[level][c].lut[i] = (blxdata)get_short_le(&inptr);
 		linfo[level][c].dlen = get_short_le(&inptr);
                 len -= sizeof(short) * n;
@@ -795,7 +795,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	    if(ctx->debug) {
 		BLXdebug2("n=%d dlen=%d\n", linfo[level][c].n, linfo[level][c].dlen);
 		BLXdebug0("lut={");
-		for(i=0; i<linfo[level][c].n-1; i++) 
+		for(i=0; i<linfo[level][c].n-1; i++)
 		    BLXdebug1("%d, ",linfo[level][c].lut[i]);
 		BLXdebug0("}\n");
 	    }
@@ -814,7 +814,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
                     BLXerror0("Cell corrupt");
                     outbuf = NULL;
                     goto error;
-                }	
+                }
 		for(i=0; i<baseside[level]*baseside[level]; i++)
 		    linfo[level][c].data[i] = (blxdata)get_short(ctx, &inptr);
                 len -= sizeof(short) * baseside[level]*baseside[level];
@@ -847,14 +847,14 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 			linfo[level][c].data[dpos++]=linfo[level][c].lut[v];
                     }
 		}
-                len -= linfo[level][c].dlen;	
+                len -= linfo[level][c].dlen;
 		if(c==1)
-		    transpose(linfo[level][c].data, baseside[level], baseside[level]);	
+		    transpose(linfo[level][c].data, baseside[level], baseside[level]);
 	    }
 	    if(0 && ctx->debug) {
 		BLXdebug1("baseside:%d\n",baseside[level]);
 		BLXdebug0("data={");
-		for(i=0; i<baseside[level]*baseside[level]; i++) 
+		for(i=0; i<baseside[level]*baseside[level]; i++)
 		    BLXdebug1("%d, ",linfo[level][c].data[i]);
 		BLXdebug0("}\n");
 	    }
@@ -875,11 +875,11 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	if(ctx->debug) {
 	    BLXdebug1("baseside:%d\n",baseside[level]);
 	    BLXdebug0("inbase={");
-	    for(i=0; i<baseside[level]*baseside[level]; i++) 
+	    for(i=0; i<baseside[level]*baseside[level]; i++)
 		BLXdebug1("%d, ",linfo[level][0].data[i]);
 	    BLXdebug0("}\n");
 	    BLXdebug0("indiff={");
-	    for(i=0; i<baseside[level]*baseside[level]; i++) 
+	    for(i=0; i<baseside[level]*baseside[level]; i++)
 		BLXdebug1("%d, ",linfo[level][1].data[i]);
 	    BLXdebug0("}\n");
 	}
@@ -887,21 +887,21 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	reconstruct_horiz(linfo[level][0].data, linfo[level][1].data, baseside[level], baseside[level], base);
 	if(ctx->debug) {
 	    BLXdebug0("base={");
-	    for(i=0; i<baseside[level]*baseside[level]; i++) 
+	    for(i=0; i<baseside[level]*baseside[level]; i++)
 		BLXdebug1("%d, ",base[i]);
 	    BLXdebug0("}\n");
 	}
 
-	reconstruct_horiz(linfo[level][2].data, linfo[level][3].data, baseside[level], baseside[level], diff);	
+	reconstruct_horiz(linfo[level][2].data, linfo[level][3].data, baseside[level], baseside[level], diff);
 	if(ctx->debug) {
 	    BLXdebug0("diff={");
-	    for(i=0; i<baseside[level]*baseside[level]; i++) 
+	    for(i=0; i<baseside[level]*baseside[level]; i++)
 		BLXdebug1("%d, ",diff[i]);
 	    BLXdebug0("}\n");
 	}
-	if(level>overviewlevel) 
+	if(level>overviewlevel)
 	    reconstruct_vert(base, diff, baseside[level], 2*baseside[level], linfo[level-1][0].data);
-	else	
+	else
 	    reconstruct_vert(base, diff, baseside[level], 2*baseside[level], outbuf);
     }
 
@@ -922,9 +922,9 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 
 	    l_index += step;
 
-	    if(value & 1) 
+	    if(value & 1)
 		value = (value-1)/2-a;
-	    else	
+	    else
 		value = value/2+a;
 
 	    if(l_index>=cellsize) {
@@ -964,7 +964,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
          BLXfree(diff);
 
     /* Free allocated memory */
-    for(level=4; level >= 0; level--) 
+    for(level=4; level >= 0; level--)
 	for(c=0; c<4; c++) {
 	    if(linfo[level][c].lut)
 		BLXfree(linfo[level][c].lut);
@@ -991,14 +991,14 @@ blxcontext_t *blx_create_context() {
 
     c->zscale = 1;
 
-    c->fillundef = 1;	
+    c->fillundef = 1;
     c->fillundefval = 0;
 
     return c;
 }
 
 void blx_free_context(blxcontext_t *ctx) {
-    if(ctx->cellindex) 
+    if(ctx->cellindex)
 	BLXfree(ctx->cellindex);
 
     BLXfree(ctx);
@@ -1044,7 +1044,7 @@ static void blx_generate_header(blxcontext_t *ctx, unsigned char *header) {
     put_double(ctx, ctx->lon, &hptr); // 20
     put_double(ctx, -ctx->lat, &hptr); // 28
 
-    put_double(ctx, ctx->pixelsize_lon, &hptr);	// 36 
+    put_double(ctx, ctx->pixelsize_lon, &hptr);	// 36
     put_double(ctx, -ctx->pixelsize_lat, &hptr); // 44
 
     put_short(ctx, (short)ctx->minval, &hptr); // 52
@@ -1113,7 +1113,7 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
     }
 
  error:
-    if(uncompbuf) 
+    if(uncompbuf)
 	BLXfree(uncompbuf);
     if(outbuf)
 	BLXfree(outbuf);
@@ -1169,15 +1169,15 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 	signature[1] = get_short_le(&hptr);
 
 	/* Determine if the endianness of the BLX file */
-	if((signature[0] == 0x4) && (signature[1] == 0x66)) 
+	if((signature[0] == 0x4) && (signature[1] == 0x66))
 	    ctx->endian = LITTLEENDIAN;
-	else {	
+	else {
 	    hptr = header;
 	    signature[0] = get_short_be(&hptr);
 	    signature[1] = get_short_be(&hptr);
-	    if((signature[0] == 0x4) && (signature[1] == 0x66)) 
+	    if((signature[0] == 0x4) && (signature[1] == 0x66))
 		ctx->endian = BIGENDIAN;
-	    else 
+	    else
 		goto error;
 	}
 
@@ -1213,7 +1213,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 	ctx->pixelsize_lon = get_double(ctx, &hptr);
 	ctx->pixelsize_lat = -get_double(ctx, &hptr);
 
-	ctx->minval = get_short(ctx, &hptr); 
+	ctx->minval = get_short(ctx, &hptr);
 	ctx->maxval = get_short(ctx, &hptr);
 	ctx->zscale = get_short(ctx, &hptr);
 	ctx->maxchunksize = get_int32(ctx, &hptr);
@@ -1230,7 +1230,7 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 		    goto error;
 		hptr=header;
 
-		ci = &ctx->cellindex[i*ctx->cell_cols + j];	
+		ci = &ctx->cellindex[i*ctx->cell_cols + j];
 		ci->offset = get_unsigned32(ctx, &hptr);
 		ci->datasize = get_unsigned_short(ctx, &hptr);
 		ci->compdatasize = get_unsigned_short(ctx, &hptr);
@@ -1307,7 +1307,7 @@ short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufs
 	chunk = BLXmalloc(ci->datasize);
 	cchunk = BLXmalloc(ci->compdatasize);
 
-	if((chunk == NULL) || (cchunk == NULL)) 
+	if((chunk == NULL) || (cchunk == NULL))
 	    goto error;
 
 	if(BLXfread(cchunk, 1, ci->compdatasize, ctx->fh) != ci->compdatasize)

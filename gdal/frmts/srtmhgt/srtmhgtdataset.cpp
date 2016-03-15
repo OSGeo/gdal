@@ -68,8 +68,8 @@ class SRTMHGTDataset : public GDALPamDataset
 
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset* Open(GDALOpenInfo*);
-    static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                                    int bStrict, char ** papszOptions, 
+    static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
 
 };
@@ -407,13 +407,13 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     const int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "SRTMHGT driver does not support source dataset with zero band.\n");
         return NULL;
     }
     else if (nBands != 1)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "SRTMHGT driver only uses the first band of the dataset.\n");
         if (bStrict)
             return NULL;
@@ -431,7 +431,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 
     if ( ogrsr_input.IsSameGeogCS(&ogrsr_wgs84) == FALSE)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "The source projection coordinate system is %s. Only WGS 84 "
                   "is supported.\nThe SRTMHGT driver will generate a file as "
                   "if the source was WGS 84 projection coordinate system.",
@@ -444,13 +444,13 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     double adfGeoTransform[6];
     if (poSrcDS->GetGeoTransform( adfGeoTransform ) != CE_None)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Source image must have a geo transform matrix.");
         return NULL;
     }
 
     const int nLLOriginLat = static_cast<int>(
-        std::floor(adfGeoTransform[3] 
+        std::floor(adfGeoTransform[3]
               + poSrcDS->GetRasterYSize() * adfGeoTransform[5] + 0.5) );
 
     int nLLOriginLong = static_cast<int>(
@@ -462,7 +462,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
         std::abs(nLLOriginLong - (
             adfGeoTransform[0] + 0.5 * adfGeoTransform[1])) > 1e-10 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                "The corner coordinates of the source are not properly "
                "aligned on plain latitude/longitude boundaries.");
     }
@@ -475,7 +475,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 
     if (!((nXSize == 1201 && nYSize == 1201) || (nXSize == 3601 && nYSize == 3601)))
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Image dimensions should be 1201x1201 or 3601x3601.");
         return NULL;
     }
@@ -491,7 +491,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
              (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
     if (!EQUAL(expectedFileName, CPLGetFilename(pszFilename)))
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Expected output filename is %s.", expectedFileName);
     }
 
@@ -551,7 +551,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
         if( pfnProgress && !pfnProgress( (iY+1) / static_cast<double>( nYSize ),
                                          NULL, pProgressData ) )
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, 
+            CPLError( CE_Failure, CPLE_UserInterrupt,
                         "User terminated CreateCopy()" );
             VSIFCloseL(fp);
             CPLFree( panData );

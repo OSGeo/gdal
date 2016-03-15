@@ -121,7 +121,7 @@ OGRSXFDataSource::~OGRSXFDataSource()
 /*                     CloseFile()                                      */
 /************************************************************************/
 void  OGRSXFDataSource::CloseFile()
-{ 
+{
     if (NULL != fpSXF)
     {
         VSIFCloseL( fpSXF );
@@ -213,7 +213,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
 
-    //read flags 
+    //read flags
     if (ReadSXFInformationFlags(fpSXF, oSXFPassport) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "SXF. Wrong state of the data.");
@@ -274,7 +274,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     //1. Create layers from RSC file or create default set of layers from osm.rsc
 
     if (soRSCRileName.empty())
-    { 
+    {
         CPLError(CE_Warning, CPLE_None, "RSC file for %s not exist", pszFilename);
     }
     else
@@ -384,12 +384,12 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
         passport.sMapSheetName = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
     }
-    
+
     SetMetadataItem("SHEET", passport.sMapSheet);
     SetMetadataItem("SHEET_NAME", passport.sMapSheetName);
-    SetMetadataItem("SHEET_CREATE_DATE", CPLSPrintf( "%.2u-%.2u-%.4u", 
+    SetMetadataItem("SHEET_CREATE_DATE", CPLSPrintf( "%.2u-%.2u-%.4u",
                     passport.dtCrateDate.nDay,
-                    passport.dtCrateDate.nMonth, 
+                    passport.dtCrateDate.nMonth,
                     passport.dtCrateDate.nYear ));
     SetMetadataItem("SXF_VERSION", CPLSPrintf("%u", passport.version));
     SetMetadataItem("SCALE", CPLSPrintf("1 : %u", passport.nScale));
@@ -604,7 +604,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
 
         for (i = 0; i < 8; i++)
         {
-            passport.stMapDescription.stGeoCoords[i] = dfCorners[i] * TO_DEGREES; // to degree 
+            passport.stMapDescription.stGeoCoords[i] = dfCorners[i] * TO_DEGREES; // to degree
         }
 
     }
@@ -681,7 +681,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         passport.stMapDescription.dfFalseEasting = 0;
 
 
-        //adfPrjParams[0] = double(anParams[0]) / 100000000.0; // to radians  
+        //adfPrjParams[0] = double(anParams[0]) / 100000000.0; // to radians
         //adfPrjParams[1] = double(anParams[1]) / 100000000.0;
         //adfPrjParams[2] = double(anParams[2]) / 100000000.0;
         //adfPrjParams[3] = double(anParams[3]) / 100000000.0;
@@ -724,7 +724,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         passport.stMapDescription.dfFalseNorthing = adfParams[4];
         passport.stMapDescription.dfFalseEasting = adfParams[5];
 
-        //adfPrjParams[0] = adfParams[0]; // to radians 
+        //adfPrjParams[0] = adfParams[0]; // to radians
         //adfPrjParams[1] = adfParams[1];
         //adfPrjParams[2] = adfParams[2];
         //adfPrjParams[3] = adfParams[3];
@@ -817,7 +817,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         SetVertCS(iVCS, passport);
         return eErr;
     }
-    else if (iEllips == 9 && iProjSys == 33 && 
+    else if (iEllips == 9 && iProjSys == 33 &&
         passport.stMapDescription.eUnitInPlan == SXF_COORD_MU_DEGREE)
     {
         passport.stMapDescription.pSpatRef = new OGRSpatialReference(SRS_WKT_WGS84);
@@ -1257,27 +1257,27 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         if (bLayerFullName)
         {
             if(LAYER.szName[0] == 0)
-                pszRecoded = CPLStrdup("Unnamed");   
+                pszRecoded = CPLStrdup("Unnamed");
             else if (stRSCFileHeader.nFontEnc == 125)
                 pszRecoded = CPLRecode(LAYER.szName, "KOI8-R", CPL_ENC_UTF8);
             else if (stRSCFileHeader.nFontEnc == 126)
                 pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
             else
                 pszRecoded = CPLStrdup(LAYER.szName);
-            
+
             papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
         else
         {
             if(LAYER.szShortName[0] == 0)
-                pszRecoded = CPLStrdup("Unnamed");   
+                pszRecoded = CPLStrdup("Unnamed");
             else if (stRSCFileHeader.nFontEnc == 125)
                 pszRecoded = CPLRecode(LAYER.szShortName, "KOI8-R", CPL_ENC_UTF8);
             else if (stRSCFileHeader.nFontEnc == 126)
                 pszRecoded = CPLRecode(LAYER.szShortName, "CP1251", CPL_ENC_UTF8);
             else
                 pszRecoded = CPLStrdup(LAYER.szShortName);
-            
+
             papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
         CPLFree(pszRecoded);
@@ -1319,14 +1319,14 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         {
             char* pszRecoded;
             if(OBJECT.szName[0] == 0)
-                pszRecoded = CPLStrdup("Unnamed");   
+                pszRecoded = CPLStrdup("Unnamed");
             else if (stRSCFileHeader.nFontEnc == 125)
                 pszRecoded = CPLRecode(OBJECT.szName, "KOI8-R", CPL_ENC_UTF8);
             else if (stRSCFileHeader.nFontEnc == 126)
                 pszRecoded = CPLRecode(OBJECT.szName, "CP1251", CPL_ENC_UTF8);
             else
                 pszRecoded = CPLStrdup(OBJECT.szName); //already in  CPL_ENC_UTF8
-                
+
             pLayer->AddClassifyCode(OBJECT.nClassifyCode, pszRecoded);
             //printf("%d;%s\n", OBJECT.nClassifyCode, OBJECT.szName);
             CPLFree(pszRecoded);

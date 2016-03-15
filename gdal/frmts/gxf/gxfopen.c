@@ -56,7 +56,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
     int		i;
     int     nLineCount = 0, nReturnLineCount = 0;
     int     bContinuedLine = FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try to read a line.  If we fail or if this isn't a proper       */
 /*      header value then return the failure.                           */
@@ -118,10 +118,10 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
             CSLDestroy(papszReturn);
             return NULL;
         }
-        
+
         pszTrimmedLine = CPLStrdup( pszLine );
 
-        for( i = ((int)nLen)-1; i >= 0 && pszLine[i] == ' '; i-- ) 
+        for( i = ((int)nLen)-1; i >= 0 && pszLine[i] == ' '; i-- )
             pszTrimmedLine[i] = '\0';
 
         if( bContinuedLine )
@@ -149,16 +149,16 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 
         /* Is it a continued line ? */
         bContinuedLine = ( i >= 0 && pszTrimmedLine[i] == '\\' );
-        
+
         CPLFree( pszTrimmedLine );
-        
+
         nNextChar = VSIFGetc( fp );
         if( VSIUngetc( nNextChar, fp ) == EOF)
         {
             CSLDestroy(papszReturn);
             return NULL;
         }
-        
+
         if( nNextChar == '#' )
             pszLine = NULL;
         else
@@ -224,7 +224,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 
     psGXF->dfUnitToMeter = 1.0;
     psGXF->pszTitle = VSIStrdup("");
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the header, one line at a time.                            */
 /* -------------------------------------------------------------------- */
@@ -430,7 +430,7 @@ double GXFParseBase90( GXFInfo_t * psGXF, const char * pszText,
         i++;
     }
 
-    if( bScale ) 
+    if( bScale )
         return( (nValue * psGXF->dfTransformScale) + psGXF->dfTransformOffset);
     else
         return( nValue );
@@ -447,7 +447,7 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
 {
     const char	*pszLine;
     int		nValuesRead = 0, nValuesSought = psGXF->nRawXSize;
-    
+
     if( VSIFSeek( psGXF->fp, iOffset, SEEK_SET ) != 0 )
         return CE_Failure;
 
@@ -467,7 +467,7 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
             while( *pszLine != '\0' && nValuesRead < nValuesSought )
             {
                 int		i;
-                
+
                 /* skip leading white space */
                 for( ; isspace((unsigned char)*pszLine); pszLine++ ) {}
 
@@ -522,11 +522,11 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                         if( nLineLen < psGXF->nGType )
                             return CE_Failure;
                     }
-                    
+
                     nCount = (int) GXFParseBase90( psGXF, pszLine, FALSE);
                     pszLine += psGXF->nGType;
                     nLineLen -= psGXF->nGType;
-                    
+
                     if( nLineLen < psGXF->nGType )
                     {
                         pszLine = CPLReadLine( psGXF->fp );
@@ -537,7 +537,7 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                         if( nLineLen < psGXF->nGType )
                             return CE_Failure;
                     }
-                    
+
                     if( *pszLine == '!' )
                         dfValue = psGXF->dfSetDummyTo;
                     else
@@ -548,7 +548,7 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                         CPLError(CE_Failure, CPLE_AppDefined, "Wrong count value");
                         return CE_Failure;
                     }
-                    
+
                     for( i=0; i < nCount && nValuesRead < nValuesSought; i++ )
                         padfLineBuf[nValuesRead++] = dfValue;
                 }
@@ -631,7 +631,7 @@ CPLErr GXFGetScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
     {
         int	i;
         double	dfTemp;
-        
+
         for( i = psGXF->nRawXSize / 2 - 1; i >= 0; i-- )
         {
             dfTemp = padfLineBuf[i];
@@ -659,7 +659,7 @@ CPLErr GXFGetScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
  *
  * @param hGXF the GXF file handle, as returned from GXFOpen().
  * @param iScanline the scanline to read, zero is the first scanline in the
- * file. 
+ * file.
  * @param padfLineBuf a buffer of doubles into which the scanline pixel
  * values are read.  This must be at least as long as a scanline.
  *
@@ -671,7 +671,7 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
     CPLErr	eErr;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Validate scanline.                                              */
 /* -------------------------------------------------------------------- */
@@ -690,7 +690,7 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
     if( psGXF->panRawLineOffset[iScanline] == 0 )
     {
         int		i;
-        
+
         CPLAssert( iScanline > 0 );
 
         for( i = 0; i < iScanline; i++ )
@@ -729,7 +729,6 @@ static void GXFScanForZMinMax( GXFHandle hGXF )
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
     int		iLine, iPixel;
     double	*padfScanline;
-    
 
     padfScanline = (double *) VSICalloc(sizeof(double),psGXF->nRawXSize);
     if( padfScanline == NULL )
@@ -799,7 +798,7 @@ static void GXFScanForZMinMax( GXFHandle hGXF )
  * in order to establish them.  This can be expensive.
  *
  * If no #DUMMY value was specified in the file, a default of -1e12 is used.
- * 
+ *
  * @param hGXF handle to GXF file returned by GXFOpen().
  * @param pnXSize int to be set with the width of the raw raster.  May be NULL.
  * @param pnYSize int to be set with the height of the raw raster. May be NULL.
@@ -808,7 +807,7 @@ static void GXFScanForZMinMax( GXFHandle hGXF )
  * @param pdfZMax double to set with minimum raster value, may be NULL.
  * @param pdfDummy double to set with dummy (nodata / invalid data) pixel
  * value.
- */ 
+ */
 
 CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
                       int * pnSense, double * pdfZMin, double * pdfZMax,
@@ -831,7 +830,7 @@ CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
     {
         GXFScanForZMinMax( hGXF );
     }
-    
+
     if( pdfZMin != NULL )
         *pdfZMin = psGXF->dfZMinimum;
 
@@ -849,15 +848,15 @@ CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
 /************************************************************************/
 
 /**
- * Return the lines related to the map projection.  It is up to   
- * the caller to parse them and interpret.  The return result    
+ * Return the lines related to the map projection.  It is up to
+ * the caller to parse them and interpret.  The return result
  * will be NULL if no #MAP_PROJECTION line was found in the header.
- * 
+ *
  * @param hGXF the GXF file handle.
  *
  * @return a NULL terminated array of string pointers containing the
  * projection, or NULL.  The strings remained owned by the GXF API, and
- * should not be modified or freed by the caller.  
+ * should not be modified or freed by the caller.
  */
 
 char **GXFGetMapProjection( GXFHandle hGXF )
@@ -871,15 +870,15 @@ char **GXFGetMapProjection( GXFHandle hGXF )
 /************************************************************************/
 
 /**
- * Return the lines related to the datum transformation.  It is up to   
- * the caller to parse them and interpret.  The return result    
+ * Return the lines related to the datum transformation.  It is up to
+ * the caller to parse them and interpret.  The return result
  * will be NULL if no #MAP_DATUM_TRANSFORM line was found in the header.
- * 
+ *
  * @param hGXF the GXF file handle.
  *
  * @return a NULL terminated array of string pointers containing the
  * datum, or NULL.  The strings remained owned by the GXF API, and
- * should not be modified or freed by the caller.  
+ * should not be modified or freed by the caller.
  */
 
 char **GXFGetMapDatumTransform( GXFHandle hGXF )
@@ -916,7 +915,7 @@ char **GXFGetMapDatumTransform( GXFHandle hGXF )
  * @return Returns CE_None if successful, or CE_Failure if no posiitioning
  * information was found in the file.
  */
- 
+
 
 CPLErr GXFGetRawPosition( GXFHandle hGXF,
                           double * pdfXOrigin, double * pdfYOrigin,
@@ -925,7 +924,7 @@ CPLErr GXFGetRawPosition( GXFHandle hGXF,
 
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
-    
+
     if( pdfXOrigin != NULL )
         *pdfXOrigin = psGXF->dfXOrigin;
     if( pdfYOrigin != NULL )
@@ -975,7 +974,7 @@ CPLErr GXFGetRawPosition( GXFHandle hGXF,
  * @return Returns CE_None if successful, or CE_Failure if no posiitioning
  * information was found in the file.
  */
- 
+
 
 CPLErr GXFGetPosition( GXFHandle hGXF,
                        double * pdfXOrigin, double * pdfYOrigin,
@@ -994,7 +993,7 @@ CPLErr GXFGetPosition( GXFHandle hGXF,
         dfCXPixelSize = psGXF->dfXPixelSize;
         dfCYPixelSize = psGXF->dfYPixelSize;
         break;
-        
+
       case GXFS_UR_LEFT:
         dfCXOrigin = psGXF->dfXOrigin
             	     - (psGXF->nRawXSize-1) * psGXF->dfXPixelSize;
@@ -1002,7 +1001,7 @@ CPLErr GXFGetPosition( GXFHandle hGXF,
         dfCXPixelSize = psGXF->dfXPixelSize;
         dfCYPixelSize = psGXF->dfYPixelSize;
         break;
-        
+
       case GXFS_LL_RIGHT:
         dfCXOrigin = psGXF->dfXOrigin;
         dfCYOrigin = psGXF->dfYOrigin
@@ -1010,7 +1009,7 @@ CPLErr GXFGetPosition( GXFHandle hGXF,
         dfCXPixelSize = psGXF->dfXPixelSize;
         dfCYPixelSize = psGXF->dfYPixelSize;
         break;
-        
+
       case GXFS_LR_LEFT:
         dfCXOrigin = psGXF->dfXOrigin
             	     - (psGXF->nRawXSize-1) * psGXF->dfXPixelSize;

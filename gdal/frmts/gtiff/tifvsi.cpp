@@ -47,7 +47,7 @@
 #endif
 
 CPL_C_START
-extern TIFF CPL_DLL * XTIFFClientOpen(const char* name, const char* mode, 
+extern TIFF CPL_DLL * XTIFFClientOpen(const char* name, const char* mode,
                                       thandle_t thehandle,
                                       TIFFReadWriteProc, TIFFReadWriteProc,
                                       TIFFSeekProc, TIFFCloseProc,

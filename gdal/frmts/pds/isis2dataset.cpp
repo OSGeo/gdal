@@ -5,13 +5,13 @@
  * Purpose:  Implementation of ISIS2Dataset
  * Author:   Trent Hare (thare@usgs.gov),
  *           Robert Soricone (rsoricone@usgs.gov)
- *           Ludovic Mercier (ludovic.mercier@gmail.com) 
+ *           Ludovic Mercier (ludovic.mercier@gmail.com)
  *           Frank Warmerdam (warmerdam@pobox.com)
  *
- * NOTE: Original code authored by Trent and Robert and placed in the public 
- * domain as per US government policy.  I have (within my rights) appropriated 
- * it and placed it under the following license.  This is not intended to 
- * diminish Trent and Roberts contribution. 
+ * NOTE: Original code authored by Trent and Robert and placed in the public
+ * domain as per US government policy.  I have (within my rights) appropriated
+ * it and placed it under the following license.  This is not intended to
+ * diminish Trent and Roberts contribution.
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
@@ -74,10 +74,10 @@ class ISIS2Dataset : public RawDataset
 
     void        CleanString( CPLString &osInput );
 
-    const char *GetKeyword( const char *pszPath, 
+    const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
-    const char *GetKeywordSub( const char *pszPath, 
-                               int iSubscript, 
+    const char *GetKeywordSub( const char *pszPath,
+                               int iSubscript,
                                const char *pszDefault = "");
 
 public:
@@ -244,16 +244,16 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
         CPLString osFilename = pszQube;
-        poDS->CleanString( osFilename ); 
-        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL ); 
+        poDS->CleanString( osFilename );
+        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
         poDS->osExternalCube = osTargetFile;
     }
-    else if( pszQube[0] == '(' ) 
+    else if( pszQube[0] == '(' )
     {
         const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
-        CPLString osFilename = poDS->GetKeywordSub("^QUBE",1,""); 
-        poDS->CleanString( osFilename ); 
-        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL ); 
+        CPLString osFilename = poDS->GetKeywordSub("^QUBE",1,"");
+        poDS->CleanString( osFilename );
+        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
         poDS->osExternalCube = osTargetFile;
 
         nQube = atoi(poDS->GetKeywordSub("^QUBE",2,"1"));
@@ -280,9 +280,9 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const int s_iy = atoi(poDS->GetKeywordSub( "QUBE.SUFFIX_ITEMS", 2 ));
     const int s_iz = atoi(poDS->GetKeywordSub( "QUBE.SUFFIX_ITEMS", 3 ));
 
-    if( s_ix != 0 || s_iy != 0 || s_iz != 0 ) 
+    if( s_ix != 0 || s_iy != 0 || s_iz != 0 )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "*** ISIS 2 cube file has invalid SUFFIX_ITEMS parameters:\n"
                   "*** gdal isis2 driver requires (0, 0, 0), thus no sideplanes or backplanes\n"
                   "found: (%i, %i, %i)\n\n", s_ix, s_iy, s_iz );
@@ -305,7 +305,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else if (EQUAL(value,"(SAMPLE,BAND,LINE)") || EQUAL(value,"") )
         strcpy(szLayout,"BSQ");
     else {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
         return NULL;
@@ -323,15 +323,15 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if (nQube > 0 && bByteLocation )
         nSkipBytes = (nQube - 1);
     else if( nQube > 0 )
-        nSkipBytes = (nQube - 1) * record_bytes;     
+        nSkipBytes = (nQube - 1) * record_bytes;
     else
-        nSkipBytes = 0;     
+        nSkipBytes = 0;
 
     /***********   Grab samples lines band ************/
     char chByteOrder = 'M';  //default to MSB
     CPLString osCoreItemType = poDS->GetKeyword( "QUBE.CORE_ITEM_TYPE" );
-    if( (EQUAL(osCoreItemType,"PC_INTEGER")) || 
-        (EQUAL(osCoreItemType,"PC_UNSIGNED_INTEGER")) || 
+    if( (EQUAL(osCoreItemType,"PC_INTEGER")) ||
+        (EQUAL(osCoreItemType,"PC_UNSIGNED_INTEGER")) ||
         (EQUAL(osCoreItemType,"PC_REAL")) ) {
         chByteOrder = 'I';
     }
@@ -374,7 +374,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
       default :
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Itype of %d is not supported in ISIS 2.",
-                  itype); 
+                  itype);
         delete poDS;
         return NULL;
     }
@@ -417,7 +417,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString target_name = poDS->GetKeyword("QUBE.TARGET_NAME");
 
     /***********   Grab MAP_PROJECTION_TYPE ************/
-    CPLString map_proj_name = 
+    CPLString map_proj_name =
         poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
     poDS->CleanString( map_proj_name );
 
@@ -464,7 +464,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
         (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ) {
         oSRS.OGRSpatialReference::SetEquirectangular2 ( 0.0, center_lon, center_lat, 0, 0 );
-    } else if (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) { 
+    } else if (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) {
         oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
     } else if ((EQUAL( map_proj_name, "SINUSOIDAL" )) ||
                (EQUAL( map_proj_name, "SINUSOIDAL_EQUAL-AREA" ))) {
@@ -503,30 +503,30 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         double iflattening = 0.0;
-        if ((semi_major - semi_minor) < 0.0000001) 
+        if ((semi_major - semi_minor) < 0.0000001)
             iflattening = 0;
         else
             iflattening = semi_major / (semi_major - semi_minor);
 
         //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
         //The use of a Sphere, polar radius or ellipse here is based on how ISIS does it internally
-        if ( ( (EQUAL( map_proj_name, "STEREOGRAPHIC" ) && (fabs(center_lat) == 90)) ) || 
-             (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC" )))  
+        if ( ( (EQUAL( map_proj_name, "STEREOGRAPHIC" ) && (fabs(center_lat) == 90)) ) ||
+             (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC" )))
         {
             if (bIsGeographic) {
                 //Geograpraphic, so set an ellipse
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, iflattening, 
+                                semi_major, iflattening,
                                 "Reference_Meridian", 0.0 );
             } else {
-                //Geocentric, so force a sphere using the semi-minor axis. I hope... 
+                //Geocentric, so force a sphere using the semi-minor axis. I hope...
                 sphere_name += "_polarRadius";
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_minor, 0.0, 
+                                semi_minor, 0.0,
                                 "Reference_Meridian", 0.0 );
             }
         }
-        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) || 
+        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
                   (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) ||
                   (EQUAL( map_proj_name, "STEREOGRAPHIC" )) ||
                   (EQUAL( map_proj_name, "SINUSOIDAL_EQUAL-AREA" )) ||
@@ -534,17 +534,17 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             // ISIS uses the spherical equation for these projections so force
             // a sphere.
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                            semi_major, 0.0, 
+                            semi_major, 0.0,
                             "Reference_Meridian", 0.0 );
         }
-        else if  ((EQUAL( map_proj_name, "EQUIRECTANGULAR_CYLINDRICAL" )) || 
+        else if  ((EQUAL( map_proj_name, "EQUIRECTANGULAR_CYLINDRICAL" )) ||
                   (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ) {
-            //Calculate localRadius using ISIS3 simple elliptical method 
+            //Calculate localRadius using ISIS3 simple elliptical method
             //  not the more standard Radius of Curvature method
             //PI = 4 * atan(1);
             if (center_lon == 0) { //No need to calculate local radius
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, 0.0, 
+                                semi_major, 0.0,
                                 "Reference_Meridian", 0.0 );
             } else {
                 const double radLat = center_lat * M_PI / 180;  // in radians
@@ -554,7 +554,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                            + pow(semi_major*sin(radLat),2) );
                 sphere_name += "_localRadius";
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                localRadius, 0.0, 
+                                localRadius, 0.0,
                                 "Reference_Meridian", 0.0 );
                 CPLDebug( "ISIS2", "local radius: %f", localRadius);
             }
@@ -564,12 +564,12 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             //Geographic, so set an ellipse
             if (bIsGeographic) {
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, iflattening, 
+                                semi_major, iflattening,
                                 "Reference_Meridian", 0.0 );
             } else {
-                //Geocentric, so force a sphere. I hope... 
+                //Geocentric, so force a sphere. I hope...
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, 0.0, 
+                                semi_major, 0.0,
                                 "Reference_Meridian", 0.0 );
             }
         }
@@ -612,8 +612,8 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open %s with write permission.\n%s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open %s with write permission.\n%s",
                   osTargetFile.c_str(), VSIStrerror( errno ) );
         delete poDS;
         return NULL;
@@ -654,7 +654,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         RawRasterBand *poBand =
             new RawRasterBand( poDS, i+1, poDS->fpImage,
-                               nSkipBytes + nBandOffset * i, 
+                               nSkipBytes + nBandOffset * i,
                                nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB
                                chByteOrder == 'I' || chByteOrder == 'L',
@@ -669,9 +669,9 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i+1, poBand );
 
         // Set offset/scale values at the PAM level.
-        poBand->SetOffset( 
+        poBand->SetOffset(
             CPLAtofM(poDS->GetKeyword("QUBE.CORE_BASE","0.0")));
-        poBand->SetScale( 
+        poBand->SetScale(
             CPLAtofM(poDS->GetKeyword("QUBE.CORE_MULTIPLIER","1.0")));
     }
 
@@ -713,20 +713,20 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "cbw", 
+        poDS->bGotTransform =
+            GDALReadWorldFile( poOpenInfo->pszFilename, "cbw",
                                poDS->adfGeoTransform );
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "wld", 
+        poDS->bGotTransform =
+            GDALReadWorldFile( poOpenInfo->pszFilename, "wld",
                                poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename ); 
-    poDS->TryLoadXML(); 
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -740,7 +740,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *ISIS2Dataset::GetKeyword( const char *pszPath, 
+const char *ISIS2Dataset::GetKeyword( const char *pszPath,
                                       const char *pszDefault )
 
 {
@@ -751,7 +751,7 @@ const char *ISIS2Dataset::GetKeyword( const char *pszPath,
 /*                            GetKeywordSub()                           */
 /************************************************************************/
 
-const char *ISIS2Dataset::GetKeywordSub( const char *pszPath, 
+const char *ISIS2Dataset::GetKeywordSub( const char *pszPath,
                                          int iSubscript,
                                          const char *pszDefault )
 
@@ -764,7 +764,7 @@ const char *ISIS2Dataset::GetKeywordSub( const char *pszPath,
     if( pszResult[0] != '(' )
         return pszDefault;
 
-    char **papszTokens = CSLTokenizeString2( pszResult, "(,)", 
+    char **papszTokens = CSLTokenizeString2( pszResult, "(,)",
                                              CSLT_HONOURSTRINGS );
 
     if( iSubscript <= CSLCount(papszTokens) )
@@ -904,7 +904,7 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
 
     CPLDebug("ISIS2","irecord = %i",static_cast<int>(iRecords));
 
-    if( bAttachedLabelingMethod ) 
+    if( bAttachedLabelingMethod )
     {
         ISIS2Dataset::WriteLabel(osRasterFile, "", sObject, nXSize, nYSize, nBands, eType, iRecords, pszInterleaving, iLabelRecords, true);
     }
@@ -913,8 +913,8 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
         ISIS2Dataset::WriteLabel(osLabelFile, osRasterFile, sObject, nXSize, nYSize, nBands, eType, iRecords, pszInterleaving, iLabelRecords);
     }
 
-    if( !ISIS2Dataset::WriteRaster(osRasterFile, bAttachedLabelingMethod, 
-                                   iRecords, iLabelRecords, eType, 
+    if( !ISIS2Dataset::WriteRaster(osRasterFile, bAttachedLabelingMethod,
+                                   iRecords, iLabelRecords, eType,
                                    pszInterleaving) )
         return NULL;
 
@@ -989,7 +989,7 @@ GUIntBig ISIS2Dataset::RecordSizeCalculation(unsigned int nXSize, unsigned int n
 
 int ISIS2Dataset::WriteQUBE_Information(
     VSILFILE *fpLabel, unsigned int iLevel, unsigned int & nWritingBytes,
-    unsigned int nXSize,  unsigned int nYSize, unsigned int nBands, 
+    unsigned int nXSize,  unsigned int nYSize, unsigned int nBands,
     GDALDataType eType, const char * pszInterleaving)
 
 {
@@ -1008,17 +1008,17 @@ int ISIS2Dataset::WriteQUBE_Information(
     nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_UNIT", "\"N/A\"");
     // TODO change for eType
 
-    if( eType == GDT_Byte ) 
+    if( eType == GDT_Byte )
     {
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_UNSIGNED_INTEGER");
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "1");
     }
-    else if( eType == GDT_UInt16 ) 
+    else if( eType == GDT_UInt16 )
     {
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_UNSIGNED_INTEGER");
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "2");
     }
-    else if( eType == GDT_Int16 ) 
+    else if( eType == GDT_Int16 )
     {
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_TYPE", "PC_INTEGER");
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "CORE_ITEM_BYTES", "2");

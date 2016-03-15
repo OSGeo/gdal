@@ -46,7 +46,7 @@ int main( int nArgc, char **papszArgv )
     GByte	*pabyScanline;
     FILE	*fp;
     int         nError = 0;
-    
+
     if( nArgc < 3 )
     {
         fprintf( stderr, "Usage: bsb2raw src_file dst_file\n" );
@@ -63,7 +63,7 @@ int main( int nArgc, char **papszArgv )
         perror( "open" );
         exit( 1 );
     }
-    
+
     pabyScanline = (GByte *) CPLMalloc(psInfo->nXSize);
     for( iLine = 0; iLine < psInfo->nYSize; iLine++ )
     {
@@ -84,26 +84,23 @@ int main( int nArgc, char **papszArgv )
 /* -------------------------------------------------------------------- */
     fp = VSIFOpen( CPLResetExtension( papszArgv[2], "aux" ), "wt" );
 
-    fprintf( fp, "AuxilaryTarget: %s\n", 
+    fprintf( fp, "AuxilaryTarget: %s\n",
              CPLGetFilename(papszArgv[2]) );
 
-    fprintf( fp, "RawDefinition: %d %d 1\n", 
+    fprintf( fp, "RawDefinition: %d %d 1\n",
              psInfo->nXSize, psInfo->nYSize );
 
-    fprintf( fp, "ChanDefinition-1: 8U 0 1 %d Swapped\n", 
+    fprintf( fp, "ChanDefinition-1: 8U 0 1 %d Swapped\n",
              psInfo->nXSize );
 
     for( i = 0; i < psInfo->nPCTSize; i++ )
         fprintf( fp, "METADATA_IMG_1_Class_%d_Color: (RGB:%d %d %d)\n",
-                 i, 
+                 i,
                  psInfo->pabyPCT[i*3 + 0],
                  psInfo->pabyPCT[i*3 + 1],
                  psInfo->pabyPCT[i*3 + 2] );
-    
+
     VSIFClose( fp );
-    
 
     exit( 0 );
 }
-
-

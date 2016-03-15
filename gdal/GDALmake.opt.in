@@ -13,7 +13,7 @@ ifeq ($(HAVE_LIBTOOL),yes)
 LIBTOOL_COMPILE_CC =	$(LIBTOOL) --mode=compile --tag=CC
 LIBTOOL_COMPILE_CXX =	$(LIBTOOL) --mode=compile --tag=CXX
 LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
-LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install 
+LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
 LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
 LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean
 OBJ_EXT = lo
@@ -176,13 +176,13 @@ endif
 # HDF5 Support.
 #
 HAVE_HDF5     = @HAVE_HDF5@
-HDF5_INCLUDE  = @HDF5_INCLUDE@ 
+HDF5_INCLUDE  = @HDF5_INCLUDE@
 
 #
 # KEA Support.
 #
 HAVE_KEA     = @HAVE_KEA@
-KEA_INC      = @KEA_INC@ 
+KEA_INC      = @KEA_INC@
 KEA_LIB      = @KEA_LIB@
 LIBS       +=   $(KEA_LIB)
 
@@ -204,7 +204,7 @@ HAVE_DODS = yes
 endif
 
 #
-# SQLite 
+# SQLite
 #
 SQLITE_INC = @SQLITE_INC@
 SQLITE_HAS_COLUMN_METADATA = @SQLITE_HAS_COLUMN_METADATA@
@@ -254,9 +254,9 @@ MRSID_LIBS	= @MRSID_LIBS@
 MRSID_LIDAR_INCLUDE	= @MRSID_LIDAR_INCLUDE@
 MRSID_LIDAR_LIBS	= @MRSID_LIDAR_LIBS@
 
-# 
+#
 # ECW Related
-# 
+#
 ECW_FLAGS	= @ECW_FLAGS@
 ECW_INCLUDE 	= @ECW_INCLUDE@
 ECW_LIBS	= @ECW_LIBS@
@@ -266,7 +266,7 @@ ECW_LIBS	= @ECW_LIBS@
 HAVE_XERCES	= @HAVE_XERCES@
 XERCES_INCLUDE	= @XERCES_INCLUDE@
 
-# 
+#
 # Enable NAS format
 #
 HAVE_NAS	= @HAVE_NAS@
@@ -305,28 +305,28 @@ GRASS_INCLUDE	=	@GRASS_INCLUDE@
 GRASS_GISBASE	=	@GRASS_GISBASE@
 HAVE_GRASS	=	@HAVE_GRASS@
 
-# 
+#
 # SDE
 #
 HAVE_SDE = @SDE_ENABLED@
 SDE_LIB	= @SDE_LIB@
 SDE_INC = @SDE_INC@
 
-# 
+#
 # FileGDB
 #
 HAVE_FGDB = @FGDB_ENABLED@
 FGDB_LIB = @FGDB_LIB@
 FGDB_INC = @FGDB_INC@
 
-# 
+#
 # MongoDB
 #
 HAVE_MONGODB = @MONGODB_ENABLED@
 MONGODB_LIB = @MONGODB_LIB@
 MONGODB_INC = @MONGODB_INC@
 
-# 
+#
 # ArcObjects
 #
 HAVE_ARCOBJECTS = @ARCOBJECTS_ENABLED@
@@ -346,7 +346,7 @@ CURL_INC	=	@CURL_INC@
 LIBJSONC_SETTING = @LIBJSONC_SETTING@
 JSON_INCLUDE = @JSON_INCLUDE@
 
-# 
+#
 # OpenCL support
 #
 OPENCL_LIB	=	@OPENCL_LIB@
@@ -362,7 +362,7 @@ HAVE_SOSI = @SOSI_ENABLED@
 
 #
 # PCIDSK SDK
-# 
+#
 PCIDSK_SETTING  =       @PCIDSK_SETTING@
 PCIDSK_LIB	=	@PCIDSK_LIB@
 PCIDSK_INCLUDE	=	@PCIDSK_INCLUDE@
@@ -380,7 +380,7 @@ HAVE_LIBXML2 = @HAVE_LIBXML2@
 LIBXML2_INC = @LIBXML2_INC@
 LIBXML2_LIB = @LIBXML2_LIB@
 
-# 
+#
 # DWGdirect Library
 #
 DWGDIRECT =	@DWGDIRECT@
@@ -399,10 +399,10 @@ DWG_LIBS = $(DWG_LIBDIR)/DD_$(DWG_PLT)_ModelerGeometry.a \
 	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Ge.a \
 	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Root.a \
 	$(DWG_LIBDIR)/DD_$(DWG_PLT)_FT.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Alloc.a 
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Alloc.a
 HAVE_DWGDIRECT = yes
 else
-DWG_LIBS =	
+DWG_LIBS =
 HAVE_DWGDIRECT = no
 endif
 
@@ -421,7 +421,7 @@ endif
 #
 ifeq (@X_FME_HOME@,)
 HAVE_FME        =       no
-FME_INCLUDE	=	
+FME_INCLUDE	=
 else
 HAVE_FME        =       yes
 FME_INCLUDE	=	-I@X_FME_HOME@/fmeobjects/cpp
@@ -554,7 +554,7 @@ HAVE_CRYPTOPP    =       @HAVE_CRYPTOPP@
 USE_ONLY_CRYPTODLL_ALG        =       @USE_ONLY_CRYPTODLL_ALG@
 
 #
-#	Note these codes have to exactly match the format directory names, 
+#	Note these codes have to exactly match the format directory names,
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GTiff().
 #

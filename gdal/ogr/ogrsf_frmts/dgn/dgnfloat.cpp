@@ -82,7 +82,7 @@ void    DGN2IEEEDouble(void * dbl)
     sign         = dt.hi & 0x80000000;
 
 /* -------------------------------------------------------------------- */
-/*      Adjust the exponent so that we may work with it                 */      
+/*      Adjust the exponent so that we may work with it                 */
 /* -------------------------------------------------------------------- */
     exponent = dt.hi >> 23;
     exponent = exponent & 0x000000ff;
@@ -169,7 +169,7 @@ void    IEEE2DGNDouble(void * dbl)
     {
         dest = (GByte *) dbl;
 
-        if (sign) 
+        if (sign)
             dest[1] = 0xff;
         else
             dest[1] = 0x7f;
@@ -183,7 +183,7 @@ void    IEEE2DGNDouble(void * dbl)
         dest[7] = 0xff;
 
         return;
-    }   
+    }
 
 /* -------------------------------------------------------------------- */
 /*      In the case of of underflow return zero                         */

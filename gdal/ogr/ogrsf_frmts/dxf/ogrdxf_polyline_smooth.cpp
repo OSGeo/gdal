@@ -46,7 +46,7 @@ static double GetRadius(double bulge, double length)
 
 static double GetLength
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end
 )
 {
@@ -56,7 +56,7 @@ static double GetLength
 
 static double GetAngle
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end
 )
 {
@@ -176,7 +176,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
 void DXFSmoothPolyline::EmitArc
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end,
     double radius, double len, double bulge,
     OGRLineString* poLS,
@@ -204,7 +204,7 @@ void DXFSmoothPolyline::EmitArc
 /* -------------------------------------------------------------------- */
 
     const double saggita = fabs(bulge * (len / 2.0));
-    const double apo = bClockwise 
+    const double apo = bClockwise
                         ? -(ogrArcRadius - saggita)
                         : -(saggita - ogrArcRadius);
 
@@ -263,8 +263,8 @@ void DXFSmoothPolyline::EmitArc
     if(!bClockwise && (ogrArcStartAngle < ogrArcEndAngle))
         ogrArcEndAngle = -180.0 + (linedir * a);
 
-    if(bClockwise && (ogrArcStartAngle > ogrArcEndAngle)) 
-        ogrArcEndAngle += 360.0; 
+    if(bClockwise && (ogrArcStartAngle > ogrArcEndAngle))
+        ogrArcEndAngle += 360.0;
 
 /* -------------------------------------------------------------------- */
 /*      Flip arc's rotation if necessary.                               */
@@ -278,7 +278,7 @@ void DXFSmoothPolyline::EmitArc
 /*      Tessellate the arc segment and append to the linestring.        */
 /* -------------------------------------------------------------------- */
 
-    OGRLineString* poArcpoLS = 
+    OGRLineString* poArcpoLS =
         (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
             ogrArcCenter.x, ogrArcCenter.y, dfZ,
             ogrArcRadius, ogrArcRadius, ogrArcRotation,
@@ -298,7 +298,7 @@ void DXFSmoothPolyline::EmitArc
 
 void DXFSmoothPolyline::EmitLine
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end,
     OGRLineString* poLS,
     bool bConstantZ,
@@ -309,12 +309,12 @@ void DXFSmoothPolyline::EmitLine
 
     if(!m_blinestringstarted)
     {
-        poLS->addPoint(start.x, start.y, 
+        poLS->addPoint(start.x, start.y,
             bConstantZ ? dfZ : start.z);
         m_blinestringstarted = true;
     }
 
-    poLS->addPoint(end.x, end.y, 
+    poLS->addPoint(end.x, end.y,
         bConstantZ ? dfZ : end.z);
 }
 
@@ -368,4 +368,3 @@ bool DXFSmoothPolyline::HasConstantZ(double& dfZ) const
     dfZ = d;
     return true;
 }
-

@@ -4,8 +4,8 @@
  * Project:  FMEObjects Translator
  * Purpose:  Implementation of the OGRFMELayerDB class.  This is the
  *           class implementing behaviour for layers that are built on
- *           smart readers representing databases with spatial constraints, 
- *           and where clause support. 
+ *           smart readers representing databases with spatial constraints,
+ *           and where clause support.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -17,16 +17,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -40,8 +40,8 @@ CPL_CVSID("$Id$");
 /*                           OGRFMELayerDB()                            */
 /************************************************************************/
 
-OGRFMELayerDB::OGRFMELayerDB( OGRFMEDataSource *poDSIn, 
-                              const char *pszReaderNameIn, 
+OGRFMELayerDB::OGRFMELayerDB( OGRFMEDataSource *poDSIn,
+                              const char *pszReaderNameIn,
                               const char *pszDatasetIn,
                               IFMEStringArray *poUserDirectivesIn )
         : OGRFMELayer( poDSIn )
@@ -58,7 +58,7 @@ OGRFMELayerDB::OGRFMELayerDB( OGRFMEDataSource *poDSIn,
 
     for( FME_UInt32 i = 0; i < poUserDirectivesIn->entries(); i++ )
     {
-        CPLDebug( "FMEOLEDB", "userDirective[%d] = %s\n", 
+        CPLDebug( "FMEOLEDB", "userDirective[%d] = %s\n",
                   i, (const char *) (*poUserDirectivesIn)(i) );
 
         poUserDirectives->append( (*poUserDirectivesIn)(i) );
@@ -89,7 +89,7 @@ int OGRFMELayerDB::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
         return FALSE;
 
@@ -99,7 +99,7 @@ int OGRFMELayerDB::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return TRUE;
 
-    else 
+    else
         return FALSE;
 }
 
@@ -143,7 +143,7 @@ OGRFeature *OGRFMELayerDB::GetNextFeature()
     poFeature = poDS->ProcessFeature( this, poFMEFeature );
 
     if( nPreviousFeature == -1 )
-        CPLDebug( "FMEOLEDB", "Fetching first feature from layer `%s'.", 
+        CPLDebug( "FMEOLEDB", "Fetching first feature from layer `%s'.",
                   GetLayerDefn()->GetName() );
 
     poFeature->SetFID( ++nPreviousFeature );
@@ -183,26 +183,26 @@ void OGRFMELayerDB::ResetReading()
 /*      user directives).                                               */
 /************************************************************************/
 
-static void SetMacro( IFMEString *poMacros, const char *pszTarget, 
+static void SetMacro( IFMEString *poMacros, const char *pszTarget,
                       const char *pszNewValue )
 
 {
     char      *pszWorking, *pszValStart;
     int       nOldValLength;
 
-    pszWorking = (char *) CPLMalloc(strlen(poMacros->data()) 
-                                    + strlen(pszNewValue) 
+    pszWorking = (char *) CPLMalloc(strlen(poMacros->data())
+                                    + strlen(pszNewValue)
                                     + strlen(pszTarget) + 20 );
     strcpy( pszWorking, poMacros->data() );
 
     pszValStart = strstr( pszWorking, pszTarget );
-    if( pszValStart == NULL 
+    if( pszValStart == NULL
         || pszValStart[strlen(pszTarget)] != ',' )
     {
         if( strlen(pszWorking) > 0 )
             strcat( pszWorking, "," );
 
-        sprintf( pszWorking + strlen(pszWorking), "%s,%s", 
+        sprintf( pszWorking + strlen(pszWorking), "%s,%s",
                  pszTarget, pszNewValue );
         *poMacros = pszWorking;
         CPLFree( pszWorking );
@@ -211,13 +211,13 @@ static void SetMacro( IFMEString *poMacros, const char *pszTarget,
 
     pszValStart += strlen(pszTarget) + 1;
 
-    for( nOldValLength = 0; 
-         pszValStart[nOldValLength] != ',' 
-             && pszValStart[nOldValLength] != '\0'; 
+    for( nOldValLength = 0;
+         pszValStart[nOldValLength] != ','
+             && pszValStart[nOldValLength] != '\0';
          nOldValLength++ ) {}
 
-    memmove( pszValStart + strlen(pszNewValue), 
-            pszValStart + nOldValLength, 
+    memmove( pszValStart + strlen(pszNewValue),
+            pszValStart + nOldValLength,
             strlen(pszValStart + nOldValLength)+1 );
 
     memcpy( pszValStart, pszNewValue, strlen( pszNewValue ) );
@@ -342,7 +342,7 @@ int OGRFMELayerDB::CreateReader()
 
                 poUDC->setElement( i+1, *poMacroValue );
 
-                CPLDebug( "FMEOLEDB", "Update %s to:\n%s", 
+                CPLDebug( "FMEOLEDB", "Update %s to:\n%s",
                           pszDirective, poMacroValue->data() );
 
                 poSession->destroyString( poMacroValue );
@@ -406,7 +406,7 @@ int OGRFMELayerDB::CreateReader()
 
     for( i = 0; i < poParms->entries(); i++ )
     {
-        CPLDebug( "FMEOLEDB", "openParms[%d] = %s", 
+        CPLDebug( "FMEOLEDB", "openParms[%d] = %s",
                   i, (const char *) (*poParms)(i) );
     }
 

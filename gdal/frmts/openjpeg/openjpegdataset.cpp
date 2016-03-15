@@ -208,8 +208,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *CreateCopy( const char * pszFilename,
-                                           GDALDataset *poSrcDS, 
-                                           int bStrict, char ** papszOptions, 
+                                           GDALDataset *poSrcDS,
+                                           int bStrict, char ** papszOptions,
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
 
@@ -226,7 +226,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -611,7 +611,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
 CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -652,7 +652,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
     CPLErr eErr = GDALPamDataset::IRasterIO(   eRWFlag,
                                         nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize,
-                                        eBufType, 
+                                        eBufType,
                                         nBandCount, panBandMap,
                                         nPixelSpace, nLineSpace, nBandSpace,
                                         psExtraArg );
@@ -1147,7 +1147,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
                 pszGMLJP2 = "GMLJP2=NO";
 
             const char* pszGeoJP2;
-            int bGeoreferencingCompatOfGeoJP2 = 
+            int bGeoreferencingCompatOfGeoJP2 =
                     ((pszProjection != NULL && pszProjection[0] != '\0' ) ||
                     nGCPCount != 0 || bGeoTransformValid);
             if( bGeoreferencingCompatOfGeoJP2 &&
@@ -1407,10 +1407,10 @@ static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->nHeaderBytes >= 16 
-        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
+    if( poOpenInfo->nHeaderBytes >= 16
+        && (memcmp( poOpenInfo->pabyHeader, jpc_header,
                     sizeof(jpc_header) ) == 0
-            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp, 
+            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp,
                     sizeof(jp2_box_jp) ) == 0
            ) )
         return TRUE;
@@ -1624,7 +1624,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                     psImage->comps[1].h == psImage->comps[0].h / 2 &&
                     psImage->comps[2].w == psImage->comps[0].w / 2 &&
                     psImage->comps[2].h == psImage->comps[0].h / 2) &&
-                    (psImage->numcomps == 3 || 
+                    (psImage->numcomps == 3 ||
                      (psImage->numcomps == 4 &&
                       psImage->comps[3].w == psImage->comps[0].w &&
                       psImage->comps[3].h == psImage->comps[0].h));
@@ -1670,7 +1670,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nCodeStreamLength = nCodeStreamLength;
     poDS->bIs420 = bIs420;
 
-    poDS->bUseSetDecodeArea = 
+    poDS->bUseSetDecodeArea =
         (poDS->nRasterXSize == (int)nTileW &&
          poDS->nRasterYSize == (int)nTileH &&
          (poDS->nRasterXSize > 1024 ||
@@ -1886,7 +1886,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         int bPromoteTo8Bit = (
             iBand == poDS->nAlphaIndex + 1 &&
             psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
-            psImage->comps[poDS->nAlphaIndex ].prec == 1 && 
+            psImage->comps[poDS->nAlphaIndex ].prec == 1 &&
             CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
                     CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
         if( bPromoteTo8Bit )
@@ -1958,7 +1958,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             int bPromoteTo8Bit = (
                 iBand == poDS->nAlphaIndex + 1 &&
                 psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
-                psImage->comps[poDS->nAlphaIndex].prec == 1 && 
+                psImage->comps[poDS->nAlphaIndex].prec == 1 &&
                 CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
                         CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
 
@@ -1991,7 +1991,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->LoadJP2Metadata(poOpenInfo);
     poOpenInfo->fpL = NULL;
 
-    poDS->bHasGeoreferencingAtOpening = 
+    poDS->bHasGeoreferencingAtOpening =
         ((poDS->pszProjection != NULL && poDS->pszProjection[0] != '\0' )||
          poDS->nGCPCount != 0 || poDS->bGeoTransformValid);
 
@@ -2126,8 +2126,8 @@ static int FloorPowerOfTwo(int nVal)
 /************************************************************************/
 
 GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
-                                           GDALDataset *poSrcDS, 
-                                           CPL_UNUSED int bStrict, char ** papszOptions, 
+                                           GDALDataset *poSrcDS,
+                                           CPL_UNUSED int bStrict, char ** papszOptions,
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData )
 
@@ -2510,12 +2510,12 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             return NULL;
         }
     }
-    else if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) 
+    else if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )
              != NULL )
     {
-        nBits = atoi(poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", 
+        nBits = atoi(poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS",
                                                        "IMAGE_STRUCTURE" ));
-        if( bInspireTG && 
+        if( bInspireTG &&
             !(nBits == 1 || nBits == 8 || nBits == 16 || nBits == 32) )
         {
             /* Implements "NOTE If the original data do not satisfy this "
@@ -2586,7 +2586,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 oJP2MD.SetGeoTransform( adfGeoTransform );
             }
             bGeoreferencingCompatOfGMLJP2 =
-                        ( pszWKT != NULL && pszWKT[0] != '\0' ) && 
+                        ( pszWKT != NULL && pszWKT[0] != '\0' ) &&
                           poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None;
         }
         if( poSrcDS->GetMetadata("RPC") != NULL )

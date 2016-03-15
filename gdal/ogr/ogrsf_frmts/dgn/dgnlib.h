@@ -50,7 +50,7 @@ CPL_C_START
  *
  * Note that the DGNReadElement() function transforms points into "master"
  * coordinate system space when they are in the file in UOR (units of
- * resolution) coordinates. 
+ * resolution) coordinates.
  */
 
 typedef struct {
@@ -71,16 +71,16 @@ typedef struct {
     unsigned char       stype;   /*!< Structure type (DGNST_*) */
     unsigned char       flags;   /*!< Other flags */
     long                offset;  /*!< Offset within file (private) */
-} DGNElementInfo;  
+} DGNElementInfo;
 
 /**
- * Core element structure. 
+ * Core element structure.
  *
  * Core information kept about each element that can be read from a DGN
- * file.  This structure is the first component of each specific element 
+ * file.  This structure is the first component of each specific element
  * structure (like DGNElemMultiPoint).  Normally the DGNElemCore.stype
  * field would be used to decide what specific structure type to case the
- * DGNElemCore pointer to. 
+ * DGNElemCore pointer to.
  *
  */
 
@@ -108,8 +108,8 @@ typedef struct {
     unsigned char *raw_data;    /*!< All raw element data including header. */
 } DGNElemCore;
 
-/** 
- * Multipoint element 
+/**
+ * Multipoint element
  *
  * The core.stype code is DGNST_MULTIPOINT.
  *
@@ -123,10 +123,10 @@ typedef struct {
   int           num_vertices;  /*!< Number of vertices in "vertices" */
   DGNPoint      vertices[2];   /*!< Array of two or more vertices */
 
-} DGNElemMultiPoint;    
+} DGNElemMultiPoint;
 
-/** 
- * Ellipse element 
+/**
+ * Ellipse element
  *
  * The core.stype code is DGNST_ARC.
  *
@@ -149,8 +149,8 @@ typedef struct {
 
 } DGNElemArc;
 
-/** 
- * Text element 
+/**
+ * Text element
  *
  * The core.stype code is DGNST_TEXT.
  *
@@ -171,8 +171,8 @@ typedef struct {
     char        string[1];     /*!< Actual text (length varies, \0 terminated*/
 } DGNElemText;
 
-/** 
- * Complex header element 
+/**
+ * Complex header element
  *
  * The core.stype code is DGNST_COMPLEX_HEADER.
  *
@@ -189,19 +189,19 @@ typedef struct {
                                     excluding the first 19 words
                                     (header + totlength field) */
     int         numelems;      /*!< # of elements in surface */
-    int         surftype;      /*!< surface/solid type 
-                                    (only used for 3D surface/solid). 
+    int         surftype;      /*!< surface/solid type
+                                    (only used for 3D surface/solid).
                                     One of  DGNSUT_* or DGNSOT_*. */
     int         boundelms;     /*!< # of elements in each boundary
-                                    (only used for 3D surface/solid). */ 
+                                    (only used for 3D surface/solid). */
 } DGNElemComplexHeader;
 
-/** 
+/**
  * Color table.
  *
  * The core.stype code is DGNST_COLORTABLE.
  *
- * Returned for DGNT_GROUP_DATA(5) elements, with a level number of 
+ * Returned for DGNT_GROUP_DATA(5) elements, with a level number of
  * DGN_GDL_COLOR_TABLE(1).
  */
 
@@ -222,7 +222,7 @@ typedef struct {
     unsigned long activez;
 } DGNViewInfo;
 
-/** 
+/**
  * Terminal Control Block (header).
  *
  * The core.stype code is DGNST_TCB.
@@ -254,7 +254,7 @@ typedef struct {
 
 } DGNElemTCB;
 
-/** 
+/**
  * Cell Header.
  *
  * The core.stype code is DGNST_CELL_HEADER.
@@ -284,7 +284,7 @@ typedef struct {
 
 } DGNElemCellHeader;
 
-/** 
+/**
  * Cell Library.
  *
  * The core.stype code is DGNST_CELL_LIBRARY.
@@ -309,7 +309,7 @@ typedef struct {
 
 } DGNElemCellLibrary;
 
-/** 
+/**
  * Shared Cell Definition.
  *
  * The core.stype code is DGNST_SHARED_CELL_DEFN.
@@ -330,7 +330,7 @@ typedef struct {
 
 typedef union { char *string; GInt32 integer; double real; } tagValueUnion;
 
-/** 
+/**
  * Tag Value.
  *
  * The core.stype code is DGNST_TAG_VALUE.
@@ -366,7 +366,7 @@ typedef struct _DGNTagDef {
 #define DGNTT_INTEGER     3
 #define DGNTT_FLOAT       4
 
-/** 
+/**
  * Tag Set.
  *
  * The core.stype code is DGNST_TAG_SET.
@@ -386,8 +386,8 @@ typedef struct {
 
 } DGNElemTagSet;
 
-/** 
- * Cone element 
+/**
+ * Cone element
  *
  * The core.stype code is DGNST_CONE.
  *
@@ -406,8 +406,8 @@ typedef struct {
 } DGNElemCone;
 
 
-/** 
- * Text Node Header. 
+/**
+ * Text Node Header.
  *
  * The core.stype code is DGNST_TEXT_NODE.
  *
@@ -436,8 +436,8 @@ typedef struct {
 } DGNElemTextNode;
 
 
-/** 
- * B-Spline Surface Header element 
+/**
+ * B-Spline Surface Header element
  *
  * The core.stype code is DGNST_BSPLINE_SURFACE_HEADER.
  *
@@ -451,14 +451,14 @@ typedef struct {
                                       (header + desc_words field) */
   unsigned char curve_type;      /*!< curve type */
   unsigned char u_order;         /*!< B-spline U order: 2-15 */
-  unsigned short u_properties;   /*!< surface U properties: 
+  unsigned short u_properties;   /*!< surface U properties:
                                       ORing of DGNBSC_ flags */
   short num_poles_u;             /*!< number of poles */
   short num_knots_u;             /*!< number of knots */
   short rule_lines_u;            /*!< number of rule lines */
 
   unsigned char v_order;         /*!< B-spline V order: 2-15 */
-  unsigned short v_properties;   /*!< surface V properties: 
+  unsigned short v_properties;   /*!< surface V properties:
                                       Oring of DGNBSS_ flags */
   short num_poles_v;             /*!< number of poles */
   short num_knots_v;             /*!< number of knots */
@@ -467,8 +467,8 @@ typedef struct {
   short num_bounds;              /*!< number of boundaries */
 } DGNElemBSplineSurfaceHeader;
 
-/** 
- * B-Spline Curve Header element 
+/**
+ * B-Spline Curve Header element
  *
  * The core.stype code is DGNST_BSPLINE_CURVE_HEADER.
  *
@@ -487,8 +487,8 @@ typedef struct {
   short num_knots;               /*!< number of knots */
 } DGNElemBSplineCurveHeader;
 
-/** 
- * B-Spline Surface Boundary element 
+/**
+ * B-Spline Surface Boundary element
  *
  * The core.stype code is DGNST_BSPLINE_SURFACE_BOUNDARY
  *
@@ -503,8 +503,8 @@ typedef struct {
                             (in UV space) */
 } DGNElemBSplineSurfaceBoundary;
 
-/** 
- * B-Spline Knot/Weight element 
+/**
+ * B-Spline Knot/Weight element
  *
  * The core.stype code is DGNST_KNOT_WEIGHT
  *
@@ -524,22 +524,22 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 
 /** DGNElemCore style: Element uses DGNElemCore structure */
-#define DGNST_CORE                 1 
+#define DGNST_CORE                 1
 
 /** DGNElemCore style: Element uses DGNElemMultiPoint structure */
-#define DGNST_MULTIPOINT           2 
+#define DGNST_MULTIPOINT           2
 
 /** DGNElemCore style: Element uses DGNElemColorTable structure */
-#define DGNST_COLORTABLE           3 
+#define DGNST_COLORTABLE           3
 
 /** DGNElemCore style: Element uses DGNElemTCB structure */
-#define DGNST_TCB                  4 
+#define DGNST_TCB                  4
 
 /** DGNElemCore style: Element uses DGNElemArc structure */
-#define DGNST_ARC                  5 
+#define DGNST_ARC                  5
 
 /** DGNElemCore style: Element uses DGNElemText structure */
-#define DGNST_TEXT                 6 
+#define DGNST_TEXT                 6
 
 /** DGNElemCore style: Element uses DGNElemComplexHeader structure */
 #define DGNST_COMPLEX_HEADER       7
@@ -767,7 +767,7 @@ int  CPL_DLL         DGNLoadTCB( DGNHandle );
 int  CPL_DLL         DGNLookupColor( DGNHandle, int, int *, int *, int * );
 int  CPL_DLL         DGNGetShapeFillInfo( DGNHandle, DGNElemCore *, int * );
 int  CPL_DLL         DGNGetAssocID( DGNHandle, DGNElemCore * );
-int  CPL_DLL         DGNGetElementExtents( DGNHandle, DGNElemCore *, 
+int  CPL_DLL         DGNGetElementExtents( DGNHandle, DGNElemCore *,
                                            DGNPoint *, DGNPoint * );
 
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
@@ -777,12 +777,12 @@ void CPL_DLL  DGNRotationToQuaternion( double, int * );
 void CPL_DLL  DGNQuaternionToMatrix( int *, float * );
 int CPL_DLL   DGNStrokeArc( DGNHandle, DGNElemArc *, int, DGNPoint * );
 int CPL_DLL   DGNStrokeCurve( DGNHandle, DGNElemMultiPoint*, int, DGNPoint * );
-void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN, 
-                                   double dfXMin, double dfYMin, 
+void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN,
+                                   double dfXMin, double dfYMin,
                                    double dfXMax, double dfYMax );
 int  CPL_DLL  DGNGetAttrLinkSize( DGNHandle, DGNElemCore *, int );
 unsigned char CPL_DLL *
-              DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
+              DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                              int iIndex, int *pnLinkageType,
                              int *pnEntityNum, int *pnMSLink, int *pnLinkSize);
 
@@ -790,34 +790,34 @@ unsigned char CPL_DLL *
 
 int  CPL_DLL  DGNWriteElement( DGNHandle, DGNElemCore * );
 int  CPL_DLL  DGNResizeElement( DGNHandle, DGNElemCore *, int );
-DGNHandle CPL_DLL 
-      DGNCreate( const char *pszNewFilename, const char *pszSeedFile, 
-                 int nCreationFlags, 
+DGNHandle CPL_DLL
+      DGNCreate( const char *pszNewFilename, const char *pszSeedFile,
+                 int nCreationFlags,
                  double dfOriginX, double dfOriginY, double dfOriginZ,
-                 int nMasterUnitPerSubUnit, int nUORPerSubUnit, 
+                 int nMasterUnitPerSubUnit, int nUORPerSubUnit,
                  const char *pszMasterUnits, const char *pszSubUnits );
-DGNElemCore CPL_DLL *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst, 
+DGNElemCore CPL_DLL *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
                                       DGNElemCore *psSrcElement );
-int CPL_DLL   DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement, 
-                                 int nLevel, int nGraphicGroup, int nColor, 
+int CPL_DLL   DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement,
+                                 int nLevel, int nGraphicGroup, int nColor,
                                  int nWeight, int nStyle );
-int CPL_DLL   DGNUpdateElemCoreExtended( DGNHandle hDGN, 
+int CPL_DLL   DGNUpdateElemCoreExtended( DGNHandle hDGN,
                                          DGNElemCore *psElement );
 
 DGNElemCore CPL_DLL *
-              DGNCreateMultiPointElem( DGNHandle hDGN, int nType, 
+              DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
                                        int nPointCount, DGNPoint*pasVertices );
 DGNElemCore CPL_DLL  *
-              DGNCreateArcElem2D( DGNHandle hDGN, int nType, 
+              DGNCreateArcElem2D( DGNHandle hDGN, int nType,
                                   double dfOriginX, double dfOriginY,
                                   double dfPrimaryAxis, double dfSecondaryAxis,
-                                  double dfRotation, 
+                                  double dfRotation,
                                   double dfStartAngle, double dfSweepAngle );
 
 DGNElemCore CPL_DLL  *
-              DGNCreateArcElem( DGNHandle hDGN, int nType, 
+              DGNCreateArcElem( DGNHandle hDGN, int nType,
                                 double dfOriginX, double dfOriginY,
-                                double dfOriginZ, 
+                                double dfOriginZ,
                                 double dfPrimaryAxis, double dfSecondaryAxis,
                                 double dfStartAngle, double dfSweepAngle,
                                 double dfRotation, int *panQuaternion );
@@ -831,52 +831,52 @@ DGNElemCore CPL_DLL  *
                                  int *panQuaternion );
 
 DGNElemCore CPL_DLL *
-             DGNCreateTextElem( DGNHandle hDGN, const char *pszText, 
-                                int nFontId, int nJustification, 
-                                double dfLengthMult, double dfHeightMult, 
+             DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
+                                int nFontId, int nJustification,
+                                double dfLengthMult, double dfHeightMult,
                                 double dfRotation, int *panQuaternion,
                        double dfOriginX, double dfOriginY, double dfOriginZ );
 
 DGNElemCore CPL_DLL *
-            DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag, 
+            DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
                                      GByte abyColorInfo[256][3] );
 DGNElemCore CPL_DLL *
-DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
+DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
                             int nTotLength, int nNumElems );
 DGNElemCore CPL_DLL *
-DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, 
+DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
                                  int nNumElems, DGNElemCore **papsElems );
 
 DGNElemCore CPL_DLL *
-DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType, 
+DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
                           int nBoundElems, int nTotLength, int nNumElems );
 DGNElemCore CPL_DLL *
 DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
-                               int nBoundElems, int nNumElems, 
+                               int nBoundElems, int nNumElems,
                                DGNElemCore **papsElems );
 
 DGNElemCore CPL_DLL  *
-DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName, 
-                         short nClass, short *panLevels, 
-                         DGNPoint *psRangeLow, DGNPoint *psRangeHigh, 
+DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
+                         short nClass, short *panLevels,
+                         DGNPoint *psRangeLow, DGNPoint *psRangeHigh,
                          DGNPoint *psOrigin, double dfXScale, double dfYScale,
                          double dfRotation );
 
 DGNElemCore CPL_DLL *
-DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName, 
-                              short nClass, short *panLevels, 
+DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
+                              short nClass, short *panLevels,
                               int nNumElems, DGNElemCore **papsElems,
                               DGNPoint *psOrigin,
                               double dfXScale, double dfYScale,
                               double dfRotation );
 
-int CPL_DLL DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement, 
+int CPL_DLL DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
                           int nLinkageType, int nEntityNum, int nMSLink );
 
-int CPL_DLL DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement, 
+int CPL_DLL DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
                                int nLinkSize, unsigned char *pabyRawLinkData );
 
-int CPL_DLL DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement, 
+int CPL_DLL DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement,
                                  int nColor );
 
 int CPL_DLL DGNElemTypeHasDispHdr( int nElemType );

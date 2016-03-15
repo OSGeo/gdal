@@ -359,8 +359,8 @@ int OGRGeoJSONDataSource::Create( const char* pszName,
     fpOut_ = VSIFOpenL( pszName, "w" );
     if( NULL == fpOut_)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create GeoJSON datasource: %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create GeoJSON datasource: %s.",
                   pszName );
         return FALSE;
     }
@@ -500,7 +500,7 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 
    if( 0 != pResult->nStatus )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Curl reports error: %d: %s",
                   pResult->nStatus, pResult->pszErrBuf );
         CPLHTTPDestroyResult( pResult );
@@ -514,7 +514,7 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 
     if ( eGeoJSONProtocolUnknown != GeoJSONGetProtocolType( pszData ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "The data that was downloaded also starts with "
             "protocol prefix (http://, https:// or ftp://) "
             "and cannot be processed as GeoJSON data.");
@@ -685,7 +685,7 @@ void OGRGeoJSONDataSource::AddLayer( OGRGeoJSONLayer* poLayer )
     poLayer->ResetReading();
 
     papoLayers_ = (OGRGeoJSONLayer**)CPLRealloc( papoLayers_, sizeof(OGRGeoJSONLayer*) * (nLayers_ + 1));
-    papoLayers_[nLayers_] = poLayer; 
+    papoLayers_[nLayers_] = poLayer;
     nLayers_ ++;
 }
 

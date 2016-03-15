@@ -93,7 +93,7 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to handle errors.                                           */
 /* -------------------------------------------------------------------- */
-    if( psResult == NULL || psResult->nDataLen == 0 
+    if( psResult == NULL || psResult->nDataLen == 0
         || CPLGetLastErrorNo() != 0 )
     {
         CPLHTTPDestroyResult( psResult );
@@ -120,8 +120,8 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
                              nNewCounter, pszFilename );
 
     VSILFILE *fp = VSIFileFromMemBuffer( osResultFilename,
-                                     psResult->pabyData, 
-                                     psResult->nDataLen, 
+                                     psResult->pabyData,
+                                     psResult->nDataLen,
                                      TRUE );
 
     if( fp == NULL )
@@ -143,7 +143,7 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     /* suppress errors as not all drivers support /vsimem */
     CPLPushErrorHandler( CPLQuietErrorHandler );
-    GDALDataset *poDS = (GDALDataset *) 
+    GDALDataset *poDS = (GDALDataset *)
         GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags, NULL,
                     poOpenInfo->papszOpenOptions, NULL);
     CPLPopErrorHandler();
@@ -164,13 +164,13 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
         osTempFilename = CPLFormFilename(pszPath, CPLGetFilename(osResultFilename), NULL );
         if( CPLCopyFile( osTempFilename, osResultFilename ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to create temporary file:%s", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to create temporary file:%s",
                       osTempFilename.c_str() );
         }
         else
         {
-            poDS =  (GDALDataset *) 
+            poDS =  (GDALDataset *)
                 GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags, NULL,
                             poOpenInfo->papszOpenOptions, NULL );
             if( VSIUnlink( osTempFilename ) != 0 && poDS != NULL )

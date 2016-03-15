@@ -88,7 +88,7 @@ char** GDALWMSRasterBand::BuildHTTPRequestOpts()
     if (m_parent_dataset->m_unsafeSsl >= 1) {
         http_request_opts = CSLAddString(http_request_opts, "UNSAFESSL=1");
     }
-    if (m_parent_dataset->m_osUserPwd.size() != 0) 
+    if (m_parent_dataset->m_osUserPwd.size() != 0)
     {
         CPLString osUserPwdOptStr("USERPWD=");
         osUserPwdOptStr += m_parent_dataset->m_osUserPwd;
@@ -194,7 +194,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                     /* check for error xml */
                     if (download_requests[i].nDataLen >= 20) {
                         const char *download_data = reinterpret_cast<char *>(download_requests[i].pabyData);
-                        if (STARTS_WITH_CI(download_data, "<?xml ") 
+                        if (STARTS_WITH_CI(download_data, "<?xml ")
                         || STARTS_WITH_CI(download_data, "<!DOCTYPE ")
                         || STARTS_WITH_CI(download_data, "<ServiceException")) {
                             if (ReportWMSException(file_name.c_str()) != CE_None) {
@@ -251,7 +251,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                 } else {
                     CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d.\n  URL: %s\n  HTTP status code: %d, error: %s.\n"
                         "Add the HTTP status code to <ZeroBlockHttpCodes> to ignore that error (see http://www.gdal.org/frmt_wms.html).",
-                        download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus, 
+                        download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus,
 		    download_requests[i].pszError ? download_requests[i].pszError : "(null)");
                     ret = CE_Failure;
                 }
@@ -575,7 +575,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
     if (ds != NULL) {
         int sx = ds->GetRasterXSize();
         int sy = ds->GetRasterYSize();
-        bool accepted_as_no_alpha = false;  // if the request is for 4 bands but the wms returns 3  
+        bool accepted_as_no_alpha = false;  // if the request is for 4 bands but the wms returns 3
         /* Allow bigger than expected so pre-tiled constant size images work on corners */
         if ((sx > nBlockXSize) || (sy > nBlockYSize) || (sx < esx) || (sy < esy)) {
             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect size %d x %d of downloaded block, expected %d x %d, max %d x %d.",
@@ -621,7 +621,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                 }
                 else if (!accepted_as_ct) {
                    if (ds->GetRasterCount()==3 && m_parent_dataset->nBands == 4 && (eDataType == GDT_Byte))
-                   { // WMS returned a file with no alpha so we will fill the alpha band with "opaque" 
+                   { // WMS returned a file with no alpha so we will fill the alpha band with "opaque"
                       accepted_as_no_alpha = true;
                    }
                    else
@@ -691,7 +691,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                   CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect bands count %d in downloaded block, expected %d.",
                                      ds->GetRasterCount(), m_parent_dataset->nBands);
                                   ret = CE_Failure;
-                               }     
+                               }
                             }
                         } else if (ib <= 4) {
                             if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, NULL, pixel_space, line_space, 0, NULL) != CE_None) {

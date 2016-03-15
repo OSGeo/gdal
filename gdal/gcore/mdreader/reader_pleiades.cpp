@@ -297,7 +297,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     if( NULL == papszRawRPCList )
     {
         CPLDestroyXMLNode(pNode);
-        return NULL;        
+        return NULL;
     }
 
     // format list
@@ -321,7 +321,6 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
                                     CSLFetchNameValue(papszRawRPCList,
                                                         apszRPBMap[i + 1]));
         }
-	
     }
 
     // merge coefficients

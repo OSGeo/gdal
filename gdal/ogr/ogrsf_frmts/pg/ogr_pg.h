@@ -302,7 +302,7 @@ class OGRPGTableLayer : public OGRPGLayer
     CPLString           osCreateTable;
 
     int                 iFIDAsRegularColumnIndex;
-    
+
     CPLString           m_osFirstGeometryFieldName;
 
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
@@ -562,4 +562,3 @@ class OGRPGDataSource : public OGRDataSource
 };
 
 #endif /* ndef OGR_PG_H_INCLUDED */
-

@@ -107,7 +107,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 
     /*
     if (m_bNewDb) {
-      CPLError(CE_Warning, CPLE_AppDefined, 
+      CPLError(CE_Warning, CPLE_AppDefined,
                "INFO: No internal SQLite DB found. Reading VFK data may take some time...");
     }
     */
@@ -116,7 +116,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 	     m_bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
 
     if (SQLITE_OK != sqlite3_open(osDbName, &m_poDB)) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Creating SQLite DB failed");
     }
     else {
@@ -145,7 +145,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
 {
     /* close tmp SQLite DB */
     if (SQLITE_OK != sqlite3_close(m_poDB)) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Closing SQLite DB failed\n  %s",
                  sqlite3_errmsg(m_poDB));
     }
@@ -295,7 +295,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
                 nFeatDB = sqlite3_column_int(hStmt, 0);
                 if (nFeatDB > 0 && nFeatDB != poDataBlockCurrent->GetFeatureCount())
-                    CPLError(CE_Failure, CPLE_AppDefined, 
+                    CPLError(CE_Failure, CPLE_AppDefined,
                              "%s: Invalid number of features " CPL_FRMT_GIB " (should be %d)",
                              pszName, poDataBlockCurrent->GetFeatureCount(), nFeatDB);
             }
@@ -309,7 +309,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         /* INSERT ... */
         nDataRecords = VFKReader::ReadDataRecords(poDataBlock);
 
-        /* update VFK_DB_TABLE table */        
+        /* update VFK_DB_TABLE table */
         poDataBlockCurrent = NULL;
         for (iDataBlock = 0; iDataBlock < GetDataBlockCount(); iDataBlock++) {
             poDataBlockCurrent = GetDataBlock(iDataBlock);
@@ -478,7 +478,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
                          "num_records, num_features, num_geometries, table_defn) VALUES "
 			 "('%s', '%s', -1, 0, 0, '%s')",
 			 VFK_DB_TABLE, m_pszFilename, pszBlockName, pszDefn);
-	
+
         ExecuteSQL(osCommand.c_str());
 
         sqlite3_finalize(hStmt);
@@ -505,7 +505,7 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
                          &hStmt, NULL);
 
     if (rc != SQLITE_OK) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "In PrepareStatement(): sqlite3_prepare(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(m_poDB));
 
@@ -522,7 +522,7 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
 /*!
   \brief Execute prepared SQL statement
 
-  \param hStmt pointer to sqlite3_stmt 
+  \param hStmt pointer to sqlite3_stmt
 
   \return OGRERR_NONE on success
 */
@@ -539,8 +539,8 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
             return OGRERR_NOT_ENOUGH_DATA;
         }
 
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "In ExecuteSQL(): sqlite3_step:\n  %s", 
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "In ExecuteSQL(): sqlite3_step:\n  %s",
                  sqlite3_errmsg(m_poDB));
         if (hStmt)
             sqlite3_finalize(hStmt);
@@ -565,11 +565,11 @@ OGRErr VFKReaderSQLite::ExecuteSQL(const char *pszSQLCommand, bool bQuiet)
 
     if (SQLITE_OK != sqlite3_exec(m_poDB, pszSQLCommand, NULL, NULL, &pszErrMsg)) {
         if (!bQuiet)
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "In ExecuteSQL(%s): %s",
                      pszSQLCommand, pszErrMsg);
         else
-            CPLError(CE_Warning, CPLE_AppDefined, 
+            CPLError(CE_Warning, CPLE_AppDefined,
                      "In ExecuteSQL(%s): %s",
                      pszSQLCommand, pszErrMsg);
 

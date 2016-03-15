@@ -36,7 +36,7 @@ CPL_CVSID("$Id: ogringresresultlayer.cpp 11522 2007-05-15 14:26:10Z mloskot $");
 /*                        OGRIngresResultLayer()                         */
 /************************************************************************/
 
-OGRIngresResultLayer::OGRIngresResultLayer( OGRIngresDataSource *poDSIn, 
+OGRIngresResultLayer::OGRIngresResultLayer( OGRIngresDataSource *poDSIn,
                                             const char * pszRawQueryIn,
                                             OGRIngresStatement *poResultSetIn )
 {
@@ -80,11 +80,11 @@ OGRFeatureDefn *OGRIngresResultLayer::ReadResultDefinition()
 
     poDefn->Reference();
 
-    for( iRawField = 0; 
-         iRawField < (int) poResultSet->getDescrParm.gd_descriptorCount; 
+    for( iRawField = 0;
+         iRawField < (int) poResultSet->getDescrParm.gd_descriptorCount;
          iRawField++ )
     {
-        IIAPI_DESCRIPTOR *psFDesc = 
+        IIAPI_DESCRIPTOR *psFDesc =
             poResultSet->getDescrParm.gd_descriptor + iRawField;
         OGRFieldDefn    oField( psFDesc->ds_columnName, OFTString);
 
@@ -128,7 +128,7 @@ OGRFeatureDefn *OGRIngresResultLayer::ReadResultDefinition()
             break;
 
           default:
-            // any other field we ignore. 
+            // any other field we ignore.
             break;
         }
     }

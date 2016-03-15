@@ -9,7 +9,7 @@
  *
  * Contributor: Alessandro Furieri, a.furieri@lqt.it
  * Portions of this module properly supporting SpatiaLite Table/Geom creation
- * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from
  * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
  *
  ******************************************************************************
@@ -532,7 +532,7 @@ int OGRSQLiteBaseDataSource::SetCacheSize()
             sqlite3_free( pszErrMsg );
             return TRUE;
         }
-		
+
         /* computing the CacheSize as #Pages */
         if( iSqlitePageSize == 0 )
             return TRUE;
@@ -719,7 +719,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     {
         if( !CPLTestBool(CPLGetConfigOption("ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", "NO")) )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, "%s", 
+            CPLError( CE_Failure, CPLE_OpenFailed, "%s",
                 "A trigger and/or view calls a OGR extension SQL function that could be used to "
                 "steal data, or use network bandwidth, without your consent.\n"
                 "The database will not be opened unless the ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW "
@@ -1228,7 +1228,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 
     CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
 
-    rc = sqlite3_get_table( 
+    rc = sqlite3_get_table(
         hDB,
         "SELECT f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format, srid"
         " FROM geometry_columns",
@@ -1276,7 +1276,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         {
             rc = sqlite3_get_table( hDB,
                                 "SELECT name, sql FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE %'",
-                                &papszResult, &nRowCount, 
+                                &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
 
             if ( rc == SQLITE_OK )
@@ -1300,8 +1300,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
             }
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                        "Unable to fetch list of tables: %s", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Unable to fetch list of tables: %s",
                         pszErrMsg );
                 sqlite3_free( pszErrMsg );
             }
@@ -1325,7 +1325,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                             "SELECT f_table_name, f_geometry_column, "
                             "type, coord_dimension, srid, "
                             "spatial_index_enabled FROM geometry_columns",
-                            &papszResult, &nRowCount, 
+                            &papszResult, &nRowCount,
                             &nColCount, &pszErrMsg );
     if (rc != SQLITE_OK )
     {
@@ -1415,7 +1415,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 /* -------------------------------------------------------------------- */
         rc = sqlite3_get_table( hDB,
                             "SELECT name, sql FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE %'",
-                            &papszResult, &nRowCount, 
+                            &papszResult, &nRowCount,
                             &nColCount, &pszErrMsg );
 
         if ( rc == SQLITE_OK )
@@ -1441,8 +1441,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                    "Unable to fetch list of tables: %s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Unable to fetch list of tables: %s",
                     pszErrMsg );
             sqlite3_free( pszErrMsg );
         }
@@ -1508,13 +1508,13 @@ all_tables:
                             "SELECT name FROM sqlite_temp_master "
                             "WHERE type IN ('table','view') "
                             "ORDER BY 1",
-                            &papszResult, &nRowCount, 
+                            &papszResult, &nRowCount,
                             &nColCount, &pszErrMsg );
 
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to fetch list of tables: %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to fetch list of tables: %s",
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
         CPLHashSetDestroy(hSet);
@@ -1792,8 +1792,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
 
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
-        return GDALDataset::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return GDALDataset::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -1915,8 +1915,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
                 pszSQLCommand, sqlite3_errmsg(GetDB()) );
 
         if( hSQLStmt != NULL )
@@ -1935,8 +1935,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         if ( rc != SQLITE_DONE )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "In ExecuteSQL(): sqlite3_step(%s):\n  %s",
                   pszSQLCommand, sqlite3_errmsg(GetDB()) );
 
             sqlite3_finalize( hSQLStmt );
@@ -2083,12 +2083,12 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
             pszGeomFormat = "SpatiaLite";
     }
 
-    if( !EQUAL(pszGeomFormat,"WKT") 
+    if( !EQUAL(pszGeomFormat,"WKT")
         && !EQUAL(pszGeomFormat,"WKB")
         && !EQUAL(pszGeomFormat, "SpatiaLite") )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "FORMAT=%s not recognised or supported.", 
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "FORMAT=%s not recognised or supported.",
                   pszGeomFormat );
         CPLFree( pszLayerName );
         return NULL;
@@ -2149,7 +2149,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
             }
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
@@ -2367,8 +2367,8 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
 
     if( iLayer == nLayers )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete layer '%s', but this layer is not known to OGR.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to delete layer '%s', but this layer is not known to OGR.",
                   pszLayerName );
         return;
     }
@@ -2400,7 +2400,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
     CPLDebug( "OGR_SQLITE", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete papoLayers[iLayer];
-    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
@@ -2418,7 +2418,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
                        NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to drop table %s: %s",
                   osLayerName.c_str(), pszErrMsg );
         sqlite3_free( pszErrMsg );
@@ -2432,7 +2432,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
     {
         CPLString osCommand;
 
-        osCommand.Printf( 
+        osCommand.Printf(
             "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
             pszEscapedLayerName );
 
@@ -2440,7 +2440,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Removal from geometry_columns failed.\n%s: %s", 
+                      "Removal from geometry_columns failed.\n%s: %s",
                       osCommand.c_str(), pszErrMsg );
             sqlite3_free( pszErrMsg );
             return OGRERR_FAILURE;
@@ -2678,7 +2678,7 @@ OGRErr OGRSQLiteBaseDataSource::DoTransactionCommand(const char* pszCommand)
     if( rc != SQLITE_OK )
     {
         nSoftTransactionLevel--;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s transaction failed: %s",
                   pszCommand, pszErrMsg );
         sqlite3_free( pszErrMsg );
@@ -2830,7 +2830,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                               "auth_name = '%s' COLLATE NOCASE AND auth_srid = '%s'",
                               pszAuthorityName, pszAuthorityCode );
 
-            rc = sqlite3_get_table( hDB, osCommand, &papszResult, 
+            rc = sqlite3_get_table( hDB, osCommand, &papszResult,
                                     &nRowCount, &nColCount, &pszErrMsg );
             if( rc != SQLITE_OK )
             {
@@ -2841,7 +2841,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                                   "auth_name = '%s' AND auth_srid = '%s'",
                                   pszAuthorityName, pszAuthorityCode );
 
-                rc = sqlite3_get_table( hDB, osCommand, &papszResult, 
+                rc = sqlite3_get_table( hDB, osCommand, &papszResult,
                                         &nRowCount, &nColCount, &pszErrMsg );
 
                 /* Retry in lower case for SpatiaLite */
@@ -2859,7 +2859,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                                       "auth_name = 'epsg' AND auth_srid = '%s'",
                                       pszAuthorityCode );
 
-                    rc = sqlite3_get_table( hDB, osCommand, &papszResult, 
+                    rc = sqlite3_get_table( hDB, osCommand, &papszResult,
                                             &nRowCount, &nColCount, &pszErrMsg );
 
                     if( rc != SQLITE_OK )
@@ -3037,7 +3037,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     if ( nSRSId == nUndefinedSRID )
     {
-        rc = sqlite3_get_table( hDB, "SELECT MAX(srid) FROM spatial_ref_sys", 
+        rc = sqlite3_get_table( hDB, "SELECT MAX(srid) FROM spatial_ref_sys",
                                 &papszResult, &nRowCount, &nColCount,
                                 &pszErrMsg );
 
@@ -3169,7 +3169,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
     if( rc != SQLITE_OK && rc != SQLITE_DONE )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to insert SRID (%s): %s",
                   osCommand.c_str(), sqlite3_errmsg(hDB) );
 
@@ -3222,7 +3222,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 
     osCommand.Printf( "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
                       nId );
-    rc = sqlite3_get_table( hDB, osCommand, 
+    rc = sqlite3_get_table( hDB, osCommand,
                             &papszResult, &nRowCount, &nColCount, &pszErrMsg );
 
     if ( rc == SQLITE_OK )
@@ -3272,7 +3272,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
         osCommand.Printf(
             "SELECT proj4text, auth_name, auth_srid%s FROM spatial_ref_sys WHERE srid = %d",
             (pszSRTEXTColName != NULL) ? osSRTEXTColNameWithCommaBefore.c_str() : "", nId );
-        rc = sqlite3_get_table( hDB, osCommand, 
+        rc = sqlite3_get_table( hDB, osCommand,
                                 &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
         if ( rc == SQLITE_OK )
@@ -3328,7 +3328,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "%s: %s", osCommand.c_str(), pszErrMsg );
             sqlite3_free( pszErrMsg );
             return NULL;

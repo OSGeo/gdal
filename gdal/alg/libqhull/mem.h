@@ -76,7 +76,7 @@ Trace short and quick memory allocations at T5
     ptr_intT is typically a signed value, but not necessarily so
     size_t is typically unsigned, but should match the parameter type
     Qhull uses int instead of size_t except for system calls such as malloc, qsort, qh_malloc, etc.
-    This matches Qt convention and is easier to work with.  
+    This matches Qt convention and is easier to work with.
 */
 #if _MSC_VER && defined(_WIN64)
 typedef long long ptr_intT;

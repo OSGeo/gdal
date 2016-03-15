@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  RPF A.TOC read Library
- * Purpose:  Main GDAL independent include file for RPF TOC support.  
+ * Purpose:  Main GDAL independent include file for RPF TOC support.
  * Author:   Even Rouault, even.rouault at mines-paris.org
  *
  **********************************************************************

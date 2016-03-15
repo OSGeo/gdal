@@ -106,7 +106,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         // Don't treat drive name colon as family separator.  It is assumed
         // that drive names are on character long, and preceded by a
         // forward or backward slash.
-        if( pszFamily < pszWorkingName+2 
+        if( pszFamily < pszWorkingName+2
             || pszFamily[-2] == '/'
             || pszFamily[-2] == '\\' )
             pszFamily = NULL;
@@ -172,7 +172,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "untranslatable PROJ.4 projection: %s\n", 
+                      "untranslatable PROJ.4 projection: %s\n",
                       ECSTEXT(psResult) );
             delete m_poSpatialRef;
             m_poSpatialRef = NULL;
@@ -228,7 +228,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
             int         i;
             const ecs_LayerCapabilities *psLayerCap;
 
-            for( i = 0; 
+            for( i = 0;
                 (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
                  i++ )
             {
@@ -253,7 +253,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      the datasource.                                                 */
 /************************************************************************/
 
-void OGROGDIDataSource::IAddLayer( const char *pszLayerName, 
+void OGROGDIDataSource::IAddLayer( const char *pszLayerName,
                                    ecs_Family eFamily )
 
 {

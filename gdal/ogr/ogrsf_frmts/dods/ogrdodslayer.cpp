@@ -110,7 +110,7 @@ OGRDODSLayer::~OGRDODSLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "DODS", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -161,7 +161,7 @@ OGRFeature *OGRDODSLayer::GetNextFeature()
 {
     OGRFeature *poFeature;
 
-    for( poFeature = GetFeature( iNextShapeId++ ); 
+    for( poFeature = GetFeature( iNextShapeId++ );
          poFeature != NULL;
          poFeature = GetFeature( iNextShapeId++ ) )
     {
@@ -214,14 +214,14 @@ int OGRDODSLayer::ProvideDataDDS()
                   poDS->oBaseURL.c_str(),
                   (poDS->oProjection + poDS->oConstraints).c_str() );
 
-        // We may need to use custom constraints here. 
-        poConnection->request_data( *poDataDDS, 
+        // We may need to use custom constraints here.
+        poConnection->request_data( *poDataDDS,
                                     poDS->oProjection + poDS->oConstraints );
     }
     catch (Error &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DataDDS request failed:\n%s", 
+                  "DataDDS request failed:\n%s",
                   e.get_error_message().c_str() );
         return FALSE;
     }

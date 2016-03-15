@@ -807,7 +807,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /*      Handle raw binary geometry ... this hasn't been tested in a     */
 /*      while.                                                          */
 /* -------------------------------------------------------------------- */
-        else if( iOGRGeomField >= 0 && 
+        else if( iOGRGeomField >= 0 &&
                  poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
         {
             OGRGeometry *poGeometry = NULL;
@@ -823,7 +823,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 #if defined(BINARY_CURSOR_ENABLED)
                 if (poDS->bUseBinaryCursor
 #if !defined(PG_PRE74)
-                    && PQfformat( hResult, iField ) == 1 
+                    && PQfformat( hResult, iField ) == 1
 #endif
                    )
                 {
@@ -859,7 +859,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         if( PQgetisnull( hResult, iRecord, iField ) )
             continue;
 
-        OGRFieldType eOGRType = 
+        OGRFieldType eOGRType =
             poFeatureDefn->GetFieldDefn(iOGRField)->GetType();
 
         if( eOGRType == OFTIntegerList)
@@ -1148,8 +1148,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             }
         }
 
-        else if( eOGRType == OFTDate 
-                 || eOGRType == OFTTime 
+        else if( eOGRType == OFTDate
+                 || eOGRType == OFTTime
                  || eOGRType == OFTDateTime )
         {
 #if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
@@ -1885,7 +1885,7 @@ OGRErr OGRPGLayer::RollbackTransaction()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRPGLayer::GetFIDColumn() 
+const char *OGRPGLayer::GetFIDColumn()
 
 {
     GetLayerDefn();

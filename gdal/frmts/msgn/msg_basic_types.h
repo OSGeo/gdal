@@ -39,9 +39,9 @@ const unsigned int      IMAGEACQUISITION_RECORD_LENGTH  = 700;
 const unsigned int      CELESTIALEVENTS_RECORD_LENGTH   = 326058; // should be 56258 according to ICD105 ??
 const unsigned int      IMAGEDESCRIPTION_RECORD_LENGTH  = 101;
 
-const unsigned int      RADIOMETRICPROCESSING_RECORD_OFFSET = 
-    SATELLITESTATUS_RECORD_LENGTH + 
-    IMAGEACQUISITION_RECORD_LENGTH + 
+const unsigned int      RADIOMETRICPROCESSING_RECORD_OFFSET =
+    SATELLITESTATUS_RECORD_LENGTH +
+    IMAGEACQUISITION_RECORD_LENGTH +
     CELESTIALEVENTS_RECORD_LENGTH +
     IMAGEDESCRIPTION_RECORD_LENGTH;
 
@@ -144,7 +144,7 @@ typedef struct {
 
 typedef struct {
     UBYTE       headerVersionNo;
-    EBYTE       packetType;         // 2 = mission data 
+    EBYTE       packetType;         // 2 = mission data
     EBYTE       subHeaderType;      // 0 = no subheader, 1 = GP_PK_SH1, 2 = GP_PK_SH2
     GP_FAC_ID   sourceFacilityId;
     GP_FAC_ENV  sourceEnvId;
@@ -154,7 +154,7 @@ typedef struct {
     GP_FAC_ID   destFacilityId;
     GP_FAC_ENV  destEnvId;
     USHORT      sequenceCount;
-    UNSIGNED    packetLength;      
+    UNSIGNED    packetLength;
 } GP_PK_HEADER;
 
 typedef struct {
@@ -170,7 +170,7 @@ typedef struct {
 typedef struct {
     double  cal_slope;
     double  cal_offset;
-} CALIBRATION; 
+} CALIBRATION;
 
 typedef struct {
     EBYTE       radianceLinearisation[12];
@@ -198,7 +198,7 @@ typedef struct {
     // rest of record omitted, for now
 } IMAGE_DESCRIPTION_RECORD;
 
-// disable byte-packing 
+// disable byte-packing
 #pragma pack()
 
 // endian conversion routines
@@ -226,8 +226,8 @@ public:
     static const double req;        // earth equatorial radius
     static const double rpol;       // earth polar radius
     static const double oblate;     // oblateness of earth
-    static const double deg_to_rad; 
-    static const double rad_to_deg; 
+    static const double deg_to_rad;
+    static const double rad_to_deg;
     static const double step;       // pixel / line step in degrees
     static const double nlines;     // number of lines in an image
 

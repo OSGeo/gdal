@@ -544,7 +544,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if (PQsetClientEncoding(hPGConn, encoding) == -1)
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                    "PQsetClientEncoding(%s) failed.\n%s", 
+                    "PQsetClientEncoding(%s) failed.\n%s",
                     encoding, PQerrorMessage( hPGConn ) );
         }
     }
@@ -840,7 +840,7 @@ void OGRPGDataSource::LoadTables()
     CPLHashSet    *hSetTables = NULL;
     std::set<CPLString> osRegisteredLayers;
 
-    for( int i = 0; i < nLayers; i++) 
+    for( int i = 0; i < nLayers; i++)
     {
         osRegisteredLayers.insert(papoLayers[i]->GetName());
     }
@@ -1736,7 +1736,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     else
         osCreateTable.Printf("CREATE%s TABLE %s.%s",
                              CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) ? " UNLOGGED": "",
-                             OGRPGEscapeColumnName(pszSchemaName).c_str(), 
+                             OGRPGEscapeColumnName(pszSchemaName).c_str(),
                              OGRPGEscapeColumnName(pszTableName).c_str());
 
     const char *suffix;
@@ -1747,7 +1747,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         suffix = "M";
     else if( GeometryTypeFlags & OGRGeometry::OGR_G_3D )
         suffix = "Z";
-    else 
+    else
         suffix = "";
 
     if( eType != wkbNone && !bHavePostGIS )
@@ -1774,7 +1774,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                     pszSerialType,
                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                     suffix,
-                    nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
+                    nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
                     osFIDColumnNameEscaped.c_str());
     }
     else if ( !bDeferredCreation && eType != wkbNone && !EQUAL(pszGeomType, "geography") &&
@@ -1787,7 +1787,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                     pszSerialType,
                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                     suffix,
-                    nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
+                    nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
                     osFIDColumnNameEscaped.c_str());
     }
     else
@@ -1997,7 +1997,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 int OGRPGDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) 
+    if( EQUAL(pszCap,ODsCCreateLayer)
         || EQUAL(pszCap,ODsCDeleteLayer)
         || EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
@@ -2861,7 +2861,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
         GetLayerCount();
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            if( EQUAL(papoLayers[iLayer]->GetName(), 
+            if( EQUAL(papoLayers[iLayer]->GetName(),
                       pszLayerName ))
             {
                 DeleteLayer( iLayer );

@@ -27,13 +27,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
- 
- 
+
+
 /******************************************************************************
  * OGR WKB export                                                             *
  *****************************************************************************/
 
-%extend OGRGeometryShadow 
+%extend OGRGeometryShadow
 {
     %apply (void *buffer_ptr) {char *buffer};
     OGRErr ExportToWkb( int bufLen, char *buffer, OGRwkbByteOrder byte_order ) {

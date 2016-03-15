@@ -17,16 +17,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -72,11 +72,11 @@ GBool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing)
     x = poPoint->getX();
     y = poPoint->getY();
 
-    for (i = 0, j = numpoints-1; i < numpoints; j = i++) 
+    for (i = 0, j = numpoints-1; i < numpoints; j = i++)
     {
-        if ((((poRing->getY(i)<=y) && (y<poRing->getY(j))) || 
-             ((poRing->getY(j)<=y) && (y<poRing->getY(i)))) && 
-            (x < (poRing->getX(j) - poRing->getX(i)) * (y - poRing->getY(i)) / 
+        if ((((poRing->getY(i)<=y) && (y<poRing->getY(j))) ||
+             ((poRing->getY(j)<=y) && (y<poRing->getY(i)))) &&
+            (x < (poRing->getX(j) - poRing->getX(i)) * (y - poRing->getY(i)) /
                  (poRing->getY(j) - poRing->getY(i)) + poRing->getX(i)))
             status = !status;
     }
@@ -95,14 +95,14 @@ GBool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing)
  *
  * Adapted version of msIntersectPointPolygon() from MapServer's mapsearch.c
  **********************************************************************/
-GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly) 
+GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
 {
     int i;
     GBool status = FALSE;
 
-    for(i=0; i<OGR_NUM_RINGS(poPoly); i++) 
+    for(i=0; i<OGR_NUM_RINGS(poPoly); i++)
     {
-        if (OGRPointInRing(poPoint, OGR_GET_RING(poPoly, i))) 
+        if (OGRPointInRing(poPoint, OGR_GET_RING(poPoly, i)))
         {
             /* ok, the point is in a line */
             status = !status;
@@ -117,13 +117,13 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
  *                   OGRPolygonLabelPoint()
  *
  * Generate a label point on the surface of a polygon.
- * 
- * The function is based on a scanline conversion routine used for polygon 
+ *
+ * The function is based on a scanline conversion routine used for polygon
  * fills.  Instead of processing each line the as with drawing, the
- * polygon is sampled. The center of the longest sample is chosen for the 
- * label point. The label point is guaranteed to be in the polygon even if 
+ * polygon is sampled. The center of the longest sample is chosen for the
+ * label point. The label point is guaranteed to be in the polygon even if
  * it has holes assuming the polygon is properly formed.
- * 
+ *
  * Returns OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
  *
  * Adapted version of msPolygonLabelPoint() from MapServer's mapprimitive.c
@@ -167,7 +167,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
     skip = (oEnv.MaxY - oEnv.MinY)/NUM_SCANLINES;
 
     n=0;
-    for(j=0; j<OGR_NUM_RINGS(poPoly); j++) 
+    for(j=0; j<OGR_NUM_RINGS(poPoly); j++)
     {
         /* count total number of points */
         n += OGR_GET_RING(poPoly, j)->getNumPoints();
@@ -179,24 +179,24 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
     if (xintersect == NULL)
         return OGRERR_FAILURE;
 
-    for(k=1; k<=NUM_SCANLINES; k++) 
+    for(k=1; k<=NUM_SCANLINES; k++)
     {
         /* sample the shape in the y direction */
 
-        y = oEnv.MaxY - k*skip; 
+        y = oEnv.MaxY - k*skip;
 
-        /* need to find a y that won't intersect any vertices exactly */  
+        /* need to find a y that won't intersect any vertices exactly */
         hi_y = y - 1; /* first initializing lo_y, hi_y to be any 2 pnts on either side of lp->y */
         lo_y = y + 1;
-        for(j=0; j<OGR_NUM_RINGS(poPoly); j++) 
+        for(j=0; j<OGR_NUM_RINGS(poPoly); j++)
         {
             OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);
 
-            if((lo_y < y) && (hi_y >= y)) 
+            if((lo_y < y) && (hi_y >= y))
                 break; /* already initialized */
-            for(i=0; i < poRing->getNumPoints(); i++) 
-            {   
-                if((lo_y < y) && (hi_y >= y)) 
+            for(i=0; i < poRing->getNumPoints(); i++)
+            {
+                if((lo_y < y) && (hi_y >= y))
                     break; /* already initialized */
                 if(poRing->getY(i) < y)
                     lo_y = poRing->getY(i);
@@ -205,28 +205,28 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
             }
         }
 
-        for(j=0; j<OGR_NUM_RINGS(poPoly); j++) 
+        for(j=0; j<OGR_NUM_RINGS(poPoly); j++)
         {
             OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);
 
-            for(i=0; i < poRing->getNumPoints(); i++) 
+            for(i=0; i < poRing->getNumPoints(); i++)
             {
-                if((poRing->getY(i) < y) && 
+                if((poRing->getY(i) < y) &&
                    ((y - poRing->getY(i)) < (y - lo_y)))
                     lo_y = poRing->getY(i);
-                if((poRing->getY(i) >= y) && 
+                if((poRing->getY(i) >= y) &&
                    ((poRing->getY(i) - y) < (hi_y - y)))
                     hi_y = poRing->getY(i);
-            }      
+            }
         }
 
-        if(lo_y == hi_y) 
+        if(lo_y == hi_y)
         {
             free(xintersect);
             return OGRERR_FAILURE;
         }
-        else  
-            y = (hi_y + lo_y)/2.0;    
+        else
+            y = (hi_y + lo_y)/2.0;
 
         nfound = 0;
         for(j=0; j<OGR_NUM_RINGS(poPoly); j++)   /* for each line */
@@ -235,12 +235,12 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
             point1.x = poRing->getX(poRing->getNumPoints()-1);
             point1.y = poRing->getY(poRing->getNumPoints()-1);
 
-            for(i=0; i < poRing->getNumPoints(); i++) 
+            for(i=0; i < poRing->getNumPoints(); i++)
             {
                 point2.x = poRing->getX(i);
                 point2.y = poRing->getY(i);
 
-                if(EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE) 
+                if(EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE)
                 {
                     if(point1.y == point2.y)
                         continue; /* ignore horizontal edges */
@@ -256,12 +256,12 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         } /* Finished the scanline */
 
         /* First, sort the intersections */
-        do 
+        do
         {
             wrong_order = 0;
-            for(i=0; i < nfound-1; i++) 
+            for(i=0; i < nfound-1; i++)
             {
-                if(xintersect[i] > xintersect[i+1]) 
+                if(xintersect[i] > xintersect[i+1])
                 {
                     wrong_order = 1;
                     SWAP(xintersect[i], xintersect[i+1], temp);
@@ -271,13 +271,13 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 
         /* Great, now find longest span */
         //point1.y = point2.y = y;
-        for(i=0; i < nfound; i += 2) 
+        for(i=0; i < nfound; i += 2)
         {
             point1.x = xintersect[i];
             point2.x = xintersect[i+1];
             /* len = length(point1, point2); */
             len = ABS((point2.x - point1.x));
-            if(len > max_len) 
+            if(len > max_len)
             {
                 max_len = len;
                 poLabelPoint->setX( (point1.x + point2.x)/2 );
@@ -290,7 +290,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 
     /* __TODO__ Bug 673
      * There seem to be some polygons for which the label is returned
-     * completely outside of the polygon's MBR and this messes the 
+     * completely outside of the polygon's MBR and this messes the
      * file bounds, etc.
      * Until we find the source of the problem, we'll at least validate
      * the label point to make sure that it overlaps the polygon MBR.
@@ -319,7 +319,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
  *                   OGRGetCentroid()
  *
  * Calculate polygon gravity center.
- * 
+ *
  * Returns OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
  *
  * Adapted version of get_centroid() from MapServer's mapprimitive.c
@@ -331,7 +331,7 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
     double cent_weight_x=0.0, cent_weight_y=0.0;
     double len, total_len=0;
 
-    for(i=0; i<OGR_NUM_RINGS(poPoly); i++) 
+    for(i=0; i<OGR_NUM_RINGS(poPoly); i++)
     {
         double x1, y1, x2, y2;
         OGRLinearRing *poRing = OGR_GET_RING(poPoly, i);
@@ -339,7 +339,7 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
         x2 = poRing->getX(0);
         y2 = poRing->getY(0);
 
-        for(j=1; j<poRing->getNumPoints(); j++) 
+        for(j=1; j<poRing->getNumPoints(); j++)
         {
             x1 = x2;
             y1 = y2;
@@ -369,11 +369,11 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
  *
  * Return the center point of a polyline.
  *
- * In MapInfo, for a simple or multiple polyline (pline), the center point 
- * in the object definition is supposed to be either the center point of 
- * the pline or the first section of a multiple pline (if an odd number of 
- * points in the pline or first section), or the midway point between the 
- * two central points (if an even number of points involved). 
+ * In MapInfo, for a simple or multiple polyline (pline), the center point
+ * in the object definition is supposed to be either the center point of
+ * the pline or the first section of a multiple pline (if an odd number of
+ * points in the pline or first section), or the midway point between the
+ * two central points (if an even number of points involved).
  *
  * Returns OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
  **********************************************************************/
@@ -421,7 +421,7 @@ int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
     x2 = poLine->getX(0);
     y2 = poLine->getY(0);
 
-    for(int i=1; i<poLine->getNumPoints(); i++) 
+    for(int i=1; i<poLine->getNumPoints(); i++)
     {
         x1 = x2;
         y1 = y2;
@@ -439,4 +439,3 @@ int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 
     return OGRERR_NONE;
 }
-

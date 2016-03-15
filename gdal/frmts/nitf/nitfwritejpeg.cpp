@@ -37,7 +37,7 @@
 #include "gdal_pam.h"
 
 CPL_C_START
-#ifdef LIBJPEG_12_PATH 
+#ifdef LIBJPEG_12_PATH
 #  include LIBJPEG_12_PATH
 #else
 #  include "jpeglib.h"
@@ -45,8 +45,8 @@ CPL_C_START
 CPL_C_END
 
 /*
-* Do we want to do special processing suitable for when JSAMPLE is a 
-* 16bit value?   
+* Do we want to do special processing suitable for when JSAMPLE is a
+* 16bit value?
 */
 #if defined(JPEG_LIB_MK1)
 #  define JPEG_LIB_MK1_OR_12BIT 1
@@ -55,7 +55,7 @@ CPL_C_END
 #endif
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(NITFWriteJPEGBlock)
-int 
+int
 NITFWriteJPEGBlock_12( GDALDataset *poSrcDS, VSILFILE *fp,
                      int nBlockXOff, int nBlockYOff,
                      int nBlockXSize, int nBlockYSize,
@@ -64,7 +64,7 @@ NITFWriteJPEGBlock_12( GDALDataset *poSrcDS, VSILFILE *fp,
                      GDALProgressFunc pfnProgress, void * pProgressData );
 #endif
 
-int 
+int
 NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
@@ -78,7 +78,7 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 /*                         NITFWriteJPEGBlock()                         */
 /************************************************************************/
 
-int 
+int
 NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
                     int nBlockXOff, int nBlockYOff,
                     int nBlockXSize, int nBlockYSize,
@@ -212,9 +212,9 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
     {
         if (iLine < nBlockYSizeToRead)
         {
-            eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1, 
+            eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1,
                                     pabyScanline, nBlockXSizeToRead, 1, eWorkDT,
-                                    nBands, anBandList, 
+                                    nBands, anBandList,
                                     nBands*nWorkDTSize, nBands * nBlockXSize * nWorkDTSize, nWorkDTSize, NULL );
 
 #if !defined(JPEG_LIB_MK1_OR_12BIT)
@@ -265,11 +265,11 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
             static_cast<double>( nBlockYOff ) * nBlockYSize * nXSize +
             static_cast<double>( nBlockXOff ) * nBlockYSize * nBlockXSize +
             (iLine + 1) * nBlockXSizeToRead;
-        if( eErr == CE_None 
+        if( eErr == CE_None
             && !pfnProgress( nCurPixels / nTotalPixels, NULL, pProgressData ) )
         {
             eErr = CE_Failure;
-            CPLError( CE_Failure, CPLE_UserInterrupt, 
+            CPLError( CE_Failure, CPLE_UserInterrupt,
                       "User terminated CreateCopy()" );
         }
     }

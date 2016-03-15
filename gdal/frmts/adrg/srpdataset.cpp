@@ -89,7 +89,7 @@ public:
 
     virtual char **GetFileList();
 
-    int                 GetFromRecord( const char* pszFileName, 
+    int                 GetFromRecord( const char* pszFileName,
                                        DDFRecord * record);
     void                AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName );
     void  AddMetadatafromFromTHF(const char* pszFileName);
@@ -209,9 +209,9 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if (l_poDS->TILEINDEX)
     {
-        if( l_poDS->PCB == 0 ) // uncompressed 
+        if( l_poDS->PCB == 0 ) // uncompressed
             offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128;
-        else // compressed 
+        else // compressed
             offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1);
     }
     else
@@ -234,7 +234,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         if( VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128*128 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, 
+            CPLError(CE_Failure, CPLE_FileIO,
                      "Cannot read data at offset %d", offset);
             return CE_Failure;
         }
@@ -253,7 +253,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nBytesRead = static_cast<int>(VSIFReadL(pabyCData, 1, nBufSize, l_poDS->fdIMG));
         if( nBytesRead == 0 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, 
+            CPLError(CE_Failure, CPLE_FileIO,
                      "Cannot read data at offset %d", offset);
             return CE_Failure;
         }
@@ -266,7 +266,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( iSrc + 2 > nBytesRead )
             {
                 CPLFree( pabyCData );
-                CPLError(CE_Failure, CPLE_AppDefined, 
+                CPLError(CE_Failure, CPLE_AppDefined,
                          "Out of data decoding image block, only %d available.",
                          iSrc );
                 return CE_Failure;
@@ -307,7 +307,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( iPixel + nCount > 128 * 128 )
             {
                 CPLFree( pabyCData );
-                CPLError(CE_Failure, CPLE_AppDefined, 
+                CPLError(CE_Failure, CPLE_AppDefined,
                       "Too much data decoding image block, likely corrupt." );
                 return CE_Failure;
             }
@@ -481,7 +481,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 
     NFC = record->GetIntSubfield( "SPR", 0, "NFC", 0, &bSuccess );
     CPLDebug("SRP", "NFC=%d", NFC);
-    
+
     if( NFL <= 0 || NFC <= 0 ||
         NFL > INT_MAX / 128 ||
         NFC > INT_MAX / 128 ||
@@ -671,7 +671,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
     {
         while( (record = oQALModule.ReadRecord()) != NULL)
         {
-            if( record->FindField( "COL" ) != NULL ) 
+            if( record->FindField( "COL" ) != NULL )
             {
                 int            iColor;
                 int            nColorCount = std::min(256,
@@ -789,11 +789,11 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         }
         else if( ZNA == 61 )
         {
-            oSRS.importFromEPSG( 32661 ); // WGS84 UPS North 
+            oSRS.importFromEPSG( 32661 ); // WGS84 UPS North
         }
         else if( ZNA == -61 )
         {
-            oSRS.importFromEPSG( 32761 ); // WGS84 UPS South 
+            oSRS.importFromEPSG( 32761 ); // WGS84 UPS South
         }
 
         char *pszWKT = NULL;
@@ -858,11 +858,11 @@ void SRPDataset::AddSubDataset( const char* pszGENFileName, const char* pszIMGFi
     osSubDatasetName += pszIMGFileName;
 
     snprintf(szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, osSubDatasetName);
 
     snprintf(szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, osSubDatasetName);
 }
 
@@ -960,7 +960,7 @@ DDFRecord* SRPDataset::FindRecordInGENForIMG(DDFModule& module,
 SRPDataset* SRPDataset::OpenDataset(
     const char* pszGENFileName, const char* pszIMGFileName, DDFRecord* record)
 {
-    DDFModule module;    
+    DDFModule module;
     DDFField* field;
     DDFFieldDefn *fieldDefn;
 
@@ -983,7 +983,7 @@ SRPDataset* SRPDataset::OpenDataset(
     }
 
     const char* pszPRT = record->GetStringSubfield("DSI", 0, "PRT", 0);
-    if( pszPRT == NULL) 
+    if( pszPRT == NULL)
         return NULL;
 
     CPLString osPRT = pszPRT;
@@ -1308,7 +1308,7 @@ char** SRPDataset::GetIMGListFromGEN(const char* pszFileName,
 
     DDFModule module;
     if (!module.Open(pszFileName, TRUE))
-        return NULL;    
+        return NULL;
 
     while( true )
     {
@@ -1517,13 +1517,13 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 
             for( i = 0; i < (int)nLeaderSize; i++ )
             {
-                if( poOpenInfo->pabyHeader[i] < 32 
+                if( poOpenInfo->pabyHeader[i] < 32
                     || poOpenInfo->pabyHeader[i] > 126 )
                     return NULL;
             }
 
-            if( poOpenInfo->pabyHeader[5] != '1' 
-                && poOpenInfo->pabyHeader[5] != '2' 
+            if( poOpenInfo->pabyHeader[5] != '1'
+                && poOpenInfo->pabyHeader[5] != '2'
                 && poOpenInfo->pabyHeader[5] != '3' )
                 return NULL;
 
@@ -1533,8 +1533,8 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
                 return NULL;
 
             // --------------------------------------------------------------------
-            //      Find and open the .GEN file.                                   
-            // -------------------------------------------------------------------- 
+            //      Find and open the .GEN file.
+            // --------------------------------------------------------------------
             VSIStatBufL sStatBuf;
 
             CPLString basename = CPLGetBasename( osFileName );
@@ -1569,7 +1569,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( poOpenInfo->eAccess == GA_Update )
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                 "The SRP driver does not support update access to existing"
                 " datasets.\n" );
             return NULL;

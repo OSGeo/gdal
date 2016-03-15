@@ -393,7 +393,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else if ( poGDS->sHeader.nBitDepth == 4 )
         {
             GByte *pabyTemp = pabyTile;
-            
+
             if( nTileBytes != (nBlockSize+1) / 2 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -417,7 +417,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else if ( poGDS->sHeader.nBitDepth == 1 )
         {
             GByte *pabyTemp = pabyTile;
-            
+
             if( nTileBytes != (nBlockSize+7) / 8 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -426,7 +426,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLFree( pabyTile );
                 return CE_Failure;
             }
-            
+
             for( GUInt32 i = 0; i < nBlockSize; i++ )
             {
                 switch ( i & 0x7 )
@@ -1484,7 +1484,7 @@ do {                                                                    \
         delete poDS;
         return NULL;
     }
-    
+
     const int nDataSize = GDALGetDataTypeSize( eType ) / 8;
     const int nBlockXSize = static_cast<int>(poDS->sHeader.nTileWidth);
     const int nBlockYSize = static_cast<int>(poDS->sHeader.nTileHeight);

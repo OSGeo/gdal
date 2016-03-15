@@ -1434,7 +1434,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             nChSaved = *pabyIterVals;
             *pabyIterVals = '\0';
 
-            /* CPLDebug("OpenFileGDB", "Field %d, row %d: %s", iCol, nCurRow, sCurField.String); */ 
+            /* CPLDebug("OpenFileGDB", "Field %d, row %d: %s", iCol, nCurRow, sCurField.String); */
 
             break;
         }

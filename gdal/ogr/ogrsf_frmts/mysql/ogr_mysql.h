@@ -44,7 +44,7 @@
 #include <mysql.h>
 
 #ifdef _MSC_VER
-#pragma warning( pop ) 
+#pragma warning( pop )
 #endif
 
 /* my_global.h from mysql 5.1 declares the min and max macros. */
@@ -166,7 +166,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
-                                { bPreservePrecision = bFlag; }    
+                                { bPreservePrecision = bFlag; }
 
     virtual int         TestCapability( const char * );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
@@ -220,7 +220,7 @@ class OGRMySQLDataSource : public OGRDataSource
     OGRErr              DeleteLayer( int iLayer );
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
@@ -247,7 +247,7 @@ class OGRMySQLDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *ICreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -271,5 +271,3 @@ class OGRMySQLDataSource : public OGRDataSource
 };
 
 #endif /* ndef OGR_MYSQL_H_INCLUDED */
-
-

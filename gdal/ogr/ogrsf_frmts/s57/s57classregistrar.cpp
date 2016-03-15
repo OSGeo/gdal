@@ -98,8 +98,8 @@ S57ClassContentExplorer::~S57ClassContentExplorer()
 /*                              FindFile()                              */
 /************************************************************************/
 
-int S57ClassRegistrar::FindFile( const char *pszTarget, 
-                                 const char *pszDirectory, 
+int S57ClassRegistrar::FindFile( const char *pszTarget,
+                                 const char *pszDirectory,
                                  int bReportErr,
                                  VSILFILE **pfp )
 

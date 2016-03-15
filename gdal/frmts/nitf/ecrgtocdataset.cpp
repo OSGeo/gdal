@@ -186,8 +186,8 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
-        CSLSetNameValue( papszSubDatasets, szName, 
+    papszSubDatasets =
+        CSLSetNameValue( papszSubDatasets, szName,
               CPLSPrintf( "ECRG_TOC_ENTRY:%s:%s:%s:%s",
                           LaunderString(pszProductTitle).c_str(),
                           LaunderString(pszDiscId).c_str(),

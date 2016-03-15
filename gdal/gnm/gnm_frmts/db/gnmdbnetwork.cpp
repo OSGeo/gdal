@@ -264,7 +264,7 @@ CPLErr GNMDatabaseNetwork::DeleteGraphLayer()
 }
 
 CPLErr GNMDatabaseNetwork::DeleteFeaturesLayer()
-{    
+{
     return DeleteLayerByName(GNM_SYSLAYER_FEATURES);
 }
 

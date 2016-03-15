@@ -51,7 +51,7 @@ protected:
     virtual int CheckNetworkExist( const char* pszFilename, char** papszOptions );
 protected:
     virtual CPLErr CreateMetadataLayerFromFile( const char* pszFilename, int nVersion,
-                                        char** papszOptions );    
+                                        char** papszOptions );
     virtual CPLErr StoreNetworkSrs();
     virtual CPLErr LoadNetworkSrs();
     virtual CPLErr DeleteMetadataLayer();

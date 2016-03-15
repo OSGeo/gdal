@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2010, ESRI 
+ * Copyright (c) 2010, ESRI
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ static double Apply( double *C, double P, double L, double H )
     const double P2 = P * P;
 
     return  C[0]
-        + C[1]*L     + C[2]*P     + C[3]*H     + C[4]*L*P   + C[5]*L*H  
+        + C[1]*L     + C[2]*P     + C[3]*H     + C[4]*L*P   + C[5]*L*H
         + C[6]*P*H   + C[7]*L2    + C[8]*P2    + C[9]*H2    + C[10]*P*L*H
         + C[11]*L*L2 + C[12]*L*P2 + C[13]*L*H2 + C[14]*L2*P + C[15]*P*P2
         + C[16]*P*H2 + C[17]*L2*H + C[18]*P2*H + C[19]*H*H2;
@@ -134,7 +134,7 @@ void NITFDensifyGCPs( GDAL_GCP **psGCPs, int *pnGCPCount )
 /*                            RPCTransform()                            */
 /************************************************************************/
 
-static bool RPCTransform( NITFRPC00BInfo *psRPCInfo, 
+static bool RPCTransform( NITFRPC00BInfo *psRPCInfo,
                           double         *pGCPXCoord,
                           double         *pGCPYCoord,
                           int             nGCPCount )

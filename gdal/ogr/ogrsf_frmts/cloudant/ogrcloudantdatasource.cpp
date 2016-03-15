@@ -349,7 +349,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
         json_object_object_add(poDoc, "_id",
                                json_object_new_string(designDoc));
         json_object_object_add(poStIndexes, "spatial", poSpatial);
-        json_object_object_add(poSpatial, "index", 
+        json_object_object_add(poSpatial, "index",
             json_object_new_string("function(doc) {if (doc.geometry && doc.geometry.coordinates && doc.geometry.coordinates.length != 0){st_index(doc.geometry);}}"));
 
         if (bSrid)
@@ -376,4 +376,4 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
     return poLayer;
-}   
+}

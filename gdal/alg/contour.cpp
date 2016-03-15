@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Contour Generation
- * Purpose:  Core algorithm implementation for contour line generation. 
+ * Purpose:  Core algorithm implementation for contour line generation.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -43,7 +43,7 @@ CPL_CVSID("$Id$");
 #define FUDGE_EXACT 0.001
 
 // The amount of a pixel that line ends need to be within to be considered to
-// match for joining purposes. 
+// match for joining purposes.
 
 #define JOIN_DIST 0.0001
 
@@ -78,14 +78,14 @@ public:
 /************************************************************************/
 /*                           GDALContourLevel                           */
 /************************************************************************/
-class GDALContourLevel 
+class GDALContourLevel
 {
     double dfLevel;
 
     int nEntryMax;
     int nEntryCount;
     GDALContourItem **papoEntries;
-    
+
 public:
     GDALContourLevel( double );
     ~GDALContourLevel();
@@ -122,18 +122,18 @@ class GDALContourGenerator
     double  dfContourInterval;
     double  dfContourOffset;
 
-    CPLErr AddSegment( double dfLevel, 
+    CPLErr AddSegment( double dfLevel,
                        double dfXStart, double dfYStart,
                        double dfXEnd, double dfYEnd, int bLeftHigh );
 
     CPLErr ProcessPixel( int iPixel );
-    CPLErr ProcessRect( double, double, double, 
-                        double, double, double, 
+    CPLErr ProcessRect( double, double, double,
+                        double, double, double,
                         double, double, double,
                         double, double, double );
 
-    void   Intersect( double, double, double, 
-                      double, double, double, 
+    void   Intersect( double, double, double,
+                      double, double, double,
                       double, double, int *, double *, double * );
 
     GDALContourLevel *FindLevel( double dfLevel );
@@ -149,7 +149,7 @@ public:
     bool                Init();
 
     void                SetNoData( double dfNoDataValue );
-    void                SetContourLevels( double dfContourIntervalIn, 
+    void                SetContourLevels( double dfContourIntervalIn,
                                           double dfContourOffsetIn = 0.0 )
         { dfContourInterval = dfContourIntervalIn;
           dfContourOffset = dfContourOffsetIn; }
@@ -157,20 +157,20 @@ public:
     void                SetFixedLevels( int, double * );
     CPLErr              FeedLine( double *padfScanline );
     CPLErr              EjectContours( int bOnlyUnused = FALSE );
-    
+
 };
 
 /************************************************************************/
 /*                           GDAL_CG_Create()                           */
 /************************************************************************/
 
-GDALContourGeneratorH 
-GDAL_CG_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue, 
-                double dfContourInterval, double dfContourBase, 
+GDALContourGeneratorH
+GDAL_CG_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue,
+                double dfContourInterval, double dfContourBase,
                 GDALContourWriter pfnWriter, void *pCBData )
 
 {
-    GDALContourGenerator *poCG = new GDALContourGenerator( nWidth, nHeight, 
+    GDALContourGenerator *poCG = new GDALContourGenerator( nWidth, nHeight,
                                                            pfnWriter, pCBData );
 
     if( bNoDataSet )
@@ -213,7 +213,7 @@ void GDAL_CG_Destroy( GDALContourGeneratorH hCG )
 /************************************************************************/
 
 GDALContourGenerator::GDALContourGenerator( int nWidthIn, int nHeightIn,
-                                            GDALContourWriter pfnWriterIn, 
+                                            GDALContourWriter pfnWriterIn,
                                             void *pWriterCBDataIn )
 {
     nWidth = nWidthIn;
@@ -270,7 +270,7 @@ bool GDALContourGenerator::Init()
 /*                           SetFixedLevels()                           */
 /************************************************************************/
 
-void GDALContourGenerator::SetFixedLevels( int nFixedLevelCount, 
+void GDALContourGenerator::SetFixedLevels( int nFixedLevelCount,
                                            double *padfFixedLevels )
 
 {
@@ -307,14 +307,14 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 /* -------------------------------------------------------------------- */
     dfUpLeft = padfLastLine[MAX(0,iPixel-1)];
     dfUpRight = padfLastLine[MIN(nWidth-1,iPixel)];
-    
+
     dfLoLeft = padfThisLine[MAX(0,iPixel-1)];
     dfLoRight = padfThisLine[MIN(nWidth-1,iPixel)];
 
 /* -------------------------------------------------------------------- */
 /*      Check if we have any nodata values.                             */
 /* -------------------------------------------------------------------- */
-    if( bNoDataActive 
+    if( bNoDataActive
         && ( dfUpLeft == dfNoDataValue
              || dfLoLeft == dfNoDataValue
              || dfLoRight == dfNoDataValue
@@ -325,12 +325,12 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 /*      Check if we have any nodata, if so, go to a special case of     */
 /*      code.                                                           */
 /* -------------------------------------------------------------------- */
-    if( iPixel > 0 && iPixel < nWidth 
+    if( iPixel > 0 && iPixel < nWidth
         && iLine > 0 && iLine < nHeight && !bSubdivide )
     {
-        return ProcessRect( dfUpLeft, iPixel - 0.5, iLine - 0.5, 
-                            dfLoLeft, iPixel - 0.5, iLine + 0.5, 
-                            dfLoRight, iPixel + 0.5, iLine + 0.5, 
+        return ProcessRect( dfUpLeft, iPixel - 0.5, iLine - 0.5,
+                            dfLoLeft, iPixel - 0.5, iLine + 0.5,
+                            dfLoRight, iPixel + 0.5, iLine + 0.5,
                             dfUpRight, iPixel + 0.5, iLine - 0.5 );
     }
 
@@ -413,34 +413,34 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 
     if( dfUpLeft != dfNoDataValue && iPixel > 0 && iLine > 0 )
     {
-        eErr = ProcessRect( dfUpLeft, iPixel - 0.5, iLine - 0.5, 
-                            dfLeft, iPixel - 0.5, iLine, 
-                            dfCenter, iPixel, iLine, 
+        eErr = ProcessRect( dfUpLeft, iPixel - 0.5, iLine - 0.5,
+                            dfLeft, iPixel - 0.5, iLine,
+                            dfCenter, iPixel, iLine,
                             dfTop, iPixel, iLine - 0.5 );
     }
 
-    if( dfLoLeft != dfNoDataValue && eErr == CE_None 
+    if( dfLoLeft != dfNoDataValue && eErr == CE_None
         && iPixel > 0 && iLine < nHeight )
     {
-        eErr = ProcessRect( dfLeft, iPixel - 0.5, iLine, 
+        eErr = ProcessRect( dfLeft, iPixel - 0.5, iLine,
                             dfLoLeft, iPixel - 0.5, iLine + 0.5,
-                            dfBottom, iPixel, iLine + 0.5, 
+                            dfBottom, iPixel, iLine + 0.5,
                             dfCenter, iPixel, iLine );
     }
 
     if( dfLoRight != dfNoDataValue && iPixel < nWidth && iLine < nHeight )
     {
-        eErr = ProcessRect( dfCenter, iPixel, iLine, 
+        eErr = ProcessRect( dfCenter, iPixel, iLine,
                             dfBottom, iPixel, iLine + 0.5,
-                            dfLoRight, iPixel + 0.5, iLine + 0.5, 
+                            dfLoRight, iPixel + 0.5, iLine + 0.5,
                             dfRight, iPixel + 0.5, iLine );
     }
 
     if( dfUpRight != dfNoDataValue && iPixel < nWidth && iLine > 0 )
     {
-        eErr = ProcessRect( dfTop, iPixel, iLine - 0.5, 
+        eErr = ProcessRect( dfTop, iPixel, iLine - 0.5,
                             dfCenter, iPixel, iLine,
-                            dfRight, iPixel + 0.5, iLine, 
+                            dfRight, iPixel + 0.5, iLine,
                             dfUpRight, iPixel + 0.5, iLine - 0.5 );
     }
 
@@ -451,12 +451,12 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 /*                            ProcessRect()                             */
 /************************************************************************/
 
-CPLErr GDALContourGenerator::ProcessRect( 
-    double dfUpLeft, double dfUpLeftX, double dfUpLeftY, 
-    double dfLoLeft, double dfLoLeftX, double dfLoLeftY, 
-    double dfLoRight, double dfLoRightX, double dfLoRightY, 
+CPLErr GDALContourGenerator::ProcessRect(
+    double dfUpLeft, double dfUpLeftX, double dfUpLeftY,
+    double dfLoLeft, double dfLoLeftX, double dfLoLeftY,
+    double dfLoRight, double dfLoRightX, double dfLoRightY,
     double dfUpRight, double dfUpRightX, double dfUpRightY )
-    
+
 {
 /* -------------------------------------------------------------------- */
 /*      Identify the range of elevations over this rect.                */
@@ -465,13 +465,13 @@ CPLErr GDALContourGenerator::ProcessRect(
 
     double dfMin = MIN(MIN(dfUpLeft,dfUpRight),MIN(dfLoLeft,dfLoRight));
     double dfMax = MAX(MAX(dfUpLeft,dfUpRight),MAX(dfLoLeft,dfLoRight));
-    
+
 
 /* -------------------------------------------------------------------- */
 /*      Compute the set of levels to compute contours for.              */
 /* -------------------------------------------------------------------- */
 
-    /* 
+    /*
     ** If we are using fixed levels, then find the min/max in the levels
     ** table.
     */
@@ -483,9 +483,9 @@ CPLErr GDALContourGenerator::ProcessRect(
         while( nStart <= nEnd )
         {
             nMiddle = (nEnd + nStart) / 2;
-            
+
             double dfMiddleLevel = papoLevels[nMiddle]->GetLevel();
-            
+
             if( dfMiddleLevel < dfMin )
                 nStart = nMiddle + 1;
             else if( dfMiddleLevel > dfMin )
@@ -501,7 +501,7 @@ CPLErr GDALContourGenerator::ProcessRect(
             iStartLevel = nEnd + 1;
 
         iEndLevel = iStartLevel;
-        while( iEndLevel < nLevelCount-1 
+        while( iEndLevel < nLevelCount-1
                && papoLevels[iEndLevel+1]->GetLevel() < dfMax )
             iEndLevel++;
 
@@ -517,9 +517,9 @@ CPLErr GDALContourGenerator::ProcessRect(
     */
     else
     {
-        iStartLevel = (int) 
+        iStartLevel = (int)
             ceil((dfMin - dfContourOffset) / dfContourInterval);
-        iEndLevel = (int)   
+        iEndLevel = (int)
             floor((dfMax - dfContourOffset) / dfContourInterval);
     }
 
@@ -540,7 +540,7 @@ CPLErr GDALContourGenerator::ProcessRect(
         else
             dfLevel = iLevel * dfContourInterval + dfContourOffset;
 
-        int  nPoints = 0; 
+        int  nPoints = 0;
         double adfX[4], adfY[4];
         CPLErr eErr = CE_None;
 
@@ -565,7 +565,7 @@ CPLErr GDALContourGenerator::ProcessRect(
         Intersect( dfUpRight, dfUpRightX, dfUpRightY,
                    dfUpLeft, dfUpLeftX, dfUpLeftY,
                    dfLoLeft, dfLevel, &nPoints, adfX, adfY );
-        
+
         if( nPoints == 1 || nPoints == 3 )
             CPLDebug( "CONTOUR", "Got nPoints = %d", nPoints );
 
@@ -577,13 +577,13 @@ CPLErr GDALContourGenerator::ProcessRect(
                                    adfX[0], adfY[0], adfX[1], adfY[1],
                                    dfUpRight > dfLoLeft );
             }
-            else if ( nPoints1 == 1 && nPoints3 == 2 ) // left + right 
+            else if ( nPoints1 == 1 && nPoints3 == 2 ) // left + right
             {
                 eErr = AddSegment( dfLevel,
                                    adfX[0], adfY[0], adfX[1], adfY[1],
                                    dfUpLeft > dfLoRight );
             }
-            else if ( nPoints1 == 1 && nPoints == 2 ) // left + top 
+            else if ( nPoints1 == 1 && nPoints == 2 ) // left + top
             { // Do not do vertical contours on the left, due to symmetry
               if ( !(dfUpLeft == dfLevel && dfLoLeft == dfLevel) )
                 eErr = AddSegment( dfLevel,
@@ -614,7 +614,7 @@ CPLErr GDALContourGenerator::ProcessRect(
                 // If we get here it is a serious error!
                 CPLDebug( "CONTOUR", "Contour state not implemented!");
             }
- 
+
             if( eErr != CE_None )
                  return eErr;
         }
@@ -647,10 +647,10 @@ CPLErr GDALContourGenerator::ProcessRect(
 /*                             Intersect()                              */
 /************************************************************************/
 
-void GDALContourGenerator::Intersect( double dfVal1, double dfX1, double dfY1, 
+void GDALContourGenerator::Intersect( double dfVal1, double dfX1, double dfY1,
                                       double dfVal2, double dfX2, double dfY2,
-                                      double dfNext, 
-                                      double dfLevel, int *pnPoints, 
+                                      double dfNext,
+                                      double dfLevel, int *pnPoints,
                                       double *padfX, double *padfY )
 
 {
@@ -682,7 +682,7 @@ void GDALContourGenerator::Intersect( double dfVal1, double dfX1, double dfY1,
 /*                             AddSegment()                             */
 /************************************************************************/
 
-CPLErr GDALContourGenerator::AddSegment( double dfLevel, 
+CPLErr GDALContourGenerator::AddSegment( double dfLevel,
                                          double dfX1, double dfY1,
                                          double dfX2, double dfY2,
                                          int bLeftHigh)
@@ -710,7 +710,7 @@ CPLErr GDALContourGenerator::AddSegment( double dfLevel,
         poTarget->AddSegment( dfX1, dfY1, dfX2, dfY2, bLeftHigh );
 
         poLevel->AdjustContour( iTarget );
-        
+
         return CE_None;
     }
 
@@ -764,7 +764,7 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
         if( bNoDataActive && padfThisLine[iPixel] == dfNoDataValue )
             continue;
 
-        double dfLevel = (padfThisLine[iPixel] - dfContourOffset) 
+        double dfLevel = (padfThisLine[iPixel] - dfContourOffset)
             / dfContourInterval;
 
         if( dfLevel - (int) dfLevel == 0.0 )
@@ -806,7 +806,7 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
         if( eErr != CE_None )
             return eErr;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      eject any pending contours.                                     */
 /* -------------------------------------------------------------------- */
@@ -838,13 +838,13 @@ CPLErr GDALContourGenerator::EjectContours( int bOnlyUnused )
         GDALContourLevel *poLevel = papoLevels[iLevel];
         int iContour;
 
-        for( iContour = 0; 
-             iContour < poLevel->GetContourCount() && eErr == CE_None; 
+        for( iContour = 0;
+             iContour < poLevel->GetContourCount() && eErr == CE_None;
              /* increment in loop if we don't consume it. */ )
         {
             int  iC2;
             GDALContourItem *poTarget = poLevel->GetContour( iContour );
-            
+
             if( bOnlyUnused && poTarget->bRecentlyAccessed )
             {
                 iContour++;
@@ -854,7 +854,7 @@ CPLErr GDALContourGenerator::EjectContours( int bOnlyUnused )
             poLevel->RemoveContour( iContour );
 
             // Try to find another contour we can merge with in this level.
-            
+
             for( iC2 = 0; iC2 < poLevel->GetContourCount(); iC2++ )
             {
                 GDALContourItem *poOther = poLevel->GetContour( iC2 );
@@ -863,7 +863,7 @@ CPLErr GDALContourGenerator::EjectContours( int bOnlyUnused )
                     break;
             }
 
-            // If we didn't merge it, then eject (write) it out. 
+            // If we didn't merge it, then eject (write) it out.
             if( iC2 == poLevel->GetContourCount() )
             {
                 if( pfnWriter != NULL )
@@ -871,8 +871,8 @@ CPLErr GDALContourGenerator::EjectContours( int bOnlyUnused )
                     // If direction is wrong, then reverse before ejecting.
                     poTarget->PrepareEjection();
 
-                    eErr = pfnWriter( poTarget->dfLevel, poTarget->nPoints, 
-                                      poTarget->padfX, poTarget->padfY, 
+                    eErr = pfnWriter( poTarget->dfLevel, poTarget->nPoints,
+                                      poTarget->padfX, poTarget->padfY,
                                       pWriterCBData );
                 }
             }
@@ -919,12 +919,12 @@ GDALContourLevel *GDALContourGenerator::FindLevel( double dfLevel )
     if( nLevelMax == nLevelCount )
     {
         nLevelMax = nLevelMax * 2 + 10;
-        papoLevels = (GDALContourLevel **) 
+        papoLevels = (GDALContourLevel **)
             CPLRealloc( papoLevels, sizeof(void*) * nLevelMax );
     }
 
     if( nLevelCount - nEnd - 1 > 0 )
-        memmove( papoLevels + nEnd + 2, papoLevels + nEnd + 1, 
+        memmove( papoLevels + nEnd + 2, papoLevels + nEnd + 1,
                  (nLevelCount - nEnd - 1) * sizeof(void*) );
     papoLevels[nEnd+1] = poLevel;
     nLevelCount++;
@@ -973,7 +973,7 @@ GDALContourLevel::~GDALContourLevel()
 void GDALContourLevel::AdjustContour( int iChanged )
 
 {
-    while( iChanged > 0 
+    while( iChanged > 0
          && papoEntries[iChanged]->dfTailX < papoEntries[iChanged-1]->dfTailX )
     {
         GDALContourItem *poTemp = papoEntries[iChanged];
@@ -1000,7 +1000,7 @@ void GDALContourLevel::RemoveContour( int iTarget )
 
 {
     if( iTarget < nEntryCount )
-        memmove( papoEntries + iTarget, papoEntries + iTarget + 1, 
+        memmove( papoEntries + iTarget, papoEntries + iTarget + 1,
                  (nEntryCount - iTarget - 1) * sizeof(void*) );
     nEntryCount--;
 }
@@ -1031,7 +1031,7 @@ int GDALContourLevel::FindContour( double dfX, double dfY )
             nEnd = nMiddle - 1;
         else
         {
-            while( nMiddle > 0 
+            while( nMiddle > 0
                    && fabs(papoEntries[nMiddle]->dfTailX-dfX) < JOIN_DIST )
                 nMiddle--;
 
@@ -1088,7 +1088,7 @@ int GDALContourLevel::InsertContour( GDALContourItem *poNewContour )
     if( nEntryMax == nEntryCount )
     {
         nEntryMax = nEntryMax * 2 + 10;
-        papoEntries = (GDALContourItem **) 
+        papoEntries = (GDALContourItem **)
             CPLRealloc( papoEntries, sizeof(void*) * nEntryMax );
     }
 
@@ -1096,7 +1096,7 @@ int GDALContourLevel::InsertContour( GDALContourItem *poNewContour )
 /*      Insert the new contour at the appropriate location.             */
 /* -------------------------------------------------------------------- */
     if( nEntryCount - nEnd - 1 > 0 )
-        memmove( papoEntries + nEnd + 2, papoEntries + nEnd + 1, 
+        memmove( papoEntries + nEnd + 2, papoEntries + nEnd + 1,
                  (nEntryCount - nEnd - 1) * sizeof(void*) );
     papoEntries[nEnd+1] = poNewContour;
     nEntryCount++;
@@ -1124,7 +1124,7 @@ GDALContourItem::GDALContourItem( double dfLevelIn )
     nMaxPoints = 0;
     padfX = NULL;
     padfY = NULL;
-    
+
     bLeftIsHigh = FALSE;
 
     dfTailX = 0.0;
@@ -1145,7 +1145,7 @@ GDALContourItem::~GDALContourItem()
 /*                             AddSegment()                             */
 /************************************************************************/
 
-int GDALContourItem::AddSegment( double dfXStart, double dfYStart, 
+int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
                                  double dfXEnd, double dfYEnd,
                                  int bLeftHigh)
 
@@ -1176,7 +1176,7 @@ int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
 /* -------------------------------------------------------------------- */
 /*      Try to matching up with one of the ends, and insert.            */
 /* -------------------------------------------------------------------- */
-    if( fabs(padfX[nPoints-1]-dfXStart) < JOIN_DIST 
+    if( fabs(padfX[nPoints-1]-dfXStart) < JOIN_DIST
              && fabs(padfY[nPoints-1]-dfYStart) < JOIN_DIST )
     {
         padfX[nPoints] = dfXEnd;
@@ -1189,7 +1189,7 @@ int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
 
         return TRUE;
     }
-    else if( fabs(padfX[nPoints-1]-dfXEnd) < JOIN_DIST 
+    else if( fabs(padfX[nPoints-1]-dfXEnd) < JOIN_DIST
              && fabs(padfY[nPoints-1]-dfYEnd) < JOIN_DIST )
     {
         padfX[nPoints] = dfXStart;
@@ -1205,7 +1205,7 @@ int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
     else
         return FALSE;
 }
- 
+
 /************************************************************************/
 /*                               Merge()                                */
 /************************************************************************/
@@ -1219,14 +1219,14 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
 /* -------------------------------------------------------------------- */
 /*      Try to matching up with one of the ends, and insert.            */
 /* -------------------------------------------------------------------- */
-    if( fabs(padfX[nPoints-1]-poOther->padfX[0]) < JOIN_DIST 
+    if( fabs(padfX[nPoints-1]-poOther->padfX[0]) < JOIN_DIST
         && fabs(padfY[nPoints-1]-poOther->padfY[0]) < JOIN_DIST )
     {
         MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
-        memcpy( padfX + nPoints, poOther->padfX + 1, 
+        memcpy( padfX + nPoints, poOther->padfX + 1,
                 sizeof(double) * (poOther->nPoints-1) );
-        memcpy( padfY + nPoints, poOther->padfY + 1, 
+        memcpy( padfY + nPoints, poOther->padfY + 1,
                 sizeof(double) * (poOther->nPoints-1) );
         nPoints += poOther->nPoints - 1;
 
@@ -1236,18 +1236,18 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
 
         return TRUE;
     }
-    else if( fabs(padfX[0]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST 
+    else if( fabs(padfX[0]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST
              && fabs(padfY[0]-poOther->padfY[poOther->nPoints-1]) < JOIN_DIST )
     {
         MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
-        memmove( padfX + poOther->nPoints - 1, padfX, 
+        memmove( padfX + poOther->nPoints - 1, padfX,
                 sizeof(double) * nPoints );
-        memmove( padfY + poOther->nPoints - 1, padfY, 
+        memmove( padfY + poOther->nPoints - 1, padfY,
                 sizeof(double) * nPoints );
-        memcpy( padfX, poOther->padfX, 
+        memcpy( padfX, poOther->padfX,
                 sizeof(double) * (poOther->nPoints-1) );
-        memcpy( padfY, poOther->padfY, 
+        memcpy( padfY, poOther->padfY,
                 sizeof(double) * (poOther->nPoints-1) );
         nPoints += poOther->nPoints - 1;
 
@@ -1257,7 +1257,7 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
 
         return TRUE;
     }
-    else if( fabs(padfX[nPoints-1]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST 
+    else if( fabs(padfX[nPoints-1]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST
         && fabs(padfY[nPoints-1]-poOther->padfY[poOther->nPoints-1]) < JOIN_DIST )
     {
         int i;
@@ -1278,16 +1278,16 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
 
         return TRUE;
     }
-    else if( fabs(padfX[0]-poOther->padfX[0]) < JOIN_DIST 
+    else if( fabs(padfX[0]-poOther->padfX[0]) < JOIN_DIST
         && fabs(padfY[0]-poOther->padfY[0]) < JOIN_DIST )
     {
         int i;
 
         MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
-        memmove( padfX + poOther->nPoints - 1, padfX, 
+        memmove( padfX + poOther->nPoints - 1, padfX,
                 sizeof(double) * nPoints );
-        memmove( padfY + poOther->nPoints - 1, padfY, 
+        memmove( padfY + poOther->nPoints - 1, padfY,
                 sizeof(double) * nPoints );
 
         for( i = 0; i < poOther->nPoints-1; i++ )
@@ -1344,7 +1344,7 @@ void GDALContourItem::PrepareEjection()
             dfTemp = padfX[i];
             padfX[i] = padfX[ nPoints - i - 1];
             padfX[ nPoints - i - 1] = dfTemp;
-            
+
             dfTemp = padfY[i];
             padfY[i] = padfY[ nPoints - i - 1];
             padfY[ nPoints - i - 1] = dfTemp;
@@ -1363,8 +1363,8 @@ void GDALContourItem::PrepareEjection()
 /*                          OGRContourWriter()                          */
 /************************************************************************/
 
-CPLErr OGRContourWriter( double dfLevel, 
-                         int nPoints, double *padfX, double *padfY, 
+CPLErr OGRContourWriter( double dfLevel,
+                         int nPoints, double *padfX, double *padfY,
                          void *pInfo )
 
 {
@@ -1380,16 +1380,16 @@ CPLErr OGRContourWriter( double dfLevel,
 
     if( poInfo->nElevField != -1 )
         OGR_F_SetFieldDouble( hFeat, poInfo->nElevField, dfLevel );
-    
+
     hGeom = OGR_G_CreateGeometry( wkbLineString );
-    
+
     for( iPoint = nPoints-1; iPoint >= 0; iPoint-- )
     {
         OGR_G_SetPoint( hGeom, iPoint,
-                        poInfo->adfGeoTransform[0] 
+                        poInfo->adfGeoTransform[0]
                         + poInfo->adfGeoTransform[1] * padfX[iPoint]
                         + poInfo->adfGeoTransform[2] * padfY[iPoint],
-                        poInfo->adfGeoTransform[3] 
+                        poInfo->adfGeoTransform[3]
                         + poInfo->adfGeoTransform[4] * padfX[iPoint]
                         + poInfo->adfGeoTransform[5] * padfY[iPoint],
                         dfLevel );
@@ -1479,73 +1479,73 @@ or:
 
 Nodata:
 
-In the "nodata" case we treat the whole nodata pixel as a no-mans land. 
+In the "nodata" case we treat the whole nodata pixel as a no-mans land.
 We extend the corner pixels near the nodata out to half way and then
 construct extra lines from those points to the center which is assigned
-an averaged value from the two nearby points (in this case (12+3+5)/3). 
+an averaged value from the two nearby points (in this case (12+3+5)/3).
 
 \verbatim
       5 |                  | 3
-     -- + ---------------- + -- 
+     -- + ---------------- + --
         |                  |
         |                  |
         |      6.7         |
         |        +---------+ 3
-     10 +___     |          
-        |   \____+ 10       
-        |        |          
-     -- + -------+        +    
+     10 +___     |
+        |   \____+ 10
+        |        |
+     -- + -------+        +
      12 |       12           (nodata)
 
 \endverbatim
 
  *
- * @param hBand The band to read raster data from.  The whole band will be 
+ * @param hBand The band to read raster data from.  The whole band will be
  * processed.
  *
  * @param dfContourInterval The elevation interval between contours generated.
- * 
- * @param dfContourBase The "base" relative to which contour intervals are 
- * applied.  This is normally zero, but could be different.  To generate 10m 
+ *
+ * @param dfContourBase The "base" relative to which contour intervals are
+ * applied.  This is normally zero, but could be different.  To generate 10m
  * contours at 5, 15, 25, ... the ContourBase would be 5.
  *
  * @param  nFixedLevelCount The number of fixed levels. If this is greater than
- * zero, then fixed levels will be used, and ContourInterval and ContourBase 
+ * zero, then fixed levels will be used, and ContourInterval and ContourBase
  * are ignored.
  *
- * @param padfFixedLevels The list of fixed contour levels at which contours 
- * should be generated.  It will contain FixedLevelCount entries, and may be 
- * NULL if fixed levels are disabled (FixedLevelCount = 0). 
+ * @param padfFixedLevels The list of fixed contour levels at which contours
+ * should be generated.  It will contain FixedLevelCount entries, and may be
+ * NULL if fixed levels are disabled (FixedLevelCount = 0).
  *
  * @param bUseNoData If TRUE the dfNoDataValue will be used.
  *
  * @param dfNoDataValue The value to use as a "nodata" value. That is, a
  * pixel value which should be ignored in generating contours as if the value
- * of the pixel were not known. 
+ * of the pixel were not known.
  *
- * @param hLayer The layer to which new contour vectors will be written. 
+ * @param hLayer The layer to which new contour vectors will be written.
  * Each contour will have a LINESTRING geometry attached to it.   This
  * is really of type OGRLayerH, but void * is used to avoid pulling the
- * ogr_api.h file in here. 
+ * ogr_api.h file in here.
  *
  * @param iIDField If not -1 this will be used as a field index to indicate
  * where a unique id should be written for each feature (contour) written.
- * 
+ *
  * @param iElevField If not -1 this will be used as a field index to indicate
  * where the elevation value of the contour should be written.
  *
  * @param pfnProgress A GDALProgressFunc that may be used to report progress
  * to the user, or to interrupt the algorithm.  May be NULL if not required.
- * 
+ *
  * @param pProgressArg The callback data for the pfnProgress function.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-CPLErr GDALContourGenerate( GDALRasterBandH hBand, 
+CPLErr GDALContourGenerate( GDALRasterBandH hBand,
                             double dfContourInterval, double dfContourBase,
                             int nFixedLevelCount, double *padfFixedLevels,
-                            int bUseNoData, double dfNoDataValue, 
+                            int bUseNoData, double dfNoDataValue,
                             void *hLayer, int iIDField, int iElevField,
                             GDALProgressFunc pfnProgress, void *pProgressArg )
 
@@ -1623,12 +1623,12 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
 
     for( iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
-        eErr = GDALRasterIO( hBand, GF_Read, 0, iLine, nXSize, 1, 
+        eErr = GDALRasterIO( hBand, GF_Read, 0, iLine, nXSize, 1,
                       padfScanline, nXSize, 1, GDT_Float64, 0, 0 );
         if( eErr == CE_None )
             eErr = oCG.FeedLine( padfScanline );
 
-        if( eErr == CE_None 
+        if( eErr == CE_None
             && !pfnProgress( (iLine+1) / (double) nYSize, "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );

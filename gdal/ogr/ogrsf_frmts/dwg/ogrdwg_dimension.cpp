@@ -3,7 +3,7 @@
  *
  * Project:  DWG Translator
  * Purpose:  Implements translation support for DIMENSION elements as a part
- *           of the OGRDWGLayer class.  
+ *           of the OGRDWGLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -87,7 +87,7 @@ OGRFeature *OGRDWGLayer::TranslateDIMENSION( OdDbEntityPtr poEntity )
 
 /*************************************************************************
 
-   DIMENSION geometry layout 
+   DIMENSION geometry layout
 
                   (11,21)(text center point)
         |          DimText                  |
@@ -104,10 +104,10 @@ Given:
 Steps:
  1) Compute direction vector from Target1 to Arrow1 (Vec1).
  2) Compute direction vector for arrow as perpendicular to Vec1 (call Vec2).
- 3) Compute Arrow2 location as intersection between line defined by 
+ 3) Compute Arrow2 location as intersection between line defined by
     Vec2 and Arrow1 and line defined by Target2 and direction Vec1 (call Arrow2)
 
-Then we can draw lines for the various components.  
+Then we can draw lines for the various components.
 
 Note that Vec1 and Vec2 may be horizontal, vertical or on an angle but
 the approach is as above in all these cases.
@@ -230,13 +230,13 @@ the approach is as above in all these cases.
     // add arrow1 arrow head.
 
     oLine.setPoint( 0, oArrow1.x, oArrow1.y );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     oArrow1.x + dfVec2X*3 + dfVec1X,
                     oArrow1.y + dfVec2Y*3 + dfVec1Y );
     poMLS->addGeometry( &oLine );
 
     oLine.setPoint( 0, oArrow1.x, oArrow1.y );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     oArrow1.x + dfVec2X*3 - dfVec1X,
                     oArrow1.y + dfVec2Y*3 - dfVec1Y );
     poMLS->addGeometry( &oLine );
@@ -244,13 +244,13 @@ the approach is as above in all these cases.
     // add arrow2 arrow head.
 
     oLine.setPoint( 0, dfArrowX2, dfArrowY2 );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     dfArrowX2 - dfVec2X*3 + dfVec1X,
                     dfArrowY2 - dfVec2Y*3 + dfVec1Y );
     poMLS->addGeometry( &oLine );
 
     oLine.setPoint( 0, dfArrowX2, dfArrowY2 );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     dfArrowX2 - dfVec2X*3 - dfVec1X,
                     dfArrowY2 - dfVec2Y*3 - dfVec1Y );
     poMLS->addGeometry( &oLine );
@@ -264,7 +264,7 @@ the approach is as above in all these cases.
 /* -------------------------------------------------------------------- */
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
-    int bHidden = 
+    int bHidden =
         EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
 
 /* -------------------------------------------------------------------- */
@@ -275,7 +275,7 @@ the approach is as above in all these cases.
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
 
-    // Use layer color? 
+    // Use layer color?
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
@@ -303,7 +303,7 @@ the approach is as above in all these cases.
     // Do we need to compute the dimension value?
     if( osText.size() == 0 )
     {
-        FormatDimension( osText, POINT_DIST( oArrow1.x, oArrow1.y, 
+        FormatDimension( osText, POINT_DIST( oArrow1.x, oArrow1.y,
                                              dfArrowX2, dfArrowY2 ) );
     }
 
@@ -333,14 +333,14 @@ the approach is as above in all these cases.
 
     const unsigned char *pabyDWGColors = ACGetColorTable();
 
-    snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x", 
+    snprintf( szBuffer, sizeof(szBuffer), ",c:#%02x%02x%02x",
               pabyDWGColors[nColor*3+0],
               pabyDWGColors[nColor*3+1],
               pabyDWGColors[nColor*3+2] );
     osStyle += szBuffer;
 
     if( bHidden )
-        osStyle += "00"; 
+        osStyle += "00";
 
     osStyle += ")";
 
@@ -367,7 +367,7 @@ void OGRDWGLayer::FormatDimension( CPLString &osText, double dfValue )
 
     // we could do a significantly more precise formatting if we want
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
-    // for example.  
+    // for example.
 
     sprintf(szFormat, "%%.%df", nPrecision );
     CPLsnprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);

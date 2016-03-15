@@ -67,15 +67,15 @@ class ValueRange
 {
 public:
     ValueRange(double min, double max);	// step = 1
-    ValueRange(double min, double max, double step);	
+    ValueRange(double min, double max, double step);
     ValueRange(std::string str);
     std::string ToString();
     ilwisStoreType get_NeededStoreType() { return st; }
     double get_rLo() { return _rLo; }
     double get_rHi() { return _rHi; }
     double get_rStep() { return _rStep; }
-    double get_rRaw0() { return _r0; }	
-    int get_iDec() { return _iDec; }	
+    double get_rRaw0() { return _r0; }
+    int get_iDec() { return _iDec; }
     double rValue(int raw);
     int iRaw(double value);
 
@@ -124,7 +124,7 @@ public:
     void ILWISOpen( std::string pszFilename);
 
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * ); 
+    virtual CPLErr IWriteBlock( int, int, void * );
     virtual double GetNoDataValue( int *pbSuccess );
 
 private:
@@ -165,9 +165,9 @@ public:
                                     void * pProgressData );
 
     static GDALDataset *Create(const char* pszFilename,
-                               int nXSize, int nYSize, 
+                               int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char** papszParmList); 
+                               char** papszParmList);
 
     virtual CPLErr 	GetGeoTransform( double * padfTransform );
     virtual CPLErr  SetGeoTransform( double * );
@@ -191,7 +191,7 @@ public:
 typedef std::map<std::string, std::string>          SectionEntries;
 typedef std::map<std::string, SectionEntries*> Sections;
 
-class IniFile  
+class IniFile
 {
 public:
     IniFile(const std::string& filename);

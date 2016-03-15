@@ -9,7 +9,7 @@
  * it under the terms of the MIT license. See COPYING for details.
  *
  */
- 
+
 #ifndef linkhash_h_
 #define linkhash_h_
 
@@ -26,7 +26,7 @@ extern "C" {
 
 /**
  * The fraction of filled hash buckets until an insert will cause the table
- * to be resized.  
+ * to be resized.
  * This can range from just above 0 up to 1.0.
  */
 #define LH_LOAD_FACTOR 0.66

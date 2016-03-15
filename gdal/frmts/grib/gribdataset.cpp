@@ -137,7 +137,7 @@ static CPLString ConvertUnitInText(int bMetricUnits, const char* pszTxt)
 /*                           GRIBRasterBand()                            */
 /************************************************************************/
 
-GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn, 
+GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
                                 inventoryType *psInv )
   : m_Grib_Data(NULL), m_Grib_MetaData(NULL)
 {
@@ -162,11 +162,11 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
     SetMetadataItem( "GRIB_COMMENT", ConvertUnitInText(bMetricUnits, psInv->comment) );
     SetMetadataItem( "GRIB_ELEMENT", psInv->element );
     SetMetadataItem( "GRIB_SHORT_NAME", psInv->shortFstLevel );
-    SetMetadataItem( "GRIB_REF_TIME", 
+    SetMetadataItem( "GRIB_REF_TIME",
                      CPLString().Printf("%12.0f sec UTC", psInv->refTime ) );
-    SetMetadataItem( "GRIB_VALID_TIME", 
+    SetMetadataItem( "GRIB_VALID_TIME",
                      CPLString().Printf("%12.0f sec UTC", psInv->validTime ) );
-    SetMetadataItem( "GRIB_FORECAST_SECONDS", 
+    SetMetadataItem( "GRIB_FORECAST_SECONDS",
                      CPLString().Printf("%.0f sec", psInv->foreSec ) );
 }
 
@@ -314,16 +314,16 @@ CPLErr GRIBRasterBand::LoadData()
         poGDS->nCachedBytes += nGribDataXSize * nGribDataYSize * sizeof(double);
         poGDS->poLastUsedBand = this;
 
-        if( nGribDataXSize != nRasterXSize 
+        if( nGribDataXSize != nRasterXSize
             || nGribDataYSize != nRasterYSize )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Band %d of GRIB dataset is %dx%d, while the first band "
                       "and dataset is %dx%d.  Georeferencing of band %d may "
                       "be incorrect, and data access may be incomplete.",
-                      nBand, 
-                      nGribDataXSize, nGribDataYSize, 
-                      nRasterXSize, nRasterYSize, 
+                      nBand,
+                      nGribDataXSize, nGribDataYSize,
+                      nRasterXSize, nRasterYSize,
                       nBand );
         }
     }
@@ -354,8 +354,8 @@ CPLErr GRIBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         && nGribDataYSize == nRasterYSize )
     {
         // Simple 1:1 case.
-        memcpy(pImage, 
-               m_Grib_Data + nRasterXSize * (nRasterYSize - nBlockYOff - 1), 
+        memcpy(pImage,
+               m_Grib_Data + nRasterXSize * (nRasterYSize - nBlockYOff - 1),
                nRasterXSize * sizeof(double));
 
         return CE_None;
@@ -369,7 +369,7 @@ CPLErr GRIBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         int nCopyWords = MIN(nRasterXSize,nGribDataXSize);
 
-        memcpy( pImage, 
+        memcpy( pImage,
                 m_Grib_Data + nGribDataXSize*(nGribDataYSize-nBlockYOff-1),
                 nCopyWords * sizeof(double) );
 
@@ -595,7 +595,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GRIB driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -607,7 +607,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
 
-    /* Check the return values */    
+    /* Check the return values */
     if (!poDS->fp) {
         // we have no FP, so we don't have anywhere to read from
         char * errMsg = errSprintf(NULL);
@@ -650,7 +650,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLDebug( "GRIB", "%s", errMsg );
         free(errMsg);
 
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s is a grib file, but no raster dataset was successfully identified.",
                   poOpenInfo->pszFilename );
         CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
@@ -826,7 +826,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
     else if( oSRS.IsProjected() )
     {
         rMinX = meta->gds.lon1; // longitude in degrees, to be transformed to meters (or degrees in case of latlon)
-        rMaxY = meta->gds.lat1; // latitude in degrees, to be transformed to meters 
+        rMaxY = meta->gds.lat1; // latitude in degrees, to be transformed to meters
         OGRCoordinateTransformation *poTransformLLtoSRS = OGRCreateCoordinateTransformation( &(oLL), &(oSRS) );
         if ((poTransformLLtoSRS != NULL) && poTransformLLtoSRS->Transform( 1, &rMinX, &rMaxY )) // transform it to meters
         {
@@ -855,7 +855,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
     else
     {
         rMinX = meta->gds.lon1; // longitude in degrees, to be transformed to meters (or degrees in case of latlon)
-        rMaxY = meta->gds.lat1; // latitude in degrees, to be transformed to meters 
+        rMaxY = meta->gds.lat1; // latitude in degrees, to be transformed to meters
 
         double rMinY = meta->gds.lat2;
         if (meta->gds.lat2 > rMaxY)

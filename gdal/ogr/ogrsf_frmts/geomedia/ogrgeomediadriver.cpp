@@ -68,7 +68,7 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
     if( STARTS_WITH_CI(pszFilename, "PGEO:") )
         return NULL;
 
-    if( !STARTS_WITH_CI(pszFilename, "GEOMEDIA:") 
+    if( !STARTS_WITH_CI(pszFilename, "GEOMEDIA:")
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
@@ -117,7 +117,7 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
     //
     if ( !InstallMdbDriver() )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
     }
     else

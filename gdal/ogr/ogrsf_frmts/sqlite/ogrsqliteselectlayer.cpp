@@ -290,7 +290,7 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
     int nRowCount, nColCount;
     int nResult = -1;
 
-    if( sqlite3_get_table( poDS->GetDB(), osFeatureCountSQL, &papszResult, 
+    if( sqlite3_get_table( poDS->GetDB(), osFeatureCountSQL, &papszResult,
                            &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
     {
         CPLDebug("SQLITE", "Error: %s", pszErrMsg);
@@ -336,8 +336,8 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
                   poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
         return OGRERR_FAILURE;

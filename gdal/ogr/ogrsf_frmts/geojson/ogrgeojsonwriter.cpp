@@ -185,7 +185,7 @@ static bool OGRGeoJSONIsPatchableGeometry( json_object* poJSonGeometry,
             int nLength;
             if( json_object_get_type(poJSonGeometries) == json_type_array &&
                 json_object_get_type(poNativeGeometries) == json_type_array &&
-                (nLength = json_object_array_length(poJSonGeometries)) == 
+                (nLength = json_object_array_length(poJSonGeometries)) ==
                     json_object_array_length(poNativeGeometries) )
             {
                 for( int i=0; i < nLength; i++ )
@@ -418,24 +418,24 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature, int nSignificantF
         else if( OFTInteger == eType )
         {
             if( eSubType == OFSTBoolean )
-                poObjProp = json_object_new_boolean( 
+                poObjProp = json_object_new_boolean(
                     poFeature->GetFieldAsInteger( nField ) );
             else
-                poObjProp = json_object_new_int( 
+                poObjProp = json_object_new_int(
                     poFeature->GetFieldAsInteger( nField ) );
         }
         else if( OFTInteger64 == eType )
         {
             if( eSubType == OFSTBoolean )
-                poObjProp = json_object_new_boolean( 
+                poObjProp = json_object_new_boolean(
                     (json_bool)poFeature->GetFieldAsInteger64( nField ) );
             else
-                poObjProp = json_object_new_int64( 
+                poObjProp = json_object_new_int64(
                     poFeature->GetFieldAsInteger64( nField ) );
         }
         else if( OFTReal == eType )
         {
-            poObjProp = json_object_new_double_with_significant_figures( 
+            poObjProp = json_object_new_double_with_significant_figures(
                 poFeature->GetFieldAsDouble(nField), nSignificantFigures );
         }
         else if( OFTString == eType )
@@ -504,7 +504,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature, int nSignificantF
         }
         else
         {
-            poObjProp = json_object_new_string( 
+            poObjProp = json_object_new_string(
                  poFeature->GetFieldAsString(nField) );
         }
 
@@ -965,7 +965,7 @@ static int OGR_json_double_with_precision_to_string(struct json_object *jso,
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", jso->o.c_double);
     }
-    return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer))); 
+    return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer)));
 }
 
 /************************************************************************/
@@ -1043,7 +1043,7 @@ static int OGR_json_double_with_significant_figures_to_string(struct json_object
         }
     }
 
-    return printbuf_memappend(pb, szBuffer, nSize); 
+    return printbuf_memappend(pb, szBuffer, nSize);
 }
 
 /************************************************************************/

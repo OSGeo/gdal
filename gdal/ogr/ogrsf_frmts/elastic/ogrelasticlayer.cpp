@@ -1227,9 +1227,9 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                 {
                     json_object* poCorner1 = json_object_array_get_idx(poCoordinates, 0);
                     json_object* poCorner2 = json_object_array_get_idx(poCoordinates, 1);
-                    if( poCorner1 && poCorner2 && 
+                    if( poCorner1 && poCorner2 &&
                         json_object_get_type(poCorner1) == json_type_array &&
-                        json_object_array_length(poCorner1) == 2 && 
+                        json_object_array_length(poCorner1) == 2 &&
                         json_object_get_type(poCorner2) == json_type_array &&
                         json_object_array_length(poCorner2) == 2 )
                     {
@@ -1266,7 +1266,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
         {
             BuildFeature(poFeature, it.val, osCurPath);
         }
-        else if( json_object_get_type(it.val) == json_type_object && 
+        else if( json_object_get_type(it.val) == json_type_object &&
                  !m_poDS->m_bFlattenNestedAttributes )
         {
             if( ( oIter = m_aosMapToGeomFieldIndex.find(osCurPath + ".coordinates") ) != m_aosMapToGeomFieldIndex.end() )
@@ -2309,7 +2309,7 @@ GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
     }
 
     json_object* poCount = json_ex_get_object_by_path(poResponse, "hits.count");
-    if( poCount == NULL ) 
+    if( poCount == NULL )
         poCount = json_ex_get_object_by_path(poResponse, "hits.total");
     if( poCount == NULL || json_object_get_type(poCount) != json_type_int )
     {

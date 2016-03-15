@@ -26,7 +26,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -487,11 +487,10 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     for(int iParam=0; iParam < 6 && CSLCount(papszNextField) > 0; iParam++)
     {
         psProj->adProjParams[iParam] = CPLAtof(papszNextField[0]);
-        papszNextField++;         
+        papszNextField++;
     }
 
     CSLDestroy(papszFields);
 
     return 0;
 }
-

@@ -252,7 +252,7 @@ static const GCSpheroidInfo gk_asSpheroidList[]=
 static int GCSRSAPI_CALL _areCompatibleSpheroids_GCSRS ( int id1, int id2 )
 {
   if( id1==id2 ) return TRUE;
- 
+
   switch( id1 )
   {
     case    4 :
@@ -277,7 +277,7 @@ static int GCSRSAPI_CALL _areCompatibleSpheroids_GCSRS ( int id1, int id2 )
 static int GCSRSAPI_CALL _areCompatibleDatums_GCSRS ( int id1, int id2 )
 {
   if( id1==id2 ) return TRUE;
- 
+
   switch( id1 )
   {
     case    1 : /* NTF */
@@ -431,7 +431,7 @@ datum_relax:
   {
     /*
      * FIXME : when both nadgrids and towgs84 are defined, bursa-wolf parameters are lost !
-     *         if the projection and the ellipsoid are known, one can retrieve the datum 
+     *         if the projection and the ellipsoid are known, one can retrieve the datum
      *         Try relaxed search ...
      */
     bRelax= TRUE;
@@ -453,7 +453,7 @@ static const GCProjectionInfo GCSRSAPI_CALL1(*) _findProjection_GCSRS ( const ch
   {
     if( iProj==0 && p==NULL)
       break;
-    if( iProj==1 && 
+    if( iProj==1 &&
         ( EQUAL(p,SRS_PT_TRANSVERSE_MERCATOR)               ||
           EQUAL(p,SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED) ) )
       break;

@@ -41,7 +41,7 @@
 //
 OGRErr OGRGeoPackageTableLayer::SaveExtent()
 {
-    if ( !m_poDS->GetUpdate() || ! m_bExtentChanged || ! m_poExtent ) 
+    if ( !m_poDS->GetUpdate() || ! m_bExtentChanged || ! m_poExtent )
         return OGRERR_NONE;
 
     sqlite3* poDb = m_poDS->GetDB();
@@ -194,8 +194,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         if ( err != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "failed to bind geometry to statement");        
-            return OGRERR_FAILURE;            
+                      "failed to bind geometry to statement");
+            return OGRERR_FAILURE;
         }
     }
 
@@ -205,7 +205,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     {
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i); 
+        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
 
         if( poFeature->IsFieldSet(i) )
         {
@@ -321,8 +321,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
 //----------------------------------------------------------------------
 // FeatureBindUpdateParameters()
 //
-// Selectively bind the values of an OGRFeature to a prepared 
-// statement, prior to execution. Carefully binds exactly the 
+// Selectively bind the values of an OGRFeature to a prepared
+// statement, prior to execution. Carefully binds exactly the
 // same parameters that have been set up by FeatureGenerateUpdateSQL()
 // as bindable.
 //
@@ -335,12 +335,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
         return err;
 
     /* Bind the FID to the "WHERE" clause */
-    int sqlite_err = sqlite3_bind_int64(poStmt, nColCount, poFeature->GetFID());    
+    int sqlite_err = sqlite3_bind_int64(poStmt, nColCount, poFeature->GetFID());
     if ( sqlite_err != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "failed to bind FID '" CPL_FRMT_GIB "' to statement", poFeature->GetFID());
-        return OGRERR_FAILURE;       
+        return OGRERR_FAILURE;
     }
 
     return OGRERR_NONE;
@@ -350,8 +350,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
 //----------------------------------------------------------------------
 // FeatureBindInsertParameters()
 //
-// Selectively bind the values of an OGRFeature to a prepared 
-// statement, prior to execution. Carefully binds exactly the 
+// Selectively bind the values of an OGRFeature to a prepared
+// statement, prior to execution. Carefully binds exactly the
 // same parameters that have been set up by FeatureGenerateInsertSQL()
 // as bindable.
 //
@@ -505,10 +505,10 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
 //----------------------------------------------------------------------
 // ReadTableDefinition()
 //
-// Initialization routine. Read all the metadata about a table, 
+// Initialization routine. Read all the metadata about a table,
 // starting from just the table name. Reads information from GPKG
-// metadata tables and from SQLite table metadata. Uses it to 
-// populate OGRSpatialReference information and OGRFeatureDefn objects, 
+// metadata tables and from SQLite table metadata. Uses it to
+// populate OGRSpatialReference information and OGRFeatureDefn objects,
 // among others.
 //
 OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
@@ -625,7 +625,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     /* Use the "PRAGMA TABLE_INFO()" call to get table definition */
     /*  #|name|type|notnull|default|pk */
     /*  0|id|integer|0||1 */
-    /*  1|name|varchar|0||0 */    
+    /*  1|name|varchar|0||0 */
     pszSQL = sqlite3_mprintf("pragma table_info('%q')", m_pszTableName);
     err = SQLQuery(poDb, pszSQL, &oResultTable);
     sqlite3_free(pszSQL);
@@ -678,8 +678,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                     oGeomType = oGeomTypeGeomCols;
                 if ( oGeomType != oGeomTypeGeomCols )
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined, 
-                             "geometry column type in '%s.%s' is not consistent with type in gpkg_geometry_columns", 
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "geometry column type in '%s.%s' is not consistent with type in gpkg_geometry_columns",
                              m_pszTableName, pszName);
                 }
 
@@ -700,8 +700,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                 }
                 else
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, 
-                             "table '%s' has multiple geometry fields? not legal in gpkg", 
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "table '%s' has multiple geometry fields? not legal in gpkg",
                              m_pszTableName);
                     SQLResultFree(&oResultTable);
                     return OGRERR_FAILURE;
@@ -712,7 +712,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             {
                 // CPLError( CE_Failure, CPLE_AppDefined, "invalid field type '%s'", pszType );
                 // SQLResultFree(&oResultTable);
-                CPLError(CE_Warning, CPLE_AppDefined, 
+                CPLError(CE_Warning, CPLE_AppDefined,
                          "geometry column '%s' of type '%s' ignored", pszName, pszType);
             }
 
@@ -798,7 +798,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     /* Wait, we didn't find a FID? Some operations will not be possible */
     if ( ! bFidFound )
     {
-        CPLDebug("GPKG", 
+        CPLDebug("GPKG",
                  "no integer primary key defined for table '%s'", m_pszTableName);
     }
     else
@@ -810,7 +810,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                             OGRSQLiteEscape(m_pszFidColumn).c_str(),
                             m_pszTableName);
         sqlite3_stmt* hColStmt = NULL;
-        int rc = sqlite3_prepare( poDb, pszSQLStatic, -1, &hColStmt, NULL ); 
+        int rc = sqlite3_prepare( poDb, pszSQLStatic, -1, &hColStmt, NULL );
         if( rc == SQLITE_OK )
         {
             rc = sqlite3_step( hColStmt );
@@ -945,7 +945,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
     {
         CPLString osCommand;
 
-        osCommand.Printf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s", 
+        osCommand.Printf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
                                  m_pszTableName, poField->GetNameRef(),
                                  GPkgFieldFromOGR(poField->GetType(),
                                                   poField->GetSubType(),
@@ -1041,7 +1041,7 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
     {
         char *pszSQL;
 
-        pszSQL = sqlite3_mprintf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s%s", 
+        pszSQL = sqlite3_mprintf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s%s",
                                  m_pszTableName, oGeomField.GetNameRef(),
                                  m_poDS->GetGeometryTypeString(oGeomField.GetType()),
                                  !oGeomField.IsNullable() ? " NOT NULL DEFAULT ''" : "");
@@ -1156,11 +1156,11 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         m_poInsertStatement = NULL;
     }
 
-    if ( ! m_poInsertStatement ) 
+    if ( ! m_poInsertStatement )
     {
         /* Construct a SQL INSERT statement from the OGRFeature */
         /* Only work with fields that are set */
-        /* Do not stick values into SQL, use placeholder and bind values later */    
+        /* Do not stick values into SQL, use placeholder and bind values later */
         m_bInsertStatementWithFID = poFeature->GetFID() != OGRNullFID;
         CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID, !bHasDefaultValue);
 
@@ -1171,9 +1171,9 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             m_poInsertStatement = NULL;
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "failed to prepare SQL: %s", osCommand.c_str());        
+                      "failed to prepare SQL: %s", osCommand.c_str());
             return OGRERR_FAILURE;
-        }        
+        }
     }
 
     /* Bind values onto the statement now */
@@ -1199,7 +1199,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         sqlite3_clear_bindings(m_poInsertStatement);
         sqlite3_finalize(m_poInsertStatement);
         m_poInsertStatement = NULL;
-        return OGRERR_FAILURE; 
+        return OGRERR_FAILURE;
     }
 
     sqlite3_reset(m_poInsertStatement);
@@ -1279,7 +1279,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         {
             /* Construct a SQL INSERT statement from the OGRFeature */
             /* Only work with fields that are set */
-            /* Do not stick values into SQL, use placeholder and bind values later */    
+            /* Do not stick values into SQL, use placeholder and bind values later */
             CPLString osCommand = FeatureGenerateInsertSQL(poFeature, true, true);
 
             /* Prepare the SQL into a statement */
@@ -1287,7 +1287,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             if ( err != SQLITE_OK )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "failed to prepare SQL: %s", osCommand.c_str());        
+                        "failed to prepare SQL: %s", osCommand.c_str());
                 return OGRERR_FAILURE;
             }
         }
@@ -1314,7 +1314,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         {
             /* Construct a SQL UPDATE statement from the OGRFeature */
             /* Only work with fields that are set */
-            /* Do not stick values into SQL, use placeholder and bind values later */    
+            /* Do not stick values into SQL, use placeholder and bind values later */
             CPLString osCommand = FeatureGenerateUpdateSQL(poFeature);
 
             /* Prepare the SQL into a statement */
@@ -1322,7 +1322,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             if ( err != SQLITE_OK )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "failed to prepare SQL: %s", osCommand.c_str());        
+                        "failed to prepare SQL: %s", osCommand.c_str());
                 return OGRERR_FAILURE;
             }
         }
@@ -1346,7 +1346,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
                   sqlite3_errmsg( m_poDS->GetDB() ) );
         sqlite3_reset(m_poUpdateStatement);
         sqlite3_clear_bindings(m_poUpdateStatement);
-        return OGRERR_FAILURE;       
+        return OGRERR_FAILURE;
     }
 
     sqlite3_reset(m_poUpdateStatement);
@@ -1444,7 +1444,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     if ( err != SQLITE_OK )
     {
         m_poQueryStatement = NULL;
-        CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", soSQL.c_str());            
+        CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", soSQL.c_str());
         return OGRERR_FAILURE;
     }
 
@@ -1497,7 +1497,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     if ( err != SQLITE_OK )
     {
         m_poQueryStatement = NULL;
-        CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", soSQL.c_str());            
+        CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", soSQL.c_str());
         return NULL;
     }
 
@@ -1528,7 +1528,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 /*                        DeleteFeature()                               */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID) 
+OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 {
     if( !m_poDS->GetUpdate() || m_pszFidColumn == NULL )
     {
@@ -1644,7 +1644,7 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     {
         if ( psExtent )
         {
-            *psExtent = *m_poExtent;            
+            *psExtent = *m_poExtent;
         }
         return OGRERR_NONE;
     }
@@ -2329,7 +2329,7 @@ void OGRGeoPackageTableLayer::BuildWhere()
         {
             m_soFilter += osQuery;
         }
-        else    
+        else
         {
             m_soFilter += " AND (";
             m_soFilter += osQuery;

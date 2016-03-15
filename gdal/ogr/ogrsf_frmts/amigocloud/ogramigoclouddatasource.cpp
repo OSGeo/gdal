@@ -704,16 +704,16 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL HTML Response:%s", psResult->pabyData );
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult->pszErrBuf != NULL) 
+    if (psResult->pszErrBuf != NULL)
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult->nStatus != 0) 
+    else if (psResult->nStatus != 0)
     {
         CPLDebug( "AMIGOCLOUD", "RunSQL Error Status:%d", psResult->nStatus );
     }
@@ -755,7 +755,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
                 poError = json_object_array_get_idx(poError, 0);
                 if( poError != NULL && json_object_get_type(poError) == json_type_string )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, 
+                    CPLError(CE_Failure, CPLE_AppDefined,
                             "Error returned by server : %s", json_object_get_string(poError));
                     json_object_put(poObj);
                     return NULL;

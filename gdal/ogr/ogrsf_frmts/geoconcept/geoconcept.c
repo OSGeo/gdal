@@ -1989,7 +1989,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
       {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "failed to add a polygon to subtype '%s.%s'.\n",
-                  GetTypeName_GCIO(GetSubTypeType_GCIO(theSubType)), 
+                  GetTypeName_GCIO(GetSubTypeType_GCIO(theSubType)),
                   GetSubTypeName_GCIO(theSubType) );
         OGR_G_DestroyGeometry(outer);
         goto onError;
@@ -4589,7 +4589,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadHeader_GCIO (
 }/* ReadHeader_GCIO */
 
 /* -------------------------------------------------------------------- */
-GCSubType GCIOAPI_CALL1(*) FindFeature_GCIO ( 
+GCSubType GCIOAPI_CALL1(*) FindFeature_GCIO (
                                               GCExportFileH* hGCT,
                                               const char* typDOTsubtypName
                                             )

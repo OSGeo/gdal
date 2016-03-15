@@ -125,7 +125,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
         CPLFree( psRecord );
         return NULL;
     }
-    
+
     psRecord->nRecordNum = (int)nRecordNumUInt32;
     psRecord->nLength = (int)nLengthUInt32;
 
@@ -142,7 +142,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 
     memcpy( psRecord->pachData, abyHeader, 12 );
 
-    if( (int)VSIFReadL( psRecord->pachData + 12, 1, psRecord->nLength-12, 
+    if( (int)VSIFReadL( psRecord->pachData + 12, 1, psRecord->nLength-12,
                        psImage->fpImage )
         != psRecord->nLength - 12 )
     {
@@ -224,10 +224,10 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
         CEOSClose( psImage );
         return NULL;
     }
-    
+
     if( abyHeader[0] != 0 || abyHeader[1] != 0 )
         psImage->bLittleEndian = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try to read the header record.                                  */
 /* -------------------------------------------------------------------- */
@@ -260,10 +260,10 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Got a %d file sequence number, instead of the expected\n"
                   "2 indicating imagery on file %s.\n"
-                  "Continuing to access anyways.\n", 
+                  "Continuing to access anyways.\n",
                   nSeqNum, pszFilename );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Extract various information.                                    */
 /* -------------------------------------------------------------------- */
@@ -307,7 +307,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
             psRecord->nLength + i * psImage->nImageRecLength
 	            + 12 + psImage->nPrefixBytes;
     }
-    
+
     CEOSDestroyRecord( psRecord );
 
     return psImage;
@@ -334,7 +334,7 @@ CPLErr CEOSReadScanline( CEOSImage * psCEOS, int nBand, int nScanline,
 
 {
     int		nOffset, nBytes;
-    
+
     /*
      * As a short cut, I currently just seek to the data, and read it
      * raw, rather than trying to read ceos records properly.

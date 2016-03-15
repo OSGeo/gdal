@@ -318,12 +318,6 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     else if ( strcmp( pszExtension, "amp" ) == 0 )
     {
-        /* ------------------------------------------------------------ */
-        /* Note: ROI_PAC amp images are lying about their y size: they  */
-        /*       report the added sizes of the two bands... So fix the  */
-        /*       value here.                                            */
-        /* ------------------------------------------------------------ */
-        poDS->nRasterYSize /= 2;
         eDataType = GDT_Float32;
         nBands = 2;
         eInterleave = PIXEL;
@@ -578,12 +572,6 @@ GDALDataset *ROIPACDataset::Create( const char *pszFilename,
                       pszExtension, nBands, GDALGetDataTypeName(eType) );
             return NULL;
         }
-        /* ------------------------------------------------------------ */
-        /* Note: ROI_PAC amp images are lying about their y size: they  */
-        /*       report the added sizes of the two bands... So fix the  */
-        /*       value here.                                            */
-        /* ------------------------------------------------------------ */
-        nYSize *= 2;
     }
     else if ( strcmp( pszExtension, "cor" ) == 0
                 || strcmp( pszExtension, "hgt" ) == 0
@@ -655,18 +643,7 @@ GDALDataset *ROIPACDataset::Create( const char *pszFilename,
 /*      Write out the header.                                           */
 /* -------------------------------------------------------------------- */
     CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%-40s %d\n", "WIDTH", nXSize ));
-    if ( strcmp( pszExtension, "amp" ) == 0) {
-        /* ------------------------------------------------------------ */
-        /* Note: ROI_PAC amp images are lying about their y size: they  */
-        /*       report the added sizes of the two bands... So fix the  */
-        /*       value here.                                            */
-        /* ------------------------------------------------------------ */
-        CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%-40s %d\n", "FILE_LENGTH", nYSize*2 ));
-    }
-    else
-    {
-        CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%-40s %d\n", "FILE_LENGTH", nYSize ));
-    }
+    CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%-40s %d\n", "FILE_LENGTH", nYSize ));
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
     return reinterpret_cast<GDALDataset *>(
@@ -698,20 +675,8 @@ void ROIPACDataset::FlushCache( void )
 /* -------------------------------------------------------------------- */
 /*      Raster dimensions.                                              */
 /* -------------------------------------------------------------------- */
-    const char *pszExtension = CPLGetExtension(CPLGetBasename(pszRscFilename));
     CPL_IGNORE_RET_VAL(VSIFPrintfL( fpRsc, "%-40s %d\n", "WIDTH", nRasterXSize ));
-    if ( strcmp( pszExtension, "amp" ) == 0) {
-        /* ------------------------------------------------------------ */
-        /* Note: ROI_PAC amp images are lying about their y size: they  */
-        /*       report the added sizes of the two bands... So fix the  */
-        /*       value here.                                            */
-        /* ------------------------------------------------------------ */
-        CPL_IGNORE_RET_VAL(VSIFPrintfL( fpRsc, "%-40s %d\n", "FILE_LENGTH", nRasterYSize*2 ));
-    }
-    else
-    {
-        CPL_IGNORE_RET_VAL(VSIFPrintfL( fpRsc, "%-40s %d\n", "FILE_LENGTH", nRasterYSize ));
-    }
+    CPL_IGNORE_RET_VAL(VSIFPrintfL( fpRsc, "%-40s %d\n", "FILE_LENGTH", nRasterYSize ));
 
 /* -------------------------------------------------------------------- */
 /*      Georeferencing.                                                 */

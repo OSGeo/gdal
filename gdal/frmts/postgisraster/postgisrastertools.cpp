@@ -12,7 +12,7 @@
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg
  *
- * Permission is hereby granted, free of charge, to any person obtaining 
+ * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
@@ -20,16 +20,16 @@
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * The above copyright notice and this permission notice shall be 
+ * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
- * NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
- * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  **********************************************************************/
  #include "postgisraster.h"
@@ -96,15 +96,15 @@ char** ParseConnectionString(const char * pszConnectionString) {
     char * pszEscapedConnectionString = NULL;
 
     /* Escape string following SQL scheme */
-    pszEscapedConnectionString = 
+    pszEscapedConnectionString =
         ReplaceSingleQuotes(pszConnectionString, -1);
 
     /* Avoid PG: part */
-    char* pszStartPos = (char*) 
+    char* pszStartPos = (char*)
         strstr(pszEscapedConnectionString, ":") + 1;
 
     /* Tokenize */
-    char** papszParams = 
+    char** papszParams =
         CSLTokenizeString2(pszStartPos, " ", CSLT_HONOURSTRINGS);
 
     /* Free */
@@ -114,7 +114,7 @@ char** ParseConnectionString(const char * pszConnectionString) {
 }
 
 /***********************************************************************
- * \brief Translate a PostGIS Raster datatype string in a valid 
+ * \brief Translate a PostGIS Raster datatype string in a valid
  * GDALDataType object.
  **********************************************************************/
 GBool TranslateDataType(const char * pszDataType,
@@ -222,4 +222,3 @@ GBool TranslateDataType(const char * pszDataType,
 
     return true;
 }
-

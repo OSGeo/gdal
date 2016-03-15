@@ -42,7 +42,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
        formats. */
     if( poSRSIn != NULL )
     {
-        poSRS = new OGRSpatialReference(NULL);   
+        poSRS = new OGRSpatialReference(NULL);
         poSRS->SetWellKnownGeogCS( "WGS84" );
         if (!poSRS->IsSame(poSRSIn))
         {
@@ -59,13 +59,13 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
                           "Failed to create coordinate transformation between the\n"
                           "input coordinate system and WGS84.  This may be because they\n"
                           "are not transformable, or because projection services\n"
-                          "(PROJ.4 DLL/.so) could not be loaded.\n" 
+                          "(PROJ.4 DLL/.so) could not be loaded.\n"
                           "This message will not be issued any more. \n"
-                          "\nSource:\n%s\n", 
+                          "\nSource:\n%s\n",
                           pszWKT );
 
                 CPLFree( pszWKT );
-                poDSIn->issuedFirstCTError(); 
+                poDSIn->issuedFirstCTError();
             }
         }
     }
@@ -235,7 +235,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     if ( poGeom == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Features without geometry not supported by GTM writer in waypoints layer." );
         return OGRERR_FAILURE;
     }
@@ -302,11 +302,11 @@ OGRFeature* GTMWaypointLayer::GetNextFeature()
         OGRFeature* poFeature = new OGRFeature( poFeatureDefn );
         double altitude = poWaypoint->getAltitude();
         if (altitude == 0.0)
-            poFeature->SetGeometryDirectly(new OGRPoint 
+            poFeature->SetGeometryDirectly(new OGRPoint
                                            (poWaypoint->getLongitude(),
                                             poWaypoint->getLatitude()));
         else
-            poFeature->SetGeometryDirectly(new OGRPoint 
+            poFeature->SetGeometryDirectly(new OGRPoint
                                            (poWaypoint->getLongitude(),
                                             poWaypoint->getLatitude(),
                                             altitude));

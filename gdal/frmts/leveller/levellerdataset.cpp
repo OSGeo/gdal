@@ -43,7 +43,7 @@ static bool str_equal(const char *_s1, const char *_s2) {
 }
 
 /*GDALDataset *LevellerCreateCopy( const char *, GDALDataset *, int, char **,
-                                GDALProgressFunc pfnProgress, 
+                                GDALProgressFunc pfnProgress,
                                 void * pProgressData );
 */
 
@@ -164,66 +164,66 @@ static const measurement_unit kUnits[] =
 	{ "%", 1.0, UNITLABEL_PERCENT }, // not actually used
 
 	{ "rad", 1.0, UNITLABEL_RADIAN },
-	{ "\xB0", kPI / 180.0, UNITLABEL_DEGREE }, // \xB0 is Unicode degree symbol 
+	{ "\xB0", kPI / 180.0, UNITLABEL_DEGREE }, // \xB0 is Unicode degree symbol
 	{ "d", kPI / 180.0, UNITLABEL_DEGREE },
 	{ "deg", kPI / 180.0, UNITLABEL_DEGREE },
 	{ "'", kPI / (60.0 * 180.0), UNITLABEL_ARCMINUTE },
 	{ "\"", kPI / (3600.0 * 180.0), UNITLABEL_ARCSECOND },
 
 	{ "ym", 1.0e-24, UNITLABEL_YM },
-	{ "zm", 1.0e-21, UNITLABEL_ZM }, 
+	{ "zm", 1.0e-21, UNITLABEL_ZM },
 	{ "am", 1.0e-18, UNITLABEL_AM },
-	{ "fm", 1.0e-15, UNITLABEL_FM }, 
-	{ "pm", 1.0e-12, UNITLABEL_PM }, 
-	{ "A",  1.0e-10, UNITLABEL_A }, 
-	{ "nm", 1.0e-9, UNITLABEL_NM }, 
-	{ "u",  1.0e-6, UNITLABEL_U }, 
-	{ "um", 1.0e-6, UNITLABEL_UM }, 
-	{ "ppt", kdInch / 72.27, UNITLABEL_PPT }, 
-	{ "pt", kdInch / 72.0, UNITLABEL_PT }, 
-    { "mm", 1.0e-3, UNITLABEL_MM }, 
-	{ "p", kdInch / 6.0, UNITLABEL_P }, 
-	{ "cm", 1.0e-2, UNITLABEL_CM }, 
-	{ "in", kdInch, UNITLABEL_IN }, 
-	{ "dft", 0.03048, UNITLABEL_DFT }, 
-	{ "dm", 0.1, UNITLABEL_DM }, 
-	{ "li", 0.2011684 /* GDAL 0.20116684023368047 ? */, UNITLABEL_LI },  
-	{ "sli", 0.201168402336805, UNITLABEL_SLI }, 
-	{ "sp", 0.2286, UNITLABEL_SP }, 
-	{ "ft", 0.3048, UNITLABEL_FT }, 
-	{ "sft", 1200.0 / 3937.0, UNITLABEL_SFT }, 
-    { "yd", 0.9144, UNITLABEL_YD }, 
-	{ "syd", 0.914401828803658, UNITLABEL_SYD }, 
-	{ "m", 1.0, UNITLABEL_M }, 
-	{ "fath", 1.8288, UNITLABEL_FATH }, 
-	{ "rd", 5.02921, UNITLABEL_RD }, 
-	{ "dam", 10.0, UNITLABEL_DAM }, 
-	{ "dkm", 10.0, UNITLABEL_DKM }, 
-	{ "ch", 20.1168 /* GDAL: 2.0116684023368047 ? */, UNITLABEL_CH },  
-	{ "sch", 20.1168402336805, UNITLABEL_SCH }, 
+	{ "fm", 1.0e-15, UNITLABEL_FM },
+	{ "pm", 1.0e-12, UNITLABEL_PM },
+	{ "A",  1.0e-10, UNITLABEL_A },
+	{ "nm", 1.0e-9, UNITLABEL_NM },
+	{ "u",  1.0e-6, UNITLABEL_U },
+	{ "um", 1.0e-6, UNITLABEL_UM },
+	{ "ppt", kdInch / 72.27, UNITLABEL_PPT },
+	{ "pt", kdInch / 72.0, UNITLABEL_PT },
+    { "mm", 1.0e-3, UNITLABEL_MM },
+	{ "p", kdInch / 6.0, UNITLABEL_P },
+	{ "cm", 1.0e-2, UNITLABEL_CM },
+	{ "in", kdInch, UNITLABEL_IN },
+	{ "dft", 0.03048, UNITLABEL_DFT },
+	{ "dm", 0.1, UNITLABEL_DM },
+	{ "li", 0.2011684 /* GDAL 0.20116684023368047 ? */, UNITLABEL_LI },
+	{ "sli", 0.201168402336805, UNITLABEL_SLI },
+	{ "sp", 0.2286, UNITLABEL_SP },
+	{ "ft", 0.3048, UNITLABEL_FT },
+	{ "sft", 1200.0 / 3937.0, UNITLABEL_SFT },
+    { "yd", 0.9144, UNITLABEL_YD },
+	{ "syd", 0.914401828803658, UNITLABEL_SYD },
+	{ "m", 1.0, UNITLABEL_M },
+	{ "fath", 1.8288, UNITLABEL_FATH },
+	{ "rd", 5.02921, UNITLABEL_RD },
+	{ "dam", 10.0, UNITLABEL_DAM },
+	{ "dkm", 10.0, UNITLABEL_DKM },
+	{ "ch", 20.1168 /* GDAL: 2.0116684023368047 ? */, UNITLABEL_CH },
+	{ "sch", 20.1168402336805, UNITLABEL_SCH },
 	{ "hm", 100.0, UNITLABEL_HM },
-	{ "f", 201.168, UNITLABEL_F }, 
-	{ "km", 1000.0, UNITLABEL_KM }, 
-	{ "mi", 1609.344, UNITLABEL_MI }, 
-	{ "smi", 1609.34721869444, UNITLABEL_SMI }, 
-	{ "nmi", 1853.0, UNITLABEL_NMI }, 
-	{ "Mm", 1.0e+6, UNITLABEL_MEGAM }, 
-    { "ls", kdLStoM, UNITLABEL_LS }, 
-	{ "Gm", 1.0e+9, UNITLABEL_GM }, 
-	{ "lm", kdLStoM * 60, UNITLABEL_LM }, 
-	{ "AU", 8.317 * kdLStoM * 60, UNITLABEL_AU }, 
-	{ "Tm", 1.0e+12, UNITLABEL_TM }, 
-	{ "lhr", 60.0 * 60.0 * kdLStoM, UNITLABEL_LHR }, 
-	{ "ld", 24 * 60.0 * 60.0 * kdLStoM, UNITLABEL_LD },  
-	{ "Pm", 1.0e+15, UNITLABEL_PETAM }, 
-	{ "ly", kdLYtoM, UNITLABEL_LY }, 
-	{ "pc", 3.2616 * kdLYtoM, UNITLABEL_PC }, 
-	{ "Em", 1.0e+18, UNITLABEL_EXAM }, 
-	{ "kly", 1.0e+3 * kdLYtoM, UNITLABEL_KLY }, 
-	{ "kpc", 3.2616 * 1.0e+3 * kdLYtoM, UNITLABEL_KPC }, 
-	{ "Zm", 1.0e+21, UNITLABEL_ZETTAM }, 
-	{ "Mly", 1.0e+6 * kdLYtoM, UNITLABEL_MLY }, 
-	{ "Mpc", 3.2616 * 1.0e+6 * kdLYtoM, UNITLABEL_MPC }, 
+	{ "f", 201.168, UNITLABEL_F },
+	{ "km", 1000.0, UNITLABEL_KM },
+	{ "mi", 1609.344, UNITLABEL_MI },
+	{ "smi", 1609.34721869444, UNITLABEL_SMI },
+	{ "nmi", 1853.0, UNITLABEL_NMI },
+	{ "Mm", 1.0e+6, UNITLABEL_MEGAM },
+    { "ls", kdLStoM, UNITLABEL_LS },
+	{ "Gm", 1.0e+9, UNITLABEL_GM },
+	{ "lm", kdLStoM * 60, UNITLABEL_LM },
+	{ "AU", 8.317 * kdLStoM * 60, UNITLABEL_AU },
+	{ "Tm", 1.0e+12, UNITLABEL_TM },
+	{ "lhr", 60.0 * 60.0 * kdLStoM, UNITLABEL_LHR },
+	{ "ld", 24 * 60.0 * 60.0 * kdLStoM, UNITLABEL_LD },
+	{ "Pm", 1.0e+15, UNITLABEL_PETAM },
+	{ "ly", kdLYtoM, UNITLABEL_LY },
+	{ "pc", 3.2616 * kdLYtoM, UNITLABEL_PC },
+	{ "Em", 1.0e+18, UNITLABEL_EXAM },
+	{ "kly", 1.0e+3 * kdLYtoM, UNITLABEL_KLY },
+	{ "kpc", 3.2616 * 1.0e+3 * kdLYtoM, UNITLABEL_KPC },
+	{ "Zm", 1.0e+21, UNITLABEL_ZETTAM },
+	{ "Mly", 1.0e+6 * kdLYtoM, UNITLABEL_MLY },
+	{ "Mpc", 3.2616 * 1.0e+6 * kdLYtoM, UNITLABEL_MPC },
 	{ "Ym", 1.0e+24, UNITLABEL_YOTTAM }
 };
 
@@ -406,7 +406,7 @@ public:
 
     explicit LevellerRasterBand(LevellerDataset*);
     ~LevellerRasterBand();
-    
+
     bool        Init();
 
     // Geomeasure support.
@@ -497,7 +497,7 @@ CPLErr LevellerRasterBand::IWriteBlock
                         (pfImage[x] - ds.m_dElevBase) / ds.m_dElevScale );
 		}
 
-#ifdef CPL_MSB 
+#ifdef CPL_MSB
 		GDALSwapWords( m_pLine, pixelsize, nBlockXSize, pixelsize );
 #endif
 		if(1 == VSIFWriteL(m_pLine, rowbytes, 1, ds.m_fp))
@@ -542,11 +542,11 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     const size_t rowbytes = nBlockXSize * sizeof(float);
 
     if(0 != VSIFSeekL(
-           poGDS->m_fp, 
-           poGDS->m_nDataOffset + nBlockYOff * rowbytes, 
+           poGDS->m_fp,
+           poGDS->m_nDataOffset + nBlockYOff * rowbytes,
            SEEK_SET))
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Leveller seek failed: %s", VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -557,7 +557,7 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( VSIFReadL( pImage, rowbytes, 1, poGDS->m_fp ) != 1 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Leveller read failed: %s", VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -565,7 +565,7 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Swap on MSB platforms.                                          */
 /* -------------------------------------------------------------------- */
-#ifdef CPL_MSB 
+#ifdef CPL_MSB
     GDALSwapWords( pImage, 4, nRasterXSize, 4 );
 #endif
 
@@ -659,7 +659,7 @@ LevellerDataset::~LevellerDataset()
         VSIFCloseL( m_fp );
 }
 
-static double degrees_to_radians(double d) 
+static double degrees_to_radians(double d)
 {
 	return (d * 0.017453292);
 }
@@ -714,7 +714,7 @@ bool LevellerDataset::compute_elev_scaling
 
 		// The earths' circumference shrinks using a sin()
 		// curve as we go up in latitude.
-		const double dLatCircum = kdEarthCircumEquat 
+		const double dLatCircum = kdEarthCircumEquat
 			* sin(degrees_to_radians(90.0 - yg[0]));
 
 		// Derive meter distance between geolongitudes
@@ -803,7 +803,7 @@ bool LevellerDataset::write_header()
 
 		if( m_adfTransform[2] != 0.0 || m_adfTransform[4] != 0.0)
 		{
-			CPLError( CE_Failure, CPLE_IllegalArg, 
+			CPLError( CE_Failure, CPLE_IllegalArg,
 				"Cannot handle rotated geotransform" );
 			return false;
 		}
@@ -826,7 +826,7 @@ bool LevellerDataset::write_header()
 	}
 
 
-	this->write_tag_start("hf_data", 
+	this->write_tag_start("hf_data",
 		sizeof(float) * nRasterXSize * nRasterYSize);
 
 	return true;
@@ -866,7 +866,7 @@ GDALDataset* LevellerDataset::Create
 (
 	const char* pszFilename,
     int nXSize, int nYSize, int nBands,
-    GDALDataType eType, char** papszOptions 
+    GDALDataType eType, char** papszOptions
 )
 {
 	if(nBands != 1)
@@ -911,19 +911,19 @@ GDALDataset* LevellerDataset::Create
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
-    const char* pszValue = CSLFetchNameValue( 
+    const char* pszValue = CSLFetchNameValue(
 		papszOptions,"MINUSERPIXELVALUE");
     if( pszValue != NULL )
         poDS->m_dLogSpan[0] = CPLAtof( pszValue );
 	else
 	{
 		delete poDS;
-		CPLError( CE_Failure, CPLE_IllegalArg, 
+		CPLError( CE_Failure, CPLE_IllegalArg,
 			"MINUSERPIXELVALUE must be specified." );
 		return NULL;
 	}
 
-    pszValue = CSLFetchNameValue( 
+    pszValue = CSLFetchNameValue(
 		papszOptions,"MAXUSERPIXELVALUE");
     if( pszValue != NULL )
         poDS->m_dLogSpan[1] = CPLAtof( pszValue );
@@ -940,7 +940,7 @@ GDALDataset* LevellerDataset::Create
 // --------------------------------------------------------------------
     LevellerRasterBand* poBand = new LevellerRasterBand( poDS );
     poDS->SetBand( 1, poBand );
-    
+
     if( !poBand->Init() )
     {
         delete poDS;
@@ -1036,7 +1036,7 @@ bool LevellerDataset::locate_data(vsi_l_offset& offset, size_t& len, VSILFILE* f
 {
     // Locate the file offset of the desired tag's data.
     // If it is not available, return false.
-    // If the tag is found, leave the filemark at the 
+    // If the tag is found, leave the filemark at the
     // start of its data.
 
     if(0 != VSIFSeekL(fp, 5, SEEK_SET))
@@ -1096,7 +1096,7 @@ bool LevellerDataset::get(int& n, VSILFILE* fp, const char* psz)
             n = static_cast<int>( value );
             return true;
         }
-    }	
+    }
     return false;
 }
 
@@ -1116,7 +1116,7 @@ bool LevellerDataset::get(double& d, VSILFILE* fp, const char* pszTag)
             CPL_LSBPTR64(&d);
             return true;
         }
-    }	
+    }
     return false;
 }
 
@@ -1145,7 +1145,7 @@ bool LevellerDataset::get(char* pszValue, size_t maxchars, VSILFILE* fp, const c
             pszValue[len] = 0; // terminate C-string
             return true;
         }
-    }	
+    }
 
     return false;
 }
@@ -1165,7 +1165,7 @@ UNITLABEL LevellerDataset::meter_measure_to_code(double dM) const
 
 UNITLABEL LevellerDataset::id_to_code(const char* pszUnits) const
 {
-	// Convert a readable UOM to its OEM code. 
+	// Convert a readable UOM to its OEM code.
 
 	const measurement_unit* pu = this->get_uom(pszUnits);
 	return (pu != NULL ? pu->oemCode : UNITLABEL_UNKNOWN);
@@ -1174,7 +1174,7 @@ UNITLABEL LevellerDataset::id_to_code(const char* pszUnits) const
 
 const char* LevellerDataset::code_to_id(UNITLABEL code) const
 {
-	// Convert a measurement unit's OEM ID to its readable ID. 
+	// Convert a measurement unit's OEM ID to its readable ID.
 
 	const measurement_unit* pu = this->get_uom(code);
 	return (pu != NULL ? pu->pszID : NULL);
@@ -1188,7 +1188,7 @@ const measurement_unit* LevellerDataset::get_uom(const char* pszUnits) const
         if(strcmp(pszUnits, kUnits[i].pszID) == 0)
             return &kUnits[i];
     }
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "Unknown measurement units: %s", pszUnits );
     return NULL;
 }
@@ -1201,7 +1201,7 @@ const measurement_unit* LevellerDataset::get_uom(UNITLABEL code) const
         if(kUnits[i].oemCode == code)
             return &kUnits[i];
     }
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "Unknown measurement unit code: %08x", code );
     return NULL;
 }
@@ -1219,7 +1219,7 @@ const measurement_unit* LevellerDataset::get_uom(double dM) const
 		else if(dM == kUnits[i].dScale)
 			return &kUnits[i];
     }
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "Unknown measurement conversion factor: %f", dM );
     return NULL;
 }
@@ -1231,9 +1231,9 @@ const measurement_unit* LevellerDataset::get_uom(double dM) const
 
 bool LevellerDataset::convert_measure
 (
-	double d, 
+	double d,
 	double& dResult,
-	const char* pszSpace 
+	const char* pszSpace
 )
 {
     // Convert a measure to meters.
@@ -1246,7 +1246,7 @@ bool LevellerDataset::convert_measure
 			return true;
 		}
     }
-    CPLError( CE_Failure, CPLE_FileIO, 
+    CPLError( CE_Failure, CPLE_FileIO,
               "Unknown linear measurement unit: '%s'", pszSpace );
     return false;
 }
@@ -1437,7 +1437,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 			}
 
 #if 0
-			// If the units are something besides m/ft/sft, 
+			// If the units are something besides m/ft/sft,
 			// then convert them to meters.
 
 			if(!str_equal("m", szWorldUnits)
@@ -1449,16 +1449,16 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 			}
 #endif
 
-			// Our extents are such that the origin is at the 
+			// Our extents are such that the origin is at the
 			// center of the heightfield.
 			m_adfTransform[0] = -0.5 * dWorldscale * (nRasterXSize-1);
 			m_adfTransform[3] = -0.5 * dWorldscale * (nRasterYSize-1);
 			m_adfTransform[1] = dWorldscale;
 			m_adfTransform[5] = dWorldscale;
 		}
-		m_dElevScale = dWorldscale; // this was 1.0 before because 
+		m_dElevScale = dWorldscale; // this was 1.0 before because
 		// we were converting to real elevs ourselves, but
-		// some callers may want both the raw pixels and the 
+		// some callers may want both the raw pixels and the
 		// transform to get real elevs.
 
         if(!make_local_coordsys("Leveller world space", szWorldUnits))

@@ -1,17 +1,23 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 
@@ -55,9 +61,12 @@ public:
   virtual ~Lerc2()  {}
 
   bool Set(int nCols, int nRows, const Byte* pMaskBits = NULL);
+  bool Set(const BitMask2& bitMask);
 
   template<class T>
   unsigned int ComputeNumBytesNeededToWrite(const T* arr, double maxZError, bool encodeMask);
+
+  unsigned int ComputeNumBytesHeader() const;
 
   static unsigned int NumExtraBytesToAllocate()  { return BitStuffer2::NumExtraBytesToAllocate(); }
 
@@ -94,7 +103,7 @@ private:
   int         m_currentVersion,
               m_microBlockSize,
               m_maxValToQuantize;
-  BitMask2    m_bitMask2;
+  BitMask2    m_bitMask;
   HeaderInfo  m_headerInfo;
   BitStuffer2 m_bitStuffer2;
   bool        m_encodeMask,
@@ -155,7 +164,7 @@ private:
   DataType GetDataTypeUsed(int typeCode) const;
 
   bool WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed) const;
-  
+
   double ReadVariableDataType(const Byte** ppByte, DataType dtUsed) const;
 
   template<class T>
@@ -204,7 +213,7 @@ unsigned int Lerc2::ComputeNumBytesNeededToWrite(const T* arr, double maxZError,
   if (needMask && encodeMask)
   {
     RLE rle;
-    size_t n = rle.computeNumBytesRLE((const Byte*)m_bitMask2.Bits(), m_bitMask2.Size());
+    size_t n = rle.computeNumBytesRLE((const Byte*)m_bitMask.Bits(), m_bitMask.Size());
     numBytes += (unsigned int)n;
   }
 
@@ -263,7 +272,7 @@ unsigned int Lerc2::ComputeNumBytesNeededToWrite(const T* arr, double maxZError,
         m_huffmanCodes.resize(0);    // if huffman lost on first run, reset it
     }
   }
-  
+
   if (nBytesOneSweep <= nBytes)
   {
     m_writeDataOneSweep = true;    // fallback: write data binary uncompressed in one sweep
@@ -331,7 +340,7 @@ bool Lerc2::Decode(const Byte** ppByte, T* arr, Byte* pMaskBits)
     return false;
 
   if (pMaskBits)    // return proper mask bits even if they were not stored
-    memcpy(pMaskBits, m_bitMask2.Bits(), m_bitMask2.Size());
+    memcpy(pMaskBits, m_bitMask.Bits(), m_bitMask.Size());
 
   memset(arr, 0, m_headerInfo.nCols * m_headerInfo.nRows * sizeof(T));
 
@@ -345,7 +354,7 @@ bool Lerc2::Decode(const Byte** ppByte, T* arr, Byte* pMaskBits)
     {
       int k = i * m_headerInfo.nCols;
       for (int j = 0; j < m_headerInfo.nCols; j++, k++)
-        if (m_bitMask2.IsValid(k))
+        if (m_bitMask.IsValid(k))
           arr[k] = z0;
     }
     return true;
@@ -381,7 +390,7 @@ bool Lerc2::WriteDataOneSweep(const T* data, Byte** ppByte) const
   {
     int k = i * m_headerInfo.nCols;
     for (int j = 0; j < m_headerInfo.nCols; j++, k++)
-      if (m_bitMask2.IsValid(k))
+      if (m_bitMask.IsValid(k))
       {
         *dstPtr++ = data[k];
         cntPixel++;
@@ -404,7 +413,7 @@ bool Lerc2::ReadDataOneSweep(const Byte** ppByte, T* data) const
   {
     int k = i * m_headerInfo.nCols;
     for (int j = 0; j < m_headerInfo.nCols; j++, k++)
-      if (m_bitMask2.IsValid(k))
+      if (m_bitMask.IsValid(k))
       {
         data[k] = *srcPtr++;
         cntPixel++;
@@ -473,7 +482,7 @@ bool Lerc2::WriteTiles(const T* data, Byte** ppByte, int& numBytes, double& zMin
     }
     else    // encode Lerc2, not Huffman
     {
-      **ppByte = 0;    // write out flag Lerc2, proceed below with Lerc2 ... 
+      **ppByte = 0;    // write out flag Lerc2, proceed below with Lerc2 ...
       (*ppByte)++;
     }
   }
@@ -651,13 +660,13 @@ bool Lerc2::ComputeStats(const T* data, int i0, int i1, int j0, int j1,
     int k = i * m_headerInfo.nCols + j0;
 
     for (int j = j0; j < j1; j++, k++)
-      if (m_bitMask2.IsValid(k))
+      if (m_bitMask.IsValid(k))
       {
         T val = data[k];
         if (numValidPixel > 0)
         {
-	  zMin = std::min(zMin, val);
-	  zMax = std::max(zMax, val);
+          zMin = std::min(zMin, val);
+          zMax = std::max(zMax, val);
         }
         else
           zMin = zMax = val;    // init
@@ -735,7 +744,7 @@ bool Lerc2::Quantize(const T* data, int i0, int i1, int j0, int j1, T zMin,
       {
         int k = i * m_headerInfo.nCols + j0;
         for (int j = j0; j < j1; j++, k++)
-          if (m_bitMask2.IsValid(k))
+          if (m_bitMask.IsValid(k))
           {
             *dstPtr++ = (unsigned int)(data[k] - zMin);
             cntPixel++;
@@ -767,7 +776,7 @@ bool Lerc2::Quantize(const T* data, int i0, int i1, int j0, int j1, T zMin,
       {
         int k = i * m_headerInfo.nCols + j0;
         for (int j = j0; j < j1; j++, k++)
-          if (m_bitMask2.IsValid(k))
+          if (m_bitMask.IsValid(k))
           {
             *dstPtr++ = (unsigned int)(((double)data[k] - zMinDbl) * scale + 0.5);
             cntPixel++;
@@ -845,7 +854,7 @@ bool Lerc2::WriteTile(const T* data, Byte** ppByte, int& numBytesWritten,
     {
       int k = i * m_headerInfo.nCols + j0;
       for (int j = j0; j < j1; j++, k++)
-        if (m_bitMask2.IsValid(k))
+        if (m_bitMask.IsValid(k))
         {
           *dstPtr++ = data[k];
           cntPixel++;
@@ -923,7 +932,7 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
     {
       int k = i * m_headerInfo.nCols + j0;
       for (int j = j0; j < j1; j++, k++)
-        if (m_bitMask2.IsValid(k))
+        if (m_bitMask.IsValid(k))
           data[k] = 0;
     }
 
@@ -939,7 +948,7 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
     {
       int k = i * m_headerInfo.nCols + j0;
       for (int j = j0; j < j1; j++, k++)
-        if (m_bitMask2.IsValid(k))
+        if (m_bitMask.IsValid(k))
         {
           data[k] = *srcPtr++;
           numPixel++;
@@ -960,7 +969,7 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
       {
         int k = i * m_headerInfo.nCols + j0;
         for (int j = j0; j < j1; j++, k++)
-          if (m_bitMask2.IsValid(k))
+          if (m_bitMask.IsValid(k))
             data[k] = (T)offset;
       }
     }
@@ -990,7 +999,7 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
         {
           int k = i * m_headerInfo.nCols + j0;
           for (int j = j0; j < j1; j++, k++)
-            if (m_bitMask2.IsValid(k))
+            if (m_bitMask.IsValid(k))
             {
               double z = offset + *srcPtr++ * invScale;
               data[k] = (T)std::min(z, m_headerInfo.zMax);    // make sure we stay in the orig range
@@ -1276,16 +1285,16 @@ bool Lerc2::ComputeHistoForHuffman(const T* data, std::vector<int>& histo) const
   {
     for (int k = 0, i = 0; i < height; i++)
       for (int j = 0; j < width; j++, k++)
-        if (m_bitMask2.IsValid(k))
+        if (m_bitMask.IsValid(k))
         {
           T val = data[k];
           T delta = val;
 
-          if (j > 0 && m_bitMask2.IsValid(k - 1))
+          if (j > 0 && m_bitMask.IsValid(k - 1))
           {
             delta -= prevVal;    // use overflow
           }
-          else if (i > 0 && m_bitMask2.IsValid(k - width))
+          else if (i > 0 && m_bitMask.IsValid(k - width))
           {
             delta -= data[k - width];
           }
@@ -1322,21 +1331,21 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
   for (int k = 0, i = 0; i < height; i++)
   {
     for (int j = 0; j < width; j++, k++)
-      if (m_bitMask2.IsValid(k))
+      if (m_bitMask.IsValid(k))
       {
         T val = data[k];
         T delta = val;
 
-        if (val < zMinA) 
+        if (val < zMinA)
 	    zMinA = val;
         if (val > zMaxA)
 	    zMaxA = val;
 
-        if (j > 0 && m_bitMask2.IsValid(k - 1))
+        if (j > 0 && m_bitMask.IsValid(k - 1))
         {
           delta -= prevVal;    // use overflow
         }
-        else if (i > 0 && m_bitMask2.IsValid(k - width))
+        else if (i > 0 && m_bitMask.IsValid(k - width))
         {
           delta -= data[k - width];
         }
@@ -1427,7 +1436,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
   {
     for (int k = 0, i = 0; i < height; i++)
       for (int j = 0; j < width; j++, k++)
-        if (m_bitMask2.IsValid(k))
+        if (m_bitMask.IsValid(k))
         {
           int val = 0;
           if (!huffman.DecodeOneValue(&srcPtr, bitPos, numBitsLUT, val))
@@ -1435,11 +1444,11 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
 
           T delta = (T)(val - offset);
 
-          if (j > 0 && m_bitMask2.IsValid(k - 1))
+          if (j > 0 && m_bitMask.IsValid(k - 1))
           {
             delta += prevVal;    // use overflow
           }
-          else if (i > 0 && m_bitMask2.IsValid(k - width))
+          else if (i > 0 && m_bitMask.IsValid(k - width))
           {
             delta += data[k - width];
           }

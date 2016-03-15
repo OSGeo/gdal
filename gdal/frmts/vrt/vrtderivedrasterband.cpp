@@ -56,7 +56,7 @@ VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn) :
 /************************************************************************/
 
 VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn,
-					   GDALDataType eType, 
+					   GDALDataType eType,
 					   int nXSize, int nYSize) :
     VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize),
     pszFuncName(NULL),
@@ -82,7 +82,7 @@ VRTDerivedRasterBand::~VRTDerivedRasterBand()
  * functions for derived bands.  Pixel functions must be registered
  * in this way before a derived band tries to access data.
  *
- * Derived bands are stored with only the name of the pixel function 
+ * Derived bands are stored with only the name of the pixel function
  * that it will apply, and if a pixel function matching the name is not
  * found the IRasterIO() call will do nothing.
  *
@@ -252,7 +252,7 @@ void VRTDerivedRasterBand::SetSourceTransferType(GDALDataType eDataTypeIn)
  * @return CE_Failure if the access fails, otherwise CE_None.
  */
 CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
-				       int nXOff, int nYOff, int nXSize, 
+				       int nXOff, int nYOff, int nXSize,
 				       int nYSize, void * pData, int nBufXSize,
 				       int nBufYSize, GDALDataType eBufType,
 				       GSpacing nPixelSpace,
@@ -261,7 +261,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 {
     if( eRWFlag == GF_Write )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Writing through VRTSourcedRasterBand is not supported." );
         return CE_Failure;
     }
@@ -304,8 +304,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
         && GetOverviewCount() > 0 )
     {
-        if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                              pData, nBufXSize, nBufYSize, 
+        if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                              pData, nBufXSize, nBufYSize,
                               eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
             return CE_None;
     }
@@ -332,7 +332,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     void **pBuffers
         = reinterpret_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
     for( int iSource = 0; iSource < nSources; iSource++ ) {
-        pBuffers[iSource] = 
+        pBuffers[iSource] =
             VSI_MALLOC_VERBOSE(sourcesize * nBufXSize * nBufYSize);
         if (pBuffers[iSource] == NULL)
         {
@@ -425,8 +425,8 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
 /* -------------------------------------------------------------------- */
 /*      Set subclass.                                                   */
 /* -------------------------------------------------------------------- */
-    CPLCreateXMLNode( 
-        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ), 
+    CPLCreateXMLNode(
+        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ),
         CXT_Text, "VRTDerivedRasterBand" );
 
     /* ---- Encode DerivedBand-specific fields ---- */

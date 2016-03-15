@@ -65,7 +65,7 @@ protected:
     virtual void LoadMetadata();
     char** LoadRPBXmlNode(CPLXMLNode* psNode);
     char** LoadIMDXmlNode(CPLXMLNode* psNode);
-protected:    
+protected:
     CPLString m_osXMLSourceFilename;
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;

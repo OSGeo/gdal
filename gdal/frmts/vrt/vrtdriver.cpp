@@ -115,7 +115,7 @@ CPLErr VRTDriver::SetMetadata( char **papszMetadata, const char *pszDomain )
 /*                          AddSourceParser()                           */
 /************************************************************************/
 
-void VRTDriver::AddSourceParser( const char *pszElementName, 
+void VRTDriver::AddSourceParser( const char *pszElementName,
                                  VRTSourceParser pfnParser )
 
 {
@@ -125,7 +125,7 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
                                 sizeof(szPtrValue) );
     szPtrValue[nRet] = 0;
 
-    papszSourceParsers = CSLSetNameValue( papszSourceParsers, 
+    papszSourceParsers = CSLSetNameValue( papszSourceParsers,
                                           pszElementName, szPtrValue );
 }
 
@@ -139,7 +139,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
 
     if( psSrc == NULL || psSrc->eType != CXT_Element )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Corrupt or empty VRT source XML document." );
         return NULL;
     }
@@ -238,7 +238,7 @@ VRTCreateCopy( const char * pszFilename,
 /*      Create the virtual dataset.                                     */
 /* -------------------------------------------------------------------- */
     VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(
-        VRTDataset::Create( pszFilename, 
+        VRTDataset::Create( pszFilename,
                             poSrcDS->GetRasterXSize(),
                             poSrcDS->GetRasterYSize(),
                             0, GDT_Byte, NULL ) );
@@ -285,7 +285,7 @@ VRTCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( poSrcDS->GetGCPCount() > 0 )
     {
-        poVRTDS->SetGCPs( poSrcDS->GetGCPCount(), 
+        poVRTDS->SetGCPs( poSrcDS->GetGCPCount(),
                           poSrcDS->GetGCPs(),
                           poSrcDS->GetGCPProjection() );
     }

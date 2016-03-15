@@ -196,7 +196,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     osAccessToken = OGRGFTGetOptionValue(pszFilename, "access");
     if (osAccessToken.size() == 0)
         osAccessToken = CPLGetConfigOption("GFT_ACCESS_TOKEN","");
-    if (osAccessToken.size() == 0 && osRefreshToken.size() > 0) 
+    if (osAccessToken.size() == 0 && osRefreshToken.size() > 0)
     {
         osAccessToken.Seize(GOA2GetAccessToken(osRefreshToken,
                                                FUSION_TABLE_SCOPE));
@@ -456,7 +456,7 @@ char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
 
     if (strlen(osAccessToken) > 0)
       papszOptions = CSLAddString(papszOptions,
-        CPLSPrintf("HEADERS=Authorization: Bearer %s", 
+        CPLSPrintf("HEADERS=Authorization: Bearer %s",
                    osAccessToken.c_str()));
 
     return CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=GFT:%p", this));
@@ -507,16 +507,16 @@ CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
         STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "GFT", "RunSQL HTML Response:%s", psResult->pabyData );
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
         psResult = NULL;
     }
-    if (psResult && psResult->pszErrBuf != NULL) 
+    if (psResult && psResult->pszErrBuf != NULL)
     {
         CPLDebug( "GFT", "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult && psResult->nStatus != 0) 
+    else if (psResult && psResult->nStatus != 0)
     {
         CPLDebug( "GFT", "RunSQL Error Status:%d", psResult->nStatus );
     }

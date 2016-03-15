@@ -39,7 +39,7 @@ class OGRIngresDataSource;
 /*                          OGRIngresStatement                          */
 /************************************************************************/
 
-class OGRIngresStatement 
+class OGRIngresStatement
 {
 public:
     II_PTR            hConn;
@@ -184,7 +184,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
-                                { bPreservePrecision = bFlag; }    
+                                { bPreservePrecision = bFlag; }
 
     virtual int         TestCapability( const char * );
 };
@@ -235,7 +235,7 @@ class OGRIngresDataSource : public OGRDataSource
     int                 DeleteLayer( int iLayer );
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
@@ -257,7 +257,7 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRErr              InitializeMetadataTables();
 
-    int                 Open( const char *pszFullName, 
+    int                 Open( const char *pszFullName,
                               char **papszOptions, int bUpdate );
     int                 OpenTable( const char *, int bUpdate );
 
@@ -265,8 +265,8 @@ class OGRIngresDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *ICreateLayer( const char *, 
-                                      OGRSpatialReference * = NULL,
+    virtual OGRLayer    *ICreateLayer( const char *,
+                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
 
@@ -306,5 +306,3 @@ class OGRIngresDriver : public OGRSFDriver
 
 
 #endif /* ndef OGR_PG_H_INCLUDED */
-
-

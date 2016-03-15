@@ -80,7 +80,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
-    int         SortIndexSection( OGRField *pasIndexFields, 
+    int         SortIndexSection( OGRField *pasIndexFields,
                                   GIntBig nStart, GIntBig nEntries );
     int         Compare( OGRField *pasFirst, OGRField *pasSecond );
 
@@ -98,7 +98,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         MustEvaluateSpatialFilterOnGenSQL();
 
   public:
-                OGRGenSQLResultsLayer( GDALDataset *poSrcDS, 
+                OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
                                        void *pSelectInfo,
                                        OGRGeometry *poSpatFilter,
                                        const char *pszWHERE,

@@ -149,8 +149,8 @@ CPLErr OGRIDBTableLayer::Initialize( const char *pszTableName,
 
     if( poFeatureDefn->GetFieldCount() == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "No column definitions found for table '%s', layer not usable.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No column definitions found for table '%s', layer not usable.",
                   pszTableName );
         return CE_Failure;
     }
@@ -158,9 +158,9 @@ CPLErr OGRIDBTableLayer::Initialize( const char *pszTableName,
 /* -------------------------------------------------------------------- */
 /*      Do we have XMIN, YMIN, XMAX, YMAX extent fields?                */
 /* -------------------------------------------------------------------- */
-    if( poFeatureDefn->GetFieldIndex( "XMIN" ) != -1 
-        && poFeatureDefn->GetFieldIndex( "XMAX" ) != -1 
-        && poFeatureDefn->GetFieldIndex( "YMIN" ) != -1 
+    if( poFeatureDefn->GetFieldIndex( "XMIN" ) != -1
+        && poFeatureDefn->GetFieldIndex( "XMAX" ) != -1
+        && poFeatureDefn->GetFieldIndex( "YMIN" ) != -1
         && poFeatureDefn->GetFieldIndex( "YMAX" ) != -1 )
     {
         bHaveSpatialExtents = TRUE;
@@ -176,8 +176,8 @@ CPLErr OGRIDBTableLayer::Initialize( const char *pszTableName,
         int iColumn = oGetCol.RowType()->ColumnId( pszGeomColumn );
         if( iColumn < 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Column %s requested for geometry, but it does not exist.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Column %s requested for geometry, but it does not exist.",
                       pszGeomColumn );
             CPLFree( pszGeomColumn );
             pszGeomColumn = NULL;
@@ -382,7 +382,7 @@ OGRErr OGRIDBTableLayer::SetAttributeFilter( const char *pszQuery )
     m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
 
     if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
+        || (pszQuery != NULL && this->pszQuery != NULL
             && EQUAL(pszQuery,this->pszQuery)) )
         return OGRERR_NONE;
 

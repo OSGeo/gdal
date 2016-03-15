@@ -200,7 +200,7 @@ class OGRJMLDataset : public GDALDataset
 
     static int          Identify( GDALOpenInfo* poOpenInfo );
     static GDALDataset* Open( GDALOpenInfo* poOpenInfo );
-    static GDALDataset* Create( const char *pszFilename, 
+    static GDALDataset* Create( const char *pszFilename,
                                  int nBands,
                                  int nXSize,
                                  int nYSize,

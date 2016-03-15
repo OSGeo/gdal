@@ -3,7 +3,7 @@
  *
  * Project:  DWG Translator
  * Purpose:  Implements translation support for HATCH elements as part
- *           of the OGRDWGLayer class.  
+ *           of the OGRDWGLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -64,7 +64,7 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
 
     TranslateGenericProperties( poFeature, poEntity );
 
-    poFeature->SetField( "Text", 
+    poFeature->SetField( "Text",
                          (const char *) poHatch->patternName() );
 
 /* -------------------------------------------------------------------- */
@@ -80,7 +80,7 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
-    OGRGeometryH hFinalGeom = 
+    OGRGeometryH hFinalGeom =
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oGC,
                                   TRUE, TRUE, 0.0000001, &eErr );
 
@@ -98,7 +98,7 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
 
-    // Use layer color? 
+    // Use layer color?
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
@@ -149,10 +149,10 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
         for (i = 0; i < (int) vertices.size(); i++)
         {
             if( i >= (int) bulges.size() )
-                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0, 
+                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0,
                                           0.0 );
             else
-                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0, 
+                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0,
                                           bulges[i] );
         }
 
@@ -201,8 +201,8 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                 dfEndAngle += 360.0;
             }
 
-            OGRLineString *poLS = (OGRLineString *) 
-                OGRGeometryFactory::approximateArcAngles( 
+            OGRLineString *poLS = (OGRLineString *)
+                OGRGeometryFactory::approximateArcAngles(
                     oCenter.x, oCenter.y, 0.0,
                     poCircArc->radius(), poCircArc->radius(), 0.0,
                     dfStartAngle, dfEndAngle, 0.0 );
@@ -233,8 +233,8 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                 dfEndAng += 360.0;
             }
 
-            OGRLineString *poLS = (OGRLineString *) 
-                OGRGeometryFactory::approximateArcAngles( 
+            OGRLineString *poLS = (OGRLineString *)
+                OGRGeometryFactory::approximateArcAngles(
                     oCenter.x, oCenter.y, 0.0,
                     poArc->majorRadius(), poArc->minorRadius(), dfRotation,
                     OGRDWGLayer::AngleCorrect(dfStartAng,dfRatio),
@@ -246,7 +246,7 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
             CPLDebug( "DWG", "Unsupported edge type (%d) in hatch loop.",
                       (int) poEdge->type() );
 
-        //case OdGe::kNurbCurve2d : dumpNurbCurveEdge(indent + 1, pEdge);    
+        //case OdGe::kNurbCurve2d : dumpNurbCurveEdge(indent + 1, pEdge);
     }
 
     return OGRERR_NONE;

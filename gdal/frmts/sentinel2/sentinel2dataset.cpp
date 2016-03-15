@@ -205,8 +205,8 @@ class SENTINEL2AlphaBand: public VRTSourcedRasterBand
                     int m_nNodataVal;
 
     public:
-                     SENTINEL2AlphaBand( GDALDataset *poDS, int nBand, 
-                                         GDALDataType eType, 
+                     SENTINEL2AlphaBand( GDALDataset *poDS, int nBand,
+                                         GDALDataType eType,
                                          int nXSize, int nYSize,
                                          int nSaturatedVal, int nNodataVal );
 
@@ -226,8 +226,8 @@ class SENTINEL2AlphaBand: public VRTSourcedRasterBand
 /*                         SENTINEL2AlphaBand()                         */
 /************************************************************************/
 
-SENTINEL2AlphaBand::SENTINEL2AlphaBand( GDALDataset *poDSIn, int nBandIn, 
-                                        GDALDataType eType, 
+SENTINEL2AlphaBand::SENTINEL2AlphaBand( GDALDataset *poDSIn, int nBandIn,
+                                        GDALDataType eType,
                                         int nXSize, int nYSize,
                                         int nSaturatedVal, int nNodataVal ) :
                             VRTSourcedRasterBand(poDSIn, nBandIn, eType,
@@ -352,7 +352,7 @@ char** SENTINEL2Dataset::GetFileList()
 /*                             Identify()                               */
 /************************************************************************/
 
-int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo ) 
+int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL2_L1B:") )
         return TRUE;
@@ -734,7 +734,7 @@ static bool SENTINEL2GetGranuleList(CPLXMLNode* psMainMTD,
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find =%s", pszNodePath);
         return false;
     }
-    pszNodePath = (eLevel == SENTINEL2_L2A) ? 
+    pszNodePath = (eLevel == SENTINEL2_L2A) ?
             "General_Info.L2A_Product_Info" : "General_Info.Product_Info";
     CPLXMLNode* psProductInfo = CPLGetXMLNode(psRoot, pszNodePath);
     if( psProductInfo == NULL )
@@ -743,7 +743,7 @@ static bool SENTINEL2GetGranuleList(CPLXMLNode* psMainMTD,
         return false;
     }
 
-    pszNodePath = (eLevel == SENTINEL2_L2A) ? 
+    pszNodePath = (eLevel == SENTINEL2_L2A) ?
             "L2A_Product_Organisation" : "Product_Organisation";
     CPLXMLNode* psProductOrganisation =
                         CPLGetXMLNode(psProductInfo, pszNodePath);
@@ -2079,7 +2079,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
                                  eLevel,
                                  pszFilename,
                                  aosGranuleList,
-                                 (eLevel == SENTINEL2_L1C) ? NULL : 
+                                 (eLevel == SENTINEL2_L1C) ? NULL :
                                                     &oSetResolutions,
                                  (eLevel == SENTINEL2_L1C) ? NULL :
                                                     &oMapResolutionsToBands) )
@@ -2731,7 +2731,7 @@ void SENTINEL2Dataset::AddL1CL2ABandMetadata(SENTINEL2Level eLevel,
 {
     CPLXMLNode* psIC = CPLGetXMLNode(psRoot,
         (eLevel == SENTINEL2_L1C) ?
-            "=Level-1C_User_Product.General_Info.Product_Image_Characteristics" : 
+            "=Level-1C_User_Product.General_Info.Product_Image_Characteristics" :
             "=Level-2A_User_Product.General_Info.L2A_Product_Image_Characteristics");
     if( psIC != NULL )
     {

@@ -98,8 +98,8 @@ GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
 #include "vsidataio.h"
 
 /*
-* Do we want to do special processing suitable for when JSAMPLE is a 
-* 16bit value?   
+* Do we want to do special processing suitable for when JSAMPLE is a
+* 16bit value?
 */
 #if defined(JPEG_LIB_MK1)
 #  define JPEG_LIB_MK1_OR_12BIT 1
@@ -120,9 +120,9 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
                            void* cinfo,
                            my_jpeg_write_m_header p_jpeg_write_m_header,
                            my_jpeg_write_m_byte p_jpeg_write_m_byte,
-                           GDALDataset *(pCreateCopy)( const char *, GDALDataset *, 
+                           GDALDataset *(pCreateCopy)( const char *, GDALDataset *,
                                      int, char **,
-                                     GDALProgressFunc pfnProgress, 
+                                     GDALProgressFunc pfnProgress,
                                      void * pProgressData ) );
 void JPGAddICCProfile( void *pInfo,
                        const char *pszICCProfile,
@@ -606,7 +606,7 @@ void JPGDatasetCommon::ReadICCProfile()
             }
 
             /* Check that no segment ID is larger than the total segment count */
-            if ((nICCChunkID > nChunkCount) || (nICCChunkID == 0) || (nChunkCount == 0)) 
+            if ((nICCChunkID > nChunkCount) || (nICCChunkID == 0) || (nChunkCount == 0))
             {
                 bOk = false;
                 break;
@@ -736,7 +736,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
         }
         else
         {
-            if( abyChunkHeader[0] != 0xFF 
+            if( abyChunkHeader[0] != 0xFF
                 || (abyChunkHeader[1] & 0xf0) != 0xe0 )
                 break; // Not an APP chunk.
 
@@ -759,7 +759,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
     TIFFHeader hdr;
 
     VSIFSeekL(fp, nTIFFHEADER, SEEK_SET);
-    if(VSIFReadL(&hdr,1,sizeof(hdr),fp) != sizeof(hdr)) 
+    if(VSIFReadL(&hdr,1,sizeof(hdr),fp) != sizeof(hdr))
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %d byte from image header.",
@@ -787,7 +787,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Not a TIFF file, bad version number %u (%#x)",
-                 hdr.tiff_version, hdr.tiff_version); 
+                 hdr.tiff_version, hdr.tiff_version);
         return FALSE;
     }
     nTiffDirStart = hdr.tiff_diroff;
@@ -925,8 +925,8 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poGDS->GetRasterCount() == 1 )
     {
 #ifdef JPEG_LIB_MK1
-        GDALCopyWords( poGDS->pabyScanline, GDT_UInt16, 2, 
-                       pImage, eDataType, nWordSize, 
+        GDALCopyWords( poGDS->pabyScanline, GDT_UInt16, 2,
+                       pImage, eDataType, nWordSize,
                        nXSize );
 #else
         memcpy( pImage, poGDS->pabyScanline, nXSize * nWordSize );
@@ -935,9 +935,9 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
     {
 #ifdef JPEG_LIB_MK1
-        GDALCopyWords( poGDS->pabyScanline + (nBand-1) * 2, 
-                       GDT_UInt16, 6, 
-                       pImage, eDataType, nWordSize, 
+        GDALCopyWords( poGDS->pabyScanline + (nBand-1) * 2,
+                       GDT_UInt16, 6,
+                       pImage, eDataType, nWordSize,
                        nXSize );
 #else
         if (poGDS->eGDALColorSpace == JCS_RGB &&
@@ -974,9 +974,9 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            GDALCopyWords( poGDS->pabyScanline + (nBand-1) * nWordSize, 
-                        eDataType, nWordSize * poGDS->GetRasterCount(), 
-                        pImage, eDataType, nWordSize, 
+            GDALCopyWords( poGDS->pabyScanline + (nBand-1) * nWordSize,
+                        eDataType, nWordSize * poGDS->GetRasterCount(),
+                        pImage, eDataType, nWordSize,
                         nXSize );
         }
 #endif
@@ -1017,7 +1017,7 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
         else if( nBand == 2 )
             return GCI_GreenBand;
 
-        else 
+        else
             return GCI_BlueBand;
     }
     else if( poGDS->eGDALColorSpace == JCS_CMYK)
@@ -1482,11 +1482,11 @@ void JPGDatasetCommon::InitInternalOverviews()
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling, 
+CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
                                           int nOverviewsListCount,
-                                          int *panOverviewList, 
+                                          int *panOverviewList,
                                           int nListBands, int *panBandList,
-                                          GDALProgressFunc pfnProgress, 
+                                          GDALProgressFunc pfnProgress,
                                           void * pProgressData )
 {
     bHasInitInternalOverviews = TRUE;
@@ -1577,7 +1577,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
         return CE_None;
 
     // setup to trap a fatal error.
-    if (setjmp(sErrorStruct.setjmp_buffer)) 
+    if (setjmp(sErrorStruct.setjmp_buffer))
         return CE_Failure;
 
     if (!bHasDoneJpegStartDecompress)
@@ -1669,27 +1669,27 @@ static const GByte Q2table[64] =
 static const GByte Q3table[64] =
 {
      8, 10, 10, 10,
-    10, 10, 10, 10, 10, 10, 11, 10, 11, 10, 11, 13, 11, 12, 12, 11, 13, 15, 
-    13, 13, 14, 13, 13, 15, 18, 16, 15, 16, 16, 15, 16, 18, 19, 18, 19, 21, 
-    19, 18, 19, 22, 23, 25, 25, 23, 22, 27, 30, 32, 30, 27, 36, 40, 40, 36, 
-    50, 53, 50, 68, 68, 91 
-}; 
+    10, 10, 10, 10, 10, 10, 11, 10, 11, 10, 11, 13, 11, 12, 12, 11, 13, 15,
+    13, 13, 14, 13, 13, 15, 18, 16, 15, 16, 16, 15, 16, 18, 19, 18, 19, 21,
+    19, 18, 19, 22, 23, 25, 25, 23, 22, 27, 30, 32, 30, 27, 36, 40, 40, 36,
+    50, 53, 50, 68, 68, 91
+};
 
 static const GByte Q4table[64] =
 {
     8, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 8, 7, 8, 7, 8, 9, 8, 8, 8, 8, 9, 11, 
-    9, 9, 10, 9, 9, 11, 13, 11, 11, 12, 12, 11, 11, 13, 14, 13, 14, 15, 
-    14, 13, 14, 16, 16, 18, 18, 16, 16, 20, 22, 23, 22, 20, 26, 29, 29, 26, 
+    7, 7, 7, 7, 7, 7, 8, 7, 8, 7, 8, 9, 8, 8, 8, 8, 9, 11,
+    9, 9, 10, 9, 9, 11, 13, 11, 11, 12, 12, 11, 11, 13, 14, 13, 14, 15,
+    14, 13, 14, 16, 16, 18, 18, 16, 16, 20, 22, 23, 22, 20, 26, 29, 29, 26,
     36, 38, 36, 49, 49, 65
 };
 
 static const GByte Q5table[64] =
 {
-    4, 4, 4, 4, 
+    4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
-    5, 5, 6, 5, 5, 6, 7, 6, 6, 6, 6, 6, 6, 7, 8, 7, 8, 8, 
-    8, 7, 8, 9, 9, 10, 10, 9, 9, 11, 12, 13, 12, 11, 14, 16, 16, 14, 
+    5, 5, 6, 5, 5, 6, 7, 6, 6, 6, 6, 6, 6, 7, 8, 7, 8, 8,
+    8, 7, 8, 9, 9, 10, 10, 9, 9, 11, 12, 13, 12, 11, 14, 16, 16, 14,
     20, 21, 20, 27, 27, 36
 };
 
@@ -1697,7 +1697,7 @@ static const GByte AC_BITS[16] =
 { 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 };
 
 static const GByte AC_HUFFVAL[256] = {
-    0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,          
+    0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
     0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
     0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
     0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0,
@@ -1717,22 +1717,22 @@ static const GByte AC_HUFFVAL[256] = {
     0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
     0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA,
     0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
-    0xF9, 0xFA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0xF9, 0xFA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 static const GByte DC_BITS[16] =
 { 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
 
 static const GByte DC_HUFFVAL[256] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0A, 0x0B };
 
 void JPGDataset::LoadDefaultTables( int n )
@@ -1760,7 +1760,7 @@ void JPGDataset::LoadDefaultTables( int n )
         return;
 
     if (sDInfo.quant_tbl_ptrs[n] == NULL)
-        sDInfo.quant_tbl_ptrs[n] = 
+        sDInfo.quant_tbl_ptrs[n] =
             jpeg_alloc_quant_table((j_common_ptr) &(sDInfo));
 
     quant_ptr = sDInfo.quant_tbl_ptrs[n];	/* quant_ptr is JQUANT_TBL* */
@@ -1836,7 +1836,7 @@ CPLErr JPGDataset::Restart()
 
 {
     // setup to trap a fatal error.
-    if (setjmp(sErrorStruct.setjmp_buffer)) 
+    if (setjmp(sErrorStruct.setjmp_buffer))
         return CE_Failure;
 
     J_COLOR_SPACE colorSpace = sDInfo.out_color_space;
@@ -1981,7 +1981,7 @@ const GDAL_GCP *JPGDatasetCommon::GetGCPs()
 
 CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
-                              void *pData, int nBufXSize, int nBufYSize, 
+                              void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -2027,7 +2027,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                 {
                     for(int x = 0; x < nXSize; ++x)
                     {
-                        memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]), 
+                        memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]),
                                (const GByte*)&(pabyScanline[x*3]), 3);
                     }
                 }
@@ -2152,7 +2152,7 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The JPEG driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -2184,7 +2184,7 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
 
     JPGDataset  *poDS = new JPGDataset();
     /* Will detect mismatch between compile-time and run-time libjpeg versions */
-    if (setjmp(poDS->sErrorStruct.setjmp_buffer)) 
+    if (setjmp(poDS->sErrorStruct.setjmp_buffer))
     {
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
         if (poDS->sDInfo.data_precision == 12 && poDS->fpImage != NULL)
@@ -2246,8 +2246,8 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
 
         if( !bScan )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Corrupt subfile definition: %s", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Corrupt subfile definition: %s",
                       pszFilename );
             delete poDS;
             return NULL;
@@ -2262,14 +2262,14 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
             real_filename++;
         else
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Could not find filename in subfile definition.");
             delete poDS;
             return NULL;
         }
 
         CPLDebug( "JPG",
-                  "real_filename %s, offset=" CPL_FRMT_GUIB ", size=" CPL_FRMT_GUIB "\n", 
+                  "real_filename %s, offset=" CPL_FRMT_GUIB ", size=" CPL_FRMT_GUIB "\n",
                   real_filename, subfile_offset, subfile_size);
 
         bIsSubfile = TRUE;
@@ -2350,7 +2350,7 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
     if( poDS->sDInfo.data_precision != 8
         && poDS->sDInfo.data_precision != 12 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GDAL JPEG Driver doesn't support files with precision of"
                   " other than 8 or 12 bits." );
         delete poDS;
@@ -2928,7 +2928,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
                             pabyCMask, nBitBufSize + 30,
                             &nTotalOut ) == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Deflate compression of jpeg bit mask failed." );
             eErr = CE_Failure;
         }
@@ -2942,7 +2942,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
         VSILFILE *fpOut = VSIFOpenL( pszJPGFilename, "r+" );
         if( fpOut == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to open jpeg to append bitmask." );
             eErr = CE_Failure;
         }
@@ -2953,7 +2953,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
             GUInt32 nImageSize = (GUInt32) VSIFTellL( fpOut );
             CPL_LSBPTR32( &nImageSize );
 
-            if( VSIFWriteL( pabyCMask, 1, nTotalOut, fpOut ) 
+            if( VSIFWriteL( pabyCMask, 1, nTotalOut, fpOut )
                 != nTotalOut )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -2983,9 +2983,9 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
                            void* cinfo,
                            my_jpeg_write_m_header p_jpeg_write_m_header,
                            my_jpeg_write_m_byte p_jpeg_write_m_byte,
-                           GDALDataset *(pCreateCopy)( const char *, GDALDataset *, 
+                           GDALDataset *(pCreateCopy)( const char *, GDALDataset *,
                                      int, char **,
-                                     GDALProgressFunc pfnProgress, 
+                                     GDALProgressFunc pfnProgress,
                                      void * pProgressData ))
 {
     const int nBands = poSrcDS->GetRasterCount();
@@ -3228,7 +3228,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 && nBands != 3 && nBands != 4 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "JPEG driver doesn't support %d bands.  Must be 1 (grey), "
                   "3 (RGB) or 4 bands.\n", nBands );
 
@@ -3238,7 +3238,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (nBands == 1 &&
         poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "JPEG driver ignores color table. "
                   "The source raster band will be considered as grey level.\n"
                   "Consider using color table expansion (-expand option in gdal_translate)\n");
@@ -3250,7 +3250,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GDALJPEGErrorStruct sErrorStruct;
     sErrorStruct.bNonFatalErrorEncountered = FALSE;
 
-    if (setjmp(sErrorStruct.setjmp_buffer)) 
+    if (setjmp(sErrorStruct.setjmp_buffer))
     {
         if( fpImage )
             VSIFCloseL( fpImage );
@@ -3262,10 +3262,10 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
     if( eDT != GDT_Byte && eDT != GDT_UInt16 )
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "JPEG driver doesn't support data type %s. "
                   "Only eight and twelve bit bands supported (Mk1 libjpeg).\n",
-                  GDALGetDataTypeName( 
+                  GDALGetDataTypeName(
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         if (bStrict)
@@ -3276,7 +3276,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
         return JPEGDataset12CreateCopy(pszFilename, poSrcDS,
-                                bStrict, papszOptions, 
+                                bStrict, papszOptions,
                                 pfnProgress, pProgressData );
 #else
         eDT = GDT_UInt16;
@@ -3288,17 +3288,17 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #else
     if( eDT != GDT_Byte )
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "JPEG driver doesn't support data type %s. "
-                  "Only eight bit byte bands supported.\n", 
-                  GDALGetDataTypeName( 
+                  "Only eight bit byte bands supported.\n",
+                  GDALGetDataTypeName(
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         if (bStrict)
             return NULL;
     }
 
-    eDT = GDT_Byte; // force to 8bit. 
+    eDT = GDT_Byte; // force to 8bit.
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -3323,8 +3323,8 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create jpeg file %s.\n", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to create jpeg file %s.\n",
                   pszFilename );
         return NULL;
     }
@@ -3427,11 +3427,11 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     jpeg_start_compress( &sCInfo, TRUE );
 
-    JPGAddEXIFOverview( eWorkDT, poSrcDS, papszOptions, 
+    JPGAddEXIFOverview( eWorkDT, poSrcDS, papszOptions,
                         &sCInfo,
                         (my_jpeg_write_m_header)jpeg_write_m_header,
                         (my_jpeg_write_m_byte)jpeg_write_m_byte,
-                        CreateCopy ); 
+                        CreateCopy );
 
 /* -------------------------------------------------------------------- */
 /*      Add comment if available                                        */
@@ -3476,10 +3476,10 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         JSAMPLE      *ppSamples;
 
-        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                   pabyScanline, nXSize, 1, eWorkDT,
                                   nBands, NULL,
-                                  nBands*nWorkDTSize, 
+                                  nBands*nWorkDTSize,
                                   nBands * nXSize * nWorkDTSize, nWorkDTSize, NULL );
 
         // clamp 16bit values to 12bit.
@@ -3508,12 +3508,12 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( eErr == CE_None )
             jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
 
-        if( eErr == CE_None 
+        if( eErr == CE_None
             && !pfnProgress( (iLine+1) / ((bAppendMask ? 2 : 1) * (double) nYSize),
                              NULL, pProgressData ) )
         {
             eErr = CE_Failure;
-            CPLError( CE_Failure, CPLE_UserInterrupt, 
+            CPLError( CE_Failure, CPLE_UserInterrupt,
                       "User terminated CreateCopy()" );
         }
     }
@@ -3640,7 +3640,7 @@ static bool GDALJPEGIsArithmeticCodingAvailable()
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
     jmp_buf     setjmp_buffer;
-    if (setjmp(setjmp_buffer)) 
+    if (setjmp(setjmp_buffer))
     {
         jpeg_destroy_compress( &sCInfo );
         return false;

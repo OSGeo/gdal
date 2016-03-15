@@ -101,7 +101,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     if (psInfo->dfCellSizeX <= 0 || psInfo->dfCellSizeY <= 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal cell size : %f x %f",
                   psInfo->dfCellSizeX, psInfo->dfCellSizeY );
         AIGClose( psInfo );
@@ -109,15 +109,15 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     }
 
     psInfo->nPixels = (int)
-        ((psInfo->dfURX - psInfo->dfLLX + 0.5 * psInfo->dfCellSizeX) 
+        ((psInfo->dfURX - psInfo->dfLLX + 0.5 * psInfo->dfCellSizeX)
 		/ psInfo->dfCellSizeX);
     psInfo->nLines = (int)
-        ((psInfo->dfURY - psInfo->dfLLY + 0.5 * psInfo->dfCellSizeY) 
+        ((psInfo->dfURY - psInfo->dfLLY + 0.5 * psInfo->dfCellSizeY)
 		/ psInfo->dfCellSizeY);
-    
+
     if (psInfo->nPixels <= 0 || psInfo->nLines <= 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid raster dimensions : %d x %d",
                   psInfo->nPixels, psInfo->nLines );
         AIGClose( psInfo );
@@ -129,7 +129,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
         psInfo->nBlockXSize > INT_MAX / psInfo->nBlocksPerRow ||
         psInfo->nBlockYSize > INT_MAX / psInfo->nBlocksPerColumn)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid block characteristics: nBlockXSize=%d, "
                   "nBlockYSize=%d, nBlocksPerRow=%d, nBlocksPerColumn=%d",
                   psInfo->nBlockXSize, psInfo->nBlockYSize,
@@ -144,7 +144,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
         AIGClose( psInfo );
         return NULL;
     }
-    
+
     psInfo->nTileXSize = psInfo->nBlockXSize * psInfo->nBlocksPerRow;
     psInfo->nTileYSize = psInfo->nBlockYSize * psInfo->nBlocksPerColumn;
 
@@ -163,7 +163,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
 /*      Setup tile infos, but defer reading of tile data.               */
 /* -------------------------------------------------------------------- */
-    psInfo->pasTileInfo = (AIGTileInfo *) 
+    psInfo->pasTileInfo = (AIGTileInfo *)
         VSI_CALLOC_VERBOSE(sizeof(AIGTileInfo),
                   psInfo->nTilesPerRow * psInfo->nTilesPerColumn);
     if (psInfo->pasTileInfo == NULL)
@@ -220,7 +220,7 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
         snprintf( szBasename, sizeof(szBasename), "w%03d000", iTileX + 1 );
     else
         snprintf( szBasename, sizeof(szBasename), "z%03d%03d", iTileX + 1, iTileY - 1 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the file w001001.adf file itself.                          */
 /* -------------------------------------------------------------------- */
@@ -229,7 +229,7 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
     psTInfo->fpGrid = AIGLLOpen( pszFilename, "rb" );
     psTInfo->bTriedToLoad = TRUE;
-    
+
     if( psTInfo->fpGrid == NULL )
     {
         CPLError( CE_Warning, CPLE_OpenFailed,
@@ -241,7 +241,7 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
     CPLFree( pszFilename );
     pszFilename = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the block index file.                                      */
 /* -------------------------------------------------------------------- */
@@ -288,15 +288,15 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
             panData[i] = ESRI_GRID_NO_DATA;
         return CE_None;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      validate block id.                                              */
 /* -------------------------------------------------------------------- */
     nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
-    if( nBlockID < 0 
+    if( nBlockID < 0
         || nBlockID >= psInfo->nBlocksPerRow * psInfo->nBlocksPerColumn )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal block requested." );
         return CE_Failure;
     }
@@ -304,14 +304,14 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     if( nBlockID >= psTInfo->nBlocks )
     {
         int i;
-        CPLDebug( "AIG", 
+        CPLDebug( "AIG",
                   "Request legal block, but from beyond end of block map.\n"
                   "Assuming all nodata." );
         for( i = psInfo->nBlockXSize * psInfo->nBlockYSize - 1; i >= 0; i-- )
             panData[i] = ESRI_GRID_NO_DATA;
         return CE_None;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read block.                                                     */
 /* -------------------------------------------------------------------- */
@@ -378,15 +378,15 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
             pafData[i] = ESRI_GRID_FLOAT_NO_DATA;
         return CE_None;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      validate block id.                                              */
 /* -------------------------------------------------------------------- */
     nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
-    if( nBlockID < 0 
+    if( nBlockID < 0
         || nBlockID >= psInfo->nBlocksPerRow * psInfo->nBlocksPerColumn )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal block requested." );
         return CE_Failure;
     }
@@ -394,14 +394,14 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     if( nBlockID >= psTInfo->nBlocks )
     {
         int i;
-        CPLDebug( "AIG", 
+        CPLDebug( "AIG",
                   "Request legal block, but from beyond end of block map.\n"
                   "Assuming all nodata." );
         for( i = psInfo->nBlockXSize * psInfo->nBlockYSize - 1; i >= 0; i-- )
             pafData[i] = ESRI_GRID_FLOAT_NO_DATA;
         return CE_None;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read block.                                                     */
 /* -------------------------------------------------------------------- */
@@ -409,7 +409,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
                          psTInfo->panBlockOffset[nBlockID],
                          psTInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
-                         (GInt32 *) pafData, psInfo->nCellType, 
+                         (GInt32 *) pafData, psInfo->nCellType,
                          psInfo->bCompressed );
 
 /* -------------------------------------------------------------------- */
@@ -476,13 +476,13 @@ VSILFILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
         char *pszUCFilename = CPLStrdup(pszFilename);
         int  i;
 
-        for( i = (int)strlen(pszUCFilename)-1; 
+        for( i = (int)strlen(pszUCFilename)-1;
              pszUCFilename[i] != '/' && pszUCFilename[i] != '\\';
              i-- )
         {
             pszUCFilename[i] = (char) toupper(pszUCFilename[i]);
         }
-        
+
         fp = VSIFOpenL( pszUCFilename, pszAccess );
 
         CPLFree( pszUCFilename );
@@ -490,4 +490,3 @@ VSILFILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
 
     return fp;
 }
-

@@ -89,7 +89,7 @@ public:
   ~FITSRasterBand();
 
   virtual CPLErr IReadBlock( int, int, void * );
-  virtual CPLErr IWriteBlock( int, int, void * ); 
+  virtual CPLErr IWriteBlock( int, int, void * );
 };
 
 
@@ -249,7 +249,7 @@ FITSDataset::~FITSDataset() {
       fits_write_key_longwarn(hFITS, &status);
       if (status) {
         CPLError(CE_Warning, CPLE_AppDefined,
-	         "Couldn't move to first HDU in FITS file %s (%d).\n", 
+	         "Couldn't move to first HDU in FITS file %s (%d).\n",
 	         GetDescription(), status);
       }
       char** metaData = GetMetadata();
@@ -285,7 +285,7 @@ FITSDataset::~FITSDataset() {
 	    // Check for errors
 	    if (status) {
 	      CPLError(CE_Warning, CPLE_AppDefined,
-		       "Couldn't update key %s in FITS file %s (%d).", 
+		       "Couldn't update key %s in FITS file %s (%d).",
 		       key, GetDescription(), status);
 	      return;
 	    }
@@ -322,7 +322,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   fits_movabs_hdu(hFITS, 1, NULL, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
-	     "Couldn't move to first HDU in FITS file %s (%d).\n", 
+	     "Couldn't move to first HDU in FITS file %s (%d).\n",
 	     GetDescription(), status);
     return CE_Failure;
   }
@@ -342,7 +342,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   fits_get_img_param(hFITS, maxdim, &bitpix, &naxis, naxes, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
-	     "Couldn't determine image parameters of FITS file %s (%d).", 
+	     "Couldn't determine image parameters of FITS file %s (%d).",
 	     GetDescription(), status);
     return CE_Failure;
   }
@@ -370,7 +370,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   }
   else {
     CPLError(CE_Failure, CPLE_AppDefined,
-	     "FITS file %s has unknown data type: %d.", GetDescription(), 
+	     "FITS file %s has unknown data type: %d.", GetDescription(),
 	     bitpix);
     return CE_Failure;
   }
@@ -388,7 +388,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   }
   else {
     CPLError(CE_Failure, CPLE_AppDefined,
-	     "FITS file %s does not have 2 or 3 dimensions.", 
+	     "FITS file %s does not have 2 or 3 dimensions.",
 	     GetDescription());
     return CE_Failure;
   }
@@ -412,7 +412,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
     fits_read_keyn(hFITS, keyNum, key, value, NULL, &status);
     if (status) {
       CPLError(CE_Failure, CPLE_AppDefined,
-	       "Error while reading key %d from FITS file %s (%d)", 
+	       "Error while reading key %d from FITS file %s (%d)",
 	       keyNum, GetDescription(), status);
       return CE_Failure;
     }
@@ -474,13 +474,13 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   // Get access mode and attempt to open the file
   int status = 0;
   fitsfile* hFITS = NULL;
-  if (poOpenInfo->eAccess == GA_ReadOnly) 
+  if (poOpenInfo->eAccess == GA_ReadOnly)
     fits_open_file(&hFITS, poOpenInfo->pszFilename, READONLY, &status);
   else
     fits_open_file(&hFITS, poOpenInfo->pszFilename, READWRITE, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
-	     "Error while opening FITS file %s (%d).\n", 
+	     "Error while opening FITS file %s (%d).\n",
 	     poOpenInfo->pszFilename, status);
     fits_close_file(hFITS, &status);
     return NULL;
@@ -571,7 +571,7 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   // Check the status
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
-	     "Couldn't create image within FITS file %s (%d).", 
+	     "Couldn't create image within FITS file %s (%d).",
 	     pszFilename, status);
     fits_close_file(hFITS, &status);
     return NULL;
@@ -584,7 +584,7 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   dataset->SetDescription(pszFilename);
 
   // Init recalculates a lot of stuff we already know, but...
-  if (dataset->Init(hFITS, false) != CE_None) { 
+  if (dataset->Init(hFITS, false) != CE_None) {
     delete dataset;
     return NULL;
   }

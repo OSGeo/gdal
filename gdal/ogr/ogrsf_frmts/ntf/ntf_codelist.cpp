@@ -55,8 +55,8 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
     papszCodeDes = (char **) CPLMalloc(sizeof(char*) * nNumCode );
 
     pszText = poRecord->GetData() + 22;
-    for( iThisField=0; 
-         *pszText != '\0' && iThisField < nNumCode; 
+    for( iThisField=0;
+         *pszText != '\0' && iThisField < nNumCode;
          iThisField++ )
     {
         char    szVal[128], szDes[128];
@@ -85,7 +85,7 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
     if( iThisField < nNumCode )
     {
         nNumCode = iThisField;
-        CPLDebug( "NTF", 
+        CPLDebug( "NTF",
                   "Didn't get all the expected fields from a CODELIST." );
     }
 }
@@ -122,5 +122,3 @@ const char *NTFCodeList::Lookup( const char * pszCode )
 
     return NULL;
 }
-
-

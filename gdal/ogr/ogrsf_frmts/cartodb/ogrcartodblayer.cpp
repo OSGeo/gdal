@@ -187,7 +187,7 @@ json_object* OGRCARTODBLayer::FetchNewFeatures(GIntBig iNextIn)
 
 OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
 {
-    if( bEOF ) 
+    if( bEOF )
         return NULL;
 
     if( iNextInFetchedObjects >= nFetchedObjects )

@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
@@ -38,7 +38,7 @@ static int _AVCDetectJapaneseEncoding(const GByte *pszLine);
 static const GByte *_AVCJapanese2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                          const GByte *pszLine,
                                          int nMaxOutputLen);
-static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo, 
+static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
                                                  const GByte *pszLine,
                                                  int nMaxOutputLen);
 
@@ -85,7 +85,7 @@ void AVCFreeDBCSInfo(AVCDBCSInfo *psInfo)
 /**********************************************************************
  *                          AVCGetDBCSCodePage()
  *
- * Fetch current multibyte codepage on the system.  
+ * Fetch current multibyte codepage on the system.
  * Returns a valid codepage number, or 0 if the codepage is single byte or
  * unsupported.
  **********************************************************************/
@@ -126,14 +126,14 @@ GBool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const GByte *pszLine)
     switch (psDBCSInfo->nDBCSCodePage)
     {
       case AVC_DBCS_JAPANESE:
-        psDBCSInfo->nDBCSEncoding = 
+        psDBCSInfo->nDBCSEncoding =
                   _AVCDetectJapaneseEncoding(pszLine);
         break;
       default:
         psDBCSInfo->nDBCSEncoding = AVC_CODE_UNKNOWN;
         return TRUE;  /* Codepage not supported... no need to scan more lines*/
     }
-    
+
     if (psDBCSInfo->nDBCSEncoding != AVC_CODE_UNKNOWN)
         return TRUE;  /* We detected the encoding! */
 
@@ -152,7 +152,7 @@ GBool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const GByte *pszLine)
  * caller.  It can be either the original string buffer or a ref. to an
  * internal buffer.
  **********************************************************************/
-const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo, 
+const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                        const GByte *pszLine,
                                        int nMaxOutputLen)
 {
@@ -160,7 +160,7 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
     GByte *pszTmp = NULL;
     GBool bAllAscii;
 
-    if (psDBCSInfo == NULL || 
+    if (psDBCSInfo == NULL ||
         psDBCSInfo->nDBCSCodePage == 0 || pszLine == NULL)
     {
         /* Single byte codepage... nothing to do
@@ -183,17 +183,17 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
      * We add 2 chars to buffer size to simplify processing... no need to
      * check if second byte of a pair would overflow buffer.
      */
-    if (psDBCSInfo->pszDBCSBuf == NULL || 
+    if (psDBCSInfo->pszDBCSBuf == NULL ||
         psDBCSInfo->nDBCSBufSize < nMaxOutputLen+2)
     {
         psDBCSInfo->nDBCSBufSize = nMaxOutputLen+2;
-        psDBCSInfo->pszDBCSBuf = 
+        psDBCSInfo->pszDBCSBuf =
             (GByte *)CPLRealloc(psDBCSInfo->pszDBCSBuf,
                                 psDBCSInfo->nDBCSBufSize*
                                 sizeof(GByte));
     }
 
-    /* Do the conversion according to current code page 
+    /* Do the conversion according to current code page
      */
     switch (psDBCSInfo->nDBCSCodePage)
     {
@@ -203,12 +203,12 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                          nMaxOutputLen);
         break;
       default:
-        /* We should never get here anyways, but just in case return pszLine 
+        /* We should never get here anyways, but just in case return pszLine
          */
         CPLAssert( FALSE ); /* Should never get here. */
         pszOutBuf = pszLine;
     }
-    
+
     return pszOutBuf;
 }
 
@@ -221,7 +221,7 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
  * caller.  It can be either the original string buffer or a ref. to an
  * internal buffer.
  **********************************************************************/
-const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo, 
+const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                       const GByte *pszLine,
                                       int nMaxOutputLen)
 {
@@ -229,7 +229,7 @@ const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
     GByte *pszTmp;
     GBool bAllAscii;
 
-    if (psDBCSInfo == NULL || 
+    if (psDBCSInfo == NULL ||
         psDBCSInfo->nDBCSCodePage == 0 || pszLine == NULL)
     {
         /* Single byte codepage... nothing to do
@@ -252,17 +252,17 @@ const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
      * We add 2 chars to buffer size to simplify processing... no need to
      * check if second byte of a pair would overflow buffer.
      */
-    if (psDBCSInfo->pszDBCSBuf == NULL || 
+    if (psDBCSInfo->pszDBCSBuf == NULL ||
         psDBCSInfo->nDBCSBufSize < nMaxOutputLen+2)
     {
         psDBCSInfo->nDBCSBufSize = nMaxOutputLen+2;
-        psDBCSInfo->pszDBCSBuf = 
+        psDBCSInfo->pszDBCSBuf =
             (GByte *)CPLRealloc(psDBCSInfo->pszDBCSBuf,
                                 psDBCSInfo->nDBCSBufSize*
                                 sizeof(GByte));
     }
 
-    /* Do the conversion according to current code page 
+    /* Do the conversion according to current code page
      */
     switch (psDBCSInfo->nDBCSCodePage)
     {
@@ -272,17 +272,17 @@ const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                                  nMaxOutputLen);
         break;
       default:
-        /* We should never get here anyways, but just in case return pszLine 
+        /* We should never get here anyways, but just in case return pszLine
          */
         pszOutBuf = pszLine;
     }
-    
+
     return pszOutBuf;
 }
 
 /*=====================================================================
  *=====================================================================
- * Functions Specific to Japanese encoding (CodePage 932).  
+ * Functions Specific to Japanese encoding (CodePage 932).
  *
  * For now we assume that we can receive only Katakana, Shift-JIS, or EUC
  * encoding as input.  Coverages use EUC encoding in most cases, except
@@ -324,7 +324,7 @@ static int _AVCDetectJapaneseEncoding(const GByte *pszLine)
             break;
         }
         else if (IS_JAP_KANA(*pszLine) && *(pszLine+1) &&
-                 (IS_ASCII(*(pszLine+1)) || 
+                 (IS_ASCII(*(pszLine+1)) ||
                   (*(pszLine+1)>=0x80 && *(pszLine+1)<=0xA0) ) )
         {
             nEncoding = AVC_CODE_JAP_SHIFTJIS; /* SHIFT-JIS + Kana */
@@ -361,7 +361,7 @@ static int _AVCDetectJapaneseEncoding(const GByte *pszLine)
  * Try to detect type of Japanese encoding if not done yet, and convert
  * string from Japanese to proper coverage DBCS encoding.
  **********************************************************************/
-static const GByte *_AVCJapanese2ArcDBCS(AVCDBCSInfo *psDBCSInfo, 
+static const GByte *_AVCJapanese2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                          const GByte *pszLine,
                                          int nMaxOutputLen)
 {
@@ -434,17 +434,17 @@ static const GByte *_AVCJapanese2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
                 trailer -= 0x7D;
                 leader ++;
             }
-            else 
+            else
             {
                 trailer -= 0x1F;
-            }  
+            }
 
             pszOut[iDst++] = leader | 0x80;
             pszOut[iDst++] = trailer | 0x80;
         }
         else
         {
-            /* We should never get here unless a double-byte pair was 
+            /* We should never get here unless a double-byte pair was
              * truncated... but just in case...
              */
             pszOut[iDst++] = *pszLine;
@@ -467,7 +467,7 @@ static const GByte *_AVCJapanese2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
  * which is EUC + all Katakana chars are prefixed with 0x8e.  So this
  * function just does a simple conversion.
  **********************************************************************/
-static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo, 
+static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
                                                  const GByte *pszLine,
                                                  int nMaxOutputLen)
 {
@@ -481,7 +481,7 @@ static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
         if (IS_ASCII(*pszLine))
         {
             /* No transformation required for ASCII */
-            pszOut[iDst++] = *pszLine;            
+            pszOut[iDst++] = *pszLine;
         }
         else if (*pszLine == 0x8e && *(pszLine+1))
         {
@@ -490,7 +490,7 @@ static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
         }
         else if (*(pszLine+1))
         {
-            /* This is a pair of EUC chars... convert them to Shift-JIS 
+            /* This is a pair of EUC chars... convert them to Shift-JIS
              */
             unsigned char leader, trailer;
             leader  = *(pszLine++) & 0x7F;
@@ -499,7 +499,7 @@ static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
             if((leader & 0x01) != 0)    trailer += 0x1F;
             else                        trailer += 0x7D;
             if(trailer >= 0x7F)         trailer ++;
-    
+
             leader = ((leader - 0x21) >> 1) + 0x81;
             if(leader > 0x9F)          leader += 0x40;
 
@@ -508,7 +508,7 @@ static const GByte *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
         }
         else
         {
-            /* We should never get here unless a double-byte pair was 
+            /* We should never get here unless a double-byte pair was
              * truncated... but just in case...
              */
             pszOut[iDst++] = *pszLine;

@@ -16,16 +16,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -104,7 +104,7 @@ static AVCByteOrder geSystemByteOrder = AVCLittleEndian;
  * Returns a valid AVCRawBinFile structure, or NULL if the file could
  * not be opened or created.
  *
- * AVCRawBinClose() will eventually have to be called to release the 
+ * AVCRawBinClose() will eventually have to be called to release the
  * resources used by the AVCRawBinFile structure.
  **********************************************************************/
 AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
@@ -116,7 +116,7 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
     psFile = (AVCRawBinFile*)CPLCalloc(1, sizeof(AVCRawBinFile));
 
     /*-----------------------------------------------------------------
-     * Validate access mode and open/create file.  
+     * Validate access mode and open/create file.
      * For now we support only: "r" for read-only or "w" for write-only
      * or "a" for append.
      *
@@ -206,7 +206,7 @@ void AVCRawBinClose(AVCRawBinFile *psFile)
  * PC Arc/Info where the physical file size is always a multiple of
  * 256 bytes padded with some junk at the end.
  *
- * The default value is -1 which just looks for the real EOF. 
+ * The default value is -1 which just looks for the real EOF.
  **********************************************************************/
 void AVCRawBinSetFileDataSize(AVCRawBinFile *psFile, int nFileDataSize)
 {
@@ -219,7 +219,7 @@ void AVCRawBinSetFileDataSize(AVCRawBinFile *psFile, int nFileDataSize)
 /**********************************************************************
  *                          AVCRawBinReadBytes()
  *
- * Copy the number of bytes from the input file to the specified 
+ * Copy the number of bytes from the input file to the specified
  * memory location.
  **********************************************************************/
 static GBool bDisableReadBytesEOFError = FALSE;
@@ -230,7 +230,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 
     /* Make sure file is opened with Read access
      */
-    if (psFile == NULL || 
+    if (psFile == NULL ||
         (psFile->eAccess != AVCRead && psFile->eAccess != AVCReadWrite))
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -248,7 +248,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         return;
     }
 
-    /* This is the long method... it supports reading data that 
+    /* This is the long method... it supports reading data that
      * overlaps the input buffer boundaries.
      */
     while(nBytesToRead > 0)
@@ -286,7 +286,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         }
 
         /* If the requested bytes are not all in the current buffer then
-         * just read the part that's in memory for now... the loop will 
+         * just read the part that's in memory for now... the loop will
          * take care of the rest.
          */
         if (psFile->nCurPos + nBytesToRead > psFile->nCurSize)
@@ -300,7 +300,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         }
         else
         {
-            /* All the requested bytes are now in the buffer... 
+            /* All the requested bytes are now in the buffer...
              * simply copy them and return.
              */
             memcpy(pBuf, psFile->abyBuf+psFile->nCurPos, nBytesToRead);
@@ -328,7 +328,7 @@ void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
     pBuf[nBytesToRead] = '\0';
 
     pszConvBuf = AVCE00ConvertFromArcDBCS(psFile->psDBCSInfo,
-                                          pBuf, 
+                                          pBuf,
                                           nBytesToRead);
 
     if (pszConvBuf != pBuf)
@@ -342,7 +342,7 @@ void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
  *
  * Move the read pointer to the specified location.
  *
- * As with fseek(), the specified position can be relative to the 
+ * As with fseek(), the specified position can be relative to the
  * beginning of the file (SEEK_SET), or the current position (SEEK_CUR).
  * SEEK_END is not supported.
  **********************************************************************/
@@ -358,7 +358,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
     if (psFile == NULL || psFile->eAccess == AVCWrite)
         return;
 
-    /* Compute destination relative to current memory buffer 
+    /* Compute destination relative to current memory buffer
      */
     if (nFrom == SEEK_SET)
         nTarget = nOffset - psFile->nOffset;
@@ -369,7 +369,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
      */
     if (nTarget > 0 && nTarget <= psFile->nCurSize)
     {
-        /* Requested location is already in memory... just move the 
+        /* Requested location is already in memory... just move the
          * read pointer
          */
         psFile->nCurPos = nTarget;
@@ -377,7 +377,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
     else
     {
         /* Requested location is not part of the memory buffer...
-         * move the FILE * to the right location and be ready to 
+         * move the FILE * to the right location and be ready to
          * read from there.
          */
         psFile->nCurPos = 0;
@@ -406,7 +406,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
     if (psFile->eAccess != AVCRead && psFile->eAccess != AVCReadWrite)
         return TRUE;
 
-    /* If file data size was specified, then check that we have not 
+    /* If file data size was specified, then check that we have not
      * passed that point yet...
      */
     if (psFile->nFileDataSize > 0 &&
@@ -430,7 +430,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
          psFile->nCurSize == AVCRAWBIN_READBUFSIZE))
     {
         GByte c;
-        /* Set bDisableReadBytesEOFError=TRUE to temporarily disable 
+        /* Set bDisableReadBytesEOFError=TRUE to temporarily disable
          * the EOF error message from AVCRawBinReadBytes().
          */
         bDisableReadBytesEOFError = TRUE;
@@ -441,7 +441,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
             AVCRawBinFSeek(psFile, -1, SEEK_CUR);
     }
 
-    return (psFile->nCurPos == psFile->nCurSize && 
+    return (psFile->nCurPos == psFile->nCurSize &&
             VSIFEof(psFile->fp));
 }
 
@@ -449,9 +449,9 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
 /**********************************************************************
  *                          AVCRawBinRead<datatype>()
  *
- * Arc/Info files are binary files with MSB first (Motorola) byte 
+ * Arc/Info files are binary files with MSB first (Motorola) byte
  * ordering.  The following functions will read from the input file
- * and return a value with the bytes ordered properly for the current 
+ * and return a value with the bytes ordered properly for the current
  * platform.
  **********************************************************************/
 GInt16  AVCRawBinReadInt16(AVCRawBinFile *psFile)
@@ -521,13 +521,13 @@ double  AVCRawBinReadDouble(AVCRawBinFile *psFile)
  * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
-void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite, 
+void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
                          const GByte *pBuf)
 {
     /*----------------------------------------------------------------
      * Make sure file is opened with Write access
      *---------------------------------------------------------------*/
-    if (psFile == NULL || 
+    if (psFile == NULL ||
         (psFile->eAccess != AVCWrite && psFile->eAccess != AVCReadWrite))
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -550,12 +550,12 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
 /**********************************************************************
  *                          AVCRawBinWrite<datatype>()
  *
- * Arc/Info files are binary files with MSB first (Motorola) byte 
+ * Arc/Info files are binary files with MSB first (Motorola) byte
  * ordering.  The following functions will reorder the byte for the
  * value properly and write that to the output file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
 void  AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value)
@@ -602,11 +602,11 @@ void  AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue)
 /**********************************************************************
  *                          AVCRawBinWriteZeros()
  *
- * Write a number of zeros (specified in bytes) at the current position 
+ * Write a number of zeros (specified in bytes) at the current position
  * in the file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
 void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
@@ -614,11 +614,11 @@ void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
     char acZeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     int i;
 
-    /* Write by 8 bytes chunks.  The last chunk may be less than 8 bytes 
+    /* Write by 8 bytes chunks.  The last chunk may be less than 8 bytes
      */
     for(i=0; i< nBytesToWrite; i+=8)
     {
-        AVCRawBinWriteBytes(psFile, MIN(8,(nBytesToWrite-i)), 
+        AVCRawBinWriteBytes(psFile, MIN(8,(nBytesToWrite-i)),
                             (GByte*)acZeros);
     }
 }
@@ -629,8 +629,8 @@ void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
  * Write a string and pad the end of the field (up to nFieldSize) with
  * spaces number of spaces at the current position in the file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
 void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
@@ -656,7 +656,7 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
      */
     for(i=0; i< numSpaces; i+=8)
     {
-        AVCRawBinWriteBytes(psFile, MIN(8,(numSpaces-i)), 
+        AVCRawBinWriteBytes(psFile, MIN(8,(numSpaces-i)),
                             (GByte*)acSpaces);
     }
 }

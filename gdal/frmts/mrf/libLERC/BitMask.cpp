@@ -68,7 +68,7 @@ bool BitMask::RLEdecompress(const Byte* src) {
 
 // Encode helper function
 // It returns how many times the byte at *s is repeated
-// a value between 1 and min(max_count, MAX_RUN) 
+// a value between 1 and min(max_count, MAX_RUN)
 inline static int run_length(const Byte *s, int max_count)
 {
     assert(max_count && s);

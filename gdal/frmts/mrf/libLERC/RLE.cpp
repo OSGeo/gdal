@@ -1,17 +1,23 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
 */
 #include "RLE.h"
@@ -129,7 +135,6 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
   const Byte* srcPtr = arr;
   Byte* cntPtr = *arrRLE;
   Byte* dstPtr = cntPtr + 2;
-  /*size_t sum = 0;*/
   size_t cntOdd = 0;
   size_t cntEven = 0;
   size_t cntTotal = 0;
@@ -148,7 +153,6 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
       {
         cntEven++;
         writeCount(-(short)cntEven, &cntPtr, &dstPtr);    // - sign for even cnts
-        /*sum += 2 + 1;*/
         bOdd = true;
         cntOdd = 0;
         cntEven = 0;
@@ -181,7 +185,6 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
           if (cntOdd > 0)
           {
             writeCount((short)cntOdd, &cntPtr, &dstPtr);    // + sign for odd cnts
-            /*sum += 2 + cntOdd;*/
           }
           bOdd = false;
           cntOdd = 0;
@@ -194,14 +197,12 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
     if (cntOdd == 32767)    // prevent short counters from overflow
     {
       writeCount((short)cntOdd, &cntPtr, &dstPtr);
-      /*sum += 2 + 32767;*/
       cntOdd = 0;
     }
     if (cntEven == 32767)
     {
       *dstPtr++ = *srcPtr;
       writeCount(-(short)cntEven, &cntPtr, &dstPtr);
-      /*sum += 2 + 1;*/
       cntEven = 0;
     }
 
@@ -215,17 +216,14 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
   {
     cntOdd++;
     writeCount((short)cntOdd, &cntPtr, &dstPtr);
-    /*sum += 2 + cntOdd;*/
   }
   else
   {
     cntEven++;
     writeCount(-(short)cntEven, &cntPtr, &dstPtr);
-    /*sum += 2 + 1;*/
   }
 
   writeCount(-32768, &cntPtr, &dstPtr);    // write end of stream symbol
-  /*sum += 2;*/
 
   if (verify)
   {

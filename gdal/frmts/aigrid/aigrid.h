@@ -34,7 +34,7 @@
 
 CPL_C_START
 
-#define ESRI_GRID_NO_DATA -2147483647				       
+#define ESRI_GRID_NO_DATA -2147483647
 /*#define ESRI_GRID_FLOAT_NO_DATA -340282306073709652508363335590014353408.0 */
 #define ESRI_GRID_FLOAT_NO_DATA -340282346638528859811704183484516925440.0
 
@@ -66,7 +66,7 @@ typedef struct {
     GInt32      bCompressed;
 
 #define AIG_CELLTYPE_INT		1
-#define AIG_CELLTYPE_FLOAT		2    
+#define AIG_CELLTYPE_FLOAT		2
 
     GInt32	nBlockXSize;
     GInt32	nBlockYSize;
@@ -108,12 +108,12 @@ CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
                      int nCellType, int bCompressed );
 
 CPLErr AIGReadHeader( const char *, AIGInfo_t * );
-CPLErr AIGReadBlockIndex( AIGInfo_t *, AIGTileInfo *, 
+CPLErr AIGReadBlockIndex( AIGInfo_t *, AIGTileInfo *,
                           const char *pszBasename );
 CPLErr AIGReadBounds( const char *, AIGInfo_t * );
 CPLErr AIGReadStatistics( const char *, AIGInfo_t * );
 
-CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes, 
+CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes,
                                unsigned char *pabyDstData, int nDstBytes,
                                int nBlockXSize, int nBlockYSize );
 

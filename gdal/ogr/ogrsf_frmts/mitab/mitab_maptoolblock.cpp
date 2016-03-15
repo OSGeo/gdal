@@ -18,16 +18,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -94,13 +94,13 @@ TABMAPToolBlock::~TABMAPToolBlock() {}
  *                   TABMAPToolBlock::EndOfChain()
  *
  * Return TRUE if we reached the end of the last block in the chain
- * TABMAPToolBlocks, or FALSE if there is still data to be read from 
+ * TABMAPToolBlocks, or FALSE if there is still data to be read from
  * this chain.
  **********************************************************************/
 GBool TABMAPToolBlock::EndOfChain()
 {
-   if (m_pabyBuf && 
-       (m_nCurPos < (m_numDataBytes+MAP_TOOL_HEADER_SIZE) || 
+   if (m_pabyBuf &&
+       (m_nCurPos < (m_numDataBytes+MAP_TOOL_HEADER_SIZE) ||
         m_nNextToolBlock > 0 ) )
    {
        return FALSE;  // There is still data to be read.
@@ -119,9 +119,9 @@ GBool TABMAPToolBlock::EndOfChain()
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
-                                           int nBlockSize, int nSizeUsed, 
+                                           int nBlockSize, int nSizeUsed,
                                            GBool bMakeCopy /* = TRUE */,
-                                           VSILFILE *fpSrc /* = NULL */, 
+                                           VSILFILE *fpSrc /* = NULL */,
                                            int nOffset /* = 0 */)
 {
     int nStatus;
@@ -131,7 +131,7 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
      *----------------------------------------------------------------*/
     nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
                                                 bMakeCopy, fpSrc, nOffset);
-    if (nStatus != 0)   
+    if (nStatus != 0)
         return nStatus;
 
     /*-----------------------------------------------------------------
@@ -184,7 +184,7 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
 /**********************************************************************
  *                   TABMAPToolBlock::CommitToFile()
  *
- * Commit the current state of the binary block to the file to which 
+ * Commit the current state of the binary block to the file to which
  * it has been previously attached.
  *
  * This method makes sure all values are properly set in the map object
@@ -200,7 +200,7 @@ int     TABMAPToolBlock::CommitToFile()
 
     if ( m_pabyBuf == NULL )
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "CommitToFile(): Block has not been initialized yet!");
         return -1;
     }
@@ -241,8 +241,8 @@ int     TABMAPToolBlock::CommitToFile()
  *                   TABMAPToolBlock::InitNewBlock()
  *
  * Initialize a newly created block so that it knows to which file it
- * is attached, its block size, etc . and then perform any specific 
- * initialization for this block type, including writing a default 
+ * is attached, its block size, etc . and then perform any specific
+ * initialization for this block type, including writing a default
  * block header, etc. and leave the block ready to receive data.
  *
  * This is an alternative to calling ReadFromFile() or InitBlockFromData()
@@ -252,7 +252,7 @@ int     TABMAPToolBlock::CommitToFile()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPToolBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
+int     TABMAPToolBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                                         int nFileOffset /* = 0*/)
 {
 #ifdef DEBUG_VERBOSE
@@ -302,7 +302,7 @@ void     TABMAPToolBlock::SetNextToolBlock(GInt32 nNextToolBlockAddress)
 /**********************************************************************
  *                   TABMAPToolBlock::SetMAPBlockManagerRef()
  *
- * Pass a reference to the block manager object for the file this 
+ * Pass a reference to the block manager object for the file this
  * block belongs to.  The block manager will be used by this object
  * when it needs to automatically allocate a new block.
  **********************************************************************/
@@ -316,7 +316,7 @@ void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
  *                   TABMAPToolBlock::ReadBytes()
  *
  * Cover function for TABRawBinBlock::ReadBytes() that will automagically
- * load the next coordinate block in the chain before reading the 
+ * load the next coordinate block in the chain before reading the
  * requested bytes if we are at the end of the current block and if
  * m_nNextToolBlock is a valid block.
  *
@@ -326,7 +326,7 @@ void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
  * the user's buffer pointed by pabyDstBuf.
  *
  * Passing pabyDstBuf = NULL will only move the read pointer by the
- * specified number of bytes as if the copy had happened... but it 
+ * specified number of bytes as if the copy had happened... but it
  * won't crash.
  *
  * Returns 0 if successful or -1 if an error happened, in which case
@@ -336,8 +336,8 @@ int     TABMAPToolBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
 {
     int nStatus;
 
-    if (m_pabyBuf && 
-        m_nCurPos >= (m_numDataBytes+MAP_TOOL_HEADER_SIZE) && 
+    if (m_pabyBuf &&
+        m_nCurPos >= (m_numDataBytes+MAP_TOOL_HEADER_SIZE) &&
         m_nNextToolBlock > 0)
     {
         if ( (nStatus=GotoByteInFile(m_nNextToolBlock)) != 0)
@@ -357,14 +357,14 @@ int     TABMAPToolBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
  *                   TABMAPToolBlock::WriteBytes()
  *
  * Cover function for TABRawBinBlock::WriteBytes() that will automagically
- * CommitToFile() the current block and create a new one if we are at 
+ * CommitToFile() the current block and create a new one if we are at
  * the end of the current block.
  *
  * Then the control is passed to TABRawBinBlock::WriteBytes() to finish the
  * work.
  *
  * Passing pabySrcBuf = NULL will only move the write pointer by the
- * specified number of bytes as if the copy had happened... but it 
+ * specified number of bytes as if the copy had happened... but it
  * won't crash.
  *
  * Returns 0 if successful or -1 if an error happened, in which case
@@ -395,7 +395,7 @@ int  TABMAPToolBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
  *                   TABMAPToolBlock::CheckAvailableSpace()
  *
  * Check if an object of the specified type can fit in
- * current block.  If it can't fit then force committing current block 
+ * current block.  If it can't fit then force committing current block
  * and allocating a new one.
  *
  * Returns 0 if successful or -1 if an error happened, in which case
@@ -463,7 +463,7 @@ void TABMAPToolBlock::Dump(FILE *fpOut /*=NULL*/)
     }
     else
     {
-        fprintf(fpOut,"Tool Block (type %d) at offset %d.\n", 
+        fprintf(fpOut,"Tool Block (type %d) at offset %d.\n",
                                                  m_nBlockType, m_nFileOffset);
         fprintf(fpOut,"  m_numDataBytes        = %d\n", m_numDataBytes);
         fprintf(fpOut,"  m_nNextToolBlock     = %d\n", m_nNextToolBlock);

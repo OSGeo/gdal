@@ -574,17 +574,17 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
         STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "CARTODB", "RunSQL HTML Response:%s", psResult->pabyData );
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult->pszErrBuf != NULL) 
+    if (psResult->pszErrBuf != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult->nStatus != 0) 
+    else if (psResult->nStatus != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RunSQL Error Status:%d", psResult->nStatus );
@@ -628,7 +628,7 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
                 poError = json_object_array_get_idx(poError, 0);
                 if( poError != NULL && json_object_get_type(poError) == json_type_string )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, 
+                    CPLError(CE_Failure, CPLE_AppDefined,
                             "Error returned by server : %s", json_object_get_string(poError));
                     json_object_put(poObj);
                     return NULL;
@@ -726,7 +726,7 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
 
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            if( EQUAL(papoLayers[iLayer]->GetName(), 
+            if( EQUAL(papoLayers[iLayer]->GetName(),
                       pszLayerName ))
             {
                 DeleteLayer( iLayer );

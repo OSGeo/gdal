@@ -344,7 +344,7 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
 /*         Tokenize HDF-EOS attributes.                                 */
 /************************************************************************/
 
-char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString ) 
+char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 
 {
     const char  * const pszDelimiters = " \t\n\r";
@@ -384,6 +384,7 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
             if ( *pszString == '"' )
             {
                 bInString = !bInString;
+                continue;
             }
             else if ( *pszString == '(' )
             {

@@ -106,7 +106,7 @@ class OGRIDBTableLayer : public OGRIDBLayer
                         OGRIDBTableLayer( OGRIDBDataSource * );
                         ~OGRIDBTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
                                     int bUpdate
                                   );
@@ -121,7 +121,7 @@ class OGRIDBTableLayer : public OGRIDBLayer
 #if 0
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-#endif    
+#endif
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual OGRSpatialReference *GetSpatialRef();
@@ -178,7 +178,7 @@ class OGRIDBDataSource : public OGRDataSource
                         ~OGRIDBDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 
@@ -218,5 +218,3 @@ ITCallbackResult
 IDBErrorHandler( const ITErrorManager &err, void * userdata, long errorlevel );
 
 #endif /* ndef _OGR_idb_H_INCLUDED_ */
-
-

@@ -675,8 +675,8 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         double dfX, dfY, dfZ;
         OGRPoint *poPoint = (OGRPoint *) poGeom;
 
-        CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI 
-                   || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC ); 
+        CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
+                   || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC );
 
         dfX = poPoint->getX();
         dfY = poPoint->getY();
@@ -691,15 +691,15 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      For multipoints we assuming SOUNDG, and write out as SG3D.      */
 /* -------------------------------------------------------------------- */
-    else if( poGeom != NULL 
+    else if( poGeom != NULL
              && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
     {
         OGRMultiPoint *poMP = (OGRMultiPoint *) poGeom;
         int i, nVCount = poMP->getNumGeometries();
         double *padfX, *padfY, *padfZ;
 
-        CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI 
-                   || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC ); 
+        CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
+                   || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC );
 
         padfX = (double *) CPLMalloc(sizeof(double) * nVCount);
         padfY = (double *) CPLMalloc(sizeof(double) * nVCount);
@@ -723,7 +723,7 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Handle LINESTRINGs (edge) geometry.                             */
 /* -------------------------------------------------------------------- */
-    else if( poGeom != NULL 
+    else if( poGeom != NULL
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
         OGRLineString *poLS = (OGRLineString *) poGeom;
@@ -770,13 +770,13 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         szName[4] = (char) ((nRCID & 0xff000000) >> 24);
 
         poRec->SetStringSubfield( "VRPT", 0, "NAME", 0, szName, 5 );
-        poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 0, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 0,
                                   poFeature->GetFieldAsInteger( "ORNT_0") );
-        poRec->SetIntSubfield   ( "VRPT", 0, "USAG", 0, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "USAG", 0,
                                   poFeature->GetFieldAsInteger( "USAG_0") );
-        poRec->SetIntSubfield   ( "VRPT", 0, "TOPI", 0, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "TOPI", 0,
                                   poFeature->GetFieldAsInteger( "TOPI_0") );
-        poRec->SetIntSubfield   ( "VRPT", 0, "MASK", 0, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "MASK", 0,
                                   poFeature->GetFieldAsInteger( "MASK_0") );
 
         nRCID = poFeature->GetFieldAsInteger( "NAME_RCID_1");
@@ -787,13 +787,13 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         szName[4] = (char) ((nRCID & 0xff000000) >> 24);
 
         poRec->SetStringSubfield( "VRPT", 0, "NAME", 1, szName, 5 );
-        poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 1, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 1,
                                   poFeature->GetFieldAsInteger( "ORNT_1") );
-        poRec->SetIntSubfield   ( "VRPT", 0, "USAG", 1, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "USAG", 1,
                                   poFeature->GetFieldAsInteger( "USAG_1") );
-        poRec->SetIntSubfield   ( "VRPT", 0, "TOPI", 1, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "TOPI", 1,
                                   poFeature->GetFieldAsInteger( "TOPI_1") );
-        poRec->SetIntSubfield   ( "VRPT", 0, "MASK", 1, 
+        poRec->SetIntSubfield   ( "VRPT", 0, "MASK", 1,
                                   poFeature->GetFieldAsInteger( "MASK_1") );
     }
 
@@ -847,8 +847,8 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      We handle primitives in a separate method.                      */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(poFDefn->GetName(),OGRN_VI) 
-        || EQUAL(poFDefn->GetName(),OGRN_VC) 
+    if( EQUAL(poFDefn->GetName(),OGRN_VI)
+        || EQUAL(poFDefn->GetName(),OGRN_VC)
         || EQUAL(poFDefn->GetName(),OGRN_VE) )
         return WritePrimitive( poFeature );
 
@@ -865,13 +865,13 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
     /*poField = */poRec->AddField( poModule->FindFieldDefn( "FRID" ) );
 
     poRec->SetIntSubfield   ( "FRID", 0, "RCNM", 0, 100 );
-    poRec->SetIntSubfield   ( "FRID", 0, "RCID", 0, 
+    poRec->SetIntSubfield   ( "FRID", 0, "RCID", 0,
                               poFeature->GetFieldAsInteger( "RCID" ) );
-    poRec->SetIntSubfield   ( "FRID", 0, "PRIM", 0, 
+    poRec->SetIntSubfield   ( "FRID", 0, "PRIM", 0,
                               poFeature->GetFieldAsInteger( "PRIM" ) );
-    poRec->SetIntSubfield   ( "FRID", 0, "GRUP", 0, 
+    poRec->SetIntSubfield   ( "FRID", 0, "GRUP", 0,
                               poFeature->GetFieldAsInteger( "GRUP") );
-    poRec->SetIntSubfield   ( "FRID", 0, "OBJL", 0, 
+    poRec->SetIntSubfield   ( "FRID", 0, "OBJL", 0,
                               poFeature->GetFieldAsInteger( "OBJL") );
     poRec->SetIntSubfield   ( "FRID", 0, "RVER", 0, 1 ); /* always new insert*/
     poRec->SetIntSubfield   ( "FRID", 0, "RUIN", 0, 1 );
@@ -881,18 +881,18 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     /*poField = */poRec->AddField( poModule->FindFieldDefn( "FOID" ) );
 
-    poRec->SetIntSubfield   ( "FOID", 0, "AGEN", 0, 
+    poRec->SetIntSubfield   ( "FOID", 0, "AGEN", 0,
                               poFeature->GetFieldAsInteger( "AGEN") );
-    poRec->SetIntSubfield   ( "FOID", 0, "FIDN", 0, 
+    poRec->SetIntSubfield   ( "FOID", 0, "FIDN", 0,
                               poFeature->GetFieldAsInteger( "FIDN") );
-    poRec->SetIntSubfield   ( "FOID", 0, "FIDS", 0, 
+    poRec->SetIntSubfield   ( "FOID", 0, "FIDS", 0,
                               poFeature->GetFieldAsInteger( "FIDS") );
 
 /* -------------------------------------------------------------------- */
 /*      ATTF support.                                                   */
 /* -------------------------------------------------------------------- */
 
-    if( poRegistrar != NULL 
+    if( poRegistrar != NULL
         && poClassContentExplorer->SelectClass( poFeature->GetDefnRef()->GetName() )
         && !WriteATTF( poRec, poFeature ) )
     {
@@ -933,7 +933,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
         }
 
         DDFField* poField = poRec->AddField( poModule->FindFieldDefn( "FSPT" ) );
-        poRec->SetFieldRaw( poField, 0, 
+        poRec->SetFieldRaw( poField, 0,
                             (const char *) pabyRawData, nRawDataSize );
         CPLFree( pabyRawData );
     }
@@ -946,7 +946,7 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
     if( CSLCount(papszLNAM_REFS) > 0 )
     {
         int i, nRefCount = CSLCount(papszLNAM_REFS);
-        const int *panRIND = 
+        const int *panRIND =
             poFeature->GetFieldAsIntegerList( "FFPT_RIND", NULL );
 
         poRec->AddField( poModule->FindFieldDefn( "FFPT" ) );
@@ -974,9 +974,9 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 
             szLNAM[8] = '\0';
 
-            poRec->SetStringSubfield( "FFPT", 0, "LNAM", i, 
+            poRec->SetStringSubfield( "FFPT", 0, "LNAM", i,
                                       (char *) szLNAM, 8 );
-            poRec->SetIntSubfield( "FFPT", 0, "RIND", i, 
+            poRec->SetIntSubfield( "FFPT", 0, "RIND", i,
                                    panRIND[i] );
         }
     }
@@ -1010,19 +1010,19 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
 {
     int nRawSize=0, nACount = 0;
     char achRawData[5000];
-    char **papszAttrList; 
+    char **papszAttrList;
 
     CPLAssert( poRegistrar != NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all attributes.                                       */
 /* -------------------------------------------------------------------- */
-    papszAttrList = poClassContentExplorer->GetAttributeList(NULL); 
+    papszAttrList = poClassContentExplorer->GetAttributeList(NULL);
 
     for( int iAttr = 0; papszAttrList[iAttr] != NULL; iAttr++ )
     {
         int iField = poFeature->GetFieldIndex( papszAttrList[iAttr] );
-        OGRFieldType eFldType = 
+        OGRFieldType eFldType =
             poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
         int nATTLInt;
         GUInt16 nATTL;
@@ -1046,14 +1046,14 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         pszATVL = poFeature->GetFieldAsString( iField );
 
         // Special hack to handle special "empty" marker in integer fields.
-        if( atoi(pszATVL) == EMPTY_NUMBER_MARKER 
+        if( atoi(pszATVL) == EMPTY_NUMBER_MARKER
             && (eFldType == OFTInteger || eFldType == OFTReal) )
             pszATVL = "";
 
         // Watch for really long data.
         if( strlen(pszATVL) + nRawSize + 10 > sizeof(achRawData) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Too much ATTF data for fixed buffer size." );
             return FALSE;
         }

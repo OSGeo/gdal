@@ -146,7 +146,7 @@ static int IsPowerOf2(int nVal)
 /*                    OGRLIBKMLGetMaxDimensions()                       */
 /************************************************************************/
 
-static void OGRLIBKMLGetMaxDimensions(const char* pszURL, 
+static void OGRLIBKMLGetMaxDimensions(const char* pszURL,
                                       int nTileSize,
                                       int* panMaxWidth,
                                       int* panMaxHeight)
@@ -485,7 +485,7 @@ FeaturePtr feat2kml (
             const char* pszHttpQuery = poOgrFeat->GetFieldAsString(iHttpQuery);
             if( strstr(pszHttpQuery, "[clientVersion]") != NULL ||
                 strstr(pszHttpQuery, "[kmlVersion]") != NULL ||
-                strstr(pszHttpQuery, "[clientName]") != NULL || 
+                strstr(pszHttpQuery, "[clientName]") != NULL ||
                 strstr(pszHttpQuery, "[language]") != NULL ) /* ATC 47 */
             {
                 poKmlLink->set_httpquery(pszHttpQuery);
