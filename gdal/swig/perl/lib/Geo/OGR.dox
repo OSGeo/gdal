@@ -513,7 +513,7 @@
 # @isa (Geo::OGR)
 
 ## @cmethod Geo::OGR::Feature new(%schema)
-# @param schema as in Schema
+# @param schema as in GetSchema().
 # @return a new Geo::OGR::Feature object
 
 ## @method $DumpReadable()
@@ -528,8 +528,12 @@
 ## @ignore Schema
 
 ## @method \%GetSchema()
-# @brief Get the schema of this feature. 
-# @return the schema of this layer, as in Geo::OGR::FeatureDefn::Schema.
+# @brief Get the schema of this feature.
+#
+# @return the schema as a hash whose keywords are Name, StyleIgnored
+# and Fields. Fields is an anonymous array of first non-spatial and
+# then spatial field schemas as in Geo::OGR::FieldDefn::Schema() and
+# Geo::OGR::GeomFieldDefn::Schema().
 
 ## @method \%Row(%row)
 # @note This method discards the data the destination feature (or
@@ -597,38 +601,33 @@
 ## @ignore GetFieldAsInteger
 ## @ignore GetFieldAsDouble
 ## @ignore GetFieldAsDateTime
+## @ignore GetFieldAsInteger64
 ## @ignore GetFieldAsDoubleList
 ## @ignore GetFieldAsIntegerList
 ## @ignore GetFieldAsStringList
 
-## @method @GetField($name)
-# @note A number of GetFieldAs* methods exist but they are not
-# documented. Syntax $feature->{field} can be used to access the
-# field (v1.9.0)
-# @param name the name of the field
-# @return the value of the field, which may be a scalar or a list,
-# depending on the field type.
-
+## @ignore SetFieldInteger64
 ## @ignore SetFieldDoubleList
 ## @ignore SetFieldIntegerList
 ## @ignore SetFieldStringList
 
 ## @method SetField($name, @Value)
-# @note Syntax $feature->{field} can be used to access the
-# field (v1.9.0)
-# @param name the name of the field.
-# @param Value a string, integer, double, a list (year, month,
-# day), a list (hour, minute, second, tzflag), a list (year, month,
-# day, hour, minute, second, tzflag), or a list of integers, doubles,
-# or strings.
-# @note If value is not given or is undefined this method unsets the field.
+# See Field().
 
-## @method Field($name, @Value)
-# @brief Get or set the field.
-# @param name the name of the field.
-# @param Value a scalar or list depending on the field type.
-# @return the value of the field, which may be a scalar or a list,
-# depending on the field type.
+## @method @GetField($name)
+# See Field().
+
+## @method Field($name, $value, ...)
+# @brief Get, set, or unset the field value.
+# @param name the name (or the index) of the field.
+# @param value a scalar, a list of scalars or a reference to a
+# list. If undef, the field is unset. If a scalar or a list of
+# scalars, the field is set from them.
+# @note Non-scalar fields (for example Date) can be set either from a
+# scalar, which is then assumed to be a string and parsed, or from a
+# list of values (for example year, month, day for Date).
+# @return in non-void context the value of the field, which may be a
+# scalar or a list, depending on the field type.
 
 ## @ignore SetGeometry
 ## @ignore SetGeometryDirectly
@@ -674,9 +673,7 @@
 # @return boolean
 
 ## @method UnsetField($field)
-# @note Field value can be unset by calling SetField without
-# parameters or with an undefined argument.
-# @param field the name (or index) of the field
+# See Field().
 
 ## @method $FID($id)
 # @brief Get or set the id of this feature.
@@ -703,10 +700,12 @@
 
 
 ## @class Geo::OGR::FeatureDefn
-# @brief A definition of the attributes of a feature class or a layer.
+# @brief The schema of a feature or a layer.
 #
-# A definition object is a collection of field definition objects. A
-# read-only definition object is obtained from a layer or a feature.
+# A FeatureDefn object is a collection of field definition objects. A
+# read-only FeatureDefn object can be obtained from a layer
+# (Geo::OGR::Layer::GetDefn()) or a feature
+# (Geo::OGR::Feature::GetDefn()).
 # @isa (Geo::OGR)
 
 ## @cmethod Geo::OGR::FeatureDefn new(%schema)
@@ -716,7 +715,7 @@
 # GeometryType is 'Unknown' or the value of the named parameter
 # GeometryType.
 # @param schema [optional] The schema for the new feature definition,
-# as in Geo::OGR::FeatureDefn::Schema.
+# as in Geo::OGR::FeatureDefn::Schema().
 # @return a Geo::OGR::FeatureDefn object
 #
 # Example usage:
@@ -732,11 +731,10 @@
 ## @method \%GetSchema()
 # @brief Get the schema of this feature or layer definition. 
 #
-# The schema is a hash whose keywords are Name, StyleIgnored and
-# Fields. Fields is an anonymous array of first non-spatial and then
-# spatial field schemas as in Geo::OGR::FieldDefn::Schema and
-# Geo::OGR::GeomFieldDefn::Schema.
-# @return the schema of this feature or layer definition.
+# @return the schema as a hash whose keywords are Name, StyleIgnored
+# and Fields. Fields is an anonymous array of first non-spatial and
+# then spatial field schemas as in Geo::OGR::FieldDefn::Schema() and
+# Geo::OGR::GeomFieldDefn::Schema().
 
 ## @ignore Name
 
