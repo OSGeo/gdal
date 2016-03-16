@@ -282,8 +282,8 @@ int VSIWin32Handle::Flush()
 size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    DWORD       dwSizeRead;
-    size_t      nResult;
+    DWORD dwSizeRead = 0;
+    size_t nResult = 0;
 
     if( !ReadFile( hFile, pBuffer, (DWORD)(nSize*nCount), &dwSizeRead, NULL ) )
     {
@@ -308,8 +308,8 @@ size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
 size_t VSIWin32Handle::Write( const void *pBuffer, size_t nSize, size_t nCount)
 
 {
-    DWORD       dwSizeWritten;
-    size_t      nResult;
+    DWORD dwSizeWritten = 0;
+    size_t nResult = 0;
 
     if( !WriteFile(hFile, (void *)pBuffer,
                    (DWORD)(nSize*nCount),&dwSizeWritten,NULL) )
@@ -624,11 +624,11 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        int nResult;
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         bool bTryOtherStatImpl = false;
+        int nResult = 0;
         if( VSIWin32IsLongFilename(pwszFilename) )
         {
             bTryOtherStatImpl = true;
@@ -693,11 +693,10 @@ int VSIWin32FilesystemHandler::Unlink( const char * pszFilename )
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        int nResult;
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        nResult = _wunlink( pwszFilename );
+        const int nResult = _wunlink( pwszFilename );
         CPLFree( pwszFilename );
         return nResult;
     }
@@ -720,13 +719,12 @@ int VSIWin32FilesystemHandler::Rename( const char *oldpath,
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        int nResult;
         wchar_t *pwszOldPath =
             CPLRecodeToWChar( oldpath, CPL_ENC_UTF8, CPL_ENC_UCS2 );
         wchar_t *pwszNewPath =
             CPLRecodeToWChar( newpath, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        nResult = _wrename( pwszOldPath, pwszNewPath );
+        const int nResult = _wrename( pwszOldPath, pwszNewPath );
         CPLFree( pwszOldPath );
         CPLFree( pwszNewPath );
         return nResult;
@@ -751,11 +749,10 @@ int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        int nResult;
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszPathname, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        nResult = _wmkdir( pwszFilename );
+        const int nResult = _wmkdir( pwszFilename );
         CPLFree( pwszFilename );
         return nResult;
     }
@@ -777,11 +774,10 @@ int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        int nResult;
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszPathname, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        nResult = _wrmdir( pwszFilename );
+        const int nResult = _wrmdir( pwszFilename );
         CPLFree( pwszFilename );
         return nResult;
     }

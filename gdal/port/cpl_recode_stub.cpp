@@ -650,7 +650,6 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
 static const char* utf8fwd(const char* p, const char* start, const char* end)
 {
   const char* a;
-  int len;
   // if we are not pointing at a continuation character, we are done:
   if ((*p&0xc0) != 0x80) return p;
   // search backwards for a 0xc0 starting the character:
@@ -659,6 +658,7 @@ static const char* utf8fwd(const char* p, const char* start, const char* end)
     if (!(a[0]&0x80)) return p;
     if ((a[0]&0x40)) break;
   }
+  int len = 0;
   utf8decode(a,end,&len);
   a += len;
   if (a > p) return a;
@@ -689,7 +689,6 @@ static const char* utf8fwd(const char* p, const char* start, const char* end)
 static const char* utf8back(const char* p, const char* start, const char* end)
 {
   const char* a;
-  int len;
   // if we are not pointing at a continuation character, we are done:
   if ((*p&0xc0) != 0x80) return p;
   // search backwards for a 0xc0 starting the character:
@@ -698,6 +697,7 @@ static const char* utf8back(const char* p, const char* start, const char* end)
     if (!(a[0]&0x80)) return p;
     if ((a[0]&0x40)) break;
   }
+  int len = 0;
   utf8decode(a,end,&len);
   if (a+len > p) return a;
   return p;
@@ -822,7 +822,8 @@ static unsigned utf8towc(const char* src, unsigned srclen,
     if (!(*p & 0x80)) { // ascii
       dst[count] = *p++;
     } else {
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len = 0;
+      unsigned ucs = utf8decode(p,e,&len);
       p += len;
 #ifdef _WIN32
       if (ucs < 0x10000) {
@@ -844,11 +845,13 @@ static unsigned utf8towc(const char* src, unsigned srclen,
     if (!(*p & 0x80)) p++;
     else {
 #ifdef _WIN32
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len = 0;
+      unsigned ucs = utf8decode(p,e,&len);
       p += len;
       if (ucs >= 0x10000) ++count;
 #else
-      int len; utf8decode(p,e,&len);
+      int len = 0;
+      utf8decode(p,e,&len);
       p += len;
 #endif
     }
@@ -887,14 +890,14 @@ static unsigned utf8toa(const char* src, unsigned srclen,
   const char* e = src+srclen;
   unsigned count = 0;
   if (dstlen) for (;;) {
-    unsigned char c;
     if (p >= e) {dst[count] = 0; return count;}
-    c = *(unsigned char*)p;
+    unsigned char c = *(unsigned char*)p;
     if (c < 0xC2) { // ascii or bad code
       dst[count] = c;
       p++;
     } else {
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len = 0;
+      unsigned ucs = utf8decode(p,e,&len);
       p += len;
       if (ucs < 0x100) dst[count] = (char)ucs;
       else
@@ -915,7 +918,7 @@ static unsigned utf8toa(const char* src, unsigned srclen,
   while (p < e) {
     if (!(*p & 0x80)) p++;
     else {
-      int len;
+      int len = 0;
       utf8decode(p,e,&len);
       p += len;
     }
@@ -1053,9 +1056,8 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
   const char* e = src+srclen;
   unsigned count = 0;
   if (dstlen) for (;;) {
-    unsigned char ucs;
     if (p >= e) {dst[count] = 0; return count;}
-    ucs = *(unsigned char*)p++;
+    unsigned char ucs = *(unsigned char*)p++;
     if (ucs < 0x80U) {
       dst[count++] = ucs;
       if (count >= dstlen) {dst[count-1] = 0; break;}
@@ -1163,7 +1165,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
 
     /* Compute the length in chars */
     BOOL bUsedDefaultChar = FALSE;
-    int len;
+    int len = 0;
     if ( dst_code_page == CP_UTF7 || dst_code_page == CP_UTF8 )
         len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, NULL );
     else
@@ -1281,11 +1283,11 @@ unsigned utf8tomb(const char* src, unsigned srclen,
     wchar_t lbuf[1024];
     wchar_t* buf = lbuf;
     unsigned length = utf8towc(src, srclen, buf, 1024);
-    int ret;
     if (length >= 1024) {
       buf = (wchar_t*)(malloc((length+1)*sizeof(wchar_t)));
       utf8towc(src, srclen, buf, length+1);
     }
+    int ret = 0;
     if (dstlen) {
       ret = wcstombs(dst, buf, dstlen);
       if (ret >= dstlen-1) ret = wcstombs(0,buf,0);
@@ -1348,9 +1350,8 @@ unsigned utf8frommb(char* dst, unsigned dstlen,
 #else
     wchar_t lbuf[1024];
     wchar_t* buf = lbuf;
-    int length;
     unsigned ret;
-    length = mbstowcs(buf, src, 1024);
+    int length = mbstowcs(buf, src, 1024);
     if (length >= 1024) {
       length = mbstowcs(0, src, 0)+1;
       buf = (wchar_t*)(malloc(length*sizeof(unsigned short)));
@@ -1404,7 +1405,8 @@ static int utf8test(const char* src, unsigned srclen) {
   const char* e = src+srclen;
   while (p < e) {
     if (*p & 0x80) {
-      int len; utf8decode(p,e,&len);
+      int len = 0;
+      utf8decode(p,e,&len);
       if (len < 2) return 0;
       if (len > ret) ret = len;
       p += len;

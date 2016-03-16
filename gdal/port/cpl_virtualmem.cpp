@@ -268,9 +268,8 @@ static bool CPLVirtualMemManagerRegisterVirtualMem(CPLVirtualMemVMA* ctxt)
 
 static void CPLVirtualMemManagerUnregisterVirtualMem(CPLVirtualMemVMA* ctxt)
 {
-    int i;
     CPLAcquireMutex(hVirtualMemManagerMutex, 1000.0);
-    for(i=0;i<pVirtualMemManager->nVirtualMemCount;i++)
+    for( int i=0; i < pVirtualMemManager->nVirtualMemCount; i++ )
     {
         if( pVirtualMemManager->pasVirtualMem[i] == ctxt )
         {
@@ -307,7 +306,6 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
     void* pData;
     size_t nMinPageSize = CPLGetPageSize();
     size_t nPageSize = DEFAULT_PAGE_SIZE;
-    size_t nCacheMaxSizeInPages;
     size_t nRoundedMappingSize;
     FILE* f;
     int nMappings = 0;
@@ -353,6 +351,7 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
         fclose(f);
     }
 
+    size_t nCacheMaxSizeInPages = 0;
     while(true)
     {
         /* /proc/self/maps must not have more than 65K lines */
@@ -450,8 +449,7 @@ static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMemVMA* ctxt)
         ctxt->pabitRWMappedPages != NULL &&
         ctxt->pfnUnCachePage != NULL )
     {
-        size_t i;
-        for(i = 0; i < nRoundedMappingSize / ctxt->sBase.nPageSize; i++)
+        for( size_t i = 0; i < nRoundedMappingSize / ctxt->sBase.nPageSize; i++ )
         {
             if( TEST_BIT(ctxt->pabitRWMappedPages, i) )
             {
@@ -536,11 +534,10 @@ void CPLVirtualMemUnDeclareThread(CPLVirtualMem* ctxt)
         return;
 #ifndef HAVE_5ARGS_MREMAP
     CPLVirtualMemVMA* ctxtVMA = (CPLVirtualMemVMA* )ctxt;
-    int i;
     pthread_t self = pthread_self();
     IGNORE_OR_ASSERT_IN_DEBUG( !ctxt->bSingleThreadUsage );
     CPLAcquireMutex(ctxtVMA->hMutexThreadArray, 1000.0);
-    for(i = 0; i < ctxtVMA->nThreads; i++)
+    for( int i = 0; i < ctxtVMA->nThreads; i++ )
     {
         if( ctxtVMA->pahThreads[i] == self )
         {
@@ -1654,7 +1651,6 @@ static void CPLVirtualMemManagerThread(void* unused_param)
     while(true)
     {
         char i_m_ready = 1;
-        int i;
         CPLVirtualMemVMA* ctxt = NULL;
         bool bMappingFound = false;
         CPLVirtualMemMsgToWorkerThread msg;
@@ -1677,7 +1673,7 @@ static void CPLVirtualMemManagerThread(void* unused_param)
 
         /* Lookup for a mapping that contains addr */
         CPLAcquireMutex(hVirtualMemManagerMutex, 1000.0);
-        for(i=0;i<pVirtualMemManager->nVirtualMemCount;i++)
+        for( int i=0; i < pVirtualMemManager->nVirtualMemCount; i++ )
         {
             ctxt = pVirtualMemManager->pasVirtualMem[i];
             if( (char*)msg.pFaultAddr >= (char*) ctxt->sBase.pData &&

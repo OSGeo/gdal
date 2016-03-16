@@ -93,19 +93,17 @@ long ZCALLBACK fseek_file_func (CPL_UNUSED voidpf  opaque, voidpf stream, uLong6
 static
 int ZCALLBACK fclose_file_func (CPL_UNUSED voidpf opaque, voidpf stream)
 {
-    int ret;
-    ret = VSIFCloseL((VSILFILE *)stream);
-    return ret;
+    return VSIFCloseL((VSILFILE *)stream);
 }
 
 static
 int ZCALLBACK ferror_file_func (CPL_UNUSED voidpf opaque,
                                 CPL_UNUSED voidpf stream)
 {
-    int ret;
-    ret = 0; // FIXME
+    // int ret;
+    // ret = 0; // FIXME
     //ret = ferror((FILE *)stream);
-    return ret;
+    return 0;
 }
 
 void cpl_fill_fopen_filefunc (zlib_filefunc_def*  pzlib_filefunc_def)

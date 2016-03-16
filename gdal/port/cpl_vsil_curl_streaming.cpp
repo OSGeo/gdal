@@ -1124,7 +1124,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
     {
         for(size_t i = 0; i < 1024 / sizeof(int); i ++)
         {
-            int nVal;
+          int nVal = 0;
             memcpy(&nVal, pCachedData + i * sizeof(int), sizeof(int));
             nRecomputedChecksumOfFirst1024Bytes += nVal;
         }
