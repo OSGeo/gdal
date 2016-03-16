@@ -34,8 +34,9 @@ or other additions.
 use Geo::GDAL;
 \endcode
 
-Makes all classes available in your Perl program. Some subroutines can be
-imported into the main namespace as usual.
+Makes all classes available in your Perl program. Some subroutines
+(Driver, Open, BuildVRT) can be imported into the main namespace with
+':all'.
 
 \code
 use Geo::GDAL qw/:all/;
