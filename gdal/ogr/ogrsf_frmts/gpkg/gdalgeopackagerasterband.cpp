@@ -1522,7 +1522,17 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
                             }
                         }
                     }
+                    else if( rc != SQLITE_DONE )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_step(%s) failed: %s",
+                                  pszNewSQL, sqlite3_errmsg( m_hTempDB ) );
+                    }
                     sqlite3_finalize(hNewStmt);
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+                              pszNewSQL, sqlite3_errmsg( m_hTempDB ) );
                 }
                 sqlite3_free(pszNewSQL);
             }
@@ -1538,7 +1548,14 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
             eErr = WriteTile();
         }
         else
+        {
+            if( rc != SQLITE_DONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_step(%s) failed: %s",
+                          pszSQL, sqlite3_errmsg( m_hTempDB ) );
+            }
             break;
+        }
     }
     while( eErr == CE_None);
 
@@ -1546,6 +1563,23 @@ CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
 
     if( bGotPartialTiles )
     {
+#ifdef DEBUG_VERBOSE
+        pszSQL = CPLSPrintf("SELECT p1.id, p1.tile_row, p1.tile_column FROM partial_tiles p1, partial_tiles p2 "
+                            "WHERE p1.zoom_level = %d AND p2.zoom_level = %d AND p1.tile_row = p2.tile_row AND p1.tile_column = p2.tile_column AND p2.partial_flag != 0",
+                            -1-m_nZoomLevel, m_nZoomLevel);
+        rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, -1, &hStmt, NULL);
+        CPLAssert( rc == SQLITE_OK );
+        while( (rc = sqlite3_step(hStmt)) == SQLITE_ROW )
+        {
+            CPLDebug("GPKG", "Conflict: existing id = %d, tile_row = %d, tile_column = %d, zoom_level = %d",
+                     sqlite3_column_int(hStmt, 0),
+                     sqlite3_column_int(hStmt, 1),
+                     sqlite3_column_int(hStmt, 2),
+                     m_nZoomLevel);
+        }
+        sqlite3_finalize(hStmt);
+#endif
+
         pszSQL = CPLSPrintf("UPDATE partial_tiles SET zoom_level = %d, "
                             "partial_flag = 0 WHERE zoom_level = %d AND partial_flag != 0",
                             -1-m_nZoomLevel, m_nZoomLevel);
@@ -1725,7 +1759,7 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
 #endif
         for( int iBand = 1; iBand <= nBands; iBand ++ )
         {
-            if( iBand != nBand && nExistingId )
+            if( iBand != nBand )
             {
                 pszSQL = CPLSPrintf("SELECT tile_data_band_%d FROM partial_tiles WHERE "
                                     "id = %d", iBand, nExistingId);
@@ -1783,7 +1817,7 @@ CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
         OGRErr err;
         pszSQL = CPLSPrintf("SELECT id FROM partial_tiles WHERE "
                             "partial_flag = 0 AND zoom_level = %d "
-                            "AND tile_column = %d AND tile_row = %d",
+                            "AND tile_row = %d AND tile_column = %d",
                             -1-m_nZoomLevel, nRow, nCol);
 #ifdef DEBUG_VERBOSE
         CPLDebug("GPKG", "%s", pszSQL);
