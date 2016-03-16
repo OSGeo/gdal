@@ -678,11 +678,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         if( !bBigEndian ) SwapWord( 4, &nRealSHXContentSize );
         nRealSHXContentSize *= 2; // And back
         psHooks->FWrite( pabySHXContent, nRealSHXContentSize, 1, psSHP->fpSHX );
+        
         psHooks->FClose( psSHP->fpSHX );
         
         free ( pabySHXContent );
-        
-        pszAccess = "r+b";
     }
     
 /* -------------------------------------------------------------------- */
