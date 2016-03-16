@@ -210,9 +210,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     }
 
     GByte *pszIconvSrcBuf = (GByte*) CPLCalloc((nSrcLen+1),nTargetCharWidth);
-    unsigned int iSrc;
 
-    for( iSrc = 0; iSrc <= nSrcLen; iSrc++ )
+    for( unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++ )
     {
         if( nTargetCharWidth == 1 )
             pszIconvSrcBuf[iSrc] = (GByte) pwszSource[iSrc];

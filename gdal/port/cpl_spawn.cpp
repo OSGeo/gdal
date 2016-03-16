@@ -192,7 +192,7 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
     {
         WaitForSingleObject( processInfo.hProcess, INFINITE );
 
-        DWORD exitCode;
+        DWORD exitCode = 0;
 
         // Get the exit code.
         int err = GetExitCodeProcess(processInfo.hProcess, &exitCode);
@@ -261,7 +261,7 @@ static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
     char buf[PIPE_BUFFER_SIZE];
     while(true)
     {
-        DWORD nRead;
+        DWORD nRead = 0;
         if (!ReadFile( pipe_fd, buf, PIPE_BUFFER_SIZE, &nRead, NULL))
             break;
         if (nRead <= 0)
@@ -300,7 +300,6 @@ CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
     CPLString osCommandLine;
-    int i;
     CPLSpawnedProcess* p = NULL;
 
     if( papszArgv == NULL )
@@ -349,7 +348,7 @@ CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_
     siStartInfo.hStdError = (bCreateErrorPipe) ? pipe_err[OUT_FOR_PARENT] : GetStdHandle(STD_ERROR_HANDLE);
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-    for(i=0;papszArgv[i] != NULL;i++)
+    for( int i=0; papszArgv[i] != NULL; i++ )
     {
         if (i > 0)
             osCommandLine += " ";
@@ -401,7 +400,7 @@ CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_
 err_pipe:
     CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
 err:
-    for(i=0;i<2;i++)
+    for( int i=0; i < 2; i++ )
     {
         if (pipe_in[i] != NULL)
             CloseHandle(pipe_in[i]);

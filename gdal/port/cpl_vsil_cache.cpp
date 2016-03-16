@@ -429,7 +429,6 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
     while( nAmountCopied < nSize * nCount )
     {
         vsi_l_offset iBlock = (nOffset + nAmountCopied) / m_nChunkSize;
-        size_t nThisCopy;
         VSICacheChunk *poBlock = oMapOffsetToCache[iBlock];
         if( poBlock == NULL )
         {
@@ -442,7 +441,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         }
 
         vsi_l_offset nStartOffset = (vsi_l_offset)iBlock * m_nChunkSize;
-        nThisCopy = (size_t)
+        size_t nThisCopy = (size_t)
             ((nStartOffset + poBlock->nDataFilled)
              - nAmountCopied - nOffset);
 

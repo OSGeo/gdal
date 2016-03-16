@@ -380,7 +380,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         /* Do we need to unescape it? */
         if( strchr(psContext->pszToken,'&') != NULL )
         {
-            int  nLength;
+            int nLength = 0;
             char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
                                                     &nLength, CPLES_XML );
             strcpy( psContext->pszToken, pszUnescaped );
@@ -408,7 +408,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         /* Do we need to unescape it? */
         if( strchr(psContext->pszToken,'&') != NULL )
         {
-            int  nLength;
+            int nLength = 0;
             char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
                                                     &nLength, CPLES_XML );
             strcpy( psContext->pszToken, pszUnescaped );
@@ -434,7 +434,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         /* Do we need to unescape it? */
         if( strchr(psContext->pszToken,'&') != NULL )
         {
-            int  nLength;
+            int nLength = 0;
             char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
                                                     &nLength, CPLES_XML );
             strcpy( psContext->pszToken, pszUnescaped );

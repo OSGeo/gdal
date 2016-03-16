@@ -44,9 +44,9 @@ CPL_CVSID("$Id$");
 /* is allowed, after only forward seeking will work */
 #define BUFFER_SIZE (1024 * 1024)
 
-static GByte* pabyBuffer;
-static GUInt32 nBufferLen;
-static GUIntBig nRealPos;
+static GByte* pabyBuffer = NULL;
+static GUInt32 nBufferLen = 0;
+static GUIntBig nRealPos = 0;
 
 /************************************************************************/
 /*                           VSIStdinInit()                             */

@@ -1156,7 +1156,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
             memcpy(localfmt, fmt, ptrend - fmt + 1);
             localfmt[ptrend-fmt+1] = '\0';
 
-            int local_ret;
+            int local_ret = 0;
             if( end == '%' )
             {
                 if( offset_out == size-1 )

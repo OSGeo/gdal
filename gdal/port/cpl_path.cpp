@@ -61,7 +61,7 @@ static const char* CPLStaticBufferTooSmall(char *pszStaticResult)
 static char *CPLGetStaticResult()
 
 {
-    int bMemoryError;
+    int bMemoryError = FALSE;
     char *pachBufRingInfo
         = static_cast<char *>( CPLGetTLSEx( CTLS_PATHBUF, &bMemoryError ) );
     if( bMemoryError )

@@ -719,7 +719,7 @@ void VSIFree( void * pData )
 
     char* ptr = ((char*)pData) - 2 * sizeof(void*);
     VSICheckMarkerBegin(ptr);
-    size_t nOldSize;
+    size_t nOldSize = 0;
     memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
     VSICheckMarkerEnd(ptr, 2 * sizeof(void*) + nOldSize);
     ptr[0] = 'M';
@@ -1016,11 +1016,10 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
     if( CSLTestBoolean(
             CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        int nResult;
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        nResult = _wstat( pwszFilename, (struct _stat *) pStatBuf );
+        int nResult = _wstat( pwszFilename, (struct _stat *) pStatBuf );
 
         CPLFree( pwszFilename );
 

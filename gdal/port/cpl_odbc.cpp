@@ -388,7 +388,7 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     if( pszPassword == NULL )
         pszPassword = "";
 
-    int bFailed;
+    int bFailed = FALSE;
     if( strstr(pszDSN,"=") != NULL )
     {
         SQLCHAR szOutConnString[1024];
@@ -1289,16 +1289,20 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 
 {
     va_list args;
-    char    szFormattedText[8000];
-    int     bSuccess;
 
     va_start( args, pszFormat );
+
+    char szFormattedText[8000];  // TODO: Move this off the stack.
+    szFormattedText[0] = '\0';
+
 #if defined(HAVE_VSNPRINTF)
-    bSuccess = vsnprintf( szFormattedText, sizeof(szFormattedText)-1,
-                          pszFormat, args ) < (int) sizeof(szFormattedText)-1;
+    const bool bSuccess =
+        vsnprintf( szFormattedText, sizeof(szFormattedText)-1,
+                   pszFormat, args )
+        < static_cast<int>( sizeof(szFormattedText) - 1 );
 #else
     vsprintf( szFormattedText, pszFormat, args );
-    bSuccess = TRUE;
+    const bool bSuccess = true;
 #endif
     va_end( args );
 
@@ -1633,15 +1637,13 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
 
 {
-    int iCol;
-
 /* -------------------------------------------------------------------- */
 /*      Display schema                                                  */
 /* -------------------------------------------------------------------- */
     if( bShowSchema )
     {
         fprintf( fp, "Column Definitions:\n" );
-        for( iCol = 0; iCol < GetColCount(); iCol++ )
+        for( int iCol = 0; iCol < GetColCount(); iCol++ )
         {
             fprintf( fp, " %2d: %-24s ", iCol, GetColName(iCol) );
             if( GetColPrecision(iCol) > 0
@@ -1668,7 +1670,7 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
     {
         fprintf( fp, "Record %d\n", iRecord++ );
 
-        for( iCol = 0; iCol < GetColCount(); iCol++ )
+        for( int iCol = 0; iCol < GetColCount(); iCol++ )
         {
             fprintf( fp, "  %s: %s\n", GetColName(iCol), GetColData(iCol) );
         }

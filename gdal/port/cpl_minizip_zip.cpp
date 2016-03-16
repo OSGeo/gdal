@@ -322,7 +322,7 @@ static uLong ziplocal_TmzDateToDosDate(const tm_zip *ptm,
 static int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
                             voidpf filestream, int *pi)
 {
-    unsigned char c;
+    unsigned char c = 0;
     int err = (int)ZREAD(*pzlib_filefunc_def,filestream,&c,1);
     if (err==1)
     {
@@ -824,7 +824,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     if ((err==Z_OK) && (password != NULL))
     {
         unsigned char bufHead[RAND_HEAD_LEN];
-        unsigned int sizeHead;
+        unsigned int sizeHead = 0;
         zi->ci.encrypt = 1;
         zi->ci.pcrc_32_tab = get_crc_table();
         /*init_keys(password,zi->ci.keys,zi->ci.pcrc_32_tab);*/
@@ -889,7 +889,7 @@ static int zipFlushWriteBuffer(
     if (zi->ci.encrypt != 0)
     {
 #ifndef NOCRYPT
-        int t;
+        int t = 0;
         for (uInt i=0;i<zi->ci.pos_in_buffered_data;i++)
             zi->ci.buffered_data[i] = zencode(zi->ci.keys, zi->ci.pcrc_32_tab,
                                        zi->ci.buffered_data[i],t);
