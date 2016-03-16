@@ -448,7 +448,7 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 /* -------------------------------------------------------------------- */
     if( nRequiredSize == -1 )
     {
-        int bMemoryError;
+        int bMemoryError = FALSE;
         void* pRet = CPLGetTLSEx( CTLS_RLBUFFERINFO, &bMemoryError );
         if( pRet != NULL )
         {
@@ -461,7 +461,7 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 /* -------------------------------------------------------------------- */
 /*      If the buffer doesn't exist yet, create it.                     */
 /* -------------------------------------------------------------------- */
-    int bMemoryError;
+    int bMemoryError = FALSE;
     GUInt32 *pnAlloc = reinterpret_cast<GUInt32 *>(
         CPLGetTLSEx( CTLS_RLBUFFERINFO, &bMemoryError ) );
     if( bMemoryError )
@@ -990,14 +990,13 @@ static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
 
 GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
 {
-    GIntBig nVal;
     errno = 0;
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    nVal = _atoi64( pszString );
+    GIntBig nVal = _atoi64( pszString );
 # elif HAVE_ATOLL
-    nVal = atoll( pszString );
+    GIntBig nVal = atoll( pszString );
 #else
-    nVal = atol( pszString );
+    GIntBig nVal = atol( pszString );
 #endif
     if( errno == ERANGE
 #if defined(__MINGW32__) || defined(__sun__)
@@ -1614,7 +1613,7 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
     const char *pszResult = NULL;
 
-    int bMemoryError;
+    int bMemoryError = FALSE;
     char **papszTLConfigOptions = reinterpret_cast<char **>(
         CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
     if( papszTLConfigOptions != NULL )
@@ -1650,7 +1649,7 @@ CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
 
     const char *pszResult = NULL;
 
-    int bMemoryError;
+    int bMemoryError = FALSE;
     char **papszTLConfigOptions = reinterpret_cast<char **>(
         CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
     if( papszTLConfigOptions != NULL )
@@ -1745,7 +1744,7 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
     CPLAccessConfigOption(pszKey, FALSE);
 #endif
 
-    int bMemoryError;
+    int bMemoryError = FALSE;
     char **papszTLConfigOptions = reinterpret_cast<char **>(
         CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
     if( bMemoryError )
@@ -1771,7 +1770,7 @@ void CPL_STDCALL CPLFreeConfig()
         CSLDestroy( (char **) papszConfigOptions);
         papszConfigOptions = NULL;
 
-        int bMemoryError;
+        int bMemoryError = FALSE;
         char **papszTLConfigOptions = reinterpret_cast<char **>(
             CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
         if( papszTLConfigOptions != NULL )
@@ -1845,15 +1844,17 @@ static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 double CPLDMSToDec( const char *is )
 
 {
-    int sign;
+    int sign = 0;
 
     /* copy sting into work space */
     while (isspace(static_cast<unsigned char>(sign = *is)))
         ++is;
 
-    int n;
-    char *p, *s, work[64];
-    for( n = sizeof(work), s = work, p = const_cast<char *>( is );
+    char *p = const_cast<char *>( is );
+    char work[64];
+    char *s = work;
+    int n = sizeof(work);
+    for( ;
          isgraph(*p) && --n ; )
         *s++ = *p++;
     *s = '\0';
@@ -1864,9 +1865,9 @@ double CPLDMSToDec( const char *is )
     if (sign == '+' || sign == '-') s++;
     else sign = '+';
 
-    int nl;
-    double v;
-    for (v = 0., nl = 0 ; nl < 3 ; nl = n + 1 ) {
+    int nl = 0;
+    double v = 0.0;
+    for ( ; nl < 3 ; nl = n + 1 ) {
         if (!(isdigit(*s) || *s == '.')) break;
         const double tv = proj_strtod(s, &s);
         if( tv == HUGE_VAL )
@@ -2455,7 +2456,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /* -------------------------------------------------------------------- */
 /*      Copy file over till we run out of stuff.                        */
 /* -------------------------------------------------------------------- */
-    size_t nBytesRead;
+    size_t nBytesRead = 0;
     int nRet = 0;
     do {
         nBytesRead = VSIFReadL( pabyBuffer, 1, nBufferSize, fpOld );

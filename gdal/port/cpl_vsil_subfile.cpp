@@ -153,7 +153,7 @@ vsi_l_offset VSISubFileHandle::Tell()
 size_t VSISubFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    size_t nRet;
+    size_t nRet = 0;
     if (nSubregionSize == 0)
         nRet = VSIFReadL( pBuffer, nSize, nCount, fp );
     else

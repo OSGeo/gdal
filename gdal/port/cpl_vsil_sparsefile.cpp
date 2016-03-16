@@ -179,9 +179,9 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*      Find what region we are in, searching linearly from the         */
 /*      start.                                                          */
 /* -------------------------------------------------------------------- */
-    unsigned int iRegion;
+    unsigned int iRegion = 0;  // Used after for.
 
-    for( iRegion = 0; iRegion < aoRegions.size(); iRegion++ )
+    for( ; iRegion < aoRegions.size(); iRegion++ )
     {
         if( nCurOffset >= aoRegions[iRegion].nDstOffset
             && nCurOffset < aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength )

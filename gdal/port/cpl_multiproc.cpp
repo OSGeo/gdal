@@ -339,14 +339,14 @@ void CPLCleanupMasterMutex()
 static void CPLCleanupTLSList( void **papTLSList )
 
 {
-    int i;
-
-//    printf( "CPLCleanupTLSList(%p)\n", papTLSList );
+#ifdef DEBUG_VERBOSE
+    printf( "CPLCleanupTLSList(%p)\n", papTLSList );
+#endif
 
     if( papTLSList == NULL )
         return;
 
-    for( i = 0; i < CTLS_MAX; i++ )
+    for( int i = 0; i < CTLS_MAX; i++ )
     {
         if( papTLSList[i] != NULL && papTLSList[i+CTLS_MAX] != NULL )
         {
@@ -790,9 +790,8 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
 {
 #ifdef USE_WIN32_MUTEX
     HANDLE hMutex = (HANDLE) hMutexIn;
-    DWORD  hr;
-
-    hr = WaitForSingleObject( hMutex, (int) (dfWaitInSeconds * 1000) );
+    const DWORD hr =
+        WaitForSingleObject( hMutex, (int) (dfWaitInSeconds * 1000) );
 
     return hr != WAIT_TIMEOUT;
 #else
@@ -1096,8 +1095,6 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
-    HANDLE hThread;
-    DWORD  nThreadId;
     CPLStdCallThreadInfo *psInfo;
 
     psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
@@ -1105,8 +1102,9 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     psInfo->pfnMain = pfnMain;
     psInfo->hThread = NULL;
 
-    hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
-                            0, &nThreadId );
+    DWORD nThreadId = 0;
+    HANDLE hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
+                                   0, &nThreadId );
 
     if( hThread == NULL )
         return -1;
@@ -1123,16 +1121,15 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
-    HANDLE hThread;
-    DWORD  nThreadId;
     CPLStdCallThreadInfo *psInfo;
 
     psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
 
-    hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
-                            0, &nThreadId );
+    DWORD nThreadId = 0;
+    HANDLE hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
+                                   0, &nThreadId );
 
     if( hThread == NULL )
         return NULL;
@@ -1165,7 +1162,7 @@ void CPLSleep( double dfWaitInSeconds )
 }
 
 static bool          bTLSKeySetup = false;
-static DWORD         nTLSKey;
+static DWORD nTLSKey = 0;
 
 /************************************************************************/
 /*                           CPLGetTLSList()                            */
@@ -1467,11 +1464,10 @@ CPLMutex *CPLCreateMutexEx(int nOptions)
 
 int CPLAcquireMutex( CPLMutex *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
 {
-    int err;
 
     /* we need to add timeout support */
     MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
-    err =  pthread_mutex_lock( &(psItem->sMutex) );
+    const int err = pthread_mutex_lock( &(psItem->sMutex) );
 
     if( err != 0 )
     {
@@ -1765,7 +1761,7 @@ static void *CPLStdCallThreadJacket( void *pData )
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) pData;
 
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
-    int bMemoryError;
+    int bMemoryError = FALSE;
     CPLGetTLSList(&bMemoryError);
     if( bMemoryError )
         goto error;
@@ -2273,12 +2269,13 @@ CPLLock *CPLCreateLock( CPLLockType eType )
 
 int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 {
-    int ret;
 #ifdef DEBUG_CONTENTION
     GUIntBig nStartTime = 0;
     if( (*ppsLock) && (*ppsLock)->bDebugPerf )
         nStartTime = CPLrdtsc();
 #endif
+    int ret = 0;
+
     switch( eType )
     {
         case LOCK_RECURSIVE_MUTEX:
