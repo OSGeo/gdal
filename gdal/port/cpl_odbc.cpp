@@ -388,7 +388,7 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     if( pszPassword == NULL )
         pszPassword = "";
 
-    bool bFailed = false;
+    int bFailed = FALSE;
     if( strstr(pszDSN,"=") != NULL )
     {
         SQLCHAR szOutConnString[1024];
