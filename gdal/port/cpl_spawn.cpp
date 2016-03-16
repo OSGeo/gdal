@@ -400,7 +400,7 @@ CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_
 err_pipe:
     CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
 err:
-    for(i=0;i<2;i++)
+    for( int i=0; i < 2; i++ )
     {
         if (pipe_in[i] != NULL)
             CloseHandle(pipe_in[i]);
