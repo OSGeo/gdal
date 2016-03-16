@@ -35,11 +35,6 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
- * Revision 1.74 2016-03-15 13:16:37   sandyre
- * added restore option when .shx file is missing
- * (modified SHPOpen(), added SHAPE_RESTORE_SHX config option) 
- * (gdal #5035)
- *
  * Revision 1.73  2012-01-24 22:33:01  fwarmerdam
  * fix memory leak on failure to open .shp (gdal #4410)
  *
@@ -271,8 +266,6 @@
  */
 
 #include "shapefil.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
 
 #include <math.h>
 #include <limits.h>
@@ -504,21 +497,21 @@ SHPOpen( const char * pszLayer, const char * pszAccess )
 /*                                                                      */
 /*      Open the .shp and .shx files based on the basename of the       */
 /*      files or either file name.                                      */
+/*      There are 2 types of SHPOpen() : with .shx restoring code       */
+/*      (SHPOpenLLEx) and normal one.                                   */
 /************************************************************************/
 
 SHPHandle SHPAPI_CALL
 SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
 {
-    char		*pszFullname, *pszBasename;
-    SHPHandle		psSHP;
+    char        *pszFullname, *pszBasename;
+    SHPHandle       psSHP;
 
-    uchar		*pabyBuf;
-    int			i;
-    double		dValue;
+    uchar       *pabyBuf;
+    int         i;
+    double      dValue;
     int         bLazySHXLoading = FALSE;
-    int         bSHXRestoring = CPLTestBoolean(CPLGetConfigOption("SHAPE_RESTORE_SHX", "FALSE"));
-    
     size_t nFullnameLen;
 
 /* -------------------------------------------------------------------- */
@@ -536,7 +529,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Establish the byte order on this machine.			*/
+/*  Establish the byte order on this machine.           */
 /* -------------------------------------------------------------------- */
 #if !defined(bBigEndian)
     i = 1;
@@ -547,7 +540,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 #endif
 
 /* -------------------------------------------------------------------- */
-/*	Initialize the info structure.					*/
+/*  Initialize the info structure.                  */
 /* -------------------------------------------------------------------- */
     psSHP = (SHPHandle) calloc(sizeof(SHPInfo),1);
 
@@ -555,8 +548,8 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     memcpy( &(psSHP->sHooks), psHooks, sizeof(SAHooks) );
 
 /* -------------------------------------------------------------------- */
-/*	Compute the base (layer) name.  If there is any extension	*/
-/*	on the passed in filename we will strip it off.			*/
+/*  Compute the base (layer) name.  If there is any extension   */
+/*  on the passed in filename we will strip it off.         */
 /* -------------------------------------------------------------------- */
     pszBasename = (char *) malloc(strlen(pszLayer)+5);
     strcpy( pszBasename, pszLayer );
@@ -569,8 +562,8 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         pszBasename[i] = '\0';
 
 /* -------------------------------------------------------------------- */
-/*	Open the .shp file.  Note that files pulled from                    */
-/*	a PC to Unix with upper case filenames won't work!                  */
+/*  Open the .shp and .shx files.  Note that files pulled from  */
+/*  a PC to Unix with upper case filenames won't work!      */
 /* -------------------------------------------------------------------- */
     nFullnameLen = strlen(pszBasename) + 5;
     pszFullname = (char *) malloc(nFullnameLen);
@@ -598,110 +591,21 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*  Read the file size from the SHP file.                               */
-/* -------------------------------------------------------------------- */
-    pabyBuf = (uchar *) malloc(100);
-    psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
-    
-    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
-                        + (unsigned int)pabyBuf[25] * 256 * 256
-                        + (unsigned int)pabyBuf[26] * 256
-                        + (unsigned int)pabyBuf[27]);
-    if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
-        psSHP->nFileSize *= 2;
-    else
-        psSHP->nFileSize = 0xFFFFFFFEU;
-    
-/* -------------------------------------------------------------------- */
-/*	Create the .shx file for existing .shp, if SHP_RESTORE_SHX parameter*/
-/*	was passed.                                                         */
-/* -------------------------------------------------------------------- */
-    if( bSHXRestoring && psSHP->fpSHX == NULL )
-    {
-        const char pszSHXAccess[] = "w+b";
-        snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
-        psSHP->fpSHX = psHooks->FOpen( pszFullname, pszSHXAccess );
-        
-        psHooks->FSeek( psSHP->fpSHP, 100, 0 );
-        char *pabySHXContent = (char *) malloc ( psSHP->nFileSize );
-        memcpy( pabySHXContent, pabyBuf, 100 );
-        
-        unsigned int nCurrentSHPOffset = 100;
-        unsigned int nCurrentRecordOffset = 0;
-        size_t nRealSHXContentSize = 100;
-        
-        int niRecord = 0;
-        int nRecordLength = 0;
-        int nRecordOffset = 50;
-        
-        while( nCurrentSHPOffset < psSHP->nFileSize )
-        {
-            if(psSHP->sHooks.FRead( &niRecord, 4, 1, psSHP->fpSHP ) == 1 &&
-               psSHP->sHooks.FRead( &nRecordLength, 4, 1, psSHP->fpSHP ) == 1)
-            {
-                if( !bBigEndian ) SwapWord( 4, &nRecordOffset );
-                memcpy( 100 + pabySHXContent + nCurrentRecordOffset, &nRecordOffset, 4 );
-                memcpy( 100 + pabySHXContent + nCurrentRecordOffset + 4, &nRecordLength, 4 );
-                
-                if ( !bBigEndian ) SwapWord( 4, &nRecordOffset );
-                if ( !bBigEndian ) SwapWord( 4, &nRecordLength );
-                nRecordOffset += nRecordLength + 4;
-                nCurrentRecordOffset += 8;
-                nCurrentSHPOffset += 8 + nRecordLength * 2;
-                
-                psSHP->sHooks.FSeek( psSHP->fpSHP, nCurrentSHPOffset, 0 );
-                nRealSHXContentSize += 8;
-            }
-            else
-            {
-                size_t nMessageLen = strlen( pszBasename )*2+256;
-                char *pszMessage = (char *) malloc( nMessageLen );
-                snprintf( pszMessage, nMessageLen, "Error parsing .shp to restore .shx" );
-                psHooks->Error( pszMessage );
-                free( pszMessage );
-        
-                psHooks->FClose( psSHP->fpSHX );
-                psHooks->FClose( psSHP->fpSHP );
-                
-                free( pabySHXContent );
-                free( psSHP );
-                free( pszBasename );
-                return( NULL );
-            }
-        }
-        
-        nRealSHXContentSize /= 2; // Bytes counted -> WORDs
-        if( !bBigEndian ) SwapWord( 4, &nRealSHXContentSize );
-        memcpy( pabySHXContent+24, &nRealSHXContentSize, 4 );
-        
-        if( !bBigEndian ) SwapWord( 4, &nRealSHXContentSize );
-        nRealSHXContentSize *= 2; // And back
-        psHooks->FWrite( pabySHXContent, nRealSHXContentSize, 1, psSHP->fpSHX );
-        
-        psHooks->FClose( psSHP->fpSHX );
-        
-        free ( pabySHXContent );
-    }
-    
-/* -------------------------------------------------------------------- */
-/*	After .shx was successfully restored, work with it in a classic way.*/
-/* -------------------------------------------------------------------- */
     snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
     psSHP->fpSHX =  psSHP->sHooks.FOpen(pszFullname, pszAccess );
     if( psSHP->fpSHX == NULL )
     {
         snprintf( pszFullname, nFullnameLen, "%s.SHX", pszBasename );
-        psSHP->fpSHX = psSHP->sHooks.FOpen( pszFullname, pszAccess );
+        psSHP->fpSHX = psSHP->sHooks.FOpen(pszFullname, pszAccess );
     }
 
     if( psSHP->fpSHX == NULL )
     {
         size_t nMessageLen = strlen(pszBasename)*2+256;
         char *pszMessage = (char *) malloc(nMessageLen);
-        snprintf( pszMessage, nMessageLen, "Unable to open %s.shx or %s.SHX.\n"
-                                            "Try --config SHAPE_RESTORE_SHX true",
-                                            pszBasename, pszBasename );
+        snprintf( pszMessage, nMessageLen, "Unable to open %s.shx or %s.SHX."
+                  "Try --config SHAPE_RESTORE_SHX true to restore or create it",
+                  pszBasename, pszBasename );
         psHooks->Error( pszMessage );
         free( pszMessage );
 
@@ -714,6 +618,21 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     free( pszFullname );
     free( pszBasename );
+
+/* -------------------------------------------------------------------- */
+/*  Read the file size from the SHP file.               */
+/* -------------------------------------------------------------------- */
+    pabyBuf = (uchar *) malloc(100);
+    psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
+
+    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
+                        + (unsigned int)pabyBuf[25] * 256 * 256
+                        + (unsigned int)pabyBuf[26] * 256
+                        + (unsigned int)pabyBuf[27]);
+    if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
+        psSHP->nFileSize *= 2;
+    else
+        psSHP->nFileSize = 0xFFFFFFFEU;
 
 /* -------------------------------------------------------------------- */
 /*  Read SHX file Header info                                           */
@@ -789,7 +708,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     memcpy( &dValue, pabyBuf+60, 8 );
     psSHP->adBoundsMax[1] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+68 );		/* z */
+    if( bBigEndian ) SwapWord( 8, pabyBuf+68 );     /* z */
     memcpy( &dValue, pabyBuf+68, 8 );
     psSHP->adBoundsMin[2] = dValue;
 
@@ -797,7 +716,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     memcpy( &dValue, pabyBuf+76, 8 );
     psSHP->adBoundsMax[2] = dValue;
 
-    if( bBigEndian ) SwapWord( 8, pabyBuf+84 );		/* z */
+    if( bBigEndian ) SwapWord( 8, pabyBuf+84 );     /* z */
     memcpy( &dValue, pabyBuf+84, 8 );
     psSHP->adBoundsMin[3] = dValue;
 
@@ -808,8 +727,8 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     free( pabyBuf );
 
 /* -------------------------------------------------------------------- */
-/*	Read the .shx file to get the offsets to each record in 	*/
-/*	the .shp file.							*/
+/*  Read the .shx file to get the offsets to each record in     */
+/*  the .shp file.                          */
 /* -------------------------------------------------------------------- */
     psSHP->nMaxRecords = psSHP->nRecords;
 
@@ -879,7 +798,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     for( i = 0; i < psSHP->nRecords; i++ )
     {
-        unsigned int		nOffset, nLength;
+        unsigned int        nOffset, nLength;
 
         memcpy( &nOffset, pabyBuf + i * 8, 4 );
         if( !bBigEndian ) SwapWord( 4, &nOffset );
@@ -914,6 +833,437 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     }
     free( pabyBuf );
 
+    return( psSHP );
+}
+
+SHPHandle SHPAPI_CALL
+SHPOpenLLEx( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
+
+{
+    char        *pszFullname, *pszBasename;
+    SHPHandle       psSHP;
+    
+    uchar       *pabyBuf;
+    int         i;
+    double      dValue;
+    int         bLazySHXLoading = FALSE;
+    
+    size_t nFullnameLen;
+    
+/* -------------------------------------------------------------------- */
+/*      Ensure the access string is one of the legal ones.  We          */
+/*      ensure the result string indicates binary to avoid common       */
+/*      problems on Windows.                                            */
+/* -------------------------------------------------------------------- */
+    if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0
+       || strcmp(pszAccess,"r+") == 0 )
+        pszAccess = "r+b";
+    else
+    {
+        bLazySHXLoading = strchr(pszAccess, 'l') != NULL;
+        pszAccess = "rb";
+    }
+    
+/* -------------------------------------------------------------------- */
+/*  Establish the byte order on this machine.           */
+/* -------------------------------------------------------------------- */
+#if !defined(bBigEndian)
+    i = 1;
+    if( *((uchar *) &i) == 1 )
+        bBigEndian = FALSE;
+    else
+        bBigEndian = TRUE;
+#endif
+    
+/* -------------------------------------------------------------------- */
+/*  Initialize the info structure.                  */
+/* -------------------------------------------------------------------- */
+    psSHP = (SHPHandle) calloc(sizeof(SHPInfo),1);
+    
+    psSHP->bUpdated = FALSE;
+    memcpy( &(psSHP->sHooks), psHooks, sizeof(SAHooks) );
+    
+/* -------------------------------------------------------------------- */
+/*  Compute the base (layer) name.  If there is any extension   */
+/*  on the passed in filename we will strip it off.         */
+/* -------------------------------------------------------------------- */
+    pszBasename = (char *) malloc(strlen(pszLayer)+5);
+    strcpy( pszBasename, pszLayer );
+    for( i = (int)strlen(pszBasename)-1;
+        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
+        && pszBasename[i] != '\\';
+        i-- ) {}
+    
+    if( pszBasename[i] == '.' )
+        pszBasename[i] = '\0';
+    
+/* -------------------------------------------------------------------- */
+/*  Open the .shp file.  Note that files pulled from                    */
+/*  a PC to Unix with upper case filenames won't work!                  */
+/* -------------------------------------------------------------------- */
+    nFullnameLen = strlen(pszBasename) + 5;
+    pszFullname = (char *) malloc(nFullnameLen);
+    snprintf( pszFullname, nFullnameLen, "%s.shp", pszBasename ) ;
+    psSHP->fpSHP = psSHP->sHooks.FOpen(pszFullname, pszAccess );
+    if( psSHP->fpSHP == NULL )
+    {
+        snprintf( pszFullname, nFullnameLen, "%s.SHP", pszBasename );
+        psSHP->fpSHP = psSHP->sHooks.FOpen(pszFullname, pszAccess );
+    }
+    
+    if( psSHP->fpSHP == NULL )
+    {
+        size_t nMessageLen = strlen(pszBasename)*2+256;
+        char *pszMessage = (char *) malloc(nMessageLen);
+        snprintf( pszMessage, nMessageLen, "Unable to open %s.shp or %s.SHP.",
+                 pszBasename, pszBasename );
+        psHooks->Error( pszMessage );
+        free( pszMessage );
+        
+        free( psSHP );
+        free( pszBasename );
+        free( pszFullname );
+        
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*  Read the file size from the SHP file.                               */
+/* -------------------------------------------------------------------- */
+    pabyBuf = (uchar *) malloc(100);
+    psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
+    
+    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
+                        + (unsigned int)pabyBuf[25] * 256 * 256
+                        + (unsigned int)pabyBuf[26] * 256
+                        + (unsigned int)pabyBuf[27]);
+    if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
+        psSHP->nFileSize *= 2;
+    else
+        psSHP->nFileSize = 0xFFFFFFFEU;
+    
+/* -------------------------------------------------------------------- */
+/*  Create the .shx file for existing .shp, if SHP_RESTORE_SHX parameter*/
+/*  was passed.                                                         */
+/* -------------------------------------------------------------------- */
+    if( psSHP->fpSHX == NULL )
+    {
+        const char pszSHXAccess[] = "w+b";
+        snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
+        psSHP->fpSHX = psHooks->FOpen( pszFullname, pszSHXAccess );
+        
+        if(psSHP->fpSHX == NULL)
+        {
+            size_t nMessageLen = strlen( pszBasename ) * 2 + 256;
+            char *pszMessage = (char *) malloc( nMessageLen );
+            snprintf( pszMessage, nMessageLen, "Error opening file %s.shx for writing",
+                     pszBasename );
+            psHooks->Error( pszMessage );
+            free( pszMessage );
+            
+            psHooks->FClose( psSHP->fpSHX );
+            psHooks->FClose( psSHP->fpSHP );
+            
+            free( psSHP );
+            free( pszBasename );
+            free( pszFullname );
+            
+            return( NULL );
+        }
+        
+        psHooks->FSeek( psSHP->fpSHP, 100, 0 );
+        char *pabySHXHeader = (char *) malloc ( 100 );
+        memcpy( pabySHXHeader, pabyBuf, 100 );
+        psHooks->FWrite( pabySHXHeader, 100, 1, psSHP->fpSHX );
+        
+        unsigned int nCurrentRecordOffset = 0;
+        unsigned int nCurrentSHPOffset = 100;
+        size_t nRealSHXContentSize = 100;
+        
+        char *pabyReadedRecord = (char *) malloc ( 8 );
+        int niRecord = 0;
+        int nRecordLength = 0;
+        int nRecordOffset = 50;
+        
+        while( nCurrentSHPOffset < psSHP->nFileSize )
+        {
+            if(psSHP->sHooks.FRead( &niRecord, 4, 1, psSHP->fpSHP ) == 1 &&
+               psSHP->sHooks.FRead( &nRecordLength, 4, 1, psSHP->fpSHP ) == 1)
+            {
+                if( !bBigEndian ) SwapWord( 4, &nRecordOffset );
+                memcpy( pabyReadedRecord, &nRecordOffset, 4 );
+                memcpy( pabyReadedRecord + 4, &nRecordLength, 4 );
+                
+                psHooks->FWrite( pabyReadedRecord, 8, 1, psSHP->fpSHX );
+                
+                if ( !bBigEndian ) SwapWord( 4, &nRecordOffset );
+                if ( !bBigEndian ) SwapWord( 4, &nRecordLength );
+                nRecordOffset += nRecordLength + 4;
+                nCurrentRecordOffset += 8;
+                nCurrentSHPOffset += 8 + nRecordLength * 2;
+                
+                psSHP->sHooks.FSeek( psSHP->fpSHP, nCurrentSHPOffset, 0 );
+                nRealSHXContentSize += 8;
+            }
+            else
+            {
+                size_t nMessageLen = strlen( pszBasename ) * 2 + 256;
+                char *pszMessage = (char *) malloc( nMessageLen );
+                snprintf( pszMessage, nMessageLen, "Error parsing .shp to restore .shx" );
+                psHooks->Error( pszMessage );
+                free( pszMessage );
+                
+                psHooks->FClose( psSHP->fpSHX );
+                psHooks->FClose( psSHP->fpSHP );
+                
+                free( pabySHXHeader );
+                free( psSHP );
+                free( pszBasename );
+                free( pszFullname );
+                
+                return( NULL );
+            }
+        }
+
+        nRealSHXContentSize /= 2; // Bytes counted -> WORDs
+        if( !bBigEndian ) SwapWord( 4, &nRealSHXContentSize );
+        psHooks->FSeek( psSHP->fpSHX, 24, 0 );
+        psHooks->FWrite( &nRealSHXContentSize, 4, 1, psSHP->fpSHX );
+
+        psHooks->FClose( psSHP->fpSHX );
+
+        free ( pabySHXHeader );
+    }
+
+/* -------------------------------------------------------------------- */
+/*  After .shx was successfully restored, work with it in a classic way.*/
+/* -------------------------------------------------------------------- */
+    snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
+    psSHP->fpSHX =  psSHP->sHooks.FOpen(pszFullname, pszAccess );
+    if( psSHP->fpSHX == NULL )
+    {
+        snprintf( pszFullname, nFullnameLen, "%s.SHX", pszBasename );
+        psSHP->fpSHX = psSHP->sHooks.FOpen( pszFullname, pszAccess );
+    }
+    
+    if( psSHP->fpSHX == NULL )
+    {
+        size_t nMessageLen = strlen(pszBasename)*2+256;
+        char *pszMessage = (char *) malloc(nMessageLen);
+        snprintf( pszMessage, nMessageLen, "Unable to open %s.shx or %s.SHX.\n",
+                 pszBasename, pszBasename );
+        psHooks->Error( pszMessage );
+        free( pszMessage );
+        
+        psSHP->sHooks.FClose( psSHP->fpSHP );
+        free( psSHP );
+        free( pszBasename );
+        free( pszFullname );
+        return( NULL );
+    }
+    
+    free( pszFullname );
+    free( pszBasename );
+    
+/* -------------------------------------------------------------------- */
+/*  Read SHX file Header info                                           */
+/* -------------------------------------------------------------------- */
+    if( psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHX ) != 1
+       || pabyBuf[0] != 0
+       || pabyBuf[1] != 0
+       || pabyBuf[2] != 0x27
+       || (pabyBuf[3] != 0x0a && pabyBuf[3] != 0x0d) )
+    {
+        psSHP->sHooks.Error( ".shx file is unreadable, or corrupt." );
+        psSHP->sHooks.FClose( psSHP->fpSHP );
+        psSHP->sHooks.FClose( psSHP->fpSHX );
+        free( psSHP );
+        
+        return( NULL );
+    }
+    
+    psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256
+    + pabyBuf[25] * 256 * 256 + (pabyBuf[24] & 0x7F) * 256 * 256 * 256;
+    psSHP->nRecords = (psSHP->nRecords - 50) / 4;
+    
+    psSHP->nShapeType = pabyBuf[32];
+    
+    if( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 )
+    {
+        char szError[200];
+        
+        snprintf( szError, sizeof(szError),
+                 "Record count in .shp header is %d, which seems\n"
+                 "unreasonable.  Assuming header is corrupt.",
+                 psSHP->nRecords );
+        psSHP->sHooks.Error( szError );
+        psSHP->sHooks.FClose( psSHP->fpSHP );
+        psSHP->sHooks.FClose( psSHP->fpSHX );
+        free( psSHP );
+        free(pabyBuf);
+        
+        return( NULL );
+    }
+    
+    /* If a lot of records are advertized, check that the file is big enough */
+    /* to hold them */
+    if( psSHP->nRecords >= 1024 * 1024 )
+    {
+        SAOffset nFileSize;
+        psSHP->sHooks.FSeek( psSHP->fpSHX, 0, 2 );
+        nFileSize = psSHP->sHooks.FTell( psSHP->fpSHX );
+        if( nFileSize > 100 &&
+           nFileSize/2 < (SAOffset)(psSHP->nRecords * 4 + 50) )
+        {
+            psSHP->nRecords = (int)((nFileSize - 100) / 8);
+        }
+        psSHP->sHooks.FSeek( psSHP->fpSHX, 100, 0 );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Read the bounds.                                                */
+/* -------------------------------------------------------------------- */
+    if( bBigEndian ) SwapWord( 8, pabyBuf+36 );
+    memcpy( &dValue, pabyBuf+36, 8 );
+    psSHP->adBoundsMin[0] = dValue;
+    
+    if( bBigEndian ) SwapWord( 8, pabyBuf+44 );
+    memcpy( &dValue, pabyBuf+44, 8 );
+    psSHP->adBoundsMin[1] = dValue;
+    
+    if( bBigEndian ) SwapWord( 8, pabyBuf+52 );
+    memcpy( &dValue, pabyBuf+52, 8 );
+    psSHP->adBoundsMax[0] = dValue;
+    
+    if( bBigEndian ) SwapWord( 8, pabyBuf+60 );
+    memcpy( &dValue, pabyBuf+60, 8 );
+    psSHP->adBoundsMax[1] = dValue;
+    
+    if( bBigEndian ) SwapWord( 8, pabyBuf+68 );     /* z */
+    memcpy( &dValue, pabyBuf+68, 8 );
+    psSHP->adBoundsMin[2] = dValue;
+    
+    if( bBigEndian ) SwapWord( 8, pabyBuf+76 );
+    memcpy( &dValue, pabyBuf+76, 8 );
+    psSHP->adBoundsMax[2] = dValue;
+    
+    if( bBigEndian ) SwapWord( 8, pabyBuf+84 );     /* z */
+    memcpy( &dValue, pabyBuf+84, 8 );
+    psSHP->adBoundsMin[3] = dValue;
+    
+    if( bBigEndian ) SwapWord( 8, pabyBuf+92 );
+    memcpy( &dValue, pabyBuf+92, 8 );
+    psSHP->adBoundsMax[3] = dValue;
+    
+    free( pabyBuf );
+    
+/* -------------------------------------------------------------------- */
+/*  Read the .shx file to get the offsets to each record in     */
+/*  the .shp file.                          */
+/* -------------------------------------------------------------------- */
+    psSHP->nMaxRecords = psSHP->nRecords;
+    
+    psSHP->panRecOffset = (unsigned int *)
+    malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+    psSHP->panRecSize = (unsigned int *)
+    malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+    if( bLazySHXLoading )
+        pabyBuf = NULL;
+    else
+        pabyBuf = (uchar *) malloc(8 * MAX(1,psSHP->nRecords) );
+    
+    if (psSHP->panRecOffset == NULL ||
+        psSHP->panRecSize == NULL ||
+        (!bLazySHXLoading && pabyBuf == NULL))
+    {
+        char szError[200];
+        
+        snprintf( szError, sizeof(szError),
+                 "Not enough memory to allocate requested memory (nRecords=%d).\n"
+                 "Probably broken SHP file",
+                 psSHP->nRecords );
+        psSHP->sHooks.Error( szError );
+        psSHP->sHooks.FClose( psSHP->fpSHP );
+        psSHP->sHooks.FClose( psSHP->fpSHX );
+        if (psSHP->panRecOffset) free( psSHP->panRecOffset );
+        if (psSHP->panRecSize) free( psSHP->panRecSize );
+        if (pabyBuf) free( pabyBuf );
+        free( psSHP );
+        return( NULL );
+    }
+    
+    if( bLazySHXLoading )
+    {
+        memset(psSHP->panRecOffset, 0, sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+        memset(psSHP->panRecSize, 0, sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+        return( psSHP );
+    }
+    
+    if( (int) psSHP->sHooks.FRead( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )
+       != psSHP->nRecords )
+    {
+        char szError[200];
+        
+        snprintf( szError, sizeof(szError),
+                 "Failed to read all values for %d records in .shx file.",
+                 psSHP->nRecords );
+        psSHP->sHooks.Error( szError );
+        
+        /* SHX is short or unreadable for some reason. */
+        psSHP->sHooks.FClose( psSHP->fpSHP );
+        psSHP->sHooks.FClose( psSHP->fpSHX );
+        free( psSHP->panRecOffset );
+        free( psSHP->panRecSize );
+        free( pabyBuf );
+        free( psSHP );
+        
+        return( NULL );
+    }
+    
+    /* In read-only mode, we can close the SHX now */
+    if (strcmp(pszAccess, "rb") == 0)
+    {
+        psSHP->sHooks.FClose( psSHP->fpSHX );
+        psSHP->fpSHX = NULL;
+    }
+    
+    for( i = 0; i < psSHP->nRecords; i++ )
+    {
+        unsigned int        nOffset, nLength;
+        
+        memcpy( &nOffset, pabyBuf + i * 8, 4 );
+        if( !bBigEndian ) SwapWord( 4, &nOffset );
+        
+        memcpy( &nLength, pabyBuf + i * 8 + 4, 4 );
+        if( !bBigEndian ) SwapWord( 4, &nLength );
+        
+        if( nOffset > (unsigned int)INT_MAX )
+        {
+            char str[128];
+            snprintf( str, sizeof(str),
+                     "Invalid offset for entity %d", i);
+            
+            psSHP->sHooks.Error( str );
+            SHPClose(psSHP);
+            free( pabyBuf );
+            return NULL;
+        }
+        if( nLength > (unsigned int)(INT_MAX / 2 - 4) )
+        {
+            char str[128];
+            snprintf( str, sizeof(str),
+                     "Invalid length for entity %d", i);
+            
+            psSHP->sHooks.Error( str );
+            SHPClose(psSHP);
+            free( pabyBuf );
+            return NULL;
+        }
+        psSHP->panRecOffset[i] = nOffset*2;
+        psSHP->panRecSize[i] = nLength*2;
+    }
+    free( pabyBuf );
+    
     return( psSHP );
 }
 

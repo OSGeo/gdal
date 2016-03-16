@@ -4486,7 +4486,7 @@ def ogr_shape_98():
     if gdaltest.shape_ds is None:
         return 'skip'
     
-    gdal.SetConfigOption('SHAPE_RESTORE_SHX', 'TRUE')
+    gdal.SetConfigOption( 'SHAPE_RESTORE_SHX', 'TRUE' )
     shutil.copy( 'data/can_caps.shp', 'tmp/can_caps.shp' )
 
     shp_ds = ogr.Open( 'tmp/can_caps.shp', update = 1 )
@@ -4501,7 +4501,9 @@ def ogr_shape_98():
     
     os.remove( 'tmp/can_caps.shp' )
     os.remove( 'tmp/can_caps.shx' )
-    
+
+    gdal.SetConfigOption( 'SHAPE_RESTORE_SHX', None )
+
     return 'success'
 
 def ogr_shape_cleanup():
