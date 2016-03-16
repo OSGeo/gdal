@@ -271,6 +271,8 @@
  */
 
 #include "shapefil.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
 
 #include <math.h>
 #include <limits.h>
@@ -522,8 +524,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*      Ensure the access string is one of the legal ones.  We          */
 /*      ensure the result string indicates binary to avoid common       */
-/*      problems on Windows. Also, if SHP_RESTORE_SHX option was passed,*/
-/*      set access string to "wb+"                                      */
+/*      problems on Windows.                                            */
 /* -------------------------------------------------------------------- */
     if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0
         || strcmp(pszAccess,"r+") == 0 )
@@ -568,8 +569,8 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         pszBasename[i] = '\0';
 
 /* -------------------------------------------------------------------- */
-/*	Open the .shp and .shx files.  Note that files pulled from	*/
-/*	a PC to Unix with upper case filenames won't work!		*/
+/*	Open the .shp file.  Note that files pulled from                    */
+/*	a PC to Unix with upper case filenames won't work!                  */
 /* -------------------------------------------------------------------- */
     nFullnameLen = strlen(pszBasename) + 5;
     pszFullname = (char *) malloc(nFullnameLen);
@@ -598,7 +599,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     }
 
 /* -------------------------------------------------------------------- */
-/*  Read the file size from the SHP file.				*/
+/*  Read the file size from the SHP file.                               */
 /* -------------------------------------------------------------------- */
     pabyBuf = (uchar *) malloc(100);
     psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
@@ -622,9 +623,9 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
         psSHP->fpSHX = psHooks->FOpen( pszFullname, pszSHXAccess );
         
-        psHooks->FSeek( psSHP->fpSHP, 100, 0);
+        psHooks->FSeek( psSHP->fpSHP, 100, 0 );
         char *pabySHXContent = (char *) malloc ( psSHP->nFileSize );
-        memcpy(pabySHXContent, pabyBuf, 100);
+        memcpy( pabySHXContent, pabyBuf, 100 );
         
         unsigned int nCurrentSHPOffset = 100;
         unsigned int nCurrentRecordOffset = 0;
@@ -654,10 +655,9 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
             }
             else
             {
-                size_t nMessageLen = strlen(pszBasename)*2+256;
-                char *pszMessage = (char *) malloc(nMessageLen);
-                snprintf( pszMessage, nMessageLen, "Error parsing .shp to restore .shx",
-                         pszBasename, pszBasename );
+                size_t nMessageLen = strlen( pszBasename )*2+256;
+                char *pszMessage = (char *) malloc( nMessageLen );
+                snprintf( pszMessage, nMessageLen, "Error parsing .shp to restore .shx" );
                 psHooks->Error( pszMessage );
                 free( pszMessage );
         
@@ -673,7 +673,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         
         nRealSHXContentSize /= 2; // Bytes counted -> WORDs
         if( !bBigEndian ) SwapWord( 4, &nRealSHXContentSize );
-        memcpy(pabySHXContent+24, &nRealSHXContentSize, 4);
+        memcpy( pabySHXContent+24, &nRealSHXContentSize, 4 );
         
         if( !bBigEndian ) SwapWord( 4, &nRealSHXContentSize );
         nRealSHXContentSize *= 2; // And back
