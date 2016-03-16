@@ -1289,13 +1289,17 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 
 {
     va_list args;
-    char    szFormattedText[8000];
 
     va_start( args, pszFormat );
+
+    char szFormattedText[8000];  // TODO: Move this off the stack.
+    szFormattedText[0] = '\0';
+
 #if defined(HAVE_VSNPRINTF)
     const bool bSuccess =
-        0 < vsnprintf( szFormattedText, sizeof(szFormattedText)-1,
-                       pszFormat, args ) < (int) sizeof(szFormattedText)-1;
+        vsnprintf( szFormattedText, sizeof(szFormattedText)-1,
+                   pszFormat, args )
+        < static_cast<int>( sizeof(szFormattedText) - 1 );
 #else
     vsprintf( szFormattedText, pszFormat, args );
     const bool bSuccess = true;
