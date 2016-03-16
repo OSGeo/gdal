@@ -940,49 +940,46 @@ sub SetField {
     my $self = shift;
     my $field = shift;
     $field = $self->_GetFieldIndex($field);
-    if (@_ == 0 or !defined($_[0])) {
+    my $arg = $_[0];
+    if (@_ == 0 or !defined($arg)) {
         _UnsetField($self, $field);
         return;
     }
-    my $list = ref($_[0]) ? $_[0] : [@_];
-    my $type = GetFieldType($self, $field);
-    if ($type == $Geo::OGR::OFTInteger or
-        $type == $Geo::OGR::OFTInteger64 or
-        $type == $Geo::OGR::OFTReal or
-        $type == $Geo::OGR::OFTString or
-        $type == $Geo::OGR::OFTBinary)
-    {
-        _SetField($self, $field, $_[0]);
-    }
-    elsif ($type == $Geo::OGR::OFTIntegerList) {
-        SetFieldIntegerList($self, $field, $list);
-    }
-    elsif ($type == $Geo::OGR::OFTInteger64List) {
-        SetFieldInteger64List($self, $field, $list);
-    }
-    elsif ($type == $Geo::OGR::OFTRealList) {
-        SetFieldDoubleList($self, $field, $list);
-    }
-    elsif ($type == $Geo::OGR::OFTStringList) {
-        SetFieldStringList($self, $field, $list);
-    }
-    elsif ($type == $Geo::OGR::OFTDate) {
-        # year, month, day, hour, minute, second, timezone
-        for my $i (0..6) {
-            $list->[$i] //= 0;
+    $arg = [@_] if @_ > 1;
+    if (ref($arg)) {
+        my $type = $self->GetFieldType($field);
+        if ($type == $Geo::OGR::OFTIntegerList) {
+            SetFieldIntegerList($self, $field, $arg);
         }
-        _SetField($self, $field, @$list[0..6]);
-    }
-    elsif ($type == $Geo::OGR::OFTTime) {
-        $list->[3] //= 0;
-        _SetField($self, $field, 0, 0, 0, @$list[0..3]);
-    }
-    elsif ($type == $Geo::OGR::OFTDateTime) {
-        $list->[6] //= 0;
-        _SetField($self, $field, @$list[0..6]);
-    }
-    else {
-        Geo::GDAL::error("Perl bindings do not support field type '$Geo::OGR::FieldDefn::TYPE_INT2STRING{$type}'.");
+        elsif ($type == $Geo::OGR::OFTInteger64List) {
+            SetFieldInteger64List($self, $field, $arg);
+        }
+        elsif ($type == $Geo::OGR::OFTRealList) {
+            SetFieldDoubleList($self, $field, $arg);
+        }
+        elsif ($type == $Geo::OGR::OFTStringList) {
+            SetFieldStringList($self, $field, $arg);
+        }
+        elsif ($type == $Geo::OGR::OFTDate) {
+            # year, month, day, hour, minute, second, timezone
+            for my $i (0..6) {
+                $arg->[$i] //= 0;
+            }
+            _SetField($self, $field, @$arg[0..6]);
+        }
+        elsif ($type == $Geo::OGR::OFTTime) {
+            $arg->[3] //= 0;
+            _SetField($self, $field, 0, 0, 0, @$arg[0..3]);
+        }
+        elsif ($type == $Geo::OGR::OFTDateTime) {
+            $arg->[6] //= 0;
+            _SetField($self, $field, @$arg[0..6]);
+        }
+        else {
+            _SetField($self, $field, @$arg);
+        }
+    } else {
+        _SetField($self, $field, $arg);
     }
 }
 
@@ -990,7 +987,7 @@ sub Field {
     my $self = shift;
     my $field = shift;
     $self->SetField($field, @_) if @_;
-    $self->GetField($field);
+    $self->GetField($field) if defined wantarray;
 }
 
 sub _GetGeomFieldIndex {
