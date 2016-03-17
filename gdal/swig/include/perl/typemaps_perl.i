@@ -256,6 +256,21 @@ typedef unsigned long      GUIntBig;
     }
     %}
 
+%fragment("CreateArrayFromGIntBigArray","header") %{
+#define LENGTH_OF_GIntBig_AS_STRING 30
+    static SV *
+        CreateArrayFromGIntBigArray( GIntBig *first, unsigned int size ) {
+        AV *av = (AV*)sv_2mortal((SV*)newAV());
+        for( unsigned int i=0; i<size; i++ ) {
+            char s[LENGTH_OF_GIntBig_AS_STRING];
+            snprintf(s, LENGTH_OF_GIntBig_AS_STRING-1, CPL_FRMT_GIB, *first);
+            av_store(av,i,newSVpv(s, 0));
+            ++first;
+        }
+        return sv_2mortal(newRV((SV*)av));
+    }
+    %}
+
 %fragment("CreateArrayFromGUIntBigArray","header") %{
 #define LENGTH_OF_GUIntBig_AS_STRING 30
     static SV *
@@ -309,6 +324,21 @@ typedef unsigned long      GUIntBig;
 {
     /* %typemap(argout) (int *nLen, const int **pList) */
     $result = CreateArrayFromIntArray( *($2), *($1) );
+    argvi++;
+}
+
+/* typemaps for (int *nLen, const GIntBig **pList) */
+
+%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
+{
+    /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) */
+    $1 = &nLen;
+    $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromGIntBigArray") (int *nLen, const GIntBig **pList)
+{
+    /* %typemap(argout) (int *nLen, const GIntBig **pList) */
+    $result = CreateArrayFromGIntBigArray( *($2), *($1) );
     argvi++;
 }
 
@@ -478,6 +508,10 @@ typedef unsigned long      GUIntBig;
 
 /* typemaps for (int nList, int* pList) */
 
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, int* pList {
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, int* pList */
+   $1 = 1;
+}
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, int* pList) */
@@ -500,8 +534,40 @@ typedef unsigned long      GUIntBig;
     CPLFree((void*) $2);
 }
 
+/* typemaps for (int nList, GIntBig* pList) */
+
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GIntBig* pList {
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GIntBig* pList */
+   $1 = 1;
+}
+%typemap(in,numinputs=1) (int nList, GIntBig* pList)
+{
+    /* %typemap(in,numinputs=1) (int nList, GIntBig* pList) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+        do_confess(NEED_ARRAY_REF, 1);
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    $2 = (GIntBig*)CPLMalloc($1*sizeof(GIntBig));
+    if ($2) {
+        for( int i = 0; i<$1; i++ ) {
+            SV **sv = av_fetch(av, i, 0);
+            $2[i] =  strtoull(SvPV_nolen(*sv), NULL, 10);
+        }
+    } else
+        SWIG_fail;
+}
+%typemap(freearg) (int nList, GIntBig* pList)
+{
+    /* %typemap(freearg) (int nList, GIntBig* pList) */
+    CPLFree((void*) $2);
+}
+
 /* typemaps for (int nList, GUIntBig* pList) */
 
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GUIntBig* pList {
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nList, GUIntBig* pList */
+   $1 = 1;
+}
 %typemap(in,numinputs=1) (int nList, GUIntBig* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList) */
@@ -866,6 +932,11 @@ typedef unsigned long      GUIntBig;
 /*
  * Typemap char **options <-> AV
  */
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) char **options
+{
+    /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) char **options */
+    $1 = 1;
+}
 %typemap(in, fragment="sv_to_utf8_string") char **options
 {
     /* %typemap(in) char **options */
@@ -1502,4 +1573,17 @@ IF_UNDEF_NULL(const char *, target_key)
 {
     /* %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects) */
     CPLFree($2);
+}
+
+%typemap(in,numinputs=1) (int nBytes, GByte* pabyBuf)
+{
+    /* %typemap(in,numinputs=1) (int nBytes, GByte* pabyBuf) */
+    $1 = SvCUR($input);
+    $2 = (GByte*)SvPV_nolen($input);
+}
+
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nBytes, GByte* pabyBuf
+{
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) int nBytes, GByte* pabyBuf */
+   $1 = 1;
 }

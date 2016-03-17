@@ -881,7 +881,6 @@ sub _GetFieldIndex {
 
 sub GetField {
     my($self, $field) = @_;
-    $field = $self->_GetFieldIndex($field);
     return unless IsFieldSet($self, $field);
     my $type = GetFieldType($self, $field);
     if ($type == $Geo::OGR::OFTInteger) {
@@ -913,7 +912,7 @@ sub GetField {
         return wantarray ? @$ret : $ret;
     }
     if ($type == $Geo::OGR::OFTBinary) {
-        return GetFieldAsString($self, $field);
+        return GetFieldAsBinary($self, $field);
     }
     if ($type == $Geo::OGR::OFTDate) {
         my @ret = GetFieldAsDateTime($self, $field);
@@ -925,29 +924,28 @@ sub GetField {
         return wantarray ? @ret[3..6] : [@ret[3..6]];
     }
     if ($type == $Geo::OGR::OFTDateTime) {
-        return GetFieldAsDateTime($self, $field);
+        my @ret = GetFieldAsDateTime($self, $field);
+        return wantarray ? @ret : [@ret];
     }
     Geo::GDAL::error("Perl bindings do not support field type '$Geo::OGR::FieldDefn::TYPE_INT2STRING{$type}'.");
 }
 
 sub UnsetField {
     my($self, $field) = @_;
-    $field = $self->_GetFieldIndex($field);
     _UnsetField($self, $field);
 }
 
 sub SetField {
     my $self = shift;
     my $field = shift;
-    $field = $self->_GetFieldIndex($field);
     my $arg = $_[0];
     if (@_ == 0 or !defined($arg)) {
         _UnsetField($self, $field);
         return;
     }
     $arg = [@_] if @_ > 1;
+    my $type = $self->GetFieldType($field);
     if (ref($arg)) {
-        my $type = $self->GetFieldType($field);
         if ($type == $Geo::OGR::OFTIntegerList) {
             SetFieldIntegerList($self, $field, $arg);
         }
@@ -961,11 +959,7 @@ sub SetField {
             SetFieldStringList($self, $field, $arg);
         }
         elsif ($type == $Geo::OGR::OFTDate) {
-            # year, month, day, hour, minute, second, timezone
-            for my $i (0..6) {
-                $arg->[$i] //= 0;
-            }
-            _SetField($self, $field, @$arg[0..6]);
+            _SetField($self, $field, @$arg[0..2], 0, 0, 0, 0);
         }
         elsif ($type == $Geo::OGR::OFTTime) {
             $arg->[3] //= 0;
@@ -979,7 +973,12 @@ sub SetField {
             _SetField($self, $field, @$arg);
         }
     } else {
-        _SetField($self, $field, $arg);
+        if ($type == $Geo::OGR::OFTBinary) {
+            #$arg = unpack('H*', $arg); # remove when SetFieldBinary is available
+            $self->SetFieldBinary($field, $arg);
+        } else {
+            _SetField($self, $field, $arg);
+        }
     }
 }
 
