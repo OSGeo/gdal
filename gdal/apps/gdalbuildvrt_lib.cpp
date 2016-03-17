@@ -1557,7 +1557,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
                             return NULL;
                         }
                     }
-                    VSIFClose(f);
+                    VSIFCloseL(f);
                 }
             }
             else
