@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import os, sys
 
 sys.path.append( '../pymod' )
 
@@ -101,11 +101,11 @@ def mk_src_feature():
     src_feature.SetField( 'field_real', 18.4 )
     src_feature.SetField( 'field_string', 'abc def' )
     src_feature.SetFieldBinaryFromHexString( 'field_binary', '0123465789ABCDEF' )
-    src_feature.SetField( 'field_date', '2011/11/11' )
+    src_feature.SetField( 'field_date', '2011/10/11' )
     src_feature.SetField( 'field_time', '14:10:35' )
-    src_feature.SetField( 'field_datetime', 2011,11,11,14,10,35.123,0)
+    src_feature.SetField( 'field_datetime', 2011,10,11,14,10,35.123,0)
     got_vals = src_feature.GetFieldAsDateTime(feat_def.GetFieldIndex('field_datetime'))
-    expected_vals = [2011, 11, 11, 14, 10, 35.123, 0]
+    expected_vals = [2011, 10, 11, 14, 10, 35.123, 0]
     for i in range(len(expected_vals)):
         if abs(got_vals[i]-expected_vals[i]) > 1e-4:
             gdaltest.post_reason('fail')
@@ -307,13 +307,13 @@ def ogr_feature_cp_string():
     if not check( dst_feature, 'field_binary', '0123465789ABCDEF' ):
         return 'fail'
 
-    if not check( dst_feature, 'field_date', '2011/11/11' ):
+    if not check( dst_feature, 'field_date', '2011/10/11' ):
         return 'fail'
 
     if not check( dst_feature, 'field_time', '14:10:35' ):
         return 'fail'
 
-    if not check( dst_feature, 'field_datetime', '2011/11/11 14:10:35.123' ):
+    if not check( dst_feature, 'field_datetime', '2011/10/11 14:10:35.123' ):
         return 'fail'
 
     if not check( dst_feature, 'field_integerlist', '(3:10,20,30)' ):
@@ -327,6 +327,20 @@ def ogr_feature_cp_string():
 
     if not check( dst_feature, 'field_stringlist', '(2:abc,def)' ):
         return 'fail'
+
+    os.environ['OGR_DATE_FORMAT'] = '%Y-%m-%d'
+    os.environ['OGR_DATETIME_FORMAT'] = '%Y-%m-%d %H:%M:%S'
+    dst_feature = mk_dst_feature( src_feature, ogr.OFTString )
+    dst_feature.SetFrom( src_feature )
+
+    if not check( dst_feature, 'field_date', '2011-10-11' ):
+        return 'fail'
+
+    if not check( dst_feature, 'field_datetime', '2011-10-11 14:10:35.123' ):
+        return 'fail'
+
+    os.environ['OGR_DATE_FORMAT'] = ''
+    os.environ['OGR_DATETIME_FORMAT'] = ''
 
     return 'success'
 
@@ -409,13 +423,13 @@ def ogr_feature_cp_date():
     if not check( dst_feature, 'field_binary', None ):
         return 'fail'
 
-    if not check( dst_feature, 'field_date', '2011/11/11' ):
+    if not check( dst_feature, 'field_date', '2011/10/11' ):
         return 'fail'
 
     if not check( dst_feature, 'field_time', '0000/00/00' ):
         return 'fail'
 
-    if not check( dst_feature, 'field_datetime', '2011/11/11' ):
+    if not check( dst_feature, 'field_datetime', '2011/10/11' ):
         return 'fail'
 
     if not check( dst_feature, 'field_integerlist', None ):
@@ -503,13 +517,13 @@ def ogr_feature_cp_datetime():
     if not check( dst_feature, 'field_binary', None ):
         return 'fail'
 
-    if not check( dst_feature, 'field_date', '2011/11/11 00:00:00' ):
+    if not check( dst_feature, 'field_date', '2011/10/11 00:00:00' ):
         return 'fail'
 
     if not check( dst_feature, 'field_time', '0000/00/00 14:10:35' ):
         return 'fail'
 
-    if not check( dst_feature, 'field_datetime', '2011/11/11 14:10:35.123' ):
+    if not check( dst_feature, 'field_datetime', '2011/10/11 14:10:35.123' ):
         return 'fail'
 
     if not check( dst_feature, 'field_integerlist', None ):
@@ -693,13 +707,13 @@ def ogr_feature_cp_stringlist():
     if not check( dst_feature, 'field_binary', ['0123465789ABCDEF'] ):
         return 'fail'
 
-    if not check( dst_feature, 'field_date', ['2011/11/11'] ):
+    if not check( dst_feature, 'field_date', ['2011/10/11'] ):
         return 'fail'
 
     if not check( dst_feature, 'field_time', ['14:10:35'] ):
         return 'fail'
 
-    if not check( dst_feature, 'field_datetime', ['2011/11/11 14:10:35.123'] ):
+    if not check( dst_feature, 'field_datetime', ['2011/10/11 14:10:35.123'] ):
         return 'fail'
 
     if not check( dst_feature, 'field_integerlist', ['10', '20', '30'] ):

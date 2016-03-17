@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrutils.cpp 33631 2016-03-04 06:28:09Z goatbar $
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Utility functions for OGR classes, including some related to
@@ -41,7 +41,7 @@
 # include "ogrsf_frmts.h"
 #endif /* OGR_ENABLED */
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id: ogrutils.cpp 33631 2016-03-04 06:28:09Z goatbar $");
 
 /************************************************************************/
 /*                        OGRFormatDouble()                             */
@@ -913,14 +913,14 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
  *   YYYY-MM-DD HH:MM:SS[.sss]+nn
  *   or YYYY-MM-DDTHH:MM:SS[.sss]Z (ISO 8601 format)
  *
- * The seconds may also have a decimal portion (which is ignored).  And
- * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported.
- * The date may also be in YYYY/MM/DD format.  If the year is less than 100
- * and greater than 30 a "1900" century value will be set.  If it is less than
- * 30 and greater than -1 then a "2000" century value will be set.  In
- * the future this function may be generalized, and additional control
- * provided through nOptions, but an nOptions value of "0" should always do
- * a reasonable default form of processing.
+ * The seconds may also have a decimal portion. Plain dates
+ * (YYYY-MM-DD) and plain times (HH:MM:SS[.sss]) are also supported.
+ * The date may also be in YYYY/MM/DD format. If the year is less than
+ * 100 and greater than 30 a "1900" century value will be set. If it
+ * is less than 30 and greater than -1 then a "2000" century value
+ * will be set. In the future this function may be generalized, and
+ * additional control provided through nOptions, but an nOptions value
+ * of "0" should always do a reasonable default form of processing.
  *
  * The value of psField will be indeterminate if the function fails (returns
  * FALSE).
@@ -936,6 +936,7 @@ int OGRParseDate( const char *pszInput,
                   OGRField *psField,
                   CPL_UNUSED int nOptions )
 {
+    const char *pszDateInput = pszInput;
     bool bGotSomething = false;
 
     psField->Date.Year = 0;
@@ -971,24 +972,24 @@ int OGRParseDate( const char *pszInput,
         while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != '-' && *pszInput != '/' )
-            return FALSE;
+            goto fail;
         else
             pszInput++;
 
         psField->Date.Month = (GByte)atoi(pszInput);
         if( psField->Date.Month > 12 )
-            return FALSE;
+            goto fail;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != '-' && *pszInput != '/' )
-            return FALSE;
+            goto fail;
         else
             pszInput++;
 
         psField->Date.Day = (GByte)atoi(pszInput);
         if( psField->Date.Day > 31 )
-            return FALSE;
+            goto fail;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
@@ -1010,18 +1011,18 @@ int OGRParseDate( const char *pszInput,
     {
         psField->Date.Hour = (GByte)atoi(pszInput);
         if( psField->Date.Hour > 23 )
-            return FALSE;
+            goto fail;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != ':' )
-            return FALSE;
+            goto fail;
         else
             pszInput++;
 
         psField->Date.Minute = (GByte)atoi(pszInput);
         if( psField->Date.Minute > 59 )
-            return FALSE;
+            goto fail;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
@@ -1030,8 +1031,8 @@ int OGRParseDate( const char *pszInput,
             pszInput++;
 
             psField->Date.Second = (float)CPLAtof(pszInput);
-            if( psField->Date.Second > 61 )
-                return FALSE;
+            if( psField->Date.Second >= 61 ) // 60 is ok to allow leap seconds
+                goto fail;
 
             while( (*pszInput >= '0' && *pszInput <= '9')
                 || *pszInput == '.' )
@@ -1051,7 +1052,7 @@ int OGRParseDate( const char *pszInput,
 
     // No date or time!
     if( !bGotSomething )
-        return FALSE;
+        goto fail;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a timezone?                                          */
@@ -1099,6 +1100,9 @@ int OGRParseDate( const char *pszInput,
     }
 
     return TRUE;
+fail:
+    CPLError(CE_Failure, CPLE_NotSupported, "Unsupported timestamp: %s", pszDateInput);
+    return FALSE;
 }
 
 
