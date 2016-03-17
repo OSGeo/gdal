@@ -1672,6 +1672,7 @@ public:
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 
+#if defined(SWIGPERL)
   void SetFieldIntegerList(const char* name, int nList, int *pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
@@ -1679,6 +1680,7 @@ public:
       else
 	  OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
+#endif
 
 #if defined(SWIGPYTHON) || defined(SWIGPERL)
   void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
