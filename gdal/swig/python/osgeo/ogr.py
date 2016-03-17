@@ -3672,7 +3672,6 @@ class Feature(_object):
     def SetFieldIntegerList(self, *args):
         """
         SetFieldIntegerList(Feature self, int id, int nList)
-        SetFieldIntegerList(Feature self, char const * name, int nList)
 
         void
         OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,

@@ -4274,15 +4274,8 @@ SWIGINTERN void OGRFeatureShadow_SetField__SWIG_5(OGRFeatureShadow *self,char co
 				 hour, minute, second,
 				 tzflag);
   }
-SWIGINTERN void OGRFeatureShadow_SetFieldIntegerList__SWIG_0(OGRFeatureShadow *self,int id,int nList,int *pList){
+SWIGINTERN void OGRFeatureShadow_SetFieldIntegerList(OGRFeatureShadow *self,int id,int nList,int *pList){
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
-  }
-SWIGINTERN void OGRFeatureShadow_SetFieldIntegerList__SWIG_1(OGRFeatureShadow *self,char const *name,int nList,int *pList){
-      int id = OGR_F_GetFieldIndex(self, name);
-      if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-	  OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 SWIGINTERN void OGRFeatureShadow_SetFieldInteger64List(OGRFeatureShadow *self,int id,int nList,GIntBig *pList){
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
@@ -15737,7 +15730,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Feature_SetFieldIntegerList__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Feature_SetFieldIntegerList(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -15790,7 +15783,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldIntegerList__SWIG_0(PyObject *SWIGUNU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldIntegerList__SWIG_0(arg1,arg2,arg3,arg4);
+    OGRFeatureShadow_SetFieldIntegerList(arg1,arg2,arg3,arg4);
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15817,173 +15810,6 @@ fail:
     }
   }
   return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Feature_SetFieldIntegerList__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  int arg3 ;
-  int *arg4 = (int *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OOO:Feature_SetFieldIntegerList",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_SetFieldIntegerList" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_SetFieldIntegerList" "', argument " "2"" of type '" "char const *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  {
-    /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-    /* check if is List */
-    if ( !PySequence_Check(obj2) ) {
-      PyErr_SetString(PyExc_TypeError, "not a sequence");
-      SWIG_fail;
-    }
-    Py_ssize_t size = PySequence_Size(obj2);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    arg3 = (int)size;
-    arg4 = (int*) malloc(arg3*sizeof(int));
-    for( int i = 0; i<arg3; i++ ) {
-      PyObject *o = PySequence_GetItem(obj2,i);
-      if ( !PyArg_Parse(o,"i",&arg4[i]) ) {
-        PyErr_SetString(PyExc_TypeError, "not an integer");
-        Py_DECREF(o);
-        SWIG_fail;
-      }
-      Py_DECREF(o);
-    }
-  }
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    OGRFeatureShadow_SetFieldIntegerList__SWIG_1(arg1,(char const *)arg2,arg3,arg4);
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_Py_Void();
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  {
-    /* %typemap(freearg) (int nList, int* pList) */
-    if (arg4) {
-      free((void*) arg4);
-    }
-  }
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  {
-    /* %typemap(freearg) (int nList, int* pList) */
-    if (arg4) {
-      free((void*) arg4);
-    }
-  }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Feature_SetFieldIntegerList(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[4];
-  int ii;
-  
-  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
-  argc = (int)PyObject_Length(args);
-  for (ii = 0; (ii < 3) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_OGRFeatureShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      {
-        int res = SWIG_AsVal_int(argv[1], NULL);
-        _v = SWIG_CheckState(res);
-      }
-      if (_v) {
-        {
-          int res = SWIG_AsVal_int(argv[2], NULL);
-          _v = SWIG_CheckState(res);
-        }
-        if (_v) {
-          if (argc <= 3) {
-            return _wrap_Feature_SetFieldIntegerList__SWIG_0(self, args);
-          }
-          void *vptr = 0;
-          int res = SWIG_ConvertPtr(argv[3], &vptr, SWIGTYPE_p_int, 0);
-          _v = SWIG_CheckState(res);
-          if (_v) {
-            return _wrap_Feature_SetFieldIntegerList__SWIG_0(self, args);
-          }
-        }
-      }
-    }
-  }
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_OGRFeatureShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        {
-          int res = SWIG_AsVal_int(argv[2], NULL);
-          _v = SWIG_CheckState(res);
-        }
-        if (_v) {
-          if (argc <= 3) {
-            return _wrap_Feature_SetFieldIntegerList__SWIG_1(self, args);
-          }
-          void *vptr = 0;
-          int res = SWIG_ConvertPtr(argv[3], &vptr, SWIGTYPE_p_int, 0);
-          _v = SWIG_CheckState(res);
-          if (_v) {
-            return _wrap_Feature_SetFieldIntegerList__SWIG_1(self, args);
-          }
-        }
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'Feature_SetFieldIntegerList'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    OGRFeatureShadow::SetFieldIntegerList(int,int,int *)\n"
-    "    OGRFeatureShadow::SetFieldIntegerList(char const *,int,int *)\n");
-  return 0;
 }
 
 
@@ -29141,8 +28967,7 @@ static PyMethodDef SwigMethods[] = {
 		"    float second, int tzflag)\n"
 		""},
 	 { (char *)"Feature_SetFieldIntegerList", _wrap_Feature_SetFieldIntegerList, METH_VARARGS, (char *)"\n"
-		"SetFieldIntegerList(int id, int nList)\n"
-		"Feature_SetFieldIntegerList(Feature self, char const * name, int nList)\n"
+		"Feature_SetFieldIntegerList(Feature self, int id, int nList)\n"
 		"\n"
 		"void\n"
 		"OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,\n"
