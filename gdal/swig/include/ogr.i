@@ -209,6 +209,8 @@ using namespace std;
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
+#define FIELD_NAME_ERROR_TMPL "No such field: '%s'"
+
 typedef void GDALMajorObjectShadow;
 
 #ifdef DEBUG
@@ -1222,7 +1224,7 @@ public:
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
         return OGRERR_FAILURE;
       }
       else
@@ -1240,7 +1242,7 @@ public:
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
         return OGRERR_FAILURE;
       }
       else
@@ -1258,7 +1260,7 @@ public:
     int i = OGR_F_GetGeomFieldIndex(self, name);
     if (i == -1)
     {
-      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       return NULL;
     }
     else
@@ -1288,7 +1290,7 @@ public:
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
       return NULL;
@@ -1307,7 +1309,7 @@ public:
   OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(const char* name) {
       int i = OGR_F_GetGeomFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
       return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
       return NULL;
@@ -1320,16 +1322,14 @@ public:
     return (const char *) OGR_F_GetFieldAsString(self, id);
   }
 
-#ifndef SWIGPERL
   const char* GetFieldAsString(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return (const char *) OGR_F_GetFieldAsString(self, i);
       return NULL;
   }
-#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsInteger -------------------- */
@@ -1338,16 +1338,14 @@ public:
     return OGR_F_GetFieldAsInteger(self, id);
   }
 
-#ifndef SWIGPERL
   int GetFieldAsInteger(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return OGR_F_GetFieldAsInteger(self, i);
       return 0;
   }
-#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsInteger64 ------------------ */
@@ -1356,16 +1354,14 @@ public:
     return OGR_F_GetFieldAsInteger64(self, id);
   }
 
-#ifndef SWIGPERL
   GIntBig GetFieldAsInteger64(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
       return OGR_F_GetFieldAsInteger64(self, i);
       return 0;
   }
-#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsDouble --------------------- */
@@ -1374,16 +1370,14 @@ public:
     return OGR_F_GetFieldAsDouble(self, id);
   }
 
-#ifndef SWIGPERL
   double GetFieldAsDouble(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return OGR_F_GetFieldAsDouble(self, i);
       return 0;
   }
-#endif
   /* ------------------------------------------- */
 
   %apply (int *OUTPUT) {(int *)};
@@ -1392,6 +1386,17 @@ public:
 			  int *pnHour, int *pnMinute, float *pfSecond,
 			  int *pnTZFlag) {
       OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
+			       pnHour, pnMinute, pfSecond,
+			       pnTZFlag);
+  }
+  void GetFieldAsDateTime(const char* name, int *pnYear, int *pnMonth, int *pnDay,
+			  int *pnHour, int *pnMinute, float *pfSecond,
+			  int *pnTZFlag) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
 			       pnHour, pnMinute, pfSecond,
 			       pnTZFlag);
   }
@@ -1415,12 +1420,30 @@ public:
   void GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
       *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
   }
+
+  void GetFieldAsIntegerList(const char* name, int *nLen, const int **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
+  }
 #endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
   void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
       *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
+
+#if defined(SWIGPERL)
+  void GetFieldAsInteger64List(const char* name, int *nLen, const GIntBig **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
+  }
+#endif
 #endif
 
 #if defined(SWIGJAVA)
@@ -1440,6 +1463,14 @@ public:
   void GetFieldAsDoubleList(int id, int *nLen, const double **pList) {
       *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
   }
+
+  void GetFieldAsDoubleList(const char* name, int *nLen, const double **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
+  }
 #endif
 
 #if defined(SWIGJAVA)
@@ -1458,6 +1489,14 @@ public:
   void GetFieldAsStringList(int id, char ***pList) {
       *pList = OGR_F_GetFieldAsStringList(self, id);
   }
+
+  void GetFieldAsStringList(const char* name, char ***pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          *pList = OGR_F_GetFieldAsStringList(self, id);
+  }
 #endif
 
 #ifndef SWIGCSHARP
@@ -1474,7 +1513,7 @@ public:
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
         return NULL;
       }
       else
@@ -1494,12 +1533,11 @@ public:
     return OGRERR_NONE;
   }
 
-#ifndef SWIGPERL
   OGRErr GetFieldAsBinary(const char* name, int *nLen, char **pBuf) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
       {
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
         return OGRERR_FAILURE;
       }
       else
@@ -1510,8 +1548,6 @@ public:
         return OGRERR_NONE;
       }
   }
-#endif /* SWIGPERL */
-
 #endif /* SWIGJAVA */
 
 #endif /* SWIGCSHARP */
@@ -1524,7 +1560,7 @@ public:
   bool IsFieldSet(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  return (OGR_F_IsFieldSet(self, i) > 0);
       return false;
@@ -1555,15 +1591,13 @@ public:
     OGR_F_UnsetField(self, id);
   }
 
-#ifndef SWIGPERL
   void UnsetField(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_UnsetField(self, i);
   }
-#endif
 
   /* ---- SetField ----------------------------- */
 #ifndef SWIGCSHARP
@@ -1575,15 +1609,13 @@ public:
     OGR_F_SetFieldString(self, id, value);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, const char* value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_SetFieldString(self, i, value);
   }
-#endif
   %clear (const char* value );
 
   void SetFieldInteger64(int id, GIntBig value) {
@@ -1595,30 +1627,26 @@ public:
     OGR_F_SetFieldInteger(self, id, value);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, int value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_SetFieldInteger(self, i, value);
   }
-#endif /* SWIGPERL */
 #endif /* SWIGPYTHON */
 
   void SetField(int id, double value) {
     OGR_F_SetFieldDouble(self, id, value);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, double value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_SetFieldDouble(self, i, value);
   }
-#endif
 
   void SetField( int id, int year, int month, int day,
                              int hour, int minute, float second,
@@ -1628,39 +1656,89 @@ public:
                              tzflag);
   }
 
-#ifndef SWIGPERL
   void SetField(const char* name, int year, int month, int day,
                              int hour, int minute, float second,
                              int tzflag ) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
 	  OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
 				 hour, minute, second,
 				 tzflag);
   }
-#endif
 
   void SetFieldIntegerList(int id, int nList, int *pList) {
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 
-#if defined(SWIGPYTHON)
+  void SetFieldIntegerList(const char* name, int nList, int *pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  OGR_F_SetFieldIntegerList(self, id, nList, pList);
+  }
+
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
   void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
+
+#if defined(SWIGPERL)
+  void SetFieldInteger64List(const char* name, int nList, GIntBig *pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  OGR_F_SetFieldInteger64List(self, id, nList, pList);
+  }
+#endif
 #endif
 
   void SetFieldDoubleList(int id, int nList, double *pList) {
       OGR_F_SetFieldDoubleList(self, id, nList, pList);
   }
 
+#if defined(SWIGPERL)
+  void SetFieldDoubleList(const char* name, int nList, double *pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  OGR_F_SetFieldDoubleList(self, id, nList, pList);
+  }
+#endif
+
 %apply (char **options) {char **pList};
   void SetFieldStringList(int id, char **pList) {
       OGR_F_SetFieldStringList(self, id, pList);
   }
+
+#if defined(SWIGPERL)
+  void SetFieldStringList(const char* name, char **pList) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  OGR_F_SetFieldStringList(self, id, pList);
+  }
+#endif
 %clear char**pList;
+
+#if defined(SWIGPERL)
+  void SetFieldBinary(int i, int nBytes, GByte* pabyBuf) {
+      OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+  }
+
+  void SetFieldBinary(const char* name, int nBytes, GByte* pabyBuf) {
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+  }
+#endif
 
   void SetFieldBinaryFromHexString(int id, const char* pszValue)
   {
@@ -1674,7 +1752,7 @@ public:
   {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
       {
         int nBytes;
@@ -1727,7 +1805,7 @@ public:
   OGRFieldType GetFieldType(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1) {
-          CPLError(CE_Failure, 1, "No such field: '%s'", name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
           return (OGRFieldType)0;
       } else
           return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( self, i ) );

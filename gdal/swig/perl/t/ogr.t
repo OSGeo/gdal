@@ -110,59 +110,6 @@ use vars qw/%test_driver $loaded $verbose @types %pack_types @fails @tested_driv
 }
 
 {
-    # test list valued fields
-    my $d = Geo::OGR::FeatureDefn->new(
-        Fields=>[
-            { Name => 'ilist',
-              Type => 'IntegerList',
-            },
-            { Name => 'rlist',
-              Type => 'RealList',
-            },
-            { Name => 'slist',
-              Type => 'StringList',
-            },
-            { Name => 'date',
-              Type => 'Date',
-            },
-            { Name => 'time',
-              Type => 'Time',
-            },
-            { Name => 'datetime',
-              Type => 'DateTime',
-            },
-        ]
-        );
-    my $f = Geo::OGR::Feature->new($d);
-    #use Data::Dumper;
-    #print Dumper {$f->Schema};
-    ok($f->Schema->{Fields}->[5]->{Name} eq 'datetime', "Name in field in schema");
-    $f->Row( ilist => [1,2,3],
-	     rlist => [1.1,2.2,3.3],
-	     slist => ['a','b','c'],
-	     date => [2008,3,23],
-	     time => [12,55,15],
-	     datetime => [2008,3,23,12,55,20],
-	     );
-    my @test;
-    @test = $f->GetField('ilist');
-    ok(is_deeply(\@test, [1,2,3]), 'integer list');
-    @test = $f->GetField('rlist');
-    for (@test) {
-        $_ = sprintf("%.1f", $_);
-    }
-    ok(is_deeply(\@test, [1.1,2.2,3.3]), 'double list');
-    @test = $f->GetField('slist');
-    ok(is_deeply(\@test, ['a','b','c']), 'string list');
-    @test = $f->GetField('date');
-    ok(is_deeply(\@test, [2008,3,23]), 'date');
-    @test = $f->GetField('time');
-    ok(is_deeply(\@test, [12,55,15,0]), 'time');
-    @test = $f->Field('datetime');
-    ok(is_deeply(\@test, [2008,3,23,12,55,20,0]), 'datetime');
-}
-
-{
     my $g2;
     {
 	my $d = Geo::OGR::FeatureDefn->new(Fields=>[Geo::OGR::FieldDefn->new(Name => 'Foo', Index => 1)]);

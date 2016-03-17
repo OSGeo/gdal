@@ -516,6 +516,9 @@
 # @param schema as in GetSchema().
 # @return a new Geo::OGR::Feature object
 
+## @method Geo::OGR::Layer Layer()
+# @return the layer to which this feature belongs to or undef.
+
 ## @method $DumpReadable()
 # Write the contents of this feature to stdout.
 
@@ -543,9 +546,9 @@
 # Get and/or set the data of the feature. The key of the (key,value)
 # pairs of the row is the field name. Special field names FID and
 # Geometry are used for feature id and (single) geometry
-# respectively. The geometry is set and get using the
+# respectively. The geometry/ies is/are set and get using the
 # Geo::OGR::Feature::Geometry method. Field values are set using the
-# Geo::OGR::Feature::SetField method.
+# Geo::OGR::Feature::Field method.
 # @param row [optional] feature data in a hash.
 # @return a reference to feature data in a hash. Spatial fields are
 # returned as Geo::OGR::Geometry objects.
@@ -600,12 +603,14 @@
 ## @ignore GetFieldAsString
 ## @ignore GetFieldAsInteger
 ## @ignore GetFieldAsDouble
+## @ignore GetFieldAsBinary
 ## @ignore GetFieldAsDateTime
 ## @ignore GetFieldAsInteger64
 ## @ignore GetFieldAsDoubleList
 ## @ignore GetFieldAsIntegerList
 ## @ignore GetFieldAsStringList
 
+## @ignore SetFieldBinaryFromHexString
 ## @ignore SetFieldInteger64
 ## @ignore SetFieldDoubleList
 ## @ignore SetFieldIntegerList
@@ -829,6 +834,7 @@
 ## @sub list Types
 # Field types supported by GDAL. Current list is
 # +list Geo::OGR OFT
+# (However, WideString is not supported.)
 
 ## @sub list JustifyValues
 # Justify values supported by GDAL. Current list is
