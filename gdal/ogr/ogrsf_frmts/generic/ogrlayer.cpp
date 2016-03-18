@@ -3877,51 +3877,32 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
             continue;
         }
 
-        OGRGeometry *geom = NULL; // this will be the geometry of the result feature
+        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
         pLayerMethod->ResetReading();
-        // incrementally add area from y to geom
+        // incrementally erase y from geom
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
-            if (!geom) {
-                geom = y_geom->clone();
-            } else {
-                OGRGeometry *geom_new = geom->Union(y_geom);
+            OGRGeometry *geom_new = geom->Difference(y_geom);
+            if (geom_new) {
                 delete geom;
                 geom = geom_new;
+            } else if (!bSkipFailures) {
+                delete y;
+                delete x;
+                goto done;
             }
             delete y;
         }
 
-        // possibly add a new feature with area x minus sum of y
-        OGRFeature *z = NULL;
-        if (geom) {
-            OGRGeometry* x_geom_diff = x_geom->Difference(geom);
-            if( x_geom_diff != NULL && !x_geom_diff->IsEmpty() )
-            {
-                z = new OGRFeature(poDefnResult);
-                z->SetFieldsFrom(x, mapInput);
-                if( bPromoteToMulti )
-                    x_geom_diff = promote_to_multi(x_geom_diff);
-                z->SetGeometryDirectly(x_geom_diff);
-            }
-            else
-                delete x_geom_diff;
-            delete geom;
-        }
-        else
-        {
-            z = new OGRFeature(poDefnResult);
+        // add a new feature if there is remaining area
+        if (!geom->IsEmpty()) {
+            OGRFeature *z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapInput);
-            OGRGeometry* x_geom_diff = x_geom->clone();
             if( bPromoteToMulti )
-                x_geom_diff = promote_to_multi(x_geom_diff);
-            z->SetGeometryDirectly(x_geom_diff);
-        }
-        delete x;
-        if (z) {
-            if (z->GetGeometryRef() != NULL && !z->GetGeometryRef()->IsEmpty())
-                ret = pLayerResult->CreateFeature(z);
+                geom = promote_to_multi(geom);
+            z->SetGeometryDirectly(geom);
+            ret = pLayerResult->CreateFeature(z);
             delete z;
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
@@ -3932,6 +3913,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
                 }
             }
         }
+        delete x;
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
