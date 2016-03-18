@@ -3887,10 +3887,6 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
             if (geom_new) {
                 delete geom;
                 geom = geom_new;
-            } else if (!bSkipFailures) {
-                delete y;
-                delete x;
-                goto done;
             }
             delete y;
         }
