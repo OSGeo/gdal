@@ -30,9 +30,9 @@
 
 #include <vector>
 
+#include "gdal_priv.h"  // Must be included first for mingw VSIStatBufL.
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
-#include "gdal_priv.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
