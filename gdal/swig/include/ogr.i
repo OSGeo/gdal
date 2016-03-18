@@ -209,7 +209,8 @@ using namespace std;
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
-#define FIELD_NAME_ERROR_TMPL "No such field: '%s'"
+#define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
+#define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
 
 typedef void GDALMajorObjectShadow;
 
@@ -1224,11 +1225,11 @@ public:
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-        return OGRERR_FAILURE;
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return OGRERR_FAILURE;
       }
       else
-        return OGR_F_SetGeomField(self, iField, geom);
+          return OGR_F_SetGeomField(self, iField, geom);
   }
 
 /* The feature takes over ownership of the geometry. */
@@ -1242,11 +1243,11 @@ public:
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-        return OGRERR_FAILURE;
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return OGRERR_FAILURE;
       }
       else
-        return OGR_F_SetGeomFieldDirectly(self, iField, geom);
+          return OGR_F_SetGeomFieldDirectly(self, iField, geom);
   }
 %clear OGRGeometryShadow *geom;
 
@@ -1257,14 +1258,14 @@ public:
 
   /* Feature owns its geometry */
   OGRGeometryShadow *GetGeomFieldRef(const char* name) {
-    int i = OGR_F_GetGeomFieldIndex(self, name);
-    if (i == -1)
-    {
-      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      return NULL;
-    }
-    else
-      return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, i);
+      int i = OGR_F_GetGeomFieldIndex(self, name);
+      if (i == -1)
+      {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return NULL;
+      }
+      else
+          return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, i);
   }
 
   %newobject Clone;
@@ -1290,9 +1291,9 @@ public:
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+          return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
       return NULL;
   }
   /* ------------------------------------------- */
@@ -1303,15 +1304,15 @@ public:
 
   /* ---- GetGeomFieldDefnRef --------------------- */
   OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(int id) {
-    return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
+      return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
   }
 
   OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(const char* name) {
       int i = OGR_F_GetGeomFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-      return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
+          return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
       return NULL;
   }
   /* ------------------------------------------- */
@@ -1357,9 +1358,9 @@ public:
   GIntBig GetFieldAsInteger64(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-      return OGR_F_GetFieldAsInteger64(self, i);
+          return OGR_F_GetFieldAsInteger64(self, i);
       return 0;
   }
   /* ------------------------------------------- */
@@ -1373,9 +1374,9 @@ public:
   double GetFieldAsDouble(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  return OGR_F_GetFieldAsDouble(self, i);
+          return OGR_F_GetFieldAsDouble(self, i);
       return 0;
   }
   /* ------------------------------------------- */
@@ -1424,7 +1425,7 @@ public:
   void GetFieldAsIntegerList(const char* name, int *nLen, const int **pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
   }
@@ -1439,7 +1440,7 @@ public:
   void GetFieldAsInteger64List(const char* name, int *nLen, const GIntBig **pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
@@ -1467,7 +1468,7 @@ public:
   void GetFieldAsDoubleList(const char* name, int *nLen, const double **pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
   }
@@ -1493,7 +1494,7 @@ public:
   void GetFieldAsStringList(const char* name, char ***pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           *pList = OGR_F_GetFieldAsStringList(self, id);
   }
@@ -1567,12 +1568,38 @@ public:
   }
   /* ------------------------------------------- */
 
+#ifdef SWIGPERL
+  int GetFieldIndex(int i) {
+      if (i < 0 || i >= OGR_F_GetFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      else
+          return i;
+  }
+#endif
+
   int GetFieldIndex(const char* name) {
-      return OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          return i;
   }
 
+#ifdef SWIGPERL
+  int GetGeomFieldIndex(int i) {
+      if (i < 0 || i >= OGR_F_GetGeomFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      else
+          return i;
+  }
+#endif
+
   int GetGeomFieldIndex(const char* name) {
-      return OGR_F_GetGeomFieldIndex(self, name);
+      int i = OGR_F_GetGeomFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          return OGR_F_GetGeomFieldIndex(self, name);
   }
 
   GIntBig GetFID() {
@@ -1594,9 +1621,9 @@ public:
   void UnsetField(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_UnsetField(self, i);
+          OGR_F_UnsetField(self, i);
   }
 
   /* ---- SetField ----------------------------- */
@@ -1612,9 +1639,9 @@ public:
   void SetField(const char* name, const char* value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_SetFieldString(self, i, value);
+          OGR_F_SetFieldString(self, i, value);
   }
   %clear (const char* value );
 
@@ -1676,9 +1703,9 @@ public:
   void SetFieldIntegerList(const char* name, int nList, int *pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_SetFieldIntegerList(self, id, nList, pList);
+       	  OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 #endif
 
@@ -1691,9 +1718,9 @@ public:
   void SetFieldInteger64List(const char* name, int nList, GIntBig *pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_SetFieldInteger64List(self, id, nList, pList);
+          OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
 #endif
 #endif
@@ -1706,9 +1733,9 @@ public:
   void SetFieldDoubleList(const char* name, int nList, double *pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_SetFieldDoubleList(self, id, nList, pList);
+          OGR_F_SetFieldDoubleList(self, id, nList, pList);
   }
 #endif
 
@@ -1721,9 +1748,9 @@ public:
   void SetFieldStringList(const char* name, char **pList) {
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_SetFieldStringList(self, id, pList);
+          OGR_F_SetFieldStringList(self, id, pList);
   }
 #endif
 %clear char**pList;
@@ -1754,13 +1781,13 @@ public:
   {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
       {
-        int nBytes;
-        GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
-        OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
-        CPLFree(pabyBuf);
+          int nBytes;
+          GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
+          OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+          CPLFree(pabyBuf);
       }
   }
 
@@ -1945,6 +1972,15 @@ public:
     return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn(self, i);
   }
 
+#ifdef SWIGPERL
+  int GetFieldIndex(int i) {
+      if (i < 0 || i >= OGR_FD_GetFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      else
+          return i;
+  }
+#endif
+
   int GetFieldIndex(const char* name) {
       return OGR_FD_GetFieldIndex(self, name);
   }
@@ -1964,6 +2000,24 @@ public:
   OGRGeomFieldDefnShadow* GetGeomFieldDefn(int i){
     return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, i);
   }
+
+#ifdef SWIGPERL
+  OGRGeomFieldDefnShadow* GetGeomFieldDefn(const char* name) {
+      int iField = OGR_FD_GetGeomFieldIndex(self, name);
+      if (iField == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);    
+      else
+          return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, iField);
+      return NULL;
+  }
+
+  int GetGeomFieldIndex(int i) {
+      if (i < 0 || i >= OGR_FD_GetGeomFieldCount(self))
+          CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
+      else
+          return i;
+  }
+#endif
 
   int GetGeomFieldIndex(const char* name) {
       return OGR_FD_GetGeomFieldIndex(self, name);
