@@ -539,10 +539,10 @@ sub new {
     my $self = Geo::OGRc::new_FeatureDefn($schema{Name});
     bless $self, $pkg;
     my $gt = $schema{GeometryType};
-    if ($fields) {
-        $self->DeleteGeomFieldDefn(0); # either default behavior or argument specified
-    } else {
-        $self->GeometryType($schema{GeometryType}) if exists $schema{GeometryType};
+    if ($gt) {
+        $self->GeometryType($gt);
+    } elsif ($fields) {
+        $self->DeleteGeomFieldDefn(0);
     }
     $self->StyleIgnored($schema{StyleIgnored}) if exists $schema{StyleIgnored};
     for my $fd (@{$fields}) {
@@ -557,6 +557,7 @@ sub new {
         if (blessed($d) and $d->isa('Geo::OGR::FieldDefn')) {
             AddFieldDefn($self, $d);
         } elsif (blessed($d) and $d->isa('Geo::OGR::GeomFieldDefn')) {
+            Geo::GDAL::error("Do not mix GeometryType and geometry fields in Fields.") if $gt;
             AddGeomFieldDefn($self, $d);
         } else {
             Geo::GDAL::error("Item in field list does not define a field.");
@@ -720,7 +721,7 @@ sub Layer {
 sub FETCH {
     my($self, $index) = @_;
     my $i;
-    eval {$i = $self->_GetFieldIndex($index)};
+    eval {$i = $self->GetFieldIndex($index)};
     return $self->GetField($i) unless $@;
     Geo::GDAL::error("It is not safe to retrieve geometries from a feature this way.");
 }
@@ -729,9 +730,9 @@ sub STORE {
     my $self = shift;
     my $index = shift;
     my $i;
-    eval {$i = $self->_GetFieldIndex($index)};
+    eval {$i = $self->GetFieldIndex($index)};
     $self->SetField($i, @_) unless $@;
-    $i = $self->_GetGeomFieldIndex($index);
+    $i = $self->GetGeomFieldIndex($index);
     $self->Geometry($i, @_);
 }
 
@@ -867,18 +868,6 @@ sub GetDefn {
 *GetFieldNames = *Geo::OGR::Layer::GetFieldNames;
 *GetFieldDefn = *Geo::OGR::Layer::GetFieldDefn;
 
-sub _GetFieldIndex {
-    my($self, $field) = @_;
-    if ($field =~ /^\d+$/) {
-        return $field if $field >= 0 and $field < $self->GetFieldCount;
-    } else {
-        for my $i (0..$self->GetFieldCount-1) {
-            return $i if $self->GetFieldDefnRef($i)->Name eq $field;
-        }
-    }
-    Geo::GDAL::error(2, $field, 'Field');
-}
-
 sub GetField {
     my($self, $field) = @_;
     return unless IsFieldSet($self, $field);
@@ -989,33 +978,17 @@ sub Field {
     $self->GetField($field) if defined wantarray;
 }
 
-sub _GetGeomFieldIndex {
-    my($self, $field) = @_;
-    if (not defined $field) {
-        return 0 if $self->GetGeomFieldCount > 0;
-    } if ($field =~ /^\d+$/) {
-        return $field if $field >= 0 and $field < $self->GetGeomFieldCount;
-    } else {
-        for my $i (0..$self->GetGeomFieldCount-1) {
-            return $i if $self->GetGeomFieldDefn($i)->Name eq $field;
-        }
-        return 0 if $self->GetGeomFieldCount > 0 and $field eq 'Geometry';
-    }
-    Geo::GDAL::error(2, $field, 'Field');
-}
-
 sub Geometry {
     my $self = shift;
-    my $field = (ref($_[0]) eq '' or (@_ > 2 and @_ % 2 == 1)) ? shift : undef;
-    $field = $self->_GetGeomFieldIndex($field);
-    if (@_) {
+    my $field = ((@_ > 0 and ref($_[0]) eq '') or (@_ > 2 and @_ % 2 == 1)) ? shift : 0;
+    my $geometry;
+    if (@_ and @_ % 2 == 0) {
+        %$geometry = @_;
+    } else {
+        $geometry = shift;
+    }
+    if ($geometry) {
         my $type = $self->GetDefn->GetGeomFieldDefn($field)->Type;
-        my $geometry;
-        if (@_ == 1) {
-            $geometry = $_[0];
-        } elsif (@_ and @_ % 2 == 0) {
-            %$geometry = @_;
-        }
         if (blessed($geometry) and $geometry->isa('Geo::OGR::Geometry')) {
             my $gtype = $geometry->GeometryType;
             Geo::GDAL::error("The type of the inserted geometry ('$gtype') is not the same as the type of the field ('$type').")
@@ -1037,11 +1010,11 @@ sub Geometry {
             };
             confess Geo::GDAL->last_error if $@;
         } else {
-            Geo::GDAL::error("'@_' does not define a geometry.");
+            Geo::GDAL::error("Usage: \$feature->Geometry([field],[geometry])");
         }
     }
     return unless defined wantarray;
-    my $geometry = $self->GetGeomFieldRef($field);
+    $geometry = $self->GetGeomFieldRef($field);
     return unless $geometry;
     $GEOMETRIES{tied(%$geometry)} = $self;
     return $geometry;

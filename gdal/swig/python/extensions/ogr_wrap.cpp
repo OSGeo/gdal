@@ -3073,7 +3073,8 @@ using namespace std;
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
-#define FIELD_NAME_ERROR_TMPL "No such field: '%s'"
+#define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
+#define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
 
 typedef void GDALMajorObjectShadow;
 
@@ -3983,11 +3984,11 @@ SWIGINTERN OGRErr OGRFeatureShadow_SetGeomField__SWIG_1(OGRFeatureShadow *self,c
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-        return 6;
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return 6;
       }
       else
-        return OGR_F_SetGeomField(self, iField, geom);
+          return OGR_F_SetGeomField(self, iField, geom);
   }
 SWIGINTERN OGRErr OGRFeatureShadow_SetGeomFieldDirectly__SWIG_0(OGRFeatureShadow *self,int iField,OGRGeometryShadow *geom){
     return OGR_F_SetGeomFieldDirectly(self, iField, geom);
@@ -3996,24 +3997,24 @@ SWIGINTERN OGRErr OGRFeatureShadow_SetGeomFieldDirectly__SWIG_1(OGRFeatureShadow
       int iField = OGR_F_GetGeomFieldIndex(self, name);
       if (iField == -1)
       {
-        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-        return 6;
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return 6;
       }
       else
-        return OGR_F_SetGeomFieldDirectly(self, iField, geom);
+          return OGR_F_SetGeomFieldDirectly(self, iField, geom);
   }
 SWIGINTERN OGRGeometryShadow *OGRFeatureShadow_GetGeomFieldRef__SWIG_0(OGRFeatureShadow *self,int iField){
     return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, iField);
   }
 SWIGINTERN OGRGeometryShadow *OGRFeatureShadow_GetGeomFieldRef__SWIG_1(OGRFeatureShadow *self,char const *name){
-    int i = OGR_F_GetGeomFieldIndex(self, name);
-    if (i == -1)
-    {
-      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      return NULL;
-    }
-    else
-      return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, i);
+      int i = OGR_F_GetGeomFieldIndex(self, name);
+      if (i == -1)
+      {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          return NULL;
+      }
+      else
+          return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, i);
   }
 SWIGINTERN OGRFeatureShadow *OGRFeatureShadow_Clone(OGRFeatureShadow *self){
     return (OGRFeatureShadow*) OGR_F_Clone(self);
@@ -4030,23 +4031,23 @@ SWIGINTERN OGRFieldDefnShadow *OGRFeatureShadow_GetFieldDefnRef__SWIG_0(OGRFeatu
 SWIGINTERN OGRFieldDefnShadow *OGRFeatureShadow_GetFieldDefnRef__SWIG_1(OGRFeatureShadow *self,char const *name){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+          return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
       return NULL;
   }
 SWIGINTERN int OGRFeatureShadow_GetGeomFieldCount(OGRFeatureShadow *self){
     return OGR_F_GetGeomFieldCount(self);
   }
 SWIGINTERN OGRGeomFieldDefnShadow *OGRFeatureShadow_GetGeomFieldDefnRef__SWIG_0(OGRFeatureShadow *self,int id){
-    return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
+      return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
   }
 SWIGINTERN OGRGeomFieldDefnShadow *OGRFeatureShadow_GetGeomFieldDefnRef__SWIG_1(OGRFeatureShadow *self,char const *name){
       int i = OGR_F_GetGeomFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-      return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
+          return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
       return NULL;
   }
 SWIGINTERN char const *OGRFeatureShadow_GetFieldAsString__SWIG_0(OGRFeatureShadow *self,int id){
@@ -4077,9 +4078,9 @@ SWIGINTERN GIntBig OGRFeatureShadow_GetFieldAsInteger64__SWIG_0(OGRFeatureShadow
 SWIGINTERN GIntBig OGRFeatureShadow_GetFieldAsInteger64__SWIG_1(OGRFeatureShadow *self,char const *name){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-      return OGR_F_GetFieldAsInteger64(self, i);
+          return OGR_F_GetFieldAsInteger64(self, i);
       return 0;
   }
 SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_0(OGRFeatureShadow *self,int id){
@@ -4091,9 +4092,9 @@ SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_0(OGRFeatureShadow *se
 SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_1(OGRFeatureShadow *self,char const *name){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  return OGR_F_GetFieldAsDouble(self, i);
+          return OGR_F_GetFieldAsDouble(self, i);
       return 0;
   }
 
@@ -4123,7 +4124,7 @@ SWIGINTERN void OGRFeatureShadow_GetFieldAsIntegerList__SWIG_0(OGRFeatureShadow 
 SWIGINTERN void OGRFeatureShadow_GetFieldAsIntegerList__SWIG_1(OGRFeatureShadow *self,char const *name,int *nLen,int const **pList){
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
   }
@@ -4136,7 +4137,7 @@ SWIGINTERN void OGRFeatureShadow_GetFieldAsDoubleList__SWIG_0(OGRFeatureShadow *
 SWIGINTERN void OGRFeatureShadow_GetFieldAsDoubleList__SWIG_1(OGRFeatureShadow *self,char const *name,int *nLen,double const **pList){
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
   }
@@ -4176,10 +4177,18 @@ SWIGINTERN bool OGRFeatureShadow_IsFieldSet__SWIG_1(OGRFeatureShadow *self,char 
       return false;
   }
 SWIGINTERN int OGRFeatureShadow_GetFieldIndex(OGRFeatureShadow *self,char const *name){
-      return OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          return i;
   }
 SWIGINTERN int OGRFeatureShadow_GetGeomFieldIndex(OGRFeatureShadow *self,char const *name){
-      return OGR_F_GetGeomFieldIndex(self, name);
+      int i = OGR_F_GetGeomFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          return OGR_F_GetGeomFieldIndex(self, name);
   }
 SWIGINTERN GIntBig OGRFeatureShadow_GetFID(OGRFeatureShadow *self){
     return OGR_F_GetFID(self);
@@ -4196,9 +4205,9 @@ SWIGINTERN void OGRFeatureShadow_UnsetField__SWIG_0(OGRFeatureShadow *self,int i
 SWIGINTERN void OGRFeatureShadow_UnsetField__SWIG_1(OGRFeatureShadow *self,char const *name){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_UnsetField(self, i);
+          OGR_F_UnsetField(self, i);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_0(OGRFeatureShadow *self,int id,char const *value){
     OGR_F_SetFieldString(self, id, value);
@@ -4206,9 +4215,9 @@ SWIGINTERN void OGRFeatureShadow_SetField__SWIG_0(OGRFeatureShadow *self,int id,
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_1(OGRFeatureShadow *self,char const *name,char const *value){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
-	  OGR_F_SetFieldString(self, i, value);
+          OGR_F_SetFieldString(self, i, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetFieldInteger64(OGRFeatureShadow *self,int id,GIntBig value){
     OGR_F_SetFieldInteger64(self, id, value);
@@ -4295,13 +4304,13 @@ SWIGINTERN void OGRFeatureShadow_SetFieldBinaryFromHexString__SWIG_0(OGRFeatureS
 SWIGINTERN void OGRFeatureShadow_SetFieldBinaryFromHexString__SWIG_1(OGRFeatureShadow *self,char const *name,char const *pszValue){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
-        CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
       {
-        int nBytes;
-        GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
-        OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
-        CPLFree(pabyBuf);
+          int nBytes;
+          GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
+          OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+          CPLFree(pabyBuf);
       }
   }
 SWIGINTERN OGRErr OGRFeatureShadow_SetFrom(OGRFeatureShadow *self,OGRFeatureShadow *other,int forgiving=1){

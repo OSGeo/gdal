@@ -513,8 +513,17 @@
 # @isa (Geo::OGR)
 
 ## @cmethod Geo::OGR::Feature new(%schema)
-# @param schema as in GetSchema().
-# @return a new Geo::OGR::Feature object
+# @brief Create a new feature.
+# @param A Geo::OGR::FeatureDefn object or named parameters to create one:
+# - \a Name
+# - \a Fields a list of Geo::OGR::FieldDefn or Geo::OGR::GeomFieldDefn
+# objects or anonymous hashes from which such can be created.
+# - \a GeometryType the geometry type if the feature has only one spatial field.
+# - \a StyleIgnored whether the style can be omitted when fetching features. (default is false)
+#
+# @note Do not mix GeometryType and geometry fields in Fields list.
+#
+# @return a new Geo::OGR::Feature object.
 
 ## @method Geo::OGR::Layer Layer()
 # @return the layer to which this feature belongs to or undef.
@@ -608,13 +617,19 @@
 ## @ignore GetFieldAsInteger64
 ## @ignore GetFieldAsDoubleList
 ## @ignore GetFieldAsIntegerList
+## @ignore GetFieldAsInteger64List
 ## @ignore GetFieldAsStringList
 
+## @ignore SetFieldBinary
 ## @ignore SetFieldBinaryFromHexString
 ## @ignore SetFieldInteger64
 ## @ignore SetFieldDoubleList
 ## @ignore SetFieldIntegerList
+## @ignore SetFieldInteger64List
 ## @ignore SetFieldStringList
+
+## @ignore IsFieldSet
+## @ignore UnsetField
 
 ## @method SetField($name, @Value)
 # See Field().
@@ -632,7 +647,8 @@
 # scalar, which is then assumed to be a string and parsed, or from a
 # list of values (for example year, month, day for Date).
 # @return in non-void context the value of the field, which may be a
-# scalar or a list, depending on the field type.
+# scalar or a list, depending on the field type. For unset fields the
+# undef value is returned.
 
 ## @ignore SetGeometry
 ## @ignore SetGeometryDirectly
@@ -642,7 +658,7 @@
 ## @ignore SetGeomField
 ## @ignore SetGeomFieldDirectly
 
-## @method $Geometry($name, $geometry)
+## @method Geometry($name, $geometry)
 # @brief Get or set the value of a geometry field.
 # @note This method delivers the functionality of undocumented methods
 # SetGeometry($geometry), SetGeometryDirectly, SetGeomField,
@@ -654,9 +670,9 @@
 # @param name [optional] the name of the spatial field,
 # whose geometry is to be set. If not given, sets or gets the geometry
 # of the first (or the single) spatial field.
-# @param geometry [optional] a Geo::OGR::Geometry object or a hash
-# array from which such can be created (using
-# Geo::OGR::Geometry::new)
+# @param geometry [optional] a Geo::OGR::Geometry object or a
+# reference to a hash from which such can be created (using
+# Geo::OGR::Geometry::new).
 # @return in a non-void context the indicated geometry in the feature
 # as a Geo::OGR::Geometry object. The returned object contains a
 # reference to the actual geometry data in the feature (the geometry
