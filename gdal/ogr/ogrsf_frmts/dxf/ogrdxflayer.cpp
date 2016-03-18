@@ -1127,11 +1127,8 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         smoothPolyline.Close();
 
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
-    // If there was a polygon mesh associated with the polyline, it should be cast to polygon
-    if (PolygonMesh == TRUE && !poGeom->Is3D())
-      poGeom = OGRGeometryFactory::forceToPolygon(poGeom);
-    // If there was a polyface mesh associated with the polyline, it should be cast to multipolygon
-    if (PolyFaceMesh == TRUE && !poGeom->Is3D())
+    // If there was a polygon mesh or polyface mesh associated with the polyline, it should be cast to multipolygon
+    if (PolygonMesh == TRUE || PolyFaceMesh == TRUE)
       poGeom = OGRGeometryFactory::forceToMultiPolygon(poGeom);
     ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
