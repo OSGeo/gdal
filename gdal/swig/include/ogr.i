@@ -1572,8 +1572,7 @@ public:
   int GetFieldIndex(int i) {
       if (i < 0 || i >= OGR_F_GetFieldCount(self))
           CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      else
-          return i;
+      return i;
   }
 #endif
 
@@ -1581,16 +1580,14 @@ public:
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
           CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          return i;
+      return i;
   }
 
 #ifdef SWIGPERL
   int GetGeomFieldIndex(int i) {
       if (i < 0 || i >= OGR_F_GetGeomFieldCount(self))
           CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      else
-          return i;
+      return i;
   }
 #endif
 
@@ -1598,8 +1595,7 @@ public:
       int i = OGR_F_GetGeomFieldIndex(self, name);
       if (i == -1)
           CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          return OGR_F_GetGeomFieldIndex(self, name);
+      return i;
   }
 
   GIntBig GetFID() {
