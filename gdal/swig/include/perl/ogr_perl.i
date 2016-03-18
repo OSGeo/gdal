@@ -297,9 +297,11 @@ sub CreateField {
         if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params{Type}}) {
             my $fd = Geo::OGR::FieldDefn->new(%params);
             _CreateField($self, $fd, $a);
-        } else {
+        } elsif (exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{Type}}) {
             my $fd = Geo::OGR::GeomFieldDefn->new(%params);
             CreateGeomField($self, $fd, $a);
+        } else {
+            Geo::GDAL::error("Invalid field type: $params{Type}.")
         }
     }
 }
@@ -307,11 +309,7 @@ sub CreateField {
 sub AlterFieldDefn {
     my $self = shift;
     my $field = shift;
-    my $index;
-    eval {
-        $index = $self->GetFieldIndex($field);
-    };
-    Geo::GDAL::error(2, $field, 'Non-spatial field') if $@;
+    my $index = $self->GetLayerDefn->GetFieldIndex($field);
     if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FieldDefn')) {
         _AlterFieldDefn($self, $index, @_);
     } else {
@@ -328,14 +326,9 @@ sub AlterFieldDefn {
 }
 
 sub DeleteField {
-    my($self, $fn) = @_;
-    my $d = $self->GetDefn;
-    my $index = $d->GetFieldIndex($fn);
-    $index = $fn if $index < 0;
-    eval {
-        _DeleteField($self, $index);
-    };
-    Geo::GDAL::error(2, $fn, 'Non-spatial field') if $@;
+    my($self, $field) = @_;
+    my $index = $self->GetLayerDefn->GetFieldIndex($field);
+    _DeleteField($self, $index);
 }
 
 sub GetSchema {
@@ -478,8 +471,8 @@ sub GetFieldDefn {
 
 sub GeometryType {
     my $self = shift;
-    my $d = $self->GetDefn;
-    my $fd = $d->GetGeomFieldDefn(0);
+    my $field = shift;
+    my $fd = $self->GetDefn->GetGeomFieldDefn($field);
     return $fd->Type if $fd;
 }
 

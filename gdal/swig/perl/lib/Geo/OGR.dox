@@ -490,6 +490,10 @@
 ## @ignore GetGeometryColumn
 ## @ignore GetGeomType
 
+## @method $GeometryType($field)
+# @param field the name or index of the spatial field.
+# @return the geometry type of the spatial field.
+
 ## @method @GetFieldNames()
 # @return a list of the names of the fields in this layer. The
 # non-geometry field names are first in the list and then the geometry
