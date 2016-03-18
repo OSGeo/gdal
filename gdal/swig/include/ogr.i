@@ -1972,13 +1972,15 @@ public:
   int GetFieldIndex(int i) {
       if (i < 0 || i >= OGR_FD_GetFieldCount(self))
           CPLError(CE_Failure, 1, FIELD_INDEX_ERROR_TMPL, i);
-      else
-          return i;
+      return i;
   }
 #endif
 
   int GetFieldIndex(const char* name) {
-      return OGR_FD_GetFieldIndex(self, name);
+      int i = OGR_FD_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      return i;
   }
 
 %apply Pointer NONNULL {OGRFieldDefnShadow* defn};

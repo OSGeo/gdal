@@ -854,14 +854,19 @@ sub CreateLayer {
         $p->{fields} = $s->{Fields} if exists $s->{Fields};
         $p->{name} = $s->{Name} if exists $s->{Name};
     }
-    $p->{geometrytype} //= 'None' if $p->{fields};
+    $p->{fields} = [] unless ref($p->{fields}) eq 'ARRAY';
+    # if fields contains spatial fields, then do not create default one
+    for my $f (@{$p->{fields}}) {
+        if ($f->{GeometryType} or exists $Geo::OGR::Geometry::TYPE_STRING2INT{$f->{Type}}) {
+            $p->{geometrytype} = 'None';
+            last;
+        }
+    }
     my $gt = Geo::GDAL::string2int($p->{geometrytype}, \%Geo::OGR::Geometry::TYPE_STRING2INT);
     my $layer = _CreateLayer($self, $p->{name}, $p->{srs}, $gt, $p->{options});
     $LAYERS{tied(%$layer)} = $self;
-    if ($p->{fields}) {
-        for my $field (@{$p->{fields}}) {
-            $layer->CreateField($field);
-        }
+    for my $f (@{$p->{fields}}) {
+        $layer->CreateField($f);
     }
     return $layer;
 }

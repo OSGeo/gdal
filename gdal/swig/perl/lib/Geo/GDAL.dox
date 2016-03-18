@@ -602,8 +602,9 @@
 # (if only one geometry field). Default is 'Unknown'.
 #
 # @note If Fields or Schema|Fields is not given, a default geometry
-# field (Name => '', GeometryType => 'Unknown') is created. The type
-# can be also set with the named parameter.
+# field (Name => '', GeometryType => 'Unknown') is created. If it is
+# given and it contains spatial fields, GeometryType is ignored. The
+# type can be also set with the named parameter.
 #
 # Example:
 # \code
