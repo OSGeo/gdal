@@ -4180,15 +4180,13 @@ SWIGINTERN int OGRFeatureShadow_GetFieldIndex(OGRFeatureShadow *self,char const 
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
           CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          return i;
+      return i;
   }
 SWIGINTERN int OGRFeatureShadow_GetGeomFieldIndex(OGRFeatureShadow *self,char const *name){
       int i = OGR_F_GetGeomFieldIndex(self, name);
       if (i == -1)
           CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
-      else
-          return OGR_F_GetGeomFieldIndex(self, name);
+      return i;
   }
 SWIGINTERN GIntBig OGRFeatureShadow_GetFID(OGRFeatureShadow *self){
     return OGR_F_GetFID(self);
