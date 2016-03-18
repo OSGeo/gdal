@@ -237,7 +237,7 @@ class CPL_DLL GDALDefaultOverviews
 
 class CPL_DLL GDALOpenInfo
 {
-    int         bHasGotSiblingFiles;
+    bool        bHasGotSiblingFiles;
     char        **papszSiblingFiles;
     int         nHeaderBytesTried;
 
