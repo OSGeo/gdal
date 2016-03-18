@@ -472,6 +472,7 @@ sub GetFieldDefn {
 sub GeometryType {
     my $self = shift;
     my $field = shift;
+    $field //= 0;
     my $fd = $self->GetDefn->GetGeomFieldDefn($field);
     return $fd->Type if $fd;
 }
