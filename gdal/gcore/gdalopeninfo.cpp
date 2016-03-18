@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "cpl_conv.h"
+#include "cpl_vsi.h"
 #include "gdal_priv.h"
 
 #ifdef HAVE_UNISTD_H
