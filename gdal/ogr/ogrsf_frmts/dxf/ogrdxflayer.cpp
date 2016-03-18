@@ -1101,8 +1101,10 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             return NULL;
         }
 
+        // Check if there is a polygon mesh associated with the polyline
         if ((nVertexFlag & 64) == 0)
           PolygonMesh = TRUE;
+        // Check if there is a polyface mesh associated with the polyline
         if ((nVertexFlag & 128) == 0)
           PolyFaceMesh = TRUE;
 
@@ -1125,8 +1127,10 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         smoothPolyline.Close();
 
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    // If there was a polygon mesh associated with the polyline, it should be cast to polygon
     if (PolygonMesh == TRUE && !poGeom->Is3D())
       poGeom = OGRGeometryFactory::forceToPolygon(poGeom);
+    // If there was a polyface mesh associated with the polyline, it should be cast to multipolygon
     if (PolyFaceMesh == TRUE && !poGeom->Is3D())
       poGeom = OGRGeometryFactory::forceToMultiPolygon(poGeom);
     ApplyOCSTransformer( poGeom );
