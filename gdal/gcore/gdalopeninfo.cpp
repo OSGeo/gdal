@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <vector>
+
 #include "cpl_conv.h"
 #include "gdal_priv.h"
 
@@ -36,6 +38,8 @@
 #endif
 
 CPL_CVSID("$Id$");
+
+using std::vector;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -137,9 +141,9 @@ retry:  // TODO(schwehr): Stop using goto.
     if( fpL != NULL )
     {
         bStatOK = TRUE;
-        const int nBufSize = 1024;
-        pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize + 1,1) );
-        nHeaderBytesTried = nBufSize;
+        const int nBufSize = 1025;
+        pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize, 1) );
+        nHeaderBytesTried = nBufSize - 1;
         nHeaderBytes = static_cast<int>(
             VSIFReadL( pabyHeader, 1, nHeaderBytesTried, fpL ) );
         VSIRewindL( fpL );
@@ -176,15 +180,14 @@ retry:  // TODO(schwehr): Stop using goto.
             // my_remote_utm.tif" we will be able to open it by passing
             // my_remote_utm.tif.  This helps a lot for GDAL based readers that
             // only provide file explorers to open datasets.
-            char szPointerFilename[2048];  // TODO(schwehr): Move off the stack.
+            const int nBufSize = 2048;
+            vector<char> oFilename(nBufSize);
+            char *szPointerFilename = &oFilename[0];
             int nBytes = static_cast<int>(
-                readlink( pszFilename, szPointerFilename,
-                          sizeof(szPointerFilename) ) );
+                readlink( pszFilename, szPointerFilename, nBufSize ) );
             if (nBytes != -1)
             {
-                szPointerFilename[
-                    MIN(nBytes,
-                    static_cast<int>(sizeof(szPointerFilename))-1)] = 0;
+                szPointerFilename[MIN(nBytes, nBufSize - 1)] = 0;
                 CPLFree(pszFilename);
                 pszFilename = CPLStrdup(szPointerFilename);
                 papszSiblingsIn = NULL;
