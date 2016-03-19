@@ -65,8 +65,6 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
 %rename (_FindFile) FindFile;
 
-%rename (_GetDriver) GetDriver;
-
 %rename (_Open) Open;
 %newobject _Open;
 
@@ -430,7 +428,7 @@ sub PackCharacter {
 sub GetDriverNames {
     my @names;
     for my $i (0..GetDriverCount()-1) {
-        my $driver = _GetDriver($i);
+        my $driver = GetDriver($i);
         push @names, $driver->Name if $driver->TestCapability('RASTER');
     }
     return @names;
@@ -440,23 +438,16 @@ sub GetDriverNames {
 sub Drivers {
     my @drivers;
     for my $i (0..GetDriverCount()-1) {
-        my $driver = _GetDriver($i);
+        my $driver = GetDriver($i);
         push @drivers, $driver if $driver->TestCapability('RASTER');
     }
     return @drivers;
 }
 
-sub GetDriver {
-    my($name) = @_;
-    $name //= 0;
-    my $driver;
-    $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
-    $driver //= GetDriverByName("$name");
-    Geo::GDAL::error(2, $name, 'Driver') unless $driver;
-    return $driver;
-
+sub Driver {
+    return 'Geo::GDAL::Driver' unless @_;
+    return GetDriver(@_);
 }
-*Driver = *GetDriver;
 
 sub AccessTypes {
     return qw/ReadOnly Update/;
@@ -758,7 +749,6 @@ sub Dataset {
 sub Domains {
     return @DOMAINS;
 }
-*GetDriver = *_GetDriver;
 
 *Open = *Geo::GDAL::Open;
 *OpenShared = *Geo::GDAL::OpenShared;

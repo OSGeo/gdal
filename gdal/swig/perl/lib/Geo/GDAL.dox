@@ -257,7 +257,7 @@
 # @param Name The short name of the driver. One of
 # Geo::GDAL::DriverNames or Geo::OGR::DriverNames.
 # @note This subroutine is imported into the main namespace if Geo::GDAL
-# is use'd with qw/:all/.
+# is used with qw/:all/.
 # @return a Geo::GDAL::Driver object.
 
 ## @sub Geo::GDAL::Driver IdentifyDriver($path, $siblings)
@@ -615,6 +615,10 @@
 # .                   { Name => 'geom', 
 # .                     Type => 'LineString25D' } ] );
 # \endcode
+#
+# @note Many formats allow only one spatial field, which currently
+# requires the use of GeometryType.
+#
 # @return a new Geo::OGR::Layer object.
 
 ## @method Geo::OGR::Layer CopyLayer($layer, $name, hashref options = undef)

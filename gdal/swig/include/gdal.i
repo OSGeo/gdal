@@ -746,6 +746,13 @@ GDALDriverShadow* GetDriverByName( char const *name ) {
 }
 %}
 
+#ifdef SWIGPERL
+%inline %{
+GDALDriverShadow* GetDriver( char const *name ) {
+  return (GDALDriverShadow*) GDALGetDriverByName( name );
+}
+%}
+#endif
 %inline %{
 GDALDriverShadow* GetDriver( int i ) {
   return (GDALDriverShadow*) GDALGetDriver( i );

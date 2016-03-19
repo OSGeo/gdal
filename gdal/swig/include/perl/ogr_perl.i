@@ -123,6 +123,7 @@ package Geo::OGR;
 our $VERSION = '2.0100'; # this needs to be the same as that in gdal_perl.i
 
 sub Driver {
+    return 'Geo::GDAL::Driver' unless @_;
     bless Geo::GDAL::Driver(@_), 'Geo::OGR::Driver';
 }
 *GetDriver = *Driver;
@@ -130,7 +131,7 @@ sub Driver {
 sub GetDriverNames {
     my @names;
     for my $i (0..Geo::GDAL::GetDriverCount()-1) {
-        my $driver = Geo::GDAL::_GetDriver($i);
+        my $driver = Geo::GDAL::GetDriver($i);
         push @names, $driver->Name if $driver->TestCapability('VECTOR');
     }
     return @names;
@@ -140,7 +141,7 @@ sub GetDriverNames {
 sub Drivers {
     my @drivers;
     for my $i (0..GetDriverCount()-1) {
-        my $driver = Geo::GDAL::_GetDriver($i);
+        my $driver = Geo::GDAL::GetDriver($i);
         push @drivers, $driver if $driver->TestCapability('VECTOR');
     }
     return @drivers;
