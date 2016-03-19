@@ -89,13 +89,9 @@
 
 
 
-
-
 ## @class Geo::OGR::Driver
-# @brief A vector format driver.
-#
-# This is a convenience class, which provides a vector driver only
-# access to the set of all drivers.
+# @brief A vector format driver. This is a legacy class which
+# should not be used in new code. Use Geo::GDAL::Driver.
 
 ## @method Open
 # The same as Geo::OGR::Open except that only this driver is allowed.
@@ -104,12 +100,6 @@
 # Create a new vector data source using this driver.
 # @param name The data source name.
 # @param options Driver specific dataset creation options. 
-#
-# Usage:
-# \code
-# $ds = Geo::OGR::Driver('GML')->Create('/tmp/x.gml', {PREFIX => $prefix});
-# \endcode
-# @return a new Geo::GDAL::Dataset object.
 
 ## @method Geo::GDAL::Dataset Copy(Geo::GDAL::Dataset source, $name, arrayref options = undef)
 # Copy a vector data source into a new data source with this driver.
@@ -123,14 +113,9 @@
 
 
 
-
-
 ## @class Geo::OGR::DataSource
-# @brief A legacy class for opening vector datasets. Otherwise see
-# Geo::OGR and Geo::GDAL::Dataset.
-#
-# This is a legacy class, which provides methods to ensure a
-# vector driver is used to open a data source.
+# @brief A vector dataset. This is a legacy class which should not be
+# used in new code. Use Geo::GDAL::Dataset.
 
 ## @sub Geo::GDAL::Dataset Open
 # The same as Geo::OGR::Open
