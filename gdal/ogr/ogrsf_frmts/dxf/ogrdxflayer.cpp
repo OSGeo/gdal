@@ -1304,7 +1304,8 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     if( !bHaveZ )
         poEllipse->flattenTo2D();
 
-    ApplyOCSTransformer( poEllipse );
+    // disabled for ellipse entity
+    //ApplyOCSTransformer( poEllipse );
     poFeature->SetGeometryDirectly( poEllipse );
 
     PrepareLineStyle( poFeature );
