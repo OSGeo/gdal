@@ -33,9 +33,10 @@ void gma_two_bands_proc(GDALRasterBand *b, gma_two_bands_callback cb, GDALRaster
             else
                 h = h_block;
             data_t block[w_block*h_block];
+            data_t block2[w_block*h_block];
             CPLErr e = b->ReadBlock(x_block, y_block, block);
             e = b2->ReadBlock(x_block, y_block, block2);
-            int ret = cb(block, blocks2, w, h);
+            int ret = cb(block, block2, w, h);
             switch (ret) {
             case 0: return;
             case 1: break;
