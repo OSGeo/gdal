@@ -2284,39 +2284,62 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                 reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
     OGRErr eErr = OGR_G_Transform( hMultiPolygon,
                      (OGRCoordinateTransformationH) &oTransformer );
-    double dfMaxLengthInPixels = GetMaximumSegmentLength(
+    const double dfInitialMaxLengthInPixels = GetMaximumSegmentLength(
                             reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
 
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    const bool bWasValidInitialy = OGR_G_IsValid(hMultiPolygon) != FALSE;
+    CPLPopErrorHandler();
     bool bDensify = false;
-    if( eErr == OGRERR_NONE && dfMaxLengthInPixels > 1.0 )
+    if( eErr == OGRERR_NONE && dfInitialMaxLengthInPixels > 1.0 )
     {
         const char* pszDensifyCutline = CPLGetConfigOption("GDALWARP_DENSIFY_CUTLINE", "YES");
         if( EQUAL(pszDensifyCutline, "ONLY_IF_INVALID") )
         {
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            bDensify = ( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) );
-            CPLPopErrorHandler();
+            bDensify = ( OGRGeometryFactory::haveGEOS() && !bWasValidInitialy );
         }
         else
             bDensify = CPLTestBool(pszDensifyCutline);
     }
     if( bDensify )
     {
-        CPLDebug("WARP", "Cutline maximum segment size was %.0f pixel after reprojection to source coordinates",
-                 dfMaxLengthInPixels);
+        CPLDebug("WARP", "Cutline maximum segment size was %.0f pixel after reprojection to source coordinates.",
+                 dfInitialMaxLengthInPixels);
 
         // Densify and reproject with the aim of having a 1 pixel density
-        OGR_G_DestroyGeometry( hMultiPolygon );
-        hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
-        OGR_G_Segmentize(hMultiPolygon, dfMaxLengthInSpatUnits / dfMaxLengthInPixels);
-        eErr = OGR_G_Transform( hMultiPolygon,
-                     (OGRCoordinateTransformationH) &oTransformer );
-        if( eErr == OGRERR_NONE )
+        double dfSegmentSize = dfMaxLengthInSpatUnits / dfInitialMaxLengthInPixels;
+        for(int i=0;i<10;i++)
         {
-            dfMaxLengthInPixels = GetMaximumSegmentLength(
-                                reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
-            CPLDebug("WARP", "After densification, cutline maximum segment size is now %.0f pixel",
-                     dfMaxLengthInPixels);
+            OGR_G_DestroyGeometry( hMultiPolygon );
+            hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
+            OGR_G_Segmentize(hMultiPolygon, dfSegmentSize);
+            eErr = OGR_G_Transform( hMultiPolygon,
+                        (OGRCoordinateTransformationH) &oTransformer );
+            if( eErr == OGRERR_NONE )
+            {
+                const double dfMaxLengthInPixels = GetMaximumSegmentLength(
+                                    reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
+                if( bWasValidInitialy )
+                {
+                    // In some cases, the densification itself results in a reprojected
+                    // invalid polygon due to the non-linearity of RPC DEM transformation,
+                    // so in those cases, try a less dense cutline
+                    CPLPushErrorHandler(CPLQuietErrorHandler);
+                    const bool bIsValid = OGR_G_IsValid(hMultiPolygon) != FALSE;
+                    CPLPopErrorHandler();
+                    if( !bIsValid )
+                    {
+                        CPLDebug("WARP", "After densification, cutline maximum segment size is now %.0f pixel, "
+                                 "but cutline is invalid. So trying a less dense cutline.",
+                                 dfMaxLengthInPixels);
+                        dfSegmentSize *= 2;
+                        continue;
+                    }
+                }
+                CPLDebug("WARP", "After densification, cutline maximum segment size is now %.0f pixel.",
+                        dfMaxLengthInPixels);
+            }
+            break;
         }
     }
 
@@ -2338,6 +2361,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         char *pszWKT = NULL;
         OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
         CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+        //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
         CPLFree( pszWKT );
 
         if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
@@ -2356,7 +2380,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     char *pszWKT = NULL;
 
     OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
-    //fprintf(stderr, "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+    //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
     OGR_G_DestroyGeometry( hMultiPolygon );
 
     *ppapszWarpOptions = CSLSetNameValue( *ppapszWarpOptions,

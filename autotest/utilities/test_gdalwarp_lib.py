@@ -1039,6 +1039,59 @@ def test_gdalwarp_lib_128():
     return 'success'
 
 ###############################################################################
+# Test automatic densification of cutline, but with initial guess leading
+# to an invalid geometry (#6375)
+
+def test_gdalwarp_lib_129():
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 1000, 2000)
+    rpc =  [  "HEIGHT_OFF=1767",
+              "LINE_NUM_COEFF=0.0004430579 -0.06200816 -1.007087 1.614683e-05 0.0009263463 -1.003745e-07 -2.346893e-06 -0.001179024 -0.0007413534 0 9.41488e-08 -4.566652e-07 2.895947e-05 -2.925327e-07 -2.308839e-05 -1.502702e-05 -4.775127e-06 0 4.290483e-07 2.850458e-08",
+              "LONG_OFF=-.2282",
+              "SAMP_DEN_COEFF=1 -0.01907542 0.01651069 -0.001340671 -0.0005495095 -1.072863e-05 -1.157626e-05 0.0003737224 0.0002712591 -0.0001363199 3.614417e-08 3.584749e-06 9.175671e-06 2.661593e-06 -1.045511e-05 -1.293648e-06 -2.769964e-06 5.931109e-07 -1.018687e-07 2.366109e-07",
+              "LINE_SCALE=11886",
+              "SAMP_NUM_COEFF=0.007334337 1.737166 -0.7954719 -0.004635387 -0.007478255 0.0006381186 -0.0003313475 0.0002313095 -0.002883101 -1.625925e-06 -6.409095e-06 -0.000403506 -0.0004441055 -0.0002360882 8.940442e-06 -0.0001780485 0.0001081517 -6.592931e-06 2.642496e-06 6.316508e-07",
+              "LONG_SCALE=0.6996",
+              "SAMP_SCALE=2945",
+              "SAMP_OFF=2926",
+              "LAT_SCALE=1.4116",
+              "LAT_OFF=.4344",
+              "LINE_OFF=-115",
+              "LINE_DEN_COEFF=1 0.0008882352 -0.0002437686 -2.380782e-06 2.69128e-05 0 2.144654e-07 -2.093549e-05 -7.055149e-06 4.740057e-06 0 -1.588607e-08 -1.397592e-05 0 -7.717698e-07 6.505002e-06 0 -1.225041e-08 3.608499e-08 -4.463376e-08",
+              "HEIGHT_SCALE=1024" ]
+
+    mem_ds.SetMetadata(rpc, "RPC")
+    mem_ds.GetRasterBand(1).Fill(255)
+
+    cutlineDSName = '/vsimem/test_gdalwarp_lib_129.json'
+    cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
+    cutline_lyr = cutline_ds.CreateLayer('cutline')
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((-0.873086 0.511332,-0.626502 0.507654,-0.630715 0.282053,-0.876863 0.285693,-0.873086 0.511332))'))
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                   dstSRS = 'EPSG:4326',
+                   outputBounds = [-1,0,0,1],
+                   xRes=0.01, yRes=0.01,
+                   transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_129_dem.vrt'])
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 399:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    gdal.Unlink(cutlineDSName)
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1115,6 +1168,7 @@ gdaltest_list = [
     test_gdalwarp_lib_126,
     test_gdalwarp_lib_127,
     test_gdalwarp_lib_128,
+    test_gdalwarp_lib_129,
     test_gdalwarp_lib_cleanup,
     ]
 
