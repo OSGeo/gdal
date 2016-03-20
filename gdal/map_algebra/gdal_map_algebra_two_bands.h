@@ -80,7 +80,6 @@ void gma_two_bands_proc_focal(GDALRasterBand *b, gma_two_bands_callback cb, GDAL
             else
                 h = h_block;
             data_t block[w_block*h_block];
-            data_t block2[w_block*h_block];
             CPLErr e = b->ReadBlock(x_block, y_block, block);
 
             // update the 3 x 3 block thing, 0 is up left, 2 is up right
@@ -88,7 +87,7 @@ void gma_two_bands_proc_focal(GDALRasterBand *b, gma_two_bands_callback cb, GDAL
             // usually read 2, 5, 8
             e = b2->ReadBlock(x_block, y_block, blocks2);
 
-            int ret = cb(block, block2, w, h);
+            int ret = cb(block, blocks2, w, h);
             switch (ret) {
             case 0: return;
             case 1: break;
