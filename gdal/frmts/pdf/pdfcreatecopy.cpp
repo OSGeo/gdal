@@ -1889,7 +1889,6 @@ int GDALPDFWriter::WriteClippedImagery(
     return TRUE;
 }
 
-#ifdef OGR_ENABLED
 
 /************************************************************************/
 /*                          WriteOGRDataSource()                        */
@@ -2958,7 +2957,6 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     return TRUE;
 }
 
-#endif
 
 /************************************************************************/
 /*                               EndPage()                              */
@@ -4690,14 +4688,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     CSLDestroy(papszExtraRasters);
     CSLDestroy(papszExtraRastersLayerName);
 
-#ifdef OGR_ENABLED
     if (bRet && pszOGRDataSource != NULL)
         oWriter.WriteOGRDataSource(pszOGRDataSource,
                                    pszOGRDisplayField,
                                    pszOGRDisplayLayerNames,
                                    pszOGRLinkField,
                                    bWriteOGRAttributes);
-#endif
 
     if (bRet)
         oWriter.EndPage(pszExtraImages,

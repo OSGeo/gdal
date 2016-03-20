@@ -35,9 +35,7 @@
 #include <vector>
 #include <map>
 
-#ifdef OGR_ENABLED
 #include "ogr_api.h"
-#endif
 
 typedef enum
 {
@@ -235,7 +233,6 @@ class GDALPDFWriter
                                int nBlockXSize, int nBlockYSize,
                                GDALProgressFunc pfnProgress,
                                void * pProgressData);
-#ifdef OGR_ENABLED
        int WriteOGRDataSource(const char* pszOGRDataSource,
                               const char* pszOGRDisplayField,
                               const char* pszOGRDisplayLayerNames,
@@ -262,7 +259,6 @@ class GDALPDFWriter
                            int bWriteOGRAttributes,
                            int& iObj,
                            int& iObjLayer);
-#endif
 
        int  WriteJavascript(const char* pszJavascript);
        int  WriteJavascriptFile(const char* pszJavascriptFile);

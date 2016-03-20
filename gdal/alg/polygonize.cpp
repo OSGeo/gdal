@@ -34,8 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifdef OGR_ENABLED
-
 /************************************************************************/
 /* ==================================================================== */
 /*                               RPolygon                               */
@@ -756,8 +754,6 @@ GBool GDALFloatEquals(float A, float B)
 }
 
 
-#endif // OGR_ENABLED
-
 /************************************************************************/
 /*                           GDALPolygonize()                           */
 /************************************************************************/
@@ -825,10 +821,6 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 void * pProgressArg )
 
 {
-#ifndef OGR_ENABLED
-    CPLError(CE_Failure, CPLE_NotSupported, "GDALPolygonize() unimplemented in a non OGR build");
-    return CE_Failure;
-#else
     return GDALPolygonizeT<GInt32, IntEqualityTest>(hSrcBand,
                                                     hMaskBand,
                                                     hOutLayer,
@@ -837,7 +829,6 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                                                     pfnProgress,
                                                     pProgressArg,
                                                     GDT_Int32);
-#endif // OGR_ENABLED
 }
 
 
@@ -909,10 +900,6 @@ GDALFPolygonize( GDALRasterBandH hSrcBand,
                 void * pProgressArg )
 
 {
-#ifndef OGR_ENABLED
-    CPLError(CE_Failure, CPLE_NotSupported, "GDALFPolygonize() unimplemented in a non OGR build");
-    return CE_Failure;
-#else
     return GDALPolygonizeT<float, FloatEqualityTest>(hSrcBand,
                                                     hMaskBand,
                                                     hOutLayer,
@@ -921,5 +908,4 @@ GDALFPolygonize( GDALRasterBandH hSrcBand,
                                                     pfnProgress,
                                                     pProgressArg,
                                                     GDT_Float32);
-#endif // OGR_ENABLED
 }

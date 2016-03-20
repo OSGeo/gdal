@@ -11,8 +11,6 @@ OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 
 CXXFLAGS :=     $(CXXFLAGS) $(SHADOW_WFLAGS) -DINST_DATA=\"$(INST_DATA)\"
 
-ifeq ($(OGR_ENABLED),yes)
-
 BASEFORMATS = \
 	-DAVCBIN_ENABLED \
 	-DBNA_ENABLED \
@@ -218,8 +216,6 @@ endif
 
 ifeq ($(HAVE_MONGODB),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
-endif
-
 endif
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)

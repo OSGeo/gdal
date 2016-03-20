@@ -408,8 +408,6 @@ static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, CPLErrorNum no, cons
 void AIGDataset::ReadRAT()
 
 {
-#ifndef OGR_ENABLED
-#else
 /* -------------------------------------------------------------------- */
 /*      Check if we have an associated info directory.  If not          */
 /*      return quietly.                                                 */
@@ -542,8 +540,6 @@ void AIGDataset::ReadRAT()
     /* Workaround against #2447 and #3031, to avoid binding languages */
     /* not being able to open the dataset */
     CPLErrorReset();
-
-#endif /* OGR_ENABLED */
 }
 
 /************************************************************************/

@@ -37,9 +37,7 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 
-#ifdef OGR_ENABLED
 #include "ogrsf_frmts.h"
-#endif
 
 /************************************************************************/
 /*                           gvBurnScanline()                           */
@@ -790,10 +788,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                             void *pProgressArg )
 
 {
-#ifndef OGR_ENABLED
-    CPLError(CE_Failure, CPLE_NotSupported, "GDALRasterizeLayers() unimplemented in a non OGR build");
-    return CE_Failure;
-#else
     GDALDataType   eType;
     unsigned char *pabyChunkBuf;
     GDALDataset *poDS = (GDALDataset *) hDS;
@@ -1074,7 +1068,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     VSIFree( pabyChunkBuf );
 
     return eErr;
-#endif /* def OGR_ENABLED */
 }
 
 /************************************************************************/
@@ -1172,11 +1165,6 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                                void *pProgressArg )
 
 {
-#ifndef OGR_ENABLED
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "GDALRasterizeLayersBuf() unimplemented in a non OGR build" );
-    return CE_Failure;
-#else
 /* -------------------------------------------------------------------- */
 /*      If pixel and line spaceing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
@@ -1333,5 +1321,4 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
     }
 
     return eErr;
-#endif /* def OGR_ENABLED */
 }

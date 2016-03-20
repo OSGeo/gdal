@@ -37,9 +37,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-#ifdef OGR_ENABLED
 # include "ogrsf_frmts.h"
-#endif /* OGR_ENABLED */
 
 CPL_CVSID("$Id$");
 

@@ -289,6 +289,4 @@ void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::ProcessLine(
 
 template class GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest>;
 
-#ifdef OGR_ENABLED
 template class GDALRasterPolygonEnumeratorT<float, FloatEqualityTest>;
-#endif

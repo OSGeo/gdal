@@ -73,9 +73,7 @@ void GDALDestroy(void)
     bInGDALGlobalDestructor = TRUE;
     GDALDestroyDriverManager();
 
-#ifdef OGR_ENABLED
     OGRCleanupAll();
-#endif
     bInGDALGlobalDestructor = FALSE;
 
     /* See https://trac.osgeo.org/gdal/ticket/6139 */

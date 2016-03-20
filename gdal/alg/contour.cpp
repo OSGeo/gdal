@@ -35,8 +35,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifdef OGR_ENABLED
-
 // The amount of a contour interval that pixels should be fudged by if they
 // match a contour level exactly.
 
@@ -1402,7 +1400,7 @@ CPLErr OGRContourWriter( double dfLevel,
 
     return (eErr == OGRERR_NONE) ? CE_None : CE_Failure;
 }
-#endif // OGR_ENABLED
+
 
 /************************************************************************/
 /*                        GDALContourGenerate()                         */
@@ -1550,10 +1548,6 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
                             GDALProgressFunc pfnProgress, void *pProgressArg )
 
 {
-#ifndef OGR_ENABLED
-    CPLError(CE_Failure, CPLE_NotSupported, "GDALContourGenerate() unimplemented in a non OGR build");
-    return CE_Failure;
-#else
     VALIDATE_POINTER1( hBand, "GDALContourGenerate", CE_Failure );
 
     OGRContourWriterInfo oCWI;
@@ -1639,5 +1633,4 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
     CPLFree( padfScanline );
 
     return eErr;
-#endif // OGR_ENABLED
 }

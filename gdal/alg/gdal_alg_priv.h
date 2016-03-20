@@ -187,8 +187,6 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 #define MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536         (6 * sizeof(int) * PRIME_FOR_65536)
 
 
-#ifdef OGR_ENABLED
-
 /************************************************************************/
 /*      Float comparison function.                                      */
 /************************************************************************/
@@ -207,7 +205,5 @@ struct FloatEqualityTest
 {
     bool operator()(float a, float b) { return GDALFloatEquals(a,b) == TRUE; }
 };
-
-#endif /* OGR_ENABLED */
 
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */
