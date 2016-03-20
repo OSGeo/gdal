@@ -28,8 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <vector>
-
 #include "gdal_priv.h"  // Must be included first for mingw VSIStatBufL.
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
@@ -37,6 +35,8 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#include <vector>
 
 CPL_CVSID("$Id$");
 
